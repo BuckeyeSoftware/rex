@@ -4,6 +4,7 @@
 #include <rx/core/concepts/no_copy.h> // no_copy
 #include <rx/core/concepts/no_move.h> // no_move
 
+#include <rx/core/debug.h> // RX_MESSAGE
 #include <rx/core/memory/uninitialized_storage.h> // uninitialized_storage
 
 namespace rx {
@@ -36,10 +37,12 @@ inline constexpr static_node::static_node(const char* name, memory::uninitialize
 }
 
 inline void static_node::init() {
+  RX_MESSAGE("init static global %s\n", m_name);
   m_data.init();
 }
 
 inline void static_node::fini() {
+  RX_MESSAGE("fini static global %s\n", m_name);
   m_data.fini();
 }
 

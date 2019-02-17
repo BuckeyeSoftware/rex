@@ -8,12 +8,15 @@
 
 namespace rx {
 
+// 32-bit: 16 bytes
+// 64-bit: 32 bytes
 struct bitset {
   using bit_type = rx_u64;
 
   static constexpr const bit_type k_bit_one{1};
   static constexpr const rx_size k_word_bits{CHAR_BIT * sizeof(bit_type)};
 
+  bitset(rx_size size);
   bitset(memory::allocator* alloc, rx_size size);
   bitset(bitset&& set);
   ~bitset();

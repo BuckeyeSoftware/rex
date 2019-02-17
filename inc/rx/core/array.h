@@ -4,13 +4,17 @@
 #include <rx/core/traits.h> // is_{same, trivially_{copyable, destructible}}
 #include <rx/core/assert.h> // RX_ASSERT
 
-#include <rx/core/memory/allocator.h> // memory::{allocator, block}
+#include <rx/core/memory/system_allocator.h> // memory::{system_allocator, allocator, block}
 
 namespace rx {
 
+// 32-bit: 20 bytes
+// 64-bit: 40 bytes
 template<typename T>
 struct array {
+  constexpr array();
   constexpr array(memory::allocator* alloc);
+
   template<typename... Ts>
   array(memory::allocator* al, rx_size size, Ts&&... args);
   array(const array& other);
@@ -36,12 +40,21 @@ struct array {
   template<typename F>
   bool each(F&& func);
 
+  template<typename F>
+  bool each(F&& func) const;
+
 private:
   memory::allocator* m_allocator;
   memory::block m_data;
   rx_size m_size;
   rx_size m_capacity;
 };
+
+template<typename T>
+inline constexpr array<T>::array()
+  : array{&*memory::g_system_allocator}
+{
+}
 
 template<typename T>
 inline constexpr array<T>::array(memory::allocator* alloc)
@@ -226,6 +239,12 @@ inline bool array<T>::each(F&& func) {
     }
   }
   return true;
+}
+
+template<typename T>
+template<typename F>
+inline bool array<T>::each(F&& func) const {
+  return const_cast<array<T>*>(this)->each(func);
 }
 
 } // namespace rx

@@ -4,16 +4,18 @@
 #include <rx/core/types.h> // rx_size
 #include <rx/core/assert.h> // RX_ASSERT
 
-#include <rx/core/memory/block.h> // block
-#include <rx/core/memory/allocator.h> // allocator
+#include <rx/core/memory/system_allocator.h> // memory::{system_allocator, allocator, block}
 
 namespace rx {
 
-// 48 bytes
+// 32-bit: 32 bytes
+// 64-bit: 48 bytes
 struct string {
   static constexpr const rx_size k_npos{-1_z};
   static constexpr const rx_size k_small_string{16};
 
+  string();
+  string(const char* contents);
   string(memory::allocator* alloc);
   string(memory::allocator* alloc, const string& contents);
   string(memory::allocator* alloc, const char* contents);
@@ -55,6 +57,16 @@ private:
   rx_byte* m_last;
   rx_byte m_buffer[k_small_string] = {0};
 };
+
+inline string::string()
+  : string{&*memory::g_system_allocator}
+{
+}
+
+inline string::string(const char* contents)
+  : string{&*memory::g_system_allocator, contents}
+{
+}
 
 inline rx_size string::size() const {
   return m_last - m_data.data();

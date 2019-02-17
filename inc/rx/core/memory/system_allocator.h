@@ -3,6 +3,8 @@
 
 #include <rx/core/memory/allocator.h>
 
+#include <rx/core/statics.h> // static_global
+
 namespace rx::memory {
 
 // system allocator
@@ -12,6 +14,8 @@ struct system_allocator final : allocator {
   virtual void deallocate(block&& data);
   virtual bool owns(const block& data) const;
 };
+
+extern static_global<system_allocator> g_system_allocator;
 
 } // namespace rx::memory
 

@@ -7,15 +7,18 @@
 #include <rx/core/algorithm.h> // swap
 #include <rx/core/hash.h> // hash
 
-#include <rx/core/memory/allocator.h> // allocator
+#include <rx/core/memory/system_allocator.h> // allocator, g_system_allocator
 
 namespace rx {
 
+// 32-bit: 44 bytes
+// 64-bit: 88 bytes
 template<typename K, typename V, typename H = hash<K>>
 struct map {
   static constexpr rx_size k_initial_size{256};
   static constexpr rx_size k_load_factor{90};
 
+  map();
   map(memory::allocator* alloc);
   ~map();
 
@@ -61,6 +64,15 @@ private:
   rx_size m_resize_threshold;
   rx_size m_mask;
 };
+
+template<typename K, typename V, typename H>
+inline map<K, V, H>::map()
+  : m_allocator{&*memory::g_system_allocator}
+  , m_size{0}
+  , m_capacity{k_initial_size}
+{
+  allocate();
+}
 
 template<typename K, typename V, typename H>
 inline map<K, V, H>::map(memory::allocator* alloc)

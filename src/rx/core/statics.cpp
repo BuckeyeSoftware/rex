@@ -2,7 +2,6 @@
 
 #include <rx/core/statics.h>
 
-#include <rx/core/debug.h> // RX_MESSAGE
 #include <rx/core/concurrency/spin_lock.h> // spin_lock
 #include <rx/core/concurrency/scope_lock.h> // scope_lock
 
@@ -33,7 +32,6 @@ void static_node::link() {
 void static_globals::init() {
   lock_guard locked(g_lock);
   for (auto node{g_head}; node; node = node->m_next) {
-    RX_MESSAGE("init static global %s\n", node->m_name);
     node->init();
   }
 }
@@ -41,7 +39,6 @@ void static_globals::init() {
 void static_globals::fini() {
   lock_guard locked(g_lock);
   for (auto node{g_tail}; node; node = node->m_prev) {
-    RX_MESSAGE("fini static global %s\n", node->m_name);
     node->fini();
   }
 }

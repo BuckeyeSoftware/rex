@@ -1,6 +1,10 @@
 #include <SDL.h>
 
+#include <rx/core/memory/system_allocator.h>
+
 #include <rx/core/statics.h>
+#include <rx/core/string.h>
+#include <rx/core/array.h>
 
 int entry(int argc, char **argv) {
 #if 0
@@ -64,8 +68,25 @@ int entry(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
+  // trigger system allocator initialization first
+  auto system_alloc{rx::static_globals::find("system_allocator")};
+  RX_ASSERT(system_alloc, "system allocator missing");
+
+  // initialize system allocator and remove from static globals list
+  system_alloc->init();
+  rx::static_globals::remove(system_alloc);
+
+  // initialize all other static globals
   rx::static_globals::init();
+
+  // run the engine
   const auto result{entry(argc, argv)};
+
+  // finalize all other static globals
   rx::static_globals::fini();
+
+  // finalize system allocator
+  system_alloc->fini();
+
   return result;
 }

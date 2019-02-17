@@ -22,4 +22,6 @@ bool system_allocator::owns(const block&) const {
   return true;
 }
 
+static_global<system_allocator> g_system_allocator("system_allocator");
+
 } // namespace rx::memory
