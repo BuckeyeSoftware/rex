@@ -1,28 +1,9 @@
 #include <SDL.h>
 
-#include <rx/core/memory/system_allocator.h>
 #include <rx/core/statics.h>
-#include <rx/core/map.h>
-
-struct A {
-  A(int m) :m{m}, p{malloc(1)} { }
-  ~A() { free(p); }
-  A(A&& a) : m{a.m}, p{a.p} { a.p = nullptr; }
-  A(const A& a) : m{a.m}, p{malloc(1)} { }
-  bool operator==(const A& o) { return o.m == m; }
-  A& operator=(A&& a) { m=a.m; return *this; }
-  int m;
-
-  struct hasher {
-    rx_size operator()(const A& a) const {
-      return rx::hash<rx_s32>{}(a.m);
-    }
-  };
-
-  void *p;
-};
 
 int entry(int argc, char **argv) {
+#if 0
   if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
     return -1;
   }
@@ -78,7 +59,7 @@ int entry(int argc, char **argv) {
     }
     SDL_AudioQuit();
   }
-
+#endif
   return 0;
 }
 

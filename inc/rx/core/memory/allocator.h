@@ -24,10 +24,10 @@ struct allocator : concepts::interface {
   // check if allocator owns block |data|
   virtual bool owns(const block& data) const = 0;
 
-  static rx_size round_to_alignment(rx_size size);
+  static constexpr rx_size round_to_alignment(rx_size size);
 };
 
-inline rx_size allocator::round_to_alignment(rx_size size) {
+inline constexpr rx_size allocator::round_to_alignment(rx_size size) {
   if (size & (k_alignment - 1)) {
     return (size + k_alignment - 1) & -k_alignment;
   }

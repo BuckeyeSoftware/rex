@@ -3,6 +3,7 @@
 #include <rx/core/memory/stack_allocator.h> // stack_allocator
 
 #include <rx/core/assert.h> // RX_ASSERT
+#include <rx/core/debug.h> // RX_MESSAGE
 #include <rx/core/traits.h> // move
 
 namespace rx::memory {
@@ -12,18 +13,23 @@ stack_allocator::stack_allocator(allocator* base, rx_size size)
   , m_data{base->allocate(size)}
   , m_point{m_data.data()}
 {
+  RX_MESSAGE("stack_allocator(%p, %zu)\n", base, size);
 }
 
 stack_allocator::~stack_allocator() {
+  RX_MESSAGE("~stack_allocator()\n");
   m_base->deallocate(move(m_data));
 }
 
 block stack_allocator::allocate(rx_size size) {
+  RX_MESSAGE("stack_allocator::allocate(%zu)\n", size);
+
   size = round_to_alignment(size);
 
   if (m_point + size < m_data.end()) {
     const auto point{m_point};
     m_point += size;
+    RX_MESSAGE("stack_allocator allocate [%p..%p] (%zu)\n", point, point + size, size);
     return {size, point};
   }
 
@@ -31,6 +37,8 @@ block stack_allocator::allocate(rx_size size) {
 }
 
 block stack_allocator::reallocate(block&& old, rx_size size) {
+  RX_MESSAGE("stack_allocator::reallocate(%p, %zu)\n", old ? old.data() : nullptr, size);
+
   // reallocate with empty block goes to allocate
   if (!old) {
     return allocate(size);
@@ -69,7 +77,9 @@ block stack_allocator::reallocate(block&& old, rx_size size) {
 void stack_allocator::deallocate(block&& old) {
   // ensure the passed pointer is inside the memory block allocated
   if (old) {
-    RX_ASSERT(owns(old), "outside memory block");
+    RX_ASSERT(owns(old), "block [%p..%p] (%zu) outside heap [%p..%p] (%zu)",
+      old.data(), old.end(), old.size(),
+      m_data.data(), m_data.end(), m_data.size());
 
     // when the value passed to us was the last allocated block we can move back
     if (old.end() == m_point) {

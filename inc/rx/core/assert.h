@@ -4,8 +4,8 @@
 namespace rx {
 
 [[noreturn]]
-void assert_fail(const char* expression, const char* message,
-  const char* file, const char* function, int line);
+void assert_fail(const char* expression, const char* file,
+  const char* function, int line, const char* message, ...);
 
 } // namespace rx
 
@@ -16,10 +16,10 @@ void assert_fail(const char* expression, const char* message,
 #endif // defined(__GNUC__)
 
 #if defined(RX_DEBUG)
-#define RX_ASSERT(condition, message) \
-  (static_cast<void>((condition) || (::rx::assert_fail(#condition, (message), __FILE__, RX_FUNCTION, __LINE__), 0)))
+#define RX_ASSERT(condition, ...) \
+  (static_cast<void>((condition) || (::rx::assert_fail(#condition, __FILE__, RX_FUNCTION, __LINE__, __VA_ARGS__), 0)))
 #else // defined(RX_DEBUG)
-#define RX_ASSERT(condition, message) \
+#define RX_ASSERT(condition, ...) \
   static_cast<void>(0)
 #endif // defined(RX_DEBUG)
 
