@@ -5,6 +5,7 @@
 #include <rx/core/statics.h>
 #include <rx/core/string.h>
 #include <rx/core/array.h>
+#include <rx/core/map.h>
 
 int entry(int argc, char **argv) {
 #if 0

@@ -37,7 +37,7 @@ struct hash<rx_s32> {
 template<>
 struct hash<rx_u64> {
   rx_size operator()(rx_u64 value) const {
-    value = (~value ) + (value << 21);
+    value = (~value) + (value << 21);
     value = value ^ (value >> 24);
     value = (value + (value << 3)) + (value << 8);
     value = value ^ (value >> 14);

@@ -136,6 +136,22 @@ bool operator!=(const string& lhs, const string& rhs);
 bool operator<(const string& lhs, const string& rhs);
 bool operator>(const string& lhs, const string& rhs);
 
+// hash function for string
+template<typename T>
+struct hash;
+
+template<>
+struct hash<string> {
+  rx_size operator()(const string& contents) const {
+    // djb2
+    rx_size value{5381};
+    for (const char *ch = contents.data(); *ch; ch++) {
+      value = ((value << 5) + value) + *ch;
+    }
+    return value;
+  }
+};
+
 } // namespace rx
 
 #endif // RX_CORE_STRING_H
