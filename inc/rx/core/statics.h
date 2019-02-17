@@ -49,10 +49,12 @@ struct static_global
   , concepts::no_move
 {
   constexpr static_global(const char* name);
+
   T& operator*();
-  T *operator->();
+  T* operator->();
   const T& operator*() const;
   const T* operator->() const;
+
 private:
   static_node m_node;
   memory::uninitialized_storage<T> m_data;
