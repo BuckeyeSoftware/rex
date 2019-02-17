@@ -1,0 +1,3 @@
+# ignore objects and dependency files
+*.o
+*.d
