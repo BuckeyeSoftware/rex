@@ -2,6 +2,7 @@
 #define RX_MATH_MAT3X3_H
 
 #include <rx/math/vec3.h> // vec3
+#include <rx/math/trig.h> // deg_to_rad, sin, cos
 
 namespace rx::math {
 
@@ -47,7 +48,15 @@ inline constexpr mat3x3<T> mat3x3<T>::scale(const vec3<T>& scale) {
 
 template<typename T>
 inline constexpr mat3x3<T> mat3x3<T>::rotate(const vec3<T>& rotate) {
-  return {}; // TODO
+  const auto sx{sin(deg_to_rad(-rotate.x))};
+  const auto cx{cos(deg_to_rad(-rotate.x))};
+  const auto sy{sin(deg_to_rad(-rotate.y))};
+  const auto cy{cos(deg_to_rad(-rotate.y))};
+  const auto sz{sin(deg_to_rad(-rotate.z))};
+  const auto cz{cos(deg_to_rad(-rotate.z))};
+  return {{ cy*cz,              cy*-sz,              sy},
+          {-sx*-sy*cz + cx*sz, -sx*-sy*-sz + cx*cz, -sx*cy},
+          { cx*-sy*cz + sx*sz,  cx*-sy*-sz + sx*cz,  cx*cy}};
 }
 
 template<typename T>

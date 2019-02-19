@@ -11,7 +11,9 @@ struct transform {
   constexpr transform(transform* parent);
   mat3x3f to_mat3() const;
   mat4x4f to_mat4() const;
-  vec3f scale, rotate, translate;
+  vec3f scale;
+  vec3f rotate;
+  vec3f translate;
   transform *parent;
 };
 
@@ -32,7 +34,7 @@ inline constexpr transform::transform(transform* parent)
 }
 
 inline mat3x3f transform::to_mat3() const {
-  const auto local = mat3x3f::scale(scale) * mat3x3f::rotate(rotate) * mat3x3f::translate(translate);
+  const auto local{mat3x3f::scale(scale) * mat3x3f::rotate(rotate) * mat3x3f::translate(translate)};
   return parent ? local * parent->to_mat3() : local;
 }
 
