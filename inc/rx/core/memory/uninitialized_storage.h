@@ -28,7 +28,7 @@ struct uninitialized_storage
   T* data();
   const T* data() const;
 
-  // type erase the uninitialized storage and return the erased instance
+  // type erase the uninitialized storage and capture |args| for constructor
   template<typename... Ts>
   type_eraser type_erase(Ts&&... args) const;
 
