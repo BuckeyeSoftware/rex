@@ -29,7 +29,8 @@ struct uninitialized_storage
   const T* data() const;
 
   // type erase the uninitialized storage and return the erased instance
-  type_eraser type_erase() const;
+  template<typename... Ts>
+  type_eraser type_erase(Ts&&... args) const;
 
 private:
   union {
@@ -67,8 +68,9 @@ inline const T* uninitialized_storage<T>::data() const {
 }
 
 template<typename T>
-inline type_eraser uninitialized_storage<T>::type_erase() const {
-  return {const_cast<void*>(reinterpret_cast<const void*>(data())), identity<T>{}};
+template<typename... Ts>
+inline type_eraser uninitialized_storage<T>::type_erase(Ts&&... args) const {
+  return {const_cast<void*>(reinterpret_cast<const void*>(data())), identity<T>{}, forward<Ts>(args)...};
 }
 
 } // namespace rx::memory

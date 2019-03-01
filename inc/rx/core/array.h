@@ -216,7 +216,7 @@ inline bool array<T>::push_back(T&& data) {
 template<typename T>
 template<typename... Ts>
 inline bool array<T>::emplace_back(Ts&&... args) {
-  return resize(size + 1, forward<Ts>(args)...);
+  return resize(m_size + 1, forward<Ts>(args)...);
 }
 
 template<typename T>

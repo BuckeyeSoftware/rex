@@ -110,6 +110,36 @@ namespace detail {
 template<bool B, typename T, typename F>
 using conditional = typename detail::conditional<B, T, F>::type;
 
+// sizes
+template<rx_size... Ns>
+struct sizes : identity<sizes<Ns...>> {};
+
+// nth_from_pack
+namespace detail {
+  template<rx_size N, typename... Ts>
+  struct nth_from_pack;
+  template<rx_size N, typename T, typename... Ts>
+  struct nth_from_pack<N, T, Ts...> : nth_from_pack<N - 1, Ts...> {};
+  template<typename T, typename... Ts>
+  struct nth_from_pack<0, T, Ts...> : identity<T> {};
+} // namespace detail
+
+template<rx_size N, typename... Ts>
+using nth_from_pack = typename detail::nth_from_pack<N, Ts...>::type;
+
+// index_sequence
+namespace detail {
+  template<rx_size L, rx_size I = 0, typename S = sizes<>>
+  struct index_sequence;
+  template<rx_size L, rx_size I, rx_size... Ns>
+  struct index_sequence<L, I, sizes<Ns...>> : index_sequence<L, I + 1, sizes<Ns..., I>> {};
+  template<rx_size L, rx_size... Ns>
+  struct index_sequence<L, L, sizes<Ns...>> : sizes<Ns...> {};
+} // namespace detail
+
+template<rx_size N>
+using index_sequence = typename detail::index_sequence<N>::type;
+
 } // namespace rx
 
 #endif // RX_CORE_TRAITS_H

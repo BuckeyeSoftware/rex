@@ -13,8 +13,9 @@ struct static_node
   : concepts::no_copy
   , concepts::no_move
 {
-  template<typename T>
-  constexpr static_node(const char* name, memory::uninitialized_storage<T>& data);
+  template<typename T, typename... Ts>
+  constexpr static_node(const char* name, memory::uninitialized_storage<T>& data, Ts&&... args);
+
   void init();
   void fini();
 private:
@@ -26,12 +27,12 @@ private:
   type_eraser m_data;
 };
 
-template<typename T>
-inline constexpr static_node::static_node(const char* name, memory::uninitialized_storage<T>& data)
+template<typename T, typename... Ts>
+inline constexpr static_node::static_node(const char* name, memory::uninitialized_storage<T>& data, Ts&&... args)
   : m_name{name}
   , m_next{nullptr}
   , m_prev{nullptr}
-  , m_data{data.type_erase()}
+  , m_data{data.type_erase(forward<Ts>(args)...)}
 {
   link();
 }
@@ -51,11 +52,14 @@ struct static_global
   : concepts::no_copy
   , concepts::no_move
 {
-  constexpr static_global(const char* name);
+  template<typename... Ts>
+  constexpr static_global(const char* name, Ts&&... args);
 
   T& operator*();
+  T* operator&();
   T* operator->();
   const T& operator*() const;
+  const T* operator&() const;
   const T* operator->() const;
 
 private:
@@ -64,14 +68,20 @@ private:
 };
 
 template<typename T>
-inline constexpr static_global<T>::static_global(const char* name)
-  : m_node{name, m_data}
+template<typename... Ts>
+inline constexpr static_global<T>::static_global(const char* name, Ts&&... args)
+  : m_node{name, m_data, forward<Ts>(args)...}
 {
 }
 
 template<typename T>
 T& static_global<T>::operator*() {
   return *m_data.data();
+}
+
+template<typename T>
+T* static_global<T>::operator&() {
+  return m_data.data();
 }
 
 template<typename T>
@@ -82,6 +92,11 @@ T *static_global<T>::operator->() {
 template<typename T>
 const T& static_global<T>::operator*() const {
   return *m_data.data();
+}
+
+template<typename T>
+const T* static_global<T>::operator&() const {
+  return m_data.data();
 }
 
 template<typename T>
