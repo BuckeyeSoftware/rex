@@ -2,6 +2,7 @@
 #define RX_MATH_VEC2_H
 
 #include <rx/core/types.h> // rx_size
+#include <rx/core/format.h> // format
 #include <rx/core/assert.h> // RX_ASSERT
 
 namespace rx::math {
@@ -21,6 +22,7 @@ struct vec2 {
 };
 
 using vec2f = vec2<rx_f32>;
+using vec2i = vec2<rx_s32>;
 
 template<typename T>
 inline constexpr vec2<T>::vec2()
@@ -120,19 +122,17 @@ inline constexpr T dot(const vec2<T> &lhs, const vec2<T> &rhs) {
 } // namespace rx::math
 
 namespace rx {
+  template<>
+  struct format<::rx::math::vec2f> {
+    char scratch[format_size<rx_f32>::size*2 + sizeof "{, }" - 1];
+    const char* operator()(const ::rx::math::vec2f& value);
+  };
 
-template<typename T>
-struct format;
-
-template<>
-struct format<math::vec2f> {
-  char fmt[128];
-  const char* operator()(const math::vec2f& value) {
-    snprintf(fmt, sizeof fmt, "{%.2f, %.2f}", value.x, value.y);
-    return fmt;
-  }
-};
-
+  template<>
+  struct format<::rx::math::vec2i> {
+    char scratch[format_size<rx_s32>::size*2 + sizeof "{, }" - 1];
+    const char* operator()(const ::rx::math::vec2i& value);
+  };
 } // namespace rx
 
 #endif // RX_MATH_VEC2_H

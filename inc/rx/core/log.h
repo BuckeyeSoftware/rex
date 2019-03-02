@@ -9,21 +9,21 @@ namespace rx {
 
 struct log {
   enum class level {
-    warning,
-    info,
-    verbose,
-    error
+    k_warning,
+    k_info,
+    k_verbose,
+    k_error
   };
 
   constexpr log(const char* name, const char* file_name, int line);
 
   template<typename... Ts>
-  void operator()(const char* fmt, level lvl, Ts&&... args);
+  void operator()(level lvl, const char* fmt, Ts&&... args);
 
   const char* name() const;
 
 private:
-  void write(string&& contents, level lvl);
+  void write(level lvl, string&& contents);
 
   const char* m_name;
   const char* m_file_name;
@@ -38,8 +38,8 @@ inline constexpr log::log(const char* name, const char* file_name, int line)
 }
 
 template<typename... Ts>
-inline void log::operator()(const char* fmt, log::level lvl, Ts&&... args) {
-  write({fmt, forward<Ts>(args)...}, lvl);
+inline void log::operator()(log::level lvl, const char* fmt, Ts&&... args) {
+  write(lvl, {fmt, forward<Ts>(args)...});
 }
 
 inline const char* log::name() const {

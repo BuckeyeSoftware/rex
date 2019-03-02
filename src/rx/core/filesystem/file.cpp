@@ -1,4 +1,4 @@
-#include <stdio.h> // FILE, f{open,close,read,write,seek}
+#include <stdio.h> // FILE, f{open,close,read,write,seek,flush}
 #include <string.h> // strcmp
 
 #include <rx/core/assert.h> // RX_ASSERT

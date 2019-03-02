@@ -2,6 +2,7 @@
 #define RX_MATH_VEC3_H
 
 #include <rx/core/types.h> // rx_size
+#include <rx/core/format.h> // format
 #include <rx/core/assert.h> // RX_ASSERT
 
 namespace rx::math {
@@ -21,6 +22,7 @@ struct vec3 {
 };
 
 using vec3f = vec3<rx_f32>;
+using vec3i = vec3<rx_s32>;
 
 template<typename T>
 inline constexpr vec3<T>::vec3()
@@ -125,5 +127,19 @@ inline constexpr vec3<T> cross(const vec3<T>& lhs, const vec3<T>& rhs) {
 }
 
 } // namespace rx::math
+
+namespace rx {
+  template<>
+  struct format<::rx::math::vec3f> {
+    char scratch[format_size<rx_f32>::size*3 + sizeof "{,,  }" - 1];
+    const char* operator()(const ::rx::math::vec3f& value);
+  };
+
+  template<>
+  struct format<::rx::math::vec3i> {
+    char scratch[format_size<rx_s32>::size*3 + sizeof "{,,  }" - 1];
+    const char* operator()(const ::rx::math::vec3i& value);
+  };
+} // namespace rx
 
 #endif // RX_MATH_VEC3_H

@@ -27,13 +27,13 @@ using filesystem::file;
 static inline const char*
 get_level_string(log::level lvl) {
   switch (lvl) {
-  case log::level::warning:
+  case log::level::k_warning:
     return "warning";
-  case log::level::info:
+  case log::level::k_info:
     return "info";
-  case log::level::verbose:
+  case log::level::k_verbose:
     return "verbose";
-  case log::level::error:
+  case log::level::k_error:
     return "error";
   }
   return nullptr;
@@ -54,7 +54,6 @@ struct logger {
   ~logger();
 
   void write(const log* owner, string&& contents, log::level level, time_t time);
-  void flush();
 
 private:
   struct message {
@@ -72,27 +71,35 @@ private:
     time_t m_time;
   };
 
+  // NOTE(dweiler): not thread safe
+  void flush_contents(rx_size max_padding) {
+    m_queue.each_fwd([&](const message& _message) {
+      const auto name_string{_message.m_owner->name()};
+      const auto level_string{get_level_string(_message.m_level)};
+      const auto padding{strlen(name_string) + strlen(level_string) + 4}; // 4 additional characters for " []/"
+      m_file.print("[%s] [%s/%s]%*s | %s\n",
+        time_stamp(_message.m_time, "%Y-%m-%d %H:%M:%S"),
+        name_string,
+        level_string,
+        static_cast<int>(max_padding-padding),
+        "",
+        _message.m_contents);
+      return true;
+    });
+    m_file.flush();
+    m_queue.clear();
+  }
+
   static int thread_function(logger* self) {
     scope_lock locked(self->m_mutex);
     const auto max_padding{self->m_max_name_length + self->m_max_level_length};
     while (self->m_running) {
-      self->m_queue.each_fwd([&](const message& _message) {
-        const auto name_string{_message.m_owner->name()};
-        const auto level_string{get_level_string(_message.m_level)};
-        const auto padding{strlen(name_string) + strlen(level_string) + 4}; // 4 additional characters for " []/"
-        self->m_file.print("[%s] [%s/%s]%*s | %s\n",
-          time_stamp(_message.m_time, "%Y-%m-%d %H:%M:%S"),
-          name_string,
-          level_string,
-          static_cast<int>(max_padding-padding),
-          "",
-          _message.m_contents);
-        return true;
-      });
-      self->m_file.flush();
-      self->m_queue.clear();
+      self->flush_contents(max_padding);
       self->m_condition_variable.wait(locked);
     }
+    // process any remaining contents when the thread exits
+    self->flush_contents(max_padding);
+    RX_ASSERT(self->m_queue.empty(), "not all contents flushed");
     return 0;
   }
 
@@ -132,10 +139,10 @@ logger::logger()
   });
 
   // calculate maximum level string length
-  const auto level0{strlen(get_level_string(log::level::warning))};
-  const auto level1{strlen(get_level_string(log::level::info))};
-  const auto level2{strlen(get_level_string(log::level::verbose))};
-  const auto level3{strlen(get_level_string(log::level::error))};
+  const auto level0{strlen(get_level_string(log::level::k_warning))};
+  const auto level1{strlen(get_level_string(log::level::k_info))};
+  const auto level2{strlen(get_level_string(log::level::k_verbose))};
+  const auto level3{strlen(get_level_string(log::level::k_error))};
 
   m_max_level_length = max(level0, level1, level2, level3);
 
@@ -147,7 +154,7 @@ logger::~logger() {
   {
     scope_lock<mutex> locked(m_mutex);
     m_running = false;
-    flush();
+    m_condition_variable.signal();
   }
 
   // join thread
@@ -163,17 +170,13 @@ void logger::write(const log* owner, string&& contents, log::level level, time_t
   scope_lock<mutex> locked(m_mutex);
   m_queue.emplace_back(owner, move(contents), level, time);
   if (m_queue.size() >= k_flush_threshold) {
-    flush();
+    m_condition_variable.signal();
   }
-}
-
-void logger::flush() {
-  m_condition_variable.signal();
 }
 
 static rx::static_global<logger> g_logger("log");
 
-void log::write(string&& contents, log::level level) {
+void log::write(log::level level, string&& contents) {
   g_logger->write(this, move(contents), level, time(nullptr));
 }
 

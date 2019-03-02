@@ -36,6 +36,7 @@ struct array {
   bool emplace_back(Ts&&... args);
 
   rx_size size() const;
+  bool empty() const;
 
   template<typename F>
   bool each_fwd(F&& func);
@@ -232,6 +233,11 @@ inline bool array<T>::emplace_back(Ts&&... args) {
 template<typename T>
 inline rx_size array<T>::size() const {
   return m_size;
+}
+
+template<typename T>
+inline bool array<T>::empty() const {
+  return m_size == 0;
 }
 
 template<typename T>

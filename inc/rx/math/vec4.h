@@ -2,6 +2,7 @@
 #define RX_MATH_VEC4_H
 
 #include <rx/core/types.h> // rx_size
+#include <rx/core/format.h> // format
 #include <rx/core/assert.h> // RX_ASSERT
 
 namespace rx::math {
@@ -19,7 +20,8 @@ struct vec4 {
   };
 };
 
-using vec4f = vec4<float>;
+using vec4f = vec4<rx_f32>;
+using vec4i = vec4<rx_s32>;
 
 template<typename T>
 inline constexpr vec4<T>::vec4()
@@ -121,5 +123,19 @@ inline constexpr T dot(const vec4<T> &lhs, const vec4<T> &rhs) {
 }
 
 } // namespace rx::math
+
+namespace rx {
+  template<>
+  struct format<::rx::math::vec4f> {
+    char scratch[format_size<rx_f32>::size*4 + sizeof "{,,,   }" - 1];
+    const char* operator()(const ::rx::math::vec4f& value);
+  };
+
+  template<>
+  struct format<::rx::math::vec4i> {
+    char scratch[format_size<rx_s32>::size*4 + sizeof "{,,,   }" - 1];
+    const char* operator()(const ::rx::math::vec4i& value);
+  };
+} // namespace rx
 
 #endif // RX_MATH_VEC4_H

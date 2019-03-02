@@ -12,7 +12,7 @@ namespace rx {
 // 64-bit: 32 bytes + k_memory
 struct type_eraser : concepts::no_copy {
   static constexpr const rx_size k_alignment{16};
-  static constexpr const rx_size k_memory{32};
+  static constexpr const rx_size k_memory{64};
 
   // initialize type eraser instance with |data|
   template<typename T, typename... Ts>
