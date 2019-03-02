@@ -274,7 +274,7 @@ private:
   vec4<T> m_current;
 };
 
-// variable<T> {
+// variable<T>
 template<typename T>
 inline variable<T>::variable(const char* name, const char* description,
   const T& min, const T& max, const T& initial)
@@ -335,7 +335,6 @@ inline variable_status variable<T>::set(const T& value) {
   m_current = value;
   return variable_status::k_success;
 }
-// }
 
 // variable<bool>
 inline variable<bool>::variable(const char* name, const char* description, bool initial)

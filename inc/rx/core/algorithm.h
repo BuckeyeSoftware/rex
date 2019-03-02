@@ -13,16 +13,22 @@ inline void swap(T &lhs, T &rhs) {
 }
 
 template<typename T>
-T min(T a) { return a; }
+inline T min(T a) {
+  return a;
+}
+
 template<typename T, typename... Ts>
-T min(T a, T b, Ts&&... args) {
+inline T min(T a, T b, Ts&&... args) {
   return min(a < b ? a : b, forward<Ts>(args)...);
 }
 
 template<typename T>
-T max(T a) { return a; }
+inline T max(T a) {
+  return a;
+}
+
 template<typename T, typename... Ts>
-T max(T a, T b, Ts&&... args) {
+inline T max(T a, T b, Ts&&... args) {
   return max(a > b ? a : b, forward<Ts>(args)...);
 }
 
