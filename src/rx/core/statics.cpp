@@ -4,18 +4,21 @@
 
 #include <rx/core/concurrency/spin_lock.h> // spin_lock
 #include <rx/core/concurrency/scope_lock.h> // scope_lock
+#include <rx/core/concurrency/scope_unlock.h> // scope_unlock
 
 namespace rx {
 
-using lock_guard = concurrency::scope_lock<concurrency::spin_lock>;
+using concurrency::scope_lock;
+using concurrency::scope_unlock;
+using concurrency::spin_lock;
 
-static concurrency::spin_lock g_lock;
+static spin_lock g_lock;
 
 static static_node* g_head; // protected by |g_lock|
 static static_node* g_tail; // protected by |g_lock|
 
 void static_node::link() {
-  lock_guard locked(g_lock);
+  scope_lock<spin_lock> locked(g_lock);
 
   if (!g_head) {
     g_head = this;
@@ -30,25 +33,23 @@ void static_node::link() {
 }
 
 void static_globals::init() {
-  lock_guard locked(g_lock);
+  scope_lock<spin_lock> locked(g_lock);
   for (auto node{g_head}; node; node = node->m_next) {
-    g_lock.unlock();
+    scope_unlock<spin_lock> unlocked(g_lock);
     node->init();
-    g_lock.lock();
   }
 }
 
 void static_globals::fini() {
-  lock_guard locked(g_lock);
+  scope_lock<spin_lock> locked(g_lock);
   for (auto node{g_tail}; node; node = node->m_prev) {
-    g_lock.unlock();
+    scope_unlock<spin_lock> unlocked(g_lock);
     node->fini();
-    g_lock.lock();
   }
 }
 
 static_node* static_globals::find(const char* name) {
-  lock_guard locked(g_lock);
+  scope_lock<spin_lock> locked(g_lock);
   for (auto node{g_head}; node; node = node->m_next) {
     if (!strcmp(node->m_name, name)) {
       return node;
@@ -58,7 +59,7 @@ static_node* static_globals::find(const char* name) {
 }
 
 void static_globals::remove(static_node* node) {
-  lock_guard locked(g_lock);
+  scope_lock<spin_lock> locked(g_lock);
   if (node->m_next) {
     node->m_next->m_prev = node->m_prev;
   }
