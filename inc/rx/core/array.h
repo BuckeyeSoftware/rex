@@ -38,10 +38,16 @@ struct array {
   rx_size size() const;
 
   template<typename F>
-  bool each(F&& func);
+  bool each_fwd(F&& func);
 
   template<typename F>
-  bool each(F&& func) const;
+  bool each_rev(F&& func);
+
+  template<typename F>
+  bool each_fwd(F&& func) const;
+
+  template<typename F>
+  bool each_rev(F&& func) const;
 
 private:
   memory::allocator* m_allocator;
@@ -166,11 +172,13 @@ bool array<T>::reserve(rx_size size) {
   } else {
     memory::block resize{m_allocator->allocate(m_capacity * sizeof(T))};
     if (resize) {
-      auto *const src{m_data.cast<T*>()};
-      auto *const dst{resize.cast<T*>()};
-      for (rx_size i{0}; i < m_size; i++) {
-        call_ctor<T>(dst + i, move(*(src + i)));
-        call_dtor<T>(src + i);
+      if (m_size) {
+        auto *const src{m_data.cast<T*>()};
+        auto *const dst{resize.cast<T*>()};
+        for (rx_size i{0}; i < m_size; i++) {
+          call_ctor<T>(dst + i, move(*(src + i)));
+          call_dtor<T>(src + i);
+        }
       }
 
       m_allocator->deallocate(move(m_data));
@@ -185,9 +193,11 @@ bool array<T>::reserve(rx_size size) {
 template<typename T>
 inline void array<T>::clear() {
   if constexpr (!is_trivially_destructible<T>) {
-    auto *const data{m_data.cast<T*>()};
-    for (rx_size i{m_size-1}; i < m_size; i--) {
-      call_dtor(data + i);
+    if (m_size) {
+      auto *const data{m_data.cast<T*>()};
+      for (rx_size i{m_size-1}; i < m_size; i--) {
+        call_dtor<T>(data + i);
+      }
     }
   }
   m_size = 0;
@@ -226,7 +236,7 @@ inline rx_size array<T>::size() const {
 
 template<typename T>
 template<typename F>
-inline bool array<T>::each(F&& func) {
+inline bool array<T>::each_fwd(F&& func) {
   if constexpr (is_same<decltype(func({})), bool>) {
     for (rx_size i{0}; i < m_size; i++) {
       if (!func(operator[](i))) {
@@ -243,8 +253,32 @@ inline bool array<T>::each(F&& func) {
 
 template<typename T>
 template<typename F>
-inline bool array<T>::each(F&& func) const {
-  return const_cast<array<T>*>(this)->each(func);
+inline bool array<T>::each_fwd(F&& func) const {
+  return const_cast<array<T>*>(this)->each_fwd(func);
+}
+
+
+template<typename T>
+template<typename F>
+inline bool array<T>::each_rev(F&& func) {
+  if constexpr (is_same<decltype(func({})), bool>) {
+    for (rx_size i{m_size-1}; i < m_size; i--) {
+      if (!func(operator[](i))) {
+        return false;
+      }
+    }
+  } else {
+    for (rx_size i{m_size-1}; i < m_size; i--) {
+      func(operator[](i));
+    }
+  }
+  return true;
+}
+
+template<typename T>
+template<typename F>
+inline bool array<T>::each_rev(F&& func) const {
+  return const_cast<array<T>*>(this)->each_rev(func);
 }
 
 } // namespace rx

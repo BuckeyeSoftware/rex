@@ -4,8 +4,6 @@
 
 #include <rx/core/statics.h>
 #include <rx/core/string.h>
-#include <rx/core/array.h>
-#include <rx/core/map.h>
 
 int entry(int argc, char **argv) {
 #if 0
@@ -77,6 +75,13 @@ int main(int argc, char **argv) {
   system_alloc->init();
   rx::static_globals::remove(system_alloc);
 
+  // trigger log initialization
+  auto log{rx::static_globals::find("log")};
+  RX_ASSERT(log, "log missing");
+
+  log->init();
+  rx::static_globals::remove(log);
+
   // initialize all other static globals
   rx::static_globals::init();
 
@@ -85,6 +90,9 @@ int main(int argc, char **argv) {
 
   // finalize all other static globals
   rx::static_globals::fini();
+
+  // finalize log
+  log->fini();
 
   // finalize system allocator
   system_alloc->fini();

@@ -8,14 +8,13 @@ namespace rx::math {
 
 template<typename T>
 struct vec2 {
-  constexpr vec2()
+  constexpr vec2();
   constexpr vec2(T x, T y);
   T& operator[](rx_size i);
   const T& operator[](rx_size i) const;
   union {
     struct { T x, y; };
     struct { T w, h; };
-    struct { T u, v; };
     struct { T r, g; };
     T v[2];
   };
@@ -119,5 +118,21 @@ inline constexpr T dot(const vec2<T> &lhs, const vec2<T> &rhs) {
 }
 
 } // namespace rx::math
+
+namespace rx {
+
+template<typename T>
+struct format;
+
+template<>
+struct format<math::vec2f> {
+  char fmt[128];
+  const char* operator()(const math::vec2f& value) {
+    snprintf(fmt, sizeof fmt, "{%.2f, %.2f}", value.x, value.y);
+    return fmt;
+  }
+};
+
+} // namespace rx
 
 #endif // RX_MATH_VEC2_H

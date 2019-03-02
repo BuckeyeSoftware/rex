@@ -18,6 +18,9 @@ struct static_node
 
   void init();
   void fini();
+
+  const char* name() const;
+
 private:
   friend struct static_globals;
   void link();
@@ -47,6 +50,10 @@ inline void static_node::fini() {
   m_data.fini();
 }
 
+inline const char* static_node::name() const {
+  return m_name;
+}
+
 template<typename T>
 struct static_global
   : concepts::no_copy
@@ -61,6 +68,11 @@ struct static_global
   const T& operator*() const;
   const T* operator&() const;
   const T* operator->() const;
+
+  template<typename... Ts>
+  auto operator()(Ts&&... args) {
+    return (*m_data.data())(forward<Ts>(args)...);
+  }
 
 private:
   static_node m_node;
@@ -110,7 +122,32 @@ struct static_globals {
 
   static static_node* find(const char* name);
   static void remove(static_node* node);
+
+  template<typename F>
+  static bool each(F&& function);
+
+private:
+  // linked-list manipulation
+  static void lock();
+  static void unlock();
+
+  static static_node* head();
+  static static_node* tail();
 };
+
+template<typename F>
+bool static_globals::each(F&& function) {
+  lock();
+  for (auto node{head()}; node; node = node->m_next) {
+    unlock();
+    if (!function(node)) {
+      return false;
+    }
+    lock();
+  }
+  unlock();
+  return true;
+}
 
 } // namespace rx
 

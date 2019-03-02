@@ -27,9 +27,19 @@ namespace detail {
   struct remove_reference<T&> : identity<T> {};
   template<typename T>
   struct remove_reference<T&&> : identity<T> {};
-}
+} // namespace detail
 template<typename T>
 using remove_reference = typename detail::remove_reference<T>::type;
+
+// remove_const
+namespace detail {
+  template<typename T>
+  struct remove_const : identity<T> {};
+  template<typename T>
+  struct remove_const<const T> : identity<T> {};
+} // namespace detail
+template<typename T>
+using remove_const = typename detail::remove_const<T>::type;
 
 // check if |T1| and |T2| are same types
 template<typename T1, typename T2>
@@ -55,7 +65,7 @@ namespace detail {
   struct add_rvalue_reference : identity<T> {};
   template<typename T>
   struct add_rvalue_reference<T, true> : identity<T&&> {};
-}
+} // namespace detail
 template<typename T>
 using add_rvalue_reference =
   typename detail::add_rvalue_reference<T, !is_void<T> && !is_reference<T>>::type;
@@ -105,8 +115,7 @@ namespace detail {
   struct conditional : identity<T> {};
   template<typename T, typename F>
   struct conditional<false, T, F> : identity<F> {};
-}
-
+} // namespace detail
 template<bool B, typename T, typename F>
 using conditional = typename detail::conditional<B, T, F>::type;
 

@@ -1,4 +1,6 @@
 #include <string.h> // strcmp, memcpy
+#include <stdarg.h> // va_{list, start, end, copy}
+#include <stdio.h> // vsnprintf
 
 #include <rx/core/algorithm.h> // swap
 #include <rx/core/debug.h> // RX_MESSAGE
@@ -6,6 +8,27 @@
 #include <rx/core/traits.h> // move
 
 namespace rx {
+
+static void format_va(string& contents, const char* format, va_list va) {
+  // calculate length to format
+  va_list ap;
+  va_copy(ap, va);
+  const int length{vsnprintf(nullptr, 0, format, ap)};
+  va_end(ap);
+
+  // format into string
+  contents.resize(length);
+  vsnprintf(contents.data(), contents.size() + 1, format, va);
+}
+
+string string::formatter(memory::allocator* alloc, const char* format, ...) {
+  va_list va;
+  va_start(va, format);
+  string contents{alloc};
+  format_va(contents, format, va);
+  va_end(va);
+  return contents;
+}
 
 string::string(memory::allocator* alloc)
   : m_allocator{alloc}

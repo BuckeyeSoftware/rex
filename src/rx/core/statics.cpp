@@ -32,14 +32,18 @@ void static_node::link() {
 void static_globals::init() {
   lock_guard locked(g_lock);
   for (auto node{g_head}; node; node = node->m_next) {
+    g_lock.unlock();
     node->init();
+    g_lock.lock();
   }
 }
 
 void static_globals::fini() {
   lock_guard locked(g_lock);
   for (auto node{g_tail}; node; node = node->m_prev) {
+    g_lock.unlock();
     node->fini();
+    g_lock.lock();
   }
 }
 
@@ -70,6 +74,22 @@ void static_globals::remove(static_node* node) {
   if (g_tail == node) {
     g_tail = node->m_prev;
   }
+}
+
+void static_globals::lock() {
+  g_lock.lock();
+}
+
+void static_globals::unlock() {
+  g_lock.unlock();
+}
+
+static_node* static_globals::head() {
+  return g_head;
+}
+
+static_node* static_globals::tail() {
+  return g_tail;
 }
 
 } // namespace rx

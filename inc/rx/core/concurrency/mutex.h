@@ -10,9 +10,12 @@ namespace rx::concurrency {
 struct mutex {
   mutex();
   ~mutex();
+
   void lock();
   void unlock();
+
 private:
+  friend class condition_variable;
   pthread_mutex_t m_mutex;
 };
 

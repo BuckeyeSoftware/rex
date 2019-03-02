@@ -20,7 +20,7 @@ endif
 
 ifeq ($(DEBUG),1)
 	CXXFLAGS += -DRX_DEBUG
-	CXXFLAGS += -O1
+	CXXFLAGS += -O0
 	CXXFLAGS += -g
 else
 	# enable assertions for release builds temporarily
