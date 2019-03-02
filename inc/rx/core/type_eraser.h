@@ -1,8 +1,6 @@
 #ifndef RX_CORE_TYPE_ERASER_H
 #define RX_CORE_TYPE_ERASER_H
 
-#include <string.h> // memcpy
-
 #include <rx/core/traits.h> // call_{ctor, dtor}
 #include <rx/core/tuple.h> // tuple
 #include <rx/core/concepts/no_copy.h> // no_copy

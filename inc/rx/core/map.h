@@ -2,7 +2,6 @@
 #define RX_CORE_MAP_H
 
 #include <limits.h> // CHAR_BIT
-#include <string.h> // memset
 
 #include <rx/core/algorithm.h> // swap
 #include <rx/core/hash.h> // hash
