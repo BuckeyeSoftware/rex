@@ -82,7 +82,7 @@ string::string(string&& contents)
     reserve(contents.size());
     append(contents.data(), contents.size());
   } else {
-    m_data = move(contents.m_data); //{contents.m_data.size(), contents.m_data.data()};
+    m_data = move(contents.m_data);
     m_last = contents.m_last;
   }
 

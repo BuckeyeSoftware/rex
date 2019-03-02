@@ -73,7 +73,7 @@ struct hash<string> {
   rx_size operator()(const string& contents) const {
     // djb2
     rx_size value{5381};
-    for (const char *ch = contents.data(); *ch; ch++) {
+    for (const char *ch{contents.data()}; *ch; ch++) {
       value = ((value << 5) + value) + *ch;
     }
     return value;
