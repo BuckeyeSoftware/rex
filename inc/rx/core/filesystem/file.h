@@ -51,4 +51,4 @@ inline bool file::print(const char* fmt, Ts&&... args) {
 
 } // namespace rx::filesystem
 
-#endif // RX_FILESYSTEM_FILE_H
+#endif // RX_CORE_FILESYSTEM_FILE_H
