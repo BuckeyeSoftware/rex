@@ -23,8 +23,12 @@ struct bitset {
 
   void set(rx_size bit);
   void clear(rx_size bit);
+  void clear_all();
   bool test(rx_size bit) const;
   rx_size size() const;
+
+  rx_size find_first_set() const;
+  rx_size find_first_unset() const;
 
 private:
   static rx_size index(rx_size bit);

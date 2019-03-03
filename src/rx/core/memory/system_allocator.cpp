@@ -8,7 +8,7 @@ block system_allocator::allocate(rx_size size) {
   return {size, reinterpret_cast<rx_byte*>(malloc(size))};
 }
 
-block system_allocator::reallocate(block&& data, rx_size size) {
+block system_allocator::reallocate(block& data, rx_size size) {
   return {size, reinterpret_cast<rx_byte*>(realloc(data ? data.data() : nullptr, size))};
 }
 

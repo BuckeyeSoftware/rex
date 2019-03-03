@@ -30,7 +30,7 @@ block stack_allocator::allocate(rx_size size) {
   return {};
 }
 
-block stack_allocator::reallocate(block&& old, rx_size size) {
+block stack_allocator::reallocate(block& old, rx_size size) {
   // reallocate with empty block goes to allocate
   if (!old) {
     return allocate(size);

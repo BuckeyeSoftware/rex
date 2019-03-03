@@ -10,7 +10,7 @@ namespace rx::memory {
 // system allocator
 struct system_allocator final : allocator {
   virtual block allocate(rx_size size);
-  virtual block reallocate(block&& data, rx_size);
+  virtual block reallocate(block& data, rx_size);
   virtual void deallocate(block&& data);
   virtual bool owns(const block& data) const;
 };

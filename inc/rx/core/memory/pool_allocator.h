@@ -20,6 +20,8 @@ struct pool_allocator
   void deallocate(block&& data);
   bool owns(const block& data) const;
   rx_size index_of(const block& data) const;
+  block data_of(rx_size index) const;
+  rx_size size() const;
 
 private:
   allocator* m_allocator;
@@ -35,6 +37,14 @@ inline bool pool_allocator::owns(const block& data) const {
 inline rx_size pool_allocator::index_of(const block& data) const {
   RX_ASSERT(owns(data), "pool does not own block");
   return (data.cast<rx_size>() - m_data.cast<rx_size>()) / m_size;
+}
+
+inline block pool_allocator::data_of(rx_size index) const {
+  return {m_size, m_data.data() + index * m_size};
+}
+
+inline rx_size pool_allocator::size() const {
+  return m_size;
 }
 
 } // namespace rx::memory

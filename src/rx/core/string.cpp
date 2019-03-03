@@ -127,7 +127,7 @@ void string::reserve(rx_size capacity) {
     }
     m_data = move(data);
   } else {
-    m_data = move(m_allocator->reallocate(move(m_data), capacity + 1));
+    m_data = move(m_allocator->reallocate(m_data, capacity + 1));
   }
 
   m_last = m_data.data() + size;
@@ -196,8 +196,8 @@ void string::swap(string& other) {
   }
 
   if (other.m_data.data() == m_buffer) {
+    other.m_last = other.m_buffer + other.size();
     other.m_data = {k_small_string, other.m_buffer};
-    other.m_last = other.m_last - other.m_data.data() + other.m_buffer;
 
     rx_byte* element{other.m_data.data()};
     const rx_byte* end{other.m_last};
@@ -210,7 +210,7 @@ void string::swap(string& other) {
   }
 
   if (m_data.data() == other.m_buffer) {
-    m_last = m_last - m_data.data() + m_buffer;
+    m_last = m_buffer + size();
     m_data = {k_small_string, m_buffer};
 
     rx_byte* element{m_data.data()};

@@ -8,6 +8,8 @@
 #include <rx/core/log.h>
 #include <rx/console/variable.h>
 
+#include <rx/math/vec3.h>
+
 RX_LOG(hardware);
 
 RX_CONSOLE_BVAR(test0, "bool", "test bool", true);
@@ -18,7 +20,7 @@ RX_CONSOLE_FVAR(test3, "float", "test float", 0.0f, 1.0f, 0.5f);
 RX_CONSOLE_V2FVAR(test4, "vec2f", "test vec2f", rx::math::vec2f(0.0f, 0.0f), rx::math::vec2f(1.0f, 1.0f), rx::math::vec2f(0.5f, 0.5f));
 
 int entry(int argc, char **argv) {
-#if 1
+#if 0
   if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
     return -1;
   }

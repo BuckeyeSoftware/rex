@@ -14,11 +14,10 @@ variable_reference::variable_reference(const char* name,
   g_head = this;
 }
 
-// instance for all console variable types here
+// instance for all console variable types here, we don't instance for
+// bool or string since those are already explicitly specialized
 template struct variable<rx_s32>;
 template struct variable<rx_f32>;
-template struct variable<bool>;
-template struct variable<string>;
 template struct variable<vec2i>;
 template struct variable<vec2f>;
 template struct variable<vec3i>;

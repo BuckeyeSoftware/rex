@@ -16,7 +16,7 @@ struct allocator : concepts::interface {
   virtual block allocate(rx_size size) = 0;
 
   // reallocate block |data| to size |size|
-  virtual block reallocate(block&& data, rx_size) = 0;
+  virtual block reallocate(block& data, rx_size) = 0;
 
   // reallocate block |data|
   virtual void deallocate(block&& data) = 0;

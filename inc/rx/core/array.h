@@ -32,6 +32,8 @@ struct array {
   bool push_back(const T& data);
   bool push_back(T&& data);
 
+  void erase(rx_size from, rx_size to);
+
   template<typename... Ts>
   bool emplace_back(Ts&&... args);
 
@@ -59,7 +61,7 @@ private:
 
 template<typename T>
 inline constexpr array<T>::array()
-  : array{&*memory::g_system_allocator}
+  : array{&memory::g_system_allocator}
 {
 }
 
@@ -112,18 +114,19 @@ inline array<T>::array(array&& other)
 
 template<typename T>
 inline array<T>::~array() {
+  clear();
   m_allocator->deallocate(move(m_data));
 }
 
 template<typename T>
 inline T& array<T>::operator[](rx_size i) {
-  RX_ASSERT(i < m_size, "out of bounds");
+  RX_ASSERT(i < m_size, "out of bounds (%zu < %zu)", i, m_size);
   return m_data.cast<T*>()[i];
 }
 
 template<typename T>
 inline const T& array<T>::operator[](rx_size i) const {
-  RX_ASSERT(i < m_size, "out of bounds");
+  RX_ASSERT(i < m_size, "out of bounds (%zu < %zu)", i, m_size);
   return m_data.cast<T*>()[i];
 }
 
@@ -138,7 +141,7 @@ bool array<T>::resize(rx_size size, Ts&&... args) {
 
   if constexpr (!is_trivially_destructible<T>) {
     if (size < m_size) {
-      for (rx_size i{m_size-1}; i > size; i--) {
+      for (rx_size i{m_size-1}; i < size; i--) {
         call_dtor<T>(data + i);
       }
     }
@@ -165,7 +168,7 @@ bool array<T>::reserve(rx_size size) {
   }
 
   if constexpr (is_trivially_copyable<T>) {
-    memory::block resize{m_allocator->reallocate(move(m_data), m_capacity * sizeof(T))};
+    memory::block resize{m_allocator->reallocate(m_data, m_capacity * sizeof(T))};
     if (resize) {
       m_data = move(resize);
       return true;
@@ -225,6 +228,29 @@ inline bool array<T>::push_back(T&& data) {
 }
 
 template<typename T>
+inline void array<T>::erase(rx_size from, rx_size to) {
+  const rx_size range{to - from};
+
+  T* beg{m_data.cast<T*>()};
+  T* end{beg+m_size};
+  T* first{beg+from};
+  T* last{beg+to};
+
+  // move all the elements to fill the gap produced by the erase
+  for (T* value{last}, *dest{first}; value != end; ++value, ++dest) {
+    *dest = move(*value);
+  }
+
+  if constexpr (!is_trivially_destructible<T>) {
+    for (T* value{end-range}; value < end; ++value) {
+      call_dtor<T>(static_cast<void*>(value));
+    }
+  }
+
+  m_size -= range;
+}
+
+template<typename T>
 template<typename... Ts>
 inline bool array<T>::emplace_back(Ts&&... args) {
   return resize(m_size + 1, forward<Ts>(args)...);
@@ -263,19 +289,20 @@ inline bool array<T>::each_fwd(F&& func) const {
   return const_cast<array<T>*>(this)->each_fwd(func);
 }
 
-
 template<typename T>
 template<typename F>
 inline bool array<T>::each_rev(F&& func) {
-  if constexpr (is_same<decltype(func({})), bool>) {
-    for (rx_size i{m_size-1}; i < m_size; i--) {
-      if (!func(operator[](i))) {
-        return false;
+  if (m_size) {
+    if constexpr (is_same<decltype(func({})), bool>) {
+      for (rx_size i{m_size-1}; i < m_size; i--) {
+        if (!func(operator[](i))) {
+          return false;
+        }
       }
-    }
-  } else {
-    for (rx_size i{m_size-1}; i < m_size; i--) {
-      func(operator[](i));
+    } else {
+      for (rx_size i{m_size-1}; i < m_size; i--) {
+        func(operator[](i));
+      }
     }
   }
   return true;

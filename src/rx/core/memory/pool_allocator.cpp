@@ -23,12 +23,10 @@ pool_allocator::~pool_allocator() {
 }
 
 block pool_allocator::allocate() {
-  for (rx_size i{0}; i < m_bits.size(); i++) {
-    if (m_bits.test(i)) {
-      continue;
-    }
-    m_bits.set(i);
-    return {m_size, m_data.data() + m_size * i};
+  const rx_size bit{m_bits.find_first_unset()};
+  if (bit != -1_z) {
+    m_bits.set(bit);
+    return data_of(bit);
   }
   return {};
 }

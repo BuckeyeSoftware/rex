@@ -21,7 +21,9 @@ endif
 ifeq ($(DEBUG),1)
 	CXXFLAGS += -DRX_DEBUG
 	CXXFLAGS += -O0
-	CXXFLAGS += -g
+	CXXFLAGS += -ggdb3
+	#CXXFLAGS += -fsanitize=address
+	#CXXFLAGS += -fno-omit-frame-pointer
 else
 	# enable assertions for release builds temporarily
 	CXXFLAGS += -DRX_DEBUG
@@ -33,6 +35,7 @@ else
 	CXXFLAGS += -fno-stack-protector
 	CXXFLAGS += -fno-asynchronous-unwind-tables
 	CXXFLAGS += -fno-stack-check
+	CXXFLAGS += -fomit-frame-pointer
 
 	ifeq ($(CXX),g++)
 		CXXFLAGS += -fno-stack-clash-protection
@@ -44,6 +47,9 @@ LDFLAGS := -lpthread
 LDFLAGS += `sdl2-config --libs`
 ifeq ($(LTO),1)
 	LDFLAGS += -flto
+endif
+ifeq ($(DEBUG),1)
+	#LDFLAGS += -fsanitize=address
 endif
 
 BIN := rex
