@@ -31,10 +31,10 @@ bool console::load(const char* file_name) {
 
   rx::filesystem::file file(file_name, "r");
   if (!file) {
-    console_print(rx::log::level::k_error, "failed to load config '%s'", file_name);
     return false;
   }
 
+  console_print(rx::log::level::k_info, "loading '%s'", file_name);
   for (rx::string line_contents; file.read_line(line_contents); ) {
     rx::string line{line_contents.lstrip(" \t")};
     if (line.is_empty() || strchr("#;[", line[0])) {
@@ -70,10 +70,10 @@ bool console::load(const char* file_name) {
 bool console::save(const char* file_name) {
   rx::filesystem::file file(file_name, "w");
   if (!file) {
-    console_print(rx::log::level::k_error, "failed to save config '%s'", file_name);
     return false;
   }
 
+  console_print(rx::log::level::k_info, "saving '%s'", file_name);
   for (const variable_reference *head{g_head}; head; head = head->m_next) {
     if (head->type() == variable_type::k_boolean) {
       const auto handle{head->cast<bool>()};

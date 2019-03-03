@@ -38,6 +38,12 @@ RX_CONSOLE_BVAR(
   "if the display can be resized",
   true);
 
+RX_CONSOLE_BVAR(
+  display_hdr,
+  "display.hdr",
+  "use HDR output if supported",
+  false);
+
 int entry(int argc, char **argv) {
   (void)argc;
   (void)argv;
@@ -76,6 +82,19 @@ int entry(int argc, char **argv) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
 
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+
+  const auto bit_depth{*display_hdr ? 10 : 8};
+  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, bit_depth);
+  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, bit_depth);
+  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, bit_depth);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
+  SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
   SDL_Window* window =
     SDL_CreateWindow(
       "rex",
@@ -84,6 +103,13 @@ int entry(int argc, char **argv) {
       display_resolution->get().x,
       display_resolution->get().y,
       flags);
+
+  if (!window) {
+    abort();
+  }
+
+  SDL_GLContext context =
+    SDL_GL_CreateContext(window);
 
   SDL_GL_SwapWindow(window);
 
@@ -126,66 +152,10 @@ int entry(int argc, char **argv) {
 
   rx::console::console::save("config.cfg");
 
+  SDL_GL_DeleteContext(context);
   SDL_DestroyWindow(window);
   SDL_Quit();
 
-#if 0
-  if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
-    return -1;
-  }
-
-  if (SDL_InitSubSystem(SDL_INIT_AUDIO) != 0) {
-    return -1;
-  }
-
-  const char* platform{SDL_GetPlatform()};
-  hardware(rx::log::level::k_info, "platform: %s", platform);
-
-  // enumerate displays and display info
-  int displays{SDL_GetNumVideoDisplays()};
-  hardware(rx::log::level::k_info, "discovered: %d displays", displays);
-  for (int i{0}; i < displays; i++) {
-    SDL_DisplayMode mode;
-    if (SDL_GetCurrentDisplayMode(i, &mode) == 0) {
-      const char* name{SDL_GetDisplayName(i)};
-      hardware(rx::log::level::k_info, "  display %d (%s):", i, name ? name : "unknown");
-      hardware(rx::log::level::k_info, "    current mode:");
-      hardware(rx::log::level::k_info, "      %d x %d @ %dHz", mode.w, mode.h, mode.refresh_rate);
-      hardware(rx::log::level::k_info, "    modes:");
-      int modes{SDL_GetNumDisplayModes(i)};
-      for (int j{0}; j < modes; j++) {
-        if (SDL_GetDisplayMode(i, j, &mode) == 0) {
-          hardware(rx::log::level::k_info, "      %d x %d @ %dHz", mode.w, mode.h, mode.refresh_rate);
-        }
-      }
-    }
-  }
-
-  // enumerate audio drivers
-  int audio_drivers{SDL_GetNumAudioDrivers()};
-  hardware(rx::log::level::k_info, "discovered: %d audio drivers", audio_drivers);
-  for (int i{0}; i < audio_drivers; i++) {
-    const char* name{SDL_GetAudioDriver(i)};
-    if (!strcmp(name, "dummy")) {
-      continue;
-    }
-    // hardware(rx::log::level::k_info, "  driver %s: ", name);
-    if (SDL_AudioInit(name) == 0) {
-      hardware(rx::log::level::k_info, "  driver %s: usable", name);
-      int audio_devices{SDL_GetNumAudioDevices(0)};
-      if (audio_devices > 0) {
-        hardware(rx::log::level::k_info, "    discovered: %d audio devices", audio_devices);
-        for (int j{0}; j < audio_devices; j++) {
-          const char* device_name{SDL_GetAudioDeviceName(j, 0)};
-          hardware(rx::log::level::k_info, "      device %s", device_name ? device_name : "unknown");
-        }
-      }
-    } else {
-      hardware(rx::log::level::k_info, "  driver %s: unusable", name);
-    }
-    SDL_AudioQuit();
-  }
-#endif
   return 0;
 }
 
