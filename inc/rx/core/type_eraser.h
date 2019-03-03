@@ -39,7 +39,7 @@ private:
   };
 
   template<typename T, typename... Ts, typename U, rx_size... Ns>
-  static void construct_with_tuple(void* object_data, U* tuple_object, sizes<Ns...>) {
+  static void construct_with_tuple(void* object_data, [[maybe_unused]] U* tuple_object, sizes<Ns...>) {
     call_ctor<T>(object_data, forward<Ts>(tuple_object->template get<Ns>())...);
   }
 

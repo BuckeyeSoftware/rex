@@ -99,7 +99,7 @@ private:
     }
     // process any remaining contents when the thread exits
     self->flush_contents(max_padding);
-    RX_ASSERT(self->m_queue.empty(), "not all contents flushed");
+    RX_ASSERT(self->m_queue.is_empty(), "not all contents flushed");
     return 0;
   }
 

@@ -38,7 +38,7 @@ struct array {
   bool emplace_back(Ts&&... args);
 
   rx_size size() const;
-  bool empty() const;
+  bool is_empty() const;
 
   template<typename F>
   bool each_fwd(F&& func);
@@ -51,6 +51,9 @@ struct array {
 
   template<typename F>
   bool each_rev(F&& func) const;
+
+  const T& last() const;
+  T& last();
 
 private:
   memory::allocator* m_allocator;
@@ -262,7 +265,7 @@ inline rx_size array<T>::size() const {
 }
 
 template<typename T>
-inline bool array<T>::empty() const {
+inline bool array<T>::is_empty() const {
   return m_size == 0;
 }
 
@@ -312,6 +315,16 @@ template<typename T>
 template<typename F>
 inline bool array<T>::each_rev(F&& func) const {
   return const_cast<array<T>*>(this)->each_rev(func);
+}
+
+template<typename T>
+inline const T& array<T>::last() const {
+  return operator[](m_size-1);
+}
+
+template<typename T>
+inline T& array<T>::last() {
+  return operator[](m_size-1);
 }
 
 } // namespace rx

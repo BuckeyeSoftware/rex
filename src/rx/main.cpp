@@ -5,6 +5,8 @@
 #include <rx/core/statics.h>
 #include <rx/core/string.h>
 
+#include <rx/console/console.h>
+
 #include <rx/input/input.h>
 
 int entry(int argc, char **argv) {
@@ -17,6 +19,11 @@ int entry(int argc, char **argv) {
       1600, 900, SDL_WINDOW_OPENGL);
 
   SDL_GL_SwapWindow(window);
+
+  if (!rx::console::console::load("config.cfg")) {
+    // immediately save the default options on load failure
+    rx::console::console::save("config.cfg");
+  }
 
   rx::input::input input;
   while (!input.get_keyboard().is_released(SDLK_ESCAPE, false)) {

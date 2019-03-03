@@ -31,6 +31,12 @@ struct file : concepts::no_copy {
   // flush to disk
   bool flush();
 
+  bool read_line(string& line);
+
+  bool is_valid() const;
+
+  operator bool() const;
+
 private:
   bool print(string&& contents);
 
@@ -38,6 +44,10 @@ private:
   const char* m_file_name;
   const char* m_mode;
 };
+
+inline file::operator bool() const {
+  return is_valid();
+}
 
 template<typename... Ts>
 inline bool file::print(rx::memory::allocator* alloc, const char* fmt, Ts&&... args) {

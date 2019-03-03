@@ -62,4 +62,42 @@ bool file::flush() {
   return fflush(static_cast<FILE*>(m_impl)) == 0;
 }
 
+bool file::read_line(string& line) {
+  auto* fp = static_cast<FILE*>(m_impl);
+
+  line.clear();
+  for (;;) {
+    char buffer[4096];
+    if (!fgets(buffer, sizeof buffer, fp)) {
+      if (feof(fp)) {
+        return !line.is_empty();
+      }
+
+      return false;
+    }
+
+    rx_size length{strlen(buffer)};
+
+    if (length && buffer[length - 1] == '\n') {
+      length--;
+    }
+
+    if (length && buffer[length - 1] == '\r') {
+      length--;
+    }
+
+    line.append(buffer, length);
+
+    if (length < sizeof buffer - 1) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool file::is_valid() const {
+  return m_impl != nullptr;
+}
+
 } // namespace rx::filesystem

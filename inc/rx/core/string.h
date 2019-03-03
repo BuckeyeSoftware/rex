@@ -3,6 +3,7 @@
 
 #include <rx/core/assert.h> // RX_ASSERT
 #include <rx/core/format.h> // format
+#include <rx/core/array.h> // array
 
 #include <rx/core/memory/system_allocator.h> // memory::{system_allocator, allocator, block}
 
@@ -36,7 +37,7 @@ struct string {
   void resize(rx_size size);
 
   rx_size size() const;
-  bool empty() const;
+  bool is_empty() const;
   void clear();
 
   string& append(const char* first, const char* last);
@@ -45,10 +46,28 @@ struct string {
   string& append(const string& contents);
   string& append(char ch);
 
+  // returns copy of string with leading characters in set removed
+  string lstrip(const char* set) const;
+
+  // returns copy of string with trailing characters in set removed
+  string rstrip(const char* set) const;
+
+  // split string by |token| up to |count| times, use |count| of zero for no limit
+  array<string> split(int ch, rx_size count = 0) const;
+
+  // take substring from |offset| of |length|, use |length| of zero for whole string
+  string substring(rx_size offset, rx_size length = 0) const;
+
+  // scan string
+  rx_size scan(const char* scan_format, ...) const;
+
   char pop_back();
 
   char& operator[](rx_size index);
   const char& operator[](rx_size index) const;
+
+  char& last();
+  const char& last() const;
 
   char* data();
   const char* data() const;
@@ -108,8 +127,8 @@ inline rx_size string::size() const {
   return m_last - m_data.data();
 }
 
-inline bool string::empty() const {
-  return m_last - m_data.data();
+inline bool string::is_empty() const {
+  return m_last - m_data.data() == 0;
 }
 
 inline void string::clear() {
@@ -138,6 +157,14 @@ inline const char& string::operator[](rx_size index) const {
   // NOTE(dweiler): <= is not a bug, indexing the null-terminator is allowed
   RX_ASSERT(index <= size(), "out of bounds");
   return m_data.cast<char*>()[index];
+}
+
+inline char& string::last() {
+  return operator[](size() - 1);
+}
+
+inline const char& string::last() const {
+  return operator[](size() - 1);
 }
 
 inline char* string::data() {

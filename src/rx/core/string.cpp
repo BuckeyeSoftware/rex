@@ -169,6 +169,81 @@ string& string::append(const char* contents) {
   return append(contents, strlen(contents));
 }
 
+string string::lstrip(const char* set) const {
+  const char* ch{m_data.cast<const char*>()};
+  for (; strchr(set, *ch); ch++);
+  return {m_allocator, ch};
+}
+
+string string::rstrip(const char* set) const {
+  const char* ch{m_data.cast<const char*>() + size()};
+  for (; strchr(set, *ch); ch--);
+  return {m_allocator, m_data.cast<const char*>(), ch};
+}
+
+string string::substring(rx_size offset, rx_size length) const {
+  const char* begin{m_data.cast<const char*>() + offset};
+  RX_ASSERT(begin < data() + size(), "out of bounds");
+  if (length == 0) {
+    return {m_allocator, begin};
+  }
+  RX_ASSERT(begin + length < data() + size(), "out of bounds");
+  return {m_allocator, begin, begin + length};
+}
+
+rx_size string::scan(const char* scan_format, ...) const {
+  va_list va;
+  va_start(va, scan_format);
+  const auto result{vsscanf(data(), scan_format, va)};
+  va_end(va);
+  return static_cast<rx_size>(result);
+}
+
+array<string> string::split(int token, rx_size count) const {
+  bool quoted{false};
+  bool limit{count > 0};
+  array<string> result;
+
+  // when there is a limit we can reserve the storage upfront
+  if (limit) {
+    result.reserve(count);
+  }
+
+  result.push_back("");
+  count--;
+
+  for (const char* ch{m_data.cast<const char*>()}; *ch; ch++) {
+    // handle escapes of quoted strings
+    if (*ch == '\\' && (ch[1] == '\\' || ch[1] == '\"')) {
+      if (ch[1] == '\\') {
+        result.last() += "\\";
+      }
+
+      if (ch[1] == '\"') {
+        result.last() += "\"";
+      }
+
+      ch += 2;
+      continue;
+    }
+
+    // handle quoted strings
+    if (*ch == '\"') {
+      quoted = !quoted;
+      continue;
+    }
+
+    if (*ch == token && !quoted && (!limit || count)) {
+      result.push_back("");
+      count--;
+    } else {
+      result.last() += *ch;
+    }
+  }
+
+  return result;
+}
+
 char string::pop_back() {
   if (m_last == m_data.data()) {
     return *data();
