@@ -13,6 +13,7 @@ struct vec3 {
   constexpr vec3(T x, T y, T z);
   T& operator[](rx_size i);
   const T& operator[](rx_size i) const;
+  bool is_any(T value) const;
   union {
     struct { T x, y, z; };
     struct { T w, h, d; };
@@ -50,6 +51,11 @@ template<typename T>
 inline const T& vec3<T>::operator[](rx_size i) const {
   RX_ASSERT(i < 3, "out of bounds");
   return v[i];
+}
+
+template<typename T>
+inline bool vec3<T>::is_any(T value) const {
+  return x == value || y == value || z == value;
 }
 
 // (vec, vec)
@@ -113,6 +119,16 @@ inline constexpr vec3<T> operator*(T lhs, const vec3<T>& rhs) {
 template<typename T>
 inline constexpr vec3<T> operator/(T lhs, const vec3<T>& rhs) {
   return {lhs/rhs.x, lhs/rhs.y, lhs/rhs.z};
+}
+
+template<typename T>
+inline constexpr bool operator==(const vec3<T>& lhs, const vec3<T>& rhs) {
+  return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
+}
+
+template<typename T>
+inline constexpr bool operator!=(const vec3<T>& lhs, const vec3<T>& rhs) {
+  return lhs.x != rhs.x || lhs.y != rhs.y || lhs.z != rhs.z;
 }
 
 // dot and cross product

@@ -13,6 +13,7 @@ struct vec2 {
   constexpr vec2(T x, T y);
   T& operator[](rx_size i);
   const T& operator[](rx_size i) const;
+  bool is_any(T value) const;
   union {
     struct { T x, y; };
     struct { T w, h; };
@@ -48,6 +49,11 @@ template<typename T>
 inline const T& vec2<T>::operator[](rx_size i) const {
   RX_ASSERT(i < 2, "out of bounds");
   return v[i];
+}
+
+template<typename T>
+inline bool vec2<T>::is_any(T value) const {
+  return x == value || y == value;
 }
 
 // (vec, vec)
@@ -111,6 +117,16 @@ inline constexpr vec2<T> operator*(T lhs, const vec2<T>& rhs) {
 template<typename T>
 inline constexpr vec2<T> operator/(T lhs, const vec2<T>& rhs) {
   return {lhs/rhs.x, lhs/rhs.y};
+}
+
+template<typename T>
+inline constexpr bool operator==(const vec2<T>& lhs, const vec2<T>& rhs) {
+  return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+template<typename T>
+inline constexpr bool operator!=(const vec2<T>& lhs, const vec2<T>& rhs) {
+  return lhs.x != rhs.x || lhs.y != rhs.y;
 }
 
 // dot product

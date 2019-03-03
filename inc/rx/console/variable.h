@@ -67,6 +67,11 @@ template<> struct variable_trait<vec3i>  : variable_type_trait<variable_type::k_
 template<> struct variable_trait<vec4f>  : variable_type_trait<variable_type::k_vec4f> {};
 template<> struct variable_trait<vec4i>  : variable_type_trait<variable_type::k_vec4i> {};
 
+static constexpr const rx_s32 k_int_min{-INT_MAX - 1};
+static constexpr const rx_s32 k_int_max{INT_MAX};
+static constexpr const rx_f32 k_float_min{-FLT_MAX};
+static constexpr const rx_f32 k_float_max{FLT_MAX};
+
 struct variable_reference {
   variable_reference() = default;
   variable_reference(const char* name, const char* description, void* handle, variable_type type);
@@ -447,6 +452,16 @@ inline const vec2<T>& variable<vec2<T>>::get() const {
 }
 
 template<typename T>
+inline const vec2<T>& variable<vec2<T>>::min() const {
+  return m_min;
+}
+
+template<typename T>
+inline const vec2<T>& variable<vec2<T>>::max() const {
+  return m_max;
+}
+
+template<typename T>
 inline const vec2<T>& variable<vec2<T>>::initial() const {
   return m_initial;
 }
@@ -501,6 +516,16 @@ inline const vec3<T>& variable<vec3<T>>::get() const {
 }
 
 template<typename T>
+inline const vec3<T>& variable<vec3<T>>::min() const {
+  return m_min;
+}
+
+template<typename T>
+inline const vec3<T>& variable<vec3<T>>::max() const {
+  return m_max;
+}
+
+template<typename T>
 inline const vec3<T>& variable<vec3<T>>::initial() const {
   return m_initial;
 }
@@ -552,6 +577,16 @@ inline variable<vec4<T>>::operator const vec4<T>&() const {
 template<typename T>
 inline const vec4<T>& variable<vec4<T>>::get() const {
   return m_current;
+}
+
+template<typename T>
+inline const vec4<T>& variable<vec4<T>>::min() const {
+  return m_min;
+}
+
+template<typename T>
+inline const vec4<T>& variable<vec4<T>>::max() const {
+  return m_max;
 }
 
 template<typename T>

@@ -13,6 +13,7 @@ struct vec4 {
   constexpr vec4(T x, T y, T z, T w);
   T& operator[](rx_size i);
   const T& operator[](rx_size i) const;
+  bool is_any(T value) const;
   union {
     struct { T x, y, z, w; };
     struct { T r, g, b, a; };
@@ -51,6 +52,11 @@ template<typename T>
 inline const T& vec4<T>::operator[](rx_size i) const {
   RX_ASSERT(i < 4, "out of bounds");
   return v[i];
+}
+
+template<typename T>
+inline bool vec4<T>::is_any(T value) const {
+  return x == value || y == value || z == value || w == value;
 }
 
 // (vec, vec)
@@ -114,6 +120,16 @@ inline constexpr vec4<T> operator*(T lhs, const vec4<T>& rhs) {
 template<typename T>
 inline constexpr vec4<T> operator/(T lhs, const vec4<T>& rhs) {
   return {lhs/rhs.x, lhs/rhs.y, lhs/rhs.z, lhs/rhs.w};
+}
+
+template<typename T>
+inline constexpr bool operator==(const vec4<T>& lhs, const vec4<T>& rhs) {
+  return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w;
+}
+
+template<typename T>
+inline constexpr bool operator!=(const vec4<T>& lhs, const vec4<T>& rhs) {
+  return lhs.x != rhs.x || lhs.y != rhs.y || lhs.z != rhs.z || lhs.w != rhs.w;
 }
 
 // dot product
