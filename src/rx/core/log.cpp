@@ -126,7 +126,6 @@ logger::logger()
     const char* name{node->name()};
     if (!strncmp(name, "log_", 4)) {
       node->init();
-      rx::static_globals::remove(node);
 
       // remember for finalization
       m_logs.push_back(node);

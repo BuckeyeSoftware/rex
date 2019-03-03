@@ -1,8 +1,7 @@
 #ifndef RX_CORE_MEMORY_SYSTEM_ALLOCATOR_H
 #define RX_CORE_MEMORY_SYSTEM_ALLOCATOR_H
 
-#include <rx/core/memory/allocator.h>
-
+#include <rx/core/memory/allocator.h> // allocator
 #include <rx/core/statics.h> // static_global
 
 namespace rx::memory {

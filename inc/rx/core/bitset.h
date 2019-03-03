@@ -4,6 +4,7 @@
 #include <limits.h> // CHAR_BIT
 
 #include <rx/core/traits.h> // move
+#include <rx/core/assert.h> // RX_ASSERT
 #include <rx/core/memory/allocator.h> // memory::{allocator, block}
 
 namespace rx {
@@ -53,14 +54,17 @@ inline bitset::~bitset() {
 }
 
 inline void bitset::set(rx_size bit) {
+  RX_ASSERT(bit < m_size, "out of bounds");
   m_data.cast<bit_type*>()[index(bit)] |= k_bit_one << offset(bit);
 }
 
 inline void bitset::clear(rx_size bit) {
+  RX_ASSERT(bit < m_size, "out of bounds");
   m_data.cast<bit_type*>()[index(bit)] &= ~(k_bit_one << offset(bit));
 }
 
 inline bool bitset::test(rx_size bit) const {
+  RX_ASSERT(bit < m_size, "out of bounds");
   return !!(m_data.cast<const bit_type*>()[index(bit)] & (k_bit_one << offset(bit)));
 }
 

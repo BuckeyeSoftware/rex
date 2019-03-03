@@ -6,6 +6,8 @@
 #include <rx/core/concurrency/spin_lock.h>
 #include <rx/core/concurrency/scope_lock.h>
 
+#include <rx/core/log.h> // RX_LOG
+
 namespace rx::console {
 
 using rx::concurrency::spin_lock;
@@ -14,6 +16,8 @@ using rx::concurrency::scope_lock;
 static spin_lock g_lock;
 static variable_reference* g_head; // protected by |g_lock|
 
+RX_LOG("console", console_print);
+
 bool console::load(const char* file_name) {
   // sort references
   {
@@ -21,14 +25,19 @@ bool console::load(const char* file_name) {
     g_head = sort(g_head);
   }
 
+  (void)file_name;
+
   return true;
 }
 
 bool console::save(const char* file_name) {
+  (void)file_name;
+
   return true;
 }
 
 variable_reference* console::add_variable_reference(variable_reference* reference) {
+  console_print(rx::log::level::k_info, "registered '%s'", reference->m_name);
   scope_lock<spin_lock> locked(g_lock);
   variable_reference* next = g_head;
   g_head = reference;

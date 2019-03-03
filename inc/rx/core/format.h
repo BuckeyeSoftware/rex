@@ -8,7 +8,7 @@
 
 namespace rx {
 
-// format_size holds maximum size needed to format a value of that
+// format_size holds maximum size needed to format a value of that type
 template<typename T>
 struct format_size;
 

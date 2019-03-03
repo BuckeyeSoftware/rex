@@ -1,6 +1,7 @@
 #include <string.h> // strcmp
 
 #include <rx/core/statics.h>
+#include <rx/core/debug.h> // RX_MESSAGE
 
 #include <rx/core/concurrency/spin_lock.h> // spin_lock
 #include <rx/core/concurrency/scope_lock.h> // scope_lock
@@ -33,18 +34,20 @@ void static_node::link() {
 }
 
 void static_globals::init() {
+  RX_MESSAGE("init static globals");
   scope_lock<spin_lock> locked(g_lock);
   for (auto node{g_head}; node; node = node->m_next) {
     scope_unlock<spin_lock> unlocked(g_lock);
-    node->init();
+    node->init_global();
   }
 }
 
 void static_globals::fini() {
+  RX_MESSAGE("fini static globals");
   scope_lock<spin_lock> locked(g_lock);
   for (auto node{g_tail}; node; node = node->m_prev) {
     scope_unlock<spin_lock> unlocked(g_lock);
-    node->fini();
+    node->fini_global();
   }
 }
 
@@ -58,6 +61,7 @@ static_node* static_globals::find(const char* name) {
   return nullptr;
 }
 
+#if 0
 void static_globals::remove(static_node* node) {
   scope_lock<spin_lock> locked(g_lock);
   if (node->m_next) {
@@ -76,6 +80,7 @@ void static_globals::remove(static_node* node) {
     g_tail = node->m_prev;
   }
 }
+#endif
 
 void static_globals::lock() {
   g_lock.lock();

@@ -4,8 +4,9 @@
 #include <rx/core/concepts/no_copy.h> // no_copy
 #include <rx/core/concepts/no_move.h> // no_move
 
-#include <rx/core/debug.h> // RX_MESSAGE
 #include <rx/core/memory/uninitialized_storage.h> // uninitialized_storage
+
+#include <rx/core/debug.h> // RX_MESSAGE
 
 namespace rx {
 
@@ -23,7 +24,11 @@ struct static_node
 
 private:
   friend struct static_globals;
+  void init_global();
+  void fini_global();
+
   void link();
+  bool m_enabled;
   const char *m_name;
   static_node *m_next;
   static_node *m_prev;
@@ -32,7 +37,8 @@ private:
 
 template<typename T, typename... Ts>
 inline constexpr static_node::static_node(const char* name, memory::uninitialized_storage<T>& data, Ts&&... args)
-  : m_name{name}
+  : m_enabled{true}
+  , m_name{name}
   , m_next{nullptr}
   , m_prev{nullptr}
   , m_data{data.type_erase(forward<Ts>(args)...)}
@@ -40,14 +46,26 @@ inline constexpr static_node::static_node(const char* name, memory::uninitialize
   link();
 }
 
+inline void static_node::init_global() {
+  if (m_enabled) {
+    m_data.init();
+  }
+}
+
+inline void static_node::fini_global() {
+  if (m_enabled) {
+    m_data.fini();
+  }
+}
+
 inline void static_node::init() {
-  RX_MESSAGE("init static global %s\n", m_name);
   m_data.init();
+  m_enabled = false;
 }
 
 inline void static_node::fini() {
-  RX_MESSAGE("fini static global %s\n", m_name);
   m_data.fini();
+  m_enabled = false;
 }
 
 inline const char* static_node::name() const {
@@ -121,7 +139,6 @@ struct static_globals {
   static void fini();
 
   static static_node* find(const char* name);
-  static void remove(static_node* node);
 
   template<typename F>
   static bool each(F&& function);

@@ -9,7 +9,7 @@ struct scope_lock {
   explicit constexpr scope_lock(T& lock);
   ~scope_lock();
 private:
-  friend class condition_variable;
+  friend struct condition_variable;
   T& m_lock;
 };
 

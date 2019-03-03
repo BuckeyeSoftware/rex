@@ -15,7 +15,7 @@ struct mutex {
   void unlock();
 
 private:
-  friend class condition_variable;
+  friend struct condition_variable;
   pthread_mutex_t m_mutex;
 };
 

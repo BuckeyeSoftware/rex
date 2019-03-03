@@ -5,27 +5,58 @@
 #include <rx/core/statics.h>
 #include <rx/core/string.h>
 
-#include <rx/core/log.h>
-#include <rx/console/variable.h>
-#include <rx/console/console.h>
-
-#include <rx/math/vec3.h>
-
-RX_LOG(hardware);
-
-RX_CONSOLE_BVAR(b, "b", "a", true);
-RX_CONSOLE_BVAR(c, "c", "a", true);
-RX_CONSOLE_BVAR(d, "d", "a", true);
-RX_CONSOLE_BVAR(f, "f", "a", true);
-RX_CONSOLE_BVAR(g, "g", "a", true);
-RX_CONSOLE_BVAR(h, "h", "a", true);
-RX_CONSOLE_BVAR(i, "i", "a", true);
-RX_CONSOLE_BVAR(j, "j", "a", true);
-RX_CONSOLE_BVAR(a, "a", "a", true);
-RX_CONSOLE_BVAR(e, "e", "a", true);
+#include <rx/input/input.h>
 
 int entry(int argc, char **argv) {
-  rx::console::console::load("");
+  (void)argc;
+  (void)argv;
+
+  SDL_Init(SDL_INIT_VIDEO);
+  SDL_Window* window =
+    SDL_CreateWindow("rex", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+      1600, 900, SDL_WINDOW_OPENGL);
+
+  SDL_GL_SwapWindow(window);
+
+  rx::input::input input;
+  while (!input.get_keyboard().is_released(SDLK_ESCAPE, false)) {
+    input.update(0);
+
+    // translate SDL events
+    for (SDL_Event event; SDL_PollEvent(&event); ) {
+      rx::input::event ievent;
+      switch (event.type) {
+      case SDL_KEYDOWN:
+      case SDL_KEYUP:
+        ievent.type = rx::input::event_type::k_keyboard;
+        ievent.as_keyboard.down = event.type == SDL_KEYDOWN;
+        ievent.as_keyboard.scan_code = event.key.keysym.scancode;
+        ievent.as_keyboard.symbol = event.key.keysym.sym;
+        input.handle_event(rx::move(ievent));
+        break;
+      case SDL_MOUSEBUTTONDOWN:
+      case SDL_MOUSEBUTTONUP:
+        ievent.type = rx::input::event_type::k_mouse_button;
+        ievent.as_mouse_button.down = event.type == SDL_MOUSEBUTTONDOWN;
+        ievent.as_mouse_button.button = event.button.button;
+        input.handle_event(rx::move(ievent));
+        break;
+      case SDL_MOUSEMOTION:
+        ievent.type = rx::input::event_type::k_mouse_motion;
+        ievent.as_mouse_motion.value = { event.motion.x, event.motion.y };
+        input.handle_event(rx::move(ievent));
+        break;
+      case SDL_MOUSEWHEEL:
+        ievent.type = rx::input::event_type::k_mouse_scroll;
+        ievent.as_mouse_scroll.value = { event.wheel.x, event.wheel.y };
+        input.handle_event(rx::move(ievent));
+        break;
+      }
+    }
+  }
+
+  SDL_DestroyWindow(window);
+  SDL_Quit();
 
 #if 0
   if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
@@ -94,14 +125,12 @@ int main(int argc, char **argv) {
 
   // initialize system allocator and remove from static globals list
   system_alloc->init();
-  rx::static_globals::remove(system_alloc);
 
   // trigger log initialization
   auto log{rx::static_globals::find("log")};
   RX_ASSERT(log, "log missing");
 
   log->init();
-  rx::static_globals::remove(log);
 
   // initialize all other static globals
   rx::static_globals::init();

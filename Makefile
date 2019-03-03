@@ -13,6 +13,8 @@ DEPS := $(filter %.d,$(SRCS:.cpp=.d))
 CXXFLAGS := -std=c++17
 CXXFLAGS += -Iinc
 CXXFLAGS += `sdl2-config --cflags`
+CXXFLAGS += -Wall
+CXXFLAGS += -Wextra
 
 ifeq ($(LTO),1)
 	CXXFLAGS += -flto

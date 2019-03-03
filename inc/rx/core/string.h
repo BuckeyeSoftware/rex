@@ -100,7 +100,7 @@ inline string::string(const char* contents)
 
 template<typename... Ts>
 inline string::string(const char* fmt, Ts&&... args)
-  : string{formatter(&memory::g_system_allocator, fmt, format<remove_const<remove_reference<Ts>>>{}(move(args))...)}
+  : string{formatter(&memory::g_system_allocator, fmt, format<remove_const<remove_reference<Ts>>>{}(forward<Ts>(args))...)}
 {
 }
 

@@ -120,13 +120,13 @@ inline array<T>::~array() {
 
 template<typename T>
 inline T& array<T>::operator[](rx_size i) {
-  RX_ASSERT(i < m_size, "out of bounds (%zu < %zu)", i, m_size);
+  RX_ASSERT(i < m_size, "out of bounds");
   return m_data.cast<T*>()[i];
 }
 
 template<typename T>
 inline const T& array<T>::operator[](rx_size i) const {
-  RX_ASSERT(i < m_size, "out of bounds (%zu < %zu)", i, m_size);
+  RX_ASSERT(i < m_size, "out of bounds");
   return m_data.cast<T*>()[i];
 }
 

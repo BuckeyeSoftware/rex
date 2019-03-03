@@ -21,6 +21,8 @@ struct log {
   void operator()(level lvl, const char* fmt, Ts&&... args);
 
   const char* name() const;
+  const char* file_name() const;
+  int line() const;
 
 private:
   void write(level lvl, string&& contents);
@@ -46,9 +48,17 @@ inline const char* log::name() const {
   return m_name;
 }
 
-#define RX_LOG(name) \
-  static ::rx::static_global<::rx::log> name \
-    ("log_" RX_PP_STRINGIZE(name), RX_PP_STRINGIZE(name), __FILE__, __LINE__)
+inline const char* log::file_name() const {
+  return m_file_name;
+}
+
+inline int log::line() const {
+  return m_line;
+}
+
+#define RX_LOG(name, identifier) \
+  static ::rx::static_global<::rx::log> identifier \
+    ("log_" name, (name), __FILE__, __LINE__)
 
 } // namespace rx
 

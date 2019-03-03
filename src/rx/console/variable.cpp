@@ -7,6 +7,7 @@ variable_reference::variable_reference(const char* name,
   const char* description, void* handle, variable_type type)
   : m_name{name}
   , m_description{description}
+  , m_handle{handle}
   , m_type{type}
 {
   m_next = console::add_variable_reference(this);
