@@ -24,8 +24,8 @@ ifeq ($(DEBUG),1)
 	CXXFLAGS += -DRX_DEBUG
 	CXXFLAGS += -O0
 	CXXFLAGS += -ggdb3
-	#CXXFLAGS += -fsanitize=address
-	#CXXFLAGS += -fno-omit-frame-pointer
+	CXXFLAGS += -fsanitize=address
+	CXXFLAGS += -fno-omit-frame-pointer
 else
 	# enable assertions for release builds temporarily
 	CXXFLAGS += -DRX_DEBUG
@@ -51,7 +51,7 @@ ifeq ($(LTO),1)
 	LDFLAGS += -flto
 endif
 ifeq ($(DEBUG),1)
-	#LDFLAGS += -fsanitize=address
+	LDFLAGS += -fsanitize=address
 endif
 
 BIN := rex
