@@ -86,6 +86,8 @@ struct variable_reference {
   variable_type type() const;
 
 private:
+  friend struct console;
+
   const char* m_name;
   const char* m_description;
   void* m_handle;

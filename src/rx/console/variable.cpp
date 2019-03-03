@@ -1,8 +1,7 @@
 #include <rx/console/variable.h>
+#include <rx/console/console.h>
 
 namespace rx::console {
-
-static variable_reference* g_head;
 
 variable_reference::variable_reference(const char* name,
   const char* description, void* handle, variable_type type)
@@ -10,8 +9,7 @@ variable_reference::variable_reference(const char* name,
   , m_description{description}
   , m_type{type}
 {
-  m_next = g_head;
-  g_head = this;
+  m_next = console::add_variable_reference(this);
 }
 
 // instance for all console variable types here, we don't instance for

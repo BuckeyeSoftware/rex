@@ -7,19 +7,26 @@
 
 #include <rx/core/log.h>
 #include <rx/console/variable.h>
+#include <rx/console/console.h>
 
 #include <rx/math/vec3.h>
 
 RX_LOG(hardware);
 
-RX_CONSOLE_BVAR(test0, "bool", "test bool", true);
-RX_CONSOLE_SVAR(test1, "string", "test string", "test");
-RX_CONSOLE_IVAR(test2, "int", "test int", 0, 1, 0);
-RX_CONSOLE_FVAR(test3, "float", "test float", 0.0f, 1.0f, 0.5f);
-
-RX_CONSOLE_V2FVAR(test4, "vec2f", "test vec2f", rx::math::vec2f(0.0f, 0.0f), rx::math::vec2f(1.0f, 1.0f), rx::math::vec2f(0.5f, 0.5f));
+RX_CONSOLE_BVAR(b, "b", "a", true);
+RX_CONSOLE_BVAR(c, "c", "a", true);
+RX_CONSOLE_BVAR(d, "d", "a", true);
+RX_CONSOLE_BVAR(f, "f", "a", true);
+RX_CONSOLE_BVAR(g, "g", "a", true);
+RX_CONSOLE_BVAR(h, "h", "a", true);
+RX_CONSOLE_BVAR(i, "i", "a", true);
+RX_CONSOLE_BVAR(j, "j", "a", true);
+RX_CONSOLE_BVAR(a, "a", "a", true);
+RX_CONSOLE_BVAR(e, "e", "a", true);
 
 int entry(int argc, char **argv) {
+  rx::console::console::load("");
+
 #if 0
   if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
     return -1;
