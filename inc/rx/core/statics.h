@@ -41,7 +41,7 @@ inline constexpr static_node::static_node(const char* name, memory::uninitialize
   , m_name{name}
   , m_next{nullptr}
   , m_prev{nullptr}
-  , m_data{data.type_erase(forward<Ts>(args)...)}
+  , m_data{data.type_erase(utility::forward<Ts>(args)...)}
 {
   link();
 }
@@ -89,7 +89,7 @@ struct static_global
 
   template<typename... Ts>
   auto operator()(Ts&&... args) {
-    return (*m_data.data())(forward<Ts>(args)...);
+    return (*m_data.data())(utility::forward<Ts>(args)...);
   }
 
 private:
@@ -100,7 +100,7 @@ private:
 template<typename T>
 template<typename... Ts>
 inline constexpr static_global<T>::static_global(const char* name, Ts&&... args)
-  : m_node{name, m_data, forward<Ts>(args)...}
+  : m_node{name, m_data, utility::forward<Ts>(args)...}
 {
 }
 
@@ -143,11 +143,10 @@ struct static_globals {
   template<typename F>
   static bool each(F&& function);
 
-private:
   // linked-list manipulation
   static void lock();
   static void unlock();
-
+private:
   static static_node* head();
   static static_node* tail();
 };

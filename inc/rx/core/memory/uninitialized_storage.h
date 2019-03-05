@@ -1,10 +1,13 @@
 #ifndef RX_CORE_MEMORY_UNINITIALIZED_STORAGE_H
 #define RX_CORE_MEMORY_UNINITIALIZED_STORAGE_H
 
-#include <rx/core/traits.h> // nat, call_{ctor, dtor}
-#include <rx/core/type_eraser.h> // type_eraser
+#include <rx/core/utility/forward.h>
+#include <rx/core/utility/nat.h>
+
 #include <rx/core/concepts/no_copy.h> // no_copy
 #include <rx/core/concepts/no_move.h> // no_move
+
+#include <rx/core/type_eraser.h> // type_eraser
 
 namespace rx::memory {
 
@@ -34,7 +37,7 @@ struct uninitialized_storage
 
 private:
   union {
-    nat m_nat;
+    utility::nat m_nat;
     alignas(T) rx_byte m_data[sizeof(T)];
   };
 };
@@ -49,12 +52,12 @@ inline constexpr uninitialized_storage<T>::uninitialized_storage()
 template<typename T>
 template<typename... Ts>
 inline void uninitialized_storage<T>::init(Ts&&... args) {
-  call_ctor<T>(reinterpret_cast<void*>(m_data), forward<Ts>(args)...);
+  utility::construct<T>(reinterpret_cast<void*>(m_data), utility::forward<Ts>(args)...);
 }
 
 template<typename T>
 inline void uninitialized_storage<T>::fini() {
-  call_dtor<T>(reinterpret_cast<void*>(m_data));
+  utility::destruct<T>(reinterpret_cast<void*>(m_data));
 }
 
 template<typename T>
@@ -70,7 +73,7 @@ inline const T* uninitialized_storage<T>::data() const {
 template<typename T>
 template<typename... Ts>
 inline type_eraser uninitialized_storage<T>::type_erase(Ts&&... args) const {
-  return {const_cast<void*>(reinterpret_cast<const void*>(data())), identity<T>{}, forward<Ts>(args)...};
+  return {const_cast<void*>(reinterpret_cast<const void*>(data())), traits::type_identity<T>{}, utility::forward<Ts>(args)...};
 }
 
 } // namespace rx::memory

@@ -53,6 +53,7 @@ int entry(int argc, char **argv) {
     rx::console::console::save("config.cfg");
   }
 
+#if 0
   // enumerate displays to find the one with the given name
   SDL_Init(SDL_INIT_VIDEO);
 
@@ -127,24 +128,24 @@ int entry(int argc, char **argv) {
         ievent.as_keyboard.down = event.type == SDL_KEYDOWN;
         ievent.as_keyboard.scan_code = event.key.keysym.scancode;
         ievent.as_keyboard.symbol = event.key.keysym.sym;
-        input.handle_event(rx::move(ievent));
+        input.handle_event(rx::utility::move(ievent));
         break;
       case SDL_MOUSEBUTTONDOWN:
       case SDL_MOUSEBUTTONUP:
         ievent.type = rx::input::event_type::k_mouse_button;
         ievent.as_mouse_button.down = event.type == SDL_MOUSEBUTTONDOWN;
         ievent.as_mouse_button.button = event.button.button;
-        input.handle_event(rx::move(ievent));
+        input.handle_event(rx::utility::move(ievent));
         break;
       case SDL_MOUSEMOTION:
         ievent.type = rx::input::event_type::k_mouse_motion;
         ievent.as_mouse_motion.value = { event.motion.x, event.motion.y };
-        input.handle_event(rx::move(ievent));
+        input.handle_event(rx::utility::move(ievent));
         break;
       case SDL_MOUSEWHEEL:
         ievent.type = rx::input::event_type::k_mouse_scroll;
         ievent.as_mouse_scroll.value = { event.wheel.x, event.wheel.y };
-        input.handle_event(rx::move(ievent));
+        input.handle_event(rx::utility::move(ievent));
         break;
       }
     }
@@ -155,6 +156,7 @@ int entry(int argc, char **argv) {
   SDL_GL_DeleteContext(context);
   SDL_DestroyWindow(window);
   SDL_Quit();
+#endif
 
   return 0;
 }

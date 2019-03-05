@@ -1,8 +1,17 @@
 #ifndef RX_CORE_ARRAY_H
 #define RX_CORE_ARRAY_H
 
-#include <rx/core/traits.h> // is_{same, trivially_{copyable, destructible}}
 #include <rx/core/assert.h> // RX_ASSERT
+
+#include <rx/core/traits/is_same.h>
+#include <rx/core/traits/is_trivially_copyable.h>
+#include <rx/core/traits/is_trivially_destructible.h>
+#include <rx/core/traits/return_type.h>
+
+#include <rx/core/utility/forward.h>
+#include <rx/core/utility/move.h>
+#include <rx/core/utility/construct.h>
+#include <rx/core/utility/destruct.h>
 
 #include <rx/core/memory/system_allocator.h> // memory::{system_allocator, allocator, block}
 
@@ -24,38 +33,56 @@ struct array {
   T& operator[](rx_size i);
   const T& operator[](rx_size i) const;
 
-  template<typename... Ts>
-  bool resize(rx_size size, Ts&&... args);
+  // resize to |size| with |value| for new objects
+  bool resize(rx_size size, const T& value = {});
+
+  // reserve |size| elements
   bool reserve(rx_size size);
+
   void clear();
 
+  // append |data| by copy
   bool push_back(const T& data);
+  // append |data| by move
   bool push_back(T&& data);
 
-  void erase(rx_size from, rx_size to);
-
+  // append new |T| construct with |args|
   template<typename... Ts>
   bool emplace_back(Ts&&... args);
 
   rx_size size() const;
   bool is_empty() const;
 
+  // enumerate collection either forward or reverse
   template<typename F>
   bool each_fwd(F&& func);
-
   template<typename F>
   bool each_rev(F&& func);
-
   template<typename F>
   bool each_fwd(F&& func) const;
-
   template<typename F>
   bool each_rev(F&& func) const;
 
+  // first or last element
+  const T& first() const;
+  T& first();
   const T& last() const;
   T& last();
 
+  const T* data() const;
+  T* data();
+
+  T&& pop_back() {
+    T&& data{utility::move(last())};
+    utility::destruct<T>(this->data() + (m_size - 1));
+    m_size--;
+    return utility::move(data);
+  }
+
 private:
+  // NOTE(dweiler): does not adjust m_size just adjusts capacity
+  bool grow_or_shrink_to(rx_size size);
+
   memory::allocator* m_allocator;
   memory::block m_data;
   rx_size m_size;
@@ -88,7 +115,7 @@ inline array<T>::array(memory::allocator* alloc, rx_size size, Ts&&... args)
   RX_ASSERT(m_data, "out of memory");
 
   for (rx_size i{0}; i < m_capacity; i++) {
-    call_ctor<T>(m_data.cast<T*>() + i, forward<Ts>(args)...);
+    utility::construct<T>(m_data.cast<T*>() + i, utility::forward<Ts>(args)...);
   }
 }
 
@@ -102,60 +129,71 @@ inline array<T>::array(const array& other)
   RX_ASSERT(m_data, "out of memory");
 
   for (rx_size i{0}; i < m_size; i++) {
-    call_ctor<T>(m_data.cast<T*>() + i, other[i]);
+    utility::construct<T>(m_data.cast<T*>() + i, other[i]);
   }
 }
 
 template<typename T>
 inline array<T>::array(array&& other)
   : m_allocator{other.m_allocator}
-  , m_data{move(other.m_data)}
+  , m_data{utility::move(other.m_data)}
   , m_size{other.m_size}
   , m_capacity{other.m_capacity}
 {
+  other.m_allocator = nullptr;
+  other.m_size = 0;
+  other.m_capacity = 0;
 }
 
 template<typename T>
 inline array<T>::~array() {
-  clear();
-  m_allocator->deallocate(move(m_data));
+  // clear();
+  // if (m_allocator) {
+  //   m_allocator->deallocate(utility::move(m_data));
+  // }
 }
 
 template<typename T>
 inline T& array<T>::operator[](rx_size i) {
-  RX_ASSERT(i < m_size, "out of bounds");
+  RX_ASSERT(i < m_size, "out of bounds (%zu >= %zu)", i, m_size);
   return m_data.cast<T*>()[i];
 }
 
 template<typename T>
 inline const T& array<T>::operator[](rx_size i) const {
-  RX_ASSERT(i < m_size, "out of bounds");
+  RX_ASSERT(i < m_size, "out of bounds (%zu >= %zu)", i, m_size);
   return m_data.cast<T*>()[i];
 }
 
 template<typename T>
-template<typename... Ts>
-bool array<T>::resize(rx_size size, Ts&&... args) {
+bool array<T>::grow_or_shrink_to(rx_size size) {
   if (!reserve(size)) {
     return false;
   }
 
-  auto *const data{m_data.cast<T*>()};
-
-  if constexpr (!is_trivially_destructible<T>) {
+  if constexpr (!traits::is_trivially_destructible<T>) {
     if (size < m_size) {
-      for (rx_size i{m_size-1}; i < size; i--) {
-        call_dtor<T>(data + i);
+      for (rx_size i{m_size-1}; i > size; i--) {
+        utility::destruct<T>(data() + i);
       }
     }
   }
 
+  return true;
+}
+
+template<typename T>
+bool array<T>::resize(rx_size size, const T& value) {
+  if (!grow_or_shrink_to(size)) {
+    return false;
+  }
+
+  // copy construct new objects
   for (rx_size i{m_size}; i < size; i++) {
-    call_ctor<T>(data + i, forward<Ts>(args)...);
+    utility::construct<T>(data() + i, value);
   }
 
   m_size = size;
-
   return true;
 }
 
@@ -170,10 +208,10 @@ bool array<T>::reserve(rx_size size) {
     m_capacity = ((m_capacity + 1) * 3) / 2;
   }
 
-  if constexpr (is_trivially_copyable<T>) {
+  if constexpr (traits::is_trivially_copyable<T>) {
     memory::block resize{m_allocator->reallocate(m_data, m_capacity * sizeof(T))};
     if (resize) {
-      m_data = move(resize);
+      m_data = utility::move(resize);
       return true;
     }
   } else {
@@ -183,13 +221,13 @@ bool array<T>::reserve(rx_size size) {
         auto *const src{m_data.cast<T*>()};
         auto *const dst{resize.cast<T*>()};
         for (rx_size i{0}; i < m_size; i++) {
-          call_ctor<T>(dst + i, move(*(src + i)));
-          call_dtor<T>(src + i);
+          utility::construct<T>(dst + i, utility::move(*(src + i)));
+          utility::destruct<T>(src + i);
         }
       }
 
-      m_allocator->deallocate(move(m_data));
-      m_data = move(resize);
+      m_allocator->deallocate(utility::move(m_data));
+      m_data = utility::move(resize);
       return true;
     }
   }
@@ -199,11 +237,10 @@ bool array<T>::reserve(rx_size size) {
 
 template<typename T>
 inline void array<T>::clear() {
-  if constexpr (!is_trivially_destructible<T>) {
-    if (m_size) {
-      auto *const data{m_data.cast<T*>()};
+  if (m_size) {
+    if constexpr (!traits::is_trivially_destructible<T>) {
       for (rx_size i{m_size-1}; i < m_size; i--) {
-        call_dtor<T>(data + i);
+        utility::destruct<T>(data() + i);
       }
     }
   }
@@ -211,52 +248,43 @@ inline void array<T>::clear() {
 }
 
 template<typename T>
-inline bool array<T>::push_back(const T& data) {
-  const auto size{m_size};
-  if (resize(size + 1)) {
-    operator[](size) = data;
-    return true;
+inline bool array<T>::push_back(const T& _value) {
+  if (!grow_or_shrink_to(m_size + 1)) {
+    return false;
   }
-  return false;
+
+  // copy construct object
+  utility::construct<T>(data() + m_size, _value);
+
+  m_size++;
+  return true;
 }
 
 template<typename T>
-inline bool array<T>::push_back(T&& data) {
-  const auto size{m_size};
-  if (resize(size + 1)) {
-    operator[](size) = move(data);
-    return true;
-  }
-  return false;
-}
-
-template<typename T>
-inline void array<T>::erase(rx_size from, rx_size to) {
-  const rx_size range{to - from};
-
-  T* beg{m_data.cast<T*>()};
-  T* end{beg+m_size};
-  T* first{beg+from};
-  T* last{beg+to};
-
-  // move all the elements to fill the gap produced by the erase
-  for (T* value{last}, *dest{first}; value != end; ++value, ++dest) {
-    *dest = move(*value);
+inline bool array<T>::push_back(T&& _value) {
+  if (!grow_or_shrink_to(m_size + 1)) {
+    return false;
   }
 
-  if constexpr (!is_trivially_destructible<T>) {
-    for (T* value{end-range}; value < end; ++value) {
-      call_dtor<T>(static_cast<void*>(value));
-    }
-  }
+  // move construct object
+  utility::construct<T>(data() + m_size, utility::move(_value));
 
-  m_size -= range;
+  m_size++;
+  return true;
 }
 
 template<typename T>
 template<typename... Ts>
 inline bool array<T>::emplace_back(Ts&&... args) {
-  return resize(m_size + 1, forward<Ts>(args)...);
+  if (!grow_or_shrink_to(m_size + 1)) {
+    return false;
+  }
+
+  // forward construct object
+  utility::construct<T>(data() + m_size, utility::forward<Ts>(args)...);
+
+  m_size++;
+  return true;
 }
 
 template<typename T>
@@ -272,14 +300,12 @@ inline bool array<T>::is_empty() const {
 template<typename T>
 template<typename F>
 inline bool array<T>::each_fwd(F&& func) {
-  if constexpr (is_same<decltype(func({})), bool>) {
-    for (rx_size i{0}; i < m_size; i++) {
+  for (rx_size i{0}; i < m_size; i++) {
+    if constexpr (traits::is_same<traits::return_type<F>, bool>) {
       if (!func(operator[](i))) {
         return false;
       }
-    }
-  } else {
-    for (rx_size i{0}; i < m_size; i++) {
+    } else {
       func(operator[](i));
     }
   }
@@ -295,17 +321,13 @@ inline bool array<T>::each_fwd(F&& func) const {
 template<typename T>
 template<typename F>
 inline bool array<T>::each_rev(F&& func) {
-  if (m_size) {
-    if constexpr (is_same<decltype(func({})), bool>) {
-      for (rx_size i{m_size-1}; i < m_size; i--) {
-        if (!func(operator[](i))) {
-          return false;
-        }
+  for (rx_size i{m_size-1}; i < m_size; i--) {
+    if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+      if (!func(operator[](i))) {
+        return false;
       }
     } else {
-      for (rx_size i{m_size-1}; i < m_size; i--) {
-        func(operator[](i));
-      }
+      func(operator[](i));
     }
   }
   return true;
@@ -319,12 +341,22 @@ inline bool array<T>::each_rev(F&& func) const {
 
 template<typename T>
 inline const T& array<T>::last() const {
-  return operator[](m_size-1);
+  return data()[m_size - 1];
 }
 
 template<typename T>
 inline T& array<T>::last() {
-  return operator[](m_size-1);
+  return data()[m_size - 1];
+}
+
+template<typename T>
+const T* array<T>::data() const {
+  return m_data.cast<const T*>();
+}
+
+template<typename T>
+inline T* array<T>::data() {
+  return m_data.cast<T*>();
 }
 
 } // namespace rx

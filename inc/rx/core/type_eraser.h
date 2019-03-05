@@ -1,9 +1,18 @@
 #ifndef RX_CORE_TYPE_ERASER_H
 #define RX_CORE_TYPE_ERASER_H
 
-#include <rx/core/traits.h> // call_{ctor, dtor}
 #include <rx/core/tuple.h> // tuple
 #include <rx/core/concepts/no_copy.h> // no_copy
+
+#include <rx/core/utility/forward.h>
+#include <rx/core/utility/move.h>
+#include <rx/core/utility/nat.h>
+#include <rx/core/utility/index_sequence.h>
+#include <rx/core/utility/make_index_sequence.h>
+#include <rx/core/utility/construct.h>
+#include <rx/core/utility/destruct.h>
+
+#include <rx/core/traits/type_identity.h>
 
 namespace rx {
 
@@ -16,7 +25,7 @@ struct type_eraser : concepts::no_copy {
 
   // initialize type eraser instance with |data|
   template<typename T, typename... Ts>
-  constexpr type_eraser(void *data, identity<T>, Ts&&... args);
+  constexpr type_eraser(void *data, traits::type_identity<T>, Ts&&... args);
 
   // move a type erased instance
   constexpr type_eraser(type_eraser&& eraser);
@@ -34,43 +43,43 @@ private:
   void (*m_move_tuple_fn)(void*, const void*);
 
   union {
-    nat m_nat;
+    utility::nat m_nat;
     alignas(k_alignment) rx_byte m_tuple[k_memory];
   };
 
   template<typename T, typename... Ts, typename U, rx_size... Ns>
-  static void construct_with_tuple(void* object_data, [[maybe_unused]] U* tuple_object, sizes<Ns...>) {
-    call_ctor<T>(object_data, forward<Ts>(tuple_object->template get<Ns>())...);
+  static void construct_with_tuple(void* object_data, [[maybe_unused]] U* tuple_object, utility::index_sequence<Ns...>) {
+    utility::construct<T>(object_data, utility::forward<Ts>(tuple_object->template get<Ns>())...);
   }
 
   template<typename T, typename... Ts>
   static void construct(void* object_data, void* tuple_data) {
     construct_with_tuple<T, Ts...>(object_data, static_cast<tuple<Ts...>*>(tuple_data),
-      index_sequence<sizeof...(Ts)>{});
+      utility::index_sequence_for<Ts...>{});
   }
 
   template<typename T>
   static void destruct(void* object_data) {
-    call_dtor<T>(object_data);
+    utility::destruct<T>(object_data);
   }
 
   template<typename T, typename... Ts>
   static void move_tuple(void* tuple_dst, const void* tuple_src) {
-    call_ctor<rx::tuple<Ts...>>(tuple_dst, move(*static_cast<const rx::tuple<Ts...>*>(tuple_src)));
+    utility::construct<tuple<Ts...>>(tuple_dst, utility::move(*static_cast<const tuple<Ts...>*>(tuple_src)));
   }
 };
 
 template<typename T, typename... Ts>
-inline constexpr type_eraser::type_eraser(void *data, identity<T>, Ts&&... args)
+inline constexpr type_eraser::type_eraser(void *data, traits::type_identity<T>, Ts&&... args)
   : m_data{data}
   , m_construct_fn{construct<T, Ts...>}
   , m_destruct_fn{destruct<T>}
   , m_move_tuple_fn{move_tuple<T, Ts...>}
   , m_nat{}
 {
-  static_assert(sizeof(rx::tuple<Ts...>) <= sizeof m_tuple, "too much data to type erase");
+  static_assert(sizeof(tuple<Ts...>) <= sizeof m_tuple, "too much data to type erase");
 
-  call_ctor<rx::tuple<Ts...>>(static_cast<void*>(m_tuple), forward<Ts>(args)...);
+  utility::construct<tuple<Ts...>>(static_cast<void*>(m_tuple), utility::forward<Ts>(args)...);
 }
 
 inline constexpr type_eraser::type_eraser(type_eraser&& eraser)

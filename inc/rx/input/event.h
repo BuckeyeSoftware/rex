@@ -2,7 +2,8 @@
 #define RX_INPUT_EVENT_H
 
 #include <rx/math/vec2.h> // math::vec2i
-#include <rx/core/traits.h> // nat
+
+#include <rx/core/utility/nat.h>
 
 namespace rx::input {
 
@@ -38,7 +39,7 @@ struct event {
   event_type type;
 
   union {
-    nat as_nat;
+    utility::nat as_nat;
     keyboard_event as_keyboard;
     mouse_button_event as_mouse_button;
     mouse_scroll_event as_mouse_scroll;

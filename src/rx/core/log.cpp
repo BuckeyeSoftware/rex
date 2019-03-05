@@ -49,77 +49,53 @@ time_stamp(time_t time, const char* fmt) {
   return date;
 }
 
+struct message {
+  message() = default;
+  message(const log* owner, string&& contents, log::level level, time_t time)
+    : m_owner{owner}
+    , m_contents{utility::move(contents)}
+    , m_level{level}
+    , m_time{time}
+  {
+  }
+  const log* m_owner;
+  string m_contents;
+  log::level m_level;
+  time_t m_time;
+};
+
 struct logger {
   logger();
   ~logger();
 
   void write(const log* owner, string&& contents, log::level level, time_t time);
+  void flush(rx_size max_padding);
 
-private:
-  struct message {
-    message() = default;
-    message(const log* owner, string&& contents, log::level level, time_t time)
-      : m_owner{owner}
-      , m_contents{move(contents)}
-      , m_level{level}
-      , m_time{time}
-    {
-    }
-    const log* m_owner;
-    string m_contents;
-    log::level m_level;
-    time_t m_time;
+  void process(int thread_id); // running in |m_thread|
+
+  enum {
+    k_running = 1 << 0,
+    k_ready = 1 << 1
   };
 
-  // NOTE(dweiler): not thread safe
-  void flush_contents(rx_size max_padding) {
-    m_queue.each_fwd([&](const message& _message) {
-      const auto name_string{_message.m_owner->name()};
-      const auto level_string{get_level_string(_message.m_level)};
-      const auto padding{strlen(name_string) + strlen(level_string) + 4}; // 4 additional characters for " []/"
-      m_file.print("[%s] [%s/%s]%*s | %s\n",
-        time_stamp(_message.m_time, "%Y-%m-%d %H:%M:%S"),
-        name_string,
-        level_string,
-        static_cast<int>(max_padding-padding),
-        "",
-        _message.m_contents);
-      return true;
-    });
-    m_file.flush();
-    m_queue.clear();
-  }
-
-  static int thread_function(logger* self) {
-    scope_lock locked(self->m_mutex);
-    const auto max_padding{self->m_max_name_length + self->m_max_level_length};
-    while (self->m_running) {
-      self->flush_contents(max_padding);
-      self->m_condition_variable.wait(locked);
-    }
-    // process any remaining contents when the thread exits
-    self->flush_contents(max_padding);
-    RX_ASSERT(self->m_queue.is_empty(), "not all contents flushed");
-    return 0;
-  }
-
   file m_file;
-  bool m_running; // protected by |m_mutex|
-  array<message> m_queue; // protected by |m_mutex|
   array<static_node*> m_logs;
   rx_size m_max_name_length;
   rx_size m_max_level_length;
-  thread<decltype(thread_function), logger> m_thread;
+  int m_status;
   mutex m_mutex;
-  condition_variable m_condition_variable;
+  array<message> m_queue; // protected by |m_mutex|
+  condition_variable m_ready_condition;
+  condition_variable m_flush_condition;
+  thread m_thread;
 };
 
 logger::logger()
   : m_file{"log.log", "w"}
-  , m_running{true}
   , m_max_name_length{0}
   , m_max_level_length{0}
-  , m_thread{thread_function, this}
+  , m_status{k_running}
+  , m_thread{[this](int id){ process(id); }}
 {
   // initialize all loggers
   rx::static_globals::each([this](rx::static_node* node) {
@@ -145,15 +121,20 @@ logger::logger()
 
   m_max_level_length = max(level0, level1, level2, level3);
 
-  m_thread.launch();
+  // signal the logging thread to begin
+  {
+    scope_lock<mutex> locked(m_mutex);
+    m_status |= k_ready;
+    m_ready_condition.signal();
+  }
 }
 
 logger::~logger() {
   // signal shutdown
   {
     scope_lock<mutex> locked(m_mutex);
-    m_running = false;
-    m_condition_variable.signal();
+    m_status &= ~k_running;
+    m_flush_condition.signal();
   }
 
   // join thread
@@ -167,16 +148,56 @@ logger::~logger() {
 
 void logger::write(const log* owner, string&& contents, log::level level, time_t time) {
   scope_lock<mutex> locked(m_mutex);
-  m_queue.emplace_back(owner, move(contents), level, time);
+  m_queue.emplace_back(owner, utility::move(contents), level, time);
   if (m_queue.size() >= k_flush_threshold) {
-    m_condition_variable.signal();
+    m_flush_condition.signal();
   }
+}
+
+void logger::flush(rx_size max_padding) {
+  m_queue.each_fwd([&](const message& _message) {
+    const auto name_string{_message.m_owner->name()};
+    const auto level_string{get_level_string(_message.m_level)};
+    const auto padding{strlen(name_string) + strlen(level_string) + 4}; // 4 additional characters for " []/"
+    m_file.print("[%s] [%s/%s]%*s | %s\n",
+      time_stamp(_message.m_time, "%Y-%m-%d %H:%M:%S"),
+      name_string,
+      level_string,
+      static_cast<int>(max_padding-padding),
+      "",
+      _message.m_contents);
+    return true;
+  });
+  m_file.flush();
+  m_queue.clear();
+}
+
+void logger::process(int thread_id) {
+  RX_MESSAGE("logger started on thread %d", thread_id);
+
+  scope_lock locked(m_mutex);
+
+  // wait until ready
+  m_ready_condition.wait(locked, [this]{ return m_status & k_ready; });
+
+  const auto max_padding{m_max_name_length + m_max_level_length};
+  while (m_status & k_running) {
+    flush(max_padding);
+
+    // wait for the next flush operation
+    m_flush_condition.wait(locked);
+  }
+
+  // flush any contents at thread exit
+  flush(max_padding);
+
+  RX_ASSERT(m_queue.is_empty(), "not all contents flushed");
 }
 
 static rx::static_global<logger> g_logger("log");
 
 void log::write(log::level level, string&& contents) {
-  g_logger->write(this, move(contents), level, time(nullptr));
+  g_logger->write(this, utility::move(contents), level, time(nullptr));
 }
 
 } // namespace rx

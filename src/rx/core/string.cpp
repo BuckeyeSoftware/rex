@@ -5,7 +5,6 @@
 #include <rx/core/algorithm.h> // swap
 #include <rx/core/debug.h> // RX_MESSAGE
 #include <rx/core/string.h> // string
-#include <rx/core/traits.h> // move
 
 namespace rx {
 
@@ -82,7 +81,7 @@ string::string(string&& contents)
     reserve(contents.size());
     append(contents.data(), contents.size());
   } else {
-    m_data = move(contents.m_data);
+    m_data = utility::move(contents.m_data);
     m_last = contents.m_last;
   }
 
@@ -98,7 +97,7 @@ string::string(const string& contents)
 
 string::~string() {
   if (m_data.data() != m_buffer) {
-    m_allocator->deallocate(move(m_data));
+    m_allocator->deallocate(utility::move(m_data));
   }
 }
 
@@ -108,7 +107,7 @@ string& string::operator=(const string& contents) {
 }
 
 string& string::operator=(string&& contents) {
-  string(move(contents)).swap(*this);
+  string(utility::move(contents)).swap(*this);
   return *this;
 }
 
@@ -120,14 +119,14 @@ void string::reserve(rx_size capacity) {
   memory::block data;
   const auto size{static_cast<rx_size>(m_last - m_data.data())};
   if (m_data.data() == m_buffer) {
-    data = move(m_allocator->allocate(capacity + 1));
+    data = utility::move(m_allocator->allocate(capacity + 1));
     if (size) {
-      RX_MESSAGE("string \"%s\" fell through small size optimization\n", m_data.data());
+      RX_MESSAGE("string \"%s\" fell through small size optimization", m_data.data());
       memcpy(data.data(), m_data.data(), size + 1);
     }
-    m_data = move(data);
+    m_data = utility::move(data);
   } else {
-    m_data = move(m_allocator->reallocate(m_data, capacity + 1));
+    m_data = utility::move(m_allocator->reallocate(m_data, capacity + 1));
   }
 
   m_last = m_data.data() + size;

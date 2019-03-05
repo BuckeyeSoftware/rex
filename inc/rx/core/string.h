@@ -7,6 +7,8 @@
 
 #include <rx/core/memory/system_allocator.h> // memory::{system_allocator, allocator, block}
 
+#include <rx/core/traits/remove_cvref.h>
+
 namespace rx {
 
 // 32-bit: 32 bytes
@@ -119,7 +121,7 @@ inline string::string(const char* contents)
 
 template<typename... Ts>
 inline string::string(const char* fmt, Ts&&... args)
-  : string{formatter(&memory::g_system_allocator, fmt, format<remove_const<remove_reference<Ts>>>{}(forward<Ts>(args))...)}
+  : string{formatter(&memory::g_system_allocator, fmt, format<traits::remove_cvref<Ts>>{}(utility::forward<Ts>(args))...)}
 {
 }
 

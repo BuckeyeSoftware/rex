@@ -3,9 +3,9 @@
 #include <rx/core/statics.h>
 #include <rx/core/debug.h> // RX_MESSAGE
 
-#include <rx/core/concurrency/spin_lock.h> // spin_lock
-#include <rx/core/concurrency/scope_lock.h> // scope_lock
-#include <rx/core/concurrency/scope_unlock.h> // scope_unlock
+#include <rx/core/concurrency/spin_lock.h>
+#include <rx/core/concurrency/scope_lock.h>
+#include <rx/core/concurrency/scope_unlock.h>
 
 namespace rx {
 

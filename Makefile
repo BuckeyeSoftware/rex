@@ -1,4 +1,6 @@
 LTO ?= 1
+ASAN ?= 0
+TSAN ?= 0
 DEBUG ?= 0
 
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
@@ -24,8 +26,9 @@ ifeq ($(DEBUG),1)
 	CXXFLAGS += -DRX_DEBUG
 	CXXFLAGS += -O0
 	CXXFLAGS += -ggdb3
-	CXXFLAGS += -fsanitize=address
 	CXXFLAGS += -fno-omit-frame-pointer
+	CXXFLAGS += -fno-exceptions
+	CXXFLAGS += -fno-rtti
 else
 	# enable assertions for release builds temporarily
 	CXXFLAGS += -DRX_DEBUG
@@ -43,6 +46,12 @@ else
 		CXXFLAGS += -fno-stack-clash-protection
 	endif
 endif
+ifeq ($(ASAN),1)
+	CXXFLAGS += -fsanitize=address
+endif
+ifeq ($(TSAN),1)
+	CXXFLAGS += -fsanitize=thread
+endif
 
 # linker flags
 LDFLAGS := -lpthread
@@ -50,8 +59,11 @@ LDFLAGS += `sdl2-config --libs`
 ifeq ($(LTO),1)
 	LDFLAGS += -flto
 endif
-ifeq ($(DEBUG),1)
+ifeq ($(ASAN),1)
 	LDFLAGS += -fsanitize=address
+endif
+ifeq ($(TSAN),1)
+	LDFLAGS += -fsanitize=thread
 endif
 
 BIN := rex

@@ -3,7 +3,8 @@
 
 #include <limits.h> // CHAR_BIT
 
-#include <rx/core/traits.h> // move
+#include <rx/core/utility/move.h>
+
 #include <rx/core/assert.h> // RX_ASSERT
 #include <rx/core/memory/allocator.h> // memory::{allocator, block}
 
@@ -42,14 +43,14 @@ private:
 
 inline bitset::bitset(bitset&& set)
   : m_allocator{set.m_allocator}
-  , m_data{move(set.m_data)}
+  , m_data{utility::move(set.m_data)}
 {
   set.m_allocator = nullptr;
 }
 
 inline bitset::~bitset() {
   if (m_allocator) {
-    m_allocator->deallocate(move(m_data));
+    m_allocator->deallocate(utility::move(m_data));
   }
 }
 

@@ -41,7 +41,7 @@ inline constexpr log::log(const char* name, const char* file_name, int line)
 
 template<typename... Ts>
 inline void log::operator()(log::level lvl, const char* fmt, Ts&&... args) {
-  write(lvl, {fmt, forward<Ts>(args)...});
+  write(lvl, {fmt, utility::forward<Ts>(args)...});
 }
 
 inline const char* log::name() const {

@@ -26,15 +26,17 @@ void rx::assert_fail(const char* expression, const char* file,
 
   va_end(va);
   assert_print(rx::log::level::k_error, "Assertion failed: %s (%s:%d %s) \"%s\"",
-    expression, file, line, function, rx::move(contents));
+    expression, file, line, function, rx::utility::move(contents));
 
   // deinitialize all static globals
   rx::static_globals::fini();
 
   // these were explicitly enabled with ->init in main so fini above does
   // not finalize them, finalize them here
+  //rx::static_globals::lock();
   rx::static_globals::find("system_allocator")->fini();
   rx::static_globals::find("log")->fini();
+  //rx::static_globals::unlock();
 
   abort();
 }

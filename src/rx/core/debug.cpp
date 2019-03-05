@@ -26,5 +26,5 @@ void rx::debug_message(const char* file, const char* function, int line,
 
   va_end(va);
   debug_print(rx::log::level::k_info, "%s:%d %s: \"%s\"", file, line, function,
-    rx::move(contents));
+    rx::utility::move(contents));
 }

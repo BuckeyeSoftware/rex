@@ -1,74 +1,46 @@
 #ifndef RX_CORE_CONCURRENCY_THREAD_H
 #define RX_CORE_CONCURRENCY_THREAD_H
 
-#include <pthread.h> // pthread_t, pthread_{create, join}
+#include <pthread.h>
 
-#include <rx/core/traits.h> // conditional, declval, move, nat
+#include <rx/core/function.h>
+#include <rx/core/concepts/no_copy.h>
+#include <rx/core/memory/allocator.h>
 
 namespace rx::concurrency {
 
-template<typename F, typename T>
-struct thread {
-  using return_type = decltype(declval<F>()({}));
-  thread(F&& function, T* data);
+struct thread : concepts::no_copy {
+  thread();
+
+  // construct thread with system allocator and function
+  thread(rx::function<void(int)>&& function);
+  // construct thread with custom allocator and function
+  thread(rx::memory::allocator* m_allocator, rx::function<void(int)>&& function);
+
+  // move construct thread
+  thread(thread&& _thread);
+
   ~thread();
-  return_type join();
-  void launch();
+
+  void join();
 
 private:
-  static void* thread_wrap(void* data);
-  pthread_t m_thread;
-  F&& m_function;
-  return_type m_result;
-  T* m_data;
-  bool m_joined;
-  bool m_launched;
+  struct state {
+    static void* wrap(void* data);
+
+    state();
+    state(rx::function<void(int)>&& _function);
+
+    void join();
+
+    pthread_t m_thread;
+    rx::function<void(int)> m_function;
+    bool m_joined;
+  };
+
+  rx::memory::allocator* m_allocator;
+  rx::memory::block m_state;
 };
-
-// template deduction guide
-template<typename F, typename T>
-thread(F&& function, T* data) -> thread<F, T>;
-
-template<typename F, typename T>
-inline thread<F, T>::thread(F&& function, T* data)
-  : m_function{move(function)}
-  , m_result{}
-  , m_data{data}
-  , m_joined{false}
-  , m_launched{false}
-{
-}
-
-template<typename F, typename T>
-inline thread<F, T>::~thread() {
-  if (m_launched && !m_joined) {
-    join();
-  }
-}
-
-template<typename F, typename T>
-inline typename thread<F, T>::return_type thread<F, T>::join() {
-  if (pthread_join(m_thread, nullptr) != 0) {
-    RX_ASSERT(false, "join failed");
-  }
-  m_joined = true;
-  return m_result;
-}
-
-template<typename F, typename T>
-inline void thread<F, T>::launch() {
-  m_launched = true;
-  if (pthread_create(&m_thread, nullptr, thread_wrap, reinterpret_cast<void*>(this)) != 0) {
-    RX_ASSERT(false, "thread creation failed");
-  }
-}
-
-template<typename F, typename T>
-void* thread<F, T>::thread_wrap(void* data) {
-  auto self = reinterpret_cast<thread<F, T>*>(data);
-  self->m_result = move(self->m_function(self->m_data));
-  return nullptr;
-}
 
 } // namespace rx::concurrency
 

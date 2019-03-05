@@ -3,7 +3,8 @@
 #include <rx/core/memory/stack_allocator.h> // stack_allocator
 
 #include <rx/core/assert.h> // RX_ASSERT
-#include <rx/core/traits.h> // move
+
+#include <rx/core/utility/move.h>
 
 namespace rx::memory {
 
@@ -15,7 +16,7 @@ stack_allocator::stack_allocator(allocator* base, rx_size size)
 }
 
 stack_allocator::~stack_allocator() {
-  m_base->deallocate(move(m_data));
+  m_base->deallocate(utility::move(m_data));
 }
 
 block stack_allocator::allocate(rx_size size) {
@@ -40,7 +41,7 @@ block stack_allocator::reallocate(block& old, rx_size size) {
 
   // no need to resize
   if (old.size() == size) {
-    return move(old);
+    return utility::move(old);
   }
 
   // inplace resize if last allocated block
@@ -60,7 +61,7 @@ block stack_allocator::reallocate(block& old, rx_size size) {
   block resize{allocate(size)};
   if (resize) {
     memcpy(resize.data(), old.data(), old.size());
-    return move(resize);
+    return utility::move(resize);
   }
 
   return {};

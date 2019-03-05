@@ -3,6 +3,7 @@
 
 #include <rx/core/assert.h> // RX_ASSERT
 #include <rx/core/types.h> // rx_{size, byte}
+
 #include <rx/core/concepts/no_copy.h> // no_copy
 
 namespace rx::memory {
@@ -18,6 +19,7 @@ struct block : concepts::no_copy {
   constexpr rx_byte* end() const;
   template<typename T>
   constexpr T cast() const;
+  void alias(block& other);
 private:
   rx_size m_size;
   rx_byte* m_data;
@@ -74,6 +76,12 @@ template<typename T>
 inline constexpr T block::cast() const {
   RX_ASSERT(m_data, "empty block");
   return reinterpret_cast<T>(m_data);
+}
+
+inline void block::alias(block& other) {
+  RX_ASSERT(other.m_data, "empty block to alias");
+  m_data = other.m_data;
+  m_size = other.m_size;
 }
 
 } // namespace rx::memory

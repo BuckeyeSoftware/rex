@@ -51,12 +51,12 @@ inline file::operator bool() const {
 
 template<typename... Ts>
 inline bool file::print(rx::memory::allocator* alloc, const char* fmt, Ts&&... args) {
-  return print({alloc, fmt, forward<Ts>(args)...});
+  return print({alloc, fmt, utility::forward<Ts>(args)...});
 }
 
 template<typename... Ts>
 inline bool file::print(const char* fmt, Ts&&... args) {
-  return print({fmt, forward<Ts>(args)...});
+  return print({fmt, utility::forward<Ts>(args)...});
 }
 
 } // namespace rx::filesystem

@@ -86,11 +86,11 @@ template<typename K, typename V, typename H>
 inline map<K, V, H>::~map() {
   for (rx_size i{0}; i < m_capacity; i++) {
     if (element_hash(i) != 0) {
-      if constexpr (!is_trivially_destructible<K>) {
-        call_dtor<K>(m_keys.cast<K*>() + i);
+      if constexpr (!traits::is_trivially_destructible<K>) {
+        utility::destruct<K>(m_keys.cast<K*>() + i);
       }
-      if constexpr (!is_trivially_destructible<V>) {
-        call_dtor<V>(m_values.cast<V*>() + i);
+      if constexpr (!traits::is_trivially_destructible<V>) {
+        utility::destruct<V>(m_values.cast<V*>() + i);
       }
     }
   }
@@ -105,7 +105,7 @@ inline void map<K, V, H>::emplace(const K& key, Ts&&... args) {
   if (++m_size >= m_resize_threshold) {
     grow();
   }
-  inserter(hash_key(key), move(K{key}), move(V{forward<Ts>(args)...}));
+  inserter(hash_key(key), utility::move(K{key}), utility::move(V{utility::forward<Ts>(args)...}));
 }
 
 template<typename K, typename V, typename H>
@@ -113,7 +113,7 @@ inline void map<K, V, H>::insert(const K& key, V&& value) {
   if (++m_size >= m_resize_threshold) {
     grow();
   }
-  inserter(hash_key(key), move(K{key}), move(value));
+  inserter(hash_key(key), utility::move(K{key}), utility::move(value));
 }
 
 template<typename K, typename V, typename H>
@@ -121,7 +121,7 @@ inline void map<K, V, H>::insert(const K& key, const V& value) {
   if (++m_size >= m_resize_threshold) {
     grow();
   }
-  inserter(hash_key(key), move(K{key}), move(V{value}));
+  inserter(hash_key(key), utility::move(K{key}), utility::move(V{value}));
 }
 
 template<typename K, typename V, typename H>
@@ -146,11 +146,11 @@ template<typename K, typename V, typename H>
 inline bool map<K, V, H>::erase(const K& key) {
   const rx_size hash{hash_key(key)};
   if (rx_size index; lookup_index(key, index)) {
-    if constexpr (!is_trivially_destructible<K>) {
-      call_dtor<K>(m_keys.cast<K*>() + index);
+    if constexpr (!traits::is_trivially_destructible<K>) {
+      utility::destruct<K>(m_keys.cast<K*>() + index);
     }
-    if constexpr (!is_trivially_destructible<V>) {
-      call_dtor<V>(m_values.cast<V*>() + index);
+    if constexpr (!traits::is_trivially_destructible<V>) {
+      utility::destruct<V>(m_values.cast<V*>() + index);
     }
 
     if constexpr (sizeof index == 8) {
@@ -247,11 +247,11 @@ inline void map<K, V, H>::grow() {
     const auto hash{hashes_data[i]};
     if (hash != 0 && !is_deleted(hash)) {
       inserter(hash, move(keys_data[i]), move(values_data[i]));
-      if constexpr (!is_trivially_destructible<K>) {
-        call_dtor<K>(keys_data + i);
+      if constexpr (!traits::is_trivially_destructible<K>) {
+        utility::destruct<K>(keys_data + i);
       }
-      if constexpr (!is_trivially_destructible<V>) {
-        call_dtor<V>(values_data + i);
+      if constexpr (!traits::is_trivially_destructible<V>) {
+        utility::destruct<V>(values_data + i);
       }
     }
   }
@@ -263,8 +263,8 @@ inline void map<K, V, H>::grow() {
 
 template<typename K, typename V, typename H>
 inline void map<K, V, H>::construct(rx_size index, rx_size hash, K&& key, V&& value) {
-  call_ctor<K>(m_keys.cast<K*>() + index, move(key));
-  call_ctor<V>(m_values.cast<V*>() + index, move(value));
+  utility::construct<K>(m_keys.cast<K*>() + index, move(key));
+  utility::construct<V>(m_values.cast<V*>() + index, move(value));
   element_hash(index) = hash;
 }
 
