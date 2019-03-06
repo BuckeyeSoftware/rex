@@ -37,19 +37,19 @@ thread::thread(rx::function<void(int)>&& _function)
 }
 
 thread::~thread() {
-  if (m_state) {
-    m_state.cast<state*>()->join();
-    utility::destruct<state>(m_state.data());
-
-    RX_ASSERT(m_allocator, "null allocator");
-    m_allocator->deallocate(utility::move(m_state));
+  if (!m_state) {
+    return;
   }
+
+  join();
+
+  utility::destruct<state>(m_state.data());
+  m_allocator->deallocate(utility::move(m_state));
 }
 
 void thread::join() {
-  if (m_state) {
-    m_state.cast<state*>()->join();
-  }
+  RX_ASSERT(m_state, "join on empty thread");
+  m_state.cast<state*>()->join();
 }
 
 // state

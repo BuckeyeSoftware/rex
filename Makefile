@@ -1,6 +1,7 @@
-LTO ?= 1
+LTO ?= 0
 ASAN ?= 0
 TSAN ?= 0
+UBSAN ?= 0
 DEBUG ?= 0
 
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
@@ -52,6 +53,9 @@ endif
 ifeq ($(TSAN),1)
 	CXXFLAGS += -fsanitize=thread -DRX_TSAN
 endif
+ifeq ($(UBSAN),1)
+	CXXFLAGS += -fsanitize=undefined
+endif
 
 # linker flags
 LDFLAGS := -lpthread
@@ -64,6 +68,9 @@ ifeq ($(ASAN),1)
 endif
 ifeq ($(TSAN),1)
 	LDFLAGS += -fsanitize=thread
+endif
+ifeq ($(UBSAN),1)
+	LDFLAGS += -fsanitize=undefined
 endif
 
 BIN := rex

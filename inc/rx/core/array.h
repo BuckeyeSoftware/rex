@@ -22,46 +22,46 @@ namespace rx {
 template<typename T>
 struct array {
   constexpr array();
-  constexpr array(memory::allocator* alloc);
+  constexpr array(memory::allocator* _allocator);
 
   template<typename... Ts>
-  array(memory::allocator* al, rx_size size, Ts&&... args);
-  array(const array& other);
-  array(array&& other);
+  array(memory::allocator* _allocator, rx_size _size, Ts&&... _args);
+  array(const array& _other);
+  array(array&& _other);
   ~array();
 
-  T& operator[](rx_size i);
-  const T& operator[](rx_size i) const;
+  T& operator[](rx_size _index);
+  const T& operator[](rx_size _index) const;
 
   // resize to |size| with |value| for new objects
-  bool resize(rx_size size, const T& value = {});
+  bool resize(rx_size _size, const T& _value = {});
 
   // reserve |size| elements
-  bool reserve(rx_size size);
+  bool reserve(rx_size _size);
 
   void clear();
 
   // append |data| by copy
-  bool push_back(const T& data);
+  bool push_back(const T& _data);
   // append |data| by move
-  bool push_back(T&& data);
+  bool push_back(T&& _data);
 
   // append new |T| construct with |args|
   template<typename... Ts>
-  bool emplace_back(Ts&&... args);
+  bool emplace_back(Ts&&... _args);
 
   rx_size size() const;
   bool is_empty() const;
 
   // enumerate collection either forward or reverse
   template<typename F>
-  bool each_fwd(F&& func);
+  bool each_fwd(F&& _func);
   template<typename F>
-  bool each_rev(F&& func);
+  bool each_rev(F&& _func);
   template<typename F>
-  bool each_fwd(F&& func) const;
+  bool each_fwd(F&& _func) const;
   template<typename F>
-  bool each_rev(F&& func) const;
+  bool each_rev(F&& _func) const;
 
   // first or last element
   const T& first() const;
@@ -72,16 +72,9 @@ struct array {
   const T* data() const;
   T* data();
 
-  T&& pop_back() {
-    T&& data{utility::move(last())};
-    utility::destruct<T>(this->data() + (m_size - 1));
-    m_size--;
-    return utility::move(data);
-  }
-
 private:
   // NOTE(dweiler): does not adjust m_size just adjusts capacity
-  bool grow_or_shrink_to(rx_size size);
+  bool grow_or_shrink_to(rx_size _size);
 
   memory::allocator* m_allocator;
   memory::block m_data;
@@ -93,87 +86,88 @@ template<typename T>
 inline constexpr array<T>::array()
   : array{&memory::g_system_allocator}
 {
+  // {empty}
 }
 
 template<typename T>
-inline constexpr array<T>::array(memory::allocator* alloc)
-  : m_allocator{alloc}
+inline constexpr array<T>::array(memory::allocator* _allocator)
+  : m_allocator{_allocator}
   , m_data{}
   , m_size{0}
   , m_capacity{0}
 {
+  RX_ASSERT(m_allocator, "null allocator");
 }
 
 template<typename T>
 template<typename... Ts>
-inline array<T>::array(memory::allocator* alloc, rx_size size, Ts&&... args)
-  : m_allocator{alloc}
-  , m_data{alloc->allocate(size * sizeof(T))}
-  , m_size{size}
-  , m_capacity{size}
+inline array<T>::array(memory::allocator* _allocator, rx_size _size, Ts&&... _args)
+  : m_allocator{_allocator}
+  , m_size{_size}
+  , m_capacity{_size}
 {
+  RX_ASSERT(m_allocator, "null allocator");
+
+  m_data = utility::move(m_allocator->allocate(size * sizeof(T)));
   RX_ASSERT(m_data, "out of memory");
 
   for (rx_size i{0}; i < m_capacity; i++) {
-    utility::construct<T>(m_data.cast<T*>() + i, utility::forward<Ts>(args)...);
+    utility::construct<T>(data() + i, utility::forward<Ts>(_args)...);
   }
 }
 
 template<typename T>
-inline array<T>::array(const array& other)
-  : m_allocator{other.m_allocator}
-  , m_data{m_allocator->allocate(other.m_capacity * sizeof(T))}
-  , m_size{other.m_size}
-  , m_capacity{other.m_capacity}
+inline array<T>::array(const array& _other)
+  : m_allocator{_other.m_allocator}
+  , m_data{m_allocator->allocate(_other.m_capacity * sizeof(T))}
+  , m_size{_other.m_size}
+  , m_capacity{_other.m_capacity}
 {
   RX_ASSERT(m_data, "out of memory");
 
   for (rx_size i{0}; i < m_size; i++) {
-    utility::construct<T>(m_data.cast<T*>() + i, other[i]);
+    utility::construct<T>(data() + i, _other[i]);
   }
 }
 
 template<typename T>
-inline array<T>::array(array&& other)
-  : m_allocator{other.m_allocator}
-  , m_data{utility::move(other.m_data)}
-  , m_size{other.m_size}
-  , m_capacity{other.m_capacity}
+inline array<T>::array(array&& _other)
+  : m_allocator{_other.m_allocator}
+  , m_data{utility::move(_other.m_data)}
+  , m_size{_other.m_size}
+  , m_capacity{_other.m_capacity}
 {
-  other.m_allocator = nullptr;
-  other.m_size = 0;
-  other.m_capacity = 0;
+  _other.m_size = 0;
+  _other.m_capacity = 0;
 }
 
 template<typename T>
 inline array<T>::~array() {
-  // clear();
-  // if (m_allocator) {
-  //   m_allocator->deallocate(utility::move(m_data));
-  // }
+  clear();
+  m_allocator->deallocate(utility::move(m_data));
 }
 
 template<typename T>
-inline T& array<T>::operator[](rx_size i) {
-  RX_ASSERT(i < m_size, "out of bounds (%zu >= %zu)", i, m_size);
-  return m_data.cast<T*>()[i];
+inline T& array<T>::operator[](rx_size _index) {
+  RX_ASSERT(_index < m_size, "out of bounds (%zu >= %zu)", _index, m_size);
+  return data()[_index];
 }
 
 template<typename T>
-inline const T& array<T>::operator[](rx_size i) const {
-  RX_ASSERT(i < m_size, "out of bounds (%zu >= %zu)", i, m_size);
-  return m_data.cast<T*>()[i];
+inline const T& array<T>::operator[](rx_size _index) const {
+  RX_ASSERT(_index < m_size, "out of bounds (%zu >= %zu)", _index, m_size);
+  return data()[_index];
 }
 
 template<typename T>
-bool array<T>::grow_or_shrink_to(rx_size size) {
-  if (!reserve(size)) {
+bool array<T>::grow_or_shrink_to(rx_size _size) {
+  if (!reserve(_size)) {
     return false;
   }
 
   if constexpr (!traits::is_trivially_destructible<T>) {
-    if (size < m_size) {
-      for (rx_size i{m_size-1}; i > size; i--) {
+    if (_size < m_size) {
+      for (rx_size i{m_size-1}; i > _size; i--) {
         utility::destruct<T>(data() + i);
       }
     }
@@ -183,28 +177,28 @@ bool array<T>::grow_or_shrink_to(rx_size size) {
 }
 
 template<typename T>
-bool array<T>::resize(rx_size size, const T& value) {
-  if (!grow_or_shrink_to(size)) {
+bool array<T>::resize(rx_size _size, const T& _value) {
+  if (!grow_or_shrink_to(_size)) {
     return false;
   }
 
   // copy construct new objects
-  for (rx_size i{m_size}; i < size; i++) {
-    utility::construct<T>(data() + i, value);
+  for (rx_size i{m_size}; i < _size; i++) {
+    utility::construct<T>(data() + i, _value);
   }
 
-  m_size = size;
+  m_size = _size;
   return true;
 }
 
 template<typename T>
-bool array<T>::reserve(rx_size size) {
-  if (size <= m_capacity) {
+bool array<T>::reserve(rx_size _size) {
+  if (_size <= m_capacity) {
     return true;
   }
 
   // golden ratio
-  while (m_capacity < size) {
+  while (m_capacity < _size) {
     m_capacity = ((m_capacity + 1) * 3) / 2;
   }
 
@@ -275,13 +269,13 @@ inline bool array<T>::push_back(T&& _value) {
 
 template<typename T>
 template<typename... Ts>
-inline bool array<T>::emplace_back(Ts&&... args) {
+inline bool array<T>::emplace_back(Ts&&... _args) {
   if (!grow_or_shrink_to(m_size + 1)) {
     return false;
   }
 
   // forward construct object
-  utility::construct<T>(data() + m_size, utility::forward<Ts>(args)...);
+  utility::construct<T>(data() + m_size, utility::forward<Ts>(_args)...);
 
   m_size++;
   return true;
@@ -299,14 +293,14 @@ inline bool array<T>::is_empty() const {
 
 template<typename T>
 template<typename F>
-inline bool array<T>::each_fwd(F&& func) {
+inline bool array<T>::each_fwd(F&& _func) {
   for (rx_size i{0}; i < m_size; i++) {
     if constexpr (traits::is_same<traits::return_type<F>, bool>) {
-      if (!func(operator[](i))) {
+      if (!_func(operator[](i))) {
         return false;
       }
     } else {
-      func(operator[](i));
+      _func(operator[](i));
     }
   }
   return true;
@@ -314,20 +308,20 @@ inline bool array<T>::each_fwd(F&& func) {
 
 template<typename T>
 template<typename F>
-inline bool array<T>::each_fwd(F&& func) const {
-  return const_cast<array<T>*>(this)->each_fwd(func);
+inline bool array<T>::each_fwd(F&& _func) const {
+  return const_cast<array<T>*>(this)->each_fwd(_func);
 }
 
 template<typename T>
 template<typename F>
-inline bool array<T>::each_rev(F&& func) {
+inline bool array<T>::each_rev(F&& _func) {
   for (rx_size i{m_size-1}; i < m_size; i--) {
     if constexpr (traits::is_same<traits::return_type<F>, bool>) {
-      if (!func(operator[](i))) {
+      if (!_func(operator[](i))) {
         return false;
       }
     } else {
-      func(operator[](i));
+      _func(operator[](i));
     }
   }
   return true;
@@ -335,8 +329,8 @@ inline bool array<T>::each_rev(F&& func) {
 
 template<typename T>
 template<typename F>
-inline bool array<T>::each_rev(F&& func) const {
-  return const_cast<array<T>*>(this)->each_rev(func);
+inline bool array<T>::each_rev(F&& _func) const {
+  return const_cast<array<T>*>(this)->each_rev(_func);
 }
 
 template<typename T>
