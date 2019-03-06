@@ -56,9 +56,9 @@ struct function<R(Ts...)> {
   }
 
   ~function() {
-    //if (m_destruct && m_data.size()) {
-    //  m_destruct(m_data.data());
-    //}
+    if (m_destruct) {
+      m_destruct(m_data.data());
+    }
   }
 
   R operator()(Ts&&... args) {

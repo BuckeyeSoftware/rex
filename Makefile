@@ -50,7 +50,7 @@ ifeq ($(ASAN),1)
 	CXXFLAGS += -fsanitize=address
 endif
 ifeq ($(TSAN),1)
-	CXXFLAGS += -fsanitize=thread
+	CXXFLAGS += -fsanitize=thread -DRX_TSAN
 endif
 
 # linker flags
