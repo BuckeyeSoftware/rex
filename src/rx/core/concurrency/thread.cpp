@@ -75,9 +75,20 @@ thread::state::state(rx::function<void(int)>&& _function)
   : m_function{utility::move(_function)}
   , m_joined{false}
 {
+#if defined(RX_PLATFORM_POSIX)
   if (pthread_create(&m_thread, nullptr, wrap, reinterpret_cast<void*>(this)) != 0) {
     RX_ASSERT(false, "thread creation failed");
   }
+#elif defined(RX_PLATFORM_WINDOWS)
+  // _beginthreadex on windows expects unsigned int return and __stdcall,
+  auto wrap_win32{[](void* _data) -> unsigned {
+    wrap(_data);
+    return 0;
+  }};
+  m_thread = reinterpret_cast<HANDLE>(
+    _beginthreadex(nullptr, 0, wrap_win32, reinterpret_cast<void*>(this), 0, nullptr));
+  RX_ASSERT(m_thread, "thread creation failed");
+#endif
 }
 
 void thread::state::join() {
@@ -85,9 +96,15 @@ void thread::state::join() {
     return;
   }
 
+#if defined(RX_PLATFORM_POSIX)
   if (pthread_join(m_thread, nullptr) != 0) {
     RX_ASSERT(false, "join failed");
   }
+#elif defined(RX_PLATFORM_WINDOWS)
+  if (WaitForSingleObject(m_thread, INFINITE) != WAIT_OBJECT_0) {
+    RX_ASSERT(false, "join failed");
+  }
+#endif
 
   m_joined = true;
 }

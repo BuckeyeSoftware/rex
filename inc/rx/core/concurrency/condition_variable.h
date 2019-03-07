@@ -1,7 +1,14 @@
 #ifndef RX_CORE_CONCURRENCY_CONDITION_VARIABLE_H
 #define RX_CORE_CONCURRENCY_CONDITION_VARIABLE_H
 
-#include <pthread.h> // pthread_cond_{t, wait, signal}
+#if defined(RX_PLATFORM_POSIX)
+#include <pthread.h>
+#elif defined(RX_PLATFORM_WINDOWS)
+#define _WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
+#error "missing condition variable implementation"
+#endif
 
 #include <rx/core/assert.h> // RX_ASSERT
 
@@ -18,57 +25,37 @@ struct condition_variable {
   void wait(scope_lock<mutex>& _scope_lock);
 
   template<typename P>
-  void wait(mutex& _mutex, P&& _predicate) {
-    while (!_predicate()) {
-      wait(_mutex);
-    }
-  }
+  void wait(mutex& _mutex, P&& _predicate);
 
   template<typename P>
-  void wait(scope_lock<mutex>& _scope_lock, P&& _predicate) {
-    while (!_predicate()) {
-      wait(_scope_lock);
-    }
-  }
+  void wait(scope_lock<mutex>& _scope_lock, P&& _predicate);
 
   void signal();
   void broadcast();
 
 private:
+#if defined(RX_PLATFORM_POSIX)
   pthread_cond_t m_cond;
+#elif defined(RX_PLATFORM_WINDOWS)
+  CONDITION_VARIABLE m_cond;
+#endif
 };
-
-inline condition_variable::condition_variable() {
-  if (pthread_cond_init(&m_cond, nullptr) != 0) {
-    RX_ASSERT(false, "failed to initialize");
-  }
-}
-
-inline condition_variable::~condition_variable() {
-  if (pthread_cond_destroy(&m_cond) != 0) {
-    RX_ASSERT(false, "failed to destroy");
-  }
-}
-
-inline void condition_variable::wait(mutex& _mutex) {
-  if (pthread_cond_wait(&m_cond, &_mutex.m_mutex) != 0) {
-    RX_ASSERT(false, "failed to wait");
-  }
-}
 
 inline void condition_variable::wait(scope_lock<mutex>& _scope_lock) {
   wait(_scope_lock.m_lock);
 }
 
-inline void condition_variable::signal() {
-  if (pthread_cond_signal(&m_cond) != 0) {
-    RX_ASSERT(false, "failed to signal");
+template<typename P>
+inline void condition_variable::wait(mutex& _mutex, P&& _predicate) {
+  while (!_predicate()) {
+    wait(_mutex);
   }
 }
 
-inline void condition_variable::broadcast() {
-  if (pthread_cond_broadcast(&m_cond) != 0) {
-    RX_ASSERT(false, "failed to broadcast");
+template<typename P>
+inline void condition_variable::wait(scope_lock<mutex>& _scope_lock, P&& _predicate) {
+  while (!_predicate()) {
+    wait(_scope_lock);
   }
 }
 

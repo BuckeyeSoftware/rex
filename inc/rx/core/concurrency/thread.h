@@ -1,7 +1,14 @@
 #ifndef RX_CORE_CONCURRENCY_THREAD_H
 #define RX_CORE_CONCURRENCY_THREAD_H
 
+#if defined(RX_PLATFORM_POSIX)
 #include <pthread.h>
+#elif defined(RX_PLATFORM_WINDOWS)
+#defined _WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
+#error "missing thread implementation"
+#endif
 
 #include <rx/core/function.h>
 #include <rx/core/concepts/no_copy.h>
@@ -33,7 +40,12 @@ private:
 
     void join();
 
+#if defined(RX_PLATFORM_POSIX)
     pthread_t m_thread;
+#elif defined(RX_PLATFORM_WINDOWS)
+    HANDLE m_thread;
+#endif
+
     rx::function<void(int)> m_function;
     bool m_joined;
   };

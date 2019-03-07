@@ -64,6 +64,12 @@ inline promise<T>::promise()
 template<typename T>
 inline promise<T>::~promise() {
   if (m_state) {
+    {
+      auto state_data{m_state.cast<state*>()};
+      scope_lock<mutex> lock(state_data->m_mutex);
+      state_data->m_condition_variable.wait(lock, [state_data] { return state_data->m_done; });
+    }
+
     utility::destruct<state>(m_state.data());
     m_allocator->deallocate(utility::move(m_state));
   }
@@ -84,8 +90,8 @@ inline void promise<T>::set_value(const T& _value) {
     scope_lock<mutex> lock(state_data->m_mutex);
     state_data->m_result = _value;
     state_data->m_done = true;
+    state_data->m_condition_variable.signal();
   }
-  state_data->m_condition_variable.signal();
 }
 
 template<typename T>
@@ -95,8 +101,8 @@ inline void promise<T>::set_value(T&& _value) {
     scope_lock<mutex> lock(state_data->m_mutex);
     state_data->m_result = utility::move(_value);
     state_data->m_done = true;
+    state_data->m_condition_variable.signal();
   }
-  state_data->m_condition_variable.signal();
 }
 
 template<typename T>
