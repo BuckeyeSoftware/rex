@@ -56,7 +56,7 @@ void thread::join() {
 void* thread::state::wrap(void* _data) {
   int thread_id = 0;
   {
-    scope_lock<spin_lock> locked(g_lock);
+    scope_lock locked(g_lock);
     thread_id = g_thread_id++;
   }
 

@@ -66,7 +66,7 @@ inline promise<T>::~promise() {
   if (m_state) {
     {
       auto state_data{m_state.cast<state*>()};
-      scope_lock<mutex> lock(state_data->m_mutex);
+      scope_lock lock(state_data->m_mutex);
       state_data->m_condition_variable.wait(lock, [state_data] { return state_data->m_done; });
     }
 
@@ -87,7 +87,7 @@ template<typename T>
 inline void promise<T>::set_value(const T& _value) {
   auto state_data{m_state.cast<state*>()};
   {
-    scope_lock<mutex> lock(state_data->m_mutex);
+    scope_lock lock(state_data->m_mutex);
     state_data->m_result = _value;
     state_data->m_done = true;
     state_data->m_condition_variable.signal();
@@ -98,7 +98,7 @@ template<typename T>
 inline void promise<T>::set_value(T&& _value) {
   auto state_data{m_state.cast<state*>()};
   {
-    scope_lock<mutex> lock(state_data->m_mutex);
+    scope_lock lock(state_data->m_mutex);
     state_data->m_result = utility::move(_value);
     state_data->m_done = true;
     state_data->m_condition_variable.signal();
@@ -108,7 +108,7 @@ inline void promise<T>::set_value(T&& _value) {
 template<typename T>
 inline T promise<T>::get_value() const {
   auto state_data{m_state.cast<state*>()};
-  scope_lock<mutex> lock(state_data->m_mutex);
+  scope_lock lock(state_data->m_mutex);
   state_data->m_condition_variable.wait(lock, [state_data] { return state_data->m_done; });
   return state_data->m_result;
 }

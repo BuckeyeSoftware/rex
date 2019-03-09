@@ -49,7 +49,7 @@ frontend::~frontend() {
 
 // create_*
 buffer* frontend::create_buffer(const command_header::info& _info) {
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_buffer;
@@ -59,7 +59,7 @@ buffer* frontend::create_buffer(const command_header::info& _info) {
 }
 
 target* frontend::create_target(const command_header::info& _info) {
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_target;
@@ -69,7 +69,7 @@ target* frontend::create_target(const command_header::info& _info) {
 }
 
 texture1D* frontend::create_texture1D(const command_header::info& _info) {
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_texture1D;
@@ -79,7 +79,7 @@ texture1D* frontend::create_texture1D(const command_header::info& _info) {
 }
 
 texture2D* frontend::create_texture2D(const command_header::info& _info) {
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_texture2D;
@@ -89,7 +89,7 @@ texture2D* frontend::create_texture2D(const command_header::info& _info) {
 }
 
 texture3D* frontend::create_texture3D(const command_header::info& _info) {
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_texture3D;
@@ -99,7 +99,7 @@ texture3D* frontend::create_texture3D(const command_header::info& _info) {
 }
 
 textureCM* frontend::create_textureCM(const command_header::info& _info) {
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_textureCM;
@@ -111,7 +111,7 @@ textureCM* frontend::create_textureCM(const command_header::info& _info) {
 // initialize_*
 void frontend::initialize_buffer(const command_header::info& _info, buffer* _buffer) {
   RX_ASSERT(_buffer, "_buffer is null");
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resoucce_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_buffer;
@@ -121,7 +121,7 @@ void frontend::initialize_buffer(const command_header::info& _info, buffer* _buf
 
 void frontend::initialize_target(const command_header::info& _info, target* _target) {
   RX_ASSERT(_target, "_target is null");
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resoucce_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_target;
@@ -131,7 +131,7 @@ void frontend::initialize_target(const command_header::info& _info, target* _tar
 
 void frontend::initialize_texture(const command_header::info& _info, texture1D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resoucce_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_texture1D;
@@ -141,7 +141,7 @@ void frontend::initialize_texture(const command_header::info& _info, texture1D* 
 
 void frontend::initialize_texture(const command_header::info& _info, texture2D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resoucce_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_texture2D;
@@ -151,7 +151,7 @@ void frontend::initialize_texture(const command_header::info& _info, texture2D* 
 
 void frontend::initialize_texture(const command_header::info& _info, texture3D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resoucce_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_texture3D;
@@ -161,7 +161,7 @@ void frontend::initialize_texture(const command_header::info& _info, texture3D* 
 
 void frontend::initialize_texture(const command_header::info& _info, textureCM* _texture) {
   RX_ASSERT(_texture, "_texture is null");
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resoucce_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_textureCM;
@@ -172,7 +172,7 @@ void frontend::initialize_texture(const command_header::info& _info, textureCM* 
 // destroy_*
 void frontend::destroy_buffer(const command_header::info& _info, buffer* _buffer) {
   if (_buffer) {
-    concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+    concurrency::scope_lock lock(m_mutex);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->type = resource_command::category::k_buffer;
@@ -184,7 +184,7 @@ void frontend::destroy_buffer(const command_header::info& _info, buffer* _buffer
 
 void frontend::destroy_target(const command_header::info& _info, target* _target) {
   if (_target) {
-    concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+    concurrency::scope_lock lock(m_mutex);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->type = resource_command::category::k_target;
@@ -196,7 +196,7 @@ void frontend::destroy_target(const command_header::info& _info, target* _target
 
 void frontend::destroy_texture(const command_header::info& _info, texture1D* _texture) {
   if (_texture) {
-    concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+    concurrency::scope_lock lock(m_mutex);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->type = resource_command::category::k_texture1D;
@@ -207,13 +207,13 @@ void frontend::destroy_texture(const command_header::info& _info, texture1D* _te
 }
 
 void frontend::destroy_texture(const command_header::info& _info, texture2D* _texture) {
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
   destroy_texture_unlocked(_info, _texture);
 }
 
 void frontend::destroy_texture(const command_header::info& _info, texture3D* _texture) {
   if (_texture) {
-    concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+    concurrency::scope_lock lock(m_mutex);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->type = resource_command::category::k_texture3D;
@@ -225,7 +225,7 @@ void frontend::destroy_texture(const command_header::info& _info, texture3D* _te
 
 void frontend::destroy_texture(const command_header::info& _info, textureCM* _texture) {
   if (_texture) {
-    concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+    concurrency::scope_lock lock(m_mutex);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->type = resource_command::category::k_textureCM;

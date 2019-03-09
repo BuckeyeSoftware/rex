@@ -24,7 +24,7 @@ struct thread_pool {
         RX_MESSAGE("starting thread %d for pool", _thread_id);
 
         {
-          scope_lock<mutex> lock(m_mutex);
+          scope_lock lock(m_mutex);
           m_ready++;
           m_ready_cond.signal();
         }
@@ -47,7 +47,7 @@ struct thread_pool {
 
     // wait for all threads to start
     {
-      scope_lock<mutex> lock(m_mutex);
+      scope_lock lock(m_mutex);
       m_ready_cond.wait(lock, [this] { return m_ready == m_threads.size(); });
     }
 
@@ -56,7 +56,7 @@ struct thread_pool {
 
   ~thread_pool() {
     {
-      scope_lock<mutex> lock(m_mutex);
+      scope_lock lock(m_mutex);
       m_stop = true;
     }
     m_task_cond.broadcast();
