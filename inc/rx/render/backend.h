@@ -2,6 +2,7 @@
 #define RX_RENDER_BACKEND_H
 
 #include <rx/core/concepts/interface.h>
+#include <rx/core/types.h> // rx_byte
 
 namespace rx::render {
 

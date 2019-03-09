@@ -17,12 +17,11 @@ struct textureCM;
 
 enum class command_type : rx_u8 {
   k_resource_allocate,
-  k_resoucce_construct,
+  k_resource_construct,
   k_resource_destroy,
   k_clear,
   k_draw,
-  k_draw_elements,
-  k_debug
+  k_draw_elements
 };
 
 struct alignas(16) command_header {

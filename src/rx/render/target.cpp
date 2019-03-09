@@ -97,15 +97,18 @@ target::target(frontend* _frontend)
 target::~target() {
   if (m_owns != 0) {
     if (m_depth_texture == m_stencil_texture) {
-      m_frontend->destroy_texture_unlocked(RX_RENDER_TAG("target depth stencil"),
+      m_frontend->destroy_texture_unlocked(
+        RX_RENDER_TAG("target depth stencil"),
         m_depth_stencil_texture);
     } else {
       if (m_owns & k_depth) {
-        m_frontend->destroy_texture_unlocked(RX_RENDER_TAG("target depth"),
+        m_frontend->destroy_texture_unlocked(
+          RX_RENDER_TAG("target depth"),
           m_depth_texture);
       }
       if (m_owns & k_stencil) {
-        m_frontend->destroy_texture_unlocked(RX_RENDER_TAG("target stencil"),
+        m_frontend->destroy_texture_unlocked(
+          RX_RENDER_TAG("target stencil"),
           m_stencil_texture);
       }
     }
@@ -114,36 +117,57 @@ target::~target() {
   target_log(log::level::k_verbose, "%08p: fini target", this);
 }
 
-void target::request_depth(texture::data_format _format) {
+void target::request_depth(texture::data_format _format, const math::vec2z& _dimensions) {
   RX_ASSERT(!m_depth_texture, "already has depth attachment");
   RX_ASSERT(!m_stencil_texture, "use combined depth stencil");
   RX_ASSERT(is_valid_depth_format(_format), "not a valid depth format");
 
   m_depth_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target depth"));
   m_depth_texture->record_format(_format);
-  // TODO: record resolution and initialize
+  m_depth_texture->record_dimensions(_dimensions);
+  m_depth_texture->record_filter({ false, false, false });
+  m_depth_texture->record_wrap({
+    texture::wrap_options::category::k_clamp_to_edge,
+    texture::wrap_options::category::k_clamp_to_edge,
+    texture::wrap_options::category::k_clamp_to_edge});
+  m_frontend->initialize_texture(RX_RENDER_TAG("target depth"), m_depth_texture);
+
   m_owns |= k_depth;
 }
 
-void target::request_stencil(texture::data_format _format) {
+void target::request_stencil(texture::data_format _format, const math::vec2z& _dimensions) {
   RX_ASSERT(!m_stencil_texture, "already has stencil attachment");
   RX_ASSERT(!m_depth_texture, "use combined depth stencil");
   RX_ASSERT(is_valid_stencil_format(_format), "not a valid stencil format");
 
   m_stencil_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target stencil"));
   m_stencil_texture->record_format(_format);
-  // TODO: record resolution and initialize
+  m_stencil_texture->record_dimensions(_dimensions);
+  m_stencil_texture->record_filter({ false, false, false });
+  m_stencil_texture->record_wrap({
+    texture::wrap_options::category::k_clamp_to_edge,
+    texture::wrap_options::category::k_clamp_to_edge,
+    texture::wrap_options::category::k_clamp_to_edge});
+  m_frontend->initialize_texture(RX_RENDER_TAG("target stencil"), m_stencil_texture);
+
   m_owns |= k_stencil;
 }
 
-void target::request_depth_stencil(texture::data_format _format) {
+void target::request_depth_stencil(texture::data_format _format, const math::vec2z& _dimensions) {
   RX_ASSERT(!m_depth_texture, "already has depth attachment");
   RX_ASSERT(!m_stencil_texture, "already had stencil attachment");
   RX_ASSERT(is_valid_depth_stencil_format(_format), "not a valid depth stencil format");
 
   m_depth_stencil_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target depth stencil"));
   m_depth_stencil_texture->record_format(_format);
-  // TODO: record resolution and initialize
+  m_depth_stencil_texture->record_dimensions(_dimensions);
+  m_depth_stencil_texture->record_filter({ false, false, false });
+  m_depth_stencil_texture->record_wrap({
+    texture::wrap_options::category::k_clamp_to_edge,
+    texture::wrap_options::category::k_clamp_to_edge,
+    texture::wrap_options::category::k_clamp_to_edge});
+  m_frontend->initialize_texture(RX_RENDER_TAG("target depth stencil"), m_depth_stencil_texture);
+
   m_owns |= k_depth;
   m_owns |= k_stencil;
 }

@@ -19,7 +19,16 @@ struct textureCM;
 struct backend;
 
 struct frontend {
-  frontend(memory::allocator* _allocator, backend* _backend, rx_size _command_memory);
+  struct allocation_info {
+    rx_size buffer_size;
+    rx_size target_size;
+    rx_size texture1D_size;
+    rx_size texture2D_size;
+    rx_size texture3D_size;
+    rx_size textureCM_size;
+  };
+
+  frontend(memory::allocator* _allocator, backend* _backend, const allocation_info& _allocation_info);
   ~frontend();
 
   buffer* create_buffer(const command_header::info& _info);

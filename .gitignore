@@ -1,3 +1,6 @@
 # ignore objects and dependency files
 *.o
 *.d
+
+# ignore trace files
+*.trace

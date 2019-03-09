@@ -54,11 +54,13 @@ struct blend_state {
 
   blend_state();
 
+  void record_enable(bool _enable);
   void record_blend_factors(factor_type _src, factor_type _dst);
   void record_color_blend_factors(factor_type _src, factor_type _dst);
   void record_alpha_blend_factors(factor_type _src, factor_type _dst);
   void record_write_mask(rx_u8 _write_mask);
 
+  bool enabled() const;
   factor_type color_src_factor() const;
   factor_type color_dst_factor() const;
   factor_type alpha_src_factor() const;
@@ -300,6 +302,11 @@ inline bool scissor_state::operator!=(const scissor_state& _other) const {
 }
 
 // blend_state
+inline void blend_state::record_enable(bool _enable) {
+  m_enabled = _enable;
+  m_hash |= k_dirty_bit;
+}
+
 inline void blend_state::record_blend_factors(factor_type _src, factor_type _dst) {
   record_color_blend_factors(_src, _dst);
   record_alpha_blend_factors(_src, _dst);
@@ -320,6 +327,10 @@ inline void blend_state::record_alpha_blend_factors(factor_type _src, factor_typ
 inline void blend_state::record_write_mask(rx_u8 _write_mask) {
   m_write_mask = _write_mask;
   m_hash |= k_dirty_bit;
+}
+
+inline bool blend_state::enabled() const {
+  return m_enabled;
 }
 
 inline blend_state::factor_type blend_state::color_src_factor() const {

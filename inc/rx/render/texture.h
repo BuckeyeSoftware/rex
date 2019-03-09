@@ -15,7 +15,7 @@ struct texture : resource {
   texture(resource::category _type);
 
   struct filter_options {
-    bool blinear;
+    bool bilinear;
     bool trilinear;
     bool mip_maps;
   };
@@ -56,6 +56,8 @@ struct texture : resource {
   // record |_filter| parameters
   void record_filter(const filter_options& _options);
 
+  bool validate() const;
+
   const array<rx_byte>& data() const &;
 
   data_format format() const;
@@ -65,9 +67,10 @@ struct texture : resource {
 
 protected:
   enum {
-    k_format = 1 << 0,
-    k_filter = 1 << 1,
-    k_wrap = 1 << 2
+    k_format     = 1 << 0,
+    k_filter     = 1 << 1,
+    k_wrap       = 1 << 2,
+    k_dimensions = 1 << 3,
   };
 
   array<rx_byte> m_data;
@@ -83,6 +86,10 @@ struct texture1D : texture {
 
   // write data |_data| of dimensions |_dimensions| to store
   void write(const rx_byte* _data, rx_size _dimensions);
+
+  // record dimensions |_dimensions|
+  void record_dimensions(rx_size _dimensions);
+
   rx_size dimensions() const;
 private:
   rx_size m_dimensions;
@@ -94,6 +101,8 @@ struct texture2D : texture {
 
   // write data |_data| of dimensions |_dimensions| to store
   void write(const rx_byte* _data, const math::vec2z& _dimensions);
+  void record_dimensions(const math::vec2z& _dimensions);
+
   const math::vec2z& dimensions() const &;
 private:
   math::vec2z m_dimensions;
@@ -105,6 +114,8 @@ struct texture3D : texture {
 
   // write data |_data| of dimensions |_dimensions| to store
   void write(const rx_byte* _data, const math::vec3z& _dimensions);
+  void record_dimensions(const math::vec3z& _dimensions);
+
   const math::vec3z& dimensions() const &;
 private:
   math::vec3z m_dimensions;
@@ -125,6 +136,8 @@ struct textureCM : texture {
 
   // write data |_data| of dimensions |_dimensions| to store |_face|
   void write(const rx_byte* _data, const math::vec2z& _dimensions, face _face);
+  void record_dimensions(const math::vec2z& _dimensions);
+
   const math::vec2z& dimensions() const &;
 private:
   math::vec2z m_dimensions;

@@ -8,6 +8,12 @@
 #include <rx/console/console.h>
 #include <rx/console/variable.h>
 
+#include <rx/render/frontend.h>
+#include <rx/render/buffer.h>
+#include <rx/render/target.h>
+#include <rx/render/texture.h>
+#include <rx/render/backend_gl4.h>
+
 #include <rx/input/input.h>
 
 RX_CONSOLE_V2IVAR(
@@ -50,8 +56,6 @@ extern "C" {
   }
 }
 
-using namespace rx;
-
 int entry(int argc, char **argv) {
   (void)argc;
   (void)argv;
@@ -61,7 +65,6 @@ int entry(int argc, char **argv) {
     rx::console::console::save("config.cfg");
   }
 
-#if 0
   // enumerate displays to find the one with the given name
   SDL_Init(SDL_INIT_VIDEO);
 
@@ -120,43 +123,110 @@ int entry(int argc, char **argv) {
   SDL_GLContext context =
     SDL_GL_CreateContext(window);
 
-  SDL_GL_SwapWindow(window);
+  const rx::math::vec3f vertices[]{
+    {-1.0f, -1.0f, 0.0f },
+    { 0.0f, -1.0f, 0.0f },
+    { 1.0f, -1.0f, 0.0f },
+    { 0.0f,  1.0f, 0.0f }
+  };
 
-  rx::input::input input;
-  while (!input.get_keyboard().is_released(SDLK_ESCAPE, false)) {
-    input.update(0);
+  const rx_u8 elements[]{
+    0,3,1,
+    1,3,2,
+    2,3,0,
+    0,1,2
+  };
 
-    // translate SDL events
-    for (SDL_Event event; SDL_PollEvent(&event); ) {
-      rx::input::event ievent;
-      switch (event.type) {
-      case SDL_KEYDOWN:
-      case SDL_KEYUP:
-        ievent.type = rx::input::event_type::k_keyboard;
-        ievent.as_keyboard.down = event.type == SDL_KEYDOWN;
-        ievent.as_keyboard.scan_code = event.key.keysym.scancode;
-        ievent.as_keyboard.symbol = event.key.keysym.sym;
-        input.handle_event(rx::utility::move(ievent));
-        break;
-      case SDL_MOUSEBUTTONDOWN:
-      case SDL_MOUSEBUTTONUP:
-        ievent.type = rx::input::event_type::k_mouse_button;
-        ievent.as_mouse_button.down = event.type == SDL_MOUSEBUTTONDOWN;
-        ievent.as_mouse_button.button = event.button.button;
-        input.handle_event(rx::utility::move(ievent));
-        break;
-      case SDL_MOUSEMOTION:
-        ievent.type = rx::input::event_type::k_mouse_motion;
-        ievent.as_mouse_motion.value = { event.motion.x, event.motion.y };
-        input.handle_event(rx::utility::move(ievent));
-        break;
-      case SDL_MOUSEWHEEL:
-        ievent.type = rx::input::event_type::k_mouse_scroll;
-        ievent.as_mouse_scroll.value = { event.wheel.x, event.wheel.y };
-        input.handle_event(rx::utility::move(ievent));
-        break;
+  {
+    rx::render::frontend::allocation_info allocation_info;
+    rx::render::backend_gl4 gl4{allocation_info};
+
+    rx::render::frontend renderer{&rx::memory::g_system_allocator, &gl4, allocation_info};
+
+    // create, record and initialize buffer
+    auto buffer{renderer.create_buffer(RX_RENDER_TAG("test"))};
+    buffer->write_vertices(vertices, sizeof vertices, sizeof(rx::math::vec3f));
+    buffer->write_elements(elements, sizeof elements);
+    buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, 0);
+    renderer.initialize_buffer(RX_RENDER_TAG("test"), buffer);
+
+    // create, record and initialize color texture
+    auto attach{renderer.create_texture2D(RX_RENDER_TAG("test"))};
+    attach->record_format(rx::render::texture::data_format::k_rgba_u8);
+    attach->record_wrap({
+      rx::render::texture::wrap_options::category::k_clamp_to_edge,
+      rx::render::texture::wrap_options::category::k_clamp_to_edge,
+      rx::render::texture::wrap_options::category::k_clamp_to_edge});
+    attach->record_filter({ true, false, false });
+    attach->record_dimensions({1600, 900});
+    renderer.initialize_texture(RX_RENDER_TAG("test"), attach);
+
+    // create, record and initialize target
+    auto target{renderer.create_target(RX_RENDER_TAG("test"))};
+    target->request_depth(rx::render::texture::data_format::k_d24, {1600, 900});
+    target->attach_texture(attach);
+    renderer.initialize_target(RX_RENDER_TAG("test"), target);
+
+    rx::input::input input;
+    while (!input.get_keyboard().is_released(SDLK_ESCAPE, false)) {
+      input.update(0);
+
+      // translate SDL events
+      for (SDL_Event event; SDL_PollEvent(&event); ) {
+        rx::input::event ievent;
+        switch (event.type) {
+        case SDL_KEYDOWN:
+        case SDL_KEYUP:
+          ievent.type = rx::input::event_type::k_keyboard;
+          ievent.as_keyboard.down = event.type == SDL_KEYDOWN;
+          ievent.as_keyboard.scan_code = event.key.keysym.scancode;
+          ievent.as_keyboard.symbol = event.key.keysym.sym;
+          input.handle_event(rx::utility::move(ievent));
+          break;
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+          ievent.type = rx::input::event_type::k_mouse_button;
+          ievent.as_mouse_button.down = event.type == SDL_MOUSEBUTTONDOWN;
+          ievent.as_mouse_button.button = event.button.button;
+          input.handle_event(rx::utility::move(ievent));
+          break;
+        case SDL_MOUSEMOTION:
+          ievent.type = rx::input::event_type::k_mouse_motion;
+          ievent.as_mouse_motion.value = { event.motion.x, event.motion.y };
+          input.handle_event(rx::utility::move(ievent));
+          break;
+        case SDL_MOUSEWHEEL:
+          ievent.type = rx::input::event_type::k_mouse_scroll;
+          ievent.as_mouse_scroll.value = { event.wheel.x, event.wheel.y };
+          input.handle_event(rx::utility::move(ievent));
+          break;
+        }
+      }
+
+#if 0
+      renderer.draw_elements(
+        RX_RENDER_TAG("test"),
+        state,
+        target,
+        buffer,
+        program,
+        rx::render::primitive_type::k_triangles,
+        0,
+        12
+      );
+#endif
+
+      if (renderer.process())
+      {
+        renderer.swap();
       }
     }
+
+    renderer.destroy_target(RX_RENDER_TAG("test"), target);
+    renderer.destroy_texture(RX_RENDER_TAG("test"), attach);
+    renderer.destroy_buffer(RX_RENDER_TAG("test"), buffer);
+
+    renderer.process();
   }
 
   rx::console::console::save("config.cfg");
@@ -164,7 +234,6 @@ int entry(int argc, char **argv) {
   SDL_GL_DeleteContext(context);
   SDL_DestroyWindow(window);
   SDL_Quit();
-#endif
 
   return 0;
 }

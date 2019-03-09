@@ -24,6 +24,7 @@ struct static_node
 
 private:
   friend struct static_globals;
+
   void init_global();
   void fini_global();
 
@@ -150,6 +151,7 @@ struct static_globals {
   // linked-list manipulation
   static void lock();
   static void unlock();
+
 private:
   static static_node* head();
   static static_node* tail();

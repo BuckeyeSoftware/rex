@@ -13,14 +13,14 @@ struct target {
   target(frontend* _frontend);
   ~target();
 
-  // request target have depth attachment
-  void request_depth(texture::data_format _format);
+  // request target have depth attachment |_format| with size |_dimensions|
+  void request_depth(texture::data_format _format, const math::vec2z& _dimensions);
 
-  // request target have stencil attachment
-  void request_stencil(texture::data_format _format);
+  // request target have stencil attachment |_format| with size |_dimensions|
+  void request_stencil(texture::data_format _format, const math::vec2z& _dimensions);
 
-  // request target have combined depth stencil attachment
-  void request_depth_stencil(texture::data_format _format);
+  // request target have combined depth stencil attachment with size |_dimensions|
+  void request_depth_stencil(texture::data_format _format, const math::vec2z& _dimensions);
 
   // attach existing depth texture |_depth| to target
   void attach_depth(texture2D* _depth);
@@ -33,6 +33,7 @@ struct target {
 
   texture2D* depth() const;
   texture2D* stencil() const;
+  texture2D* depth_stencil() const;
   const array<texture2D*> attachments() const &;
 
 private:
@@ -60,6 +61,10 @@ inline texture2D* target::depth() const {
 
 inline texture2D* target::stencil() const {
   return m_stencil_texture;
+}
+
+inline texture2D* target::depth_stencil() const {
+  return m_depth_texture == m_stencil_texture ? m_depth_stencil_texture : nullptr;
 }
 
 inline const array<texture2D*> target::attachments() const & {

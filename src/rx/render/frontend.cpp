@@ -15,6 +15,7 @@ RX_CONSOLE_IVAR(max_texture1D, "render.max_texture1D", "maximum 1D textures", 16
 RX_CONSOLE_IVAR(max_texture2D, "render.max_texture2D", "maximum 2D textures", 16, 4096, 1024);
 RX_CONSOLE_IVAR(max_texture3D, "render.max_texture3D", "maximum 3D textures", 16, 128, 16);
 RX_CONSOLE_IVAR(max_textureCM, "render.max_textureCM", "maximum CM textures", 16, 128, 16);
+RX_CONSOLE_IVAR(command_memory, "render.command_memory", "memory for command buffer in MiB", 16, 64, 16);
 
 RX_LOG("render", render_log);
 
@@ -23,13 +24,13 @@ namespace rx::render {
 #define allocate_command(data_type, type) \
   m_command_buffer.allocate(sizeof(data_type), (type), _info)
 
-frontend::frontend(memory::allocator* _allocator, backend* _backend, rx_size _command_memory)
-  : m_buffer_pool{_allocator, sizeof(buffer), static_cast<rx_size>(*max_buffers)}
-  , m_target_pool{_allocator, sizeof(target), static_cast<rx_size>(*max_targets)}
-  , m_texture1D_pool{_allocator, sizeof(texture1D), static_cast<rx_size>(*max_texture1D)}
-  , m_texture2D_pool{_allocator, sizeof(texture2D), static_cast<rx_size>(*max_texture2D)}
-  , m_texture3D_pool{_allocator, sizeof(texture3D), static_cast<rx_size>(*max_texture3D)}
-  , m_textureCM_pool{_allocator, sizeof(textureCM), static_cast<rx_size>(*max_textureCM)}
+frontend::frontend(memory::allocator* _allocator, backend* _backend, const allocation_info& _allocation_info)
+  : m_buffer_pool{_allocator, _allocation_info.buffer_size + sizeof(buffer), static_cast<rx_size>(*max_buffers)}
+  , m_target_pool{_allocator, _allocation_info.target_size + sizeof(target), static_cast<rx_size>(*max_targets)}
+  , m_texture1D_pool{_allocator, _allocation_info.texture1D_size + sizeof(texture1D), static_cast<rx_size>(*max_texture1D)}
+  , m_texture2D_pool{_allocator, _allocation_info.texture2D_size + sizeof(texture2D), static_cast<rx_size>(*max_texture2D)}
+  , m_texture3D_pool{_allocator, _allocation_info.texture3D_size + sizeof(texture3D), static_cast<rx_size>(*max_texture3D)}
+  , m_textureCM_pool{_allocator, _allocation_info.textureCM_size + sizeof(textureCM), static_cast<rx_size>(*max_textureCM)}
   , m_destroy_buffers{_allocator}
   , m_destroy_targets{_allocator}
   , m_destroy_textures1D{_allocator}
@@ -37,14 +38,12 @@ frontend::frontend(memory::allocator* _allocator, backend* _backend, rx_size _co
   , m_destroy_textures3D{_allocator}
   , m_destroy_texturesCM{_allocator}
   , m_commands{_allocator}
-  , m_command_buffer{_allocator, _command_memory}
+  , m_command_buffer{_allocator, static_cast<rx_size>(*command_memory * 1024 * 1024)}
   , m_backend{_backend}
 {
-  render_log(log::level::k_info, "created frontend");
 }
 
 frontend::~frontend() {
-  render_log(log::level::k_info, "destroying frontend");
 }
 
 // create_*
@@ -112,7 +111,7 @@ textureCM* frontend::create_textureCM(const command_header::info& _info) {
 void frontend::initialize_buffer(const command_header::info& _info, buffer* _buffer) {
   RX_ASSERT(_buffer, "_buffer is null");
   concurrency::scope_lock lock(m_mutex);
-  auto command_base{allocate_command(resource_command, command_type::k_resoucce_construct)};
+  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_buffer;
   command->as_buffer = _buffer;
@@ -122,7 +121,7 @@ void frontend::initialize_buffer(const command_header::info& _info, buffer* _buf
 void frontend::initialize_target(const command_header::info& _info, target* _target) {
   RX_ASSERT(_target, "_target is null");
   concurrency::scope_lock lock(m_mutex);
-  auto command_base{allocate_command(resource_command, command_type::k_resoucce_construct)};
+  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_target;
   command->as_target = _target;
@@ -131,8 +130,10 @@ void frontend::initialize_target(const command_header::info& _info, target* _tar
 
 void frontend::initialize_texture(const command_header::info& _info, texture1D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
+  RX_ASSERT(_texture->validate(), "_texture is not valid");
+
   concurrency::scope_lock lock(m_mutex);
-  auto command_base{allocate_command(resource_command, command_type::k_resoucce_construct)};
+  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_texture1D;
   command->as_texture1D = _texture;
@@ -141,8 +142,10 @@ void frontend::initialize_texture(const command_header::info& _info, texture1D* 
 
 void frontend::initialize_texture(const command_header::info& _info, texture2D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
+  RX_ASSERT(_texture->validate(), "_texture is not valid");
+
   concurrency::scope_lock lock(m_mutex);
-  auto command_base{allocate_command(resource_command, command_type::k_resoucce_construct)};
+  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_texture2D;
   command->as_texture2D = _texture;
@@ -151,8 +154,10 @@ void frontend::initialize_texture(const command_header::info& _info, texture2D* 
 
 void frontend::initialize_texture(const command_header::info& _info, texture3D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
+  RX_ASSERT(_texture->validate(), "_texture is not valid");
+
   concurrency::scope_lock lock(m_mutex);
-  auto command_base{allocate_command(resource_command, command_type::k_resoucce_construct)};
+  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_texture3D;
   command->as_texture3D = _texture;
@@ -161,8 +166,10 @@ void frontend::initialize_texture(const command_header::info& _info, texture3D* 
 
 void frontend::initialize_texture(const command_header::info& _info, textureCM* _texture) {
   RX_ASSERT(_texture, "_texture is null");
+  RX_ASSERT(_texture->validate(), "_texture is not valid");
+
   concurrency::scope_lock lock(m_mutex);
-  auto command_base{allocate_command(resource_command, command_type::k_resoucce_construct)};
+  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_textureCM;
   command->as_textureCM = _texture;
