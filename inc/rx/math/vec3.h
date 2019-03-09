@@ -3,6 +3,7 @@
 
 #include <rx/core/types.h> // rx_size
 #include <rx/core/format.h> // format
+#include <rx/core/hash.h> // hash, hash_combine
 #include <rx/core/assert.h> // RX_ASSERT
 
 namespace rx::math {
@@ -24,6 +25,7 @@ struct vec3 {
 
 using vec3f = vec3<rx_f32>;
 using vec3i = vec3<rx_s32>;
+using vec3z = vec3<rx_size>;
 
 template<typename T>
 inline constexpr vec3<T>::vec3()
@@ -155,6 +157,26 @@ namespace rx {
   struct format<::rx::math::vec3i> {
     char scratch[format_size<rx_s32>::size*3 + sizeof "{,,  }" - 1];
     const char* operator()(const ::rx::math::vec3i& value);
+  };
+
+  template<>
+  struct hash<::rx::math::vec3f> {
+    rx_size operator()(const ::rx::math::vec3f& _value) {
+      const auto x{hash<rx_f32>{}(_value.x)};
+      const auto y{hash<rx_f32>{}(_value.y)};
+      const auto z{hash<rx_f32>{}(_value.z)};
+      return hash_combine(hash_combine(x, y), z);
+    }
+  };
+
+  template<>
+  struct hash<::rx::math::vec3i> {
+    rx_size operator()(const ::rx::math::vec3i& _value) {
+      const auto x{hash<rx_s32>{}(_value.x)};
+      const auto y{hash<rx_s32>{}(_value.y)};
+      const auto z{hash<rx_s32>{}(_value.z)};
+      return hash_combine(hash_combine(x, y), z);
+    }
   };
 } // namespace rx
 

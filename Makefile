@@ -8,7 +8,8 @@ PLATFORM := RX_PLATFORM_POSIX
 
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 
-CXX ?= clang++
+CXX := gcc
+CXX ?= clang
 
 SRCS := $(call rwildcard, src/, *cpp)
 OBJS := $(filter %.o,$(SRCS:.cpp=.o))
@@ -62,6 +63,7 @@ endif
 
 # linker flags
 LDFLAGS := -lpthread
+LDFLAGS += -lm
 LDFLAGS += `sdl2-config --libs`
 ifeq ($(LTO),1)
 	LDFLAGS += -flto
@@ -81,7 +83,7 @@ BIN := rex
 all: $(BIN)
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) -xc++ $(CXXFLAGS) -c -o $@ $<
 
 $(BIN): $(OBJS)
 	$(CXX) $(OBJS) $(LDFLAGS) -o $@

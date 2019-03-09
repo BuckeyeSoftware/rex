@@ -108,7 +108,7 @@ inline array<T>::array(memory::allocator* _allocator, rx_size _size, Ts&&... _ar
 {
   RX_ASSERT(m_allocator, "null allocator");
 
-  m_data = utility::move(m_allocator->allocate(size * sizeof(T)));
+  m_data = utility::move(m_allocator->allocate(_size * sizeof(T)));
   RX_ASSERT(m_data, "out of memory");
 
   for (rx_size i{0}; i < m_capacity; i++) {

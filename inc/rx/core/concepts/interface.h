@@ -7,6 +7,8 @@
 namespace rx::concepts {
 
 // interfaces are non-copyable, non-movable and virtual
+#undef interface
+
 struct interface
   : no_copy
   , no_move

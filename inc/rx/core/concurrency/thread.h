@@ -4,7 +4,7 @@
 #if defined(RX_PLATFORM_POSIX)
 #include <pthread.h>
 #elif defined(RX_PLATFORM_WINDOWS)
-#defined _WIN32_LEAN_AND_MEAN
+#define _WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #else
 #error "missing thread implementation"

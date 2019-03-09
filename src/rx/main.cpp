@@ -44,6 +44,14 @@ RX_CONSOLE_BVAR(
   "use HDR output if supported",
   false);
 
+extern "C" {
+  void __cxa_pure_virtual() {
+    RX_ASSERT(false, "pure virtual function call");
+  }
+}
+
+using namespace rx;
+
 int entry(int argc, char **argv) {
   (void)argc;
   (void)argv;

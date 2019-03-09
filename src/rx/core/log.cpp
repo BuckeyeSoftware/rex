@@ -11,6 +11,7 @@
 #include <rx/core/concurrency/mutex.h> // mutex
 #include <rx/core/concurrency/condition_variable.h> // condition_variable
 #include <rx/core/concurrency/scope_lock.h> // scope_lock
+#include <rx/core/concurrency/scope_unlock.h> // scope_unlock
 #include <rx/core/concurrency/thread.h> // thread
 
 namespace rx {
@@ -20,6 +21,7 @@ static constexpr const rx_size k_flush_threshold{1000}; // 1000 messages
 using concurrency::mutex;
 using concurrency::condition_variable;
 using concurrency::scope_lock;
+using concurrency::scope_unlock;
 using concurrency::thread;
 
 using filesystem::file;
@@ -97,6 +99,8 @@ logger::logger()
   , m_status{k_running}
   , m_thread{[this](int id){ process(id); }}
 {
+  RX_MESSAGE("starting logger... (messages will be flushed once started)");
+
   // initialize all loggers
   rx::static_globals::each([this](rx::static_node* node) {
     const char* name{node->name()};
@@ -173,14 +177,21 @@ void logger::flush(rx_size max_padding) {
 }
 
 void logger::process(int thread_id) {
-  RX_MESSAGE("logger started on thread %d", thread_id);
-
-  scope_lock locked(m_mutex);
+  scope_lock<mutex> locked(m_mutex);
 
   // wait until ready
   m_ready_condition.wait(locked, [this]{ return m_status & k_ready; });
 
+  {
+    // don't hold a lock for RX_MESSAGE since it acquires this same lock
+    scope_unlock<mutex> unlocked(m_mutex);
+    RX_MESSAGE("logger started on thread %d", thread_id);
+    RX_MESSAGE("flushed all messages above at this time");
+  }
+
   const auto max_padding{m_max_name_length + m_max_level_length};
+  flush(max_padding);
+
   while (m_status & k_running) {
     flush(max_padding);
 

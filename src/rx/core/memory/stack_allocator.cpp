@@ -5,6 +5,7 @@
 #include <rx/core/assert.h> // RX_ASSERT
 
 #include <rx/core/utility/move.h>
+#include <rx/core/utility/construct.h>
 
 namespace rx::memory {
 
@@ -83,6 +84,10 @@ void stack_allocator::deallocate(block&& old) {
 
 bool stack_allocator::owns(const block& data) const {
   return data.data() >= m_data.data() && data.end() <= m_data.end();
+}
+
+void stack_allocator::reset() {
+  m_point = m_data.data();
 }
 
 } // namespace rx::memory

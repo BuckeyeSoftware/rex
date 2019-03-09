@@ -14,6 +14,7 @@ struct stack_allocator final : allocator {
   virtual block reallocate(block& data, rx_size);
   virtual void deallocate(block&& data);
   virtual bool owns(const block& data) const;
+  void reset();
 
 private:
   allocator* m_base;

@@ -36,6 +36,8 @@ struct type_eraser : concepts::no_copy {
   // call the destructor on the type-erased object
   void fini();
 
+  const void* data() const { return m_data; }
+
 private:
   void* m_data;
   void (*m_construct_fn)(void*, void*);

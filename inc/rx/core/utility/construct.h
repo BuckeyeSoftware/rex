@@ -2,12 +2,21 @@
 #define RX_CORE_UTILITY_CONSTRUCT_H
 
 #include <rx/core/types.h> // rx_size
+#include <rx/core/assert.h> // RX_ASSERT
 #include <rx/core/utility/forward.h>
 
 struct rx_placement_new {};
 
 inline void* operator new(rx_size, void* _data, rx_placement_new) {
   return _data;
+}
+
+inline void operator delete([[maybe_unused]] void* _data) {
+  RX_ASSERT(false, "invalid delete %p", _data);
+}
+
+inline void operator delete(void* _data, rx_size) {
+  operator delete(_data);
 }
 
 namespace rx::utility {

@@ -10,61 +10,81 @@ struct hash;
 
 template<>
 struct hash<bool> {
-  rx_size operator()(bool value) const {
-    return value ? 1231 : 1237;
+  constexpr rx_size operator()(bool _value) const {
+    return _value ? 1231 : 1237;
   }
 };
 
 template<>
 struct hash<rx_u32> {
-  rx_size operator()(rx_u32 value) const {
-    value = (value ^ 61) ^ (value >> 16);
-    value = value + (value << 3);
-    value = value ^ (value >> 4);
-    value = value * 0x27D4EB2D;
-    value = value ^ (value >> 15);
-    return static_cast<rx_size>(value);
+  constexpr rx_size operator()(rx_u32 _value) const {
+    _value = (_value ^ 61) ^ (_value >> 16);
+    _value = _value + (_value << 3);
+    _value = _value ^ (_value >> 4);
+    _value = _value * 0x27D4EB2D;
+    _value = _value ^ (_value >> 15);
+    return static_cast<rx_size>(_value);
   }
 };
 
 template<>
 struct hash<rx_s32> {
-  rx_size operator()(rx_s32 value) const {
+  constexpr rx_size operator()(rx_s32 value) const {
     return hash<rx_u32>{}(static_cast<rx_u32>(value));
   }
 };
 
 template<>
 struct hash<rx_u64> {
-  rx_size operator()(rx_u64 value) const {
-    value = (~value) + (value << 21);
-    value = value ^ (value >> 24);
-    value = (value + (value << 3)) + (value << 8);
-    value = value ^ (value >> 14);
-    value = (value + (value << 2)) + (value << 4);
-    value = value ^ (value << 28);
-    value = value + (value << 31);
-    return static_cast<rx_size>(value);
+  constexpr rx_size operator()(rx_u64 _value) const {
+    _value = (~_value) + (_value << 21);
+    _value = _value ^ (_value >> 24);
+    _value = (_value + (_value << 3)) + (_value << 8);
+    _value = _value ^ (_value >> 14);
+    _value = (_value + (_value << 2)) + (_value << 4);
+    _value = _value ^ (_value << 28);
+    _value = _value + (_value << 31);
+    return static_cast<rx_size>(_value);
   }
 };
 
 template<>
 struct hash<rx_s64> {
-  rx_size operator()(rx_s64 value) const {
-    return hash<rx_u64>{}(static_cast<rx_u64>(value));
+  rx_size operator()(rx_s64 _value) const {
+    return hash<rx_u64>{}(static_cast<rx_u64>(_value));
   }
+};
+
+template<>
+struct hash<rx_f32> {
+  rx_size operator()(rx_f32 _value) const {
+    const union { rx_f32 f; rx_u32 u; } cast{_value};
+    return hash<rx_u32>{}(cast.u);
+  };
+};
+
+template<>
+struct hash<rx_f64> {
+  rx_size operator()(rx_f64 _value) const {
+    const union { rx_f64 f; rx_u64 u; } cast{_value};
+    return hash<rx_u64>{}(cast.u);
+  };
 };
 
 template<typename T>
 struct hash<T*> {
-  rx_size operator()(T* value) const {
-    if constexpr (sizeof value == 8) {
-      return hash<rx_u64>{}(reinterpret_cast<rx_u64>(value));
+  rx_size operator()(T* _value) const {
+    if constexpr (sizeof _value == 8) {
+      return hash<rx_u64>{}(reinterpret_cast<rx_u64>(_value));
     } else {
-      return hash<rx_u32>{}(reinterpret_cast<rx_u32>(value));
+      return hash<rx_u32>{}(reinterpret_cast<rx_u32>(_value));
     }
   }
 };
+
+inline constexpr rx_size hash_combine(rx_size _hash1, rx_size _hash2) {
+  return _hash1 ^ (_hash2 + 0x9E3779B9 + (_hash1 << 6) + (_hash1 >> 2));
+}
 
 } // namespace rx
 

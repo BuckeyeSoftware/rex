@@ -3,6 +3,7 @@
 
 #include <rx/core/types.h> // rx_size
 #include <rx/core/format.h> // format
+#include <rx/core/hash.h> // hash, hash_combine
 #include <rx/core/assert.h> // RX_ASSERT
 
 namespace rx::math {
@@ -23,6 +24,7 @@ struct vec4 {
 
 using vec4f = vec4<rx_f32>;
 using vec4i = vec4<rx_s32>;
+using vec4z = vec4<rx_size>;
 
 template<typename T>
 inline constexpr vec4<T>::vec4()
@@ -151,6 +153,28 @@ namespace rx {
   struct format<::rx::math::vec4i> {
     char scratch[format_size<rx_s32>::size*4 + sizeof "{,,,   }" - 1];
     const char* operator()(const ::rx::math::vec4i& value);
+  };
+
+  template<>
+  struct hash<::rx::math::vec4f> {
+    rx_size operator()(const ::rx::math::vec4f& _value) {
+      const auto x{hash<rx_f32>{}(_value.x)};
+      const auto y{hash<rx_f32>{}(_value.y)};
+      const auto z{hash<rx_f32>{}(_value.z)};
+      const auto w{hash<rx_f32>{}(_value.w)};
+      return hash_combine(hash_combine(x, y), hash_combine(z, w));
+    }
+  };
+
+  template<>
+  struct hash<::rx::math::vec4i> {
+    rx_size operator()(const ::rx::math::vec4i& _value) {
+      const auto x{hash<rx_s32>{}(_value.x)};
+      const auto y{hash<rx_s32>{}(_value.y)};
+      const auto z{hash<rx_s32>{}(_value.z)};
+      const auto w{hash<rx_s32>{}(_value.w)};
+      return hash_combine(hash_combine(x, y), hash_combine(z, w));
+    }
   };
 } // namespace rx
 
