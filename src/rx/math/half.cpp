@@ -52,7 +52,7 @@ struct half_lut {
   rx_u8 shift[512];
 };
 
-static const rx::static_global<half_lut> table("half_lut");
+static const static_global<half_lut> table("half_lut");
 
 half half::to_half(rx_f32 f) {
   const bits shape{f};

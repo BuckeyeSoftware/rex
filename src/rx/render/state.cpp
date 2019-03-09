@@ -36,8 +36,8 @@ bool scissor_state::operator==(const scissor_state& _other) const {
 rx_size scissor_state::flush() {
   if (m_hash & k_dirty_bit) {
     m_hash = hash<bool>{}(m_enabled);
-    m_hash = hash_combine(m_hash, hash<rx::math::vec2i>{}(m_offset));
-    m_hash = hash_combine(m_hash, hash<rx::math::vec2i>{}(m_size));
+    m_hash = hash_combine(m_hash, hash<math::vec2i>{}(m_offset));
+    m_hash = hash_combine(m_hash, hash<math::vec2i>{}(m_size));
     m_hash &= ~k_dirty_bit;
   }
   return m_hash;

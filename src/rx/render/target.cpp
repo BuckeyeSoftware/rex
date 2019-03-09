@@ -91,7 +91,7 @@ target::target(frontend* _frontend)
 {
   RX_ASSERT(_frontend, "null frontend");
 
-  target_log(rx::log::level::k_verbose, "%08p: init target", this);
+  target_log(log::level::k_verbose, "%08p: init target", this);
 }
 
 target::~target() {
@@ -111,7 +111,7 @@ target::~target() {
     }
   }
 
-  target_log(rx::log::level::k_verbose, "%08p: fini target", this);
+  target_log(log::level::k_verbose, "%08p: fini target", this);
 }
 
 void target::request_depth(texture::data_format _format) {

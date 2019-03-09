@@ -39,11 +39,11 @@ void texture::record_filter(const filter_options& _options) {
 texture1D::texture1D()
   : texture{resource::category::k_texture1D}
 {
-  texture_log(rx::log::level::k_verbose, "%p: init texture1D", this);
+  texture_log(log::level::k_verbose, "%p: init texture1D", this);
 }
 
 texture1D::~texture1D() {
-  texture_log(rx::log::level::k_verbose, "%p: fini texture1D", this);
+  texture_log(log::level::k_verbose, "%p: fini texture1D", this);
 }
 
 void texture1D::write(const rx_byte* _data, rx_size _dimensions) {
@@ -58,11 +58,11 @@ void texture1D::write(const rx_byte* _data, rx_size _dimensions) {
 texture2D::texture2D()
   : texture{resource::category::k_texture2D}
 {
-  texture_log(rx::log::level::k_verbose, "%p: init texture2D", this);
+  texture_log(log::level::k_verbose, "%p: init texture2D", this);
 }
 
 texture2D::~texture2D() {
-  texture_log(rx::log::level::k_verbose, "%p: fini texture2D", this);
+  texture_log(log::level::k_verbose, "%p: fini texture2D", this);
 }
 
 void texture2D::write(const rx_byte* _data, const math::vec2z& _dimensions) {
@@ -78,11 +78,11 @@ void texture2D::write(const rx_byte* _data, const math::vec2z& _dimensions) {
 texture3D::texture3D()
   : texture{resource::category::k_texture3D}
 {
-  texture_log(rx::log::level::k_verbose, "%p: init texture3D", this);
+  texture_log(log::level::k_verbose, "%p: init texture3D", this);
 }
 
 texture3D::~texture3D() {
-  texture_log(rx::log::level::k_verbose, "%p: fini texture3D", this);
+  texture_log(log::level::k_verbose, "%p: fini texture3D", this);
 }
 
 void texture3D::write(const rx_byte* _data, const math::vec3z& _dimensions) {
@@ -98,11 +98,11 @@ void texture3D::write(const rx_byte* _data, const math::vec3z& _dimensions) {
 textureCM::textureCM()
   : texture{resource::category::k_textureCM}
 {
-  texture_log(rx::log::level::k_verbose, "%p: init textureCM", this);
+  texture_log(log::level::k_verbose, "%p: init textureCM", this);
 }
 
 textureCM::~textureCM() {
-  texture_log(rx::log::level::k_verbose, "%p: fini textureCM", this);
+  texture_log(log::level::k_verbose, "%p: fini textureCM", this);
 }
 
 void textureCM::write(const rx_byte* _data, const math::vec2z& _dimensions, face _face) {

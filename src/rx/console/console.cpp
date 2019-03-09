@@ -14,10 +14,7 @@
 
 namespace rx::console {
 
-using rx::concurrency::spin_lock;
-using rx::concurrency::scope_lock;
-
-static spin_lock g_lock;
+static concurrency::spin_lock g_lock;
 static variable_reference* g_head; // protected by |g_lock|
 
 RX_LOG("console", console_print);
@@ -25,41 +22,41 @@ RX_LOG("console", console_print);
 bool console::load(const char* file_name) {
   // sort references
   {
-    scope_lock<spin_lock> locked(g_lock);
+    concurrency::scope_lock locked(g_lock);
     g_head = sort(g_head);
   }
 
-  rx::filesystem::file file(file_name, "r");
+  filesystem::file file(file_name, "r");
   if (!file) {
     return false;
   }
 
-  console_print(rx::log::level::k_info, "loading '%s'", file_name);
-  for (rx::string line_contents; file.read_line(line_contents); ) {
-    rx::string line{line_contents.lstrip(" \t")};
+  console_print(log::level::k_info, "loading '%s'", file_name);
+  for (string line_contents; file.read_line(line_contents); ) {
+    string line{line_contents.lstrip(" \t")};
     if (line.is_empty() || strchr("#;[", line[0])) {
       // ignore empty and comment lines
       continue;
     }
 
     // tokenize line contents
-    rx::array<string> tokens{line.split(' ', 2)};
+    array<string> tokens{line.split(' ', 2)};
     variable_status status{change(tokens[0], tokens[1])};
     switch (status) {
     case variable_status::k_malformed:
-      console_print(rx::log::level::k_error, "'%s' malformed", tokens[0]);
+      console_print(log::level::k_error, "'%s' malformed", tokens[0]);
       break;
     case variable_status::k_not_found:
-      console_print(rx::log::level::k_error, "'%s' not found", tokens[0]);
+      console_print(log::level::k_error, "'%s' not found", tokens[0]);
       break;
     case variable_status::k_out_of_range:
-      console_print(rx::log::level::k_error, "'%s' out of range", tokens[0]);
+      console_print(log::level::k_error, "'%s' out of range", tokens[0]);
       break;
     case variable_status::k_success:
-      console_print(rx::log::level::k_info, "'%s' changed to '%s'", tokens[0], tokens[1]);
+      console_print(log::level::k_info, "'%s' changed to '%s'", tokens[0], tokens[1]);
       break;
     case variable_status::k_type_mismatch:
-      console_print(rx::log::level::k_error, "'%s' type mismatch", tokens[0]);
+      console_print(log::level::k_error, "'%s' type mismatch", tokens[0]);
       break;
     }
   }
@@ -68,12 +65,12 @@ bool console::load(const char* file_name) {
 }
 
 bool console::save(const char* file_name) {
-  rx::filesystem::file file(file_name, "w");
+  filesystem::file file(file_name, "w");
   if (!file) {
     return false;
   }
 
-  console_print(rx::log::level::k_info, "saving '%s'", file_name);
+  console_print(log::level::k_info, "saving '%s'", file_name);
   for (const variable_reference *head{g_head}; head; head = head->m_next) {
     if (head->type() == variable_type::k_boolean) {
       const auto handle{head->cast<bool>()};
@@ -455,8 +452,8 @@ variable_status console::change(const string& name, const string& value) {
 }
 
 variable_reference* console::add_variable_reference(variable_reference* reference) {
-  console_print(rx::log::level::k_info, "registered '%s'", reference->m_name);
-  scope_lock<spin_lock> locked(g_lock);
+  console_print(log::level::k_info, "registered '%s'", reference->m_name);
+  concurrency::scope_lock locked(g_lock);
   variable_reference* next = g_head;
   g_head = reference;
   return next;

@@ -7,7 +7,9 @@
 
 RX_LOG("debug", debug_print);
 
-void rx::debug_message(const char* file, const char* function, int line,
+namespace rx {
+
+void debug_message(const char* file, const char* function, int line,
   const char* message, ...)
 {
   va_list va;
@@ -20,11 +22,13 @@ void rx::debug_message(const char* file, const char* function, int line,
   va_end(ap);
 
   // format into string
-  rx::string contents;
+  string contents;
   contents.resize(length);
   vsnprintf(contents.data(), contents.size() + 1, message, va);
 
   va_end(va);
-  debug_print(rx::log::level::k_info, "%s:%d %s: \"%s\"", file, line, function,
-    rx::utility::move(contents));
+  debug_print(log::level::k_info, "%s:%d %s: \"%s\"", file, line, function,
+    utility::move(contents));
 }
+
+} // namespace rx

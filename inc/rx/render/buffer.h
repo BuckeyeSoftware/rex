@@ -41,9 +41,9 @@ struct buffer : resource {
   // flush vertex and element store
   void flush();
 
-  const rx::array<rx_byte>& vertices() const &;
-  const rx::array<rx_byte>& elements() const &;
-  const rx::array<attribute>& attributes() const &;
+  const array<rx_byte>& vertices() const &;
+  const array<rx_byte>& elements() const &;
+  const array<attribute>& attributes() const &;
   rx_size stride() const;
   element_category element_type() const;
 
@@ -51,9 +51,9 @@ private:
   void write_vertices_data(const rx_byte* _data, rx_size _size, rx_size _stride);
   void write_elements_data(element_category _type, const rx_byte* _data, rx_size _size);
 
-  rx::array<rx_byte> m_vertices_store;
-  rx::array<rx_byte> m_elements_store;
-  rx::array<attribute> m_attributes;
+  array<rx_byte> m_vertices_store;
+  array<rx_byte> m_elements_store;
+  array<attribute> m_attributes;
   element_category m_element_type;
   rx_size m_stride;
 };
@@ -83,15 +83,15 @@ inline void buffer::record_attribute(attribute::category _type, rx_size _count, 
   m_attributes.push_back({_count, _offset, _type});
 }
 
-inline const rx::array<rx_byte>& buffer::vertices() const & {
+inline const array<rx_byte>& buffer::vertices() const & {
   return m_vertices_store;
 }
 
-inline const rx::array<rx_byte>& buffer::elements() const & {
+inline const array<rx_byte>& buffer::elements() const & {
   return m_elements_store;
 }
 
-inline const rx::array<buffer::attribute>& buffer::attributes() const & {
+inline const array<buffer::attribute>& buffer::attributes() const & {
   return m_attributes;
 }
 

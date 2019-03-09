@@ -33,7 +33,7 @@ struct target {
 
   texture2D* depth() const;
   texture2D* stencil() const;
-  const rx::array<texture2D*> attachments() const &;
+  const array<texture2D*> attachments() const &;
 
 private:
   enum /* m_owns */ {
@@ -50,7 +50,7 @@ private:
     };
     texture2D* m_depth_stencil_texture;
   };
-  rx::array<texture2D*> m_attachments;
+  array<texture2D*> m_attachments;
   int m_owns;
 };
 
@@ -62,7 +62,7 @@ inline texture2D* target::stencil() const {
   return m_stencil_texture;
 }
 
-inline const rx::array<texture2D*> target::attachments() const & {
+inline const array<texture2D*> target::attachments() const & {
   return m_attachments;
 }
 

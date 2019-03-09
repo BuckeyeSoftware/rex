@@ -18,14 +18,6 @@ namespace rx {
 
 static constexpr const rx_size k_flush_threshold{1000}; // 1000 messages
 
-using concurrency::mutex;
-using concurrency::condition_variable;
-using concurrency::scope_lock;
-using concurrency::scope_unlock;
-using concurrency::thread;
-
-using filesystem::file;
-
 static inline const char*
 get_level_string(log::level lvl) {
   switch (lvl) {
@@ -80,16 +72,16 @@ struct logger {
     k_ready = 1 << 1
   };
 
-  file m_file;
+  filesystem::file m_file;
   array<static_node*> m_logs;
   rx_size m_max_name_length;
   rx_size m_max_level_length;
   int m_status;
-  mutex m_mutex;
+  concurrency::mutex m_mutex;
   array<message> m_queue; // protected by |m_mutex|
-  condition_variable m_ready_condition;
-  condition_variable m_flush_condition;
-  thread m_thread;
+  concurrency::condition_variable m_ready_condition;
+  concurrency::condition_variable m_flush_condition;
+  concurrency::thread m_thread;
 };
 
 logger::logger()
@@ -102,7 +94,7 @@ logger::logger()
   RX_MESSAGE("starting logger... (messages will be flushed once started)");
 
   // initialize all loggers
-  rx::static_globals::each([this](rx::static_node* node) {
+  static_globals::each([this](static_node* node) {
     const char* name{node->name()};
     if (!strncmp(name, "log_", 4)) {
       node->init();
@@ -127,7 +119,7 @@ logger::logger()
 
   // signal the logging thread to begin
   {
-    scope_lock<mutex> locked(m_mutex);
+    concurrency::scope_lock locked(m_mutex);
     m_status |= k_ready;
     m_ready_condition.signal();
   }
@@ -136,7 +128,7 @@ logger::logger()
 logger::~logger() {
   // signal shutdown
   {
-    scope_lock<mutex> locked(m_mutex);
+    concurrency::scope_lock locked(m_mutex);
     m_status &= ~k_running;
     m_flush_condition.signal();
   }
@@ -151,7 +143,7 @@ logger::~logger() {
 }
 
 void logger::write(const log* owner, string&& contents, log::level level, time_t time) {
-  scope_lock<mutex> locked(m_mutex);
+  concurrency::scope_lock locked(m_mutex);
   m_queue.emplace_back(owner, utility::move(contents), level, time);
   if (m_queue.size() >= k_flush_threshold) {
     m_flush_condition.signal();
@@ -177,14 +169,14 @@ void logger::flush(rx_size max_padding) {
 }
 
 void logger::process(int thread_id) {
-  scope_lock<mutex> locked(m_mutex);
+  concurrency::scope_lock locked(m_mutex);
 
   // wait until ready
   m_ready_condition.wait(locked, [this]{ return m_status & k_ready; });
 
   {
     // don't hold a lock for RX_MESSAGE since it acquires this same lock
-    scope_unlock<mutex> unlocked(m_mutex);
+    concurrency::scope_unlock unlocked(m_mutex);
     RX_MESSAGE("logger started on thread %d", thread_id);
     RX_MESSAGE("flushed all messages above at this time");
   }
@@ -205,7 +197,7 @@ void logger::process(int thread_id) {
   RX_ASSERT(m_queue.is_empty(), "not all contents flushed");
 }
 
-static rx::static_global<logger> g_logger("log");
+static static_global<logger> g_logger("log");
 
 void log::write(log::level level, string&& contents) {
   g_logger->write(this, utility::move(contents), level, time(nullptr));

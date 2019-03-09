@@ -12,11 +12,11 @@ buffer::buffer()
   , m_element_type{element_category::k_none}
   , m_stride{0}
 {
-  buffer_log(rx::log::level::k_verbose, "%p: init buffer", this);
+  buffer_log(log::level::k_verbose, "%p: init buffer", this);
 }
 
 buffer::~buffer() {
-  buffer_log(rx::log::level::k_verbose, "%p: fini buffer", this);
+  buffer_log(log::level::k_verbose, "%p: fini buffer", this);
 }
 
 void buffer::write_vertices_data(const rx_byte* _data, rx_size _size, rx_size _stride) {

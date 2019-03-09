@@ -30,9 +30,9 @@ struct thread_pool {
         }
 
         for (;;) {
-          rx::function<void(int)> task;
+          function<void(int)> task;
           {
-            scope_lock<mutex> lock(m_mutex);
+            scope_lock lock(m_mutex);
             m_task_cond.wait(lock, [this] { return m_stop || !m_queue.is_empty(); });
             if (m_stop && m_queue.is_empty()) {
               RX_MESSAGE("stopping thread %d for pool", _thread_id);
@@ -68,9 +68,9 @@ struct thread_pool {
     RX_MESSAGE("all threads stopped");
   }
 
-  void add(rx::function<void(int)>&& _task) {
+  void add(function<void(int)>&& _task) {
     {
-      scope_lock<mutex> lock(m_mutex);
+      scope_lock lock(m_mutex);
       m_queue.push(utility::move(_task));
     }
     m_task_cond.signal();
@@ -80,7 +80,7 @@ private:
   mutex m_mutex;
   condition_variable m_task_cond;
   condition_variable m_ready_cond;
-  queue<rx::function<void(int)>> m_queue; // protected by |m_mutex|
+  queue<function<void(int)>> m_queue; // protected by |m_mutex|
   array<thread> m_threads; // protected by |m_mutex|
   bool m_stop; // protected by |m_mutex|
   rx_size m_ready; // protected by |m_mutex|

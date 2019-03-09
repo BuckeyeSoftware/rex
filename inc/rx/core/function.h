@@ -10,64 +10,17 @@ struct function;
 
 template<typename R, typename... Ts>
 struct function<R(Ts...)> {
-  function()
-    : m_invoke{nullptr}
-    , m_construct{nullptr}
-    , m_destruct{nullptr}
-  {
-  }
+  constexpr function();
 
   template<typename F>
-  function(F fn)
-    : m_invoke{invoke<F>}
-    , m_construct{construct<F>}
-    , m_destruct{destruct<F>}
-  {
-    m_data.resize(sizeof fn);
-    m_construct(m_data.data(), reinterpret_cast<rx_byte*>(&fn));
-  }
+  function(F fn);
+  function(const function& fn);
 
-  function(const function& fn)
-    : m_invoke{fn.m_invoke}
-    , m_construct{fn.m_construct}
-    , m_destruct{fn.m_destruct}
-  {
-    if (m_invoke) {
-      m_data.resize(fn.m_data.size());
-      m_construct(m_data.data(), fn.m_data.data());
-    }
-  }
+  function& operator=(const function& fn);
 
-  function& operator=(const function& fn) {
-    if (m_destruct) {
-      m_destruct(m_data.data());
-    }
+  ~function();
 
-    m_invoke = fn.m_invoke;
-    m_construct = fn.m_construct;
-    m_destruct = fn.m_destruct;
-
-    if (m_invoke) {
-      m_data.resize(fn.m_data.size());
-      m_construct(m_data.data(), fn.m_data.data());
-    }
-
-    return *this;
-  }
-
-  ~function() {
-    if (m_destruct) {
-      m_destruct(m_data.data());
-    }
-  }
-
-  R operator()(Ts&&... args) {
-    if constexpr(traits::is_same<R, void>) {
-      return m_invoke(m_data.data(), utility::forward<Ts>(args)...);
-    } else {
-      m_invoke(m_data.data(), utility::forward<Ts>(args)...);
-    }
-  }
+  R operator()(Ts&&... args);
 
 private:
   using invoke_fn = R (*)(rx_byte*, Ts&&...);
@@ -99,6 +52,70 @@ private:
   array<rx_byte> m_data;
 };
 
+template<typename R, typename... Ts>
+inline constexpr function<R(Ts...)>::function()
+  : m_invoke{nullptr}
+  , m_construct{nullptr}
+  , m_destruct{nullptr}
+{
+}
+
+template<typename R, typename... Ts>
+template<typename F>
+inline function<R(Ts...)>::function(F fn)
+  : m_invoke{invoke<F>}
+  , m_construct{construct<F>}
+  , m_destruct{destruct<F>}
+{
+  m_data.resize(sizeof fn);
+  m_construct(m_data.data(), reinterpret_cast<rx_byte*>(&fn));
+}
+
+template<typename R, typename... Ts>
+inline function<R(Ts...)>::function(const function& fn)
+  : m_invoke{fn.m_invoke}
+  , m_construct{fn.m_construct}
+  , m_destruct{fn.m_destruct}
+{
+  if (m_invoke) {
+    m_data.resize(fn.m_data.size());
+    m_construct(m_data.data(), fn.m_data.data());
+  }
+}
+
+template<typename R, typename... Ts>
+inline function<R(Ts...)>& function<R(Ts...)>::operator=(const function& fn) {
+  if (m_destruct) {
+    m_destruct(m_data.data());
+  }
+
+  m_invoke = fn.m_invoke;
+  m_construct = fn.m_construct;
+  m_destruct = fn.m_destruct;
+
+  if (m_invoke) {
+    m_data.resize(fn.m_data.size());
+    m_construct(m_data.data(), fn.m_data.data());
+  }
+
+  return *this;
+}
+
+template<typename R, typename... Ts>
+inline function<R(Ts...)>::~function() {
+  if (m_destruct) {
+    m_destruct(m_data.data());
+  }
+}
+
+template<typename R, typename... Ts>
+inline R function<R(Ts...)>::operator()(Ts&&... args) {
+  if constexpr(traits::is_same<R, void>) {
+    return m_invoke(m_data.data(), utility::forward<Ts>(args)...);
+  } else {
+    m_invoke(m_data.data(), utility::forward<Ts>(args)...);
+  }
+}
 
 } // namespace rx::core
 

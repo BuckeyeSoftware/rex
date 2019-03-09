@@ -19,7 +19,7 @@ struct file : concepts::no_copy {
 
   // print |fmt| with |args| to file using |alloc| for formatting
   template<typename... Ts>
-  bool print(rx::memory::allocator* alloc, const char* fmt, Ts&&... args);
+  bool print(memory::allocator* alloc, const char* fmt, Ts&&... args);
 
   // print |fmt| with |args| to file
   template<typename... Ts>
@@ -50,7 +50,7 @@ inline file::operator bool() const {
 }
 
 template<typename... Ts>
-inline bool file::print(rx::memory::allocator* alloc, const char* fmt, Ts&&... args) {
+inline bool file::print(memory::allocator* alloc, const char* fmt, Ts&&... args) {
   return print({alloc, fmt, utility::forward<Ts>(args)...});
 }
 

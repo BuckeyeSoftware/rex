@@ -141,20 +141,20 @@ inline constexpr T dot(const vec2<T> &lhs, const vec2<T> &rhs) {
 
 namespace rx {
   template<>
-  struct format<::rx::math::vec2f> {
+  struct format<math::vec2f> {
     char scratch[format_size<rx_f32>::size*2 + sizeof "{, }" - 1];
-    const char* operator()(const ::rx::math::vec2f& value);
+    const char* operator()(const math::vec2f& value);
   };
 
   template<>
-  struct format<::rx::math::vec2i> {
+  struct format<math::vec2i> {
     char scratch[format_size<rx_s32>::size*2 + sizeof "{, }" - 1];
-    const char* operator()(const ::rx::math::vec2i& value);
+    const char* operator()(const math::vec2i& value);
   };
 
   template<>
-  struct hash<::rx::math::vec2f> {
-    rx_size operator()(const ::rx::math::vec2f& _value) {
+  struct hash<math::vec2f> {
+    rx_size operator()(const math::vec2f& _value) {
       const auto x{hash<rx_f32>{}(_value.x)};
       const auto y{hash<rx_f32>{}(_value.y)};
       return hash_combine(x, y);
@@ -162,8 +162,8 @@ namespace rx {
   };
 
   template<>
-  struct hash<::rx::math::vec2i> {
-    rx_size operator()(const ::rx::math::vec2i& _value) {
+  struct hash<math::vec2i> {
+    rx_size operator()(const math::vec2i& _value) {
       const auto x{hash<rx_s32>{}(_value.x)};
       const auto y{hash<rx_s32>{}(_value.y)};
       return hash_combine(x, y);

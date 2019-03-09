@@ -56,7 +56,7 @@ struct texture : resource {
   // record |_filter| parameters
   void record_filter(const filter_options& _options);
 
-  const rx::array<rx_byte>& data() const &;
+  const array<rx_byte>& data() const &;
 
   data_format format() const;
   filter_options filter() const;
@@ -70,7 +70,7 @@ protected:
     k_wrap = 1 << 2
   };
 
-  rx::array<rx_byte> m_data;
+  array<rx_byte> m_data;
   data_format m_format;
   filter_options m_filter;
   wrap_options m_wrap;
@@ -147,7 +147,7 @@ inline const math::vec2z& textureCM::dimensions() const & {
 }
 
 // texture
-inline const rx::array<rx_byte>& texture::data() const & {
+inline const array<rx_byte>& texture::data() const & {
   return m_data;
 }
 

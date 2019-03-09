@@ -6,8 +6,10 @@
 
 RX_LOG("assert", assert_print);
 
+namespace rx {
+
 [[noreturn]]
-void rx::assert_fail(const char* expression, const char* file,
+void assert_fail(const char* expression, const char* file,
   const char* function, int line, const char* message, ...)
 {
   va_list va;
@@ -20,23 +22,23 @@ void rx::assert_fail(const char* expression, const char* file,
   va_end(ap);
 
   // format into string
-  rx::string contents;
+  string contents;
   contents.resize(length);
   vsnprintf(contents.data(), contents.size() + 1, message, va);
 
   va_end(va);
-  assert_print(rx::log::level::k_error, "Assertion failed: %s (%s:%d %s) \"%s\"",
-    expression, file, line, function, rx::utility::move(contents));
+  assert_print(log::level::k_error, "Assertion failed: %s (%s:%d %s) \"%s\"",
+    expression, file, line, function, utility::move(contents));
 
   // deinitialize all static globals
-  rx::static_globals::fini();
+  static_globals::fini();
 
   // these were explicitly enabled with ->init in main so fini above does
   // not finalize them, finalize them here
-  //rx::static_globals::lock();
-  rx::static_globals::find("system_allocator")->fini();
-  rx::static_globals::find("log")->fini();
-  //rx::static_globals::unlock();
+  static_globals::find("system_allocator")->fini();
+  static_globals::find("log")->fini();
 
   abort();
 }
+
+} // namespace rx

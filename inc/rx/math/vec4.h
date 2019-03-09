@@ -144,20 +144,20 @@ inline constexpr T dot(const vec4<T> &lhs, const vec4<T> &rhs) {
 
 namespace rx {
   template<>
-  struct format<::rx::math::vec4f> {
+  struct format<math::vec4f> {
     char scratch[format_size<rx_f32>::size*4 + sizeof "{,,,   }" - 1];
-    const char* operator()(const ::rx::math::vec4f& value);
+    const char* operator()(const math::vec4f& value);
   };
 
   template<>
-  struct format<::rx::math::vec4i> {
+  struct format<math::vec4i> {
     char scratch[format_size<rx_s32>::size*4 + sizeof "{,,,   }" - 1];
-    const char* operator()(const ::rx::math::vec4i& value);
+    const char* operator()(const math::vec4i& value);
   };
 
   template<>
-  struct hash<::rx::math::vec4f> {
-    rx_size operator()(const ::rx::math::vec4f& _value) {
+  struct hash<math::vec4f> {
+    rx_size operator()(const math::vec4f& _value) {
       const auto x{hash<rx_f32>{}(_value.x)};
       const auto y{hash<rx_f32>{}(_value.y)};
       const auto z{hash<rx_f32>{}(_value.z)};
@@ -167,8 +167,8 @@ namespace rx {
   };
 
   template<>
-  struct hash<::rx::math::vec4i> {
-    rx_size operator()(const ::rx::math::vec4i& _value) {
+  struct hash<math::vec4i> {
+    rx_size operator()(const math::vec4i& _value) {
       const auto x{hash<rx_s32>{}(_value.x)};
       const auto y{hash<rx_s32>{}(_value.y)};
       const auto z{hash<rx_s32>{}(_value.z)};

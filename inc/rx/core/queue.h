@@ -10,7 +10,7 @@ namespace rx {
 
 template<typename T>
 struct queue {
-  constexpr queue(rx::memory::allocator* _allocator);
+  constexpr queue(memory::allocator* _allocator);
   constexpr queue();
 
   ~queue();
@@ -29,16 +29,16 @@ private:
     constexpr node(const T& value) : m_value{value} {}
     constexpr node(T&& value) : m_value{utility::move(value)} {}
     T m_value;
-    rx::memory::block m_next;
+    memory::block m_next;
   };
 
-  rx::memory::allocator* m_allocator;
-  rx::memory::block m_first;
-  rx::memory::block m_last;
+  memory::allocator* m_allocator;
+  memory::block m_first;
+  memory::block m_last;
 };
 
 template<typename T>
-inline constexpr queue<T>::queue(rx::memory::allocator* _allocator)
+inline constexpr queue<T>::queue(memory::allocator* _allocator)
   : m_allocator{_allocator}
 {
   // {empty}
@@ -46,7 +46,7 @@ inline constexpr queue<T>::queue(rx::memory::allocator* _allocator)
 
 template<typename T>
 inline constexpr queue<T>::queue()
-  : m_allocator{&rx::memory::g_system_allocator}
+  : m_allocator{&memory::g_system_allocator}
 {
   // {empty}
 }

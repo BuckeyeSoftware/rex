@@ -1,4 +1,5 @@
 #include <rx/render/frontend.h>
+#include <rx/render/backend.h>
 #include <rx/render/buffer.h>
 #include <rx/render/target.h>
 #include <rx/render/texture.h>
@@ -22,7 +23,7 @@ namespace rx::render {
 #define allocate_command(data_type, type) \
   m_command_buffer.allocate(sizeof(data_type), (type), _info)
 
-frontend::frontend(memory::allocator* _allocator, rx_size _command_memory)
+frontend::frontend(memory::allocator* _allocator, backend* _backend, rx_size _command_memory)
   : m_buffer_pool{_allocator, sizeof(buffer), static_cast<rx_size>(*max_buffers)}
   , m_target_pool{_allocator, sizeof(target), static_cast<rx_size>(*max_targets)}
   , m_texture1D_pool{_allocator, sizeof(texture1D), static_cast<rx_size>(*max_texture1D)}
@@ -37,12 +38,13 @@ frontend::frontend(memory::allocator* _allocator, rx_size _command_memory)
   , m_destroy_texturesCM{_allocator}
   , m_commands{_allocator}
   , m_command_buffer{_allocator, _command_memory}
+  , m_backend{_backend}
 {
-  render_log(rx::log::level::k_info, "created frontend");
+  render_log(log::level::k_info, "created frontend");
 }
 
 frontend::~frontend() {
-  render_log(rx::log::level::k_info, "destroying frontend");
+  render_log(log::level::k_info, "destroying frontend");
 }
 
 // create_*
@@ -252,9 +254,11 @@ bool frontend::process() {
   }
 
   // consume all commands
-  m_commands.each_fwd([](rx_byte* _command) {
-    render_log(rx::log::level::k_verbose, "processed command: %08p", _command);
-  });
+  if (m_backend) {
+    m_commands.each_fwd([this](rx_byte* _command) {
+      m_backend->process(_command);
+    });
+  }
 
   // cleanup unreferenced resources
   m_destroy_buffers.each_fwd([this](buffer* _buffer) {
@@ -291,7 +295,15 @@ bool frontend::process() {
   m_destroy_textures3D.clear();
   m_destroy_texturesCM.clear();
 
+  m_command_buffer.reset();
+
   return true;
+}
+
+void frontend::swap() {
+  if (m_backend) {
+    m_backend->swap();
+  }
 }
 
 } // namespace rx::render

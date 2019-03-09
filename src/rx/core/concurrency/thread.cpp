@@ -22,7 +22,7 @@ thread::thread(thread&& _thread)
   _thread.m_allocator = nullptr;
 }
 
-thread::thread(rx::memory::allocator* _allocator, rx::function<void(int)>&& _function)
+thread::thread(memory::allocator* _allocator, function<void(int)>&& _function)
   : m_allocator{_allocator}
 {
   RX_ASSERT(m_allocator, "null allocator");
@@ -30,8 +30,8 @@ thread::thread(rx::memory::allocator* _allocator, rx::function<void(int)>&& _fun
   utility::construct<state>(m_state.data(), utility::move(_function));
 }
 
-thread::thread(rx::function<void(int)>&& _function)
-  : thread{&rx::memory::g_system_allocator, utility::move(_function)}
+thread::thread(function<void(int)>&& _function)
+  : thread{&memory::g_system_allocator, utility::move(_function)}
 {
   // {empty}
 }
@@ -71,7 +71,7 @@ thread::state::state()
   // {empty}
 }
 
-thread::state::state(rx::function<void(int)>&& _function)
+thread::state::state(function<void(int)>&& _function)
   : m_function{utility::move(_function)}
   , m_joined{false}
 {

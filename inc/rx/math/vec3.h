@@ -148,20 +148,20 @@ inline constexpr vec3<T> cross(const vec3<T>& lhs, const vec3<T>& rhs) {
 
 namespace rx {
   template<>
-  struct format<::rx::math::vec3f> {
+  struct format<math::vec3f> {
     char scratch[format_size<rx_f32>::size*3 + sizeof "{,,  }" - 1];
-    const char* operator()(const ::rx::math::vec3f& value);
+    const char* operator()(const math::vec3f& value);
   };
 
   template<>
   struct format<::rx::math::vec3i> {
     char scratch[format_size<rx_s32>::size*3 + sizeof "{,,  }" - 1];
-    const char* operator()(const ::rx::math::vec3i& value);
+    const char* operator()(const math::vec3i& value);
   };
 
   template<>
-  struct hash<::rx::math::vec3f> {
-    rx_size operator()(const ::rx::math::vec3f& _value) {
+  struct hash<math::vec3f> {
+    rx_size operator()(const math::vec3f& _value) {
       const auto x{hash<rx_f32>{}(_value.x)};
       const auto y{hash<rx_f32>{}(_value.y)};
       const auto z{hash<rx_f32>{}(_value.z)};
@@ -170,8 +170,8 @@ namespace rx {
   };
 
   template<>
-  struct hash<::rx::math::vec3i> {
-    rx_size operator()(const ::rx::math::vec3i& _value) {
+  struct hash<math::vec3i> {
+    rx_size operator()(const math::vec3i& _value) {
       const auto x{hash<rx_s32>{}(_value.x)};
       const auto y{hash<rx_s32>{}(_value.y)};
       const auto z{hash<rx_s32>{}(_value.z)};
