@@ -74,7 +74,7 @@ static constexpr const rx_f32 k_float_max{FLT_MAX};
 
 struct variable_reference {
   variable_reference() = default;
-  variable_reference(const char* name, const char* description, void* handle, variable_type type);
+  variable_reference(const char* _name, const char* _description, void* _handle, variable_type _type);
 
   template<typename T>
   const variable<T>* try_cast() const;
@@ -137,8 +137,8 @@ inline variable_type variable_reference::type() const {
 
 template<typename T>
 struct variable {
-  variable(const char* name, const char* description, const T& min,
-    const T& max, const T& initial);
+  variable(const char* _name, const char* _description, const T& _min,
+    const T& _max, const T& _initial);
 
   operator const T&() const;
   const T& get() const;
@@ -163,7 +163,7 @@ private:
 // specialization for boolean
 template<>
 struct variable<bool> {
-  variable(const char* name, const char* description, bool initial);
+  variable(const char* _name, const char* _description, bool _initial);
 
   operator const bool&() const;
   const bool& get() const;
@@ -186,7 +186,7 @@ private:
 // specialization for string
 template<>
 struct variable<string> {
-  variable(const char* name, const char* description, const char* initial);
+  variable(const char* _name, const char* _description, const char* _initial);
 
   operator const string&() const;
   const string& get() const;
@@ -196,8 +196,8 @@ struct variable<string> {
   const variable_reference* reference() const;
 
   void reset();
-  variable_status set(const char* value);
-  variable_status set(const string& value);
+  variable_status set(const char* _value);
+  variable_status set(const string& _value);
 
 private:
   variable_reference m_reference;
@@ -208,8 +208,8 @@ private:
 // specialization for vector types
 template<typename T>
 struct variable<vec2<T>> {
-  variable(const char* name, const char* description, const vec2<T>& min,
-    const vec2<T>& max, const vec2<T>& initial);
+  variable(const char* _name, const char* _description, const vec2<T>& _min,
+    const vec2<T>& _max, const vec2<T>& _initial);
 
   operator const vec2<T>&() const;
   const vec2<T>& get() const;
@@ -221,7 +221,7 @@ struct variable<vec2<T>> {
   const variable_reference* reference() const;
 
   void reset();
-  variable_status set(const vec2<T>& value);
+  variable_status set(const vec2<T>& _value);
 
 private:
   variable_reference m_reference;
@@ -233,8 +233,8 @@ private:
 
 template<typename T>
 struct variable<vec3<T>> {
-  variable(const char* name, const char* description, const vec3<T>& min,
-    const vec3<T>& max, const vec3<T>& initial);
+  variable(const char* _name, const char* _description, const vec3<T>& _min,
+    const vec3<T>& _max, const vec3<T>& _initial);
 
   operator const vec3<T>&() const;
   const vec3<T>& get() const;
@@ -258,8 +258,8 @@ private:
 
 template<typename T>
 struct variable<vec4<T>> {
-  variable(const char* name, const char* description, const vec4<T>& min,
-    const vec4<T>& max, const vec4<T>& initial);
+  variable(const char* _name, const char* _description, const vec4<T>& _min,
+    const vec4<T>& _max, const vec4<T>& _initial);
 
   operator const vec4<T>&() const;
   const vec4<T>& get() const;
@@ -283,13 +283,13 @@ private:
 
 // variable<T>
 template<typename T>
-inline variable<T>::variable(const char* name, const char* description,
-  const T& min, const T& max, const T& initial)
-  : m_reference{name, description, static_cast<void*>(this), variable_trait<T>::type}
-  , m_min{min}
-  , m_max{max}
-  , m_initial{initial}
-  , m_current{initial}
+inline variable<T>::variable(const char* _name, const char* _description,
+  const T& _min, const T& _max, const T& _initial)
+  : m_reference{_name, _description, static_cast<void*>(this), variable_trait<T>::type}
+  , m_min{_min}
+  , m_max{_max}
+  , m_initial{_initial}
+  , m_current{_initial}
 {
   // {empty}
 }
@@ -335,19 +335,19 @@ inline void variable<T>::reset() {
 }
 
 template<typename T>
-inline variable_status variable<T>::set(const T& value) {
-  if (value < m_min || value > m_max) {
+inline variable_status variable<T>::set(const T& _value) {
+  if (_value < m_min || _value > m_max) {
     return variable_status::k_out_of_range;
   }
-  m_current = value;
+  m_current = _value;
   return variable_status::k_success;
 }
 
 // variable<bool>
-inline variable<bool>::variable(const char* name, const char* description, bool initial)
-  : m_reference{name, description, static_cast<void*>(this), variable_trait<bool>::type}
-  , m_initial{initial}
-  , m_current{initial}
+inline variable<bool>::variable(const char* _name, const char* _description, bool _initial)
+  : m_reference{_name, _description, static_cast<void*>(this), variable_trait<bool>::type}
+  , m_initial{_initial}
+  , m_current{_initial}
 {
   // {empty}
 }
@@ -386,10 +386,10 @@ inline void variable<bool>::toggle() {
 }
 
 // variable<string>
-inline variable<string>::variable(const char* name, const char* description, const char* initial)
-  : m_reference{name, description, static_cast<void*>(this), variable_trait<string>::type}
-  , m_initial{initial}
-  , m_current{initial}
+inline variable<string>::variable(const char* _name, const char* _description, const char* _initial)
+  : m_reference{_name, _description, static_cast<void*>(this), variable_trait<string>::type}
+  , m_initial{_initial}
+  , m_current{_initial}
 {
   // {empty}
 }
@@ -418,25 +418,25 @@ inline void variable<string>::reset() {
   m_current = m_initial;
 }
 
-inline variable_status variable<string>::set(const char* value) {
-  m_current = value;
+inline variable_status variable<string>::set(const char* _value) {
+  m_current = _value;
   return variable_status::k_success;
 }
 
-inline variable_status variable<string>::set(const string& value) {
-  m_current = value;
+inline variable_status variable<string>::set(const string& _value) {
+  m_current = _value;
   return variable_status::k_success;
 }
 
 // variable<vec2<T>>
 template<typename T>
-inline variable<vec2<T>>::variable(const char* name, const char* description,
-  const vec2<T>& min, const vec2<T>& max, const vec2<T>& initial)
-  : m_reference{name, description, static_cast<void*>(this), variable_trait<vec2<T>>::type}
-  , m_min{min}
-  , m_max{max}
-  , m_initial{initial}
-  , m_current{initial}
+inline variable<vec2<T>>::variable(const char* _name, const char* _description,
+  const vec2<T>& _min, const vec2<T>& _max, const vec2<T>& _initial)
+  : m_reference{_name, _description, static_cast<void*>(this), variable_trait<vec2<T>>::type}
+  , m_min{_min}
+  , m_max{_max}
+  , m_initial{_initial}
+  , m_current{_initial}
 {
   // {empty}
 }
@@ -482,25 +482,25 @@ inline void variable<vec2<T>>::reset() {
 }
 
 template<typename T>
-inline variable_status variable<vec2<T>>::set(const vec2<T>& value) {
-  if (value.x < m_min.x || value.y < m_min.y ||
-      value.x > m_max.x || value.y > m_max.y)
+inline variable_status variable<vec2<T>>::set(const vec2<T>& _value) {
+  if (_value.x < m_min.x || _value.y < m_min.y ||
+      _value.x > m_max.x || _value.y > m_max.y)
   {
     return variable_status::k_out_of_range;
   }
-  m_current = value;
+  m_current = _value;
   return variable_status::k_success;
 }
 
 // variable<vec3<T>>
 template<typename T>
-inline variable<vec3<T>>::variable(const char* name, const char* description,
-  const vec3<T>& min, const vec3<T>& max, const vec3<T>& initial)
-  : m_reference{name, description, static_cast<void*>(this), variable_trait<vec3<T>>::type}
-  , m_min{min}
-  , m_max{max}
-  , m_initial{initial}
-  , m_current{initial}
+inline variable<vec3<T>>::variable(const char* _name, const char* _description,
+  const vec3<T>& _min, const vec3<T>& _max, const vec3<T>& _initial)
+  : m_reference{_name, _description, static_cast<void*>(this), variable_trait<vec3<T>>::type}
+  , m_min{_min}
+  , m_max{_max}
+  , m_initial{_initial}
+  , m_current{_initial}
 {
   // {empty}
 }
@@ -546,25 +546,25 @@ inline void variable<vec3<T>>::reset() {
 }
 
 template<typename T>
-inline variable_status variable<vec3<T>>::set(const vec3<T>& value) {
-  if (value.x < m_min.x || value.y < m_min.y || value.z < m_min.z ||
-      value.x > m_max.x || value.y > m_max.y || value.z > m_max.z)
+inline variable_status variable<vec3<T>>::set(const vec3<T>& _value) {
+  if (_value.x < m_min.x || _value.y < m_min.y || _value.z < m_min.z ||
+      _value.x > m_max.x || _value.y > m_max.y || _value.z > m_max.z)
   {
     return variable_status::k_out_of_range;
   }
-  m_current = value;
+  m_current = _value;
   return variable_status::k_success;
 }
 
 // variable<vec4<T>>
 template<typename T>
-inline variable<vec4<T>>::variable(const char* name, const char* description,
-  const vec4<T>& min, const vec4<T>& max, const vec4<T>& initial)
-  : m_reference{name, description, static_cast<void*>(this), variable_trait<vec4<T>>::type}
-  , m_min{min}
-  , m_max{max}
-  , m_initial{initial}
-  , m_current{initial}
+inline variable<vec4<T>>::variable(const char* _name, const char* _description,
+  const vec4<T>& _min, const vec4<T>& _max, const vec4<T>& _initial)
+  : m_reference{_name, _description, static_cast<void*>(this), variable_trait<vec4<T>>::type}
+  , m_min{_min}
+  , m_max{_max}
+  , m_initial{_initial}
+  , m_current{_initial}
 {
   // {empty}
 }
@@ -610,55 +610,55 @@ inline void variable<vec4<T>>::reset() {
 }
 
 template<typename T>
-inline variable_status variable<vec4<T>>::set(const vec4<T>& value) {
-  if (value.x < m_min.x || value.y < m_min.y || value.z < m_min.z || value.w < m_min.w ||
-      value.x > m_max.x || value.y > m_max.y || value.z > m_max.z || value.w > m_max.w)
+inline variable_status variable<vec4<T>>::set(const vec4<T>& _value) {
+  if (_value.x < m_min.x || _value.y < m_min.y || _value.z < m_min.z || _value.w < m_min.w ||
+      _value.x > m_max.x || _value.y > m_max.y || _value.z > m_max.z || _value.w > m_max.w)
   {
     return variable_status::k_out_of_range;
   }
-  m_current = value;
+  m_current = _value;
   return variable_status::k_success;
 }
 
 } // namespace rx::console
 
-#define RX_CONSOLE_TRVAR(type, label, name, description, min, max, initial) \
-  static ::rx::static_global<::rx::console::variable<type>> label \
-    ("cvar_" name, (name), (description), (min), (max), (initial))
+#define RX_CONSOLE_TRVAR(_type, _label, _name, _description, _min, _max, _initial) \
+  static ::rx::static_global<::rx::console::variable<_type>> _label \
+    ("cvar_" _name, (_name), (_description), (_min), (_max), (_initial))
 
-#define RX_CONSOLE_TUVAR(type, label, name, description, initial) \
-  static ::rx::static_global<::rx::console::variable<type>> label \
-    ("cvar_" name, (name), (description), (initial))
+#define RX_CONSOLE_TUVAR(_type, _label, _name, _description, _initial) \
+  static ::rx::static_global<::rx::console::variable<_type>> _label \
+    ("cvar_" _name, (_name), (_description), (_initial))
 
 // helper macros to define console variables
-#define RX_CONSOLE_BVAR(label, name, description, initial) \
-  RX_CONSOLE_TUVAR(bool, label, name, (description), (initial))
+#define RX_CONSOLE_BVAR(_label, _name, _description, _initial) \
+  RX_CONSOLE_TUVAR(bool, _label, _name, (_description), (_initial))
 
-#define RX_CONSOLE_SVAR(label, name, description, initial) \
-  RX_CONSOLE_TUVAR(::rx::string, label, name, (description), (initial))
+#define RX_CONSOLE_SVAR(_label, _name, _description, _initial) \
+  RX_CONSOLE_TUVAR(::rx::string, _label, _name, (_description), (_initial))
 
-#define RX_CONSOLE_IVAR(label, name, description, min, max, initial) \
-  RX_CONSOLE_TRVAR(rx_s32, label, name, (description), (min), (max), (initial))
+#define RX_CONSOLE_IVAR(_label, _name, _description, _min, _max, _initial) \
+  RX_CONSOLE_TRVAR(rx_s32, _label, _name, (_description), (_min), (_max), (_initial))
 
-#define RX_CONSOLE_FVAR(label, name, description, min, max, initial) \
-  RX_CONSOLE_TRVAR(rx_f32, label, name, (description), (min), (max), (initial))
+#define RX_CONSOLE_FVAR(_label, _name, _description, _min, _max, _initial) \
+  RX_CONSOLE_TRVAR(rx_f32, _label, _name, (_description), (_min), (_max), (_initial))
 
-#define RX_CONSOLE_V2IVAR(label, name, description, min, max, initial) \
-  RX_CONSOLE_TRVAR(::rx::math::vec2i, label, name, (description), (min), (max), (initial))
+#define RX_CONSOLE_V2IVAR(_label, _name, _description, _min, _max, _initial) \
+  RX_CONSOLE_TRVAR(::rx::math::vec2i, _label, _name, (_description), (_min), (_max), (_initial))
 
-#define RX_CONSOLE_V2FVAR(label, name, description, min, max, initial) \
-  RX_CONSOLE_TRVAR(::rx::math::vec2f, label, name, (description), (min), (max), (initial))
+#define RX_CONSOLE_V2FVAR(_label, _name, _description, _min, _max, _initial) \
+  RX_CONSOLE_TRVAR(::rx::math::vec2f, _label, _name, (_description), (_min), (_max), (_initial))
 
-#define RX_CONSOLE_V3IVAR(label, name, description, min, max, initial) \
-  RX_CONSOLE_TRVAR(::rx::math::vec3i, label, name, (description), (min), (max), (initial))
+#define RX_CONSOLE_V3IVAR(_label, _name, _description, _min, _max, _initial) \
+  RX_CONSOLE_TRVAR(::rx::math::vec3i, _label, _name, (_description), (_min), (_max), (_initial))
 
-#define RX_CONSOLE_V3FVAR(label, name, description, min, max, initial) \
-  RX_CONSOLE_TRVAR(::rx::math::vec3f, label, name, (description), (min), (max), (initial))
+#define RX_CONSOLE_V3FVAR(_label, _name, _description, _min, _max, _initial) \
+  RX_CONSOLE_TRVAR(::rx::math::vec3f, _label, _name, (_description), (_min), (_max), (_initial))
 
-#define RX_CONSOLE_V4IVAR(label, name, description, min, max, initial) \
-  RX_CONSOLE_TRVAR(::rx::math::vec4i, label, name, (description), (min), (max), (initial))
+#define RX_CONSOLE_V4IVAR(_label, _name, _description, _min, _max, _initial) \
+  RX_CONSOLE_TRVAR(::rx::math::vec4i, _label, _name, (_description), (_min), (_max), (_initial))
 
-#define RX_CONSOLE_V4FVAR(label, name, description, min, max, initial) \
-  RX_CONSOLE_TRVAR(::rx::math::vec4f, label, name, (description), (min), (max), (initial))
+#define RX_CONSOLE_V4FVAR(_label, _name, _description, _min, _max, _initial) \
+  RX_CONSOLE_TRVAR(::rx::math::vec4f, _label, _name, (_description), (_min), (_max), (_initial))
 
 #endif // RX_CONSOLE_VARIABLE_H

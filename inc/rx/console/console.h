@@ -6,28 +6,36 @@
 namespace rx::console {
 
 struct console {
-  static bool load(const char* file_name);
-  static bool save(const char* file_name);
+  // loads |_file_name| configuration
+  static bool load(const char* _file_name);
 
-  static variable_reference* add_variable_reference(variable_reference* reference);
+  // saves configuration to |_file_name|
+  static bool save(const char* _file_name);
 
+  // thread type-erased static global variable |_reference| during static
+  // initialization into global linked-list representation
+  static variable_reference* add_variable_reference(variable_reference* _reference);
+
+  // set variable |_name| with typed value |_value|
   template<typename T>
-  static variable_status set_from_value(const string& name, const T& value);
+  static variable_status set_from_value(const string& _name, const T& _value);
 
-
-  static variable_status change(const string& name, const string& value);
+  // change variable |_name| with string encoded |_value|
+  static variable_status change(const string& _name, const string& _value);
 
 private:
+  // parse string |_contents| into typed value |value_|
   template<typename T>
-  static variable_status parse_string(const string& contents, T& value);
+  static variable_status parse_string(const string& _contents, T& value_);
 
+  // set variable |_name| with string encoded |_value|
   template<typename T>
-  static variable_status set_from_string(const string& name, const string& value);
+  static variable_status set_from_string(const string& _name, const string& _value);
 
-  // linked-list merge sort for variable references
-  static variable_reference* split(variable_reference* reference);
-  static variable_reference* merge(variable_reference* lhs, variable_reference* rhs);
-  static variable_reference* sort(variable_reference* reference);
+  // merge-sort variable references in alphabetical order
+  static variable_reference* split(variable_reference* _reference);
+  static variable_reference* merge(variable_reference* _lhs, variable_reference* _rhs);
+  static variable_reference* sort(variable_reference* _reference);
 };
 
 } // namespace rx::console
