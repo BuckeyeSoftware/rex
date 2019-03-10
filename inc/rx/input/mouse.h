@@ -5,8 +5,8 @@
 
 namespace rx::input {
 
-struct mouse {
-  mouse();
+struct mouse_device {
+  mouse_device();
 
   static constexpr const auto k_buttons{32};
 
@@ -35,15 +35,15 @@ private:
   bool m_scrolled;
 };
 
-inline const math::vec2i& mouse::movement() const {
+inline const math::vec2i& mouse_device::movement() const {
   return m_movement;
 }
 
-inline const math::vec2i& mouse::position() const {
+inline const math::vec2i& mouse_device::position() const {
   return m_position;
 }
 
-inline const math::vec2i& mouse::scroll() const {
+inline const math::vec2i& mouse_device::scroll() const {
   return m_scroll;
 }
 

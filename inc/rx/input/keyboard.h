@@ -5,8 +5,8 @@
 
 namespace rx::input {
 
-struct keyboard {
-  keyboard();
+struct keyboard_device {
+  keyboard_device();
 
   static constexpr const auto k_keys{384};
 
@@ -28,15 +28,15 @@ private:
   int m_scan_codes[k_keys];
 };
 
-inline bool keyboard::is_pressed(int key, bool scan_code) const {
+inline bool keyboard_device::is_pressed(int key, bool scan_code) const {
   return scan_code ? (m_scan_codes[key] & k_pressed) : (m_symbols[key] & k_pressed);
 }
 
-inline bool keyboard::is_released(int key, bool scan_code) const {
+inline bool keyboard_device::is_released(int key, bool scan_code) const {
   return scan_code ? (m_scan_codes[key] & k_released) : (m_symbols[key] & k_released);
 }
 
-inline bool keyboard::is_held(int key, bool scan_code) const {
+inline bool keyboard_device::is_held(int key, bool scan_code) const {
   return scan_code ? (m_scan_codes[key] & k_held) : (m_symbols[key] & k_held);
 }
 

@@ -168,7 +168,7 @@ int entry(int argc, char **argv) {
     renderer.initialize_target(RX_RENDER_TAG("test"), target);
 
     rx::input::input input;
-    while (!input.get_keyboard().is_released(SDLK_ESCAPE, false)) {
+    while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
       input.update(0);
 
       // translate SDL events
