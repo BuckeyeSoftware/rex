@@ -20,9 +20,9 @@ struct thread : concepts::no_copy {
   thread();
 
   // construct thread with system allocator and function
-  thread(function<void(int)>&& _function);
+  thread(const char* _name, function<void(int)>&& _function);
   // construct thread with custom allocator and function
-  thread(memory::allocator* _allocator, function<void(int)>&& _function);
+  thread(memory::allocator* _allocator, const char* _name, function<void(int)>&& _function);
 
   // move construct thread
   thread(thread&& _thread);
@@ -36,7 +36,7 @@ private:
     static void* wrap(void* data);
 
     state();
-    state(function<void(int)>&& _function);
+    state(const char* _name, function<void(int)>&& _function);
 
     void join();
 
@@ -52,6 +52,7 @@ private:
 
   memory::allocator* m_allocator;
   memory::block m_state;
+  const char* m_name;
 };
 
 } // namespace rx::concurrency

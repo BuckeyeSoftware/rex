@@ -5,6 +5,7 @@
 
 #include <rx/core/memory/stack_allocator.h>
 #include <rx/core/utility/construct.h>
+#include <rx/math/vec4.h>
 
 namespace rx::render {
 
@@ -14,6 +15,14 @@ struct texture1D;
 struct texture2D;
 struct texture3D;
 struct textureCM;
+
+#define RX_RENDER_CLEAR_DEPTH (1 << 0)
+#define RX_RENDER_CLEAR_STENCIL (1 << 1)
+#define RX_RENDER_CLEAR_COLOR(INDEX) (1 << (2 + (INDEX)))
+
+enum class primitive_type : rx_u8 {
+  k_triangles
+};
 
 enum class command_type : rx_u8 {
   k_resource_allocate,
@@ -58,7 +67,9 @@ private:
 };
 
 struct clear_command {
-  target* destination_target;
+  target* render_target;
+  int clear_mask;
+  math::vec4f clear_color;
 };
 
 struct resource_command {
@@ -84,13 +95,14 @@ struct resource_command {
 };
 
 struct draw_command : state {
-  rx_u64 binds; // bitstring of '123c', '0' indicates end of string
-  const rx_byte* textures() const;
+  target* render_target;
+  buffer* render_buffer;
+  rx_size count;
+  rx_size offset;
+  primitive_type type;
+  char texture_types[9];
+  void* texture_binds[8];
 };
-
-inline const rx_byte* draw_command::textures() const {
-  return reinterpret_cast<const rx_byte*>(this) + sizeof *this;
-}
 
 } // namespace rx::render
 

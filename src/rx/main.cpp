@@ -123,49 +123,33 @@ int entry(int argc, char **argv) {
   SDL_GLContext context =
     SDL_GL_CreateContext(window);
 
-  const rx::math::vec3f vertices[]{
-    {-1.0f, -1.0f, 0.0f },
-    { 0.0f, -1.0f, 0.0f },
-    { 1.0f, -1.0f, 0.0f },
-    { 0.0f,  1.0f, 0.0f }
-  };
+    const rx::math::vec3f vertices[]{
+      {-1.0f, -1.0f, 0.0f},
+      { 1.0f, -1.0f, 0.0f},
+      { 0.0f,  1.0f, 0.0f}
+    };
 
-  const rx_u8 elements[]{
-    0,3,1,
-    1,3,2,
-    2,3,0,
-    0,1,2
-  };
+    const rx_u8 elements[]{
+      0, 1, 2
+    };
 
-  {
-    rx::render::frontend::allocation_info allocation_info;
-    rx::render::backend_gl4 gl4{allocation_info};
+    {
+      rx::render::frontend::allocation_info allocation_info;
+      rx::render::backend_gl4 gl4{allocation_info};
 
-    rx::render::frontend renderer{&rx::memory::g_system_allocator, &gl4, allocation_info};
+      rx::render::frontend renderer{&rx::memory::g_system_allocator, &gl4, allocation_info};
 
-    // create, record and initialize buffer
-    auto buffer{renderer.create_buffer(RX_RENDER_TAG("test"))};
-    buffer->write_vertices(vertices, sizeof vertices, sizeof(rx::math::vec3f));
-    buffer->write_elements(elements, sizeof elements);
-    buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, 0);
-    renderer.initialize_buffer(RX_RENDER_TAG("test"), buffer);
+      // create, record and initialize buffer
+      auto buffer{renderer.create_buffer(RX_RENDER_TAG("test"))};
+      buffer->write_vertices(vertices, sizeof vertices, sizeof(rx::math::vec3f));
+      buffer->write_elements(elements, sizeof elements);
+      buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, 0);
+      renderer.initialize_buffer(RX_RENDER_TAG("test"), buffer);
 
-    // create, record and initialize color texture
-    auto attach{renderer.create_texture2D(RX_RENDER_TAG("test"))};
-    attach->record_format(rx::render::texture::data_format::k_rgba_u8);
-    attach->record_wrap({
-      rx::render::texture::wrap_options::category::k_clamp_to_edge,
-      rx::render::texture::wrap_options::category::k_clamp_to_edge,
-      rx::render::texture::wrap_options::category::k_clamp_to_edge});
-    attach->record_filter({ true, false, false });
-    attach->record_dimensions({1600, 900});
-    renderer.initialize_texture(RX_RENDER_TAG("test"), attach);
-
-    // create, record and initialize target
-    auto target{renderer.create_target(RX_RENDER_TAG("test"))};
-    target->request_depth(rx::render::texture::data_format::k_d24, {1600, 900});
-    target->attach_texture(attach);
-    renderer.initialize_target(RX_RENDER_TAG("test"), target);
+      // create, record and initialize swapchain target
+      auto target{renderer.create_target(RX_RENDER_TAG("test"))};
+      target->request_swapchain();
+      renderer.initialize_target(RX_RENDER_TAG("test"), target);
 
     rx::input::input input;
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
@@ -203,18 +187,33 @@ int entry(int argc, char **argv) {
         }
       }
 
-#if 0
+      rx::render::state state; // default
+
+      // clear depth to 1s and stencil to 0s
+      renderer.clear(
+        RX_RENDER_TAG("test"),
+        target,
+        RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL,
+        {1.0f, 0.0f, 0.0f, 0.0f}
+      );
+
+      renderer.clear(
+        RX_RENDER_TAG("test"),
+        target,
+        RX_RENDER_CLEAR_COLOR(0),
+        {1.0f, 0.0f, 0.0f, 1.0f}
+      );
+
       renderer.draw_elements(
         RX_RENDER_TAG("test"),
         state,
         target,
         buffer,
-        program,
-        rx::render::primitive_type::k_triangles,
+        3,
         0,
-        12
+        rx::render::primitive_type::k_triangles,
+        ""
       );
-#endif
 
       if (renderer.process())
       {
@@ -223,7 +222,6 @@ int entry(int argc, char **argv) {
     }
 
     renderer.destroy_target(RX_RENDER_TAG("test"), target);
-    renderer.destroy_texture(RX_RENDER_TAG("test"), attach);
     renderer.destroy_buffer(RX_RENDER_TAG("test"), buffer);
 
     renderer.process();

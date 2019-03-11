@@ -89,7 +89,7 @@ logger::logger()
   , m_max_name_length{0}
   , m_max_level_length{0}
   , m_status{k_running}
-  , m_thread{[this](int id){ process(id); }}
+  , m_thread{"logger", [this](int id){ process(id); }}
 {
   RX_MESSAGE("starting logger... (messages will be flushed once started)");
 

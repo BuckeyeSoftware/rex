@@ -88,6 +88,7 @@ target::target(frontend* _frontend)
   , m_depth_texture{nullptr}
   , m_stencil_texture{nullptr}
   , m_owns{0}
+  , m_is_swapchain{false}
 {
   RX_ASSERT(_frontend, "null frontend");
 
@@ -117,7 +118,13 @@ target::~target() {
   target_log(log::level::k_verbose, "%08p: fini target", this);
 }
 
+void target::request_swapchain() {
+  RX_ASSERT(m_owns == 0 && m_attachments.is_empty(), "target is not empty");
+  m_is_swapchain = true;
+}
+
 void target::request_depth(texture::data_format _format, const math::vec2z& _dimensions) {
+  RX_ASSERT(!is_swapchain(), "request on swapchain");
   RX_ASSERT(!m_depth_texture, "already has depth attachment");
   RX_ASSERT(!m_stencil_texture, "use combined depth stencil");
   RX_ASSERT(is_valid_depth_format(_format), "not a valid depth format");
@@ -136,6 +143,7 @@ void target::request_depth(texture::data_format _format, const math::vec2z& _dim
 }
 
 void target::request_stencil(texture::data_format _format, const math::vec2z& _dimensions) {
+  RX_ASSERT(!is_swapchain(), "request on swapchain");
   RX_ASSERT(!m_stencil_texture, "already has stencil attachment");
   RX_ASSERT(!m_depth_texture, "use combined depth stencil");
   RX_ASSERT(is_valid_stencil_format(_format), "not a valid stencil format");
@@ -154,6 +162,7 @@ void target::request_stencil(texture::data_format _format, const math::vec2z& _d
 }
 
 void target::request_depth_stencil(texture::data_format _format, const math::vec2z& _dimensions) {
+  RX_ASSERT(!is_swapchain(), "request on swapchain");
   RX_ASSERT(!m_depth_texture, "already has depth attachment");
   RX_ASSERT(!m_stencil_texture, "already had stencil attachment");
   RX_ASSERT(is_valid_depth_stencil_format(_format), "not a valid depth stencil format");
@@ -173,18 +182,21 @@ void target::request_depth_stencil(texture::data_format _format, const math::vec
 }
 
 void target::attach_depth(texture2D* _depth) {
+  RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
   RX_ASSERT(!m_depth_texture, "depth already attached");
   RX_ASSERT(is_valid_depth_format(_depth->format()), "not a depth format texture");
   m_depth_texture = _depth;
 }
 
 void target::attach_stencil(texture2D* _stencil) {
+  RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
   RX_ASSERT(!m_stencil_texture, "stencil already attached");
   RX_ASSERT(is_valid_stencil_format(_stencil->format()), "not a stencil format texture");
   m_stencil_texture = _stencil;
 }
 
 void target::attach_texture(texture2D* _texture) {
+  RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
   m_attachments.each_fwd([_texture](texture2D* _attachment) {
     RX_ASSERT(_texture != _attachment, "texture already attached");
   });

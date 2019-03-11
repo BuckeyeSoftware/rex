@@ -44,7 +44,10 @@ struct texture : resource {
     k_s8
   };
 
+  // get byte size of |_format|
   static rx_size byte_size_of_format(data_format _format);
+
+  // get channel count of |_format|
   static rx_size channel_count_of_format(data_format _format);
 
   // record format |_format|

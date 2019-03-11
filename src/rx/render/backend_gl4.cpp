@@ -225,6 +225,14 @@ static GLenum convert_texture_format(render::texture::data_format _data_format) 
   RX_ASSERT(false, "unreachable");
 }
 
+static GLenum convert_primitive_type(render::primitive_type _primitive_type) {
+  switch (_primitive_type) {
+  case render::primitive_type::k_triangles:
+    return GL_TRIANGLES;
+  }
+  RX_ASSERT(false, "unreachable");
+}
+
 struct filter {
   GLuint min;
   GLuint mag;
@@ -265,7 +273,6 @@ namespace detail {
     buffer() {
       pglCreateBuffers(2, bo);
       pglCreateVertexArrays(1, &va);
-      RX_MESSAGE("made vbo: %u, ebo: %u, vao: %u", bo[0], bo[1], va);
     }
 
     ~buffer() {
@@ -280,7 +287,6 @@ namespace detail {
   struct target {
     target() {
       pglCreateFramebuffers(1, &fbo);
-      RX_MESSAGE("made fbo: %u", fbo);
     }
 
     ~target() {
@@ -305,7 +311,6 @@ namespace detail {
   struct texture2D {
     texture2D() {
       pglCreateTextures(GL_TEXTURE_2D, 1, &tex);
-      RX_MESSAGE("made t2d: %u", tex);
     }
 
     ~texture2D() {
@@ -368,12 +373,12 @@ namespace detail {
       }
     }
 
-    void use_state(const ::rx::render::state& _state) {
-      const auto& scissor{_state.scissor};
-      const auto& blend{_state.blend};
-      const auto& cull{_state.cull};
-      const auto& stencil{_state.stencil};
-      const auto& polygon{_state.polygon};
+    void use_state(const ::rx::render::state* _render_state) {
+      const auto& scissor{_render_state->scissor};
+      const auto& blend{_render_state->blend};
+      const auto& cull{_render_state->cull};
+      const auto& stencil{_render_state->stencil};
+      const auto& polygon{_render_state->polygon};
 
       if (this->scissor != scissor) {
         const auto enabled{scissor.enabled()};
@@ -572,8 +577,28 @@ namespace detail {
       flush();
     }
 
+    void use_target(const ::rx::render::target* _render_target) {
+      const auto this_target{reinterpret_cast<const target*>(_render_target + 1)};
+      if (this_target->fbo != m_bound_fbo) {
+        pglBindFramebuffer(GL_FRAMEBUFFER, this_target->fbo);
+        m_bound_fbo = this_target->fbo;
+      }
+    }
+
+    void use_buffer(const ::rx::render::buffer* _render_buffer) {
+      const auto this_buffer{reinterpret_cast<const buffer*>(_render_buffer + 1)};
+      if (this_buffer->va != m_bound_vao) {
+        pglBindVertexArray(this_buffer->va);
+        m_bound_vao = this_buffer->va;
+      }
+    }
+
     rx_u8 m_color_mask;
+
     GLint m_swap_chain_fbo;
+
+    GLuint m_bound_vao;
+    GLuint m_bound_fbo;
   };
 };
 
@@ -657,14 +682,15 @@ backend_gl4::backend_gl4(frontend::allocation_info& allocation_info_) {
   fetch("glDrawArrays", pglDrawArrays);
   fetch("glDrawElements", pglDrawElements);
 
-
-  detail::state s;
+  m_impl = malloc(sizeof(detail::state));
+  utility::construct<detail::state>(m_impl);
 }
 
 backend_gl4::~backend_gl4() {
 }
 
 void backend_gl4::process(rx_byte* _command) {
+  auto state{reinterpret_cast<detail::state*>(m_impl)};
   auto header{reinterpret_cast<command_header*>(_command)};
   switch (header->type) {
   case command_type::k_resource_allocate:
@@ -675,7 +701,12 @@ void backend_gl4::process(rx_byte* _command) {
         utility::construct<detail::buffer>(resource->as_buffer + 1);
         break;
       case resource_command::category::k_target:
-        utility::construct<detail::target>(resource->as_target + 1);
+        {
+          const auto render_target{resource->as_target};
+          if (!render_target->is_swapchain()) {
+            utility::construct<detail::target>(resource->as_target + 1);
+          }
+        }
         break;
       case resource_command::category::k_texture1D:
         utility::construct<detail::texture1D>(resource->as_texture1D + 1);
@@ -700,7 +731,12 @@ void backend_gl4::process(rx_byte* _command) {
         utility::destruct<detail::buffer>(resource->as_buffer + 1);
         break;
       case resource_command::category::k_target:
-        utility::destruct<detail::target>(resource->as_target + 1);
+        {
+          const auto render_target{resource->as_target};
+          if (!render_target->is_swapchain()) {
+            utility::destruct<detail::target>(render_target + 1);
+          }
+        } 
         break;
       case resource_command::category::k_texture1D:
         utility::destruct<detail::texture1D>(resource->as_texture1D + 1);
@@ -772,6 +808,11 @@ void backend_gl4::process(rx_byte* _command) {
       case resource_command::category::k_target:
         {
           const auto render_target{resource->as_target};
+          if (render_target->is_swapchain()) {
+            // swap chain targets don't have an user-defined attachments
+            break;
+          }
+
           const auto target{reinterpret_cast<const detail::target*>(render_target + 1)};
           const auto depth_stencil{render_target->depth_stencil()};
           if (depth_stencil) {
@@ -951,14 +992,111 @@ void backend_gl4::process(rx_byte* _command) {
     break;
   case command_type::k_clear:
     {
-      // TODO: implement
+      const auto command{reinterpret_cast<clear_command*>(header + 1)};
+      const auto render_target{command->render_target};
+      const auto this_target{reinterpret_cast<detail::target*>(render_target + 1)};
+      const bool clear_depth{command->clear_mask & RX_RENDER_CLEAR_DEPTH};
+      const bool clear_stencil{command->clear_mask & RX_RENDER_CLEAR_STENCIL};  
+      const auto clear_color{command->clear_mask & ~(RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL)};
+
+      // ensure depth writes are enabled when clearing depth
+      if (state->depth.write() && clear_depth) {
+        pglDepthMask(GL_TRUE);
+        state->depth.record_write(true);
+        state->depth.flush();
+      }
+
+      // ensure stencil writes are enabled when clearing stencil
+      if (state->stencil.write_mask() != 0xff && clear_stencil) {
+        pglStencilMask(0xff);
+        state->stencil.record_write_mask(0xff);
+        state->stencil.flush();
+      }
+
+      // ensure scissor is disabled when clearing
+      if (state->scissor.enabled()) {
+        pglDisable(GL_SCISSOR_TEST);
+        state->scissor.record_enable(false);
+        state->scissor.flush();
+      }
+
+      // ensure color mask is appropriate for clear
+      if (state->blend.write_mask() != render::blend_state::k_mask_all && clear_color) {
+        pglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        state->blend.record_write_mask(0xff);
+        state->blend.flush();
+      }
+
+
+      // treat swapchain specially since it's special in GL
+      const GLuint fbo{render_target->is_swapchain() ? state->m_swap_chain_fbo : this_target->fbo};
+
+      if (clear_color) {
+        for (rx_u32 i{0}; i < 32; i++) {
+          if (clear_color & (1 << i)) {
+            // NOTE: -2 because depth stencil attachments behave as index 0 and 1 respectively
+            pglClearNamedFramebufferfv(fbo, GL_COLOR, static_cast<GLint>(i - 2),
+              &command->clear_color[0]);
+            break;
+          }
+        }
+      }
+      if (clear_depth && clear_stencil) {
+        pglClearNamedFramebufferfi(fbo, GL_DEPTH_STENCIL,
+          0, command->clear_color.r, static_cast<GLint>(command->clear_color.g));
+      } else if (clear_depth) {
+        pglClearNamedFramebufferfv(fbo, GL_DEPTH, 0, &command->clear_color.r);
+      } else if (clear_stencil) {
+        pglClearNamedFramebufferfv(fbo, GL_STENCIL, 0, &command->clear_color.g);
+      }
     }
     break;
   case command_type::k_draw:
     [[fallthrough]];
   case command_type::k_draw_elements:
     {
-      // TODO: implement
+      const auto command{reinterpret_cast<draw_command*>(header + 1)};
+      const auto render_target{command->render_target};
+      const auto render_buffer{command->render_buffer};
+      const auto render_state{reinterpret_cast<render::state*>(command)};
+
+      state->use_target(render_target);
+      state->use_buffer(render_buffer);
+      state->use_state(render_state);
+
+      if (header->type == command_type::k_draw_elements) {
+        switch (render_buffer->element_type()) {
+        case render::buffer::element_category::k_none:
+          // [[unreachable]]
+          break;
+        case render::buffer::element_category::k_u8:
+          pglDrawElements(
+            convert_primitive_type(command->type),
+            command->count,
+            GL_UNSIGNED_BYTE,
+            reinterpret_cast<void*>(sizeof(GLubyte) * command->offset));
+          break;
+        case render::buffer::element_category::k_u16:
+          pglDrawElements(
+            convert_primitive_type(command->type),
+            command->count,
+            GL_UNSIGNED_SHORT,
+            reinterpret_cast<void*>(sizeof(GLushort) * command->offset));
+          break;
+        case render::buffer::element_category::k_u32:
+          pglDrawElements(
+            convert_primitive_type(command->type),
+            command->count,
+            GL_UNSIGNED_INT,
+            reinterpret_cast<void*>(sizeof(GLuint) * command->offset));
+          break;
+        }
+      } else {
+        pglDrawArrays(
+          convert_primitive_type(command->type),
+          command->offset,
+          command->count);
+      }
     }
     break;
   }

@@ -22,16 +22,16 @@ thread::thread(thread&& _thread)
   _thread.m_allocator = nullptr;
 }
 
-thread::thread(memory::allocator* _allocator, function<void(int)>&& _function)
+thread::thread(memory::allocator* _allocator, const char* _name, function<void(int)>&& _function)
   : m_allocator{_allocator}
 {
   RX_ASSERT(m_allocator, "null allocator");
   m_state = utility::move(m_allocator->allocate(sizeof(state)));
-  utility::construct<state>(m_state.data(), utility::move(_function));
+  utility::construct<state>(m_state.data(), _name, utility::move(_function));
 }
 
-thread::thread(function<void(int)>&& _function)
-  : thread{&memory::g_system_allocator, utility::move(_function)}
+thread::thread(const char* _name, function<void(int)>&& _function)
+  : thread{&memory::g_system_allocator, _name, utility::move(_function)}
 {
   // {empty}
 }
@@ -71,13 +71,16 @@ thread::state::state()
   // {empty}
 }
 
-thread::state::state(function<void(int)>&& _function)
+thread::state::state(const char* _name, function<void(int)>&& _function)
   : m_function{utility::move(_function)}
   , m_joined{false}
 {
 #if defined(RX_PLATFORM_POSIX)
   if (pthread_create(&m_thread, nullptr, wrap, reinterpret_cast<void*>(this)) != 0) {
     RX_ASSERT(false, "thread creation failed");
+  }
+  if (pthread_setname_np(m_thread, _name) != 0) {
+    RX_MESSAGE("failed to set thread name");
   }
 #elif defined(RX_PLATFORM_WINDOWS)
   // _beginthreadex on windows expects unsigned int return and __stdcall,
@@ -88,6 +91,8 @@ thread::state::state(function<void(int)>&& _function)
   m_thread = reinterpret_cast<HANDLE>(
     _beginthreadex(nullptr, 0, wrap_win32, reinterpret_cast<void*>(this), 0, nullptr));
   RX_ASSERT(m_thread, "thread creation failed");
+  // TODO(dweiler): convert _name to UNICODE here for Windows
+  // SetThreadDescription(m_thread, _name);
 #endif
 }
 

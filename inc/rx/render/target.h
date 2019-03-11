@@ -13,6 +13,9 @@ struct target {
   target(frontend* _frontend);
   ~target();
 
+  // request the swap chain for this target
+  void request_swapchain();
+
   // request target have depth attachment |_format| with size |_dimensions|
   void request_depth(texture::data_format _format, const math::vec2z& _dimensions);
 
@@ -35,6 +38,7 @@ struct target {
   texture2D* stencil() const;
   texture2D* depth_stencil() const;
   const array<texture2D*> attachments() const &;
+  bool is_swapchain() const;
 
 private:
   enum /* m_owns */ {
@@ -53,6 +57,7 @@ private:
   };
   array<texture2D*> m_attachments;
   int m_owns;
+  bool m_is_swapchain;
 };
 
 inline texture2D* target::depth() const {
@@ -69,6 +74,10 @@ inline texture2D* target::depth_stencil() const {
 
 inline const array<texture2D*> target::attachments() const & {
   return m_attachments;
+}
+
+inline bool target::is_swapchain() const {
+  return m_is_swapchain;
 }
 
 } // namespace rx::render

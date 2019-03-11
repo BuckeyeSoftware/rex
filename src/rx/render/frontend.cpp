@@ -1,3 +1,6 @@
+#include <stdarg.h> // va_list, va_start, va_end
+#include <string.h> // strlen
+
 #include <rx/render/frontend.h>
 #include <rx/render/backend.h>
 #include <rx/render/buffer.h>
@@ -251,6 +254,67 @@ void frontend::destroy_texture_unlocked(const command_header::info& _info, textu
     m_commands.push_back(command_base);
     m_destroy_textures2D.push_back(_texture);
   }
+}
+
+void frontend::draw_elements(
+  const command_header::info& _info,
+  const state& _state,
+  target* _target,
+  buffer* _buffer,
+  rx_size _count,
+  rx_size _offset,
+  primitive_type _primitive_type,
+  const char* _textures,
+  ...)
+{
+  if (_count == 0) {
+    return;
+  }
+
+  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+
+  auto command_base{allocate_command(draw_command, command_type::k_draw)};
+  auto command{reinterpret_cast<draw_command*>(command_base + sizeof(command_header))};
+  *reinterpret_cast<state*>(command) = _state;
+  command->render_target = _target;
+  command->render_buffer = _buffer;
+  command->count = _count;
+  command->offset = _offset;
+  command->type = _primitive_type;
+
+  rx_size textures{strlen(_textures)};
+  if (textures) {
+    va_list va;
+    va_start(va, _textures);
+    for (rx_size i{0}; i < textures; i++) {
+      const char ch{_textures[i]};
+      command->texture_types[i] = ch;
+      command->texture_binds[i] = va_arg(va, void*);
+    }
+    va_end(va);
+  }
+
+  // TODO: programs
+  m_commands.push_back(command_base);
+}
+
+void frontend::clear(
+  const command_header::info& _info,
+  target* _target,
+  rx_u32 _clear_mask,
+  const math::vec4f& _clear_color)
+{
+  RX_ASSERT(_clear_mask, "empty clear");
+  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+
+  auto command_base{allocate_command(draw_command, command_type::k_clear)};
+  auto command{reinterpret_cast<clear_command*>(command_base + sizeof(command_header))};
+
+  command->render_target = _target;
+  command->clear_mask = _clear_mask;
+  command->clear_color = _clear_color;
+
+  m_commands.push_back(command_base);
 }
 
 bool frontend::process() {

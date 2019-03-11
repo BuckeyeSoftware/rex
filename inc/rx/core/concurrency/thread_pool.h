@@ -20,7 +20,7 @@ struct thread_pool {
     RX_MESSAGE("starting thread pool with %zu threads", threads);
 
     for (rx_size i{0}; i < threads; i++) {
-      m_threads.emplace_back([this](int _thread_id) {
+      m_threads.emplace_back("thread pool", [this](int _thread_id) {
         RX_MESSAGE("starting thread %d for pool", _thread_id);
 
         {

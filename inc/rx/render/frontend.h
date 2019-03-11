@@ -52,6 +52,43 @@ struct frontend {
   void destroy_texture(const command_header::info& _info, texture3D* _texture);
   void destroy_texture(const command_header::info& _info, textureCM* _texture);
 
+  void draw_elements(
+    const command_header::info& _info,
+    const state& _state,
+    target* _target,
+    buffer* _buffer,
+    rx_size _count,
+    rx_size _offset,
+    primitive_type _primitive_type,
+    const char* _textures,
+    ...);
+
+  // _clear_mask can be one of
+  //  RX_RENDER_CLEAR_DEPTH,
+  //  RX_RENDER_CLEAR_STENCIL,
+  //  RX_RENDER_CLEAR_COLOR(index)
+  //  RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL
+  //  any other combinaiton of flags is undefined
+  //
+  // _clear_color stores the color for the clear operation, for
+  //  RX_RENDER_CLEAR_DEPTH, _clear_color.r stores the depth clear value
+  //  RX_RENDER_CLEAR_STENCIL, _clear_color.r stores the stencil clear value
+  //  RX_RENDER_CLEAR_COLOR, _clear_color stores the color clear value
+  //  RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL, _clear_color.r stores the
+  //  depth clear, _clear_color.g stores the stencil clear
+  //
+  // NOTE: in the combined depth stencil clear, the order of the bitflags does
+  // not matter but the order of the values in _clear_color does, depth is alway
+  // in R and stencil always in G.
+  void clear(
+    const command_header::info& _info,
+    target* _target,
+    rx_u32 _clear_mask,
+    const math::vec4f& _clear_color
+  );
+
+  target* backbuffer() const;
+
   bool process();
   void swap();
 
@@ -81,6 +118,8 @@ private:
   command_buffer m_command_buffer;         // protected by |m_mutex|
 
   backend* m_backend;                      // protected by |m_mutex|
+
+  target* m_bacbuffer;
 };
 
 } // namespace rx::render
