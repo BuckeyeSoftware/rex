@@ -11,6 +11,7 @@ namespace rx::render {
 
 struct target;
 struct buffer;
+struct program;
 struct texture1D;
 struct texture2D;
 struct texture3D;
@@ -76,6 +77,7 @@ struct resource_command {
   enum class category : rx_u8 {
     k_buffer,
     k_target,
+    k_program,
     k_texture1D,
     k_texture2D,
     k_texture3D,
@@ -87,6 +89,7 @@ struct resource_command {
   union {
     target* as_target;
     buffer* as_buffer;
+    program* as_program;
     texture1D* as_texture1D;
     texture2D* as_texture2D;
     texture3D* as_texture3D;
@@ -97,12 +100,26 @@ struct resource_command {
 struct draw_command : state {
   target* render_target;
   buffer* render_buffer;
+  program* render_program;
   rx_size count;
   rx_size offset;
-  primitive_type type;
-  char texture_types[9];
+  char texture_types[8];
   void* texture_binds[8];
+  primitive_type type;
+  
+  const rx_byte* uniforms() const;
+  rx_byte* uniforms();
 };
+
+inline const rx_byte* draw_command::uniforms() const {
+  // NOTE: standard permits aliasing with char (rx_byte)
+  return reinterpret_cast<const rx_byte*>(this) + sizeof *this;
+}
+
+inline rx_byte* draw_command::uniforms() {
+  // NOTE: standard permits aliasing with char (rx_byte)
+  return reinterpret_cast<rx_byte*>(this) + sizeof *this;
+}
 
 } // namespace rx::render
 

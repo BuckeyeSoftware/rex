@@ -18,6 +18,8 @@ struct mat3x3 {
   static constexpr mat3x3 translate(const vec3<T>& translate);
   static constexpr mat3x3 transpose(const mat3x3& mat);
 
+  const T* data() const;
+
   vec x, y, z;
 };
 
@@ -78,6 +80,12 @@ inline constexpr mat3x3<T> operator*(const mat3x3<T>& a, const mat3x3<T>& b) {
   return {b.x*a.x.x + b.y*a.x.y + b.z*a.x.z,
           b.x*a.y.x + b.y*a.y.y + b.z*a.y.z,
           b.x*a.z.x + b.y*a.z.y + b.z*a.z.z};
+}
+
+template<typename T>
+inline const T* mat3x3<T>::data() const {
+  // NOTE: this only works because mat3x3 is contiguous in memory
+  return x.data();
 }
 
 } // namespace rx::math

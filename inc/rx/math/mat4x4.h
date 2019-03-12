@@ -20,10 +20,12 @@ struct mat4x4 {
   static constexpr mat4x4 transpose(const mat4x4& mat);
   static constexpr mat4x4 invert(const mat4x4& mat);
 
+  const T* data() const;
+
   vec x, y, z, w;
 
 private:
-  static constexpr T det2x2(T a, T b, T c, T d)
+  static constexpr T det2x2(T a, T b, T c, T d);
   static constexpr T det3x3(T a1, T a2, T a3, T b1, T b2, T b3, T c1, T c2, T c3);
 };
 
@@ -142,6 +144,12 @@ inline constexpr T mat4x4<T>::det2x2(T a, T b, T c, T d) {
 template<typename T>
 inline constexpr T mat4x4<T>::det3x3(T a1, T a2, T a3, T b1, T b2, T b3, T c1, T c2, T c3) {
   return a1 * det2x2(b2, b3, c2, c3) - b1 * det2x2(a2, a3, c2, c3) + c1 * det2x2(a2, a3, b2, b3);
+}
+
+template<typename T>
+inline const T* mat4x4<T>::data() const {
+  // NOTE: this only works because mat4x4 is contiguous in memory
+  return x.data();
 }
 
 } // namespace rx::math

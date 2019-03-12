@@ -30,6 +30,8 @@ struct array {
   array(array&& _other);
   ~array();
 
+  array& operator=(const array& _other);
+
   T& operator[](rx_size _index);
   const T& operator[](rx_size _index) const;
 
@@ -145,6 +147,27 @@ template<typename T>
 inline array<T>::~array() {
   clear();
   m_allocator->deallocate(utility::move(m_data));
+}
+
+template<typename T>
+inline array<T>& array<T>::operator=(const array& _other) {
+  clear();
+
+  if (_other.is_empty()) {
+    return *this;
+  }
+
+  m_allocator = _other.m_allocator;
+  m_data = m_allocator->allocate(_other.m_capacity * sizeof(T));
+  m_size = _other.m_size;
+  m_capacity = _other.m_capacity;
+  RX_ASSERT(m_data, "out of memory");
+
+  for (rx_size i{0}; i < m_size; i++) {
+    utility::construct<T>(data() + i, _other[i]);
+  }
+
+  return *this;
 }
 
 template<typename T>
@@ -309,7 +332,16 @@ inline bool array<T>::each_fwd(F&& _func) {
 template<typename T>
 template<typename F>
 inline bool array<T>::each_fwd(F&& _func) const {
-  return const_cast<array<T>*>(this)->each_fwd(_func);
+  for (rx_size i{0}; i < m_size; i++) {
+    if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+      if (!_func(operator[](i))) {
+        return false;
+      }
+    } else {
+      _func(operator[](i));
+    }
+  }
+  return true;
 }
 
 template<typename T>
@@ -330,7 +362,16 @@ inline bool array<T>::each_rev(F&& _func) {
 template<typename T>
 template<typename F>
 inline bool array<T>::each_rev(F&& _func) const {
-  return const_cast<array<T>*>(this)->each_rev(_func);
+  for (rx_size i{m_size-1}; i < m_size; i--) {
+    if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+      if (!_func(operator[](i))) {
+        return false;
+      }
+    } else {
+      _func(operator[](i));
+    }
+  }
+  return true;
 }
 
 template<typename T>

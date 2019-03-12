@@ -19,8 +19,6 @@ namespace detail {
 
   template<typename T, typename... Ts>
   struct add_pointer<T(Ts..., ...), true> : type_identity<T(*)(Ts..., ...)> {};
-
-  };
 } // namespace detail
 
 template<typename T>

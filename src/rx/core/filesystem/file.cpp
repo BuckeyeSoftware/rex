@@ -49,6 +49,25 @@ bool file::seek(rx_u64 where) {
   return fseek(static_cast<FILE*>(m_impl), where, SEEK_SET) == 0;
 }
 
+optional<rx_u64> file::size() {
+  RX_ASSERT(m_impl, "invalid");
+  RX_ASSERT(strcmp(m_mode, "rb") == 0, "cannot get size with mode '%s'", m_mode);
+
+  auto fp{static_cast<FILE*>(m_impl)};
+  if (fseek(fp, 0, SEEK_END) != 0) {
+    return nullopt;
+  }
+
+  auto result{ftell(fp)};
+  if (result == -1L) {
+    fseek(fp, 0, SEEK_SET);
+    return nullopt;
+  }
+
+  fseek(fp, 0, SEEK_SET);
+  return result;
+}
+
 bool file::print(string&& contents) {
   RX_ASSERT(m_impl, "invalid");
   RX_ASSERT(strcmp(m_mode, "w") == 0, "cannot print with mode '%s'", m_mode);

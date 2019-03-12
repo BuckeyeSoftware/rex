@@ -15,6 +15,7 @@ struct vec4 {
   T& operator[](rx_size i);
   const T& operator[](rx_size i) const;
   bool is_any(T value) const;
+  const T* data() const;
   union {
     struct { T x, y, z, w; };
     struct { T r, g, b, a; };
@@ -59,6 +60,11 @@ inline const T& vec4<T>::operator[](rx_size i) const {
 template<typename T>
 inline bool vec4<T>::is_any(T value) const {
   return x == value || y == value || z == value || w == value;
+}
+
+template<typename T>
+inline const T* vec4<T>::data() const {
+  return v;
 }
 
 // (vec, vec)

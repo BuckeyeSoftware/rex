@@ -12,6 +12,7 @@
 #include <rx/render/buffer.h>
 #include <rx/render/target.h>
 #include <rx/render/texture.h>
+#include <rx/render/program.h>
 #include <rx/render/backend_gl4.h>
 
 #include <rx/input/input.h>
@@ -133,23 +134,29 @@ int entry(int argc, char **argv) {
       0, 1, 2
     };
 
-    {
-      rx::render::frontend::allocation_info allocation_info;
-      rx::render::backend_gl4 gl4{allocation_info};
+  {
+    rx::render::frontend::allocation_info allocation_info;
+    rx::render::backend_gl4 gl4{allocation_info};
 
-      rx::render::frontend renderer{&rx::memory::g_system_allocator, &gl4, allocation_info};
+    rx::render::frontend renderer{&rx::memory::g_system_allocator, &gl4, allocation_info};
 
-      // create, record and initialize buffer
-      auto buffer{renderer.create_buffer(RX_RENDER_TAG("test"))};
-      buffer->write_vertices(vertices, sizeof vertices, sizeof(rx::math::vec3f));
-      buffer->write_elements(elements, sizeof elements);
-      buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, 0);
-      renderer.initialize_buffer(RX_RENDER_TAG("test"), buffer);
+    // create, record and initialize buffer
+    auto buffer{renderer.create_buffer(RX_RENDER_TAG("test"))};
+    buffer->write_vertices(vertices, sizeof vertices, sizeof(rx::math::vec3f));
+    buffer->write_elements(elements, sizeof elements);
+    buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, 0);
+    renderer.initialize_buffer(RX_RENDER_TAG("test"), buffer);
 
-      // create, record and initialize swapchain target
-      auto target{renderer.create_target(RX_RENDER_TAG("test"))};
-      target->request_swapchain();
-      renderer.initialize_target(RX_RENDER_TAG("test"), target);
+    // create, record and initialize swapchain target
+    auto target{renderer.create_target(RX_RENDER_TAG("test"))};
+    target->request_swapchain();
+    renderer.initialize_target(RX_RENDER_TAG("test"), target);
+
+    // create, record and initialize program
+    auto program{renderer.create_program(RX_RENDER_TAG("test"))};
+    program->record_description({});
+    program->add_uniform("color", rx::render::uniform::category::k_vec4f);
+    renderer.initialize_program(RX_RENDER_TAG("test"), program);
 
     rx::input::input input;
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
@@ -204,11 +211,14 @@ int entry(int argc, char **argv) {
         {1.0f, 0.0f, 0.0f, 1.0f}
       );
 
+      (*program)[0].record_vec4f({0.0f, 1.0f, 0.0f, 1.0f});
+
       renderer.draw_elements(
         RX_RENDER_TAG("test"),
         state,
         target,
         buffer,
+        program,
         3,
         0,
         rx::render::primitive_type::k_triangles,

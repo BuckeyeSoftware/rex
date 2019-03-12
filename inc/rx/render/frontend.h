@@ -11,6 +11,7 @@ namespace rx::render {
 
 struct buffer;
 struct target;
+struct program;
 struct texture1D;
 struct texture2D;
 struct texture3D;
@@ -22,6 +23,7 @@ struct frontend {
   struct allocation_info {
     rx_size buffer_size;
     rx_size target_size;
+    rx_size program_size;
     rx_size texture1D_size;
     rx_size texture2D_size;
     rx_size texture3D_size;
@@ -33,6 +35,8 @@ struct frontend {
 
   buffer* create_buffer(const command_header::info& _info);
   target* create_target(const command_header::info& _info);
+  program* create_program(const command_header::info& _info);
+
   texture1D* create_texture1D(const command_header::info& _info);
   texture2D* create_texture2D(const command_header::info& _info);
   texture3D* create_texture3D(const command_header::info& _info);
@@ -40,6 +44,7 @@ struct frontend {
 
   void initialize_buffer(const command_header::info& _info, buffer* _buffer);
   void initialize_target(const command_header::info& _info, target* _target);
+  void initialize_program(const command_header::info& _info, program* _program);
   void initialize_texture(const command_header::info& _info, texture1D* _texture);
   void initialize_texture(const command_header::info& _info, texture2D* _texture);
   void initialize_texture(const command_header::info& _info, texture3D* _texture);
@@ -47,6 +52,7 @@ struct frontend {
 
   void destroy_buffer(const command_header::info& _info, buffer* _buffer);
   void destroy_target(const command_header::info& _info, target* _target);
+  void destroy_program(const command_header::info& _info, program* _program);
   void destroy_texture(const command_header::info& _info, texture1D* _texture);
   void destroy_texture(const command_header::info& _info, texture2D* _texture);
   void destroy_texture(const command_header::info& _info, texture3D* _texture);
@@ -57,6 +63,7 @@ struct frontend {
     const state& _state,
     target* _target,
     buffer* _buffer,
+    program* _program,
     rx_size _count,
     rx_size _offset,
     primitive_type _primitive_type,
@@ -102,6 +109,7 @@ private:
 
   memory::pool_allocator m_buffer_pool;    // protected by |m_mutex|
   memory::pool_allocator m_target_pool;    // protected by |m_mutex|
+  memory::pool_allocator m_program_pool;   // protected by |m_mutex|
   memory::pool_allocator m_texture1D_pool; // protected by |m_mutex|
   memory::pool_allocator m_texture2D_pool; // protected by |m_mutex|
   memory::pool_allocator m_texture3D_pool; // protected by |m_mutex|
@@ -109,6 +117,7 @@ private:
 
   array<buffer*> m_destroy_buffers;        // protected by |m_mutex|
   array<target*> m_destroy_targets;        // protected by |m_mutex|
+  array<program*> m_destroy_programs;      // protected by |m_mutex|
   array<texture1D*> m_destroy_textures1D;  // protected by |m_mutex|
   array<texture2D*> m_destroy_textures2D;  // protected by |m_mutex|
   array<texture3D*> m_destroy_textures3D;  // protected by |m_mutex|

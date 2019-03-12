@@ -5,6 +5,7 @@
 #include <rx/render/backend.h>
 #include <rx/render/buffer.h>
 #include <rx/render/target.h>
+#include <rx/render/program.h>
 #include <rx/render/texture.h>
 
 #include <rx/core/concurrency/scope_lock.h>
@@ -12,8 +13,9 @@
 
 #include <rx/console/variable.h>
 
-RX_CONSOLE_IVAR(max_buffers,   "render.max_buffers",   "maximum buffers",     16, 128, 64);
-RX_CONSOLE_IVAR(max_targets,   "render.max_targets",   "maximum targets",     16, 128, 16);
+RX_CONSOLE_IVAR(max_buffers, "render.max_buffers","maximum buffers", 16, 128, 64);
+RX_CONSOLE_IVAR(max_targets, "render.max_targets", "maximum targets", 16, 128, 16);
+RX_CONSOLE_IVAR(max_programs, "render.max_programs", "maximum programs", 128, 4096, 512);
 RX_CONSOLE_IVAR(max_texture1D, "render.max_texture1D", "maximum 1D textures", 16, 128, 16);
 RX_CONSOLE_IVAR(max_texture2D, "render.max_texture2D", "maximum 2D textures", 16, 4096, 1024);
 RX_CONSOLE_IVAR(max_texture3D, "render.max_texture3D", "maximum 3D textures", 16, 128, 16);
@@ -30,6 +32,7 @@ namespace rx::render {
 frontend::frontend(memory::allocator* _allocator, backend* _backend, const allocation_info& _allocation_info)
   : m_buffer_pool{_allocator, _allocation_info.buffer_size + sizeof(buffer), static_cast<rx_size>(*max_buffers)}
   , m_target_pool{_allocator, _allocation_info.target_size + sizeof(target), static_cast<rx_size>(*max_targets)}
+  , m_program_pool{_allocator, _allocation_info.program_size + sizeof(program), static_cast<rx_size>(*max_programs)}
   , m_texture1D_pool{_allocator, _allocation_info.texture1D_size + sizeof(texture1D), static_cast<rx_size>(*max_texture1D)}
   , m_texture2D_pool{_allocator, _allocation_info.texture2D_size + sizeof(texture2D), static_cast<rx_size>(*max_texture2D)}
   , m_texture3D_pool{_allocator, _allocation_info.texture3D_size + sizeof(texture3D), static_cast<rx_size>(*max_texture3D)}
@@ -47,6 +50,7 @@ frontend::frontend(memory::allocator* _allocator, backend* _backend, const alloc
 }
 
 frontend::~frontend() {
+  // {empty}
 }
 
 // create_*
@@ -68,6 +72,16 @@ target* frontend::create_target(const command_header::info& _info) {
   command->as_target = m_target_pool.allocate_and_construct<target>(this);
   m_commands.push_back(command_base);
   return command->as_target;
+}
+
+program* frontend::create_program(const command_header::info& _info) {
+  concurrency::scope_lock lock(m_mutex);
+  auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
+  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
+  command->type = resource_command::category::k_program;
+  command->as_program = m_program_pool.allocate_and_construct<program>();
+  m_commands.push_back(command_base);
+  return command->as_program;
 }
 
 texture1D* frontend::create_texture1D(const command_header::info& _info) {
@@ -128,6 +142,16 @@ void frontend::initialize_target(const command_header::info& _info, target* _tar
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->type = resource_command::category::k_target;
   command->as_target = _target;
+  m_commands.push_back(command_base);
+}
+
+void frontend::initialize_program(const command_header::info& _info, program* _program) {
+  RX_ASSERT(_program->validate(), "_program is not valid");
+  concurrency::scope_lock lock(m_mutex);
+  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
+  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
+  command->type = resource_command::category::k_program;
+  command->as_program = _program;
   m_commands.push_back(command_base);
 }
 
@@ -204,6 +228,18 @@ void frontend::destroy_target(const command_header::info& _info, target* _target
   }
 }
 
+void frontend::destroy_program(const command_header::info& _info, program* _program) {
+  if (_program) {
+    concurrency::scope_lock lock(m_mutex);
+    auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
+    auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
+    command->type = resource_command::category::k_program;
+    command->as_program = _program;
+    m_commands.push_back(command_base);
+    m_destroy_programs.push_back(_program);
+  }
+}
+
 void frontend::destroy_texture(const command_header::info& _info, texture1D* _texture) {
   if (_texture) {
     concurrency::scope_lock lock(m_mutex);
@@ -261,6 +297,7 @@ void frontend::draw_elements(
   const state& _state,
   target* _target,
   buffer* _buffer,
+  program* _program,
   rx_size _count,
   rx_size _offset,
   primitive_type _primitive_type,
@@ -273,14 +310,24 @@ void frontend::draw_elements(
 
   concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
 
-  auto command_base{allocate_command(draw_command, command_type::k_draw)};
+  // gather all dirty uniforms
+  array<rx_byte> uniforms{utility::move(_program->flush())};
+
+  // allocate and fill out command
+  auto command_base{m_command_buffer.allocate(sizeof(draw_command) + uniforms.size(), command_type::k_draw_elements, _info)};
   auto command{reinterpret_cast<draw_command*>(command_base + sizeof(command_header))};
   *reinterpret_cast<state*>(command) = _state;
   command->render_target = _target;
   command->render_buffer = _buffer;
+  command->render_program = _program;
   command->count = _count;
   command->offset = _offset;
   command->type = _primitive_type;
+
+  // copy the uniforms directly into the command structure, if any
+  if (!uniforms.is_empty()) {
+    memcpy(command->uniforms(), uniforms.data(), uniforms.size());
+  }
 
   rx_size textures{strlen(_textures)};
   if (textures) {
@@ -361,6 +408,7 @@ bool frontend::process() {
 
   m_destroy_buffers.clear();
   m_destroy_targets.clear();
+  m_destroy_programs.clear();
   m_destroy_textures1D.clear();
   m_destroy_textures2D.clear();
   m_destroy_textures3D.clear();

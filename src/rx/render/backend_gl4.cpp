@@ -5,11 +5,14 @@
 #include <rx/render/command.h>
 #include <rx/render/buffer.h>
 #include <rx/render/target.h>
+#include <rx/render/program.h>
 #include <rx/render/texture.h>
 
 #include <rx/core/algorithm.h>
 #include <rx/core/debug.h>
 #include <rx/core/log.h>
+
+#include <rx/core/filesystem/file.h>
 
 #include <rx/math/log2.h>
 
@@ -57,6 +60,21 @@ static void (GLAPIENTRYP pglClearNamedFramebufferfv)(GLuint, GLenum, GLint, cons
 static void (GLAPIENTRYP pglClearNamedFramebufferfi)(GLuint, GLenum, GLint, GLfloat, GLint);
 
 // shaders and programs
+static void (GLAPIENTRYP pglShaderSource)(GLuint, GLsizei, const GLchar**, const GLint*);
+static GLuint (GLAPIENTRYP pglCreateShader)(GLenum);
+static void (GLAPIENTRYP pglDeleteShader)(GLuint);
+static void (GLAPIENTRYP pglCompileShader)(GLuint);
+static void (GLAPIENTRYP pglGetShaderiv)(GLuint, GLenum, GLint*);
+static void (GLAPIENTRYP pglGetShaderInfoLog)(GLuint, GLsizei, GLsizei*, GLchar*);
+static void (GLAPIENTRYP pglGetProgramiv)(GLuint, GLenum, GLint*);
+static void (GLAPIENTRYP pglGetProgramInfoLog)(GLuint, GLsizei, GLsizei*, GLchar*);
+static void (GLAPIENTRYP pglAttachShader)(GLuint, GLuint);
+static void (GLAPIENTRYP pglLinkProgram)(GLuint);
+static void (GLAPIENTRYP pglDetachShader)(GLuint, GLuint);
+static GLuint (GLAPIENTRYP pglCreateProgram)();
+static void (GLAPIENTRYP pglDeleteProgram)(GLuint);
+static void (GLAPIENTRYP pglUseProgram)(GLuint);
+static GLint (GLAPIENTRYP pglGetUniformLocation)(GLuint, const GLchar*);
 
 // state
 static void (GLAPIENTRYP pglEnable)(GLenum);
@@ -294,6 +312,19 @@ namespace detail {
     }
 
     GLuint fbo;
+  };
+
+  struct program {
+    program() {
+      handle = pglCreateProgram();
+    }
+
+    ~program() {
+      pglDeleteProgram(handle);
+    }
+
+    GLuint handle;
+    array<GLint> uniforms;
   };
 
   struct texture1D {
@@ -609,9 +640,57 @@ static void fetch(const char* _name, F& function_) {
   *reinterpret_cast<void**>(&function_) = address;
 }
 
+static GLuint compile_shader(GLenum _type, const string& _file_name) {
+  filesystem::file file{_file_name.data(), "rb"};
+  if (!file) {
+    gl4_log(log::level::k_error, "failed to open '%s'", _file_name);
+    return 0;
+  }
+  
+  auto size{file.size()};
+  if (!size) {
+    gl4_log(log::level::k_error, "failed to size '%s'", _file_name);
+    return 0;
+  }
+
+  // NOTE: size + 1 because we inject a null-terminator on the contents
+  array<char> data{&memory::g_system_allocator, *size + 1, 0};
+  if (!file.read(reinterpret_cast<rx_byte*>(data.data()), data.size())) {
+    gl4_log(log::level::k_error, "failed to read '%s'", _file_name);
+    return 0;
+  }
+
+  const GLchar* texts[]{data.data()};
+  const GLint sizes[]{static_cast<GLint>(data.size())};
+
+  GLuint handle{pglCreateShader(_type)};
+  pglShaderSource(handle, 1, texts, sizes);
+
+  GLint status{0};
+  pglGetShaderiv(handle, GL_COMPILE_STATUS, &status);
+  if (status != GL_TRUE) {
+    GLint log_size{0};
+    pglGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_size);
+
+    gl4_log(log::level::k_error, "failed compiling shader '%s'", _file_name);
+
+    if (log_size) {
+      array<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
+      pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
+      gl4_log(log::level::k_error, "\n%s\n%s", error_log.data(), data.data());
+    }
+
+    pglDeleteShader(handle);
+    return 0;
+  }
+
+  return handle;
+}
+
 backend_gl4::backend_gl4(frontend::allocation_info& allocation_info_) {
   allocation_info_.buffer_size = sizeof(detail::buffer);
   allocation_info_.target_size = sizeof(detail::target);
+  allocation_info_.program_size = sizeof(detail::program);
   allocation_info_.texture1D_size = sizeof(detail::texture1D);
   allocation_info_.texture2D_size = sizeof(detail::texture2D);
   allocation_info_.texture3D_size = sizeof(detail::texture3D);
@@ -655,6 +734,23 @@ backend_gl4::backend_gl4(frontend::allocation_info& allocation_info_) {
   fetch("glBindFramebuffer", pglBindFramebuffer);
   fetch("glClearNamedFramebufferfv", pglClearNamedFramebufferfv);
   fetch("glClearNamedFramebufferfi", pglClearNamedFramebufferfi);
+
+  // shaders and programs
+  fetch("glShaderSource", pglShaderSource);
+  fetch("glCreateShader", pglCreateShader);
+  fetch("glDeleteShader", pglDeleteShader);
+  fetch("glCompileShader", pglCompileShader);
+  fetch("glGetShaderiv", pglGetShaderiv);
+  fetch("glGetShaderInfoLog", pglGetShaderInfoLog);
+  fetch("glGetProgramiv", pglGetProgramiv);
+  fetch("glGetProgramInfoLog", pglGetProgramInfoLog);
+  fetch("glAttachShader", pglAttachShader);
+  fetch("glLinkProgram", pglLinkProgram);
+  fetch("glDetachShader", pglDetachShader);
+  fetch("glCreateProgram", pglCreateProgram);
+  fetch("glDeleteProgram", pglDeleteProgram);
+  fetch("glUseProgram", pglUseProgram);
+  fetch("glGetUniformLocation", pglGetUniformLocation);
 
   // state
   fetch("glEnable", pglEnable);
@@ -708,6 +804,9 @@ void backend_gl4::process(rx_byte* _command) {
           }
         }
         break;
+      case resource_command::category::k_program:
+        utility::construct<detail::program>(resource->as_program + 1);
+        break;
       case resource_command::category::k_texture1D:
         utility::construct<detail::texture1D>(resource->as_texture1D + 1);
         break;
@@ -737,6 +836,9 @@ void backend_gl4::process(rx_byte* _command) {
             utility::destruct<detail::target>(render_target + 1);
           }
         } 
+        break;
+      case resource_command::category::k_program:
+        utility::destruct<detail::program>(resource->as_program + 1);
         break;
       case resource_command::category::k_texture1D:
         utility::destruct<detail::texture1D>(resource->as_texture1D + 1);
@@ -839,6 +941,45 @@ void backend_gl4::process(rx_byte* _command) {
             const auto texture{reinterpret_cast<detail::texture2D*>(render_texture + 1)};
             pglNamedFramebufferTexture(target->fbo, attachment, texture->tex, 0);
           }
+        }
+        break;
+      case resource_command::category::k_program:
+        {
+          const auto render_program{resource->as_program};
+          const auto program{reinterpret_cast<detail::program*>(render_program + 1)};
+
+          // TODO(dweiler): preprocessor for GLSL
+          const auto& name{render_program->info().name};
+          const auto vert{compile_shader(GL_VERTEX_SHADER, {"%s_vert.glsl", name})};
+          const auto frag{compile_shader(GL_FRAGMENT_SHADER, {"%s_frag.glsl", name})};
+
+          if (vert && frag) {
+            pglAttachShader(program->handle, vert);
+            pglAttachShader(program->handle, frag);
+
+            render_program->info().data.each_fwd([](const string& _data){
+              // TODO
+            });
+
+            render_program->info().layout.each_fwd([](const string& _layout){
+              // TODO
+            });
+
+            pglLinkProgram(program->handle);
+
+            // TODO
+
+            pglDetachShader(program->handle, vert);
+            pglDetachShader(program->handle, frag);
+          }
+
+          // fetch uniform locations
+          render_program->uniforms().each_fwd([program](const uniform& _uniform) {
+            program->uniforms.push_back(pglGetUniformLocation(program->handle, _uniform.name().data()));
+          });
+
+          pglDeleteShader(vert);
+          pglDeleteShader(frag);
         }
         break;
       case resource_command::category::k_texture1D:
@@ -995,8 +1136,8 @@ void backend_gl4::process(rx_byte* _command) {
       const auto command{reinterpret_cast<clear_command*>(header + 1)};
       const auto render_target{command->render_target};
       const auto this_target{reinterpret_cast<detail::target*>(render_target + 1)};
-      const bool clear_depth{command->clear_mask & RX_RENDER_CLEAR_DEPTH};
-      const bool clear_stencil{command->clear_mask & RX_RENDER_CLEAR_STENCIL};  
+      const bool clear_depth{!!(command->clear_mask & RX_RENDER_CLEAR_DEPTH)};
+      const bool clear_stencil{!!(command->clear_mask & RX_RENDER_CLEAR_STENCIL)};  
       const auto clear_color{command->clear_mask & ~(RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL)};
 
       // ensure depth writes are enabled when clearing depth

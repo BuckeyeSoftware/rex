@@ -59,7 +59,7 @@ inline constexpr optional<T>::optional(T&& data)
   : m_data{}
   , m_init{true}
 {
-  m_data.init(move(data));
+  m_data.init(utility::move(data));
 }
 
 template<typename T>
@@ -77,7 +77,7 @@ inline constexpr optional<T>::optional(optional&& other)
 {
   if (m_init) {
     auto& data{other.m_data};
-    m_data.init(move(*data.data()));
+    m_data.init(utility::move(*data.data()));
     data.fini();
   }
   other.m_init = false;
@@ -100,7 +100,7 @@ inline optional<T>& optional<T>::operator=(T&& data) {
     m_data.fini();
   }
   m_init = true;
-  m_data.init(move(*data.data()));
+  m_data.init(utility::move(*data.data()));
   return *this;
 }
 
@@ -122,7 +122,7 @@ inline optional<T>& optional<T>::operator=(optional&& other) {
   m_init = other.m_init;
   if (m_init) {
     auto& data{other.m_data};
-    m_data.init(move(*data.data()));
+    m_data.init(utility::move(*data.data()));
     data.fini();
   }
   return *this;
