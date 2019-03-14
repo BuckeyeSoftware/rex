@@ -52,14 +52,15 @@ inline promise<T>::promise(memory::allocator* _allocator)
   : m_allocator{_allocator}
 {
   RX_ASSERT(m_allocator, "null allocator");
+
+  m_state = utility::move(m_allocator->allocate(sizeof(state)));
+  utility::construct<state>(m_state.data());
 }
 
 template<typename T>
 inline promise<T>::promise()
   : promise{&memory::g_system_allocator}
 {
-  m_state = utility::move(m_allocator->allocate(sizeof(state)));
-  utility::construct<state>(m_state.data());
 }
 
 template<typename T>
