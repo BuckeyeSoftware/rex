@@ -341,7 +341,6 @@ void frontend::draw_elements(
     va_end(va);
   }
 
-  // TODO: programs
   m_commands.push_back(command_base);
 }
 

@@ -957,11 +957,11 @@ void backend_gl4::process(rx_byte* _command) {
             pglAttachShader(program->handle, vert);
             pglAttachShader(program->handle, frag);
 
-            render_program->info().data.each_fwd([](const string& _data){
+            render_program->info().data.each_fwd([](const string& _data) {
               // TODO
             });
 
-            render_program->info().layout.each_fwd([](const string& _layout){
+            render_program->info().layout.each_fwd([](const string& _layout) {
               // TODO
             });
 
