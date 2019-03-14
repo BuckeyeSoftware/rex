@@ -33,6 +33,7 @@ struct array {
   ~array();
 
   array& operator=(const array& _other);
+  array& operator=(array&& _other);
 
   T& operator[](rx_size _index);
   const T& operator[](rx_size _index) const;
@@ -178,6 +179,25 @@ inline array<T>& array<T>::operator=(const array& _other) {
   for (rx_size i{0}; i < m_size; i++) {
     utility::construct<T>(data() + i, _other[i]);
   }
+
+  return *this;
+}
+
+template<typename T>
+inline array<T>& array<T>::operator=(array&& _other) {
+  clear();
+
+  if (_other.is_empty()) {
+    return *this;
+  }
+
+  m_allocator = _other.m_allocator;
+  m_data = utility::move(_other.m_data);
+  m_size = _other.m_size;
+  m_capacity = _other.m_capacity;
+
+  _other.m_size = 0;
+  _other.m_capacity = 0;
 
   return *this;
 }
