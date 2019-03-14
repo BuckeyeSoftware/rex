@@ -44,7 +44,7 @@ void directory::each(function<void(const item&)>&& _function) {
     }
 
     if (next) {
-      // only accept regulat files and directories, symbol links are not allowed
+      // only accept regular files and directories, symbol links are not allowed
       switch (next->d_type) {
       case DT_DIR:
         _function({m_allocator, next->d_name, item::type::k_directory});
