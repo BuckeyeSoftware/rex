@@ -187,10 +187,6 @@ template<typename T>
 inline array<T>& array<T>::operator=(array&& _other) {
   clear();
 
-  if (_other.is_empty()) {
-    return *this;
-  }
-
   m_allocator = _other.m_allocator;
   m_data = utility::move(_other.m_data);
   m_size = _other.m_size;
