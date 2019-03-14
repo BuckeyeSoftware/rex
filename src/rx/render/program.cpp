@@ -146,7 +146,6 @@ namespace render {
     , layout{_layout}
     , defines{_defines}
   {
-    // {empty}
   }
 
   bool operator==(const program::description& _lhs, const program::description& _rhs) {

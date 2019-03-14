@@ -291,7 +291,6 @@ inline variable<T>::variable(const char* _name, const char* _description,
   , m_initial{_initial}
   , m_current{_initial}
 {
-  // {empty}
 }
 
 template<typename T>
@@ -391,7 +390,6 @@ inline variable<string>::variable(const char* _name, const char* _description, c
   , m_initial{_initial}
   , m_current{_initial}
 {
-  // {empty}
 }
 
 inline variable<string>::operator const string&() const {

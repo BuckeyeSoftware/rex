@@ -11,7 +11,6 @@ texture::texture(resource::category _type)
   : resource{_type}
   , m_recorded{0}
 {
-  // {empty}
 }
 
 void texture::record_format(data_format _format) {
