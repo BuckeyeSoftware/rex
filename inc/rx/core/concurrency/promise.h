@@ -9,6 +9,8 @@
 #include <rx/core/utility/construct.h>
 #include <rx/core/utility/destruct.h>
 
+#include <rx/core/memory/allocator.h>
+
 #include <rx/core/concepts/no_copy.h>
 
 namespace rx::concurrency {
@@ -43,7 +45,6 @@ template<typename T>
 inline promise<T>::state::state()
   : m_done{false}
 {
-  // {empty}
 }
 
 template<typename T>
@@ -80,29 +81,24 @@ inline promise<T>::promise(promise&& _promise)
   : m_allocator{_promise.m_allocator}
   , m_state{utility::move(_promise.m_state)}
 {
-  // {empty}
 }
 
 template<typename T>
 inline void promise<T>::set_value(const T& _value) {
   auto state_data{m_state.cast<state*>()};
-  {
-    scope_lock lock(state_data->m_mutex);
-    state_data->m_result = _value;
-    state_data->m_done = true;
-    state_data->m_condition_variable.signal();
-  }
+  scope_lock lock(state_data->m_mutex);
+  state_data->m_result = _value;
+  state_data->m_done = true;
+  state_data->m_condition_variable.signal();
 }
 
 template<typename T>
 inline void promise<T>::set_value(T&& _value) {
   auto state_data{m_state.cast<state*>()};
-  {
-    scope_lock lock(state_data->m_mutex);
-    state_data->m_result = utility::move(_value);
-    state_data->m_done = true;
-    state_data->m_condition_variable.signal();
-  }
+  scope_lock lock(state_data->m_mutex);
+  state_data->m_result = utility::move(_value);
+  state_data->m_done = true;
+  state_data->m_condition_variable.signal();
 }
 
 template<typename T>
