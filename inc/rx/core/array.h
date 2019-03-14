@@ -22,11 +22,13 @@ namespace rx {
 template<typename T>
 struct array {
   constexpr array();
-  constexpr array(memory::allocator* _allocator);
-
-  template<typename... Ts>
-  array(memory::allocator* _allocator, rx_size _size, Ts&&... _args);
+  array(rx_size _size, const T& value = {});
   array(const array& _other);
+
+  constexpr array(memory::allocator* _allocator);
+  array(memory::allocator* _allocator, rx_size _size, const T& value = {});
+  array(memory::allocator* _allocator, const array& _other);
+
   array(array&& _other);
   ~array();
 
@@ -88,7 +90,18 @@ template<typename T>
 inline constexpr array<T>::array()
   : array{&memory::g_system_allocator}
 {
-  // {empty}
+}
+
+template<typename T>
+inline array<T>::array(rx_size _size, const T& value)
+  : array{&memory::g_system_allocator, value}
+{
+}
+
+template<typename T>
+inline array<T>::array(const array& _other)
+  : array{_other.m_allocator, _other}
+{
 }
 
 template<typename T>
@@ -102,8 +115,7 @@ inline constexpr array<T>::array(memory::allocator* _allocator)
 }
 
 template<typename T>
-template<typename... Ts>
-inline array<T>::array(memory::allocator* _allocator, rx_size _size, Ts&&... _args)
+inline array<T>::array(memory::allocator* _allocator, rx_size _size, const T& value)
   : m_allocator{_allocator}
   , m_size{_size}
   , m_capacity{_size}
@@ -114,13 +126,13 @@ inline array<T>::array(memory::allocator* _allocator, rx_size _size, Ts&&... _ar
   RX_ASSERT(m_data, "out of memory");
 
   for (rx_size i{0}; i < m_capacity; i++) {
-    utility::construct<T>(data() + i, utility::forward<Ts>(_args)...);
+    utility::construct<T>(data() + i, value);
   }
 }
 
 template<typename T>
-inline array<T>::array(const array& _other)
-  : m_allocator{_other.m_allocator}
+inline array<T>::array(memory::allocator* _allocator, const array& _other)
+  : m_allocator{_allocator}
   , m_data{m_allocator->allocate(_other.m_capacity * sizeof(T))}
   , m_size{_other.m_size}
   , m_capacity{_other.m_capacity}

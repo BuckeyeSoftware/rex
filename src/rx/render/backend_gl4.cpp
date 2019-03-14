@@ -1168,7 +1168,6 @@ void backend_gl4::process(rx_byte* _command) {
         state->blend.flush();
       }
 
-
       // treat swapchain specially since it's special in GL
       const GLuint fbo{render_target->is_swapchain() ? state->m_swap_chain_fbo : this_target->fbo};
 
