@@ -30,12 +30,6 @@ thread::thread(memory::allocator* _allocator, const char* _name, function<void(i
   utility::construct<state>(m_state.data(), _name, utility::move(_function));
 }
 
-thread::thread(const char* _name, function<void(int)>&& _function)
-  : thread{&memory::g_system_allocator, _name, utility::move(_function)}
-{
-  // {empty}
-}
-
 thread::~thread() {
   if (!m_state) {
     return;
