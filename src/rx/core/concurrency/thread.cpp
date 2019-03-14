@@ -1,8 +1,8 @@
 #include <rx/core/concurrency/thread.h>
 #include <rx/core/concurrency/spin_lock.h>
 #include <rx/core/concurrency/scope_lock.h>
-
 #include <rx/core/memory/system_allocator.h>
+#include <rx/core/string.h>
 
 namespace rx::concurrency {
 
@@ -85,8 +85,8 @@ thread::state::state(const char* _name, function<void(int)>&& _function)
   m_thread = reinterpret_cast<HANDLE>(
     _beginthreadex(nullptr, 0, wrap_win32, reinterpret_cast<void*>(this), 0, nullptr));
   RX_ASSERT(m_thread, "thread creation failed");
-  // TODO(dweiler): convert _name to UNICODE here for Windows
-  // SetThreadDescription(m_thread, _name);
+  wide_string converted_name{_name};
+  SetThreadDescription(m_thread, reinterpret_cast<PCWSTR>(converted_name.data()));
 #endif
 }
 
