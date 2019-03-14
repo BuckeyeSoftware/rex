@@ -13,9 +13,11 @@
 namespace rx::concurrency {
 
 struct thread_pool {
-  thread_pool(rx_size threads = 16);
+  thread_pool(rx_size _threads = 16);
   ~thread_pool();
 
+  // insert |_task| into the thread pool to be executed, the integer passed
+  // to |_task| is the thread id of the calling thread in the pool
   void add(function<void(int)>&& _task);
   
 private:
@@ -23,9 +25,9 @@ private:
   condition_variable m_task_cond;
   condition_variable m_ready_cond;
   queue<function<void(int)>> m_queue; // protected by |m_mutex|
-  array<thread> m_threads; // protected by |m_mutex|
-  bool m_stop; // protected by |m_mutex|
-  rx_size m_ready; // protected by |m_mutex|
+  array<thread> m_threads;            // protected by |m_mutex|
+  bool m_stop;                        // protected by |m_mutex|
+  rx_size m_ready;                    // protected by |m_mutex|
 };
 
 } // namespace rx::concurrency
