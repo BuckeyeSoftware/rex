@@ -18,18 +18,21 @@ struct string {
   static constexpr const rx_size k_small_string{16};
 
   string();
-  string(const char* contents);
-
+  string(const string& _contents);
+  string(const char* _contents);
+  string(const char* _contents, rx_size _size);
   template<typename... Ts>
-  string(const char* fmt, Ts&&... args);
+  string(const char* _format, Ts&&... _arguments);
 
-  string(memory::allocator* alloc);
-  string(memory::allocator* alloc, const string& contents);
-  string(memory::allocator* alloc, const char* contents);
-  string(memory::allocator* alloc, const char* contents, rx_size size);
-  string(memory::allocator* alloc, const char* begin, const char* end);
-  string(const string& contents);
-  string(string&& contents);
+  string(memory::allocator* _allocator);
+  string(memory::allocator* _allocator, const string& _contents);
+  string(memory::allocator* _allocator, const char* _contents);
+  string(memory::allocator* _allocator, const char* _contents, rx_size _size);
+  template<typename... Ts>
+  string(memory::allocator* _allocator, const char* _format, Ts&&... _arguments);
+
+  string(string&& _contents);
+
   ~string();
 
   string& operator=(const string& contents);
@@ -85,6 +88,53 @@ private:
   rx_byte m_buffer[k_small_string] = {0};
 };
 
+// utf-16, Windows compatible "wide-string"
+struct wide_string {
+  // constructors that use system allocator
+  wide_string();
+  wide_string(const wide_string& _other);
+  wide_string(const rx_u16* _contents);
+  wide_string(const rx_u16* _contents, rx_size _size);
+  wide_string(const char* _contents, rx_size _size);
+  wide_string(const char* _contents);
+  wide_string(const string& _contents);
+
+  // custom allocator versions
+  wide_string(memory::allocator* _allocator);
+  wide_string(memory::allocator* _allocator, const wide_string& _other);
+  wide_string(memory::allocator* _allocator, const rx_u16* _contents);
+  wide_string(memory::allocator* _allocator, const rx_u16* _contents, rx_size _size);
+  wide_string(memory::allocator* _allocator, const char* _contents, rx_size _size);
+  wide_string(memory::allocator* _allocator, const char* _contents);
+  wide_string(memory::allocator* _allocator, const string& _contents);
+
+  wide_string(wide_string&& _other);
+
+  ~wide_string();
+
+  // disable all assignment operators because you're not supposed to use wide_string
+  // for any other purpose than to convert string (which is utf8) to utf16 for
+  // interfaces expecting that, such as the ones on Windows
+  wide_string& operator=(const wide_string&) = delete;
+  wide_string& operator=(const rx_u16*) = delete;
+  wide_string& operator=(const char*) = delete;
+  wide_string& operator=(const string&) = delete;
+
+  rx_size size() const;
+  bool is_empty() const;
+
+  rx_u16& operator[](rx_size _index);
+  const rx_u16& operator[](rx_size _index) const;
+
+  rx_u16* data();
+  const rx_u16* data() const;
+
+private:
+  memory::allocator* m_allocator;
+  memory::block m_data;
+  rx_size m_size;
+};
+
 // hash function for string
 template<typename T>
 struct hash;
@@ -109,19 +159,36 @@ struct format<string> {
   }
 };
 
+template<typename... Ts>
+inline string::string(memory::allocator* _allocator, const char* _format, Ts&&... _arguments)
+  : string{utility::move(formatter(_allocator, _format, format<traits::remove_cvref<Ts>>{}(utility::forward<Ts>(_arguments))...))}
+{
+  // {empty}
+}
+
 inline string::string()
   : string{&memory::g_system_allocator}
 {
 }
 
-inline string::string(const char* contents)
-  : string{&memory::g_system_allocator, contents}
+inline string::string(const string& _contents)
+  : string{_contents.m_allocator, _contents}
+{
+}
+
+inline string::string(const char* _contents)
+  : string{&memory::g_system_allocator, _contents}
+{
+}
+
+inline string::string(const char* _contents, rx_size _size)
+  : string{&memory::g_system_allocator, _contents, _size}
 {
 }
 
 template<typename... Ts>
-inline string::string(const char* fmt, Ts&&... args)
-  : string{formatter(&memory::g_system_allocator, fmt, format<traits::remove_cvref<Ts>>{}(utility::forward<Ts>(args))...)}
+inline string::string(const char* _format, Ts&&... _arguments)
+  : string{&memory::g_system_allocator, _format, utility::forward<Ts>(_arguments)...}
 {
 }
 
@@ -200,6 +267,68 @@ bool operator==(const string& lhs, const string& rhs);
 bool operator!=(const string& lhs, const string& rhs);
 bool operator<(const string& lhs, const string& rhs);
 bool operator>(const string& lhs, const string& rhs);
+
+// wide_string
+inline wide_string::wide_string()
+  : wide_string{&memory::g_system_allocator}
+{
+}
+
+inline wide_string::wide_string(const rx_u16* _contents)
+  : wide_string{&memory::g_system_allocator, _contents}
+{
+}
+
+inline wide_string::wide_string(const rx_u16* _contents, rx_size _size)
+  : wide_string{&memory::g_system_allocator, _contents, _size}
+{
+}
+
+inline wide_string::wide_string(const char* _contents, rx_size _size)
+  : wide_string{&memory::g_system_allocator, _contents, _size}
+{
+}
+
+inline wide_string::wide_string(const char* _contents)
+  : wide_string{&memory::g_system_allocator, _contents}
+{
+}
+
+inline wide_string::wide_string(const string& _contents)
+  : wide_string{&memory::g_system_allocator, _contents}
+{
+}
+
+inline wide_string::wide_string(const wide_string& _other)
+  : wide_string{_other.m_allocator, _other}
+{
+}
+
+inline rx_size wide_string::size() const {
+  return m_size;
+}
+
+inline bool wide_string::is_empty() const {
+  return m_size == 0;
+}
+
+inline rx_u16& wide_string::operator[](rx_size _index) {
+  RX_ASSERT(_index < m_size, "out of bounds");
+  return m_data.cast<rx_u16*>()[_index];
+}
+
+inline const rx_u16& wide_string::operator[](rx_size _index) const {
+  RX_ASSERT(_index < m_size, "out of bounds");
+  return m_data.cast<const rx_u16*>()[_index];
+}
+
+inline rx_u16* wide_string::data() {
+  return m_data.cast<rx_u16*>();
+}
+
+inline const rx_u16* wide_string::data() const {
+  return m_data.cast<const rx_u16*>();
+}
 
 } // namespace rx
 
