@@ -14,14 +14,14 @@ namespace rx::traits {
 namespace detail {
   template<typename T>
   struct decay {
-    using base_type = remove_reference<T>;
-    using type = conditional<
-      is_array<base_type>,
-      remove_extent<base_type>*,
-      conditional<
-        is_function<base_type>,
-        add_pointer<base_type>,
-        remove_cv<base_type>
+    using base_type = traits::remove_reference<T>;
+    using type = traits::conditional<
+      traits::is_array<base_type>,
+      traits::remove_extent<base_type>*,
+      traits::conditional<
+        traits::is_function<base_type>,
+        traits::add_pointer<base_type>,
+        traits::remove_cv<base_type>
       >
     >;
   };

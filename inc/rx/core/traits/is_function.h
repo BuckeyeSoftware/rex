@@ -1,11 +1,9 @@
 #ifndef RX_CORE_TRAITS_IS_FUNCTION_H
 #define RX_CORE_TRAITS_IS_FUNCTION_H
 
-namespace rx::traits {
+#include <rx/core/config.h> // __has_feature
 
-#ifndef __has_feature
-#define __has_feature(...) 0
-#endif
+namespace rx::traits {
 
 #if __has_feature(__is_function)
 // use compiler proxy for faster compilation if supported

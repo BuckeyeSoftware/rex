@@ -1,3 +1,5 @@
+#include <rx/core/config.h> // __has_include
+
 #if __has_include(<windows.h>)
 #define _WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -8,8 +10,6 @@
 #endif
 
 #include <rx/core/concurrency/spin_lock.h> // spin_lock
-
-static constexpr const int k_backoff_spins{10000};
 
 // ThreadSanitizer annotations
 #if defined(RX_TSAN)
@@ -30,19 +30,27 @@ namespace rx::concurrency {
 void spin_lock::lock() {
   tsan_acquire(&m_lock);
 
-  for (;;) {
-    for (int i{0}; i < k_backoff_spins; i++) {
-      if (__sync_bool_compare_and_swap(&m_lock, 0, 1)) {
-        return;
-      }
+  // fast path, always succeeds within a single thread
+  if (!m_lock.test_and_set(memory_order::k_acquire)) {
+    return;
+  }
+
+  // fixed busy loop
+  int count{100};
+  while (count--) {
+    if (!m_lock.test_and_set(memory_order::k_acquire)) {
+      return;
     }
+  }
+
+  // blocking loop
+  while (m_lock.test_and_set(memory_order::k_acquire)) {
     yield();
   }
 }
 
 void spin_lock::unlock() {
-  __asm__ __volatile__("" ::: "memory");
-  m_lock = 0;
+  m_lock.clear(memory_order::k_release);
   tsan_release(&m_lock);
 }
 

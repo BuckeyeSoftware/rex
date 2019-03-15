@@ -7,10 +7,10 @@ namespace rx::traits {
 
 namespace detail {
   template<typename T>
-  struct remove_const : type_identity<T> {};
+  struct remove_const : traits::type_identity<T> {};
 
   template<typename T>
-  struct remove_const<const T> : type_identity<T> {};
+  struct remove_const<const T> : traits::type_identity<T> {};
 } // namespace detail
 
 template<typename T>

@@ -95,7 +95,7 @@ inline constexpr array<T>::array()
 
 template<typename T>
 inline array<T>::array(rx_size _size, const T& value)
-  : array{&memory::g_system_allocator, value}
+  : array{&memory::g_system_allocator, _size, value}
 {
 }
 

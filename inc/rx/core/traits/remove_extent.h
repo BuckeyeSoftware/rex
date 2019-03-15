@@ -8,13 +8,13 @@ namespace rx::traits {
 
 namespace detail {
   template<typename T>
-  struct remove_extent : type_identity<T> {};
+  struct remove_extent : traits::type_identity<T> {};
 
   template<typename T>
-  struct remove_extent<T[]> : type_identity<T> {};
+  struct remove_extent<T[]> : traits::type_identity<T> {};
 
   template<typename T, rx_size E>
-  struct remove_extent<T[E]> : type_identity<T> {};
+  struct remove_extent<T[E]> : traits::type_identity<T> {};
 } // namespace detail
 
 template<typename T>

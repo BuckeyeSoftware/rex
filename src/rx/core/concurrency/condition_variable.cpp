@@ -18,7 +18,7 @@ condition_variable::~condition_variable() {
     RX_ASSERT(false, "failed to destroy");
   }
 #elif defined(RX_PLATFORM_WINDOWS)
-  // {empty}
+  // NOTE: there's no function to destroy a CONDITION_VARIABLE on Windows
 #endif
 }
 

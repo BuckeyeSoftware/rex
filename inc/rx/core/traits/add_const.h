@@ -4,14 +4,9 @@
 #include <rx/core/traits/type_identity.h>
 
 namespace rx::traits {
-
-namespace detail {
-  template<typename T>
-  struct add_const : type_identity<const T> {};
-} // namespace detail
-
+  
 template<typename T>
-using add_const = typename detail::add_const<T>::type;
+using add_const = const T;
 
 } // namespace rx::traits
 

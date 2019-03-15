@@ -7,13 +7,13 @@ namespace rx::traits {
 
 namespace detail {
   template<typename T>
-  struct remove_reference : type_identity<T> {};
+  struct remove_reference : traits::type_identity<T> {};
 
   template<typename T>
-  struct remove_reference<T&> : type_identity<T> {};
+  struct remove_reference<T&> : traits::type_identity<T> {};
 
   template<typename T>
-  struct remove_reference<T&&> : type_identity<T> {};
+  struct remove_reference<T&&> : traits::type_identity<T> {};
 } // namespace detail
 
 template<typename T>

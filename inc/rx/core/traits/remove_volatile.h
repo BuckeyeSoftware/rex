@@ -7,10 +7,10 @@ namespace rx::traits {
 
 namespace detail {
   template<typename T>
-  struct remove_volatile : type_identity<T> {};
+  struct remove_volatile : traits::type_identity<T> {};
 
   template<typename T>
-  struct remove_volatile<volatile T> : type_identity<T> {};
+  struct remove_volatile<volatile T> : traits::type_identity<T> {};
 } // namespace detail
 
 template<typename T>

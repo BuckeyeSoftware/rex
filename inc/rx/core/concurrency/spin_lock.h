@@ -1,7 +1,7 @@
 #ifndef RX_CORE_CONCURRENCY_SPIN_LOCK_H
 #define RX_CORE_CONCURRENCY_SPIN_LOCK_H
 
-#include <rx/core/types.h>
+#include <rx/core/concurrency/atomic.h>
 
 namespace rx::concurrency {
 
@@ -11,11 +11,11 @@ struct spin_lock {
   void lock();
   void unlock();
 private:
-  rx_u32 m_lock;
+  atomic_flag m_lock;
 };
 
 inline constexpr spin_lock::spin_lock()
-  : m_lock{0}
+  : m_lock{false}
 {
 }
 

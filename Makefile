@@ -4,8 +4,6 @@ TSAN ?= 0
 UBSAN ?= 0
 DEBUG ?= 0
 
-PLATFORM := RX_PLATFORM_POSIX
-
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 
 CXX := gcc
@@ -21,7 +19,6 @@ CXXFLAGS += -Iinc
 CXXFLAGS += `sdl2-config --cflags`
 CXXFLAGS += -Wall
 CXXFLAGS += -Wextra
-CXXFLAGS += -D$(PLATFORM)
 
 ifeq ($(LTO),1)
 	CXXFLAGS += -flto

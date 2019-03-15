@@ -7,10 +7,10 @@ namespace rx::traits {
 
 namespace detail {
   template<bool B, typename T, typename F>
-  struct conditional : type_identity<T> {};
+  struct conditional : traits::type_identity<T> {};
 
   template<typename T, typename F>
-  struct conditional<false, T, F> : type_identity<F> {};
+  struct conditional<false, T, F> : traits::type_identity<F> {};
 } // namespace detail
 
 template<bool B, typename T, typename F>

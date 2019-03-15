@@ -7,19 +7,19 @@ namespace rx::traits {
 
 namespace detail {
   template<typename T>
-  struct remove_pointer : type_identity<T> {};
+  struct remove_pointer : traits::type_identity<T> {};
 
   template<typename T>
-  struct remove_pointer<T*> : type_identity<T> {};
+  struct remove_pointer<T*> : traits::type_identity<T> {};
 
   template<typename T>
-  struct remove_pointer<T* const> : type_identity<T> {};
+  struct remove_pointer<T* const> : traits::type_identity<T> {};
 
   template<typename T>
-  struct remove_pointer<T* volatile> : type_identity<T> {};
+  struct remove_pointer<T* volatile> : traits::type_identity<T> {};
 
   template<typename T>
-  struct remove_pointer<T* const volatile> : type_identity<T> {};
+  struct remove_pointer<T* const volatile> : traits::type_identity<T> {};
 } // namespace detail
 
 template<typename T>

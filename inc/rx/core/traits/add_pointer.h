@@ -9,16 +9,16 @@ namespace rx::traits {
 
 namespace detail {
   template<typename T, bool F = false>
-  struct add_pointer : type_identity<remove_reference<T>*> {};
+  struct add_pointer : traits::type_identity<traits::remove_reference<T>*> {};
 
   template<typename T>
-  struct add_pointer<T, true> : type_identity<T> {};
+  struct add_pointer<T, true> : traits::type_identity<T> {};
 
   template<typename T, typename... Ts>
-  struct add_pointer<T(Ts...), true> : type_identity<T(*)(Ts...)> {};
+  struct add_pointer<T(Ts...), true> : traits::type_identity<T(*)(Ts...)> {};
 
   template<typename T, typename... Ts>
-  struct add_pointer<T(Ts..., ...), true> : type_identity<T(*)(Ts..., ...)> {};
+  struct add_pointer<T(Ts..., ...), true> : traits::type_identity<T(*)(Ts..., ...)> {};
 } // namespace detail
 
 template<typename T>

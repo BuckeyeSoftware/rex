@@ -1,3 +1,5 @@
+#include <rx/core/config.h> // RX_PLATFORM_*
+
 #if defined(RX_PLATFORM_POSIX)
 #include <dirent.h>
 #elif defined(RX_PLATFORM_WINDOWS)

@@ -7,11 +7,11 @@
 namespace rx::traits {
 
 namespace detail {
-  template<typename T, bool = is_referenceable<T>>
-  struct add_lvalue_reference : type_identity<T> {};
+  template<typename T, bool = traits::is_referenceable<T>>
+  struct add_lvalue_reference : traits::type_identity<T> {};
 
   template<typename T>
-  struct add_lvalue_reference<T, true> : type_identity<T&> {};
+  struct add_lvalue_reference<T, true> : traits::type_identity<T&> {};
 } // namespace detail
 
 template<typename T>

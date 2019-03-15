@@ -5,13 +5,8 @@
 
 namespace rx::traits {
 
-namespace detail {
-  template<typename T>
-  struct add_cv : type_identity<const volatile T> {};
-} // namespace detail
-
 template<typename T>
-using add_cv = typename detail::add_cv<T>::type;
+using add_cv = const volatile T;
 
 } // namespace rx::traits
 
