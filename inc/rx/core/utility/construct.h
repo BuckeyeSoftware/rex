@@ -10,15 +10,6 @@ struct rx_placement_new {};
 inline void* operator new(rx_size, void* _data, rx_placement_new) {
   return _data;
 }
-
-inline void operator delete([[maybe_unused]] void* _data) {
-  RX_ASSERT(false, "invalid delete %p", _data);
-}
-
-inline void operator delete(void* _data, rx_size) {
-  operator delete(_data);
-}
-
 namespace rx::utility {
 
 template<typename T, typename... Ts>

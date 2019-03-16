@@ -49,7 +49,6 @@ string::string(memory::allocator* _allocator, const string& _contents)
 string::string(memory::allocator* _allocator, const char* _contents)
   : string{_allocator, _contents, strlen(_contents)}
 {
-  // {empty}
 }
 
 string::string(memory::allocator* _allocator, const char* _contents, rx_size _size)
@@ -420,7 +419,6 @@ wide_string::wide_string(memory::allocator* _allocator)
   : m_allocator{_allocator}
   , m_size{0}
 {
-  // {empty}
 }
 
 wide_string::wide_string(memory::allocator* _allocator, const rx_u16* _contents)

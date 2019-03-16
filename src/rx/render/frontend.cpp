@@ -50,7 +50,6 @@ frontend::frontend(memory::allocator* _allocator, backend* _backend, const alloc
 }
 
 frontend::~frontend() {
-  // {empty}
 }
 
 // create_*

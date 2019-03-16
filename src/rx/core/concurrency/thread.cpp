@@ -12,7 +12,6 @@ static int g_thread_id; // protected by |g_lock|
 thread::thread()
   : m_allocator{nullptr}
 {
-  // {empty}
 }
 
 thread::thread(thread&& _thread)
@@ -62,7 +61,6 @@ void* thread::state::wrap(void* _data) {
 thread::state::state()
   : m_joined{false}
 {
-  // {empty}
 }
 
 thread::state::state(const char* _name, function<void(int)>&& _function)

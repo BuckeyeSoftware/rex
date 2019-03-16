@@ -53,7 +53,6 @@ private:
 inline file::file(const string& _file_name, const char* _mode)
   : file{_file_name.data(), _mode}
 {
-  // {empty}
 }
 
 inline file::operator bool() const {

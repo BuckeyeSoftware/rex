@@ -11,7 +11,6 @@ file::file(const char* file_name, const char* mode)
   , m_file_name{file_name}
   , m_mode{mode}
 {
-  // {empty}
 }
 
 file::file(file&& other)

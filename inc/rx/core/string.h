@@ -163,7 +163,6 @@ template<typename... Ts>
 inline string::string(memory::allocator* _allocator, const char* _format, Ts&&... _arguments)
   : string{utility::move(formatter(_allocator, _format, format<traits::remove_cvref<Ts>>{}(utility::forward<Ts>(_arguments))...))}
 {
-  // {empty}
 }
 
 inline string::string()

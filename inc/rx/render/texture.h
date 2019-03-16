@@ -105,6 +105,7 @@ struct texture2D : texture {
   // write data |_data| of dimensions |_dimensions| to store
   void write(const rx_byte* _data, const math::vec2z& _dimensions);
   void record_dimensions(const math::vec2z& _dimensions);
+  void request_mipchain(rx_size _levels);
 
   const math::vec2z& dimensions() const &;
 private:

@@ -13,7 +13,6 @@ command_buffer::command_buffer(memory::allocator* _allocator, rx_size _size)
 }
 
 command_buffer::~command_buffer() {
-  // {empty}
 }
 
 rx_byte* command_buffer::allocate(rx_size _size, command_type _command, const command_header::info& _info) {

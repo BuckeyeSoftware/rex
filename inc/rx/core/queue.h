@@ -41,14 +41,12 @@ template<typename T>
 inline constexpr queue<T>::queue(memory::allocator* _allocator)
   : m_allocator{_allocator}
 {
-  // {empty}
 }
 
 template<typename T>
 inline constexpr queue<T>::queue()
   : m_allocator{&memory::g_system_allocator}
 {
-  // {empty}
 }
 
 template<typename T>

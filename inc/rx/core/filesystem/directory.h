@@ -75,7 +75,6 @@ inline directory::item::item(memory::allocator* _allocator, const char* _name, t
   : m_name{_allocator, _name}
   , m_type{_type}
 {
-  // {empty}
 }
 
 } // namespace rx::filesystem

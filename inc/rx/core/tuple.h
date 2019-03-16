@@ -49,7 +49,6 @@ template<typename... Ts>
 inline constexpr tuple<Ts...>::tuple(Ts&&... args)
   : detail::tuple<utility::index_sequence_for<Ts...>, Ts...>{utility::forward<Ts>(args)...}
 {
-  // {empty}
 }
 
 template<typename... Ts>

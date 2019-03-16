@@ -348,7 +348,6 @@ inline variable<bool>::variable(const char* _name, const char* _description, boo
   , m_initial{_initial}
   , m_current{_initial}
 {
-  // {empty}
 }
 
 inline variable<bool>::operator const bool&() const {
@@ -436,7 +435,6 @@ inline variable<vec2<T>>::variable(const char* _name, const char* _description,
   , m_initial{_initial}
   , m_current{_initial}
 {
-  // {empty}
 }
 
 template<typename T>
@@ -500,7 +498,6 @@ inline variable<vec3<T>>::variable(const char* _name, const char* _description,
   , m_initial{_initial}
   , m_current{_initial}
 {
-  // {empty}
 }
 
 template<typename T>
@@ -564,7 +561,6 @@ inline variable<vec4<T>>::variable(const char* _name, const char* _description,
   , m_initial{_initial}
   , m_current{_initial}
 {
-  // {empty}
 }
 
 template<typename T>

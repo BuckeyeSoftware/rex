@@ -28,7 +28,6 @@ inline resource::resource(category _type)
   : m_resource_type{_type}
   , m_resource_bytes{0}
 {
-  // {empty}
 }
 
 inline resource::~resource() {

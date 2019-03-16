@@ -13,6 +13,7 @@
 #include <rx/render/target.h>
 #include <rx/render/texture.h>
 #include <rx/render/program.h>
+#include <rx/render/timer.h>
 #include <rx/render/backend_gl4.h>
 
 #include <rx/input/input.h>
@@ -50,13 +51,7 @@ RX_CONSOLE_BVAR(
   "display.hdr",
   "use HDR output if supported",
   false);
-
-extern "C" {
-  void __cxa_pure_virtual() {
-    RX_ASSERT(false, "pure virtual function call");
-  }
-}
-
+  
 int entry(int argc, char **argv) {
   (void)argc;
   (void)argv;
@@ -158,6 +153,7 @@ int entry(int argc, char **argv) {
     program->add_uniform("color", rx::render::uniform::category::k_vec4f);
     renderer.initialize_program(RX_RENDER_TAG("test"), program);
 
+    rx::render::frame_timer timer;
     rx::input::input input;
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
       input.update(0);
@@ -228,6 +224,12 @@ int entry(int argc, char **argv) {
       if (renderer.process())
       {
         renderer.swap();
+      }
+
+      if (timer.update()) {
+        char format[1024];
+        snprintf(format, sizeof format, "%d fps | %.2f mspf", timer.fps(), timer.mspf());
+        SDL_SetWindowTitle(window, format);
       }
     }
 
