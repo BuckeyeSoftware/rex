@@ -1,14 +1,19 @@
 #include <string.h> // memcpy
 
 #include <rx/render/buffer.h>
+#include <rx/render/frontend.h>
 #include <rx/core/log.h>
 
 RX_LOG("render/buffer", buffer_log);
 
 namespace rx::render {
 
-buffer::buffer()
+buffer::buffer(frontend* _frontend)
   : resource{resource::category::k_buffer}
+  , m_frontend{_frontend}
+  , m_vertices_store{m_frontend->allocator()}
+  , m_elements_store{m_frontend->allocator()}
+  , m_attributes{m_frontend->allocator()}
   , m_element_type{element_category::k_none}
   , m_stride{0}
 {

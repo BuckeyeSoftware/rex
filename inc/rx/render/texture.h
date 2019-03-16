@@ -11,8 +11,10 @@
 
 namespace rx::render {
 
+struct frontend;
+
 struct texture : resource {
-  texture(resource::category _type);
+  texture(frontend* _frontend, resource::category _type);
 
   struct filter_options {
     bool bilinear;
@@ -76,6 +78,7 @@ protected:
     k_dimensions = 1 << 3,
   };
 
+  frontend* m_frontend;
   array<rx_byte> m_data;
   data_format m_format;
   filter_options m_filter;
@@ -84,7 +87,7 @@ protected:
 };
 
 struct texture1D : texture {
-  texture1D();
+  texture1D(frontend* _frontend);
   ~texture1D();
 
   // write data |_data| of dimensions |_dimensions| to store
@@ -99,7 +102,7 @@ private:
 };
 
 struct texture2D : texture {
-  texture2D();
+  texture2D(frontend* _frontend);
   ~texture2D();
 
   // write data |_data| of dimensions |_dimensions| to store
@@ -113,7 +116,7 @@ private:
 };
 
 struct texture3D : texture {
-  texture3D();
+  texture3D(frontend* _frontend);
   ~texture3D();
 
   // write data |_data| of dimensions |_dimensions| to store
@@ -135,7 +138,7 @@ struct textureCM : texture {
     k_back
   };
 
-  textureCM();
+  textureCM(frontend* _frontend);
   ~textureCM();
 
   // write data |_data| of dimensions |_dimensions| to store |_face|

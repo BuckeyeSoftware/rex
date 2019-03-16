@@ -7,8 +7,9 @@ RX_LOG("render/texture", texture_log);
 
 namespace rx::render {
 
-texture::texture(resource::category _type)
+texture::texture(frontend* _frontend, resource::category _type)
   : resource{_type}
+  , m_frontend{_frontend}
   , m_recorded{0}
 {
 }
@@ -59,8 +60,8 @@ bool texture::validate() const {
 }
 
 // texture1D
-texture1D::texture1D()
-  : texture{resource::category::k_texture1D}
+texture1D::texture1D(frontend* _frontend)
+  : texture{_frontend, resource::category::k_texture1D}
 {
   texture_log(log::level::k_verbose, "%p: init texture1D", this);
 }
@@ -87,8 +88,8 @@ void texture1D::record_dimensions(rx_size _dimensions) {
   m_recorded |= k_dimensions;
 }
 
-texture2D::texture2D()
-  : texture{resource::category::k_texture2D}
+texture2D::texture2D(frontend* _frontend)
+  : texture{_frontend, resource::category::k_texture2D}
 {
   texture_log(log::level::k_verbose, "%p: init texture2D", this);
 }
@@ -116,8 +117,8 @@ void texture2D::record_dimensions(const math::vec2z& _dimensions) {
 }
 
 // texture3D
-texture3D::texture3D()
-  : texture{resource::category::k_texture3D}
+texture3D::texture3D(frontend* _frontend)
+  : texture{_frontend, resource::category::k_texture3D}
 {
   texture_log(log::level::k_verbose, "%p: init texture3D", this);
 }
@@ -145,8 +146,8 @@ void texture3D::record_dimensions(const math::vec3z& _dimensions) {
 }
 
 // textureCM
-textureCM::textureCM()
-  : texture{resource::category::k_textureCM}
+textureCM::textureCM(frontend* _frontend)
+  : texture{_frontend, resource::category::k_textureCM}
 {
   texture_log(log::level::k_verbose, "%p: init textureCM", this);
 }

@@ -8,6 +8,8 @@ namespace rx::render {
 struct resource {
   enum class category {
     k_buffer,
+    k_target,
+    k_program,
     k_texture1D,
     k_texture2D,
     k_texture3D,

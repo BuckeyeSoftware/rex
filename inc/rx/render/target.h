@@ -4,12 +4,13 @@
 #include <rx/core/array.h>
 
 #include <rx/render/texture.h>
+#include <rx/render/resource.h>
 
 namespace rx::render {
 
 struct frontend;
 
-struct target {
+struct target : resource {
   target(frontend* _frontend);
   ~target();
 

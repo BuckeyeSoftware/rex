@@ -1,20 +1,26 @@
 #include <string.h> // memcpy
+
 #include <rx/render/program.h>
+#include <rx/render/frontend.h>
 #include <rx/core/utility/bit.h>
 
 namespace rx {
 namespace render {
-  uniform::uniform() = default;
-  uniform::uniform(const string& _name, category _type)
-    : m_type{_type}
+  uniform::uniform() 
+    : m_allocator{nullptr}
+  {
+  }
+
+  uniform::uniform(memory::allocator* _allocator, const string& _name, category _type)
+    : m_allocator{_allocator}
+    , m_type{_type}
     , m_name{_name}
   {
-    // allocate memory for uniform with system allocator
-    as_opaque = memory::g_system_allocator->allocate(size_for_type(m_type));
+    as_opaque = m_allocator->allocate(size_for_type(m_type));
   }
 
   uniform::~uniform() {
-    memory::g_system_allocator->deallocate(as_opaque);
+    m_allocator->deallocate(as_opaque);
   }
 
   void uniform::flush(rx_byte* _flush) {
@@ -186,8 +192,12 @@ namespace render {
     return true;
   }
 
-  program::program()
-    : m_dirty_bits{0}
+  program::program(frontend* _frontend)
+    : resource{resource::category::k_program}
+    , m_frontend{_frontend}
+    , m_uniforms{m_frontend->allocator()}
+    , m_shaders{m_frontend->allocator()}
+    , m_dirty_bits{0}
     , m_has_description{false}
   {
   }
@@ -201,8 +211,15 @@ namespace render {
     return m_has_description;
   }
 
+  void program::add_shader(shader _new_shader) {
+    m_shaders.each_fwd([_new_shader]([[maybe_unused]] shader _shader){
+      RX_ASSERT(_new_shader != _shader, "shader already added");
+    });
+    m_shaders.push_back(_new_shader);
+  }
+
   uniform& program::add_uniform(const string& _name, uniform::category _type) {
-    m_uniforms.emplace_back(_name, _type);
+    m_uniforms.emplace_back(m_frontend->allocator(), _name, _type);
     return m_uniforms.last();
   }
 

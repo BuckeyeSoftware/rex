@@ -6,6 +6,7 @@
 
 namespace rx::render {
 
+struct frontend;
 struct buffer : resource {
   struct attribute {
     enum class category {
@@ -24,7 +25,7 @@ struct buffer : resource {
     k_u32
   };
 
-  buffer();
+  buffer(frontend* _frontend);
   ~buffer();
 
   // write |_size| bytes from |_data| into vertex store
@@ -51,6 +52,7 @@ private:
   void write_vertices_data(const rx_byte* _data, rx_size _size, rx_size _stride);
   void write_elements_data(element_category _type, const rx_byte* _data, rx_size _size);
 
+  frontend* m_frontend;
   array<rx_byte> m_vertices_store;
   array<rx_byte> m_elements_store;
   array<attribute> m_attributes;

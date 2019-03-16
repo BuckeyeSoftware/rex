@@ -99,6 +99,8 @@ struct frontend {
   bool process();
   void swap();
 
+  memory::allocator* allocator() const;
+
 private:
   friend struct target;
 
@@ -106,6 +108,8 @@ private:
   void destroy_texture_unlocked(const command_header::info& _info, texture2D* _texture);
 
   concurrency::mutex m_mutex;
+
+  memory::allocator* m_allocator;          // protected by |m_mutex|
 
   memory::pool_allocator m_buffer_pool;    // protected by |m_mutex|
   memory::pool_allocator m_target_pool;    // protected by |m_mutex|
@@ -130,6 +134,10 @@ private:
 
   target* m_bacbuffer;
 };
+
+inline memory::allocator* frontend::allocator() const {
+  return m_allocator;
+}
 
 } // namespace rx::render
 

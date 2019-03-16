@@ -11,8 +11,12 @@
 #include <rx/core/array.h>
 #include <rx/core/hash.h>
 
+#include <rx/render/resource.h>
+
 namespace rx::render
 {
+
+struct frontend;
 
 struct uniform {
   enum class category {
@@ -31,7 +35,7 @@ struct uniform {
   };
 
   uniform();
-  uniform(const string& _name, category _type);
+  uniform(memory::allocator* allocator, const string& _name, category _type);
   ~uniform();
 
   void record_sampler(int _sampler);
@@ -56,6 +60,7 @@ struct uniform {
 private:
   static rx_size size_for_type(category _type);
 
+  memory::allocator* m_allocator;
   category m_type;
   union {
     rx_byte* as_opaque;
@@ -83,7 +88,12 @@ inline rx_size uniform::size() const {
   return size_for_type(m_type);
 }
 
-struct program {
+struct program : resource {
+  enum class shader {
+    k_fragment,
+    k_vertex
+  };
+
   struct description {
     description() = default;
     description(const string& _name, const array<string>& _data,
@@ -94,21 +104,26 @@ struct program {
     array<string> defines;
   };
 
-  program();
+  program(frontend* _frontend);
 
   void record_description(const description& _description);
+
   bool validate() const;
 
+  void add_shader(shader _shader);
   uniform& add_uniform(const string& _name, uniform::category _type);
   uniform& operator[](rx_size _index);
 
   array<rx_byte> flush();
 
   const array<uniform>& uniforms() const &;
+  const array<shader>& shaders() const &;
   const description& info() const &;
 
 private:
+  frontend* m_frontend;
   array<uniform> m_uniforms;
+  array<shader> m_shaders;
   description m_description;
   rx_u64 m_dirty_bits;
   bool m_has_description;
