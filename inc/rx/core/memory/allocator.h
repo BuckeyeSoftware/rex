@@ -1,37 +1,31 @@
 #ifndef RX_CORE_MEMORY_ALLOCATOR_H
 #define RX_CORE_MEMORY_ALLOCATOR_H
 
-#include <rx/core/memory/block.h> // block
-#include <rx/core/concepts/interface.h> // interface
+#include <rx/core/types.h> // rx_size, rx_byte
+#include <rx/core/concepts/interface.h> // concepts::interface
 
 namespace rx::memory {
 
 struct allocator : concepts::interface {
+  // all allocators must align their memory to this alignment
   static constexpr const rx_size k_alignment = 16;
 
   constexpr allocator() = default;
   ~allocator() = default;
 
-  // allocate block of size |size|
-  virtual block allocate(rx_size size) = 0;
+  virtual rx_byte* allocate(rx_size _size) = 0;
+  virtual rx_byte* reallocate(rx_byte* _data, rx_size _size) = 0;
+  virtual void deallocate(rx_byte* data) = 0;
+  virtual bool owns(const rx_byte* _data) const = 0;
 
-  // reallocate block |data| to size |size|
-  virtual block reallocate(block& data, rx_size) = 0;
-
-  // reallocate block |data|
-  virtual void deallocate(block&& data) = 0;
-
-  // check if allocator owns block |data|
-  virtual bool owns(const block& data) const = 0;
-
-  static constexpr rx_size round_to_alignment(rx_size size);
+  static constexpr rx_size round_to_alignment(rx_size _size);
 };
 
-inline constexpr rx_size allocator::round_to_alignment(rx_size size) {
-  if (size & (k_alignment - 1)) {
-    return (size + k_alignment - 1) & -k_alignment;
+inline constexpr rx_size allocator::round_to_alignment(rx_size _size) {
+  if (_size & (k_alignment - 1)) {
+    return (_size + k_alignment - 1) & -k_alignment;
   }
-  return size;
+  return _size;
 }
 
 } // namespace rx::memory

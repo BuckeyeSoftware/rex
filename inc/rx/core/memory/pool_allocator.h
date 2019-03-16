@@ -18,7 +18,7 @@ struct pool_allocator
   : concepts::no_copy
   , concepts::no_move
 {
-  pool_allocator(allocator* alloc, rx_size size, rx_size count);
+  pool_allocator(allocator* _allocator, rx_size _size, rx_size _count);
   ~pool_allocator();
 
   rx_byte* allocate();
@@ -36,31 +36,33 @@ struct pool_allocator
 
 private:
   allocator* m_allocator;
-  rx_size m_size;
-  block m_data;
+  rx_size m_object_size;
+  rx_size m_object_count;
+
+  rx_byte* m_data;
   bitset m_bits;
 };
 
 inline bool pool_allocator::owns(const rx_byte* _data) const {
-  return _data >= m_data.data() && _data + m_size <= m_data.end();
+  return _data >= m_data && _data + m_object_size <= m_data + m_object_size * m_object_count;
 }
 
 inline rx_size pool_allocator::index_of(const rx_byte* _data) const {
   RX_ASSERT(owns(_data), "pool does not own memory");
-  return (_data - m_data.data()) / m_size;
+  return (_data - m_data) / m_object_size;
 }
 
 inline rx_byte* pool_allocator::data_of(rx_size _index) const {
-  return m_data.data() + m_size * _index;
+  return m_data + m_object_size * _index;
 }
 
 inline rx_size pool_allocator::size() const {
-  return m_size;
+  return m_object_size;
 }
 
 template<typename T, typename... Ts>
 inline T* pool_allocator::allocate_and_construct(Ts&&... _arguments) {
-  RX_ASSERT(sizeof(T) <= m_size, "size too large");
+  RX_ASSERT(sizeof(T) <= m_object_size, "size too large");
   auto data{allocate()};
   RX_ASSERT(data, "out of memory");
   utility::construct<T>(data, utility::forward<Ts>(_arguments)...);
@@ -70,7 +72,7 @@ inline T* pool_allocator::allocate_and_construct(Ts&&... _arguments) {
 template<typename T>
 inline void pool_allocator::destruct_and_deallocate(T* _data) {
   auto raw_data{reinterpret_cast<rx_byte*>(_data)};
-  RX_ASSERT(sizeof(T) <= m_size, "size too large");
+  RX_ASSERT(sizeof(T) <= m_object_size, "size too large");
   RX_ASSERT(owns(raw_data), "does not own memory");
   utility::destruct<T>(raw_data);
   deallocate(raw_data);

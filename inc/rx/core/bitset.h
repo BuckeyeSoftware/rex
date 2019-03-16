@@ -38,35 +38,33 @@ private:
 
   memory::allocator* m_allocator;
   rx_size m_size;
-  memory::block m_data;
+  bit_type* m_data;
 };
 
 inline bitset::bitset(bitset&& set)
   : m_allocator{set.m_allocator}
-  , m_data{utility::move(set.m_data)}
+  , m_data{set.m_data}
 {
-  set.m_allocator = nullptr;
+  set.m_data = nullptr;
 }
 
 inline bitset::~bitset() {
-  if (m_allocator) {
-    m_allocator->deallocate(utility::move(m_data));
-  }
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
 }
 
 inline void bitset::set(rx_size bit) {
   RX_ASSERT(bit < m_size, "out of bounds");
-  m_data.cast<bit_type*>()[index(bit)] |= k_bit_one << offset(bit);
+  m_data[index(bit)] |= k_bit_one << offset(bit);
 }
 
 inline void bitset::clear(rx_size bit) {
   RX_ASSERT(bit < m_size, "out of bounds");
-  m_data.cast<bit_type*>()[index(bit)] &= ~(k_bit_one << offset(bit));
+  m_data[index(bit)] &= ~(k_bit_one << offset(bit));
 }
 
 inline bool bitset::test(rx_size bit) const {
   RX_ASSERT(bit < m_size, "out of bounds");
-  return !!(m_data.cast<const bit_type*>()[index(bit)] & (k_bit_one << offset(bit)));
+  return !!(m_data[index(bit)] & (k_bit_one << offset(bit)));
 }
 
 inline rx_size bitset::size() const {

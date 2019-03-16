@@ -10,11 +10,11 @@ namespace render {
     , m_name{_name}
   {
     // allocate memory for uniform with system allocator
-    as_opaque = memory::g_system_allocator->allocate(size_for_type(m_type)).data();
+    as_opaque = memory::g_system_allocator->allocate(size_for_type(m_type));
   }
 
   uniform::~uniform() {
-    memory::g_system_allocator->deallocate({size_for_type(m_type), as_opaque});
+    memory::g_system_allocator->deallocate(as_opaque);
   }
 
   void uniform::flush(rx_byte* _flush) {

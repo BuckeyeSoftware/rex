@@ -25,8 +25,8 @@ thread::thread(memory::allocator* _allocator, const char* _name, function<void(i
   : m_allocator{_allocator}
 {
   RX_ASSERT(m_allocator, "null allocator");
-  m_state = utility::move(m_allocator->allocate(sizeof(state)));
-  utility::construct<state>(m_state.data(), _name, utility::move(_function));
+  m_state = reinterpret_cast<state*>(m_allocator->allocate(sizeof *m_state));
+  utility::construct<state>(m_state, _name, utility::move(_function));
 }
 
 thread::~thread() {
@@ -36,13 +36,13 @@ thread::~thread() {
 
   join();
 
-  utility::destruct<state>(m_state.data());
-  m_allocator->deallocate(utility::move(m_state));
+  utility::destruct<state>(m_state);
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_state));
 }
 
 void thread::join() {
   RX_ASSERT(m_state, "join on empty thread");
-  m_state.cast<state*>()->join();
+  m_state->join();
 }
 
 // state

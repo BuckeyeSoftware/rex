@@ -385,6 +385,10 @@ bool frontend::process() {
     m_target_pool.destruct_and_deallocate<target>(_target);
   });
 
+  m_destroy_programs.each_fwd([this](program* _program) {
+    m_program_pool.destruct_and_deallocate<program>(_program);
+  });
+
   m_destroy_textures1D.each_fwd([this](texture1D* _texture) {
     m_texture1D_pool.destruct_and_deallocate<texture1D>(_texture);
   });

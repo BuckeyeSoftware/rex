@@ -38,7 +38,7 @@ private:
   };
 
   memory::allocator* m_allocator;
-  memory::block m_state;
+  state* m_state;
 };
 
 template<typename T>
@@ -53,8 +53,8 @@ inline promise<T>::promise(memory::allocator* _allocator)
 {
   RX_ASSERT(m_allocator, "null allocator");
 
-  m_state = utility::move(m_allocator->allocate(sizeof(state)));
-  utility::construct<state>(m_state.data());
+  m_state = reinterpret_cast<state*>(m_allocator->allocate(sizeof *m_state));
+  utility::construct<state>(m_state);
 }
 
 template<typename T>
@@ -67,47 +67,44 @@ template<typename T>
 inline promise<T>::~promise() {
   if (m_state) {
     {
-      auto state_data{m_state.cast<state*>()};
-      scope_lock lock(state_data->m_mutex);
-      state_data->m_condition_variable.wait(lock, [state_data] { return state_data->m_done; });
+      scope_lock lock(m_state->m_mutex);
+      m_state->m_condition_variable.wait(lock, [m_state] { return m_state->m_done; });
     }
 
-    utility::destruct<state>(m_state.data());
-    m_allocator->deallocate(utility::move(m_state));
+    utility::destruct<state>(m_state);
+    m_allocator->deallocate(m_state);
   }
 }
 
 template<typename T>
 inline promise<T>::promise(promise&& _promise)
   : m_allocator{_promise.m_allocator}
-  , m_state{utility::move(_promise.m_state)}
+  , m_state{_promise.m_state}
 {
+  _promise.m_state = nullptr;
 }
 
 template<typename T>
 inline void promise<T>::set_value(const T& _value) {
-  auto state_data{m_state.cast<state*>()};
-  scope_lock lock(state_data->m_mutex);
-  state_data->m_result = _value;
-  state_data->m_done = true;
-  state_data->m_condition_variable.signal();
+  scope_lock lock(m_state->m_mutex);
+  m_state->m_result = _value;
+  m_state->m_done = true;
+  m_state->m_condition_variable.signal();
 }
 
 template<typename T>
 inline void promise<T>::set_value(T&& _value) {
-  auto state_data{m_state.cast<state*>()};
-  scope_lock lock(state_data->m_mutex);
-  state_data->m_result = utility::move(_value);
-  state_data->m_done = true;
-  state_data->m_condition_variable.signal();
+  scope_lock lock(m_state->m_mutex);
+  m_state->m_result = utility::move(_value);
+  m_state->m_done = true;
+  m_state->m_condition_variable.signal();
 }
 
 template<typename T>
 inline T promise<T>::get_value() const {
-  auto state_data{m_state.cast<state*>()};
-  scope_lock lock(state_data->m_mutex);
-  state_data->m_condition_variable.wait(lock, [state_data] { return state_data->m_done; });
-  return state_data->m_result;
+  scope_lock lock(m_state->m_mutex);
+  m_state->m_condition_variable.wait(lock, [m_state] { return m_state->m_done; });
+  return m_state->m_result;
 }
 
 } // namespace rx::concurrency

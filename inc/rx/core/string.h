@@ -83,9 +83,10 @@ private:
   void swap(string& other);
 
   memory::allocator* m_allocator;
-  memory::block m_data;
-  rx_byte* m_last;
-  rx_byte m_buffer[k_small_string] = {0};
+  char* m_data;
+  char* m_last;
+  char* m_capacity;
+  char m_buffer[k_small_string] = {0};
 };
 
 // utf-16, Windows compatible "wide-string"
@@ -131,7 +132,7 @@ struct wide_string {
 
 private:
   memory::allocator* m_allocator;
-  memory::block m_data;
+  rx_u16* m_data;
   rx_size m_size;
 };
 
@@ -192,11 +193,11 @@ inline string::string(const char* _format, Ts&&... _arguments)
 }
 
 inline rx_size string::size() const {
-  return m_last - m_data.data();
+  return m_last - m_data;
 }
 
 inline bool string::is_empty() const {
-  return m_last - m_data.data() == 0;
+  return m_last - m_data == 0;
 }
 
 inline void string::clear() {
@@ -218,29 +219,29 @@ inline string& string::append(char ch) {
 inline char& string::operator[](rx_size index) {
   // NOTE(dweiler): <= is not a bug, indexing the null-terminator is allowed
   RX_ASSERT(index <= size(), "out of bounds");
-  return m_data.cast<char*>()[index];
+  return m_data[index];
 }
 
 inline const char& string::operator[](rx_size index) const {
   // NOTE(dweiler): <= is not a bug, indexing the null-terminator is allowed
   RX_ASSERT(index <= size(), "out of bounds");
-  return m_data.cast<char*>()[index];
+  return m_data[index];
 }
 
 inline char& string::last() {
-  return operator[](size() - 1);
+  return m_data[size() - 1];
 }
 
 inline const char& string::last() const {
-  return operator[](size() - 1);
+  return m_data[size() - 1];
 }
 
 inline char* string::data() {
-  return m_data.cast<char*>();
+  return m_data;
 }
 
 inline const char* string::data() const {
-  return m_data.cast<const char*>();
+  return m_data;
 }
 
 inline string operator+(const string& lhs, const char* rhs) {
@@ -313,20 +314,20 @@ inline bool wide_string::is_empty() const {
 
 inline rx_u16& wide_string::operator[](rx_size _index) {
   RX_ASSERT(_index < m_size, "out of bounds");
-  return m_data.cast<rx_u16*>()[_index];
+  return m_data[_index];
 }
 
 inline const rx_u16& wide_string::operator[](rx_size _index) const {
   RX_ASSERT(_index < m_size, "out of bounds");
-  return m_data.cast<const rx_u16*>()[_index];
+  return m_data[_index];
 }
 
 inline rx_u16* wide_string::data() {
-  return m_data.cast<rx_u16*>();
+  return m_data;
 }
 
 inline const rx_u16* wide_string::data() const {
-  return m_data.cast<const rx_u16*>();
+  return m_data;
 }
 
 } // namespace rx

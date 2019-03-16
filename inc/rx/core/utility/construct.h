@@ -10,6 +10,7 @@ struct rx_placement_new {};
 inline void* operator new(rx_size, void* _data, rx_placement_new) {
   return _data;
 }
+
 namespace rx::utility {
 
 template<typename T, typename... Ts>

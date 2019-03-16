@@ -1,6 +1,8 @@
 #ifndef RX_CORE_MAP_H
 #define RX_CORE_MAP_H
 
+#if 0
+
 #include <limits.h> // CHAR_BIT
 
 #include <rx/core/algorithm.h> // swap
@@ -318,5 +320,7 @@ inline bool map<K, V, H>::lookup_index(const K& key, rx_size& index) const {
 }
 
 } // namespace rx
+
+#endif
 
 #endif // RX_CORE_MAP_H

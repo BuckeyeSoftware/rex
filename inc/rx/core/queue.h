@@ -29,12 +29,12 @@ private:
     constexpr node(const T& value) : m_value{value} {}
     constexpr node(T&& value) : m_value{utility::move(value)} {}
     T m_value;
-    memory::block m_next;
+    node* m_next;
   };
 
   memory::allocator* m_allocator;
-  memory::block m_first;
-  memory::block m_last;
+  node* m_first;
+  node* m_last;
 };
 
 template<typename T>
@@ -61,30 +61,30 @@ inline bool queue<T>::is_empty() const {
 
 template<typename T>
 inline void queue<T>::push(const T& _value) {
-  auto new_node_block{utility::move(m_allocator->allocate(sizeof(node)))};
-  utility::construct<node>(new_node_block.data(), _value);
+  auto new_node{reinterpret_cast<node*>(m_allocator->allocate(sizeof(node)))};
+  utility::construct<T>(new_node, _value);
   if (is_empty()) {
-    m_first = utility::move(new_node_block);
-    m_last.alias(m_first);
+    m_first = new_node;
+    m_last = m_first;
   } else {
-    auto last_node{m_last.template cast<node*>()};
-    last_node->m_next = utility::move(new_node_block);
-    m_last.alias(last_node->m_next);
+    auto last_node{m_last};
+    last_node->m_next = new_node;
+    m_last = last_node->m_next;
   }
 }
 
 template<typename T>
 template<typename... Ts>
 inline void queue<T>::emplace(Ts&&... _arguments) {
-  auto new_node_block{utility::move(m_allocator->allocate(sizeof(node)))};
-  utility::construct<node>(new_node_block.data(), utility::forward<Ts>(_arguments)...);
+  auto new_node{reinterpret_cast<node*>(m_allocator->allocate(sizeof(node)))};
+  utility::construct(new_node, utility::forward<Ts>(_arguments)...);
   if (is_empty()) {
-    m_first = utility::move(new_node_block);
-    m_last.alias(m_first);
+    m_first = new_node;
+    m_last = m_first;
   } else {
-    auto last_node{m_last.template cast<node*>()};
-    last_node->m_next = utility::move(new_node_block);
-    m_last.alias(last_node->m_next);
+    auto last_node{m_last};
+    last_node->m_next = new_node;
+    m_last = last_node->m_next;
   }
 }
 
@@ -92,13 +92,13 @@ template<typename T>
 inline T queue<T>::pop() {
   RX_ASSERT(!is_empty(), "empty queue");
 
-  auto this_node_block{utility::move(m_first)};
-  auto this_node{this_node_block.template cast<node*>()};
+  auto this_node{m_first};
 
   T value{utility::move(this_node->m_value)};
   m_first = utility::move(this_node->m_next);
-  utility::destruct<node>(this_node);
-  m_allocator->deallocate(utility::move(this_node_block));
+
+  utility::destruct<T>(this_node);
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(this_node));
 
   return value;
 }

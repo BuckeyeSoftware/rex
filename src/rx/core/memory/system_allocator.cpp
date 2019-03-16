@@ -4,21 +4,19 @@
 
 namespace rx::memory {
 
-block system_allocator::allocate(rx_size size) {
-  return {size, reinterpret_cast<rx_byte*>(malloc(size))};
+rx_byte* system_allocator::allocate(rx_size _size) {
+  return reinterpret_cast<rx_byte*>(malloc(_size));
 }
 
-block system_allocator::reallocate(block& data, rx_size size) {
-  return {size, reinterpret_cast<rx_byte*>(realloc(data ? data.data() : nullptr, size))};
+rx_byte* system_allocator::reallocate(rx_byte* _data, rx_size _size) {
+  return reinterpret_cast<rx_byte*>(realloc(_data, _size));
 }
 
-void system_allocator::deallocate(block&& data) {
-  if (data) {
-    free(data.data());
-  }
+void system_allocator::deallocate(rx_byte* _data) {
+  free(_data);
 }
 
-bool system_allocator::owns(const block&) const {
+bool system_allocator::owns(const rx_byte*) const {
   return true;
 }
 

@@ -82,7 +82,7 @@ private:
   bool grow_or_shrink_to(rx_size _size);
 
   memory::allocator* m_allocator;
-  memory::block m_data;
+  T* m_data;
   rx_size m_size;
   rx_size m_capacity;
 };
@@ -108,7 +108,7 @@ inline array<T>::array(const array& _other)
 template<typename T>
 inline constexpr array<T>::array(memory::allocator* _allocator)
   : m_allocator{_allocator}
-  , m_data{}
+  , m_data{nullptr}
   , m_size{0}
   , m_capacity{0}
 {
@@ -123,7 +123,7 @@ inline array<T>::array(memory::allocator* _allocator, rx_size _size, const T& va
 {
   RX_ASSERT(m_allocator, "null allocator");
 
-  m_data = utility::move(m_allocator->allocate(_size * sizeof(T)));
+  m_data = reinterpret_cast<T*>(m_allocator->allocate(_size * sizeof *m_data));
   RX_ASSERT(m_data, "out of memory");
 
   for (rx_size i{0}; i < m_capacity; i++) {
@@ -134,7 +134,7 @@ inline array<T>::array(memory::allocator* _allocator, rx_size _size, const T& va
 template<typename T>
 inline array<T>::array(memory::allocator* _allocator, const array& _other)
   : m_allocator{_allocator}
-  , m_data{m_allocator->allocate(_other.m_capacity * sizeof(T))}
+  , m_data{reinterpret_cast<T*>(m_allocator->allocate(_other.m_capacity * sizeof *m_data))}
   , m_size{_other.m_size}
   , m_capacity{_other.m_capacity}
 {
@@ -148,10 +148,11 @@ inline array<T>::array(memory::allocator* _allocator, const array& _other)
 template<typename T>
 inline array<T>::array(array&& _other)
   : m_allocator{_other.m_allocator}
-  , m_data{utility::move(_other.m_data)}
+  , m_data{_other.m_data}
   , m_size{_other.m_size}
   , m_capacity{_other.m_capacity}
 {
+  _other.m_data = nullptr;
   _other.m_size = 0;
   _other.m_capacity = 0;
 }
@@ -159,7 +160,7 @@ inline array<T>::array(array&& _other)
 template<typename T>
 inline array<T>::~array() {
   clear();
-  m_allocator->deallocate(utility::move(m_data));
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
 }
 
 template<typename T>
@@ -171,7 +172,7 @@ inline array<T>& array<T>::operator=(const array& _other) {
   }
 
   m_allocator = _other.m_allocator;
-  m_data = m_allocator->allocate(_other.m_capacity * sizeof(T));
+  m_data = reinterpret_cast<T*>(m_allocator->allocate(_other.m_capacity * sizeof *m_data));
   m_size = _other.m_size;
   m_capacity = _other.m_capacity;
   RX_ASSERT(m_data, "out of memory");
@@ -188,10 +189,11 @@ inline array<T>& array<T>::operator=(array&& _other) {
   clear();
 
   m_allocator = _other.m_allocator;
-  m_data = utility::move(_other.m_data);
+  m_data = _other.m_data;
   m_size = _other.m_size;
   m_capacity = _other.m_capacity;
 
+  _other.m_data = nullptr;
   _other.m_size = 0;
   _other.m_capacity = 0;
 
@@ -201,13 +203,13 @@ inline array<T>& array<T>::operator=(array&& _other) {
 template<typename T>
 inline T& array<T>::operator[](rx_size _index) {
   RX_ASSERT(_index < m_size, "out of bounds (%zu >= %zu)", _index, m_size);
-  return data()[_index];
+  return m_data[_index];
 }
 
 template<typename T>
 inline const T& array<T>::operator[](rx_size _index) const {
   RX_ASSERT(_index < m_size, "out of bounds (%zu >= %zu)", _index, m_size);
-  return data()[_index];
+  return m_data[_index];
 }
 
 template<typename T>
@@ -219,7 +221,7 @@ bool array<T>::grow_or_shrink_to(rx_size _size) {
   if constexpr (!traits::is_trivially_destructible<T>) {
     if (_size < m_size) {
       for (rx_size i{m_size-1}; i > _size; i--) {
-        utility::destruct<T>(data() + i);
+        utility::destruct<T>(m_data + i);
       }
     }
   }
@@ -235,7 +237,7 @@ bool array<T>::resize(rx_size _size, const T& _value) {
 
   // copy construct new objects
   for (rx_size i{m_size}; i < _size; i++) {
-    utility::construct<T>(data() + i, _value);
+    utility::construct<T>(m_data + i, _value);
   }
 
   m_size = _size;
@@ -254,25 +256,21 @@ bool array<T>::reserve(rx_size _size) {
   }
 
   if constexpr (traits::is_trivially_copyable<T>) {
-    memory::block resize{m_allocator->reallocate(m_data, m_capacity * sizeof(T))};
+    T* resize{reinterpret_cast<T*>(m_allocator->reallocate(reinterpret_cast<rx_byte*>(m_data), m_capacity * sizeof *m_data))};
     if (resize) {
-      m_data = utility::move(resize);
+      m_data = resize;
       return true;
     }
   } else {
-    memory::block resize{m_allocator->allocate(m_capacity * sizeof(T))};
+    T* resize{reinterpret_cast<T*>(m_allocator->allocate(m_capacity * sizeof *m_data))};
     if (resize) {
-      if (m_size) {
-        auto *const src{m_data.cast<T*>()};
-        auto *const dst{resize.cast<T*>()};
-        for (rx_size i{0}; i < m_size; i++) {
-          utility::construct<T>(dst + i, utility::move(*(src + i)));
-          utility::destruct<T>(src + i);
-        }
+      for (rx_size i{0}; i < m_size; i++) {
+        utility::construct<T>(resize + i, utility::move(*(m_data + i)));
+        utility::destruct<T>(m_data + i);
       }
 
-      m_allocator->deallocate(utility::move(m_data));
-      m_data = utility::move(resize);
+      m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
+      m_data = resize;
       return true;
     }
   }
@@ -285,7 +283,7 @@ inline void array<T>::clear() {
   if (m_size) {
     if constexpr (!traits::is_trivially_destructible<T>) {
       for (rx_size i{m_size-1}; i < m_size; i--) {
-        utility::destruct<T>(data() + i);
+        utility::destruct<T>(m_data + i);
       }
     }
   }
@@ -299,7 +297,7 @@ inline bool array<T>::push_back(const T& _value) {
   }
 
   // copy construct object
-  utility::construct<T>(data() + m_size, _value);
+  utility::construct<T>(m_data + m_size, _value);
 
   m_size++;
   return true;
@@ -312,7 +310,7 @@ inline bool array<T>::push_back(T&& _value) {
   }
 
   // move construct object
-  utility::construct<T>(data() + m_size, utility::move(_value));
+  utility::construct<T>(m_data + m_size, utility::move(_value));
 
   m_size++;
   return true;
@@ -326,7 +324,7 @@ inline bool array<T>::emplace_back(Ts&&... _args) {
   }
 
   // forward construct object
-  utility::construct<T>(data() + m_size, utility::forward<Ts>(_args)...);
+  utility::construct<T>(m_data + m_size, utility::forward<Ts>(_args)...);
 
   m_size++;
   return true;
@@ -347,11 +345,11 @@ template<typename F>
 inline bool array<T>::each_fwd(F&& _func) {
   for (rx_size i{0}; i < m_size; i++) {
     if constexpr (traits::is_same<traits::return_type<F>, bool>) {
-      if (!_func(operator[](i))) {
+      if (!_func(m_data[i])) {
         return false;
       }
     } else {
-      _func(operator[](i));
+      _func(m_data[i]);
     }
   }
   return true;
@@ -362,11 +360,11 @@ template<typename F>
 inline bool array<T>::each_fwd(F&& _func) const {
   for (rx_size i{0}; i < m_size; i++) {
     if constexpr (traits::is_same<traits::return_type<F>, bool>) {
-      if (!_func(operator[](i))) {
+      if (!_func(m_data[i])) {
         return false;
       }
     } else {
-      _func(operator[](i));
+      _func(m_data[i]);
     }
   }
   return true;
@@ -377,11 +375,11 @@ template<typename F>
 inline bool array<T>::each_rev(F&& _func) {
   for (rx_size i{m_size-1}; i < m_size; i--) {
     if constexpr (traits::is_same<traits::return_type<F>, bool>) {
-      if (!_func(operator[](i))) {
+      if (!_func(m_data[i])) {
         return false;
       }
     } else {
-      _func(operator[](i));
+      _func(m_data[i]);
     }
   }
   return true;
@@ -392,11 +390,11 @@ template<typename F>
 inline bool array<T>::each_rev(F&& _func) const {
   for (rx_size i{m_size-1}; i < m_size; i--) {
     if constexpr (traits::is_same<traits::return_type<F>, bool>) {
-      if (!_func(operator[](i))) {
+      if (!_func(m_data[i])) {
         return false;
       }
     } else {
-      _func(operator[](i));
+      _func(m_data[i]);
     }
   }
   return true;
@@ -404,22 +402,22 @@ inline bool array<T>::each_rev(F&& _func) const {
 
 template<typename T>
 inline const T& array<T>::last() const {
-  return data()[m_size - 1];
+  return m_data[m_size - 1];
 }
 
 template<typename T>
 inline T& array<T>::last() {
-  return data()[m_size - 1];
+  return m_data[m_size - 1];
 }
 
 template<typename T>
 const T* array<T>::data() const {
-  return m_data.cast<const T*>();
+  return m_data;
 }
 
 template<typename T>
 inline T* array<T>::data() {
-  return m_data.cast<T*>();
+  return m_data;
 }
 
 } // namespace rx

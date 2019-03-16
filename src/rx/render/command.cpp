@@ -17,8 +17,7 @@ command_buffer::~command_buffer() {
 
 rx_byte* command_buffer::allocate(rx_size _size, command_type _command, const command_header::info& _info) {
   _size = memory::allocator::round_to_alignment(_size + sizeof(command_header));
-  auto block{utility::move(m_allocator.allocate(_size))};
-  rx_byte* data{block.data()};
+  rx_byte* data{m_allocator.allocate(_size)};
   memset(data, 0, _size);
   memcpy(data + offsetof(command_header, type), &_command, sizeof _command);
   memcpy(data + offsetof(command_header, tag), &_info, sizeof _info);

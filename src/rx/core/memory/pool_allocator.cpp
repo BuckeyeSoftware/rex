@@ -9,11 +9,12 @@
 
 namespace rx::memory {
 
-pool_allocator::pool_allocator(allocator* alloc, rx_size size, rx_size capacity)
-  : m_allocator{alloc}
-  , m_size{size}
-  , m_data{utility::move(m_allocator->allocate(m_size * capacity))}
-  , m_bits{alloc, capacity}
+pool_allocator::pool_allocator(allocator* _allocator, rx_size _object_size, rx_size _object_count)
+  : m_allocator{_allocator}
+  , m_object_size{_object_size}
+  , m_object_count{_object_count}
+  , m_data{m_allocator->allocate(m_object_size * m_object_count)}
+  , m_bits{_allocator, m_object_count}
 {
   RX_ASSERT(m_data, "out of memory");
 }
@@ -24,7 +25,7 @@ pool_allocator::~pool_allocator() {
       RX_MESSAGE("leaked object %zu %p in pool", i, data_of(i));
     }
   }
-  m_allocator->deallocate(utility::move(m_data));
+  m_allocator->deallocate(m_data);
 }
 
 rx_byte* pool_allocator::allocate() {

@@ -22,23 +22,11 @@ namespace rx::concurrency {
 struct thread : concepts::no_copy {
   thread();
 
-  // construct thread with system allocator to allocate thread resources, given
-  // name |_name| and |_function|, the integer passed to |_function| is the
-  // thread id
   thread(const char* _name, function<void(int)>&& _function);
-
-  // construct thread with allocator |_allocator| to allocate thread resources,
-  // given name |_name| and |_function|, the integer passed to |_function| is the
-  // thread id
   thread(memory::allocator* _allocator, const char* _name, function<void(int)>&& _function);
-
-  // move construct thread
   thread(thread&& _thread);
-
   ~thread();
 
-  // join a thread, this is safe to call even if the thread has already been
-  // joined previously
   void join();
 
 private:
@@ -61,7 +49,7 @@ private:
   };
 
   memory::allocator* m_allocator;
-  memory::block m_state;
+  state* m_state;
   const char* m_name;
 };
 
