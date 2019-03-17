@@ -54,6 +54,7 @@ struct uniform {
   const rx_byte* data() const;
   const string& name() const;
   rx_size size() const;
+  bool is_dirty() const;
 
   void flush(rx_byte* _data);
 
@@ -88,6 +89,10 @@ inline rx_size uniform::size() const {
   return size_for_type(m_type);
 }
 
+inline bool uniform::is_dirty() const {
+  return m_dirty;
+}
+
 struct program : resource {
   enum {
     k_vertex_shader = 1 << 0,
@@ -112,21 +117,24 @@ struct program : resource {
   bool validate() const;
 
   uniform& add_uniform(const string& _name, uniform::category _type);
-  uniform& operator[](rx_size _index);
 
   array<rx_byte> flush();
 
   const array<uniform>& uniforms() const &;
+  array<uniform>& uniforms() &;
   const description& info() const &;
 
 private:
   array<uniform> m_uniforms;
   description m_description;
-  rx_u64 m_dirty_bits;
   bool m_has_description;
 };
 
 inline const array<uniform>& program::uniforms() const & {
+  return m_uniforms;
+}
+
+inline array<uniform>& program::uniforms() & {
   return m_uniforms;
 }
 

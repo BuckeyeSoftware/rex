@@ -137,6 +137,7 @@ cull_state::cull_state()
   : m_hash{k_dirty_bit}
   , m_front_face{front_face_type::k_clock_wise}
   , m_cull_face{cull_face_type::k_back}
+  , m_enabled{true}
 {
   flush();
 }

@@ -311,7 +311,7 @@ void frontend::draw_elements(
   concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
 
   // gather all dirty uniforms
-  array<rx_byte> uniforms{utility::move(_program->flush())};
+  array<rx_byte> uniforms{_program->flush()};
 
   // allocate and fill out command
   auto command_base{m_command_buffer.allocate(sizeof(draw_command) + uniforms.size(), command_type::k_draw_elements, _info)};

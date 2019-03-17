@@ -15,8 +15,9 @@ namespace render {
     : m_allocator{_allocator}
     , m_type{_type}
     , m_name{_name}
+    , m_dirty{false}
   {
-    as_opaque = m_allocator->allocate(size_for_type(m_type));
+    as_opaque = m_allocator->allocate(size());
   }
 
   uniform::~uniform() {
@@ -117,7 +118,7 @@ namespace render {
 
   void uniform::record_vec2f(const math::vec2f& _value) {
     RX_ASSERT(m_type == category::k_vec2f, "not a vec2f");
-    if (memcmp(as_float, _value.data(), sizeof _value)) {
+    if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
       memcpy(as_float, _value.data(), sizeof _value);
       m_dirty = true;
     }
@@ -125,7 +126,7 @@ namespace render {
 
   void uniform::record_vec3f(const math::vec3f& _value) {
     RX_ASSERT(m_type == category::k_vec3f, "not a vec3f");
-    if (memcmp(as_float, _value.data(), sizeof _value)) {
+    if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
       memcpy(as_float, _value.data(), sizeof _value);
       m_dirty = true;
     }
@@ -133,7 +134,7 @@ namespace render {
 
   void uniform::record_vec4f(const math::vec4f& _value) {
     RX_ASSERT(m_type == category::k_vec4f, "not a vec4f");
-    if (memcmp(as_float, _value.data(), sizeof _value)) {
+    if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
       memcpy(as_float, _value.data(), sizeof _value);
       m_dirty = true;
     }
@@ -196,7 +197,6 @@ namespace render {
   program::program(frontend* _frontend)
     : resource{_frontend, resource::category::k_program}
     , m_uniforms{m_frontend->allocator()}
-    , m_dirty_bits{0}
     , m_has_description{false}
   {
   }
@@ -215,37 +215,39 @@ namespace render {
     return m_uniforms.last();
   }
 
-  uniform& program::operator[](rx_size _index) {
-    return m_uniforms[_index];
-  }
-
   array<rx_byte> program::flush() {
-    if (m_dirty_bits == 0) {
+    // calculate storage and bitset needed for uniform delta
+    rx_u64 dirty{0};
+    rx_size size{sizeof dirty};
+    for (rx_size i{0}; i < m_uniforms.size(); i++) {
+      const auto& this_uniform{m_uniforms[i]};
+      if (this_uniform.is_dirty()) {
+        dirty |= (rx_u64{1} << i);
+        size += this_uniform.size();
+      }
+    }
+
+    // nothing changed in the program
+    if (dirty == 0) {
       return {};
     }
 
-    // calculate storage needed to flush program values
-    rx_size size{sizeof m_dirty_bits};
-    for (rx_size i{bit_next(m_dirty_bits, 0)}; i < sizeof m_dirty_bits * CHAR_BIT; i = bit_next(m_dirty_bits, i + 1)) {
-      size += m_uniforms[i].size();
-    }
+    // allocate storage for uniform delta
+    rx::array<rx_byte> store{size};
+    rx_byte* data{store.data()};
 
-    array<rx_byte> data(&memory::g_system_allocator, size);
+    // write bitset to head of uniform delta
+    *reinterpret_cast<rx_u64*>(data) = dirty;
+    data += sizeof dirty;
 
-    // store dirty bitset as a header to the block of memory to know which uniforms
-    // changed, if bit N is set then it means uniform N needs to be changed
-    rx_size offset{0};
-    memcpy(data.data(), &m_dirty_bits, sizeof m_dirty_bits);
-    offset += sizeof m_dirty_bits;
-
-    // store dirty uniform data into block of memory
-    for (rx_size i{bit_next(m_dirty_bits, 0)}; i < sizeof m_dirty_bits * CHAR_BIT; i = bit_next(m_dirty_bits, i + 1)) {
+    // write dirty unfiroms to delta
+    for (rx_size i{bit_next(dirty, 0)}; i < sizeof dirty * CHAR_BIT; i = bit_next(dirty, i + 1)) {
       auto& this_uniform{m_uniforms[i]};
-      this_uniform.flush(data.data() + offset);
-      offset += this_uniform.size();
+      this_uniform.flush(data);
+      data += this_uniform.size();
     }
 
-    return data;
+    return store;
   }
 } // namespace render
 

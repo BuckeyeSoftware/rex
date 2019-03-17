@@ -31,7 +31,6 @@ static constexpr const char* resource_type_to_string(resource::category _type) {
 resource::resource(frontend* _frontend, category _type)
   : m_frontend{_frontend}
   , m_resource_type{_type}
-  , m_resource_bytes{0}
 {
   log_resource(log::level::k_verbose, "%p init %s", this, resource_type_to_string(_type));
 }

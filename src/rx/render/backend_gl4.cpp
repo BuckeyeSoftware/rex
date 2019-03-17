@@ -76,6 +76,18 @@ static void (GLAPIENTRYP pglDeleteProgram)(GLuint);
 static void (GLAPIENTRYP pglUseProgram)(GLuint);
 static GLint (GLAPIENTRYP pglGetUniformLocation)(GLuint, const GLchar*);
 
+static void (GLAPIENTRYP pglProgramUniform1fv)(GLuint, GLint, GLsizei, const GLfloat*);
+static void (GLAPIENTRYP pglProgramUniform2fv)(GLuint, GLint, GLsizei, const GLfloat*);
+static void (GLAPIENTRYP pglProgramUniform3fv)(GLuint, GLint, GLsizei, const GLfloat*);
+static void (GLAPIENTRYP pglProgramUniform4fv)(GLuint, GLint, GLsizei, const GLfloat*);
+
+static void (GLAPIENTRYP pglProgramUniform1iv)(GLuint, GLint, GLsizei, const GLint*);
+static void (GLAPIENTRYP pglProgramUniform2iv)(GLuint, GLint, GLsizei, const GLint*);
+static void (GLAPIENTRYP pglProgramUniform3iv)(GLuint, GLint, GLsizei, const GLint*);
+static void (GLAPIENTRYP pglProgramUniform4iv)(GLuint, GLint, GLsizei, const GLint*);
+
+static void (GLAPIENTRYP pglProgramUniform1i)(GLuint, GLint, GLint);
+
 // state
 static void (GLAPIENTRYP pglEnable)(GLenum);
 static void (GLAPIENTRYP pglDisable)(GLenum);
@@ -376,7 +388,12 @@ namespace detail {
   };
 
   struct state : ::rx::render::state {
-    state() {
+    state()
+      : m_color_mask{0xff}
+      , m_bound_vao{0}
+      , m_bound_fbo{0}
+      , m_bound_program{0}
+    {
       pglFrontFace(GL_CW);
       pglDepthFunc(GL_LEQUAL);
       pglGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_swap_chain_fbo);
@@ -610,9 +627,10 @@ namespace detail {
 
     void use_target(const ::rx::render::target* _render_target) {
       const auto this_target{reinterpret_cast<const target*>(_render_target + 1)};
-      if (this_target->fbo != m_bound_fbo) {
-        pglBindFramebuffer(GL_FRAMEBUFFER, this_target->fbo);
-        m_bound_fbo = this_target->fbo;
+      const GLuint fbo{_render_target->is_swapchain() ? m_swap_chain_fbo : this_target->fbo};
+      if (m_bound_fbo != fbo) {
+        pglBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        m_bound_fbo = fbo;
       }
     }
 
@@ -624,12 +642,21 @@ namespace detail {
       }
     }
 
+    void use_program(const ::rx::render::program* _render_program) {
+      const auto this_program{reinterpret_cast<const program*>(_render_program + 1)};
+      if (this_program->handle != m_bound_program) {
+        pglUseProgram(this_program->handle);
+        m_bound_program = this_program->handle;
+      }
+    }
+
     rx_u8 m_color_mask;
 
     GLint m_swap_chain_fbo;
 
     GLuint m_bound_vao;
     GLuint m_bound_fbo;
+    GLuint m_bound_program;
   };
 };
 
@@ -654,7 +681,7 @@ static GLuint compile_shader(GLenum _type, const string& _file_name) {
   }
 
   // NOTE: size + 1 because we inject a null-terminator on the contents
-  array<char> data{&memory::g_system_allocator, *size + 1, 0};
+  array<char> data{*size + 1, 0};
   if (!file.read(reinterpret_cast<rx_byte*>(data.data()), data.size())) {
     gl4_log(log::level::k_error, "failed to read '%s'", _file_name);
     return 0;
@@ -665,6 +692,7 @@ static GLuint compile_shader(GLenum _type, const string& _file_name) {
 
   GLuint handle{pglCreateShader(_type)};
   pglShaderSource(handle, 1, texts, sizes);
+  pglCompileShader(handle);
 
   GLint status{0};
   pglGetShaderiv(handle, GL_COMPILE_STATUS, &status);
@@ -751,6 +779,16 @@ backend_gl4::backend_gl4(frontend::allocation_info& allocation_info_) {
   fetch("glDeleteProgram", pglDeleteProgram);
   fetch("glUseProgram", pglUseProgram);
   fetch("glGetUniformLocation", pglGetUniformLocation);
+
+  fetch("glProgramUniform1fv", pglProgramUniform1fv);
+  fetch("glProgramUniform2fv", pglProgramUniform2fv);
+  fetch("glProgramUniform3fv", pglProgramUniform3fv);
+  fetch("glProgramUniform4fv", pglProgramUniform4fv);
+  fetch("glProgramUniform1iv", pglProgramUniform1iv);
+  fetch("glProgramUniform2iv", pglProgramUniform2iv);
+  fetch("glProgramUniform3iv", pglProgramUniform3iv);
+  fetch("glProgramUniform4iv", pglProgramUniform4iv);
+  fetch("glProgramUniform1i", pglProgramUniform1i);
 
   // state
   fetch("glEnable", pglEnable);
@@ -1196,13 +1234,85 @@ void backend_gl4::process(rx_byte* _command) {
   case command_type::k_draw_elements:
     {
       const auto command{reinterpret_cast<draw_command*>(header + 1)};
+      const auto render_state{reinterpret_cast<render::state*>(command)};
       const auto render_target{command->render_target};
       const auto render_buffer{command->render_buffer};
-      const auto render_state{reinterpret_cast<render::state*>(command)};
+      const auto render_program{command->render_program};
+      const auto this_program{reinterpret_cast<detail::program*>(render_program + 1)};
 
       state->use_target(render_target);
       state->use_buffer(render_buffer);
+      state->use_program(render_program);
       state->use_state(render_state);
+
+      // check for and apply uniform deltas
+      const auto& program_uniforms{render_program->uniforms()};
+      const rx_byte* draw_uniforms{command->uniforms()};
+
+      // read the bitset of dirty uniforms
+      rx_u64 changed_uniforms_bitset{*reinterpret_cast<const rx_u64*>(draw_uniforms)};
+      draw_uniforms += sizeof changed_uniforms_bitset;
+
+      for (rx_size i{0}; i < sizeof changed_uniforms_bitset * CHAR_BIT; i++) {
+        if (changed_uniforms_bitset & (rx_u64{1} << i)) {
+          const auto& uniform{program_uniforms[i]};
+          const auto location{this_program->uniforms[i]};
+
+          if (location == -1) {
+            draw_uniforms += uniform.size();
+            continue;
+          }
+
+          switch (uniform.type()) {
+          case uniform::category::k_sampler:
+            pglProgramUniform1i(this_program->handle, location,
+              *reinterpret_cast<const rx_s32*>(draw_uniforms));
+            break;
+          case uniform::category::k_bool:
+            pglProgramUniform1i(this_program->handle, location,
+              *reinterpret_cast<const bool*>(draw_uniforms) ? 1 : 0);
+            break;
+          case uniform::category::k_int:
+            pglProgramUniform1i(this_program->handle, location,
+              *reinterpret_cast<const rx_s32*>(draw_uniforms));
+            break;
+          case uniform::category::k_float:
+            pglProgramUniform1fv(this_program->handle, location, 1,
+              reinterpret_cast<const rx_f32*>(draw_uniforms));
+            break;
+          case uniform::category::k_vec2i:
+            pglProgramUniform2iv(this_program->handle, location, 1,
+              reinterpret_cast<const rx_s32*>(draw_uniforms));
+            break;
+          case uniform::category::k_vec3i:
+            pglProgramUniform3iv(this_program->handle, location, 1,
+              reinterpret_cast<const rx_s32*>(draw_uniforms));
+            break;
+          case uniform::category::k_vec4i:
+            pglProgramUniform4iv(this_program->handle, location, 1,
+              reinterpret_cast<const rx_s32*>(draw_uniforms));
+            break;
+          case uniform::category::k_vec2f:
+            pglProgramUniform2fv(this_program->handle, location, 1,
+              reinterpret_cast<const rx_f32*>(draw_uniforms));
+            break;
+          case uniform::category::k_vec3f:
+            pglProgramUniform3fv(this_program->handle, location, 1,
+              reinterpret_cast<const rx_f32*>(draw_uniforms));
+            break;
+          case uniform::category::k_vec4f:
+            pglProgramUniform4fv(this_program->handle, location, 1,
+              reinterpret_cast<const rx_f32*>(draw_uniforms));
+            break;
+          case uniform::category::k_mat3x3f:
+            break;
+          case uniform::category::k_mat4x4f:
+            break;
+          }
+
+          draw_uniforms += uniform.size();
+        }
+      }
 
       if (header->type == command_type::k_draw_elements) {
         switch (render_buffer->element_type()) {

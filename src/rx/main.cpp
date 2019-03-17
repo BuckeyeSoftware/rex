@@ -149,15 +149,21 @@ int entry(int argc, char **argv) {
 
     // create, record and initialize program
     auto program{renderer.create_program(RX_RENDER_TAG("test"))};
+
+    rx::array<rx::string> data;
+    rx::array<rx::string> layout;
+    data.emplace_back("fs_color");
+    layout.emplace_back("a_position");
+
     program->record_description({
       "test", 
       rx::render::program::k_vertex_shader | rx::render::program::k_fragment_shader,
-      {},
-      {},
+      data,
+      layout,
       {}
     });
 
-    program->add_uniform("color", rx::render::uniform::category::k_vec4f);
+    program->add_uniform("u_color", rx::render::uniform::category::k_vec3f);
     renderer.initialize_program(RX_RENDER_TAG("test"), program);
 
     rx::render::frame_timer timer;
@@ -214,7 +220,11 @@ int entry(int argc, char **argv) {
         {1.0f, 0.0f, 0.0f, 1.0f}
       );
 
-      (*program)[0].record_vec4f({0.0f, 1.0f, 0.0f, 1.0f});
+      rx_f32 r{static_cast<rx_f32>(rand()) / static_cast<rx_f32>(RAND_MAX)};
+      rx_f32 g{static_cast<rx_f32>(rand()) / static_cast<rx_f32>(RAND_MAX)};
+      rx_f32 b{static_cast<rx_f32>(rand()) / static_cast<rx_f32>(RAND_MAX)};
+
+      program->uniforms()[0].record_vec3f({r, g, b});
 
       renderer.draw_elements(
         RX_RENDER_TAG("test"),

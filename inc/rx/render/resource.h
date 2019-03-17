@@ -32,7 +32,6 @@ protected:
 
 private:
   category m_resource_type;
-  rx_size m_resource_bytes;
 };
 
 } // namespace rx::render
