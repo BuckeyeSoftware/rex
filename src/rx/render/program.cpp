@@ -145,9 +145,10 @@ namespace render {
     m_dirty = true;
   }
 
-  program::description::description(const string& _name, const array<string>& _data,
+  program::description::description(const string& _name, int _shaders, const array<string>& _data,
     const array<string>& _layout, const array<string>& _defines)
     : name{_name}
+    , shaders{_shaders}
     , data{_data}
     , layout{_layout}
     , defines{_defines}
@@ -195,7 +196,6 @@ namespace render {
   program::program(frontend* _frontend)
     : resource{_frontend, resource::category::k_program}
     , m_uniforms{m_frontend->allocator()}
-    , m_shaders{m_frontend->allocator()}
     , m_dirty_bits{0}
     , m_has_description{false}
   {
@@ -208,13 +208,6 @@ namespace render {
 
   bool program::validate() const {
     return m_has_description;
-  }
-
-  void program::add_shader(shader _new_shader) {
-    m_shaders.each_fwd([_new_shader]([[maybe_unused]] shader _shader){
-      RX_ASSERT(_new_shader != _shader, "shader already added");
-    });
-    m_shaders.push_back(_new_shader);
   }
 
   uniform& program::add_uniform(const string& _name, uniform::category _type) {

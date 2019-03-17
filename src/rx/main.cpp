@@ -149,7 +149,14 @@ int entry(int argc, char **argv) {
 
     // create, record and initialize program
     auto program{renderer.create_program(RX_RENDER_TAG("test"))};
-    program->record_description({});
+    program->record_description({
+      "test", 
+      rx::render::program::k_vertex_shader | rx::render::program::k_fragment_shader,
+      {},
+      {},
+      {}
+    });
+
     program->add_uniform("color", rx::render::uniform::category::k_vec4f);
     renderer.initialize_program(RX_RENDER_TAG("test"), program);
 

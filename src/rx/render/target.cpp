@@ -2,10 +2,6 @@
 #include <rx/render/command.h>
 #include <rx/render/frontend.h>
 
-#include <rx/core/log.h>
-
-RX_LOG("render/target", target_log);
-
 namespace rx::render {
 
 // checks if |_format| is a valid depth-only format
@@ -91,9 +87,6 @@ target::target(frontend* _frontend)
   , m_owns{0}
   , m_is_swapchain{false}
 {
-  RX_ASSERT(_frontend, "null frontend");
-
-  target_log(log::level::k_verbose, "%08p: init target", this);
 }
 
 target::~target() {
@@ -115,8 +108,6 @@ target::~target() {
       }
     }
   }
-
-  target_log(log::level::k_verbose, "%08p: fini target", this);
 }
 
 void target::request_swapchain() {

@@ -29,6 +29,30 @@ void bitset::clear_all() {
   memset(m_data, 0, sizeof *m_data * (m_size / k_word_bits + 1));
 }
 
+rx_size bitset::count_set_bits() const {
+  rx_size count{0};
+
+  for (rx_size i{0}; i < m_size; i++) {
+    if (test(i)) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+rx_size bitset::count_unset_bits() const {
+  rx_size count{0};
+
+  for (rx_size i{0}; i < m_size; i++) {
+    if (!test(i)) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
 rx_size bitset::find_first_unset() const {
   for (rx_size i{0}; i < m_size; i++) {
     if (!test(i)) {

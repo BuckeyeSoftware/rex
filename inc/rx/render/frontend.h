@@ -1,11 +1,13 @@
 #ifndef RX_RENDER_FRONTEND_H
 #define RX_RENDER_FRONTEND_H
 
-#include <rx/render/command.h>
-
 #include <rx/core/array.h>
-#include <rx/core/memory/pool_allocator.h>
 #include <rx/core/concurrency/mutex.h>
+#include <rx/core/concurrency/atomic.h>
+#include <rx/core/memory/pool_allocator.h>
+
+#include <rx/render/command.h>
+#include <rx/render/resource.h>
 
 namespace rx::render {
 
@@ -101,8 +103,17 @@ struct frontend {
 
   memory::allocator* allocator() const;
 
+  struct statistics {
+    rx_size total;
+    rx_size used;
+    rx_size cached;
+  };
+
+  statistics stats(resource::category _type);
+
 private:
   friend struct target;
+  friend struct resource;
 
   // needed by target to release depth/stencil textures without holding m_mutex
   void destroy_texture_unlocked(const command_header::info& _info, texture2D* _texture);
@@ -132,7 +143,8 @@ private:
 
   backend* m_backend;                      // protected by |m_mutex|
 
-  target* m_bacbuffer;
+  concurrency::atomic<rx_size> m_resource_usage[2][resource::count()];
+  concurrency::atomic<rx_size> m_draw_calls[2];
 };
 
 inline memory::allocator* frontend::allocator() const {

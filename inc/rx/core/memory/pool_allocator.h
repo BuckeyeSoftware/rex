@@ -26,6 +26,7 @@ struct pool_allocator
   bool owns(const rx_byte* _data) const;
   rx_size index_of(const rx_byte* _data) const;
   rx_byte* data_of(rx_size index) const;
+  rx_size capacity() const;
   rx_size size() const;
 
   template<typename T, typename... Ts>
@@ -56,8 +57,12 @@ inline rx_byte* pool_allocator::data_of(rx_size _index) const {
   return m_data + m_object_size * _index;
 }
 
+inline rx_size pool_allocator::capacity() const {
+  return m_object_count;
+}
+
 inline rx_size pool_allocator::size() const {
-  return m_object_size;
+  return m_bits.count_set_bits();
 }
 
 template<typename T, typename... Ts>

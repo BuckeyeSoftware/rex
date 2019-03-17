@@ -118,7 +118,7 @@ namespace detail {
       return atomic_compare_exchange_strong(&m_value, expected_, _value, _order, _order);
     }
 
-  private:
+  protected:
     mutable atomic_value<T> m_value;
   };
 

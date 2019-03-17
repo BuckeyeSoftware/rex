@@ -4,8 +4,6 @@
 #include <rx/render/frontend.h>
 #include <rx/core/log.h>
 
-RX_LOG("render/buffer", buffer_log);
-
 namespace rx::render {
 
 buffer::buffer(frontend* _frontend)
@@ -16,11 +14,9 @@ buffer::buffer(frontend* _frontend)
   , m_element_type{element_category::k_none}
   , m_stride{0}
 {
-  buffer_log(log::level::k_verbose, "%p: init buffer", this);
 }
 
 buffer::~buffer() {
-  buffer_log(log::level::k_verbose, "%p: fini buffer", this);
 }
 
 void buffer::write_vertices_data(const rx_byte* _data, rx_size _size, rx_size _stride) {

@@ -8,6 +8,9 @@
 #include <rx/core/assert.h> // RX_ASSERT
 #include <rx/core/memory/allocator.h> // memory::{allocator, block}
 
+#include <rx/core/traits/is_same.h>
+#include <rx/core/traits/return_type.h>
+
 namespace rx {
 
 // 32-bit: 16 bytes
@@ -18,19 +21,51 @@ struct bitset {
   static constexpr const bit_type k_bit_one{1};
   static constexpr const rx_size k_word_bits{CHAR_BIT * sizeof(bit_type)};
 
-  bitset(rx_size size);
-  bitset(memory::allocator* alloc, rx_size size);
-  bitset(bitset&& set);
+  // construct bitset with |_size| bits using system allocator
+  bitset(rx_size _size);
+
+  // construct bitset with |_size| bits using allocator |_allocator|
+  bitset(memory::allocator* _allocator, rx_size _size);
+
+  // move construct from |_bitset|
+  bitset(bitset&& _bitset);
+
   ~bitset();
 
-  void set(rx_size bit);
-  void clear(rx_size bit);
+  // set |_bit|
+  void set(rx_size _bit);
+
+  // clear |_bit|
+  void clear(rx_size _bit);
+
+  // clear all bits
   void clear_all();
-  bool test(rx_size bit) const;
+
+  // test if bit |_bit| is set
+  bool test(rx_size _bit) const;
+
+  // the amount of bits
   rx_size size() const;
 
+  // count the # of set bits
+  rx_size count_set_bits() const;
+
+  // count the # of unset bits
+  rx_size count_unset_bits() const;
+
+  // find the index of the first set bit
   rx_size find_first_set() const;
+
+  // find the index of the first unset bit
   rx_size find_first_unset() const;
+
+  // iterate bitset invoking |_function| with index of each set bit
+  template<typename F>
+  void each_set(F&& _function);
+
+  // iterate bitset invoking |_function| with index of each unset bit
+  template<typename F>
+  void each_unset(F&& _function);
 
 private:
   static rx_size index(rx_size bit);
@@ -77,6 +112,36 @@ inline rx_size bitset::index(rx_size bit) {
 
 inline rx_size bitset::offset(rx_size bit) {
   return bit % k_word_bits;
+}
+
+template<typename F>
+inline void bitset::each_set(F&& _function) {
+  for (rx_size i{0}; i < m_size; i++) {
+    if (test(i)) {
+      if constexpr (traits::is_same<bool, traits::return_type<F>>) {
+        if (!_function(i)) {
+          return;
+        }
+      } else {
+        _function(i);
+      }
+    }
+  }
+}
+
+template<typename F>
+inline void bitset::each_unset(F&& _function) {
+  for (rx_size i{0}; i < m_size; i++) {
+    if (!test(i)) {
+      if constexpr (traits::is_same<bool, traits::return_type<F>>) {
+        if (!_function(i)) {
+          return;
+        }
+      } else {
+        _function(i);
+      }
+    }
+  }
 }
 
 } // namespace rx

@@ -18,6 +18,10 @@ struct resource {
     k_textureCM
   };
 
+  static constexpr rx_size count() {
+    return static_cast<rx_size>(category::k_textureCM);
+  }
+
   resource(frontend* _frontend, category _type);
   ~resource();
 
@@ -30,17 +34,6 @@ private:
   category m_resource_type;
   rx_size m_resource_bytes;
 };
-
-inline resource::resource(frontend* _frontend, category _type)
-  : m_frontend{_frontend}
-  , m_resource_type{_type}
-  , m_resource_bytes{0}
-{
-}
-
-inline resource::~resource() {
-  update_resource_usage(0);
-}
 
 } // namespace rx::render
 

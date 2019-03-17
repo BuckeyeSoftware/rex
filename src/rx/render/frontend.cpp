@@ -10,6 +10,7 @@
 
 #include <rx/core/concurrency/scope_lock.h>
 #include <rx/core/log.h>
+#include <rx/core/algorithm.h>
 
 #include <rx/console/variable.h>
 
@@ -342,6 +343,8 @@ void frontend::draw_elements(
   }
 
   m_commands.push_back(command_base);
+
+  m_draw_calls[0]++;
 }
 
 void frontend::clear(
@@ -419,7 +422,37 @@ bool frontend::process() {
 
   m_command_buffer.reset();
 
+  memcpy(&m_resource_usage[1], &m_resource_usage[0], sizeof m_resource_usage[0]);
+  memset(&m_resource_usage[0], 0, sizeof m_resource_usage[0]);
+
+  m_draw_calls[1].exchange(m_draw_calls[0]);
+  m_draw_calls[0] = 0;
+
   return true;
+}
+
+frontend::statistics frontend::stats(resource::category _type) {
+  concurrency::scope_lock lock(m_mutex);
+
+  switch (_type) {
+  case resource::category::k_buffer:
+    return {m_buffer_pool.capacity(), m_buffer_pool.size(), 0};
+  case resource::category::k_program:
+    return {m_program_pool.capacity(), m_program_pool.size(), 0};
+  case resource::category::k_target:
+    return {m_target_pool.capacity(), m_target_pool.size(), 0};
+  case resource::category::k_texture1D:
+    return {m_texture1D_pool.capacity(), m_texture1D_pool.size(), 0};
+  case resource::category::k_texture2D:
+    return {m_texture2D_pool.capacity(), m_texture2D_pool.size(), 0};
+  case resource::category::k_texture3D:
+    return {m_texture3D_pool.capacity(), m_texture3D_pool.size(), 0};
+  case resource::category::k_textureCM:
+    return {m_textureCM_pool.capacity(), m_textureCM_pool.size(), 0};
+  }
+
+  // NOTE: unreachable
+  return {};
 }
 
 void frontend::swap() {

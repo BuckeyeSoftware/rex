@@ -89,16 +89,17 @@ inline rx_size uniform::size() const {
 }
 
 struct program : resource {
-  enum class shader {
-    k_fragment,
-    k_vertex
+  enum {
+    k_vertex_shader = 1 << 0,
+    k_fragment_shader = 1 << 1
   };
 
   struct description {
     description() = default;
-    description(const string& _name, const array<string>& _data,
+    description(const string& _name, int _shaders, const array<string>& _data,
       const array<string>& _layout, const array<string>& _defines);
     string name;
+    int shaders;
     array<string> data;
     array<string> layout;
     array<string> defines;
@@ -110,19 +111,16 @@ struct program : resource {
 
   bool validate() const;
 
-  void add_shader(shader _shader);
   uniform& add_uniform(const string& _name, uniform::category _type);
   uniform& operator[](rx_size _index);
 
   array<rx_byte> flush();
 
   const array<uniform>& uniforms() const &;
-  const array<shader>& shaders() const &;
   const description& info() const &;
 
 private:
   array<uniform> m_uniforms;
-  array<shader> m_shaders;
   description m_description;
   rx_u64 m_dirty_bits;
   bool m_has_description;
