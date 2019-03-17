@@ -193,8 +193,7 @@ namespace render {
   }
 
   program::program(frontend* _frontend)
-    : resource{resource::category::k_program}
-    , m_frontend{_frontend}
+    : resource{_frontend, resource::category::k_program}
     , m_uniforms{m_frontend->allocator()}
     , m_shaders{m_frontend->allocator()}
     , m_dirty_bits{0}

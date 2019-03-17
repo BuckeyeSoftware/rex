@@ -14,6 +14,7 @@ using rx_u64 = unsigned long long;
 using rx_f32 = float;
 using rx_f64 = double;
 using rx_ptrdiff = long;
+using rx_uintptr = rx_size;
 
 constexpr rx_size operator"" _z(unsigned long long value) {
   return static_cast<rx_size>(value);

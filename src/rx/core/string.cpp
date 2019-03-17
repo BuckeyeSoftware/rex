@@ -326,6 +326,28 @@ bool operator>(const string& _lhs, const string& _rhs) {
   return &_lhs == &_rhs ? false : strcmp(_lhs.data(), _rhs.data()) > 0;
 }
 
+string string::human_size_format(rx_size _size) {
+  static constexpr const char* k_suffixes[]{
+    "B", "KiB", "MiB", "GiB", "TiB"
+  };
+
+  rx_f64 bytes{static_cast<rx_f64>(_size)};
+  rx_size i{0};
+  for (; bytes >= 1024.0 && i < sizeof k_suffixes / sizeof *k_suffixes; i++) {
+    bytes /= 1024.0;
+  }
+  RX_ASSERT(i != sizeof k_suffixes / sizeof *k_suffixes, "out of bounds");
+
+  char buffer[2*(DBL_MANT_DIG + DBL_MAX_EXP)];
+  const int result{snprintf(buffer, sizeof buffer, "%.*f",
+    static_cast<int>(sizeof buffer), bytes)}; // NOTE: we want truncation here
+  RX_ASSERT(result > 0, "failed to format");
+  char* period{strchr(buffer, '.')};
+  RX_ASSERT(period, "failed to format");
+  period[3] = '\0';
+  return {"%s %s", buffer, k_suffixes[i]};
+}
+
 static rx_size utf16_len(const rx_u16* _data) {
   rx_size length{0};
   while (_data[length]) {

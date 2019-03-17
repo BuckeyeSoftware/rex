@@ -84,8 +84,7 @@ static bool is_valid_depth_stencil_format(texture::data_format _format) {
 }
 
 target::target(frontend* _frontend)
-  : resource{resource::category::k_target}
-  , m_frontend{_frontend}
+  : resource{_frontend, resource::category::k_target}
   , m_depth_texture{nullptr}
   , m_stencil_texture{nullptr}
   , m_attachments{_frontend->allocator()}

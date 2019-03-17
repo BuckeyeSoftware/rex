@@ -14,6 +14,7 @@ struct stack_allocator final : allocator {
   virtual rx_byte* reallocate(rx_byte* _data, rx_size _size);
   virtual void deallocate(rx_byte* _data);
   virtual bool owns(const rx_byte* _data) const;
+  virtual statistics stats();
 
   void reset();
 
@@ -22,7 +23,12 @@ private:
   rx_byte* m_data;
   rx_size m_size;
   rx_byte* m_point;
+  statistics m_statistics;
 };
+
+inline statistics stack_allocator::stats() {
+  return m_statistics;
+}
 
 } // namespace rx::memory
 

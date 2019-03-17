@@ -8,8 +8,7 @@ RX_LOG("render/texture", texture_log);
 namespace rx::render {
 
 texture::texture(frontend* _frontend, resource::category _type)
-  : resource{_type}
-  , m_frontend{_frontend}
+  : resource{_frontend, _type}
   , m_recorded{0}
 {
 }

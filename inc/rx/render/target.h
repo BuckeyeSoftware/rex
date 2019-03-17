@@ -47,8 +47,6 @@ private:
     k_stencil = 1 << 1
   };
 
-  frontend* m_frontend;
-
   union {
     struct {
       texture2D* m_depth_texture;

@@ -9,8 +9,7 @@ RX_LOG("render/buffer", buffer_log);
 namespace rx::render {
 
 buffer::buffer(frontend* _frontend)
-  : resource{resource::category::k_buffer}
-  , m_frontend{_frontend}
+  : resource{_frontend, resource::category::k_buffer}
   , m_vertices_store{m_frontend->allocator()}
   , m_elements_store{m_frontend->allocator()}
   , m_attributes{m_frontend->allocator()}

@@ -77,6 +77,8 @@ struct string {
   char* data();
   const char* data() const;
 
+  static string human_size_format(rx_size _size);
+
 private:
   static string formatter(memory::allocator* alloc, const char* fmt, ...);
 

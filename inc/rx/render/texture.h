@@ -78,7 +78,6 @@ protected:
     k_dimensions = 1 << 3,
   };
 
-  frontend* m_frontend;
   array<rx_byte> m_data;
   data_format m_format;
   filter_options m_filter;

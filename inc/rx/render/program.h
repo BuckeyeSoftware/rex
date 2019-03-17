@@ -121,7 +121,6 @@ struct program : resource {
   const description& info() const &;
 
 private:
-  frontend* m_frontend;
   array<uniform> m_uniforms;
   array<shader> m_shaders;
   description m_description;

@@ -5,6 +5,8 @@
 
 namespace rx::render {
 
+struct frontend;
+
 struct resource {
   enum class category {
     k_buffer,
@@ -16,18 +18,22 @@ struct resource {
     k_textureCM
   };
 
-  resource(category _type);
+  resource(frontend* _frontend, category _type);
   ~resource();
 
   void update_resource_usage(rx_size _bytes);
+
+protected:
+  frontend* m_frontend;
 
 private:
   category m_resource_type;
   rx_size m_resource_bytes;
 };
 
-inline resource::resource(category _type)
-  : m_resource_type{_type}
+inline resource::resource(frontend* _frontend, category _type)
+  : m_frontend{_frontend}
+  , m_resource_type{_type}
   , m_resource_bytes{0}
 {
 }

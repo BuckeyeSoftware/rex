@@ -51,7 +51,7 @@ RX_CONSOLE_BVAR(
   "display.hdr",
   "use HDR output if supported",
   false);
-  
+
 int entry(int argc, char **argv) {
   (void)argc;
   (void)argv;
@@ -227,14 +227,26 @@ int entry(int argc, char **argv) {
       }
 
       if (timer.update()) {
-        char format[1024];
-        snprintf(format, sizeof format, "%d fps | %.2f mspf", timer.fps(), timer.mspf());
-        SDL_SetWindowTitle(window, format);
+        const auto stats{rx::memory::g_system_allocator->stats()};
+        const rx::string format{"%d fps | %.2f mspf | mem a/%zu, r/r:%zu a:%zu, d/%zu, u/r:%s a:%s, p/r:%s a:%s",
+          timer.fps(),
+          timer.mspf(),
+          stats.allocations,
+          stats.request_reallocations,
+          stats.actual_reallocations,
+          stats.deallocations,
+          rx::string::human_size_format(stats.used_request_bytes),
+          rx::string::human_size_format(stats.used_actual_bytes),
+          rx::string::human_size_format(stats.peak_request_bytes),
+          rx::string::human_size_format(stats.peak_actual_bytes)};
+
+        SDL_SetWindowTitle(window, format.data());
       }
     }
 
     renderer.destroy_target(RX_RENDER_TAG("test"), target);
     renderer.destroy_buffer(RX_RENDER_TAG("test"), buffer);
+    renderer.destroy_program(RX_RENDER_TAG("test"), program);
 
     renderer.process();
   }
