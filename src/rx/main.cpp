@@ -18,6 +18,8 @@
 
 #include <rx/input/input.h>
 
+#include <rx/math/transform.h>
+
 RX_CONSOLE_V2IVAR(
   display_resolution,
   "display.resolution",
@@ -164,10 +166,14 @@ int entry(int argc, char **argv) {
     });
 
     program->add_uniform("u_color", rx::render::uniform::category::k_vec3f);
+    program->add_uniform("u_transform", rx::render::uniform::category::k_mat4x4f);
+
     renderer.initialize_program(RX_RENDER_TAG("test"), program);
 
     rx::render::frame_timer timer;
     rx::input::input input;
+
+    rx::math::vec3f rotate;
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
       input.update(0);
 
@@ -226,6 +232,16 @@ int entry(int argc, char **argv) {
 
       program->uniforms()[0].record_vec3f({r, g, b});
 
+      rotate.x += 100.0f*timer.delta_time();
+      rotate.y += 100.0f*timer.delta_time();
+      rotate.z += 100.0f*timer.delta_time();
+
+      rx::math::transform xform;
+      xform.rotate = rotate;
+      xform.scale = {0.5f, 0.5f, 0.5f};
+
+      program->uniforms()[1].record_mat4x4f(xform.to_mat4());
+
       renderer.draw_elements(
         RX_RENDER_TAG("test"),
         state,
@@ -245,19 +261,20 @@ int entry(int argc, char **argv) {
 
       if (timer.update()) {
         const auto stats{rx::memory::g_system_allocator->stats()};
-        const rx::string format{"%d fps | %.2f mspf | mem a/%zu, r/r:%zu a:%zu, d/%zu, u/r:%s a:%s, p/r:%s a:%s",
+        char format[1024];
+        snprintf(format, sizeof format, "%d fps | %.2f mspf | mem a/%zu, r/r:%zu a:%zu, d/%zu, u/r:%s a:%s, p/r:%s a:%s",
           timer.fps(),
           timer.mspf(),
           stats.allocations,
           stats.request_reallocations,
           stats.actual_reallocations,
           stats.deallocations,
-          rx::string::human_size_format(stats.used_request_bytes),
-          rx::string::human_size_format(stats.used_actual_bytes),
-          rx::string::human_size_format(stats.peak_request_bytes),
-          rx::string::human_size_format(stats.peak_actual_bytes)};
+          rx::string::human_size_format(stats.used_request_bytes).data(),
+          rx::string::human_size_format(stats.used_actual_bytes).data(),
+          rx::string::human_size_format(stats.peak_request_bytes).data(),
+          rx::string::human_size_format(stats.peak_actual_bytes).data());
 
-        SDL_SetWindowTitle(window, format.data());
+        SDL_SetWindowTitle(window, format);
       }
     }
 

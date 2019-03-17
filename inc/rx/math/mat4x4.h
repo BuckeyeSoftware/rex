@@ -54,7 +54,7 @@ inline constexpr mat4x4<T> mat4x4<T>::scale(const vec3<T>& scale) {
   return {{scale.x, 0, 0, 0},
           {0, scale.y, 0, 0},
           {0, 0, scale.z, 0},
-          {0, 0, 0, scale.w}};
+          {0, 0, 0, 1}};
 }
 
 template<typename T>

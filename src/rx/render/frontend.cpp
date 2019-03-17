@@ -310,11 +310,10 @@ void frontend::draw_elements(
 
   concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
 
-  // gather all dirty uniforms
-  array<rx_byte> uniforms{_program->flush()};
+  const auto dirty_uniforms_size{_program->dirty_uniforms_size()};
 
   // allocate and fill out command
-  auto command_base{m_command_buffer.allocate(sizeof(draw_command) + uniforms.size(), command_type::k_draw_elements, _info)};
+  auto command_base{m_command_buffer.allocate(sizeof(draw_command) + dirty_uniforms_size, command_type::k_draw_elements, _info)};
   auto command{reinterpret_cast<draw_command*>(command_base + sizeof(command_header))};
   *reinterpret_cast<state*>(command) = _state;
   command->render_target = _target;
@@ -323,10 +322,11 @@ void frontend::draw_elements(
   command->count = _count;
   command->offset = _offset;
   command->type = _primitive_type;
+  command->dirty_uniforms_bitset = _program->dirty_uniforms_bitset();
 
   // copy the uniforms directly into the command structure, if any
-  if (!uniforms.is_empty()) {
-    memcpy(command->uniforms(), uniforms.data(), uniforms.size());
+  if (dirty_uniforms_size) {
+    _program->flush_dirty_uniforms(command->uniforms());
   }
 
   rx_size textures{strlen(_textures)};

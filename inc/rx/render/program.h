@@ -11,14 +11,17 @@
 #include <rx/core/array.h>
 #include <rx/core/hash.h>
 
+#include <rx/core/concepts/no_copy.h>
+
 #include <rx/render/resource.h>
 
 namespace rx::render
 {
 
 struct frontend;
+struct program;
 
-struct uniform {
+struct uniform : concepts::no_copy {
   enum class category {
     k_sampler,
     k_bool,
@@ -35,7 +38,8 @@ struct uniform {
   };
 
   uniform();
-  uniform(memory::allocator* allocator, const string& _name, category _type);
+  uniform(program* _program, rx_size _index, const string& _name, category _type);
+  uniform(uniform&& _uniform);
   ~uniform();
 
   void record_sampler(int _sampler);
@@ -48,20 +52,22 @@ struct uniform {
   void record_vec2f(const math::vec2f& _value);
   void record_vec3f(const math::vec3f& _value);
   void record_vec4f(const math::vec4f& _value);
+  void record_mat3x3f(const math::mat3x3f& _value);
+  void record_mat4x4f(const math::mat4x4f& _value);
   void record_raw(const rx_byte* _data, rx_size _size);
 
   category type() const;
   const rx_byte* data() const;
   const string& name() const;
   rx_size size() const;
-  bool is_dirty() const;
 
   void flush(rx_byte* _data);
 
 private:
   static rx_size size_for_type(category _type);
 
-  memory::allocator* m_allocator;
+  program* m_program;
+  rx_u64 m_mask;
   category m_type;
   union {
     rx_byte* as_opaque;
@@ -70,7 +76,6 @@ private:
     rx_f32* as_float;
   };
   string m_name;
-  bool m_dirty;
 };
 
 inline uniform::category uniform::type() const {
@@ -87,10 +92,6 @@ inline const string& uniform::name() const {
 
 inline rx_size uniform::size() const {
   return size_for_type(m_type);
-}
-
-inline bool uniform::is_dirty() const {
-  return m_dirty;
 }
 
 struct program : resource {
@@ -117,17 +118,23 @@ struct program : resource {
   bool validate() const;
 
   uniform& add_uniform(const string& _name, uniform::category _type);
+  rx_u64 dirty_uniforms_bitset() const;
+  rx_size dirty_uniforms_size() const;
 
-  array<rx_byte> flush();
+  void flush_dirty_uniforms(rx_byte* _data);
 
   const array<uniform>& uniforms() const &;
   array<uniform>& uniforms() &;
   const description& info() const &;
 
 private:
+  friend struct uniform;
+
+  memory::allocator* m_allocator;
   array<uniform> m_uniforms;
   description m_description;
   bool m_has_description;
+  rx_u64 m_dirty_uniforms;
 };
 
 inline const array<uniform>& program::uniforms() const & {

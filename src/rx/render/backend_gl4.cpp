@@ -88,6 +88,8 @@ static void (GLAPIENTRYP pglProgramUniform4iv)(GLuint, GLint, GLsizei, const GLi
 
 static void (GLAPIENTRYP pglProgramUniform1i)(GLuint, GLint, GLint);
 
+static void (GLAPIENTRYP pglProgramUniformMatrix3fv)(GLuint, GLint, GLsizei, GLboolean, const GLfloat*);
+static void (GLAPIENTRYP pglProgramUniformMatrix4fv)(GLuint, GLint, GLsizei, GLboolean, const GLfloat*);
 // state
 static void (GLAPIENTRYP pglEnable)(GLenum);
 static void (GLAPIENTRYP pglDisable)(GLenum);
@@ -788,7 +790,11 @@ backend_gl4::backend_gl4(frontend::allocation_info& allocation_info_) {
   fetch("glProgramUniform2iv", pglProgramUniform2iv);
   fetch("glProgramUniform3iv", pglProgramUniform3iv);
   fetch("glProgramUniform4iv", pglProgramUniform4iv);
+
   fetch("glProgramUniform1i", pglProgramUniform1i);
+
+  fetch("glProgramUniformMatrix3fv", pglProgramUniformMatrix3fv);
+  fetch("glProgramUniformMatrix4fv", pglProgramUniformMatrix4fv);
 
   // state
   fetch("glEnable", pglEnable);
@@ -1246,71 +1252,73 @@ void backend_gl4::process(rx_byte* _command) {
       state->use_state(render_state);
 
       // check for and apply uniform deltas
-      const auto& program_uniforms{render_program->uniforms()};
-      const rx_byte* draw_uniforms{command->uniforms()};
+      if (command->dirty_uniforms_bitset) {
+        const auto& program_uniforms{render_program->uniforms()};
+        const rx_byte* draw_uniforms{command->uniforms()};
 
-      // read the bitset of dirty uniforms
-      rx_u64 changed_uniforms_bitset{*reinterpret_cast<const rx_u64*>(draw_uniforms)};
-      draw_uniforms += sizeof changed_uniforms_bitset;
+        for (rx_size i{0}; i < 64; i++) {
+          if (command->dirty_uniforms_bitset & (rx_u64{1} << i)) {
+            const auto& uniform{program_uniforms[i]};
+            const auto location{this_program->uniforms[i]};
 
-      for (rx_size i{0}; i < sizeof changed_uniforms_bitset * CHAR_BIT; i++) {
-        if (changed_uniforms_bitset & (rx_u64{1} << i)) {
-          const auto& uniform{program_uniforms[i]};
-          const auto location{this_program->uniforms[i]};
+            if (location == -1) {
+              draw_uniforms += uniform.size();
+              continue;
+            }
 
-          if (location == -1) {
+            switch (uniform.type()) {
+            case uniform::category::k_sampler:
+              pglProgramUniform1i(this_program->handle, location,
+                *reinterpret_cast<const rx_s32*>(draw_uniforms));
+              break;
+            case uniform::category::k_bool:
+              pglProgramUniform1i(this_program->handle, location,
+                *reinterpret_cast<const bool*>(draw_uniforms) ? 1 : 0);
+              break;
+            case uniform::category::k_int:
+              pglProgramUniform1i(this_program->handle, location,
+                *reinterpret_cast<const rx_s32*>(draw_uniforms));
+              break;
+            case uniform::category::k_float:
+              pglProgramUniform1fv(this_program->handle, location, 1,
+                reinterpret_cast<const rx_f32*>(draw_uniforms));
+              break;
+            case uniform::category::k_vec2i:
+              pglProgramUniform2iv(this_program->handle, location, 1,
+                reinterpret_cast<const rx_s32*>(draw_uniforms));
+              break;
+            case uniform::category::k_vec3i:
+              pglProgramUniform3iv(this_program->handle, location, 1,
+                reinterpret_cast<const rx_s32*>(draw_uniforms));
+              break;
+            case uniform::category::k_vec4i:
+              pglProgramUniform4iv(this_program->handle, location, 1,
+                reinterpret_cast<const rx_s32*>(draw_uniforms));
+              break;
+            case uniform::category::k_vec2f:
+              pglProgramUniform2fv(this_program->handle, location, 1,
+                reinterpret_cast<const rx_f32*>(draw_uniforms));
+              break;
+            case uniform::category::k_vec3f:
+              pglProgramUniform3fv(this_program->handle, location, 1,
+                reinterpret_cast<const rx_f32*>(draw_uniforms));
+              break;
+            case uniform::category::k_vec4f:
+              pglProgramUniform4fv(this_program->handle, location, 1,
+                reinterpret_cast<const rx_f32*>(draw_uniforms));
+              break;
+            case uniform::category::k_mat3x3f:
+              pglProgramUniformMatrix3fv(this_program->handle, location, 1,
+                GL_FALSE, reinterpret_cast<const rx_f32*>(draw_uniforms));
+              break;
+            case uniform::category::k_mat4x4f:
+              pglProgramUniformMatrix4fv(this_program->handle, location, 1,
+                GL_FALSE, reinterpret_cast<const rx_f32*>(draw_uniforms));
+              break;
+            }
+
             draw_uniforms += uniform.size();
-            continue;
           }
-
-          switch (uniform.type()) {
-          case uniform::category::k_sampler:
-            pglProgramUniform1i(this_program->handle, location,
-              *reinterpret_cast<const rx_s32*>(draw_uniforms));
-            break;
-          case uniform::category::k_bool:
-            pglProgramUniform1i(this_program->handle, location,
-              *reinterpret_cast<const bool*>(draw_uniforms) ? 1 : 0);
-            break;
-          case uniform::category::k_int:
-            pglProgramUniform1i(this_program->handle, location,
-              *reinterpret_cast<const rx_s32*>(draw_uniforms));
-            break;
-          case uniform::category::k_float:
-            pglProgramUniform1fv(this_program->handle, location, 1,
-              reinterpret_cast<const rx_f32*>(draw_uniforms));
-            break;
-          case uniform::category::k_vec2i:
-            pglProgramUniform2iv(this_program->handle, location, 1,
-              reinterpret_cast<const rx_s32*>(draw_uniforms));
-            break;
-          case uniform::category::k_vec3i:
-            pglProgramUniform3iv(this_program->handle, location, 1,
-              reinterpret_cast<const rx_s32*>(draw_uniforms));
-            break;
-          case uniform::category::k_vec4i:
-            pglProgramUniform4iv(this_program->handle, location, 1,
-              reinterpret_cast<const rx_s32*>(draw_uniforms));
-            break;
-          case uniform::category::k_vec2f:
-            pglProgramUniform2fv(this_program->handle, location, 1,
-              reinterpret_cast<const rx_f32*>(draw_uniforms));
-            break;
-          case uniform::category::k_vec3f:
-            pglProgramUniform3fv(this_program->handle, location, 1,
-              reinterpret_cast<const rx_f32*>(draw_uniforms));
-            break;
-          case uniform::category::k_vec4f:
-            pglProgramUniform4fv(this_program->handle, location, 1,
-              reinterpret_cast<const rx_f32*>(draw_uniforms));
-            break;
-          case uniform::category::k_mat3x3f:
-            break;
-          case uniform::category::k_mat4x4f:
-            break;
-          }
-
-          draw_uniforms += uniform.size();
         }
       }
 

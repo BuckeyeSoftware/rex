@@ -7,27 +7,37 @@
 namespace rx {
 namespace render {
   uniform::uniform() 
-    : m_allocator{nullptr}
+    : m_program{nullptr}
   {
   }
 
-  uniform::uniform(memory::allocator* _allocator, const string& _name, category _type)
-    : m_allocator{_allocator}
+  uniform::uniform(program* _program, rx_size _index, const string& _name, category _type)
+    : m_program{_program}
+    , m_mask{rx_u64{1} << _index}
     , m_type{_type}
     , m_name{_name}
-    , m_dirty{false}
   {
-    as_opaque = m_allocator->allocate(size());
+    as_opaque = m_program->m_allocator->allocate(size());
+  }
+
+  uniform::uniform(uniform&& _uniform)
+    : m_program{_uniform.m_program}
+    , m_mask{_uniform.m_mask}
+    , m_type{_uniform.m_type}
+    , m_name{utility::move(_uniform.m_name)}
+  {
+    as_opaque = _uniform.as_opaque;
+    _uniform.as_opaque = nullptr;
   }
 
   uniform::~uniform() {
-    m_allocator->deallocate(as_opaque);
+    m_program->m_allocator->deallocate(as_opaque);
   }
 
   void uniform::flush(rx_byte* _flush) {
-    RX_ASSERT(m_dirty, "flush on non-dirty uniform");
+    RX_ASSERT(m_program->m_dirty_uniforms & m_mask, "flush on non-dirty uniform");
     memcpy(_flush, as_opaque, size());
-    m_dirty = false;
+    m_program->m_dirty_uniforms &= ~m_mask;
   }
 
   rx_size uniform::size_for_type(category _type) {
@@ -64,7 +74,7 @@ namespace render {
     RX_ASSERT(m_type == category::k_sampler, "not a sampler");
     if (*as_int != _sampler) {
       *as_int = _sampler;
-      m_dirty = true;
+      m_program->m_dirty_uniforms |= m_mask;
     }
   }
 
@@ -72,7 +82,7 @@ namespace render {
     RX_ASSERT(m_type == category::k_int, "not an int");
     if (*as_int != _value) {
       *as_int = _value;
-      m_dirty = true;
+      m_program->m_dirty_uniforms |= m_mask;
     }
   }
 
@@ -80,7 +90,7 @@ namespace render {
     RX_ASSERT(m_type == category::k_vec2i, "not a vec2i");
     if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
       memcpy(as_int, _value.data(), sizeof _value);
-      m_dirty = true;
+      m_program->m_dirty_uniforms |= m_mask;
     }
   }
 
@@ -88,7 +98,7 @@ namespace render {
     RX_ASSERT(m_type == category::k_vec3i, "not a vec3i");
     if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
       memcpy(as_int, _value.data(), sizeof _value);
-      m_dirty = true;
+      m_program->m_dirty_uniforms |= m_mask;
     }
   }
 
@@ -96,7 +106,7 @@ namespace render {
     RX_ASSERT(m_type == category::k_vec4i, "not a vec4i");
     if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
       memcpy(as_int, _value.data(), sizeof _value);
-      m_dirty = true;
+      m_program->m_dirty_uniforms |= m_mask;
     }
   }
 
@@ -104,7 +114,7 @@ namespace render {
     RX_ASSERT(m_type == category::k_bool, "not a bool");
     if (*as_boolean != _value) {
       *as_boolean = _value;
-      m_dirty = true;
+      m_program->m_dirty_uniforms |= m_mask;
     }
   }
 
@@ -112,7 +122,7 @@ namespace render {
     RX_ASSERT(m_type == category::k_float, "not a float");
     if (*as_float != _value) {
       *as_float = _value;
-      m_dirty = true;
+      m_program->m_dirty_uniforms |= m_mask;
     }
   }
 
@@ -120,7 +130,7 @@ namespace render {
     RX_ASSERT(m_type == category::k_vec2f, "not a vec2f");
     if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
       memcpy(as_float, _value.data(), sizeof _value);
-      m_dirty = true;
+      m_program->m_dirty_uniforms |= m_mask;
     }
   }
 
@@ -128,7 +138,7 @@ namespace render {
     RX_ASSERT(m_type == category::k_vec3f, "not a vec3f");
     if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
       memcpy(as_float, _value.data(), sizeof _value);
-      m_dirty = true;
+      m_program->m_dirty_uniforms |= m_mask;
     }
   }
 
@@ -136,14 +146,30 @@ namespace render {
     RX_ASSERT(m_type == category::k_vec4f, "not a vec4f");
     if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
       memcpy(as_float, _value.data(), sizeof _value);
-      m_dirty = true;
+      m_program->m_dirty_uniforms |= m_mask;
+    }
+  }
+
+  void uniform::record_mat3x3f(const math::mat3x3f& _value) {
+    RX_ASSERT(m_type == category::k_mat3x3f, "not a mat3x3f");
+    if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
+      memcpy(as_float, _value.data(), sizeof _value);
+      m_program->m_dirty_uniforms |= m_mask;
+    }
+  }
+
+  void uniform::record_mat4x4f(const math::mat4x4f& _value) {
+    RX_ASSERT(m_type == category::k_mat4x4f, "not a mat4x4f");
+    if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
+      memcpy(as_float, _value.data(), sizeof _value);
+      m_program->m_dirty_uniforms |= m_mask;
     }
   }
 
   void uniform::record_raw(const rx_byte* _data, rx_size _size) {
     RX_ASSERT(_size == size_for_type(m_type), "invalid size");
     memcpy(as_opaque, _data, _size);
-    m_dirty = true;
+    m_program->m_dirty_uniforms |= m_mask;
   }
 
   program::description::description(const string& _name, int _shaders, const array<string>& _data,
@@ -196,8 +222,10 @@ namespace render {
 
   program::program(frontend* _frontend)
     : resource{_frontend, resource::category::k_program}
-    , m_uniforms{m_frontend->allocator()}
+    , m_allocator{_frontend->allocator()}
+    , m_uniforms{m_allocator}
     , m_has_description{false}
+    , m_dirty_uniforms{0}
   {
   }
 
@@ -211,43 +239,30 @@ namespace render {
   }
 
   uniform& program::add_uniform(const string& _name, uniform::category _type) {
-    m_uniforms.emplace_back(m_frontend->allocator(), _name, _type);
+    m_uniforms.emplace_back(this, m_uniforms.size(), _name, _type);
     return m_uniforms.last();
   }
 
-  array<rx_byte> program::flush() {
-    // calculate storage and bitset needed for uniform delta
-    rx_u64 dirty{0};
-    rx_size size{sizeof dirty};
-    for (rx_size i{0}; i < m_uniforms.size(); i++) {
-      const auto& this_uniform{m_uniforms[i]};
-      if (this_uniform.is_dirty()) {
-        dirty |= (rx_u64{1} << i);
-        size += this_uniform.size();
-      }
+  rx_u64 program::dirty_uniforms_bitset() const {
+    return m_dirty_uniforms;
+  }
+
+  rx_size program::dirty_uniforms_size() const {
+    rx_size size{0};
+    for (rx_size i{bit_next(m_dirty_uniforms, 0)}; i < 64; i = bit_next(m_dirty_uniforms, i + 1)) {
+      size += m_uniforms[i].size();
     }
+    return size;
+  }
 
-    // nothing changed in the program
-    if (dirty == 0) {
-      return {};
-    }
-
-    // allocate storage for uniform delta
-    rx::array<rx_byte> store{size};
-    rx_byte* data{store.data()};
-
-    // write bitset to head of uniform delta
-    *reinterpret_cast<rx_u64*>(data) = dirty;
-    data += sizeof dirty;
-
-    // write dirty unfiroms to delta
-    for (rx_size i{bit_next(dirty, 0)}; i < sizeof dirty * CHAR_BIT; i = bit_next(dirty, i + 1)) {
+  void program::flush_dirty_uniforms(rx_byte* _data) {
+    for (rx_size i{bit_next(m_dirty_uniforms, 0)}; i < 64; i = bit_next(m_dirty_uniforms, i + 1)) {
       auto& this_uniform{m_uniforms[i]};
-      this_uniform.flush(data);
-      data += this_uniform.size();
+      this_uniform.flush(_data);
+      _data += this_uniform.size();
     }
 
-    return store;
+    RX_ASSERT(m_dirty_uniforms == 0, "failed to flush all uniforms");
   }
 } // namespace render
 
