@@ -10,7 +10,6 @@
 
 #include <rx/core/concurrency/scope_lock.h>
 #include <rx/core/log.h>
-#include <rx/core/algorithm.h>
 
 #include <rx/console/variable.h>
 
@@ -422,8 +421,10 @@ bool frontend::process() {
 
   m_command_buffer.reset();
 
-  memcpy(&m_resource_usage[1], &m_resource_usage[0], sizeof m_resource_usage[0]);
-  memset(&m_resource_usage[0], 0, sizeof m_resource_usage[0]);
+  for (rx_size i{0}; i < sizeof m_resource_usage[0] / sizeof *m_resource_usage[0]; i++) {
+    m_resource_usage[1][i].exchange(m_resource_usage[0][i]);
+    m_resource_usage[0][i] = 0;
+  }
 
   m_draw_calls[1].exchange(m_draw_calls[0]);
   m_draw_calls[0] = 0;
