@@ -17,8 +17,8 @@
 
 namespace rx {
 
-// 32-bit: 20 bytes
-// 64-bit: 40 bytes
+// 32-bit: 16 bytes
+// 64-bit: 32 bytes
 template<typename T>
 struct array {
   constexpr array();

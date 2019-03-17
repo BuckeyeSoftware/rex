@@ -11,8 +11,8 @@
 
 namespace rx {
 
-// 32-bit: 32 bytes
-// 64-bit: 48 bytes
+// 32-bit: 16 + k_small_string bytes
+// 64-bit: 32 + k_small_string bytes
 struct string {
   static constexpr const rx_size k_npos{-1_z};
   static constexpr const rx_size k_small_string{16};
