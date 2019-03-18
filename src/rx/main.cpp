@@ -173,7 +173,8 @@ int entry(int argc, char **argv) {
     rx::render::frame_timer timer;
     rx::input::input input;
 
-    rx::math::vec3f rotate;
+    rx::math::transform camera;
+
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
       input.update(0);
 
@@ -209,6 +210,26 @@ int entry(int argc, char **argv) {
         }
       }
 
+      const auto& delta{input.mouse().movement()};
+      rx::math::vec3f move{static_cast<rx_f32>(delta.y), static_cast<rx_f32>(delta.x), 0.0f};
+      camera.rotate = camera.rotate + move;
+
+      if (input.keyboard().is_held(SDL_SCANCODE_W, true)) {
+        const auto f{camera.to_mat4().z};
+        camera.translate = camera.translate + rx::math::vec3f(f.x, f.y, f.z) * (10.0f * timer.delta_time());
+      }
+      if (input.keyboard().is_held(SDL_SCANCODE_S, true)) {
+        const auto f{camera.to_mat4().z};
+        camera.translate = camera.translate - rx::math::vec3f(f.x, f.y, f.z) * (10.0f * timer.delta_time());
+      }
+      if (input.keyboard().is_held(SDL_SCANCODE_D, true)) {
+        const auto l{camera.to_mat4().x};
+        camera.translate = camera.translate + rx::math::vec3f(l.x, l.y, l.z) * (10.0f * timer.delta_time());
+      }
+      if (input.keyboard().is_held(SDL_SCANCODE_A, true)) {
+        const auto l{camera.to_mat4().x};
+        camera.translate = camera.translate - rx::math::vec3f(l.x, l.y, l.z) * (10.0f * timer.delta_time());
+      }
       rx::render::state state; // default
 
       // clear depth to 1s and stencil to 0s
@@ -232,15 +253,12 @@ int entry(int argc, char **argv) {
 
       program->uniforms()[0].record_vec3f({r, g, b});
 
-      rotate.x += 100.0f*timer.delta_time();
-      rotate.y += 100.0f*timer.delta_time();
-      rotate.z += 100.0f*timer.delta_time();
+      const auto model{rx::math::mat4x4f::translate({0.0f, 0.0f, 10.0f})};
+      const auto view{rx::math::mat4x4f::invert(camera.to_mat4())};
+      const auto projection{rx::math::mat4x4f::perspective(68.0f, {0.01f, 1024.0f}, 1600.0f/900.0f)};
 
-      rx::math::transform xform;
-      xform.rotate = rotate;
-      xform.scale = {0.5f, 0.5f, 0.5f};
-
-      program->uniforms()[1].record_mat4x4f(xform.to_mat4());
+      // RX_MESSAGE("x: %s, y: %s, z: %s)
+      program->uniforms()[1].record_mat4x4f(model * view * projection);
 
       renderer.draw_elements(
         RX_RENDER_TAG("test"),

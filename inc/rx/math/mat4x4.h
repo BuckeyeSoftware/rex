@@ -19,6 +19,7 @@ struct mat4x4 {
   static constexpr mat4x4 translate(const vec3<T>& translate);
   static constexpr mat4x4 transpose(const mat4x4& mat);
   static constexpr mat4x4 invert(const mat4x4& mat);
+  static constexpr mat4x4 perspective(T _fov, const range<T>& _planes, T _aspect);
 
   const T* data() const;
 
@@ -82,9 +83,9 @@ inline constexpr mat4x4<T> mat4x4<T>::translate(const vec3<T>& translate) {
 
 template<typename T>
 inline constexpr mat4x4<T> mat4x4<T>::transpose(const mat4x4& mat) {
-  return {{mat.x.x, mat.y.x, mat.z.x},
-          {mat.x.y, mat.y.y, mat.z.y},
-          {mat.x.z, mat.y.z, mat.z.z}};
+  return {{mat.x.x, mat.y.x, mat.z.x, mat.w.x},
+          {mat.x.y, mat.y.y, mat.z.y, mat.w.y},
+          {mat.x.z, mat.y.z, mat.z.z, mat.w.z}};
 }
 
 template<typename T>
@@ -127,13 +128,30 @@ inline constexpr mat4x4<T> mat4x4<T>::invert(const mat4x4& mat) {
   };
 }
 
+template<typename T>
+inline constexpr mat4x4<T> mat4x4<T>::perspective(T _fov, const range<T>& _planes, T _aspect) {
+  const T range{_planes.min - _planes.max};
+  const T half{tanf(deg_to_rad(_fov*.5))};
+  if (_aspect < T{1}) {
+    return {{T{1} / half,             T{0},                    T{0},                                      T{0}},
+            {T{0},                    T{1} / (half / _aspect), T{0},                                      T{0}},
+            {T{0},                    T{0},                    -(_planes.min + _planes.max) / range,      T{1}},
+            {T{0},                    T{0},                    T{2} * _planes.max * _planes.min / range,  T{0}}};
+  } else {
+    return {{T{1} / (half * _aspect), T{0},                    T{0},                                      T{0}},
+            {T{0},                    T{1} / half,             T{0},                                      T{0}},
+            {T{0},                    T{0},                    -(_planes.min + _planes.max) / range,      T{1}},
+            {T{0},                    T{0},                    T{2} * _planes.max * _planes.min / range,  T{0}}};
+  }
+}
+
 // NOTE(dweiler): the operand order is reversed here
 template<typename T>
 inline constexpr mat4x4<T> operator*(const mat4x4<T>& a, const mat4x4<T>& b) {
-  return {b.x*a.x.x + b.y*a.x.y + b.z*a.x.z,
-          b.x*a.y.x + b.y*a.y.y + b.z*a.y.z,
-          b.x*a.z.x + b.y*a.z.y + b.z*a.z.z,
-          b.x*a.w.x + b.y*a.w.y + b.z*a.w.z};
+  return {b.x*a.x.x + b.y*a.x.y + b.z*a.x.z + b.w*a.x.w,
+          b.x*a.y.x + b.y*a.y.y + b.z*a.y.z + b.w*a.y.w,
+          b.x*a.z.x + b.y*a.z.y + b.z*a.z.z + b.w*a.z.w,
+          b.x*a.w.x + b.y*a.w.y + b.z*a.w.z + b.w*a.w.w};
 }
 
 template<typename T>

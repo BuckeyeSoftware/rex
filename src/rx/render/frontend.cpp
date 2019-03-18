@@ -316,6 +316,7 @@ void frontend::draw_elements(
   auto command_base{m_command_buffer.allocate(sizeof(draw_command) + dirty_uniforms_size, command_type::k_draw_elements, _info)};
   auto command{reinterpret_cast<draw_command*>(command_base + sizeof(command_header))};
   *reinterpret_cast<state*>(command) = _state;
+  reinterpret_cast<state*>(command)->flush();
   command->render_target = _target;
   command->render_buffer = _buffer;
   command->render_program = _program;

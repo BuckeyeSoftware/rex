@@ -429,6 +429,7 @@ namespace detail {
       const auto& cull{_render_state->cull};
       const auto& stencil{_render_state->stencil};
       const auto& polygon{_render_state->polygon};
+      const auto& this_depth{_render_state->depth};
 
       if (this->scissor != scissor) {
         const auto enabled{scissor.enabled()};
@@ -493,9 +494,9 @@ namespace detail {
         }
       }
 
-      if (this->depth != depth) {
-        const auto test{depth.test()};
-        const auto write{depth.write()};
+      if (this->depth != this_depth) {
+        const auto test{this_depth.test()};
+        const auto write{this_depth.write()};
 
         if (this->depth.test() != test) {
           use_enable(GL_DEPTH_TEST, test);
@@ -1226,8 +1227,8 @@ void backend_gl4::process(rx_byte* _command) {
         }
       }
       if (clear_depth && clear_stencil) {
-        pglClearNamedFramebufferfi(fbo, GL_DEPTH_STENCIL,
-          0, command->clear_color.r, static_cast<GLint>(command->clear_color.g));
+        pglClearNamedFramebufferfi(fbo, GL_DEPTH_STENCIL, 0, 1.0f, 0.0f); /*
+          0, command->clear_color.r, static_cast<GLint>(command->clear_color.g));*/
       } else if (clear_depth) {
         pglClearNamedFramebufferfv(fbo, GL_DEPTH, 0, &command->clear_color.r);
       } else if (clear_stencil) {

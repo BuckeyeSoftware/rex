@@ -1,3 +1,9 @@
+# Compilation options:
+# * LTO   - Link time optimization
+# * ASAN  - Address sanitizer
+# * TSAN  - Thread sanitizer
+# * UBSAN - Undefined behavior sanitizer
+# * DEBUG - Debug builds
 LTO ?= 0
 ASAN ?= 0
 TSAN ?= 0
@@ -6,56 +12,63 @@ DEBUG ?= 0
 
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 
+# C compiler
+CC := gcc
+CC ?= clang
+
+# C++ compiler
+# We use the C frontend with -xcpp to avoid linking in C++ runtime library
 CXX := gcc
 CXX ?= clang
 
-SRCS := $(call rwildcard, src/, *cpp)
-OBJS := $(filter %.o,$(SRCS:.cpp=.o))
-DEPS := $(filter %.d,$(SRCS:.cpp=.d))
+SRCS := $(call rwildcard, src/, *cpp) $(call rwildcard, src/, *c)
+OBJS := $(filter %.o,$(SRCS:.cpp=.o)) $(filter %.o,$(SRCS:.c=.o))
+DEPS := $(filter %.d,$(SRCS:.cpp=.d)) $(filter %.d,$(SRCS:.c=.d))
 
-# compilation flags
+# Shared C and C++ compilation flags
+CFLAGS := -Iinc
+CFLAGS += -Wall
+CFLAGS += -Wextra
+CFLAGS += `sdl2-config --cflags`
+
+# C compilation flags
+CCFLAGS := -std=c11
+
+# C++ compilation flags
 CXXFLAGS := -std=c++17
-CXXFLAGS += -Iinc
-CXXFLAGS += `sdl2-config --cflags`
-CXXFLAGS += -Wall
-CXXFLAGS += -Wextra
+CXXFLAGS += -fno-exceptions
+CXXFLAGS += -fno-rtti
 
 ifeq ($(LTO),1)
-	CXXFLAGS += -flto
+	CFLAGS += -flto
 endif
 
 ifeq ($(DEBUG),1)
-	CXXFLAGS += -DRX_DEBUG
-	CXXFLAGS += -O0
-	CXXFLAGS += -ggdb3
-	CXXFLAGS += -fno-omit-frame-pointer
-	CXXFLAGS += -fno-exceptions
-	CXXFLAGS += -fno-rtti
+	CFLAGS += -DRX_DEBUG
+	CFLAGS += -O0
+	CFLAGS += -ggdb3
+	CFLAGS += -fno-omit-frame-pointer
 else
 	# enable assertions for release builds temporarily
-	CXXFLAGS += -DRX_DEBUG
-	CXXFLAGS += -O3
-
-	# disable things we don't want in release
-	CXXFLAGS += -fno-exceptions
-	CXXFLAGS += -fno-rtti
-	CXXFLAGS += -fno-stack-protector
-	CXXFLAGS += -fno-asynchronous-unwind-tables
-	CXXFLAGS += -fno-stack-check
-	CXXFLAGS += -fomit-frame-pointer
+	CFLAGS += -DRX_DEBUG
+	CFLAGS += -O3
+	CFLAGS += -fno-stack-protector
+	CFLAGS += -fno-asynchronous-unwind-tables
+	CFLAGS += -fno-stack-check
+	CFLAGS += -fomit-frame-pointer
 
 	ifeq ($(CXX),g++)
-		CXXFLAGS += -fno-stack-clash-protection
+		CFLAGS += -fno-stack-clash-protection
 	endif
 endif
 ifeq ($(ASAN),1)
-	CXXFLAGS += -fsanitize=address
+	CFLAGS += -fsanitize=address
 endif
 ifeq ($(TSAN),1)
-	CXXFLAGS += -fsanitize=thread -DRX_TSAN
+	CFLAGS += -fsanitize=thread -DRX_TSAN
 endif
 ifeq ($(UBSAN),1)
-	CXXFLAGS += -fsanitize=undefined
+	CFLAGS += -fsanitize=undefined
 endif
 
 # linker flags
@@ -80,7 +93,10 @@ BIN := rex
 all: $(BIN)
 
 %.o: %.cpp
-	$(CXX) -xc++ $(CXXFLAGS) -c -o $@ $<
+	$(CXX) -xc++ $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(CCFLAGS) -c -o $@ $<
 
 $(BIN): $(OBJS)
 	$(CXX) $(OBJS) $(LDFLAGS) -o $@

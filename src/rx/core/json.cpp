@@ -1,0 +1,138 @@
+#include <stdlib.h> // strtod
+#include <string.h> // strcmp
+
+#include <rx/core/json.h>
+
+namespace rx {
+
+static const char* json_parse_error_to_string(enum json_parse_error_e _error) {
+  switch (_error) {
+  case json_parse_error_expected_comma_or_closing_bracket:
+    return "expected either a comma or closing '}' or ']'";
+  case json_parse_error_expected_colon:
+    return "expected a colon";
+  case json_parse_error_expected_opening_quote:
+    return "expected opening quote '\"'";
+  case json_parse_error_invalid_string_escape_sequence:
+    return "invalid string escape sequence";
+  case json_parse_error_invalid_number_format:
+    return "invalid number formatting";
+  case json_parse_error_invalid_value:
+    return "invalid value";
+  case json_parse_error_premature_end_of_buffer:
+    return "premature end of buffer";
+  case json_parse_error_invalid_string:
+    return "malformed string";
+  case json_parse_error_allocator_failed:
+    return "out of memory";
+  case json_parse_error_unexpected_trailing_characters:
+    return "unexpected trailing characters";
+  case json_parse_error_unknown:
+    [[fallthrough]];
+  default:
+    return "unknown error";
+  }
+}
+
+static void* json_allocator(void* _user, rx_size _size) {
+  auto allocator{reinterpret_cast<memory::allocator*>(_user)};
+  return allocator->allocate(_size);
+}
+
+json::json(memory::allocator* _allocator, const string& _contents)
+  : m_allocator{_allocator}
+  , m_root{nullptr}
+{
+  RX_ASSERT(m_allocator, "null allocator");
+
+  m_root = json_parse_ex(_contents.data(), _contents.size(),
+    json_parse_flags_allow_c_style_comments | json_parse_flags_allow_location_information,
+    json_allocator,
+    m_allocator,
+    &m_error);
+}
+
+json::json(struct json_value_s *_value)
+  : m_allocator{nullptr}
+  , m_root{_value}
+{
+}
+
+json::~json() {
+  if (m_allocator) {
+    m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_root));
+  }
+}
+
+json json::operator[](rx_size _index) const {
+  RX_ASSERT(is_array() || is_object(), "not an indexable type");
+
+  if (is_array()) {
+    auto array{reinterpret_cast<struct json_array_s*>(m_root->payload)};
+    auto element{array->start};
+    RX_ASSERT(_index < array->length, "out of bounds");
+    for (rx_size i{0}; i < _index; i++) {
+      element = element->next;
+    }
+    return {element->value};
+  } else {
+    auto object{reinterpret_cast<struct json_object_s*>(m_root->payload)};
+    auto element{object->start};
+    RX_ASSERT(_index < object->length, "out of bounds");
+    for (rx_size i{0}; i < _index; i++) {
+      element = element->next;
+    }
+    return {element->value};
+  }
+  
+  return {nullptr};
+}
+
+bool json::as_boolean() const {
+  RX_ASSERT(is_boolean(), "not a boolean");
+  return m_root->type == json_type_true;
+}
+
+rx_f64 json::as_number() const {
+  RX_ASSERT(is_number(), "not a number");
+  auto number{reinterpret_cast<struct json_number_s*>(m_root->payload)};
+  return strtod(number->number, nullptr);
+}
+
+json json::operator[](const char* _name) const {
+  RX_ASSERT(is_object(), "not a object");
+  auto object{reinterpret_cast<struct json_object_s*>(m_root->payload)};
+  for (auto element{object->start}; element; element = element->next) {
+    if (!strcmp(element->name->string, _name)) {
+      return {element->value};
+    }
+  }
+  return {nullptr};
+}
+
+string json::as_string() const {
+  RX_ASSERT(is_string(), "not a string");
+  auto string{reinterpret_cast<struct json_string_s*>(m_root->payload)};
+  return {string->string, string->string_size};
+}
+
+rx_size json::size() const {
+  RX_ASSERT(is_array() || is_object(), "not an indexable type");
+  switch (m_root->type) {
+  case json_type_array:
+    return reinterpret_cast<struct json_array_s*>(m_root->payload)->length;
+  case json_type_object:
+    return reinterpret_cast<struct json_object_s*>(m_root->payload)->length;
+  }
+  return 0;
+}
+
+optional<string> json::error() const {
+  if (m_allocator) {
+    return string { "%zu:%zu %s", m_error.error_line_no, m_error.error_row_no,
+      json_parse_error_to_string(static_cast<enum json_parse_error_e>(m_error.error)) };
+  }
+  return nullopt;
+}
+
+} // namespace rx
