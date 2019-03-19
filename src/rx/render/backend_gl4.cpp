@@ -670,31 +670,126 @@ static void fetch(const char* _name, F& function_) {
   *reinterpret_cast<void**>(&function_) = address;
 }
 
-static GLuint compile_shader(GLenum _type, const string& _file_name) {
-  filesystem::file file{_file_name.data(), "rb"};
-  if (!file) {
-    gl4_log(log::level::k_error, "failed to open '%s'", _file_name);
-    return 0;
+static constexpr const char* inout_to_string(shader::inout_category _type) {
+  switch (_type) {
+  case shader::inout_category::k_vec2f:
+    return "vec2f";
+  case shader::inout_category::k_vec3f:
+    return "vec3f";
+  case shader::inout_category::k_vec4f:
+    return "vec4f";
+  case shader::inout_category::k_vec2i:
+    return "vec2i";
+  case shader::inout_category::k_vec3i:
+    return "vec3i";
+  case shader::inout_category::k_vec4i:
+    return "vec4i";
   }
-  
-  auto size{file.size()};
-  if (!size) {
-    gl4_log(log::level::k_error, "failed to size '%s'", _file_name);
-    return 0;
+  return nullptr;
+}
+
+static constexpr const char* uniform_to_string(uniform::category _type) {
+  switch (_type) {
+  case uniform::category::k_sampler1D:
+    return "rx_sampler1D";
+  case uniform::category::k_sampler2D:
+    return "rx_sampler2D";
+  case uniform::category::k_sampler3D:
+    return "rx_sampler3D";
+  case uniform::category::k_samplerCM:
+    return "rx_samplerCM";
+  case uniform::category::k_bool:
+    return "bool";
+  case uniform::category::k_int:
+    return "int";
+  case uniform::category::k_float:
+    return "float";
+  case uniform::category::k_vec2i:
+    return "vec2i";
+  case uniform::category::k_vec3i:
+    return "vec3i";
+  case uniform::category::k_vec4i:
+    return "vec4i";
+  case uniform::category::k_vec2f:
+    return "vec2f";
+  case uniform::category::k_vec3f:
+    return "vec3f";
+  case uniform::category::k_vec4f:
+    return "vec4f";
+  case uniform::category::k_mat4x4f:
+    return "mat4x4f";
+  case uniform::category::k_mat3x3f:
+    return "mat3x3f";
+  }
+  return nullptr;
+}
+
+static GLuint compile_shader(const array<uniform>& _uniforms, const shader& _shader) {
+  // emit prelude to every shader
+  static constexpr const char* k_prelude{
+    "#version 450 core\n"
+    "#define vec2f vec2\n"
+    "#define vec3f vec3\n"
+    "#define vec4f vec4\n"
+    "#define vec2i ivec2\n"
+    "#define vec3i ivec3\n"
+    "#define vec4i ivec4\n"
+    "#define mat3x3f mat3\n"
+    "#define mat4x4f mat4\n"
+    "#define rx_sampler1D sampler1D\n"
+    "#define rx_sampler2D sampler2D\n"
+    "#define rx_sampler3D sampler3D\n"
+    "#define rx_samplerCM samplerCubemap\n"
+    "#define rx_position gl_Position\n"
+  };
+
+  string contents{k_prelude};
+
+  int location{0};
+  GLenum type{0};
+  switch (_shader.type) {
+  case shader::category::k_vertex:
+    type = GL_VERTEX_SHADER;
+    // emit vertex attributes inputs
+    _shader.inputs.each([&](rx_size, const string& _name, shader::inout_category _type) {
+      contents.append({"layout(location = %d) in %s %s;\n", location, inout_to_string(_type), _name});
+      location++;
+    });
+    // emit vertex outputs
+    _shader.outputs.each([&](rx_size, const string& _name, shader::inout_category _type) {
+      contents.append({"out %s %s;\n", inout_to_string(_type), _name});
+    });
+    break;
+  case shader::category::k_fragment:
+    type = GL_FRAGMENT_SHADER;
+    // emit fragment inputs
+    _shader.inputs.each([&](rx_size, const string& _name, shader::inout_category _type) {
+      contents.append({"in %s %s;\n", inout_to_string(_type), _name});
+    });
+    // emit fragment outputs
+    _shader.outputs.each([&](rx_size, const string& _name, shader::inout_category _type) {
+      contents.append({"layout(location = %d) out %s %s;\n", location, inout_to_string(_type), _name});
+      location++;
+    });
+    break;
   }
 
-  // NOTE: size + 1 because we inject a null-terminator on the contents
-  array<char> data{*size + 1, 0};
-  if (!file.read(reinterpret_cast<rx_byte*>(data.data()), data.size())) {
-    gl4_log(log::level::k_error, "failed to read '%s'", _file_name);
-    return 0;
-  }
+  // emit uniforms
+  _uniforms.each_fwd([&](const uniform& _uniform) {
+    contents.append({"uniform %s %s;\n", uniform_to_string(_uniform.type()), _uniform.name()});
+  });
 
-  const GLchar* texts[]{data.data()};
-  const GLint sizes[]{static_cast<GLint>(data.size())};
+  // to get good diagnostics
+  contents.append("#line 0\n");
 
-  GLuint handle{pglCreateShader(_type)};
-  pglShaderSource(handle, 1, texts, sizes);
+  // append the user shader source now
+  contents.append(_shader.source);
+
+  const GLchar* data{static_cast<const GLchar*>(contents.data())};
+  const GLint size{static_cast<GLint>(contents.size())};
+
+  GLuint handle{pglCreateShader(type)};
+  pglShaderSource(handle, 1, &data, &size);
   pglCompileShader(handle);
 
   GLint status{0};
@@ -703,12 +798,12 @@ static GLuint compile_shader(GLenum _type, const string& _file_name) {
     GLint log_size{0};
     pglGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_size);
 
-    gl4_log(log::level::k_error, "failed compiling shader '%s'", _file_name);
+    gl4_log(log::level::k_error, "failed compiling shader");
 
     if (log_size) {
       array<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
       pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
-      gl4_log(log::level::k_error, "\n%s\n%s", error_log.data(), data.data());
+      gl4_log(log::level::k_error, "\n%s\n%s", error_log.data(), contents);
     }
 
     pglDeleteShader(handle);
@@ -993,38 +1088,43 @@ void backend_gl4::process(rx_byte* _command) {
           const auto render_program{resource->as_program};
           const auto program{reinterpret_cast<detail::program*>(render_program + 1)};
 
-          // TODO(dweiler): preprocessor for GLSL
-          const auto& name{render_program->info().name};
-          const auto vert{compile_shader(GL_VERTEX_SHADER, {"%s_vert.glsl", name})};
-          const auto frag{compile_shader(GL_FRAGMENT_SHADER, {"%s_frag.glsl", name})};
+          const auto shaders{render_program->shaders()};
 
-          if (vert && frag) {
-            pglAttachShader(program->handle, vert);
-            pglAttachShader(program->handle, frag);
+          array<GLuint> shader_handles;
+          shaders.each_fwd([&](const shader& _shader) {
+            GLuint shader_handle{compile_shader(render_program->uniforms(), _shader)};
+            if (shader_handle != 0) {
+              pglAttachShader(program->handle, shader_handle);
+              shader_handles.push_back(shader_handle);
+            }
+          });
 
-            render_program->info().data.each_fwd([](const string& _data) {
-              // TODO
-            });
+          pglLinkProgram(program->handle);
 
-            render_program->info().layout.each_fwd([](const string& _layout) {
-              // TODO
-            });
+          GLint status{0};
+          pglGetProgramiv(program->handle, GL_LINK_STATUS, &status);
+          if (status != GL_TRUE) {
+            GLint log_size{0};
+            pglGetProgramiv(program->handle, GL_INFO_LOG_LENGTH, &log_size);
 
-            pglLinkProgram(program->handle);
+            gl4_log(log::level::k_error, "failed linking program");
 
-            // TODO
-
-            pglDetachShader(program->handle, vert);
-            pglDetachShader(program->handle, frag);
+            if (log_size) {
+              array<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
+              pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
+              gl4_log(log::level::k_error, "\n%s", error_log.data());
+            }
           }
+
+          shader_handles.each_fwd([&](GLuint _shader) {
+            pglDetachShader(program->handle, _shader);
+            pglDeleteShader(_shader);
+          });
 
           // fetch uniform locations
           render_program->uniforms().each_fwd([program](const uniform& _uniform) {
             program->uniforms.push_back(pglGetUniformLocation(program->handle, _uniform.name().data()));
           });
-
-          pglDeleteShader(vert);
-          pglDeleteShader(frag);
         }
         break;
       case resource_command::category::k_texture1D:
@@ -1268,7 +1368,13 @@ void backend_gl4::process(rx_byte* _command) {
             }
 
             switch (uniform.type()) {
-            case uniform::category::k_sampler:
+            case uniform::category::k_sampler1D:
+              [[fallthrough]];
+            case uniform::category::k_sampler2D:
+              [[fallthrough]];
+            case uniform::category::k_sampler3D:
+              [[fallthrough]];
+            case uniform::category::k_samplerCM:
               pglProgramUniform1i(this_program->handle, location,
                 *reinterpret_cast<const rx_s32*>(draw_uniforms));
               break;

@@ -46,7 +46,10 @@ json::json(memory::allocator* _allocator, const string& _contents)
   RX_ASSERT(m_allocator, "null allocator");
 
   m_root = json_parse_ex(_contents.data(), _contents.size(),
-    json_parse_flags_allow_c_style_comments | json_parse_flags_allow_location_information,
+    (json_parse_flags_allow_c_style_comments |
+     json_parse_flags_allow_location_information |
+     json_parse_flags_allow_unquoted_keys |
+     json_parse_flags_allow_multi_line_strings),
     json_allocator,
     m_allocator,
     &m_error);

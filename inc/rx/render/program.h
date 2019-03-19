@@ -9,7 +9,7 @@
 
 #include <rx/core/string.h>
 #include <rx/core/array.h>
-#include <rx/core/hash.h>
+#include <rx/core/map.h>
 
 #include <rx/core/concepts/no_copy.h>
 
@@ -23,7 +23,10 @@ struct program;
 
 struct uniform : concepts::no_copy {
   enum class category {
-    k_sampler,
+    k_sampler1D,
+    k_sampler2D,
+    k_sampler3D,
+    k_samplerCM,
     k_bool,
     k_int,
     k_float,
@@ -94,29 +97,33 @@ inline rx_size uniform::size() const {
   return size_for_type(m_type);
 }
 
+struct shader {
+  enum class category {
+    k_vertex,
+    k_fragment
+  };
+
+  enum class inout_category {
+    k_vec2i, // ivec2
+    k_vec3i, // ivec3
+    k_vec4i, // ivec4
+    k_vec2f, // vec2
+    k_vec3f, // vec3
+    k_vec4f  // vec4
+  };
+
+  category type;
+  string source;
+  map<string, inout_category> inputs;
+  map<string, inout_category> outputs;
+};
+
 struct program : resource {
-  enum {
-    k_vertex_shader = 1 << 0,
-    k_fragment_shader = 1 << 1
-  };
-
-  struct description {
-    description() = default;
-    description(const string& _name, int _shaders, const array<string>& _data,
-      const array<string>& _layout, const array<string>& _defines);
-    string name;
-    int shaders;
-    array<string> data;
-    array<string> layout;
-    array<string> defines;
-  };
-
   program(frontend* _frontend);
-
-  void record_description(const description& _description);
 
   bool validate() const;
 
+  void add_shader(shader&& _shader);
   uniform& add_uniform(const string& _name, uniform::category _type);
   rx_u64 dirty_uniforms_bitset() const;
   rx_size dirty_uniforms_size() const;
@@ -124,16 +131,15 @@ struct program : resource {
   void flush_dirty_uniforms(rx_byte* _data);
 
   const array<uniform>& uniforms() const &;
+  const array<shader>& shaders() const &;
   array<uniform>& uniforms() &;
-  const description& info() const &;
 
 private:
   friend struct uniform;
 
   memory::allocator* m_allocator;
   array<uniform> m_uniforms;
-  description m_description;
-  bool m_has_description;
+  array<shader> m_shaders;
   rx_u64 m_dirty_uniforms;
 };
 
@@ -141,23 +147,14 @@ inline const array<uniform>& program::uniforms() const & {
   return m_uniforms;
 }
 
+inline const array<shader>& program::shaders() const & {
+  return m_shaders;
+}
+
 inline array<uniform>& program::uniforms() & {
   return m_uniforms;
 }
 
-inline const program::description& program::info() const & {
-  return m_description;
-}
-
-bool operator==(const program::description& _lhs, const program::description& _rhs);
-
 } // namespace rx::render
-
-namespace rx {
-  template<>
-  struct hash<render::program::description> {
-    rx_size operator()(const render::program::description& _description);
-  };
-} // namespace rx
 
 #endif // RX_RENDER_PROGRAM_H

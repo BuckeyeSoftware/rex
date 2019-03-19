@@ -4,3 +4,11 @@
 
 # ignore trace files
 *.trace
+
+# ignore engine generated files
+*.log
+*.cfg
+
+# ignore hidden files and directories but not .gitignore
+.*
+!/.gitignore

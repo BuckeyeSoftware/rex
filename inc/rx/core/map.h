@@ -1,46 +1,65 @@
 #ifndef RX_CORE_MAP_H
 #define RX_CORE_MAP_H
 
-#if 0
-
 #include <limits.h> // CHAR_BIT
 
 #include <rx/core/algorithm.h> // swap
 #include <rx/core/hash.h> // hash
 
+#include <rx/core/utility/construct.h>
+#include <rx/core/utility/destruct.h>
+#include <rx/core/utility/move.h>
+
+#include <rx/core/traits/return_type.h>
+#include <rx/core/traits/is_same.h>
+
 #include <rx/core/memory/system_allocator.h> // allocator, g_system_allocator
 
 namespace rx {
 
-// 32-bit: 44 bytes
-// 64-bit: 88 bytes
+// 32-bit: 28 bytes
+// 64-bit: 56 bytes
 template<typename K, typename V, typename H = hash<K>>
 struct map {
   static constexpr rx_size k_initial_size{256};
   static constexpr rx_size k_load_factor{90};
 
   map();
-  map(memory::allocator* alloc);
+  map(memory::allocator* _allocator);
+  map(map&& _map);
+  map(const map& _map);
   ~map();
 
-  template<typename... Ts>
-  void emplace(const K& key, Ts&&... args);
+  map& operator=(map&& _map);
+  map& operator=(const map& _map);
 
-  void insert(const K& key, V&& value);
-  void insert(const K& key, const V& value);
+  void insert(const K& _key, V&& _value);
+  void insert(const K& _key, const V& _value);
 
-  V* find(const K& key);
-  const V* find(const K& key) const;
+  V* find(const K& _key);
+  const V* find(const K& _key) const;
 
-  bool erase(const K& key);
+  bool erase(const K& _key);
   rx_size size() const;
+  bool is_empty() const;
+
+  void clear();
+
+  template<typename F>
+  bool each(F&& _function);
+
+  template<typename F>
+  bool each(F&& _function) const;
 
 private:
-  static rx_size hash_key(const K& key);
-  static bool is_deleted(rx_size hash);
+  void clear_and_deallocate();
+  void initialize(memory::allocator* _allocator, rx_size _capacity);
 
-  rx_size desired_position(rx_size hash) const;
-  rx_size probe_distance(rx_size hash, rx_size slot_index) const;
+  static rx_size hash_key(const K& _key);
+  static bool is_deleted(rx_size _hash);
+
+  rx_size desired_position(rx_size _hash) const;
+  rx_size probe_distance(rx_size _hash, rx_size _slot_index) const;
 
   rx_size& element_hash(rx_size index);
   rx_size element_hash(rx_size index) const;
@@ -48,17 +67,20 @@ private:
   void allocate();
   void grow();
 
-  void construct(rx_size index, rx_size hash, K&& key, V&& value);
+  // move and non-move construction functions
+  void construct(rx_size _index, rx_size _hash, K&& _key, V&& _value);
 
-  void inserter(rx_size hash, K&& key, V&& value);
+  void inserter(rx_size _hash, K&& _key, V&& _value);
+  void inserter(rx_size _hash, const K& _key, const V& _value);
+  void inserter(rx_size _hash, const K& _key, V&& _value);
 
-  bool lookup_index(const K& key, rx_size& index) const;
+  bool lookup_index(const K& _key, rx_size& _index) const;
 
   memory::allocator* m_allocator;
 
-  memory::block m_keys;
-  memory::block m_values;
-  memory::block m_hashes;
+  K* m_keys;
+  V* m_values;
+  rx_size* m_hashes;
 
   rx_size m_size;
   rx_size m_capacity;
@@ -68,91 +90,158 @@ private:
 
 template<typename K, typename V, typename H>
 inline map<K, V, H>::map()
-  : m_allocator{&*memory::g_system_allocator}
-  , m_size{0}
-  , m_capacity{k_initial_size}
+  : map{&memory::g_system_allocator}
 {
+}
+
+template<typename K, typename V, typename H>
+inline map<K, V, H>::map(memory::allocator* _allocator)
+{
+  initialize(_allocator, k_initial_size);
   allocate();
 }
 
 template<typename K, typename V, typename H>
-inline map<K, V, H>::map(memory::allocator* alloc)
-  : m_allocator{alloc}
-  , m_size{0}
-  , m_capacity{k_initial_size}
+inline map<K, V, H>::map(map&& _map)
+  : m_allocator{_map.m_allocator}
+  , m_keys{_map.m_keys}
+  , m_values{_map.m_values}
+  , m_hashes{_map.m_hashes}
+  , m_size{_map.m_size}
+  , m_capacity{_map.m_capacity}
+  , m_resize_threshold{_map.m_resize_threshold}
+  , m_mask{_map.m_mask}
 {
-  allocate();
+  _map.initialize(nullptr, 0);
+}
+
+template<typename K, typename V, typename H>
+inline map<K, V, H>::map(const map& _map)
+  : map{_map.m_allocator ? _map.m_allocator : &memory::g_system_allocator}
+{
+  for (rx_size i{0}; i < _map.m_capacity; i++) {
+    if (_map.element_hash(i) != 0) {
+      insert(_map.m_keys[i], _map.m_values[i]);
+    }
+  }
 }
 
 template<typename K, typename V, typename H>
 inline map<K, V, H>::~map() {
+  clear_and_deallocate();
+}
+
+template<typename K, typename V, typename H>
+inline void map<K, V, H>::clear() {
   for (rx_size i{0}; i < m_capacity; i++) {
     if (element_hash(i) != 0) {
       if constexpr (!traits::is_trivially_destructible<K>) {
-        utility::destruct<K>(m_keys.cast<K*>() + i);
+        utility::destruct<K>(m_keys + i);
       }
       if constexpr (!traits::is_trivially_destructible<V>) {
-        utility::destruct<V>(m_values.cast<V*>() + i);
+        utility::destruct<V>(m_values + i);
       }
     }
   }
-  m_allocator->deallocate(move(m_keys));
-  m_allocator->deallocate(move(m_values));
-  m_allocator->deallocate(move(m_hashes));
+  m_size = 0;
 }
 
 template<typename K, typename V, typename H>
-template<typename... Ts>
-inline void map<K, V, H>::emplace(const K& key, Ts&&... args) {
+inline void map<K, V, H>::clear_and_deallocate() {
+  clear();
+
+  if (m_allocator) {
+    m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_keys));
+    m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_values));
+    m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_hashes));
+  }
+}
+
+template<typename K, typename V, typename H>
+inline map<K, V, H>& map<K, V, H>::operator=(map<K, V, H>&& _map) {
+  clear_and_deallocate();
+
+  m_allocator = _map.m_allocator;
+  m_keys = _map.m_keys;
+  m_values = _map.m_values;
+  m_hashes = _map.m_hashes;
+  m_size = _map.m_size;
+  m_capacity = _map.m_capacity;
+  m_resize_threshold = _map.m_resize_threshold;
+  m_mask = _map.m_mask;
+
+  _map.initialize(nullptr, 0);
+
+  return *this;
+}
+
+template<typename K, typename V, typename H>
+inline map<K, V, H>& map<K, V, H>::operator=(const map<K, V, H>& _map) {
+  clear_and_deallocate();
+  initialize(_map.m_allocator, _map.m_capacity);
+  allocate();
+
+  for (rx_size i{0}; i < _map.m_capacity; i++) {
+    if (_map.element_hash(i) != 0) {
+      insert(_map.m_keys[i], _map.m_values[i]);
+    }
+  }
+
+  return *this;
+}
+
+template<typename K, typename V, typename H>
+inline void map<K, V, H>::initialize(memory::allocator* _allocator, rx_size _capacity) {
+  m_allocator = _allocator;
+  m_keys = nullptr;
+  m_values = nullptr;
+  m_hashes = nullptr;
+  m_size = 0;
+  m_capacity = _capacity;
+  m_resize_threshold = 0;
+  m_mask = 0;
+}
+
+template<typename K, typename V, typename H>
+inline void map<K, V, H>::insert(const K& _key, V&& _value) {
   if (++m_size >= m_resize_threshold) {
     grow();
   }
-  inserter(hash_key(key), utility::move(K{key}), utility::move(V{utility::forward<Ts>(args)...}));
+  inserter(hash_key(_key), _key, utility::move(_value));
 }
 
 template<typename K, typename V, typename H>
-inline void map<K, V, H>::insert(const K& key, V&& value) {
+inline void map<K, V, H>::insert(const K& _key, const V& _value) {
   if (++m_size >= m_resize_threshold) {
     grow();
   }
-  inserter(hash_key(key), utility::move(K{key}), utility::move(value));
+  inserter(hash_key(_key), _key, _value);
 }
 
 template<typename K, typename V, typename H>
-inline void map<K, V, H>::insert(const K& key, const V& value) {
-  if (++m_size >= m_resize_threshold) {
-    grow();
-  }
-  inserter(hash_key(key), utility::move(K{key}), utility::move(V{value}));
-}
-
-template<typename K, typename V, typename H>
-V* map<K, V, H>::find(const K& key) {
-  const rx_size hash{hash_key(key)};
-  if (rx_size index; lookup_index(key, index)) {
-    return m_values.cast<V*>() + index;
+V* map<K, V, H>::find(const K& _key) {
+  if (rx_size index; lookup_index(_key, index)) {
+    return m_values + index;
   }
   return nullptr;
 }
 
 template<typename K, typename V, typename H>
-const V* map<K, V, H>::find(const K& key) const {
-  const rx_size hash{hash_key(key)};
-  if (rx_size index; lookup_index(key, index)) {
-    return m_values.cast<V*>() + index;
+const V* map<K, V, H>::find(const K& _key) const {
+  if (rx_size index; lookup_index(_key, index)) {
+    return m_values + index;
   }
   return nullptr;
 }
 
 template<typename K, typename V, typename H>
-inline bool map<K, V, H>::erase(const K& key) {
-  const rx_size hash{hash_key(key)};
-  if (rx_size index; lookup_index(key, index)) {
+inline bool map<K, V, H>::erase(const K& _key) {
+  if (rx_size index; lookup_index(_key, index)) {
     if constexpr (!traits::is_trivially_destructible<K>) {
-      utility::destruct<K>(m_keys.cast<K*>() + index);
+      utility::destruct<K>(m_keys + index);
     }
     if constexpr (!traits::is_trivially_destructible<V>) {
-      utility::destruct<V>(m_values.cast<V*>() + index);
+      utility::destruct<V>(m_values + index);
     }
 
     if constexpr (sizeof index == 8) {
@@ -173,9 +262,14 @@ inline rx_size map<K, V, H>::size() const {
 }
 
 template<typename K, typename V, typename H>
-inline rx_size map<K, V, H>::hash_key(const K& key) {
+inline bool map<K, V, H>::is_empty() const {
+  return m_size == 0;
+}
+
+template<typename K, typename V, typename H>
+inline rx_size map<K, V, H>::hash_key(const K& _key) {
   const H hasher;
-  auto hash_value{hasher(key)};
+  auto hash_value{hasher(_key)};
 
   // MSB is used to indicate deleted elements
   if constexpr(sizeof hash_value == 8) {
@@ -191,36 +285,36 @@ inline rx_size map<K, V, H>::hash_key(const K& key) {
 }
 
 template<typename K, typename V, typename H>
-inline bool map<K, V, H>::is_deleted(rx_size hash) {
+inline bool map<K, V, H>::is_deleted(rx_size _hash) {
   // MSB indicates tombstones
-  return (hash >> ((sizeof hash * CHAR_BIT) - 1)) != 0;
+  return (_hash >> ((sizeof _hash * CHAR_BIT) - 1)) != 0;
 }
 
 template<typename K, typename V, typename H>
-inline rx_size map<K, V, H>::desired_position(rx_size hash) const {
-  return hash & m_mask;
+inline rx_size map<K, V, H>::desired_position(rx_size _hash) const {
+  return _hash & m_mask;
 }
 
 template<typename K, typename V, typename H>
-inline rx_size map<K, V, H>::probe_distance(rx_size hash, rx_size slot_index) const {
-  return (slot_index + m_capacity - desired_position(hash)) & m_mask;
+inline rx_size map<K, V, H>::probe_distance(rx_size _hash, rx_size _slot_index) const {
+  return (_slot_index + m_capacity - desired_position(_hash)) & m_mask;
 }
 
 template<typename K, typename V, typename H>
-inline rx_size& map<K, V, H>::element_hash(rx_size index) {
-  return m_hashes.cast<rx_size*>()[index];
+inline rx_size& map<K, V, H>::element_hash(rx_size _index) {
+  return m_hashes[_index];
 }
 
 template<typename K, typename V, typename H>
-inline rx_size map<K, V, H>::element_hash(rx_size index) const {
-  return m_hashes.cast<const rx_size*>()[index];
+inline rx_size map<K, V, H>::element_hash(rx_size _index) const {
+  return m_hashes[_index];
 }
 
 template<typename K, typename V, typename H>
 inline void map<K, V, H>::allocate() {
-  m_keys = move(m_allocator->allocate(sizeof(K) * m_capacity));
-  m_values = move(m_allocator->allocate(sizeof(V) * m_capacity));
-  m_hashes = move(m_allocator->allocate(sizeof(rx_size) * m_capacity));
+  m_keys = reinterpret_cast<K*>(m_allocator->allocate(sizeof(K) * m_capacity));
+  m_values = reinterpret_cast<V*>(m_allocator->allocate(sizeof(V) * m_capacity));
+  m_hashes = reinterpret_cast<rx_size*>(m_allocator->allocate(sizeof(rx_size) * m_capacity));
 
   for (rx_size i{0}; i < m_capacity; i++) {
     element_hash(i) = 0;
@@ -234,21 +328,17 @@ template<typename K, typename V, typename H>
 inline void map<K, V, H>::grow() {
   const auto old_capacity{m_capacity};
 
-  auto keys{move(m_keys)};
-  auto values{move(m_values)};
-  auto hashes{move(m_hashes)};
+  auto keys_data{m_keys};
+  auto values_data{m_values};
+  auto hashes_data{m_hashes};
 
   m_capacity *= 2;
   allocate();
 
-  auto keys_data{keys.template cast<K*>()};
-  auto values_data{values.template cast<V*>()};
-  auto hashes_data{hashes.template cast<rx_size*>()};
-
   for (rx_size i{0}; i < old_capacity; i++) {
     const auto hash{hashes_data[i]};
     if (hash != 0 && !is_deleted(hash)) {
-      inserter(hash, move(keys_data[i]), move(values_data[i]));
+      inserter(hash, utility::move(keys_data[i]), utility::move(values_data[i]));
       if constexpr (!traits::is_trivially_destructible<K>) {
         utility::destruct<K>(keys_data + i);
       }
@@ -258,38 +348,38 @@ inline void map<K, V, H>::grow() {
     }
   }
 
-  m_allocator->deallocate(move(keys));
-  m_allocator->deallocate(move(values));
-  m_allocator->deallocate(move(hashes));
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(keys_data));
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(values_data));
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(hashes_data));
 }
 
 template<typename K, typename V, typename H>
-inline void map<K, V, H>::construct(rx_size index, rx_size hash, K&& key, V&& value) {
-  utility::construct<K>(m_keys.cast<K*>() + index, move(key));
-  utility::construct<V>(m_values.cast<V*>() + index, move(value));
-  element_hash(index) = hash;
+inline void map<K, V, H>::construct(rx_size _index, rx_size _hash, K&& _key, V&& _value) {
+  utility::construct<K>(m_keys + _index, utility::move(_key));
+  utility::construct<V>(m_values + _index, utility::move(_value));
+  element_hash(_index) = _hash;
 }
 
 template<typename K, typename V, typename H>
-inline void map<K, V, H>::inserter(rx_size hash, K&& key, V&& value) {
-  rx_size position{desired_position(hash)};
+inline void map<K, V, H>::inserter(rx_size _hash, K&& _key, V&& _value) {
+  rx_size position{desired_position(_hash)};
   rx_size distance{0};
   for (;;) {
     if (element_hash(position) == 0) {
-      construct(position, hash, move(key), move(value));
+      construct(position, _hash, utility::move(_key), utility::move(_value));
       return;
     }
 
     const rx_size existing_element_probe_distance{probe_distance(element_hash(position), position)};
     if (existing_element_probe_distance < distance) {
       if (is_deleted(element_hash(position))) {
-        construct(position, hash, move(key), move(value));
+        construct(position, _hash, utility::move(_key), utility::move(_value));
         return;
       }
 
-      swap(hash, element_hash(position));
-      swap(key, m_keys.cast<K*>()[position]);
-      swap(value, m_values.cast<V*>()[position]);
+      swap(_hash, element_hash(position));
+      swap(_key, m_keys[position]);
+      swap(_value, m_values[position]);
 
       distance = existing_element_probe_distance;
     }
@@ -300,8 +390,21 @@ inline void map<K, V, H>::inserter(rx_size hash, K&& key, V&& value) {
 }
 
 template<typename K, typename V, typename H>
-inline bool map<K, V, H>::lookup_index(const K& key, rx_size& index) const {
-  const rx_size hash{hash_key(key)};
+inline void map<K, V, H>::inserter(rx_size _hash, const K& _key, V&& _value) {
+  K key{_key};
+  return inserter(_hash, utility::move(key), utility::move(_value));
+}
+
+template<typename K, typename V, typename H>
+inline void map<K, V, H>::inserter(rx_size _hash, const K& _key, const V& _value) {
+  K key{_key};
+  V value{_value};
+  return inserter(_hash, utility::move(key), utility::move(value));
+}
+
+template<typename K, typename V, typename H>
+inline bool map<K, V, H>::lookup_index(const K& _key, rx_size& _index) const {
+  const rx_size hash{hash_key(_key)};
   rx_size position{desired_position(hash)};
   rx_size distance{0};
   for (;;) {
@@ -309,8 +412,8 @@ inline bool map<K, V, H>::lookup_index(const K& key, rx_size& index) const {
       return false;
     } else if (distance > probe_distance(element_hash(position), position)) {
       return false;
-    } else if (element_hash(position) == hash && m_keys.cast<K*>()[position] == key) {
-      index = position;
+    } else if (element_hash(position) == hash && m_keys[position] == _key) {
+      _index = position;
       return true;
     }
     position = (position + 1) & m_mask;
@@ -319,8 +422,42 @@ inline bool map<K, V, H>::lookup_index(const K& key, rx_size& index) const {
   return false; // unreachable
 }
 
+template<typename K, typename V, typename H>
+template<typename F>
+inline bool map<K, V, H>::each(F&& _function) {
+  for (rx_size i{0}; i < m_capacity; i++) {
+    const auto hash{m_hashes[i]};
+    if (hash != 0 && !is_deleted(hash)) {
+      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+        if (!_function(m_hashes[i], m_keys[i], m_values[i])) {
+          return false;
+        }
+      } else {
+        _function(m_hashes[i], m_keys[i], m_values[i]);
+      }
+    }
+  }
+  return true;
+}
+
+template<typename K, typename V, typename H>
+template<typename F>
+inline bool map<K, V, H>::each(F&& _function) const {
+  for (rx_size i{0}; i < m_capacity; i++) {
+    const auto hash{m_hashes[i]};
+    if (hash != 0 && !is_deleted(hash)) {
+      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+        if (!_function(m_hashes[i], m_keys[i], m_values[i])) {
+          return false;
+        }
+      } else {
+        _function(m_hashes[i], m_keys[i], m_values[i]);
+      }
+    }
+  }
+  return true;
+}
+
 } // namespace rx
 
-#endif
-
-#endif // RX_CORE_MAP_H
+#endif // RX_CORE_MAP

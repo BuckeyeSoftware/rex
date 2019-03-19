@@ -4,8 +4,23 @@
 #include <rx/render/frontend.h>
 #include <rx/core/utility/bit.h>
 
-namespace rx {
-namespace render {
+namespace rx::render {
+  // checks if |_type| is a sampler type
+  static bool is_sampler(uniform::category _type) {
+    switch (_type) {
+    case uniform::category::k_sampler1D:
+      [[fallthrough]];
+    case uniform::category::k_sampler2D:
+      [[fallthrough]];
+    case uniform::category::k_sampler3D:
+      [[fallthrough]];
+    case uniform::category::k_samplerCM:
+      return true;
+    default:
+      return false;
+    }
+  }
+
   uniform::uniform() 
     : m_program{nullptr}
   {
@@ -42,7 +57,13 @@ namespace render {
 
   rx_size uniform::size_for_type(category _type) {
     switch (_type) {
-    case uniform::category::k_sampler:
+    case uniform::category::k_sampler1D:
+      [[fallthrough]];
+    case uniform::category::k_sampler2D:
+      [[fallthrough]];
+    case uniform::category::k_sampler3D:
+      [[fallthrough]];
+    case uniform::category::k_samplerCM:
       return sizeof(int);
     case uniform::category::k_bool:
       return sizeof(bool);
@@ -71,7 +92,7 @@ namespace render {
   }
 
   void uniform::record_sampler(int _sampler) {
-    RX_ASSERT(m_type == category::k_sampler, "not a sampler");
+    RX_ASSERT(is_sampler(m_type), "not a sampler");
     if (*as_int != _sampler) {
       *as_int = _sampler;
       m_program->m_dirty_uniforms |= m_mask;
@@ -172,70 +193,20 @@ namespace render {
     m_program->m_dirty_uniforms |= m_mask;
   }
 
-  program::description::description(const string& _name, int _shaders, const array<string>& _data,
-    const array<string>& _layout, const array<string>& _defines)
-    : name{_name}
-    , shaders{_shaders}
-    , data{_data}
-    , layout{_layout}
-    , defines{_defines}
-  {
-  }
-
-  bool operator==(const program::description& _lhs, const program::description& _rhs) {
-    if (_lhs.name != _rhs.name) {
-      return false;
-    }
-
-    if (_lhs.data.size() != _rhs.data.size()) {
-      return false;
-    }
-
-    if (_lhs.layout.size() != _rhs.layout.size()) {
-      return false;
-    }
-
-    if (_lhs.defines.size() != _rhs.defines.size()) {
-      return false;
-    }
-
-    for (rx_size i{0}; i < _lhs.data.size(); i++) {
-      if (_lhs.data[i] != _rhs.data[i]) {
-        return false;
-      }
-    }
-
-    for (rx_size i{0}; i < _lhs.layout.size(); i++) {
-      if (_lhs.layout[i] != _rhs.layout[i]) {
-        return false;
-      }
-    }
-
-    for (rx_size i{0}; i < _lhs.defines.size(); i++) {
-      if (_lhs.defines[i] != _rhs.defines[i]) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   program::program(frontend* _frontend)
     : resource{_frontend, resource::category::k_program}
     , m_allocator{_frontend->allocator()}
     , m_uniforms{m_allocator}
-    , m_has_description{false}
     , m_dirty_uniforms{0}
   {
   }
 
-  void program::record_description(const description& _description) {
-    m_description = _description;
-    m_has_description = true;
+  void program::add_shader(shader&& _shader) {
+    m_shaders.push_back(utility::move(_shader));
   }
 
   bool program::validate() const {
-    return m_has_description;
+    return !m_shaders.is_empty();
   }
 
   uniform& program::add_uniform(const string& _name, uniform::category _type) {
@@ -264,25 +235,4 @@ namespace render {
 
     RX_ASSERT(m_dirty_uniforms == 0, "failed to flush all uniforms");
   }
-} // namespace render
-
-rx_size hash<render::program::description>::operator()(const render::program::description& _description) {
-  using hasher = hash<string>;
-  rx_size result{hasher{}(_description.name)};
-
-  _description.data.each_fwd([&result](const string& _data) {
-    result = hash_combine(result, hasher{}(_data));
-  });
-
-  _description.layout.each_fwd([&result](const string& _layout) {
-    result = hash_combine(result, hasher{}(_layout));
-  });
-
-  _description.defines.each_fwd([&result](const string& _define) {
-    result = hash_combine(result, hasher{}(_define));
-  });
-
-  return result;
-}
-
-} // namespace rx
+} // namespace rx::render

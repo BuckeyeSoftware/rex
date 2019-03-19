@@ -39,7 +39,7 @@ struct json {
   rx_size size() const;
 
   template<typename F>
-  void each(F&& _function) const;
+  bool each(F&& _function) const;
 
 private:
   json(struct json_value_s* _head);
@@ -83,16 +83,17 @@ inline bool json::is_string() const {
 }
 
 template<typename F>
-inline void json::each(F&& _function) const {
+inline bool json::each(F&& _function) const {
   for (rx_size i{0}; i < size(); i++) {
     if constexpr(traits::is_same<traits::return_type<F>, bool>) {
       if (!_function(operator[](i))) {
-        return;
+        return false;
       }
     } else {
       _function(operator[](i));
     }
   }
+  return true;
 }
 
 } // namespace rx

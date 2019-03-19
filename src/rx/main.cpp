@@ -14,6 +14,7 @@
 #include <rx/render/texture.h>
 #include <rx/render/program.h>
 #include <rx/render/timer.h>
+#include <rx/render/technique.h>
 #include <rx/render/backend_gl4.h>
 
 #include <rx/input/input.h>
@@ -53,6 +54,9 @@ RX_CONSOLE_BVAR(
   "display.hdr",
   "use HDR output if supported",
   false);
+
+#include <rx/core/filesystem/file.h>
+#include <rx/core/map.h>
 
 int entry(int argc, char **argv) {
   (void)argc;
@@ -137,6 +141,28 @@ int entry(int argc, char **argv) {
 
     rx::render::frontend renderer{&rx::memory::g_system_allocator, &gl4, allocation_info};
 
+    rx::memory::uninitialized_storage<rx::render::technique> technique;
+
+    {
+      rx::filesystem::file data("technique.json5", "rb");
+      if (data) {
+        auto size{data.size()};
+        if (size) {
+          rx::string contents;
+          contents.resize(*size);
+          if (data.read(reinterpret_cast<rx_byte*>(contents.data()), contents.size())) {
+            technique.init(&renderer, rx::json{contents});
+          } else {
+            abort();
+          }
+        } else {
+          abort();
+        }
+      } else {
+        abort();
+      }
+    }
+
     // create, record and initialize buffer
     auto buffer{renderer.create_buffer(RX_RENDER_TAG("test"))};
     buffer->write_vertices(vertices, sizeof vertices, sizeof(rx::math::vec3f));
@@ -149,30 +175,8 @@ int entry(int argc, char **argv) {
     target->request_swapchain();
     renderer.initialize_target(RX_RENDER_TAG("test"), target);
 
-    // create, record and initialize program
-    auto program{renderer.create_program(RX_RENDER_TAG("test"))};
-
-    rx::array<rx::string> data;
-    rx::array<rx::string> layout;
-    data.emplace_back("fs_color");
-    layout.emplace_back("a_position");
-
-    program->record_description({
-      "test", 
-      rx::render::program::k_vertex_shader | rx::render::program::k_fragment_shader,
-      data,
-      layout,
-      {}
-    });
-
-    program->add_uniform("u_color", rx::render::uniform::category::k_vec3f);
-    program->add_uniform("u_transform", rx::render::uniform::category::k_mat4x4f);
-
-    renderer.initialize_program(RX_RENDER_TAG("test"), program);
-
     rx::render::frame_timer timer;
     rx::input::input input;
-
     rx::math::transform camera;
 
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
@@ -247,18 +251,12 @@ int entry(int argc, char **argv) {
         {1.0f, 0.0f, 0.0f, 1.0f}
       );
 
-      rx_f32 r{static_cast<rx_f32>(rand()) / static_cast<rx_f32>(RAND_MAX)};
-      rx_f32 g{static_cast<rx_f32>(rand()) / static_cast<rx_f32>(RAND_MAX)};
-      rx_f32 b{static_cast<rx_f32>(rand()) / static_cast<rx_f32>(RAND_MAX)};
-
-      program->uniforms()[0].record_vec3f({r, g, b});
-
       const auto model{rx::math::mat4x4f::translate({0.0f, 0.0f, 10.0f})};
       const auto view{rx::math::mat4x4f::invert(camera.to_mat4())};
       const auto projection{rx::math::mat4x4f::perspective(68.0f, {0.01f, 1024.0f}, 1600.0f/900.0f)};
 
-      // RX_MESSAGE("x: %s, y: %s, z: %s)
-      program->uniforms()[1].record_mat4x4f(model * view * projection);
+      rx::render::program* program{*technique.data()};
+      program->uniforms()[0].record_mat4x4f(model * view * projection);
 
       renderer.draw_elements(
         RX_RENDER_TAG("test"),
@@ -298,7 +296,8 @@ int entry(int argc, char **argv) {
 
     renderer.destroy_target(RX_RENDER_TAG("test"), target);
     renderer.destroy_buffer(RX_RENDER_TAG("test"), buffer);
-    renderer.destroy_program(RX_RENDER_TAG("test"), program);
+
+    technique.fini();
 
     renderer.process();
   }
