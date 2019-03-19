@@ -135,6 +135,8 @@ int entry(int argc, char **argv) {
       0, 1, 2
     };
 
+  SDL_GL_SetSwapInterval(1);
+
   {
     rx::render::frontend::allocation_info allocation_info;
     rx::render::backend_gl4 gl4{allocation_info};
@@ -178,6 +180,7 @@ int entry(int argc, char **argv) {
     rx::render::frame_timer timer;
     rx::input::input input;
     rx::math::transform camera;
+    //timer.cap_fps(60);
 
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
       input.update(0);
@@ -234,7 +237,6 @@ int entry(int argc, char **argv) {
         const auto l{camera.to_mat4().x};
         camera.translate = camera.translate - rx::math::vec3f(l.x, l.y, l.z) * (10.0f * timer.delta_time());
       }
-      rx::render::state state; // default
 
       // clear depth to 1s and stencil to 0s
       renderer.clear(
@@ -251,30 +253,34 @@ int entry(int argc, char **argv) {
         {1.0f, 0.0f, 0.0f, 1.0f}
       );
 
-      const auto model{rx::math::mat4x4f::translate({0.0f, 0.0f, 10.0f})};
+      auto model{rx::math::mat4x4f::translate({0.0f, 0.0f, 10.0f})};
       const auto view{rx::math::mat4x4f::invert(camera.to_mat4())};
       const auto projection{rx::math::mat4x4f::perspective(68.0f, {0.01f, 1024.0f}, 1600.0f/900.0f)};
 
       rx::render::program* program{*technique.data()};
-      program->uniforms()[0].record_mat4x4f(model * view * projection);
 
-      renderer.draw_elements(
-        RX_RENDER_TAG("test"),
-        state,
-        target,
-        buffer,
-        program,
-        3,
-        0,
-        rx::render::primitive_type::k_triangles,
-        ""
-      );
+      rx::render::state state; // default
 
-      if (renderer.process())
-      {
-        renderer.swap();
+      for (int i{0}; i < 1024; i++) {
+        model = rx::math::mat4x4f::translate({-2.5f*50.0f + (2.5f * i), 0.0f, 10.0f});
+        program->uniforms()[0].record_mat4x4f(model * view * projection);
+        renderer.draw_elements(
+          RX_RENDER_TAG("test"),
+          state,
+          target,
+          buffer,
+          program,
+          3,
+          0,
+          rx::render::primitive_type::k_triangles,
+          ""
+        );
       }
 
+      if (renderer.process()) {
+        renderer.swap();
+      }
+  
       if (timer.update()) {
         const auto stats{rx::memory::g_system_allocator->stats()};
         char format[1024];

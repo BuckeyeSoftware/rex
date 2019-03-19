@@ -308,7 +308,7 @@ void frontend::draw_elements(
     return;
   }
 
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
 
   const auto dirty_uniforms_size{_program->dirty_uniforms_size()};
 
@@ -354,7 +354,7 @@ void frontend::clear(
   const math::vec4f& _clear_color)
 {
   RX_ASSERT(_clear_mask, "empty clear");
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
 
   auto command_base{allocate_command(draw_command, command_type::k_clear)};
   auto command{reinterpret_cast<clear_command*>(command_base + sizeof(command_header))};
@@ -367,7 +367,7 @@ void frontend::clear(
 }
 
 bool frontend::process() {
-  concurrency::scope_lock<concurrency::mutex> lock(m_mutex);
+  concurrency::scope_lock lock(m_mutex);
 
   if (m_commands.is_empty()) {
     return false;
