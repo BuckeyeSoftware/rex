@@ -457,9 +457,9 @@ frontend::statistics frontend::stats(resource::category _type) {
   return {};
 }
 
-void frontend::swap() {
+void frontend::swap(void* _context) {
   if (m_backend) {
-    m_backend->swap();
+    m_backend->swap(_context);
   }
 }
 

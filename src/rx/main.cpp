@@ -262,7 +262,7 @@ int entry(int argc, char **argv) {
       rx::render::state state; // default
 
       for (int i{0}; i < 1024; i++) {
-        model = rx::math::mat4x4f::translate({-2.5f*50.0f + (2.5f * i), 0.0f, 10.0f});
+        model = rx::math::mat4x4f::translate({-2.5f*1024.0f*.5f + (2.5f * i), 0.0f, 10.0f});
         program->uniforms()[0].record_mat4x4f(model * view * projection);
         renderer.draw_elements(
           RX_RENDER_TAG("test"),
@@ -278,7 +278,7 @@ int entry(int argc, char **argv) {
       }
 
       if (renderer.process()) {
-        renderer.swap();
+        renderer.swap(reinterpret_cast<void*>(window));
       }
   
       if (timer.update()) {

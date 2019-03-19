@@ -11,7 +11,7 @@ struct backend_gl4 : backend {
   ~backend_gl4();
 
   void process(rx_byte* _command);
-  void swap();
+  void swap(void* _context);
 
 private:
   void* m_impl;

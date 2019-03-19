@@ -99,7 +99,7 @@ struct frontend {
   target* backbuffer() const;
 
   bool process();
-  void swap();
+  void swap(void* _context);
 
   memory::allocator* allocator() const;
 

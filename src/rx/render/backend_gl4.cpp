@@ -1467,8 +1467,8 @@ void backend_gl4::process(rx_byte* _command) {
   }
 }
 
-void backend_gl4::swap() {
-  SDL_GL_SwapWindow(SDL_GL_GetCurrentWindow());
+void backend_gl4::swap(void* _context) {
+  SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(_context));
 }
 
 

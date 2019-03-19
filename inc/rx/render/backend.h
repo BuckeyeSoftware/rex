@@ -10,7 +10,7 @@ struct backend
   : concepts::interface
 {
   virtual void process(rx_byte* _command) = 0;
-  virtual void swap() = 0;
+  virtual void swap(void* _context) = 0;
 };
 
 } // namespace rx::render
