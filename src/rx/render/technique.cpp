@@ -163,12 +163,14 @@ technique::operator program*() const {
 
 program* technique::operator[](rx_u64 _flags) const {
   RX_ASSERT(m_type == category::k_permute, "not a permute technique");
+  (void)_flags;
   // TODO
   return nullptr;
 }
 
 program* technique::operator[](const char* _variant) const {
   RX_ASSERT(m_type == category::k_variant, "not a variant technique");
+  (void)_variant;
   // TODO
   return nullptr;
 }
