@@ -46,53 +46,6 @@ RX_CONSOLE_BVAR(
   "use HDR output if supported",
   false);
 
-// #include <rx/render/immediate.h>
-
-#if 0
-static void draw_frame_graph(rx::render::renderer& _renderer) {
-  auto& _queue = _renderer.immediates();
-  const auto& _time = _renderer.time();
-  const auto& timestamps = _time.timestamps();
-
-  static constexpr const rx_f32 k_scale{16.66*2.0f};
-
-  const rx::math::vec2i box_size{600, 200};
-  const rx_s32 box_bottom{25};
-  const rx_s32 box_middle{box_bottom + (box_size.h / 2)};
-  const rx_s32 box_top{box_bottom + box_size.h};
-  const rx_s32 box_left{1600/2 - box_size.w/2};
-  const rx_s32 box_center{box_left+(box_size.w/2)};
-  const rx_s32 box_right{box_left+box_size.w};
-
-  _queue.record_rectangle({box_left, box_bottom}, box_size, 0, {0.0f, 0.0f, 0.0f, 1.0f});
-
-  rx::array<rx::math::vec2i> points;
-  timestamps.each_fwd([&](const rx::render::frame_timer::timestamp& _timestamp) {
-    const rx_f32 delta_x{static_cast<rx_f32>((_time.life_time() - _timestamp.life_time) / rx::render::frame_timer::k_timestamp_seconds)};
-    const rx_f32 delta_y{static_cast<rx_f32>(rx::min(_timestamp.frame_time / k_scale, 1.0))};
-    const rx::math::vec2i point{
-      box_right - static_cast<rx_s32>(delta_x * box_size.w),
-      box_top - static_cast<rx_s32>(delta_y * box_size.h)
-    };
-    points.push_back(point);
-  });
-
-  _queue.record_scissor({box_left, box_bottom}, box_size);
-  for (rx_size i{1}; i < points.size(); i++) {
-    _queue.record_line(points[i - 1], points[i], 0, 1, {0.0f, 1.0f, 0.0f, 1.0f});
-  }
-  _queue.record_scissor({-1, -1}, {-1, -1});
-
-  _queue.record_line({box_left, box_bottom}, {box_left, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-  _queue.record_line({box_center, box_bottom}, {box_center, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-  _queue.record_line({box_right, box_bottom}, {box_right, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-  _queue.record_line({box_left, box_bottom}, {box_right, box_bottom}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-  _queue.record_line({box_left, box_middle}, {box_right, box_middle}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-  _queue.record_line({box_left, box_top}, {box_right, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-}
-
-#endif
-
 int entry(int argc, char **argv) {
   (void)argc;
   (void)argv;
@@ -250,7 +203,6 @@ int entry(int argc, char **argv) {
 
   return 0;
 }
-
 
 int main(int argc, char **argv) {
   // trigger system allocator initialization first

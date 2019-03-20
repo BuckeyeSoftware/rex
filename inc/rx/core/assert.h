@@ -1,6 +1,8 @@
 #ifndef RX_CORE_ASSERT_H
 #define RX_CORE_ASSERT_H
 
+#include <rx/core/config.h>
+
 namespace rx {
 
 [[noreturn]]
@@ -22,5 +24,13 @@ void assert_fail(const char* expression, const char* file,
 #define RX_ASSERT(condition, ...) \
   static_cast<void>(0)
 #endif // defined(RX_DEBUG)
+
+#if __has_builtin(__builtin_unreachable)
+#define RX_UNREACHABLE() \
+  __builtin_unreachable()
+#else
+#define RX_UNREACHABLE() \
+  RX_ABORT("reached unreachable code")
+#endif
 
 #endif // RX_CORE_ASSERT_H

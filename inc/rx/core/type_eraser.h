@@ -1,9 +1,6 @@
 #ifndef RX_CORE_TYPE_ERASER_H
 #define RX_CORE_TYPE_ERASER_H
 
-#include <rx/core/tuple.h> // tuple
-#include <rx/core/concepts/no_copy.h> // no_copy
-
 #include <rx/core/utility/forward.h>
 #include <rx/core/utility/move.h>
 #include <rx/core/utility/nat.h>
@@ -11,6 +8,7 @@
 #include <rx/core/utility/make_index_sequence.h>
 #include <rx/core/utility/construct.h>
 #include <rx/core/utility/destruct.h>
+#include <rx/core/utility/tuple.h> // tuple
 
 #include <rx/core/traits/type_identity.h>
 
@@ -19,7 +17,9 @@ namespace rx {
 // type erasing variant
 // 32-bit: 16 bytes + k_memory
 // 64-bit: 32 bytes + k_memory
-struct type_eraser : concepts::no_copy {
+struct type_eraser
+  : concepts::no_copy
+{
   static constexpr const rx_size k_alignment{16};
   static constexpr const rx_size k_memory{64};
 

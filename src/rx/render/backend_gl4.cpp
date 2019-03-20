@@ -8,11 +8,10 @@
 #include <rx/render/program.h>
 #include <rx/render/texture.h>
 
-#include <rx/core/algorithm.h>
 #include <rx/core/debug.h>
 #include <rx/core/log.h>
 
-#include <rx/core/filesystem/file.h>
+#include <rx/core/algorithm/max.h>
 
 #include <rx/math/log2.h>
 
@@ -1207,7 +1206,7 @@ void backend_gl4::process(rx_byte* _command) {
 
           GLint levels{1};
           if (filter.mip_maps) {
-            levels = math::log2(rx_u32(1 + max(dimensions.w, dimensions.h)));
+            levels = math::log2(rx_u32(1 + algorithm::max(dimensions.w, dimensions.h)));
           }
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
@@ -1256,7 +1255,7 @@ void backend_gl4::process(rx_byte* _command) {
 
           GLint levels{1};
           if (filter.mip_maps) {
-            levels = math::log2(rx_u32(1 + max(dimensions.w, dimensions.h, dimensions.d)));
+            levels = math::log2(rx_u32(1 + algorithm::max(dimensions.w, dimensions.h, dimensions.d)));
           }
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);

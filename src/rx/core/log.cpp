@@ -4,7 +4,7 @@
 #include <rx/core/log.h> // log
 #include <rx/core/string.h> // string
 #include <rx/core/array.h> // array
-#include <rx/core/algorithm.h> // max
+#include <rx/core/algorithm/max.h>
 
 #include <rx/core/filesystem/file.h> // file
 
@@ -104,7 +104,7 @@ logger::logger()
 
       // calculate maximum name length
       const auto name_length{strlen(name)};
-      m_max_name_length = max(m_max_name_length, name_length);
+      m_max_name_length = algorithm::max(m_max_name_length, name_length);
     }
     return true;
   });
@@ -115,7 +115,7 @@ logger::logger()
   const auto level2{strlen(get_level_string(log::level::k_verbose))};
   const auto level3{strlen(get_level_string(log::level::k_error))};
 
-  m_max_level_length = max(level0, level1, level2, level3);
+  m_max_level_length = algorithm::max(level0, level1, level2, level3);
 
   // signal the logging thread to begin
   {

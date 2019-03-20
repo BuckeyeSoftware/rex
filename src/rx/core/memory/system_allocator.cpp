@@ -2,7 +2,7 @@
 
 #include <rx/core/memory/system_allocator.h> // system_allocator
 #include <rx/core/concurrency/scope_lock.h>
-#include <rx/core/algorithm.h> // max
+#include <rx/core/algorithm/max.h>
 
 namespace rx::memory {
 
@@ -26,8 +26,8 @@ rx_byte* system_allocator::allocate(rx_size _size) {
     m_statistics.allocations++;
     m_statistics.used_request_bytes += _size;
     m_statistics.used_actual_bytes += actual_size;
-    m_statistics.peak_request_bytes = max(m_statistics.peak_request_bytes, m_statistics.used_request_bytes);
-    m_statistics.peak_actual_bytes = max(m_statistics.peak_actual_bytes, m_statistics.used_actual_bytes);
+    m_statistics.peak_request_bytes = algorithm::max(m_statistics.peak_request_bytes, m_statistics.used_request_bytes);
+    m_statistics.peak_actual_bytes = algorithm::max(m_statistics.peak_actual_bytes, m_statistics.used_actual_bytes);
   }
   return aligned;
 }

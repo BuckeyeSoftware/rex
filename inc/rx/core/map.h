@@ -3,12 +3,12 @@
 
 #include <limits.h> // CHAR_BIT
 
-#include <rx/core/algorithm.h> // swap
 #include <rx/core/hash.h> // hash
 
 #include <rx/core/utility/construct.h>
 #include <rx/core/utility/destruct.h>
 #include <rx/core/utility/move.h>
+#include <rx/core/utility/swap.h>
 
 #include <rx/core/traits/return_type.h>
 #include <rx/core/traits/is_same.h>
@@ -375,9 +375,9 @@ inline void map<K, V, H>::inserter(rx_size _hash, K&& _key, V&& _value) {
         return;
       }
 
-      swap(_hash, element_hash(position));
-      swap(_key, m_keys[position]);
-      swap(_value, m_values[position]);
+      utility::swap(_hash, element_hash(position));
+      utility::swap(_key, m_keys[position]);
+      utility::swap(_value, m_values[position]);
 
       distance = existing_element_probe_distance;
     }

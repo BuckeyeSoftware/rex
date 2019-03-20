@@ -2,9 +2,10 @@
 #include <stdarg.h> // va_{list, start, end, copy}
 #include <stdio.h> // vsnprintf
 
-#include <rx/core/algorithm.h> // swap
 #include <rx/core/debug.h> // RX_MESSAGE
 #include <rx/core/string.h> // string
+
+#include <rx/core/utility/swap.h>
 
 namespace rx {
 
@@ -245,9 +246,9 @@ char string::pop_back() {
 
 // complicated because of small string optimization
 void string::swap(string& other_) {
-  rx::swap(m_data, other_.m_data);
-  rx::swap(m_last, other_.m_last);
-  rx::swap(m_capacity, other_.m_capacity);
+  utility::swap(m_data, other_.m_data);
+  utility::swap(m_last, other_.m_last);
+  utility::swap(m_capacity, other_.m_capacity);
 
   char buffer[k_small_string];
 
