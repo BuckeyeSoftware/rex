@@ -6,7 +6,11 @@
 namespace rx {
 
 template<typename T>
-struct hash;
+struct hash {
+  rx_size operator()(const T& _value) const {
+    return _value.hash();
+  }
+};
 
 template<>
 struct hash<bool> {

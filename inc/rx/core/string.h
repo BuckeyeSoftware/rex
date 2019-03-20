@@ -82,6 +82,8 @@ struct string {
   bool begins_with(const char* _prefix) const;
   bool ends_with(const char* _suffix) const;
 
+  rx_size hash() const;
+
 private:
   static string formatter(memory::allocator* alloc, const char* fmt, ...);
 
@@ -139,22 +141,6 @@ private:
   memory::allocator* m_allocator;
   rx_u16* m_data;
   rx_size m_size;
-};
-
-// hash function for string
-template<typename T>
-struct hash;
-
-template<>
-struct hash<string> {
-  rx_size operator()(const string& contents) const {
-    // djb2
-    rx_size value{5381};
-    for (const char *ch{contents.data()}; *ch; ch++) {
-      value = ((value << 5) + value) + *ch;
-    }
-    return value;
-  }
 };
 
 // format function for string

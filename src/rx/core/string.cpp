@@ -361,6 +361,15 @@ bool string::ends_with(const char* _suffix) const {
   return strcmp(m_data + size() - strlen(_suffix), _suffix) == 0;
 }
 
+rx_size string::hash() const {
+  // djb2
+  rx_size value{5381};
+  for (const char *ch{m_data}; *ch; ch++) {
+    value = ((value << 5) + value) + *ch;
+  }
+  return value;
+}
+
 static rx_size utf16_len(const rx_u16* _data) {
   rx_size length{0};
   while (_data[length]) {
