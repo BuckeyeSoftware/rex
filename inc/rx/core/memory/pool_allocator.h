@@ -14,6 +14,9 @@ namespace rx::memory {
 
 struct allocator;
 
+// allocator for a pool of objects, specify the object size and the # of objects
+// needed ahead of time, maintains an efficent mechanism for allocating objects
+// of that size and that size only
 struct pool_allocator
   : concepts::no_copy
   , concepts::no_move

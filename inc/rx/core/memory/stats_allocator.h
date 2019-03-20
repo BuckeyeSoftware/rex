@@ -23,6 +23,9 @@ struct statistics {
   rx_u64 used_actual_bytes;
 };
 
+// extends an existing allocator with a header of metadata used to track allocations;
+// useful for finding memory leaks, reasoning about memory usage of engine systems
+// and debugging memory corruption
 struct stats_allocator : allocator {
   stats_allocator(allocator* _allocator);
   ~stats_allocator();

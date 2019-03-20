@@ -6,6 +6,7 @@
 
 namespace rx::memory {
 
+// the base allocator everything allocates from
 extern static_global<stats_allocator> g_system_allocator;
 
 } // namespace rx::memory

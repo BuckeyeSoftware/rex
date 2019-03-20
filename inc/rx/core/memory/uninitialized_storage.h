@@ -12,7 +12,8 @@
 namespace rx::memory {
 
 // represents uninitialized storage suitable in size and alignment for
-// an object of type |T|
+// an object of type |T|, can be type erased for implementing deferred static
+// globals and variant types
 template<typename T>
 struct uninitialized_storage
   : concepts::no_copy

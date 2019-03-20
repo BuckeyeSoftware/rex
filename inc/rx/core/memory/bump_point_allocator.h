@@ -7,6 +7,8 @@ namespace rx::memory {
 
 struct allocator;
 
+// linear burn / scratch memory, no reallocations or deallocations, just bumps
+// a pointer along based on the allocation size
 struct bump_point_allocator {
   bump_point_allocator(allocator* _allocator, rx_size _size);
   ~bump_point_allocator();
