@@ -24,8 +24,11 @@ struct renderer {
 
 private:
   backend* create_backend(const char* _name, void* _data);
+  memory::allocator* create_allocator();
 
   memory::allocator* m_allocator;
+  memory::allocator* m_frontend_allocator;
+  memory::allocator* m_backend_allocator;
 
   backend* m_backend;
 

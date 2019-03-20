@@ -12,6 +12,8 @@ static constexpr const char* k_technique_path{"base/renderer/techniques"};
 
 renderer::renderer(memory::allocator* _allocator, const char* _backend_name, void* _backend_data)
   : m_allocator{_allocator}
+  , m_frontend_allocator{create_allocator()}
+  , m_backend_allocator{create_allocator()}
   , m_backend{create_backend(_backend_name, _backend_data)}
   , m_frontend{_allocator, m_backend}
   , m_immediates{nullptr}
@@ -42,15 +44,15 @@ renderer::renderer(memory::allocator* _allocator, const char* _backend_name, voi
   technique* immediate_technique{find_technique_by_name("immediate")};
   RX_ASSERT(immediate_technique, "immediate technique not found");
 
-  m_immediates = reinterpret_cast<immediate*>(m_allocator->allocate(sizeof *m_immediates));
+  m_immediates = reinterpret_cast<immediate*>(m_frontend_allocator->allocate(sizeof *m_immediates));
   RX_ASSERT(m_immediates, "out of memory");
 
-  utility::construct<immediate>(m_immediates, &m_frontend, immediate_technique);
+  utility::construct<immediate>(m_immediates, m_frontend_allocator, &m_frontend, immediate_technique);
 }
 
 renderer::~renderer() {
   utility::destruct<immediate>(m_immediates);
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_immediates));
+  m_frontend_allocator->deallocate(reinterpret_cast<rx_byte*>(m_immediates));
 
   m_frontend.destroy_target(RX_RENDER_TAG("backbuffer"), m_back_target);
   m_frontend.destroy_target(RX_RENDER_TAG("composite"), m_composite_target);
@@ -59,7 +61,12 @@ renderer::~renderer() {
   m_frontend.process();
 
   utility::destruct<backend>(m_backend);
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_backend));
+  m_backend_allocator->deallocate(reinterpret_cast<rx_byte*>(m_backend));
+
+  utility::destruct<memory::allocator>(m_backend_allocator);
+  utility::destruct<memory::allocator>(m_frontend_allocator);
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_backend_allocator));
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_frontend_allocator));
 }
 
 bool renderer::update() {
@@ -84,11 +91,17 @@ bool renderer::update() {
 
 backend* renderer::create_backend(const char* _name, void* _data) {
   if (!strcmp(_name, "gl4")) {
-    auto data{m_allocator->allocate(sizeof(backend_gl4))};
-    utility::construct<backend_gl4>(data, m_allocator, _data);
+    auto data{m_backend_allocator->allocate(sizeof(backend_gl4))};
+    utility::construct<backend_gl4>(data, m_backend_allocator, _data);
     return reinterpret_cast<backend*>(data);
   }
   return nullptr;
+}
+
+memory::allocator* renderer::create_allocator() {
+  auto data{m_allocator->allocate(sizeof(memory::stats_allocator))};
+  utility::construct<memory::stats_allocator>(data, m_allocator);
+  return reinterpret_cast<memory::allocator*>(data);
 }
 
 technique* renderer::find_technique_by_name(const char* _name) {

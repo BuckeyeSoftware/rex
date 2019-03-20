@@ -16,6 +16,9 @@ namespace rx::render {
 
 struct immediate {
   struct queue {
+    queue() = default;
+    queue(memory::allocator* _allocator);
+
     struct box {
       math::vec2i position;
       math::vec2i size;
@@ -78,7 +81,7 @@ struct immediate {
     array<command> m_commands;
   };
 
-  immediate(frontend* _frontend, technique* _technique);
+  immediate(memory::allocator* _allocator, frontend* _frontend, technique* _technique);
   ~immediate();
 
   void render(target* _target);
@@ -115,6 +118,7 @@ private:
     state render_state;
   };
 
+  memory::allocator* m_allocator;
   frontend* m_frontend;
   technique* m_technique;
 

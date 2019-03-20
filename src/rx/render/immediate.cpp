@@ -13,6 +13,11 @@
 
 namespace rx::render {
 
+immediate::queue::queue(memory::allocator* _allocator)
+  : m_commands{_allocator}
+{
+}
+
 bool immediate::queue::command::operator!=(const command& _command) const {
   if (_command.hash != hash) {
     return true;
@@ -137,12 +142,22 @@ void immediate::queue::clear() {
   m_commands.clear();
 }
 
-immediate::immediate(frontend* _frontend, technique* _technique)
-  : m_frontend{_frontend}
+immediate::immediate(memory::allocator* _allocator, frontend* _frontend, technique* _technique)
+  : m_allocator{_allocator}
+  , m_frontend{_frontend}
   , m_technique{_technique}
+  , m_queue{m_allocator}
+  , m_vertices{m_allocator}
+  , m_elements{m_allocator}
+  , m_batches{m_allocator}
   , m_rd_index{1}
   , m_wr_index{0}
 {
+  for (rx_size i{0}; i < k_buffers; i++) {
+    m_render_batches[i] = {m_allocator};
+    m_render_queue[i] = {m_allocator};
+  }
+
   // generate circle geometry
   for (rx_size i{0}; i < k_circle_vertices; i++) {
     const rx_f32 phi{rx_f32(i) / rx_f32(k_circle_vertices) * math::k_pi<rx_f32> * 2.0f};
