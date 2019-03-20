@@ -6,24 +6,6 @@
 
 namespace rx::memory {
 
-// all allocators must track statistics
-struct statistics {
-  rx_size allocations;           // # of calls to allocate
-  rx_size request_reallocations; // # of calls to reallocate
-  rx_size actual_reallocations;  // # of calls to reallocate that actually just resized memory in place
-  rx_size deallocations;         // # of calls to deallocate
-
-  // measures peak and in-use requested bytes, that is the literal sizes given
-  // to allocate and reallocate and not the actual bytes
-  rx_u64 peak_request_bytes;
-  rx_u64 used_request_bytes;
-
-  // measures peak and in-use actual bytes, these are the actual values after
-  // sizes to allocate and reallocate are rounded aligned and tracked with metadata
-  rx_u64 peak_actual_bytes;
-  rx_u64 used_actual_bytes;
-};
-
 struct allocator : concepts::interface {
   // all allocators must align their data and round their sizes to this alignment
   // value as well, failure to do so will lead to unaligned reads and writes to
@@ -46,11 +28,6 @@ struct allocator : concepts::interface {
 
   // reallocate existing memory |_data|
   virtual void deallocate(rx_byte* data) = 0;
-
-  // check if this allocator owns the memory pointed by |_data|
-  virtual bool owns(const rx_byte* _data) const = 0;
-
-  virtual statistics stats() = 0;
 
   static constexpr rx_uintptr round_to_alignment(rx_uintptr _ptr_or_size);
 };

@@ -33,11 +33,10 @@ void assert_fail(const char* expression, const char* file,
   // deinitialize all static globals
   static_globals::fini();
 
-  // these were explicitly enabled with ->init in main so fini above does
-  // not finalize them, finalize them here
   static_globals::find("log")->fini();
 
   static_globals::find("system_allocator")->fini();
+  static_globals::find("malloc_allocator")->fini();
 
   abort();
 }
