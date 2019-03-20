@@ -150,6 +150,9 @@ inline constexpr vec3<T> cross(const vec3<T>& lhs, const vec3<T>& rhs) {
   return {lhs.y*rhs.z - rhs.y*lhs.z, lhs.z*rhs.x - rhs.z*lhs.x, lhs.x*rhs.y - rhs.x*lhs.y};
 }
 
+rx_f32 length(const vec3f& _value);
+vec3f normalize(const vec3f& _value);
+
 } // namespace rx::math
 
 namespace rx {

@@ -7,13 +7,16 @@
 namespace rx::render {
 
 struct backend_gl4 : backend {
-  backend_gl4(frontend::allocation_info& allocation_info_);
+  allocation_info query_allocation_info() const;
+  backend_gl4(memory::allocator* _allocator, void* _data);
   ~backend_gl4();
 
   void process(rx_byte* _command);
-  void swap(void* _context);
+  void swap();
 
 private:
+  memory::allocator* m_allocator;
+  void* m_data;
   void* m_impl;
 };
 

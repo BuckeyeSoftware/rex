@@ -114,8 +114,14 @@ struct shader {
 
   category type;
   string source;
-  map<string, inout_category> inputs;
-  map<string, inout_category> outputs;
+
+  struct inout {
+    rx_size index;
+    inout_category category;
+  };
+
+  map<string, inout> inputs;
+  map<string, inout> outputs;
 };
 
 struct program : resource {

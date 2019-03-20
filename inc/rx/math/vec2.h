@@ -16,6 +16,12 @@ struct vec2 {
   const T& operator[](rx_size i) const;
   bool is_any(T value) const;
   const T* data() const;
+
+  template<typename T2>
+  vec2<T2> cast() const {
+    return {static_cast<T2>(x), static_cast<T2>(y)};
+  }
+
   union {
     struct { T x, y; };
     struct { T w, h; };
@@ -142,6 +148,9 @@ template<typename T>
 inline constexpr T dot(const vec2<T> &lhs, const vec2<T> &rhs) {
   return lhs.x*rhs.x + lhs.y*rhs.y;
 }
+
+rx_f32 length(const vec2f& _value);
+vec2f normalize(const vec2f& _value);
 
 } // namespace rx::math
 

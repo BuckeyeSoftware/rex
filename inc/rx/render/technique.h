@@ -15,8 +15,7 @@ struct frontend;
 
 struct technique {
   technique() = default;
-  
-  technique(frontend* _frontend, const json& _description);
+  technique(frontend* _frontend);
   ~technique();
 
   enum class category {
@@ -34,6 +33,10 @@ struct technique {
   program* operator[](rx_u64 _flags) const;
   program* operator[](const char* _variant) const;
 
+  bool load(const string& _file_name);
+
+  const string& name() const;
+
 private:
   bool parse(const json& _description);
   bool compile();
@@ -47,8 +50,8 @@ private:
   bool parse_vertex_shader(const json& _shader);
   bool parse_fragment_shader(const json& _shader);
 
-  bool parse_inouts(const json& _inouts, const char* _type, map<string, shader::inout_category>& inouts_);
-  bool parse_inout(const json& _inout, const char* _type, map<string, shader::inout_category>& inouts_);
+  bool parse_inouts(const json& _inouts, const char* _type, map<string, shader::inout>& inouts_);
+  bool parse_inout(const json& _inout, const char* _type, map<string, shader::inout>& inouts_);
 
   bool parse_specializations(const json& _specializations, const char* _type);
   bool parse_specialization(const json& _specialization, const char* _type);
@@ -71,6 +74,10 @@ private:
   map<string, uniform::category> m_uniforms;
   array<string> m_specializations;
 };
+
+inline const string& technique::name() const {
+  return m_name;
+}
 
 template<typename... Ts>
 inline bool technique::error(const char* _format, Ts&&... _arguments) {

@@ -14,6 +14,8 @@ struct directory {
   directory(memory::allocator* _allocator, const string& _path);
   ~directory();
 
+  operator bool() const;
+
   struct item {
     enum class type : rx_u8 {
       k_file,
@@ -32,8 +34,6 @@ struct directory {
     string m_name;
     type m_type;
   };
-
-  operator bool() const;
 
   // enumerate directory with |_function| being called for each item
   // NOTE: does not consider hidden files, symbolic links, block devices, or ..
@@ -57,6 +57,10 @@ inline directory::directory(const string& _path)
 inline directory::directory(memory::allocator* _allocator, const string& _path)
   : directory{_allocator, _path.data()}
 {
+}
+
+inline directory::operator bool() const {
+  return m_impl;
 }
 
 inline bool directory::item::is_file() const {

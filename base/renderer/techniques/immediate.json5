@@ -1,0 +1,38 @@
+{
+  name: "immediate",
+  shaders: [
+    {
+      type: "vertex",
+      inputs: [
+        { name: "a_position", type: "vec2f" },
+        { name: "a_coordinate", type: "vec2f" },
+        { name: "a_color", type: "vec4f" }
+      ],
+      outputs: [
+        { name: "vs_color", type: "vec4f" },
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      source: "
+        void main() {
+          vs_color = a_color;
+          vs_coordinate = a_coordinate;
+          rx_position = vec4f(a_position * 2.0 / vec2f(1600.0, 900.0) - 1.0, 0.0, 1.0);
+        }
+      "
+    },{
+      type: "fragment",
+      inputs: [
+        { name: "vs_color", type: "vec4f" },
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      outputs: [
+        { name: "fs_color", type: "vec4f" }
+      ],
+      source: "
+        void main() {
+          fs_color = vs_color;
+        }
+      "
+    }
+  ]
+}

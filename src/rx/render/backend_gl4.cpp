@@ -20,6 +20,9 @@ RX_LOG("render/gl4", gl4_log);
 
 namespace rx::render {
 
+// 16MiB buffer slab size for unspecified buffer sizes
+static constexpr const rx_size k_buffer_slab_size{16<<20};
+
 // buffers
 static void (GLAPIENTRYP pglCreateBuffers)(GLsizei, GLuint*);
 static void (GLAPIENTRYP pglDeleteBuffers)(GLsizei, const GLuint*);
@@ -314,6 +317,8 @@ namespace detail {
 
     GLuint bo[2];
     GLuint va;
+    rx_size elements_size;
+    rx_size vertices_size;
   };
 
   struct target {
@@ -745,31 +750,28 @@ static GLuint compile_shader(const array<uniform>& _uniforms, const shader& _sha
 
   string contents{k_prelude};
 
-  int location{0};
   GLenum type{0};
   switch (_shader.type) {
   case shader::category::k_vertex:
     type = GL_VERTEX_SHADER;
     // emit vertex attributes inputs
-    _shader.inputs.each([&](rx_size, const string& _name, shader::inout_category _type) {
-      contents.append({"layout(location = %d) in %s %s;\n", location, inout_to_string(_type), _name});
-      location++;
+    _shader.inputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
+      contents.append({"layout(location = %zu) in %s %s;\n", _inout.index, inout_to_string(_inout.category), _name});
     });
     // emit vertex outputs
-    _shader.outputs.each([&](rx_size, const string& _name, shader::inout_category _type) {
-      contents.append({"out %s %s;\n", inout_to_string(_type), _name});
+    _shader.outputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
+      contents.append({"out %s %s;\n", inout_to_string(_inout.category), _name});
     });
     break;
   case shader::category::k_fragment:
     type = GL_FRAGMENT_SHADER;
     // emit fragment inputs
-    _shader.inputs.each([&](rx_size, const string& _name, shader::inout_category _type) {
-      contents.append({"in %s %s;\n", inout_to_string(_type), _name});
+    _shader.inputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
+      contents.append({"in %s %s;\n", inout_to_string(_inout.category), _name});
     });
     // emit fragment outputs
-    _shader.outputs.each([&](rx_size, const string& _name, shader::inout_category _type) {
-      contents.append({"layout(location = %d) out %s %s;\n", location, inout_to_string(_type), _name});
-      location++;
+    _shader.outputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
+      contents.append({"layout(location = %d) out %s %s;\n", _inout.index, inout_to_string(_inout.category), _name});
     });
     break;
   }
@@ -813,15 +815,22 @@ static GLuint compile_shader(const array<uniform>& _uniforms, const shader& _sha
   return handle;
 }
 
-backend_gl4::backend_gl4(frontend::allocation_info& allocation_info_) {
-  allocation_info_.buffer_size = sizeof(detail::buffer);
-  allocation_info_.target_size = sizeof(detail::target);
-  allocation_info_.program_size = sizeof(detail::program);
-  allocation_info_.texture1D_size = sizeof(detail::texture1D);
-  allocation_info_.texture2D_size = sizeof(detail::texture2D);
-  allocation_info_.texture3D_size = sizeof(detail::texture3D);
-  allocation_info_.textureCM_size = sizeof(detail::textureCM);
+allocation_info backend_gl4::query_allocation_info() const {
+  allocation_info info;
+  info.buffer_size = sizeof(detail::buffer);
+  info.target_size = sizeof(detail::target);
+  info.program_size = sizeof(detail::program);
+  info.texture1D_size = sizeof(detail::texture1D);
+  info.texture2D_size = sizeof(detail::texture2D);
+  info.texture3D_size = sizeof(detail::texture3D);
+  info.textureCM_size = sizeof(detail::textureCM);
+  return info;
+}
 
+backend_gl4::backend_gl4(memory::allocator* _allocator, void* _data)
+  : m_allocator{_allocator}
+  , m_data{_data}
+{
   // buffers
   fetch("glCreateBuffers", pglCreateBuffers);
   fetch("glDeleteBuffers", pglDeleteBuffers);
@@ -918,11 +927,12 @@ backend_gl4::backend_gl4(frontend::allocation_info& allocation_info_) {
   fetch("glDrawArrays", pglDrawArrays);
   fetch("glDrawElements", pglDrawElements);
 
-  m_impl = malloc(sizeof(detail::state));
+  m_impl = m_allocator->allocate(sizeof(detail::state));
   utility::construct<detail::state>(m_impl);
 }
 
 backend_gl4::~backend_gl4() {
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_impl));
 }
 
 void backend_gl4::process(rx_byte* _command) {
@@ -967,6 +977,9 @@ void backend_gl4::process(rx_byte* _command) {
       const auto resource{reinterpret_cast<const resource_command*>(header + 1)};
       switch (resource->type) {
       case resource_command::category::k_buffer:
+        if (state->m_bound_vao == reinterpret_cast<detail::buffer*>(resource->as_buffer + 1)->va) {
+          state->m_bound_vao = 0;
+        }
         utility::destruct<detail::buffer>(resource->as_buffer + 1);
         break;
       case resource_command::category::k_target:
@@ -1002,16 +1015,26 @@ void backend_gl4::process(rx_byte* _command) {
       case resource_command::category::k_buffer:
         {
           const auto render_buffer{resource->as_buffer};
-          const auto buffer{reinterpret_cast<const detail::buffer*>(render_buffer + 1)};
+          auto buffer{reinterpret_cast<detail::buffer*>(render_buffer + 1)};
           const auto& vertices{render_buffer->vertices()};
           const auto& elements{render_buffer->elements()};
+          const auto type{render_buffer->type() == buffer::category::k_dynamic
+            ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW};
 
           if (vertices.size()) {
-            pglNamedBufferData(buffer->bo[0], vertices.size(), vertices.data(), GL_STATIC_DRAW);
+            pglNamedBufferData(buffer->bo[0], vertices.size(), vertices.data(), type);
+            buffer->vertices_size = vertices.size();
+          } else {
+            pglNamedBufferData(buffer->bo[0], k_buffer_slab_size, nullptr, type);
+            buffer->vertices_size = k_buffer_slab_size;
           }
 
           if (elements.size()) {
-            pglNamedBufferData(buffer->bo[1], elements.size(), elements.data(), GL_STATIC_DRAW);
+            pglNamedBufferData(buffer->bo[1], elements.size(), elements.data(), type);
+            buffer->elements_size = elements.size();
+          } else {
+            pglNamedBufferData(buffer->bo[1], k_buffer_slab_size, nullptr, type);
+            buffer->elements_size = k_buffer_slab_size;
           }
 
           pglVertexArrayVertexBuffer(buffer->va, 0, buffer->bo[0], 0,
@@ -1276,6 +1299,41 @@ void backend_gl4::process(rx_byte* _command) {
       }
     }
     break;
+  case command_type::k_resource_update:
+    {
+      const auto resource{reinterpret_cast<const resource_command*>(header + 1)};
+      switch (resource->type) {
+      case resource_command::category::k_buffer:
+        {
+          const auto render_buffer{resource->as_buffer};
+          auto buffer{reinterpret_cast<detail::buffer*>(render_buffer + 1)};
+          const auto& vertices{render_buffer->vertices()};
+          const auto& elements{render_buffer->elements()};
+          const auto type{render_buffer->type() == buffer::category::k_dynamic
+            ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW};
+
+          if (vertices.size() > buffer->vertices_size) {
+            // respecify buffer storage if we exceed what is available to use
+            buffer->vertices_size = vertices.size();
+            pglNamedBufferData(buffer->bo[0], vertices.size(), vertices.data(), type);
+          } else {
+            pglNamedBufferSubData(buffer->bo[0], 0, vertices.size(), vertices.data());
+          }
+
+          if (elements.size() > buffer->elements_size) {
+            // respecify buffer storage if we exceed what is available to use
+            buffer->elements_size = elements.size();
+            pglNamedBufferData(buffer->bo[1], elements.size(), elements.data(), type);
+          } else {
+            pglNamedBufferSubData(buffer->bo[1], 0, elements.size(), elements.data());
+          }
+        }
+        break;
+      default:
+        break;
+      }
+    }
+    break;
   case command_type::k_clear:
     {
       const auto command{reinterpret_cast<clear_command*>(header + 1)};
@@ -1467,8 +1525,8 @@ void backend_gl4::process(rx_byte* _command) {
   }
 }
 
-void backend_gl4::swap(void* _context) {
-  SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(_context));
+void backend_gl4::swap() {
+  SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(m_data));
 }
 
 

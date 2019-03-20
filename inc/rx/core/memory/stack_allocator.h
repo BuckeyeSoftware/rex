@@ -7,6 +7,7 @@ namespace rx::memory {
 
 // linear burn allocator
 struct stack_allocator final : allocator {
+  stack_allocator() = default;
   stack_allocator(allocator* _allocator, rx_size _size);
   ~stack_allocator();
 

@@ -21,6 +21,8 @@ struct bitset {
   static constexpr const bit_type k_bit_one{1};
   static constexpr const rx_size k_word_bits{CHAR_BIT * sizeof(bit_type)};
 
+  bitset() = default;
+
   // construct bitset with |_size| bits using system allocator
   bitset(rx_size _size);
 

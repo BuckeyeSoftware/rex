@@ -18,6 +18,7 @@ struct pool_allocator
   : concepts::no_copy
   , concepts::no_move
 {
+  pool_allocator() = default;
   pool_allocator(allocator* _allocator, rx_size _size, rx_size _count);
   ~pool_allocator();
 

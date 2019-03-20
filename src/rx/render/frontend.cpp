@@ -7,6 +7,7 @@
 #include <rx/render/target.h>
 #include <rx/render/program.h>
 #include <rx/render/texture.h>
+#include <rx/render/technique.h>
 
 #include <rx/core/concurrency/scope_lock.h>
 #include <rx/core/log.h>
@@ -29,15 +30,16 @@ namespace rx::render {
 #define allocate_command(data_type, type) \
   m_command_buffer.allocate(sizeof(data_type), (type), _info)
 
-frontend::frontend(memory::allocator* _allocator, backend* _backend, const allocation_info& _allocation_info)
+frontend::frontend(memory::allocator* _allocator, backend* _backend)
   : m_allocator{_allocator}
-  , m_buffer_pool{m_allocator, _allocation_info.buffer_size + sizeof(buffer), static_cast<rx_size>(*max_buffers)}
-  , m_target_pool{m_allocator, _allocation_info.target_size + sizeof(target), static_cast<rx_size>(*max_targets)}
-  , m_program_pool{m_allocator, _allocation_info.program_size + sizeof(program), static_cast<rx_size>(*max_programs)}
-  , m_texture1D_pool{m_allocator, _allocation_info.texture1D_size + sizeof(texture1D), static_cast<rx_size>(*max_texture1D)}
-  , m_texture2D_pool{m_allocator, _allocation_info.texture2D_size + sizeof(texture2D), static_cast<rx_size>(*max_texture2D)}
-  , m_texture3D_pool{m_allocator, _allocation_info.texture3D_size + sizeof(texture3D), static_cast<rx_size>(*max_texture3D)}
-  , m_textureCM_pool{m_allocator, _allocation_info.textureCM_size + sizeof(textureCM), static_cast<rx_size>(*max_textureCM)}
+  , m_allocation_info{_backend->query_allocation_info()}
+  , m_buffer_pool{m_allocator, m_allocation_info.buffer_size + sizeof(buffer), static_cast<rx_size>(*max_buffers)}
+  , m_target_pool{m_allocator, m_allocation_info.target_size + sizeof(target), static_cast<rx_size>(*max_targets)}
+  , m_program_pool{m_allocator, m_allocation_info.program_size + sizeof(program), static_cast<rx_size>(*max_programs)}
+  , m_texture1D_pool{m_allocator, m_allocation_info.texture1D_size + sizeof(texture1D), static_cast<rx_size>(*max_texture1D)}
+  , m_texture2D_pool{m_allocator, m_allocation_info.texture2D_size + sizeof(texture2D), static_cast<rx_size>(*max_texture2D)}
+  , m_texture3D_pool{m_allocator, m_allocation_info.texture3D_size + sizeof(texture3D), static_cast<rx_size>(*max_texture3D)}
+  , m_textureCM_pool{m_allocator, m_allocation_info.textureCM_size + sizeof(textureCM), static_cast<rx_size>(*max_textureCM)}
   , m_destroy_buffers{m_allocator}
   , m_destroy_targets{m_allocator}
   , m_destroy_textures1D{m_allocator}
@@ -51,6 +53,7 @@ frontend::frontend(memory::allocator* _allocator, backend* _backend, const alloc
 }
 
 frontend::~frontend() {
+  // ?
 }
 
 // create_*
@@ -201,6 +204,18 @@ void frontend::initialize_texture(const command_header::info& _info, textureCM* 
   command->type = resource_command::category::k_textureCM;
   command->as_textureCM = _texture;
   m_commands.push_back(command_base);
+}
+
+// update_*
+void frontend::update_buffer(const command_header::info& _info, buffer* _buffer) {
+  if (_buffer) {
+    concurrency::scope_lock lock(m_mutex);
+    auto command_base{allocate_command(resource_command, command_type::k_resource_update)};
+    auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
+    command->type = resource_command::category::k_buffer;
+    command->as_buffer = _buffer;
+    m_commands.push_back(command_base);
+  }
 }
 
 // destroy_*
@@ -457,10 +472,8 @@ frontend::statistics frontend::stats(resource::category _type) {
   return {};
 }
 
-void frontend::swap(void* _context) {
-  if (m_backend) {
-    m_backend->swap(_context);
-  }
+void frontend::swap() {
+  m_backend->swap();
 }
 
 } // namespace rx::render

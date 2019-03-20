@@ -7,13 +7,9 @@
 
 namespace rx {
 
-bitset::bitset(rx_size size)
-  : m_allocator{&memory::g_system_allocator}
-  , m_size{size}
-  , m_data{reinterpret_cast<bit_type*>(m_allocator->allocate(sizeof(bit_type) * (m_size / k_word_bits + 1)))}
+bitset::bitset(rx_size _size)
+  : bitset{&memory::g_system_allocator, _size}
 {
-  RX_ASSERT(m_data, "out of memory");
-  clear_all();
 }
 
 bitset::bitset(memory::allocator* _allocator, rx_size _size)

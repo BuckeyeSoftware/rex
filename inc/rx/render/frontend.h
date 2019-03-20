@@ -8,6 +8,7 @@
 
 #include <rx/render/command.h>
 #include <rx/render/resource.h>
+#include <rx/render/backend.h>
 
 namespace rx::render {
 
@@ -18,21 +19,10 @@ struct texture1D;
 struct texture2D;
 struct texture3D;
 struct textureCM;
-
-struct backend;
+struct technique;
 
 struct frontend {
-  struct allocation_info {
-    rx_size buffer_size;
-    rx_size target_size;
-    rx_size program_size;
-    rx_size texture1D_size;
-    rx_size texture2D_size;
-    rx_size texture3D_size;
-    rx_size textureCM_size;
-  };
-
-  frontend(memory::allocator* _allocator, backend* _backend, const allocation_info& _allocation_info);
+  frontend(memory::allocator* _allocator, backend* _backend);
   ~frontend();
 
   buffer* create_buffer(const command_header::info& _info);
@@ -51,6 +41,10 @@ struct frontend {
   void initialize_texture(const command_header::info& _info, texture2D* _texture);
   void initialize_texture(const command_header::info& _info, texture3D* _texture);
   void initialize_texture(const command_header::info& _info, textureCM* _texture);
+
+  void update_buffer(const command_header::info& _info, buffer* _buffer);
+  // TODO: update_texture functions, no program/target updates though, they're
+  // fully immutable.
 
   void destroy_buffer(const command_header::info& _info, buffer* _buffer);
   void destroy_target(const command_header::info& _info, target* _target);
@@ -96,10 +90,8 @@ struct frontend {
     const math::vec4f& _clear_color
   );
 
-  target* backbuffer() const;
-
   bool process();
-  void swap(void* _context);
+  void swap();
 
   memory::allocator* allocator() const;
 
@@ -121,6 +113,9 @@ private:
   concurrency::mutex m_mutex;
 
   memory::allocator* m_allocator;          // protected by |m_mutex|
+
+  // size of resources as reported by the backend
+  allocation_info m_allocation_info;
 
   memory::pool_allocator m_buffer_pool;    // protected by |m_mutex|
   memory::pool_allocator m_target_pool;    // protected by |m_mutex|

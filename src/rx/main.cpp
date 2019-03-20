@@ -8,18 +8,9 @@
 #include <rx/console/console.h>
 #include <rx/console/variable.h>
 
-#include <rx/render/frontend.h>
-#include <rx/render/buffer.h>
-#include <rx/render/target.h>
-#include <rx/render/texture.h>
-#include <rx/render/program.h>
-#include <rx/render/timer.h>
-#include <rx/render/technique.h>
-#include <rx/render/backend_gl4.h>
-
 #include <rx/input/input.h>
 
-#include <rx/math/transform.h>
+#include <rx/render/renderer.h>
 
 RX_CONSOLE_V2IVAR(
   display_resolution,
@@ -55,8 +46,52 @@ RX_CONSOLE_BVAR(
   "use HDR output if supported",
   false);
 
-#include <rx/core/filesystem/file.h>
-#include <rx/core/map.h>
+// #include <rx/render/immediate.h>
+
+#if 0
+static void draw_frame_graph(rx::render::renderer& _renderer) {
+  auto& _queue = _renderer.immediates();
+  const auto& _time = _renderer.time();
+  const auto& timestamps = _time.timestamps();
+
+  static constexpr const rx_f32 k_scale{16.66*2.0f};
+
+  const rx::math::vec2i box_size{600, 200};
+  const rx_s32 box_bottom{25};
+  const rx_s32 box_middle{box_bottom + (box_size.h / 2)};
+  const rx_s32 box_top{box_bottom + box_size.h};
+  const rx_s32 box_left{1600/2 - box_size.w/2};
+  const rx_s32 box_center{box_left+(box_size.w/2)};
+  const rx_s32 box_right{box_left+box_size.w};
+
+  _queue.record_rectangle({box_left, box_bottom}, box_size, 0, {0.0f, 0.0f, 0.0f, 1.0f});
+
+  rx::array<rx::math::vec2i> points;
+  timestamps.each_fwd([&](const rx::render::frame_timer::timestamp& _timestamp) {
+    const rx_f32 delta_x{static_cast<rx_f32>((_time.life_time() - _timestamp.life_time) / rx::render::frame_timer::k_timestamp_seconds)};
+    const rx_f32 delta_y{static_cast<rx_f32>(rx::min(_timestamp.frame_time / k_scale, 1.0))};
+    const rx::math::vec2i point{
+      box_right - static_cast<rx_s32>(delta_x * box_size.w),
+      box_top - static_cast<rx_s32>(delta_y * box_size.h)
+    };
+    points.push_back(point);
+  });
+
+  _queue.record_scissor({box_left, box_bottom}, box_size);
+  for (rx_size i{1}; i < points.size(); i++) {
+    _queue.record_line(points[i - 1], points[i], 0, 1, {0.0f, 1.0f, 0.0f, 1.0f});
+  }
+  _queue.record_scissor({-1, -1}, {-1, -1});
+
+  _queue.record_line({box_left, box_bottom}, {box_left, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _queue.record_line({box_center, box_bottom}, {box_center, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _queue.record_line({box_right, box_bottom}, {box_right, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _queue.record_line({box_left, box_bottom}, {box_right, box_bottom}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _queue.record_line({box_left, box_middle}, {box_right, box_middle}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _queue.record_line({box_left, box_top}, {box_right, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+}
+
+#endif
 
 int entry(int argc, char **argv) {
   (void)argc;
@@ -125,62 +160,11 @@ int entry(int argc, char **argv) {
   SDL_GLContext context =
     SDL_GL_CreateContext(window);
 
-    const rx::math::vec3f vertices[]{
-      {-1.0f, -1.0f, 0.0f},
-      { 1.0f, -1.0f, 0.0f},
-      { 0.0f,  1.0f, 0.0f}
-    };
-
-    const rx_u8 elements[]{
-      0, 1, 2
-    };
-
   SDL_GL_SetSwapInterval(1);
 
   {
-    rx::render::frontend::allocation_info allocation_info;
-    rx::render::backend_gl4 gl4{allocation_info};
-
-    rx::render::frontend renderer{&rx::memory::g_system_allocator, &gl4, allocation_info};
-
-    rx::memory::uninitialized_storage<rx::render::technique> technique;
-
-    {
-      rx::filesystem::file data("technique.json5", "rb");
-      if (data) {
-        auto size{data.size()};
-        if (size) {
-          rx::string contents;
-          contents.resize(*size);
-          if (data.read(reinterpret_cast<rx_byte*>(contents.data()), contents.size())) {
-            technique.init(&renderer, rx::json{contents});
-          } else {
-            abort();
-          }
-        } else {
-          abort();
-        }
-      } else {
-        abort();
-      }
-    }
-
-    // create, record and initialize buffer
-    auto buffer{renderer.create_buffer(RX_RENDER_TAG("test"))};
-    buffer->write_vertices(vertices, sizeof vertices, sizeof(rx::math::vec3f));
-    buffer->write_elements(elements, sizeof elements);
-    buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, 0);
-    renderer.initialize_buffer(RX_RENDER_TAG("test"), buffer);
-
-    // create, record and initialize swapchain target
-    auto target{renderer.create_target(RX_RENDER_TAG("test"))};
-    target->request_swapchain();
-    renderer.initialize_target(RX_RENDER_TAG("test"), target);
-
-    rx::render::frame_timer timer;
+    rx::render::renderer renderer{&rx::memory::g_system_allocator, "gl4", reinterpret_cast<void*>(window)};
     rx::input::input input;
-    rx::math::transform camera;
-    //timer.cap_fps(60);
 
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
       input.update(0);
@@ -219,74 +203,31 @@ int entry(int argc, char **argv) {
 
       const auto& delta{input.mouse().movement()};
       rx::math::vec3f move{static_cast<rx_f32>(delta.y), static_cast<rx_f32>(delta.x), 0.0f};
-      camera.rotate = camera.rotate + move;
+      //camera.rotate = camera.rotate + move;
 
       if (input.keyboard().is_held(SDL_SCANCODE_W, true)) {
-        const auto f{camera.to_mat4().z};
-        camera.translate = camera.translate + rx::math::vec3f(f.x, f.y, f.z) * (10.0f * timer.delta_time());
+        //const auto f{camera.to_mat4().z};
+        //camera.translate = camera.translate + rx::math::vec3f(f.x, f.y, f.z) * (10.0f * timer.delta_time());
       }
       if (input.keyboard().is_held(SDL_SCANCODE_S, true)) {
-        const auto f{camera.to_mat4().z};
-        camera.translate = camera.translate - rx::math::vec3f(f.x, f.y, f.z) * (10.0f * timer.delta_time());
+        //const auto f{camera.to_mat4().z};
+        //camera.translate = camera.translate - rx::math::vec3f(f.x, f.y, f.z) * (10.0f * timer.delta_time());
       }
       if (input.keyboard().is_held(SDL_SCANCODE_D, true)) {
-        const auto l{camera.to_mat4().x};
-        camera.translate = camera.translate + rx::math::vec3f(l.x, l.y, l.z) * (10.0f * timer.delta_time());
+        //const auto l{camera.to_mat4().x};
+        //camera.translate = camera.translate + rx::math::vec3f(l.x, l.y, l.z) * (10.0f * timer.delta_time());
       }
       if (input.keyboard().is_held(SDL_SCANCODE_A, true)) {
-        const auto l{camera.to_mat4().x};
-        camera.translate = camera.translate - rx::math::vec3f(l.x, l.y, l.z) * (10.0f * timer.delta_time());
+        //const auto l{camera.to_mat4().x};
+        //camera.translate = camera.translate - rx::math::vec3f(l.x, l.y, l.z) * (10.0f * timer.delta_time());
       }
 
-      // clear depth to 1s and stencil to 0s
-      renderer.clear(
-        RX_RENDER_TAG("test"),
-        target,
-        RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL,
-        {1.0f, 0.0f, 0.0f, 0.0f}
-      );
-
-      renderer.clear(
-        RX_RENDER_TAG("test"),
-        target,
-        RX_RENDER_CLEAR_COLOR(0),
-        {1.0f, 0.0f, 0.0f, 1.0f}
-      );
-
-      auto model{rx::math::mat4x4f::translate({0.0f, 0.0f, 10.0f})};
-      const auto view{rx::math::mat4x4f::invert(camera.to_mat4())};
-      const auto projection{rx::math::mat4x4f::perspective(68.0f, {0.01f, 1024.0f}, 1600.0f/900.0f)};
-
-      rx::render::program* program{*technique.data()};
-
-      rx::render::state state; // default
-
-      for (int i{0}; i < 1024; i++) {
-        model = rx::math::mat4x4f::translate({-2.5f*1024.0f*.5f + (2.5f * i), 0.0f, 10.0f});
-        program->uniforms()[0].record_mat4x4f(model * view * projection);
-        renderer.draw_elements(
-          RX_RENDER_TAG("test"),
-          state,
-          target,
-          buffer,
-          program,
-          3,
-          0,
-          rx::render::primitive_type::k_triangles,
-          ""
-        );
-      }
-
-      if (renderer.process()) {
-        renderer.swap(reinterpret_cast<void*>(window));
-      }
-  
-      if (timer.update()) {
+      if (renderer.update()) {
         const auto stats{rx::memory::g_system_allocator->stats()};
         char format[1024];
         snprintf(format, sizeof format, "%d fps | %.2f mspf | mem a/%zu, r/r:%zu a:%zu, d/%zu, u/r:%s a:%s, p/r:%s a:%s",
-          timer.fps(),
-          timer.mspf(),
+          renderer.timer().fps(),
+          renderer.timer().mspf(),
           stats.allocations,
           stats.request_reallocations,
           stats.actual_reallocations,
@@ -299,13 +240,6 @@ int entry(int argc, char **argv) {
         SDL_SetWindowTitle(window, format);
       }
     }
-
-    renderer.destroy_target(RX_RENDER_TAG("test"), target);
-    renderer.destroy_buffer(RX_RENDER_TAG("test"), buffer);
-
-    technique.fini();
-
-    renderer.process();
   }
 
   rx::console::console::save("config.cfg");
@@ -316,6 +250,7 @@ int entry(int argc, char **argv) {
 
   return 0;
 }
+
 
 int main(int argc, char **argv) {
   // trigger system allocator initialization first

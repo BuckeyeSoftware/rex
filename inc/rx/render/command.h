@@ -28,6 +28,7 @@ enum class primitive_type : rx_u8 {
 enum class command_type : rx_u8 {
   k_resource_allocate,
   k_resource_construct,
+  k_resource_update,
   k_resource_destroy,
   k_clear,
   k_draw,

@@ -265,6 +265,39 @@ struct state {
     m_hash = hash_combine(m_hash, polygon.flush());
   }
 
+  bool operator==(const state& _state) const
+  {
+    if (_state.m_hash != m_hash) {
+      return false;
+    }
+
+    if (_state.scissor != scissor) {
+      return false;
+    }
+
+    if (_state.blend != blend) {
+      return false;
+    }
+
+    if (_state.depth != depth) {
+      return false;
+    }
+
+    if (_state.cull != cull) {
+      return false;
+    }
+
+    if (_state.stencil != stencil) {
+      return false;
+    }
+
+    if (_state.polygon != polygon) {
+      return false;
+    }
+
+    return true;
+  }
+
 private:
   rx_size m_hash;
 };

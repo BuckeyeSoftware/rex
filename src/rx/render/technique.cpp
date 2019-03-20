@@ -3,6 +3,7 @@
 
 #include <rx/core/log.h>
 #include <rx/core/optional.h>
+#include <rx/core/filesystem/file.h>
 
 RX_LOG("render/technique", log_technique);
 
@@ -60,12 +61,9 @@ optional<shader::inout_category> inout_category_from_string(const string& _categ
   return nullopt;
 }
 
-technique::technique(frontend* _frontend, const json& _description)
+technique::technique(frontend* _frontend)
   : m_frontend{_frontend}
 {
-  if (parse(_description)) {
-    compile();
-  }
 }
 
 technique::~technique() {
@@ -97,24 +95,24 @@ bool technique::compile() {
     // ensure all fragment inputs wire correctly into vertex outputs
     const bool check_inouts{
       // enumerate all vertex outputs and check for matching fragment inputs
-      vertex->outputs.each([&](rx_size, const string& _name, shader::inout_category _category) {
+      vertex->outputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
         const auto check{fragment->inputs.find(_name)};
         if (!check) {
           return error("could not find fragment input for vertex output '%s'", _name);
         }
-        if (*check != _category) {
+        if (check->category != _inout.category) {
           return error("type mismatch for fragment input '%s'", _name);
         }
         return true;
       })
       &&
       // enumerate all fragment inputs and check for matching vertex outputs
-      fragment->inputs.each([&](rx_size, const string& _name, shader::inout_category _category) {
+      fragment->inputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
         const auto check{vertex->outputs.find(_name)};
         if (!check) {
           return error("could not find vertex output for fragment input '%s'", _name);
         }
-        if (*check != _category) {
+        if (check->category != _inout.category) {
           return error("type mismatch for vertex output '%s'", _name);
         }
         return true;
@@ -175,6 +173,30 @@ program* technique::operator[](const char* _variant) const {
   return nullptr;
 }
 
+bool technique::load(const string& _file_name) {
+  filesystem::file file{_file_name, "rb"};
+  if (!file) {
+    return false;
+  }
+
+  const auto size{file.size()};
+  if (!size) {
+    return false;
+  }
+
+  string contents;
+  contents.resize(*size);
+  if (!file.read(reinterpret_cast<rx_byte*>(contents.data()), contents.size())) {
+    return false;
+  }
+
+  if (!parse({contents})) {
+    return false;
+  }
+
+  return compile();
+}
+
 bool technique::parse(const json& _description) {
   if (!_description) {
     const auto json_error{_description.error()};
@@ -203,10 +225,6 @@ bool technique::parse(const json& _description) {
   const auto& permutes{_description["permutes"]};
   const auto& variants{_description["variants"]};
 
-  if (!uniforms) {
-    return error("missing uniforms");
-  }
-
   if (!shaders) {
     return error("missing shaders");
   }
@@ -215,7 +233,7 @@ bool technique::parse(const json& _description) {
     return error("cannot define both permutes and variants");
   }
 
-  if (!parse_uniforms(uniforms)) {
+  if (uniforms && !parse_uniforms(uniforms)) {
     return false;
   }
 
@@ -404,7 +422,7 @@ bool technique::parse_fragment_shader(const json& _shader) {
   return true;
 }
 
-bool technique::parse_inouts(const json& _inouts, const char* _type, map<string, shader::inout_category>& inouts_) {
+bool technique::parse_inouts(const json& _inouts, const char* _type, map<string, shader::inout>& inouts_) {
   log(log::level::k_verbose, "parsing %ss ...", _type);
 
   if (!_inouts.is_array()) {
@@ -416,7 +434,7 @@ bool technique::parse_inouts(const json& _inouts, const char* _type, map<string,
   });
 }
 
-bool technique::parse_inout(const json& _inout, const char* _type, map<string, shader::inout_category>& inouts_) {
+bool technique::parse_inout(const json& _inout, const char* _type, map<string, shader::inout>& inouts_) {
   if (!_inout.is_object()) {
     return error("expected Object for %s", _type);
   }
@@ -451,7 +469,11 @@ bool technique::parse_inout(const json& _inout, const char* _type, map<string, s
     return error("unknown type '%s' for '%s'", type_string, name_string);
   }
 
-  inouts_.insert(name_string, *type_category);
+  shader::inout inout;
+  inout.index = inouts_.size();
+  inout.category = *type_category;
+
+  inouts_.insert(name_string, inout);
   log(log::level::k_verbose, "added %s '%s'", _type, name_string);
 
   return true;

@@ -348,6 +348,18 @@ string string::human_size_format(rx_size _size) {
   return {"%s %s", buffer, k_suffixes[i]};
 }
 
+bool string::begins_with(const char* _prefix) const {
+  return strstr(m_data, _prefix) == m_data;
+}
+
+bool string::ends_with(const char* _suffix) const {
+  if (size() < strlen(_suffix)) {
+    return false;
+  }
+
+  return strcmp(m_data + size() - strlen(_suffix), _suffix) == 0;
+}
+
 static rx_size utf16_len(const rx_u16* _data) {
   rx_size length{0};
   while (_data[length]) {

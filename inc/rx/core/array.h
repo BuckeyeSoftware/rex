@@ -68,6 +68,26 @@ struct array {
   template<typename F>
   bool each_rev(F&& _func) const;
 
+  void erase(rx_size _from, rx_size _to) {
+    const rx_size range{_to-_from};
+    T* begin{m_data};
+    T* end{m_data + m_size};
+    T* first{begin + _from};
+    T* last{begin + _to};
+
+    for (T* value{last}, *dest{first}; value != end; ++value, ++dest) {
+      *dest = utility::move(*value);
+    }
+
+    if constexpr (!traits::is_trivially_destructible<T>) {
+      for (T* value{end-range}; value < end; ++value) {
+        utility::destruct<T>(value);
+      }
+    }
+
+    m_size -= range;
+  }
+
   // first or last element
   const T& first() const;
   T& first();
@@ -118,15 +138,16 @@ inline constexpr array<T>::array(memory::allocator* _allocator)
 template<typename T>
 inline array<T>::array(memory::allocator* _allocator, rx_size _size, const T& value)
   : m_allocator{_allocator}
+  , m_data{nullptr}
   , m_size{_size}
   , m_capacity{_size}
 {
   RX_ASSERT(m_allocator, "null allocator");
 
-  m_data = reinterpret_cast<T*>(m_allocator->allocate(_size * sizeof *m_data));
+  m_data = reinterpret_cast<T*>(m_allocator->allocate(m_size * sizeof *m_data));
   RX_ASSERT(m_data, "out of memory");
 
-  for (rx_size i{0}; i < m_capacity; i++) {
+  for (rx_size i{0}; i < m_size; i++) {
     utility::construct<T>(data() + i, value);
   }
 }
@@ -134,10 +155,12 @@ inline array<T>::array(memory::allocator* _allocator, rx_size _size, const T& va
 template<typename T>
 inline array<T>::array(memory::allocator* _allocator, const array& _other)
   : m_allocator{_allocator}
-  , m_data{reinterpret_cast<T*>(m_allocator->allocate(_other.m_capacity * sizeof *m_data))}
   , m_size{_other.m_size}
   , m_capacity{_other.m_capacity}
 {
+  RX_ASSERT(m_allocator, "null allocator");
+
+  m_data = reinterpret_cast<T*>(m_allocator->allocate(_other.m_capacity * sizeof *m_data));
   RX_ASSERT(m_data, "out of memory");
 
   for (rx_size i{0}; i < m_size; i++) {
@@ -152,6 +175,7 @@ inline array<T>::array(array&& _other)
   , m_size{_other.m_size}
   , m_capacity{_other.m_capacity}
 {
+  _other.m_allocator = &memory::g_system_allocator;
   _other.m_data = nullptr;
   _other.m_size = 0;
   _other.m_capacity = 0;
@@ -166,15 +190,12 @@ inline array<T>::~array() {
 template<typename T>
 inline array<T>& array<T>::operator=(const array& _other) {
   clear();
-
-  if (_other.is_empty()) {
-    return *this;
-  }
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
 
   m_allocator = _other.m_allocator;
-  m_data = reinterpret_cast<T*>(m_allocator->allocate(_other.m_capacity * sizeof *m_data));
   m_size = _other.m_size;
   m_capacity = _other.m_capacity;
+  m_data = reinterpret_cast<T*>(m_allocator->allocate(_other.m_capacity * sizeof *m_data));
   RX_ASSERT(m_data, "out of memory");
 
   for (rx_size i{0}; i < m_size; i++) {
@@ -187,12 +208,14 @@ inline array<T>& array<T>::operator=(const array& _other) {
 template<typename T>
 inline array<T>& array<T>::operator=(array&& _other) {
   clear();
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
 
   m_allocator = _other.m_allocator;
   m_data = _other.m_data;
   m_size = _other.m_size;
   m_capacity = _other.m_capacity;
 
+  _other.m_allocator = &memory::g_system_allocator;
   _other.m_data = nullptr;
   _other.m_size = 0;
   _other.m_capacity = 0;
@@ -218,8 +241,8 @@ bool array<T>::grow_or_shrink_to(rx_size _size) {
     return false;
   }
 
-  if constexpr (!traits::is_trivially_destructible<T>) {
-    if (_size < m_size) {
+  if (_size < m_size) {
+    if constexpr (!traits::is_trivially_destructible<T>) {
       for (rx_size i{m_size-1}; i > _size; i--) {
         utility::destruct<T>(m_data + i);
       }

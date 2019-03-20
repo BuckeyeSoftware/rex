@@ -79,6 +79,9 @@ struct string {
 
   static string human_size_format(rx_size _size);
 
+  bool begins_with(const char* _prefix) const;
+  bool ends_with(const char* _suffix) const;
+
 private:
   static string formatter(memory::allocator* alloc, const char* fmt, ...);
 

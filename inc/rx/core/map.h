@@ -112,12 +112,12 @@ inline map<K, V, H>::map(map&& _map)
   , m_resize_threshold{_map.m_resize_threshold}
   , m_mask{_map.m_mask}
 {
-  _map.initialize(nullptr, 0);
+  _map.initialize(&memory::g_system_allocator, 0);
 }
 
 template<typename K, typename V, typename H>
 inline map<K, V, H>::map(const map& _map)
-  : map{_map.m_allocator ? _map.m_allocator : &memory::g_system_allocator}
+  : map{_map.m_allocator}
 {
   for (rx_size i{0}; i < _map.m_capacity; i++) {
     if (_map.element_hash(i) != 0) {
@@ -150,11 +150,9 @@ template<typename K, typename V, typename H>
 inline void map<K, V, H>::clear_and_deallocate() {
   clear();
 
-  if (m_allocator) {
-    m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_keys));
-    m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_values));
-    m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_hashes));
-  }
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_keys));
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_values));
+  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_hashes));
 }
 
 template<typename K, typename V, typename H>
@@ -170,7 +168,7 @@ inline map<K, V, H>& map<K, V, H>::operator=(map<K, V, H>&& _map) {
   m_resize_threshold = _map.m_resize_threshold;
   m_mask = _map.m_mask;
 
-  _map.initialize(nullptr, 0);
+  _map.initialize(&memory::g_system_allocator, 0);
 
   return *this;
 }
