@@ -3,7 +3,7 @@
 
 #include <rx/render/state.h>
 
-#include <rx/core/memory/stack_allocator.h>
+#include <rx/core/memory/bump_point_allocator.h>
 #include <rx/core/utility/construct.h>
 #include <rx/math/vec4.h>
 
@@ -65,7 +65,7 @@ struct command_buffer {
   void reset();
 
 private:
-  memory::stack_allocator m_allocator;
+  memory::bump_point_allocator m_allocator;
 };
 
 struct clear_command {
