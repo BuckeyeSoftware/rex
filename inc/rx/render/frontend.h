@@ -2,13 +2,18 @@
 #define RX_RENDER_FRONTEND_H
 
 #include <rx/core/array.h>
+#include <rx/core/string.h>
+#include <rx/core/map.h>
+
 #include <rx/core/concurrency/mutex.h>
 #include <rx/core/concurrency/atomic.h>
+
 #include <rx/core/memory/pool_allocator.h>
 
 #include <rx/render/command.h>
 #include <rx/render/resource.h>
 #include <rx/render/backend.h>
+#include <rx/render/timer.h>
 
 namespace rx::render {
 
@@ -91,7 +96,7 @@ struct frontend {
   );
 
   bool process();
-  void swap();
+  bool swap();
 
   memory::allocator* allocator() const;
 
@@ -102,6 +107,10 @@ struct frontend {
   };
 
   statistics stats(resource::category _type);
+
+  technique* find_technique_by_name(const char* _name);
+
+  const frame_timer& timer() const &;
 
 private:
   friend struct target;
@@ -138,12 +147,19 @@ private:
 
   backend* m_backend;                      // protected by |m_mutex|
 
+  map<string, technique> m_techniques; 
+  frame_timer m_timer;
+
   concurrency::atomic<rx_size> m_resource_usage[2][resource::count()];
   concurrency::atomic<rx_size> m_draw_calls[2];
 };
 
 inline memory::allocator* frontend::allocator() const {
   return m_allocator;
+}
+
+inline const frame_timer& frontend::timer() const & {
+  return m_timer;
 }
 
 } // namespace rx::render

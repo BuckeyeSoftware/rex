@@ -1,6 +1,5 @@
 #include <rx/render/immediate.h>
 #include <rx/render/frontend.h>
-#include <rx/render/buffer.h>
 #include <rx/render/technique.h>
 
 #include <rx/math/constants.h>
@@ -15,7 +14,7 @@ namespace rx::render {
 
 immediate::queue::queue(memory::allocator* _allocator)
   : m_commands{_allocator}
-{
+{ 
 }
 
 bool immediate::queue::command::operator!=(const command& _command) const {
@@ -142,20 +141,19 @@ void immediate::queue::clear() {
   m_commands.clear();
 }
 
-immediate::immediate(memory::allocator* _allocator, frontend* _frontend, technique* _technique)
-  : m_allocator{_allocator}
-  , m_frontend{_frontend}
-  , m_technique{_technique}
-  , m_queue{m_allocator}
-  , m_vertices{m_allocator}
-  , m_elements{m_allocator}
-  , m_batches{m_allocator}
+immediate::immediate(frontend* _frontend)
+  : m_frontend{_frontend}
+  , m_technique{m_frontend->find_technique_by_name("immediate")}
+  , m_queue{m_frontend->allocator()}
+  , m_vertices{m_frontend->allocator()}
+  , m_elements{m_frontend->allocator()}
+  , m_batches{m_frontend->allocator()}
   , m_rd_index{1}
   , m_wr_index{0}
 {
   for (rx_size i{0}; i < k_buffers; i++) {
-    m_render_batches[i] = {m_allocator};
-    m_render_queue[i] = {m_allocator};
+    m_render_batches[i] = {m_frontend->allocator()};
+    m_render_queue[i] = {m_frontend->allocator()};
   }
 
   // generate circle geometry

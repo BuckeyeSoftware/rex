@@ -10,9 +10,10 @@
 #include <rx/render/target.h>
 #include <rx/render/buffer.h>
 #include <rx/render/state.h>
-#include <rx/render/technique.h>
 
 namespace rx::render {
+
+struct technique;
 
 struct immediate {
   struct queue {
@@ -81,7 +82,7 @@ struct immediate {
     array<command> m_commands;
   };
 
-  immediate(memory::allocator* _allocator, frontend* _frontend, technique* _technique);
+  immediate(frontend* _frontend);
   ~immediate();
 
   void render(target* _target);
@@ -118,7 +119,6 @@ private:
     state render_state;
   };
 
-  memory::allocator* m_allocator;
   frontend* m_frontend;
   technique* m_technique;
 

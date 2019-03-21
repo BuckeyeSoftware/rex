@@ -19,7 +19,9 @@ stats_allocator::stats_allocator(allocator* _allocator)
 
 stats_allocator::~stats_allocator() {
   concurrency::scope_lock lock(m_lock);
-  RX_ASSERT(m_statistics.allocations == m_statistics.deallocations, "leaked memory");
+  RX_ASSERT(m_statistics.allocations == m_statistics.deallocations,
+    "leaked memory (%zu allocations, %zu deallocations)",
+    m_statistics.allocations, m_statistics.deallocations);
 }
 
 rx_byte* stats_allocator::allocate(rx_size _size) {

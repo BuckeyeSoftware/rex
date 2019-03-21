@@ -10,7 +10,9 @@
 
 #include <rx/input/input.h>
 
-#include <rx/render/renderer.h>
+#include <rx/render/frontend.h>
+#include <rx/render/target.h>
+#include <rx/render/backend_gl4.h>
 
 RX_CONSOLE_V2IVAR(
   display_resolution,
@@ -116,7 +118,12 @@ int entry(int argc, char **argv) {
   SDL_GL_SetSwapInterval(1);
 
   {
-    rx::render::renderer renderer{&rx::memory::g_system_allocator, "gl4", reinterpret_cast<void*>(window)};
+    rx::render::backend_gl4 backend{&rx::memory::g_system_allocator, reinterpret_cast<void*>(window)};
+    rx::render::frontend frontend{&rx::memory::g_system_allocator, &backend};
+
+    rx::render::target* target{frontend.create_target(RX_RENDER_TAG("default"))};
+    target->request_swapchain();
+
     rx::input::input input;
 
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
@@ -175,24 +182,31 @@ int entry(int argc, char **argv) {
         //camera.translate = camera.translate - rx::math::vec3f(l.x, l.y, l.z) * (10.0f * timer.delta_time());
       }
 
-      if (renderer.update()) {
-        const auto stats{rx::memory::g_system_allocator->stats()};
-        char format[1024];
-        snprintf(format, sizeof format, "%d fps | %.2f mspf | mem a/%zu, r/r:%zu a:%zu, d/%zu, u/r:%s a:%s, p/r:%s a:%s",
-          renderer.timer().fps(),
-          renderer.timer().mspf(),
-          stats.allocations,
-          stats.request_reallocations,
-          stats.actual_reallocations,
-          stats.deallocations,
-          rx::string::human_size_format(stats.used_request_bytes).data(),
-          rx::string::human_size_format(stats.used_actual_bytes).data(),
-          rx::string::human_size_format(stats.peak_request_bytes).data(),
-          rx::string::human_size_format(stats.peak_actual_bytes).data());
+      frontend.clear(RX_RENDER_TAG("default"),
+        target, RX_RENDER_CLEAR_COLOR(0), {1.0f, 0.0f, 0.0f, 1.0f});
 
-        SDL_SetWindowTitle(window, format);
+      if (frontend.process()) {
+        if (frontend.swap()) {
+          const auto stats{rx::memory::g_system_allocator->stats()};
+          char format[1024];
+          snprintf(format, sizeof format, "%d fps | %.2f mspf | mem a/%zu, r/r:%zu a:%zu, d/%zu, u/r:%s a:%s, p/r:%s a:%s",
+            frontend.timer().fps(),
+            frontend.timer().mspf(),
+            stats.allocations,
+            stats.request_reallocations,
+            stats.actual_reallocations,
+            stats.deallocations,
+            rx::string::human_size_format(stats.used_request_bytes).data(),
+            rx::string::human_size_format(stats.used_actual_bytes).data(),
+            rx::string::human_size_format(stats.peak_request_bytes).data(),
+            rx::string::human_size_format(stats.peak_actual_bytes).data());
+
+          SDL_SetWindowTitle(window, format);
+        }
       }
     }
+
+    frontend.destroy_target(RX_RENDER_TAG("default"), target);
   }
 
   rx::console::console::save("config.cfg");

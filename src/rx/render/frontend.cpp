@@ -10,6 +10,7 @@
 #include <rx/render/technique.h>
 
 #include <rx/core/concurrency/scope_lock.h>
+#include <rx/core/filesystem/directory.h>
 #include <rx/core/log.h>
 
 #include <rx/console/variable.h>
@@ -24,6 +25,8 @@ RX_CONSOLE_IVAR(max_textureCM, "render.max_textureCM", "maximum CM textures", 16
 RX_CONSOLE_IVAR(command_memory, "render.command_memory", "memory for command buffer in MiB", 16, 64, 16);
 
 RX_LOG("render", render_log);
+
+static constexpr const char* k_technique_path{"/base/renderer/techniques"};
 
 namespace rx::render {
 
@@ -50,6 +53,17 @@ frontend::frontend(memory::allocator* _allocator, backend* _backend)
   , m_command_buffer{m_allocator, static_cast<rx_size>(*command_memory * 1024 * 1024)}
   , m_backend{_backend}
 {
+  // load all techniques
+  if (filesystem::directory directory{k_technique_path}) {
+    directory.each([this](const filesystem::directory::item& _item) {
+      if (_item.is_file() && _item.name().ends_with(".json5")) {
+        technique new_technique{this};
+        if (new_technique.load({"%s/%s", k_technique_path, _item.name()})) {
+          m_techniques.insert(_item.name(), utility::move(new_technique));
+        }
+      }
+    });
+  }
 }
 
 frontend::~frontend() {
@@ -472,8 +486,13 @@ frontend::statistics frontend::stats(resource::category _type) {
   return {};
 }
 
-void frontend::swap() {
+bool frontend::swap() {
   m_backend->swap();
+  return m_timer.update();
+}
+
+technique* frontend::find_technique_by_name(const char* _name) {
+  return m_techniques.find(_name);
 }
 
 } // namespace rx::render
