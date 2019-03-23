@@ -11,14 +11,26 @@ struct mat3x3 {
   using vec = vec3<T>;
 
   constexpr mat3x3();
-  constexpr mat3x3(const vec& x, const vec& y, const vec& z);
-
-  static constexpr mat3x3 scale(const vec3<T>& scale);
-  static constexpr mat3x3 rotate(const vec3<T>& rotate);
-  static constexpr mat3x3 translate(const vec3<T>& translate);
-  static constexpr mat3x3 transpose(const mat3x3& mat);
+  constexpr mat3x3(const vec& _x, const vec& _y, const vec& _z);
 
   const T* data() const;
+
+  static constexpr mat3x3 scale(const vec3<T>& _scale);
+  static constexpr mat3x3 rotate(const vec3<T>& _rotate);
+  static constexpr mat3x3 translate(const vec3<T>& _translate);
+  static constexpr mat3x3 transpose(const mat3x3& _mat);
+
+  constexpr mat3x3 operator*(const mat3x3& _mat) const;
+  constexpr mat3x3 operator+(const mat3x3& _mat) const;
+
+  constexpr mat3x3 operator*(T _scalar) const;
+  constexpr mat3x3 operator+(T _scalar) const;
+
+  constexpr mat3x3& operator*=(const mat3x3& _mat);
+  constexpr mat3x3& operator+=(const mat3x3& _mat);
+
+  constexpr mat3x3& operator*=(T _scalar);
+  constexpr mat3x3& operator+=(T _scalar);
 
   vec x, y, z;
 };
@@ -34,58 +46,92 @@ constexpr mat3x3<T>::mat3x3()
 }
 
 template<typename T>
-constexpr mat3x3<T>::mat3x3(const vec& x, const vec& y, const vec& z)
-  : x{x}
-  , y{y}
-  , z{z}
+constexpr mat3x3<T>::mat3x3(const vec& _x, const vec& _y, const vec& _z)
+  : x{_x}
+  , y{_y}
+  , z{_z}
 {
 }
 
 template<typename T>
-inline constexpr mat3x3<T> mat3x3<T>::scale(const vec3<T>& scale) {
-  return {{scale.x, 0,       0},
-          {0,       scale.y, 0},
-          {0,       0,       scale.z}};
+inline const T* mat3x3<T>::data() const {
+  return x.data();
 }
 
 template<typename T>
-inline constexpr mat3x3<T> mat3x3<T>::rotate(const vec3<T>& rotate) {
-  const auto sx{sin(deg_to_rad(-rotate.x))};
-  const auto cx{cos(deg_to_rad(-rotate.x))};
-  const auto sy{sin(deg_to_rad(-rotate.y))};
-  const auto cy{cos(deg_to_rad(-rotate.y))};
-  const auto sz{sin(deg_to_rad(-rotate.z))};
-  const auto cz{cos(deg_to_rad(-rotate.z))};
+inline constexpr mat3x3<T> mat3x3<T>::scale(const vec3<T>& _scale) {
+  return {{_scale.x, 0,       0},
+          {0,       _scale.y, 0},
+          {0,       0,       _scale.z}};
+}
+
+template<typename T>
+inline constexpr mat3x3<T> mat3x3<T>::rotate(const vec3<T>& _rotate) {
+  const auto sx{sin(deg_to_rad(-_rotate.x))};
+  const auto cx{cos(deg_to_rad(-_rotate.x))};
+  const auto sy{sin(deg_to_rad(-_rotate.y))};
+  const auto cy{cos(deg_to_rad(-_rotate.y))};
+  const auto sz{sin(deg_to_rad(-_rotate.z))};
+  const auto cz{cos(deg_to_rad(-_rotate.z))};
   return {{ cy*cz,              cy*-sz,              sy},
           {-sx*-sy*cz + cx*sz, -sx*-sy*-sz + cx*cz, -sx*cy},
           { cx*-sy*cz + sx*sz,  cx*-sy*-sz + sx*cz,  cx*cy}};
 }
 
 template<typename T>
-inline constexpr mat3x3<T> mat3x3<T>::translate(const vec3<T>& translate) {
+inline constexpr mat3x3<T> mat3x3<T>::translate(const vec3<T>& _translate) {
   return {{1, 0, 0},
           {0, 1, 0},
-          translate};
+          _translate};
 }
 
 template<typename T>
-inline constexpr mat3x3<T> mat3x3<T>::transpose(const mat3x3& mat) {
-  return {{mat.x.x, mat.y.x, mat.z.x},
-          {mat.x.y, mat.y.y, mat.z.y},
-          {mat.x.z, mat.y.z, mat.z.z}};
+inline constexpr mat3x3<T> mat3x3<T>::transpose(const mat3x3& _mat) {
+  return {{_mat.x.x, _mat.y.x, _mat.z.x},
+          {_mat.x.y, _mat.y.y, _mat.z.y},
+          {_mat.x.z, _mat.y.z, _mat.z.z}};
 }
 
 template<typename T>
-inline constexpr mat3x3<T> operator*(const mat3x3<T>& a, const mat3x3<T>& b) {
-  return {b.x*a.x.x + b.y*a.x.y + b.z*a.x.z,
-          b.x*a.y.x + b.y*a.y.y + b.z*a.y.z,
-          b.x*a.z.x + b.y*a.z.y + b.z*a.z.z};
+inline constexpr mat3x3<T> mat3x3<T>::operator*(const mat3x3& _mat) const {
+  return {_mat.x*x.x + _mat.y*x.y + _mat.z*x.z,
+          _mat.x*y.x + _mat.y*y.y + _mat.z*y.z,
+          _mat.x*z.x + _mat.y*z.y + _mat.z*z.z};
 }
 
 template<typename T>
-inline const T* mat3x3<T>::data() const {
-  // NOTE: this only works because mat3x3 is contiguous in memory
-  return x.data();
+inline constexpr mat3x3<T> mat3x3<T>::operator+(const mat3x3& _mat) const {
+  return {x + _mat.x, y + _mat.y, z + _mat.z};
+}
+
+template<typename T>
+inline constexpr mat3x3<T> mat3x3<T>::operator*(T _scalar) const {
+  return {x * _scalar, y * _scalar, z * _scalar};
+}
+
+template<typename T>
+inline constexpr mat3x3<T> mat3x3<T>::operator+(T _scalar) const {
+  return {x + _scalar, y + _scalar, z + _scalar};
+}
+
+template<typename T>
+inline constexpr mat3x3<T>& mat3x3<T>::operator*=(const mat3x3& _mat) {
+  return *this = *this * _mat;
+}
+
+template<typename T>
+inline constexpr mat3x3<T>& mat3x3<T>::operator+=(const mat3x3& _mat) {
+  return *this = *this + _mat;
+}
+
+template<typename T>
+inline constexpr mat3x3<T>& mat3x3<T>::operator*=(T _scalar) {
+  return *this = *this * _scalar;
+}
+
+template<typename T>
+inline constexpr mat3x3<T>& mat3x3<T>::operator+=(T _scalar) {
+  return *this = *this + _scalar;
 }
 
 } // namespace rx::math

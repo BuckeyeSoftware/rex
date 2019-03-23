@@ -12,16 +12,28 @@ struct mat4x4 {
   using vec = vec4<T>;
 
   constexpr mat4x4();
-  constexpr mat4x4(const vec& x, const vec& y, const vec& z, const vec& w);
-
-  static constexpr mat4x4 scale(const vec3<T>& scale);
-  static constexpr mat4x4 rotate(const vec3<T>& rotate);
-  static constexpr mat4x4 translate(const vec3<T>& translate);
-  static constexpr mat4x4 transpose(const mat4x4& mat);
-  static constexpr mat4x4 invert(const mat4x4& mat);
-  static constexpr mat4x4 perspective(T _fov, const range<T>& _planes, T _aspect);
+  constexpr mat4x4(const vec& _x, const vec& _y, const vec& _z, const vec& _w);
 
   const T* data() const;
+
+  static constexpr mat4x4 scale(const vec3<T>& _scale);
+  static constexpr mat4x4 rotate(const vec3<T>& _rotate);
+  static constexpr mat4x4 translate(const vec3<T>& _translate);
+  static constexpr mat4x4 transpose(const mat4x4& _mat);
+  static constexpr mat4x4 invert(const mat4x4& _mat);
+  static constexpr mat4x4 perspective(T _fov, const range<T>& _planes, T _aspect);
+
+  constexpr mat4x4 operator*(const mat4x4& _mat) const;
+  constexpr mat4x4 operator+(const mat4x4& _mat) const;
+
+  constexpr mat4x4 operator*(T _scalar) const;
+  constexpr mat4x4 operator+(T _scalar) const;
+
+  constexpr mat4x4& operator*=(const mat4x4& _mat);
+  constexpr mat4x4& operator+=(const mat4x4& _mat);
+
+  constexpr mat4x4& operator*=(T _scalar);
+  constexpr mat4x4& operator+=(T _scalar);
 
   vec x, y, z, w;
 
@@ -48,6 +60,11 @@ constexpr mat4x4<T>::mat4x4(const vec& x, const vec& y, const vec& z, const vec&
   , z{z}
   , w{w}
 {
+}
+
+template<typename T>
+inline const T* mat4x4<T>::data() const {
+  return x.data();
 }
 
 template<typename T>
@@ -145,13 +162,47 @@ inline constexpr mat4x4<T> mat4x4<T>::perspective(T _fov, const range<T>& _plane
   }
 }
 
-// NOTE(dweiler): the operand order is reversed here
 template<typename T>
-inline constexpr mat4x4<T> operator*(const mat4x4<T>& a, const mat4x4<T>& b) {
-  return {b.x*a.x.x + b.y*a.x.y + b.z*a.x.z + b.w*a.x.w,
-          b.x*a.y.x + b.y*a.y.y + b.z*a.y.z + b.w*a.y.w,
-          b.x*a.z.x + b.y*a.z.y + b.z*a.z.z + b.w*a.z.w,
-          b.x*a.w.x + b.y*a.w.y + b.z*a.w.z + b.w*a.w.w};
+inline constexpr mat4x4<T> mat4x4<T>::operator*(const mat4x4& _mat) const {
+  return {_mat.x*x.x + _mat.y*x.y + _mat.z*x.z + _mat.w*x.w,
+          _mat.x*y.x + _mat.y*y.y + _mat.z*y.z + _mat.w*y.w,
+          _mat.x*z.x + _mat.y*z.y + _mat.z*z.z + _mat.w*z.w,
+          _mat.x*w.x + _mat.y*w.y + _mat.z*w.z + _mat.w*w.w};
+}
+
+template<typename T>
+inline constexpr mat4x4<T> mat4x4<T>::operator+(const mat4x4& _mat) const {
+  return {x + _mat.x, y + _mat.y, z + _mat.z, w + _mat.w};
+}
+
+template<typename T>
+inline constexpr mat4x4<T> mat4x4<T>::operator*(T _scalar) const {
+  return {x * _scalar, y * _scalar, z * _scalar, w * _scalar};
+}
+
+template<typename T>
+inline constexpr mat4x4<T> mat4x4<T>::operator+(T _scalar) const {
+  return {x + _scalar, y + _scalar, z + _scalar, w + _scalar};
+}
+
+template<typename T>
+inline constexpr mat4x4<T>& mat4x4<T>::operator*=(const mat4x4& _mat) {
+  return *this = *this * _mat;
+}
+
+template<typename T>
+inline constexpr mat4x4<T>& mat4x4<T>::operator+=(const mat4x4& _mat) {
+  return *this = *this + _mat;
+}
+
+template<typename T>
+inline constexpr mat4x4<T>& mat4x4<T>::operator*=(T _scalar) {
+  return *this = *this * _scalar;
+}
+
+template<typename T>
+inline constexpr mat4x4<T>& mat4x4<T>::operator+=(T _scalar) {
+  return *this = *this + _scalar;
 }
 
 template<typename T>
@@ -162,12 +213,6 @@ inline constexpr T mat4x4<T>::det2x2(T a, T b, T c, T d) {
 template<typename T>
 inline constexpr T mat4x4<T>::det3x3(T a1, T a2, T a3, T b1, T b2, T b3, T c1, T c2, T c3) {
   return a1 * det2x2(b2, b3, c2, c3) - b1 * det2x2(a2, a3, c2, c3) + c1 * det2x2(a2, a3, b2, b3);
-}
-
-template<typename T>
-inline const T* mat4x4<T>::data() const {
-  // NOTE: this only works because mat4x4 is contiguous in memory
-  return x.data();
 }
 
 } // namespace rx::math

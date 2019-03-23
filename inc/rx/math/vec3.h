@@ -11,11 +11,53 @@ namespace rx::math {
 template<typename T>
 struct vec3 {
   constexpr vec3();
-  constexpr vec3(T x, T y, T z);
-  T& operator[](rx_size i);
-  const T& operator[](rx_size i) const;
-  bool is_any(T value) const;
+  constexpr vec3(T _x, T _y, T _z);
+
+  T& operator[](rx_size _i);
+  const T& operator[](rx_size _i) const;
+
+  bool is_any(T _value) const;
+  bool is_all(T _value) const;
+
   const T* data() const;
+
+  template<typename T2>
+  constexpr vec3<T2> cast() const;
+
+  constexpr vec3 operator*(const vec3<T>& _vec) const;
+  constexpr vec3 operator/(const vec3<T>& _vec) const;
+  constexpr vec3 operator+(const vec3<T>& _vec) const;
+  constexpr vec3 operator-(const vec3<T>& _vec) const;
+
+  constexpr vec3& operator*=(const vec3<T>& _vec) const;
+  constexpr vec3& operator/=(const vec3<T>& _vec) const;
+  constexpr vec3& operator+=(const vec3<T>& _vec) const;
+  constexpr vec3& operator-=(const vec3<T>& _vec) const;
+
+  constexpr vec3 operator*(T _scalar) const;
+  constexpr vec3 operator/(T _scalar) const;
+  constexpr vec3 operator+(T _scalar) const;
+  constexpr vec3 operator-(T _scalar) const;
+
+  constexpr vec3& operator*=(T _scalar) const;
+  constexpr vec3& operator/=(T _scalar) const;
+  constexpr vec3& operator+=(T _scalar) const;
+  constexpr vec3& operator-=(T _scalar) const;
+
+  template<typename U>
+  friend constexpr vec3<U> operator*(U _scalar, const vec3<T>& _vec);
+  template<typename U>
+  friend constexpr vec3<U> operator/(U _scalar, const vec3<T>& _vec);
+  template<typename U>
+  friend constexpr vec3<U> operator+(U _scalar, const vec3<T>& _vec);
+  template<typename U>
+  friend constexpr vec3<U> operator-(U _scalar, const vec3<T>& _vec);
+
+  template<typename U>
+  friend constexpr bool operator==(const vec3<U>& _lhs, const vec3<U>& _rhs);
+  template<typename U>
+  friend constexpr bool operator!=(const vec3<U>& _lhs, const vec3<U>& _rhs);
+
   union {
     struct { T x, y, z; };
     struct { T w, h, d; };
@@ -37,28 +79,33 @@ inline constexpr vec3<T>::vec3()
 }
 
 template<typename T>
-inline constexpr vec3<T>::vec3(T x, T y, T z)
-  : x{x}
-  , y{y}
-  , z{z}
+inline constexpr vec3<T>::vec3(T _x, T _y, T _z)
+  : x{_x}
+  , y{_y}
+  , z{_z}
 {
 }
 
 template<typename T>
-inline T& vec3<T>::operator[](rx_size i) {
-  RX_ASSERT(i < 3, "out of bounds");
-  return v[i];
+inline T& vec3<T>::operator[](rx_size _i) {
+  RX_ASSERT(_i < 3, "out of bounds");
+  return v[_i];
 }
 
 template<typename T>
-inline const T& vec3<T>::operator[](rx_size i) const {
-  RX_ASSERT(i < 3, "out of bounds");
-  return v[i];
+inline const T& vec3<T>::operator[](rx_size _i) const {
+  RX_ASSERT(_i < 3, "out of bounds");
+  return v[_i];
 }
 
 template<typename T>
-inline bool vec3<T>::is_any(T value) const {
-  return x == value || y == value || z == value;
+inline bool vec3<T>::is_any(T _value) const {
+  return x == _value || y == _value || z == _value;
+}
+
+template<typename T>
+inline bool vec3<T>::is_all(T _value) const {
+  return x == _value && y == _value && z == _value;
 }
 
 template<typename T>
@@ -66,88 +113,134 @@ inline const T* vec3<T>::data() const {
   return v;
 }
 
+template<typename T>
+template<typename T2>
+inline constexpr vec3<T2> vec3<T>::cast() const {
+  return {static_cast<T2>(x), static_cast<T2>(y), static_cast<T2>(z)};
+}
+
 // (vec, vec)
 template<typename T>
-inline constexpr vec3<T> operator+(const vec3<T>& lhs, const vec3<T>& rhs) {
-  return {lhs.x+rhs.x, lhs.y+rhs.y, lhs.z+rhs.z};
+inline constexpr vec3<T> vec3<T>::operator*(const vec3<T>& _vec) const {
+  return {x*_vec.x, y*_vec.y, z*_vec.z};
 }
 
 template<typename T>
-inline constexpr vec3<T> operator-(const vec3<T>& lhs, const vec3<T>& rhs) {
-  return {lhs.x-rhs.x, lhs.y-rhs.y, lhs.z-rhs.z};
+inline constexpr vec3<T> vec3<T>::operator/(const vec3<T>& _vec) const {
+  return {x/_vec.x, y/_vec.y, z/_vec.z};
 }
 
 template<typename T>
-inline constexpr vec3<T> operator*(const vec3<T>& lhs, const vec3<T>& rhs) {
-  return {lhs.x*rhs.x, lhs.y*rhs.y, lhs.z*rhs.z};
+inline constexpr vec3<T> vec3<T>::operator+(const vec3<T>& _vec) const {
+  return {x+_vec.x, y+_vec.y, z+_vec.z};
 }
 
 template<typename T>
-inline constexpr vec3<T> operator/(const vec3<T>& lhs, const vec3<T>& rhs) {
-  return {lhs.x/rhs.x, lhs.y/rhs.y, lhs.z/rhs.z};
+inline constexpr vec3<T> vec3<T>::operator-(const vec3<T>& _vec) const {
+  return {x-_vec.x, y-_vec.y, z-_vec.z};
+}
+
+template<typename T>
+inline constexpr vec3<T>& vec3<T>::operator*=(const vec3<T>& _vec) const {
+  return *this = *this * _vec;
+}
+
+template<typename T>
+inline constexpr vec3<T>& vec3<T>::operator/=(const vec3<T>& _vec) const {
+  return *this = *this / _vec;
+}
+
+template<typename T>
+inline constexpr vec3<T>& vec3<T>::operator+=(const vec3<T>& _vec) const {
+  return *this = *this + _vec;
+}
+
+template<typename T>
+inline constexpr vec3<T>& vec3<T>::operator-=(const vec3<T>& _vec) const {
+  return *this = *this - _vec;
 }
 
 // (vec, scalar)
 template<typename T>
-inline constexpr vec3<T> operator+(const vec3<T>& lhs, T rhs) {
-  return {lhs.x+rhs, lhs.y+rhs, lhs.z+rhs};
+inline constexpr vec3<T> vec3<T>::operator*(T _scalar) const {
+  return {x*_scalar, y*_scalar, z*_scalar};
 }
 
 template<typename T>
-inline constexpr vec3<T> operator-(const vec3<T>& lhs, T rhs) {
-  return {lhs.x-rhs, lhs.y-rhs, lhs.z-rhs};
+inline constexpr vec3<T> vec3<T>::operator/(T _scalar) const {
+  return {x/_scalar, y/_scalar, z/_scalar};
 }
 
 template<typename T>
-inline constexpr vec3<T> operator*(const vec3<T>& lhs, T rhs) {
-  return {lhs.x*rhs, lhs.y*rhs, lhs.z*rhs};
+inline constexpr vec3<T> vec3<T>::operator+(T _scalar) const {
+  return {x+_scalar, y+_scalar, z+_scalar};
 }
 
 template<typename T>
-inline constexpr vec3<T> operator/(const vec3<T>& lhs, T rhs) {
-  return {lhs.x/rhs, lhs.y/rhs, lhs.z/rhs};
+inline constexpr vec3<T> vec3<T>::operator-(T _scalar) const {
+  return {x-_scalar, y-_scalar, z-_scalar};
+}
+
+template<typename T>
+inline constexpr vec3<T>& vec3<T>::operator*=(T _scalar) const {
+  return *this = *this * _scalar;
+}
+
+template<typename T>
+inline constexpr vec3<T>& vec3<T>::operator/=(T _scalar) const {
+  return *this = *this / _scalar;
+}
+
+template<typename T>
+inline constexpr vec3<T>& vec3<T>::operator+=(T _scalar) const {
+  return *this = *this + _scalar;
+}
+
+template<typename T>
+inline constexpr vec3<T>& vec3<T>::operator-=(T _scalar) const {
+  return *this = *this - _scalar;
 }
 
 // (scalar, vec)
-template<typename T>
-inline constexpr vec3<T> operator+(T lhs, const vec3<T>& rhs) {
-  return {lhs+rhs.x, lhs+rhs.y, lhs+rhs.z};
+template<typename U>
+inline constexpr vec3<U> operator*(U _scalar, const vec3<U>& _vec) {
+  return {_scalar*_vec.x, _scalar*_vec.y, _scalar*_vec.z};
 }
 
-template<typename T>
-inline constexpr vec3<T> operator-(T lhs, const vec3<T>& rhs) {
-  return {lhs-rhs.x, lhs-rhs.y, lhs-rhs.z};
+template<typename U>
+inline constexpr vec3<U> operator/(U _scalar, const vec3<U>& _vec) {
+  return {_scalar/_vec.x, _scalar/_vec.y, _scalar/_vec.z};
 }
 
-template<typename T>
-inline constexpr vec3<T> operator*(T lhs, const vec3<T>& rhs) {
-  return {lhs*rhs.x, lhs*rhs.y, lhs*rhs.z};
+template<typename U>
+inline constexpr vec3<U> operator+(U _scalar, const vec3<U>& _vec) {
+  return {_scalar+_vec.x, _scalar+_vec.y, _scalar+_vec.z};
 }
 
-template<typename T>
-inline constexpr vec3<T> operator/(T lhs, const vec3<T>& rhs) {
-  return {lhs/rhs.x, lhs/rhs.y, lhs/rhs.z};
+template<typename U>
+inline constexpr vec3<U> operator-(U _scalar, const vec3<U>& _vec) {
+  return {_scalar-_vec.x, _scalar-_vec.y, _scalar-_vec.z};
 }
 
-template<typename T>
-inline constexpr bool operator==(const vec3<T>& lhs, const vec3<T>& rhs) {
-  return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
+template<typename U>
+inline constexpr bool operator==(const vec3<U>& _lhs, const vec3<U>& _rhs) {
+  return _lhs.x == _rhs.x && _lhs.y == _rhs.y && _lhs.z == _rhs.z;
 }
 
-template<typename T>
-inline constexpr bool operator!=(const vec3<T>& lhs, const vec3<T>& rhs) {
-  return lhs.x != rhs.x || lhs.y != rhs.y || lhs.z != rhs.z;
+template<typename U>
+inline constexpr bool operator!=(const vec3<U>& _lhs, const vec3<U>& _rhs) {
+  return _lhs.x != _rhs.x || _lhs.y != _rhs.y || _lhs.z != _rhs.z;
 }
 
 // dot and cross product
 template<typename T>
-inline constexpr T dot(const vec3<T> &lhs, const vec3<T> &rhs) {
-  return lhs.x*rhs.x + lhs.y*rhs.y + lhs.z*rhs.z;
+inline constexpr T dot(const vec3<T>& _lhs, const vec3<T>& _rhs) {
+  return _lhs.x*_rhs.x + _lhs.y*_rhs.y + _lhs.z*_rhs.z;
 }
 
 template<typename T>
-inline constexpr vec3<T> cross(const vec3<T>& lhs, const vec3<T>& rhs) {
-  return {lhs.y*rhs.z - rhs.y*lhs.z, lhs.z*rhs.x - rhs.z*lhs.x, lhs.x*rhs.y - rhs.x*lhs.y};
+inline constexpr vec3<T> cross(const vec3<T>& _lhs, const vec3<T>& _rhs) {
+  return {_lhs.y*_rhs.z - _rhs.y*_lhs.z, _lhs.z*_rhs.x - _rhs.z*_lhs.x, _lhs.x*_rhs.y - _rhs.x*_lhs.y};
 }
 
 rx_f32 length(const vec3f& _value);
@@ -159,13 +252,13 @@ namespace rx {
   template<>
   struct format<math::vec3f> {
     char scratch[format_size<rx_f32>::size*3 + sizeof "{,,  }" - 1];
-    const char* operator()(const math::vec3f& value);
+    const char* operator()(const math::vec3f& _value);
   };
 
   template<>
   struct format<::rx::math::vec3i> {
     char scratch[format_size<rx_s32>::size*3 + sizeof "{,,  }" - 1];
-    const char* operator()(const math::vec3i& value);
+    const char* operator()(const math::vec3i& _value);
   };
 
   template<>
