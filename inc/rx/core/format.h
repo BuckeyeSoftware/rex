@@ -2,7 +2,6 @@
 #define RX_CORE_FORMAT_H
 
 #include <float.h> // {DBL,FLT}_MAX_10_EXP
-#include <limits.h> // CHAR_BIT
 
 #include <rx/core/types.h> // rx_size
 
@@ -24,12 +23,12 @@ struct format_size<rx_f64> {
 
 template<>
 struct format_size<rx_s32> {
-  static constexpr const rx_size size{3+(CHAR_BIT*sizeof(rx_s32)/3)};
+  static constexpr const rx_size size{3+(8*sizeof(rx_s32)/3)};
 };
 
 template<>
 struct format_size<rx_s64> {
-  static constexpr const rx_size size{3+(CHAR_BIT*sizeof(rx_s32)/3)};
+  static constexpr const rx_size size{3+(8*sizeof(rx_s32)/3)};
 };
 
 template<typename T>

@@ -22,7 +22,7 @@ struct scissor_state {
   rx_size flush();
 
 private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*CHAR_BIT - 1)};
+  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
   rx_size m_hash;
 
   math::vec2i m_offset;
@@ -73,7 +73,7 @@ struct blend_state {
   rx_size flush();
 
 private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*CHAR_BIT - 1)};
+  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
   rx_size m_hash;
 
   factor_type m_color_src_factor;
@@ -100,7 +100,7 @@ struct depth_state {
   rx_size flush();
 
 private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*CHAR_BIT - 1)};
+  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
   rx_size m_hash;
 
   enum {
@@ -138,7 +138,7 @@ struct cull_state {
   rx_size flush();
 
 private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*CHAR_BIT - 1)};
+  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
   rx_size m_hash;
 
   front_face_type m_front_face;
@@ -207,7 +207,7 @@ struct stencil_state {
   rx_size flush();
 
 private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*CHAR_BIT - 1)};
+  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
   rx_size m_hash;
 
   rx_u8 m_write_mask;
@@ -242,7 +242,7 @@ struct polygon_state {
   rx_size flush();
 
 private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*CHAR_BIT - 1)};
+  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
   rx_size m_hash;
 
   mode_type m_mode;

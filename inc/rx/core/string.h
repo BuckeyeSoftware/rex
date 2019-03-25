@@ -18,6 +18,7 @@ struct string {
   static constexpr const rx_size k_small_string{16};
 
   string();
+  string(array<rx_byte>&& _data);
   string(const string& _contents);
   string(const char* _contents);
   string(const char* _contents, rx_size _size);

@@ -1,6 +1,8 @@
 #ifndef RX_CONSOLE_VARIABLE_H
 #define RX_CONSOLE_VARIABLE_H
 
+#include <limits.h> // INT_{MIN, MAX}
+
 #include <rx/core/assert.h> // RX_ASSERT
 #include <rx/core/string.h> // string
 #include <rx/core/statics.h> // static_global

@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <rx/render/technique.h>
 #include <rx/render/frontend.h>
 
@@ -199,21 +201,14 @@ program* technique::operator[](const char* _variant) const {
 }
 
 bool technique::load(const string& _file_name) {
-  filesystem::file file{_file_name, "rb"};
-  if (!file) {
+  const auto data{filesystem::read_binary_file(_file_name)};
+  if (!data) {
     return false;
   }
 
-  const auto size{file.size()};
-  if (!size) {
-    return false;
-  }
-
-  string contents;
-  contents.resize(*size);
-  if (!file.read(reinterpret_cast<rx_byte*>(contents.data()), contents.size())) {
-    return false;
-  }
+  string contents{m_frontend->allocator()};
+  contents.resize(data->size());
+  memcpy(contents.data(), data->data(), data->size());
 
   if (!parse({contents})) {
     return false;

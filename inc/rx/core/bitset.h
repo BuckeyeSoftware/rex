@@ -1,12 +1,10 @@
 #ifndef RX_CORE_BITSET_H
 #define RX_CORE_BITSET_H
 
-#include <limits.h> // CHAR_BIT
-
 #include <rx/core/utility/move.h>
 
-#include <rx/core/assert.h> // RX_ASSERT
-#include <rx/core/memory/allocator.h> // memory::{allocator, block}
+#include <rx/core/assert.h>
+#include <rx/core/memory/allocator.h>
 
 #include <rx/core/traits/is_same.h>
 #include <rx/core/traits/return_type.h>
@@ -19,7 +17,7 @@ struct bitset {
   using bit_type = rx_u64;
 
   static constexpr const bit_type k_bit_one{1};
-  static constexpr const rx_size k_word_bits{CHAR_BIT * sizeof(bit_type)};
+  static constexpr const rx_size k_word_bits{8 * sizeof(bit_type)};
 
   bitset() = default;
 

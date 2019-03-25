@@ -6,9 +6,7 @@
 
 #include <rx/core/concurrency/thread.h>
 #include <rx/core/concurrency/mutex.h>
-#include <rx/core/concurrency/spin_lock.h>
 #include <rx/core/concurrency/condition_variable.h>
-#include <rx/core/concurrency/scope_lock.h>
 
 namespace rx::concurrency {
 

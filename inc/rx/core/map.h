@@ -1,8 +1,6 @@
 #ifndef RX_CORE_MAP_H
 #define RX_CORE_MAP_H
 
-#include <limits.h> // CHAR_BIT
-
 #include <rx/core/hash.h> // hash
 
 #include <rx/core/utility/construct.h>
@@ -284,7 +282,7 @@ inline rx_size map<K, V>::hash_key(const K& _key) {
 template<typename K, typename V>
 inline bool map<K, V>::is_deleted(rx_size _hash) {
   // MSB indicates tombstones
-  return (_hash >> ((sizeof _hash * CHAR_BIT) - 1)) != 0;
+  return (_hash >> ((sizeof _hash * 8) - 1)) != 0;
 }
 
 template<typename K, typename V>
