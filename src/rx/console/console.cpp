@@ -294,7 +294,7 @@ variable_status console::parse_string<rx_s32>(const string& contents, rx_s32& re
     return variable_status::k_malformed;
   }
 
-  if (value < INT_MIN || value > INT_MAX) {
+  if (value < k_int_min || value > k_int_max) {
     return variable_status::k_out_of_range;
   }
 
