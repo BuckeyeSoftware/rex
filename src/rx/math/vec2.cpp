@@ -1,7 +1,7 @@
 #include <stdio.h> // snprintf
-#include <math.h> // sqrtf
 
-#include <rx/math/vec2.h> // vec2
+#include <rx/math/trig.h>
+#include <rx/math/vec2.h>
 
 namespace rx {
 
@@ -16,12 +16,11 @@ const char* format_type<math::vec2i>::operator()(const math::vec2i& value) {
 }
 
 rx_f32 math::length(const vec2f& _value) {
-  return sqrtf(dot(_value, _value));
+  return sqrt(dot(_value, _value));
 }
 
 math::vec2f math::normalize(const math::vec2f& _value) {
-  const rx_f32 l{length(_value)};
-  return {_value.x / l, _value.y / l};
+  return _value * (1.0f / math::length(_value));
 }
 
 } // namespace rx

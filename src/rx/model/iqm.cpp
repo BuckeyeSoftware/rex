@@ -1,5 +1,7 @@
 #include <string.h> // memcmp
 
+#include <rx/math/quat.h>
+
 #include <rx/model/iqm.h>
 
 namespace rx::model {
@@ -301,9 +303,29 @@ bool iqm::read_meshes(const header& _header, const array<rx_byte>& _data) {
 }
 
 bool iqm::read_animations(const header& _header, const array<rx_byte>& _data) {
-  (void)_header;
-  (void)_data;
-  // TODO
+  // read base pose
+  m_generic_base_frame.resize(_header.joints);
+  m_inverse_base_frame.resize(_header.joints);
+
+  for (rx_u32 i{0}; i <_header.joints; i++) {
+    const auto* this_joint{reinterpret_cast<const joint*>(_data.data() + _header.joints_offset) + i};
+
+    // IQM is Z up, we're Y up
+    const math::vec3f scale{this_joint->scale[0], this_joint->scale[2], this_joint->scale[1]};
+    const math::quatf rotate{this_joint->rotate[0], this_joint->rotate[2], this_joint->rotate[1], -this_joint->rotate[3]};
+    const math::vec3f translate{this_joint->translate[0], this_joint->translate[2], this_joint->translate[1]};
+
+    m_generic_base_frame[i] = math::mat3x4f{scale, math::normalize(rotate), translate};
+    m_inverse_base_frame[i] = math::mat3x4f::invert(m_generic_base_frame[i]);
+
+    if (this_joint->parent >= 0) {
+      m_generic_base_frame[i] = m_generic_base_frame[this_joint->parent] * m_generic_base_frame[i];
+      m_inverse_base_frame[i] *= m_inverse_base_frame[this_joint->parent];
+    }
+  }
+
+  // TODO read animations
+
   return true;
 }
 

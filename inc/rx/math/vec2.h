@@ -24,6 +24,8 @@ struct vec2 {
   template<typename T2>
   constexpr vec2<T2> cast() const;
 
+  constexpr vec2 operator-() const;
+
   constexpr vec2 operator*(const vec2<T>& _vec) const;
   constexpr vec2 operator/(const vec2<T>& _vec) const;
   constexpr vec2 operator+(const vec2<T>& _vec) const;
@@ -116,6 +118,11 @@ template<typename T>
 template<typename T2>
 inline constexpr vec2<T2> vec2<T>::cast() const {
   return {static_cast<T2>(x), static_cast<T2>(y)};
+}
+
+template<typename T>
+inline constexpr vec2<T> vec2<T>::operator-() const {
+  return {-x, -y};
 }
 
 // (vec, vec)

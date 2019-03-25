@@ -24,6 +24,8 @@ struct vec4 {
   template<typename T2>
   vec4<T2> cast() const;
 
+  constexpr vec4 operator-() const;
+
   constexpr vec4 operator*(const vec4<T>& _vec) const;
   constexpr vec4 operator/(const vec4<T>& _vec) const;
   constexpr vec4 operator+(const vec4<T>& _vec) const;
@@ -113,6 +115,17 @@ inline bool vec4<T>::is_all(T _value) const {
 template<typename T>
 inline const T* vec4<T>::data() const {
   return array;
+}
+
+template<typename T>
+template<typename T2>
+inline vec4<T2> vec4<T>::cast() const {
+  return {static_cast<T2>(x), static_cast<T2>(y), static_cast<T2>(z), static_cast<T2>(w)};
+}
+
+template<typename T>
+inline constexpr vec4<T> vec4<T>::operator-() const {
+  return {-x, -y, -z, -w};
 }
 
 // (vec, vec)
@@ -233,6 +246,9 @@ template<typename T>
 inline constexpr T dot(const vec4<T>& _lhs, const vec4<T>& _rhs) {
   return _lhs.x*_rhs.x + _lhs.y*_rhs.y + _lhs.z*_rhs.z + _lhs.w*_rhs.w;
 }
+
+rx_f32 length(const vec4f& _value);
+vec4f normalize(const vec4f& _value);
 
 } // namespace rx::math
 

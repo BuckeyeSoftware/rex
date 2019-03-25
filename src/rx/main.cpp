@@ -52,6 +52,7 @@ RX_CONSOLE_BVAR(
   false);
 
 #include <rx/model/iqm.h>
+#include <rx/math/quat.h>
 
 int entry(int argc, char **argv) {
   (void)argc;
@@ -137,15 +138,14 @@ int entry(int argc, char **argv) {
     triangle->record_element_type(rx::render::buffer::element_category::k_u32);
     triangle->record_type(rx::render::buffer::category::k_static);
     triangle->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, 0);
-    //triangle->write_elements(k_elements, sizeof k_elements);
-    //triangle->write_vertices(k_vertices, sizeof k_vertices);
-    frontend.initialize_buffer(RX_RENDER_TAG("triangle"), triangle);
 
     rx::model::iqm iqm{&rx::memory::g_system_allocator};
     if (iqm.load("test.iqm")) {
       triangle->write_vertices(iqm.positions().data(), iqm.positions().size() * sizeof(rx::math::vec3f));
       triangle->write_elements(iqm.elements().data(), iqm.elements().size() * sizeof(rx_u32));
     }
+
+    frontend.initialize_buffer(RX_RENDER_TAG("triangle"), triangle);
 
     rx::input::input input;
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {

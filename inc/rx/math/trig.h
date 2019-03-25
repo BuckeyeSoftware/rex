@@ -16,8 +16,13 @@ inline constexpr T rad_to_deg(T rad) {
   return rad * 180.0 / k_pi<T>;
 }
 
-rx_f32 sin(rx_f32 x);
-rx_f32 cos(rx_f32 x);
+rx_f32 sin(rx_f32 _x);
+rx_f32 cos(rx_f32 _x);
+rx_f32 sqrt(rx_f32 _x);
+
+rx_f64 sin(rx_f64 _x);
+rx_f64 cos(rx_f64 _x);
+rx_f64 sqrt(rx_f64 _x);
 
 }
 

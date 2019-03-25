@@ -1,12 +1,14 @@
 #ifndef RX_MODEL_LOADER_H
 #define RX_MODEL_LOADER_H
 
+#include <rx/core/concepts/interface.h>
 #include <rx/core/array.h>
 #include <rx/core/string.h>
 #include <rx/core/json.h>
-#include <rx/core/concepts/interface.h>
 
 #include <rx/math/vec2.h>
+#include <rx/math/vec3.h>
+
 #include <rx/math/mat3x4.h>
 
 namespace rx::model {
@@ -38,6 +40,10 @@ protected:
   array<math::vec4f> m_tangents; // w = bitangent sign
   array<math::vec4b> m_blend_indices;
   array<math::vec4b> m_blend_weights;
+
+  array<math::mat3x4f> m_generic_base_frame;
+  array<math::mat3x4f> m_inverse_base_frame;
+
   json m_materials;
 };
 

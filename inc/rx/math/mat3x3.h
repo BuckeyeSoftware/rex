@@ -7,11 +7,17 @@
 namespace rx::math {
 
 template<typename T>
+struct quat;
+
+template<typename T>
 struct mat3x3 {
   using vec = vec3<T>;
 
   constexpr mat3x3();
   constexpr mat3x3(const vec& _x, const vec& _y, const vec& _z);
+
+  explicit mat3x3(const quat<T>& _rotation);
+  explicit mat3x3(const vec3<T>& _scale, const quat<T>& _rotation);
 
   const T* data() const;
 

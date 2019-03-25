@@ -9,13 +9,15 @@ namespace rx::model {
 
 loader::loader(memory::allocator* _allocator)
   : m_allocator{_allocator}
-  , m_elements{_allocator}
-  , m_positions{_allocator}
-  , m_coordinates{_allocator}
-  , m_normals{_allocator}
-  , m_tangents{_allocator}
-  , m_blend_indices{_allocator}
-  , m_blend_weights{_allocator}
+  , m_elements{m_allocator}
+  , m_positions{m_allocator}
+  , m_coordinates{m_allocator}
+  , m_normals{m_allocator}
+  , m_tangents{m_allocator}
+  , m_blend_indices{m_allocator}
+  , m_blend_weights{m_allocator}
+  , m_generic_base_frame{m_allocator}
+  , m_inverse_base_frame{m_allocator}
 {
 }
 

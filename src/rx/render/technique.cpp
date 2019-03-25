@@ -171,11 +171,27 @@ bool technique::compile() {
     m_frontend->initialize_program(RX_RENDER_TAG("technique"), program);
     m_programs.push_back(program);
   } else if (m_type == category::k_permute) {
-    // create and add all possible permutations of m_specializations
     // TODO
   } else if (m_type == category::k_variant) {
-    // create and add a program for each in m_specializations
-    // TODO
+    m_specializations.each_fwd([this](const string& _specialization) {
+      auto program{m_frontend->create_program(RX_RENDER_TAG("technique"))};
+
+      m_shader_definitions.each_fwd([program, &_specialization](const shader& _shader) {
+        // make copy of shader and inject specialization macro for this variant
+        shader specialized_shader{_shader};
+        const string source{utility::move(specialized_shader.source)};
+        specialized_shader.source.append(string::format("#define %s\n", _specialization));
+        specialized_shader.source.append(source);
+        program->add_shader(utility::move(specialized_shader));
+      });
+
+      m_uniforms.each([program](rx_size, const string& _name, uniform::category _type) {
+        program->add_uniform(_name, _type);
+      });
+    
+      m_frontend->initialize_program(RX_RENDER_TAG("technique"), program);
+      m_programs.push_back(program);
+    });
   }
 
   return true;
