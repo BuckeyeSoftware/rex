@@ -197,7 +197,7 @@ bool iqm::read_meshes(const header& _header, const array<rx_byte>& _data) {
       break;
     case vertex_attribute::k_blend_weights:
       if (format != vertex_format::k_u8) {
-        return error("unsupported formaqt for blend weights");
+        return error("unsupported format for blend weights");
       }
       if (size != 4) {
         return error("invalid size for blend weights");

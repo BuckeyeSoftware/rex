@@ -264,6 +264,8 @@ static GLenum convert_primitive_type(render::primitive_type _primitive_type) {
   switch (_primitive_type) {
   case render::primitive_type::k_triangles:
     return GL_TRIANGLES;
+  case render::primitive_type::k_triangle_strip:
+    return GL_TRIANGLE_STRIP;
   }
   RX_ASSERT(false, "unreachable");
 }
@@ -1489,6 +1491,24 @@ void backend_gl4::process(rx_byte* _command) {
 
             draw_uniforms += uniform.size();
           }
+        }
+      }
+
+      // apply any textures
+      for (rx_size i{0}; i < 8; i++) {
+        switch (command->texture_types[i]) {
+        case '1':
+          // pglBindTextureUnit(i, reinterpret_cast<detail::texture1D*>(reinterpret_cast<texture1D*>(command->texture_binds[i]) + 1)->tex);
+          break;
+        case '2':
+          pglBindTextureUnit(i, reinterpret_cast<detail::texture2D*>(reinterpret_cast<texture2D*>(command->texture_binds[i]) + 1)->tex);
+          break;
+        case '3':
+          break;
+        case 'c':
+          break;
+        default:
+          break;
         }
       }
 

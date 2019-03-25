@@ -22,7 +22,8 @@ struct textureCM;
 #define RX_RENDER_CLEAR_COLOR(INDEX) (1 << (2 + (INDEX)))
 
 enum class primitive_type : rx_u8 {
-  k_triangles
+  k_triangles,
+  k_triangle_strip
 };
 
 enum class command_type : rx_u8 {

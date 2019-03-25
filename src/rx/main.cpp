@@ -17,6 +17,10 @@
 #include <rx/render/technique.h>
 #include <rx/render/backend_gl4.h>
 
+#include <rx/model/iqm.h>
+
+#include <rx/math/transform.h>
+
 RX_CONSOLE_V2IVAR(
   display_resolution,
   "display.resolution",
@@ -51,8 +55,21 @@ RX_CONSOLE_BVAR(
   "use HDR output if supported",
   false);
 
-#include <rx/model/iqm.h>
-#include <rx/math/quat.h>
+struct quad_vertex {
+  rx::math::vec2f position;
+  rx::math::vec2f coordinate;
+};
+
+static constexpr const quad_vertex k_quad_vertices[]{
+  {{ -1.0f,  1.0f}, {0.0f, 1.0f}},
+  {{  1.0f,  1.0f}, {1.0f, 1.0f}},
+  {{ -1.0f, -1.0f}, {0.0f, 0.0f}},
+  {{  1.0f, -1.0f}, {1.0f, 0.0f}}
+};
+
+static constexpr const rx_byte k_quad_elements[]{
+  0, 1, 2, 3
+};
 
 int entry(int argc, char **argv) {
   (void)argc;
@@ -123,6 +140,8 @@ int entry(int argc, char **argv) {
 
   SDL_GL_SetSwapInterval(1);
 
+  rx::math::transform camera;
+
   {
     rx::render::backend_gl4 backend{&rx::memory::g_system_allocator, reinterpret_cast<void*>(window)};
     rx::render::frontend frontend{&rx::memory::g_system_allocator, &backend};
@@ -146,6 +165,16 @@ int entry(int argc, char **argv) {
     }
 
     frontend.initialize_buffer(RX_RENDER_TAG("triangle"), triangle);
+
+    rx::render::buffer* quad{frontend.create_buffer(RX_RENDER_TAG("quad"))};
+    quad->record_stride(sizeof(quad_vertex));
+    quad->record_element_type(rx::render::buffer::element_category::k_u8);
+    quad->record_type(rx::render::buffer::category::k_static);
+    quad->record_attribute(rx::render::buffer::attribute::category::k_f32, 2, offsetof(quad_vertex, position));
+    quad->record_attribute(rx::render::buffer::attribute::category::k_f32, 2, offsetof(quad_vertex, coordinate));
+    quad->write_vertices(k_quad_vertices, sizeof k_quad_vertices);
+    quad->write_elements(k_quad_elements, sizeof k_quad_elements);
+    frontend.initialize_buffer(RX_RENDER_TAG("quad"), quad);
 
     rx::input::input input;
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
@@ -185,23 +214,23 @@ int entry(int argc, char **argv) {
 
       const auto& delta{input.mouse().movement()};
       rx::math::vec3f move{static_cast<rx_f32>(delta.y), static_cast<rx_f32>(delta.x), 0.0f};
-      //camera.rotate = camera.rotate + move;
+      camera.rotate = camera.rotate + move;
 
       if (input.keyboard().is_held(SDL_SCANCODE_W, true)) {
-        //const auto f{camera.to_mat4().z};
-        //camera.translate = camera.translate + rx::math::vec3f(f.x, f.y, f.z) * (10.0f * timer.delta_time());
+        const auto f{camera.to_mat4().z};
+        camera.translate += rx::math::vec3f(f.x, f.y, f.z) * (10.0f * frontend.timer().delta_time());
       }
       if (input.keyboard().is_held(SDL_SCANCODE_S, true)) {
-        //const auto f{camera.to_mat4().z};
-        //camera.translate = camera.translate - rx::math::vec3f(f.x, f.y, f.z) * (10.0f * timer.delta_time());
+        const auto f{camera.to_mat4().z};
+        camera.translate -= rx::math::vec3f(f.x, f.y, f.z) * (10.0f * frontend.timer().delta_time());
       }
       if (input.keyboard().is_held(SDL_SCANCODE_D, true)) {
-        //const auto l{camera.to_mat4().x};
-        //camera.translate = camera.translate + rx::math::vec3f(l.x, l.y, l.z) * (10.0f * timer.delta_time());
+        const auto l{camera.to_mat4().x};
+        camera.translate += rx::math::vec3f(l.x, l.y, l.z) * (10.0f * frontend.timer().delta_time());
       }
       if (input.keyboard().is_held(SDL_SCANCODE_A, true)) {
-        //const auto l{camera.to_mat4().x};
-        //camera.translate = camera.translate - rx::math::vec3f(l.x, l.y, l.z) * (10.0f * timer.delta_time());
+        const auto l{camera.to_mat4().x};
+        camera.translate -= rx::math::vec3f(l.x, l.y, l.z) * (10.0f * frontend.timer().delta_time());
       }
 
       // clear gbuffer albedo, normal & emission for testing
@@ -214,13 +243,29 @@ int entry(int argc, char **argv) {
       frontend.clear(RX_RENDER_TAG("gbuffer emission"),
         gbuffer, RX_RENDER_CLEAR_COLOR(2), {0.0f, 0.0f, 1.0f, 1.0f});
 
-      rx::render::technique* program{frontend.find_technique_by_name("gbuffer-test")};
+
+      rx::math::mat4x4f model{};
+      rx::math::mat4x4f view{rx::math::mat4x4f::invert(camera.to_mat4())};
+      rx::math::mat4x4f projection{rx::math::mat4x4f::perspective(90.0f, {0.01, 1024.0f}, 1600.0f/900.0f)};
+
+      rx::render::technique* gbuffer_test_technique{frontend.find_technique_by_name("gbuffer-test")};
+      rx::render::technique* fs_quad_technique{frontend.find_technique_by_name("fs-quad")};
+
+      RX_ASSERT(gbuffer_test_technique, "");
+      RX_ASSERT(fs_quad_technique, "");
+      
+      rx::render::program* gbuffer_test_program{*gbuffer_test_technique};
+      rx::render::program* fs_quad_program{*fs_quad_technique};
+
+      gbuffer_test_program->uniforms()[0].record_mat4x4f(model * view * projection);
+      fs_quad_program->uniforms()[0].record_sampler(0);
+
       frontend.draw_elements(
-        RX_RENDER_TAG("test"),
+        RX_RENDER_TAG("gbuffer test"),
         {},
         gbuffer,
         triangle,
-        *program,
+        gbuffer_test_program,
         iqm.elements().size(),
         0,
         rx::render::primitive_type::k_triangles,
@@ -228,6 +273,18 @@ int entry(int argc, char **argv) {
 
       frontend.clear(RX_RENDER_TAG("default"),
         target, RX_RENDER_CLEAR_COLOR(0), {1.0f, 0.0f, 0.0f, 1.0f});
+
+      frontend.draw_elements(
+        RX_RENDER_TAG("test"),
+        {},
+        target,
+        quad,
+        fs_quad_program,
+        4,
+        0,
+        rx::render::primitive_type::k_triangle_strip,
+        "2",
+        gbuffer.albedo());
 
       if (frontend.process()) {
         if (frontend.swap()) {
@@ -252,6 +309,7 @@ int entry(int argc, char **argv) {
 
     frontend.destroy_target(RX_RENDER_TAG("default"), target);
     frontend.destroy_buffer(RX_RENDER_TAG("test"), triangle);
+    frontend.destroy_buffer(RX_RENDER_TAG("quad"), quad);
   }
 
   rx::console::console::save("config.cfg");

@@ -1,0 +1,37 @@
+{
+  name: "fs-quad",
+  uniforms: [
+    { name: "u_sampler", type: "sampler2D" }
+  ],
+  shaders: [
+    {
+      type: "vertex",
+      inputs: [
+        { name: "a_position", type: "vec2f" },
+        { name: "a_coordinate", type: "vec2f" }
+      ],
+      outputs: [
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      source: "
+        void main() {
+          rx_position = vec4(a_position, 0.0, 1.0);
+          vs_coordinate = a_coordinate;
+        }
+      "
+    },{
+      type: "fragment",
+      inputs: [
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      outputs: [
+        { name: "fs_color", type: "vec4f" }
+      ],
+      source: "
+        void main() {
+          fs_color = vec4(texture2D(u_sampler, vs_coordinate).rgb, 1.0);
+        }
+      "
+    }
+  ]
+}

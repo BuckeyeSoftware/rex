@@ -1,5 +1,8 @@
 {
   name: "gbuffer-test",
+  uniforms: [
+    { name: "u_transform", type: "mat4x4f" }
+  ],
   shaders: [
     {
       type: "vertex",
@@ -8,7 +11,7 @@
       ],
       source: "
         void main() {
-          rx_position = vec4f(a_position.xy * 0.5, a_position.z, 1.0);
+          rx_position = u_transform * vec4f(a_position, 1.0);
         }
       "
     },{

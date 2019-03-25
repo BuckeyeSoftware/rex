@@ -360,6 +360,8 @@ void frontend::draw_elements(
     _program->flush_dirty_uniforms(command->uniforms());
   }
 
+  memset(command->texture_types, 0, sizeof command->texture_types);
+
   rx_size textures{strlen(_textures)};
   if (textures) {
     va_list va;
