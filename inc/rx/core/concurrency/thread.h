@@ -50,7 +50,6 @@ private:
 
   memory::allocator* m_allocator;
   state* m_state;
-  const char* m_name;
 };
 
 inline thread::thread(const char* _name, function<void(int)>&& _function)

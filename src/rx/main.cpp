@@ -12,6 +12,9 @@
 
 #include <rx/render/frontend.h>
 #include <rx/render/target.h>
+#include <rx/render/gbuffer.h>
+#include <rx/render/buffer.h>
+#include <rx/render/technique.h>
 #include <rx/render/backend_gl4.h>
 
 RX_CONSOLE_V2IVAR(
@@ -47,6 +50,8 @@ RX_CONSOLE_BVAR(
   "display.hdr",
   "use HDR output if supported",
   false);
+
+#include <rx/model/iqm.h>
 
 int entry(int argc, char **argv) {
   (void)argc;
@@ -124,8 +129,25 @@ int entry(int argc, char **argv) {
     rx::render::target* target{frontend.create_target(RX_RENDER_TAG("default"))};
     target->request_swapchain();
 
-    rx::input::input input;
+    rx::render::gbuffer gbuffer{&frontend};
+    gbuffer.create({1600, 900});
 
+    rx::render::buffer* triangle{frontend.create_buffer(RX_RENDER_TAG("triangle"))};
+    triangle->record_stride(sizeof(rx::math::vec3f));
+    triangle->record_element_type(rx::render::buffer::element_category::k_u32);
+    triangle->record_type(rx::render::buffer::category::k_static);
+    triangle->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, 0);
+    //triangle->write_elements(k_elements, sizeof k_elements);
+    //triangle->write_vertices(k_vertices, sizeof k_vertices);
+    frontend.initialize_buffer(RX_RENDER_TAG("triangle"), triangle);
+
+    rx::model::iqm iqm{&rx::memory::g_system_allocator};
+    if (iqm.load("test.iqm")) {
+      triangle->write_vertices(iqm.positions().data(), iqm.positions().size() * sizeof(rx::math::vec3f));
+      triangle->write_elements(iqm.elements().data(), iqm.elements().size() * sizeof(rx_u32));
+    }
+
+    rx::input::input input;
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
       input.update(0);
 
@@ -182,6 +204,28 @@ int entry(int argc, char **argv) {
         //camera.translate = camera.translate - rx::math::vec3f(l.x, l.y, l.z) * (10.0f * timer.delta_time());
       }
 
+      // clear gbuffer albedo, normal & emission for testing
+      frontend.clear(RX_RENDER_TAG("gbuffer albedo"),
+        gbuffer, RX_RENDER_CLEAR_COLOR(0), {1.0f, 0.0f, 0.0f, 1.0f});
+
+      frontend.clear(RX_RENDER_TAG("gbuffer normal"),
+        gbuffer, RX_RENDER_CLEAR_COLOR(1), {0.0f, 1.0f, 0.0f, 1.0f});
+
+      frontend.clear(RX_RENDER_TAG("gbuffer emission"),
+        gbuffer, RX_RENDER_CLEAR_COLOR(2), {0.0f, 0.0f, 1.0f, 1.0f});
+
+      rx::render::technique* program{frontend.find_technique_by_name("gbuffer-test")};
+      frontend.draw_elements(
+        RX_RENDER_TAG("test"),
+        {},
+        gbuffer,
+        triangle,
+        *program,
+        iqm.elements().size(),
+        0,
+        rx::render::primitive_type::k_triangles,
+        "");
+
       frontend.clear(RX_RENDER_TAG("default"),
         target, RX_RENDER_CLEAR_COLOR(0), {1.0f, 0.0f, 0.0f, 1.0f});
 
@@ -207,6 +251,7 @@ int entry(int argc, char **argv) {
     }
 
     frontend.destroy_target(RX_RENDER_TAG("default"), target);
+    frontend.destroy_buffer(RX_RENDER_TAG("test"), triangle);
   }
 
   rx::console::console::save("config.cfg");

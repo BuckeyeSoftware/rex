@@ -15,6 +15,7 @@
 namespace rx {
 
 struct json {
+  constexpr json();
   json(const string& _contents);
   json(memory::allocator* _allocator, const string& _contents);
   ~json();
@@ -48,6 +49,13 @@ private:
   struct json_value_s* m_root;
   struct json_parse_result_s m_error;
 };
+
+inline constexpr json::json()
+  : m_allocator{nullptr}
+  , m_root{nullptr}
+  , m_error{}
+{
+}
 
 inline json::json(const string& _contents)
   : json{&memory::g_system_allocator, _contents}

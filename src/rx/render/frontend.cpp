@@ -26,7 +26,7 @@ RX_CONSOLE_IVAR(command_memory, "render.command_memory", "memory for command buf
 
 RX_LOG("render", render_log);
 
-static constexpr const char* k_technique_path{"/base/renderer/techniques"};
+static constexpr const char* k_technique_path{"base/renderer/techniques"};
 
 namespace rx::render {
 
@@ -52,14 +52,15 @@ frontend::frontend(memory::allocator* _allocator, backend* _backend)
   , m_commands{m_allocator}
   , m_command_buffer{m_allocator, static_cast<rx_size>(*command_memory * 1024 * 1024)}
   , m_backend{_backend}
+  , m_deferred_process{[this]() { process(); }}
 {
   // load all techniques
   if (filesystem::directory directory{k_technique_path}) {
     directory.each([this](const filesystem::directory::item& _item) {
       if (_item.is_file() && _item.name().ends_with(".json5")) {
         technique new_technique{this};
-        if (new_technique.load({"%s/%s", k_technique_path, _item.name()})) {
-          m_techniques.insert(_item.name(), utility::move(new_technique));
+        if (new_technique.load(string::format("%s/%s", k_technique_path, _item.name()))) {
+          m_techniques.insert(new_technique.name(), utility::move(new_technique));
         }
       }
     });
@@ -67,7 +68,8 @@ frontend::frontend(memory::allocator* _allocator, backend* _backend)
 }
 
 frontend::~frontend() {
-  // ?
+  // execute any remaining commands on the backend
+  process();
 }
 
 // create_*
@@ -144,6 +146,7 @@ textureCM* frontend::create_textureCM(const command_header::info& _info) {
 // initialize_*
 void frontend::initialize_buffer(const command_header::info& _info, buffer* _buffer) {
   RX_ASSERT(_buffer, "_buffer is null");
+  _buffer->validate();
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -154,6 +157,7 @@ void frontend::initialize_buffer(const command_header::info& _info, buffer* _buf
 
 void frontend::initialize_target(const command_header::info& _info, target* _target) {
   RX_ASSERT(_target, "_target is null");
+  _target->validate();
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -163,7 +167,8 @@ void frontend::initialize_target(const command_header::info& _info, target* _tar
 }
 
 void frontend::initialize_program(const command_header::info& _info, program* _program) {
-  RX_ASSERT(_program->validate(), "_program is not valid");
+  RX_ASSERT(_program, "_program is null");
+  _program->validate();
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -174,8 +179,7 @@ void frontend::initialize_program(const command_header::info& _info, program* _p
 
 void frontend::initialize_texture(const command_header::info& _info, texture1D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
-  RX_ASSERT(_texture->validate(), "_texture is not valid");
-
+  _texture->validate();
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -186,8 +190,7 @@ void frontend::initialize_texture(const command_header::info& _info, texture1D* 
 
 void frontend::initialize_texture(const command_header::info& _info, texture2D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
-  RX_ASSERT(_texture->validate(), "_texture is not valid");
-
+  _texture->validate();
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -198,8 +201,7 @@ void frontend::initialize_texture(const command_header::info& _info, texture2D* 
 
 void frontend::initialize_texture(const command_header::info& _info, texture3D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
-  RX_ASSERT(_texture->validate(), "_texture is not valid");
-
+  _texture->validate();
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -210,8 +212,7 @@ void frontend::initialize_texture(const command_header::info& _info, texture3D* 
 
 void frontend::initialize_texture(const command_header::info& _info, textureCM* _texture) {
   RX_ASSERT(_texture, "_texture is null");
-  RX_ASSERT(_texture->validate(), "_texture is not valid");
-
+  _texture->validate();
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};

@@ -21,55 +21,59 @@ struct string {
   string(const string& _contents);
   string(const char* _contents);
   string(const char* _contents, rx_size _size);
-  template<typename... Ts>
-  string(const char* _format, Ts&&... _arguments);
+  string(const char* _first, const char* _last);
 
   string(memory::allocator* _allocator);
   string(memory::allocator* _allocator, const string& _contents);
   string(memory::allocator* _allocator, const char* _contents);
   string(memory::allocator* _allocator, const char* _contents, rx_size _size);
+  string(memory::allocator* _allocator, const char* _first, const char* _last);
+
   template<typename... Ts>
-  string(memory::allocator* _allocator, const char* _format, Ts&&... _arguments);
+  static string format(memory::allocator* _allocator, const char* _format, Ts&&... _arguments);
+
+  template<typename... Ts>
+  static string format(const char* _format, Ts&&... _arguments);
 
   string(string&& _contents);
 
   ~string();
 
-  string& operator=(const string& contents);
-  string& operator=(string&& contents);
+  string& operator=(const string& _contents);
+  string& operator=(string&& _contents);
 
-  void reserve(rx_size size);
-  void resize(rx_size size);
+  void reserve(rx_size _size);
+  void resize(rx_size _size);
 
   rx_size size() const;
   bool is_empty() const;
   void clear();
 
-  string& append(const char* first, const char* last);
-  string& append(const char* contents, rx_size size);
-  string& append(const char* contents);
-  string& append(const string& contents);
-  string& append(char ch);
+  string& append(const char* _first, const char* _last);
+  string& append(const char* _contents, rx_size _size);
+  string& append(const char* _contents);
+  string& append(const string& _contents);
+  string& append(char _ch);
 
   // returns copy of string with leading characters in set removed
-  string lstrip(const char* set) const;
+  string lstrip(const char* _set) const;
 
   // returns copy of string with trailing characters in set removed
-  string rstrip(const char* set) const;
+  string rstrip(const char* _set) const;
 
   // split string by |token| up to |count| times, use |count| of zero for no limit
-  array<string> split(int ch, rx_size count = 0) const;
+  array<string> split(int _ch, rx_size _count = 0) const;
 
   // take substring from |offset| of |length|, use |length| of zero for whole string
-  string substring(rx_size offset, rx_size length = 0) const;
+  string substring(rx_size _offset, rx_size _length = 0) const;
 
   // scan string
-  rx_size scan(const char* scan_format, ...) const;
+  rx_size scan(const char* _scan_format, ...) const;
 
   char pop_back();
 
-  char& operator[](rx_size index);
-  const char& operator[](rx_size index) const;
+  char& operator[](rx_size _index);
+  const char& operator[](rx_size _index) const;
 
   char& last();
   const char& last() const;
@@ -85,7 +89,7 @@ struct string {
   rx_size hash() const;
 
 private:
-  static string formatter(memory::allocator* alloc, const char* fmt, ...);
+  static string formatter(memory::allocator* _allocator, const char* _format, ...);
 
   void swap(string& other);
 
@@ -145,16 +149,20 @@ private:
 
 // format function for string
 template<>
-struct format<string> {
-  const char* operator()(const string& value) const {
-    return value.data();
+struct format_type<string> {
+  const char* operator()(const string& _value) const {
+    return _value.data();
   }
 };
 
 template<typename... Ts>
-inline string::string(memory::allocator* _allocator, const char* _format, Ts&&... _arguments)
-  : string{utility::move(formatter(_allocator, _format, format<traits::remove_cvref<Ts>>{}(utility::forward<Ts>(_arguments))...))}
-{
+inline string string::format(memory::allocator* _allocator, const char* _format, Ts&&... _arguments) {
+  return formatter(_allocator, _format, format_type<traits::remove_cvref<Ts>>{}(utility::forward<Ts>(_arguments))...);
+}
+
+template<typename... Ts>
+inline string string::format(const char* _format, Ts&&... _arguments) {
+  return format(&memory::g_system_allocator, _format, utility::forward<Ts>(_arguments)...);
 }
 
 inline string::string()
@@ -177,9 +185,8 @@ inline string::string(const char* _contents, rx_size _size)
 {
 }
 
-template<typename... Ts>
-inline string::string(const char* _format, Ts&&... _arguments)
-  : string{&memory::g_system_allocator, _format, utility::forward<Ts>(_arguments)...}
+inline string::string(const char* _first, const char* _last)
+  : string{&memory::g_system_allocator, _first, _last}
 {
 }
 

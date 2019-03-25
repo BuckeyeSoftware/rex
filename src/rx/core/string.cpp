@@ -9,23 +9,23 @@
 
 namespace rx {
 
-static void format_va(string& contents, const char* format, va_list va) {
+static void format_va(string& contents_, const char* _format, va_list _va) {
   // calculate length to format
   va_list ap;
-  va_copy(ap, va);
-  const int length{vsnprintf(nullptr, 0, format, ap)};
+  va_copy(ap, _va);
+  const int length{vsnprintf(nullptr, 0, _format, ap)};
   va_end(ap);
 
   // format into string
-  contents.resize(length);
-  vsnprintf(contents.data(), contents.size() + 1, format, va);
+  contents_.resize(length);
+  vsnprintf(contents_.data(), contents_.size() + 1, _format, _va);
 }
 
-string string::formatter(memory::allocator* alloc, const char* format, ...) {
+string string::formatter(memory::allocator* _allocator, const char* _format, ...) {
   va_list va;
-  va_start(va, format);
-  string contents{alloc};
-  format_va(contents, format, va);
+  va_start(va, _format);
+  string contents{_allocator};
+  format_va(contents, _format, va);
   va_end(va);
   return contents;
 }
@@ -37,14 +37,12 @@ string::string(memory::allocator* _allocator)
   , m_capacity{m_buffer + k_small_string}
 {
   RX_ASSERT(m_allocator, "null allocator");
-
   resize(0);
 }
 
 string::string(memory::allocator* _allocator, const string& _contents)
   : string{_allocator}
 {
-  reserve(_contents.size());
   append(_contents.data(), _contents.size());
 }
 
@@ -56,10 +54,13 @@ string::string(memory::allocator* _allocator, const char* _contents)
 string::string(memory::allocator* _allocator, const char* _contents, rx_size _size)
   : string{_allocator}
 {
-  RX_ASSERT(m_allocator, "null allocator");
-
-  reserve(_size);
   append(_contents, _size);
+}
+
+string::string(memory::allocator* _allocator, const char* _first, const char* _last)
+  : string{_allocator}
+{
+  append(_first, _last);
 }
 
 string::string(string&& _contents)
@@ -346,7 +347,7 @@ string string::human_size_format(rx_size _size) {
   char* period{strchr(buffer, '.')};
   RX_ASSERT(period, "failed to format");
   period[3] = '\0';
-  return {"%s %s", buffer, k_suffixes[i]};
+  return format("%s %s", buffer, k_suffixes[i]);
 }
 
 bool string::begins_with(const char* _prefix) const {

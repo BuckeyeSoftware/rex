@@ -82,8 +82,8 @@ bool console::save(const char* file_name) {
       const auto handle{head->cast<rx_s32>()};
       const auto min{handle->min()};
       const auto max{handle->max()};
-      const auto min_fmt{min == k_int_min ? "-inf" : string{"%d", min}};
-      const auto max_fmt{max == k_int_max ? "+inf" : string{"%d", max}};
+      const auto min_fmt{min == k_int_min ? "-inf" : string::format("%d", min)};
+      const auto max_fmt{max == k_int_max ? "+inf" : string::format("%d", max)};
       file.print("## %s (in range [%s, %s], defaults to %d)\n",
         head->description(), min_fmt, max_fmt, handle->initial());
       file.print(handle->get() == handle->initial() ? ";%s %d\n" : "%s %d\n",
@@ -92,8 +92,8 @@ bool console::save(const char* file_name) {
       const auto handle{head->cast<rx_f32>()};
       const auto min{handle->min()};
       const auto max{handle->max()};
-      const auto min_fmt{min == k_float_min ? "-inf" : string{"%f", min}};
-      const auto max_fmt{max == k_float_max ? "+inf" : string{"%f", max}};
+      const auto min_fmt{min == k_float_min ? "-inf" : string::format("%f", min)};
+      const auto max_fmt{max == k_float_max ? "+inf" : string::format("%f", max)};
       file.print("## %s (in range [%s, %s], defaults to %f)\n",
         head->description(), min_fmt, max_fmt, handle->initial());
       file.print(handle->get() == handle->initial() ? ";%s %f\n" : "%s %f\n",
@@ -130,19 +130,19 @@ bool console::save(const char* file_name) {
       string min_fmt;
       string max_fmt;
       if (min.is_any(k_float_min) || max.is_any(k_float_max)) {
-        const auto min_x{min.x == k_float_min ? "-inf" : string{"%f", min.x}};
-        const auto min_y{min.y == k_float_min ? "-inf" : string{"%f", min.y}};
-        const auto min_z{min.z == k_float_min ? "-inf" : string{"%f", min.z}};
-        const auto min_w{min.w == k_float_min ? "-inf" : string{"%f", min.w}};
-        const auto max_x{max.x == k_float_max ? "+inf" : string{"%f", max.x}};
-        const auto max_y{max.y == k_float_max ? "+inf" : string{"%f", max.y}};
-        const auto max_z{max.z == k_float_max ? "+inf" : string{"%f", max.z}};
-        const auto max_w{max.w == k_float_max ? "+inf" : string{"%f", max.w}};
-        min_fmt = { "{%s, %s, %s, %s}", min_x, min_y, min_z, min_w };
-        max_fmt = { "{%s, %s, %s, %s}", max_x, max_y, max_z, max_w };
+        const auto min_x{min.x == k_float_min ? "-inf" : string::format("%f", min.x)};
+        const auto min_y{min.y == k_float_min ? "-inf" : string::format("%f", min.y)};
+        const auto min_z{min.z == k_float_min ? "-inf" : string::format("%f", min.z)};
+        const auto min_w{min.w == k_float_min ? "-inf" : string::format("%f", min.w)};
+        const auto max_x{max.x == k_float_max ? "+inf" : string::format("%f", max.x)};
+        const auto max_y{max.y == k_float_max ? "+inf" : string::format("%f", max.y)};
+        const auto max_z{max.z == k_float_max ? "+inf" : string::format("%f", max.z)};
+        const auto max_w{max.w == k_float_max ? "+inf" : string::format("%f", max.w)};
+        min_fmt = string::format("{%s, %s, %s, %s}", min_x, min_y, min_z, min_w);
+        max_fmt = string::format("{%s, %s, %s, %s}", max_x, max_y, max_z, max_w);
       } else {
-        min_fmt = { "%s", min };
-        max_fmt = { "%s", max };
+        min_fmt = string::format("%s", min);
+        max_fmt = string::format("%s", max);
       }
       file.print("## %s (in range [%s, %s], defaults to %s)\n",
         head->description(), min_fmt, max_fmt, handle->initial());
@@ -155,19 +155,19 @@ bool console::save(const char* file_name) {
       string min_fmt;
       string max_fmt;
       if (min.is_any(k_int_min) || max.is_any(k_int_max)) {
-        const auto min_x{min.x == k_int_min ? "-inf" : string{"%d", min.x}};
-        const auto min_y{min.y == k_int_min ? "-inf" : string{"%d", min.y}};
-        const auto min_z{min.z == k_int_min ? "-inf" : string{"%d", min.z}};
-        const auto min_w{min.w == k_int_min ? "-inf" : string{"%d", min.w}};
-        const auto max_x{max.x == k_int_max ? "+inf" : string{"%d", max.x}};
-        const auto max_y{max.y == k_int_max ? "+inf" : string{"%d", max.y}};
-        const auto max_z{max.z == k_int_max ? "+inf" : string{"%d", max.z}};
-        const auto max_w{min.w == k_int_min ? "+inf" : string{"%d", max.w}};
-        min_fmt = { "{%s, %s, %s, %s}", min_x, min_y, min_z, min_w };
-        max_fmt = { "{%s, %s, %s, %s}", max_x, max_y, max_z, max_w };
+        const auto min_x{min.x == k_int_min ? "-inf" : string::format("%d", min.x)};
+        const auto min_y{min.y == k_int_min ? "-inf" : string::format("%d", min.y)};
+        const auto min_z{min.z == k_int_min ? "-inf" : string::format("%d", min.z)};
+        const auto min_w{min.w == k_int_min ? "-inf" : string::format("%d", min.w)};
+        const auto max_x{max.x == k_int_max ? "+inf" : string::format("%d", max.x)};
+        const auto max_y{max.y == k_int_max ? "+inf" : string::format("%d", max.y)};
+        const auto max_z{max.z == k_int_max ? "+inf" : string::format("%d", max.z)};
+        const auto max_w{min.w == k_int_min ? "+inf" : string::format("%d", max.w)};
+        min_fmt = string::format("{%s, %s, %s, %s}", min_x, min_y, min_z, min_w);
+        max_fmt = string::format("{%s, %s, %s, %s}", max_x, max_y, max_z, max_w);
       } else {
-        min_fmt = { "%s", min };
-        max_fmt = { "%s", max };
+        min_fmt = string::format("%s", min);
+        max_fmt = string::format("%s", max);
       }
       file.print("## %s (in range [%s, %s], defaults to %s)\n",
         head->name(), min_fmt, max_fmt, handle->initial());
@@ -178,17 +178,17 @@ bool console::save(const char* file_name) {
       string min_fmt;
       string max_fmt;
       if (min.is_any(k_float_min) || max.is_any(k_float_max)) {
-        const auto min_x{min.x == k_float_min ? "-inf" : string{"%f", min.x}};
-        const auto min_y{min.y == k_float_min ? "-inf" : string{"%f", min.y}};
-        const auto min_z{min.z == k_float_min ? "-inf" : string{"%f", min.z}};
-        const auto max_x{max.x == k_float_max ? "+inf" : string{"%f", max.x}};
-        const auto max_y{max.y == k_float_max ? "+inf" : string{"%f", max.y}};
-        const auto max_z{max.z == k_float_max ? "+inf" : string{"%f", max.z}};
-        min_fmt = { "{%s, %s, %s}", min_x, min_y, min_z };
-        max_fmt = { "{%s, %s, %s}", max_x, max_y, max_z };
+        const auto min_x{min.x == k_float_min ? "-inf" : string::format("%f", min.x)};
+        const auto min_y{min.y == k_float_min ? "-inf" : string::format("%f", min.y)};
+        const auto min_z{min.z == k_float_min ? "-inf" : string::format("%f", min.z)};
+        const auto max_x{max.x == k_float_max ? "+inf" : string::format("%f", max.x)};
+        const auto max_y{max.y == k_float_max ? "+inf" : string::format("%f", max.y)};
+        const auto max_z{max.z == k_float_max ? "+inf" : string::format("%f", max.z)};
+        min_fmt = string::format("{%s, %s, %s}", min_x, min_y, min_z);
+        max_fmt = string::format("{%s, %s, %s}", max_x, max_y, max_z);
       } else {
-        min_fmt = { "%s", min };
-        max_fmt = { "%s", max };
+        min_fmt = string::format("%s", min);
+        max_fmt = string::format("%s", max);
       }
       file.print("## %s (in range [%s, %s], defaults to %s)\n",
         head->description(), min_fmt, max_fmt, handle->initial());
@@ -201,17 +201,17 @@ bool console::save(const char* file_name) {
       string min_fmt;
       string max_fmt;
       if (min.is_any(k_int_min) || max.is_any(k_int_max)) {
-        const auto min_x{min.x == k_int_min ? "-inf" : string{"%d", min.x}};
-        const auto min_y{min.y == k_int_min ? "-inf" : string{"%d", min.y}};
-        const auto min_z{min.z == k_int_min ? "-inf" : string{"%d", min.z}};
-        const auto max_x{max.x == k_int_max ? "+inf" : string{"%d", max.x}};
-        const auto max_y{max.y == k_int_max ? "+inf" : string{"%d", max.y}};
-        const auto max_z{max.z == k_int_max ? "+inf" : string{"%d", max.z}};
-        min_fmt = { "{%s, %s, %s}", min_x, min_y, min_z };
-        max_fmt = { "{%s, %s, %s}", max_x, max_y, max_z };
+        const auto min_x{min.x == k_int_min ? "-inf" : string::format("%d", min.x)};
+        const auto min_y{min.y == k_int_min ? "-inf" : string::format("%d", min.y)};
+        const auto min_z{min.z == k_int_min ? "-inf" : string::format("%d", min.z)};
+        const auto max_x{max.x == k_int_max ? "+inf" : string::format("%d", max.x)};
+        const auto max_y{max.y == k_int_max ? "+inf" : string::format("%d", max.y)};
+        const auto max_z{max.z == k_int_max ? "+inf" : string::format("%d", max.z)};
+        min_fmt = string::format("{%s, %s, %s}", min_x, min_y, min_z);
+        max_fmt = string::format("{%s, %s, %s}", max_x, max_y, max_z);
       } else {
-        min_fmt = { "%s", min };
-        max_fmt = { "%s", max };
+        min_fmt = string::format("%s", min);
+        max_fmt = string::format("%s", max);
       }
       file.print("## %s (in range [%s, %s], defaults to %s)\n",
         head->name(), min_fmt, max_fmt, handle->initial());
@@ -222,15 +222,15 @@ bool console::save(const char* file_name) {
       string min_fmt;
       string max_fmt;
       if (min.is_any(k_float_min) || max.is_any(k_float_max)) {
-        const auto min_x{min.x == k_float_min ? "-inf" : string{"%f", min.x}};
-        const auto min_y{min.y == k_float_min ? "-inf" : string{"%f", min.y}};
-        const auto max_x{max.x == k_float_max ? "+inf" : string{"%f", max.x}};
-        const auto max_y{max.y == k_float_max ? "+inf" : string{"%f", max.y}};
-        min_fmt = { "{%s, %s}", min_x, min_y };
-        max_fmt = { "{%s, %s}", max_x, max_y };
+        const auto min_x{min.x == k_float_min ? "-inf" : string::format("%f", min.x)};
+        const auto min_y{min.y == k_float_min ? "-inf" : string::format("%f", min.y)};
+        const auto max_x{max.x == k_float_max ? "+inf" : string::format("%f", max.x)};
+        const auto max_y{max.y == k_float_max ? "+inf" : string::format("%f", max.y)};
+        min_fmt = string::format("{%s, %s}", min_x, min_y);
+        max_fmt = string::format("{%s, %s}", max_x, max_y);
       } else {
-        min_fmt = { "%s", min };
-        max_fmt = { "%s", max };
+        min_fmt = string::format("%s", min);
+        max_fmt = string::format("%s", max);
       }
       file.print("## %s (in range [%s, %s], defaults to %s)\n",
         head->description(), min_fmt, max_fmt, handle->initial());
@@ -243,15 +243,15 @@ bool console::save(const char* file_name) {
       string min_fmt;
       string max_fmt;
       if (min.is_any(k_int_min) || max.is_any(k_int_max)) {
-        const auto min_x{min.x == k_int_min ? "-inf" : string{"%d", min.x}};
-        const auto min_y{min.y == k_int_min ? "-inf" : string{"%d", min.y}};
-        const auto max_x{max.x == k_int_max ? "+inf" : string{"%d", max.x}};
-        const auto max_y{max.y == k_int_max ? "+inf" : string{"%d", max.y}};
-        min_fmt = { "{%s, %s}", min_x, min_y };
-        max_fmt = { "{%s, %s}", max_x, max_y };
+        const auto min_x{min.x == k_int_min ? "-inf" : string::format("%d", min.x)};
+        const auto min_y{min.y == k_int_min ? "-inf" : string::format("%d", min.y)};
+        const auto max_x{max.x == k_int_max ? "+inf" : string::format("%d", max.x)};
+        const auto max_y{max.y == k_int_max ? "+inf" : string::format("%d", max.y)};
+        min_fmt = string::format("{%s, %s}", min_x, min_y);
+        max_fmt = string::format("{%s, %s}", max_x, max_y);
       } else {
-        min_fmt = { "%s", min };
-        max_fmt = { "%s", max };
+        min_fmt = string::format("%s", min);
+        max_fmt = string::format("%s", max);
       }
       file.print("## %s (in range [%s, %s], defaults to %s)\n",
         head->description(), min_fmt, max_fmt, handle->initial());

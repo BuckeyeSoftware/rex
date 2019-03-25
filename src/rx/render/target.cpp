@@ -195,4 +195,14 @@ void target::attach_texture(texture2D* _texture) {
   m_attachments.push_back(_texture);
 }
 
+void target::validate() {
+  if (m_is_swapchain) {
+    RX_ASSERT(m_attachments.is_empty(), "swapchain cannot have attachments");
+  } else {
+    if (!m_depth_texture && !m_stencil_texture) {
+      RX_ASSERT(!m_attachments.is_empty(), "no attachments");
+    }
+  }
+}
+
 } // namespace rx::render

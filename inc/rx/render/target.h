@@ -41,6 +41,8 @@ struct target : resource {
   const array<texture2D*> attachments() const &;
   bool is_swapchain() const;
 
+  void validate();
+
 private:
   enum /* m_owns */ {
     k_depth = 1 << 0,
@@ -54,6 +56,7 @@ private:
     };
     texture2D* m_depth_stencil_texture;
   };
+
   array<texture2D*> m_attachments;
   int m_owns;
   bool m_is_swapchain;

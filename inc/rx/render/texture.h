@@ -29,6 +29,7 @@ struct texture : resource {
       k_mirrored_repeat,
       k_repeat
     };
+
     category s;
     category t;
     category r;
@@ -61,7 +62,7 @@ struct texture : resource {
   // record |_filter| parameters
   void record_filter(const filter_options& _options);
 
-  bool validate() const;
+  void validate() const;
 
   const array<rx_byte>& data() const &;
 

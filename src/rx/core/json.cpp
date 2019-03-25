@@ -132,8 +132,8 @@ rx_size json::size() const {
 
 optional<string> json::error() const {
   if (m_allocator) {
-    return string { "%zu:%zu %s", m_error.error_line_no, m_error.error_row_no,
-      json_parse_error_to_string(static_cast<enum json_parse_error_e>(m_error.error)) };
+    return string::format("%zu:%zu %s", m_error.error_line_no, m_error.error_row_no,
+      json_parse_error_to_string(static_cast<enum json_parse_error_e>(m_error.error)));
   }
   return nullopt;
 }

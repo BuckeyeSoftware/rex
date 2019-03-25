@@ -117,6 +117,22 @@ inline R function<R(Ts...)>::operator()(Ts&&... args) {
   }
 }
 
+template<typename T>
+struct deferred_function {
+  template<typename F>
+  deferred_function(F _function)
+    : m_function{_function}
+  {
+  }
+
+  ~deferred_function() {
+    m_function();
+  }
+
+private:
+  function<T> m_function;
+};
+
 } // namespace rx::core
 
 #endif // RX_CORE_FUNCTION_H

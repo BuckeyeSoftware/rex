@@ -13,10 +13,13 @@ namespace rx::render {
 
 struct frontend;
 
-struct technique {
+struct technique : concepts::no_copy {
   technique() = default;
   technique(frontend* _frontend);
   ~technique();
+
+  technique(technique&& _technique);
+  technique& operator=(technique&& _technique);
 
   enum class category {
     k_basic,
@@ -81,14 +84,14 @@ inline const string& technique::name() const {
 
 template<typename... Ts>
 inline bool technique::error(const char* _format, Ts&&... _arguments) {
-  m_error = {_format, utility::forward<Ts>(_arguments)...};
+  m_error = string::format(_format, utility::forward<Ts>(_arguments)...);
   log(log::level::k_error, "%s", m_error);
   return false;
 }
 
 template<typename... Ts>
 inline void technique::log(log::level _level, const char* _format, Ts&&... _arguments) {
-  write_log(_level, {_format, utility::forward<Ts>(_arguments)...});
+  write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
 }
 
 } // namespace rx::render

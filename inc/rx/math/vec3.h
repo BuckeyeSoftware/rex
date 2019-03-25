@@ -29,20 +29,20 @@ struct vec3 {
   constexpr vec3 operator+(const vec3<T>& _vec) const;
   constexpr vec3 operator-(const vec3<T>& _vec) const;
 
-  constexpr vec3& operator*=(const vec3<T>& _vec) const;
-  constexpr vec3& operator/=(const vec3<T>& _vec) const;
-  constexpr vec3& operator+=(const vec3<T>& _vec) const;
-  constexpr vec3& operator-=(const vec3<T>& _vec) const;
+  constexpr vec3& operator*=(const vec3<T>& _vec);
+  constexpr vec3& operator/=(const vec3<T>& _vec);
+  constexpr vec3& operator+=(const vec3<T>& _vec);
+  constexpr vec3& operator-=(const vec3<T>& _vec);
 
   constexpr vec3 operator*(T _scalar) const;
   constexpr vec3 operator/(T _scalar) const;
   constexpr vec3 operator+(T _scalar) const;
   constexpr vec3 operator-(T _scalar) const;
 
-  constexpr vec3& operator*=(T _scalar) const;
-  constexpr vec3& operator/=(T _scalar) const;
-  constexpr vec3& operator+=(T _scalar) const;
-  constexpr vec3& operator-=(T _scalar) const;
+  constexpr vec3& operator*=(T _scalar);
+  constexpr vec3& operator/=(T _scalar);
+  constexpr vec3& operator+=(T _scalar);
+  constexpr vec3& operator-=(T _scalar);
 
   template<typename U>
   friend constexpr vec3<U> operator*(U _scalar, const vec3<T>& _vec);
@@ -62,7 +62,7 @@ struct vec3 {
     struct { T x, y, z; };
     struct { T w, h, d; };
     struct { T r, g, b; };
-    T v[3];
+    T array[3];
   };
 };
 
@@ -89,13 +89,13 @@ inline constexpr vec3<T>::vec3(T _x, T _y, T _z)
 template<typename T>
 inline T& vec3<T>::operator[](rx_size _i) {
   RX_ASSERT(_i < 3, "out of bounds");
-  return v[_i];
+  return array[_i];
 }
 
 template<typename T>
 inline const T& vec3<T>::operator[](rx_size _i) const {
   RX_ASSERT(_i < 3, "out of bounds");
-  return v[_i];
+  return array[_i];
 }
 
 template<typename T>
@@ -110,7 +110,7 @@ inline bool vec3<T>::is_all(T _value) const {
 
 template<typename T>
 inline const T* vec3<T>::data() const {
-  return v;
+  return array;
 }
 
 template<typename T>
@@ -141,22 +141,22 @@ inline constexpr vec3<T> vec3<T>::operator-(const vec3<T>& _vec) const {
 }
 
 template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator*=(const vec3<T>& _vec) const {
+inline constexpr vec3<T>& vec3<T>::operator*=(const vec3<T>& _vec) {
   return *this = *this * _vec;
 }
 
 template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator/=(const vec3<T>& _vec) const {
+inline constexpr vec3<T>& vec3<T>::operator/=(const vec3<T>& _vec) {
   return *this = *this / _vec;
 }
 
 template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator+=(const vec3<T>& _vec) const {
+inline constexpr vec3<T>& vec3<T>::operator+=(const vec3<T>& _vec) {
   return *this = *this + _vec;
 }
 
 template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator-=(const vec3<T>& _vec) const {
+inline constexpr vec3<T>& vec3<T>::operator-=(const vec3<T>& _vec) {
   return *this = *this - _vec;
 }
 
@@ -182,22 +182,22 @@ inline constexpr vec3<T> vec3<T>::operator-(T _scalar) const {
 }
 
 template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator*=(T _scalar) const {
+inline constexpr vec3<T>& vec3<T>::operator*=(T _scalar) {
   return *this = *this * _scalar;
 }
 
 template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator/=(T _scalar) const {
+inline constexpr vec3<T>& vec3<T>::operator/=(T _scalar) {
   return *this = *this / _scalar;
 }
 
 template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator+=(T _scalar) const {
+inline constexpr vec3<T>& vec3<T>::operator+=(T _scalar) {
   return *this = *this + _scalar;
 }
 
 template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator-=(T _scalar) const {
+inline constexpr vec3<T>& vec3<T>::operator-=(T _scalar) {
   return *this = *this - _scalar;
 }
 
@@ -250,13 +250,13 @@ vec3f normalize(const vec3f& _value);
 
 namespace rx {
   template<>
-  struct format<math::vec3f> {
+  struct format_type<math::vec3f> {
     char scratch[format_size<rx_f32>::size*3 + sizeof "{,,  }" - 1];
     const char* operator()(const math::vec3f& _value);
   };
 
   template<>
-  struct format<::rx::math::vec3i> {
+  struct format_type<::rx::math::vec3i> {
     char scratch[format_size<rx_s32>::size*3 + sizeof "{,,  }" - 1];
     const char* operator()(const math::vec3i& _value);
   };

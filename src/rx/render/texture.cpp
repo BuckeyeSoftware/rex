@@ -31,28 +31,11 @@ void texture::record_filter(const filter_options& _options) {
   m_recorded |= k_filter;
 }
 
-bool texture::validate() const {
-  if (!(m_recorded & k_format)) {
-    RX_MESSAGE("texture %p validation failed: format not supplied", this);
-    return false;
-
-  }
-  if (!(m_recorded & k_filter)) {
-    RX_MESSAGE("texture %p validation failed: filter not supplied", this);
-    return false;
-  }
-
-  if (!(m_recorded & k_wrap)) {
-    RX_MESSAGE("texture %p validation failed: wrap not supplied", this);
-    return false;
-  }
-
-  if (!(m_recorded & k_dimensions)) {
-    RX_MESSAGE("texture %p validation failed: dimensions not supplied", this);
-    return false;
-  }
-
-  return true;
+void texture::validate() const {
+  RX_ASSERT(m_recorded & k_format, "format not supplied");
+  RX_ASSERT(m_recorded & k_filter, "filter not supplied");
+  RX_ASSERT(m_recorded & k_wrap, "wrap not supplied");
+  RX_ASSERT(m_recorded & k_dimensions, "dimensions not supplied");
 }
 
 // texture1D

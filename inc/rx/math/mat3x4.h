@@ -13,7 +13,7 @@ struct mat3x4 {
 
   constexpr mat3x4() = default;
   constexpr mat3x4(const vec& _x, const vec& _y, const vec& _z);
-  constexpr mat3x4(const mat3x4<T>& _rotation, const vec3<T>& _translation)
+  constexpr mat3x4(const mat3x4<T>& _rotation, const vec3<T>& _translation);
 
   const T* data() const;
 

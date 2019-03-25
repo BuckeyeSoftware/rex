@@ -205,8 +205,8 @@ namespace rx::render {
     m_shaders.push_back(utility::move(_shader));
   }
 
-  bool program::validate() const {
-    return !m_shaders.is_empty();
+  void program::validate() const {
+    RX_ASSERT(!m_shaders.is_empty(), "no shaders specified");
   }
 
   uniform& program::add_uniform(const string& _name, uniform::category _type) {

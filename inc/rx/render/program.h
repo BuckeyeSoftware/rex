@@ -127,7 +127,7 @@ struct shader {
 struct program : resource {
   program(frontend* _frontend);
 
-  bool validate() const;
+  void validate() const;
 
   void add_shader(shader&& _shader);
   uniform& add_uniform(const string& _name, uniform::category _type);

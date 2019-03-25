@@ -29,20 +29,20 @@ struct vec4 {
   constexpr vec4 operator+(const vec4<T>& _vec) const;
   constexpr vec4 operator-(const vec4<T>& _vec) const;
 
-  constexpr vec4& operator*=(const vec4<T>& _vec) const;
-  constexpr vec4& operator/=(const vec4<T>& _vec) const;
-  constexpr vec4& operator+=(const vec4<T>& _vec) const;
-  constexpr vec4& operator-=(const vec4<T>& _vec) const;
+  constexpr vec4& operator*=(const vec4<T>& _vec);
+  constexpr vec4& operator/=(const vec4<T>& _vec);
+  constexpr vec4& operator+=(const vec4<T>& _vec);
+  constexpr vec4& operator-=(const vec4<T>& _vec);
 
   constexpr vec4 operator*(T _scalar) const;
   constexpr vec4 operator/(T _scalar) const;
   constexpr vec4 operator+(T _scalar) const;
   constexpr vec4 operator-(T _scalar) const;
 
-  constexpr vec4& operator*=(T _scalar) const;
-  constexpr vec4& operator/=(T _scalar) const;
-  constexpr vec4& operator+=(T _scalar) const;
-  constexpr vec4& operator-=(T _scalar) const;
+  constexpr vec4& operator*=(T _scalar);
+  constexpr vec4& operator/=(T _scalar);
+  constexpr vec4& operator+=(T _scalar);
+  constexpr vec4& operator-=(T _scalar);
 
   template<typename U>
   friend constexpr vec4<U> operator*(U _scalar, const vec4<T>& _vec);
@@ -61,10 +61,11 @@ struct vec4 {
   union {
     struct { T x, y, z, w; };
     struct { T r, g, b, a; };
-    T v[4];
+    T array[4];
   };
 };
 
+using vec4b = vec4<rx_byte>;
 using vec4f = vec4<rx_f32>;
 using vec4i = vec4<rx_s32>;
 using vec4z = vec4<rx_size>;
@@ -90,13 +91,13 @@ inline constexpr vec4<T>::vec4(T _x, T _y, T _z, T _w)
 template<typename T>
 inline T& vec4<T>::operator[](rx_size _i) {
   RX_ASSERT(_i < 4, "out of bounds");
-  return v[_i];
+  return array[_i];
 }
 
 template<typename T>
 inline const T& vec4<T>::operator[](rx_size _i) const {
   RX_ASSERT(_i < 4, "out of bounds");
-  return v[_i];
+  return array[_i];
 }
 
 template<typename T>
@@ -111,7 +112,7 @@ inline bool vec4<T>::is_all(T _value) const {
 
 template<typename T>
 inline const T* vec4<T>::data() const {
-  return v;
+  return array;
 }
 
 // (vec, vec)
@@ -136,22 +137,22 @@ inline constexpr vec4<T> vec4<T>::operator-(const vec4<T>& _vec) const {
 }
 
 template<typename T>
-inline constexpr vec4<T>& vec4<T>::operator*=(const vec4<T>& _vec) const {
+inline constexpr vec4<T>& vec4<T>::operator*=(const vec4<T>& _vec) {
   return *this = *this * _vec;
 }
 
 template<typename T>
-inline constexpr vec4<T>& vec4<T>::operator/=(const vec4<T>& _vec) const {
+inline constexpr vec4<T>& vec4<T>::operator/=(const vec4<T>& _vec) {
   return *this = *this / _vec;
 }
 
 template<typename T>
-inline constexpr vec4<T>& vec4<T>::operator+=(const vec4<T>& _vec) const {
+inline constexpr vec4<T>& vec4<T>::operator+=(const vec4<T>& _vec) {
   return *this = *this + _vec;
 }
 
 template<typename T>
-inline constexpr vec4<T>& vec4<T>::operator-=(const vec4<T>& _vec) const {
+inline constexpr vec4<T>& vec4<T>::operator-=(const vec4<T>& _vec) {
   return *this = *this - _vec;
 }
 
@@ -177,22 +178,22 @@ inline constexpr vec4<T> vec4<T>::operator-(T _scalar) const {
 }
 
 template<typename T>
-inline constexpr vec4<T>& vec4<T>::operator*=(T _scalar) const {
+inline constexpr vec4<T>& vec4<T>::operator*=(T _scalar) {
   return *this = *this * _scalar;
 }
 
 template<typename T>
-inline constexpr vec4<T>& vec4<T>::operator/=(T _scalar) const {
+inline constexpr vec4<T>& vec4<T>::operator/=(T _scalar) {
   return *this = *this / _scalar;
 }
 
 template<typename T>
-inline constexpr vec4<T>& vec4<T>::operator+=(T _scalar) const {
+inline constexpr vec4<T>& vec4<T>::operator+=(T _scalar) {
   return *this = *this + _scalar;
 }
 
 template<typename T>
-inline constexpr vec4<T>& vec4<T>::operator-=(T _scalar) const {
+inline constexpr vec4<T>& vec4<T>::operator-=(T _scalar) {
   return *this = *this - _scalar;
 }
 
@@ -237,13 +238,13 @@ inline constexpr T dot(const vec4<T>& _lhs, const vec4<T>& _rhs) {
 
 namespace rx {
   template<>
-  struct format<math::vec4f> {
+  struct format_type<math::vec4f> {
     char scratch[format_size<rx_f32>::size*4 + sizeof "{,,,   }" - 1];
     const char* operator()(const math::vec4f& _value);
   };
 
   template<>
-  struct format<math::vec4i> {
+  struct format_type<math::vec4i> {
     char scratch[format_size<rx_s32>::size*4 + sizeof "{,,,   }" - 1];
     const char* operator()(const math::vec4i& _value);
   };

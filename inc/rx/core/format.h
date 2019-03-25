@@ -33,14 +33,14 @@ struct format_size<rx_s64> {
 };
 
 template<typename T>
-struct format {
+struct format_type {
   T operator()(const T& value) const {
     return value;
   }
 };
 
 template<rx_size E>
-struct format<char[E]> {
+struct format_type<char[E]> {
   const char* operator()(const char (&data)[E]) const {
     return data;
   }

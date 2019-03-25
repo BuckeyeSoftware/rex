@@ -60,6 +60,7 @@ static void (GLAPIENTRYP pglNamedFramebufferTexture)(GLuint, GLenum, GLuint, GLi
 static void (GLAPIENTRYP pglBindFramebuffer)(GLenum, GLuint);
 static void (GLAPIENTRYP pglClearNamedFramebufferfv)(GLuint, GLenum, GLint, const GLfloat*);
 static void (GLAPIENTRYP pglClearNamedFramebufferfi)(GLuint, GLenum, GLint, GLfloat, GLint);
+static void (GLAPIENTRYP pglNamedFramebufferDrawBuffers)(GLuint, GLsizei, const GLenum*);
 
 // shaders and programs
 static void (GLAPIENTRYP pglShaderSource)(GLuint, GLsizei, const GLchar**, const GLint*);
@@ -755,29 +756,29 @@ static GLuint compile_shader(const array<uniform>& _uniforms, const shader& _sha
     type = GL_VERTEX_SHADER;
     // emit vertex attributes inputs
     _shader.inputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
-      contents.append({"layout(location = %zu) in %s %s;\n", _inout.index, inout_to_string(_inout.category), _name});
+      contents.append(string::format("layout(location = %zu) in %s %s;\n", _inout.index, inout_to_string(_inout.category), _name));
     });
     // emit vertex outputs
     _shader.outputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
-      contents.append({"out %s %s;\n", inout_to_string(_inout.category), _name});
+      contents.append(string::format("out %s %s;\n", inout_to_string(_inout.category), _name));
     });
     break;
   case shader::category::k_fragment:
     type = GL_FRAGMENT_SHADER;
     // emit fragment inputs
     _shader.inputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
-      contents.append({"in %s %s;\n", inout_to_string(_inout.category), _name});
+      contents.append(string::format("in %s %s;\n", inout_to_string(_inout.category), _name));
     });
     // emit fragment outputs
     _shader.outputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
-      contents.append({"layout(location = %d) out %s %s;\n", _inout.index, inout_to_string(_inout.category), _name});
+      contents.append(string::format("layout(location = %d) out %s %s;\n", _inout.index, inout_to_string(_inout.category), _name));
     });
     break;
   }
 
   // emit uniforms
   _uniforms.each_fwd([&](const uniform& _uniform) {
-    contents.append({"uniform %s %s;\n", uniform_to_string(_uniform.type()), _uniform.name()});
+    contents.append(string::format("uniform %s %s;\n", uniform_to_string(_uniform.type()), _uniform.name()));
   });
 
   // to get good diagnostics
@@ -868,6 +869,7 @@ backend_gl4::backend_gl4(memory::allocator* _allocator, void* _data)
   fetch("glBindFramebuffer", pglBindFramebuffer);
   fetch("glClearNamedFramebufferfv", pglClearNamedFramebufferfv);
   fetch("glClearNamedFramebufferfi", pglClearNamedFramebufferfi);
+  fetch("glNamedFramebufferDrawBuffers", pglNamedFramebufferDrawBuffers);
 
   // shaders and programs
   fetch("glShaderSource", pglShaderSource);
@@ -1095,14 +1097,18 @@ void backend_gl4::process(rx_byte* _command) {
               pglNamedFramebufferTexture(target->fbo, GL_STENCIL_ATTACHMENT, texture->tex, 0);
             }
           }
-          // color attachments
+          // color attachments & draw buffers
           const auto& attachments{render_target->attachments()};
+          array<GLenum> draw_buffers{m_allocator, attachments.size()};
           for (rx_size i{0}; i < attachments.size(); i++) {
             const auto attachment{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
             const auto render_texture{attachments[i]};
             const auto texture{reinterpret_cast<detail::texture2D*>(render_texture + 1)};
             pglNamedFramebufferTexture(target->fbo, attachment, texture->tex, 0);
+            draw_buffers[i] = attachment;
           }
+          // draw buffers
+          pglNamedFramebufferDrawBuffers(target->fbo, draw_buffers.size(), draw_buffers.data());
         }
         break;
       case resource_command::category::k_program:

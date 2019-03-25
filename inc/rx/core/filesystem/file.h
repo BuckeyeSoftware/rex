@@ -60,13 +60,19 @@ inline file::operator bool() const {
 }
 
 template<typename... Ts>
-inline bool file::print(memory::allocator* alloc, const char* fmt, Ts&&... args) {
-  return print({alloc, fmt, utility::forward<Ts>(args)...});
+inline bool file::print(memory::allocator* _allocator, const char* _format, Ts&&... _arguments) {
+  return print(string::format(_allocator, _format, utility::forward<Ts>(_arguments)...));
 }
 
 template<typename... Ts>
-inline bool file::print(const char* fmt, Ts&&... args) {
-  return print({fmt, utility::forward<Ts>(args)...});
+inline bool file::print(const char* _format, Ts&&... _arguments) {
+  return print(&memory::g_system_allocator, _format, utility::forward<Ts>(_arguments)...);
+}
+
+optional<array<rx_byte>> read_binary_file(memory::allocator* _allocator, const string& _file_name);
+
+inline optional<array<rx_byte>> read_binary_file(const string& _file_name) {
+  return read_binary_file(&memory::g_system_allocator, _file_name);
 }
 
 } // namespace rx::filesystem

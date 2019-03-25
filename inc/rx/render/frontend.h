@@ -3,6 +3,7 @@
 
 #include <rx/core/array.h>
 #include <rx/core/string.h>
+#include <rx/core/function.h>
 #include <rx/core/map.h>
 
 #include <rx/core/concurrency/mutex.h>
@@ -146,6 +147,8 @@ private:
   command_buffer m_command_buffer;         // protected by |m_mutex|
 
   backend* m_backend;                      // protected by |m_mutex|
+
+  deferred_function<void()> m_deferred_process;
 
   map<string, technique> m_techniques; 
   frame_timer m_timer;

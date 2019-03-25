@@ -72,6 +72,31 @@ technique::~technique() {
   });
 }
 
+technique::technique(technique&& _technique)
+  : m_frontend{_technique.m_frontend}
+  , m_type{_technique.m_type}
+  , m_programs{utility::move(_technique.m_programs)}
+  , m_name{utility::move(_technique.m_name)}
+  , m_error{utility::move(_technique.m_error)}
+  , m_shader_definitions{utility::move(_technique.m_shader_definitions)}
+  , m_uniforms{utility::move(_technique.m_uniforms)}
+  , m_specializations{utility::move(_technique.m_specializations)}
+{
+  _technique.m_frontend = nullptr;
+}
+
+technique& technique::operator=(technique&& _technique) {
+  m_frontend = _technique.m_frontend;
+  m_type = _technique.m_type;
+  m_programs = utility::move(_technique.m_programs);
+  m_name = utility::move(_technique.m_name);
+  m_error = utility::move(_technique.m_error);
+  m_shader_definitions = utility::move(_technique.m_shader_definitions);
+  m_uniforms = utility::move(_technique.m_uniforms);
+  m_specializations = utility::move(_technique.m_specializations);
+  return *this;
+}
+
 bool technique::compile() {
   shader description;
 
@@ -368,7 +393,7 @@ bool technique::parse_shader(const json& _shader) {
 }
 
 bool technique::parse_vertex_shader(const json& _shader) {
-  if (!m_shader_definitions.each_fwd([this](const shader& _shader) {
+  if (!m_shader_definitions.each_fwd([](const shader& _shader) {
       return _shader.type != shader::category::k_vertex; }))
   {
     return error("multiple vertex shaders present");
@@ -395,7 +420,7 @@ bool technique::parse_vertex_shader(const json& _shader) {
 }
 
 bool technique::parse_fragment_shader(const json& _shader) {
-  if (!m_shader_definitions.each_fwd([this](const shader& _shader) {
+  if (!m_shader_definitions.each_fwd([](const shader& _shader) {
       return _shader.type != shader::category::k_fragment; }))
   {
     return error("multiple vertex shaders present");

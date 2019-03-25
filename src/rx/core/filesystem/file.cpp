@@ -1,8 +1,12 @@
 #include <stdio.h> // FILE, f{open,close,read,write,seek,flush}
-#include <string.h> // strcmp
+#include <errno.h> // errno
+#include <string.h> // strcmp, strerror
 
 #include <rx/core/assert.h> // RX_ASSERT
+#include <rx/core/log.h>
 #include <rx/core/filesystem/file.h> // file
+
+RX_LOG("filesystem/file", log_file);
 
 namespace rx::filesystem {
 
@@ -116,6 +120,33 @@ bool file::read_line(string& line) {
 
 bool file::is_valid() const {
   return m_impl != nullptr;
+}
+
+optional<array<rx_byte>> read_binary_file(memory::allocator* _allocator, const string& _file_name) {
+  file open_file{_file_name, "rb"};
+  if (!open_file) {
+    log_file(log::level::k_error, "failed to open file '%s' [%s]", _file_name, strerror(errno));
+    return nullopt;
+  }
+
+  const auto size{open_file.size()};
+  if (size) {
+    array<rx_byte> data{_allocator, *size};
+    if (!open_file.read(data.data(), data.size())) {
+      log_file(log::level::k_error, "failed to read file '%s' [%s]", _file_name, strerror(errno));
+      return nullopt;
+    }
+    return data;
+  } else {
+    // NOTE: taking advantage of stdio buffering here to make this reasonable
+    array<rx_byte> data{_allocator, 1};
+    for(rx_byte* cursor{data.data()}; open_file.read(cursor, 1); cursor++) {
+      data.resize(data.size() + 1);
+    }
+    return data;
+  }
+
+  return nullopt;
 }
 
 } // namespace rx::filesystem
