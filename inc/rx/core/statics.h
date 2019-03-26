@@ -54,7 +54,7 @@ inline void static_node::init_global() {
     m_data.init();
   }
 }
-
+ 
 inline void static_node::fini_global() {
   if (m_enabled) {
     m_data.fini();

@@ -17,7 +17,7 @@
 #include <rx/render/technique.h>
 #include <rx/render/backend_gl4.h>
 
-#include <rx/model/iqm.h>
+#include <rx/model/model.h>
 
 #include <rx/math/transform.h>
 
@@ -152,31 +152,38 @@ int entry(int argc, char **argv) {
     rx::render::gbuffer gbuffer{&frontend};
     gbuffer.create({1600, 900});
 
-    struct vertex {
-      rx::math::vec3f position;
-      rx::math::vec3f normal;
-    };
-
-    rx::render::buffer* triangle{frontend.create_buffer(RX_RENDER_TAG("triangle"))};
-    triangle->record_stride(sizeof(vertex));
-    triangle->record_element_type(rx::render::buffer::element_category::k_u32);
-    triangle->record_type(rx::render::buffer::category::k_static);
-    triangle->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, position));
-    triangle->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, normal));
-
-    rx::model::iqm iqm{&rx::memory::g_system_allocator};
-    if (iqm.load("test.iqm")) {
-      rx::array<vertex> vertices{&rx::memory::g_system_allocator, iqm.positions().size()};
-      for (rx_size i{0}; i < iqm.positions().size(); i++) {
-        vertices[i].position = iqm.positions()[i];
-        vertices[i].normal = iqm.normals()[i];
+    rx::render::buffer* model_buffer{frontend.create_buffer(RX_RENDER_TAG("model"))};
+    model_buffer->record_element_type(rx::render::buffer::element_category::k_u32);
+    model_buffer->record_type(rx::render::buffer::category::k_static);
+    rx::model::model model{&rx::memory::g_system_allocator};
+    rx_u32 element_count{0};
+    if (model.load("test.iqm")) {
+      if (model.is_animated()) {
+        using vertex = rx::model::model::animated_vertex;
+        const auto& vertices{model.animated_vertices()};
+        model_buffer->record_stride(sizeof(vertex));
+        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, position));
+        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, normal));
+        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 4, offsetof(vertex, tangent));
+        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 2, offsetof(vertex, coordinate));
+        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_u8, 4, offsetof(vertex, blend_weight));
+        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_u8, 4, offsetof(vertex, blend_index));
+        model_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
+      } else {
+        using vertex = rx::model::model::vertex;
+        const auto& vertices{model.vertices()};
+        model_buffer->record_stride(sizeof(vertex));
+        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, position));
+        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, normal));
+        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 4, offsetof(vertex, tangent));
+        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 2, offsetof(vertex, coordinate));
+        model_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
       }
-
-      triangle->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
-      triangle->write_elements(iqm.elements().data(), iqm.elements().size() * sizeof(rx_u32));
+      const auto& elements{model.elements()};
+      model_buffer->write_elements(elements.data(), elements.size() * sizeof(rx_u32));
+      element_count = elements.size();
     }
-
-    frontend.initialize_buffer(RX_RENDER_TAG("triangle"), triangle);
+    frontend.initialize_buffer(RX_RENDER_TAG("model"), model_buffer);
 
     rx::render::buffer* quad{frontend.create_buffer(RX_RENDER_TAG("quad"))};
     quad->record_stride(sizeof(quad_vertex));
@@ -289,9 +296,9 @@ int entry(int argc, char **argv) {
         RX_RENDER_TAG("gbuffer test"),
         state,
         gbuffer,
-        triangle,
+        model_buffer,
         gbuffer_test_program,
-        iqm.elements().size(),
+        element_count,
         0,
         rx::render::primitive_type::k_triangles,
         "");
@@ -333,7 +340,7 @@ int entry(int argc, char **argv) {
     }
 
     frontend.destroy_target(RX_RENDER_TAG("default"), target);
-    frontend.destroy_buffer(RX_RENDER_TAG("test"), triangle);
+    frontend.destroy_buffer(RX_RENDER_TAG("model"), model_buffer);
     frontend.destroy_buffer(RX_RENDER_TAG("quad"), quad);
   }
 
