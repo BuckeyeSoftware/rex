@@ -44,7 +44,7 @@ void gbuffer::create(const math::vec2z& _resolution) {
     texture::wrap_options::category::k_clamp_to_edge,
     texture::wrap_options::category::k_clamp_to_edge,
     texture::wrap_options::category::k_clamp_to_edge});
-  m_normal_texture->record_format(texture::data_format::k_rgba_u8);
+  m_normal_texture->record_format(texture::data_format::k_rgba_f16);
   m_frontend->initialize_texture(RX_RENDER_TAG("gbuffer normal"), m_normal_texture);
 
   m_emission_texture = m_frontend->create_texture2D(RX_RENDER_TAG("gbuffer emission"));

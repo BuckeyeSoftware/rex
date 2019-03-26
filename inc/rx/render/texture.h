@@ -38,6 +38,8 @@ struct texture : resource {
   enum class data_format {
     k_rgba_u8,
     k_bgra_u8,
+    k_rgba_f16,
+    k_bgra_f16,
     k_d16,
     k_d24,
     k_d32,
@@ -193,6 +195,10 @@ inline rx_size texture::byte_size_of_format(data_format _format) {
     return 4;
   case data_format::k_bgra_u8:
     return 4;
+  case data_format::k_rgba_f16:
+    return 8;
+  case data_format::k_bgra_f16:
+    return 8;
   case data_format::k_d16:
     return 2;
   case data_format::k_d24:
@@ -216,6 +222,10 @@ inline rx_size texture::channel_count_of_format(data_format _format) {
   case data_format::k_rgba_u8:
     return 4;
   case data_format::k_bgra_u8:
+    return 4;
+  case data_format::k_rgba_f16:
+    return 4;
+  case data_format::k_bgra_f16:
     return 4;
   case data_format::k_d16:
     return 1;

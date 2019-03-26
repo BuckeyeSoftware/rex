@@ -1,12 +1,12 @@
 #include <rx/model/loader.h>
 
 #include <rx/core/filesystem/file.h>
-#include <rx/core/log.h>
 #include <rx/core/algorithm/max.h>
+#include <rx/core/log.h>
 
+#include <rx/math/constants.h>
 #include <rx/math/mat3x3.h>
 #include <rx/math/trig.h>
-#include <rx/math/constants.h>
 
 RX_LOG("model/loader", log_model);
 
@@ -21,9 +21,7 @@ loader::loader(memory::allocator* _allocator)
   , m_tangents{m_allocator}
   , m_blend_indices{m_allocator}
   , m_blend_weights{m_allocator}
-  , m_generic_base_frame{m_allocator}
-  , m_inverse_base_frame{m_allocator}
-  , m_animation_frames{m_allocator}
+  , m_frames{m_allocator}
 {
 }
 

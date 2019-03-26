@@ -11,6 +11,10 @@ static bool is_valid_depth_format(texture::data_format _format) {
     return false;
   case texture::data_format::k_bgra_u8:
     return false;
+  case texture::data_format::k_rgba_f16:
+    return false;
+  case texture::data_format::k_bgra_f16:
+    return false;
   case texture::data_format::k_d16:
     return true;
   case texture::data_format::k_d24:
@@ -36,6 +40,10 @@ static bool is_valid_stencil_format(texture::data_format _format) {
     return false;
   case texture::data_format::k_bgra_u8:
     return false;
+  case texture::data_format::k_rgba_f16:
+    return false;
+  case texture::data_format::k_bgra_f16:
+    return false;
   case texture::data_format::k_d16:
     return false;
   case texture::data_format::k_d24:
@@ -60,6 +68,10 @@ static bool is_valid_depth_stencil_format(texture::data_format _format) {
   case texture::data_format::k_rgba_u8:
     return false;
   case texture::data_format::k_bgra_u8:
+    return false;
+  case texture::data_format::k_rgba_f16:
+    return false;
+  case texture::data_format::k_bgra_f16:
     return false;
   case texture::data_format::k_d16:
     return false;

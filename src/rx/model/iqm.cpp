@@ -6,7 +6,7 @@
 
 namespace rx::model {
 
-struct mesh {
+struct iqm_mesh {
   rx_u32 name;
   rx_u32 material;
   rx_u32 first_vertex;
@@ -38,11 +38,11 @@ enum class vertex_format {
   k_f64
 };
 
-struct triangle {
+struct iqm_triangle {
   rx_u32 vertex[3];
 };
 
-struct joint {
+struct iqm_joint {
   rx_u32 name;
   rx_s32 parent;
   rx_f32 translate[3];
@@ -50,14 +50,14 @@ struct joint {
   rx_f32 scale[3];
 };
 
-struct pose {
+struct iqm_pose {
   rx_s32 parent;
   rx_u32 mask;
   rx_f32 channel_offset[10];
   rx_f32 channel_scale[10];
 };
 
-struct animation {
+struct iqm_animation {
   rx_u32 name;
   rx_u32 first_frame;
   rx_u32 num_frames;
@@ -65,7 +65,7 @@ struct animation {
   rx_u32 flags;
 };
 
-struct vertex_array {
+struct iqm_vertex_array {
   rx_u32 type;
   rx_u32 flags;
   rx_u32 format;
@@ -73,7 +73,7 @@ struct vertex_array {
   rx_u32 offset;
 };
 
-struct bounds {
+struct iqm_bounds {
   rx_f32 min[3];
   rx_f32 max[3];
   rx_u32 xy_radius;
@@ -146,9 +146,9 @@ bool iqm::read_meshes(const header& _header, const array<rx_byte>& _data) {
   const rx_byte* in_blend_index{nullptr};
   const rx_byte* in_blend_weight{nullptr};
 
-  const auto vertex_arrays{reinterpret_cast<const vertex_array*>(_data.data() + _header.vertex_arrays_offset)};
+  const auto vertex_arrays{reinterpret_cast<const iqm_vertex_array*>(_data.data() + _header.vertex_arrays_offset)};
   for (rx_u32 i{0}; i < _header.vertex_arrays; i++) {
-    const vertex_array& array{vertex_arrays[i]};
+    const iqm_vertex_array& array{vertex_arrays[i]};
     const auto attribute{static_cast<vertex_attribute>(array.type)};
     const auto format{static_cast<vertex_format>(array.format)};
     const rx_size size{array.size};
@@ -279,17 +279,16 @@ bool iqm::read_meshes(const header& _header, const array<rx_byte>& _data) {
     }
   }
 
+  const auto meshes{reinterpret_cast<const iqm_mesh *>(_data.data() + _header.meshes_offset)};
   for (rx_u32 i{0}; i < _header.meshes; i++) {
-    const auto* this_mesh{reinterpret_cast<const mesh *>(_data.data() + _header.meshes_offset) + i};
-    const char* material_name{string_table + this_mesh->material};
-    (void)this_mesh;
-    (void)material_name;
-    // TODO
+    const auto& this_mesh{meshes[i]};
+    const char* material_name{string_table + this_mesh.material};
+    m_meshes.push_back({this_mesh.first_triangle * 3, this_mesh.num_triangles * 3, material_name});
   }
 
   m_elements.resize(_header.triangles * 3);
   for (rx_u32 i{0}; i < _header.triangles; i++) {
-    const auto* this_triangle{reinterpret_cast<const triangle*>(_data.data() + _header.triangles_offset) + i};
+    const auto* this_triangle{reinterpret_cast<const iqm_triangle*>(_data.data() + _header.triangles_offset) + i};
     m_elements[i * 3 + 0] = this_triangle->vertex[0];
     m_elements[i * 3 + 1] = this_triangle->vertex[1];
     m_elements[i * 3 + 2] = this_triangle->vertex[2];
@@ -299,10 +298,13 @@ bool iqm::read_meshes(const header& _header, const array<rx_byte>& _data) {
 }
 
 bool iqm::read_animations(const header& _header, const array<rx_byte>& _data) {
-  m_generic_base_frame.resize(_header.joints);
-  m_inverse_base_frame.resize(_header.joints);
+  array<math::mat3x4f> generic_base_frame;
+  array<math::mat3x4f> inverse_base_frame;
 
-  const joint* joints{reinterpret_cast<const joint*>(_data.data() + _header.joints_offset)};
+  generic_base_frame.resize(_header.joints);
+  inverse_base_frame.resize(_header.joints);
+
+  const auto joints{reinterpret_cast<const iqm_joint*>(_data.data() + _header.joints_offset)};
 
   // read base pose
   for (rx_u32 i{0}; i <_header.joints; i++) {
@@ -313,29 +315,30 @@ bool iqm::read_animations(const header& _header, const array<rx_byte>& _data) {
     const math::quatf rotate{this_joint.rotate[0], this_joint.rotate[2], this_joint.rotate[1], -this_joint.rotate[3]};
     const math::vec3f translate{this_joint.translate[0], this_joint.translate[2], this_joint.translate[1]};
 
-    m_generic_base_frame[i] = math::mat3x4f{scale, math::normalize(rotate), translate};
-    m_inverse_base_frame[i] = math::mat3x4f::invert(m_generic_base_frame[i]);
+    generic_base_frame[i] = math::mat3x4f{scale, math::normalize(rotate), translate};
+    inverse_base_frame[i] = math::mat3x4f::invert(generic_base_frame[i]);
 
     if (this_joint.parent >= 0) {
-      m_generic_base_frame[i] = m_generic_base_frame[this_joint.parent] * m_generic_base_frame[i];
-      m_inverse_base_frame[i] *= m_inverse_base_frame[this_joint.parent];
+      generic_base_frame[i] = generic_base_frame[this_joint.parent] * generic_base_frame[i];
+      inverse_base_frame[i] *= inverse_base_frame[this_joint.parent];
     }
   }
 
-  // TODO read animations
   const char* string_table{reinterpret_cast<const char *>(_data.data() + _header.text_offset)};
-  const animation* animations{reinterpret_cast<const animation*>(_data.data() + _header.animations_offset)};
+  const iqm_animation* animations{reinterpret_cast<const iqm_animation*>(_data.data() + _header.animations_offset)};
   for (rx_u32 i{0}; i < _header.animations; i++) {
-    // TODO
+    const iqm_animation& this_animation{animations[i]};
+    m_animations.push_back({this_animation.frame_rate, this_animation.first_frame,
+      this_animation.num_frames, string_table + this_animation.name});
   }
 
-  array<math::mat3x4f> frames{m_allocator, _header.joints * _header.frames};
-  const pose* poses{reinterpret_cast<const pose*>(_data.data() + _header.poses_offset)};
+  m_frames.resize(_header.joints * _header.frames);
+  const auto* poses{reinterpret_cast<const iqm_pose*>(_data.data() + _header.poses_offset)};
   const rx_u16* frame_data{reinterpret_cast<const rx_u16*>(_data.data() + _header.frames_offset)};
 
   for (rx_u32 i{0}; i < _header.frames; i++) {
     for (rx_u32 j{0}; j < _header.poses; j++) {
-      const pose& this_pose{poses[j]};
+      const iqm_pose& this_pose{poses[j]};
       rx_f32 channel_data[10];
       for (rx_size k{0}; k < 10; k++) {
         channel_data[k] = this_pose.channel_offset[k];
@@ -357,18 +360,18 @@ bool iqm::read_animations(const header& _header, const array<rx_byte>& _data) {
       // parent_pose * (parent_inverse_base_pose * parent_base_pose) * child_pose * child_inverse_base_pose =>
       // parent_pose * child_pose * child_inverse_base_pose
       if (this_pose.parent >= 0) {
-        scale_rotate_translate = m_generic_base_frame[this_pose.parent] * scale_rotate_translate * m_inverse_base_frame[j];
+        scale_rotate_translate = generic_base_frame[this_pose.parent] * scale_rotate_translate * inverse_base_frame[j];
       } else {
-        scale_rotate_translate = scale_rotate_translate * m_inverse_base_frame[j];
+        scale_rotate_translate = scale_rotate_translate * inverse_base_frame[j];
       }
 
       // The parent multiplication is done here to avoid having to do it at animation time too,
       // this will need to be moved to support more complicated animation blending
       if (joints[j].parent >= 0) {
-        scale_rotate_translate = frames[i * _header.poses + joints[j].parent] * scale_rotate_translate;
+        scale_rotate_translate = m_frames[i * _header.poses + joints[j].parent] * scale_rotate_translate;
       }
 
-      frames[i * _header.poses + j] = scale_rotate_translate;
+      m_frames[i * _header.poses + j] = scale_rotate_translate;
     }
   }
 

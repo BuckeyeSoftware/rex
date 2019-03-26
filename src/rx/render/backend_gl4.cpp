@@ -218,6 +218,10 @@ static GLenum convert_texture_data_format(render::texture::data_format _data_for
     return GL_RGBA8;
   case render::texture::data_format::k_bgra_u8:
     return GL_RGBA8; // not a bug
+  case render::texture::data_format::k_rgba_f16:
+    return GL_RGBA16F;
+  case render::texture::data_format::k_bgra_f16:
+    return GL_RGBA16F; // not a bug
   case render::texture::data_format::k_d16:
     return GL_DEPTH_COMPONENT16;
   case render::texture::data_format::k_d24:
@@ -241,7 +245,11 @@ static GLenum convert_texture_format(render::texture::data_format _data_format) 
   case render::texture::data_format::k_rgba_u8:
     return GL_RGBA;
   case render::texture::data_format::k_bgra_u8:
-    return GL_BGRA; // not a bug
+    return GL_BGRA;
+  case render::texture::data_format::k_rgba_f16:
+    return GL_RGBA;
+  case render::texture::data_format::k_bgra_f16:
+    return GL_BGRA;
   case render::texture::data_format::k_d16:
     return GL_DEPTH_COMPONENT;
   case render::texture::data_format::k_d24:

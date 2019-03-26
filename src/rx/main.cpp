@@ -152,15 +152,27 @@ int entry(int argc, char **argv) {
     rx::render::gbuffer gbuffer{&frontend};
     gbuffer.create({1600, 900});
 
+    struct vertex {
+      rx::math::vec3f position;
+      rx::math::vec3f normal;
+    };
+
     rx::render::buffer* triangle{frontend.create_buffer(RX_RENDER_TAG("triangle"))};
-    triangle->record_stride(sizeof(rx::math::vec3f));
+    triangle->record_stride(sizeof(vertex));
     triangle->record_element_type(rx::render::buffer::element_category::k_u32);
     triangle->record_type(rx::render::buffer::category::k_static);
-    triangle->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, 0);
+    triangle->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, position));
+    triangle->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, normal));
 
     rx::model::iqm iqm{&rx::memory::g_system_allocator};
     if (iqm.load("test.iqm")) {
-      triangle->write_vertices(iqm.positions().data(), iqm.positions().size() * sizeof(rx::math::vec3f));
+      rx::array<vertex> vertices{&rx::memory::g_system_allocator, iqm.positions().size()};
+      for (rx_size i{0}; i < iqm.positions().size(); i++) {
+        vertices[i].position = iqm.positions()[i];
+        vertices[i].normal = iqm.normals()[i];
+      }
+
+      triangle->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
       triangle->write_elements(iqm.elements().data(), iqm.elements().size() * sizeof(rx_u32));
     }
 
@@ -259,9 +271,23 @@ int entry(int argc, char **argv) {
       gbuffer_test_program->uniforms()[0].record_mat4x4f(model * view * projection);
       fs_quad_program->uniforms()[0].record_sampler(0);
 
+      rx::render::state state;
+      state.depth.record_test(true);
+      state.depth.record_write(true);
+
+      frontend.clear(RX_RENDER_TAG("gbuffer test"),
+        gbuffer,
+        RX_RENDER_CLEAR_COLOR(0),
+        {1.0f, 1.0f, 1.0f, 1.0f});
+      
+      frontend.clear(RX_RENDER_TAG("gbuffer test"),
+        gbuffer,
+        RX_RENDER_CLEAR_DEPTH,
+        {1.0f, 0.0f, 0.0f, 0.0f});
+      
       frontend.draw_elements(
         RX_RENDER_TAG("gbuffer test"),
-        {},
+        state,
         gbuffer,
         triangle,
         gbuffer_test_program,
@@ -283,7 +309,7 @@ int entry(int argc, char **argv) {
         0,
         rx::render::primitive_type::k_triangle_strip,
         "2",
-        gbuffer.albedo());
+        gbuffer.normal());
 
       if (frontend.process()) {
         if (frontend.swap()) {
