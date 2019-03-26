@@ -243,7 +243,6 @@ int entry(int argc, char **argv) {
       frontend.clear(RX_RENDER_TAG("gbuffer emission"),
         gbuffer, RX_RENDER_CLEAR_COLOR(2), {0.0f, 0.0f, 1.0f, 1.0f});
 
-
       rx::math::mat4x4f model{};
       rx::math::mat4x4f view{rx::math::mat4x4f::invert(camera.to_mat4())};
       rx::math::mat4x4f projection{rx::math::mat4x4f::perspective(90.0f, {0.01, 1024.0f}, 1600.0f/900.0f)};
@@ -253,7 +252,7 @@ int entry(int argc, char **argv) {
 
       RX_ASSERT(gbuffer_test_technique, "");
       RX_ASSERT(fs_quad_technique, "");
-      
+
       rx::render::program* gbuffer_test_program{*gbuffer_test_technique};
       rx::render::program* fs_quad_program{*fs_quad_technique};
 

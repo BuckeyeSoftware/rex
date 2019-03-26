@@ -65,6 +65,7 @@ struct vec2 {
     struct { T w, h; };
     struct { T r, g; };
     struct { T u, v; };
+    struct { T s, t; };
     T array[2];
   };
 };

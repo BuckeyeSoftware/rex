@@ -13,6 +13,7 @@ struct iqm : loader {
 
   virtual bool read(const array<rx_byte>& _data);
 
+private:
   bool read_meshes(const header& _header, const array<rx_byte>& _data);
   bool read_animations(const header& _header, const array<rx_byte>& _data);
 };

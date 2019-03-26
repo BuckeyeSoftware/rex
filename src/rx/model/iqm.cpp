@@ -129,12 +129,8 @@ bool iqm::read(const array<rx_byte>& _data) {
     return false;
   }
 
-  if (read_header->animations) {
-    if (!read_animations(*read_header, _data)) {
-      return false;
-    }
-  } else {
-    // TODO
+  if (read_header->animations && !read_animations(*read_header, _data)) {
+    return false;
   }
 
   return true;
@@ -303,28 +299,78 @@ bool iqm::read_meshes(const header& _header, const array<rx_byte>& _data) {
 }
 
 bool iqm::read_animations(const header& _header, const array<rx_byte>& _data) {
-  // read base pose
   m_generic_base_frame.resize(_header.joints);
   m_inverse_base_frame.resize(_header.joints);
 
+  const joint* joints{reinterpret_cast<const joint*>(_data.data() + _header.joints_offset)};
+
+  // read base pose
   for (rx_u32 i{0}; i <_header.joints; i++) {
-    const auto* this_joint{reinterpret_cast<const joint*>(_data.data() + _header.joints_offset) + i};
+    const auto& this_joint{joints[i]};
 
     // IQM is Z up, we're Y up
-    const math::vec3f scale{this_joint->scale[0], this_joint->scale[2], this_joint->scale[1]};
-    const math::quatf rotate{this_joint->rotate[0], this_joint->rotate[2], this_joint->rotate[1], -this_joint->rotate[3]};
-    const math::vec3f translate{this_joint->translate[0], this_joint->translate[2], this_joint->translate[1]};
+    const math::vec3f scale{this_joint.scale[0], this_joint.scale[2], this_joint.scale[1]};
+    const math::quatf rotate{this_joint.rotate[0], this_joint.rotate[2], this_joint.rotate[1], -this_joint.rotate[3]};
+    const math::vec3f translate{this_joint.translate[0], this_joint.translate[2], this_joint.translate[1]};
 
     m_generic_base_frame[i] = math::mat3x4f{scale, math::normalize(rotate), translate};
     m_inverse_base_frame[i] = math::mat3x4f::invert(m_generic_base_frame[i]);
 
-    if (this_joint->parent >= 0) {
-      m_generic_base_frame[i] = m_generic_base_frame[this_joint->parent] * m_generic_base_frame[i];
-      m_inverse_base_frame[i] *= m_inverse_base_frame[this_joint->parent];
+    if (this_joint.parent >= 0) {
+      m_generic_base_frame[i] = m_generic_base_frame[this_joint.parent] * m_generic_base_frame[i];
+      m_inverse_base_frame[i] *= m_inverse_base_frame[this_joint.parent];
     }
   }
 
   // TODO read animations
+  const char* string_table{reinterpret_cast<const char *>(_data.data() + _header.text_offset)};
+  const animation* animations{reinterpret_cast<const animation*>(_data.data() + _header.animations_offset)};
+  for (rx_u32 i{0}; i < _header.animations; i++) {
+    // TODO
+  }
+
+  array<math::mat3x4f> frames{m_allocator, _header.joints * _header.frames};
+  const pose* poses{reinterpret_cast<const pose*>(_data.data() + _header.poses_offset)};
+  const rx_u16* frame_data{reinterpret_cast<const rx_u16*>(_data.data() + _header.frames_offset)};
+
+  for (rx_u32 i{0}; i < _header.frames; i++) {
+    for (rx_u32 j{0}; j < _header.poses; j++) {
+      const pose& this_pose{poses[j]};
+      rx_f32 channel_data[10];
+      for (rx_size k{0}; k < 10; k++) {
+        channel_data[k] = this_pose.channel_offset[k];
+        if (this_pose.mask & (1 << k)) {
+          channel_data[k] += (*frame_data++) * this_pose.channel_scale[k];
+        }
+      }
+
+      const math::vec3f scale{channel_data[7], channel_data[8], channel_data[9]};
+      const math::quatf rotate{channel_data[3], channel_data[4], channel_data[5], channel_data[6]};
+      const math::vec3f translate{channel_data[0], channel_data[1], channel_data[2]};
+      math::mat3x4 scale_rotate_translate{scale, rotate, translate};
+
+      // Concatenate each and every pose with the inverse base pose to avoid having to do it
+      // at animation time; if the join has a parent, then it needs to be preconcatenated with
+      // it's parent's base pose, this will all negate at animation time; consider:
+      //
+      // (parent_pose * parent_inverse_base_pose) * (parent_base_pose * child_pose * child_inverse_base_pose) =>
+      // parent_pose * (parent_inverse_base_pose * parent_base_pose) * child_pose * child_inverse_base_pose =>
+      // parent_pose * child_pose * child_inverse_base_pose
+      if (this_pose.parent >= 0) {
+        scale_rotate_translate = m_generic_base_frame[this_pose.parent] * scale_rotate_translate * m_inverse_base_frame[j];
+      } else {
+        scale_rotate_translate = scale_rotate_translate * m_inverse_base_frame[j];
+      }
+
+      // The parent multiplication is done here to avoid having to do it at animation time too,
+      // this will need to be moved to support more complicated animation blending
+      if (joints[j].parent >= 0) {
+        scale_rotate_translate = frames[i * _header.poses + joints[j].parent] * scale_rotate_translate;
+      }
+
+      frames[i * _header.poses + j] = scale_rotate_translate;
+    }
+  }
 
   return true;
 }

@@ -29,11 +29,12 @@ struct loader : concepts::interface {
 
 protected:
   void generate_normals();
-  void generate_tangents();
+  bool generate_tangents();
 
   memory::allocator* m_allocator;
-  string m_error;
+
   array<rx_u32> m_elements;
+
   array<math::vec3f> m_positions;
   array<math::vec2f> m_coordinates;
   array<math::vec3f> m_normals;
@@ -43,6 +44,9 @@ protected:
 
   array<math::mat3x4f> m_generic_base_frame;
   array<math::mat3x4f> m_inverse_base_frame;
+  array<math::mat3x4f> m_animation_frames;
+
+  string m_error;
 
   json m_materials;
 };
