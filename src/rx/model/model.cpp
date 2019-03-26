@@ -35,7 +35,6 @@ bool model::load(const string& _file_name) {
 
     if (animations.is_empty()) {
       utility::construct<array<vertex>>(&as_vertices, m_allocator, vertices);
-      as_vertices = {m_allocator, positions.size()};
       for (rx_size i{0}; i < vertices; i++) {
         as_vertices[i].position = positions[i];
         as_vertices[i].normal = normals[i];
