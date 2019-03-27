@@ -6,22 +6,22 @@
 
 namespace rx::render {
 
-static rx_size size_for_element_type(buffer::element_category _type) {
+static rx_size size_for_element_type(buffer::element_type _type) {
   switch (_type) {
-  case buffer::element_category::k_none:
+  case buffer::element_type::k_none:
     return 0;
-  case buffer::element_category::k_u8:
+  case buffer::element_type::k_u8:
     return 1;
-  case buffer::element_category::k_u16:
+  case buffer::element_type::k_u16:
     return 2;
-  case buffer::element_category::k_u32:
+  case buffer::element_type::k_u32:
     return 4;
   }
   return 0;
 }
 
 buffer::buffer(frontend* _frontend)
-  : resource{_frontend, resource::category::k_buffer}
+  : resource{_frontend, resource::type::k_buffer}
   , m_vertices_store{m_frontend->allocator()}
   , m_elements_store{m_frontend->allocator()}
   , m_attributes{m_frontend->allocator()}

@@ -4,7 +4,7 @@
 
 namespace rx::render {
 
-texture::texture(frontend* _frontend, resource::category _type)
+texture::texture(frontend* _frontend, resource::type _type)
   : resource{_frontend, _type}
   , m_recorded{0}
 {
@@ -40,7 +40,7 @@ void texture::validate() const {
 
 // texture1D
 texture1D::texture1D(frontend* _frontend)
-  : texture{_frontend, resource::category::k_texture1D}
+  : texture{_frontend, resource::type::k_texture1D}
 {
 }
 
@@ -66,7 +66,7 @@ void texture1D::record_dimensions(rx_size _dimensions) {
 }
 
 texture2D::texture2D(frontend* _frontend)
-  : texture{_frontend, resource::category::k_texture2D}
+  : texture{_frontend, resource::type::k_texture2D}
 {
 }
 
@@ -93,7 +93,7 @@ void texture2D::record_dimensions(const math::vec2z& _dimensions) {
 
 // texture3D
 texture3D::texture3D(frontend* _frontend)
-  : texture{_frontend, resource::category::k_texture3D}
+  : texture{_frontend, resource::type::k_texture3D}
 {
 }
 
@@ -120,7 +120,7 @@ void texture3D::record_dimensions(const math::vec3z& _dimensions) {
 
 // textureCM
 textureCM::textureCM(frontend* _frontend)
-  : texture{_frontend, resource::category::k_textureCM}
+  : texture{_frontend, resource::type::k_textureCM}
 {
 }
 

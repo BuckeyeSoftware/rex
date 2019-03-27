@@ -31,9 +31,9 @@ void gbuffer::create(const math::vec2z& _resolution) {
   m_albedo_texture->record_dimensions(_resolution);
   m_albedo_texture->record_filter({false, false, false});
   m_albedo_texture->record_wrap({
-    texture::wrap_options::category::k_clamp_to_edge,
-    texture::wrap_options::category::k_clamp_to_edge,
-    texture::wrap_options::category::k_clamp_to_edge});
+    texture::wrap_options::type::k_clamp_to_edge,
+    texture::wrap_options::type::k_clamp_to_edge,
+    texture::wrap_options::type::k_clamp_to_edge});
   m_albedo_texture->record_format(texture::data_format::k_rgba_u8);
   m_frontend->initialize_texture(RX_RENDER_TAG("gbuffer albedo"), m_albedo_texture);
 
@@ -41,9 +41,9 @@ void gbuffer::create(const math::vec2z& _resolution) {
   m_normal_texture->record_dimensions(_resolution);
   m_normal_texture->record_filter({ false, false, false });
   m_normal_texture->record_wrap({
-    texture::wrap_options::category::k_clamp_to_edge,
-    texture::wrap_options::category::k_clamp_to_edge,
-    texture::wrap_options::category::k_clamp_to_edge});
+    texture::wrap_options::type::k_clamp_to_edge,
+    texture::wrap_options::type::k_clamp_to_edge,
+    texture::wrap_options::type::k_clamp_to_edge});
   m_normal_texture->record_format(texture::data_format::k_rgba_f16);
   m_frontend->initialize_texture(RX_RENDER_TAG("gbuffer normal"), m_normal_texture);
 
@@ -51,9 +51,9 @@ void gbuffer::create(const math::vec2z& _resolution) {
   m_emission_texture->record_dimensions(_resolution);
   m_emission_texture->record_filter({false, false, false});
   m_emission_texture->record_wrap({
-    texture::wrap_options::category::k_clamp_to_edge,
-    texture::wrap_options::category::k_clamp_to_edge,
-    texture::wrap_options::category::k_clamp_to_edge});
+    texture::wrap_options::type::k_clamp_to_edge,
+    texture::wrap_options::type::k_clamp_to_edge,
+    texture::wrap_options::type::k_clamp_to_edge});
   m_emission_texture->record_format(texture::data_format::k_rgba_u8);
   m_frontend->initialize_texture(RX_RENDER_TAG("gbuffer emission"), m_emission_texture);
 

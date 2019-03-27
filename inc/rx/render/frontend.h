@@ -107,7 +107,7 @@ struct frontend {
     rx_size cached;
   };
 
-  statistics stats(resource::category _type);
+  statistics stats(resource::type _type);
 
   technique* find_technique_by_name(const char* _name);
 

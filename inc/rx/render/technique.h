@@ -22,13 +22,13 @@ struct technique : concepts::no_copy {
   technique(technique&& _technique);
   technique& operator=(technique&& _technique);
 
-  enum class category {
+  enum class type {
     k_basic,
     k_variant,
     k_permute
   };
 
-  category type() const;
+  type kind() const;
   bool has_variants() const;
   bool has_permutes() const;
 
@@ -43,19 +43,19 @@ struct technique : concepts::no_copy {
 
 private:
   struct uniform_definition {
-    uniform::category type;
+    uniform::type kind;
     string name;
     string when;
   };
 
   struct shader_definition {
     struct inout {
-      shader::inout_category type;
+      shader::inout_type kind;
       rx_size index;
       string when;
     };
 
-    shader::category type;
+    shader::type kind;
     string source;
     map<string, inout> inputs;
     map<string, inout> outputs;
@@ -90,7 +90,7 @@ private:
   void write_log(log::level _level, string&& _message) const;
 
   frontend* m_frontend;
-  category m_type;
+  type m_type;
   array<program*> m_programs;
   array<rx_u32> m_permute_flags;
   string m_name;

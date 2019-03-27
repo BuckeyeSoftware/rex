@@ -301,15 +301,15 @@ static filter convert_texture_filter(const render::texture::filter_options& _fil
   return {min, mag};
 }
 
-static GLenum convert_texture_wrap(const render::texture::wrap_options::category _category) {
-  switch (_category) {
-  case render::texture::wrap_options::category::k_clamp_to_edge:
+static GLenum convert_texture_wrap(const render::texture::wrap_options::type _type) {
+  switch (_type) {
+  case render::texture::wrap_options::type::k_clamp_to_edge:
     return GL_CLAMP_TO_EDGE;
-  case render::texture::wrap_options::category::k_clamp_to_border:
+  case render::texture::wrap_options::type::k_clamp_to_border:
     return GL_CLAMP_TO_BORDER;
-  case render::texture::wrap_options::category::k_mirrored_repeat:
+  case render::texture::wrap_options::type::k_mirrored_repeat:
     return GL_MIRRORED_REPEAT;
-  case render::texture::wrap_options::category::k_repeat:
+  case render::texture::wrap_options::type::k_repeat:
     return GL_REPEAT;
   }
   RX_ASSERT(false, "unreachable");
@@ -687,59 +687,59 @@ static void fetch(const char* _name, F& function_) {
   *reinterpret_cast<void**>(&function_) = address;
 }
 
-static constexpr const char* inout_to_string(shader::inout_category _type) {
+static constexpr const char* inout_to_string(shader::inout_type _type) {
   switch (_type) {
-  case shader::inout_category::k_vec2f:
+  case shader::inout_type::k_vec2f:
     return "vec2f";
-  case shader::inout_category::k_vec3f:
+  case shader::inout_type::k_vec3f:
     return "vec3f";
-  case shader::inout_category::k_vec4f:
+  case shader::inout_type::k_vec4f:
     return "vec4f";
-  case shader::inout_category::k_vec2i:
+  case shader::inout_type::k_vec2i:
     return "vec2i";
-  case shader::inout_category::k_vec3i:
+  case shader::inout_type::k_vec3i:
     return "vec3i";
-  case shader::inout_category::k_vec4i:
+  case shader::inout_type::k_vec4i:
     return "vec4i";
-  case shader::inout_category::k_vec4b:
+  case shader::inout_type::k_vec4b:
     return "vec4b";
   }
   return nullptr;
 }
 
-static constexpr const char* uniform_to_string(uniform::category _type) {
+static constexpr const char* uniform_to_string(uniform::type _type) {
   switch (_type) {
-  case uniform::category::k_sampler1D:
+  case uniform::type::k_sampler1D:
     return "rx_sampler1D";
-  case uniform::category::k_sampler2D:
+  case uniform::type::k_sampler2D:
     return "rx_sampler2D";
-  case uniform::category::k_sampler3D:
+  case uniform::type::k_sampler3D:
     return "rx_sampler3D";
-  case uniform::category::k_samplerCM:
+  case uniform::type::k_samplerCM:
     return "rx_samplerCM";
-  case uniform::category::k_bool:
+  case uniform::type::k_bool:
     return "bool";
-  case uniform::category::k_int:
+  case uniform::type::k_int:
     return "int";
-  case uniform::category::k_float:
+  case uniform::type::k_float:
     return "float";
-  case uniform::category::k_vec2i:
+  case uniform::type::k_vec2i:
     return "vec2i";
-  case uniform::category::k_vec3i:
+  case uniform::type::k_vec3i:
     return "vec3i";
-  case uniform::category::k_vec4i:
+  case uniform::type::k_vec4i:
     return "vec4i";
-  case uniform::category::k_vec2f:
+  case uniform::type::k_vec2f:
     return "vec2f";
-  case uniform::category::k_vec3f:
+  case uniform::type::k_vec3f:
     return "vec3f";
-  case uniform::category::k_vec4f:
+  case uniform::type::k_vec4f:
     return "vec4f";
-  case uniform::category::k_mat4x4f:
+  case uniform::type::k_mat4x4f:
     return "mat4x4f";
-  case uniform::category::k_mat3x3f:
+  case uniform::type::k_mat3x3f:
     return "mat3x3f";
-  case uniform::category::k_bonesf:
+  case uniform::type::k_bonesf:
     return "bonesf";
   }
   return nullptr;
@@ -770,34 +770,34 @@ static GLuint compile_shader(const array<uniform>& _uniforms, const shader& _sha
   string contents{k_prelude};
 
   GLenum type{0};
-  switch (_shader.type) {
-  case shader::category::k_vertex:
+  switch (_shader.kind) {
+  case shader::type::k_vertex:
     type = GL_VERTEX_SHADER;
     // emit vertex attributes inputs
     _shader.inputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
-      contents.append(string::format("layout(location = %zu) in %s %s;\n", _inout.index, inout_to_string(_inout.category), _name));
+      contents.append(string::format("layout(location = %zu) in %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
     });
     // emit vertex outputs
     _shader.outputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
-      contents.append(string::format("out %s %s;\n", inout_to_string(_inout.category), _name));
+      contents.append(string::format("out %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     break;
-  case shader::category::k_fragment:
+  case shader::type::k_fragment:
     type = GL_FRAGMENT_SHADER;
     // emit fragment inputs
     _shader.inputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
-      contents.append(string::format("in %s %s;\n", inout_to_string(_inout.category), _name));
+      contents.append(string::format("in %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     // emit fragment outputs
     _shader.outputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
-      contents.append(string::format("layout(location = %d) out %s %s;\n", _inout.index, inout_to_string(_inout.category), _name));
+      contents.append(string::format("layout(location = %d) out %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
     });
     break;
   }
 
   // emit uniforms
   _uniforms.each_fwd([&](const uniform& _uniform) {
-    contents.append(string::format("uniform %s %s;\n", uniform_to_string(_uniform.type()), _uniform.name()));
+    contents.append(string::format("uniform %s %s;\n", uniform_to_string(_uniform.kind()), _uniform.name()));
   });
 
   // to get good diagnostics
@@ -963,11 +963,11 @@ void backend_gl4::process(rx_byte* _command) {
   case command_type::k_resource_allocate:
     {
       const auto resource{reinterpret_cast<const resource_command*>(header + 1)};
-      switch (resource->type) {
-      case resource_command::category::k_buffer:
+      switch (resource->kind) {
+      case resource_command::type::k_buffer:
         utility::construct<detail::buffer>(resource->as_buffer + 1);
         break;
-      case resource_command::category::k_target:
+      case resource_command::type::k_target:
         {
           const auto render_target{resource->as_target};
           if (!render_target->is_swapchain()) {
@@ -975,19 +975,19 @@ void backend_gl4::process(rx_byte* _command) {
           }
         }
         break;
-      case resource_command::category::k_program:
+      case resource_command::type::k_program:
         utility::construct<detail::program>(resource->as_program + 1);
         break;
-      case resource_command::category::k_texture1D:
+      case resource_command::type::k_texture1D:
         utility::construct<detail::texture1D>(resource->as_texture1D + 1);
         break;
-      case resource_command::category::k_texture2D:
+      case resource_command::type::k_texture2D:
         utility::construct<detail::texture2D>(resource->as_texture2D + 1);
         break;
-      case resource_command::category::k_texture3D:
+      case resource_command::type::k_texture3D:
         utility::construct<detail::texture3D>(resource->as_texture3D + 1);
         break;
-      case resource_command::category::k_textureCM:
+      case resource_command::type::k_textureCM:
         utility::construct<detail::textureCM>(resource->as_textureCM + 1);
         break;
       }
@@ -996,14 +996,14 @@ void backend_gl4::process(rx_byte* _command) {
   case command_type::k_resource_destroy:
     {
       const auto resource{reinterpret_cast<const resource_command*>(header + 1)};
-      switch (resource->type) {
-      case resource_command::category::k_buffer:
+      switch (resource->kind) {
+      case resource_command::type::k_buffer:
         if (state->m_bound_vao == reinterpret_cast<detail::buffer*>(resource->as_buffer + 1)->va) {
           state->m_bound_vao = 0;
         }
         utility::destruct<detail::buffer>(resource->as_buffer + 1);
         break;
-      case resource_command::category::k_target:
+      case resource_command::type::k_target:
         {
           const auto render_target{resource->as_target};
           if (!render_target->is_swapchain()) {
@@ -1011,19 +1011,19 @@ void backend_gl4::process(rx_byte* _command) {
           }
         } 
         break;
-      case resource_command::category::k_program:
+      case resource_command::type::k_program:
         utility::destruct<detail::program>(resource->as_program + 1);
         break;
-      case resource_command::category::k_texture1D:
+      case resource_command::type::k_texture1D:
         utility::destruct<detail::texture1D>(resource->as_texture1D + 1);
         break;
-      case resource_command::category::k_texture2D:
+      case resource_command::type::k_texture2D:
         utility::destruct<detail::texture2D>(resource->as_texture2D + 1);
         break;
-      case resource_command::category::k_texture3D:
+      case resource_command::type::k_texture3D:
         utility::destruct<detail::texture3D>(resource->as_texture3D + 1);
         break;
-      case resource_command::category::k_textureCM:
+      case resource_command::type::k_textureCM:
         utility::destruct<detail::textureCM>(resource->as_textureCM + 1);
         break;
       }
@@ -1032,14 +1032,14 @@ void backend_gl4::process(rx_byte* _command) {
   case command_type::k_resource_construct:
     {
       const auto resource{reinterpret_cast<const resource_command*>(header + 1)};
-      switch (resource->type) {
-      case resource_command::category::k_buffer:
+      switch (resource->kind) {
+      case resource_command::type::k_buffer:
         {
           const auto render_buffer{resource->as_buffer};
           auto buffer{reinterpret_cast<detail::buffer*>(render_buffer + 1)};
           const auto& vertices{render_buffer->vertices()};
           const auto& elements{render_buffer->elements()};
-          const auto type{render_buffer->type() == buffer::category::k_dynamic
+          const auto type{render_buffer->kind() == buffer::type::k_dynamic
             ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW};
 
           if (vertices.size()) {
@@ -1067,8 +1067,8 @@ void backend_gl4::process(rx_byte* _command) {
             const auto& attribute{attributes[i]};
             const auto index{static_cast<GLuint>(i)};
             pglEnableVertexArrayAttrib(buffer->va, index);
-            switch (attribute.type) {
-            case buffer::attribute::category::k_f32:
+            switch (attribute.kind) {
+            case buffer::attribute::type::k_f32:
               pglVertexArrayAttribFormat(
                 buffer->va,
                 index,
@@ -1077,7 +1077,7 @@ void backend_gl4::process(rx_byte* _command) {
                 GL_FALSE,
                 static_cast<GLsizei>(attribute.offset));
               break;
-            case buffer::attribute::category::k_u8:
+            case buffer::attribute::type::k_u8:
               pglVertexArrayAttribFormat(
                 buffer->va,
                 index,
@@ -1091,7 +1091,7 @@ void backend_gl4::process(rx_byte* _command) {
           }
         }
         break;
-      case resource_command::category::k_target:
+      case resource_command::type::k_target:
         {
           const auto render_target{resource->as_target};
           if (render_target->is_swapchain()) {
@@ -1131,7 +1131,7 @@ void backend_gl4::process(rx_byte* _command) {
           pglNamedFramebufferDrawBuffers(target->fbo, draw_buffers.size(), draw_buffers.data());
         }
         break;
-      case resource_command::category::k_program:
+      case resource_command::type::k_program:
         {
           const auto render_program{resource->as_program};
           const auto program{reinterpret_cast<detail::program*>(render_program + 1)};
@@ -1175,7 +1175,7 @@ void backend_gl4::process(rx_byte* _command) {
           });
         }
         break;
-      case resource_command::category::k_texture1D:
+      case resource_command::type::k_texture1D:
         {
           const auto render_texture{resource->as_texture1D};
           const auto texture{reinterpret_cast<const detail::texture1D*>(render_texture + 1)};
@@ -1218,7 +1218,7 @@ void backend_gl4::process(rx_byte* _command) {
           }
         }
         break;
-      case resource_command::category::k_texture2D:
+      case resource_command::type::k_texture2D:
         {
           const auto render_texture{resource->as_texture2D};
           const auto texture{reinterpret_cast<const detail::texture2D*>(render_texture + 1)};
@@ -1266,7 +1266,7 @@ void backend_gl4::process(rx_byte* _command) {
           }
         }
         break;
-      case resource_command::category::k_texture3D:
+      case resource_command::type::k_texture3D:
         {
           const auto render_texture{resource->as_texture3D};
           const auto texture{reinterpret_cast<const detail::texture3D*>(render_texture + 1)};
@@ -1319,7 +1319,7 @@ void backend_gl4::process(rx_byte* _command) {
           }
         }
         break;
-      case resource_command::category::k_textureCM:
+      case resource_command::type::k_textureCM:
         break;
       }
     }
@@ -1327,14 +1327,14 @@ void backend_gl4::process(rx_byte* _command) {
   case command_type::k_resource_update:
     {
       const auto resource{reinterpret_cast<const resource_command*>(header + 1)};
-      switch (resource->type) {
-      case resource_command::category::k_buffer:
+      switch (resource->kind) {
+      case resource_command::type::k_buffer:
         {
           const auto render_buffer{resource->as_buffer};
           auto buffer{reinterpret_cast<detail::buffer*>(render_buffer + 1)};
           const auto& vertices{render_buffer->vertices()};
           const auto& elements{render_buffer->elements()};
-          const auto type{render_buffer->type() == buffer::category::k_dynamic
+          const auto type{render_buffer->kind() == buffer::type::k_dynamic
             ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW};
 
           if (vertices.size() > buffer->vertices_size) {
@@ -1450,62 +1450,62 @@ void backend_gl4::process(rx_byte* _command) {
               continue;
             }
 
-            switch (uniform.type()) {
-            case uniform::category::k_sampler1D:
+            switch (uniform.kind()) {
+            case uniform::type::k_sampler1D:
               [[fallthrough]];
-            case uniform::category::k_sampler2D:
+            case uniform::type::k_sampler2D:
               [[fallthrough]];
-            case uniform::category::k_sampler3D:
+            case uniform::type::k_sampler3D:
               [[fallthrough]];
-            case uniform::category::k_samplerCM:
+            case uniform::type::k_samplerCM:
               pglProgramUniform1i(this_program->handle, location,
                 *reinterpret_cast<const rx_s32*>(draw_uniforms));
               break;
-            case uniform::category::k_bool:
+            case uniform::type::k_bool:
               pglProgramUniform1i(this_program->handle, location,
                 *reinterpret_cast<const bool*>(draw_uniforms) ? 1 : 0);
               break;
-            case uniform::category::k_int:
+            case uniform::type::k_int:
               pglProgramUniform1i(this_program->handle, location,
                 *reinterpret_cast<const rx_s32*>(draw_uniforms));
               break;
-            case uniform::category::k_float:
+            case uniform::type::k_float:
               pglProgramUniform1fv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
-            case uniform::category::k_vec2i:
+            case uniform::type::k_vec2i:
               pglProgramUniform2iv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_s32*>(draw_uniforms));
               break;
-            case uniform::category::k_vec3i:
+            case uniform::type::k_vec3i:
               pglProgramUniform3iv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_s32*>(draw_uniforms));
               break;
-            case uniform::category::k_vec4i:
+            case uniform::type::k_vec4i:
               pglProgramUniform4iv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_s32*>(draw_uniforms));
               break;
-            case uniform::category::k_vec2f:
+            case uniform::type::k_vec2f:
               pglProgramUniform2fv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
-            case uniform::category::k_vec3f:
+            case uniform::type::k_vec3f:
               pglProgramUniform3fv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
-            case uniform::category::k_vec4f:
+            case uniform::type::k_vec4f:
               pglProgramUniform4fv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
-            case uniform::category::k_mat3x3f:
+            case uniform::type::k_mat3x3f:
               pglProgramUniformMatrix3fv(this_program->handle, location, 1,
                 GL_FALSE, reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
-            case uniform::category::k_mat4x4f:
+            case uniform::type::k_mat4x4f:
               pglProgramUniformMatrix4fv(this_program->handle, location, 1,
                 GL_FALSE, reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
-            case uniform::category::k_bonesf:
+            case uniform::type::k_bonesf:
               pglProgramUniformMatrix3x4fv(this_program->handle, location,
                 static_cast<GLsizei>(uniform.size() / sizeof(math::mat3x4f)),
                 GL_FALSE, reinterpret_cast<const rx_f32*>(draw_uniforms));
@@ -1535,25 +1535,25 @@ void backend_gl4::process(rx_byte* _command) {
       }
 
       if (header->type == command_type::k_draw_elements) {
-        switch (render_buffer->element_type()) {
-        case render::buffer::element_category::k_none:
+        switch (render_buffer->element_kind()) {
+        case render::buffer::element_type::k_none:
           // [[unreachable]]
           break;
-        case render::buffer::element_category::k_u8:
+        case render::buffer::element_type::k_u8:
           pglDrawElements(
             convert_primitive_type(command->type),
             command->count,
             GL_UNSIGNED_BYTE,
             reinterpret_cast<void*>(sizeof(GLubyte) * command->offset));
           break;
-        case render::buffer::element_category::k_u16:
+        case render::buffer::element_type::k_u16:
           pglDrawElements(
             convert_primitive_type(command->type),
             command->count,
             GL_UNSIGNED_SHORT,
             reinterpret_cast<void*>(sizeof(GLushort) * command->offset));
           break;
-        case render::buffer::element_category::k_u32:
+        case render::buffer::element_type::k_u32:
           pglDrawElements(
             convert_primitive_type(command->type),
             command->count,

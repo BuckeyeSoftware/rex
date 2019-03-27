@@ -44,7 +44,7 @@ struct immediate {
     struct command {
       command() : as_nat{} {}
 
-      enum class category {
+      enum class type {
         k_rectangle,
         k_triangle,
         k_line,
@@ -53,7 +53,7 @@ struct immediate {
 
       bool operator!=(const command& _command) const;
 
-      category type;
+      type kind;
       rx_u32 flags;
       rx_size hash;
       math::vec4f color;
@@ -95,7 +95,7 @@ private:
 
   template<rx_size E>
   void generate_polygon(const math::vec2f (&coordinates)[E],
-    rx_f32 _thickness, const math::vec4f& _color, queue::command::category _from_type);
+    rx_f32 _thickness, const math::vec4f& _color, queue::command::type _from_type);
 
   void generate_rectangle(const math::vec2f& _position, const math::vec2f& _size,
     rx_f32 _roundness, const math::vec4f& _color);
@@ -104,7 +104,7 @@ private:
     const math::vec2f& _point_b, rx_f32 _thickness, rx_f32 _roundness,
     const math::vec4f& _color);
 
-  void add_batch(rx_size _offset, queue::command::category _category);
+  void add_batch(rx_size _offset, queue::command::type _type);
 
   struct vertex {
     math::vec2f position;
@@ -115,7 +115,7 @@ private:
   struct batch {
     rx_size offset;
     rx_size count;
-    queue::command::category category;
+    queue::command::type kind;
     state render_state;
   };
 

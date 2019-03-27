@@ -22,7 +22,7 @@ bool immediate::queue::command::operator!=(const command& _command) const {
     return true;
   }
 
-  if (_command.type != type) {
+  if (_command.kind != kind) {
     return true;
   }
 
@@ -34,14 +34,14 @@ bool immediate::queue::command::operator!=(const command& _command) const {
     return true;
   }
 
-  switch (type) {
-  case command::category::k_line:
+  switch (kind) {
+  case command::type::k_line:
     return _command.as_line != as_line;
-  case command::category::k_rectangle:
+  case command::type::k_rectangle:
     return _command.as_rectangle != as_rectangle;
-  case command::category::k_scissor:
+  case command::type::k_scissor:
     return _command.as_scissor != as_scissor;
-  case command::category::k_triangle:
+  case command::type::k_triangle:
     return _command.as_triangle != as_triangle;
   }
 
@@ -52,13 +52,13 @@ void immediate::queue::record_scissor(const math::vec2i& _position,
   const math::vec2i& _size)
 {
   command next_command;
-  next_command.type = command::category::k_scissor;
+  next_command.kind = command::type::k_scissor;
   next_command.flags = _position.x < 0 ? 0 : 1;
   next_command.color = {};
   next_command.as_scissor.position = _position;
   next_command.as_scissor.size = _size;
 
-  next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.type));
+  next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.kind));
   next_command.hash = hash_combine(next_command.hash, hash<rx_u32>{}(next_command.flags));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec2i>{}(next_command.as_scissor.position));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec2i>{}(next_command.as_scissor.size));
@@ -70,14 +70,14 @@ void immediate::queue::record_rectangle(const math::vec2i& _position,
   const math::vec2i& _size, rx_s32 _roundness, const math::vec4f& _color)
 {
   command next_command;
-  next_command.type = command::category::k_rectangle;
+  next_command.kind = command::type::k_rectangle;
   next_command.flags = 0;
   next_command.color = _color;
   next_command.as_rectangle.position = _position;
   next_command.as_rectangle.size = _size;
   next_command.as_rectangle.roundness = _roundness;
 
-  next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.type));
+  next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.kind));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec4f>{}(next_command.color));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec2i>{}(next_command.as_rectangle.position));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec2i>{}(next_command.as_rectangle.size));
@@ -91,7 +91,7 @@ void immediate::queue::record_line(const math::vec2i& _point_a,
   const math::vec4f& _color)
 {
   command next_command;
-  next_command.type = command::category::k_line;
+  next_command.kind = command::type::k_line;
   next_command.flags = 0;
   next_command.color = _color;
   next_command.as_line.points[0] = _point_a;
@@ -99,7 +99,7 @@ void immediate::queue::record_line(const math::vec2i& _point_a,
   next_command.as_line.roundness = _roundness;
   next_command.as_line.thickness = _thickness;
 
-  next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.type));
+  next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.kind));
 
   m_commands.push_back(utility::move(next_command));
 }
@@ -108,13 +108,13 @@ void immediate::queue::record_triangle(const math::vec2i& _position,
   const math::vec2i& _size, rx_u32 _flags, const math::vec4f& _color)
 {
   command next_command;
-  next_command.type = command::category::k_triangle;
+  next_command.kind = command::type::k_triangle;
   next_command.flags = _flags;
   next_command.color = _color;
   next_command.as_triangle.position = _position;
   next_command.as_triangle.size = _size;
 
-  next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.type));
+  next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.kind));
   next_command.hash = hash_combine(next_command.hash, hash<rx_u32>{}(next_command.flags));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec4f>{}(next_command.color));
   next_command.hash = hash<math::vec2i>{}(next_command.as_triangle.position);
@@ -165,10 +165,10 @@ immediate::immediate(frontend* _frontend)
   for (rx_size i{0}; i < k_buffers; i++) {
     m_buffers[i] = m_frontend->create_buffer(RX_RENDER_TAG("immediate"));
     m_buffers[i]->record_stride(sizeof(vertex));
-    m_buffers[i]->record_element_type(buffer::element_category::k_u32);
-    m_buffers[i]->record_attribute(buffer::attribute::category::k_f32, 2, offsetof(vertex, position));
-    m_buffers[i]->record_attribute(buffer::attribute::category::k_f32, 2, offsetof(vertex, coordinate));
-    m_buffers[i]->record_attribute(buffer::attribute::category::k_f32, 4, offsetof(vertex, color));
+    m_buffers[i]->record_element_type(buffer::element_type::k_u32);
+    m_buffers[i]->record_attribute(buffer::attribute::type::k_f32, 2, offsetof(vertex, position));
+    m_buffers[i]->record_attribute(buffer::attribute::type::k_f32, 2, offsetof(vertex, coordinate));
+    m_buffers[i]->record_attribute(buffer::attribute::type::k_f32, 4, offsetof(vertex, color));
     m_frontend->initialize_buffer(RX_RENDER_TAG("immediate"), m_buffers[i]);
   }
 }
@@ -192,15 +192,15 @@ void immediate::immediate::render(target* _target) {
   if (m_queue != m_render_queue[m_rd_index]) {
     // generate geometry for a future frame
     m_queue.m_commands.each_fwd([this](const queue::command& _command) {
-      switch (_command.type) {
-      case queue::command::category::k_rectangle:
+      switch (_command.kind) {
+      case queue::command::type::k_rectangle:
         generate_rectangle(
           _command.as_rectangle.position.cast<rx_f32>(),
           _command.as_rectangle.size.cast<rx_f32>(),
           static_cast<rx_f32>(_command.as_rectangle.roundness),
           _command.color);
         break;
-      case queue::command::category::k_line:
+      case queue::command::type::k_line:
         generate_line(
           _command.as_line.points[0].cast<rx_f32>(),
           _command.as_line.points[1].cast<rx_f32>(),
@@ -208,9 +208,9 @@ void immediate::immediate::render(target* _target) {
           static_cast<rx_f32>(_command.as_line.roundness),
           _command.color);
         break;
-      case queue::command::category::k_triangle:
+      case queue::command::type::k_triangle:
         break;
-      case queue::command::category::k_scissor:
+      case queue::command::type::k_scissor:
         m_scissor_position = _command.as_scissor.position;
         m_scissor_size = _command.as_scissor.size;
       default:
@@ -239,12 +239,12 @@ void immediate::immediate::render(target* _target) {
   // if the last queue has any draw commands, render them now
   if (!last_empty) {
     m_render_batches[m_rd_index].each_fwd([&](const batch& _batch) {
-      switch (_batch.category) {
-      case queue::command::category::k_rectangle:
+      switch (_batch.kind) {
+      case queue::command::type::k_rectangle:
         [[fallthrough]];
-      case queue::command::category::k_line:
+      case queue::command::type::k_line:
         [[fallthrough]];
-      case queue::command::category::k_triangle:
+      case queue::command::type::k_triangle:
         m_frontend->draw_elements(
           RX_RENDER_TAG("immediate"),
           _batch.render_state,
@@ -269,7 +269,7 @@ void immediate::immediate::render(target* _target) {
 
 template<rx_size E>
 void immediate::generate_polygon(const math::vec2f (&_coordinates)[E],
-  const rx_f32 _thickness, const math::vec4f& _color, queue::command::category _from_type)
+  const rx_f32 _thickness, const math::vec4f& _color, queue::command::type _from_type)
 {
   math::vec2f normals[E];
   math::vec2f coordinates[E];
@@ -343,7 +343,7 @@ void immediate::generate_line(const math::vec2f& _point_a,
     _point_b + delta - normal
   };
 
-  generate_polygon(vertices, _thickness, _color, queue::command::category::k_line);
+  generate_polygon(vertices, _thickness, _color, queue::command::type::k_line);
 }
 
 void immediate::generate_rectangle(const math::vec2f& _position, const math::vec2f& _size,
@@ -372,7 +372,7 @@ void immediate::generate_rectangle(const math::vec2f& _position, const math::vec
 
     vertices[j++] = _position + math::vec2f{_size.w - _roundness, _roundness} + m_circle_vertices[0] * _roundness;
 
-    generate_polygon(vertices, 1.0f, _color, queue::command::category::k_rectangle);
+    generate_polygon(vertices, 1.0f, _color, queue::command::type::k_rectangle);
   } else {
     const math::vec2f vertices[]{
       {_position.x,           _position.y},
@@ -381,11 +381,11 @@ void immediate::generate_rectangle(const math::vec2f& _position, const math::vec
       {_position.x,           _position.y + _size.h}
     };
     
-    generate_polygon(vertices, 1.0f, _color, queue::command::category::k_rectangle);
+    generate_polygon(vertices, 1.0f, _color, queue::command::type::k_rectangle);
   }
 }
 
-void immediate::add_batch(rx_size _offset, queue::command::category _category) {
+void immediate::add_batch(rx_size _offset, queue::command::type _type) {
   const rx_size count{m_elements.size() - _offset};
 
   state render_state;
@@ -404,13 +404,13 @@ void immediate::add_batch(rx_size _offset, queue::command::category _category) {
 
   if (!m_batches.is_empty()) {
     auto& batch{m_batches.last()};
-    if (batch.category == _category && batch.render_state == render_state) {
+    if (batch.kind == _type && batch.render_state == render_state) {
       batch.count += count;
       return;
     }
   }
 
-  m_batches.push_back({_offset, count, _category, render_state});
+  m_batches.push_back({_offset, count, _type, render_state});
 }
 
 } // namespace rx::render

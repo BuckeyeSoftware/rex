@@ -8,7 +8,7 @@ namespace rx::render {
 struct frontend;
 
 struct resource {
-  enum class category {
+  enum class type {
     k_buffer,
     k_target,
     k_program,
@@ -19,10 +19,10 @@ struct resource {
   };
 
   static constexpr rx_size count() {
-    return static_cast<rx_size>(category::k_textureCM);
+    return static_cast<rx_size>(type::k_textureCM);
   }
 
-  resource(frontend* _frontend, category _type);
+  resource(frontend* _frontend, type _type);
   ~resource();
 
   void update_resource_usage(rx_size _bytes);
@@ -31,7 +31,7 @@ protected:
   frontend* m_frontend;
 
 private:
-  category m_resource_type;
+  type m_resource_type;
 };
 
 } // namespace rx::render

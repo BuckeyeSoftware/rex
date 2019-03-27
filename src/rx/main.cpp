@@ -158,8 +158,8 @@ int entry(int argc, char **argv) {
     gbuffer.create({1600, 900});
 
     rx::render::buffer* model_buffer{frontend.create_buffer(RX_RENDER_TAG("model"))};
-    model_buffer->record_element_type(rx::render::buffer::element_category::k_u32);
-    model_buffer->record_type(rx::render::buffer::category::k_static);
+    model_buffer->record_element_type(rx::render::buffer::element_type::k_u32);
+    model_buffer->record_type(rx::render::buffer::type::k_static);
     rx::model::model model{&rx::memory::g_system_allocator};
 
     rx_u32 element_count{0};
@@ -168,21 +168,21 @@ int entry(int argc, char **argv) {
         using vertex = rx::model::model::animated_vertex;
         const auto& vertices{model.animated_vertices()};
         model_buffer->record_stride(sizeof(vertex));
-        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, position));
-        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, normal));
-        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 4, offsetof(vertex, tangent));
-        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 2, offsetof(vertex, coordinate));
-        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_u8, 4, offsetof(vertex, blend_weights));
-        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_u8, 4, offsetof(vertex, blend_indices));
+        model_buffer->record_attribute(rx::render::buffer::attribute::type::k_f32, 3, offsetof(vertex, position));
+        model_buffer->record_attribute(rx::render::buffer::attribute::type::k_f32, 3, offsetof(vertex, normal));
+        model_buffer->record_attribute(rx::render::buffer::attribute::type::k_f32, 4, offsetof(vertex, tangent));
+        model_buffer->record_attribute(rx::render::buffer::attribute::type::k_f32, 2, offsetof(vertex, coordinate));
+        model_buffer->record_attribute(rx::render::buffer::attribute::type::k_u8, 4, offsetof(vertex, blend_weights));
+        model_buffer->record_attribute(rx::render::buffer::attribute::type::k_u8, 4, offsetof(vertex, blend_indices));
         model_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
       } else {
         using vertex = rx::model::model::vertex;
         const auto& vertices{model.vertices()};
         model_buffer->record_stride(sizeof(vertex));
-        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, position));
-        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, normal));
-        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 4, offsetof(vertex, tangent));
-        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 2, offsetof(vertex, coordinate));
+        model_buffer->record_attribute(rx::render::buffer::attribute::type::k_f32, 3, offsetof(vertex, position));
+        model_buffer->record_attribute(rx::render::buffer::attribute::type::k_f32, 3, offsetof(vertex, normal));
+        model_buffer->record_attribute(rx::render::buffer::attribute::type::k_f32, 4, offsetof(vertex, tangent));
+        model_buffer->record_attribute(rx::render::buffer::attribute::type::k_f32, 2, offsetof(vertex, coordinate));
         model_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
       }
       const auto& elements{model.elements()};
@@ -193,10 +193,10 @@ int entry(int argc, char **argv) {
 
     rx::render::buffer* quad{frontend.create_buffer(RX_RENDER_TAG("quad"))};
     quad->record_stride(sizeof(quad_vertex));
-    quad->record_element_type(rx::render::buffer::element_category::k_u8);
-    quad->record_type(rx::render::buffer::category::k_static);
-    quad->record_attribute(rx::render::buffer::attribute::category::k_f32, 2, offsetof(quad_vertex, position));
-    quad->record_attribute(rx::render::buffer::attribute::category::k_f32, 2, offsetof(quad_vertex, coordinate));
+    quad->record_element_type(rx::render::buffer::element_type::k_u8);
+    quad->record_type(rx::render::buffer::type::k_static);
+    quad->record_attribute(rx::render::buffer::attribute::type::k_f32, 2, offsetof(quad_vertex, position));
+    quad->record_attribute(rx::render::buffer::attribute::type::k_f32, 2, offsetof(quad_vertex, coordinate));
     quad->write_vertices(k_quad_vertices, sizeof k_quad_vertices);
     quad->write_elements(k_quad_elements, sizeof k_quad_elements);
     frontend.initialize_buffer(RX_RENDER_TAG("quad"), quad);

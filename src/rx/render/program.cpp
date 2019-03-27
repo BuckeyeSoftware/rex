@@ -8,15 +8,15 @@
 
 namespace rx::render {
   // checks if |_type| is a sampler type
-  static bool is_sampler(uniform::category _type) {
+  static bool is_sampler(uniform::type _type) {
     switch (_type) {
-    case uniform::category::k_sampler1D:
+    case uniform::type::k_sampler1D:
       [[fallthrough]];
-    case uniform::category::k_sampler2D:
+    case uniform::type::k_sampler2D:
       [[fallthrough]];
-    case uniform::category::k_sampler3D:
+    case uniform::type::k_sampler3D:
       [[fallthrough]];
-    case uniform::category::k_samplerCM:
+    case uniform::type::k_samplerCM:
       return true;
     default:
       return false;
@@ -28,7 +28,7 @@ namespace rx::render {
   {
   }
 
-  uniform::uniform(program* _program, rx_size _index, const string& _name, category _type)
+  uniform::uniform(program* _program, rx_size _index, const string& _name, type _type)
     : m_program{_program}
     , m_mask{1_u64 << _index}
     , m_type{_type}
@@ -57,39 +57,39 @@ namespace rx::render {
     m_program->m_dirty_uniforms &= ~m_mask;
   }
 
-  rx_size uniform::size_for_type(category _type) {
+  rx_size uniform::size_for_type(type _type) {
     switch (_type) {
-    case uniform::category::k_sampler1D:
+    case uniform::type::k_sampler1D:
       [[fallthrough]];
-    case uniform::category::k_sampler2D:
+    case uniform::type::k_sampler2D:
       [[fallthrough]];
-    case uniform::category::k_sampler3D:
+    case uniform::type::k_sampler3D:
       [[fallthrough]];
-    case uniform::category::k_samplerCM:
+    case uniform::type::k_samplerCM:
       return sizeof(int);
-    case uniform::category::k_bool:
+    case uniform::type::k_bool:
       return sizeof(bool);
-    case uniform::category::k_int:
+    case uniform::type::k_int:
       return sizeof(rx_s32);
-    case uniform::category::k_float:
+    case uniform::type::k_float:
       return sizeof(rx_f32);
-    case uniform::category::k_vec2i:
+    case uniform::type::k_vec2i:
       return sizeof(math::vec2i);
-    case uniform::category::k_vec3i:
+    case uniform::type::k_vec3i:
       return sizeof(math::vec3i);
-    case uniform::category::k_vec4i:
+    case uniform::type::k_vec4i:
       return sizeof(math::vec4i);
-    case uniform::category::k_vec2f:
+    case uniform::type::k_vec2f:
       return sizeof(math::vec2f);
-    case uniform::category::k_vec3f:
+    case uniform::type::k_vec3f:
       return sizeof(math::vec3f);
-    case uniform::category::k_vec4f:
+    case uniform::type::k_vec4f:
       return sizeof(math::vec4f);
-    case uniform::category::k_mat3x3f:
+    case uniform::type::k_mat3x3f:
       return sizeof(math::mat3x3f);
-    case uniform::category::k_mat4x4f:
+    case uniform::type::k_mat4x4f:
       return sizeof(math::mat4x4f);
-    case uniform::category::k_bonesf:
+    case uniform::type::k_bonesf:
       return sizeof(math::mat3x4f) * 80;
     }
     RX_ASSERT(false, "unreachable");
@@ -104,7 +104,7 @@ namespace rx::render {
   }
 
   void uniform::record_int(int _value) {
-    RX_ASSERT(m_type == category::k_int, "not an int");
+    RX_ASSERT(m_type == type::k_int, "not an int");
     if (*as_int != _value) {
       *as_int = _value;
       m_program->m_dirty_uniforms |= m_mask;
@@ -112,7 +112,7 @@ namespace rx::render {
   }
 
   void uniform::record_vec2i(const math::vec2i& _value) {
-    RX_ASSERT(m_type == category::k_vec2i, "not a vec2i");
+    RX_ASSERT(m_type == type::k_vec2i, "not a vec2i");
     if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
       memcpy(as_int, _value.data(), sizeof _value);
       m_program->m_dirty_uniforms |= m_mask;
@@ -120,7 +120,7 @@ namespace rx::render {
   }
 
   void uniform::record_vec3i(const math::vec3i& _value) {
-    RX_ASSERT(m_type == category::k_vec3i, "not a vec3i");
+    RX_ASSERT(m_type == type::k_vec3i, "not a vec3i");
     if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
       memcpy(as_int, _value.data(), sizeof _value);
       m_program->m_dirty_uniforms |= m_mask;
@@ -128,7 +128,7 @@ namespace rx::render {
   }
 
   void uniform::record_vec4i(const math::vec4i& _value) {
-    RX_ASSERT(m_type == category::k_vec4i, "not a vec4i");
+    RX_ASSERT(m_type == type::k_vec4i, "not a vec4i");
     if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
       memcpy(as_int, _value.data(), sizeof _value);
       m_program->m_dirty_uniforms |= m_mask;
@@ -136,7 +136,7 @@ namespace rx::render {
   }
 
   void uniform::record_bool(bool _value) {
-    RX_ASSERT(m_type == category::k_bool, "not a bool");
+    RX_ASSERT(m_type == type::k_bool, "not a bool");
     if (*as_boolean != _value) {
       *as_boolean = _value;
       m_program->m_dirty_uniforms |= m_mask;
@@ -144,7 +144,7 @@ namespace rx::render {
   }
 
   void uniform::record_float(rx_f32 _value) {
-    RX_ASSERT(m_type == category::k_float, "not a float");
+    RX_ASSERT(m_type == type::k_float, "not a float");
     if (*as_float != _value) {
       *as_float = _value;
       m_program->m_dirty_uniforms |= m_mask;
@@ -152,7 +152,7 @@ namespace rx::render {
   }
 
   void uniform::record_vec2f(const math::vec2f& _value) {
-    RX_ASSERT(m_type == category::k_vec2f, "not a vec2f");
+    RX_ASSERT(m_type == type::k_vec2f, "not a vec2f");
     if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
       memcpy(as_float, _value.data(), sizeof _value);
       m_program->m_dirty_uniforms |= m_mask;
@@ -160,7 +160,7 @@ namespace rx::render {
   }
 
   void uniform::record_vec3f(const math::vec3f& _value) {
-    RX_ASSERT(m_type == category::k_vec3f, "not a vec3f");
+    RX_ASSERT(m_type == type::k_vec3f, "not a vec3f");
     if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
       memcpy(as_float, _value.data(), sizeof _value);
       m_program->m_dirty_uniforms |= m_mask;
@@ -168,7 +168,7 @@ namespace rx::render {
   }
 
   void uniform::record_vec4f(const math::vec4f& _value) {
-    RX_ASSERT(m_type == category::k_vec4f, "not a vec4f");
+    RX_ASSERT(m_type == type::k_vec4f, "not a vec4f");
     if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
       memcpy(as_float, _value.data(), sizeof _value);
       m_program->m_dirty_uniforms |= m_mask;
@@ -176,7 +176,7 @@ namespace rx::render {
   }
 
   void uniform::record_mat3x3f(const math::mat3x3f& _value) {
-    RX_ASSERT(m_type == category::k_mat3x3f, "not a mat3x3f");
+    RX_ASSERT(m_type == type::k_mat3x3f, "not a mat3x3f");
     if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
       memcpy(as_float, _value.data(), sizeof _value);
       m_program->m_dirty_uniforms |= m_mask;
@@ -184,7 +184,7 @@ namespace rx::render {
   }
 
   void uniform::record_mat4x4f(const math::mat4x4f& _value) {
-    RX_ASSERT(m_type == category::k_mat4x4f, "not a mat4x4f");
+    RX_ASSERT(m_type == type::k_mat4x4f, "not a mat4x4f");
     if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
       memcpy(as_float, _value.data(), sizeof _value);
       m_program->m_dirty_uniforms |= m_mask;
@@ -192,7 +192,7 @@ namespace rx::render {
   }
 
   void uniform::record_bones(const array<math::mat3x4f>& _frames, rx_size _joints) {
-    RX_ASSERT(m_type == category::k_bonesf, "not bones");
+    RX_ASSERT(m_type == type::k_bonesf, "not bones");
     const rx_size size{sizeof(math::mat3x4f) * algorithm::min(_joints, 80_z)};
     if (memcmp(as_float, _frames.data(), size) != 0) {
       memcpy(as_float, _frames.data(), size);
@@ -207,7 +207,7 @@ namespace rx::render {
   }
 
   program::program(frontend* _frontend)
-    : resource{_frontend, resource::category::k_program}
+    : resource{_frontend, resource::type::k_program}
     , m_allocator{_frontend->allocator()}
     , m_uniforms{m_allocator}
     , m_dirty_uniforms{0}
@@ -222,7 +222,7 @@ namespace rx::render {
     RX_ASSERT(!m_shaders.is_empty(), "no shaders specified");
   }
 
-  uniform& program::add_uniform(const string& _name, uniform::category _type) {
+  uniform& program::add_uniform(const string& _name, uniform::type _type) {
     m_uniforms.emplace_back(this, m_uniforms.size(), _name, _type);
     return m_uniforms.last();
   }

@@ -133,54 +133,54 @@ static int binexp_evaluate(const char* _expression, const map<string, bool>& _va
   return result;
 }
 
-optional<uniform::category> uniform_category_from_string(const string& _category) {
+static optional<uniform::type> uniform_type_from_string(const string& _type) {
   static constexpr const struct {
     const char* match;
-    uniform::category category;
+    uniform::type kind;
   } k_table[]{
-    {"sampler1D",  uniform::category::k_sampler1D},
-    {"sampler2D",  uniform::category::k_sampler2D},
-    {"sampler3D",  uniform::category::k_sampler3D},
-    {"samplerCM",  uniform::category::k_samplerCM},
-    {"bool",       uniform::category::k_bool},
-    {"float",      uniform::category::k_float},
-    {"vec2i",      uniform::category::k_vec2i},
-    {"vec3i",      uniform::category::k_vec3i},
-    {"vec4i",      uniform::category::k_vec4i},
-    {"vec2f",      uniform::category::k_vec2f},
-    {"vec3f",      uniform::category::k_vec3f},
-    {"vec4f",      uniform::category::k_vec4f},
-    {"mat4x4f",    uniform::category::k_mat4x4f},
-    {"mat3x3f",    uniform::category::k_mat3x3f},
-    {"bonesf",     uniform::category::k_bonesf}
+    {"sampler1D",  uniform::type::k_sampler1D},
+    {"sampler2D",  uniform::type::k_sampler2D},
+    {"sampler3D",  uniform::type::k_sampler3D},
+    {"samplerCM",  uniform::type::k_samplerCM},
+    {"bool",       uniform::type::k_bool},
+    {"float",      uniform::type::k_float},
+    {"vec2i",      uniform::type::k_vec2i},
+    {"vec3i",      uniform::type::k_vec3i},
+    {"vec4i",      uniform::type::k_vec4i},
+    {"vec2f",      uniform::type::k_vec2f},
+    {"vec3f",      uniform::type::k_vec3f},
+    {"vec4f",      uniform::type::k_vec4f},
+    {"mat4x4f",    uniform::type::k_mat4x4f},
+    {"mat3x3f",    uniform::type::k_mat3x3f},
+    {"bonesf",     uniform::type::k_bonesf}
   };
 
   for (const auto& element : k_table) {
-    if (_category == element.match) {
-      return element.category;
+    if (_type == element.match) {
+      return element.kind;
     }
   }
 
   return nullopt;
 }
 
-optional<shader::inout_category> inout_category_from_string(const string& _category) {
+static optional<shader::inout_type> inout_type_from_string(const string& _type) {
   static constexpr const struct {
     const char* match;
-    shader::inout_category category;
+    shader::inout_type kind;
   } k_table[]{
-    {"vec2i", shader::inout_category::k_vec2i},
-    {"vec3i", shader::inout_category::k_vec3i},
-    {"vec4i", shader::inout_category::k_vec4i},
-    {"vec2f", shader::inout_category::k_vec2f},
-    {"vec3f", shader::inout_category::k_vec3f},
-    {"vec4f", shader::inout_category::k_vec4f},
-    {"vec4b", shader::inout_category::k_vec4b}
+    {"vec2i", shader::inout_type::k_vec2i},
+    {"vec3i", shader::inout_type::k_vec3i},
+    {"vec4i", shader::inout_type::k_vec4i},
+    {"vec2f", shader::inout_type::k_vec2f},
+    {"vec3f", shader::inout_type::k_vec3f},
+    {"vec4f", shader::inout_type::k_vec4f},
+    {"vec4b", shader::inout_type::k_vec4b}
   };
 
   for (const auto& element : k_table) {
-    if (element.match == _category) {
-      return element.category;
+    if (element.match == _type) {
+      return element.kind;
     }
   }
 
@@ -263,9 +263,9 @@ bool technique::compile() {
   shader_definition* vertex{nullptr};
   shader_definition* fragment{nullptr};
   m_shader_definitions.each_fwd([&](shader_definition& _shader) {
-    if (_shader.type == shader::category::k_fragment) {
+    if (_shader.kind == shader::type::k_fragment) {
       fragment = &_shader;
-    } else if (_shader.type == shader::category::k_vertex) {
+    } else if (_shader.kind == shader::type::k_vertex) {
       vertex = &_shader;
     }
     return true;
@@ -285,7 +285,7 @@ bool technique::compile() {
         if (!check) {
           return error("could not find fragment input for vertex output '%s'", _name);
         }
-        if (check->type != _inout_definition.type) {
+        if (check->kind != _inout_definition.kind) {
           return error("type mismatch for fragment input '%s'", _name);
         }
         if (check->when != _inout_definition.when) {
@@ -300,7 +300,7 @@ bool technique::compile() {
         if (!check) {
           return error("could not find vertex output for fragment input '%s'", _name);
         }
-        if (check->type != _inout_definition.type) {
+        if (check->kind != _inout_definition.kind) {
           return error("type mismatch for vertex output '%s'", _name);
         }
         if (check->when != _inout_definition.when) {
@@ -320,27 +320,27 @@ bool technique::compile() {
     }
   }
 
-  if (m_type == category::k_basic) {
+  if (m_type == type::k_basic) {
     // create and add just a single program to m_programs
     auto program{m_frontend->create_program(RX_RENDER_TAG("technique"))};
 
     m_shader_definitions.each_fwd([&](const shader_definition& _shader_definition) {
       if (evaluate_when_for_basic(_shader_definition.when)) {
         shader specialized_shader;
-        specialized_shader.type = _shader_definition.type;
+        specialized_shader.kind = _shader_definition.kind;
         specialized_shader.source = _shader_definition.source;
 
         // emit inputs
         _shader_definition.inputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout) {
           if (evaluate_when_for_basic(_inout.when)) {
-            specialized_shader.inputs.insert(_name, {_inout.index, _inout.type});
+            specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
           }
         });
 
         // emit outputs
         _shader_definition.outputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout){
           if (evaluate_when_for_basic(_inout.when)) {
-            specialized_shader.outputs.insert(_name, {_inout.index, _inout.type});
+            specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
           }
         });
 
@@ -350,14 +350,14 @@ bool technique::compile() {
 
     m_uniform_definitions.each_fwd([&](const uniform_definition& _uniform_definition) {
       if (evaluate_when_for_basic(_uniform_definition.when)) {
-        program->add_uniform(_uniform_definition.name, _uniform_definition.type);
+        program->add_uniform(_uniform_definition.name, _uniform_definition.kind);
       }
     });
 
     m_frontend->initialize_program(RX_RENDER_TAG("technique"), program);
 
     m_programs.push_back(program);
-  } else if (m_type == category::k_permute) {
+  } else if (m_type == type::k_permute) {
     const rx_u64 mask{(1_u64 << m_specializations.size()) - 1};
     auto generate{[&](rx_u64 _flags) {
       m_permute_flags.push_back(_flags);
@@ -366,7 +366,7 @@ bool technique::compile() {
       m_shader_definitions.each_fwd([&](const shader_definition& _shader_definition) {
         if (evaluate_when_for_permute(_shader_definition.when, _flags)) {
           shader specialized_shader;
-          specialized_shader.type = _shader_definition.type;
+          specialized_shader.kind = _shader_definition.kind;
 
           // emit #defines
           const rx_size specializations{m_specializations.size()};
@@ -383,14 +383,14 @@ bool technique::compile() {
           // emit inputs
           _shader_definition.inputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout) {
             if (evaluate_when_for_permute(_inout.when, _flags)) {
-              specialized_shader.inputs.insert(_name, {_inout.index, _inout.type});
+              specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
             }
           });
 
           // emit outputs
           _shader_definition.outputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout){
             if (evaluate_when_for_permute(_inout.when, _flags)) {
-              specialized_shader.outputs.insert(_name, {_inout.index, _inout.type});
+              specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
             }
           });
 
@@ -401,7 +401,7 @@ bool technique::compile() {
       // emit uniforms
       m_uniform_definitions.each_fwd([&](const uniform_definition& _uniform_definition) {
         if (evaluate_when_for_permute(_uniform_definition.when, _flags)) {
-          program->add_uniform(_uniform_definition.name, _uniform_definition.type);
+          program->add_uniform(_uniform_definition.name, _uniform_definition.kind);
         }
       });
 
@@ -415,7 +415,7 @@ bool technique::compile() {
     }
 
     generate(mask);
-  } else if (m_type == category::k_variant) {
+  } else if (m_type == type::k_variant) {
     const rx_size specializations{m_specializations.size()};
     for (rx_size i{0}; i < specializations; i++) {
       const auto& specialization{m_specializations[i]};
@@ -423,7 +423,7 @@ bool technique::compile() {
       m_shader_definitions.each_fwd([&](const shader_definition& _shader_definition) {
         if (evaluate_when_for_variant(_shader_definition.when, i)) {
           shader specialized_shader;
-          specialized_shader.type = _shader_definition.type;
+          specialized_shader.kind = _shader_definition.kind;
 
           // emit #defines
           specialized_shader.source.append(string::format("#define %s\n", specialization));
@@ -434,14 +434,14 @@ bool technique::compile() {
           // emit inputs
           _shader_definition.inputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout) {
             if (evaluate_when_for_variant(_inout.when, i)) {
-              specialized_shader.inputs.insert(_name, {_inout.index, _inout.type});
+              specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
             }
           });
 
           // emit outputs
           _shader_definition.outputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout){
             if (evaluate_when_for_variant(_inout.when, i)) {
-              specialized_shader.outputs.insert(_name, {_inout.index, _inout.type});
+              specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
             }
           });
 
@@ -452,7 +452,7 @@ bool technique::compile() {
       // emit uniforms
       m_uniform_definitions.each_fwd([&](const uniform_definition& _uniform_definition) {
         if (evaluate_when_for_variant(_uniform_definition.when, i)) {
-          program->add_uniform(_uniform_definition.name, _uniform_definition.type);
+          program->add_uniform(_uniform_definition.name, _uniform_definition.kind);
         }
       });
     
@@ -466,12 +466,12 @@ bool technique::compile() {
 }
 
 technique::operator program*() const {
-  RX_ASSERT(m_type == category::k_basic, "not a basic technique");
+  RX_ASSERT(m_type == type::k_basic, "not a basic technique");
   return m_programs[0];
 }
 
 program* technique::permute(rx_u64 _flags) const {
-  RX_ASSERT(m_type == category::k_permute, "not a permute technique");
+  RX_ASSERT(m_type == type::k_permute, "not a permute technique");
 
   const rx_size permutations{m_permute_flags.size()};
   for (rx_size i{0}; i < permutations; i++) {
@@ -485,7 +485,7 @@ program* technique::permute(rx_u64 _flags) const {
 }
 
 program* technique::variant(rx_size _index) const {
-  RX_ASSERT(m_type == category::k_variant, "not a variant technique");
+  RX_ASSERT(m_type == type::k_variant, "not a variant technique");
   return m_programs[_index];
 }
 
@@ -552,14 +552,14 @@ bool technique::parse(const json& _description) {
     if (!parse_specializations(permutes, "permutes")) {
       return false;
     }
-    m_type = category::k_permute;
+    m_type = type::k_permute;
   } else if (variants) {
     if (!parse_specializations(variants, "variants")) {
       return false;
     }
-    m_type = category::k_variant;
+    m_type = type::k_variant;
   } else {
-    m_type = category::k_basic;
+    m_type = type::k_basic;
   }
 
   return true;
@@ -632,12 +632,12 @@ bool technique::parse_uniform(const json& _uniform) {
     return error("duplicate uniform '%s'", name_string);
   }
 
-  const auto type_category{uniform_category_from_string(type_string)};
-  if (!type_category) {
+  const auto kind{uniform_type_from_string(type_string)};
+  if (!kind) {
     return error("unknown type '%s' for '%s'", type_string, name_string);
   }
 
-  m_uniform_definitions.push_back({*type_category, name_string, when ? when.as_string() : ""});
+  m_uniform_definitions.push_back({*kind, name_string, when ? when.as_string() : ""});
   return true;
 }
 
@@ -671,24 +671,24 @@ bool technique::parse_shader(const json& _shader) {
   }
 
   const auto type_string{type.as_string()};
-  shader::category shader_type;
+  shader::type shader_type;
   if (type_string == "vertex") {
-    shader_type = shader::category::k_vertex;
+    shader_type = shader::type::k_vertex;
   } else if (type_string == "fragment") {
-    shader_type = shader::category::k_fragment;
+    shader_type = shader::type::k_fragment;
   } else {
     return error("unknown type '%s' for shader", type_string);
   }
 
   // ensure we don't have multiple definitions of the same shader
   if (!m_shader_definitions.each_fwd([shader_type](const shader_definition& _shader_definition)
-    { return _shader_definition.type != shader_type; }))
+    { return _shader_definition.kind != shader_type; }))
   {
     return error("multiple %s shaders present", type_string);
   }
 
   shader_definition definition;
-  definition.type = shader_type;
+  definition.kind = shader_type;
   definition.source = _shader["source"].as_string();
   definition.when = when ? when.as_string() : "";
 
@@ -751,14 +751,14 @@ bool technique::parse_inout(const json& _inout, const char* _type, map<string, s
   }
 
   const auto type_string{type.as_string()};
-  const auto type_category{inout_category_from_string(type_string)};
-  if (!type_category) {
+  const auto kind{inout_type_from_string(type_string)};
+  if (!kind) {
     return error("unknown type '%s' for '%s'", type_string, name_string);
   }
 
   shader_definition::inout inout;
   inout.index = inouts_.size();
-  inout.type = *type_category;
+  inout.kind = *kind;
   inout.when = when ? when.as_string() : "";
 
   inouts_.insert(name_string, inout);

@@ -8,27 +8,27 @@ RX_LOG("render/resource", log_resource);
 
 namespace rx::render {
 
-static constexpr const char* resource_type_to_string(resource::category _type) {
+static constexpr const char* resource_type_to_string(resource::type _type) {
   switch (_type) {
-  case resource::category::k_buffer:
+  case resource::type::k_buffer:
     return "buffer";
-  case resource::category::k_program:
+  case resource::type::k_program:
     return "program";
-  case resource::category::k_target:
+  case resource::type::k_target:
     return "target";
-  case resource::category::k_texture1D:
+  case resource::type::k_texture1D:
     return "texture1D";
-  case resource::category::k_texture2D:
+  case resource::type::k_texture2D:
     return "texture2D";
-  case resource::category::k_texture3D:
+  case resource::type::k_texture3D:
     return "texture3D";
-  case resource::category::k_textureCM:
+  case resource::type::k_textureCM:
     return "textureCM";
   }
   return "";
 }
 
-resource::resource(frontend* _frontend, category _type)
+resource::resource(frontend* _frontend, type _type)
   : m_frontend{_frontend}
   , m_resource_type{_type}
 {

@@ -21,7 +21,7 @@ struct frontend;
 struct program;
 
 struct uniform : concepts::no_copy {
-  enum class category {
+  enum class type {
     k_sampler1D,
     k_sampler2D,
     k_sampler3D,
@@ -41,7 +41,7 @@ struct uniform : concepts::no_copy {
   };
 
   uniform();
-  uniform(program* _program, rx_size _index, const string& _name, category _type);
+  uniform(program* _program, rx_size _index, const string& _name, type _type);
   uniform(uniform&& _uniform);
   ~uniform();
 
@@ -60,7 +60,7 @@ struct uniform : concepts::no_copy {
   void record_bones(const array<math::mat3x4f>& _frames, rx_size _joints);
   void record_raw(const rx_byte* _data, rx_size _size);
 
-  category type() const;
+  type kind() const;
   const rx_byte* data() const;
   const string& name() const;
   rx_size size() const;
@@ -68,11 +68,11 @@ struct uniform : concepts::no_copy {
   void flush(rx_byte* _data);
 
 private:
-  static rx_size size_for_type(category _type);
+  static rx_size size_for_type(type _type);
 
   program* m_program;
   rx_u64 m_mask;
-  category m_type;
+  type m_type;
   union {
     rx_byte* as_opaque;
     rx_s32* as_int;
@@ -82,7 +82,7 @@ private:
   string m_name;
 };
 
-inline uniform::category uniform::type() const {
+inline uniform::type uniform::kind() const {
   return m_type;
 }
 
@@ -99,12 +99,12 @@ inline rx_size uniform::size() const {
 }
 
 struct shader {
-  enum class category {
+  enum class type {
     k_vertex,
     k_fragment
   };
 
-  enum class inout_category {
+  enum class inout_type {
     k_vec2i,
     k_vec3i,
     k_vec4i,
@@ -114,12 +114,12 @@ struct shader {
     k_vec4b
   };
 
-  category type;
+  type kind;
   string source;
 
   struct inout {
     rx_size index;
-    inout_category category;
+    inout_type kind;
   };
 
   map<string, inout> inputs;
@@ -132,7 +132,7 @@ struct program : resource {
   void validate() const;
 
   void add_shader(shader&& _shader);
-  uniform& add_uniform(const string& _name, uniform::category _type);
+  uniform& add_uniform(const string& _name, uniform::type _type);
   rx_u64 dirty_uniforms_bitset() const;
   rx_size dirty_uniforms_size() const;
 

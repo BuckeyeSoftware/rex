@@ -14,7 +14,7 @@ namespace rx::render {
 struct frontend;
 
 struct texture : resource {
-  texture(frontend* _frontend, resource::category _type);
+  texture(frontend* _frontend, resource::type _type);
 
   struct filter_options {
     bool bilinear;
@@ -23,16 +23,16 @@ struct texture : resource {
   };
 
   struct wrap_options {
-    enum class category {
+    enum class type {
       k_clamp_to_edge,
       k_clamp_to_border,
       k_mirrored_repeat,
       k_repeat
     };
 
-    category s;
-    category t;
-    category r;
+    type s;
+    type t;
+    type r;
   };
 
   enum class data_format {

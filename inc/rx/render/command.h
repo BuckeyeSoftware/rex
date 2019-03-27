@@ -76,7 +76,7 @@ struct clear_command {
 };
 
 struct resource_command {
-  enum class category : rx_u8 {
+  enum class type : rx_u8 {
     k_buffer,
     k_target,
     k_program,
@@ -86,7 +86,7 @@ struct resource_command {
     k_textureCM
   };
 
-  category type;
+  type kind;
 
   union {
     target* as_target;
