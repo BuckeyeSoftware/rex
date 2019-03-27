@@ -1,0 +1,54 @@
+{
+  name: "geometry",
+  uniforms: [
+    { name: "u_transform", type: "mat4x4f" }
+  ],
+  permutes: [
+    "HAS_SKELETON"
+  ],
+  shaders: [
+    {
+      type: "vertex",
+      inputs: [
+        { name: "a_position",      type: "vec3f" },
+        { name: "a_normal",        type: "vec3f" },
+        { name: "a_tangent",       type: "vec4f" },
+        { name: "a_coordinate",    type: "vec2f" },
+        { name: "vs_blend_weight", type: "vec4b", when: "HAS_SKELETON" },
+        { name: "vs_blend_index",  type: "vec4b", when: "HAS_SKELETON" }
+      ],
+      outputs: [
+        { name: "vs_normal",       type: "vec3f" },
+        { name: "vs_tangent",      type: "vec4f" },
+        { name: "vs_coordinate",   type: "vec2f" }
+      ],
+      source: "
+        void main() {
+          vs_normal     = a_normal;
+          vs_tangent    = a_tangent;
+          vs_coordinate = a_coordinate;
+          rx_position   = u_transform * vec4f(a_position, 1.0);
+        }
+      "
+    },{
+      type: "fragment",
+      inputs: [
+        { name: "vs_normal",       type: "vec3f" },
+        { name: "vs_tangent",      type: "vec4f" },
+        { name: "vs_coordinate",   type: "vec2f" }
+      ],
+      outputs: [
+        { name: "fs_albedo",     type: "vec4f" },
+        { name: "fs_normal",     type: "vec4f" },
+        { name: "fs_emissive",   type: "vec4f" }
+      ],
+      source: "
+        void main() {
+          fs_albedo = vec4f(0.0, 0.0, 1.0, 1.0);
+          fs_normal = vec4f(normalize(vs_normal), 1.0);
+          fs_emissive = vec4f(1.0, 0.0, 0.0, 1.0);
+        }
+      "
+    }
+  ]
+}

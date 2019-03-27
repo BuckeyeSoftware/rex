@@ -699,6 +699,8 @@ static constexpr const char* inout_to_string(shader::inout_category _type) {
     return "vec3i";
   case shader::inout_category::k_vec4i:
     return "vec4i";
+  case shader::inout_category::k_vec4b:
+    return "vec4b";
   }
   return nullptr;
 }
@@ -749,6 +751,7 @@ static GLuint compile_shader(const array<uniform>& _uniforms, const shader& _sha
     "#define vec2i ivec2\n"
     "#define vec3i ivec3\n"
     "#define vec4i ivec4\n"
+    "#define vec4b uvec4\n"
     "#define mat3x3f mat3\n"
     "#define mat4x4f mat4\n"
     "#define rx_sampler1D sampler1D\n"
@@ -1431,7 +1434,7 @@ void backend_gl4::process(rx_byte* _command) {
         const rx_byte* draw_uniforms{command->uniforms()};
 
         for (rx_size i{0}; i < 64; i++) {
-          if (command->dirty_uniforms_bitset & (rx_u64{1} << i)) {
+          if (command->dirty_uniforms_bitset & (1_u64 << i)) {
             const auto& uniform{program_uniforms[i]};
             const auto location{this_program->uniforms[i]};
 

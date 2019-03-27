@@ -266,13 +266,13 @@ int entry(int argc, char **argv) {
       rx::math::mat4x4f view{rx::math::mat4x4f::invert(camera.to_mat4())};
       rx::math::mat4x4f projection{rx::math::mat4x4f::perspective(90.0f, {0.01, 1024.0f}, 1600.0f/900.0f)};
 
-      rx::render::technique* gbuffer_test_technique{frontend.find_technique_by_name("gbuffer-test")};
+      rx::render::technique* gbuffer_test_technique{frontend.find_technique_by_name("geometry")};
       rx::render::technique* fs_quad_technique{frontend.find_technique_by_name("fs-quad")};
 
       RX_ASSERT(gbuffer_test_technique, "");
       RX_ASSERT(fs_quad_technique, "");
 
-      rx::render::program* gbuffer_test_program{*gbuffer_test_technique};
+      rx::render::program* gbuffer_test_program{gbuffer_test_technique->permute(0)};
       rx::render::program* fs_quad_program{*fs_quad_technique};
 
       gbuffer_test_program->uniforms()[0].record_mat4x4f(model * view * projection);

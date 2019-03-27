@@ -104,12 +104,13 @@ struct shader {
   };
 
   enum class inout_category {
-    k_vec2i, // ivec2
-    k_vec3i, // ivec3
-    k_vec4i, // ivec4
-    k_vec2f, // vec2
-    k_vec3f, // vec3
-    k_vec4f  // vec4
+    k_vec2i,
+    k_vec3i,
+    k_vec4i,
+    k_vec2f,
+    k_vec3f,
+    k_vec4f,
+    k_vec4b
   };
 
   category type;

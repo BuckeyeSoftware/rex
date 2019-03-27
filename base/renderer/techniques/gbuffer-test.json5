@@ -1,7 +1,10 @@
 {
   name: "gbuffer-test",
   uniforms: [
-    { name: "u_transform", type: "mat4x4f" }
+    { name: "u_transform", type: "mat4x4f", when: "USE_A" }
+  ],
+  variants: [
+    "USE_A"
   ],
   shaders: [
     {

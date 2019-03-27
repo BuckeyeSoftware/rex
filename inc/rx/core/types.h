@@ -22,4 +22,12 @@ constexpr rx_size operator"" _z(unsigned long long value) {
   return static_cast<rx_size>(value);
 }
 
+constexpr rx_u32 operator"" _u32(unsigned long long value) {
+  return static_cast<rx_u32>(value);
+}
+
+constexpr rx_u64 operator"" _u64(unsigned long long value) {
+  return static_cast<rx_u64>(value);
+}
+
 #endif // RX_FOUNDATION_TYPES_H

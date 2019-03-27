@@ -28,7 +28,7 @@ namespace rx::render {
 
   uniform::uniform(program* _program, rx_size _index, const string& _name, category _type)
     : m_program{_program}
-    , m_mask{rx_u64{1} << _index}
+    , m_mask{1_u64 << _index}
     , m_type{_type}
     , m_name{_name}
   {
