@@ -23,7 +23,7 @@ struct loader : concepts::interface {
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments);
 
- struct animation {
+  struct animation {
     rx_f32 frame_rate;
     rx_size frame_offset;
     rx_size frame_count;
@@ -50,6 +50,7 @@ struct loader : concepts::interface {
   const array<math::vec4b>& blend_weights() const &;
   const array<math::mat3x4f>& frames() const &;
   const array<animation>& animations() const &;
+  rx_size joints() const;
 
 protected:
   void generate_normals();
@@ -70,6 +71,7 @@ protected:
   array<math::vec4b> m_blend_weights;
   array<math::mat3x4f> m_frames;
   array<animation> m_animations;
+  rx_size m_joints;
 
   string m_error;
 };
@@ -118,6 +120,10 @@ inline const array<math::mat3x4f>& loader::frames() const & {
 
 inline const array<loader::animation>& loader::animations() const & {
   return m_animations;
+}
+
+inline rx_size loader::joints() const {
+  return m_joints;
 }
 
 #if 0

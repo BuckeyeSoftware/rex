@@ -1,10 +1,11 @@
 {
   name: "geometry",
-  uniforms: [
-    { name: "u_transform", type: "mat4x4f" }
-  ],
   permutes: [
     "HAS_SKELETON"
+  ],
+  uniforms: [
+    { name: "u_transform", type: "mat4x4f" },
+    { name: "u_bones",     type: "bonesf", when: "HAS_SKELETON" }
   ],
   shaders: [
     {
@@ -14,8 +15,8 @@
         { name: "a_normal",        type: "vec3f" },
         { name: "a_tangent",       type: "vec4f" },
         { name: "a_coordinate",    type: "vec2f" },
-        { name: "vs_blend_weight", type: "vec4b", when: "HAS_SKELETON" },
-        { name: "vs_blend_index",  type: "vec4b", when: "HAS_SKELETON" }
+        { name: "a_blend_weights", type: "vec4b", when: "HAS_SKELETON" },
+        { name: "a_blend_indices", type: "vec4b", when: "HAS_SKELETON" }
       ],
       outputs: [
         { name: "vs_normal",       type: "vec3f" },
@@ -24,10 +25,24 @@
       ],
       source: "
         void main() {
+        #if defined(HAS_SKELETON)
+          mat3x4f transform  = u_bones[int(a_blend_indices.x)] * a_blend_weights.x / 255.0;
+                  transform += u_bones[int(a_blend_indices.y)] * a_blend_weights.y / 255.0;
+                  transform += u_bones[int(a_blend_indices.z)] * a_blend_weights.z / 255.0;
+                  transform += u_bones[int(a_blend_indices.w)] * a_blend_weights.w / 255.0;
+        
+          vec4f position = vec4(vec4(a_position, 1.0) * transform, 1.0);
+          mat3x3f adjust_transform = mat3(cross(transform[1].xyz, transform[2].xyz),
+                                          cross(transform[2].xyz, transform[0].xyz),
+                                          cross(transform[0].xyz, transform[1].xyz));
+        #else
+          vec4f position = vec4(a_position, 1.0);
+        #endif
+
           vs_normal     = a_normal;
           vs_tangent    = a_tangent;
           vs_coordinate = a_coordinate;
-          rx_position   = u_transform * vec4f(a_position, 1.0);
+          rx_position   = u_transform * position;
         }
       "
     },{
@@ -38,9 +53,9 @@
         { name: "vs_coordinate",   type: "vec2f" }
       ],
       outputs: [
-        { name: "fs_albedo",     type: "vec4f" },
-        { name: "fs_normal",     type: "vec4f" },
-        { name: "fs_emissive",   type: "vec4f" }
+        { name: "fs_albedo",       type: "vec4f" },
+        { name: "fs_normal",       type: "vec4f" },
+        { name: "fs_emissive",     type: "vec4f" }
       ],
       source: "
         void main() {

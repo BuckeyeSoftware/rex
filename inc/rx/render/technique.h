@@ -44,6 +44,7 @@ struct technique : concepts::no_copy {
 private:
   struct uniform_definition {
     uniform::category type;
+    string name;
     string when;
   };
 
@@ -96,7 +97,7 @@ private:
   mutable string m_error;
 
   array<shader_definition> m_shader_definitions;
-  map<string, uniform_definition> m_uniforms;
+  array<uniform_definition> m_uniform_definitions;
   array<string> m_specializations;
 };
 

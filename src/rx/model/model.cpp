@@ -1,6 +1,8 @@
 #include <rx/model/model.h>
 #include <rx/model/iqm.h>
 
+#include <rx/math/trig.h>
+
 namespace rx::model {
 
 model::~model() {
@@ -51,13 +53,16 @@ bool model::load(const string& _file_name) {
         as_animated_vertices[i].normal = normals[i];
         as_animated_vertices[i].tangent = tangents[i];
         as_animated_vertices[i].coordinate = coordinates[i];
-        as_animated_vertices[i].blend_weight = blend_weights[i];
-        as_animated_vertices[i].blend_index = blend_indices[i];
+        as_animated_vertices[i].blend_weights = blend_weights[i];
+        as_animated_vertices[i].blend_indices = blend_indices[i];
       }
       m_is_animated = true;
     }
 
     m_elements = new_loader->elements();
+    m_animations = new_loader->animations();
+    m_frames = new_loader->frames();
+    m_joints = new_loader->joints();
   }
 
   utility::destruct<loader>(new_loader);

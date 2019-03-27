@@ -93,6 +93,8 @@ static void (GLAPIENTRYP pglProgramUniform1i)(GLuint, GLint, GLint);
 
 static void (GLAPIENTRYP pglProgramUniformMatrix3fv)(GLuint, GLint, GLsizei, GLboolean, const GLfloat*);
 static void (GLAPIENTRYP pglProgramUniformMatrix4fv)(GLuint, GLint, GLsizei, GLboolean, const GLfloat*);
+static void (GLAPIENTRYP pglProgramUniformMatrix3x4fv)(GLuint, GLint, GLsizei, GLboolean, const GLfloat*);
+
 // state
 static void (GLAPIENTRYP pglEnable)(GLenum);
 static void (GLAPIENTRYP pglDisable)(GLenum);
@@ -737,6 +739,8 @@ static constexpr const char* uniform_to_string(uniform::category _type) {
     return "mat4x4f";
   case uniform::category::k_mat3x3f:
     return "mat3x3f";
+  case uniform::category::k_bonesf:
+    return "bonesf";
   }
   return nullptr;
 }
@@ -751,9 +755,11 @@ static GLuint compile_shader(const array<uniform>& _uniforms, const shader& _sha
     "#define vec2i ivec2\n"
     "#define vec3i ivec3\n"
     "#define vec4i ivec4\n"
-    "#define vec4b uvec4\n"
+    "#define vec4b vec4\n"
     "#define mat3x3f mat3\n"
     "#define mat4x4f mat4\n"
+    "#define mat3x4f mat3x4\n"
+    "#define bonesf mat3x4f[80]\n"
     "#define rx_sampler1D sampler1D\n"
     "#define rx_sampler2D sampler2D\n"
     "#define rx_sampler3D sampler3D\n"
@@ -914,6 +920,7 @@ backend_gl4::backend_gl4(memory::allocator* _allocator, void* _data)
 
   fetch("glProgramUniformMatrix3fv", pglProgramUniformMatrix3fv);
   fetch("glProgramUniformMatrix4fv", pglProgramUniformMatrix4fv);
+  fetch("glProgramUniformMatrix3x4fv", pglProgramUniformMatrix3x4fv);
 
   // state
   fetch("glEnable", pglEnable);
@@ -1498,6 +1505,10 @@ void backend_gl4::process(rx_byte* _command) {
               pglProgramUniformMatrix4fv(this_program->handle, location, 1,
                 GL_FALSE, reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
+            case uniform::category::k_bonesf:
+              pglProgramUniformMatrix3x4fv(this_program->handle, location,
+                static_cast<GLsizei>(uniform.size() / sizeof(math::mat3x4f)),
+                GL_FALSE, reinterpret_cast<const rx_f32*>(draw_uniforms));
             }
 
             draw_uniforms += uniform.size();

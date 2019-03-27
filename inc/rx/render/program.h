@@ -1,15 +1,14 @@
 #ifndef RX_RENDER_PROGRAM_H
 #define RX_RENDER_PROGRAM_H
 
-#include <rx/math/vec2.h>   // vec2{i,f}
-#include <rx/math/vec3.h>   // vec3{i,f}
-#include <rx/math/vec4.h>   // vec4{i,f}
-#include <rx/math/mat3x3.h> // mat3x3f
-#include <rx/math/mat4x4.h> // mat4x4f
-
 #include <rx/core/string.h>
 #include <rx/core/array.h>
 #include <rx/core/map.h>
+
+#include <rx/math/vec2.h>
+#include <rx/math/mat3x3.h>
+#include <rx/math/mat3x4.h>
+#include <rx/math/mat4x4.h>
 
 #include <rx/core/concepts/no_copy.h>
 
@@ -37,7 +36,8 @@ struct uniform : concepts::no_copy {
     k_vec3f,
     k_vec4f,
     k_mat4x4f,
-    k_mat3x3f
+    k_mat3x3f,
+    k_bonesf
   };
 
   uniform();
@@ -57,6 +57,7 @@ struct uniform : concepts::no_copy {
   void record_vec4f(const math::vec4f& _value);
   void record_mat3x3f(const math::mat3x3f& _value);
   void record_mat4x4f(const math::mat4x4f& _value);
+  void record_bones(const array<math::mat3x4f>& _frames, rx_size _joints);
   void record_raw(const rx_byte* _data, rx_size _size);
 
   category type() const;

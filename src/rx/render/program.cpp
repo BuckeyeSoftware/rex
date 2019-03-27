@@ -2,7 +2,9 @@
 
 #include <rx/render/program.h>
 #include <rx/render/frontend.h>
+
 #include <rx/core/utility/bit.h>
+#include <rx/core/algorithm/min.h>
 
 namespace rx::render {
   // checks if |_type| is a sampler type
@@ -87,6 +89,8 @@ namespace rx::render {
       return sizeof(math::mat3x3f);
     case uniform::category::k_mat4x4f:
       return sizeof(math::mat4x4f);
+    case uniform::category::k_bonesf:
+      return sizeof(math::mat3x4f) * 80;
     }
     RX_ASSERT(false, "unreachable");
   }
@@ -183,6 +187,15 @@ namespace rx::render {
     RX_ASSERT(m_type == category::k_mat4x4f, "not a mat4x4f");
     if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
       memcpy(as_float, _value.data(), sizeof _value);
+      m_program->m_dirty_uniforms |= m_mask;
+    }
+  }
+
+  void uniform::record_bones(const array<math::mat3x4f>& _frames, rx_size _joints) {
+    RX_ASSERT(m_type == category::k_bonesf, "not bones");
+    const rx_size size{sizeof(math::mat3x4f) * algorithm::min(_joints, 80_z)};
+    if (memcmp(as_float, _frames.data(), size) != 0) {
+      memcpy(as_float, _frames.data(), size);
       m_program->m_dirty_uniforms |= m_mask;
     }
   }

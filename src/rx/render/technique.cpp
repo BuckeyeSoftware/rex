@@ -151,7 +151,8 @@ optional<uniform::category> uniform_category_from_string(const string& _category
     {"vec3f",      uniform::category::k_vec3f},
     {"vec4f",      uniform::category::k_vec4f},
     {"mat4x4f",    uniform::category::k_mat4x4f},
-    {"mat3x3f",    uniform::category::k_mat3x3f}
+    {"mat3x3f",    uniform::category::k_mat3x3f},
+    {"bonesf",     uniform::category::k_bonesf}
   };
 
   for (const auto& element : k_table) {
@@ -193,7 +194,7 @@ technique::technique(frontend* _frontend)
   , m_name{m_frontend->allocator()}
   , m_error{m_frontend->allocator()}
   , m_shader_definitions{m_frontend->allocator()}
-  , m_uniforms{m_frontend->allocator()}
+  , m_uniform_definitions{m_frontend->allocator()}
   , m_specializations{m_frontend->allocator()}
 {
 }
@@ -212,7 +213,7 @@ technique::technique(technique&& _technique)
   , m_name{utility::move(_technique.m_name)}
   , m_error{utility::move(_technique.m_error)}
   , m_shader_definitions{utility::move(_technique.m_shader_definitions)}
-  , m_uniforms{utility::move(_technique.m_uniforms)}
+  , m_uniform_definitions{utility::move(_technique.m_uniform_definitions)}
   , m_specializations{utility::move(_technique.m_specializations)}
 {
   _technique.m_frontend = nullptr;
@@ -225,7 +226,7 @@ technique& technique::operator=(technique&& _technique) {
   m_name = utility::move(_technique.m_name);
   m_error = utility::move(_technique.m_error);
   m_shader_definitions = utility::move(_technique.m_shader_definitions);
-  m_uniforms = utility::move(_technique.m_uniforms);
+  m_uniform_definitions = utility::move(_technique.m_uniform_definitions);
   m_specializations = utility::move(_technique.m_specializations);
   return *this;
 }
@@ -347,9 +348,9 @@ bool technique::compile() {
       }
     });
 
-    m_uniforms.each([&](rx_size, const string& _name, const uniform_definition& _uniform_definition) {
+    m_uniform_definitions.each_fwd([&](const uniform_definition& _uniform_definition) {
       if (evaluate_when_for_basic(_uniform_definition.when)) {
-        program->add_uniform(_name, _uniform_definition.type);
+        program->add_uniform(_uniform_definition.name, _uniform_definition.type);
       }
     });
 
@@ -398,9 +399,9 @@ bool technique::compile() {
       });
 
       // emit uniforms
-      m_uniforms.each([&](rx_size, const string& _name, const uniform_definition& _uniform_definition) {
+      m_uniform_definitions.each_fwd([&](const uniform_definition& _uniform_definition) {
         if (evaluate_when_for_permute(_uniform_definition.when, _flags)) {
-          program->add_uniform(_name, _uniform_definition.type);
+          program->add_uniform(_uniform_definition.name, _uniform_definition.type);
         }
       });
 
@@ -449,9 +450,9 @@ bool technique::compile() {
       });
 
       // emit uniforms
-      m_uniforms.each([&](rx_size, const string& _name, const uniform_definition& _uniform_definition) {
+      m_uniform_definitions.each_fwd([&](const uniform_definition& _uniform_definition) {
         if (evaluate_when_for_variant(_uniform_definition.when, i)) {
-          program->add_uniform(_name, _uniform_definition.type);
+          program->add_uniform(_uniform_definition.name, _uniform_definition.type);
         }
       });
     
@@ -624,7 +625,10 @@ bool technique::parse_uniform(const json& _uniform) {
   const auto name_string{name.as_string()};
   const auto type_string{type.as_string()};
 
-  if (m_uniforms.find(name_string)) {
+  // ensure we don't have multiple definitions of the same uniform
+  if (!m_uniform_definitions.each_fwd([name_string](const uniform_definition& _uniform_definition)
+    { return _uniform_definition.name != name_string; }))
+  {
     return error("duplicate uniform '%s'", name_string);
   }
 
@@ -633,7 +637,7 @@ bool technique::parse_uniform(const json& _uniform) {
     return error("unknown type '%s' for '%s'", type_string, name_string);
   }
 
-  m_uniforms.insert(name_string, {*type_category, when ? when.as_string() : ""});
+  m_uniform_definitions.push_back({*type_category, name_string, when ? when.as_string() : ""});
   return true;
 }
 
@@ -677,8 +681,8 @@ bool technique::parse_shader(const json& _shader) {
   }
 
   // ensure we don't have multiple definitions of the same shader
-  if (!m_shader_definitions.each_fwd([shader_type](const shader_definition& _shader)
-    { return _shader.type != shader_type; }))
+  if (!m_shader_definitions.each_fwd([shader_type](const shader_definition& _shader_definition)
+    { return _shader_definition.type != shader_type; }))
   {
     return error("multiple %s shaders present", type_string);
   }

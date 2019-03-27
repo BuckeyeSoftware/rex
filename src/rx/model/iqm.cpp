@@ -298,16 +298,15 @@ bool iqm::read_meshes(const header& _header, const array<rx_byte>& _data) {
 }
 
 bool iqm::read_animations(const header& _header, const array<rx_byte>& _data) {
-  array<math::mat3x4f> generic_base_frame;
-  array<math::mat3x4f> inverse_base_frame;
+  m_joints = static_cast<rx_size>(_header.joints);
 
-  generic_base_frame.resize(_header.joints);
-  inverse_base_frame.resize(_header.joints);
+  array<math::mat3x4f> generic_base_frame{m_allocator, m_joints};
+  array<math::mat3x4f> inverse_base_frame{m_allocator, m_joints};
 
   const auto joints{reinterpret_cast<const iqm_joint*>(_data.data() + _header.joints_offset)};
 
   // read base pose
-  for (rx_u32 i{0}; i <_header.joints; i++) {
+  for (rx_size i{0}; i < m_joints; i++) {
     const auto& this_joint{joints[i]};
 
     // IQM is Z up, we're Y up
@@ -332,7 +331,7 @@ bool iqm::read_animations(const header& _header, const array<rx_byte>& _data) {
       this_animation.num_frames, string_table + this_animation.name});
   }
 
-  m_frames.resize(_header.joints * _header.frames);
+  m_frames.resize(m_joints * _header.frames);
   const auto* poses{reinterpret_cast<const iqm_pose*>(_data.data() + _header.poses_offset)};
   const rx_u16* frame_data{reinterpret_cast<const rx_u16*>(_data.data() + _header.frames_offset)};
 
@@ -347,13 +346,15 @@ bool iqm::read_animations(const header& _header, const array<rx_byte>& _data) {
         }
       }
 
-      const math::vec3f scale{channel_data[7], channel_data[8], channel_data[9]};
-      const math::quatf rotate{channel_data[3], channel_data[4], channel_data[5], channel_data[6]};
-      const math::vec3f translate{channel_data[0], channel_data[1], channel_data[2]};
-      math::mat3x4 scale_rotate_translate{scale, rotate, translate};
+      // IQM is Z up, we're Y up
+      const math::vec3f scale{channel_data[7], channel_data[9], channel_data[8]};
+      const math::quatf rotate{channel_data[3], channel_data[5], channel_data[4], -channel_data[6]};
+      const math::vec3f translate{channel_data[0], channel_data[2], channel_data[1]};
+
+      math::mat3x4 scale_rotate_translate{scale, math::normalize(rotate), translate};
 
       // Concatenate each and every pose with the inverse base pose to avoid having to do it
-      // at animation time; if the join has a parent, then it needs to be preconcatenated with
+      // at animation time; if the joint has a parent, then it needs to be preconcatenated with
       // it's parent's base pose, this will all negate at animation time; consider:
       //
       // (parent_pose * parent_inverse_base_pose) * (parent_base_pose * child_pose * child_inverse_base_pose) =>

@@ -1,13 +1,7 @@
 #ifndef RX_MODEL_MODEL_H
 #define RX_MODEL_MODEL_H
 
-#include <rx/math/vec2.h>
-#include <rx/math/vec3.h>
-#include <rx/math/vec4.h>
-
-#include <rx/core/utility/nat.h>
-#include <rx/core/array.h>
-#include <rx/core/string.h>
+#include <rx/model/loader.h>
 
 namespace rx::model {
 
@@ -29,8 +23,8 @@ struct model {
     math::vec3f normal;
     math::vec4f tangent;
     math::vec2f coordinate;
-    math::vec4b blend_weight;
-    math::vec4b blend_index;
+    math::vec4b blend_weights;
+    math::vec4b blend_indices;
   };
 
   bool is_animated() const;
@@ -38,8 +32,11 @@ struct model {
   const array<vertex>& vertices() const &;
   const array<animated_vertex> animated_vertices() const &;
   const array<rx_u32>& elements() const &;
+  rx_size joints() const;
 
 private:
+  friend struct animation;
+
   memory::allocator* m_allocator;
 
   bool m_is_animated;
@@ -50,6 +47,9 @@ private:
     array<animated_vertex> as_animated_vertices;
   };
   array<rx_u32> m_elements;
+  array<loader::animation> m_animations;
+  array<math::mat3x4f> m_frames;
+  rx_size m_joints;
 };
 
 inline constexpr model::model(memory::allocator* _allocator)
@@ -57,6 +57,7 @@ inline constexpr model::model(memory::allocator* _allocator)
   , m_is_animated{false}
   , as_nat{}
   , m_elements{m_allocator}
+  , m_joints{0}
 {
 }
 
@@ -74,6 +75,10 @@ inline const array<model::animated_vertex> model::animated_vertices() const & {
 
 inline const array<rx_u32>& model::elements() const & {
   return m_elements;
+}
+
+inline rx_size model::joints() const {
+  return m_joints;
 }
 
 } // namespace rx::model

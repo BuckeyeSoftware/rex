@@ -18,6 +18,7 @@
 #include <rx/render/backend_gl4.h>
 
 #include <rx/model/model.h>
+#include <rx/model/animation.h>
 
 #include <rx/math/transform.h>
 
@@ -141,6 +142,8 @@ int entry(int argc, char **argv) {
   SDL_GL_SetSwapInterval(1);
 
   rx::math::transform camera;
+  camera.translate = { 0.0f, 5.0f, -10.0f };
+  // camera.rotate = { 10.0f, 0.0f, 0.0f };
 
   {
     rx::render::backend_gl4 backend{&rx::memory::g_system_allocator, reinterpret_cast<void*>(window)};
@@ -156,6 +159,7 @@ int entry(int argc, char **argv) {
     model_buffer->record_element_type(rx::render::buffer::element_category::k_u32);
     model_buffer->record_type(rx::render::buffer::category::k_static);
     rx::model::model model{&rx::memory::g_system_allocator};
+
     rx_u32 element_count{0};
     if (model.load("test.iqm")) {
       if (model.is_animated()) {
@@ -166,8 +170,8 @@ int entry(int argc, char **argv) {
         model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 3, offsetof(vertex, normal));
         model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 4, offsetof(vertex, tangent));
         model_buffer->record_attribute(rx::render::buffer::attribute::category::k_f32, 2, offsetof(vertex, coordinate));
-        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_u8, 4, offsetof(vertex, blend_weight));
-        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_u8, 4, offsetof(vertex, blend_index));
+        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_u8, 4, offsetof(vertex, blend_weights));
+        model_buffer->record_attribute(rx::render::buffer::attribute::category::k_u8, 4, offsetof(vertex, blend_indices));
         model_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
       } else {
         using vertex = rx::model::model::vertex;
@@ -196,8 +200,11 @@ int entry(int argc, char **argv) {
     frontend.initialize_buffer(RX_RENDER_TAG("quad"), quad);
 
     rx::input::input input;
+    rx::model::animation animation{&model, 0};
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
       input.update(0);
+
+      animation.update(frontend.timer().delta_time(), true);
 
       // translate SDL events
       for (SDL_Event event; SDL_PollEvent(&event); ) {
@@ -262,7 +269,7 @@ int entry(int argc, char **argv) {
       frontend.clear(RX_RENDER_TAG("gbuffer emission"),
         gbuffer, RX_RENDER_CLEAR_COLOR(2), {0.0f, 0.0f, 1.0f, 1.0f});
 
-      rx::math::mat4x4f model{};
+      rx::math::mat4x4f modelm{rx::math::mat4x4f::rotate({0, 90, 0})};
       rx::math::mat4x4f view{rx::math::mat4x4f::invert(camera.to_mat4())};
       rx::math::mat4x4f projection{rx::math::mat4x4f::perspective(90.0f, {0.01, 1024.0f}, 1600.0f/900.0f)};
 
@@ -272,10 +279,12 @@ int entry(int argc, char **argv) {
       RX_ASSERT(gbuffer_test_technique, "");
       RX_ASSERT(fs_quad_technique, "");
 
-      rx::render::program* gbuffer_test_program{gbuffer_test_technique->permute(0)};
+      rx::render::program* gbuffer_test_program{gbuffer_test_technique->permute((1 << 0))};
       rx::render::program* fs_quad_program{*fs_quad_technique};
 
-      gbuffer_test_program->uniforms()[0].record_mat4x4f(model * view * projection);
+      gbuffer_test_program->uniforms()[0].record_mat4x4f(modelm * view * projection);
+      gbuffer_test_program->uniforms()[1].record_bones(animation.frames(), model.joints());
+
       fs_quad_program->uniforms()[0].record_sampler(0);
 
       rx::render::state state;
