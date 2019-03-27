@@ -141,6 +141,8 @@ int entry(int argc, char **argv) {
 
   SDL_GL_SetSwapInterval(1);
 
+  // SDL_SetRelativeMouseMode(SDL_TRUE);
+
   rx::math::transform camera;
   camera.translate = { 0.0f, 5.0f, -10.0f };
   // camera.rotate = { 10.0f, 0.0f, 0.0f };
@@ -227,7 +229,7 @@ int entry(int argc, char **argv) {
           break;
         case SDL_MOUSEMOTION:
           ievent.type = rx::input::event_type::k_mouse_motion;
-          ievent.as_mouse_motion.value = { event.motion.x, event.motion.y };
+          ievent.as_mouse_motion.value = { event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel };
           input.handle_event(rx::utility::move(ievent));
           break;
         case SDL_MOUSEWHEEL:
@@ -238,8 +240,9 @@ int entry(int argc, char **argv) {
         }
       }
 
+      const rx_f32 sens{0.2f};
       const auto& delta{input.mouse().movement()};
-      rx::math::vec3f move{static_cast<rx_f32>(delta.y), static_cast<rx_f32>(delta.x), 0.0f};
+      rx::math::vec3f move{static_cast<rx_f32>(delta.y) * sens, static_cast<rx_f32>(delta.x) * sens, 0.0f};
       camera.rotate = camera.rotate + move;
 
       if (input.keyboard().is_held(SDL_SCANCODE_W, true)) {

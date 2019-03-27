@@ -26,9 +26,9 @@ void mouse_device::update_button(bool down, int button) {
   }
 }
 
-void mouse_device::update_motion(const math::vec2i& movement) {
-  m_movement = movement - m_position;
-  m_position = movement;
+void mouse_device::update_motion(const math::vec4i& movement) {
+  m_movement += { movement.z, movement.w };
+  m_position = { movement.x, movement.y };
 }
 
 void mouse_device::update_scroll(const math::vec2i& scroll) {

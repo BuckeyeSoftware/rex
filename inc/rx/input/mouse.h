@@ -1,7 +1,8 @@
 #ifndef RX_INPUT_MOUSE_H
 #define RX_INPUT_MOUSE_H
 
-#include <rx/math/vec2.h> // math::vec2i
+#include <rx/math/vec2.h>
+#include <rx/math/vec4.h>
 
 namespace rx::input {
 
@@ -12,7 +13,7 @@ struct mouse_device {
 
   void update(rx_f32 delta_time);
   void update_button(bool down, int button);
-  void update_motion(const math::vec2i& movement);
+  void update_motion(const math::vec4i& movement);
   void update_scroll(const math::vec2i& scroll);
 
   const math::vec2i& movement() const;

@@ -1,7 +1,8 @@
 #ifndef RX_INPUT_EVENT_H
 #define RX_INPUT_EVENT_H
 
-#include <rx/math/vec2.h> // math::vec2i
+#include <rx/math/vec2.h>
+#include <rx/math/vec4.h>
 
 #include <rx/core/utility/nat.h>
 
@@ -30,7 +31,7 @@ struct mouse_scroll_event {
 };
 
 struct mouse_motion_event {
-  math::vec2i value;
+  math::vec4i value; // x, y, xrel, yrel
 };
 
 struct event {
