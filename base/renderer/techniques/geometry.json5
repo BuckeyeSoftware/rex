@@ -30,7 +30,7 @@
                   transform += u_bones[int(a_blend_indices.y)] * a_blend_weights.y / 255.0;
                   transform += u_bones[int(a_blend_indices.z)] * a_blend_weights.z / 255.0;
                   transform += u_bones[int(a_blend_indices.w)] * a_blend_weights.w / 255.0;
-        
+
           vec4f position = vec4(vec4(a_position, 1.0) * transform, 1.0);
           mat3x3f adjust_transform = mat3(cross(transform[1].xyz, transform[2].xyz),
                                           cross(transform[2].xyz, transform[0].xyz),
@@ -38,7 +38,6 @@
         #else
           vec4f position = vec4(a_position, 1.0);
         #endif
-
           vs_normal     = a_normal;
           vs_tangent    = a_tangent;
           vs_coordinate = a_coordinate;
