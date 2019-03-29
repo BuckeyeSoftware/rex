@@ -89,6 +89,8 @@ bool loader::load(const string& _file_name) {
     m_coordinates.resize(vertices);
   }
 
+  // concurrency::thread_pool optimize_pool(8);
+
   return true;
 }
 

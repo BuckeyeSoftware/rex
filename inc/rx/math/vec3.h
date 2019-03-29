@@ -5,12 +5,14 @@
 #include <rx/core/format.h> // format
 #include <rx/core/hash.h> // hash, hash_combine
 #include <rx/core/assert.h> // RX_ASSERT
+#include <rx/core/traits/is_integral.h>
 
 namespace rx::math {
 
 template<typename T>
 struct vec3 {
   constexpr vec3();
+  constexpr vec3(T _v);
   constexpr vec3(T _x, T _y, T _z);
 
   T& operator[](rx_size _i);
@@ -18,6 +20,9 @@ struct vec3 {
 
   bool is_any(T _value) const;
   bool is_all(T _value) const;
+
+  T area() const;
+  T sum() const;
 
   const T* data() const;
 
@@ -81,6 +86,14 @@ inline constexpr vec3<T>::vec3()
 }
 
 template<typename T>
+inline constexpr vec3<T>::vec3(T _v)
+  : x{_v}
+  , y{_v}
+  , z{_v}
+{
+}
+
+template<typename T>
 inline constexpr vec3<T>::vec3(T _x, T _y, T _z)
   : x{_x}
   , y{_y}
@@ -108,6 +121,16 @@ inline bool vec3<T>::is_any(T _value) const {
 template<typename T>
 inline bool vec3<T>::is_all(T _value) const {
   return x == _value && y == _value && z == _value;
+}
+
+template<typename T>
+inline T vec3<T>::area() const {
+  return x * y * z;
+}
+
+template<typename T>
+inline T vec3<T>::sum() const {
+  return x + y + z;
 }
 
 template<typename T>
@@ -237,6 +260,18 @@ inline constexpr bool operator==(const vec3<U>& _lhs, const vec3<U>& _rhs) {
 template<typename U>
 inline constexpr bool operator!=(const vec3<U>& _lhs, const vec3<U>& _rhs) {
   return _lhs.x != _rhs.x || _lhs.y != _rhs.y || _lhs.z != _rhs.z;
+}
+
+template<typename T>
+inline constexpr vec3<T> operator<<(const vec3<T>& _lhs, const vec3<T>& _rhs) {
+  static_assert(traits::is_integral<T>, "<< for integrals only");
+  return {_lhs.x << _rhs.x, _lhs.y << _rhs.y, _lhs.z << _rhs.z};
+}
+
+template<typename T>
+inline constexpr vec3<T> operator>>(const vec3<T>& _lhs, const vec3<T>& _rhs) {
+  static_assert(traits::is_integral<T>, ">> for integrals only");
+  return {_lhs.x >> _rhs.x, _lhs.y >> _rhs.y, _lhs.z >> _rhs.z};
 }
 
 // dot and cross product

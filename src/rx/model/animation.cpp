@@ -46,7 +46,7 @@ void animation::update(rx_f32 _delta_time, bool _loop) {
     m_frames[i] = mat1[i] * (1.0f - offset) + mat2[i] * offset;
   }
 
-  if (finished) {
+  if (completes) {
     if (_loop) {
       m_current_frame = 0.0f;
     } else {

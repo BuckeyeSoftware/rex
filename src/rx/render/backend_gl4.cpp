@@ -1186,10 +1186,7 @@ void backend_gl4::process(rx_byte* _command) {
           const auto filter{render_texture->filter()};
           const auto& data{render_texture->data()};
 
-          GLint levels{1};
-          if (filter.mip_maps) {
-            levels = math::log2(rx_u32(1 + dimensions));
-          }
+          const auto levels{static_cast<GLint>(render_texture->levels())};
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
@@ -1230,10 +1227,7 @@ void backend_gl4::process(rx_byte* _command) {
           const auto filter{render_texture->filter()};
           const auto& data{render_texture->data()};
 
-          GLint levels{1};
-          if (filter.mip_maps) {
-            levels = math::log2(rx_u32(1 + algorithm::max(dimensions.w, dimensions.h)));
-          }
+          const auto levels{static_cast<GLint>(render_texture->levels())};
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
@@ -1279,10 +1273,7 @@ void backend_gl4::process(rx_byte* _command) {
           const auto filter{render_texture->filter()};
           const auto& data{render_texture->data()};
 
-          GLint levels{1};
-          if (filter.mip_maps) {
-            levels = math::log2(rx_u32(1 + algorithm::max(dimensions.w, dimensions.h, dimensions.d)));
-          }
+          const auto levels{static_cast<GLint>(render_texture->levels())};
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
@@ -1320,6 +1311,7 @@ void backend_gl4::process(rx_byte* _command) {
         }
         break;
       case resource_command::type::k_textureCM:
+        // TODO
         break;
       }
     }

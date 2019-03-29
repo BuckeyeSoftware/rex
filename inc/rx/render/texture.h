@@ -4,6 +4,7 @@
 #include <rx/render/resource.h>
 
 #include <rx/core/array.h>
+#include <rx/core/algorithm/max.h>
 
 #include <rx/math/vec2.h>
 #include <rx/math/vec3.h>
@@ -72,6 +73,7 @@ struct texture : resource {
   filter_options filter() const;
   wrap_options wrap() const;
   rx_size channels() const;
+  rx_size levels() const;
 
 protected:
   enum {
@@ -92,42 +94,50 @@ struct texture1D : texture {
   texture1D(frontend* _frontend);
   ~texture1D();
 
-  // write data |_data| of dimensions |_dimensions| to store
-  void write(const rx_byte* _data, rx_size _dimensions);
+  // write data |_data| to store for miplevel |_level|
+  void write(const rx_byte* _data, rx_size _level);
 
   // record dimensions |_dimensions|
   void record_dimensions(rx_size _dimensions);
 
   rx_size dimensions() const;
+  rx_size levels() const;
+
 private:
   rx_size m_dimensions;
+  rx_size m_dimensions_log2;
 };
 
 struct texture2D : texture {
   texture2D(frontend* _frontend);
   ~texture2D();
 
-  // write data |_data| of dimensions |_dimensions| to store
-  void write(const rx_byte* _data, const math::vec2z& _dimensions);
+  // write data |_data| to store for miplevel |_level|
+  void write(const rx_byte* _data, rx_size _level);
   void record_dimensions(const math::vec2z& _dimensions);
-  void request_mipchain(rx_size _levels);
 
   const math::vec2z& dimensions() const &;
+  rx_size levels() const;
+
 private:
   math::vec2z m_dimensions;
+  math::vec2z m_dimensions_log2;
 };
 
 struct texture3D : texture {
   texture3D(frontend* _frontend);
   ~texture3D();
 
-  // write data |_data| of dimensions |_dimensions| to store
-  void write(const rx_byte* _data, const math::vec3z& _dimensions);
+  // write data |_data| to store for miplevel |_level|
+  void write(const rx_byte* _data, rx_size _level);
   void record_dimensions(const math::vec3z& _dimensions);
 
   const math::vec3z& dimensions() const &;
+  rx_size levels() const;
+
 private:
   math::vec3z m_dimensions;
+  math::vec3z m_dimensions_log2;
 };
 
 struct textureCM : texture {
@@ -143,29 +153,48 @@ struct textureCM : texture {
   textureCM(frontend* _frontend);
   ~textureCM();
 
-  // write data |_data| of dimensions |_dimensions| to store |_face|
-  void write(const rx_byte* _data, const math::vec2z& _dimensions, face _face);
+  // write data |_data| for face |_face| to store for miplevel |_level|
+  void write(const rx_byte* _data, face _face, rx_size _level);
   void record_dimensions(const math::vec2z& _dimensions);
 
   const math::vec2z& dimensions() const &;
+  rx_size levels() const;
+
 private:
   math::vec2z m_dimensions;
+  math::vec2z m_dimensions_log2;
 };
 
 inline rx_size texture1D::dimensions() const {
   return m_dimensions;
 }
 
+inline rx_size texture1D::levels() const {
+  return m_filter.mip_maps ? m_dimensions_log2 + 1 : 1;
+}
+
 inline const math::vec2z& texture2D::dimensions() const & {
   return m_dimensions;
+}
+
+inline rx_size texture2D::levels() const {
+  return m_filter.mip_maps ? algorithm::max(m_dimensions.w, m_dimensions.h) + 1 : 1;
 }
 
 inline const math::vec3z& texture3D::dimensions() const & {
   return m_dimensions;
 }
 
+inline rx_size texture3D::levels() const {
+  return m_filter.mip_maps ? algorithm::max(m_dimensions.w, m_dimensions.h, m_dimensions.d) + 1 : 1;
+}
+
 inline const math::vec2z& textureCM::dimensions() const & {
   return m_dimensions;
+}
+
+inline rx_size textureCM::levels() const {
+  return m_filter.mip_maps ? algorithm::max(m_dimensions.w, m_dimensions.h) + 1 : 1;
 }
 
 // texture

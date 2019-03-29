@@ -11,6 +11,7 @@ namespace rx::math {
 template<typename T>
 struct vec4 {
   constexpr vec4();
+  constexpr vec4(T _v);
   constexpr vec4(T _x, T _y, T _z, T _w);
 
   T& operator[](rx_size _i);
@@ -78,6 +79,15 @@ inline constexpr vec4<T>::vec4()
   , y{0}
   , z{0}
   , w{0}
+{
+}
+
+template<typename T>
+inline constexpr vec4<T>::vec4(T _v)
+  : x{_v}
+  , y{_v}
+  , z{_v}
+  , w{_v}
 {
 }
 
