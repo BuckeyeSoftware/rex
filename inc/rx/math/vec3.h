@@ -5,7 +5,6 @@
 #include <rx/core/format.h> // format
 #include <rx/core/hash.h> // hash, hash_combine
 #include <rx/core/assert.h> // RX_ASSERT
-#include <rx/core/traits/is_integral.h>
 
 namespace rx::math {
 
@@ -269,18 +268,6 @@ inline constexpr bool operator==(const vec3<U>& _lhs, const vec3<U>& _rhs) {
 template<typename U>
 inline constexpr bool operator!=(const vec3<U>& _lhs, const vec3<U>& _rhs) {
   return _lhs.x != _rhs.x || _lhs.y != _rhs.y || _lhs.z != _rhs.z;
-}
-
-template<typename T>
-inline constexpr vec3<T> operator<<(const vec3<T>& _lhs, const vec3<T>& _rhs) {
-  static_assert(traits::is_integral<T>, "<< for integrals only");
-  return {_lhs.x << _rhs.x, _lhs.y << _rhs.y, _lhs.z << _rhs.z};
-}
-
-template<typename T>
-inline constexpr vec3<T> operator>>(const vec3<T>& _lhs, const vec3<T>& _rhs) {
-  static_assert(traits::is_integral<T>, ">> for integrals only");
-  return {_lhs.x >> _rhs.x, _lhs.y >> _rhs.y, _lhs.z >> _rhs.z};
 }
 
 // dot and cross product

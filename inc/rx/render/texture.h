@@ -154,8 +154,6 @@ struct texture3D : texture {
 
   // write 3D data |_data| to store for miplevel |_level|
   void write(const rx_byte* _data, rx_size _level);
-  // write 2D data |_data| to slice |_layer| of store for miplevel |_level|
-  void write(const rx_byte* _data, rx_size _layer, rx_size _level);
   void record_dimensions(const math::vec3z& _dimensions);
 
   const math::vec3z& dimensions() const &;

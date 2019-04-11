@@ -173,8 +173,8 @@ void target::request_depth_stencil(texture::data_format _format, const math::vec
 
   m_depth_stencil_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target depth stencil"));
   m_depth_stencil_texture->record_format(_format);
-  m_depth_stencil_texture->record_dimensions(_dimensions);
   m_depth_stencil_texture->record_filter({ false, false, false });
+  m_depth_stencil_texture->record_dimensions(_dimensions);
   m_depth_stencil_texture->record_wrap({
     texture::wrap_options::type::k_clamp_to_edge,
     texture::wrap_options::type::k_clamp_to_edge,

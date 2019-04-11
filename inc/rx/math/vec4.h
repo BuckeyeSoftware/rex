@@ -21,7 +21,7 @@ struct vec4 {
   bool is_all(T _value) const;
 
   template<typename F>
-  vec4<T>& map(F&& _fn) const;
+  vec4<T> map(F&& _fn) const;
 
   const T* data() const;
 

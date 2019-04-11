@@ -6,7 +6,7 @@
 #include <rx/core/utility/index_sequence.h>
 #include <rx/core/utility/make_index_sequence.h>
 
-namespace rx {
+namespace rx::utility {
 
 namespace detail {
   template<rx_size N, typename T>

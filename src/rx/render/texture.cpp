@@ -5,26 +5,96 @@
 
 namespace rx::render {
 
-template<typename T>
-static inline bool is_pot(T _x) {
-  return _x && !(_x & (_x - 1));
+struct level_extents {
+  rx_size offset;
+  rx_size size;
+};
+
+inline rx_size storage_for_1D(rx_size _dimensions, rx_size _bpp, bool _mips) {
+  if (_mips) {
+    rx_size size{0};
+    const rx_size levels{math::log2(_dimensions)+1};
+    for (rx_size i{0}; i < levels; i++) {
+      size += _dimensions * _bpp;
+      _dimensions >>= 1;
+    }
+    return size;
+  }
+  return _dimensions * _bpp;
 }
 
-static inline rx_size offset_for_1D(rx_size _dimensions_log2, rx_size _level, rx_size _bpp) {
-  return ((1 << 1*_level) - 1) * (1 << ((_dimensions_log2 - 1 * _level) + 1)) * _bpp;
+inline rx_size storage_for_2D(math::vec2z _dimensions, rx_size _bpp, bool _mips) {
+  if (_mips) {
+    rx_size size{0};
+    const rx_size levels{math::log2(algorithm::max(_dimensions.x, _dimensions.y))+1};
+    for (rx_size i{0}; i < levels; i++) {
+      size += _dimensions.area() * _bpp;
+      _dimensions /= 2;
+    }
+    return size;
+  }
+  return _dimensions.area() * _bpp;
 }
 
-static inline rx_size offset_for_2D(const math::vec2z& _dimensions_log2, rx_size _level, rx_size _bpp) {
-  return (((1 << 2*_level) - 1) * (1 << ((_dimensions_log2.w + _dimensions_log2.h - 2 * _level) + 2)) / 3) * _bpp;
+inline rx_size storage_for_3D(math::vec3z _dimensions, rx_size _bpp, bool _mips) {
+  if (_mips) {
+    rx_size size{0};
+    const rx_size levels{math::log2(algorithm::max(_dimensions.w, _dimensions.h, _dimensions.d))+1};
+    for (rx_size i{0}; i < levels; i++) {
+      size += _dimensions.area() * _bpp;
+      _dimensions /= 2;
+    }
+    return size;
+  }
+  return _dimensions.area() * _bpp;
 }
 
-static inline rx_size offset_for_3D(const math::vec3z& _dimensions_log2, rx_size _level, rx_size _bpp) {
-  return (((1 << 3*_level) - 1) * (1 << ((_dimensions_log2.w + _dimensions_log2.h + _dimensions_log2.d - 3 * _level) + 3)) / 7) * _bpp;
+inline rx_size storage_for_CM(math::vec2z _dimensions, rx_size _bpp, bool _mips) {
+  return storage_for_2D(_dimensions, _bpp, _mips) * 6;
 }
 
-static inline rx_size offset_for_CM(const math::vec2z& _dimensions_log2, rx_size _level, textureCM::face _face, rx_size _bpp) {
-  const rx_size offset2D{offset_for_2D({_dimensions_log2.w, _dimensions_log2.h*6}, _level, _bpp)};
-  return offset2D + static_cast<rx_size>(_face) * (1 << (_dimensions_log2.w + _dimensions_log2.h - 2 * _level)) * _bpp;
+inline level_extents extents_for_1D(rx_size _dimensions, rx_size _bpp, rx_size _level) {
+  rx_size offset{0};
+  rx_size size{0};
+  for (rx_size i{0}; i < _level; i++) {
+    size = _dimensions * _bpp;
+    offset += size;
+    _dimensions /= 2;
+  }
+  return {offset, size};
+}
+
+inline level_extents extents_for_2D(math::vec2z _dimensions, rx_size _bpp, rx_size _level) {
+  rx_size offset{0};
+  rx_size size{0};
+  for (rx_size i{0}; i < _level; i++) {
+    size = _dimensions.area() * _bpp;
+    offset += size;
+    _dimensions /= 2;
+  }
+  return {offset, size};
+}
+
+inline level_extents extents_for_3D(math::vec3z _dimensions, rx_size _bpp, rx_size _level) {
+  rx_size offset{0};
+  rx_size size{0};
+  for (rx_size i{0}; i < _level; i++) {
+    size = _dimensions.area() * _bpp;
+    offset += size;
+    _dimensions /= 2;
+  }
+  return {offset, size};
+}
+
+inline level_extents extents_for_CM(math::vec2z _dimensions, rx_size _bpp, rx_size _level, textureCM::face _face) {
+  rx_size offset{0};
+  rx_size size{0};
+  for (rx_size i{0}; i < _level; i++) {
+    size = _dimensions.area() * _bpp;
+    offset += size * 6;
+    _dimensions /= 2;
+  }
+  return {offset + size * static_cast<rx_size>(_face), size};
 }
 
 texture::texture(frontend* _frontend, resource::type _type)
@@ -79,25 +149,19 @@ void texture1D::write(const rx_byte* _data, rx_size _level) {
   RX_ASSERT(m_recorded & k_format, "format not recorded");
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
-  RX_ASSERT(_level < levels(), "mipmap level out of bounds");
+  RX_ASSERT(_level && _level <= levels(), "mipmap level out of bounds");
 
-  write_set(_level);
-
-  const rx_size level_dimensions{1_z << (m_dimensions_log2 - _level)};
-  const rx_size bpp{byte_size_of_format(m_format)};
-  const rx_size size{level_dimensions * bpp};
-  m_data.resize(m_dimensions * levels() * byte_size_of_format(m_format));
-  memcpy(m_data.data() + offset_for_1D(m_dimensions_log2, _level, bpp), _data, size);
+  const auto extents{extents_for_1D(m_dimensions, byte_size_of_format(m_format), _level)};
+  memcpy(m_data.data() + extents.offset, _data, extents.size);
 }
 
 void texture1D::record_dimensions(rx_size _dimensions) {
   RX_ASSERT(!(m_recorded & k_dimensions), "dimensions already recorded");
-  if (m_filter.mip_maps) {
-    RX_ASSERT(is_pot(_dimensions), "mipmaps only supported for dimensions that are POT");
-  }
+  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
 
   m_dimensions = _dimensions;
   m_dimensions_log2 = math::log2(m_dimensions);
+  m_data.resize(storage_for_1D(_dimensions, byte_size_of_format(m_format), m_filter.mip_maps));
   update_resource_usage(m_data.size());
   m_recorded |= k_dimensions;
 }
@@ -115,27 +179,20 @@ void texture2D::write(const rx_byte* _data, rx_size _level) {
   RX_ASSERT(m_recorded & k_format, "format not recorded");
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
-  RX_ASSERT(_level < levels(), "mipmap level out of bounds");
+  RX_ASSERT(_level && _level <= levels(), "mipmap level out of bounds");
 
-  write_set(_level);
-
-  const math::vec2z level_dimensions{math::vec2z{1} << (m_dimensions_log2 - _level)};
-  const rx_size bpp{byte_size_of_format(m_format)};
-  const rx_size size{level_dimensions.area() * bpp};
-  m_data.resize(m_dimensions.area() * levels() * byte_size_of_format(m_format));
-  update_resource_usage(m_data.size());
-  memcpy(m_data.data() + offset_for_2D(m_dimensions_log2, _level, bpp), _data, size);
+  const auto extents{extents_for_2D(m_dimensions, byte_size_of_format(m_format), _level)};
+  memcpy(m_data.data() + extents.offset, _data, extents.size);
 }
 
 void texture2D::record_dimensions(const math::vec2z& _dimensions) {
   RX_ASSERT(!(m_recorded & k_dimensions), "dimensions already recorded");
-  if (m_filter.mip_maps) {
-    RX_ASSERT(is_pot(_dimensions.w) && is_pot(_dimensions.h),
-      "mipmaps only supported for dimensions that are POT");
-  }
+  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
 
   m_dimensions = _dimensions;
   m_dimensions_log2 = m_dimensions.map(math::log2<rx_size>);
+  m_data.resize(storage_for_2D(_dimensions, byte_size_of_format(m_format), m_filter.mip_maps));
+  update_resource_usage(m_data.size());
   m_recorded |= k_dimensions;
 }
 
@@ -153,31 +210,20 @@ void texture3D::write(const rx_byte* _data, rx_size _level) {
   RX_ASSERT(m_recorded & k_format, "format not recorded");
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
-  RX_ASSERT(_level < levels(), "mipmap level out of bounds");
+  RX_ASSERT(_level && _level <= levels(), "mipmap level out of bounds");
 
-  const math::vec3z level_dimensions{math::vec3z{1} << (m_dimensions_log2 - _level)};
-
-  // set all bits for every layer set
-  for (rx_size i{0}; i < level_dimensions.d; i++) {
-    write_set(level_dimensions.d * i + _level);
-  }
-
-  const rx_size bpp{byte_size_of_format(m_format)};
-  const rx_size size{level_dimensions.area() * bpp};
-  m_data.resize(m_dimensions.area() * levels() * byte_size_of_format(m_format));
-  update_resource_usage(m_data.size());
-  memcpy(m_data.data() + offset_for_3D(m_dimensions_log2, _level, bpp), _data, size);
+  const auto extents{extents_for_3D(m_dimensions, byte_size_of_format(m_format), _level)};
+  memcpy(m_data.data() + extents.offset, _data, extents.size);
 }
 
 void texture3D::record_dimensions(const math::vec3z& _dimensions) {
   RX_ASSERT(!(m_recorded & k_dimensions), "dimensions already recorded");
-  if (m_filter.mip_maps) {
-    RX_ASSERT(is_pot(_dimensions.w) && is_pot(_dimensions.h) &&
-      is_pot(_dimensions.d), "mipmaps only supported for dimensions that are POT");
-  }
+  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
 
   m_dimensions = _dimensions;
   m_dimensions_log2 = m_dimensions.map(math::log2<rx_size>);
+  m_data.resize(storage_for_3D(m_dimensions, byte_size_of_format(m_format), m_filter.mip_maps));
+  update_resource_usage(m_data.size());
   m_recorded |= k_dimensions;
 }
 
@@ -195,27 +241,21 @@ void textureCM::write(const rx_byte* _data, face _face, rx_size _level) {
   RX_ASSERT(m_recorded & k_format, "format not recorded");
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
-  RX_ASSERT(_level < levels(), "mipmap level out of bounds");
+  RX_ASSERT(_level && _level <= levels(), "mipmap level out of bounds");
 
-  write_set(_level*6 + static_cast<rx_u32>(_face));
-
-  const math::vec2z level_dimensions{math::vec2z{1} << (m_dimensions_log2 - _level)};
-  const rx_size bpp{byte_size_of_format(m_format)};
-  const rx_size size{level_dimensions.area() * bpp};
-  m_data.resize(m_dimensions.area() * levels() * 6 * byte_size_of_format(m_format));
-  update_resource_usage(m_data.size());
-  memcpy(m_data.data() + offset_for_CM(m_dimensions_log2, _level, _face, bpp), _data, size);
+  // TODO(dweiler): implement
+  const auto extents{extents_for_CM(m_dimensions, byte_size_of_format(m_format), _level, _face)};
+  memcpy(m_data.data() + extents.offset, _data, extents.size);
 }
 
 void textureCM::record_dimensions(const math::vec2z& _dimensions) {
   RX_ASSERT(!(m_recorded & k_dimensions), "dimensions already recorded");
-  if (m_filter.mip_maps) {
-    RX_ASSERT(is_pot(_dimensions.w) && is_pot(_dimensions.h),
-      "mipmaps only supported for dimensions that are POT");
-  }
+  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
 
   m_dimensions = _dimensions;
   m_dimensions_log2 = m_dimensions.map(math::log2<rx_size>);
+  m_data.resize(storage_for_CM(m_dimensions, byte_size_of_format(m_format), m_filter.mip_maps));
+  update_resource_usage(m_data.size());
   m_recorded |= k_dimensions;
 }
 
