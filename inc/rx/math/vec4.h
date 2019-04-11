@@ -20,6 +20,9 @@ struct vec4 {
   bool is_any(T _value) const;
   bool is_all(T _value) const;
 
+  template<typename F>
+  vec4<T>& map(F&& _fn) const;
+
   const T* data() const;
 
   template<typename T2>
@@ -120,6 +123,12 @@ inline bool vec4<T>::is_any(T _value) const {
 template<typename T>
 inline bool vec4<T>::is_all(T _value) const {
   return x == _value && y == _value && z == _value && w == _value;
+}
+
+template<typename T>
+template<typename F>
+inline vec4<T> vec4<T>::map(F&& _fn) const {
+  return { _fn(x), _fn(y), _fn(z), _fn(w) };
 }
 
 template<typename T>

@@ -24,6 +24,9 @@ struct vec2 {
   T area() const;
   T sum() const;
 
+  template<typename F>
+  vec2<T> map(F&& _fn) const;
+
   const T* data() const;
 
   template<typename T2>
@@ -131,6 +134,12 @@ inline T vec2<T>::area() const {
 template<typename T>
 inline T vec2<T>::sum() const {
   return x + y;
+}
+
+template<typename T>
+template<typename F>
+inline vec2<T> vec2<T>::map(F&& _fn) const {
+  return { _fn(x), _fn(y) };
 }
 
 template<typename T>

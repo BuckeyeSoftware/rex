@@ -81,6 +81,8 @@ void texture1D::write(const rx_byte* _data, rx_size _level) {
   RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
   RX_ASSERT(_level < levels(), "mipmap level out of bounds");
 
+  write_set(_level);
+
   const rx_size level_dimensions{1_z << (m_dimensions_log2 - _level)};
   const rx_size bpp{byte_size_of_format(m_format)};
   const rx_size size{level_dimensions * bpp};
@@ -115,6 +117,8 @@ void texture2D::write(const rx_byte* _data, rx_size _level) {
   RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
   RX_ASSERT(_level < levels(), "mipmap level out of bounds");
 
+  write_set(_level);
+
   const math::vec2z level_dimensions{math::vec2z{1} << (m_dimensions_log2 - _level)};
   const rx_size bpp{byte_size_of_format(m_format)};
   const rx_size size{level_dimensions.area() * bpp};
@@ -131,8 +135,7 @@ void texture2D::record_dimensions(const math::vec2z& _dimensions) {
   }
 
   m_dimensions = _dimensions;
-  m_dimensions_log2.w = math::log2(m_dimensions.w);
-  m_dimensions_log2.h = math::log2(m_dimensions.h);
+  m_dimensions_log2 = m_dimensions.map(math::log2<rx_size>);
   m_recorded |= k_dimensions;
 }
 
@@ -153,6 +156,12 @@ void texture3D::write(const rx_byte* _data, rx_size _level) {
   RX_ASSERT(_level < levels(), "mipmap level out of bounds");
 
   const math::vec3z level_dimensions{math::vec3z{1} << (m_dimensions_log2 - _level)};
+
+  // set all bits for every layer set
+  for (rx_size i{0}; i < level_dimensions.d; i++) {
+    write_set(level_dimensions.d * i + _level);
+  }
+
   const rx_size bpp{byte_size_of_format(m_format)};
   const rx_size size{level_dimensions.area() * bpp};
   m_data.resize(m_dimensions.area() * levels() * byte_size_of_format(m_format));
@@ -168,9 +177,7 @@ void texture3D::record_dimensions(const math::vec3z& _dimensions) {
   }
 
   m_dimensions = _dimensions;
-  m_dimensions_log2.w = math::log2(m_dimensions.w);
-  m_dimensions_log2.h = math::log2(m_dimensions.y);
-  m_dimensions_log2.d = math::log2(m_dimensions.d);
+  m_dimensions_log2 = m_dimensions.map(math::log2<rx_size>);
   m_recorded |= k_dimensions;
 }
 
@@ -190,6 +197,8 @@ void textureCM::write(const rx_byte* _data, face _face, rx_size _level) {
   RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
   RX_ASSERT(_level < levels(), "mipmap level out of bounds");
 
+  write_set(_level*6 + static_cast<rx_u32>(_face));
+
   const math::vec2z level_dimensions{math::vec2z{1} << (m_dimensions_log2 - _level)};
   const rx_size bpp{byte_size_of_format(m_format)};
   const rx_size size{level_dimensions.area() * bpp};
@@ -206,8 +215,7 @@ void textureCM::record_dimensions(const math::vec2z& _dimensions) {
   }
 
   m_dimensions = _dimensions;
-  m_dimensions_log2.w = math::log2(m_dimensions.w);
-  m_dimensions_log2.h = math::log2(m_dimensions.h);
+  m_dimensions_log2 = m_dimensions.map(math::log2<rx_size>);
   m_recorded |= k_dimensions;
 }
 

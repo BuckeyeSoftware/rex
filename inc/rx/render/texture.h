@@ -14,7 +14,14 @@ namespace rx::render {
 
 struct frontend;
 
+static constexpr rx_size bits_needed(rx_size _n) {
+  return _n <= 1 ? 0 : 1 + bits_needed((_n + 1) / 2);
+}
+
 struct texture : resource {
+  static constexpr const rx_size k_max_dimensions{4096};
+  static constexpr const rx_size k_write_bits_needed{(bits_needed(k_max_dimensions)+1)*k_max_dimensions};
+
   texture(frontend* _frontend, resource::type _type);
 
   struct filter_options {
@@ -73,21 +80,38 @@ struct texture : resource {
   filter_options filter() const;
   wrap_options wrap() const;
   rx_size channels() const;
-  rx_size levels() const;
 
 protected:
-  enum {
+  enum : rx_u16 {
     k_format     = 1 << 0,
     k_filter     = 1 << 1,
     k_wrap       = 1 << 2,
-    k_dimensions = 1 << 3,
+    k_dimensions = 1 << 3
   };
 
   array<rx_byte> m_data;
   data_format m_format;
   filter_options m_filter;
   wrap_options m_wrap;
-  int m_recorded;
+  rx_u16 m_recorded;
+
+  rx_byte m_written_data[((k_write_bits_needed + 8 - 1) / 8)];
+
+  static rx_size write_mask(rx_size _index) {
+    return 1 << (_index % 8);
+  }
+
+  static rx_size write_slot(rx_size _index) {
+    return _index / 8;
+  }
+
+  void write_set(rx_size _index) {
+    m_written_data[write_slot(_index)] |= write_mask(_index);
+  }
+
+  bool write_test(rx_size _index) {
+    return m_written_data[write_slot(_index)] & write_mask(_index);
+  }
 };
 
 struct texture1D : texture {
@@ -128,8 +152,10 @@ struct texture3D : texture {
   texture3D(frontend* _frontend);
   ~texture3D();
 
-  // write data |_data| to store for miplevel |_level|
+  // write 3D data |_data| to store for miplevel |_level|
   void write(const rx_byte* _data, rx_size _level);
+  // write 2D data |_data| to slice |_layer| of store for miplevel |_level|
+  void write(const rx_byte* _data, rx_size _layer, rx_size _level);
   void record_dimensions(const math::vec3z& _dimensions);
 
   const math::vec3z& dimensions() const &;

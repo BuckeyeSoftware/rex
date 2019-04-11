@@ -1,6 +1,7 @@
 #ifndef RX_MATH_LOG2_H
 #define RX_MATH_LOG2_H
 
+#include <rx/core/config.h>
 #include <rx/core/types.h>
 
 namespace rx::math {
@@ -8,6 +9,23 @@ namespace rx::math {
 template<typename T>
 inline T log2(T _value);
 
+// use compiler intrinsics if available
+#if defined(RX_COMPILER_CLANG) || defined(RX_COMPILER_GCC)
+template<>
+inline rx_u32 log2(rx_u32 _value) {
+  static_assert(traits::is_same<rx_u32, unsigned int>, "rx_u32 not unsigned int");
+  return sizeof _value * 8 - __builtin_clz(_value) - 1;
+}
+
+template<>
+inline rx_u64 log2(rx_u64 _value) {
+  if constexpr (traits::is_same<rx_u64, unsigned long>) {
+    return sizeof _value * 8 - __builtin_clzl(_value) - 1;
+  } else {
+    return sizeof _value * 8 - __builtin_clzll(_value) - 1;
+  }
+}
+#else
 template<>
 inline rx_u32 log2(rx_u32 _value) {
   static constexpr const rx_u8 k_table[]{
@@ -38,6 +56,7 @@ inline rx_u64 log2(rx_u64 _value) {
   _value |= _value >> 32;
   return k_table[(rx_u64((_value - (_value >> 1)) * 0x07EDD5E59A4E28C2)) >> 58];
 }
+#endif
 
 } // namespace rx::math
 
