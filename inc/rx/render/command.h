@@ -62,7 +62,8 @@ struct command_buffer {
   command_buffer(memory::allocator* _allocator, rx_size _size);
   ~command_buffer();
 
-  rx_byte* allocate(rx_size _size, command_type _command, const command_header::info& _info);
+  rx_byte* allocate(rx_size _size, command_type _command,
+    const command_header::info& _info);
   void reset();
 
 private:

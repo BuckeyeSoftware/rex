@@ -126,37 +126,6 @@ inline rx_size loader::joints() const {
   return m_joints;
 }
 
-#if 0
-struct animation_state {
-  math::vec2z indices;
-  rx_f32 offset;
-  bool finished;
-};
-
-static animation_state animate(const loader::animation& _animation, rx_f32 _current_frame, bool _loop, rx_f32 _delta_time) {
-  _current_frame += _animation.frame_rate;
-
-  const bool finished{_current_frame >= _animation.frame_count - 1};
-  const bool complete{finished && !_loop};
-
-  _current_frame = math::mod(_current_frame, static_cast<rx_f32>(_animation.frame_count));
-
-  rx_size frame1{complete ? _animation.frame_count - 1 : static_cast<rx_size>(_current_frame)};
-  rx_size frame2{complete ? _animation.frame_count - 1 : frame1 + 1};
-
-  frame1 %= _animation.frame_count;
-  frame2 %= _animation.frame_count;
-
-  animation_state state;
-  state.indices[0] = _animation.frame_offset + frame1;
-  state.indices[1] = _animation.frame_offset + frame2;
-  state.offset = complete ? 0.0f : math::abs(_current_frame - static_cast<rx_f32>(frame1));
-  state.finished = finished;
-
-  return state;
-}
-#endif
-
 } // namespace rx::model
 
 #endif // RX_MODEL_LOADER_H

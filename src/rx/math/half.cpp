@@ -5,11 +5,22 @@
 namespace rx::math {
 
 union bits {
-  constexpr bits(rx_u32 u) : u{u} {}
-  constexpr bits(rx_f32 f) : f{f} {}
+  constexpr bits(rx_u32 u);
+  constexpr bits(rx_f32 f);
+
   rx_u32 u;
   rx_f32 f;
 };
+
+inline constexpr bits::bits(rx_u32 u)
+  : u{u}
+{
+}
+
+inline constexpr bits::bits(rx_f32 f)
+  : f{f}
+{
+}
 
 static constexpr const rx_u32 k_magic{113 << 23};
 static constexpr const rx_u32 k_shift_exp{0x7C00 << 13}; // exp mask after shift
@@ -52,12 +63,12 @@ struct half_lut {
   rx_u8 shift[512];
 };
 
-static const static_global<half_lut> table("half_lut");
+static const static_global<half_lut> g_table("half_lut");
 
 half half::to_half(rx_f32 f) {
   const bits shape{f};
-  return half(static_cast<rx_u16>(table->base[(shape.u >> 23) & 0x1FF] +
-    ((shape.u & 0x007FFFFF) >> table->shift[(shape.u >> 23) & 0x1FF])));
+  return half(static_cast<rx_u16>(g_table->base[(shape.u >> 23) & 0x1FF] +
+    ((shape.u & 0x007FFFFF) >> g_table->shift[(shape.u >> 23) & 0x1FF])));
 }
 
 rx_f32 half::to_f32() const {

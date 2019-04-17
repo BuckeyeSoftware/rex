@@ -31,7 +31,8 @@ inline constexpr transform::transform(transform* _parent)
 }
 
 inline mat4x4f transform::to_mat4() const {
-  const auto local{mat4x4f::scale(scale) * mat4x4f::rotate(rotate) * mat4x4f::translate(translate)};
+  const auto local{mat4x4f::scale(scale) * mat4x4f::rotate(rotate) *
+    mat4x4f::translate(translate)};
   return parent ? local * parent->to_mat4() : local;
 }
 

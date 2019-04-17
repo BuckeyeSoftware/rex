@@ -41,6 +41,9 @@ struct buffer : resource {
   template<typename T>
   void write_elements(const T* _data, rx_size _size);
 
+  // flush vertex and element store
+  void flush();
+
   // record attribute of |_count| elements of |_type| starting at |_offset|
   void record_attribute(attribute::type _type, rx_size _count, rx_size _offset);
 
@@ -53,15 +56,13 @@ struct buffer : resource {
   // record buffer type |_type|
   void record_type(type _type);
 
-  // flush vertex and element store
-  void flush();
-
   const array<rx_byte>& vertices() const &;
   const array<rx_byte>& elements() const &;
   const array<attribute>& attributes() const &;
   rx_size stride() const;
   element_type element_kind() const;
   type kind() const;
+  rx_size size() const;
 
   void validate() const;
 
@@ -92,8 +93,8 @@ inline void buffer::write_vertices(const T* _data, rx_size _size) {
 
 template<typename T>
 inline void buffer::write_elements(const T* _data, rx_size _size) {
-  static_assert((traits::is_same<T, rx_byte> || traits::is_same<T, rx_u16> || traits::is_same<T, rx_u32>),
-    "unsupported element type T");
+  static_assert((traits::is_same<T, rx_byte> || traits::is_same<T, rx_u16>
+    || traits::is_same<T, rx_u32>), "unsupported element type T");
 
   RX_ASSERT(_size % sizeof(T) == 0, "_size isn't a multiple of T");
 
@@ -106,7 +107,16 @@ inline void buffer::write_elements(const T* _data, rx_size _size) {
   }
 }
 
-inline void buffer::record_attribute(attribute::type _type, rx_size _count, rx_size _offset) {
+inline void buffer::flush() {
+  m_vertices_store.clear();
+  m_elements_store.clear();
+
+  update_resource_usage(0);
+}
+
+inline void buffer::record_attribute(attribute::type _type, rx_size _count,
+  rx_size _offset)
+{
   m_recorded |= k_attribute;
   m_attributes.push_back({_count, _offset, _type});
 }
@@ -151,6 +161,10 @@ inline buffer::element_type buffer::element_kind() const {
 
 inline buffer::type buffer::kind() const {
   return m_type;
+}
+
+inline rx_size buffer::size() const {
+  return m_vertices_store.size() + m_elements_store.size();
 }
 
 } // namespace rx::render

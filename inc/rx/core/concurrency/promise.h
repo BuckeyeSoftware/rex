@@ -53,8 +53,8 @@ inline promise<T>::promise(memory::allocator* _allocator)
 {
   RX_ASSERT(m_allocator, "null allocator");
 
-  m_state = reinterpret_cast<state*>(m_allocator->allocate(sizeof *m_state));
-  utility::construct<state>(m_state);
+  m_state = utility::allocate_and_construct<state>(m_allocator);
+  RX_ASSERT(m_state, "out of memory");
 }
 
 template<typename T>
@@ -70,9 +70,7 @@ inline promise<T>::~promise() {
       scope_lock lock(m_state->m_mutex);
       m_state->m_condition_variable.wait(lock, [m_state] { return m_state->m_done; });
     }
-
-    utility::destruct<state>(m_state);
-    m_allocator->deallocate(m_state);
+    utility::destruct_and_deallocate<state>(m_allocator, m_state);
   }
 }
 
@@ -81,6 +79,7 @@ inline promise<T>::promise(promise&& _promise)
   : m_allocator{_promise.m_allocator}
   , m_state{_promise.m_state}
 {
+  _promise.m_allocator = nullptr;
   _promise.m_state = nullptr;
 }
 

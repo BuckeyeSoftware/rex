@@ -952,12 +952,11 @@ backend_gl4::backend_gl4(memory::allocator* _allocator, void* _data)
   fetch("glDrawArrays", pglDrawArrays);
   fetch("glDrawElements", pglDrawElements);
 
-  m_impl = m_allocator->allocate(sizeof(detail::state));
-  utility::construct<detail::state>(m_impl);
+  m_impl = utility::allocate_and_construct<detail::state>(m_allocator);
 }
 
 backend_gl4::~backend_gl4() {
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_impl));
+  utility::destruct_and_deallocate<detail::state>(m_allocator, m_impl);
 }
 
 void backend_gl4::process(rx_byte* _command) {

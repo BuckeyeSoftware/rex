@@ -18,9 +18,7 @@ bool model::load(const string& _file_name) {
 
   // determine the model format based on the extension
   if (_file_name.ends_with(".iqm")) {
-    auto iqm_loader{reinterpret_cast<iqm*>(m_allocator->allocate(sizeof(iqm)))};
-    utility::construct<iqm>(iqm_loader, m_allocator);
-    new_loader = iqm_loader;
+    new_loader = utility::allocate_and_construct<iqm>(m_allocator, m_allocator);
   } else {
     // future model formats go here
     return false;
@@ -65,8 +63,7 @@ bool model::load(const string& _file_name) {
     m_joints = new_loader->joints();
   }
 
-  utility::destruct<loader>(new_loader);
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(new_loader));
+  utility::destruct_and_deallocate<loader>(m_allocator, new_loader);
   return result;
 }
 

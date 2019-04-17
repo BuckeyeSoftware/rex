@@ -15,7 +15,8 @@ struct static_node
   , concepts::no_move
 {
   template<typename T, typename... Ts>
-  constexpr static_node(const char* name, memory::uninitialized_storage<T>& data, Ts&&... args);
+  constexpr static_node(const char* name, memory::uninitialized_storage<T>& data,
+    Ts&&... args);
 
   void init();
   void fini();
@@ -37,7 +38,8 @@ private:
 };
 
 template<typename T, typename... Ts>
-inline constexpr static_node::static_node(const char* name, memory::uninitialized_storage<T>& data, Ts&&... args)
+inline constexpr static_node::static_node(const char* name,
+  memory::uninitialized_storage<T>& data, Ts&&... args)
   : m_enabled{true}
   , m_name{name}
   , m_next{nullptr}
@@ -93,9 +95,7 @@ struct static_global
   const T* operator->() const;
 
   template<typename... Ts>
-  auto operator()(Ts&&... args) {
-    return (*m_data.data())(utility::forward<Ts>(args)...);
-  }
+  auto operator()(Ts&&... args);
 
 private:
   static_node m_node;
@@ -110,33 +110,39 @@ inline constexpr static_global<T>::static_global(const char* name, Ts&&... args)
 }
 
 template<typename T>
-T& static_global<T>::operator*() {
+inline T& static_global<T>::operator*() {
   return *m_data.data();
 }
 
 template<typename T>
-T* static_global<T>::operator&() {
+inline T* static_global<T>::operator&() {
   return m_data.data();
 }
 
 template<typename T>
-T *static_global<T>::operator->() {
+inline T *static_global<T>::operator->() {
   return m_data.data();
 }
 
 template<typename T>
-const T& static_global<T>::operator*() const {
+inline const T& static_global<T>::operator*() const {
   return *m_data.data();
 }
 
 template<typename T>
-const T* static_global<T>::operator&() const {
+inline const T* static_global<T>::operator&() const {
   return m_data.data();
 }
 
 template<typename T>
-const T* static_global<T>::operator->() const {
+inline const T* static_global<T>::operator->() const {
   return m_data.data();
+}
+
+template<typename T>
+template<typename... Ts>
+inline auto static_global<T>::operator()(Ts&&... _arguments) {
+  return (*m_data.data())(utility::forward<Ts>(_arguments)...);
 }
 
 struct static_globals {

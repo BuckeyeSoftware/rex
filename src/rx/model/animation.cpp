@@ -23,7 +23,8 @@ void animation::update(rx_f32 _delta_time, bool _loop) {
 
   const bool completes{m_current_frame >= animation.frame_count - 1};
   const bool finished{completes && !_loop};
-  m_current_frame = math::mod(m_current_frame, static_cast<rx_f32>(animation.frame_count));
+  m_current_frame = math::mod(m_current_frame,
+    static_cast<rx_f32>(animation.frame_count));
 
   rx_size frame1{finished ? animation.frame_count - 1 : static_cast<rx_size>(m_current_frame)};
   rx_size frame2{finished ? animation.frame_count - 1 : frame1 + 1};

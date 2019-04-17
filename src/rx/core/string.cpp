@@ -21,7 +21,9 @@ static void format_va(string& contents_, const char* _format, va_list _va) {
   vsnprintf(contents_.data(), contents_.size() + 1, _format, _va);
 }
 
-string string::formatter(memory::allocator* _allocator, const char* _format, ...) {
+string string::formatter(memory::allocator* _allocator,
+  const char* _format, ...)
+{
   va_list va;
   va_start(va, _format);
   string contents{_allocator};
@@ -51,13 +53,15 @@ string::string(memory::allocator* _allocator, const char* _contents)
 {
 }
 
-string::string(memory::allocator* _allocator, const char* _contents, rx_size _size)
+string::string(memory::allocator* _allocator, const char* _contents,
+  rx_size _size)
   : string{_allocator}
 {
   append(_contents, _size);
 }
 
-string::string(memory::allocator* _allocator, const char* _first, const char* _last)
+string::string(memory::allocator* _allocator, const char* _first,
+  const char* _last)
   : string{_allocator}
 {
   append(_first, _last);
@@ -379,7 +383,9 @@ static rx_size utf16_len(const rx_u16* _data) {
   return length;
 }
 
-static rx_size utf8_to_utf16(const char* _utf8_contents, rx_size _length, rx_u16* utf16_contents_) {
+static rx_size utf8_to_utf16(const char* _utf8_contents, rx_size _length,
+  rx_u16* utf16_contents_)
+{
   rx_size elements{0};
   rx_u32 code_point{0};
 
@@ -419,7 +425,9 @@ static rx_size utf8_to_utf16(const char* _utf8_contents, rx_size _length, rx_u16
   return elements;
 }
 
-/*static*/ rx_size utf16_to_utf8(const rx_u16* _utf16_contents, rx_size _length, char* utf8_contents_) {
+/*static*/ rx_size utf16_to_utf8(const rx_u16* _utf16_contents, rx_size _length,
+  char* utf8_contents_)
+{
   rx_size elements{0};
   rx_u32 code_point{0};
 
@@ -482,7 +490,8 @@ wide_string::wide_string(memory::allocator* _allocator, const rx_u16* _contents)
 {
 }
 
-wide_string::wide_string(memory::allocator* _allocator, const rx_u16* _contents, rx_size _size)
+wide_string::wide_string(memory::allocator* _allocator, const rx_u16* _contents,
+  rx_size _size)
   : m_allocator{_allocator}
   , m_size{_size}
 {
@@ -504,7 +513,8 @@ wide_string::wide_string(memory::allocator* _allocator, const string& _contents)
 {
 }
 
-wide_string::wide_string(memory::allocator* _allocator, const char* _contents, rx_size _size) 
+wide_string::wide_string(memory::allocator* _allocator, const char* _contents,
+  rx_size _size) 
   : m_allocator{_allocator}
 {
   RX_ASSERT(m_allocator, "null allocator");

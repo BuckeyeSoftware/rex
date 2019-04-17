@@ -18,6 +18,7 @@ bitset::bitset(memory::allocator* _allocator, rx_size _size)
   , m_data{reinterpret_cast<bit_type*>(m_allocator->allocate(sizeof(bit_type) * (m_size / k_word_bits + 1)))}
 {
   RX_ASSERT(m_data, "out of memory");
+
   clear_all();
 }
 

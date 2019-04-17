@@ -75,8 +75,10 @@ private:
   bool parse_uniform(const json& _uniform);
   bool parse_shader(const json& _shader);
 
-  bool parse_inouts(const json& _inouts, const char* _type, map<string, shader_definition::inout>& inouts_);
-  bool parse_inout(const json& _inout, const char* _type, map<string, shader_definition::inout>& inouts_);
+  bool parse_inouts(const json& _inouts, const char* _type,
+    map<string, shader_definition::inout>& inouts_);
+  bool parse_inout(const json& _inout, const char* _type,
+    map<string, shader_definition::inout>& inouts_);
 
   bool parse_specializations(const json& _specializations, const char* _type);
   bool parse_specialization(const json& _specialization, const char* _type);
@@ -113,7 +115,9 @@ inline bool technique::error(const char* _format, Ts&&... _arguments) const {
 }
 
 template<typename... Ts>
-inline void technique::log(log::level _level, const char* _format, Ts&&... _arguments) const {
+inline void technique::log(log::level _level, const char* _format,
+  Ts&&... _arguments) const
+{
   write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
 }
 

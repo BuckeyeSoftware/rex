@@ -50,14 +50,18 @@ private:
   };
 
   template<typename T, typename... Ts, typename U, rx_size... Ns>
-  static void construct_with_tuple(void* object_data, [[maybe_unused]] U* tuple_object, utility::index_sequence<Ns...>) {
-    utility::construct<T>(object_data, utility::forward<Ts>(tuple_object->template get<Ns>())...);
+  static void construct_with_tuple(void* object_data,
+    [[maybe_unused]] U* tuple_object, utility::index_sequence<Ns...>)
+  {
+    utility::construct<T>(object_data,
+      utility::forward<Ts>(tuple_object->template get<Ns>())...);
   }
 
   template<typename T, typename... Ts>
   static void construct(void* object_data, void* tuple_data) {
-    construct_with_tuple<T, Ts...>(object_data, static_cast<utility::tuple<Ts...>*>(tuple_data),
-      utility::index_sequence_for<Ts...>{});
+    construct_with_tuple<T, Ts...>(object_data,
+      static_cast<utility::tuple<Ts...>*>(tuple_data),
+        utility::index_sequence_for<Ts...>{});
   }
 
   template<typename T>
@@ -67,21 +71,25 @@ private:
 
   template<typename T, typename... Ts>
   static void move_tuple(void* tuple_dst, const void* tuple_src) {
-    utility::construct<utility::tuple<Ts...>>(tuple_dst, utility::move(*static_cast<const utility::tuple<Ts...>*>(tuple_src)));
+    utility::construct<utility::tuple<Ts...>>(tuple_dst,
+      utility::move(*static_cast<const utility::tuple<Ts...>*>(tuple_src)));
   }
 };
 
 template<typename T, typename... Ts>
-inline constexpr type_eraser::type_eraser(void *data, traits::type_identity<T>, Ts&&... args)
+inline constexpr type_eraser::type_eraser(void *data, traits::type_identity<T>,
+  Ts&&... args)
   : m_data{data}
   , m_construct_fn{construct<T, Ts...>}
   , m_destruct_fn{destruct<T>}
   , m_move_tuple_fn{move_tuple<T, Ts...>}
   , m_nat{}
 {
-  static_assert(sizeof(utility::tuple<Ts...>) <= sizeof m_tuple, "too much data to type erase");
+  static_assert(sizeof(utility::tuple<Ts...>) <= sizeof m_tuple,
+    "too much data to type erase");
 
-  utility::construct<utility::tuple<Ts...>>(static_cast<void*>(m_tuple), utility::forward<Ts>(args)...);
+  utility::construct<utility::tuple<Ts...>>(static_cast<void*>(m_tuple),
+    utility::forward<Ts>(args)...);
 }
 
 inline constexpr type_eraser::type_eraser(type_eraser&& eraser)
@@ -96,7 +104,8 @@ inline constexpr type_eraser::type_eraser(type_eraser&& eraser)
   eraser.m_destruct_fn = nullptr;
   eraser.m_move_tuple_fn = nullptr;
 
-  m_move_tuple_fn(static_cast<void*>(m_tuple), static_cast<const void*>(eraser.m_tuple));
+  m_move_tuple_fn(static_cast<void*>(m_tuple),
+    static_cast<const void*>(eraser.m_tuple));
 }
 
 inline void type_eraser::init() {

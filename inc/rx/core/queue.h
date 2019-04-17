@@ -76,8 +76,7 @@ inline void queue<T>::push(const T& _value) {
 template<typename T>
 template<typename... Ts>
 inline void queue<T>::emplace(Ts&&... _arguments) {
-  auto new_node{reinterpret_cast<node*>(m_allocator->allocate(sizeof(node)))};
-  utility::construct(new_node, utility::forward<Ts>(_arguments)...);
+  auto new_node{utility::allocate_and_construct<node>(m_allocator, utility::forward<Ts>(_arguments)...)};
   if (is_empty()) {
     m_first = new_node;
     m_last = m_first;
@@ -97,8 +96,7 @@ inline T queue<T>::pop() {
   T value{utility::move(this_node->m_value)};
   m_first = utility::move(this_node->m_next);
 
-  utility::destruct<T>(this_node);
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(this_node));
+  utility::destruct_and_deallocate<T>(m_allocator, this_node);
 
   return value;
 }

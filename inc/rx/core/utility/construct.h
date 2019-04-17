@@ -17,7 +17,8 @@ namespace rx::utility {
 
 template<typename T, typename... Ts>
 inline void construct(void *_data, Ts&&... _args) {
-  new (reinterpret_cast<T*>(_data), rx_placement_new{}) T(utility::forward<Ts>(_args)...);
+  new (reinterpret_cast<T*>(_data), rx_placement_new{})
+    T(utility::forward<Ts>(_args)...);
 }
 
 template<typename T, typename... Ts>

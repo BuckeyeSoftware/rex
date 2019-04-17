@@ -11,7 +11,7 @@ using rx_s16 = signed short;
 using rx_u16 = unsigned short;
 using rx_s32 = signed int;
 using rx_u32 = unsigned int;
-using rx_s64 = rx::traits::conditional<sizeof(signed long) == 8, signed long, signed long long>;
+using rx_s64 = rx::traits::conditional<sizeof(signed long) == 8, signed long,signed long long>;
 using rx_u64 = rx::traits::conditional<sizeof(unsigned long) == 8, unsigned long, unsigned long long>;
 using rx_f32 = float;
 using rx_f64 = double;

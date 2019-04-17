@@ -18,13 +18,16 @@ struct target : resource {
   void request_swapchain();
 
   // request target have depth attachment |_format| with size |_dimensions|
-  void request_depth(texture::data_format _format, const math::vec2z& _dimensions);
+  void request_depth(texture::data_format _format,
+    const math::vec2z& _dimensions);
 
   // request target have stencil attachment |_format| with size |_dimensions|
-  void request_stencil(texture::data_format _format, const math::vec2z& _dimensions);
+  void request_stencil(texture::data_format _format,
+    const math::vec2z& _dimensions);
 
   // request target have combined depth stencil attachment with size |_dimensions|
-  void request_depth_stencil(texture::data_format _format, const math::vec2z& _dimensions);
+  void request_depth_stencil(texture::data_format _format,
+    const math::vec2z& _dimensions);
 
   // attach existing depth texture |_depth| to target
   void attach_depth(texture2D* _depth);

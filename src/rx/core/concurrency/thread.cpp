@@ -1,13 +1,11 @@
 #include <rx/core/concurrency/thread.h>
-#include <rx/core/concurrency/spin_lock.h>
-#include <rx/core/concurrency/scope_lock.h>
+#include <rx/core/concurrency/atomic.h>
 #include <rx/core/memory/system_allocator.h>
 #include <rx/core/string.h>
 
 namespace rx::concurrency {
 
-static spin_lock g_lock;
-static int g_thread_id; // protected by |g_lock|
+static atomic<int> g_thread_id;
 
 thread::thread()
   : m_allocator{nullptr}
@@ -25,19 +23,16 @@ thread::thread(memory::allocator* _allocator, const char* _name, function<void(i
   : m_allocator{_allocator}
 {
   RX_ASSERT(m_allocator, "null allocator");
-  m_state = reinterpret_cast<state*>(m_allocator->allocate(sizeof *m_state));
-  utility::construct<state>(m_state, _name, utility::move(_function));
+
+  m_state = utility::allocate_and_construct<state>(m_allocator, _name, utility::move(_function));
 }
 
 thread::~thread() {
-  if (!m_state) {
-    return;
+  if (m_state) {
+    join();
+
+    utility::destruct_and_deallocate<state>(m_allocator, m_state);
   }
-
-  join();
-
-  utility::destruct<state>(m_state);
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_state));
 }
 
 void thread::join() {
@@ -47,12 +42,7 @@ void thread::join() {
 
 // state
 void* thread::state::wrap(void* _data) {
-  int thread_id = 0;
-  {
-    scope_lock locked(g_lock);
-    thread_id = g_thread_id++;
-  }
-
+  int thread_id{g_thread_id++};
   auto self{reinterpret_cast<state*>(_data)};
   self->m_function(utility::move(thread_id));
   return nullptr;

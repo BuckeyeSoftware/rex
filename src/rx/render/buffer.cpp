@@ -39,6 +39,7 @@ void buffer::write_vertices_data(const rx_byte* _data, rx_size _size) {
 
   const auto old_size{m_vertices_store.size()};
   m_vertices_store.resize(old_size + _size);
+  update_resource_usage(size());
   memcpy(m_vertices_store.data() + old_size, _data, _size);
 }
 
@@ -49,6 +50,7 @@ void buffer::write_elements_data(const rx_byte* _data, rx_size _size) {
 
   const auto old_size{m_elements_store.size()};
   m_elements_store.resize(old_size + _size);
+  update_resource_usage(size());
   memcpy(m_elements_store.data() + old_size, _data, _size);
 }
 
@@ -57,11 +59,6 @@ void buffer::validate() const {
   RX_ASSERT(m_recorded & k_element_type, "no element type specified");
   RX_ASSERT(m_recorded & k_stride, "no stride specified");
   RX_ASSERT(m_recorded & k_type, "no type specified");
-}
-
-void buffer::flush() {
-  m_vertices_store.clear();
-  m_elements_store.clear();
 }
 
 } // namespace rx::render

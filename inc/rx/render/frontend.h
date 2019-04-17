@@ -118,7 +118,8 @@ private:
   friend struct resource;
 
   // needed by target to release depth/stencil textures without holding m_mutex
-  void destroy_texture_unlocked(const command_header::info& _info, texture2D* _texture);
+  void destroy_texture_unlocked(const command_header::info& _info,
+    texture2D* _texture);
 
   concurrency::mutex m_mutex;
 

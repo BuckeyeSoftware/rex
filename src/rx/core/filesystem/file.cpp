@@ -125,7 +125,8 @@ bool file::is_valid() const {
 optional<array<rx_byte>> read_binary_file(memory::allocator* _allocator, const string& _file_name) {
   file open_file{_file_name, "rb"};
   if (!open_file) {
-    log_file(log::level::k_error, "failed to open file '%s' [%s]", _file_name, strerror(errno));
+    log_file(log::level::k_error, "failed to open file '%s' [%s]", _file_name,
+      strerror(errno));
     return nullopt;
   }
 
@@ -133,7 +134,8 @@ optional<array<rx_byte>> read_binary_file(memory::allocator* _allocator, const s
   if (size) {
     array<rx_byte> data{_allocator, *size};
     if (!open_file.read(data.data(), data.size())) {
-      log_file(log::level::k_error, "failed to read file '%s' [%s]", _file_name, strerror(errno));
+      log_file(log::level::k_error, "failed to read file '%s' [%s]", _file_name,
+        strerror(errno));
       return nullopt;
     }
     return data;
