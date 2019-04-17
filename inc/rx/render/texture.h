@@ -9,6 +9,7 @@
 #include <rx/math/vec2.h>
 #include <rx/math/vec3.h>
 #include <rx/math/vec4.h>
+#include <rx/math/log2.h>
 
 namespace rx::render {
 
@@ -16,6 +17,13 @@ struct frontend;
 
 struct texture : resource {
   texture(frontend* _frontend, resource::type _type);
+
+  template<typename T>
+  struct level_info {
+    rx_size offset;
+    rx_size size;
+    T dimensions;
+  };
 
   struct filter_options {
     bool bilinear;
@@ -37,6 +45,7 @@ struct texture : resource {
   };
 
   enum class data_format {
+    k_r_u8,
     k_rgba_u8,
     k_bgra_u8,
     k_rgba_f16,
@@ -102,6 +111,8 @@ struct texture1D : texture {
   rx_size dimensions() const;
   rx_size levels() const;
 
+  level_info<rx_size> info_for_level(rx_size _level) const;
+
 private:
   rx_size m_dimensions;
   rx_size m_dimensions_log2;
@@ -118,6 +129,8 @@ struct texture2D : texture {
   const math::vec2z& dimensions() const &;
   rx_size levels() const;
 
+  level_info<math::vec2z> info_for_level(rx_size _level) const;
+
 private:
   math::vec2z m_dimensions;
   math::vec2z m_dimensions_log2;
@@ -133,6 +146,8 @@ struct texture3D : texture {
 
   const math::vec3z& dimensions() const &;
   rx_size levels() const;
+
+  level_info<math::vec3z> info_for_level(rx_size _level) const;
 
 private:
   math::vec3z m_dimensions;
@@ -159,6 +174,8 @@ struct textureCM : texture {
   const math::vec2z& dimensions() const &;
   rx_size levels() const;
 
+  level_info<math::vec2z> info_for_level(face _face, rx_size _level) const;
+
 private:
   math::vec2z m_dimensions;
   math::vec2z m_dimensions_log2;
@@ -169,7 +186,7 @@ inline rx_size texture1D::dimensions() const {
 }
 
 inline rx_size texture1D::levels() const {
-  return m_filter.mip_maps ? m_dimensions_log2 + 1 : 1;
+  return m_filter.mip_maps ? math::log2(m_dimensions_log2) + 1 : 1;
 }
 
 inline const math::vec2z& texture2D::dimensions() const & {
@@ -177,7 +194,7 @@ inline const math::vec2z& texture2D::dimensions() const & {
 }
 
 inline rx_size texture2D::levels() const {
-  return m_filter.mip_maps ? algorithm::max(m_dimensions.w, m_dimensions.h) + 1 : 1;
+  return m_filter.mip_maps ? math::log2(algorithm::max(m_dimensions.w, m_dimensions.h)) + 1 : 1;
 }
 
 inline const math::vec3z& texture3D::dimensions() const & {
@@ -185,7 +202,7 @@ inline const math::vec3z& texture3D::dimensions() const & {
 }
 
 inline rx_size texture3D::levels() const {
-  return m_filter.mip_maps ? algorithm::max(m_dimensions.w, m_dimensions.h, m_dimensions.d) + 1 : 1;
+  return m_filter.mip_maps ? math::log2(algorithm::max(m_dimensions.w, m_dimensions.h, m_dimensions.d)) + 1 : 1;
 }
 
 inline const math::vec2z& textureCM::dimensions() const & {
@@ -193,7 +210,7 @@ inline const math::vec2z& textureCM::dimensions() const & {
 }
 
 inline rx_size textureCM::levels() const {
-  return m_filter.mip_maps ? algorithm::max(m_dimensions.w, m_dimensions.h) + 1 : 1;
+  return m_filter.mip_maps ? math::log2(algorithm::max(m_dimensions.w, m_dimensions.h)) + 1 : 1;
 }
 
 // texture
@@ -241,6 +258,8 @@ inline rx_size texture::byte_size_of_format(data_format _format) {
     return 5;
   case data_format::k_s8:
     return 1;
+  case data_format::k_r_u8:
+    return 1;
   }
   return 0;
 }
@@ -268,6 +287,8 @@ inline rx_size texture::channel_count_of_format(data_format _format) {
   case data_format::k_d32f_s8:
     return 2;
   case data_format::k_s8:
+    return 1;
+  case data_format::k_r_u8:
     return 1;
   }
   return 0;

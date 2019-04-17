@@ -29,6 +29,8 @@ static bool is_valid_depth_format(texture::data_format _format) {
     return false;
   case texture::data_format::k_s8:
     return false;
+  case texture::data_format::k_r_u8:
+    return false;
   }
   return false;
 }
@@ -58,6 +60,8 @@ static bool is_valid_stencil_format(texture::data_format _format) {
     return false;
   case texture::data_format::k_s8:
     return true;
+  case texture::data_format::k_r_u8:
+    return false;
   }
   return false;
 }
@@ -86,6 +90,8 @@ static bool is_valid_depth_stencil_format(texture::data_format _format) {
   case texture::data_format::k_d32f_s8:
     return true;
   case texture::data_format::k_s8:
+    return false;
+  case texture::data_format::k_r_u8:
     return false;
   }
   return false;

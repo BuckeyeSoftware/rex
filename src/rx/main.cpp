@@ -16,6 +16,7 @@
 #include <rx/render/buffer.h>
 #include <rx/render/technique.h>
 #include <rx/render/backend_gl4.h>
+#include <rx/render/immediate.h>
 
 #include <rx/model/model.h>
 #include <rx/model/animation.h>
@@ -71,6 +72,8 @@ static constexpr const quad_vertex k_quad_vertices[]{
 static constexpr const rx_byte k_quad_elements[]{
   0, 1, 2, 3
 };
+
+// static void memory_stats()
 
 int entry(int argc, char **argv) {
   (void)argc;
@@ -150,6 +153,7 @@ int entry(int argc, char **argv) {
   {
     rx::render::backend_gl4 backend{&rx::memory::g_system_allocator, reinterpret_cast<void*>(window)};
     rx::render::frontend frontend{&rx::memory::g_system_allocator, &backend};
+    rx::render::immediate immediate{&frontend};
 
     rx::render::target* target{frontend.create_target(RX_RENDER_TAG("default"))};
     target->request_swapchain();
@@ -330,9 +334,68 @@ int entry(int argc, char **argv) {
         "2",
         gbuffer.normal());
 
+      // immediate.frame_queue().record_rectangle({100, 100}, {100, 100}, 1, {1.0f, 0.0f, 0.0f, 1.0f});
+
+      // memory stats
+      // rx::memory::g_system_allocator->stats();
+      static constexpr rx::math::vec2i size{400, 200};
+      static constexpr rx_s32 k_border{10}; // 10px border
+      rx::math::vec2i position{display_resolution->get().w - (size.w + k_border), k_border};
+      immediate.frame_queue().record_rectangle(
+        position,
+        size,
+        k_border,
+        {0.1f, 0.1f, 0.1f, 0.75f});
+
+      const auto stats{rx::memory::g_system_allocator->stats()};
+
+      const auto k_height{25};
+      position.x += size.w/2;
+      position.y += size.h - k_height;
+
+      immediate.frame_queue().record_text(
+        "Inconsolata-Regular",
+        position,
+        k_height,
+        1.0f,
+        rx::render::immediate::text_align::k_center,
+        "MEMORY",
+        {1.0f, 1.0f, 1.0f, 1.0f});
+      
+      position.x -= size.w/2;
+      position.x += k_border;
+      position.y -= k_height; // advance
+
+      static constexpr auto k_size{16};
+      auto line{[&](const rx::string& _contents) {
+        immediate.frame_queue().record_text(
+          "Inconsolata-Regular",
+          position,
+          k_size,
+          1.0f,
+          rx::render::immediate::text_align::k_left,
+          _contents,
+          {1.0f, 1.0f, 1.0f, 1.0f});
+          position.y -= k_size; // next
+      }};
+
+      line(rx::string::format("^wallocations:   ^m%zu", stats.allocations));
+      line(rx::string::format("^wdeallocations: ^m%zu", stats.deallocations));
+      line(rx::string::format("^wreallocations: ^m%zu ^w(^m%zu ^binplace resizes^w)", stats.request_reallocations, stats.actual_reallocations));
+      line(rx::string::format("^wused: ^m%s ^w(^brequest^w) ^m%s ^w(^bactual^w)",
+        rx::string::human_size_format(stats.used_request_bytes),
+        rx::string::human_size_format(stats.used_actual_bytes)));
+      line(rx::string::format("^wpeak: ^m%s ^w(^brequest^w) ^m%s ^w(^bactual^w)",
+        rx::string::human_size_format(stats.peak_request_bytes),
+        rx::string::human_size_format(stats.peak_actual_bytes)));
+
+      //immediate.frame_queue().record_text("OpenSans-Regular", {100, 100}, 30, rx::render::immediate::text_align::k_left,
+      //  "^rred ^ggreen ^bblue ^ccyan ^yyellow ^mmagenta ^kblack ^wwhite ^[ff0000ff]red?", {});
+
+      immediate.render(target);
+
       if (frontend.process()) {
         if (frontend.swap()) {
-          const auto stats{rx::memory::g_system_allocator->stats()};
           char format[1024];
           snprintf(format, sizeof format, "%d fps | %.2f mspf | mem a/%zu, r/r:%zu a:%zu, d/%zu, u/r:%s a:%s, p/r:%s a:%s",
             frontend.timer().fps(),

@@ -238,6 +238,8 @@ static GLenum convert_texture_data_format(render::texture::data_format _data_for
     return GL_DEPTH32F_STENCIL8;
   case render::texture::data_format::k_s8:
     return GL_STENCIL_INDEX8;
+  case render::texture::data_format::k_r_u8:
+    return GL_R8;
   }
   RX_ASSERT(false, "unreachable");
 }
@@ -266,6 +268,8 @@ static GLenum convert_texture_format(render::texture::data_format _data_format) 
     return GL_DEPTH_STENCIL;
   case render::texture::data_format::k_s8:
     return GL_STENCIL_INDEX;
+  case render::texture::data_format::k_r_u8:
+    return GL_RED;
   }
   RX_ASSERT(false, "unreachable");
 }
@@ -1200,17 +1204,16 @@ void backend_gl4::process(rx_byte* _command) {
             dimensions);
 
           if (data.size()) {
-            pglTextureSubImage1D(
-              texture->tex,
-              0,
-              0,
-              dimensions,
-              convert_texture_format(format),
-              GL_UNSIGNED_BYTE,
-              data.data());
-
-            if (filter.mip_maps) {
-              pglGenerateTextureMipmap(texture->tex);
+            for (GLint i{0}; i < levels; i++) {
+              const auto level_info{render_texture->info_for_level(i)};
+              pglTextureSubImage1D(
+                texture->tex,
+                i,
+                0,
+                level_info.dimensions,
+                convert_texture_format(format),
+                GL_UNSIGNED_BYTE,
+                data.data() + level_info.offset);
             }
           }
         }
@@ -1243,19 +1246,18 @@ void backend_gl4::process(rx_byte* _command) {
             dimensions.h);
 
           if (data.size()) {
-            pglTextureSubImage2D(
-              texture->tex,
-              0,
-              0,
-              0,
-              dimensions.w,
-              dimensions.h,
-              convert_texture_format(format),
-              GL_UNSIGNED_BYTE,
-              data.data());
-
-            if (filter.mip_maps) {
-              pglGenerateTextureMipmap(texture->tex);
+            for (GLint i{0}; i < levels; i++) {
+              const auto level_info{render_texture->info_for_level(i)};
+              pglTextureSubImage2D(
+                texture->tex,
+                i,
+                0,
+                0,
+                level_info.dimensions.w,
+                level_info.dimensions.h,
+                convert_texture_format(format),
+                GL_UNSIGNED_BYTE,
+                data.data() + level_info.offset);
             }
           }
         }
@@ -1291,21 +1293,20 @@ void backend_gl4::process(rx_byte* _command) {
             dimensions.d);
 
           if (data.size()) {
-            pglTextureSubImage3D(
-              texture->tex,
-              0,
-              0,
-              0,
-              0,
-              dimensions.w,
-              dimensions.h,
-              dimensions.d,
-              convert_texture_format(format),
-              GL_UNSIGNED_BYTE,
-              data.data());
-
-            if (filter.mip_maps) {
-              pglGenerateTextureMipmap(texture->tex);
+            for (GLint i{0}; i < levels; i++) {
+              const auto level_info{render_texture->info_for_level(i)};
+              pglTextureSubImage3D(
+                texture->tex,
+                i,
+                0,
+                0,
+                0,
+                level_info.dimensions.w,
+                level_info.dimensions.h,
+                level_info.dimensions.d,
+                convert_texture_format(format),
+                GL_UNSIGNED_BYTE,
+                data.data() + level_info.offset);
             }
           }
         }

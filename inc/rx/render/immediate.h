@@ -6,6 +6,7 @@
 
 #include <rx/core/utility/nat.h>
 #include <rx/core/string.h>
+#include <rx/core/map.h>
 
 #include <rx/render/target.h>
 #include <rx/render/buffer.h>
@@ -16,9 +17,20 @@ namespace rx::render {
 struct technique;
 
 struct immediate {
-  struct queue {
+  enum class text_align {
+    k_left,
+    k_center,
+    k_right
+  };
+
+  struct queue 
+    : concepts::no_copy
+  {
     queue() = default;
     queue(memory::allocator* _allocator);
+    queue(queue&& _queue);
+
+    queue& operator=(queue&& _queue);
 
     struct box {
       math::vec2i position;
@@ -41,13 +53,24 @@ struct immediate {
       bool operator!=(const line& _line) const;
     };
 
+    struct text {
+      math::vec2i position;
+      rx_s32 size;
+      rx_f32 scale;
+      rx_size font_index;
+      rx_size text_index;
+      bool operator!=(const text& _text) const;
+    };
+
     struct command {
-      command() : as_nat{} {}
+      constexpr command();
 
       enum class type {
+        k_uninitialized,
         k_rectangle,
         k_triangle,
         k_line,
+        k_text,
         k_scissor
       };
 
@@ -61,6 +84,7 @@ struct immediate {
       union {
         utility::nat as_nat;
         line as_line;
+        text as_text;
         rectangle as_rectangle;
         scissor as_scissor;
         triangle as_triangle;
@@ -68,26 +92,72 @@ struct immediate {
     };
 
     void record_scissor(const math::vec2i& _position, const math::vec2i& _size);
-    void record_rectangle(const math::vec2i& _position, const math::vec2i& _size, rx_s32 _roundness, const math::vec4f& _color);
-    void record_line(const math::vec2i& _point_a, const math::vec2i& _point_b, rx_s32 _roundness, rx_s32 _thickness, const math::vec4f& _color);
-    void record_triangle(const math::vec2i& _position, const math::vec2i& _size, rx_u32 _flags, const math::vec4f& _color);
+    void record_rectangle(const math::vec2i& _position, const math::vec2i& _size,
+      rx_s32 _roundness, const math::vec4f& _color);
+    void record_line(const math::vec2i& _point_a, const math::vec2i& _point_b,
+      rx_s32 _roundness, rx_s32 _thickness, const math::vec4f& _color);
+    void record_triangle(const math::vec2i& _position, const math::vec2i& _size,
+      rx_u32 _flags, const math::vec4f& _color);
+    void record_text(const string& _font, const math::vec2i& _position,
+      rx_s32 _size, rx_f32 _scale, text_align _align, const string& _contents,
+      const math::vec4f& _color);
 
     bool operator!=(const queue& _queue) const;
     void clear();
+    bool is_empty() const;
 
-    bool is_empty() const {
-      return m_commands.is_empty();
-    }
-    
+  private:
+    friend struct immediate;
+
+    memory::allocator* m_allocator;
     array<command> m_commands;
+    array<char> m_string_table;
   };
 
   immediate(frontend* _frontend);
   ~immediate();
 
   void render(target* _target);
+  queue& frame_queue();
 
-  operator queue&();
+  struct font {
+    static constexpr const rx_size k_default_resolution{128};
+
+    struct quad {
+      math::vec2f position[2];
+      math::vec2f coordinate[2];
+    };
+
+    struct glyph {
+      math::vec2<rx_u16> position[2];
+      math::vec2f offset;
+      rx_f32 x_advance;
+    };
+
+    struct key {
+      rx_s32 size;
+      string name;
+      rx_size hash() const;
+      bool operator==(const key& _key) const;
+    };
+
+    font(const key& _key, frontend* _frontend);
+    font(font&& _font);
+    ~font();
+
+    quad quad_for_glyph(rx_size _glyph, rx_f32 _scale, math::vec2f& position_) const;
+    glyph glyph_for_code(rx_u32 _code) const;
+
+    rx_s32 size() const;
+    render::texture2D* texture() const;
+  
+  private:
+    frontend* m_frontend;
+    rx_s32 m_size;
+    rx_size m_resolution;
+    render::texture2D* m_texture;
+    array<glyph> m_glyphs;
+  };
 
 private:
   static constexpr const rx_size k_buffers{2};
@@ -104,7 +174,12 @@ private:
     const math::vec2f& _point_b, rx_f32 _thickness, rx_f32 _roundness,
     const math::vec4f& _color);
 
-  void add_batch(rx_size _offset, queue::command::type _type);
+  void generate_text(int _size, const string& _font, const string& _contents,
+    rx_f32 _scale, const math::vec2f& _position, text_align _align,
+    const math::vec4f& _color);
+
+  void add_batch(rx_size _offset, queue::command::type _type,
+    texture2D* _texture = nullptr);
 
   struct vertex {
     math::vec2f position;
@@ -117,10 +192,14 @@ private:
     rx_size count;
     queue::command::type kind;
     state render_state;
+    texture2D* texture;
   };
 
   frontend* m_frontend;
   technique* m_technique;
+
+  // loaded fonts
+  map<font::key, font*> m_fonts;
 
   // current scissor rectangle
   math::vec2i m_scissor_position;
@@ -144,7 +223,7 @@ private:
 };
 
 inline bool immediate::queue::box::operator!=(const box& _box) const {
-  return _box.position != position || _box.size == size;
+  return _box.position != position || _box.size != size;
 }
 
 inline bool immediate::queue::rectangle::operator!=(const rectangle& _rectangle) const {
@@ -156,8 +235,46 @@ inline bool immediate::queue::line::operator!=(const line& _line) const {
     _line.roundness != roundness || _line.thickness != thickness;
 }
 
-inline immediate::operator queue&() {
+inline bool immediate::queue::text::operator!=(const text& _text) const {
+  return _text.position != position || _text.size != size ||
+    _text.scale != scale || _text.font_index != font_index || _text.text_index != text_index;
+}
+
+inline constexpr immediate::queue::command::command()
+  : kind{queue::command::type::k_uninitialized}
+  , flags{0}
+  , hash{0}
+  , color{}
+  , as_nat{}
+{
+}
+
+inline bool immediate::queue::is_empty() const {
+  return m_commands.is_empty();
+}
+
+inline rx_size immediate::font::key::hash() const {
+  return hash_combine(name.hash(), rx::hash<rx_s32>{}(size));
+}
+
+inline immediate::queue& immediate::frame_queue() {
   return m_queue;
+}
+
+inline bool immediate::font::key::operator==(const key& _key) const {
+  return name == _key.name && size == _key.size;
+}
+
+inline immediate::font::glyph immediate::font::glyph_for_code(rx_u32 _code) const {
+  return m_glyphs[static_cast<rx_size>(_code)];
+}
+
+inline rx_s32 immediate::font::size() const {
+  return m_size;
+}
+
+inline render::texture2D* immediate::font::texture() const {
+  return m_texture;
 }
 
 } // namespace rx::render
