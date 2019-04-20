@@ -1512,14 +1512,16 @@ void backend_gl4::process(rx_byte* _command) {
       for (rx_size i{0}; i < 8; i++) {
         switch (command->texture_types[i]) {
         case '1':
-          // pglBindTextureUnit(i, reinterpret_cast<detail::texture1D*>(reinterpret_cast<texture1D*>(command->texture_binds[i]) + 1)->tex);
+          pglBindTextureUnit(i, reinterpret_cast<detail::texture1D*>(reinterpret_cast<texture1D*>(command->texture_binds[i]) + 1)->tex);
           break;
         case '2':
           pglBindTextureUnit(i, reinterpret_cast<detail::texture2D*>(reinterpret_cast<texture2D*>(command->texture_binds[i]) + 1)->tex);
           break;
         case '3':
+          pglBindTextureUnit(i, reinterpret_cast<detail::texture3D*>(reinterpret_cast<texture3D*>(command->texture_binds[i]) + 1)->tex);
           break;
         case 'c':
+          pglBindTextureUnit(i, reinterpret_cast<detail::textureCM*>(reinterpret_cast<textureCM*>(command->texture_binds[i]) + 1)->tex);
           break;
         default:
           break;
@@ -1529,7 +1531,7 @@ void backend_gl4::process(rx_byte* _command) {
       if (header->type == command_type::k_draw_elements) {
         switch (render_buffer->element_kind()) {
         case render::buffer::element_type::k_none:
-          // [[unreachable]]
+          // [[unreachable]];
           break;
         case render::buffer::element_type::k_u8:
           pglDrawElements(
