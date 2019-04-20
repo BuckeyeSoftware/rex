@@ -241,9 +241,10 @@ immediate::font::font(const key& _key, frontend* _frontend)
       if (result == -k_glyphs || result > 0) {
         // create and upload baked atlas
         m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("font"));
+        m_texture->record_format(texture::data_format::k_r_u8);
+        m_texture->record_type(texture::type::k_static);
         m_texture->record_filter({false, false, false});
         m_texture->record_dimensions({m_resolution, m_resolution});
-        m_texture->record_format(texture::data_format::k_r_u8);
         m_texture->record_wrap({texture::wrap_options::type::k_clamp_to_edge,
                                 texture::wrap_options::type::k_clamp_to_edge,
                                 texture::wrap_options::type::k_clamp_to_edge});

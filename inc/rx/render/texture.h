@@ -59,6 +59,12 @@ struct texture : resource {
     k_s8
   };
 
+  enum class type {
+    k_attachment,
+    k_static,
+    k_dynamic
+  };
+
   // get byte size of |_format|
   static rx_size byte_size_of_format(data_format _format);
 
@@ -67,6 +73,9 @@ struct texture : resource {
 
   // record format |_format|
   void record_format(data_format _format);
+
+  // record type |_type|
+  void record_type(type _type);
 
   // record |_wrap| parameters
   void record_wrap(const wrap_options& _options);
@@ -82,17 +91,20 @@ struct texture : resource {
   filter_options filter() const;
   wrap_options wrap() const;
   rx_size channels() const;
+  type kind() const;
 
 protected:
   enum : rx_u16 {
     k_format     = 1 << 0,
-    k_filter     = 1 << 1,
-    k_wrap       = 1 << 2,
-    k_dimensions = 1 << 3
+    k_type       = 1 << 1,
+    k_filter     = 1 << 2,
+    k_wrap       = 1 << 3,
+    k_dimensions = 1 << 4
   };
 
   array<rx_byte> m_data;
   data_format m_format;
+  type m_type;
   filter_options m_filter;
   wrap_options m_wrap;
   rx_u16 m_recorded;
@@ -228,6 +240,10 @@ inline texture::filter_options texture::filter() const {
 
 inline rx_size texture::channels() const {
   return channel_count_of_format(m_format);
+}
+
+inline texture::type texture::kind() const {
+  return m_type;
 }
 
 inline texture::wrap_options texture::wrap() const {

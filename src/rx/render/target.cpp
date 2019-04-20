@@ -141,6 +141,7 @@ void target::request_depth(texture::data_format _format, const math::vec2z& _dim
 
   m_depth_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target depth"));
   m_depth_texture->record_format(_format);
+  m_depth_texture->record_type(texture::type::k_attachment);
   m_depth_texture->record_filter({ false, false, false });
   m_depth_texture->record_dimensions(_dimensions);
   m_depth_texture->record_wrap({
@@ -160,6 +161,7 @@ void target::request_stencil(texture::data_format _format, const math::vec2z& _d
 
   m_stencil_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target stencil"));
   m_stencil_texture->record_format(_format);
+  m_stencil_texture->record_type(texture::type::k_attachment);
   m_stencil_texture->record_filter({ false, false, false });
   m_stencil_texture->record_dimensions(_dimensions);
   m_stencil_texture->record_wrap({
@@ -179,6 +181,7 @@ void target::request_depth_stencil(texture::data_format _format, const math::vec
 
   m_depth_stencil_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target depth stencil"));
   m_depth_stencil_texture->record_format(_format);
+  m_depth_stencil_texture->record_type(texture::type::k_attachment);
   m_depth_stencil_texture->record_filter({ false, false, false });
   m_depth_stencil_texture->record_dimensions(_dimensions);
   m_depth_stencil_texture->record_wrap({
@@ -195,6 +198,8 @@ void target::attach_depth(texture2D* _depth) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
   RX_ASSERT(!m_depth_texture, "depth already attached");
   RX_ASSERT(is_valid_depth_format(_depth->format()), "not a depth format texture");
+  RX_ASSERT(_depth->kind() == texture::type::k_attachment, "not attachable texture");
+
   m_depth_texture = _depth;
 }
 
@@ -202,11 +207,15 @@ void target::attach_stencil(texture2D* _stencil) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
   RX_ASSERT(!m_stencil_texture, "stencil already attached");
   RX_ASSERT(is_valid_stencil_format(_stencil->format()), "not a stencil format texture");
+  RX_ASSERT(_stencil->kind() == texture::type::k_attachment, "not attachable texture");
+
   m_stencil_texture = _stencil;
 }
 
 void target::attach_texture(texture2D* _texture) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
+  RX_ASSERT(_texture->kind() == texture::type::k_attachment, "not attachable texture");
+
   m_attachments.each_fwd([_texture](texture2D* _attachment) {
     RX_ASSERT(_texture != _attachment, "texture already attached");
   });

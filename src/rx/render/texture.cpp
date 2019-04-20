@@ -118,6 +118,13 @@ void texture::record_format(data_format _format) {
   m_recorded |= k_format;
 }
 
+void texture::record_type(type _type) {
+  RX_ASSERT(!(m_recorded & k_type), "type already recorded");
+
+  m_type = _type;
+  m_recorded |= k_type;
+}
+
 void texture::record_wrap(const wrap_options& _options) {
   RX_ASSERT(!(m_recorded & k_wrap), "wrap already recorded");
 
@@ -134,13 +141,10 @@ void texture::record_filter(const filter_options& _options) {
 
 void texture::validate() const {
   RX_ASSERT(m_recorded & k_format, "format not recorded");
+  RX_ASSERT(m_recorded & k_type, "type not recorded");
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_wrap, "wrap not recorded");
   RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
-
-  if (m_filter.mip_maps) {
-    // TODO: ensure all miplevels are recorded
-  }
 }
 
 // texture1D
@@ -154,24 +158,28 @@ texture1D::~texture1D() {
 
 void texture1D::write(const rx_byte* _data, rx_size _level) {
   RX_ASSERT(_data, "_data is null");
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
-  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
-  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
   RX_ASSERT(_level < levels(), "mipmap level out of bounds");
 
+  validate();
   const auto extents{extents_for_1D(m_dimensions, byte_size_of_format(m_format), _level)};
   memcpy(m_data.data() + extents.offset, _data, extents.size);
 }
 
 void texture1D::record_dimensions(rx_size _dimensions) {
   RX_ASSERT(!(m_recorded & k_dimensions), "dimensions already recorded");
+
+  RX_ASSERT(m_recorded & k_type, "type not recorded");
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
 
   m_dimensions = _dimensions;
   m_dimensions_log2 = math::log2(m_dimensions);
-  m_data.resize(storage_for_1D(_dimensions, byte_size_of_format(m_format), m_filter.mip_maps));
-  update_resource_usage(m_data.size());
   m_recorded |= k_dimensions;
+
+  if (m_type != type::k_attachment) {
+    m_data.resize(storage_for_1D(_dimensions, byte_size_of_format(m_format),
+      m_filter.mip_maps));
+    update_resource_usage(m_data.size());
+  }
 }
 
 texture::level_info<rx_size> texture1D::info_for_level(rx_size _level) const {
@@ -188,24 +196,28 @@ texture2D::~texture2D() {
 
 void texture2D::write(const rx_byte* _data, rx_size _level) {
   RX_ASSERT(_data, "_data is null");
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
-  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
-  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
   RX_ASSERT(_level < levels(), "mipmap level out of bounds");
 
+  validate();
   const auto extents{extents_for_2D(m_dimensions, byte_size_of_format(m_format), _level)};
   memcpy(m_data.data() + extents.offset, _data, extents.size);
 }
 
 void texture2D::record_dimensions(const math::vec2z& _dimensions) {
   RX_ASSERT(!(m_recorded & k_dimensions), "dimensions already recorded");
+
+  RX_ASSERT(m_recorded & k_type, "type not recorded");
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
 
   m_dimensions = _dimensions;
   m_dimensions_log2 = m_dimensions.map(math::log2<rx_size>);
-  m_data.resize(storage_for_2D(_dimensions, byte_size_of_format(m_format), m_filter.mip_maps));
-  update_resource_usage(m_data.size());
   m_recorded |= k_dimensions;
+
+  if (m_type != type::k_attachment) {
+    m_data.resize(storage_for_2D(_dimensions, byte_size_of_format(m_format),
+      m_filter.mip_maps));
+    update_resource_usage(m_data.size());
+  }
 }
 
 texture::level_info<math::vec2z> texture2D::info_for_level(rx_size _level) const {
@@ -223,24 +235,28 @@ texture3D::~texture3D() {
 
 void texture3D::write(const rx_byte* _data, rx_size _level) {
   RX_ASSERT(_data, "_data is null");
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
-  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
-  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
   RX_ASSERT(_level < levels(), "mipmap level out of bounds");
 
+  validate();
   const auto extents{extents_for_3D(m_dimensions, byte_size_of_format(m_format), _level)};
   memcpy(m_data.data() + extents.offset, _data, extents.size);
 }
 
 void texture3D::record_dimensions(const math::vec3z& _dimensions) {
   RX_ASSERT(!(m_recorded & k_dimensions), "dimensions already recorded");
+
+  RX_ASSERT(m_recorded & k_type, "type not recorded");
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
 
   m_dimensions = _dimensions;
   m_dimensions_log2 = m_dimensions.map(math::log2<rx_size>);
-  m_data.resize(storage_for_3D(m_dimensions, byte_size_of_format(m_format), m_filter.mip_maps));
-  update_resource_usage(m_data.size());
   m_recorded |= k_dimensions;
+
+  if (m_type != type::k_attachment) {
+    m_data.resize(storage_for_3D(m_dimensions, byte_size_of_format(m_format),
+      m_filter.mip_maps));
+    update_resource_usage(m_data.size());
+  }
 }
 
 texture::level_info<math::vec3z> texture3D::info_for_level(rx_size _level) const {
@@ -258,25 +274,29 @@ textureCM::~textureCM() {
 
 void textureCM::write(const rx_byte* _data, face _face, rx_size _level) {
   RX_ASSERT(_data, "_data is null");
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
-  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
-  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
   RX_ASSERT(_level < levels(), "mipmap level out of bounds");
 
-  // TODO(dweiler): implement
-  const auto extents{extents_for_CM(m_dimensions, byte_size_of_format(m_format), _level, _face)};
+  validate();
+  const auto extents{extents_for_CM(m_dimensions, byte_size_of_format(m_format),
+    _level, _face)};
   memcpy(m_data.data() + extents.offset, _data, extents.size);
 }
 
 void textureCM::record_dimensions(const math::vec2z& _dimensions) {
   RX_ASSERT(!(m_recorded & k_dimensions), "dimensions already recorded");
+
+  RX_ASSERT(m_recorded & k_type, "type not recorded");
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
 
   m_dimensions = _dimensions;
   m_dimensions_log2 = m_dimensions.map(math::log2<rx_size>);
-  m_data.resize(storage_for_CM(m_dimensions, byte_size_of_format(m_format), m_filter.mip_maps));
-  update_resource_usage(m_data.size());
   m_recorded |= k_dimensions;
+
+  if (m_type != type::k_attachment) {
+    m_data.resize(storage_for_CM(m_dimensions, byte_size_of_format(m_format),
+      m_filter.mip_maps));
+    update_resource_usage(m_data.size());
+  }
 }
 
 texture::level_info<math::vec2z> textureCM::info_for_level(face _face, rx_size _level) const {
