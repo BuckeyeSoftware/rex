@@ -145,9 +145,8 @@ void target::request_depth(texture::data_format _format, const math::vec2z& _dim
   m_depth_texture->record_filter({ false, false, false });
   m_depth_texture->record_dimensions(_dimensions);
   m_depth_texture->record_wrap({
-    texture::wrap_options::type::k_clamp_to_edge,
-    texture::wrap_options::type::k_clamp_to_edge,
-    texture::wrap_options::type::k_clamp_to_edge});
+    texture::wrap_type::k_clamp_to_edge,
+    texture::wrap_type::k_clamp_to_edge});
   m_frontend->initialize_texture(RX_RENDER_TAG("target depth"), m_depth_texture);
 
   m_owns |= k_depth;
@@ -165,9 +164,8 @@ void target::request_stencil(texture::data_format _format, const math::vec2z& _d
   m_stencil_texture->record_filter({ false, false, false });
   m_stencil_texture->record_dimensions(_dimensions);
   m_stencil_texture->record_wrap({
-    texture::wrap_options::type::k_clamp_to_edge,
-    texture::wrap_options::type::k_clamp_to_edge,
-    texture::wrap_options::type::k_clamp_to_edge});
+    texture::wrap_type::k_clamp_to_edge,
+    texture::wrap_type::k_clamp_to_edge});
   m_frontend->initialize_texture(RX_RENDER_TAG("target stencil"), m_stencil_texture);
 
   m_owns |= k_stencil;
@@ -185,9 +183,8 @@ void target::request_depth_stencil(texture::data_format _format, const math::vec
   m_depth_stencil_texture->record_filter({ false, false, false });
   m_depth_stencil_texture->record_dimensions(_dimensions);
   m_depth_stencil_texture->record_wrap({
-    texture::wrap_options::type::k_clamp_to_edge,
-    texture::wrap_options::type::k_clamp_to_edge,
-    texture::wrap_options::type::k_clamp_to_edge});
+    texture::wrap_type::k_clamp_to_edge,
+    texture::wrap_type::k_clamp_to_edge});
   m_frontend->initialize_texture(RX_RENDER_TAG("target depth stencil"), m_depth_stencil_texture);
 
   m_owns |= k_depth;

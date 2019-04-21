@@ -31,20 +31,14 @@ struct texture : resource {
     bool mip_maps;
   };
 
-  struct wrap_options {
-    enum class type {
-      k_clamp_to_edge,
-      k_clamp_to_border,
-      k_mirrored_repeat,
-      k_repeat
-    };
-
-    type s;
-    type t;
-    type r;
+  enum class wrap_type : rx_u8 {
+    k_clamp_to_edge,
+    k_clamp_to_border,
+    k_mirrored_repeat,
+    k_repeat
   };
 
-  enum class data_format {
+  enum class data_format : rx_u8 {
     k_r_u8,
     k_rgba_u8,
     k_bgra_u8,
@@ -59,7 +53,7 @@ struct texture : resource {
     k_s8
   };
 
-  enum class type {
+  enum class type : rx_u8 {
     k_attachment,
     k_static,
     k_dynamic
@@ -77,24 +71,19 @@ struct texture : resource {
   // record type |_type|
   void record_type(type _type);
 
-  // record |_wrap| parameters
-  void record_wrap(const wrap_options& _options);
-
-  // record |_filter| parameters
+  // record filter options |_options|
   void record_filter(const filter_options& _options);
 
   void validate() const;
 
   const array<rx_byte>& data() const &;
-
   data_format format() const;
   filter_options filter() const;
-  wrap_options wrap() const;
   rx_size channels() const;
   type kind() const;
 
 protected:
-  enum : rx_u16 {
+  enum : rx_u8 {
     k_format     = 1 << 0,
     k_type       = 1 << 1,
     k_filter     = 1 << 2,
@@ -106,67 +95,97 @@ protected:
   data_format m_format;
   type m_type;
   filter_options m_filter;
-  wrap_options m_wrap;
   rx_u16 m_recorded;
 };
 
 struct texture1D : texture {
+  using dimension_type = rx_size;
+  using wrap_options = wrap_type;
+
   texture1D(frontend* _frontend);
   ~texture1D();
 
   // write data |_data| to store for miplevel |_level|
   void write(const rx_byte* _data, rx_size _level);
 
-  // record dimensions |_dimensions|
-  void record_dimensions(rx_size _dimensions);
+  // map data for miplevel |_level|
+  rx_byte* map(rx_size _level);
 
-  rx_size dimensions() const;
+  void record_dimensions(const dimension_type& _dimensions);
+  void record_wrap(const wrap_options& _wrap);
+
+  const dimension_type& dimensions() const &;
+  const wrap_options& wrap() const &;
   rx_size levels() const;
-
-  level_info<rx_size> info_for_level(rx_size _level) const;
+  const level_info<dimension_type>& info_for_level(rx_size _index) const &;
 
 private:
-  rx_size m_dimensions;
-  rx_size m_dimensions_log2;
+  dimension_type m_dimensions;
+  dimension_type m_dimensions_log2;
+  wrap_options m_wrap;
+  array<level_info<dimension_type>> m_levels;
 };
 
 struct texture2D : texture {
+  using dimension_type = math::vec2z;
+  using wrap_options = math::vec2<wrap_type>;
+
   texture2D(frontend* _frontend);
   ~texture2D();
 
   // write data |_data| to store for miplevel |_level|
   void write(const rx_byte* _data, rx_size _level);
-  void record_dimensions(const math::vec2z& _dimensions);
 
-  const math::vec2z& dimensions() const &;
+  // map data for miplevel |_level|
+  rx_byte* map(rx_size _level);
+
+  void record_dimensions(const dimension_type& _dimensions);
+  void record_wrap(const wrap_options& _wrap);
+
+  const dimension_type& dimensions() const &;
+  const wrap_options& wrap() const &;
   rx_size levels() const;
-
-  level_info<math::vec2z> info_for_level(rx_size _level) const;
+  const level_info<dimension_type>& info_for_level(rx_size _index) const &;
 
 private:
-  math::vec2z m_dimensions;
-  math::vec2z m_dimensions_log2;
+  dimension_type m_dimensions;
+  dimension_type m_dimensions_log2;
+  wrap_options m_wrap;
+  array<level_info<dimension_type>> m_levels;
 };
 
 struct texture3D : texture {
+  using dimension_type = math::vec3z;
+  using wrap_options = math::vec3<wrap_type>;
+
   texture3D(frontend* _frontend);
   ~texture3D();
 
   // write 3D data |_data| to store for miplevel |_level|
   void write(const rx_byte* _data, rx_size _level);
-  void record_dimensions(const math::vec3z& _dimensions);
 
-  const math::vec3z& dimensions() const &;
+  // map data for miplevel |_level|
+  rx_byte* map(rx_size _level);
+
+  void record_dimensions(const dimension_type& _dimensions);
+  void record_wrap(const wrap_options& _wrap);
+
+  const dimension_type& dimensions() const &;
+  const wrap_options& wrap() const &;
   rx_size levels() const;
-
-  level_info<math::vec3z> info_for_level(rx_size _level) const;
+  const level_info<dimension_type>& info_for_level(rx_size _index) const &;
 
 private:
-  math::vec3z m_dimensions;
-  math::vec3z m_dimensions_log2;
+  dimension_type m_dimensions;
+  dimension_type m_dimensions_log2;
+  wrap_options m_wrap;
+  array<level_info<dimension_type>> m_levels;
 };
 
 struct textureCM : texture {
+  using dimension_type = math::vec2z;
+  using wrap_options = math::vec2<wrap_type>;
+
   enum class face : rx_u8 {
     k_right,
     k_left,
@@ -181,49 +200,24 @@ struct textureCM : texture {
 
   // write data |_data| for face |_face| to store for miplevel |_level|
   void write(const rx_byte* _data, face _face, rx_size _level);
-  void record_dimensions(const math::vec2z& _dimensions);
 
-  const math::vec2z& dimensions() const &;
+  // map data for face |_face| for miplevel |_level|
+  rx_byte* map(rx_size _level, face _facer);
+
+  void record_dimensions(const dimension_type& _dimensions);
+  void record_wrap(const wrap_options& _wrap);
+
+  const dimension_type& dimensions() const &;
+  const wrap_options& wrap() const &;
   rx_size levels() const;
-
-  level_info<math::vec2z> info_for_level(face _face, rx_size _level) const;
+  const level_info<dimension_type>& info_for_level(rx_size _index) const &;
 
 private:
-  math::vec2z m_dimensions;
-  math::vec2z m_dimensions_log2;
+  dimension_type m_dimensions;
+  dimension_type m_dimensions_log2;
+  wrap_options m_wrap;
+  array<level_info<dimension_type>> m_levels;
 };
-
-inline rx_size texture1D::dimensions() const {
-  return m_dimensions;
-}
-
-inline rx_size texture1D::levels() const {
-  return m_filter.mip_maps ? math::log2(m_dimensions_log2) + 1 : 1;
-}
-
-inline const math::vec2z& texture2D::dimensions() const & {
-  return m_dimensions;
-}
-
-inline rx_size texture2D::levels() const {
-  return m_filter.mip_maps ? math::log2(algorithm::max(m_dimensions.w, m_dimensions.h)) + 1 : 1;
-}
-
-inline const math::vec3z& texture3D::dimensions() const & {
-  return m_dimensions;
-}
-
-inline rx_size texture3D::levels() const {
-  return m_filter.mip_maps ? math::log2(algorithm::max(m_dimensions.w, m_dimensions.h, m_dimensions.d)) + 1 : 1;
-}
-
-inline const math::vec2z& textureCM::dimensions() const & {
-  return m_dimensions;
-}
-
-inline rx_size textureCM::levels() const {
-  return m_filter.mip_maps ? math::log2(algorithm::max(m_dimensions.w, m_dimensions.h)) + 1 : 1;
-}
 
 // texture
 inline const array<rx_byte>& texture::data() const & {
@@ -244,10 +238,6 @@ inline rx_size texture::channels() const {
 
 inline texture::type texture::kind() const {
   return m_type;
-}
-
-inline texture::wrap_options texture::wrap() const {
-  return m_wrap;
 }
 
 inline rx_size texture::byte_size_of_format(data_format _format) {
@@ -308,6 +298,81 @@ inline rx_size texture::channel_count_of_format(data_format _format) {
     return 1;
   }
   return 0;
+}
+
+// texture1D
+inline const texture1D::dimension_type& texture1D::dimensions() const & {
+  return m_dimensions;
+}
+
+inline const texture1D::wrap_options& texture1D::wrap() const & {
+  return m_wrap;
+}
+
+inline rx_size texture1D::levels() const {
+  return m_filter.mip_maps ? math::log2(m_dimensions_log2) + 1 : 1;
+}
+
+inline const texture::level_info<texture1D::dimension_type>&
+texture1D::info_for_level(rx_size _index) const & {
+  return m_levels[_index];
+}
+
+// texture2D
+inline const texture2D::dimension_type& texture2D::dimensions() const & {
+  return m_dimensions;
+}
+
+inline const texture2D::wrap_options& texture2D::wrap() const & {
+  return m_wrap;
+}
+
+inline rx_size texture2D::levels() const {
+  return m_filter.mip_maps
+    ? math::log2(algorithm::max(m_dimensions.w, m_dimensions.h)) + 1 : 1;
+}
+
+inline const texture::level_info<texture2D::dimension_type>&
+texture2D::info_for_level(rx_size _index) const & {
+  return m_levels[_index];
+}
+
+// texture3D
+inline const texture3D::dimension_type& texture3D::dimensions() const & {
+  return m_dimensions;
+}
+
+inline const texture3D::wrap_options& texture3D::wrap() const & {
+  return m_wrap;
+}
+
+inline rx_size texture3D::levels() const {
+  return m_filter.mip_maps
+    ? math::log2(algorithm::max(m_dimensions.w, m_dimensions.h, m_dimensions.d)) + 1 : 1;
+}
+
+inline const texture::level_info<texture3D::dimension_type>&
+texture3D::info_for_level(rx_size _index) const & {
+  return m_levels[_index];
+}
+
+// textureCM
+inline const textureCM::dimension_type& textureCM::dimensions() const & {
+  return m_dimensions;
+}
+
+inline const textureCM::wrap_options& textureCM::wrap() const & {
+  return m_wrap;
+}
+
+inline rx_size textureCM::levels() const {
+  return m_filter.mip_maps
+    ? math::log2(algorithm::max(m_dimensions.w, m_dimensions.h)) + 1 : 1;
+}
+
+inline const texture::level_info<textureCM::dimension_type>&
+textureCM::info_for_level(rx_size _index) const & {
+  return m_levels[_index];
 }
 
 } // namespace rx::render

@@ -71,6 +71,7 @@ struct vec3 {
     struct { T x, y, z; };
     struct { T w, h, d; };
     struct { T r, g, b; };
+    struct { T s, t, p; };
     T array[3];
   };
 };

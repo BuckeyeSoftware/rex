@@ -305,15 +305,15 @@ static filter convert_texture_filter(const render::texture::filter_options& _fil
   return {min, mag};
 }
 
-static GLenum convert_texture_wrap(const render::texture::wrap_options::type _type) {
+static GLenum convert_texture_wrap(const render::texture::wrap_type _type) {
   switch (_type) {
-  case render::texture::wrap_options::type::k_clamp_to_edge:
+  case render::texture::wrap_type::k_clamp_to_edge:
     return GL_CLAMP_TO_EDGE;
-  case render::texture::wrap_options::type::k_clamp_to_border:
+  case render::texture::wrap_type::k_clamp_to_border:
     return GL_CLAMP_TO_BORDER;
-  case render::texture::wrap_options::type::k_mirrored_repeat:
+  case render::texture::wrap_type::k_mirrored_repeat:
     return GL_MIRRORED_REPEAT;
-  case render::texture::wrap_options::type::k_repeat:
+  case render::texture::wrap_type::k_repeat:
     return GL_REPEAT;
   }
   RX_ASSERT(false, "unreachable");
@@ -1183,7 +1183,7 @@ void backend_gl4::process(rx_byte* _command) {
           const auto render_texture{resource->as_texture1D};
           const auto texture{reinterpret_cast<const detail::texture1D*>(render_texture + 1)};
           const auto wrap{render_texture->wrap()};
-          const auto wrap_s{convert_texture_wrap(wrap.s)};
+          const auto wrap_s{convert_texture_wrap(wrap)};
           const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{render_texture->filter()};
@@ -1268,7 +1268,7 @@ void backend_gl4::process(rx_byte* _command) {
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
-          const auto wrap_r{convert_texture_wrap(wrap.r)};
+          const auto wrap_r{convert_texture_wrap(wrap.p)};
           const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{render_texture->filter()};

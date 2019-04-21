@@ -243,15 +243,15 @@ immediate::font::font(const key& _key, frontend* _frontend)
         m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("font"));
         m_texture->record_format(texture::data_format::k_r_u8);
         m_texture->record_type(texture::type::k_static);
-        m_texture->record_filter({false, false, false});
+        m_texture->record_filter({true, false, true});
         m_texture->record_dimensions({m_resolution, m_resolution});
-        m_texture->record_wrap({texture::wrap_options::type::k_clamp_to_edge,
-                                texture::wrap_options::type::k_clamp_to_edge,
-                                texture::wrap_options::type::k_clamp_to_edge});
+        m_texture->record_wrap({
+          texture::wrap_type::k_clamp_to_edge,
+          texture::wrap_type::k_clamp_to_edge});
         
         const auto bpp{texture::byte_size_of_format(m_texture->format())};
-        m_texture->write(baked_atlas.data(), 0);
-        #if 0
+        // m_texture->write(baked_atlas.data(), 0);
+
         // write mip levels
         for (rx_size i{0}; i < m_texture->levels(); i++) {
           const auto info{m_texture->info_for_level(i)};
@@ -267,7 +267,6 @@ immediate::font::font(const key& _key, frontend* _frontend)
             info.dimensions.h);
           m_texture->write(data.data(), i);
         }
-        #endif
           
         m_frontend->initialize_texture(RX_RENDER_TAG("font"), m_texture);
 

@@ -19,10 +19,10 @@ void halve(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
     {
       for (rx_size i{0}; i < C; i++) {
         dst_[i] = (T{x_src[i]} + T{x_src[i+C]} + T{x_src[_stride+i]} +
-          T{x_src[_stride+C]}) >> 2;
+          T{x_src[_stride+i+C]}) >> 2;
       }
-      _src += 2 * _stride;
     }
+    _src += 2 * _stride;
   }
 }
 
@@ -79,10 +79,10 @@ void scale(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
   const rx_size d_area{_dw * _dh};
   const rx_size s_area{_sw * _sh};
 
-  rx_size area_oflow;
-  rx_size area_uflow;
-  for (area_oflow = 0; (d_area >> area_oflow) > s_area; area_oflow++);
-  for (area_uflow = 0; (d_area << area_uflow) > s_area; area_uflow++);
+  rx_size area_oflow{0};
+  rx_size area_uflow{0};
+  for (; (d_area >> area_oflow) > s_area; area_oflow++);
+  for (; (d_area << area_uflow) > s_area; area_uflow++);
 
   const rx_size c_scale{algorithm::clamp(area_uflow, area_oflow - 12, 12_z)};
   const rx_size a_scale{algorithm::clamp(12 + area_uflow - area_oflow, 0_z, 24_z)};
@@ -94,18 +94,18 @@ void scale(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
 
   for (rx_size y{0}; y < _dh; y += h_frac) {
     const rx_size yn{y + h_frac - 1};
-    const rx_size yi{y >> 12};
-    const rx_size h{(yn >> 12) - yi};
-    const rx_size yl{((yn | (-rx_s32(h) >> 24)) & 0xfffu) + 1 - (y & 0xfffu)};
-    const rx_size yh{(yn & 0xfffu) + 1};
+    const rx_size yi{y >> 12_z};
+    const rx_size h{(yn >> 12_z) - yi};
+    const rx_size yl{((yn | (-rx_s32(h) >> 24)) & 0xfff_z) + 1 - (y & 0xfff_z)};
+    const rx_size yh{(yn & 0xfff_z) + 1};
     const rx_byte* y_src{_src + yi * _stride};
 
     for (rx_size x{0}; x < _dw; x += w_frac, dst_ += C) {
       const rx_size xn{x + w_frac - 1};
-      const rx_size xi{x >> 12};
-      const rx_size w{(xn >> 12) - xi};
-      const rx_size xl{((w + 0xfffu) & 0x1000u) - (x & 0xfffu)};
-      const rx_size xh{(xn & 0xfffu) + 1};
+      const rx_size xi{x >> 12_z};
+      const rx_size w{(xn >> 12_z) - xi};
+      const rx_size xl{((w + 0xfff_z) & 0x1000_z) - (x & 0xfff_z)};
+      const rx_size xh{(xn & 0xfff_z) + 1};
       const rx_byte* x_src{y_src + xi * C};
       const rx_byte* x_end{x_src + w * C};
 
@@ -117,7 +117,7 @@ void scale(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
       }
 
       for (rx_size i{0}; i < C; i++) {
-        r[i] = (yl * (r[i] + ((x_src[i] * xl + x_end[i] * xh) >> 12u))) >> c_scale;
+        r[i] = (yl * (r[i] + ((x_src[i] * xl + x_end[i] * xh) >> 12_z))) >> c_scale;
       }
 
       if (h) {
@@ -134,7 +134,7 @@ void scale(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
           }
 
           for (rx_size i{0}; i < C; i++) {
-            r[i] += ((p[i] << 12u) + x_src[i] * xl + x_end[i] * xh) >> c_scale;
+            r[i] += ((p[i] << 12_z) + x_src[i] * xl + x_end[i] * xh) >> c_scale;
           }
         }
 
@@ -146,7 +146,7 @@ void scale(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
         }
 
         for (rx_size i{0}; i < C; i++) {
-          r[i] += (yh * (p[i] + ((x_src[i] * xl + x_end[i] * xh) >> 12u))) >> c_scale;
+          r[i] += (yh * (p[i] + ((x_src[i] * xl + x_end[i] * xh) >> 12_z))) >> c_scale;
         }
       }
 

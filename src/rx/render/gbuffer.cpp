@@ -33,9 +33,8 @@ void gbuffer::create(const math::vec2z& _resolution) {
   m_albedo_texture->record_filter({false, false, false});
   m_albedo_texture->record_dimensions(_resolution);
   m_albedo_texture->record_wrap({
-    texture::wrap_options::type::k_clamp_to_edge,
-    texture::wrap_options::type::k_clamp_to_edge,
-    texture::wrap_options::type::k_clamp_to_edge});
+    texture::wrap_type::k_clamp_to_edge,
+    texture::wrap_type::k_clamp_to_edge});
   m_frontend->initialize_texture(RX_RENDER_TAG("gbuffer albedo"), m_albedo_texture);
 
   m_normal_texture = m_frontend->create_texture2D(RX_RENDER_TAG("gbuffer normal"));
@@ -44,9 +43,8 @@ void gbuffer::create(const math::vec2z& _resolution) {
   m_normal_texture->record_filter({ false, false, false });
   m_normal_texture->record_dimensions(_resolution);
   m_normal_texture->record_wrap({
-    texture::wrap_options::type::k_clamp_to_edge,
-    texture::wrap_options::type::k_clamp_to_edge,
-    texture::wrap_options::type::k_clamp_to_edge});
+    texture::wrap_type::k_clamp_to_edge,
+    texture::wrap_type::k_clamp_to_edge});
   m_frontend->initialize_texture(RX_RENDER_TAG("gbuffer normal"), m_normal_texture);
 
   m_emission_texture = m_frontend->create_texture2D(RX_RENDER_TAG("gbuffer emission"));
@@ -55,9 +53,8 @@ void gbuffer::create(const math::vec2z& _resolution) {
   m_emission_texture->record_filter({false, false, false});
   m_emission_texture->record_dimensions(_resolution);
   m_emission_texture->record_wrap({
-    texture::wrap_options::type::k_clamp_to_edge,
-    texture::wrap_options::type::k_clamp_to_edge,
-    texture::wrap_options::type::k_clamp_to_edge});
+    texture::wrap_type::k_clamp_to_edge,
+    texture::wrap_type::k_clamp_to_edge});
   m_frontend->initialize_texture(RX_RENDER_TAG("gbuffer emission"), m_emission_texture);
 
   m_target = m_frontend->create_target(RX_RENDER_TAG("gbuffer"));
