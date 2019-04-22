@@ -14,7 +14,7 @@ namespace rx::render {
 // simple recursive descent parser and evaluator for declarative predicates
 // <ident> := [a-Z0-9_]
 // <op>    := "&&"" | "||"
-// <expr>  := <ident> | (<expr>) | <expr> <op> <expr>
+// <expr>  := <ident> | (<expr>) | <expr> <op> <expr> | !<expr>
 enum {
   k_unmatched_parenthesis        = -1,
   k_unexpected_character         = -2,
