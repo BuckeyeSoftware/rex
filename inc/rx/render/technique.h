@@ -43,9 +43,30 @@ struct technique : concepts::no_copy {
 
 private:
   struct uniform_definition {
+    union variant {
+      constexpr variant()
+        : as_nat{}
+      {
+      }
+
+      utility::nat as_nat;
+      rx_s32 as_int;
+      rx_f32 as_float;
+      bool as_bool;
+      math::vec2i as_vec2i;
+      math::vec3i as_vec3i;
+      math::vec4i as_vec4i;
+      math::vec2f as_vec2f;
+      math::vec3f as_vec3f;
+      math::vec4f as_vec4f;
+      math::mat3x3f as_mat3x3f;
+      math::mat4x4f as_mat4x4f;
+    };
+
     uniform::type kind;
     string name;
     string when;
+    variant value;
   };
 
   struct shader_definition {

@@ -2,6 +2,7 @@
 #include <string.h> // strcmp
 
 #include <rx/core/json.h>
+#include <rx/math/trig.h>
 
 namespace rx {
 
@@ -67,6 +68,34 @@ json::~json() {
   }
 }
 
+optional<string> json::error() const {
+  if (m_allocator) {
+    return string::format("%zu:%zu %s", m_error.error_line_no, m_error.error_row_no,
+      json_parse_error_to_string(static_cast<enum json_parse_error_e>(m_error.error)));
+  }
+  return nullopt;
+}
+
+bool json::is_type(type _type) const {
+  switch (_type) {
+  case type::k_array:
+    return m_root->type == json_type_array;
+  case type::k_boolean:
+    return m_root->type == json_type_true || m_root->type == json_type_false;
+  case type::k_integer:
+    return m_root->type == json_type_number && math::floor(as_number()) == as_number();
+  case type::k_null:
+    return !m_root || m_root->type == json_type_null;
+  case type::k_number:
+    return m_root->type == json_type_number;
+  case type::k_object:
+    return m_root->type == json_type_object;
+  case type::k_string:
+    return m_root->type == json_type_string;
+  }
+  return false;
+}
+
 json json::operator[](rx_size _index) const {
   RX_ASSERT(is_array() || is_object(), "not an indexable type");
 
@@ -102,6 +131,15 @@ rx_f64 json::as_number() const {
   return strtod(number->number, nullptr);
 }
 
+rx_f32 json::as_float() const {
+  return static_cast<rx_f32>(as_number());
+}
+
+rx_s32 json::as_integer() const {
+  RX_ASSERT(is_integer(), "not a integer");
+  return static_cast<rx_s32>(as_number());
+}
+
 json json::operator[](const char* _name) const {
   RX_ASSERT(is_object(), "not a object");
   auto object{reinterpret_cast<struct json_object_s*>(m_root->payload)};
@@ -128,14 +166,6 @@ rx_size json::size() const {
     return reinterpret_cast<struct json_object_s*>(m_root->payload)->length;
   }
   return 0;
-}
-
-optional<string> json::error() const {
-  if (m_allocator) {
-    return string::format("%zu:%zu %s", m_error.error_line_no, m_error.error_row_no,
-      json_parse_error_to_string(static_cast<enum json_parse_error_e>(m_error.error)));
-  }
-  return nullopt;
 }
 
 } // namespace rx

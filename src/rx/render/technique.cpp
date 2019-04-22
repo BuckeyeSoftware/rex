@@ -574,8 +574,8 @@ void technique::write_log(log::level _level, string&& _message) const {
 }
 
 bool technique::parse_uniforms(const json& _uniforms) {
-  if (!_uniforms.is_array()) {
-    return error("expected Array for 'uniforms'");
+  if (!_uniforms.is_array_of(json::type::k_object)) {
+    return error("expected Array[Object] for 'uniforms'");
   }
 
   return _uniforms.each([this](const json& _uniform) {
@@ -584,8 +584,8 @@ bool technique::parse_uniforms(const json& _uniforms) {
 }
 
 bool technique::parse_shaders(const json& _shaders) {
-  if (!_shaders.is_array()) {
-    return error("expected Array for 'shaders'");
+  if (!_shaders.is_array_of(json::type::k_object)) {
+    return error("expected Array[Object] for 'shaders'");
   }
 
   return _shaders.each([this](const json& _shader) {
@@ -601,6 +601,7 @@ bool technique::parse_uniform(const json& _uniform) {
   const auto& name{_uniform["name"]};
   const auto& type{_uniform["type"]};
   const auto& when{_uniform["when"]};
+  const auto& value{_uniform["value"]};
 
   if (!name) {
     return error("missing 'name' in uniform");
@@ -637,7 +638,172 @@ bool technique::parse_uniform(const json& _uniform) {
     return error("unknown type '%s' for '%s'", type_string, name_string);
   }
 
-  m_uniform_definitions.push_back({*kind, name_string, when ? when.as_string() : ""});
+  uniform_definition::variant constant;
+
+  if (value) {
+    switch (*kind) {
+    case uniform::type::k_sampler1D:
+      [[fallthrough]];
+    case uniform::type::k_sampler2D:
+      [[fallthrough]];
+    case uniform::type::k_sampler3D:
+      [[fallthrough]];
+    case uniform::type::k_samplerCM:
+      [[fallthrough]];
+    case uniform::type::k_int:
+      if (!value.is_integer()) {
+        return error("expected Integer for %s", name_string);
+      }
+      constant.as_int = value.as_integer();
+      break;
+
+    case uniform::type::k_bool:
+      if (!value.is_boolean()) {
+        return error("expected Boolean for %s", name_string);
+      }
+      constant.as_bool = value.as_boolean();
+      break;
+
+    case uniform::type::k_float:
+      if (!value.is_number()) {
+        return error("expected Number for %s", name_string);
+      }
+      constant.as_float = value.as_float();
+      break;
+
+    case uniform::type::k_vec2i:
+      if (!value.is_array_of(json::type::k_integer, 2)) {
+        return error("expected Array[Integer, 2] for %s", name_string);
+      }
+      constant.as_vec2i = {
+        value[0_z].as_integer(),
+        value[1_z].as_integer()
+      };
+      break;
+
+    case uniform::type::k_vec3i:
+      if (!value.is_array_of(json::type::k_integer, 3)) {
+        return error("expected Array[Integer, 3] for %s", name_string);
+      }
+      constant.as_vec3i = {
+        value[0_z].as_integer(),
+        value[1_z].as_integer(),
+        value[2_z].as_integer()
+      };
+      break;
+
+    case uniform::type::k_vec4i:
+      if (!value.is_array_of(json::type::k_integer, 4)) {
+        return error("expected Array[Integer, 4] for %s", name_string);
+      }
+      constant.as_vec4i = {
+        value[0_z].as_integer(),
+        value[1_z].as_integer(),
+        value[2_z].as_integer(),
+        value[3_z].as_integer()
+      };
+      break;
+
+    case uniform::type::k_vec2f:
+      if (!value.is_array_of(json::type::k_number, 2)) {
+        return error("expected Array[Number, 2] for %s", name_string);
+      }
+      constant.as_vec2f = {
+        value[0_z].as_float(),
+        value[1_z].as_float()
+      };
+      break;
+
+    case uniform::type::k_vec3f:
+      if (!value.is_array_of(json::type::k_number, 3)) {
+        return error("expected Array[Number, 3] for %s", name_string);
+      }
+      constant.as_vec3f = {
+        value[0_z].as_float(),
+        value[1_z].as_float(),
+        value[2_z].as_float()
+      };
+      break;
+
+    case uniform::type::k_vec4f:
+      if (!value.is_array_of(json::type::k_number, 4)) {
+        return error("expected Array[Number, 4] for %s", name_string);
+      }
+      constant.as_vec4f = {
+        value[0_z].as_float(),
+        value[1_z].as_float(),
+        value[2_z].as_float(),
+        value[3_z].as_float()
+      };
+      break;
+
+    case uniform::type::k_mat4x4f:
+      if (!value.is_array_of(json::type::k_array, 4)
+        ||!value.each([](const json& _row) { return _row.is_array_of(json::type::k_number, 4); }))
+      {
+        return error("expected Array[Array[Number, 4], 4] for %s", name_string);
+      }
+
+      constant.as_mat4x4f = {
+        {
+          value[0_z][0_z].as_float(),
+          value[0_z][1_z].as_float(),
+          value[0_z][2_z].as_float(),
+          value[0_z][3_z].as_float()
+        },
+        {
+          value[1_z][0_z].as_float(),
+          value[1_z][1_z].as_float(),
+          value[1_z][2_z].as_float(),
+          value[1_z][3_z].as_float()
+        },
+        {
+          value[2_z][0_z].as_float(),
+          value[2_z][1_z].as_float(),
+          value[2_z][2_z].as_float(),
+          value[2_z][3_z].as_float()
+        },
+        {
+          value[3_z][0_z].as_float(),
+          value[3_z][1_z].as_float(),
+          value[3_z][2_z].as_float(),
+          value[3_z][3_z].as_float()
+        }
+      };
+      break;
+
+    case uniform::type::k_mat3x3f:
+      if (!value.is_array_of(json::type::k_array, 3)
+      || !value.each([](const json& _row) { return _row.is_array_of(json::type::k_number, 3); }))
+      {
+        return error("expected Array[Array[Number, 3], 3] for %s", name_string);
+      }
+
+    constant.as_mat3x3f = {
+        {
+          value[0_z][0_z].as_float(),
+          value[0_z][1_z].as_float(),
+          value[0_z][2_z].as_float()
+        },
+        {
+          value[1_z][0_z].as_float(),
+          value[1_z][1_z].as_float(),
+          value[1_z][2_z].as_float()
+        },
+        {
+          value[2_z][0_z].as_float(),
+          value[2_z][1_z].as_float(),
+          value[2_z][2_z].as_float()
+        }
+      };
+      break;
+
+    case uniform::type::k_bonesf:
+      return error("cannot give value for bones");
+    }
+  }
+
+  m_uniform_definitions.push_back({*kind, name_string, when ? when.as_string() : "", constant});
   return true;
 }
 
@@ -706,9 +872,11 @@ bool technique::parse_shader(const json& _shader) {
   return true;
 }
 
-bool technique::parse_inouts(const json& _inouts, const char* _type, map<string, shader_definition::inout>& inouts_) {
-  if (!_inouts.is_array()) {
-    return error("expected Array in %ss", _type);
+bool technique::parse_inouts(const json& _inouts, const char* _type,
+  map<string, shader_definition::inout>& inouts_)
+{
+  if (!_inouts.is_array_of(json::type::k_object)) {
+    return error("expected Array[Object] in %ss", _type);
   }
 
   return _inouts.each([&](const json& _inout) {
@@ -716,11 +884,9 @@ bool technique::parse_inouts(const json& _inouts, const char* _type, map<string,
   });
 }
 
-bool technique::parse_inout(const json& _inout, const char* _type, map<string, shader_definition::inout>& inouts_) {
-  if (!_inout.is_object()) {
-    return error("expected Object for %s", _type);
-  }
-
+bool technique::parse_inout(const json& _inout, const char* _type,
+  map<string, shader_definition::inout>& inouts_)
+{
   const auto& name{_inout["name"]};
   const auto& type{_inout["type"]};
   const auto& when{_inout["when"]};
@@ -765,9 +931,11 @@ bool technique::parse_inout(const json& _inout, const char* _type, map<string, s
   return true;
 }
 
-bool technique::parse_specializations(const json& _specializations, const char* _type) {
-  if (!_specializations.is_array()) {
-    return error("expected Array for '%ss'", _type);
+bool technique::parse_specializations(const json& _specializations,
+  const char* _type)
+{
+  if (!_specializations.is_array_of(json::type::k_string)) {
+    return error("expected Array[String] for '%ss'", _type);
   }
 
   return _specializations.each([this, _type](const json& _specialization) {
@@ -775,7 +943,9 @@ bool technique::parse_specializations(const json& _specializations, const char* 
   });
 }
 
-bool technique::parse_specialization(const json& _specialization, const char* _type) {
+bool technique::parse_specialization(const json& _specialization,
+  const char* _type)
+{
   if (!_specialization.is_string()) {
     return error("expected String for '%s'", _type);
   }

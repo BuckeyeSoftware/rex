@@ -87,12 +87,12 @@ struct static_global
   template<typename... Ts>
   constexpr static_global(const char* name, Ts&&... args);
 
-  T& operator*();
-  T* operator&();
-  T* operator->();
-  const T& operator*() const;
-  const T* operator&() const;
-  const T* operator->() const;
+  constexpr T& operator*();
+  constexpr T* operator&();
+  constexpr T* operator->();
+  constexpr const T& operator*() const;
+  constexpr const T* operator&() const;
+  constexpr const T* operator->() const;
 
   template<typename... Ts>
   auto operator()(Ts&&... args);
@@ -110,32 +110,32 @@ inline constexpr static_global<T>::static_global(const char* name, Ts&&... args)
 }
 
 template<typename T>
-inline T& static_global<T>::operator*() {
+inline constexpr T& static_global<T>::operator*() {
   return *m_data.data();
 }
 
 template<typename T>
-inline T* static_global<T>::operator&() {
+inline constexpr T* static_global<T>::operator&() {
   return m_data.data();
 }
 
 template<typename T>
-inline T *static_global<T>::operator->() {
+inline constexpr T *static_global<T>::operator->() {
   return m_data.data();
 }
 
 template<typename T>
-inline const T& static_global<T>::operator*() const {
+inline constexpr const T& static_global<T>::operator*() const {
   return *m_data.data();
 }
 
 template<typename T>
-inline const T* static_global<T>::operator&() const {
+inline constexpr const T* static_global<T>::operator&() const {
   return m_data.data();
 }
 
 template<typename T>
-inline const T* static_global<T>::operator->() const {
+inline constexpr const T* static_global<T>::operator->() const {
   return m_data.data();
 }
 

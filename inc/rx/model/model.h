@@ -30,8 +30,11 @@ struct model {
   bool is_animated() const;
 
   const array<vertex>& vertices() const &;
+  array<vertex>&& vertices() &&;
   const array<animated_vertex> animated_vertices() const &;
+  array<animated_vertex>&& animated_vertices() &&;
   const array<rx_u32>& elements() const &;
+  array<rx_u32>&& elements() &&;
   rx_size joints() const;
 
 private:
@@ -66,15 +69,30 @@ inline bool model::is_animated() const {
 }
 
 inline const array<model::vertex>& model::vertices() const & {
+  RX_ASSERT(!m_is_animated, "not a static model");
   return as_vertices;
 }
 
+inline array<model::vertex>&& model::vertices() && {
+  return utility::move(as_vertices);
+}
+
 inline const array<model::animated_vertex> model::animated_vertices() const & {
+  RX_ASSERT(m_is_animated, "not a animated model");
   return as_animated_vertices;
+}
+
+inline array<model::animated_vertex>&& model::animated_vertices() && {
+  RX_ASSERT(m_is_animated, "not a animated model");
+  return utility::move(as_animated_vertices);
 }
 
 inline const array<rx_u32>& model::elements() const & {
   return m_elements;
+}
+
+inline array<rx_u32>&& model::elements() && {
+  return utility::move(m_elements);
 }
 
 inline rx_size model::joints() const {

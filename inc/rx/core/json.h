@@ -20,19 +20,36 @@ struct json {
   json(memory::allocator* _allocator, const string& _contents);
   ~json();
 
+  enum class type {
+    k_array,
+    k_boolean,
+    k_null,
+    k_number,
+    k_object,
+    k_string,
+    k_integer
+  };
+
   operator bool() const;
   optional<string> error() const;
 
+  bool is_type(type _type) const;
+
   bool is_array() const;
+  bool is_array_of(type _type) const;
+  bool is_array_of(type _type, rx_size _size) const;
   bool is_boolean() const;
   bool is_null() const;
   bool is_number() const;
   bool is_object() const;
   bool is_string() const;
+  bool is_integer() const;
 
   json operator[](rx_size _index) const;
   bool as_boolean() const;
   rx_f64 as_number() const;
+  rx_f32 as_float() const;
+  rx_s32 as_integer() const;
   json operator[](const char* _name) const;
   string as_string() const;
 
@@ -67,27 +84,55 @@ inline json::operator bool() const {
 }
 
 inline bool json::is_array() const {
-  return m_root->type == json_type_array;
+  return is_type(type::k_array);
+}
+
+inline bool json::is_array_of(type _type) const {
+  if (!is_array()) {
+    return false;
+  }
+
+  return each([this, _type](const json& _value) {
+    return _value.is_type(_type);
+  });
+}
+
+inline bool json::is_array_of(type _type, rx_size _size) const {
+  if (!is_array()) {
+    return false;
+  }
+
+  if (size() != _size) {
+    return false;
+  }
+
+  return each([this, _type](const json& _value) {
+    return _value.is_type(_type);
+  });
 }
 
 inline bool json::is_boolean() const {
-  return m_root->type == json_type_true || m_root->type == json_type_false;
+  return is_type(type::k_boolean);
 }
 
 inline bool json::is_null() const {
-  return !m_root || m_root->type == json_type_null;
+  return is_type(type::k_null);
 }
 
 inline bool json::is_number() const {
-  return m_root->type == json_type_number;
+  return is_type(type::k_number);
 }
 
 inline bool json::is_object() const {
-  return m_root->type == json_type_object;
+  return is_type(type::k_object);
 }
 
 inline bool json::is_string() const {
-  return m_root->type == json_type_string;
+  return is_type(type::k_string);
+}
+
+inline bool json::is_integer() const {
+  return is_type(type::k_integer);
 }
 
 template<typename F>

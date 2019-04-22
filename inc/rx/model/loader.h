@@ -37,9 +37,7 @@ struct loader : concepts::interface {
   };
 
   const array<mesh>& meshes() const &;
-
   const array<rx_u32>& elements() const &;
-
   const array<math::vec3f>& positions() const &;
   const array<math::vec2f>& coordinates() const &;
   const array<math::vec3f>& normals() const &;

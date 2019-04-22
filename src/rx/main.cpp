@@ -23,6 +23,8 @@
 
 #include <rx/math/transform.h>
 
+#include <rx/texture/loader.h>
+
 RX_CONSOLE_V2IVAR(
   display_resolution,
   "display.resolution",
@@ -165,6 +167,12 @@ int entry(int argc, char **argv) {
     model_buffer->record_element_type(rx::render::buffer::element_type::k_u32);
     model_buffer->record_type(rx::render::buffer::type::k_static);
     rx::model::model model{&rx::memory::g_system_allocator};
+
+    rx::texture::loader loader;
+    if (loader.load("test.png")) {
+      RX_MESSAGE("texture %zu x %zu @ %zu (%zu bpp)", loader.dimensions().w,
+        loader.dimensions().h, loader.channels(), loader.bpp());
+    }
 
     rx_u32 element_count{0};
     if (model.load("test.iqm")) {
