@@ -36,9 +36,6 @@ There cannot be both `variants` and `permutes`
   * `"fragment"`
   * `"compute"`
 
-`#ShaderSource` is a `String` that is a subset of GLSL with some modifications
-outlined [here](SHADER.md)
-
 `#InOut` schema looks like:
 ```
 {
@@ -48,13 +45,17 @@ outlined [here](SHADER.md)
 }
 ```
 
-The inputs of a vertex shader describe the vertex attributes, the outputs of
-a vertex shader are values passed to the fragment shader, as such the outputs
+`#ShaderSource` is a `String` that is a subset of GLSL with some modifications
+outlined [here](SHADER.md)
+
+The inputs of a vertex shader describe the vertex attributes. The outputs of
+a vertex shader are values passed to the fragment shader; as such, the outputs
 of the vertex shader **must** match the inputs of the fragment shader.
 
-The outputs of a fragment shader describe the fragment data, multiple outputs
-means the technique can only be used with a render target with multiple
-attachments. The types must match the attachment types for the render target.
+The outputs of a fragment shader describe the fragment data for a target.
+Multiple outputs means the technique can only be used with a render target with
+multiple attachments. The types must match the attachment types for the render
+target.
 
 `#InOutType` is a `String` that is one of
   * `"vec2i"`
@@ -112,16 +113,6 @@ attachments. The types must match the attachment types for the render target.
 
 A `value` cannot be specified for `bonesf`
 
-As an example, the identity matrix for a `mat4x4f` would look like
-```
-[
-  [1, 0, 0, 0],
-  [0, 1, 0, 0],
-  [0, 0, 1, 0],
-  [0, 0, 0, 1]
-]
-```
-
 `#When` is a `String` that can only be present if `variants` or `permutes`
 exists. It encodes a binary expression that is evaluated to conditionally
 include or exclude the given entity. The grammar of the expression is given
@@ -131,6 +122,15 @@ include or exclude the given entity. The grammar of the expression is given
 <expr>  := <ident> | (<expr>) | <expr> <op> <expr> | !<expr>
 ```
 
-Here's an example expression
+The purpose of `variants` is to describe a list of tokens used to control shader
+variants. A program is created for each variant. The token in the variants array
+can then be used to conditionally include or exclude bodies of code in the
+source through the use of the preprocerssor as well as through the use of the
+`#When` for `#InOut` and `#Uniform` entities.
 
-`(a && b) || c && !d`
+The purpose of `permutes` is to a describe a list of tokens used to control
+shader permutations. A program is created for every permutation of tokens in
+the permutes list. Tokens in the permutes array can then be used to
+conditionally include or exclude bodies of code in the source through the use of
+the preprocessor as well as through the use of the `#When` for `#InOut` and
+`#Uniform` entities.
