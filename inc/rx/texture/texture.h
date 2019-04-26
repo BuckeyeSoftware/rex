@@ -23,7 +23,9 @@ struct texture {
     math::vec2z dimensions;
   };
 
+  // create texture with given |_loader| data
   texture(loader&& _loader, bool _want_mipchain);
+
   texture(array<rx_byte>&& _data, pixel_format _format,
     const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain);
   texture(const rx_byte* _data, pixel_format _format,
@@ -44,8 +46,7 @@ struct texture {
   rx_size bpp() const;
 
 private:
-  void generate_levels(bool _has_mipchain, bool _want_mipchain);
-  void generate_mipmaps();
+  void generate_mipchain(bool _has_mipchain, bool _want_mipchain);
 
   static pixel_format pixel_format_for_loader_bpp(rx_size _bpp);
 
