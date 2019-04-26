@@ -36,7 +36,7 @@ struct type_eraser
   // call the destructor on the type-erased object
   void fini();
 
-  const void* data() const { return m_data; }
+  const void* data() const;
 
 private:
   void* m_data;
@@ -114,6 +114,10 @@ inline void type_eraser::init() {
 
 inline void type_eraser::fini() {
   m_destruct_fn(m_data);
+}
+
+inline const void* type_eraser::data() const {
+  return m_data;
 }
 
 } // namespace rx

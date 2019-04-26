@@ -39,7 +39,7 @@ struct uninitialized_storage
 private:
   union {
     utility::nat m_nat;
-    alignas(T) rx_byte m_data[sizeof(T)];
+    alignas(T) mutable rx_byte m_data[sizeof(T)];
   };
 };
 
@@ -74,7 +74,7 @@ inline const T* uninitialized_storage<T>::data() const {
 template<typename T>
 template<typename... Ts>
 inline type_eraser uninitialized_storage<T>::type_erase(Ts&&... args) const {
-  return {const_cast<void*>(reinterpret_cast<const void*>(data())), traits::type_identity<T>{}, utility::forward<Ts>(args)...};
+  return {reinterpret_cast<void*>(m_data), traits::type_identity<T>{}, utility::forward<Ts>(args)...};
 }
 
 } // namespace rx::memory
