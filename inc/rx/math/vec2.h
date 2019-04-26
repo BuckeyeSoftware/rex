@@ -6,6 +6,9 @@
 #include <rx/core/hash.h> // hash, hash_combine
 #include <rx/core/assert.h> // RX_ASSERT
 
+#include <rx/core/algorithm/min.h> // algorithm::min
+#include <rx/core/algorithm/max.h> // algorithm::max
+
 namespace rx::math {
 
 template<typename T>
@@ -22,6 +25,9 @@ struct vec2 {
 
   T area() const;
   T sum() const;
+
+  T max_element() const;
+  T min_element() const;
 
   template<typename F>
   vec2<T> map(F&& _fn) const;
@@ -133,6 +139,16 @@ inline T vec2<T>::area() const {
 template<typename T>
 inline T vec2<T>::sum() const {
   return x + y;
+}
+
+template<typename T>
+inline T vec2<T>::max_element() const {
+  return algorithm::max(x, y);
+}
+
+template<typename T>
+inline T vec2<T>::min_element() const {
+  return algorithm::min(x, y);
 }
 
 template<typename T>

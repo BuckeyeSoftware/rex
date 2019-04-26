@@ -1,9 +1,9 @@
 #ifndef RX_RENDER_FRONTEND_H
 #define RX_RENDER_FRONTEND_H
 
+#include <rx/core/deferred_function.h>
 #include <rx/core/array.h>
 #include <rx/core/string.h>
-#include <rx/core/function.h>
 #include <rx/core/map.h>
 
 #include <rx/core/concurrency/mutex.h>

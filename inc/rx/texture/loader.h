@@ -20,10 +20,10 @@ struct loader {
 
 private:
   memory::allocator* m_allocator;
+  array<rx_byte> m_data;
   rx_size m_bpp;
   rx_size m_channels;
   math::vec2z m_dimensions;
-  array<rx_byte> m_data;
 };
 
 inline constexpr loader::loader()
@@ -33,10 +33,10 @@ inline constexpr loader::loader()
 
 inline constexpr loader::loader(memory::allocator* _allocator)
   : m_allocator{_allocator}
+  , m_data{m_allocator}
   , m_bpp{0}
   , m_channels{0}
   , m_dimensions{}
-  , m_data{m_allocator}
 {
 }
 

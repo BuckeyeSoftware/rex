@@ -49,6 +49,8 @@ struct map {
   template<typename F>
   bool each(F&& _function) const;
 
+  memory::allocator* allocator() const;
+
 private:
   void clear_and_deallocate();
   void initialize(memory::allocator* _allocator, rx_size _capacity);
@@ -433,6 +435,11 @@ inline bool map<K, V>::each(F&& _function) {
     }
   }
   return true;
+}
+
+template<typename K, typename V>
+inline memory::allocator* map<K, V>::allocator() const {
+  return m_allocator;
 }
 
 template<typename K, typename V>

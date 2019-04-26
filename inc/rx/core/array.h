@@ -68,25 +68,7 @@ struct array {
   template<typename F>
   bool each_rev(F&& _func) const;
 
-  void erase(rx_size _from, rx_size _to) {
-    const rx_size range{_to-_from};
-    T* begin{m_data};
-    T* end{m_data + m_size};
-    T* first{begin + _from};
-    T* last{begin + _to};
-
-    for (T* value{last}, *dest{first}; value != end; ++value, ++dest) {
-      *dest = utility::move(*value);
-    }
-
-    if constexpr (!traits::is_trivially_destructible<T>) {
-      for (T* value{end-range}; value < end; ++value) {
-        utility::destruct<T>(value);
-      }
-    }
-
-    m_size -= range;
-  }
+  void erase(rx_size _from, rx_size _to);
 
   // first or last element
   const T& first() const;
@@ -96,6 +78,8 @@ struct array {
 
   const T* data() const;
   T* data();
+
+  memory::allocator* allocator() const;
 
 private:
   // NOTE(dweiler): does not adjust m_size just adjusts capacity
@@ -409,6 +393,27 @@ inline bool array<T>::each_rev(F&& _func) {
 }
 
 template<typename T>
+inline void array<T>::erase(rx_size _from, rx_size _to) {
+  const rx_size range{_to-_from};
+  T* begin{m_data};
+  T* end{m_data + m_size};
+  T* first{begin + _from};
+  T* last{begin + _to};
+
+  for (T* value{last}, *dest{first}; value != end; ++value, ++dest) {
+    *dest = utility::move(*value);
+  }
+
+  if constexpr (!traits::is_trivially_destructible<T>) {
+    for (T* value{end-range}; value < end; ++value) {
+      utility::destruct<T>(value);
+    }
+  }
+
+  m_size -= range;
+}
+
+template<typename T>
 template<typename F>
 inline bool array<T>::each_rev(F&& _func) const {
   for (rx_size i{m_size-1}; i < m_size; i--) {
@@ -441,6 +446,11 @@ const T* array<T>::data() const {
 template<typename T>
 inline T* array<T>::data() {
   return m_data;
+}
+
+template<typename T>
+inline memory::allocator* array<T>::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx

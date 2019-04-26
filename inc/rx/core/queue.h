@@ -24,6 +24,8 @@ struct queue {
   T pop();
   void clear();
 
+  memory::allocator* allocator() const;
+
 private:
   struct node {
     constexpr node(const T& value) : m_value{value} {}
@@ -106,6 +108,11 @@ inline void queue<T>::clear() {
   while (!is_empty()) {
     pop();
   }
+}
+
+template<typename T>
+inline memory::allocator* queue<T>::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx

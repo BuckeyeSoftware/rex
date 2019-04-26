@@ -328,8 +328,7 @@ inline const texture2D::wrap_options& texture2D::wrap() const & {
 }
 
 inline rx_size texture2D::levels() const {
-  return m_filter.mip_maps
-    ? math::log2(algorithm::max(m_dimensions.w, m_dimensions.h)) + 1 : 1;
+  return m_filter.mip_maps ? math::log2(m_dimensions.max_element()) + 1 : 1;
 }
 
 inline const texture::level_info<texture2D::dimension_type>&
@@ -347,8 +346,7 @@ inline const texture3D::wrap_options& texture3D::wrap() const & {
 }
 
 inline rx_size texture3D::levels() const {
-  return m_filter.mip_maps
-    ? math::log2(algorithm::max(m_dimensions.w, m_dimensions.h, m_dimensions.d)) + 1 : 1;
+  return m_filter.mip_maps ? math::log2(m_dimensions.max_element()) + 1 : 1;
 }
 
 inline const texture::level_info<texture3D::dimension_type>&
@@ -366,8 +364,7 @@ inline const textureCM::wrap_options& textureCM::wrap() const & {
 }
 
 inline rx_size textureCM::levels() const {
-  return m_filter.mip_maps
-    ? math::log2(algorithm::max(m_dimensions.w, m_dimensions.h)) + 1 : 1;
+  return m_filter.mip_maps ? math::log2(m_dimensions.max_element()) + 1 : 1;
 }
 
 inline const texture::level_info<textureCM::dimension_type>&

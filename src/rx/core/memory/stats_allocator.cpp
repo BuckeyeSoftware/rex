@@ -3,6 +3,10 @@
 #include <rx/core/algorithm/max.h>
 #include <rx/core/assert.h>
 
+
+
+#include <stdlib.h>
+
 namespace rx::memory {
 
 struct header {

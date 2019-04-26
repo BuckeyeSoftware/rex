@@ -92,7 +92,7 @@ inline bool json::is_array_of(type _type) const {
     return false;
   }
 
-  return each([this, _type](const json& _value) {
+  return each([_type](const json& _value) {
     return _value.is_type(_type);
   });
 }
@@ -106,7 +106,7 @@ inline bool json::is_array_of(type _type, rx_size _size) const {
     return false;
   }
 
-  return each([this, _type](const json& _value) {
+  return each([_type](const json& _value) {
     return _value.is_type(_type);
   });
 }

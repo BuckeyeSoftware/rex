@@ -6,6 +6,9 @@
 #include <rx/core/hash.h> // hash, hash_combine
 #include <rx/core/assert.h> // RX_ASSERT
 
+#include <rx/core/algorithm/min.h> // algorithm::min
+#include <rx/core/algorithm/max.h> // algorithm::max
+
 namespace rx::math {
 
 template<typename T>
@@ -19,6 +22,12 @@ struct vec4 {
 
   bool is_any(T _value) const;
   bool is_all(T _value) const;
+
+  T area() const;
+  T sum() const;
+
+  T max_element() const;
+  T min_element() const;
 
   template<typename F>
   vec4<T> map(F&& _fn) const;
@@ -123,6 +132,26 @@ inline bool vec4<T>::is_any(T _value) const {
 template<typename T>
 inline bool vec4<T>::is_all(T _value) const {
   return x == _value && y == _value && z == _value && w == _value;
+}
+
+template<typename T>
+inline T vec4<T>::area() const {
+  return x * y * z * w;
+}
+
+template<typename T>
+inline T vec4<T>::sum() const {
+  return x + y + z + w;
+}
+
+template<typename T>
+inline T vec4<T>::max_element() const {
+  return algorithm::max(x, y, z, w);
+}
+
+template<typename T>
+inline T vec4<T>::min_element() const {
+  return algorithm::min(x, y, z, w);
 }
 
 template<typename T>
