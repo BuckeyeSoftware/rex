@@ -3,6 +3,8 @@
 
 #include <rx/math/log2.h>
 
+#include <rx/core/utility/swap.h>
+
 #include <string.h>
 
 namespace rx::texture {
@@ -16,27 +18,35 @@ texture::texture(array<rx_byte>&& _data, pixel_format _pixel_format,
   generate_mipchain(_has_mipchain, _want_mipchain);
 }
 
-void texture::generate_mipchain(bool _has_mipchain, bool _want_mipchain) {
-  m_levels.clear();
+static array<texture::level> generate_levels(memory::allocator* _allocator,
+  bool _want_mipchain, const math::vec2z& _dimensions, rx_size _bpp)
+{
+  array<texture::level> result{_allocator};
 
   if (_want_mipchain) {
     // levels = log2(max(w, h)+1)
-    const rx_size levels{math::log2(m_dimensions.max_element()) + 1};
-    m_levels.reserve(levels);
+    const rx_size levels{math::log2(_dimensions.max_element()) + 1};
+    result.reserve(levels);
 
     // calculate each miplevel in the chain
-    math::vec2z dimensions{m_dimensions};
+    math::vec2z dimensions{_dimensions};
     rx_size offset{0};
     for (rx_size i{0}; i < levels; i++) {
-      const rx_size size{dimensions.area() * bpp()};
-      m_levels.push_back({offset, size, dimensions});
+      const rx_size size{dimensions.area() * _bpp};
+      result.push_back({offset, size, dimensions});
       offset += size;
       dimensions /= 2;
     };
   } else {
-    // when we don't want a mipchain we just have one level
-    m_levels.push_back({0, m_dimensions.area() * bpp(), m_dimensions});
+    result.push_back({0, _dimensions.area() * _bpp, _dimensions});
   }
+
+  return result;
+}
+
+void texture::generate_mipchain(bool _has_mipchain, bool _want_mipchain) {
+  m_levels = generate_levels(m_levels.allocator(), _want_mipchain,
+    m_dimensions, bpp());
 
   // we have a mipchain but we don't want it
   if (_has_mipchain && !_want_mipchain) {
@@ -134,48 +144,6 @@ void texture::resize(const math::vec2z& _dimensions) {
 
     generate_mipchain(false /*_has_mipchain*/, false /*_want_mipchain*/);
   }
-}
-
-void texture::convert(pixel_format _pixel_format,
-  const math::vec4f& _fill_pattern)
-{
-  if (m_pixel_format == _pixel_format) {
-    return;
-  }
-
-  // TODO(dweiler): implement
-  (void)_fill_pattern;
-
-  // use inplace swap for the following conversions
-  //   rgb_u8  -> bgr_u8
-  //   bgr_u8  -> rgb_u8
-  //
-  //   rgba_u8 -> bgra_u8
-  //   bgra_u8 -> rgba_u8
-
-  // need temporary storage for the following conversions
-  //   rgb_u8   -> rgba_u8
-  //   rgb_u8   -> bgra_u8
-  //   rgb_u8   -> r_u8
-  //
-  //   bgr_u8   -> rgba_u8
-  //   bgr_u8   -> bgra_u8
-  //   bgr_u8   -> r_u8
-  //
-  //   rgba_u8  -> rgb_u8
-  //   rgba_u8  -> bgr_u8
-  //   rgba_u8  -> r_u8
-  //
-  //   bgra_u8  -> rgb_u8
-  //   bgra_u8  -> bgr_u8
-  //   bgra_u8  -> r_u8
-  //
-  //   r_u8     -> rgba_u8
-  //   r_u8     -> bgra_u8
-  //   r_u8     -> rgb_u8
-  //   r_u8     -> bgr_u8
-
-  m_pixel_format = _pixel_format;
 }
 
 } // namespace rx::texture

@@ -3,6 +3,7 @@
 #include <stdio.h> // vsnprintf
 
 #include <rx/core/log.h> // RX_LOG, rx::log, rx::static_globals
+#include <rx/core/abort.h> // rx::abort
 
 RX_LOG("assert", assert_print);
 
@@ -30,15 +31,7 @@ void assert_fail(const char* expression, const char* file,
   assert_print(log::level::k_error, "Assertion failed: %s (%s:%d %s) \"%s\"",
     expression, file, line, function, utility::move(contents));
 
-  // deinitialize all static globals
-  static_globals::fini();
-
-  static_globals::find("log")->fini();
-
-  static_globals::find("system_allocator")->fini();
-  static_globals::find("malloc_allocator")->fini();
-
-  abort();
+  abort(contents.data());
 }
 
 } // namespace rx

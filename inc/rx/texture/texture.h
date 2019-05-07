@@ -36,7 +36,6 @@ struct texture {
     bool _has_mipchain, bool _want_mipchain);
 
   void resize(const math::vec2z& _dimensions);
-  void convert(pixel_format _format, const math::vec4f& _fill_pattern);
 
   array<rx_byte>&& data() &&;
   const array<rx_byte>& data() const &;
@@ -55,6 +54,19 @@ private:
   math::vec2z m_dimensions;
   pixel_format m_pixel_format;
 };
+
+inline texture::pixel_format texture::pixel_format_for_loader_bpp(rx_size _bpp) {
+  switch (_bpp) {
+  case 4:
+    return pixel_format::k_rgba_u8;
+  case 3:
+    return pixel_format::k_rgb_u8;
+  case 1:
+    return pixel_format::k_r_u8;
+  }
+
+  RX_UNREACHABLE();
+}
 
 inline texture::texture(loader&& _loader, bool _want_mipchain)
   : texture{utility::move(_loader).data(),

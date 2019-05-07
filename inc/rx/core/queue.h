@@ -28,8 +28,8 @@ struct queue {
 
 private:
   struct node {
-    constexpr node(const T& value) : m_value{value} {}
-    constexpr node(T&& value) : m_value{utility::move(value)} {}
+    constexpr node(const T& value);
+    constexpr node(T&& value);
     T m_value;
     node* m_next;
   };
@@ -38,6 +38,18 @@ private:
   node* m_first;
   node* m_last;
 };
+
+template<typename T>
+inline constexpr queue<T>::node::node(const T& _value)
+  : m_value{_value}
+{
+}
+
+template<typename T>
+inline constexpr queue<T>::node::node(T&& _value)
+  : m_value{utility::move(_value)}
+{
+}
 
 template<typename T>
 inline constexpr queue<T>::queue(memory::allocator* _allocator)
@@ -63,8 +75,7 @@ inline bool queue<T>::is_empty() const {
 
 template<typename T>
 inline void queue<T>::push(const T& _value) {
-  auto new_node{reinterpret_cast<node*>(m_allocator->allocate(sizeof(node)))};
-  utility::construct<T>(new_node, _value);
+  auto new_node{utility::allocate_and_construct<node>(m_allocator, _value)};
   if (is_empty()) {
     m_first = new_node;
     m_last = m_first;
