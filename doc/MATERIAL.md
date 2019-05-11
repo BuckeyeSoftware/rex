@@ -26,9 +26,9 @@ The top level schema of a material looks like
 ```
 
 `#TextureType` is a `String` that is one of:
-  * `"diffuse"`
+  * `"albedo"`
   * `"normal"`
-  * `"metal"`
+  * `"metalness"`
   * `"roughness"`
 
 `#Filter` is a `String` that is one of:

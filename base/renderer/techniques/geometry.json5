@@ -73,7 +73,7 @@
           // tangent space normal map texture
           vec3f bitangent = cross(normal, vs_tangent.xyz) * vs_tangent.w;
           vec3f mapnormal = rx_texture2D(u_normal, vs_coordinate).rgb * 2.0 - 1.0;
-          mat3x3f tbn = mat3x3f(vs_tangent, bitangent, normal);
+          mat3x3f tbn = mat3x3f(vs_tangent.xyz, bitangent, normal);
           normal = normalize(tbn * mapnormal);
         #endif
           // consider model matrix

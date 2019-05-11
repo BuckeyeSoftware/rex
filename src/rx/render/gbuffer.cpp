@@ -16,7 +16,6 @@ gbuffer::gbuffer(frontend* _frontend)
 
 gbuffer::~gbuffer() {
   destroy();
-  // destroy();
 }
 
 void gbuffer::destroy() {

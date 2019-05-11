@@ -821,6 +821,7 @@ bool technique::parse_shader(const json& _shader) {
   const auto& type{_shader["type"]};
   const auto& source{_shader["source"]};
   const auto& when{_shader["when"]};
+  const auto& imports{_shader["imports"]};
 
   if (!type) {
     return error("missing 'type' in shader");
@@ -842,6 +843,10 @@ bool technique::parse_shader(const json& _shader) {
     return error("expected String for 'when'");
   }
 
+  if (imports && !imports.is_array_of(json::type::k_string)) {
+    return error("expected Array[String] for 'imports'");
+  }
+
   const auto type_string{type.as_string()};
   shader::type shader_type;
   if (type_string == "vertex") {
@@ -861,8 +866,25 @@ bool technique::parse_shader(const json& _shader) {
 
   shader_definition definition;
   definition.kind = shader_type;
-  definition.source = _shader["source"].as_string();
   definition.when = when ? when.as_string() : "";
+
+  // process imports for this shader
+  if (imports) {
+    const auto result{imports.each([this, &definition](const json& _import) {
+      const auto& file_name{_import.as_string()};
+      const auto& data{filesystem::read_binary_file(file_name)};
+      if (!data) {
+        return error("failed to import '%s'", file_name);
+      }
+      definition.source.append(reinterpret_cast<const char*>(data->data()), data->size());
+      return true;
+    })};
+  
+    if (!result) {
+      return false;
+    }
+  }
+  definition.source.append(_shader["source"].as_string());
 
   const auto& inputs{_shader["inputs"]};
   if (inputs && !parse_inouts(inputs, "input", definition.inputs)) {

@@ -1,40 +1,34 @@
-#include <stdlib.h> // abort
-
 #include <rx/core/types.h>
 #include <rx/core/assert.h>
+#include <rx/core/abort.h>
 
 void* operator new(rx_size) {
-  RX_ASSERT(false, "operator new is disabled");
-  abort();
+  rx::abort("operator new is disabled");
 }
 
 void* operator new[](rx_size) {
-  RX_ASSERT(false, "operator new[] is disabled");
-  abort();
+  rx::abort("operator new[] is disabled");
 }
 
 void operator delete(void*) {
-  RX_ASSERT(false, "operator delete is disabled");
-  abort();
+  rx::abort("operator delete is disabled");
 }
 
 void operator delete(void*, rx_size) {
-  RX_ASSERT(false, "operator delete is disabled");
-  abort();
+  rx::abort("operator delete is disabled");
 }
 
 void operator delete[](void*) {
-  RX_ASSERT(false, "operator delete[] is disabled");
-  abort();
+  rx::abort("operator delete[] is disabled");
 }
 
 void operator delete[](void*, rx_size) {
-  RX_ASSERT(false, "operator delete[] is disabled");
+  rx::abort("operator delete[] is disabled");
 }
 
 extern "C" {
   void __cxa_pure_virtual() {
-    RX_ASSERT(false, "pure virtual function call");
+    rx::abort("pure virtual function call");
   }
 
   void __cxa_guard_acquire(...) {

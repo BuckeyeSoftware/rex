@@ -17,7 +17,7 @@ material::material(frontend* _frontend)
   : m_frontend{_frontend}
   , m_diffuse{nullptr}
   , m_normal{nullptr}
-  , m_metal{nullptr}
+  , m_metalness{nullptr}
   , m_roughness{nullptr}
   , m_name{m_frontend->allocator()}
 {
@@ -53,7 +53,7 @@ void material::fini() {
 
   m_frontend->destroy_texture(tag, m_diffuse);
   m_frontend->destroy_texture(tag, m_normal);
-  m_frontend->destroy_texture(tag, m_metal);
+  m_frontend->destroy_texture(tag, m_metalness);
   m_frontend->destroy_texture(tag, m_roughness);
 }
 
@@ -132,9 +132,9 @@ bool material::parse_texture(const json& _texture) {
   } else if (type_string == "normal") {
     store_texture = &m_normal;
     tag_string = "material normal";
-  } else if (type_string == "metal") {
-    store_texture = &m_metal;
-    tag_string = "material metal";
+  } else if (type_string == "metalness") {
+    store_texture = &m_metalness;
+    tag_string = "material metalness";
   } else if (type_string == "roughness") {
     store_texture = &m_roughness;
     tag_string = "material roughness";

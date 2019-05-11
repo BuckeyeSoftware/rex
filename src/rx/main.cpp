@@ -178,7 +178,7 @@ int entry(int argc, char **argv) {
       flags);
 
   if (!window) {
-    abort();
+    rx::abort("failed to create window");
   }
 
   SDL_GLContext context =
@@ -186,10 +186,10 @@ int entry(int argc, char **argv) {
 
   SDL_GL_SetSwapInterval(1);
 
-  // SDL_SetRelativeMouseMode(SDL_TRUE);
+  SDL_SetRelativeMouseMode(SDL_TRUE);
 
   rx::math::transform camera;
-  camera.translate = { 0.0f, 5.0f, -10.0f };
+  camera.translate = { 0.0f, 2.5f, -5.0f };
   // camera.rotate = { 10.0f, 0.0f, 0.0f };
 
   {
@@ -212,16 +212,11 @@ int entry(int argc, char **argv) {
     rx::map<rx::string, rx::render::material> materials;
     {
       rx::render::material material{&frontend};
-      material.load("base/materials/body.json5");
-      materials.insert("Body.tga", rx::utility::move(material));
-    }
-    {
-      rx::render::material material{&frontend};
-      material.load("base/materials/head.json5");
-      materials.insert("Head.tga", rx::utility::move(material));
+      material.load("base/models/chest/material.json5");
+      materials.insert("chest", rx::utility::move(material));
     }
 
-    if (model.load("test.iqm")) {
+    if (model.load("base/models/chest/model.iqm")) {
       if (model.is_animated()) {
         using vertex = rx::model::model::animated_vertex;
         const auto& vertices{model.animated_vertices()};
@@ -245,6 +240,10 @@ int entry(int argc, char **argv) {
       }
       const auto& elements{model.elements()};
       model_buffer->write_elements(elements.data(), elements.size() * sizeof(rx_u32));
+
+      model.meshes().each_fwd([](const rx::model::mesh& _mesh) {
+        RX_MESSAGE("mesh: %s", _mesh.material.data());
+      });
     }
     frontend.initialize_buffer(RX_RENDER_TAG("model"), model_buffer);
 
@@ -259,11 +258,11 @@ int entry(int argc, char **argv) {
     frontend.initialize_buffer(RX_RENDER_TAG("quad"), quad);
 
     rx::input::input input;
-    rx::model::animation animation{&model, 0};
+    // rx::model::animation animation{&model, 0};
     while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
       input.update(0);
 
-      animation.update(frontend.timer().delta_time(), true);
+      // animation.update(frontend.timer().delta_time(), true);
 
       // translate SDL events
       for (SDL_Event event; SDL_PollEvent(&event); ) {
@@ -329,7 +328,7 @@ int entry(int argc, char **argv) {
       frontend.clear(RX_RENDER_TAG("gbuffer emission"),
         gbuffer, RX_RENDER_CLEAR_COLOR(2), {0.0f, 0.0f, 1.0f, 1.0f});
 
-      rx::math::mat4x4f modelm{rx::math::mat4x4f::rotate({0, 90, 0})};
+      rx::math::mat4x4f modelm{rx::math::mat4x4f::scale({2.0f, 2.0f, 2.0f}) * rx::math::mat4x4f::rotate({0, 90, 0})};
       rx::math::mat4x4f view{rx::math::mat4x4f::invert(camera.to_mat4())};
       rx::math::mat4x4f projection{rx::math::mat4x4f::perspective(90.0f, {0.01, 1024.0f}, 1600.0f/900.0f)};
 
@@ -339,11 +338,11 @@ int entry(int argc, char **argv) {
       RX_ASSERT(gbuffer_test_technique, "");
       RX_ASSERT(fs_quad_technique, "");
 
-      rx::render::program* gbuffer_test_program{gbuffer_test_technique->permute((1 << 0) | (1 << 1))};
+      rx::render::program* gbuffer_test_program{gbuffer_test_technique->permute((1 << 1) | (1 << 1) | (1 << 2) | (1 << 3))};
       rx::render::program* fs_quad_program{*fs_quad_technique};
 
       gbuffer_test_program->uniforms()[0].record_mat4x4f(modelm * view * projection);
-      gbuffer_test_program->uniforms()[1].record_bones(animation.frames(), model.joints());
+      // gbuffer_test_program->uniforms()[1].record_bones(animation.frames(), model.joints());
 
       fs_quad_program->uniforms()[0].record_sampler(0);
 
@@ -375,8 +374,11 @@ int entry(int argc, char **argv) {
           _mesh.count,
           _mesh.offset,
           rx::render::primitive_type::k_triangles,
-          material ? "2" : "",
-          material ? material->diffuse() : nullptr);
+          material ? "222" : "",
+          material ? material->diffuse() : nullptr,
+          material ? material->normal() : nullptr,
+          material ? material->metalness() : nullptr,
+          material ? material->roughness() : nullptr);
       });
 
       frontend.clear(RX_RENDER_TAG("default"),
@@ -394,70 +396,14 @@ int entry(int argc, char **argv) {
         "2",
         gbuffer.albedo());
 
-      // immediate.frame_queue().record_rectangle({100, 100}, {100, 100}, 1, {1.0f, 0.0f, 0.0f, 1.0f});
-
       frame_graph(frontend.timer(), immediate);
-
-      // memory stats
-      // rx::memory::g_system_allocator->stats();
-      static constexpr rx::math::vec2i size{400, 200};
-      static constexpr rx_s32 k_border{10}; // 10px border
-      rx::math::vec2i position{display_resolution->get().w - (size.w + k_border), k_border};
-      immediate.frame_queue().record_rectangle(
-        position,
-        size,
-        k_border,
-        {0.1f, 0.1f, 0.1f, 0.75f});
-
-      const auto stats{rx::memory::g_system_allocator->stats()};
-
-      const auto k_height{25};
-      position.x += size.w/2;
-      position.y += size.h - k_height;
-
-      immediate.frame_queue().record_text(
-        "Inconsolata-Regular",
-        position,
-        k_height,
-        1.0f,
-        rx::render::immediate::text_align::k_center,
-        "MEMORY",
-        {1.0f, 1.0f, 1.0f, 1.0f});
-      
-      position.x -= size.w/2;
-      position.x += k_border;
-      position.y -= k_height; // advance
-
-      static constexpr auto k_size{16};
-      auto line{[&](const rx::string& _contents) {
-        immediate.frame_queue().record_text(
-          "Inconsolata-Regular",
-          position,
-          k_size,
-          1.0f,
-          rx::render::immediate::text_align::k_left,
-          _contents,
-          {1.0f, 1.0f, 1.0f, 1.0f});
-          position.y -= k_size; // next
-      }};
-
-      line(rx::string::format("^wallocations:   ^m%zu", stats.allocations));
-      line(rx::string::format("^wdeallocations: ^m%zu", stats.deallocations));
-      line(rx::string::format("^wreallocations: ^m%zu ^w(^m%zu ^binplace resizes^w)", stats.request_reallocations, stats.actual_reallocations));
-      line(rx::string::format("^wused: ^m%s ^w(^brequest^w) ^m%s ^w(^bactual^w)",
-        rx::string::human_size_format(stats.used_request_bytes),
-        rx::string::human_size_format(stats.used_actual_bytes)));
-      line(rx::string::format("^wpeak: ^m%s ^w(^brequest^w) ^m%s ^w(^bactual^w)",
-        rx::string::human_size_format(stats.peak_request_bytes),
-        rx::string::human_size_format(stats.peak_actual_bytes)));
-
-      //immediate.frame_queue().record_text("OpenSans-Regular", {100, 100}, 30, rx::render::immediate::text_align::k_left,
-      //  "^rred ^ggreen ^bblue ^ccyan ^yyellow ^mmagenta ^kblack ^wwhite ^[ff0000ff]red?", {});
+      // TODO other stats
 
       immediate.render(target);
 
       if (frontend.process()) {
         if (frontend.swap()) {
+          const auto stats{rx::memory::g_system_allocator->stats()};
           char format[1024];
           snprintf(format, sizeof format, "%d fps | %.2f mspf | mem a/%zu, r/r:%zu a:%zu, d/%zu, u/r:%s a:%s, p/r:%s a:%s",
             frontend.timer().fps(),

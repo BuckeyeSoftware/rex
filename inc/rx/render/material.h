@@ -24,7 +24,7 @@ struct material : concepts::no_copy {
 
   texture2D* diffuse() const;
   texture2D* normal() const;
-  texture2D* metal() const;
+  texture2D* metalness() const;
   texture2D* roughness() const;
 
 private:
@@ -47,7 +47,7 @@ private:
 
   texture2D* m_diffuse;
   texture2D* m_normal;
-  texture2D* m_metal;
+  texture2D* m_metalness;
   texture2D* m_roughness;
 
   string m_name;
@@ -57,13 +57,13 @@ inline material::material(material&& _material)
   : m_frontend{_material.m_frontend}
   , m_diffuse{_material.m_diffuse}
   , m_normal{_material.m_normal}
-  , m_metal{_material.m_metal}
+  , m_metalness{_material.m_metalness}
   , m_roughness{_material.m_roughness}
   , m_name{utility::move(_material.m_name)}
 {
   _material.m_diffuse = nullptr;
   _material.m_normal = nullptr;
-  _material.m_metal = nullptr;
+  _material.m_metalness = nullptr;
   _material.m_roughness = nullptr;
 }
 
@@ -73,13 +73,13 @@ inline material& material::operator=(material&& _material) {
   m_frontend = _material.m_frontend;
   m_diffuse = _material.m_diffuse;
   m_normal = _material.m_normal;
-  m_metal = _material.m_metal;
+  m_metalness = _material.m_metalness;
   m_roughness = _material.m_roughness;
   m_name = utility::move(_material.m_name);
 
   _material.m_diffuse = nullptr;
   _material.m_normal = nullptr;
-  _material.m_metal = nullptr;
+  _material.m_metalness = nullptr;
   _material.m_roughness = nullptr;
 
   return *this;
@@ -93,8 +93,8 @@ inline texture2D* material::normal() const {
   return m_normal;
 }
 
-inline texture2D* material::metal() const {
-  return m_metal;
+inline texture2D* material::metalness() const {
+  return m_metalness;
 }
 
 inline texture2D* material::roughness() const {

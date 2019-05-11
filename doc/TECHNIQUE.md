@@ -28,6 +28,7 @@ There cannot be both `variants` and `permutes`
   inputs:   required Array[#InOut]
   outputs:  required Array[#InOut]
   source:   required #ShaderSource
+  imports:  optional Array[String]
 }
 ```
 
