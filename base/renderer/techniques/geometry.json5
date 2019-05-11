@@ -1,12 +1,19 @@
 {
   name: "geometry",
   permutes: [
-    "HAS_SKELETON"
+    "HAS_SKELETON",
+    "HAS_DIFFUSE",
+    "HAS_NORMAL",
+    "HAS_METALNESS",
+    "HAS_ROUGHNESS"
   ],
   uniforms: [
     { name: "u_transform", type: "mat4x4f" },
-    { name: "u_bones",     type: "bonesf", when: "HAS_SKELETON" },
-    { name: "u_diffuse",   type: "sampler2D", value: 0 }
+    { name: "u_bones",     type: "bonesf",    when: "HAS_SKELETON" },
+    { name: "u_diffuse",   type: "sampler2D", when: "HAS_DIFFUSE" },
+    { name: "u_normal",    type: "sampler2D", when: "HAS_NORMAL" },
+    { name: "u_metal",     type: "sampler2D", when: "HAS_METALNESS" },
+    { name: "u_roughness", type: "sampler2D", when: "HAS_ROUGHNESS" }
   ],
   shaders: [
     {
@@ -42,6 +49,7 @@
           vs_normal     = a_normal;
           vs_tangent    = a_tangent;
           vs_coordinate = a_coordinate;
+
           rx_position   = u_transform * position;
         }
       "
@@ -59,9 +67,40 @@
       ],
       source: "
         void main() {
-          fs_albedo = rx_texture2D(u_diffuse, vs_coordinate);
-          fs_normal = vec4f(normalize(vs_normal), 1.0);
-          fs_emissive = vec4f(1.0, 0.0, 0.0, 1.0);
+          // calculate normal
+          vec3f normal = vs_normal;
+        #if defined(HAS_NORMAL)
+          // tangent space normal map texture
+          vec3f bitangent = cross(normal, vs_tangent.xyz) * vs_tangent.w;
+          vec3f mapnormal = rx_texture2D(u_normal, vs_coordinate).rgb * 2.0 - 1.0;
+          mat3x3f tbn = mat3x3f(vs_tangent, bitangent, normal);
+          normal = normalize(tbn * mapnormal);
+        #endif
+          // consider model matrix
+          // TODO(dweiler): normalize((u_model * vec4(normal, 0.0))).xyz;
+          // FIXME(dweiler):
+          normal = normalize(normal);
+
+          // calculate metalness value
+          float metalness = 0;
+        #if defined(HAS_METALNESS)
+          metalness = rx_texture2D(u_metal, vs_coordinate).r;
+        #endif
+
+          // calculate roughness value
+          float roughness = 0;
+        #if defined(HAS_ROUGHNESS)
+          roughness = rx_texture2D(u_roughness, vs_coordinate).r;
+        #endif
+
+          // calculate diffuse color
+          vec3f diffuse = vec3f(0.0);
+        #if defined(HAS_DIFFUSE)
+          diffuse = rx_texture2D(u_diffuse, vs_coordinate).rgb;
+        #endif
+
+          fs_albedo = vec4f(diffuse, roughness);            // roughness stored in alpha
+          fs_normal = vec4f(normal * 0.5 + 0.5, metalness); // metalness stored in alpha
         }
       "
     }

@@ -419,7 +419,10 @@ namespace detail {
       , m_bound_fbo{0}
       , m_bound_program{0}
     {
+      pglEnable(GL_CULL_FACE);
+      pglCullFace(GL_BACK);
       pglFrontFace(GL_CW);
+
       pglDepthFunc(GL_LEQUAL);
       pglGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_swap_chain_fbo);
       pglDisable(GL_MULTISAMPLE);

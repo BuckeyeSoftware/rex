@@ -70,4 +70,8 @@ void gbuffer::resize(const math::vec2z& _resolution) {
   create(_resolution);
 }
 
+texture2D* gbuffer::depth_stencil() const {
+  return m_target->depth_stencil();
+}
+
 } // namespace rx::render

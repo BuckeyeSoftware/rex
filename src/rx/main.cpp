@@ -74,7 +74,47 @@ static constexpr const rx_byte k_quad_elements[]{
   0, 1, 2, 3
 };
 
-// static void memory_stats()
+static void frame_graph(const rx::render::frame_timer& _timer, rx::render::immediate& _immediate) {
+  const rx::math::vec2i& screen_size{*display_resolution};
+  const rx::math::vec2i box_size{600, 200};
+  const rx_s32 box_bottom{25};
+  const rx_s32 box_middle{box_bottom + (box_size.h / 2)};
+  const rx_s32 box_top{box_bottom + box_size.h};
+  const rx_s32 box_left{screen_size.w / 2 - box_size.w / 2};
+  const rx_s32 box_center{box_left + box_size.w / 2};
+  const rx_s32 box_right{box_left + box_size.w};
+
+  _immediate.frame_queue().record_rectangle({box_left, box_bottom}, box_size, 0, {0.0f, 0.0f, 0.0f, 0.5f});
+
+  const auto k_frame_scale{16.667*2.0f};
+
+  rx::array<rx::math::vec2i> points;
+  _timer.frame_times().each_fwd([&](const rx::render::frame_timer::frame_time& _time){
+    const auto delta_x{(_timer.ticks() * _timer.resolution() - _time.life) / rx::render::frame_timer::k_frame_history_seconds};
+    const auto delta_y{rx::algorithm::min(_time.frame / k_frame_scale, 1.0)};
+    const rx::math::vec2i point{box_right - rx_s32(delta_x * box_size.w), box_top - rx_s32(delta_y * box_size.h)};
+    points.push_back(point);
+  });
+
+  const rx_size n_points{points.size()};
+  for (rx_size i{1}; i < n_points; i++) {
+    const auto& a{points[i - 1]};
+    const auto& b{points[i]};
+    _immediate.frame_queue().record_line(a, b, 0, 1, {0.0f, 1.0f, 0.0f, 1.0f});
+  }
+
+  _immediate.frame_queue().record_line({box_left,   box_bottom}, {box_left,   box_top},    0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_line({box_center, box_bottom}, {box_center, box_top},    0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_line({box_right,  box_bottom}, {box_right,  box_top},    0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_line({box_left,   box_bottom}, {box_right,  box_bottom}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_line({box_left,   box_middle}, {box_right,  box_middle}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_line({box_left,   box_top},    {box_right,  box_top},    0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+
+  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_center,    box_top    + 5}, 18, 1.0f, rx::render::immediate::text_align::k_center, "Frame Time", {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_top    - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left,   "0.0",        {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_middle - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left,   rx::string::format("%.1f", k_frame_scale * .5), {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_bottom - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left,   rx::string::format("%.1f", k_frame_scale),      {1.0f, 1.0f, 1.0f, 1.0f});
+}
 
 int entry(int argc, char **argv) {
   (void)argc;
@@ -302,7 +342,7 @@ int entry(int argc, char **argv) {
       RX_ASSERT(gbuffer_test_technique, "");
       RX_ASSERT(fs_quad_technique, "");
 
-      rx::render::program* gbuffer_test_program{gbuffer_test_technique->permute((1 << 0))};
+      rx::render::program* gbuffer_test_program{gbuffer_test_technique->permute((1 << 0) | (1 << 1))};
       rx::render::program* fs_quad_program{*fs_quad_technique};
 
       gbuffer_test_program->uniforms()[0].record_mat4x4f(modelm * view * projection);
@@ -313,11 +353,14 @@ int entry(int argc, char **argv) {
       rx::render::state state;
       state.depth.record_test(true);
       state.depth.record_write(true);
+      state.cull.record_enable(true);
+      state.cull.record_front_face(rx::render::cull_state::front_face_type::k_clock_wise);
+      state.cull.record_cull_face(rx::render::cull_state::cull_face_type::k_back);
 
       frontend.clear(RX_RENDER_TAG("gbuffer test"),
         gbuffer,
         RX_RENDER_CLEAR_COLOR(0),
-        {1.0f, 1.0f, 1.0f, 1.0f});
+        {0.0f, 0.0f, 0.0f, 1.0f});
       
       frontend.clear(RX_RENDER_TAG("gbuffer test"),
         gbuffer,
@@ -355,6 +398,8 @@ int entry(int argc, char **argv) {
         gbuffer.albedo());
 
       // immediate.frame_queue().record_rectangle({100, 100}, {100, 100}, 1, {1.0f, 0.0f, 0.0f, 1.0f});
+
+      frame_graph(frontend.timer(), immediate);
 
       // memory stats
       // rx::memory::g_system_allocator->stats();

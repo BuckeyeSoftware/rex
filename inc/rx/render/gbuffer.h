@@ -19,6 +19,7 @@ struct gbuffer {
   texture2D* albedo() const;
   texture2D* normal() const;
   texture2D* emission() const;
+  texture2D* depth_stencil() const;
 
   operator target*() const;
 

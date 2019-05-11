@@ -74,7 +74,7 @@ inline texture2D* target::stencil() const {
 }
 
 inline texture2D* target::depth_stencil() const {
-  return m_depth_texture == m_stencil_texture ? m_depth_stencil_texture : nullptr;
+  return m_depth_stencil_texture;
 }
 
 inline const array<texture2D*> target::attachments() const & {

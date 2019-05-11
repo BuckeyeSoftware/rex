@@ -763,6 +763,8 @@ void immediate::add_batch(rx_size _offset, queue::command::type _type,
   render_state.depth.record_test(false);
   render_state.depth.record_write(false);
 
+  render_state.cull.record_enable(false);
+
   render_state.scissor.record_enable(m_scissor_size.w > 0);
   render_state.scissor.record_offset(m_scissor_position);
   render_state.scissor.record_size(m_scissor_size);
