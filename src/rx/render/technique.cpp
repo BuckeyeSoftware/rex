@@ -199,9 +199,7 @@ technique::technique(frontend* _frontend)
 }
 
 technique::~technique() {
-  m_programs.each_fwd([this](program* _program) {
-    m_frontend->destroy_program(RX_RENDER_TAG("technique"), _program);
-  });
+  fini();
 }
 
 technique::technique(technique&& _technique)
@@ -218,6 +216,8 @@ technique::technique(technique&& _technique)
 }
 
 technique& technique::operator=(technique&& _technique) {
+  fini();
+
   m_frontend = _technique.m_frontend;
   m_type = _technique.m_type;
   m_programs = utility::move(_technique.m_programs);
@@ -225,6 +225,7 @@ technique& technique::operator=(technique&& _technique) {
   m_shader_definitions = utility::move(_technique.m_shader_definitions);
   m_uniform_definitions = utility::move(_technique.m_uniform_definitions);
   m_specializations = utility::move(_technique.m_specializations);
+
   return *this;
 }
 
@@ -501,6 +502,14 @@ bool technique::load(const string& _file_name) {
   }
 
   return compile();
+}
+
+void technique::fini() {
+  m_programs.each_fwd([this](program* _program) {
+    m_frontend->destroy_program(RX_RENDER_TAG("technique"), _program);
+  });
+
+  m_programs.clear();
 }
 
 bool technique::parse(const json& _description) {

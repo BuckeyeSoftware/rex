@@ -5,14 +5,19 @@
 #include <rx/core/json.h>
 #include <rx/core/log.h>
 
+#include <rx/core/concepts/no_copy.h>
+
 namespace rx::render {
 
 struct texture2D;
 struct frontend;
 
-struct material {
+struct material : concepts::no_copy {
   material(frontend* _frontend);
   ~material();
+
+  material(material&& _material);
+  material& operator=(material&& _material);
 
   bool load(const string& _file_name);
   const string& name() const &;
@@ -23,6 +28,8 @@ struct material {
   texture2D* roughness() const;
 
 private:
+  void fini();
+
   bool parse(const json& _data);
   bool parse_texture(const json& _texture);
   bool parse_wrap(texture2D* _texture, const json& _wrap);
@@ -45,6 +52,38 @@ private:
 
   string m_name;
 };
+
+inline material::material(material&& _material)
+  : m_frontend{_material.m_frontend}
+  , m_diffuse{_material.m_diffuse}
+  , m_normal{_material.m_normal}
+  , m_metal{_material.m_metal}
+  , m_roughness{_material.m_roughness}
+  , m_name{utility::move(_material.m_name)}
+{
+  _material.m_diffuse = nullptr;
+  _material.m_normal = nullptr;
+  _material.m_metal = nullptr;
+  _material.m_roughness = nullptr;
+}
+
+inline material& material::operator=(material&& _material) {
+  fini();
+
+  m_frontend = _material.m_frontend;
+  m_diffuse = _material.m_diffuse;
+  m_normal = _material.m_normal;
+  m_metal = _material.m_metal;
+  m_roughness = _material.m_roughness;
+  m_name = utility::move(_material.m_name);
+
+  _material.m_diffuse = nullptr;
+  _material.m_normal = nullptr;
+  _material.m_metal = nullptr;
+  _material.m_roughness = nullptr;
+
+  return *this;
+}
 
 inline texture2D* material::diffuse() const {
   return m_diffuse;

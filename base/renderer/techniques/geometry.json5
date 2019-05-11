@@ -5,7 +5,8 @@
   ],
   uniforms: [
     { name: "u_transform", type: "mat4x4f" },
-    { name: "u_bones",     type: "bonesf", when: "HAS_SKELETON" }
+    { name: "u_bones",     type: "bonesf", when: "HAS_SKELETON" },
+    { name: "u_diffuse",   type: "sampler2D", value: 0 }
   ],
   shaders: [
     {
@@ -58,7 +59,7 @@
       ],
       source: "
         void main() {
-          fs_albedo = vec4f(0.0, 0.0, 1.0, 1.0);
+          fs_albedo = rx_texture2D(u_diffuse, vs_coordinate);
           fs_normal = vec4f(normalize(vs_normal), 1.0);
           fs_emissive = vec4f(1.0, 0.0, 0.0, 1.0);
         }

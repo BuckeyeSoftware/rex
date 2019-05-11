@@ -23,6 +23,10 @@ material::material(frontend* _frontend)
 {
 }
 
+material::~material() {
+  fini();
+}
+
 void material::write_log(log::level _level, string&& _message) const {
   if (m_name.is_empty()) {
     log_material(_level, "%s", _message);
@@ -42,6 +46,15 @@ bool material::load(const string& _file_name) {
   memcpy(contents.data(), data->data(), data->size());
 
   return parse({contents});
+}
+
+void material::fini() {
+  const auto& tag{RX_RENDER_TAG("finalizer")};
+
+  m_frontend->destroy_texture(tag, m_diffuse);
+  m_frontend->destroy_texture(tag, m_normal);
+  m_frontend->destroy_texture(tag, m_metal);
+  m_frontend->destroy_texture(tag, m_roughness);
 }
 
 bool material::parse(const json& _description) {
@@ -130,6 +143,10 @@ bool material::parse_texture(const json& _texture) {
   }
 
   texture2D* texture{m_frontend->create_texture2D(RX_RENDER_TAG(tag_string))};
+
+  // static texture, cannot be modified
+  texture->record_type(texture::type::k_static);
+
   if (!parse_filter(texture, filter, mipmaps ? mipmaps.as_boolean() : false) || !parse_wrap(texture, wrap)) {
     m_frontend->destroy_texture(RX_RENDER_TAG(tag_string), texture);
     return false;
@@ -140,8 +157,31 @@ bool material::parse_texture(const json& _texture) {
     rx::texture::chain texture_chain{utility::move(texture_loader), texture->filter().mipmaps};
     const auto& levels{texture_chain.levels()};
 
-    // record the texture dimensions and begin writing the chain into the render resource
+    // record the texture format, requires conversion from chain loaded
+    switch (texture_chain.format()) {
+    case rx::texture::chain::pixel_format::k_rgba_u8:
+      texture->record_format(texture::data_format::k_rgba_u8);
+      break;
+    case rx::texture::chain::pixel_format::k_bgra_u8:
+      texture->record_format(texture::data_format::k_bgra_u8);
+      break;
+    case rx::texture::chain::pixel_format::k_rgb_u8:
+      // TODO(dweiler): convert the texture chain to RGBA
+      RX_MESSAGE("rgb u8");
+      break;
+    case rx::texture::chain::pixel_format::k_bgr_u8:
+      // TODO(dweiler): convert the texture chain to BGRA
+      RX_MESSAGE("bgr u8");
+      break;
+    case rx::texture::chain::pixel_format::k_r_u8:
+      texture->record_format(texture::data_format::k_r_u8);
+      break;
+    }
+
+    // record the texture dimensions
     texture->record_dimensions(texture_chain.dimensions());
+
+    // write each level from the texture chain into the render resource
     for (rx_size i{0}; i < levels.size(); i++) {
       const auto& level{levels[i]};
       texture->write(texture_chain.data().data() + level.offset, i);

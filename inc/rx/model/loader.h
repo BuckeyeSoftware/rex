@@ -37,17 +37,24 @@ struct loader : concepts::interface {
   };
 
   const array<mesh>& meshes() const &;
+  array<mesh>&& meshes() &&;
   const array<rx_u32>& elements() const &;
+  array<rx_u32>&& elements() &&;
+
   const array<math::vec3f>& positions() const &;
   const array<math::vec2f>& coordinates() const &;
   const array<math::vec3f>& normals() const &;
   const array<math::vec4f>& tangents() const &;
 
   // for skeletally animated models
+  const array<math::mat3x4f>& frames() const &;
+  array<math::mat3x4f>&& frames() &&;
+  const array<animation>& animations() const &;
+  array<animation>&& animations() &&;
+
   const array<math::vec4b>& blend_indices() const &;
   const array<math::vec4b>& blend_weights() const &;
-  const array<math::mat3x4f>& frames() const &;
-  const array<animation>& animations() const &;
+  
   rx_size joints() const;
 
 protected:
@@ -84,8 +91,16 @@ inline const array<loader::mesh>& loader::meshes() const & {
   return m_meshes;
 }
 
+inline array<loader::mesh>&& loader::meshes() && {
+  return utility::move(m_meshes);
+}
+
 inline const array<rx_u32>& loader::elements() const & {
   return m_elements;
+}
+
+inline array<rx_u32>&& loader::elements() && {
+  return utility::move(m_elements);
 }
 
 inline const array<math::vec3f>& loader::positions() const & {
@@ -104,20 +119,28 @@ inline const array<math::vec4f>& loader::tangents() const & {
   return m_tangents;
 }
 
+inline const array<math::mat3x4f>& loader::frames() const & {
+  return m_frames;
+}
+
+inline array<math::mat3x4f>&& loader::frames() && {
+  return utility::move(m_frames);
+}
+
+inline const array<loader::animation>& loader::animations() const & {
+  return m_animations;
+}
+
+inline array<loader::animation>&& loader::animations() && {
+  return utility::move(m_animations);
+}
+
 inline const array<math::vec4b>& loader::blend_indices() const & {
   return m_blend_indices;
 }
 
 inline const array<math::vec4b>& loader::blend_weights() const & {
   return m_blend_weights;
-}
-
-inline const array<math::mat3x4f>& loader::frames() const & {
-  return m_frames;
-}
-
-inline const array<loader::animation>& loader::animations() const & {
-  return m_animations;
 }
 
 inline rx_size loader::joints() const {

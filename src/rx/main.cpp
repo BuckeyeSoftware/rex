@@ -15,6 +15,7 @@
 #include <rx/render/gbuffer.h>
 #include <rx/render/buffer.h>
 #include <rx/render/technique.h>
+#include <rx/render/material.h>
 #include <rx/render/backend_gl4.h>
 #include <rx/render/immediate.h>
 
@@ -22,8 +23,6 @@
 #include <rx/model/animation.h>
 
 #include <rx/math/transform.h>
-
-#include <rx/texture/loader.h>
 
 RX_CONSOLE_V2IVAR(
   display_resolution,
@@ -168,13 +167,19 @@ int entry(int argc, char **argv) {
     model_buffer->record_type(rx::render::buffer::type::k_static);
     rx::model::model model{&rx::memory::g_system_allocator};
 
-    rx::texture::loader loader;
-    if (loader.load("test.png")) {
-      RX_MESSAGE("texture %zu x %zu @ %zu (%zu bpp)", loader.dimensions().w,
-        loader.dimensions().h, loader.channels(), loader.bpp());
+    // materials
+    rx::map<rx::string, rx::render::material> materials;
+    {
+      rx::render::material material{&frontend};
+      material.load("base/materials/body.json5");
+      materials.insert("Body.tga", rx::utility::move(material));
+    }
+    {
+      rx::render::material material{&frontend};
+      material.load("base/materials/head.json5");
+      materials.insert("Head.tga", rx::utility::move(material));
     }
 
-    rx_u32 element_count{0};
     if (model.load("test.iqm")) {
       if (model.is_animated()) {
         using vertex = rx::model::model::animated_vertex;
@@ -199,7 +204,10 @@ int entry(int argc, char **argv) {
       }
       const auto& elements{model.elements()};
       model_buffer->write_elements(elements.data(), elements.size() * sizeof(rx_u32));
-      element_count = elements.size();
+
+      model.meshes().each_fwd([](const rx::model::loader::mesh& _mesh) {
+        RX_MESSAGE("%s", _mesh.material.data());
+      });
     }
     frontend.initialize_buffer(RX_RENDER_TAG("model"), model_buffer);
 
@@ -315,17 +323,21 @@ int entry(int argc, char **argv) {
         gbuffer,
         RX_RENDER_CLEAR_DEPTH,
         {1.0f, 0.0f, 0.0f, 0.0f});
-      
-      frontend.draw_elements(
-        RX_RENDER_TAG("gbuffer test"),
-        state,
-        gbuffer,
-        model_buffer,
-        gbuffer_test_program,
-        element_count,
-        0,
-        rx::render::primitive_type::k_triangles,
-        "");
+
+      model.meshes().each_fwd([&](const rx::model::loader::mesh& _mesh) {
+        const auto material{materials.find(_mesh.material)};
+        frontend.draw_elements(
+          RX_RENDER_TAG("gbuffer test"),
+          state,
+          gbuffer,
+          model_buffer,
+          gbuffer_test_program,
+          _mesh.count,
+          _mesh.offset,
+          rx::render::primitive_type::k_triangles,
+          material ? "2" : "",
+          material ? material->diffuse() : nullptr);
+      });
 
       frontend.clear(RX_RENDER_TAG("default"),
         target, RX_RENDER_CLEAR_COLOR(0), {1.0f, 0.0f, 0.0f, 1.0f});
@@ -340,7 +352,7 @@ int entry(int argc, char **argv) {
         0,
         rx::render::primitive_type::k_triangle_strip,
         "2",
-        gbuffer.normal());
+        gbuffer.albedo());
 
       // immediate.frame_queue().record_rectangle({100, 100}, {100, 100}, 1, {1.0f, 0.0f, 0.0f, 1.0f});
 

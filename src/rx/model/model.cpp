@@ -57,10 +57,11 @@ bool model::load(const string& _file_name) {
       m_is_animated = true;
     }
 
-    m_elements = new_loader->elements();
-    m_animations = new_loader->animations();
-    m_frames = new_loader->frames();
-    m_joints = new_loader->joints();
+    m_meshes = utility::move(new_loader->meshes());
+    m_elements = utility::move(new_loader->elements());
+    m_animations = utility::move(new_loader->animations());
+    m_frames = utility::move(new_loader->frames());
+    m_joints = utility::move(new_loader->joints());
   }
 
   utility::destruct_and_deallocate<loader>(m_allocator, new_loader);

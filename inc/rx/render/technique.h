@@ -42,6 +42,8 @@ struct technique : concepts::no_copy {
   const string& name() const;
 
 private:
+  void fini();
+
   struct uniform_definition {
     union variant {
       constexpr variant()

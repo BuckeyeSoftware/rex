@@ -29,7 +29,7 @@
       ],
       source: "
         void main() {
-          fs_color = vec4(texture2D(u_sampler, vs_coordinate).rgb*.5+.5, 1.0);
+          fs_color = rx_texture2D(u_sampler, vs_coordinate);
         }
       "
     }

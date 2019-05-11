@@ -33,6 +33,7 @@ struct model {
   array<vertex>&& vertices() &&;
   const array<animated_vertex> animated_vertices() const &;
   array<animated_vertex>&& animated_vertices() &&;
+  const array<loader::mesh>& meshes() const &;
   const array<rx_u32>& elements() const &;
   array<rx_u32>&& elements() &&;
   rx_size joints() const;
@@ -49,7 +50,9 @@ private:
     array<vertex> as_vertices;
     array<animated_vertex> as_animated_vertices;
   };
+
   array<rx_u32> m_elements;
+  array<loader::mesh> m_meshes;
   array<loader::animation> m_animations;
   array<math::mat3x4f> m_frames;
   rx_size m_joints;
@@ -85,6 +88,10 @@ inline const array<model::animated_vertex> model::animated_vertices() const & {
 inline array<model::animated_vertex>&& model::animated_vertices() && {
   RX_ASSERT(m_is_animated, "not a animated model");
   return utility::move(as_animated_vertices);
+}
+
+inline const array<loader::mesh>& model::meshes() const & {
+  return m_meshes;
 }
 
 inline const array<rx_u32>& model::elements() const & {

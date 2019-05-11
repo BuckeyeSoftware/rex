@@ -770,6 +770,10 @@ static GLuint compile_shader(const array<uniform>& _uniforms, const shader& _sha
     "#define rx_sampler2D sampler2D\n"
     "#define rx_sampler3D sampler3D\n"
     "#define rx_samplerCM samplerCubemap\n"
+    "#define rx_texture1D texture\n"
+    "#define rx_texture2D texture\n"
+    "#define rx_texture3D texture\n"
+    "#define rx_textureCM texture\n"
     "#define rx_position gl_Position\n"
   };
 

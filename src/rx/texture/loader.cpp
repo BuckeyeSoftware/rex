@@ -19,13 +19,13 @@ bool loader::load(const string& _file_name) {
   int channels;
   rx_byte* decoded_image{stbi_load_from_memory(data.data(),
     static_cast<int>(data.size()), &dimensions.w, &dimensions.h, &channels,
-    0)};
+    4)}; // TODO(dweiler): add loader conversions ...
   if (!decoded_image) {
     return false;
   }
 
   m_dimensions = dimensions.cast<rx_size>();
-  m_channels = channels;
+  m_channels = 4; // TODO(dweiler): add loader conversions for channels
   m_bpp = m_channels;
 
   m_data.resize(m_dimensions.area() * m_bpp);
