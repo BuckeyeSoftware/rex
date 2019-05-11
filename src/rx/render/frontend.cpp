@@ -68,8 +68,7 @@ frontend::frontend(memory::allocator* _allocator, backend* _backend)
 }
 
 frontend::~frontend() {
-  // execute any remaining commands on the backend
-  process();
+  // {empty}
 }
 
 // create_*

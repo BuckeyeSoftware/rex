@@ -13,8 +13,7 @@
 #include <rx/core/filesystem/file.h>
 #include <rx/core/json.h>
 
-// #include <rx/texture/scale.h>
-#include <rx/texture/texture.h>
+#include <rx/texture/chain.h>
 
 #include "lib/stb_truetype.h"
 
@@ -240,9 +239,9 @@ immediate::font::font(const key& _key, frontend* _frontend)
         k_glyphs, baked_glyphs.data())};
       
       if (result == -k_glyphs || result > 0) {
-        // create a texture from this baked font bitmap
-        ::rx::texture::texture texture{utility::move(baked_atlas),
-          ::rx::texture::texture::pixel_format::k_r_u8, {m_resolution}, false, true};
+        // create a texture chain from this baked font bitmap
+        rx::texture::chain chain{utility::move(baked_atlas),
+          rx::texture::chain::pixel_format::k_r_u8, {m_resolution}, false, true};
 
         // create and upload baked atlas
         m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("font"));
@@ -254,8 +253,10 @@ immediate::font::font(const key& _key, frontend* _frontend)
           texture::wrap_type::k_clamp_to_edge,
           texture::wrap_type::k_clamp_to_edge});
         
-        for (rx_size i{0}; i < m_texture->levels(); i++) {
-          m_texture->write(texture.data().data() + texture.levels()[i].offset, i);
+        const auto& levels{chain.levels()};
+        for (rx_size i{0}; i < levels.size(); i++) {
+          const auto& level{levels[i]};
+          m_texture->write(chain.data().data() + level.offset, i);
         }
           
         m_frontend->initialize_texture(RX_RENDER_TAG("font"), m_texture);

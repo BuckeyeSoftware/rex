@@ -117,7 +117,6 @@ private:
   array<program*> m_programs;
   array<rx_u32> m_permute_flags;
   string m_name;
-  mutable string m_error;
 
   array<shader_definition> m_shader_definitions;
   array<uniform_definition> m_uniform_definitions;
@@ -130,8 +129,7 @@ inline const string& technique::name() const {
 
 template<typename... Ts>
 inline bool technique::error(const char* _format, Ts&&... _arguments) const {
-  m_error = string::format(_format, utility::forward<Ts>(_arguments)...);
-  log(log::level::k_error, "%s", m_error);
+  log(log::level::k_error, "%s", string::format(_format, utility::forward<Ts>(_arguments)...));
   return false;
 }
 

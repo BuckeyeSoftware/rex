@@ -1,4 +1,4 @@
-#include <rx/texture/texture.h>
+#include <rx/texture/chain.h>
 #include <rx/texture/scale.h>
 
 #include <rx/math/log2.h>
@@ -9,7 +9,7 @@
 
 namespace rx::texture {
 
-texture::texture(array<rx_byte>&& _data, pixel_format _pixel_format,
+chain::chain(array<rx_byte>&& _data, pixel_format _pixel_format,
     const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain)
   : m_data{utility::move(_data)}
   , m_dimensions{_dimensions}
@@ -18,10 +18,10 @@ texture::texture(array<rx_byte>&& _data, pixel_format _pixel_format,
   generate_mipchain(_has_mipchain, _want_mipchain);
 }
 
-static array<texture::level> generate_levels(memory::allocator* _allocator,
+static array<chain::level> generate_levels(memory::allocator* _allocator,
   bool _want_mipchain, const math::vec2z& _dimensions, rx_size _bpp)
 {
-  array<texture::level> result{_allocator};
+  array<chain::level> result{_allocator};
 
   if (_want_mipchain) {
     // levels = log2(max(w, h)+1)
@@ -44,7 +44,7 @@ static array<texture::level> generate_levels(memory::allocator* _allocator,
   return result;
 }
 
-void texture::generate_mipchain(bool _has_mipchain, bool _want_mipchain) {
+void chain::generate_mipchain(bool _has_mipchain, bool _want_mipchain) {
   m_levels = generate_levels(m_levels.allocator(), _want_mipchain,
     m_dimensions, bpp());
 
@@ -80,7 +80,7 @@ void texture::generate_mipchain(bool _has_mipchain, bool _want_mipchain) {
   }
 }
 
-void texture::resize(const math::vec2z& _dimensions) {
+void chain::resize(const math::vec2z& _dimensions) {
   if (m_dimensions == _dimensions) {
     return;
   }

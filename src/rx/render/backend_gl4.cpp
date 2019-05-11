@@ -296,7 +296,7 @@ static filter convert_texture_filter(const render::texture::filter_options& _fil
   };
 
   int filter_index{_filter_options.bilinear ? 1 : 0};
-  filter_index |= _filter_options.mip_maps << 1;
+  filter_index |= _filter_options.mipmaps << 1;
   filter_index |= _filter_options.trilinear << 2;
 
   const GLenum mag{static_cast<GLenum>(filter_index & 1 ? GL_LINEAR : GL_NEAREST)};
@@ -315,6 +315,8 @@ static GLenum convert_texture_wrap(const render::texture::wrap_type _type) {
     return GL_MIRRORED_REPEAT;
   case render::texture::wrap_type::k_repeat:
     return GL_REPEAT;
+  case render::texture::wrap_type::k_mirror_clamp_to_edge:
+    return GL_MIRROR_CLAMP_TO_EDGE;
   }
   RX_ASSERT(false, "unreachable");
 }

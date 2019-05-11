@@ -7,7 +7,7 @@
 
 namespace rx::texture {
 
-bool loader::load(const char* _file_name) {
+bool loader::load(const string& _file_name) {
   auto read_data{filesystem::read_binary_file(m_allocator, _file_name)};
   if (!read_data) {
     return false;

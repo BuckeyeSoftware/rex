@@ -2,6 +2,8 @@
 #define RX_TEXTURE_LOADER_H
 
 #include <rx/core/array.h>
+#include <rx/core/string.h>
+
 #include <rx/math/vec2.h>
 
 namespace rx::texture {
@@ -11,7 +13,7 @@ struct loader {
   constexpr loader(memory::allocator* _allocator);
   ~loader() = default;
 
-  bool load(const char* _file_name);
+  bool load(const string& _file_name);
 
   rx_size bpp() const;
   rx_size channels() const;

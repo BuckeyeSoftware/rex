@@ -192,7 +192,6 @@ technique::technique(frontend* _frontend)
   , m_programs{m_frontend->allocator()}
   , m_permute_flags{m_frontend->allocator()}
   , m_name{m_frontend->allocator()}
-  , m_error{m_frontend->allocator()}
   , m_shader_definitions{m_frontend->allocator()}
   , m_uniform_definitions{m_frontend->allocator()}
   , m_specializations{m_frontend->allocator()}
@@ -211,7 +210,6 @@ technique::technique(technique&& _technique)
   , m_programs{utility::move(_technique.m_programs)}
   , m_permute_flags{utility::move(_technique.m_permute_flags)}
   , m_name{utility::move(_technique.m_name)}
-  , m_error{utility::move(_technique.m_error)}
   , m_shader_definitions{utility::move(_technique.m_shader_definitions)}
   , m_uniform_definitions{utility::move(_technique.m_uniform_definitions)}
   , m_specializations{utility::move(_technique.m_specializations)}
@@ -224,7 +222,6 @@ technique& technique::operator=(technique&& _technique) {
   m_type = _technique.m_type;
   m_programs = utility::move(_technique.m_programs);
   m_name = utility::move(_technique.m_name);
-  m_error = utility::move(_technique.m_error);
   m_shader_definitions = utility::move(_technique.m_shader_definitions);
   m_uniform_definitions = utility::move(_technique.m_uniform_definitions);
   m_specializations = utility::move(_technique.m_specializations);
