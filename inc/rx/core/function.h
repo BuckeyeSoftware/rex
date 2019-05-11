@@ -24,10 +24,13 @@ struct function<R(Ts...)> {
 
   function(const function& _function);
   function& operator=(const function& _function);
+  function& operator=(rx_nullptr);
 
   ~function();
 
-  R operator()(Ts&&... _arguments);
+  R operator()(Ts... _arguments);
+
+  operator bool() const;
 
 private:
   using invoke_fn = R (*)(rx_byte*, Ts&&...);
@@ -124,6 +127,19 @@ inline function<R(Ts...)>& function<R(Ts...)>::operator=(const function& _functi
 }
 
 template<typename R, typename... Ts>
+inline function<R(Ts...)>& function<R(Ts...)>::operator=(rx_nullptr) {
+  if (m_destruct) {
+    m_destruct(m_data.data());
+  }
+
+  m_invoke = nullptr;
+  m_construct = nullptr;
+  m_destruct = nullptr;
+
+  return *this;
+}
+
+template<typename R, typename... Ts>
 inline function<R(Ts...)>::~function() {
   if (m_destruct) {
     m_destruct(m_data.data());
@@ -131,12 +147,17 @@ inline function<R(Ts...)>::~function() {
 }
 
 template<typename R, typename... Ts>
-inline R function<R(Ts...)>::operator()(Ts&&... _arguments) {
+inline R function<R(Ts...)>::operator()(Ts... _arguments) {
   if constexpr(traits::is_same<R, void>) {
     return m_invoke(m_data.data(), utility::forward<Ts>(_arguments)...);
   } else {
     m_invoke(m_data.data(), utility::forward<Ts>(_arguments)...);
   }
+}
+
+template<typename R, typename... Ts>
+function<R(Ts...)>::operator bool() const {
+  return m_invoke != nullptr;
 }
 
 } // namespace rx::core

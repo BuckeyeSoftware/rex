@@ -1,9 +1,10 @@
 #ifndef RX_MODEL_LOADER_H
 #define RX_MODEL_LOADER_H
 
+#include <rx/model/mesh.h>
+
 #include <rx/core/concepts/interface.h>
 #include <rx/core/array.h>
-#include <rx/core/string.h>
 
 #include <rx/math/vec2.h>
 #include <rx/math/vec3.h>
@@ -28,12 +29,6 @@ struct loader : concepts::interface {
     rx_size frame_offset;
     rx_size frame_count;
     string name;
-  };
-
-  struct mesh {
-    rx_size offset;
-    rx_size count;
-    string material;
   };
 
   const array<mesh>& meshes() const &;
@@ -87,11 +82,11 @@ inline bool loader::error(const char* _format, Ts&&... _arguments) {
   return false;
 }
 
-inline const array<loader::mesh>& loader::meshes() const & {
+inline const array<mesh>& loader::meshes() const & {
   return m_meshes;
 }
 
-inline array<loader::mesh>&& loader::meshes() && {
+inline array<mesh>&& loader::meshes() && {
   return utility::move(m_meshes);
 }
 

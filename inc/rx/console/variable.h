@@ -6,6 +6,7 @@
 #include <rx/core/assert.h> // RX_ASSERT
 #include <rx/core/string.h> // string
 #include <rx/core/statics.h> // static_global
+#include <rx/core/event.h> // event
 
 #include <rx/math/vec2.h> // vec2{f,i}
 #include <rx/math/vec3.h> // vec3{f,i}
@@ -139,6 +140,8 @@ inline variable_type variable_reference::type() const {
 
 template<typename T>
 struct variable {
+  using on_change_event = event<variable<T>&>;
+
   variable(const char* _name, const char* _description, const T& _min,
     const T& _max, const T& _initial);
 
@@ -154,17 +157,22 @@ struct variable {
   void reset();
   variable_status set(const T& value);
 
+  typename on_change_event::handle on_change(typename on_change_event::delegate&& _on_change);
+
 private:
   variable_reference m_reference;
   T m_min;
   T m_max;
   T m_initial;
   T m_current;
+  on_change_event m_on_change;
 };
 
 // specialization for boolean
 template<>
 struct variable<bool> {
+  using on_change_event = event<variable<bool>&>;
+
   variable(const char* _name, const char* _description, bool _initial);
 
   operator const bool&() const;
@@ -179,15 +187,20 @@ struct variable<bool> {
 
   void toggle();
 
+  typename on_change_event::handle on_change(typename on_change_event::delegate&& _on_change);
+
 private:
   variable_reference m_reference;
   bool m_initial;
   bool m_current;
+  on_change_event m_on_change;
 };
 
 // specialization for string
 template<>
 struct variable<string> {
+  using on_change_event = event<variable<string>&>;
+
   variable(const char* _name, const char* _description, const char* _initial);
 
   operator const string&() const;
@@ -201,15 +214,20 @@ struct variable<string> {
   variable_status set(const char* _value);
   variable_status set(const string& _value);
 
+  typename on_change_event::handle on_change(typename on_change_event::delegate&& _on_change);
+
 private:
   variable_reference m_reference;
   const char* m_initial;
   string m_current;
+  on_change_event m_on_change;
 };
 
 // specialization for vector types
 template<typename T>
 struct variable<vec2<T>> {
+  using on_change_event = event<variable<vec2<T>>&>;
+
   variable(const char* _name, const char* _description, const vec2<T>& _min,
     const vec2<T>& _max, const vec2<T>& _initial);
 
@@ -225,16 +243,21 @@ struct variable<vec2<T>> {
   void reset();
   variable_status set(const vec2<T>& _value);
 
+  typename on_change_event::handle on_change(typename on_change_event::delegate&& _on_change);
+
 private:
   variable_reference m_reference;
   vec2<T> m_min;
   vec2<T> m_max;
   vec2<T> m_initial;
   vec2<T> m_current;
+  on_change_event m_on_change;
 };
 
 template<typename T>
 struct variable<vec3<T>> {
+  using on_change_event = event<variable<vec3<T>>&>;
+
   variable(const char* _name, const char* _description, const vec3<T>& _min,
     const vec3<T>& _max, const vec3<T>& _initial);
 
@@ -250,16 +273,21 @@ struct variable<vec3<T>> {
   void reset();
   variable_status set(const vec3<T>& value);
 
+  typename on_change_event::handle on_change(typename on_change_event::delegate&& _on_change);
+
 private:
   variable_reference m_reference;
   vec3<T> m_min;
   vec3<T> m_max;
   vec3<T> m_initial;
   vec3<T> m_current;
+  on_change_event m_on_change;
 };
 
 template<typename T>
 struct variable<vec4<T>> {
+  using on_change_event = event<variable<vec4<T>>&>;
+
   variable(const char* _name, const char* _description, const vec4<T>& _min,
     const vec4<T>& _max, const vec4<T>& _initial);
 
@@ -275,12 +303,15 @@ struct variable<vec4<T>> {
   void reset();
   variable_status set(const vec4<T>& value);
 
+  typename on_change_event::handle on_change(typename on_change_event::delegate&& _on_change);
+
 private:
   variable_reference m_reference;
   vec4<T> m_min;
   vec4<T> m_max;
   vec4<T> m_initial;
   vec4<T> m_current;
+  on_change_event m_on_change;
 };
 
 // variable<T>
@@ -340,8 +371,16 @@ inline variable_status variable<T>::set(const T& _value) {
   if (_value < m_min || _value > m_max) {
     return variable_status::k_out_of_range;
   }
-  m_current = _value;
+  if (m_current != _value) {
+    m_current = _value;
+    m_on_change.signal(*this);
+  }
   return variable_status::k_success;
+}
+
+template<typename T>
+inline typename variable<T>::on_change_event::handle variable<T>::on_change(typename on_change_event::delegate&& _on_change) {
+  return m_on_change.connect(utility::move(_on_change));
 }
 
 // variable<bool>
@@ -377,12 +416,20 @@ inline void variable<bool>::reset() {
 }
 
 inline variable_status variable<bool>::set(bool value) {
-  m_current = value;
+  if (m_current != value) {
+    m_current = value;
+    m_on_change.signal(*this);
+  }
   return variable_status::k_success;
 }
 
 inline void variable<bool>::toggle() {
   m_current = !m_current;
+  m_on_change.signal(*this);
+}
+
+inline typename variable<bool>::on_change_event::handle variable<bool>::on_change(typename on_change_event::delegate&& _on_change) {
+  return m_on_change.connect(utility::move(_on_change));
 }
 
 // variable<string>
@@ -418,13 +465,23 @@ inline void variable<string>::reset() {
 }
 
 inline variable_status variable<string>::set(const char* _value) {
-  m_current = _value;
+  if (m_current != _value) {
+    m_current = _value;
+    m_on_change.signal(*this);
+  }
   return variable_status::k_success;
 }
 
 inline variable_status variable<string>::set(const string& _value) {
-  m_current = _value;
+  if (m_current != _value) {
+    m_current = _value;
+    m_on_change.signal(*this);
+  }
   return variable_status::k_success;
+}
+
+inline typename variable<string>::on_change_event::handle variable<string>::on_change(typename on_change_event::delegate&& _on_change) {
+  return m_on_change.connect(utility::move(_on_change));
 }
 
 // variable<vec2<T>>
@@ -486,8 +543,16 @@ inline variable_status variable<vec2<T>>::set(const vec2<T>& _value) {
   {
     return variable_status::k_out_of_range;
   }
-  m_current = _value;
+  if (m_current != _value) {
+    m_current = _value;
+    m_on_change.signal(*this);
+  }
   return variable_status::k_success;
+}
+
+template<typename T>
+inline typename variable<vec2<T>>::on_change_event::handle variable<vec2<T>>::on_change(typename on_change_event::delegate&& _on_change) {
+  return m_on_change.connect(utility::move(_on_change));
 }
 
 // variable<vec3<T>>
@@ -549,8 +614,16 @@ inline variable_status variable<vec3<T>>::set(const vec3<T>& _value) {
   {
     return variable_status::k_out_of_range;
   }
-  m_current = _value;
+  if (m_current != _value) {
+    m_current = _value;
+    m_on_change.signal(*this);
+  }
   return variable_status::k_success;
+}
+
+template<typename T>
+inline typename variable<vec3<T>>::on_change_event::handle variable<vec3<T>>::on_change(typename on_change_event::delegate&& _on_change) {
+  return m_on_change.connect(utility::move(_on_change));
 }
 
 // variable<vec4<T>>
@@ -612,8 +685,16 @@ inline variable_status variable<vec4<T>>::set(const vec4<T>& _value) {
   {
     return variable_status::k_out_of_range;
   }
-  m_current = _value;
+  if (m_current != _value) {
+    m_current = _value;
+    m_on_change.signal(*this);
+  }
   return variable_status::k_success;
+}
+
+template<typename T>
+inline typename variable<vec4<T>>::on_change_event::handle variable<vec4<T>>::on_change(typename on_change_event::delegate&& _on_change) {
+  return m_on_change.connect(utility::move(_on_change));
 }
 
 } // namespace rx::console

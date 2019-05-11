@@ -4,6 +4,7 @@
 
 #include <rx/core/statics.h>
 #include <rx/core/string.h>
+#include <rx/core/event.h>
 
 #include <rx/console/console.h>
 #include <rx/console/variable.h>
@@ -244,10 +245,6 @@ int entry(int argc, char **argv) {
       }
       const auto& elements{model.elements()};
       model_buffer->write_elements(elements.data(), elements.size() * sizeof(rx_u32));
-
-      model.meshes().each_fwd([](const rx::model::loader::mesh& _mesh) {
-        RX_MESSAGE("%s", _mesh.material.data());
-      });
     }
     frontend.initialize_buffer(RX_RENDER_TAG("model"), model_buffer);
 
@@ -367,7 +364,7 @@ int entry(int argc, char **argv) {
         RX_RENDER_CLEAR_DEPTH,
         {1.0f, 0.0f, 0.0f, 0.0f});
 
-      model.meshes().each_fwd([&](const rx::model::loader::mesh& _mesh) {
+      model.meshes().each_fwd([&](const rx::model::mesh& _mesh) {
         const auto material{materials.find(_mesh.material)};
         frontend.draw_elements(
           RX_RENDER_TAG("gbuffer test"),
