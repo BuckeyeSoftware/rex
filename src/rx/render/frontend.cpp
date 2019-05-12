@@ -54,6 +54,8 @@ frontend::frontend(memory::allocator* _allocator, backend* _backend)
   , m_backend{_backend}
   , m_deferred_process{[this]() { process(); }}
 {
+  memset(m_resource_usage, 0, sizeof m_resource_usage);
+
   // load all techniques
   if (filesystem::directory directory{k_technique_path}) {
     directory.each([this](const filesystem::directory::item& _item) {
@@ -453,39 +455,39 @@ bool frontend::process() {
 
   m_command_buffer.reset();
 
-  for (rx_size i{0}; i < sizeof m_resource_usage[0] / sizeof *m_resource_usage[0]; i++) {
-    m_resource_usage[1][i].exchange(m_resource_usage[0][i]);
-    m_resource_usage[0][i] = 0;
-  }
-
-  m_draw_calls[1].exchange(m_draw_calls[0]);
-  m_draw_calls[0] = 0;
+  m_draw_calls[1].store(m_draw_calls[0].load());
+  m_draw_calls[0].store(0);
 
   return true;
 }
 
-frontend::statistics frontend::stats(resource::type _type) {
+frontend::statistics frontend::stats(resource::type _type) const {
   concurrency::scope_lock lock(m_mutex);
 
+  const auto index{static_cast<rx_size>(_type)};
   switch (_type) {
   case resource::type::k_buffer:
-    return {m_buffer_pool.capacity(), m_buffer_pool.size(), 0};
+    return {m_buffer_pool.capacity(), m_buffer_pool.size(), 0, m_resource_usage[index]};
   case resource::type::k_program:
-    return {m_program_pool.capacity(), m_program_pool.size(), 0};
+    return {m_program_pool.capacity(), m_program_pool.size(), 0, m_resource_usage[index]};
   case resource::type::k_target:
-    return {m_target_pool.capacity(), m_target_pool.size(), 0};
+    return {m_target_pool.capacity(), m_target_pool.size(), 0, m_resource_usage[index]};
   case resource::type::k_texture1D:
-    return {m_texture1D_pool.capacity(), m_texture1D_pool.size(), 0};
+    return {m_texture1D_pool.capacity(), m_texture1D_pool.size(), 0, m_resource_usage[index]};
   case resource::type::k_texture2D:
-    return {m_texture2D_pool.capacity(), m_texture2D_pool.size(), 0};
+    return {m_texture2D_pool.capacity(), m_texture2D_pool.size(), 0, m_resource_usage[index]};
   case resource::type::k_texture3D:
-    return {m_texture3D_pool.capacity(), m_texture3D_pool.size(), 0};
+    return {m_texture3D_pool.capacity(), m_texture3D_pool.size(), 0, m_resource_usage[index]};
   case resource::type::k_textureCM:
-    return {m_textureCM_pool.capacity(), m_textureCM_pool.size(), 0};
+    return {m_textureCM_pool.capacity(), m_textureCM_pool.size(), 0, m_resource_usage[index]};
   }
 
   // NOTE: unreachable
   return {};
+}
+
+rx_size frontend::draw_calls() const {
+  return m_draw_calls[1];
 }
 
 bool frontend::swap() {

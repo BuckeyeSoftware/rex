@@ -105,9 +105,11 @@ struct frontend {
     rx_size total;
     rx_size used;
     rx_size cached;
+    rx_size memory;
   };
 
-  statistics stats(resource::type _type);
+  statistics stats(resource::type _type) const;
+  rx_size draw_calls() const;
 
   technique* find_technique_by_name(const char* _name);
 
@@ -121,7 +123,7 @@ private:
   void destroy_texture_unlocked(const command_header::info& _info,
     texture2D* _texture);
 
-  concurrency::mutex m_mutex;
+  mutable concurrency::mutex m_mutex;
 
   memory::allocator* m_allocator;          // protected by |m_mutex|
 
@@ -154,7 +156,7 @@ private:
   map<string, technique> m_techniques; 
   frame_timer m_timer;
 
-  concurrency::atomic<rx_size> m_resource_usage[2][resource::count()];
+  rx_size m_resource_usage[resource::count()];
   concurrency::atomic<rx_size> m_draw_calls[2];
 };
 

@@ -226,6 +226,7 @@ void program::validate() const {
 
 uniform& program::add_uniform(const string& _name, uniform::type _type) {
   m_uniforms.emplace_back(this, m_uniforms.size(), _name, _type);
+  update_resource_usage();
   return m_uniforms.last();
 }
 
@@ -249,6 +250,14 @@ void program::flush_dirty_uniforms(rx_byte* _data) {
   }
 
   RX_ASSERT(m_dirty_uniforms == 0, "failed to flush all uniforms");
+}
+
+void program::update_resource_usage() {
+  rx_size usage{0};
+  m_uniforms.each_fwd([&usage](const uniform& _uniform) {
+    usage += _uniform.size();
+  });
+  resource::update_resource_usage(usage);
 }
 
 } // namespace rx::render

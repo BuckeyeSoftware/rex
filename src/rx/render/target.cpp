@@ -150,6 +150,8 @@ void target::request_depth(texture::data_format _format, const math::vec2z& _dim
   m_frontend->initialize_texture(RX_RENDER_TAG("target depth"), m_depth_texture);
 
   m_owns |= k_depth;
+
+  update_resource_usage();
 }
 
 void target::request_stencil(texture::data_format _format, const math::vec2z& _dimensions) {
@@ -169,6 +171,8 @@ void target::request_stencil(texture::data_format _format, const math::vec2z& _d
   m_frontend->initialize_texture(RX_RENDER_TAG("target stencil"), m_stencil_texture);
 
   m_owns |= k_stencil;
+
+  update_resource_usage();
 }
 
 void target::request_depth_stencil(texture::data_format _format, const math::vec2z& _dimensions) {
@@ -189,6 +193,8 @@ void target::request_depth_stencil(texture::data_format _format, const math::vec
 
   m_owns |= k_depth;
   m_owns |= k_stencil;
+
+  update_resource_usage();
 }
 
 void target::attach_depth(texture2D* _depth) {
@@ -198,6 +204,8 @@ void target::attach_depth(texture2D* _depth) {
   RX_ASSERT(_depth->kind() == texture::type::k_attachment, "not attachable texture");
 
   m_depth_texture = _depth;
+
+  update_resource_usage();
 }
 
 void target::attach_stencil(texture2D* _stencil) {
@@ -207,6 +215,8 @@ void target::attach_stencil(texture2D* _stencil) {
   RX_ASSERT(_stencil->kind() == texture::type::k_attachment, "not attachable texture");
 
   m_stencil_texture = _stencil;
+
+  update_resource_usage();
 }
 
 void target::attach_texture(texture2D* _texture) {
@@ -217,9 +227,11 @@ void target::attach_texture(texture2D* _texture) {
     RX_ASSERT(_texture != _attachment, "texture already attached");
   });
   m_attachments.push_back(_texture);
+
+  update_resource_usage();
 }
 
-void target::validate() {
+void target::validate() const {
   if (m_is_swapchain) {
     RX_ASSERT(m_attachments.is_empty(), "swapchain cannot have attachments");
   } else {
@@ -227,6 +239,31 @@ void target::validate() {
       RX_ASSERT(!m_attachments.is_empty(), "no attachments");
     }
   }
+}
+
+void target::update_resource_usage() {
+  const auto rt_usage{[](const texture2D* _texture){
+    return _texture->dimensions().area() * texture::byte_size_of_format(_texture->format());
+  }};
+
+  // calcualte memory usage for each attachment texture
+  rx_size usage{0};
+  m_attachments.each_fwd([&](const texture2D* _texture) {
+    usage += rt_usage(_texture);
+  });
+
+  // as well as any usage for depth and stencil textures
+  if (m_depth_stencil_texture) {
+    usage += rt_usage(m_depth_stencil_texture);
+  } else {
+    if (m_depth_texture) {
+      usage += rt_usage(m_depth_texture);
+    } else if (m_stencil_texture) {
+      usage += rt_usage(m_stencil_texture);
+    }
+  }
+
+  resource::update_resource_usage(usage);
 }
 
 } // namespace rx::render

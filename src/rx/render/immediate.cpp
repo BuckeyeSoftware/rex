@@ -480,7 +480,6 @@ void immediate::immediate::render(target* _target) {
           break;
       default:
         break;
-        // TODO
       }
     });
 

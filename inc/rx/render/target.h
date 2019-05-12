@@ -44,9 +44,11 @@ struct target : resource {
   const array<texture2D*> attachments() const &;
   bool is_swapchain() const;
 
-  void validate();
+  void validate() const;
 
 private:
+  void update_resource_usage();
+
   enum /* m_owns */ {
     k_depth = 1 << 0,
     k_stencil = 1 << 1

@@ -143,6 +143,8 @@ struct program : resource {
   array<uniform>& uniforms() &;
 
 private:
+  void update_resource_usage();
+
   friend struct uniform;
 
   memory::allocator* m_allocator;

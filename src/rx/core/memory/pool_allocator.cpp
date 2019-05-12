@@ -11,7 +11,7 @@ namespace rx::memory {
 
 pool_allocator::pool_allocator(allocator* _allocator, rx_size _object_size, rx_size _object_count)
   : m_allocator{_allocator}
-  , m_object_size{_object_size}
+  , m_object_size{allocator::round_to_alignment(_object_size)}
   , m_object_count{_object_count}
   , m_data{m_allocator->allocate(m_object_size * m_object_count)}
   , m_bits{_allocator, m_object_count}

@@ -75,7 +75,8 @@ static constexpr const rx_byte k_quad_elements[]{
   0, 1, 2, 3
 };
 
-static void frame_graph(const rx::render::frame_timer& _timer, rx::render::immediate& _immediate) {
+static void frame_stats(const rx::render::frontend& _frontend, rx::render::immediate& _immediate) {
+  const rx::render::frame_timer& _timer{_frontend.timer()};
   const rx::math::vec2i& screen_size{*display_resolution};
   const rx::math::vec2i box_size{600, 200};
   const rx_s32 box_bottom{25};
@@ -88,7 +89,6 @@ static void frame_graph(const rx::render::frame_timer& _timer, rx::render::immed
   _immediate.frame_queue().record_rectangle({box_left, box_bottom}, box_size, 0, {0.0f, 0.0f, 0.0f, 0.5f});
 
   const auto k_frame_scale{16.667*2.0f};
-
   rx::array<rx::math::vec2i> points;
   _timer.frame_times().each_fwd([&](const rx::render::frame_timer::frame_time& _time){
     const auto delta_x{(_timer.ticks() * _timer.resolution() - _time.life) / rx::render::frame_timer::k_frame_history_seconds};
@@ -99,9 +99,7 @@ static void frame_graph(const rx::render::frame_timer& _timer, rx::render::immed
 
   const rx_size n_points{points.size()};
   for (rx_size i{1}; i < n_points; i++) {
-    const auto& a{points[i - 1]};
-    const auto& b{points[i]};
-    _immediate.frame_queue().record_line(a, b, 0, 1, {0.0f, 1.0f, 0.0f, 1.0f});
+    _immediate.frame_queue().record_line(points[i - 1], points[i], 0, 1, {0.0f, 1.0f, 0.0f, 1.0f});
   }
 
   _immediate.frame_queue().record_line({box_left,   box_bottom}, {box_left,   box_top},    0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
@@ -110,11 +108,53 @@ static void frame_graph(const rx::render::frame_timer& _timer, rx::render::immed
   _immediate.frame_queue().record_line({box_left,   box_bottom}, {box_right,  box_bottom}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
   _immediate.frame_queue().record_line({box_left,   box_middle}, {box_right,  box_middle}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
   _immediate.frame_queue().record_line({box_left,   box_top},    {box_right,  box_top},    0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-
   _immediate.frame_queue().record_text("Inconsolata-Regular", {box_center,    box_top    + 5}, 18, 1.0f, rx::render::immediate::text_align::k_center, "Frame Time", {1.0f, 1.0f, 1.0f, 1.0f});
   _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_top    - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left,   "0.0",        {1.0f, 1.0f, 1.0f, 1.0f});
   _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_middle - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left,   rx::string::format("%.1f", k_frame_scale * .5), {1.0f, 1.0f, 1.0f, 1.0f});
   _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_bottom - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left,   rx::string::format("%.1f", k_frame_scale),      {1.0f, 1.0f, 1.0f, 1.0f});
+}
+
+static void render_stats(const rx::render::frontend& _frontend, rx::render::immediate& _immediate) {
+  const auto& buffer_stats{_frontend.stats(rx::render::resource::type::k_buffer)};
+  const auto& program_stats{_frontend.stats(rx::render::resource::type::k_program)};
+  const auto& target_stats{_frontend.stats(rx::render::resource::type::k_target)};
+  const auto& texture1D_stats{_frontend.stats(rx::render::resource::type::k_texture1D)};
+  const auto& texture2D_stats{_frontend.stats(rx::render::resource::type::k_texture2D)};
+  const auto& texture3D_stats{_frontend.stats(rx::render::resource::type::k_texture3D)};
+  const auto& textureCM_stats{_frontend.stats(rx::render::resource::type::k_textureCM)};
+
+  rx::math::vec2i offset{25, 25};
+
+  auto render{[&](const char* _label, const rx::render::frontend::statistics& _stats) {
+    auto color{[&_stats]() -> rx_u32 {
+      const rx::math::vec3f bad{1.0f, 0.0f, 0.0f};
+      const rx::math::vec3f good{0.0f, 1.0f, 0.0f};
+      const rx_f32 scaled{static_cast<rx_f32>(_stats.used) / static_cast<rx_f32>(_stats.total)};
+      const rx::math::vec3f color{bad * scaled + good * (1.0f - scaled)};
+      return (rx_u32(color.r * 255.0f) << 24) |
+             (rx_u32(color.g * 255.0f) << 16) |
+             (rx_u32(color.b * 255.0f) << 8) |
+             0xFF;
+    }};
+    const auto format{rx::string::format("^w%s: ^[%x]%zu ^wof ^m%zu ^g%s",
+      _label, color(), _stats.used, _stats.total, rx::string::human_size_format(_stats.memory))};
+    _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
+      rx::render::immediate::text_align::k_left, format, {1.0f, 1.0f, 1.0f, 1.0f});
+    offset.y += 20;
+  }};
+
+  render("texturesCM", textureCM_stats);
+  render("textures3D", texture3D_stats);
+  render("textures2D", texture2D_stats);
+  render("textures1D", texture1D_stats);
+  render("programs", program_stats);
+  render("buffers", buffer_stats);
+  render("targets", target_stats);
+
+  _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
+    rx::render::immediate::text_align::k_left,
+    rx::string::format("draws: %zu", _frontend.draw_calls()),
+    {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
 int entry(int argc, char **argv) {
@@ -396,8 +436,8 @@ int entry(int argc, char **argv) {
         "2",
         gbuffer.albedo());
 
-      frame_graph(frontend.timer(), immediate);
-      // TODO other stats
+      frame_stats(frontend, immediate);
+      render_stats(frontend, immediate);
 
       immediate.render(target);
 

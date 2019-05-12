@@ -31,18 +31,23 @@ static constexpr const char* resource_type_to_string(resource::type _type) {
 resource::resource(frontend* _frontend, type _type)
   : m_frontend{_frontend}
   , m_resource_type{_type}
+  , m_resource_usage{0}
 {
-  log_resource(log::level::k_verbose, "%p init %s", this, resource_type_to_string(_type));
+  log_resource(log::level::k_verbose, "%p init %s", this, resource_type_to_string(m_resource_type));
 }
 
 resource::~resource() {
-  update_resource_usage(0);
+  const auto index{static_cast<rx_size>(m_resource_type)};
+  m_frontend->m_resource_usage[index] -= m_resource_usage;
 
   log_resource(log::level::k_verbose, "%p fini %s", this, resource_type_to_string(m_resource_type));
 }
 
 void resource::update_resource_usage(rx_size _bytes) {
-  m_frontend->m_resource_usage[0][static_cast<rx_size>(m_resource_type)] = _bytes;
+  const auto index{static_cast<rx_size>(m_resource_type)};
+  m_frontend->m_resource_usage[index] -= m_resource_usage;
+  m_resource_usage = _bytes;
+  m_frontend->m_resource_usage[index] += m_resource_usage;
 }
 
 } // namespace rx::render
