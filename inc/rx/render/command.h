@@ -66,9 +66,20 @@ struct command_buffer {
     const command_header::info& _info);
   void reset();
 
+  rx_size used() const;
+  rx_size size() const;
+
 private:
   memory::bump_point_allocator m_allocator;
 };
+
+inline rx_size command_buffer::used() const {
+  return m_allocator.used();
+}
+
+inline rx_size command_buffer::size() const {
+  return m_allocator.size();
+}
 
 struct clear_command {
   target* render_target;

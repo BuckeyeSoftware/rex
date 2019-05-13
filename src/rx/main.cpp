@@ -125,35 +125,59 @@ static void render_stats(const rx::render::frontend& _frontend, rx::render::imme
 
   rx::math::vec2i offset{25, 25};
 
-  auto render{[&](const char* _label, const rx::render::frontend::statistics& _stats) {
-    auto color{[&_stats]() -> rx_u32 {
-      const rx::math::vec3f bad{1.0f, 0.0f, 0.0f};
-      const rx::math::vec3f good{0.0f, 1.0f, 0.0f};
-      const rx_f32 scaled{static_cast<rx_f32>(_stats.used) / static_cast<rx_f32>(_stats.total)};
-      const rx::math::vec3f color{bad * scaled + good * (1.0f - scaled)};
-      return (rx_u32(color.r * 255.0f) << 24) |
-             (rx_u32(color.g * 255.0f) << 16) |
-             (rx_u32(color.b * 255.0f) << 8) |
-             0xFF;
-    }};
+  auto color_ratio{[](rx_size _used, rx_size _total) -> rx_u32 {
+    const rx::math::vec3f bad{1.0f, 0.0f, 0.0f};
+    const rx::math::vec3f good{0.0f, 1.0f, 0.0f};
+    const rx_f32 scaled{static_cast<rx_f32>(_used) / static_cast<rx_f32>(_total)};
+    const rx::math::vec3f color{bad * scaled + good * (1.0f - scaled)};
+    return (rx_u32(color.r * 255.0f) << 24) |
+           (rx_u32(color.g * 255.0f) << 16) |
+           (rx_u32(color.b * 255.0f) << 8) |
+           0xFF;
+  }};
+
+  auto render_stat{[&](const char* _label, const rx::render::frontend::statistics& _stats) {
     const auto format{rx::string::format("^w%s: ^[%x]%zu ^wof ^m%zu ^g%s",
-      _label, color(), _stats.used, _stats.total, rx::string::human_size_format(_stats.memory))};
+      _label, color_ratio(_stats.used, _stats.total), _stats.used, _stats.total,
+      rx::string::human_size_format(_stats.memory))};
+
     _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
       rx::render::immediate::text_align::k_left, format, {1.0f, 1.0f, 1.0f, 1.0f});
     offset.y += 20;
   }};
 
-  render("texturesCM", textureCM_stats);
-  render("textures3D", texture3D_stats);
-  render("textures2D", texture2D_stats);
-  render("textures1D", texture1D_stats);
-  render("programs", program_stats);
-  render("buffers", buffer_stats);
-  render("targets", target_stats);
+  const auto& command_buffer{_frontend.get_command_buffer()};
+  const rx_size commands_used{command_buffer.used()};
+  const rx_size commands_total{command_buffer.size()};
+  _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
+    rx::render::immediate::text_align::k_left,
+    rx::string::format("commands: ^[%x]%s ^wof ^g%s",
+      color_ratio(commands_used, commands_total),
+      rx::string::human_size_format(commands_used),
+      rx::string::human_size_format(commands_total)),
+    {1.0f, 1.0f, 1.0f, 1.0f});
+
+  offset.y += 20;
+
+  render_stat("texturesCM", textureCM_stats);
+  render_stat("textures3D", texture3D_stats);
+  render_stat("textures2D", texture2D_stats);
+  render_stat("textures1D", texture1D_stats);
+  render_stat("programs", program_stats);
+  render_stat("buffers", buffer_stats);
+  render_stat("targets", target_stats);
 
   _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
     rx::render::immediate::text_align::k_left,
     rx::string::format("draws: %zu", _frontend.draw_calls()),
+    {1.0f, 1.0f, 1.0f, 1.0f});
+  
+  // mspf and fps
+  const rx::render::frame_timer& _timer{_frontend.timer()};
+  const rx::math::vec2i& screen_size{*display_resolution};
+  _immediate.frame_queue().record_text("Consolas-Regular", screen_size - rx::math::vec2i{25, 25}, 16, 1.0f,
+    rx::render::immediate::text_align::k_right,
+    rx::string::format("MSPF: %.2f | FPS: %d", _timer.mspf(), _timer.fps()),
     {1.0f, 1.0f, 1.0f, 1.0f});
 }
 

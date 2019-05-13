@@ -115,6 +115,8 @@ struct frontend {
 
   const frame_timer& timer() const &;
 
+  const command_buffer& get_command_buffer() const &;
+
 private:
   friend struct target;
   friend struct resource;
@@ -166,6 +168,10 @@ inline memory::allocator* frontend::allocator() const {
 
 inline const frame_timer& frontend::timer() const & {
   return m_timer;
+}
+
+inline const command_buffer& frontend::get_command_buffer() const & {
+  return m_command_buffer;
 }
 
 } // namespace rx::render

@@ -674,9 +674,9 @@ static rx_f32 calculate_text_length(immediate::font* _font, rx_f32 _scale,
     }
 
     const auto glyph{_font->glyph_for_code(ch - 32)};
-    const auto round{static_cast<rx_s32>(math::floor(position + glyph.offset.x) + .5f)};
+    const auto round{position + glyph.offset.x};
 
-    span = static_cast<rx_f32>(round)
+    span = round
       + static_cast<rx_f32>(glyph.position[1].x) * _scale
       - static_cast<rx_f32>(glyph.position[0].x) * _scale;
     
