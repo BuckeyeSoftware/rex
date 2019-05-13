@@ -12,3 +12,6 @@
 # ignore hidden files and directories but not .gitignore
 .*
 !/.gitignore
+
+# ignore TODO
+TODO.md
