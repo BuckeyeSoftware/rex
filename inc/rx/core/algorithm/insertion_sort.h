@@ -5,6 +5,7 @@
 
 namespace rx::algorithm {
 
+//! insertion sort from _start to _end using _compare comparator
 template<typename T, typename F>
 inline void insertion_sort(T* _start, T* _end, F&& _compare) {
   for (T* item1 = _start + 1; item1 < _end; item1++) {

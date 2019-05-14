@@ -203,22 +203,22 @@ bool material::parse_filter(texture2D* texture_, const json& _filter, bool _mipm
     return error("expected String");
   }
 
-  bool bilinear{false};
-  bool trilinear{false};
-  bool mipmaps{_mipmaps};
+  static constexpr const char* k_matches[]{
+    "bilinear",
+    "trilinear",
+    "nearest"
+  };
+
   const auto& filter_string{_filter.as_string()};
-  if (filter_string == "bilinear") {
-    bilinear = true;
-  } else if (filter_string == "trilinear") {
-    trilinear = true;
-    mipmaps = true;
-  } else if (filter_string != "nearest") {
-    return error("unknown filter '%s'", filter_string);
+  for (const auto& match : k_matches) {
+    if (filter_string == match) {
+      bool trilinear{*match == 't'};
+      texture_->record_filter({*match == 'b', trilinear, _mipmaps || trilinear});
+      return true;
+    }
   }
 
-  texture_->record_filter({bilinear, trilinear, mipmaps});
-
-  return true;
+  return error("unknown filter '%s'", filter_string);
 }
 
 bool material::parse_wrap(texture2D* texture_, const json& _wrap) {
@@ -226,19 +226,23 @@ bool material::parse_wrap(texture2D* texture_, const json& _wrap) {
     return error("expected Array[String, 2]");
   }
 
-  const auto parse{[this](const string& _type) -> optional<texture::wrap_type> {
-    if (_type == "clamp_to_edge") {
-      return texture::wrap_type::k_clamp_to_edge;
-    } else if (_type == "clamp_to_border") {
-      return texture::wrap_type::k_clamp_to_border;
-    } else if (_type == "mirrored_repeat") {
-      return texture::wrap_type::k_mirrored_repeat;
-    } else if (_type == "repeat") {
-      return texture::wrap_type::k_repeat;
-    } else if (_type == "mirror_clamp_to_edge") {
-      return texture::wrap_type::k_mirror_clamp_to_edge;
-    }
+  static constexpr const struct {
+    const char* match;
+    texture::wrap_type type;
+  } k_matches[]{
+    { "clamp_to_edge",        texture::wrap_type::k_clamp_to_edge        },
+    { "clamp_to_border",      texture::wrap_type::k_clamp_to_border      },
+    { "mirrored_repeat",      texture::wrap_type::k_mirrored_repeat      },
+    { "repeat",               texture::wrap_type::k_repeat               },
+    { "mirror_clamp_to_edge", texture::wrap_type::k_mirror_clamp_to_edge }
+  };
 
+  const auto parse{[this](const string& _type) -> optional<texture::wrap_type> {
+    for (const auto& match : k_matches) {
+      if (_type == match.match) {
+        return match.type;
+      }
+    }
     error("invalid wrap type '%s'", _type);
     return nullopt;
   }};

@@ -17,17 +17,16 @@ struct transform {
 };
 
 inline constexpr transform::transform()
-  : scale{1.0f, 1.0f, 1.0f}
-  , rotate{}
-  , translate{}
-  , parent{nullptr}
+  : transform{nullptr}
 {
 }
 
 inline constexpr transform::transform(transform* _parent)
-  : transform{}
+  : scale{1.0f, 1.0f, 1.0f}
+  , rotate{}
+  , translate{}
+  , parent{_parent}
 {
-  parent = _parent;
 }
 
 inline mat4x4f transform::to_mat4() const {

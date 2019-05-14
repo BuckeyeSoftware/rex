@@ -416,7 +416,7 @@ inline bool map<K, V>::lookup_index(const K& _key, rx_size& _index) const {
     position = (position + 1) & m_mask;
     distance++;
   }
-  return false; // unreachable
+  RX_UNREACHABLE();
 }
 
 template<typename K, typename V>

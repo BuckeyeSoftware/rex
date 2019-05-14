@@ -94,7 +94,7 @@ rx_size uniform::size_for_type(type _type) {
   case uniform::type::k_bonesf:
     return sizeof(math::mat3x4f) * k_max_bones;
   }
-  RX_ASSERT(false, "unreachable");
+  RX_UNREACHABLE();
 }
 
 void uniform::record_sampler(int _sampler) {

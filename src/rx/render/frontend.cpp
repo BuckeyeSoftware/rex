@@ -482,8 +482,7 @@ frontend::statistics frontend::stats(resource::type _type) const {
     return {m_textureCM_pool.capacity(), m_textureCM_pool.size(), 0, m_resource_usage[index]};
   }
 
-  // NOTE: unreachable
-  return {};
+  RX_UNREACHABLE();
 }
 
 rx_size frontend::draw_calls() const {

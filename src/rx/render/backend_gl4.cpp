@@ -155,7 +155,7 @@ static GLenum convert_blend_factor(render::blend_state::factor_type _factor_type
   case render::blend_state::factor_type::k_zero:
     return GL_ZERO;
   }
-  RX_ASSERT(false, "unreachable");
+  RX_UNREACHABLE();
 }
 
 static GLenum convert_stencil_operation(render::stencil_state::operation_type _operation_type) {
@@ -177,7 +177,7 @@ static GLenum convert_stencil_operation(render::stencil_state::operation_type _o
   case render::stencil_state::operation_type::k_zero:
     return GL_ZERO;
   }
-  RX_ASSERT(false, "unreachable");
+  RX_UNREACHABLE();
 }
 
 static GLenum convert_stencil_function(render::stencil_state::function_type _function_type) {
@@ -199,7 +199,7 @@ static GLenum convert_stencil_function(render::stencil_state::function_type _fun
   case render::stencil_state::function_type::k_not_equal:
     return GL_NOTEQUAL;
   }
-  RX_ASSERT(false, "unreachable");
+  RX_UNREACHABLE();
 }
 
 static GLenum convert_polygon_mode(render::polygon_state::mode_type _mode_type) {
@@ -211,7 +211,7 @@ static GLenum convert_polygon_mode(render::polygon_state::mode_type _mode_type) 
   case render::polygon_state::mode_type::k_point:
     return GL_POINT;
   }
-  RX_ASSERT(false, "unreachable");
+  RX_UNREACHABLE();
 }
 
 static GLenum convert_texture_data_format(render::texture::data_format _data_format) {
@@ -241,7 +241,7 @@ static GLenum convert_texture_data_format(render::texture::data_format _data_for
   case render::texture::data_format::k_r_u8:
     return GL_R8;
   }
-  RX_ASSERT(false, "unreachable");
+  RX_UNREACHABLE();
 }
 
 static GLenum convert_texture_format(render::texture::data_format _data_format) {
@@ -271,7 +271,7 @@ static GLenum convert_texture_format(render::texture::data_format _data_format) 
   case render::texture::data_format::k_r_u8:
     return GL_RED;
   }
-  RX_ASSERT(false, "unreachable");
+  RX_UNREACHABLE();
 }
 
 static GLenum convert_primitive_type(render::primitive_type _primitive_type) {
@@ -281,7 +281,7 @@ static GLenum convert_primitive_type(render::primitive_type _primitive_type) {
   case render::primitive_type::k_triangle_strip:
     return GL_TRIANGLE_STRIP;
   }
-  RX_ASSERT(false, "unreachable");
+  RX_UNREACHABLE();
 }
 
 struct filter {
@@ -318,7 +318,7 @@ static GLenum convert_texture_wrap(const render::texture::wrap_type _type) {
   case render::texture::wrap_type::k_mirror_clamp_to_edge:
     return GL_MIRROR_CLAMP_TO_EDGE;
   }
-  RX_ASSERT(false, "unreachable");
+  RX_UNREACHABLE();
 }
 
 namespace detail {
@@ -1540,8 +1540,7 @@ void backend_gl4::process(rx_byte* _command) {
       if (header->type == command_type::k_draw_elements) {
         switch (render_buffer->element_kind()) {
         case render::buffer::element_type::k_none:
-          // [[unreachable]];
-          break;
+          RX_UNREACHABLE();
         case render::buffer::element_type::k_u8:
           pglDrawElements(
             convert_primitive_type(command->type),

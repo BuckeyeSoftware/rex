@@ -9,6 +9,7 @@
 namespace rx::input {
 
 enum class event_type {
+  k_none,
   k_keyboard,
   k_mouse_button,
   k_mouse_scroll,
@@ -35,7 +36,7 @@ struct mouse_motion_event {
 };
 
 struct event {
-  event() : as_nat{} {}
+  constexpr event();
 
   event_type type;
 
@@ -47,6 +48,12 @@ struct event {
     mouse_motion_event as_mouse_motion;
   };
 };
+
+inline constexpr event::event()
+  : type{event_type::k_none}
+  , as_nat{}
+{
+}
 
 } // namespace rx::input
 

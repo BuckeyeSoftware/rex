@@ -10,10 +10,17 @@ RX_LOG("filesystem/file", log_file);
 
 namespace rx::filesystem {
 
-file::file(const char* file_name, const char* mode)
-  : m_impl{static_cast<void*>(fopen(file_name, mode))}
-  , m_file_name{file_name}
-  , m_mode{mode}
+file::file(void* _impl, const char* _file_name, const char* _mode)
+  : m_impl{_impl}
+  , m_file_name{_file_name}
+  , m_mode{_mode}
+{
+}
+
+file::file(const char* _file_name, const char* _mode)
+  : m_impl{static_cast<void*>(fopen(_file_name, _mode))}
+  , m_file_name{_file_name}
+  , m_mode{_mode}
 {
 }
 
@@ -28,9 +35,21 @@ file::file(file&& other)
 }
 
 file::~file() {
+  close();
+}
+
+void file::close() {
   if (m_impl) {
     fclose(static_cast<FILE*>(m_impl));
+    m_impl = nullptr;
   }
+}
+
+file& file::operator=(file&& _other) {
+  close();
+  m_impl = _other.m_impl;
+  _other.m_impl = nullptr;
+  return *this;
 }
 
 rx_u64 file::read(rx_byte* data, rx_u64 size) {

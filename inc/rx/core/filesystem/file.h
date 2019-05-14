@@ -8,16 +8,24 @@
 namespace rx::filesystem {
 
 struct file : concepts::no_copy {
-  file(const char* file_name, const char* mode);
+  constexpr file();
+
+  file(void* _impl, const char* _file_name, const char* _mode);
+  file(const char* _file_name, const char* _mode);
   file(const string& _file_name, const char* _mode);
-  file(file&& other);
+  file(file&& _other);
   ~file();
 
-  // read |size| bytes from file into |data|
-  rx_u64 read(rx_byte* data, rx_u64 size);
+  file& operator=(file&& _other);
 
-  // write |size| bytes from |data| into file
-  rx_u64 write(const rx_byte* data, rx_u64 size);
+  // close file
+  void close();
+
+  // read |_size| bytes from file into |_data|
+  rx_u64 read(rx_byte* _data, rx_u64 _size);
+
+  // write |_size| bytes from |_data| into file
+  rx_u64 write(const rx_byte* _data, rx_u64 _size);
 
   // print |fmt| with |args| to file using |alloc| for formatting
   template<typename... Ts>
@@ -42,13 +50,23 @@ struct file : concepts::no_copy {
 
   operator bool() const;
 
-private:
   bool print(string&& contents);
 
+private:
+  friend struct process;
+
   void* m_impl;
+
   const char* m_file_name;
   const char* m_mode;
 };
+
+inline constexpr file::file()
+  : m_impl{nullptr}
+  , m_file_name{nullptr}
+  , m_mode{nullptr}
+{
+}
 
 inline file::file(const string& _file_name, const char* _mode)
   : file{_file_name.data(), _mode}

@@ -3,6 +3,7 @@
 
 namespace rx::algorithm {
 
+//! clamp value to given range
 template<typename T>
 inline constexpr T clamp(T _value, T _min, T _max) {
   return _value < _min ? _min : (_value > _max ? _max : _value);

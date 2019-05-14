@@ -9,6 +9,8 @@ void input::update(rx_f32 delta_time) {
 
 void input::handle_event(event&& _event) {
   switch (_event.type) {
+  case event_type::k_none:
+    RX_UNREACHABLE();
   case event_type::k_keyboard:
     m_keyboard.update_key(
       _event.as_keyboard.down,
