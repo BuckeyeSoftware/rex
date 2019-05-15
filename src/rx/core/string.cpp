@@ -485,6 +485,11 @@ wide_string::wide_string(memory::allocator* _allocator)
 {
 }
 
+wide_string::wide_string(memory::allocator* _allocator, const wide_string& _other)
+  : wide_string{_allocator, _other.data(), _other.size()}
+{
+}
+
 wide_string::wide_string(memory::allocator* _allocator, const rx_u16* _contents)
   : wide_string{_allocator, _contents, utf16_len(_contents)}
 {
@@ -513,6 +518,15 @@ wide_string::wide_string(memory::allocator* _allocator, const string& _contents)
 {
 }
 
+wide_string::wide_string(wide_string&& _other)
+  : m_allocator{_other.m_allocator}
+  , m_data{_other.m_data}
+  , m_size{_other.m_size}
+{
+  _other.m_data = nullptr;
+  _other.m_size = 0;
+}
+
 wide_string::wide_string(memory::allocator* _allocator, const char* _contents,
   rx_size _size) 
   : m_allocator{_allocator}
@@ -529,6 +543,14 @@ wide_string::wide_string(memory::allocator* _allocator, const char* _contents,
 
 wide_string::~wide_string() {
   m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
+}
+
+string wide_string::to_utf8() const {
+  rx_size size{utf16_to_utf8(m_data, m_size, nullptr)};
+  string contents{m_allocator};
+  contents.resize(size);
+  utf16_to_utf8(m_data, m_size, contents.data());
+  return contents;
 }
 
 } // namespace rx

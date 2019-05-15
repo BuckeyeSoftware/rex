@@ -9,7 +9,7 @@
 
 namespace rx::concurrency {
 
-enum class memory_order{
+enum class memory_order {
   k_relaxed,
   k_consume, // load-consume
   k_acquire, // load-acquire
@@ -24,6 +24,8 @@ enum class memory_order{
 #include <rx/core/concurrency/gcc/atomic.h>
 #elif defined(RX_COMPILER_CLANG)
 #include <rx/core/concurrency/clang/atomic.h>
+#elif defined(RX_COMPILER_MSVC)
+#include <rx/core/concurrency/msvc/atomic.h>
 #else
 #error "missing atomic implementation"
 #endif

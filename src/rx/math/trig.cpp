@@ -5,6 +5,7 @@
 extern "C" {
 float sinf(float);
 float cosf(float);
+float tanf(float);
 float fabsf(float);
 float sqrtf(float);
 float fmodf(float, float);
@@ -12,6 +13,7 @@ float floorf(float);
 
 double sin(double);
 double cos(double);
+double tan(double);
 double sqrt(double);
 double fabs(double);
 double fmod(double, double);
@@ -28,12 +30,16 @@ rx_f32 cos(rx_f32 _x) {
   return ::cosf(_x);
 }
 
+rx_f32 tan(rx_f32 _x) {
+  return ::tanf(_x);
+}
+
 rx_f32 sqrt(rx_f32 _x) {
   return ::sqrtf(_x);
 }
 
 rx_f32 abs(rx_f32 _x) {
-  return ::fabsf(_x);
+  return ::fabs(_x);
 }
 
 rx_f32 mod(rx_f32 _x, rx_f32 _y) {
@@ -50,6 +56,10 @@ rx_f64 sin(rx_f64 _x) {
 
 rx_f64 cos(rx_f64 _x) {
   return ::cos(_x);
+}
+
+rx_f64 tan(rx_f64 _x) {
+  return ::tan(_x);
 }
 
 rx_f64 sqrt(rx_f64 _x) {

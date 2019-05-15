@@ -117,7 +117,7 @@ private:
   frontend* m_frontend;
   type m_type;
   array<program*> m_programs;
-  array<rx_u32> m_permute_flags;
+  array<rx_u64> m_permute_flags;
   string m_name;
 
   array<shader_definition> m_shader_definitions;

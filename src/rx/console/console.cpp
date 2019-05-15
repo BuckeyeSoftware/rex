@@ -298,7 +298,7 @@ variable_status console::parse_string<rx_s32>(const string& contents, rx_s32& re
     return variable_status::k_out_of_range;
   }
 
-  result = value;
+  result = static_cast<rx_s32>(value);
   return variable_status::k_success;
 }
 

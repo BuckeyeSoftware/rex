@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{5095E5BA-8E17-4A36-A015-9B2BC0BC0098}</ProjectGuid>
+    <RootNamespace>rex</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <CompileAsManaged>false</CompileAsManaged>
+      <CompileAsWinRT>false</CompileAsWinRT>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <ExceptionHandling>false</ExceptionHandling>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <CreateHotpatchableImage>false</CreateHotpatchableImage>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <OpenMPSupport>false</OpenMPSupport>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <EnableModules>false</EnableModules>
+      <CompileAs>Default</CompileAs>
+      <ObjectFileName>$(IntDir)%(RelativeDir)\%(Filename).obj</ObjectFileName>
+      <ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SmallerTypeCheck>false</SmallerTypeCheck>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ExceptionHandling>false</ExceptionHandling>
+      <SmallerTypeCheck>false</SmallerTypeCheck>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <OpenMPSupport>false</OpenMPSupport>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <EnableModules>false</EnableModules>
+      <Optimization>MinSpace</Optimization>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;RX_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <CompileAsManaged>false</CompileAsManaged>
+      <CompileAsWinRT>false</CompileAsWinRT>
+      <SDLCheck>false</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <WarningLevel>Level3</WarningLevel>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
+      <EnableParallelCodeGeneration>false</EnableParallelCodeGeneration>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <CreateHotpatchableImage>false</CreateHotpatchableImage>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ConformanceMode>true</ConformanceMode>
+      <OmitFramePointers>false</OmitFramePointers>
+      <ObjectFileName>$(IntDir)%(RelativeDir)\%(Filename).obj</ObjectFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="inc\lib\json.h" />
+    <ClInclude Include="inc\lib\stb_image.h" />
+    <ClInclude Include="inc\lib\stb_truetype.h" />
+    <ClInclude Include="inc\rx\console\console.h" />
+    <ClInclude Include="inc\rx\console\variable.h" />
+    <ClInclude Include="inc\rx\core\abort.h" />
+    <ClInclude Include="inc\rx\core\algorithm\clamp.h" />
+    <ClInclude Include="inc\rx\core\algorithm\insertion_sort.h" />
+    <ClInclude Include="inc\rx\core\algorithm\max.h" />
+    <ClInclude Include="inc\rx\core\algorithm\min.h" />
+    <ClInclude Include="inc\rx\core\algorithm\quick_sort.h" />
+    <ClInclude Include="inc\rx\core\array.h" />
+    <ClInclude Include="inc\rx\core\assert.h" />
+    <ClInclude Include="inc\rx\core\bitset.h" />
+    <ClInclude Include="inc\rx\core\concepts\interface.h" />
+    <ClInclude Include="inc\rx\core\concepts\no_copy.h" />
+    <ClInclude Include="inc\rx\core\concepts\no_move.h" />
+    <ClInclude Include="inc\rx\core\concurrency\atomic.h" />
+    <ClInclude Include="inc\rx\core\concurrency\clang\atomic.h" />
+    <ClInclude Include="inc\rx\core\concurrency\condition_variable.h" />
+    <ClInclude Include="inc\rx\core\concurrency\gcc\atomic.h" />
+    <ClInclude Include="inc\rx\core\concurrency\msvc\atomic.h" />
+    <ClInclude Include="inc\rx\core\concurrency\mutex.h" />
+    <ClInclude Include="inc\rx\core\concurrency\promise.h" />
+    <ClInclude Include="inc\rx\core\concurrency\scope_lock.h" />
+    <ClInclude Include="inc\rx\core\concurrency\scope_unlock.h" />
+    <ClInclude Include="inc\rx\core\concurrency\spin_lock.h" />
+    <ClInclude Include="inc\rx\core\concurrency\thread.h" />
+    <ClInclude Include="inc\rx\core\concurrency\thread_pool.h" />
+    <ClInclude Include="inc\rx\core\config.h" />
+    <ClInclude Include="inc\rx\core\debug.h" />
+    <ClInclude Include="inc\rx\core\deferred_function.h" />
+    <ClInclude Include="inc\rx\core\event.h" />
+    <ClInclude Include="inc\rx\core\filesystem\directory.h" />
+    <ClInclude Include="inc\rx\core\filesystem\file.h" />
+    <ClInclude Include="inc\rx\core\format.h" />
+    <ClInclude Include="inc\rx\core\function.h" />
+    <ClInclude Include="inc\rx\core\hash.h" />
+    <ClInclude Include="inc\rx\core\json.h" />
+    <ClInclude Include="inc\rx\core\log.h" />
+    <ClInclude Include="inc\rx\core\map.h" />
+    <ClInclude Include="inc\rx\core\memory\allocator.h" />
+    <ClInclude Include="inc\rx\core\memory\bump_point_allocator.h" />
+    <ClInclude Include="inc\rx\core\memory\pool_allocator.h" />
+    <ClInclude Include="inc\rx\core\memory\stats_allocator.h" />
+    <ClInclude Include="inc\rx\core\memory\system_allocator.h" />
+    <ClInclude Include="inc\rx\core\memory\uninitialized_storage.h" />
+    <ClInclude Include="inc\rx\core\optional.h" />
+    <ClInclude Include="inc\rx\core\pp.h" />
+    <ClInclude Include="inc\rx\core\queue.h" />
+    <ClInclude Include="inc\rx\core\statics.h" />
+    <ClInclude Include="inc\rx\core\string.h" />
+    <ClInclude Include="inc\rx\core\traits\add_const.h" />
+    <ClInclude Include="inc\rx\core\traits\add_cv.h" />
+    <ClInclude Include="inc\rx\core\traits\add_lvalue_reference.h" />
+    <ClInclude Include="inc\rx\core\traits\add_pointer.h" />
+    <ClInclude Include="inc\rx\core\traits\add_rvalue_reference.h" />
+    <ClInclude Include="inc\rx\core\traits\add_volatile.h" />
+    <ClInclude Include="inc\rx\core\traits\conditional.h" />
+    <ClInclude Include="inc\rx\core\traits\decay.h" />
+    <ClInclude Include="inc\rx\core\traits\enable_if.h" />
+    <ClInclude Include="inc\rx\core\traits\is_array.h" />
+    <ClInclude Include="inc\rx\core\traits\is_assignable.h" />
+    <ClInclude Include="inc\rx\core\traits\is_callable.h" />
+    <ClInclude Include="inc\rx\core\traits\is_floating_point.h" />
+    <ClInclude Include="inc\rx\core\traits\is_function.h" />
+    <ClInclude Include="inc\rx\core\traits\is_integral.h" />
+    <ClInclude Include="inc\rx\core\traits\is_lvalue_reference.h" />
+    <ClInclude Include="inc\rx\core\traits\is_pointer.h" />
+    <ClInclude Include="inc\rx\core\traits\is_reference.h" />
+    <ClInclude Include="inc\rx\core\traits\is_referenceable.h" />
+    <ClInclude Include="inc\rx\core\traits\is_rvalue_reference.h" />
+    <ClInclude Include="inc\rx\core\traits\is_same.h" />
+    <ClInclude Include="inc\rx\core\traits\is_trivially_copyable.h" />
+    <ClInclude Include="inc\rx\core\traits\is_trivially_destructible.h" />
+    <ClInclude Include="inc\rx\core\traits\is_void.h" />
+    <ClInclude Include="inc\rx\core\traits\remove_all_extents.h" />
+    <ClInclude Include="inc\rx\core\traits\remove_const.h" />
+    <ClInclude Include="inc\rx\core\traits\remove_cv.h" />
+    <ClInclude Include="inc\rx\core\traits\remove_cvref.h" />
+    <ClInclude Include="inc\rx\core\traits\remove_extent.h" />
+    <ClInclude Include="inc\rx\core\traits\remove_pointer.h" />
+    <ClInclude Include="inc\rx\core\traits\remove_reference.h" />
+    <ClInclude Include="inc\rx\core\traits\remove_volatile.h" />
+    <ClInclude Include="inc\rx\core\traits\return_type.h" />
+    <ClInclude Include="inc\rx\core\traits\type_identity.h" />
+    <ClInclude Include="inc\rx\core\types.h" />
+    <ClInclude Include="inc\rx\core\type_eraser.h" />
+    <ClInclude Include="inc\rx\core\utility\bit.h" />
+    <ClInclude Include="inc\rx\core\utility\construct.h" />
+    <ClInclude Include="inc\rx\core\utility\declval.h" />
+    <ClInclude Include="inc\rx\core\utility\destruct.h" />
+    <ClInclude Include="inc\rx\core\utility\forward.h" />
+    <ClInclude Include="inc\rx\core\utility\index_sequence.h" />
+    <ClInclude Include="inc\rx\core\utility\integer_sequence.h" />
+    <ClInclude Include="inc\rx\core\utility\make_index_sequence.h" />
+    <ClInclude Include="inc\rx\core\utility\make_integer_sequence.h" />
+    <ClInclude Include="inc\rx\core\utility\move.h" />
+    <ClInclude Include="inc\rx\core\utility\nat.h" />
+    <ClInclude Include="inc\rx\core\utility\swap.h" />
+    <ClInclude Include="inc\rx\core\utility\tuple.h" />
+    <ClInclude Include="inc\rx\input\event.h" />
+    <ClInclude Include="inc\rx\input\input.h" />
+    <ClInclude Include="inc\rx\input\keyboard.h" />
+    <ClInclude Include="inc\rx\input\mouse.h" />
+    <ClInclude Include="inc\rx\math\camera.h" />
+    <ClInclude Include="inc\rx\math\constants.h" />
+    <ClInclude Include="inc\rx\math\half.h" />
+    <ClInclude Include="inc\rx\math\log2.h" />
+    <ClInclude Include="inc\rx\math\mat3x3.h" />
+    <ClInclude Include="inc\rx\math\mat3x4.h" />
+    <ClInclude Include="inc\rx\math\mat4x4.h" />
+    <ClInclude Include="inc\rx\math\quat.h" />
+    <ClInclude Include="inc\rx\math\transform.h" />
+    <ClInclude Include="inc\rx\math\trig.h" />
+    <ClInclude Include="inc\rx\math\vec2.h" />
+    <ClInclude Include="inc\rx\math\vec3.h" />
+    <ClInclude Include="inc\rx\math\vec4.h" />
+    <ClInclude Include="inc\rx\model\animation.h" />
+    <ClInclude Include="inc\rx\model\iqm.h" />
+    <ClInclude Include="inc\rx\model\loader.h" />
+    <ClInclude Include="inc\rx\model\mesh.h" />
+    <ClInclude Include="inc\rx\model\model.h" />
+    <ClInclude Include="inc\rx\render\backend.h" />
+    <ClInclude Include="inc\rx\render\backend_gl4.h" />
+    <ClInclude Include="inc\rx\render\buffer.h" />
+    <ClInclude Include="inc\rx\render\command.h" />
+    <ClInclude Include="inc\rx\render\frontend.h" />
+    <ClInclude Include="inc\rx\render\gbuffer.h" />
+    <ClInclude Include="inc\rx\render\immediate.h" />
+    <ClInclude Include="inc\rx\render\material.h" />
+    <ClInclude Include="inc\rx\render\program.h" />
+    <ClInclude Include="inc\rx\render\resource.h" />
+    <ClInclude Include="inc\rx\render\state.h" />
+    <ClInclude Include="inc\rx\render\target.h" />
+    <ClInclude Include="inc\rx\render\technique.h" />
+    <ClInclude Include="inc\rx\render\texture.h" />
+    <ClInclude Include="inc\rx\render\timer.h" />
+    <ClInclude Include="inc\rx\texture\chain.h" />
+    <ClInclude Include="inc\rx\texture\loader.h" />
+    <ClInclude Include="inc\rx\texture\scale.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\lib\json.c" />
+    <ClCompile Include="src\lib\stb_image.c" />
+    <ClCompile Include="src\lib\stb_truetype.c" />
+    <ClCompile Include="src\rx\console\console.cpp" />
+    <ClCompile Include="src\rx\console\variable.cpp" />
+    <ClCompile Include="src\rx\core\abort.cpp" />
+    <ClCompile Include="src\rx\core\assert.cpp" />
+    <ClCompile Include="src\rx\core\bitset.cpp" />
+    <ClCompile Include="src\rx\core\concurrency\condition_variable.cpp" />
+    <ClCompile Include="src\rx\core\concurrency\mutex.cpp" />
+    <ClCompile Include="src\rx\core\concurrency\spin_lock.cpp" />
+    <ClCompile Include="src\rx\core\concurrency\thread.cpp" />
+    <ClCompile Include="src\rx\core\concurrency\thread_pool.cpp" />
+    <ClCompile Include="src\rx\core\cpprt.cpp" />
+    <ClCompile Include="src\rx\core\debug.cpp" />
+    <ClCompile Include="src\rx\core\filesystem\directory.cpp" />
+    <ClCompile Include="src\rx\core\filesystem\file.cpp" />
+    <ClCompile Include="src\rx\core\json.cpp" />
+    <ClCompile Include="src\rx\core\log.cpp" />
+    <ClCompile Include="src\rx\core\memory\bump_point_allocator.cpp" />
+    <ClCompile Include="src\rx\core\memory\pool_allocator.cpp" />
+    <ClCompile Include="src\rx\core\memory\stats_allocator.cpp" />
+    <ClCompile Include="src\rx\core\memory\system_allocator.cpp" />
+    <ClCompile Include="src\rx\core\statics.cpp" />
+    <ClCompile Include="src\rx\core\string.cpp" />
+    <ClCompile Include="src\rx\input\input.cpp" />
+    <ClCompile Include="src\rx\input\keyboard.cpp" />
+    <ClCompile Include="src\rx\input\mouse.cpp" />
+    <ClCompile Include="src\rx\main.cpp" />
+    <ClCompile Include="src\rx\math\half.cpp" />
+    <ClCompile Include="src\rx\math\mat3x3.cpp" />
+    <ClCompile Include="src\rx\math\mat3x4.cpp" />
+    <ClCompile Include="src\rx\math\quat.cpp" />
+    <ClCompile Include="src\rx\math\trig.cpp" />
+    <ClCompile Include="src\rx\math\vec2.cpp" />
+    <ClCompile Include="src\rx\math\vec3.cpp" />
+    <ClCompile Include="src\rx\math\vec4.cpp" />
+    <ClCompile Include="src\rx\model\animation.cpp" />
+    <ClCompile Include="src\rx\model\iqm.cpp" />
+    <ClCompile Include="src\rx\model\loader.cpp" />
+    <ClCompile Include="src\rx\model\model.cpp" />
+    <ClCompile Include="src\rx\render\backend_gl4.cpp" />
+    <ClCompile Include="src\rx\render\buffer.cpp" />
+    <ClCompile Include="src\rx\render\command.cpp" />
+    <ClCompile Include="src\rx\render\frontend.cpp" />
+    <ClCompile Include="src\rx\render\gbuffer.cpp" />
+    <ClCompile Include="src\rx\render\immediate.cpp" />
+    <ClCompile Include="src\rx\render\material.cpp" />
+    <ClCompile Include="src\rx\render\program.cpp" />
+    <ClCompile Include="src\rx\render\resource.cpp" />
+    <ClCompile Include="src\rx\render\state.cpp" />
+    <ClCompile Include="src\rx\render\target.cpp" />
+    <ClCompile Include="src\rx\render\technique.cpp" />
+    <ClCompile Include="src\rx\render\texture.cpp" />
+    <ClCompile Include="src\rx\render\timer.cpp" />
+    <ClCompile Include="src\rx\texture\chain.cpp" />
+    <ClCompile Include="src\rx\texture\loader.cpp" />
+    <ClCompile Include="src\rx\texture\scale.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="packages\sdl2.nuget.2.0.9\build\native\sdl2.nuget.targets" Condition="Exists('packages\sdl2.nuget.2.0.9\build\native\sdl2.nuget.targets')" />
+    <Import Project="packages\sdl2.redist.2.0.5\build\native\sdl2.redist.targets" Condition="Exists('packages\sdl2.redist.2.0.5\build\native\sdl2.redist.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\sdl2.nuget.2.0.9\build\native\sdl2.nuget.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\sdl2.nuget.2.0.9\build\native\sdl2.nuget.targets'))" />
+    <Error Condition="!Exists('packages\sdl2.redist.2.0.5\build\native\sdl2.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\sdl2.redist.2.0.5\build\native\sdl2.redist.targets'))" />
+  </Target>
+</Project>

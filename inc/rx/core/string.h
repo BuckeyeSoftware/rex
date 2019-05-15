@@ -18,7 +18,6 @@ struct string {
   static constexpr const rx_size k_small_string{16};
 
   string();
-  string(array<rx_byte>&& _data);
   string(const string& _contents);
   string(const char* _contents);
   string(const char* _contents, rx_size _size);
@@ -141,6 +140,8 @@ struct wide_string {
 
   rx_u16* data();
   const rx_u16* data() const;
+
+  string to_utf8() const;
 
 private:
   memory::allocator* m_allocator;

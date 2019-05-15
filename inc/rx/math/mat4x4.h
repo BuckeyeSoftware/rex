@@ -3,7 +3,7 @@
 
 #include <rx/math/vec3.h> // vec3
 #include <rx/math/vec4.h> // vec4
-#include <rx/math/trig.h> // deg_to_rad, sin, cos
+#include <rx/math/trig.h> // deg_to_rad, sin, cos, tan
 
 namespace rx::math {
 
@@ -148,7 +148,7 @@ inline constexpr mat4x4<T> mat4x4<T>::invert(const mat4x4& mat) {
 template<typename T>
 inline constexpr mat4x4<T> mat4x4<T>::perspective(T _fov, const range<T>& _planes, T _aspect) {
   const T range{_planes.min - _planes.max};
-  const T half{tanf(deg_to_rad(_fov*.5))};
+  const T half{tan(deg_to_rad(_fov*T{.5}))};
   if (_aspect < T{1}) {
     return {{T{1} / half,             T{0},                    T{0},                                      T{0}},
             {T{0},                    T{1} / (half / _aspect), T{0},                                      T{0}},

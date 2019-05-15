@@ -36,7 +36,11 @@ get_level_string(log::level lvl) {
 static inline string
 time_stamp(time_t time, const char* fmt) {
   struct tm tm;
+#if defined(RX_PLATFORM_WINDOWS)
+  localtime_s(&tm, &time);
+#else
   localtime_r(&time, &tm);
+#endif
   char date[256];
   strftime(date, sizeof date, fmt, &tm);
   date[sizeof date - 1] = '\0';

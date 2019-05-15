@@ -1,0 +1,708 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="inc">
+      <UniqueIdentifier>{6982cadd-4d02-420c-8ec5-50fa1e5da6d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{72805f71-8400-4a52-a351-f75489996c94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\lib">
+      <UniqueIdentifier>{d1f0c985-1a79-4b04-a4c1-9056bdbf8b5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\lib">
+      <UniqueIdentifier>{4573f785-6d59-4ba4-bcf1-58063711aa20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx">
+      <UniqueIdentifier>{cf3934b6-8d06-4b06-a6b8-96c33c15d4e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx">
+      <UniqueIdentifier>{7042ed69-ce69-4ab3-bddc-7b0210a504c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\console">
+      <UniqueIdentifier>{2cee5468-831d-4e84-b3ff-2a599c8fd886}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\core">
+      <UniqueIdentifier>{9e75db62-5ccd-4ccc-9d87-3b11efc26c5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\input">
+      <UniqueIdentifier>{41d6198e-0dbd-4cac-9fae-e8ab5ec7c929}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\math">
+      <UniqueIdentifier>{640a81ad-9a34-41fd-a5d2-2f2a39b246fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\model">
+      <UniqueIdentifier>{2c94dbb8-49f8-4d46-b362-fafbab207410}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\texture">
+      <UniqueIdentifier>{bed07b40-4aa8-4438-b4ab-fc3fc80dd8c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\render">
+      <UniqueIdentifier>{cf6c3593-742a-4e0c-a6bf-9e58a11e1d7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\core\algorithm">
+      <UniqueIdentifier>{e6aa77e1-99a2-4dc9-b4dd-3d0fbbb12260}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\core\concepts">
+      <UniqueIdentifier>{a2285722-f1f1-467a-8b73-37d5785f56ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\core\concurrency">
+      <UniqueIdentifier>{2255ab47-8e19-4f0e-9c87-a76f09ea8ace}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\core\filesystem">
+      <UniqueIdentifier>{11ffd6c8-bf54-47c5-a288-d99d9a53c78f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\core\memory">
+      <UniqueIdentifier>{36cf7a45-a763-4ba0-8d03-f1ebd408d139}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\core\traits">
+      <UniqueIdentifier>{a94c457b-23c9-4c46-944c-859f7d34aba1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\core\utility">
+      <UniqueIdentifier>{93263657-69df-4542-b97f-cf2cbeba8f6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\core\concurrency\msvc">
+      <UniqueIdentifier>{5f480fc1-4d1c-4c44-8266-66afe097d319}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\core\concurrency\clang">
+      <UniqueIdentifier>{7c06024a-8e35-493c-9ea4-3a7a49e26c29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc\rx\core\concurrency\gcc">
+      <UniqueIdentifier>{9f1e2cdf-48c4-44e3-9bb6-759a54cd7d6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx\console">
+      <UniqueIdentifier>{dc24f025-d548-43ec-885e-6686f7fb2701}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx\core">
+      <UniqueIdentifier>{63be38c3-f4af-4ed6-add1-153e6dfe4310}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx\input">
+      <UniqueIdentifier>{e78138d9-de9f-478c-969a-bbaff00e4611}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx\math">
+      <UniqueIdentifier>{e6bca38e-a1e3-476f-b785-ce249bfd97a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx\model">
+      <UniqueIdentifier>{578f772b-b459-47b5-be10-be92a4e7f960}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx\texture">
+      <UniqueIdentifier>{5992316c-72dc-48df-9daa-12ab4fde304c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx\render">
+      <UniqueIdentifier>{1b8e180e-f880-4387-8cd8-ddb0c971fb17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx\core\concurrency">
+      <UniqueIdentifier>{4f907b2a-bfe2-4c2a-9625-82b5a71a720b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx\core\filesystem">
+      <UniqueIdentifier>{20673b90-b367-4478-9961-cfc56fcd4ada}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx\core\memory">
+      <UniqueIdentifier>{25fcced5-29fe-481d-a05a-2f3c993f5f6c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="inc\lib\json.h">
+      <Filter>inc\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\lib\stb_image.h">
+      <Filter>inc\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\lib\stb_truetype.h">
+      <Filter>inc\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\console\console.h">
+      <Filter>inc\rx\console</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\console\variable.h">
+      <Filter>inc\rx\console</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\input\event.h">
+      <Filter>inc\rx\input</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\input\input.h">
+      <Filter>inc\rx\input</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\input\keyboard.h">
+      <Filter>inc\rx\input</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\input\mouse.h">
+      <Filter>inc\rx\input</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\camera.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\constants.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\half.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\log2.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\mat3x3.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\mat3x4.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\mat4x4.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\quat.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\transform.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\trig.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\vec2.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\vec3.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\math\vec4.h">
+      <Filter>inc\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\model\animation.h">
+      <Filter>inc\rx\model</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\model\iqm.h">
+      <Filter>inc\rx\model</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\model\loader.h">
+      <Filter>inc\rx\model</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\model\mesh.h">
+      <Filter>inc\rx\model</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\model\model.h">
+      <Filter>inc\rx\model</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\backend.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\backend_gl4.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\buffer.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\command.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\frontend.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\gbuffer.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\immediate.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\material.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\program.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\resource.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\state.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\target.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\technique.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\texture.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\render\timer.h">
+      <Filter>inc\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\texture\chain.h">
+      <Filter>inc\rx\texture</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\texture\loader.h">
+      <Filter>inc\rx\texture</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\texture\scale.h">
+      <Filter>inc\rx\texture</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\algorithm\clamp.h">
+      <Filter>inc\rx\core\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\algorithm\insertion_sort.h">
+      <Filter>inc\rx\core\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\algorithm\max.h">
+      <Filter>inc\rx\core\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\algorithm\min.h">
+      <Filter>inc\rx\core\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\algorithm\quick_sort.h">
+      <Filter>inc\rx\core\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concepts\interface.h">
+      <Filter>inc\rx\core\concepts</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concepts\no_copy.h">
+      <Filter>inc\rx\core\concepts</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concepts\no_move.h">
+      <Filter>inc\rx\core\concepts</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concurrency\atomic.h">
+      <Filter>inc\rx\core\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concurrency\condition_variable.h">
+      <Filter>inc\rx\core\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concurrency\mutex.h">
+      <Filter>inc\rx\core\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concurrency\promise.h">
+      <Filter>inc\rx\core\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concurrency\scope_lock.h">
+      <Filter>inc\rx\core\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concurrency\scope_unlock.h">
+      <Filter>inc\rx\core\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concurrency\spin_lock.h">
+      <Filter>inc\rx\core\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concurrency\thread.h">
+      <Filter>inc\rx\core\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concurrency\thread_pool.h">
+      <Filter>inc\rx\core\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\filesystem\directory.h">
+      <Filter>inc\rx\core\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\filesystem\file.h">
+      <Filter>inc\rx\core\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\memory\allocator.h">
+      <Filter>inc\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\memory\bump_point_allocator.h">
+      <Filter>inc\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\memory\pool_allocator.h">
+      <Filter>inc\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\memory\stats_allocator.h">
+      <Filter>inc\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\memory\system_allocator.h">
+      <Filter>inc\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\memory\uninitialized_storage.h">
+      <Filter>inc\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\add_const.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\add_cv.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\add_lvalue_reference.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\add_pointer.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\add_rvalue_reference.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\add_volatile.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\conditional.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\decay.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\enable_if.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_array.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_assignable.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_callable.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_floating_point.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_function.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_integral.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_lvalue_reference.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_pointer.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_reference.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_referenceable.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_rvalue_reference.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_same.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_trivially_copyable.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_trivially_destructible.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\is_void.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\remove_all_extents.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\remove_const.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\remove_cv.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\remove_cvref.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\remove_extent.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\remove_pointer.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\remove_reference.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\remove_volatile.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\return_type.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\traits\type_identity.h">
+      <Filter>inc\rx\core\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\bit.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\construct.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\declval.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\destruct.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\forward.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\index_sequence.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\integer_sequence.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\make_index_sequence.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\make_integer_sequence.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\move.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\nat.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\swap.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\utility\tuple.h">
+      <Filter>inc\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concurrency\clang\atomic.h">
+      <Filter>inc\rx\core\concurrency\clang</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concurrency\gcc\atomic.h">
+      <Filter>inc\rx\core\concurrency\gcc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\abort.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\array.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\assert.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\bitset.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\config.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\debug.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\deferred_function.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\event.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\format.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\function.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\hash.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\json.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\log.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\map.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\optional.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\pp.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\queue.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\statics.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\string.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\type_eraser.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\types.h">
+      <Filter>inc\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\rx\core\concurrency\msvc\atomic.h">
+      <Filter>inc\rx\core\concurrency\msvc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\lib\json.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\stb_image.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\stb_truetype.c">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\console\console.cpp">
+      <Filter>src\rx\console</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\console\variable.cpp">
+      <Filter>src\rx\console</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\abort.cpp">
+      <Filter>src\rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\assert.cpp">
+      <Filter>src\rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\bitset.cpp">
+      <Filter>src\rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\cpprt.cpp">
+      <Filter>src\rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\debug.cpp">
+      <Filter>src\rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\json.cpp">
+      <Filter>src\rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\log.cpp">
+      <Filter>src\rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\statics.cpp">
+      <Filter>src\rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\string.cpp">
+      <Filter>src\rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\input\input.cpp">
+      <Filter>src\rx\input</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\input\keyboard.cpp">
+      <Filter>src\rx\input</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\input\mouse.cpp">
+      <Filter>src\rx\input</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\math\half.cpp">
+      <Filter>src\rx\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\math\mat3x3.cpp">
+      <Filter>src\rx\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\math\mat3x4.cpp">
+      <Filter>src\rx\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\math\quat.cpp">
+      <Filter>src\rx\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\math\trig.cpp">
+      <Filter>src\rx\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\math\vec2.cpp">
+      <Filter>src\rx\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\math\vec3.cpp">
+      <Filter>src\rx\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\math\vec4.cpp">
+      <Filter>src\rx\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\model\animation.cpp">
+      <Filter>src\rx\model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\model\iqm.cpp">
+      <Filter>src\rx\model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\model\loader.cpp">
+      <Filter>src\rx\model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\model\model.cpp">
+      <Filter>src\rx\model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\backend_gl4.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\buffer.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\command.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\frontend.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\gbuffer.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\immediate.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\material.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\program.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\resource.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\state.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\target.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\technique.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\texture.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\timer.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\texture\chain.cpp">
+      <Filter>src\rx\texture</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\texture\loader.cpp">
+      <Filter>src\rx\texture</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\texture\scale.cpp">
+      <Filter>src\rx\texture</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\main.cpp">
+      <Filter>src\rx</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\concurrency\condition_variable.cpp">
+      <Filter>src\rx\core\concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\concurrency\mutex.cpp">
+      <Filter>src\rx\core\concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\concurrency\spin_lock.cpp">
+      <Filter>src\rx\core\concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\concurrency\thread.cpp">
+      <Filter>src\rx\core\concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\concurrency\thread_pool.cpp">
+      <Filter>src\rx\core\concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\filesystem\directory.cpp">
+      <Filter>src\rx\core\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\filesystem\file.cpp">
+      <Filter>src\rx\core\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\memory\bump_point_allocator.cpp">
+      <Filter>src\rx\core\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\memory\pool_allocator.cpp">
+      <Filter>src\rx\core\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\memory\stats_allocator.cpp">
+      <Filter>src\rx\core\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\memory\system_allocator.cpp">
+      <Filter>src\rx\core\memory</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+</Project>

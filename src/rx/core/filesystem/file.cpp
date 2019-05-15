@@ -68,7 +68,7 @@ rx_u64 file::write(const rx_byte* data, rx_u64 size) {
 bool file::seek(rx_u64 where) {
   RX_ASSERT(m_impl, "invalid");
   RX_ASSERT(strcmp(m_mode, "rb") == 0, "cannot seek with mode '%s'", m_mode);
-  return fseek(static_cast<FILE*>(m_impl), where, SEEK_SET) == 0;
+  return fseek(static_cast<FILE*>(m_impl), static_cast<long>(where), SEEK_SET) == 0;
 }
 
 optional<rx_u64> file::size() {

@@ -8,6 +8,8 @@
 #elif defined(RX_PLATFORM_WINDOWS)
 #define _WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <process.h>
+#undef interface
 #else
 #error "missing thread implementation"
 #endif

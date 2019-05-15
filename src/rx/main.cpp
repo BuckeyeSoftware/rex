@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <stdio.h> // snprintf
 
 #include <rx/core/memory/system_allocator.h>
 

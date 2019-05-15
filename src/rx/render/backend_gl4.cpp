@@ -1140,7 +1140,7 @@ void backend_gl4::process(rx_byte* _command) {
             draw_buffers[i] = attachment;
           }
           // draw buffers
-          pglNamedFramebufferDrawBuffers(target->fbo, draw_buffers.size(), draw_buffers.data());
+          pglNamedFramebufferDrawBuffers(target->fbo, static_cast<GLsizei>(draw_buffers.size()), draw_buffers.data());
         }
         break;
       case resource_command::type::k_program:
@@ -1209,7 +1209,7 @@ void backend_gl4::process(rx_byte* _command) {
             texture->tex,
             levels,
             convert_texture_data_format(format),
-            dimensions);
+            static_cast<GLsizei>(dimensions));
 
           if (data.size()) {
             for (GLint i{0}; i < levels; i++) {
@@ -1218,7 +1218,7 @@ void backend_gl4::process(rx_byte* _command) {
                 texture->tex,
                 i,
                 0,
-                level_info.dimensions,
+                static_cast<GLsizei>(level_info.dimensions),
                 convert_texture_format(format),
                 GL_UNSIGNED_BYTE,
                 data.data() + level_info.offset);
@@ -1250,8 +1250,8 @@ void backend_gl4::process(rx_byte* _command) {
             texture->tex,
             levels,
             convert_texture_data_format(format),
-            dimensions.w,
-            dimensions.h);
+            static_cast<GLsizei>(dimensions.w),
+            static_cast<GLsizei>(dimensions.h));
 
           if (data.size()) {
             for (GLint i{0}; i < levels; i++) {
@@ -1261,8 +1261,8 @@ void backend_gl4::process(rx_byte* _command) {
                 i,
                 0,
                 0,
-                level_info.dimensions.w,
-                level_info.dimensions.h,
+                static_cast<GLsizei>(level_info.dimensions.w),
+                static_cast<GLsizei>(level_info.dimensions.h),
                 convert_texture_format(format),
                 GL_UNSIGNED_BYTE,
                 data.data() + level_info.offset);
@@ -1296,9 +1296,9 @@ void backend_gl4::process(rx_byte* _command) {
             texture->tex,
             levels,
             convert_texture_data_format(format),
-            dimensions.w,
-            dimensions.h,
-            dimensions.d);
+            static_cast<GLsizei>(dimensions.w),
+            static_cast<GLsizei>(dimensions.h),
+            static_cast<GLsizei>(dimensions.d));
 
           if (data.size()) {
             for (GLint i{0}; i < levels; i++) {
@@ -1309,9 +1309,9 @@ void backend_gl4::process(rx_byte* _command) {
                 0,
                 0,
                 0,
-                level_info.dimensions.w,
-                level_info.dimensions.h,
-                level_info.dimensions.d,
+                static_cast<GLsizei>(level_info.dimensions.w),
+                static_cast<GLsizei>(level_info.dimensions.h),
+                static_cast<GLsizei>(level_info.dimensions.d),
                 convert_texture_format(format),
                 GL_UNSIGNED_BYTE,
                 data.data() + level_info.offset);
@@ -1411,8 +1411,8 @@ void backend_gl4::process(rx_byte* _command) {
         }
       }
       if (clear_depth && clear_stencil) {
-        pglClearNamedFramebufferfi(fbo, GL_DEPTH_STENCIL, 0, 1.0f, 0.0f); /*
-          0, command->clear_color.r, static_cast<GLint>(command->clear_color.g));*/
+        pglClearNamedFramebufferfi(fbo, GL_DEPTH_STENCIL,
+          0, command->clear_color.r, static_cast<GLint>(command->clear_color.g));
       } else if (clear_depth) {
         pglClearNamedFramebufferfv(fbo, GL_DEPTH, 0, &command->clear_color.r);
       } else if (clear_stencil) {
@@ -1518,7 +1518,7 @@ void backend_gl4::process(rx_byte* _command) {
       }
 
       // apply any textures
-      for (rx_size i{0}; i < 8; i++) {
+      for (GLuint i{0}; i < 8; i++) {
         switch (command->texture_types[i]) {
         case '1':
           pglBindTextureUnit(i, reinterpret_cast<detail::texture1D*>(reinterpret_cast<texture1D*>(command->texture_binds[i]) + 1)->tex);
@@ -1544,21 +1544,21 @@ void backend_gl4::process(rx_byte* _command) {
         case render::buffer::element_type::k_u8:
           pglDrawElements(
             convert_primitive_type(command->type),
-            command->count,
+            static_cast<GLsizei>(command->count),
             GL_UNSIGNED_BYTE,
             reinterpret_cast<void*>(sizeof(GLubyte) * command->offset));
           break;
         case render::buffer::element_type::k_u16:
           pglDrawElements(
             convert_primitive_type(command->type),
-            command->count,
+            static_cast<GLsizei>(command->count),
             GL_UNSIGNED_SHORT,
             reinterpret_cast<void*>(sizeof(GLushort) * command->offset));
           break;
         case render::buffer::element_type::k_u32:
           pglDrawElements(
             convert_primitive_type(command->type),
-            command->count,
+            static_cast<GLsizei>(command->count),
             GL_UNSIGNED_INT,
             reinterpret_cast<void*>(sizeof(GLuint) * command->offset));
           break;
@@ -1566,8 +1566,8 @@ void backend_gl4::process(rx_byte* _command) {
       } else {
         pglDrawArrays(
           convert_primitive_type(command->type),
-          command->offset,
-          command->count);
+          static_cast<GLint>(command->offset),
+          static_cast<GLsizei>(command->count));
       }
     }
     break;

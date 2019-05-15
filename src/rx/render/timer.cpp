@@ -76,7 +76,7 @@ bool frame_timer::update() {
 
   if (m_target_ticks && m_current_ticks < m_target_ticks) {
     const auto ticks_before_delay{timer_ticks()};
-    SDL_Delay(m_target_ticks - m_current_ticks);
+    SDL_Delay(static_cast<Uint32>(m_target_ticks - m_current_ticks));
     m_current_ticks = timer_ticks();
     m_average_ticks += m_current_ticks - ticks_before_delay;
   }
@@ -85,8 +85,8 @@ bool frame_timer::update() {
   m_last_frame_ticks = m_current_ticks;
 
   if (m_current_ticks - m_last_second_ticks >= m_frequency) {
-    m_frames_per_second = m_frame_count;
-    m_frame_average = (m_resolution * m_average_ticks / m_frame_count) * 1000.0f;
+    m_frames_per_second = static_cast<rx_u32>(m_frame_count);
+    m_frame_average = static_cast<rx_f32>((m_resolution * m_average_ticks / m_frame_count) * 1000.0);
     m_frame_min = m_min_ticks;
     m_frame_max = m_max_ticks;
 

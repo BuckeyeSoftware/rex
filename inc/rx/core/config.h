@@ -33,6 +33,8 @@
 # define RX_COMPILER_CLANG
 #elif defined(__GNUC__)
 # define RX_COMPILER_GCC
+#elif defined(_MSC_VER)
+# define RX_COMPILER_MSVC
 #else
 # error "unsupported compiler"
 #endif
@@ -40,6 +42,7 @@
 // determine platform
 #if defined(_WIN32)
 # define RX_PLATFORM_WINDOWS
+# define RX_BYTE_ORDER_LITTLE_ENDIAN
 #elif defined(__linux__)
 # define RX_PLATFORM_LINUX
 # define RX_PLATFORM_POSIX
@@ -78,5 +81,11 @@
 #   error "unable to determine endian"
 # endif
 #endif // !defined(RX_BYTE_ORDER_LITTLE_ENDIAN) && !defined(RX_BYTE_ORDER_BIG_ENDIAN)
+
+// disable some compiler warnings we don't care about
+#if defined(RX_COMPILER_MSVC)
+# pragma warning(disable: 4146) // unary minus operator applied to unsigned type, result still unsigned
+# pragma warning(disable: 4522) // multiple assignment operators specified
+#endif // defined(RX_COMPILER_MSVC)
 
 #endif // RX_CORE_CONFIG_H

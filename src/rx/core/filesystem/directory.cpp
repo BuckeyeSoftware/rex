@@ -13,13 +13,30 @@
 
 namespace rx::filesystem {
 
+#if defined(RX_PLATFORM_WINDOWS)
+struct find_context {
+  array<rx_u16> path_data;
+};
+#endif
+
 directory::directory(memory::allocator* _allocator, const char* _path)
   : m_allocator{_allocator}
 {
 #if defined(RX_PLATFORM_POSIX)
   m_impl = reinterpret_cast<void*>(opendir(_path));
 #elif defined(RX_PLATFORM_WINDOWS)
-  // TODO
+  // WIN32 FindData does not support "rewinding" a directory so |each| must open it each time,
+  // the only thing we can cache between reuses of a directory object is the path conversion
+  array<rx_u16>* path_data{utility::allocate_and_construct<array<rx_u16>>(m_allocator, m_allocator)};
+
+  const wide_string path_utf16{_path};
+  static constexpr const wchar_t k_path_extra[] = L"\\*";
+
+  path_data->resize(path_utf16.size() + sizeof k_path_extra);
+  memcpy(path_data->data(), path_utf16.data(), path_utf16.size() * 2);
+  memcpy(path_data->data() + path_utf16.size(), k_path_extra, sizeof k_path_extra);
+
+  m_impl = reinterpret_cast<void*>(path_data);
 #endif
 }
 
@@ -29,7 +46,9 @@ directory::~directory() {
     closedir(reinterpret_cast<DIR*>(m_impl));
   }
 #elif defined(RX_PLATFORM_WINDOWS)
-  // TODO
+  if (m_impl) {
+    utility::destruct_and_deallocate<array<rx_u16>>(m_allocator, m_impl);
+  }
 #endif
 }
 
@@ -61,8 +80,37 @@ void directory::each(function<void(const item&)>&& _function) {
       break;
     }
   }
+
+  rewinddir(dir);
 #elif defined(RX_PLATFORM_WINDOWS)
-  // TODO
+  auto* context{reinterpret_cast<find_context*>(m_impl)};
+
+  WIN32_FIND_DATAW find_data;
+  HANDLE handle{INVALID_HANDLE_VALUE};
+  if (!(handle = FindFirstFileW(reinterpret_cast<LPCWSTR>(context->path_data.data()), &find_data))) {
+    return;
+  }
+
+  for (;;) {
+    if (find_data.cFileName[0] == L'.' && !find_data.cFileName[1 + !!(find_data.cFileName[1] == L'.')]) {
+      if (!FindNextFileW(handle, &find_data)) {
+        break;
+      }
+      continue;
+    }
+
+    const wide_string utf16_name{reinterpret_cast<rx_u16*>(&find_data.cFileName)};
+    const string utf8_name{utf16_name.to_utf8()};
+    item::type kind{find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
+      ? item::type::k_directory : item::type::k_file};
+    _function({m_allocator, utf8_name.data(), kind});
+
+    if (!FindNextFileW(handle, &find_data)) {
+      break;
+    }
+  }
+
+  FindClose(handle);
 #endif
 }
 

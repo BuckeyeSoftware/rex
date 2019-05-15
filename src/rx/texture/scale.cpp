@@ -62,7 +62,7 @@ void shift(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
         }
       }
       for (rx_size i{0}; i < C; i++) {
-        dst_[i] = r[i] >> t_shift;
+        dst_[i] = static_cast<rx_byte>(r[i] >> t_shift);
       }
     }
     _src += h_frac * _stride;
@@ -151,7 +151,7 @@ void scale(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
       }
 
       for (rx_size i{0}; i < C; i++) {
-        dst_[i] = (r[i] * area) >> d_scale;
+        dst_[i] = static_cast<rx_byte>((r[i] * area) >> d_scale);
       }
     }
   }
