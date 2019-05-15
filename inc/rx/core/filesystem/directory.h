@@ -28,8 +28,8 @@ struct directory {
 
   private:
     friend struct directory;
-
-    item(memory::allocator* _allocator, const char* _name, type _type);
+  
+    item(string&& _name, type _type);
 
     string m_name;
     type m_type;
@@ -75,8 +75,8 @@ inline const string& directory::item::name() const {
   return m_name;
 }
 
-inline directory::item::item(memory::allocator* _allocator, const char* _name, type _type)
-  : m_name{_allocator, _name}
+inline directory::item::item(string&& _name, type _type)
+  : m_name{utility::move(_name)}
   , m_type{_type}
 {
 }

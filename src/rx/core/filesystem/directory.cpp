@@ -68,10 +68,10 @@ void directory::each(function<void(const item&)>&& _function) {
       // only accept regular files and directories, symbol links are not allowed
       switch (next->d_type) {
       case DT_DIR:
-        _function({m_allocator, next->d_name, item::type::k_directory});
+        _function({{m_allocator, next->d_name}, item::type::k_directory});
         break;
       case DT_REG:
-        _function({m_allocator, next->d_name, item::type::k_file});
+        _function({{m_allocator, next->d_name}, item::type::k_file});
         break;
       }
 
@@ -103,7 +103,7 @@ void directory::each(function<void(const item&)>&& _function) {
     const string utf8_name{utf16_name.to_utf8()};
     item::type kind{find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
       ? item::type::k_directory : item::type::k_file};
-    _function({m_allocator, utf8_name.data(), kind});
+    _function({utility::move(utf8_name), kind});
 
     if (!FindNextFileW(handle, &find_data)) {
       break;
