@@ -29,6 +29,8 @@ struct string {
   string(memory::allocator* _allocator, const char* _contents, rx_size _size);
   string(memory::allocator* _allocator, const char* _first, const char* _last);
 
+  string(memory::view _view);
+
   template<typename... Ts>
   static string format(memory::allocator* _allocator, const char* _format, Ts&&... _arguments);
 
@@ -87,6 +89,9 @@ struct string {
   bool ends_with(const char* _suffix) const;
 
   rx_size hash() const;
+
+  memory::allocator* allocator() const;
+  memory::view release();
 
 private:
   static string formatter(memory::allocator* _allocator, const char* _format, ...);
@@ -267,6 +272,10 @@ bool operator==(const string& lhs, const string& rhs);
 bool operator!=(const string& lhs, const string& rhs);
 bool operator<(const string& lhs, const string& rhs);
 bool operator>(const string& lhs, const string& rhs);
+
+inline memory::allocator* string::allocator() const {
+  return m_allocator;
+}
 
 // wide_string
 inline wide_string::wide_string()

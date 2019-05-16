@@ -2,6 +2,7 @@
 #include <rx/core/concurrency/atomic.h>
 #include <rx/core/memory/system_allocator.h>
 #include <rx/core/string.h>
+#include <rx/core/debug.h> // RX_MESSAGE
 
 namespace rx::concurrency {
 

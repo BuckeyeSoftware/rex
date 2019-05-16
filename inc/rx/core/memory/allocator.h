@@ -36,6 +36,12 @@ inline constexpr rx_uintptr allocator::round_to_alignment(rx_uintptr _ptr_or_siz
   return (_ptr_or_size + (k_alignment - 1)) & ~(k_alignment - 1);
 }
 
+struct view {
+  allocator* owner;
+  rx_byte* data;
+  rx_size size;
+};
+
 } // namespace rx::memory
 
 #endif // RX_CORE_MEMORY_ALLOCATOR_H

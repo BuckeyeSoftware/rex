@@ -488,16 +488,12 @@ program* technique::variant(rx_size _index) const {
 }
 
 bool technique::load(const string& _file_name) {
-  const auto data{filesystem::read_binary_file(_file_name)};
+  auto data{filesystem::read_binary_file(_file_name)};
   if (!data) {
     return false;
   }
 
-  string contents{m_frontend->allocator()};
-  contents.resize(data->size());
-  memcpy(contents.data(), data->data(), data->size());
-
-  if (!parse({contents})) {
+  if (!parse({data->release()})) {
     return false;
   }
 

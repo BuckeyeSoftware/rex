@@ -3,6 +3,7 @@
 #include <rx/render/texture.h>
 
 #include <rx/core/filesystem/file.h>
+#include <rx/core/debug.h> // RX_MESSAGE
 
 #include <rx/texture/loader.h>
 #include <rx/texture/chain.h>
@@ -36,16 +37,12 @@ void material::write_log(log::level _level, string&& _message) const {
 }
 
 bool material::load(const string& _file_name) {
-  const auto data{filesystem::read_binary_file(_file_name)};
+  auto data{filesystem::read_binary_file(_file_name)};
   if (!data) {
     return false;
   }
 
-  string contents{m_frontend->allocator()};
-  contents.resize(data->size());
-  memcpy(contents.data(), data->data(), data->size());
-
-  return parse({contents});
+  return parse({data->release()});
 }
 
 void material::fini() {

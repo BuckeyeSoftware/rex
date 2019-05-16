@@ -81,6 +81,8 @@ struct array {
 
   memory::allocator* allocator() const;
 
+  memory::view release();
+
 private:
   // NOTE(dweiler): does not adjust m_size just adjusts capacity
   bool grow_or_shrink_to(rx_size _size);
@@ -451,6 +453,15 @@ inline T* array<T>::data() {
 template<typename T>
 inline memory::allocator* array<T>::allocator() const {
   return m_allocator;
+}
+
+template<typename T>
+inline memory::view array<T>::release() {
+  memory::view view{allocator(), reinterpret_cast<rx_byte*>(data()), size()*sizeof(T)};
+  m_data = nullptr;
+  m_size = 0;
+  m_capacity = 0;
+  return view;
 }
 
 } // namespace rx

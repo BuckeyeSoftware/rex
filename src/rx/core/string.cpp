@@ -67,6 +67,14 @@ string::string(memory::allocator* _allocator, const char* _first,
   append(_first, _last);
 }
 
+string::string(memory::view _view)
+  : m_allocator{_view.owner}
+  , m_data{reinterpret_cast<char*>(_view.data)}
+  , m_last{m_data + _view.size}
+  , m_capacity{m_last}
+{
+}
+
 string::string(string&& _contents)
   : m_allocator{_contents.m_allocator}
 {
@@ -373,6 +381,14 @@ rx_size string::hash() const {
     value = ((value << 5) + value) + *ch;
   }
   return value;
+}
+
+memory::view string::release() {
+  memory::view view{m_allocator, reinterpret_cast<rx_byte*>(data()), size()};
+  m_data = m_buffer;
+  m_last = m_buffer;
+  m_capacity = m_buffer + k_small_string;
+  return view;
 }
 
 static rx_size utf16_len(const rx_u16* _data) {
