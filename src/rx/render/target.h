@@ -44,14 +44,17 @@ struct target : resource {
   const array<texture2D*> attachments() const &;
   bool is_swapchain() const;
 
+  const math::vec2z& dimensions() const;
+
   void validate() const;
 
 private:
   void update_resource_usage();
 
-  enum /* m_owns */ {
+  enum /* m_flags */ {
     k_depth = 1 << 0,
-    k_stencil = 1 << 1
+    k_stencil = 1 << 1,
+    k_dimensions = 1<< 2
   };
 
   union {
@@ -63,8 +66,9 @@ private:
   };
 
   array<texture2D*> m_attachments;
-  int m_owns;
+  int m_flags;
   bool m_is_swapchain;
+  math::vec2z m_dimensions;
 };
 
 inline texture2D* target::depth() const {
@@ -85,6 +89,10 @@ inline const array<texture2D*> target::attachments() const & {
 
 inline bool target::is_swapchain() const {
   return m_is_swapchain;
+}
+
+inline const math::vec2z& target::dimensions() const {
+  return m_dimensions;
 }
 
 } // namespace rx::render

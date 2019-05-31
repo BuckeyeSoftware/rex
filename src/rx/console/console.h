@@ -23,6 +23,9 @@ struct console {
   // change variable |_name| with string encoded |_value|
   static variable_status change(const string& _name, const string& _value);
 
+  // get variable |_name|
+  static variable_reference* get_from_name(const string& _name);
+
 private:
   // parse string |_contents| into typed value |value_|
   template<typename T>

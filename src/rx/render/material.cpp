@@ -152,7 +152,7 @@ bool material::parse_texture(const json& _texture) {
     rx::texture::chain texture_chain{utility::move(texture_loader), texture->filter().mipmaps};
     const auto& levels{texture_chain.levels()};
 
-    // record the texture format, requires conversion from chain loaded
+    // record the texture format, requires conversion from chain loader
     switch (texture_chain.format()) {
     case rx::texture::chain::pixel_format::k_rgba_u8:
       texture->record_format(texture::data_format::k_rgba_u8);

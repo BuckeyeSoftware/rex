@@ -443,8 +443,9 @@ void immediate::immediate::render(target* _target) {
   }
 
   // if the last queue has any draw commands, render them now
-  m_technique->variant(0)->uniforms()[0].record_vec2i({1600, 900});
-  m_technique->variant(1)->uniforms()[0].record_vec2i({1600, 900});
+  const auto& dimensions{_target->dimensions().cast<rx_s32>()};
+  m_technique->variant(0)->uniforms()[0].record_vec2i(dimensions);
+  m_technique->variant(1)->uniforms()[0].record_vec2i(dimensions);
 
   if (!last_empty) {
     m_render_batches[m_rd_index].each_fwd([&](const batch& _batch) {

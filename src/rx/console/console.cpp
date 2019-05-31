@@ -451,6 +451,18 @@ variable_status console::change(const string& name, const string& value) {
   return variable_status::k_not_found;
 }
 
+variable_reference* console::get_from_name(const string& _name) {
+  for (variable_reference* head{g_head}; head; head = head->m_next) {
+    if (head->name() != _name) {
+      continue;
+    }
+
+    return head;
+  }
+
+  return nullptr;
+}
+
 variable_reference* console::add_variable_reference(variable_reference* reference) {
   console_print(log::level::k_info, "registered '%s'", reference->m_name);
   concurrency::scope_lock locked(g_lock);

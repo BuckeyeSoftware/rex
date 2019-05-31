@@ -2,6 +2,9 @@
 #include "rx/render/command.h"
 #include "rx/render/frontend.h"
 
+#include "rx/console/console.h"
+#include "rx/console/variable.h"
+
 namespace rx::render {
 
 // checks if |_format| is a valid depth-only format
@@ -102,35 +105,29 @@ target::target(frontend* _frontend)
   , m_depth_texture{nullptr}
   , m_stencil_texture{nullptr}
   , m_attachments{_frontend->allocator()}
-  , m_owns{0}
+  , m_flags{0}
   , m_is_swapchain{false}
 {
 }
 
 target::~target() {
-  if (m_owns != 0) {
-    if (m_depth_texture == m_stencil_texture) {
-      m_frontend->destroy_texture_unlocked(
-        RX_RENDER_TAG("target depth stencil"),
-        m_depth_stencil_texture);
-    } else {
-      if (m_owns & k_depth) {
-        m_frontend->destroy_texture_unlocked(
-          RX_RENDER_TAG("target depth"),
-          m_depth_texture);
-      }
-      if (m_owns & k_stencil) {
-        m_frontend->destroy_texture_unlocked(
-          RX_RENDER_TAG("target stencil"),
-          m_stencil_texture);
-      }
-    }
+  if (m_flags & (k_depth | k_stencil)) {
+    m_frontend->destroy_texture_unlocked(RX_RENDER_TAG("target depth stencil"),
+      m_depth_stencil_texture);
+  } else if (m_flags & k_depth) {
+    m_frontend->destroy_texture_unlocked(RX_RENDER_TAG("target depth"),
+      m_depth_texture);
+  } else if (m_flags & k_stencil) {
+    m_frontend->destroy_texture_unlocked(RX_RENDER_TAG("target stencil"),
+      m_stencil_texture);
   }
 }
 
 void target::request_swapchain() {
-  RX_ASSERT(m_owns == 0 && m_attachments.is_empty(), "target is not empty");
+  RX_ASSERT(m_flags == 0 && m_attachments.is_empty(), "target is not empty");
   m_is_swapchain = true;
+
+  m_dimensions = {1600, 900};
 }
 
 void target::request_depth(texture::data_format _format, const math::vec2z& _dimensions) {
@@ -138,6 +135,13 @@ void target::request_depth(texture::data_format _format, const math::vec2z& _dim
   RX_ASSERT(!m_depth_texture, "already has depth attachment");
   RX_ASSERT(!m_stencil_texture, "use combined depth stencil");
   RX_ASSERT(is_valid_depth_format(_format), "not a valid depth format");
+
+  if (m_flags & k_dimensions) {
+    RX_ASSERT(_dimensions == m_dimensions, "invalid dimensions");
+  } else {
+    m_dimensions = _dimensions;
+    m_flags |= k_dimensions;
+  }
 
   m_depth_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target depth"));
   m_depth_texture->record_format(_format);
@@ -149,7 +153,7 @@ void target::request_depth(texture::data_format _format, const math::vec2z& _dim
     texture::wrap_type::k_clamp_to_edge});
   m_frontend->initialize_texture(RX_RENDER_TAG("target depth"), m_depth_texture);
 
-  m_owns |= k_depth;
+  m_flags |= k_depth;
 
   update_resource_usage();
 }
@@ -159,6 +163,10 @@ void target::request_stencil(texture::data_format _format, const math::vec2z& _d
   RX_ASSERT(!m_stencil_texture, "already has stencil attachment");
   RX_ASSERT(!m_depth_texture, "use combined depth stencil");
   RX_ASSERT(is_valid_stencil_format(_format), "not a valid stencil format");
+
+  if (m_flags & k_dimensions) {
+    RX_ASSERT(_dimensions == m_dimensions, "invalid dimensions");
+  }
 
   m_stencil_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target stencil"));
   m_stencil_texture->record_format(_format);
@@ -170,7 +178,7 @@ void target::request_stencil(texture::data_format _format, const math::vec2z& _d
     texture::wrap_type::k_clamp_to_edge});
   m_frontend->initialize_texture(RX_RENDER_TAG("target stencil"), m_stencil_texture);
 
-  m_owns |= k_stencil;
+  m_flags |= k_stencil;
 
   update_resource_usage();
 }
@@ -180,6 +188,13 @@ void target::request_depth_stencil(texture::data_format _format, const math::vec
   RX_ASSERT(!m_depth_texture, "already has depth attachment");
   RX_ASSERT(!m_stencil_texture, "already had stencil attachment");
   RX_ASSERT(is_valid_depth_stencil_format(_format), "not a valid depth stencil format");
+
+  if (m_flags & k_dimensions) {
+    RX_ASSERT(_dimensions == m_dimensions, "invalid dimensions");
+  } else {
+    m_dimensions = _dimensions;
+    m_flags |= k_dimensions;
+  }
 
   m_depth_stencil_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target depth stencil"));
   m_depth_stencil_texture->record_format(_format);
@@ -191,8 +206,8 @@ void target::request_depth_stencil(texture::data_format _format, const math::vec
     texture::wrap_type::k_clamp_to_edge});
   m_frontend->initialize_texture(RX_RENDER_TAG("target depth stencil"), m_depth_stencil_texture);
 
-  m_owns |= k_depth;
-  m_owns |= k_stencil;
+  m_flags |= k_depth;
+  m_flags |= k_stencil;
 
   update_resource_usage();
 }
@@ -202,6 +217,13 @@ void target::attach_depth(texture2D* _depth) {
   RX_ASSERT(!m_depth_texture, "depth already attached");
   RX_ASSERT(is_valid_depth_format(_depth->format()), "not a depth format texture");
   RX_ASSERT(_depth->kind() == texture::type::k_attachment, "not attachable texture");
+
+  if (m_flags & k_dimensions) {
+    RX_ASSERT(_depth->dimensions() == m_dimensions, "invalid dimensions");
+  } else {
+    m_dimensions = _depth->dimensions();
+    m_flags |= k_dimensions;
+  }
 
   m_depth_texture = _depth;
 
@@ -214,7 +236,15 @@ void target::attach_stencil(texture2D* _stencil) {
   RX_ASSERT(is_valid_stencil_format(_stencil->format()), "not a stencil format texture");
   RX_ASSERT(_stencil->kind() == texture::type::k_attachment, "not attachable texture");
 
+  if (m_flags & k_dimensions) {
+    RX_ASSERT(_stencil->dimensions() == m_dimensions, "invalid dimensions");
+  } else {
+    m_dimensions = _stencil->dimensions();
+    m_flags |= k_dimensions;
+  }
+
   m_stencil_texture = _stencil;
+  m_flags |= k_stencil;
 
   update_resource_usage();
 }
@@ -223,21 +253,31 @@ void target::attach_texture(texture2D* _texture) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
   RX_ASSERT(_texture->kind() == texture::type::k_attachment, "not attachable texture");
 
+  if (m_flags & k_dimensions) {
+    RX_ASSERT(_texture->dimensions() == m_dimensions, "invalid dimensions");
+  }
+
   m_attachments.each_fwd([_texture](texture2D* _attachment) {
     RX_ASSERT(_texture != _attachment, "texture already attached");
   });
+
+  if (!(m_flags & k_dimensions)) {
+    m_dimensions = _texture->dimensions();
+    m_flags |= k_dimensions;
+  }
+
   m_attachments.push_back(_texture);
 
   update_resource_usage();
 }
 
 void target::validate() const {
+  RX_ASSERT(m_flags & k_dimensions, "dimensions not recorded");
+
   if (m_is_swapchain) {
     RX_ASSERT(m_attachments.is_empty(), "swapchain cannot have attachments");
-  } else {
-    if (!m_depth_texture && !m_stencil_texture) {
-      RX_ASSERT(!m_attachments.is_empty(), "no attachments");
-    }
+  } else if (!m_depth_texture && !m_stencil_texture) {
+    RX_ASSERT(!m_attachments.is_empty(), "no attachments");
   }
 }
 
