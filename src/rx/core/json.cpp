@@ -1,8 +1,8 @@
 #include <stdlib.h> // strtod
 #include <string.h> // strcmp
 
-#include <rx/core/json.h>
-#include <rx/math/trig.h>
+#include "rx/core/json.h"
+#include "rx/math/trig.h"
 
 namespace rx {
 

@@ -2,15 +2,15 @@
 #include <stdlib.h> // strtoll, strtof
 #include <errno.h> // errno, ERANGE
 
-#include <rx/console/console.h>
-#include <rx/console/variable.h>
+#include "rx/console/console.h"
+#include "rx/console/variable.h"
 
-#include <rx/core/concurrency/spin_lock.h>
-#include <rx/core/concurrency/scope_lock.h>
+#include "rx/core/concurrency/spin_lock.h"
+#include "rx/core/concurrency/scope_lock.h"
 
-#include <rx/core/filesystem/file.h>
+#include "rx/core/filesystem/file.h"
 
-#include <rx/core/log.h> // RX_LOG
+#include "rx/core/log.h" // RX_LOG
 
 namespace rx::console {
 

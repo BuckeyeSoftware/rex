@@ -1,7 +1,7 @@
 #include <string.h>
 
-#include <rx/texture/loader.h>
-#include <rx/core/filesystem/file.h>
+#include "rx/texture/loader.h"
+#include "rx/core/filesystem/file.h"
 
 #include "lib/stb_image.h"
 

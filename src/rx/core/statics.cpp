@@ -1,11 +1,11 @@
 #include <string.h> // strcmp
 
-#include <rx/core/statics.h>
-#include <rx/core/debug.h> // RX_MESSAGE
+#include "rx/core/statics.h"
+#include "rx/core/debug.h" // RX_MESSAGE
 
-#include <rx/core/concurrency/spin_lock.h>
-#include <rx/core/concurrency/scope_lock.h>
-#include <rx/core/concurrency/scope_unlock.h>
+#include "rx/core/concurrency/spin_lock.h"
+#include "rx/core/concurrency/scope_lock.h"
+#include "rx/core/concurrency/scope_unlock.h"
 
 namespace rx {
 

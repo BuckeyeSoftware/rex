@@ -1,19 +1,19 @@
 #include <stdarg.h> // va_list, va_start, va_end
 #include <string.h> // strlen
 
-#include <rx/render/frontend.h>
-#include <rx/render/backend.h>
-#include <rx/render/buffer.h>
-#include <rx/render/target.h>
-#include <rx/render/program.h>
-#include <rx/render/texture.h>
-#include <rx/render/technique.h>
+#include "rx/render/frontend.h"
+#include "rx/render/backend.h"
+#include "rx/render/buffer.h"
+#include "rx/render/target.h"
+#include "rx/render/program.h"
+#include "rx/render/texture.h"
+#include "rx/render/technique.h"
 
-#include <rx/core/concurrency/scope_lock.h>
-#include <rx/core/filesystem/directory.h>
-#include <rx/core/log.h>
+#include "rx/core/concurrency/scope_lock.h"
+#include "rx/core/filesystem/directory.h"
+#include "rx/core/log.h"
 
-#include <rx/console/variable.h>
+#include "rx/console/variable.h"
 
 RX_CONSOLE_IVAR(max_buffers, "render.max_buffers","maximum buffers", 16, 128, 64);
 RX_CONSOLE_IVAR(max_targets, "render.max_targets", "maximum targets", 16, 128, 16);
@@ -439,7 +439,7 @@ bool frontend::process() {
   });
 
   m_destroy_texturesCM.each_fwd([this](textureCM* _texture) {
-    m_texture1D_pool.destruct_and_deallocate<textureCM>(_texture);
+    m_textureCM_pool.destruct_and_deallocate<textureCM>(_texture);
   });
 
   // clear lists

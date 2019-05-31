@@ -1,5 +1,5 @@
-#include <rx/texture/scale.h>
-#include <rx/core/algorithm/clamp.h>
+#include "rx/texture/scale.h"
+#include "rx/core/algorithm/clamp.h"
 
 namespace rx::texture {
 

@@ -1,6 +1,6 @@
-#include <SDL.h> // SDL_GetTicks
+#include <SDL.h> // SDL_GetPerformance{Counter,Frequency}
 
-#include <rx/render/timer.h>
+#include "rx/render/timer.h"
 
 namespace rx::render {
 

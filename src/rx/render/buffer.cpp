@@ -1,8 +1,7 @@
 #include <string.h> // memcpy
 
-#include <rx/render/buffer.h>
-#include <rx/render/frontend.h>
-#include <rx/core/log.h>
+#include "rx/render/buffer.h"
+#include "rx/render/frontend.h"
 
 namespace rx::render {
 

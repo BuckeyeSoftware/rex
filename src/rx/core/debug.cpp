@@ -2,8 +2,8 @@
 #include <stdarg.h> // va_{list,start,end,copy}
 #include <stdio.h> // vsnprintf
 
-#include <rx/core/log.h> // RX_LOG, rx::log
-#include <rx/core/debug.h> // rx::debug_message
+#include "rx/core/log.h" // RX_LOG, rx::log
+#include "rx/core/debug.h" // rx::debug_message
 
 RX_LOG("debug", debug_print);
 

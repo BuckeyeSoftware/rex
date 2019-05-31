@@ -1,6 +1,6 @@
-#include <rx/math/half.h> // half
+#include "rx/math/half.h" // half
 
-#include <rx/core/statics.h> // static_global
+#include "rx/core/statics.h" // static_global
 
 namespace rx::math {
 

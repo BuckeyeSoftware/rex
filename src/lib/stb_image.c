@@ -1,4 +1,4 @@
-#include <rx/core/config.h>
+#include "rx/core/config.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 

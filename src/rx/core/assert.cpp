@@ -2,8 +2,8 @@
 #include <stdarg.h> // va_{list,start,end,copy}
 #include <stdio.h> // vsnprintf
 
-#include <rx/core/log.h> // RX_LOG, rx::log
-#include <rx/core/abort.h> // rx::abort
+#include "rx/core/log.h" // RX_LOG, rx::log
+#include "rx/core/abort.h" // rx::abort
 
 RX_LOG("assert", assert_print);
 

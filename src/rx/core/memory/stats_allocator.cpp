@@ -1,11 +1,9 @@
-#include <rx/core/memory/stats_allocator.h>
-#include <rx/core/concurrency/scope_lock.h>
-#include <rx/core/algorithm/max.h>
-#include <rx/core/assert.h>
-
-
-
 #include <stdlib.h>
+
+#include "rx/core/memory/stats_allocator.h"
+#include "rx/core/concurrency/scope_lock.h"
+#include "rx/core/algorithm/max.h"
+#include "rx/core/assert.h"
 
 namespace rx::memory {
 

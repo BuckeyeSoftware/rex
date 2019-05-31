@@ -1,4 +1,4 @@
-#include <rx/core/config.h> // RX_PLATFORM_*
+#include "rx/core/config.h" // RX_PLATFORM_*
 
 #if defined(RX_PLATFORM_POSIX)
 #include <dirent.h>
@@ -9,7 +9,7 @@
 #error "missing directory implementation"
 #endif
 
-#include <rx/core/filesystem/directory.h>
+#include "rx/core/filesystem/directory.h"
 
 namespace rx::filesystem {
 
@@ -29,7 +29,7 @@ directory::directory(memory::allocator* _allocator, const char* _path)
   // the only thing we can cache between reuses of a directory object is the path conversion
   array<rx_u16>* path_data{utility::allocate_and_construct<array<rx_u16>>(m_allocator, m_allocator)};
 
-  const wide_string path_utf16{_path};
+  const wide_string path_utf16{string(_path).to_utf16()};
   static constexpr const wchar_t k_path_extra[] = L"\\*";
 
   path_data->resize(path_utf16.size() + sizeof k_path_extra);

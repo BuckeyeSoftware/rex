@@ -1,5 +1,5 @@
-#include <rx/math/mat3x3.h>
-#include <rx/math/quat.h>
+#include "rx/math/mat3x3.h"
+#include "rx/math/quat.h"
 
 namespace rx::math {
 

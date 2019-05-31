@@ -1,30 +1,30 @@
 #include <SDL.h>
 #include <stdio.h> // snprintf
 
-#include <rx/core/memory/system_allocator.h>
+#include "rx/core/memory/system_allocator.h"
 
-#include <rx/core/statics.h>
-#include <rx/core/string.h>
-#include <rx/core/event.h>
+#include "rx/core/statics.h"
+#include "rx/core/string.h"
+#include "rx/core/event.h"
 
-#include <rx/console/console.h>
-#include <rx/console/variable.h>
+#include "rx/console/console.h"
+#include "rx/console/variable.h"
 
-#include <rx/input/input.h>
+#include "rx/input/input.h"
 
-#include <rx/render/frontend.h>
-#include <rx/render/target.h>
-#include <rx/render/gbuffer.h>
-#include <rx/render/buffer.h>
-#include <rx/render/technique.h>
-#include <rx/render/material.h>
-#include <rx/render/backend_gl4.h>
-#include <rx/render/immediate.h>
+#include "rx/render/frontend.h"
+#include "rx/render/target.h"
+#include "rx/render/gbuffer.h"
+#include "rx/render/buffer.h"
+#include "rx/render/technique.h"
+#include "rx/render/material.h"
+#include "rx/render/backend_gl4.h"
+#include "rx/render/immediate.h"
 
-#include <rx/model/model.h>
-#include <rx/model/animation.h>
+#include "rx/model/model.h"
+#include "rx/model/animation.h"
 
-#include <rx/math/camera.h>
+#include "rx/math/camera.h"
 
 RX_CONSOLE_V2IVAR(
   display_resolution,
@@ -251,7 +251,7 @@ int entry(int argc, char **argv) {
 
   SDL_GL_SetSwapInterval(1);
 
-  // SDL_SetRelativeMouseMode(SDL_TRUE);
+  SDL_SetRelativeMouseMode(SDL_TRUE);
 
   rx::math::camera camera{rx::math::mat4x4f::perspective(90.0f, {0.01, 1024.0f}, 1600.0f/900.0f)};
   camera.translate = { 0.0f, 2.5f, -5.0f };

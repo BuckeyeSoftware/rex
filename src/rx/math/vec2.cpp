@@ -1,7 +1,7 @@
 #include <stdio.h> // snprintf
 
-#include <rx/math/trig.h>
-#include <rx/math/vec2.h>
+#include "rx/math/trig.h"
+#include "rx/math/vec2.h"
 
 namespace rx {
 

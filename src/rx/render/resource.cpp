@@ -1,8 +1,8 @@
-#include <rx/render/resource.h>
-#include <rx/render/frontend.h>
+#include "rx/render/resource.h"
+#include "rx/render/frontend.h"
 
-#include <rx/core/log.h>
-#include <rx/core/concurrency/scope_lock.h>
+#include "rx/core/log.h"
+#include "rx/core/concurrency/scope_lock.h"
 
 RX_LOG("render/resource", log_resource);
 

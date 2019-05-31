@@ -26,7 +26,7 @@ OBJS := $(filter %.o,$(SRCS:.cpp=.o)) $(filter %.o,$(SRCS:.c=.o))
 DEPS := $(filter %.d,$(SRCS:.cpp=.d)) $(filter %.d,$(SRCS:.c=.d))
 
 # Shared C and C++ compilation flags
-CFLAGS := -Iinc
+CFLAGS := -Isrc
 CFLAGS += -Wall
 CFLAGS += -Wextra
 CFLAGS += `sdl2-config --cflags`

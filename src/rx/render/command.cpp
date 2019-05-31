@@ -1,6 +1,4 @@
-#include <rx/render/command.h>
-#include <rx/core/memory/allocator.h>
-#include <rx/core/utility/move.h>
+#include "rx/render/command.h"
 
 namespace rx::render {
 

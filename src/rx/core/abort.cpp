@@ -1,8 +1,8 @@
 #include <stdlib.h> // abort
 
-#include <rx/core/abort.h>
-#include <rx/core/statics.h>
-#include <rx/core/log.h>
+#include "rx/core/abort.h"
+#include "rx/core/statics.h"
+#include "rx/core/log.h"
 
 RX_LOG("abort", abort_log);
 

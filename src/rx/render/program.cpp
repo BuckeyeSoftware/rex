@@ -1,10 +1,10 @@
 #include <string.h> // memcpy
 
-#include <rx/render/program.h>
-#include <rx/render/frontend.h>
+#include "rx/render/program.h"
+#include "rx/render/frontend.h"
 
-#include <rx/core/utility/bit.h>
-#include <rx/core/algorithm/min.h>
+#include "rx/core/utility/bit.h"
+#include "rx/core/algorithm/min.h"
 
 namespace rx::render {
 static constexpr const rx_size k_max_bones{80};

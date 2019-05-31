@@ -1,11 +1,11 @@
 #include <string.h> // memset
 
-#include <rx/core/utility/move.h>
+#include "rx/core/utility/move.h"
 
-#include <rx/core/memory/allocator.h> // allocator
-#include <rx/core/memory/pool_allocator.h> // pool_allocator
+#include "rx/core/memory/allocator.h" // allocator
+#include "rx/core/memory/pool_allocator.h" // pool_allocator
 
-#include <rx/core/debug.h> // mesg
+#include "rx/core/debug.h" // mesg
 
 namespace rx::memory {
 

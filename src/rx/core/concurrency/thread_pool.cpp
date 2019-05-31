@@ -1,5 +1,5 @@
-#include <rx/core/concurrency/thread_pool.h>
-#include <rx/core/debug.h> // RX_MESSAGE
+#include "rx/core/concurrency/thread_pool.h"
+#include "rx/core/debug.h" // RX_MESSAGE
 
 namespace rx::concurrency {
 

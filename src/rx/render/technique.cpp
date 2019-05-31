@@ -1,11 +1,11 @@
 #include <string.h>
 
-#include <rx/render/technique.h>
-#include <rx/render/frontend.h>
+#include "rx/render/technique.h"
+#include "rx/render/frontend.h"
 
-#include <rx/core/log.h>
-#include <rx/core/optional.h>
-#include <rx/core/filesystem/file.h>
+#include "rx/core/log.h"
+#include "rx/core/optional.h"
+#include "rx/core/filesystem/file.h"
 
 RX_LOG("render/technique", log_technique);
 

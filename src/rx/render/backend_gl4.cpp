@@ -1,19 +1,19 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 
-#include <rx/render/backend_gl4.h>
-#include <rx/render/command.h>
-#include <rx/render/buffer.h>
-#include <rx/render/target.h>
-#include <rx/render/program.h>
-#include <rx/render/texture.h>
+#include "rx/render/backend_gl4.h"
+#include "rx/render/command.h"
+#include "rx/render/buffer.h"
+#include "rx/render/target.h"
+#include "rx/render/program.h"
+#include "rx/render/texture.h"
 
-#include <rx/core/debug.h>
-#include <rx/core/log.h>
+#include "rx/core/debug.h"
+#include "rx/core/log.h"
 
-#include <rx/core/algorithm/max.h>
+#include "rx/core/algorithm/max.h"
 
-#include <rx/math/log2.h>
+#include "rx/math/log2.h"
 
 RX_LOG("render/gl4", gl4_log);
 
@@ -772,7 +772,7 @@ static GLuint compile_shader(const array<uniform>& _uniforms, const shader& _sha
     "#define rx_sampler1D sampler1D\n"
     "#define rx_sampler2D sampler2D\n"
     "#define rx_sampler3D sampler3D\n"
-    "#define rx_samplerCM samplerCubemap\n"
+    "#define rx_samplerCM samplerCube\n"
     "#define rx_texture1D texture\n"
     "#define rx_texture2D texture\n"
     "#define rx_texture3D texture\n"
@@ -1320,7 +1320,52 @@ void backend_gl4::process(rx_byte* _command) {
         }
         break;
       case resource_command::type::k_textureCM:
-        // TODO
+        {
+          const auto render_texture{resource->as_textureCM};
+          const auto texture{reinterpret_cast<const detail::textureCM*>(render_texture + 1)};
+          const auto wrap{render_texture->wrap()};
+          const auto wrap_s{convert_texture_wrap(wrap.s)};
+          const auto wrap_t{convert_texture_wrap(wrap.t)};
+          const auto dimensions{render_texture->dimensions()};
+          const auto format{render_texture->format()};
+          const auto filter{render_texture->filter()};
+          const auto& data{render_texture->data()};
+
+          const auto levels{static_cast<GLint>(render_texture->levels())};
+
+          pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTextureStorage2D(
+            texture->tex,
+            levels,
+            convert_texture_data_format(format),
+            static_cast<GLsizei>(dimensions.w),
+            static_cast<GLsizei>(dimensions.h));
+
+          if (data.size()) {
+            for (GLint i{0}; i < levels; i++) {
+              const auto level_info{render_texture->info_for_level(i)};
+              for (GLint j{0}; j < 6; j++) {
+                pglTextureSubImage3D(
+                  texture->tex,
+                  i,
+                  0,
+                  0,
+                  j,
+                  static_cast<GLsizei>(level_info.dimensions.w),
+                  static_cast<GLsizei>(level_info.dimensions.h),
+                  1,
+                  convert_texture_format(format),
+                  GL_UNSIGNED_BYTE,
+                  data.data() + level_info.offset * level_info.dimensions.area() * j);
+              }
+            }
+          }
+        }
         break;
       }
     }

@@ -1,7 +1,7 @@
 #include <string.h> // memcpy
 
-#include <rx/render/texture.h>
-#include <rx/math/log2.h>
+#include "rx/render/texture.h"
+#include "rx/math/log2.h"
 
 namespace rx::render {
 
@@ -233,7 +233,7 @@ void textureCM::write(const rx_byte* _data, face _face, rx_size _level) {
 
   const auto& info{m_levels[_level]};
   memcpy(m_data.data() + info.offset + info.dimensions.area()
-    * static_cast<rx_size>(_face), _data, info.size);
+    * static_cast<rx_size>(_face), _data, info.size / 6);
 }
 
 rx_byte* textureCM::map(rx_size _level, face _face) {

@@ -1,8 +1,8 @@
 #include <string.h> // memcmp
 
-#include <rx/math/quat.h>
+#include "rx/math/quat.h"
 
-#include <rx/model/iqm.h>
+#include "rx/model/iqm.h"
 
 namespace rx::model {
 

@@ -1,7 +1,7 @@
 #include <stdio.h> // snprintf
 
-#include <rx/math/trig.h>
-#include <rx/math/vec3.h> // vec3
+#include "rx/math/trig.h"
+#include "rx/math/vec3.h" // vec3
 
 namespace rx {
 

@@ -1,4 +1,4 @@
-#include <rx/math/trig.h>
+#include "rx/math/trig.h"
 
 // we define libm functions directly here to avoid including math.h, we only use
 // a handful of the functions anyways

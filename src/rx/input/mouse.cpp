@@ -1,6 +1,6 @@
 #include <string.h> // memset
 
-#include <rx/input/mouse.h>
+#include "rx/input/mouse.h"
 
 namespace rx::input {
 

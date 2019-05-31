@@ -1,7 +1,7 @@
-#include <rx/render/gbuffer.h>
-#include <rx/render/target.h>
-#include <rx/render/texture.h>
-#include <rx/render/frontend.h>
+#include "rx/render/gbuffer.h"
+#include "rx/render/target.h"
+#include "rx/render/texture.h"
+#include "rx/render/frontend.h"
 
 namespace rx::render {
 
@@ -39,7 +39,7 @@ void gbuffer::create(const math::vec2z& _resolution) {
   m_normal_texture = m_frontend->create_texture2D(RX_RENDER_TAG("gbuffer normal"));
   m_normal_texture->record_format(texture::data_format::k_rgba_f16);
   m_normal_texture->record_type(texture::type::k_attachment);
-  m_normal_texture->record_filter({ false, false, false });
+  m_normal_texture->record_filter({false, false, false});
   m_normal_texture->record_dimensions(_resolution);
   m_normal_texture->record_wrap({
     texture::wrap_type::k_clamp_to_edge,

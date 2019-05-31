@@ -2,10 +2,10 @@
 #include <stdarg.h> // va_{list, start, end, copy}
 #include <stdio.h> // vsnprintf
 
-#include <rx/core/debug.h> // RX_MESSAGE
-#include <rx/core/string.h> // string
+#include "rx/core/debug.h" // RX_MESSAGE
+#include "rx/core/string.h" // string
 
-#include <rx/core/utility/swap.h>
+#include "rx/core/utility/swap.h"
 
 namespace rx {
 
@@ -19,6 +19,101 @@ static void format_va(string& contents_, const char* _format, va_list _va) {
   // format into string
   contents_.resize(length);
   vsnprintf(contents_.data(), contents_.size() + 1, _format, _va);
+}
+
+static rx_size utf8_to_utf16(const char* _utf8_contents, rx_size _length,
+  rx_u16* utf16_contents_)
+{
+  rx_size elements{0};
+  rx_u32 code_point{0};
+
+  for (rx_size i{0}; i < _length; i++) {
+    const char* element{_utf8_contents + i};
+    const rx_byte element_ch{static_cast<rx_byte>(*element)};
+
+    if (element_ch <= 0x7f) {
+      code_point = static_cast<rx_u16>(element_ch);
+    } else if (element_ch <= 0xbf) {
+      code_point = (code_point << 6) | (element_ch & 0x3f);
+    } else if (element_ch <= 0xdf) {
+      code_point = element_ch & 0x1f;
+    } else if (element_ch <= 0xef) {
+      code_point = element_ch & 0x0f;
+    } else {
+      code_point = element_ch & 0x07;
+    }
+
+    element++;
+    if ((*element & 0xc0) != 0x80 && code_point <= 0x10ffff) {
+      if (code_point > 0xffff) {
+        elements += 2;
+        if (utf16_contents_) {
+          *utf16_contents_++ = static_cast<rx_u16>(0xd800 + (code_point >> 10));
+          *utf16_contents_++ = static_cast<rx_u16>(0xdc00 + (code_point & 0x03ff));
+        }
+      } else if (code_point < 0xd800 || code_point >= 0xe000) {
+        elements += 1;
+        if (utf16_contents_) {
+          *utf16_contents_++ = static_cast<rx_u16>(code_point);
+        }
+      }
+    }
+  }
+
+  return elements;
+}
+
+static rx_size utf16_to_utf8(const rx_u16* _utf16_contents, rx_size _length,
+  char* utf8_contents_)
+{
+  rx_size elements{0};
+  rx_u32 code_point{0};
+
+  for (rx_size i{0}; i < _length; i++) {
+    const rx_u16* element{_utf16_contents+i};
+
+    if (*element >= 0xd800 && *element <= 0xdbff) {
+      code_point = ((*element - 0xd800) << 10) + 0x10000;
+    } else {
+      if (*element >= 0xdc00 && *element <= 0xdfff) {
+        code_point |= *element - 0xdc00;
+      } else {
+        code_point = *element;
+      }
+
+      if (code_point < 0x7f) {
+        elements += 1;
+        if (utf8_contents_) {
+          *utf8_contents_++ = static_cast<char>(code_point);
+        }
+      } else if (code_point <= 0x7ff) {
+        elements += 2;
+        if (utf8_contents_) {
+          *utf8_contents_++ = static_cast<char>(0xc0 | ((code_point >> 6) & 0x1f));
+          *utf8_contents_++ = static_cast<char>(0x80 | (code_point & 0x3f));
+        }
+      } else if (code_point <= 0xffff) {
+        elements += 3;
+        if (utf8_contents_) {
+          *utf8_contents_++ = static_cast<char>(0xe0 | ((code_point >> 12) & 0x0f));
+          *utf8_contents_++ = static_cast<char>(0x80 | ((code_point >> 6) & 0x3f));
+          *utf8_contents_++ = static_cast<char>(0x80 | (code_point & 0x3f));
+        }
+      } else {
+        elements += 4;
+        if (utf8_contents_) {
+          *utf8_contents_++ = static_cast<char>(0xf0 | ((code_point >> 18) & 0x07));
+          *utf8_contents_++ = static_cast<char>(0x80 | ((code_point >> 12) & 0x3f));
+          *utf8_contents_++ = static_cast<char>(0x80 | ((code_point >> 6) & 0x3f));
+          *utf8_contents_++ = static_cast<char>(0x80 | (code_point & 0x3f));
+        }
+      }
+
+      code_point = 0;
+    }
+  }
+
+  return elements;
 }
 
 string string::formatter(memory::allocator* _allocator,
@@ -391,107 +486,37 @@ memory::view string::release() {
   return view;
 }
 
+wide_string string::to_utf16() const {
+  rx_size length{utf8_to_utf16(m_data, size(), nullptr)};
+  wide_string contents{m_allocator};
+  contents.resize(length);
+  utf8_to_utf16(m_data, length, contents.data());
+  return contents;
+}
+
+void wide_string::resize(rx_size _size) {
+  const rx_size previous_size{m_size};
+  m_data = reinterpret_cast<rx_u16*>(m_allocator->reallocate(reinterpret_cast<rx_byte*>(m_data), (_size + 1) * sizeof *m_data));
+  for (rx_size i{previous_size}; i < _size; i++) {
+    m_data[i] = 0;
+  }
+  m_size = _size;
+}
+
+string wide_string::to_utf8() const {
+  rx_size size{utf16_to_utf8(m_data, m_size, nullptr)};
+  string contents{m_allocator};
+  contents.resize(size);
+  utf16_to_utf8(m_data, m_size, contents.data());
+  return contents;
+}
+
 static rx_size utf16_len(const rx_u16* _data) {
   rx_size length{0};
   while (_data[length]) {
     ++length;
   }
   return length;
-}
-
-static rx_size utf8_to_utf16(const char* _utf8_contents, rx_size _length,
-  rx_u16* utf16_contents_)
-{
-  rx_size elements{0};
-  rx_u32 code_point{0};
-
-  for (rx_size i{0}; i < _length; i++) {
-    const char* element{_utf8_contents + i};
-    const rx_byte element_ch{static_cast<rx_byte>(*element)};
-
-    if (element_ch <= 0x7f) {
-      code_point = static_cast<rx_u16>(element_ch);
-    } else if (element_ch <= 0xbf) {
-      code_point = (code_point << 6) | (element_ch & 0x3f);
-    } else if (element_ch <= 0xdf) {
-      code_point = element_ch & 0x1f;
-    } else if (element_ch <= 0xef) {
-      code_point = element_ch & 0x0f;
-    } else {
-      code_point = element_ch & 0x07;
-    }
-
-    element++;
-    if ((*element & 0xc0) != 0x80 && code_point <= 0x10ffff) {
-      if (code_point > 0xffff) {
-        elements += 2;
-        if (utf16_contents_) {
-          *utf16_contents_++ = static_cast<rx_u16>(0xd800 + (code_point >> 10));
-          *utf16_contents_++ = static_cast<rx_u16>(0xdc00 + (code_point & 0x03ff));
-        }
-      } else if (code_point < 0xd800 || code_point >= 0xe000) {
-        elements += 1;
-        if (utf16_contents_) {
-          *utf16_contents_++ = static_cast<rx_u16>(code_point);
-        }
-      }
-    }
-  }
-
-  return elements;
-}
-
-/*static*/ rx_size utf16_to_utf8(const rx_u16* _utf16_contents, rx_size _length,
-  char* utf8_contents_)
-{
-  rx_size elements{0};
-  rx_u32 code_point{0};
-
-  for (rx_size i{0}; i < _length; i++) {
-    const rx_u16* element{_utf16_contents+i};
-
-    if (*element >= 0xd800 && *element <= 0xdbff) {
-      code_point = ((*element - 0xd800) << 10) + 0x10000;
-    } else {
-      if (*element >= 0xdc00 && *element <= 0xdfff) {
-        code_point |= *element - 0xdc00;
-      } else {
-        code_point = *element;
-      }
-
-      if (code_point < 0x7f) {
-        elements += 1;
-        if (utf8_contents_) {
-          *utf8_contents_++ = static_cast<char>(code_point);
-        }
-      } else if (code_point <= 0x7ff) {
-        elements += 2;
-        if (utf8_contents_) {
-          *utf8_contents_++ = static_cast<char>(0xc0 | ((code_point >> 6) & 0x1f));
-          *utf8_contents_++ = static_cast<char>(0x80 | (code_point & 0x3f));
-        }
-      } else if (code_point <= 0xffff) {
-        elements += 3;
-        if (utf8_contents_) {
-          *utf8_contents_++ = static_cast<char>(0xe0 | ((code_point >> 12) & 0x0f));
-          *utf8_contents_++ = static_cast<char>(0x80 | ((code_point >> 6) & 0x3f));
-          *utf8_contents_++ = static_cast<char>(0x80 | (code_point & 0x3f));
-        }
-      } else {
-        elements += 4;
-        if (utf8_contents_) {
-          *utf8_contents_++ = static_cast<char>(0xf0 | ((code_point >> 18) & 0x07));
-          *utf8_contents_++ = static_cast<char>(0x80 | ((code_point >> 12) & 0x3f));
-          *utf8_contents_++ = static_cast<char>(0x80 | ((code_point >> 6) & 0x3f));
-          *utf8_contents_++ = static_cast<char>(0x80 | (code_point & 0x3f));
-        }
-      }
-
-      code_point = 0;
-    }
-  }
-
-  return elements;
 }
 
 // wide_string
@@ -524,16 +549,6 @@ wide_string::wide_string(memory::allocator* _allocator, const rx_u16* _contents,
   memcpy(m_data, _contents, sizeof(rx_u16) * (_size + 1));
 }
 
-wide_string::wide_string(memory::allocator* _allocator, const char* _contents)
-  : wide_string{_allocator, _contents, strlen(_contents)}
-{
-}
-
-wide_string::wide_string(memory::allocator* _allocator, const string& _contents)
-  : wide_string{_allocator, _contents.data(), _contents.size()}
-{
-}
-
 wide_string::wide_string(wide_string&& _other)
   : m_allocator{_other.m_allocator}
   , m_data{_other.m_data}
@@ -543,30 +558,8 @@ wide_string::wide_string(wide_string&& _other)
   _other.m_size = 0;
 }
 
-wide_string::wide_string(memory::allocator* _allocator, const char* _contents,
-  rx_size _size) 
-  : m_allocator{_allocator}
-{
-  RX_ASSERT(m_allocator, "null allocator");
-
-  m_size = {utf8_to_utf16(_contents, _size, nullptr)};
-  m_data = reinterpret_cast<rx_u16*>(m_allocator->allocate(sizeof(rx_u16) * (m_size + 1)));
-  RX_ASSERT(m_data, "out of memory");
-
-  utf8_to_utf16(_contents, _size, reinterpret_cast<rx_u16*>(m_data));
-  m_data[m_size] = 0;
-}
-
 wide_string::~wide_string() {
   m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
-}
-
-string wide_string::to_utf8() const {
-  rx_size size{utf16_to_utf8(m_data, m_size, nullptr)};
-  string contents{m_allocator};
-  contents.resize(size);
-  utf16_to_utf8(m_data, m_size, contents.data());
-  return contents;
 }
 
 } // namespace rx

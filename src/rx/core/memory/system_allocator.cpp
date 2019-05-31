@@ -1,8 +1,8 @@
 #include <stdlib.h> // malloc, realloc, free
 
-#include <rx/core/memory/system_allocator.h> // system_allocator
-#include <rx/core/concurrency/scope_lock.h>
-#include <rx/core/algorithm/max.h>
+#include "rx/core/memory/system_allocator.h" // system_allocator
+#include "rx/core/concurrency/scope_lock.h"
+#include "rx/core/algorithm/max.h"
 
 namespace rx::memory {
 

@@ -1,7 +1,7 @@
-#include <rx/math/trig.h>
-#include <rx/math/quat.h>
-#include <rx/math/mat3x3.h>
-#include <rx/math/mat3x4.h>
+#include "rx/math/trig.h"
+#include "rx/math/quat.h"
+#include "rx/math/mat3x3.h"
+#include "rx/math/mat3x4.h"
 
 namespace rx::math {
 

@@ -1,14 +1,12 @@
-#include <rx/render/material.h>
-#include <rx/render/frontend.h>
-#include <rx/render/texture.h>
+#include "rx/render/material.h"
+#include "rx/render/frontend.h"
+#include "rx/render/texture.h"
 
-#include <rx/core/filesystem/file.h>
-#include <rx/core/debug.h> // RX_MESSAGE
+#include "rx/core/filesystem/file.h"
+#include "rx/core/debug.h" // RX_MESSAGE
 
-#include <rx/texture/loader.h>
-#include <rx/texture/chain.h>
-
-#include <string.h>
+#include "rx/texture/loader.h"
+#include "rx/texture/chain.h"
 
 RX_LOG("render/material", log_material);
 

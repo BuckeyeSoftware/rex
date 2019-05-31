@@ -3,17 +3,17 @@
 #include <stdio.h> // sscanf
 #include <inttypes.h> // PRIx32
 
-#include <rx/render/immediate.h>
-#include <rx/render/frontend.h>
-#include <rx/render/technique.h>
+#include "rx/render/immediate.h"
+#include "rx/render/frontend.h"
+#include "rx/render/technique.h"
 
-#include <rx/math/constants.h>
-#include <rx/math/trig.h>
+#include "rx/math/constants.h"
+#include "rx/math/trig.h"
 
-#include <rx/core/filesystem/file.h>
-#include <rx/core/json.h>
+#include "rx/core/filesystem/file.h"
+#include "rx/core/json.h"
 
-#include <rx/texture/chain.h>
+#include "rx/texture/chain.h"
 
 #include "lib/stb_truetype.h"
 

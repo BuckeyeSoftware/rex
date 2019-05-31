@@ -1,6 +1,6 @@
 #include <string.h> // memset
 
-#include <rx/input/keyboard.h>
+#include "rx/input/keyboard.h"
 
 namespace rx::input {
 
