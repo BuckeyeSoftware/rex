@@ -15,15 +15,23 @@ bitset::bitset(rx_size _size)
 bitset::bitset(memory::allocator* _allocator, rx_size _size)
   : m_allocator{_allocator}
   , m_size{_size}
-  , m_data{reinterpret_cast<bit_type*>(m_allocator->allocate(sizeof(bit_type) * (m_size / k_word_bits + 1)))}
+  , m_data{reinterpret_cast<bit_type*>(m_allocator->allocate(bytes_for_size(m_size)))}
 {
   RX_ASSERT(m_data, "out of memory");
 
   clear_all();
 }
 
+bitset::bitset(const bitset& _bitset)
+  : m_allocator{_bitset.m_allocator}
+  , m_size{_bitset.m_size}
+  , m_data{reinterpret_cast<bit_type*>(m_allocator->allocate(bytes_for_size(m_size)))}
+{
+  memcpy(m_data, _bitset.m_data, bytes_for_size(m_size));
+}
+
 void bitset::clear_all() {
-  memset(m_data, 0, sizeof *m_data * (m_size / k_word_bits + 1));
+  memset(m_data, 0, bytes_for_size(m_size));
 }
 
 rx_size bitset::count_set_bits() const {

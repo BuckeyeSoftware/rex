@@ -7,7 +7,9 @@
 
 namespace rx::filesystem {
 
-struct file : concepts::no_copy {
+struct file
+  : concepts::no_copy
+{
   constexpr file();
 
   file(void* _impl, const char* _file_name, const char* _mode);
@@ -87,9 +89,17 @@ inline bool file::print(const char* _format, Ts&&... _arguments) {
   return print(&memory::g_system_allocator, _format, utility::forward<Ts>(_arguments)...);
 }
 
-optional<array<rx_byte>> read_binary_file(memory::allocator* _allocator, const string& _file_name);
+optional<array<rx_byte>> read_binary_file(memory::allocator* _allocator, const char* _file_name);
+
+inline optional<array<rx_byte>> read_binary_file(memory::allocator* _allocator, const string& _file_name) {
+  return read_binary_file(_allocator, _file_name.data());
+}
 
 inline optional<array<rx_byte>> read_binary_file(const string& _file_name) {
+  return read_binary_file(&memory::g_system_allocator, _file_name);
+}
+
+inline optional<array<rx_byte>> read_binary_file(const char* _file_name) {
   return read_binary_file(&memory::g_system_allocator, _file_name);
 }
 

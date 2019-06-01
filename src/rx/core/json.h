@@ -7,8 +7,8 @@
 #include "rx/core/memory/allocator.h"
 #include "rx/core/memory/system_allocator.h"
 
-#include "rx/core/traits/return_type.h"
-#include "rx/core/traits/is_same.h"
+#include "core/traits/return_type.h"
+#include "core/traits/is_same.h"
 
 #include "lib/json.h"
 

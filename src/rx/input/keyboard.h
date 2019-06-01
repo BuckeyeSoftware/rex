@@ -10,12 +10,12 @@ struct keyboard_device {
 
   static constexpr const auto k_keys{384};
 
-  void update(rx_f32 delta_time);
-  void update_key(bool down, int scan_code, int symbol);
+  void update(rx_f32 _delta_time);
+  void update_key(bool _down, int _scan_code, int _symbol);
 
-  bool is_pressed(int key, bool scan_code) const;
-  bool is_released(int key, bool scan_code) const;
-  bool is_held(int key, bool scan_code) const;
+  bool is_pressed(int _key, bool _scan_code) const;
+  bool is_released(int _key, bool _scan_code) const;
+  bool is_held(int _key, bool _scan_code) const;
 
 private:
   enum {
@@ -28,16 +28,16 @@ private:
   int m_scan_codes[k_keys];
 };
 
-inline bool keyboard_device::is_pressed(int key, bool scan_code) const {
-  return scan_code ? (m_scan_codes[key] & k_pressed) : (m_symbols[key] & k_pressed);
+inline bool keyboard_device::is_pressed(int _key, bool _scan_code) const {
+  return _scan_code ? (m_scan_codes[_key] & k_pressed) : (m_symbols[_key] & k_pressed);
 }
 
-inline bool keyboard_device::is_released(int key, bool scan_code) const {
-  return scan_code ? (m_scan_codes[key] & k_released) : (m_symbols[key] & k_released);
+inline bool keyboard_device::is_released(int _key, bool _scan_code) const {
+  return _scan_code ? (m_scan_codes[_key] & k_released) : (m_symbols[_key] & k_released);
 }
 
-inline bool keyboard_device::is_held(int key, bool scan_code) const {
-  return scan_code ? (m_scan_codes[key] & k_held) : (m_symbols[key] & k_held);
+inline bool keyboard_device::is_held(int _key, bool _scan_code) const {
+  return _scan_code ? (m_scan_codes[_key] & k_held) : (m_symbols[_key] & k_held);
 }
 
 } // namespace rx::input

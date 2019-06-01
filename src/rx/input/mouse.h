@@ -11,10 +11,10 @@ struct mouse_device {
 
   static constexpr const auto k_buttons{32};
 
-  void update(rx_f32 delta_time);
-  void update_button(bool down, int button);
-  void update_motion(const math::vec4i& movement);
-  void update_scroll(const math::vec2i& scroll);
+  void update(rx_f32 _delta_time);
+  void update_button(bool _down, int _button);
+  void update_motion(const math::vec4i& _movement);
+  void update_scroll(const math::vec2i& _scroll);
 
   const math::vec2i& movement() const;
   const math::vec2i& position() const;

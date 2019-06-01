@@ -153,9 +153,9 @@ void immediate::queue::record_triangle(const math::vec2i& _position,
   m_commands.push_back(utility::move(next_command));
 }
 
-void immediate::queue::record_text(const string& _font,
+void immediate::queue::record_text(const char* _font, rx_size _font_length,
   const math::vec2i& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
-  const string& _text, const math::vec4f& _color)
+  const char* _text, rx_size _text_length, const math::vec4f& _color)
 {
   command next_command;
   next_command.kind = command::type::k_text;
@@ -164,17 +164,19 @@ void immediate::queue::record_text(const string& _font,
   next_command.as_text.position = _position;
   next_command.as_text.size = _size;
   next_command.as_text.scale = _scale;
+  next_command.as_text.font_length = _font_length;
+  next_command.as_text.text_length = _text_length;
 
   // insert strings into string table
   const auto font_index{m_string_table.size()};
   next_command.as_text.font_index = font_index;
-  m_string_table.resize(font_index + _font.size() + 1);
-  memcpy(m_string_table.data() + font_index, _font.data(), _font.size() + 1);
+  m_string_table.resize(font_index + _font_length + 1);
+  memcpy(m_string_table.data() + font_index, _font, _font_length + 1);
 
   const auto text_index{m_string_table.size()};
   next_command.as_text.text_index = text_index;
-  m_string_table.resize(text_index + _text.size() + 1);
-  memcpy(m_string_table.data() + text_index, _text.data(), _text.size() + 1);
+  m_string_table.resize(text_index + _text_length + 1);
+  memcpy(m_string_table.data() + text_index, _text, _text_length + 1);
 
   next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.kind));
   next_command.hash = hash_combine(next_command.hash, hash<rx_u32>{}(next_command.flags));
@@ -183,7 +185,9 @@ void immediate::queue::record_text(const string& _font,
   next_command.hash = hash_combine(next_command.hash, hash<rx_s32>{}(next_command.as_text.size));
   next_command.hash = hash_combine(next_command.hash, hash<rx_f32>{}(next_command.as_text.scale));
   next_command.hash = hash_combine(next_command.hash, hash<rx_size>{}(next_command.as_text.font_index));
+  next_command.hash = hash_combine(next_command.hash, hash<rx_size>{}(next_command.as_text.font_length));
   next_command.hash = hash_combine(next_command.hash, hash<rx_size>{}(next_command.as_text.text_index));
+  next_command.hash = hash_combine(next_command.hash, hash<rx_size>{}(next_command.as_text.text_length));
 
   m_commands.push_back(utility::move(next_command));
 }
@@ -409,7 +413,9 @@ void immediate::immediate::render(target* _target) {
         generate_text(
           _command.as_text.size,
           m_queue.m_string_table.data() + _command.as_text.font_index,
+          _command.as_text.font_length,
           m_queue.m_string_table.data() + _command.as_text.text_index,
+          _command.as_text.text_length,
           _command.as_text.scale,
           _command.as_text.position.cast<rx_f32>(),
           static_cast<text_align>(_command.flags),
@@ -687,10 +693,13 @@ static rx_f32 calculate_text_length(immediate::font* _font, rx_f32 _scale,
   return span;
 }
 
-void immediate::generate_text(rx_s32 _size, const string& _font,
-  const string& _contents, rx_f32 _scale, const math::vec2f& _position,
-  text_align _align, const math::vec4f& _color)
+void immediate::generate_text(rx_s32 _size, const char* _font,
+  rx_size _font_length, const char* _contents, rx_size _contents_length,
+  rx_f32 _scale, const math::vec2f& _position, text_align _align,
+  const math::vec4f& _color)
 {
+  (void)_font_length;
+
   const font::key key{_size, _font};
   const auto find{m_fonts.find(key)};
   font* font_map{nullptr};
@@ -720,11 +729,11 @@ void immediate::generate_text(rx_s32 _size, const string& _font,
   // _scale /= static_cast<rx_f32>(font_map->size());
 
   const rx_size offset{m_elements.size()};
-  const rx_size length{_contents.size()};
+  const rx_size length{_contents_length};
   for (rx_size i{0}; i < length; i++) {
     const int ch{_contents[i]};
     if (ch == '^') {
-      const char* next{_contents.data() + i + 1};
+      const char* next{_contents + i + 1};
       if (*next != '^') {
         i += calculate_text_color(next, color);
         continue;

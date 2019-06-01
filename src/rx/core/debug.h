@@ -5,8 +5,8 @@
 
 namespace rx {
 
-void debug_message(const char* file, const char* function, int line,
-  const char* message, ...);
+void debug_message(const char* _file, const char* _function, int _line,
+  const char* _message, ...);
 
 } // namespace rx
 

@@ -7,39 +7,39 @@
 namespace rx::algorithm {
 
 template<typename T, typename F>
-void quick_sort(T* _start, T* _end, F&& _compare) {
-  while (_end - _start > 10) {
-    T* middle{_start + (_end - _start) / 2};
-    T* item1{_start+1};
-    T* item2{_end-2};
+void quick_sort(T* start_, T* end_, F&& _compare) {
+  while (end_ - start_ > 10) {
+    T* middle{start_ + (end_ - start_) / 2};
+    T* item1{start_+1};
+    T* item2{end_-2};
     T pivot;
 
-    if (compare(*_start, *middle)) {
+    if (compare(*start_, *middle)) {
       // start < middle
-      if (compare(*(_end - 1), *_start)) {
+      if (compare(*(_end - 1), *start_)) {
         // end < start < middle
-        pivot = utility::move(*_start);
-        *_start = utility::move(*(_end - 1));
-        *(_end - 1) = utility::move(*middle);
+        pivot = utility::move(*start_);
+        *start_ = utility::move(*(end_ - 1));
+        *(end_ - 1) = utility::move(*middle);
       } else if (compare(*(_end - 1), *middle)) {
         // start <= end < middle
-        pivot = utility::move(*(_end - 1));
-        *(_end - 1) = utility::move(*middle);
+        pivot = utility::move(*(end_ - 1));
+        *(end_ - 1) = utility::move(*middle);
       } else {
         pivot = utility::move(*middle);
       }
-    } else if (compare(*start, *(_end - 1))) {
+    } else if (compare(*start_, *(end_ - 1))) {
       // middle <= start <= end
-      pivot = utility::move(*_start);
-      *_start = utility::move(*middle);
-    } else if (compare(*middle, *(_end - 1))) {
+      pivot = utility::move(*start_);
+      *start_ = utility::move(*middle);
+    } else if (compare(*middle, *(end_ - 1))) {
       // middle < end <= start
-      pivot = utility::move(*(_end - 1));
-      *(_end - 1) = utility::move(*_start);
-      *_start = utility::move(*middle);
+      pivot = utility::move(*(end_ - 1));
+      *(end_ - 1) = utility::move(*start_);
+      *start_ = utility::move(*middle);
     } else {
       pivot = utility::move(*middle);
-      swap(*_start, *(_end - 1));
+      swap(*start_, *(end_ - 1));
     }
 
     do {
@@ -59,19 +59,19 @@ void quick_sort(T* _start, T* _end, F&& _compare) {
     } while (++item1 < item2);
 
 partitioned:
-    *(_end - 2) = utility::move(*item1);
+    *(end_ - 2) = utility::move(*item1);
     *item1 = utility::move(pivot);
 
-    if (item1 - _start < _end - item1 + 1) {
-      quick_sort(_start, item1, utility::forward<F>(compare));
-      _start = item1 + 1;
+    if (item1 - start_ < end_ - item1 + 1) {
+      quick_sort(start_, item1, utility::forward<F>(compare));
+      start_ = item1 + 1;
     } else {
-      quick_sort(item1 + 1, _end, utility::forward<F>(compare));
-      _end = item1;
+      quick_sort(item1 + 1, end_, utility::forward<F>(compare));
+      end_ = item1;
     }
   }
 
-  insertion_sort(_start, _end, utility::forward<F>(compare));
+  insertion_sort(start_, end_, utility::forward<F>(compare));
 }
 
 } // namespace rx::algorithm

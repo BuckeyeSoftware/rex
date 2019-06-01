@@ -2,9 +2,9 @@
 
 namespace rx::input {
 
-void input::update(rx_f32 delta_time) {
-  m_mouse.update(delta_time);
-  m_keyboard.update(delta_time);
+void input::update(rx_f32 _delta_time) {
+  m_mouse.update(_delta_time);
+  m_keyboard.update(_delta_time);
 }
 
 void input::handle_event(event&& _event) {

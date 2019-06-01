@@ -81,7 +81,7 @@ struct array {
 
   memory::allocator* allocator() const;
 
-  memory::view release();
+  memory::view disown();
 
 private:
   // NOTE(dweiler): does not adjust m_size just adjusts capacity
@@ -456,7 +456,7 @@ inline memory::allocator* array<T>::allocator() const {
 }
 
 template<typename T>
-inline memory::view array<T>::release() {
+inline memory::view array<T>::disown() {
   memory::view view{allocator(), reinterpret_cast<rx_byte*>(data()), size()*sizeof(T)};
   m_data = nullptr;
   m_size = 0;

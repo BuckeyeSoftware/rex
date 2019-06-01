@@ -40,7 +40,7 @@ bool material::load(const string& _file_name) {
     return false;
   }
 
-  return parse({data->release()});
+  return parse({data->disown()});
 }
 
 void material::fini() {

@@ -7,8 +7,8 @@
 namespace rx {
 
 [[noreturn]]
-void assert_fail(const char* expression, const char* file,
-  const char* function, int line, const char* message, ...);
+void assert_fail(const char* _expression, const char* _file,
+  const char* _function, int _line, const char* _message, ...);
 
 } // namespace rx
 

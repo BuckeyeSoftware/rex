@@ -30,6 +30,9 @@ struct bitset {
   // move construct from |_bitset|
   bitset(bitset&& _bitset);
 
+  // copy construct from |_bitset|
+  bitset(const bitset& _bitset);
+
   ~bitset();
 
   // set |_bit|
@@ -68,6 +71,8 @@ struct bitset {
   void each_unset(F&& _function);
 
 private:
+  static rx_size bytes_for_size(rx_size _size);
+
   static rx_size index(rx_size bit);
   static rx_size offset(rx_size bit);
 
@@ -104,6 +109,10 @@ inline bool bitset::test(rx_size bit) const {
 
 inline rx_size bitset::size() const {
   return m_size;
+}
+
+inline rx_size bitset::bytes_for_size(rx_size _size) {
+  return sizeof(bit_type) * (_size / k_word_bits + 1);
 }
 
 inline rx_size bitset::index(rx_size bit) {

@@ -493,7 +493,7 @@ bool technique::load(const string& _file_name) {
     return false;
   }
 
-  if (!parse({data->release()})) {
+  if (!parse({data->disown()})) {
     return false;
   }
 

@@ -88,14 +88,16 @@ struct string {
   static string human_size_format(rx_size _size);
 
   bool begins_with(const char* _prefix) const;
+  bool begins_with(const string& _prefix) const;
   bool ends_with(const char* _suffix) const;
+  bool ends_with(const string& _suffix) const;
 
   rx_size hash() const;
 
   wide_string to_utf16() const;
 
   memory::allocator* allocator() const;
-  memory::view release();
+  memory::view disown();
 
 private:
   static string formatter(memory::allocator* _allocator, const char* _format, ...);

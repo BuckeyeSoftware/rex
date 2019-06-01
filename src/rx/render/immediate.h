@@ -58,7 +58,9 @@ struct immediate {
       rx_s32 size;
       rx_f32 scale;
       rx_size font_index;
+      rx_size font_length;
       rx_size text_index;
+      rx_size text_length;
       bool operator!=(const text& _text) const;
     };
 
@@ -98,6 +100,15 @@ struct immediate {
       rx_s32 _roundness, rx_s32 _thickness, const math::vec4f& _color);
     void record_triangle(const math::vec2i& _position, const math::vec2i& _size,
       rx_u32 _flags, const math::vec4f& _color);
+
+    void record_text(const char* _font, rx_size _font_length,
+      const math::vec2i& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
+      const char* _contents, rx_size _contents_length, const math::vec4f& _color);
+
+    void record_text(const char* _font, const math::vec2i& _position,
+      rx_s32 _size, rx_f32 _scale, text_align _align, const char* _contents,
+      const math::vec4f& _color);
+
     void record_text(const string& _font, const math::vec2i& _position,
       rx_s32 _size, rx_f32 _scale, text_align _align, const string& _contents,
       const math::vec4f& _color);
@@ -174,9 +185,9 @@ private:
     const math::vec2f& _point_b, rx_f32 _thickness, rx_f32 _roundness,
     const math::vec4f& _color);
 
-  void generate_text(int _size, const string& _font, const string& _contents,
-    rx_f32 _scale, const math::vec2f& _position, text_align _align,
-    const math::vec4f& _color);
+  void generate_text(rx_s32 _size, const char* _font, rx_size _font_length,
+    const char* _contents, rx_size _contents_length, rx_f32 _scale,
+    const math::vec2f& _position, text_align _align, const math::vec4f& _color);
 
   void add_batch(rx_size _offset, queue::command::type _type,
     texture2D* _texture = nullptr);
@@ -236,8 +247,9 @@ inline bool immediate::queue::line::operator!=(const line& _line) const {
 }
 
 inline bool immediate::queue::text::operator!=(const text& _text) const {
-  return _text.position != position || _text.size != size ||
-    _text.scale != scale || _text.font_index != font_index || _text.text_index != text_index;
+  return _text.position != position || _text.size != size || _text.scale != scale
+    || _text.font_index != font_index || _text.font_length != font_length
+    || _text.text_index != text_index || _text.text_length != text_length;
 }
 
 inline constexpr immediate::queue::command::command()
@@ -247,6 +259,22 @@ inline constexpr immediate::queue::command::command()
   , color{}
   , as_nat{}
 {
+}
+
+inline void immediate::queue::record_text(const char* _font,
+  const math::vec2i& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
+  const char* _contents, const math::vec4f& _color)
+{
+  record_text(_font, strlen(_font), _position, _size, _scale, _align, _contents,
+    strlen(_contents), _color);
+}
+
+inline void immediate::queue::record_text(const string& _font,
+  const math::vec2i& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
+  const string& _contents, const math::vec4f& _color)
+{
+  record_text(_font.data(), _font.size(), _position, _size, _scale, _align,
+    _contents.data(), _contents.size(), _color);
 }
 
 inline bool immediate::queue::is_empty() const {

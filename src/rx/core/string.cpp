@@ -138,9 +138,8 @@ string::string(memory::allocator* _allocator)
 }
 
 string::string(memory::allocator* _allocator, const string& _contents)
-  : string{_allocator}
+  : string{_allocator, _contents.data(), _contents.size()}
 {
-  append(_contents.data(), _contents.size());
 }
 
 string::string(memory::allocator* _allocator, const char* _contents)
@@ -461,12 +460,24 @@ bool string::begins_with(const char* _prefix) const {
   return strstr(m_data, _prefix) == m_data;
 }
 
+bool string::begins_with(const string& _prefix) const {
+  return strstr(m_data, _prefix.data()) == m_data;
+}
+
 bool string::ends_with(const char* _suffix) const {
   if (size() < strlen(_suffix)) {
     return false;
   }
 
   return strcmp(m_data + size() - strlen(_suffix), _suffix) == 0;
+}
+
+bool string::ends_with(const string& _suffix) const {
+  if (size() < _suffix.size()) {
+    return false;
+  }
+
+  return strcmp(m_data + size() - _suffix.size(), _suffix.data()) == 0;
 }
 
 rx_size string::hash() const {
@@ -478,7 +489,7 @@ rx_size string::hash() const {
   return value;
 }
 
-memory::view string::release() {
+memory::view string::disown() {
   memory::view view{m_allocator, reinterpret_cast<rx_byte*>(data()), size()};
   m_data = m_buffer;
   m_last = m_buffer;

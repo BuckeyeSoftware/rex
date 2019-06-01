@@ -10,7 +10,7 @@ inline void destruct(void* _data) {
   reinterpret_cast<T*>(_data)->~T();
 }
 
-template<typename T, typename... Ts>
+template<typename T>
 inline void destruct_and_deallocate(memory::allocator* _allocator, void* _data) {
   if (_data) {
     destruct<T>(_data);

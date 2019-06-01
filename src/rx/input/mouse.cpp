@@ -17,22 +17,22 @@ void mouse_device::update(rx_f32) {
   }
 }
 
-void mouse_device::update_button(bool down, int button) {
-  if (down) {
-    m_buttons[button] |= (k_pressed | k_held);
+void mouse_device::update_button(bool _down, int _button) {
+  if (_down) {
+    m_buttons[_button] |= (k_pressed | k_held);
   } else {
-    m_buttons[button] |= k_released;
-    m_buttons[button] &= ~k_held;
+    m_buttons[_button] |= k_released;
+    m_buttons[_button] &= ~k_held;
   }
 }
 
-void mouse_device::update_motion(const math::vec4i& movement) {
-  m_movement += { movement.z, movement.w };
-  m_position = { movement.x, movement.y };
+void mouse_device::update_motion(const math::vec4i& _movement) {
+  m_movement += { _movement.z, _movement.w };
+  m_position = { _movement.x, _movement.y };
 }
 
-void mouse_device::update_scroll(const math::vec2i& scroll) {
-  m_scroll = scroll;
+void mouse_device::update_scroll(const math::vec2i& _scroll) {
+  m_scroll = _scroll;
   m_scrolled = true;
 }
 

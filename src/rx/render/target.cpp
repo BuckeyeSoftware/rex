@@ -127,7 +127,9 @@ void target::request_swapchain() {
   RX_ASSERT(m_flags == 0 && m_attachments.is_empty(), "target is not empty");
   m_is_swapchain = true;
 
-  m_dimensions = {1600, 900};
+  auto display_resolution{console::console::get_from_name("display.resolution")};
+  RX_ASSERT(display_resolution, "display.resolution not found");
+  m_dimensions = display_resolution->cast<math::vec2i>()->get().cast<rx_size>();
 }
 
 void target::request_depth(texture::data_format _format, const math::vec2z& _dimensions) {

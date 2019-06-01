@@ -141,7 +141,7 @@ bool file::is_valid() const {
   return m_impl != nullptr;
 }
 
-optional<array<rx_byte>> read_binary_file(memory::allocator* _allocator, const string& _file_name) {
+optional<array<rx_byte>> read_binary_file(memory::allocator* _allocator, const char* _file_name) {
   file open_file{_file_name, "rb"};
   if (!open_file) {
     log_file(log::level::k_error, "failed to open file '%s' [%s]", _file_name,
