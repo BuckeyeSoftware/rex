@@ -100,7 +100,7 @@ void directory::each(function<void(const item&)>&& _function) {
     }
 
     const wide_string utf16_name{reinterpret_cast<rx_u16*>(&find_data.cFileName)};
-    const string utf8_name{utf16_name.to_utf8()};
+    string utf8_name{utf16_name.to_utf8()};
     item::type kind{find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
       ? item::type::k_directory : item::type::k_file};
     _function({utility::move(utf8_name), kind});

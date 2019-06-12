@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project InitialTargets="UNDUPOBJ" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<!-- ================ UNDUPOBJ ================ -->
-	<!-- relevant topics -->
-	<!-- https://stackoverflow.com/questions/3729515/visual-studio-2010-2008-cant-handle-source-files-with-identical-names-in-diff/26935613 -->
-	<!-- https://stackoverflow.com/questions/7033855/msvc10-mp-builds-not-multicore-across-folders-in-a-project -->
-	<!-- https://stackoverflow.com/questions/18304911/how-can-one-modify-an-itemdefinitiongroup-from-an-msbuild-target -->
-	<!-- other maybe related info -->
-	<!-- https://stackoverflow.com/questions/841913/modify-msbuild-itemgroup-metadata -->
-	<UsingTask TaskName="UNDUPOBJ_TASK" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
-	  <ParameterGroup>
-		<OutputDir ParameterType="System.String" Required="true" />
-		<ItemList ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
-		<OutputItemList ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
-	  </ParameterGroup>
-	  <Task>
-		<Code><![CDATA[
+  <!-- ================ UNDUPOBJ ================ -->
+  <!-- relevant topics -->
+  <!-- https://stackoverflow.com/questions/3729515/visual-studio-2010-2008-cant-handle-source-files-with-identical-names-in-diff/26935613 -->
+  <!-- https://stackoverflow.com/questions/7033855/msvc10-mp-builds-not-multicore-across-folders-in-a-project -->
+  <!-- https://stackoverflow.com/questions/18304911/how-can-one-modify-an-itemdefinitiongroup-from-an-msbuild-target -->
+  <!-- other maybe related info -->
+  <!-- https://stackoverflow.com/questions/841913/modify-msbuild-itemgroup-metadata -->
+  <UsingTask TaskName="UNDUPOBJ_TASK" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <OutputDir ParameterType="System.String" Required="true" />
+      <ItemList ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <OutputItemList ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Code><![CDATA[
 				//general outline: for each item (in ClCompile) assign it to a subdirectory of $(IntDir) by allocating subdirectories 0,1,2, etc., as needed to prevent duplicate filenames from clobbering each other
 				//this minimizes the number of batches that need to be run, since each subdirectory will necessarily be in a distinct batch due to /Fo specifying that output subdirectory
 
@@ -44,20 +44,19 @@
 				ItemList = new Microsoft.Build.Framework.ITaskItem[0];
 
 			]]></Code>
-	  </Task>
-	</UsingTask>
-
-	<Target Name="UNDUPOBJ">
-	  <!-- see stackoverflow topics for discussion on why we need to do some loopy copying stuff here -->
-	  <ItemGroup>
-		<ClCompileCopy Include="@(ClCompile)"/>
-		<ClCompile Remove="@(ClCompile)"/>
-	  </ItemGroup>
-	  <UNDUPOBJ_TASK OutputDir="$(IntDir)" ItemList="@(ClCompileCopy)" OutputItemList="@(ClCompile)">
-		<Output ItemName="ClCompile" TaskParameter="OutputItemList"/>
-	  </UNDUPOBJ_TASK>
-	</Target>
-	<!-- ================ UNDUPOBJ ================ -->
+    </Task>
+  </UsingTask>
+  <Target Name="UNDUPOBJ">
+    <!-- see stackoverflow topics for discussion on why we need to do some loopy copying stuff here -->
+    <ItemGroup>
+      <ClCompileCopy Include="@(ClCompile)" />
+      <ClCompile Remove="@(ClCompile)" />
+    </ItemGroup>
+    <UNDUPOBJ_TASK OutputDir="$(IntDir)" ItemList="@(ClCompileCopy)" OutputItemList="@(ClCompile)">
+      <Output ItemName="ClCompile" TaskParameter="OutputItemList" />
+    </UNDUPOBJ_TASK>
+  </Target>
+  <!-- ================ UNDUPOBJ ================ -->
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -102,7 +101,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
@@ -139,7 +138,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <BufferSecurityCheck>true</BufferSecurityCheck>
@@ -171,153 +170,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="inc\lib\json.h" />
-    <ClInclude Include="inc\lib\stb_image.h" />
-    <ClInclude Include="inc\lib\stb_truetype.h" />
-    <ClInclude Include="inc\rx\console\console.h" />
-    <ClInclude Include="inc\rx\console\variable.h" />
-    <ClInclude Include="inc\rx\core\abort.h" />
-    <ClInclude Include="inc\rx\core\algorithm\clamp.h" />
-    <ClInclude Include="inc\rx\core\algorithm\insertion_sort.h" />
-    <ClInclude Include="inc\rx\core\algorithm\max.h" />
-    <ClInclude Include="inc\rx\core\algorithm\min.h" />
-    <ClInclude Include="inc\rx\core\algorithm\quick_sort.h" />
-    <ClInclude Include="inc\rx\core\array.h" />
-    <ClInclude Include="inc\rx\core\assert.h" />
-    <ClInclude Include="inc\rx\core\bitset.h" />
-    <ClInclude Include="inc\rx\core\concepts\interface.h" />
-    <ClInclude Include="inc\rx\core\concepts\no_copy.h" />
-    <ClInclude Include="inc\rx\core\concepts\no_move.h" />
-    <ClInclude Include="inc\rx\core\concurrency\atomic.h" />
-    <ClInclude Include="inc\rx\core\concurrency\clang\atomic.h" />
-    <ClInclude Include="inc\rx\core\concurrency\condition_variable.h" />
-    <ClInclude Include="inc\rx\core\concurrency\gcc\atomic.h" />
-    <ClInclude Include="inc\rx\core\concurrency\msvc\atomic.h" />
-    <ClInclude Include="inc\rx\core\concurrency\mutex.h" />
-    <ClInclude Include="inc\rx\core\concurrency\promise.h" />
-    <ClInclude Include="inc\rx\core\concurrency\scope_lock.h" />
-    <ClInclude Include="inc\rx\core\concurrency\scope_unlock.h" />
-    <ClInclude Include="inc\rx\core\concurrency\spin_lock.h" />
-    <ClInclude Include="inc\rx\core\concurrency\thread.h" />
-    <ClInclude Include="inc\rx\core\concurrency\thread_pool.h" />
-    <ClInclude Include="inc\rx\core\config.h" />
-    <ClInclude Include="inc\rx\core\debug.h" />
-    <ClInclude Include="inc\rx\core\deferred_function.h" />
-    <ClInclude Include="inc\rx\core\event.h" />
-    <ClInclude Include="inc\rx\core\filesystem\directory.h" />
-    <ClInclude Include="inc\rx\core\filesystem\file.h" />
-    <ClInclude Include="inc\rx\core\format.h" />
-    <ClInclude Include="inc\rx\core\function.h" />
-    <ClInclude Include="inc\rx\core\hash.h" />
-    <ClInclude Include="inc\rx\core\json.h" />
-    <ClInclude Include="inc\rx\core\log.h" />
-    <ClInclude Include="inc\rx\core\map.h" />
-    <ClInclude Include="inc\rx\core\memory\allocator.h" />
-    <ClInclude Include="inc\rx\core\memory\bump_point_allocator.h" />
-    <ClInclude Include="inc\rx\core\memory\pool_allocator.h" />
-    <ClInclude Include="inc\rx\core\memory\stats_allocator.h" />
-    <ClInclude Include="inc\rx\core\memory\system_allocator.h" />
-    <ClInclude Include="inc\rx\core\memory\uninitialized_storage.h" />
-    <ClInclude Include="inc\rx\core\optional.h" />
-    <ClInclude Include="inc\rx\core\pp.h" />
-    <ClInclude Include="inc\rx\core\queue.h" />
-    <ClInclude Include="inc\rx\core\statics.h" />
-    <ClInclude Include="inc\rx\core\string.h" />
-    <ClInclude Include="inc\rx\core\traits\add_const.h" />
-    <ClInclude Include="inc\rx\core\traits\add_cv.h" />
-    <ClInclude Include="inc\rx\core\traits\add_lvalue_reference.h" />
-    <ClInclude Include="inc\rx\core\traits\add_pointer.h" />
-    <ClInclude Include="inc\rx\core\traits\add_rvalue_reference.h" />
-    <ClInclude Include="inc\rx\core\traits\add_volatile.h" />
-    <ClInclude Include="inc\rx\core\traits\conditional.h" />
-    <ClInclude Include="inc\rx\core\traits\decay.h" />
-    <ClInclude Include="inc\rx\core\traits\enable_if.h" />
-    <ClInclude Include="inc\rx\core\traits\is_array.h" />
-    <ClInclude Include="inc\rx\core\traits\is_assignable.h" />
-    <ClInclude Include="inc\rx\core\traits\is_callable.h" />
-    <ClInclude Include="inc\rx\core\traits\is_floating_point.h" />
-    <ClInclude Include="inc\rx\core\traits\is_function.h" />
-    <ClInclude Include="inc\rx\core\traits\is_integral.h" />
-    <ClInclude Include="inc\rx\core\traits\is_lvalue_reference.h" />
-    <ClInclude Include="inc\rx\core\traits\is_pointer.h" />
-    <ClInclude Include="inc\rx\core\traits\is_reference.h" />
-    <ClInclude Include="inc\rx\core\traits\is_referenceable.h" />
-    <ClInclude Include="inc\rx\core\traits\is_rvalue_reference.h" />
-    <ClInclude Include="inc\rx\core\traits\is_same.h" />
-    <ClInclude Include="inc\rx\core\traits\is_trivially_copyable.h" />
-    <ClInclude Include="inc\rx\core\traits\is_trivially_destructible.h" />
-    <ClInclude Include="inc\rx\core\traits\is_void.h" />
-    <ClInclude Include="inc\rx\core\traits\remove_all_extents.h" />
-    <ClInclude Include="inc\rx\core\traits\remove_const.h" />
-    <ClInclude Include="inc\rx\core\traits\remove_cv.h" />
-    <ClInclude Include="inc\rx\core\traits\remove_cvref.h" />
-    <ClInclude Include="inc\rx\core\traits\remove_extent.h" />
-    <ClInclude Include="inc\rx\core\traits\remove_pointer.h" />
-    <ClInclude Include="inc\rx\core\traits\remove_reference.h" />
-    <ClInclude Include="inc\rx\core\traits\remove_volatile.h" />
-    <ClInclude Include="inc\rx\core\traits\return_type.h" />
-    <ClInclude Include="inc\rx\core\traits\type_identity.h" />
-    <ClInclude Include="inc\rx\core\types.h" />
-    <ClInclude Include="inc\rx\core\type_eraser.h" />
-    <ClInclude Include="inc\rx\core\utility\bit.h" />
-    <ClInclude Include="inc\rx\core\utility\construct.h" />
-    <ClInclude Include="inc\rx\core\utility\declval.h" />
-    <ClInclude Include="inc\rx\core\utility\destruct.h" />
-    <ClInclude Include="inc\rx\core\utility\forward.h" />
-    <ClInclude Include="inc\rx\core\utility\index_sequence.h" />
-    <ClInclude Include="inc\rx\core\utility\integer_sequence.h" />
-    <ClInclude Include="inc\rx\core\utility\make_index_sequence.h" />
-    <ClInclude Include="inc\rx\core\utility\make_integer_sequence.h" />
-    <ClInclude Include="inc\rx\core\utility\move.h" />
-    <ClInclude Include="inc\rx\core\utility\nat.h" />
-    <ClInclude Include="inc\rx\core\utility\swap.h" />
-    <ClInclude Include="inc\rx\core\utility\tuple.h" />
-    <ClInclude Include="inc\rx\input\event.h" />
-    <ClInclude Include="inc\rx\input\input.h" />
-    <ClInclude Include="inc\rx\input\keyboard.h" />
-    <ClInclude Include="inc\rx\input\mouse.h" />
-    <ClInclude Include="inc\rx\math\camera.h" />
-    <ClInclude Include="inc\rx\math\constants.h" />
-    <ClInclude Include="inc\rx\math\half.h" />
-    <ClInclude Include="inc\rx\math\log2.h" />
-    <ClInclude Include="inc\rx\math\mat3x3.h" />
-    <ClInclude Include="inc\rx\math\mat3x4.h" />
-    <ClInclude Include="inc\rx\math\mat4x4.h" />
-    <ClInclude Include="inc\rx\math\quat.h" />
-    <ClInclude Include="inc\rx\math\transform.h" />
-    <ClInclude Include="inc\rx\math\trig.h" />
-    <ClInclude Include="inc\rx\math\vec2.h" />
-    <ClInclude Include="inc\rx\math\vec3.h" />
-    <ClInclude Include="inc\rx\math\vec4.h" />
-    <ClInclude Include="inc\rx\model\animation.h" />
-    <ClInclude Include="inc\rx\model\iqm.h" />
-    <ClInclude Include="inc\rx\model\loader.h" />
-    <ClInclude Include="inc\rx\model\mesh.h" />
-    <ClInclude Include="inc\rx\model\model.h" />
-    <ClInclude Include="inc\rx\render\backend.h" />
-    <ClInclude Include="inc\rx\render\backend_gl4.h" />
-    <ClInclude Include="inc\rx\render\buffer.h" />
-    <ClInclude Include="inc\rx\render\command.h" />
-    <ClInclude Include="inc\rx\render\frontend.h" />
-    <ClInclude Include="inc\rx\render\gbuffer.h" />
-    <ClInclude Include="inc\rx\render\immediate.h" />
-    <ClInclude Include="inc\rx\render\material.h" />
-    <ClInclude Include="inc\rx\render\program.h" />
-    <ClInclude Include="inc\rx\render\resource.h" />
-    <ClInclude Include="inc\rx\render\state.h" />
-    <ClInclude Include="inc\rx\render\target.h" />
-    <ClInclude Include="inc\rx\render\technique.h" />
-    <ClInclude Include="inc\rx\render\texture.h" />
-    <ClInclude Include="inc\rx\render\timer.h" />
-    <ClInclude Include="inc\rx\texture\chain.h" />
-    <ClInclude Include="inc\rx\texture\loader.h" />
-    <ClInclude Include="inc\rx\texture\scale.h" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\lib\json.c" />
     <ClCompile Include="src\lib\stb_image.c" />
     <ClCompile Include="src\lib\stb_truetype.c" />
-    <ClCompile Include="src\rx\console\console.cpp" />
+    <ClCompile Include="src\rx\console\interface.cpp" />
     <ClCompile Include="src\rx\console\variable.cpp" />
     <ClCompile Include="src\rx\core\abort.cpp" />
     <ClCompile Include="src\rx\core\assert.cpp" />
@@ -352,29 +211,169 @@
     <ClCompile Include="src\rx\math\vec3.cpp" />
     <ClCompile Include="src\rx\math\vec4.cpp" />
     <ClCompile Include="src\rx\model\animation.cpp" />
+    <ClCompile Include="src\rx\model\interface.cpp" />
     <ClCompile Include="src\rx\model\iqm.cpp" />
     <ClCompile Include="src\rx\model\loader.cpp" />
-    <ClCompile Include="src\rx\model\model.cpp" />
-    <ClCompile Include="src\rx\render\backend_gl4.cpp" />
-    <ClCompile Include="src\rx\render\buffer.cpp" />
-    <ClCompile Include="src\rx\render\command.cpp" />
-    <ClCompile Include="src\rx\render\frontend.cpp" />
+    <ClCompile Include="src\rx\render\backend\gl4.cpp" />
+    <ClCompile Include="src\rx\render\frontend\buffer.cpp" />
+    <ClCompile Include="src\rx\render\frontend\command.cpp" />
+    <ClCompile Include="src\rx\render\frontend\interface.cpp" />
+    <ClCompile Include="src\rx\render\frontend\material.cpp" />
+    <ClCompile Include="src\rx\render\frontend\program.cpp" />
+    <ClCompile Include="src\rx\render\frontend\resource.cpp" />
+    <ClCompile Include="src\rx\render\frontend\state.cpp" />
+    <ClCompile Include="src\rx\render\frontend\target.cpp" />
+    <ClCompile Include="src\rx\render\frontend\technique.cpp" />
+    <ClCompile Include="src\rx\render\frontend\texture.cpp" />
+    <ClCompile Include="src\rx\render\frontend\timer.cpp" />
     <ClCompile Include="src\rx\render\gbuffer.cpp" />
     <ClCompile Include="src\rx\render\immediate.cpp" />
-    <ClCompile Include="src\rx\render\material.cpp" />
-    <ClCompile Include="src\rx\render\program.cpp" />
-    <ClCompile Include="src\rx\render\resource.cpp" />
-    <ClCompile Include="src\rx\render\state.cpp" />
-    <ClCompile Include="src\rx\render\target.cpp" />
-    <ClCompile Include="src\rx\render\technique.cpp" />
-    <ClCompile Include="src\rx\render\texture.cpp" />
-    <ClCompile Include="src\rx\render\timer.cpp" />
     <ClCompile Include="src\rx\texture\chain.cpp" />
     <ClCompile Include="src\rx\texture\loader.cpp" />
     <ClCompile Include="src\rx\texture\scale.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ClInclude Include="src\lib\json.h" />
+    <ClInclude Include="src\lib\stb_image.h" />
+    <ClInclude Include="src\lib\stb_truetype.h" />
+    <ClInclude Include="src\rx\console\interface.h" />
+    <ClInclude Include="src\rx\console\variable.h" />
+    <ClInclude Include="src\rx\core\abort.h" />
+    <ClInclude Include="src\rx\core\algorithm\clamp.h" />
+    <ClInclude Include="src\rx\core\algorithm\insertion_sort.h" />
+    <ClInclude Include="src\rx\core\algorithm\max.h" />
+    <ClInclude Include="src\rx\core\algorithm\min.h" />
+    <ClInclude Include="src\rx\core\algorithm\quick_sort.h" />
+    <ClInclude Include="src\rx\core\array.h" />
+    <ClInclude Include="src\rx\core\assert.h" />
+    <ClInclude Include="src\rx\core\bitset.h" />
+    <ClInclude Include="src\rx\core\concepts\interface.h" />
+    <ClInclude Include="src\rx\core\concepts\no_copy.h" />
+    <ClInclude Include="src\rx\core\concepts\no_move.h" />
+    <ClInclude Include="src\rx\core\concurrency\atomic.h" />
+    <ClInclude Include="src\rx\core\concurrency\clang\atomic.h" />
+    <ClInclude Include="src\rx\core\concurrency\condition_variable.h" />
+    <ClInclude Include="src\rx\core\concurrency\gcc\atomic.h" />
+    <ClInclude Include="src\rx\core\concurrency\msvc\atomic.h" />
+    <ClInclude Include="src\rx\core\concurrency\mutex.h" />
+    <ClInclude Include="src\rx\core\concurrency\promise.h" />
+    <ClInclude Include="src\rx\core\concurrency\scope_lock.h" />
+    <ClInclude Include="src\rx\core\concurrency\scope_unlock.h" />
+    <ClInclude Include="src\rx\core\concurrency\spin_lock.h" />
+    <ClInclude Include="src\rx\core\concurrency\thread.h" />
+    <ClInclude Include="src\rx\core\concurrency\thread_pool.h" />
+    <ClInclude Include="src\rx\core\config.h" />
+    <ClInclude Include="src\rx\core\debug.h" />
+    <ClInclude Include="src\rx\core\deferred_function.h" />
+    <ClInclude Include="src\rx\core\event.h" />
+    <ClInclude Include="src\rx\core\filesystem\directory.h" />
+    <ClInclude Include="src\rx\core\filesystem\file.h" />
+    <ClInclude Include="src\rx\core\format.h" />
+    <ClInclude Include="src\rx\core\function.h" />
+    <ClInclude Include="src\rx\core\hash.h" />
+    <ClInclude Include="src\rx\core\json.h" />
+    <ClInclude Include="src\rx\core\log.h" />
+    <ClInclude Include="src\rx\core\map.h" />
+    <ClInclude Include="src\rx\core\memory\allocator.h" />
+    <ClInclude Include="src\rx\core\memory\bump_point_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\pool_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\stats_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\system_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\uninitialized_storage.h" />
+    <ClInclude Include="src\rx\core\optional.h" />
+    <ClInclude Include="src\rx\core\pp.h" />
+    <ClInclude Include="src\rx\core\queue.h" />
+    <ClInclude Include="src\rx\core\statics.h" />
+    <ClInclude Include="src\rx\core\string.h" />
+    <ClInclude Include="src\rx\core\traits\add_const.h" />
+    <ClInclude Include="src\rx\core\traits\add_cv.h" />
+    <ClInclude Include="src\rx\core\traits\add_lvalue_reference.h" />
+    <ClInclude Include="src\rx\core\traits\add_pointer.h" />
+    <ClInclude Include="src\rx\core\traits\add_rvalue_reference.h" />
+    <ClInclude Include="src\rx\core\traits\add_volatile.h" />
+    <ClInclude Include="src\rx\core\traits\conditional.h" />
+    <ClInclude Include="src\rx\core\traits\decay.h" />
+    <ClInclude Include="src\rx\core\traits\enable_if.h" />
+    <ClInclude Include="src\rx\core\traits\is_array.h" />
+    <ClInclude Include="src\rx\core\traits\is_assignable.h" />
+    <ClInclude Include="src\rx\core\traits\is_callable.h" />
+    <ClInclude Include="src\rx\core\traits\is_floating_point.h" />
+    <ClInclude Include="src\rx\core\traits\is_function.h" />
+    <ClInclude Include="src\rx\core\traits\is_integral.h" />
+    <ClInclude Include="src\rx\core\traits\is_lvalue_reference.h" />
+    <ClInclude Include="src\rx\core\traits\is_pointer.h" />
+    <ClInclude Include="src\rx\core\traits\is_reference.h" />
+    <ClInclude Include="src\rx\core\traits\is_referenceable.h" />
+    <ClInclude Include="src\rx\core\traits\is_rvalue_reference.h" />
+    <ClInclude Include="src\rx\core\traits\is_same.h" />
+    <ClInclude Include="src\rx\core\traits\is_trivially_copyable.h" />
+    <ClInclude Include="src\rx\core\traits\is_trivially_destructible.h" />
+    <ClInclude Include="src\rx\core\traits\is_void.h" />
+    <ClInclude Include="src\rx\core\traits\remove_all_extents.h" />
+    <ClInclude Include="src\rx\core\traits\remove_const.h" />
+    <ClInclude Include="src\rx\core\traits\remove_cv.h" />
+    <ClInclude Include="src\rx\core\traits\remove_cvref.h" />
+    <ClInclude Include="src\rx\core\traits\remove_extent.h" />
+    <ClInclude Include="src\rx\core\traits\remove_pointer.h" />
+    <ClInclude Include="src\rx\core\traits\remove_reference.h" />
+    <ClInclude Include="src\rx\core\traits\remove_volatile.h" />
+    <ClInclude Include="src\rx\core\traits\return_type.h" />
+    <ClInclude Include="src\rx\core\traits\type_identity.h" />
+    <ClInclude Include="src\rx\core\types.h" />
+    <ClInclude Include="src\rx\core\type_eraser.h" />
+    <ClInclude Include="src\rx\core\utility\bit.h" />
+    <ClInclude Include="src\rx\core\utility\construct.h" />
+    <ClInclude Include="src\rx\core\utility\declval.h" />
+    <ClInclude Include="src\rx\core\utility\destruct.h" />
+    <ClInclude Include="src\rx\core\utility\forward.h" />
+    <ClInclude Include="src\rx\core\utility\index_sequence.h" />
+    <ClInclude Include="src\rx\core\utility\integer_sequence.h" />
+    <ClInclude Include="src\rx\core\utility\make_index_sequence.h" />
+    <ClInclude Include="src\rx\core\utility\make_integer_sequence.h" />
+    <ClInclude Include="src\rx\core\utility\move.h" />
+    <ClInclude Include="src\rx\core\utility\nat.h" />
+    <ClInclude Include="src\rx\core\utility\swap.h" />
+    <ClInclude Include="src\rx\core\utility\tuple.h" />
+    <ClInclude Include="src\rx\input\event.h" />
+    <ClInclude Include="src\rx\input\input.h" />
+    <ClInclude Include="src\rx\input\keyboard.h" />
+    <ClInclude Include="src\rx\input\mouse.h" />
+    <ClInclude Include="src\rx\math\camera.h" />
+    <ClInclude Include="src\rx\math\constants.h" />
+    <ClInclude Include="src\rx\math\half.h" />
+    <ClInclude Include="src\rx\math\log2.h" />
+    <ClInclude Include="src\rx\math\mat3x3.h" />
+    <ClInclude Include="src\rx\math\mat3x4.h" />
+    <ClInclude Include="src\rx\math\mat4x4.h" />
+    <ClInclude Include="src\rx\math\quat.h" />
+    <ClInclude Include="src\rx\math\transform.h" />
+    <ClInclude Include="src\rx\math\trig.h" />
+    <ClInclude Include="src\rx\math\vec2.h" />
+    <ClInclude Include="src\rx\math\vec3.h" />
+    <ClInclude Include="src\rx\math\vec4.h" />
+    <ClInclude Include="src\rx\model\animation.h" />
+    <ClInclude Include="src\rx\model\interface.h" />
+    <ClInclude Include="src\rx\model\iqm.h" />
+    <ClInclude Include="src\rx\model\loader.h" />
+    <ClInclude Include="src\rx\model\mesh.h" />
+    <ClInclude Include="src\rx\render\backend\gl4.h" />
+    <ClInclude Include="src\rx\render\backend\interface.h" />
+    <ClInclude Include="src\rx\render\frontend\buffer.h" />
+    <ClInclude Include="src\rx\render\frontend\command.h" />
+    <ClInclude Include="src\rx\render\frontend\interface.h" />
+    <ClInclude Include="src\rx\render\frontend\material.h" />
+    <ClInclude Include="src\rx\render\frontend\program.h" />
+    <ClInclude Include="src\rx\render\frontend\resource.h" />
+    <ClInclude Include="src\rx\render\frontend\state.h" />
+    <ClInclude Include="src\rx\render\frontend\target.h" />
+    <ClInclude Include="src\rx\render\frontend\technique.h" />
+    <ClInclude Include="src\rx\render\frontend\texture.h" />
+    <ClInclude Include="src\rx\render\frontend\timer.h" />
+    <ClInclude Include="src\rx\render\gbuffer.h" />
+    <ClInclude Include="src\rx\render\immediate.h" />
+    <ClInclude Include="src\rx\texture\chain.h" />
+    <ClInclude Include="src\rx\texture\loader.h" />
+    <ClInclude Include="src\rx\texture\scale.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
