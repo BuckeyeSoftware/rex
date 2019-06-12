@@ -8,9 +8,10 @@
 
 namespace rx::model {
 
-struct model;
+struct interface;
+
 struct animation {
-  animation(model* _model, rx_size _index);
+  animation(interface* _model, rx_size _index);
 
   void update(rx_f32 _delta_time, bool _loop);
 
@@ -18,7 +19,7 @@ struct animation {
   rx_size joints() const;
 
 private:
-  model* m_model;
+  interface* m_model;
   array<math::mat3x4f> m_frames;
   rx_size m_animation;
   rx_f32 m_current_frame;

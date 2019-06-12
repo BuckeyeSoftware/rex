@@ -94,7 +94,7 @@ struct variable_reference {
   variable_type type() const;
 
 private:
-  friend struct console;
+  friend struct interface;
 
   const char* m_name;
   const char* m_description;

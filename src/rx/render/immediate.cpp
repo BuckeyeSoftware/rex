@@ -4,8 +4,12 @@
 #include <inttypes.h> // PRIx32
 
 #include "rx/render/immediate.h"
-#include "rx/render/frontend.h"
-#include "rx/render/technique.h"
+
+#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/technique.h"
+#include "rx/render/frontend/buffer.h"
+#include "rx/render/frontend/texture.h"
+#include "rx/render/frontend/target.h"
 
 #include "rx/math/constants.h"
 #include "rx/math/trig.h"
@@ -221,7 +225,7 @@ void immediate::queue::clear() {
   m_string_table.clear();
 }
 
-immediate::font::font(const key& _key, frontend* _frontend)
+immediate::font::font(const key& _key, frontend::interface* _frontend)
   : m_frontend{_frontend}
   , m_size{_key.size}
   , m_resolution{k_default_resolution}
@@ -249,13 +253,13 @@ immediate::font::font(const key& _key, frontend* _frontend)
 
         // create and upload baked atlas
         m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("font"));
-        m_texture->record_format(texture::data_format::k_r_u8);
-        m_texture->record_type(texture::type::k_static);
+        m_texture->record_format(frontend::texture::data_format::k_r_u8);
+        m_texture->record_type(frontend::texture::type::k_static);
         m_texture->record_filter({true, false, true});
         m_texture->record_dimensions({m_resolution, m_resolution});
         m_texture->record_wrap({
-          texture::wrap_type::k_clamp_to_edge,
-          texture::wrap_type::k_clamp_to_edge});
+          frontend::texture::wrap_type::k_clamp_to_edge,
+          frontend::texture::wrap_type::k_clamp_to_edge});
         
         const auto& levels{chain.levels()};
         for (rx_size i{0}; i < levels.size(); i++) {
@@ -335,7 +339,7 @@ immediate::font::quad immediate::font::quad_for_glyph(rx_size _glyph,
   return result;
 }
 
-immediate::immediate(frontend* _frontend)
+immediate::immediate(frontend::interface* _frontend)
   : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("immediate")}
   , m_queue{m_frontend->allocator()}
@@ -359,11 +363,11 @@ immediate::immediate(frontend* _frontend)
   for (rx_size i{0}; i < k_buffers; i++) {
     m_buffers[i] = m_frontend->create_buffer(RX_RENDER_TAG("immediate"));
     m_buffers[i]->record_stride(sizeof(vertex));
-    m_buffers[i]->record_type(buffer::type::k_dynamic);
-    m_buffers[i]->record_element_type(buffer::element_type::k_u32);
-    m_buffers[i]->record_attribute(buffer::attribute::type::k_f32, 2, offsetof(vertex, position));
-    m_buffers[i]->record_attribute(buffer::attribute::type::k_f32, 2, offsetof(vertex, coordinate));
-    m_buffers[i]->record_attribute(buffer::attribute::type::k_f32, 4, offsetof(vertex, color));
+    m_buffers[i]->record_type(frontend::buffer::type::k_dynamic);
+    m_buffers[i]->record_element_type(frontend::buffer::element_type::k_u32);
+    m_buffers[i]->record_attribute(frontend::buffer::attribute::type::k_f32, 2, offsetof(vertex, position));
+    m_buffers[i]->record_attribute(frontend::buffer::attribute::type::k_f32, 2, offsetof(vertex, coordinate));
+    m_buffers[i]->record_attribute(frontend::buffer::attribute::type::k_f32, 4, offsetof(vertex, color));
     m_frontend->initialize_buffer(RX_RENDER_TAG("immediate"), m_buffers[i]);
   }
 }
@@ -378,7 +382,7 @@ immediate::~immediate() {
   });
 }
 
-void immediate::immediate::render(target* _target) {
+void immediate::immediate::render(frontend::target* _target) {
   // avoid rendering if the last update did not produce any draw commands and
   // this iteration has no updates either
   const bool last_empty{m_render_queue[m_rd_index].is_empty()};
@@ -469,7 +473,7 @@ void immediate::immediate::render(target* _target) {
           m_technique->variant(0),
           _batch.count,
           _batch.offset,
-          primitive_type::k_triangles,
+          frontend::primitive_type::k_triangles,
           "");
           break;
       case queue::command::type::k_text:
@@ -481,7 +485,7 @@ void immediate::immediate::render(target* _target) {
           m_technique->variant(1),
           _batch.count,
           _batch.offset,
-          primitive_type::k_triangles,
+          frontend::primitive_type::k_triangles,
           "2",
           _batch.texture);
           break;
@@ -760,14 +764,14 @@ void immediate::generate_text(rx_s32 _size, const char* _font,
 }
 
 void immediate::add_batch(rx_size _offset, queue::command::type _type,
-  texture2D* _texture)
+  frontend::texture2D* _texture)
 {
   const rx_size count{m_elements.size() - _offset};
 
-  state render_state;
+  frontend::state render_state;
   render_state.blend.record_enable(true);
-  render_state.blend.record_blend_factors(blend_state::factor_type::k_src_alpha,
-    blend_state::factor_type::k_one_minus_src_alpha);
+  render_state.blend.record_blend_factors(frontend::blend_state::factor_type::k_src_alpha,
+    frontend::blend_state::factor_type::k_one_minus_src_alpha);
   
   render_state.depth.record_test(false);
   render_state.depth.record_write(false);
@@ -791,4 +795,4 @@ void immediate::add_batch(rx_size _offset, queue::command::type _type,
   m_batches.push_back({_offset, count, _type, render_state, _texture});
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend

@@ -1,11 +1,11 @@
 #include "rx/model/animation.h"
-#include "rx/model/model.h"
+#include "rx/model/interface.h"
 
 #include "rx/math/trig.h"
 
 namespace rx::model {
 
-animation::animation(model* _model, rx_size _index)
+animation::animation(interface* _model, rx_size _index)
   : m_model{_model}
   , m_animation{_index}
 {

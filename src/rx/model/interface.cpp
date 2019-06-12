@@ -1,11 +1,11 @@
-#include "rx/model/model.h"
+#include "rx/model/interface.h"
 #include "rx/model/iqm.h"
 
 #include "rx/math/trig.h"
 
 namespace rx::model {
 
-model::~model() {
+interface::~interface() {
   if (m_is_animated) {
     utility::destruct<array<animated_vertex>>(&as_animated_vertices);
   } else {
@@ -13,7 +13,7 @@ model::~model() {
   }
 }
 
-bool model::load(const string& _file_name) {
+bool interface::load(const string& _file_name) {
   loader* new_loader{nullptr};
 
   // determine the model format based on the extension

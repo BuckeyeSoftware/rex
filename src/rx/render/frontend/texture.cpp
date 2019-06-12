@@ -1,11 +1,11 @@
 #include <string.h> // memcpy
 
-#include "rx/render/texture.h"
+#include "rx/render/frontend/texture.h"
 #include "rx/math/log2.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
-texture::texture(frontend* _frontend, resource::type _type)
+texture::texture(interface* _frontend, resource::type _type)
   : resource{_frontend, _type}
   , m_recorded{0}
 {
@@ -41,7 +41,7 @@ void texture::validate() const {
 }
 
 // texture1D
-texture1D::texture1D(frontend* _frontend)
+texture1D::texture1D(interface* _frontend)
   : texture{_frontend, resource::type::k_texture1D}
 {
 }
@@ -100,7 +100,7 @@ void texture1D::record_wrap(const wrap_options& _wrap) {
 }
 
 // texture2D
-texture2D::texture2D(frontend* _frontend)
+texture2D::texture2D(interface* _frontend)
   : texture{_frontend, resource::type::k_texture2D}
 {
 }
@@ -159,7 +159,7 @@ void texture2D::record_wrap(const wrap_options& _wrap) {
 }
 
 // texture3D
-texture3D::texture3D(frontend* _frontend)
+texture3D::texture3D(interface* _frontend)
   : texture{_frontend, resource::type::k_texture3D}
 {
 }
@@ -218,7 +218,7 @@ void texture3D::record_wrap(const wrap_options& _wrap) {
 }
 
 // textureCM
-textureCM::textureCM(frontend* _frontend)
+textureCM::textureCM(interface* _frontend)
   : texture{_frontend, resource::type::k_textureCM}
 {
 }
@@ -279,4 +279,4 @@ void textureCM::record_wrap(const wrap_options& _wrap) {
   m_recorded |= k_wrap;
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend

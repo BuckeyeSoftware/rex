@@ -1,13 +1,13 @@
-#ifndef RX_MODEL_MODEL_H
-#define RX_MODEL_MODEL_H
+#ifndef RX_MODEL_INTERFACE_H
+#define RX_MODEL_INTERFACE_H
 
 #include "rx/model/loader.h"
 
 namespace rx::model {
 
-struct model {
-  constexpr model(memory::allocator* _allocator);
-  ~model();
+struct interface {
+  constexpr interface(memory::allocator* _allocator);
+  ~interface();
 
   bool load(const string& _file_name);
 
@@ -58,7 +58,7 @@ private:
   rx_size m_joints;
 };
 
-inline constexpr model::model(memory::allocator* _allocator)
+inline constexpr interface::interface(memory::allocator* _allocator)
   : m_allocator{_allocator}
   , m_is_animated{false}
   , as_nat{}
@@ -67,45 +67,45 @@ inline constexpr model::model(memory::allocator* _allocator)
 {
 }
 
-inline bool model::is_animated() const {
+inline bool interface::is_animated() const {
   return m_is_animated;
 }
 
-inline const array<model::vertex>& model::vertices() const & {
+inline const array<interface::vertex>& interface::vertices() const & {
   RX_ASSERT(!m_is_animated, "not a static model");
   return as_vertices;
 }
 
-inline array<model::vertex>&& model::vertices() && {
+inline array<interface::vertex>&& interface::vertices() && {
   return utility::move(as_vertices);
 }
 
-inline const array<model::animated_vertex> model::animated_vertices() const & {
+inline const array<interface::animated_vertex> interface::animated_vertices() const & {
   RX_ASSERT(m_is_animated, "not a animated model");
   return as_animated_vertices;
 }
 
-inline array<model::animated_vertex>&& model::animated_vertices() && {
+inline array<interface::animated_vertex>&& interface::animated_vertices() && {
   RX_ASSERT(m_is_animated, "not a animated model");
   return utility::move(as_animated_vertices);
 }
 
-inline const array<mesh>& model::meshes() const & {
+inline const array<mesh>& interface::meshes() const & {
   return m_meshes;
 }
 
-inline const array<rx_u32>& model::elements() const & {
+inline const array<rx_u32>& interface::elements() const & {
   return m_elements;
 }
 
-inline array<rx_u32>&& model::elements() && {
+inline array<rx_u32>&& interface::elements() && {
   return utility::move(m_elements);
 }
 
-inline rx_size model::joints() const {
+inline rx_size interface::joints() const {
   return m_joints;
 }
 
 } // namespace rx::model
 
-#endif // RX_MODEL_MODEL_H
+#endif // RX_MODEL_INTERFACE_H

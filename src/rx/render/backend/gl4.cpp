@@ -1,12 +1,13 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 
-#include "rx/render/backend_gl4.h"
-#include "rx/render/command.h"
-#include "rx/render/buffer.h"
-#include "rx/render/target.h"
-#include "rx/render/program.h"
-#include "rx/render/texture.h"
+#include "rx/render/backend/gl4.h"
+
+#include "rx/render/frontend/command.h"
+#include "rx/render/frontend/buffer.h"
+#include "rx/render/frontend/target.h"
+#include "rx/render/frontend/program.h"
+#include "rx/render/frontend/texture.h"
 
 #include "rx/core/debug.h"
 #include "rx/core/log.h"
@@ -17,7 +18,7 @@
 
 RX_LOG("render/gl4", gl4_log);
 
-namespace rx::render {
+namespace rx::render::backend {
 
 // 16MiB buffer slab size for unspecified buffer sizes
 static constexpr const rx_size k_buffer_slab_size{16<<20};
@@ -122,163 +123,163 @@ static void (GLAPIENTRYP pglDrawArrays)(GLenum, GLint, GLsizei);
 static void (GLAPIENTRYP pglDrawElements)(GLenum, GLsizei, GLenum, const GLvoid*);
 
 // utility functions to convert rx rhi to gl
-static GLenum convert_blend_factor(render::blend_state::factor_type _factor_type) {
+static GLenum convert_blend_factor(frontend::blend_state::factor_type _factor_type) {
   switch (_factor_type) {
-  case render::blend_state::factor_type::k_constant_alpha:
+  case frontend::blend_state::factor_type::k_constant_alpha:
     return GL_CONSTANT_ALPHA;
-  case render::blend_state::factor_type::k_constant_color:
+  case frontend::blend_state::factor_type::k_constant_color:
     return GL_CONSTANT_COLOR;
-  case render::blend_state::factor_type::k_dst_alpha:
+  case frontend::blend_state::factor_type::k_dst_alpha:
     return GL_DST_ALPHA;
-  case render::blend_state::factor_type::k_dst_color:
+  case frontend::blend_state::factor_type::k_dst_color:
     return GL_DST_COLOR;
-  case render::blend_state::factor_type::k_one:
+  case frontend::blend_state::factor_type::k_one:
     return GL_ONE;
-  case render::blend_state::factor_type::k_one_minus_constant_alpha:
+  case frontend::blend_state::factor_type::k_one_minus_constant_alpha:
     return GL_ONE_MINUS_CONSTANT_ALPHA;
-  case render::blend_state::factor_type::k_one_minus_constant_color:
+  case frontend::blend_state::factor_type::k_one_minus_constant_color:
     return GL_ONE_MINUS_CONSTANT_COLOR;
-  case render::blend_state::factor_type::k_one_minus_dst_alpha:
+  case frontend::blend_state::factor_type::k_one_minus_dst_alpha:
     return GL_ONE_MINUS_DST_ALPHA;
-  case render::blend_state::factor_type::k_one_minus_dst_color:
+  case frontend::blend_state::factor_type::k_one_minus_dst_color:
     return GL_ONE_MINUS_DST_COLOR;
-  case render::blend_state::factor_type::k_one_minus_src_alpha:
+  case frontend::blend_state::factor_type::k_one_minus_src_alpha:
     return GL_ONE_MINUS_SRC_ALPHA;
-  case render::blend_state::factor_type::k_one_minus_src_color:
+  case frontend::blend_state::factor_type::k_one_minus_src_color:
     return GL_ONE_MINUS_SRC_COLOR;
-  case render::blend_state::factor_type::k_src_alpha:
+  case frontend::blend_state::factor_type::k_src_alpha:
     return GL_SRC_ALPHA;
-  case render::blend_state::factor_type::k_src_alpha_saturate:
+  case frontend::blend_state::factor_type::k_src_alpha_saturate:
     return GL_SRC_ALPHA_SATURATE;
-  case render::blend_state::factor_type::k_src_color:
+  case frontend::blend_state::factor_type::k_src_color:
     return GL_SRC_COLOR;
-  case render::blend_state::factor_type::k_zero:
+  case frontend::blend_state::factor_type::k_zero:
     return GL_ZERO;
   }
   RX_UNREACHABLE();
 }
 
-static GLenum convert_stencil_operation(render::stencil_state::operation_type _operation_type) {
+static GLenum convert_stencil_operation(frontend::stencil_state::operation_type _operation_type) {
   switch (_operation_type) {
-  case render::stencil_state::operation_type::k_decrement:
+  case frontend::stencil_state::operation_type::k_decrement:
     return GL_DECR;
-  case render::stencil_state::operation_type::k_decrement_wrap:
+  case frontend::stencil_state::operation_type::k_decrement_wrap:
     return GL_DECR_WRAP;
-  case render::stencil_state::operation_type::k_increment:
+  case frontend::stencil_state::operation_type::k_increment:
     return GL_INCR;
-  case render::stencil_state::operation_type::k_increment_wrap:
+  case frontend::stencil_state::operation_type::k_increment_wrap:
     return GL_INCR_WRAP;
-  case render::stencil_state::operation_type::k_invert:
+  case frontend::stencil_state::operation_type::k_invert:
     return GL_INVERT;
-  case render::stencil_state::operation_type::k_keep:
+  case frontend::stencil_state::operation_type::k_keep:
     return GL_KEEP;
-  case render::stencil_state::operation_type::k_replace:
+  case frontend::stencil_state::operation_type::k_replace:
     return GL_REPLACE;
-  case render::stencil_state::operation_type::k_zero:
+  case frontend::stencil_state::operation_type::k_zero:
     return GL_ZERO;
   }
   RX_UNREACHABLE();
 }
 
-static GLenum convert_stencil_function(render::stencil_state::function_type _function_type) {
+static GLenum convert_stencil_function(frontend::stencil_state::function_type _function_type) {
   switch (_function_type) {
-  case render::stencil_state::function_type::k_always:
+  case frontend::stencil_state::function_type::k_always:
     return GL_ALWAYS;
-  case render::stencil_state::function_type::k_equal:
+  case frontend::stencil_state::function_type::k_equal:
     return GL_EQUAL;
-  case render::stencil_state::function_type::k_greater:
+  case frontend::stencil_state::function_type::k_greater:
     return GL_GREATER;
-  case render::stencil_state::function_type::k_greater_equal:
+  case frontend::stencil_state::function_type::k_greater_equal:
     return GL_GEQUAL;
-  case render::stencil_state::function_type::k_less:
+  case frontend::stencil_state::function_type::k_less:
     return GL_LESS;
-  case render::stencil_state::function_type::k_less_equal:
+  case frontend::stencil_state::function_type::k_less_equal:
     return GL_LEQUAL;
-  case render::stencil_state::function_type::k_never:
+  case frontend::stencil_state::function_type::k_never:
     return GL_NEVER;
-  case render::stencil_state::function_type::k_not_equal:
+  case frontend::stencil_state::function_type::k_not_equal:
     return GL_NOTEQUAL;
   }
   RX_UNREACHABLE();
 }
 
-static GLenum convert_polygon_mode(render::polygon_state::mode_type _mode_type) {
+static GLenum convert_polygon_mode(frontend::polygon_state::mode_type _mode_type) {
   switch (_mode_type) {
-  case render::polygon_state::mode_type::k_fill:
+  case frontend::polygon_state::mode_type::k_fill:
     return GL_FILL;
-  case render::polygon_state::mode_type::k_line:
+  case frontend::polygon_state::mode_type::k_line:
     return GL_LINE;
-  case render::polygon_state::mode_type::k_point:
+  case frontend::polygon_state::mode_type::k_point:
     return GL_POINT;
   }
   RX_UNREACHABLE();
 }
 
-static GLenum convert_texture_data_format(render::texture::data_format _data_format) {
+static GLenum convert_texture_data_format(frontend::texture::data_format _data_format) {
   switch (_data_format) {
-  case render::texture::data_format::k_rgba_u8:
+  case frontend::texture::data_format::k_rgba_u8:
     return GL_RGBA8;
-  case render::texture::data_format::k_bgra_u8:
+  case frontend::texture::data_format::k_bgra_u8:
     return GL_RGBA8; // not a bug
-  case render::texture::data_format::k_rgba_f16:
+  case frontend::texture::data_format::k_rgba_f16:
     return GL_RGBA16F;
-  case render::texture::data_format::k_bgra_f16:
+  case frontend::texture::data_format::k_bgra_f16:
     return GL_RGBA16F; // not a bug
-  case render::texture::data_format::k_d16:
+  case frontend::texture::data_format::k_d16:
     return GL_DEPTH_COMPONENT16;
-  case render::texture::data_format::k_d24:
+  case frontend::texture::data_format::k_d24:
     return GL_DEPTH_COMPONENT24;
-  case render::texture::data_format::k_d32:
+  case frontend::texture::data_format::k_d32:
     return GL_DEPTH_COMPONENT32;
-  case render::texture::data_format::k_d32f:
+  case frontend::texture::data_format::k_d32f:
     return GL_DEPTH_COMPONENT32F;
-  case render::texture::data_format::k_d24_s8:
+  case frontend::texture::data_format::k_d24_s8:
     return GL_DEPTH24_STENCIL8;
-  case render::texture::data_format::k_d32f_s8:
+  case frontend::texture::data_format::k_d32f_s8:
     return GL_DEPTH32F_STENCIL8;
-  case render::texture::data_format::k_s8:
+  case frontend::texture::data_format::k_s8:
     return GL_STENCIL_INDEX8;
-  case render::texture::data_format::k_r_u8:
+  case frontend::texture::data_format::k_r_u8:
     return GL_R8;
   }
   RX_UNREACHABLE();
 }
 
-static GLenum convert_texture_format(render::texture::data_format _data_format) {
+static GLenum convert_texture_format(frontend::texture::data_format _data_format) {
   switch (_data_format) {
-  case render::texture::data_format::k_rgba_u8:
+  case frontend::texture::data_format::k_rgba_u8:
     return GL_RGBA;
-  case render::texture::data_format::k_bgra_u8:
+  case frontend::texture::data_format::k_bgra_u8:
     return GL_BGRA;
-  case render::texture::data_format::k_rgba_f16:
+  case frontend::texture::data_format::k_rgba_f16:
     return GL_RGBA;
-  case render::texture::data_format::k_bgra_f16:
+  case frontend::texture::data_format::k_bgra_f16:
     return GL_BGRA;
-  case render::texture::data_format::k_d16:
+  case frontend::texture::data_format::k_d16:
     return GL_DEPTH_COMPONENT;
-  case render::texture::data_format::k_d24:
+  case frontend::texture::data_format::k_d24:
     return GL_DEPTH_COMPONENT;
-  case render::texture::data_format::k_d32:
+  case frontend::texture::data_format::k_d32:
     return GL_DEPTH_COMPONENT;
-  case render::texture::data_format::k_d32f:
+  case frontend::texture::data_format::k_d32f:
     return GL_DEPTH_COMPONENT;
-  case render::texture::data_format::k_d24_s8:
+  case frontend::texture::data_format::k_d24_s8:
     return GL_DEPTH_STENCIL;
-  case render::texture::data_format::k_d32f_s8:
+  case frontend::texture::data_format::k_d32f_s8:
     return GL_DEPTH_STENCIL;
-  case render::texture::data_format::k_s8:
+  case frontend::texture::data_format::k_s8:
     return GL_STENCIL_INDEX;
-  case render::texture::data_format::k_r_u8:
+  case frontend::texture::data_format::k_r_u8:
     return GL_RED;
   }
   RX_UNREACHABLE();
 }
 
-static GLenum convert_primitive_type(render::primitive_type _primitive_type) {
+static GLenum convert_primitive_type(frontend::primitive_type _primitive_type) {
   switch (_primitive_type) {
-  case render::primitive_type::k_triangles:
+  case frontend::primitive_type::k_triangles:
     return GL_TRIANGLES;
-  case render::primitive_type::k_triangle_strip:
+  case frontend::primitive_type::k_triangle_strip:
     return GL_TRIANGLE_STRIP;
   }
   RX_UNREACHABLE();
@@ -289,7 +290,7 @@ struct filter {
   GLuint mag;
 };
 
-static filter convert_texture_filter(const render::texture::filter_options& _filter_options) {
+static filter convert_texture_filter(const frontend::texture::filter_options& _filter_options) {
   static constexpr const GLenum k_min_table[]{
     GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_NEAREST,
     GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR
@@ -305,17 +306,17 @@ static filter convert_texture_filter(const render::texture::filter_options& _fil
   return {min, mag};
 }
 
-static GLenum convert_texture_wrap(const render::texture::wrap_type _type) {
+static GLenum convert_texture_wrap(const frontend::texture::wrap_type _type) {
   switch (_type) {
-  case render::texture::wrap_type::k_clamp_to_edge:
+  case frontend::texture::wrap_type::k_clamp_to_edge:
     return GL_CLAMP_TO_EDGE;
-  case render::texture::wrap_type::k_clamp_to_border:
+  case frontend::texture::wrap_type::k_clamp_to_border:
     return GL_CLAMP_TO_BORDER;
-  case render::texture::wrap_type::k_mirrored_repeat:
+  case frontend::texture::wrap_type::k_mirrored_repeat:
     return GL_MIRRORED_REPEAT;
-  case render::texture::wrap_type::k_repeat:
+  case frontend::texture::wrap_type::k_repeat:
     return GL_REPEAT;
-  case render::texture::wrap_type::k_mirror_clamp_to_edge:
+  case frontend::texture::wrap_type::k_mirror_clamp_to_edge:
     return GL_MIRROR_CLAMP_TO_EDGE;
   }
   RX_UNREACHABLE();
@@ -412,7 +413,7 @@ namespace detail {
     GLuint tex;
   };
 
-  struct state : ::rx::render::state {
+  struct state : frontend::state {
     state()
       : m_color_mask{0xff}
       , m_bound_vao{0}
@@ -449,7 +450,7 @@ namespace detail {
       }
     }
 
-    void use_state(const ::rx::render::state* _render_state) {
+    void use_state(const frontend::state* _render_state) {
       const auto& scissor{_render_state->scissor};
       const auto& blend{_render_state->blend};
       const auto& cull{_render_state->cull};
@@ -550,10 +551,10 @@ namespace detail {
         if (enabled) {
           if (this->cull.front_face() != front_face) {
             switch (front_face) {
-            case cull_state::front_face_type::k_clock_wise:
+            case frontend::cull_state::front_face_type::k_clock_wise:
               pglFrontFace(GL_CW);
               break;
-            case cull_state::front_face_type::k_counter_clock_wise:
+            case frontend::cull_state::front_face_type::k_counter_clock_wise:
               pglFrontFace(GL_CCW);
               break;
             }
@@ -562,10 +563,10 @@ namespace detail {
 
           if (this->cull.cull_face() != cull_face) {
             switch (cull_face) {
-            case cull_state::cull_face_type::k_front:
+            case frontend::cull_state::cull_face_type::k_front:
               pglCullFace(GL_FRONT);
               break;
-            case cull_state::cull_face_type::k_back:
+            case frontend::cull_state::cull_face_type::k_back:
               pglCullFace(GL_BACK);
               break;
             }
@@ -654,7 +655,7 @@ namespace detail {
       flush();
     }
 
-    void use_target(const ::rx::render::target* _render_target) {
+    void use_target(const frontend::target* _render_target) {
       const auto this_target{reinterpret_cast<const target*>(_render_target + 1)};
       const GLuint fbo{_render_target->is_swapchain() ? m_swap_chain_fbo : this_target->fbo};
       if (m_bound_fbo != fbo) {
@@ -663,7 +664,7 @@ namespace detail {
       }
     }
 
-    void use_buffer(const ::rx::render::buffer* _render_buffer) {
+    void use_buffer(const frontend::buffer* _render_buffer) {
       const auto this_buffer{reinterpret_cast<const buffer*>(_render_buffer + 1)};
       if (this_buffer->va != m_bound_vao) {
         pglBindVertexArray(this_buffer->va);
@@ -671,7 +672,7 @@ namespace detail {
       }
     }
 
-    void use_program(const ::rx::render::program* _render_program) {
+    void use_program(const frontend::program* _render_program) {
       const auto this_program{reinterpret_cast<const program*>(_render_program + 1)};
       if (this_program->handle != m_bound_program) {
         pglUseProgram(this_program->handle);
@@ -696,65 +697,67 @@ static void fetch(const char* _name, F& function_) {
   *reinterpret_cast<void**>(&function_) = address;
 }
 
-static constexpr const char* inout_to_string(shader::inout_type _type) {
+static constexpr const char* inout_to_string(frontend::shader::inout_type _type) {
   switch (_type) {
-  case shader::inout_type::k_vec2f:
+  case frontend::shader::inout_type::k_vec2f:
     return "vec2f";
-  case shader::inout_type::k_vec3f:
+  case frontend::shader::inout_type::k_vec3f:
     return "vec3f";
-  case shader::inout_type::k_vec4f:
+  case frontend::shader::inout_type::k_vec4f:
     return "vec4f";
-  case shader::inout_type::k_vec2i:
+  case frontend::shader::inout_type::k_vec2i:
     return "vec2i";
-  case shader::inout_type::k_vec3i:
+  case frontend::shader::inout_type::k_vec3i:
     return "vec3i";
-  case shader::inout_type::k_vec4i:
+  case frontend::shader::inout_type::k_vec4i:
     return "vec4i";
-  case shader::inout_type::k_vec4b:
+  case frontend::shader::inout_type::k_vec4b:
     return "vec4b";
   }
   return nullptr;
 }
 
-static constexpr const char* uniform_to_string(uniform::type _type) {
+static constexpr const char* uniform_to_string(frontend::uniform::type _type) {
   switch (_type) {
-  case uniform::type::k_sampler1D:
+  case frontend::uniform::type::k_sampler1D:
     return "rx_sampler1D";
-  case uniform::type::k_sampler2D:
+  case frontend::uniform::type::k_sampler2D:
     return "rx_sampler2D";
-  case uniform::type::k_sampler3D:
+  case frontend::uniform::type::k_sampler3D:
     return "rx_sampler3D";
-  case uniform::type::k_samplerCM:
+  case frontend::uniform::type::k_samplerCM:
     return "rx_samplerCM";
-  case uniform::type::k_bool:
+  case frontend::uniform::type::k_bool:
     return "bool";
-  case uniform::type::k_int:
+  case frontend::uniform::type::k_int:
     return "int";
-  case uniform::type::k_float:
+  case frontend::uniform::type::k_float:
     return "float";
-  case uniform::type::k_vec2i:
+  case frontend::uniform::type::k_vec2i:
     return "vec2i";
-  case uniform::type::k_vec3i:
+  case frontend::uniform::type::k_vec3i:
     return "vec3i";
-  case uniform::type::k_vec4i:
+  case frontend::uniform::type::k_vec4i:
     return "vec4i";
-  case uniform::type::k_vec2f:
+  case frontend::uniform::type::k_vec2f:
     return "vec2f";
-  case uniform::type::k_vec3f:
+  case frontend::uniform::type::k_vec3f:
     return "vec3f";
-  case uniform::type::k_vec4f:
+  case frontend::uniform::type::k_vec4f:
     return "vec4f";
-  case uniform::type::k_mat4x4f:
+  case frontend::uniform::type::k_mat4x4f:
     return "mat4x4f";
-  case uniform::type::k_mat3x3f:
+  case frontend::uniform::type::k_mat3x3f:
     return "mat3x3f";
-  case uniform::type::k_bonesf:
+  case frontend::uniform::type::k_bonesf:
     return "bonesf";
   }
   return nullptr;
 }
 
-static GLuint compile_shader(const array<uniform>& _uniforms, const shader& _shader) {
+static GLuint compile_shader(const array<frontend::uniform>& _uniforms,
+  const frontend::shader& _shader)
+{
   // emit prelude to every shader
   static constexpr const char* k_prelude{
     "#version 450 core\n"
@@ -784,32 +787,32 @@ static GLuint compile_shader(const array<uniform>& _uniforms, const shader& _sha
 
   GLenum type{0};
   switch (_shader.kind) {
-  case shader::type::k_vertex:
+  case frontend::shader::type::k_vertex:
     type = GL_VERTEX_SHADER;
     // emit vertex attributes inputs
-    _shader.inputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
+    _shader.inputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("layout(location = %zu) in %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
     });
     // emit vertex outputs
-    _shader.outputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
+    _shader.outputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("out %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     break;
-  case shader::type::k_fragment:
+  case frontend::shader::type::k_fragment:
     type = GL_FRAGMENT_SHADER;
     // emit fragment inputs
-    _shader.inputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
+    _shader.inputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("in %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     // emit fragment outputs
-    _shader.outputs.each([&](rx_size, const string& _name, const shader::inout& _inout) {
+    _shader.outputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("layout(location = %d) out %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
     });
     break;
   }
 
   // emit uniforms
-  _uniforms.each_fwd([&](const uniform& _uniform) {
+  _uniforms.each_fwd([&](const frontend::uniform& _uniform) {
     contents.append(string::format("uniform %s %s;\n", uniform_to_string(_uniform.kind()), _uniform.name()));
   });
 
@@ -847,7 +850,7 @@ static GLuint compile_shader(const array<uniform>& _uniforms, const shader& _sha
   return handle;
 }
 
-allocation_info backend_gl4::query_allocation_info() const {
+allocation_info gl4::query_allocation_info() const {
   allocation_info info;
   info.buffer_size = sizeof(detail::buffer);
   info.target_size = sizeof(detail::target);
@@ -859,7 +862,7 @@ allocation_info backend_gl4::query_allocation_info() const {
   return info;
 }
 
-backend_gl4::backend_gl4(memory::allocator* _allocator, void* _data)
+gl4::gl4(memory::allocator* _allocator, void* _data)
   : m_allocator{_allocator}
   , m_data{_data}
 {
@@ -964,22 +967,22 @@ backend_gl4::backend_gl4(memory::allocator* _allocator, void* _data)
   m_impl = utility::allocate_and_construct<detail::state>(m_allocator);
 }
 
-backend_gl4::~backend_gl4() {
+gl4::~gl4() {
   utility::destruct_and_deallocate<detail::state>(m_allocator, m_impl);
 }
 
-void backend_gl4::process(rx_byte* _command) {
+void gl4::process(rx_byte* _command) {
   auto state{reinterpret_cast<detail::state*>(m_impl)};
-  auto header{reinterpret_cast<command_header*>(_command)};
+  auto header{reinterpret_cast<frontend::command_header*>(_command)};
   switch (header->type) {
-  case command_type::k_resource_allocate:
+  case frontend::command_type::k_resource_allocate:
     {
-      const auto resource{reinterpret_cast<const resource_command*>(header + 1)};
+      const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
       switch (resource->kind) {
-      case resource_command::type::k_buffer:
+      case frontend::resource_command::type::k_buffer:
         utility::construct<detail::buffer>(resource->as_buffer + 1);
         break;
-      case resource_command::type::k_target:
+      case frontend::resource_command::type::k_target:
         {
           const auto render_target{resource->as_target};
           if (!render_target->is_swapchain()) {
@@ -987,35 +990,35 @@ void backend_gl4::process(rx_byte* _command) {
           }
         }
         break;
-      case resource_command::type::k_program:
+      case frontend::resource_command::type::k_program:
         utility::construct<detail::program>(resource->as_program + 1);
         break;
-      case resource_command::type::k_texture1D:
+      case frontend::resource_command::type::k_texture1D:
         utility::construct<detail::texture1D>(resource->as_texture1D + 1);
         break;
-      case resource_command::type::k_texture2D:
+      case frontend::resource_command::type::k_texture2D:
         utility::construct<detail::texture2D>(resource->as_texture2D + 1);
         break;
-      case resource_command::type::k_texture3D:
+      case frontend::resource_command::type::k_texture3D:
         utility::construct<detail::texture3D>(resource->as_texture3D + 1);
         break;
-      case resource_command::type::k_textureCM:
+      case frontend::resource_command::type::k_textureCM:
         utility::construct<detail::textureCM>(resource->as_textureCM + 1);
         break;
       }
     }
     break;
-  case command_type::k_resource_destroy:
+  case frontend::command_type::k_resource_destroy:
     {
-      const auto resource{reinterpret_cast<const resource_command*>(header + 1)};
+      const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
       switch (resource->kind) {
-      case resource_command::type::k_buffer:
+      case frontend::resource_command::type::k_buffer:
         if (state->m_bound_vao == reinterpret_cast<detail::buffer*>(resource->as_buffer + 1)->va) {
           state->m_bound_vao = 0;
         }
         utility::destruct<detail::buffer>(resource->as_buffer + 1);
         break;
-      case resource_command::type::k_target:
+      case frontend::resource_command::type::k_target:
         {
           const auto render_target{resource->as_target};
           if (!render_target->is_swapchain()) {
@@ -1023,35 +1026,35 @@ void backend_gl4::process(rx_byte* _command) {
           }
         } 
         break;
-      case resource_command::type::k_program:
+      case frontend::resource_command::type::k_program:
         utility::destruct<detail::program>(resource->as_program + 1);
         break;
-      case resource_command::type::k_texture1D:
+      case frontend::resource_command::type::k_texture1D:
         utility::destruct<detail::texture1D>(resource->as_texture1D + 1);
         break;
-      case resource_command::type::k_texture2D:
+      case frontend::resource_command::type::k_texture2D:
         utility::destruct<detail::texture2D>(resource->as_texture2D + 1);
         break;
-      case resource_command::type::k_texture3D:
+      case frontend::resource_command::type::k_texture3D:
         utility::destruct<detail::texture3D>(resource->as_texture3D + 1);
         break;
-      case resource_command::type::k_textureCM:
+      case frontend::resource_command::type::k_textureCM:
         utility::destruct<detail::textureCM>(resource->as_textureCM + 1);
         break;
       }
     }
     break;
-  case command_type::k_resource_construct:
+  case frontend::command_type::k_resource_construct:
     {
-      const auto resource{reinterpret_cast<const resource_command*>(header + 1)};
+      const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
       switch (resource->kind) {
-      case resource_command::type::k_buffer:
+      case frontend::resource_command::type::k_buffer:
         {
           const auto render_buffer{resource->as_buffer};
           auto buffer{reinterpret_cast<detail::buffer*>(render_buffer + 1)};
           const auto& vertices{render_buffer->vertices()};
           const auto& elements{render_buffer->elements()};
-          const auto type{render_buffer->kind() == buffer::type::k_dynamic
+          const auto type{render_buffer->kind() == frontend::buffer::type::k_dynamic
             ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW};
 
           if (vertices.size()) {
@@ -1080,7 +1083,7 @@ void backend_gl4::process(rx_byte* _command) {
             const auto index{static_cast<GLuint>(i)};
             pglEnableVertexArrayAttrib(buffer->va, index);
             switch (attribute.kind) {
-            case buffer::attribute::type::k_f32:
+            case frontend::buffer::attribute::type::k_f32:
               pglVertexArrayAttribFormat(
                 buffer->va,
                 index,
@@ -1089,7 +1092,7 @@ void backend_gl4::process(rx_byte* _command) {
                 GL_FALSE,
                 static_cast<GLsizei>(attribute.offset));
               break;
-            case buffer::attribute::type::k_u8:
+            case frontend::buffer::attribute::type::k_u8:
               pglVertexArrayAttribFormat(
                 buffer->va,
                 index,
@@ -1103,7 +1106,7 @@ void backend_gl4::process(rx_byte* _command) {
           }
         }
         break;
-      case resource_command::type::k_target:
+      case frontend::resource_command::type::k_target:
         {
           const auto render_target{resource->as_target};
           if (render_target->is_swapchain()) {
@@ -1143,7 +1146,7 @@ void backend_gl4::process(rx_byte* _command) {
           pglNamedFramebufferDrawBuffers(target->fbo, static_cast<GLsizei>(draw_buffers.size()), draw_buffers.data());
         }
         break;
-      case resource_command::type::k_program:
+      case frontend::resource_command::type::k_program:
         {
           const auto render_program{resource->as_program};
           const auto program{reinterpret_cast<detail::program*>(render_program + 1)};
@@ -1151,7 +1154,7 @@ void backend_gl4::process(rx_byte* _command) {
           const auto shaders{render_program->shaders()};
 
           array<GLuint> shader_handles;
-          shaders.each_fwd([&](const shader& _shader) {
+          shaders.each_fwd([&](const frontend::shader& _shader) {
             GLuint shader_handle{compile_shader(render_program->uniforms(), _shader)};
             if (shader_handle != 0) {
               pglAttachShader(program->handle, shader_handle);
@@ -1182,12 +1185,12 @@ void backend_gl4::process(rx_byte* _command) {
           });
 
           // fetch uniform locations
-          render_program->uniforms().each_fwd([program](const uniform& _uniform) {
+          render_program->uniforms().each_fwd([program](const frontend::uniform& _uniform) {
             program->uniforms.push_back(pglGetUniformLocation(program->handle, _uniform.name().data()));
           });
         }
         break;
-      case resource_command::type::k_texture1D:
+      case frontend::resource_command::type::k_texture1D:
         {
           const auto render_texture{resource->as_texture1D};
           const auto texture{reinterpret_cast<const detail::texture1D*>(render_texture + 1)};
@@ -1226,7 +1229,7 @@ void backend_gl4::process(rx_byte* _command) {
           }
         }
         break;
-      case resource_command::type::k_texture2D:
+      case frontend::resource_command::type::k_texture2D:
         {
           const auto render_texture{resource->as_texture2D};
           const auto texture{reinterpret_cast<const detail::texture2D*>(render_texture + 1)};
@@ -1270,7 +1273,7 @@ void backend_gl4::process(rx_byte* _command) {
           }
         }
         break;
-      case resource_command::type::k_texture3D:
+      case frontend::resource_command::type::k_texture3D:
         {
           const auto render_texture{resource->as_texture3D};
           const auto texture{reinterpret_cast<const detail::texture3D*>(render_texture + 1)};
@@ -1319,7 +1322,7 @@ void backend_gl4::process(rx_byte* _command) {
           }
         }
         break;
-      case resource_command::type::k_textureCM:
+      case frontend::resource_command::type::k_textureCM:
         {
           const auto render_texture{resource->as_textureCM};
           const auto texture{reinterpret_cast<const detail::textureCM*>(render_texture + 1)};
@@ -1370,17 +1373,17 @@ void backend_gl4::process(rx_byte* _command) {
       }
     }
     break;
-  case command_type::k_resource_update:
+  case frontend::command_type::k_resource_update:
     {
-      const auto resource{reinterpret_cast<const resource_command*>(header + 1)};
+      const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
       switch (resource->kind) {
-      case resource_command::type::k_buffer:
+      case frontend::resource_command::type::k_buffer:
         {
           const auto render_buffer{resource->as_buffer};
           auto buffer{reinterpret_cast<detail::buffer*>(render_buffer + 1)};
           const auto& vertices{render_buffer->vertices()};
           const auto& elements{render_buffer->elements()};
-          const auto type{render_buffer->kind() == buffer::type::k_dynamic
+          const auto type{render_buffer->kind() == frontend::buffer::type::k_dynamic
             ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW};
 
           if (vertices.size() > buffer->vertices_size) {
@@ -1405,9 +1408,9 @@ void backend_gl4::process(rx_byte* _command) {
       }
     }
     break;
-  case command_type::k_clear:
+  case frontend::command_type::k_clear:
     {
-      const auto command{reinterpret_cast<clear_command*>(header + 1)};
+      const auto command{reinterpret_cast<frontend::clear_command*>(header + 1)};
       const auto render_target{command->render_target};
       const auto this_target{reinterpret_cast<detail::target*>(render_target + 1)};
       const bool clear_depth{!!(command->clear_mask & RX_RENDER_CLEAR_DEPTH)};
@@ -1436,7 +1439,7 @@ void backend_gl4::process(rx_byte* _command) {
       }
 
       // ensure color mask is appropriate for clear
-      if (state->blend.write_mask() != render::blend_state::k_mask_all && clear_color) {
+      if (state->blend.write_mask() != frontend::blend_state::k_mask_all && clear_color) {
         pglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         state->blend.record_write_mask(0xff);
         state->blend.flush();
@@ -1465,12 +1468,12 @@ void backend_gl4::process(rx_byte* _command) {
       }
     }
     break;
-  case command_type::k_draw:
+  case frontend::command_type::k_draw:
     [[fallthrough]];
-  case command_type::k_draw_elements:
+  case frontend::command_type::k_draw_elements:
     {
-      const auto command{reinterpret_cast<draw_command*>(header + 1)};
-      const auto render_state{reinterpret_cast<render::state*>(command)};
+      const auto command{reinterpret_cast<frontend::draw_command*>(header + 1)};
+      const auto render_state{reinterpret_cast<frontend::state*>(command)};
       const auto render_target{command->render_target};
       const auto render_buffer{command->render_buffer};
       const auto render_program{command->render_program};
@@ -1497,61 +1500,61 @@ void backend_gl4::process(rx_byte* _command) {
             }
 
             switch (uniform.kind()) {
-            case uniform::type::k_sampler1D:
+            case frontend::uniform::type::k_sampler1D:
               [[fallthrough]];
-            case uniform::type::k_sampler2D:
+            case frontend::uniform::type::k_sampler2D:
               [[fallthrough]];
-            case uniform::type::k_sampler3D:
+            case frontend::uniform::type::k_sampler3D:
               [[fallthrough]];
-            case uniform::type::k_samplerCM:
+            case frontend::uniform::type::k_samplerCM:
               pglProgramUniform1i(this_program->handle, location,
                 *reinterpret_cast<const rx_s32*>(draw_uniforms));
               break;
-            case uniform::type::k_bool:
+            case frontend::uniform::type::k_bool:
               pglProgramUniform1i(this_program->handle, location,
                 *reinterpret_cast<const bool*>(draw_uniforms) ? 1 : 0);
               break;
-            case uniform::type::k_int:
+            case frontend::uniform::type::k_int:
               pglProgramUniform1i(this_program->handle, location,
                 *reinterpret_cast<const rx_s32*>(draw_uniforms));
               break;
-            case uniform::type::k_float:
+            case frontend::uniform::type::k_float:
               pglProgramUniform1fv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
-            case uniform::type::k_vec2i:
+            case frontend::uniform::type::k_vec2i:
               pglProgramUniform2iv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_s32*>(draw_uniforms));
               break;
-            case uniform::type::k_vec3i:
+            case frontend::uniform::type::k_vec3i:
               pglProgramUniform3iv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_s32*>(draw_uniforms));
               break;
-            case uniform::type::k_vec4i:
+            case frontend::uniform::type::k_vec4i:
               pglProgramUniform4iv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_s32*>(draw_uniforms));
               break;
-            case uniform::type::k_vec2f:
+            case frontend::uniform::type::k_vec2f:
               pglProgramUniform2fv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
-            case uniform::type::k_vec3f:
+            case frontend::uniform::type::k_vec3f:
               pglProgramUniform3fv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
-            case uniform::type::k_vec4f:
+            case frontend::uniform::type::k_vec4f:
               pglProgramUniform4fv(this_program->handle, location, 1,
                 reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
-            case uniform::type::k_mat3x3f:
+            case frontend::uniform::type::k_mat3x3f:
               pglProgramUniformMatrix3fv(this_program->handle, location, 1,
                 GL_FALSE, reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
-            case uniform::type::k_mat4x4f:
+            case frontend::uniform::type::k_mat4x4f:
               pglProgramUniformMatrix4fv(this_program->handle, location, 1,
                 GL_FALSE, reinterpret_cast<const rx_f32*>(draw_uniforms));
               break;
-            case uniform::type::k_bonesf:
+            case frontend::uniform::type::k_bonesf:
               pglProgramUniformMatrix3x4fv(this_program->handle, location,
                 static_cast<GLsizei>(uniform.size() / sizeof(math::mat3x4f)),
                 GL_FALSE, reinterpret_cast<const rx_f32*>(draw_uniforms));
@@ -1566,41 +1569,41 @@ void backend_gl4::process(rx_byte* _command) {
       for (GLuint i{0}; i < 8; i++) {
         switch (command->texture_types[i]) {
         case '1':
-          pglBindTextureUnit(i, reinterpret_cast<detail::texture1D*>(reinterpret_cast<texture1D*>(command->texture_binds[i]) + 1)->tex);
+          pglBindTextureUnit(i, reinterpret_cast<detail::texture1D*>(reinterpret_cast<frontend::texture1D*>(command->texture_binds[i]) + 1)->tex);
           break;
         case '2':
-          pglBindTextureUnit(i, reinterpret_cast<detail::texture2D*>(reinterpret_cast<texture2D*>(command->texture_binds[i]) + 1)->tex);
+          pglBindTextureUnit(i, reinterpret_cast<detail::texture2D*>(reinterpret_cast<frontend::texture2D*>(command->texture_binds[i]) + 1)->tex);
           break;
         case '3':
-          pglBindTextureUnit(i, reinterpret_cast<detail::texture3D*>(reinterpret_cast<texture3D*>(command->texture_binds[i]) + 1)->tex);
+          pglBindTextureUnit(i, reinterpret_cast<detail::texture3D*>(reinterpret_cast<frontend::texture3D*>(command->texture_binds[i]) + 1)->tex);
           break;
         case 'c':
-          pglBindTextureUnit(i, reinterpret_cast<detail::textureCM*>(reinterpret_cast<textureCM*>(command->texture_binds[i]) + 1)->tex);
+          pglBindTextureUnit(i, reinterpret_cast<detail::textureCM*>(reinterpret_cast<frontend::textureCM*>(command->texture_binds[i]) + 1)->tex);
           break;
         default:
           break;
         }
       }
 
-      if (header->type == command_type::k_draw_elements) {
+      if (header->type == frontend::command_type::k_draw_elements) {
         switch (render_buffer->element_kind()) {
-        case render::buffer::element_type::k_none:
+        case frontend::buffer::element_type::k_none:
           RX_UNREACHABLE();
-        case render::buffer::element_type::k_u8:
+        case frontend::buffer::element_type::k_u8:
           pglDrawElements(
             convert_primitive_type(command->type),
             static_cast<GLsizei>(command->count),
             GL_UNSIGNED_BYTE,
             reinterpret_cast<void*>(sizeof(GLubyte) * command->offset));
           break;
-        case render::buffer::element_type::k_u16:
+        case frontend::buffer::element_type::k_u16:
           pglDrawElements(
             convert_primitive_type(command->type),
             static_cast<GLsizei>(command->count),
             GL_UNSIGNED_SHORT,
             reinterpret_cast<void*>(sizeof(GLushort) * command->offset));
           break;
-        case render::buffer::element_type::k_u32:
+        case frontend::buffer::element_type::k_u32:
           pglDrawElements(
             convert_primitive_type(command->type),
             static_cast<GLsizei>(command->count),
@@ -1619,9 +1622,8 @@ void backend_gl4::process(rx_byte* _command) {
   }
 }
 
-void backend_gl4::swap() {
+void gl4::swap() {
   SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(m_data));
 }
 
-
-} // namespace rx::render
+} // namespace rx::backend

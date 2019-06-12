@@ -1,9 +1,9 @@
-#ifndef RX_RENDER_TIMER_H
-#define RX_RENDER_TIMER_H
+#ifndef RX_RENDER_FRONTEND_TIMER_H
+#define RX_RENDER_FRONTEND_TIMER_H
 
 #include "rx/core/array.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
 struct frame_timer {
   static constexpr rx_f64 k_frame_history_seconds{2.0};
@@ -72,6 +72,6 @@ inline const array<frame_timer::frame_time>& frame_timer::frame_times() const & 
   return m_frame_times;
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend
 
-#endif // RX_RENDER_TIMER_H
+#endif // RX_RENDER_FRONTEND_TIMER_H

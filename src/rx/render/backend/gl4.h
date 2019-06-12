@@ -1,15 +1,18 @@
 #ifndef RX_RENDER_BACKEND_GL4_H
 #define RX_RENDER_BACKEND_GL4_H
 
-#include "rx/render/backend.h"
-#include "rx/render/frontend.h"
+#include "rx/render/backend/interface.h"
 
-namespace rx::render {
+namespace rx::memory {
+  struct allocator;
+}
 
-struct backend_gl4 : backend {
+namespace rx::render::backend {
+
+struct gl4 : interface {
   allocation_info query_allocation_info() const;
-  backend_gl4(memory::allocator* _allocator, void* _data);
-  ~backend_gl4();
+  gl4(memory::allocator* _allocator, void* _data);
+  ~gl4();
 
   void process(rx_byte* _command);
   void swap();
@@ -20,6 +23,6 @@ private:
   void* m_impl;
 };
 
-} // namespace rx::render
+} // namespace rx::render::backend
 
 #endif // RX_RENDER_BACKEND_GL4_H

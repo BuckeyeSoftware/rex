@@ -1,12 +1,13 @@
-#ifndef RX_RENDER_BUFFER_H
-#define RX_RENDER_BUFFER_H
+#ifndef RX_RENDER_FRONTEND_BUFFER_H
+#define RX_RENDER_FRONTEND_BUFFER_H
 
 #include "rx/core/array.h"
-#include "rx/render/resource.h"
+#include "rx/render/frontend/resource.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
-struct frontend;
+struct interface;
+
 struct buffer : resource {
   struct attribute {
     enum class type {
@@ -30,7 +31,7 @@ struct buffer : resource {
     k_dynamic
   };
 
-  buffer(frontend* _frontend);
+  buffer(interface* _frontend);
   ~buffer();
 
   // write |_size| bytes from |_data| into vertex store
@@ -167,6 +168,6 @@ inline rx_size buffer::size() const {
   return m_vertices_store.size() + m_elements_store.size();
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend
 
-#endif
+#endif // RX_RENDER_FRONTEND_BUFFER_H

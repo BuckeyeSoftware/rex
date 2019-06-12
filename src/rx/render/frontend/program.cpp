@@ -1,12 +1,12 @@
 #include <string.h> // memcpy
 
-#include "rx/render/program.h"
-#include "rx/render/frontend.h"
+#include "rx/render/frontend/program.h"
+#include "rx/render/frontend/interface.h"
 
 #include "rx/core/utility/bit.h"
 #include "rx/core/algorithm/min.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 static constexpr const rx_size k_max_bones{80};
 
 // checks if |_type| is a sampler type
@@ -208,7 +208,7 @@ void uniform::record_raw(const rx_byte* _data, rx_size _size) {
   m_program->m_dirty_uniforms |= m_mask;
 }
 
-program::program(frontend* _frontend)
+program::program(interface* _frontend)
   : resource{_frontend, resource::type::k_program}
   , m_allocator{_frontend->allocator()}
   , m_uniforms{m_allocator}
@@ -260,4 +260,4 @@ void program::update_resource_usage() {
   resource::update_resource_usage(usage);
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend

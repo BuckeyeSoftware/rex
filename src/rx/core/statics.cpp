@@ -57,27 +57,6 @@ static_node* static_globals::find(const char* name) {
   return nullptr;
 }
 
-#if 0
-void static_globals::remove(static_node* node) {
-  concurrency::scope_lock locked(g_lock);
-  if (node->m_next) {
-    node->m_next->m_prev = node->m_prev;
-  }
-
-  if (node->m_prev) {
-    node->m_prev->m_next = node->m_next;
-  }
-
-  if (g_head == node) {
-    g_head = node->m_next;
-  }
-
-  if (g_tail == node) {
-    g_tail = node->m_prev;
-  }
-}
-#endif
-
 void static_globals::lock() {
   g_lock.lock();
 }

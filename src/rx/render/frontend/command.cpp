@@ -1,6 +1,6 @@
-#include "rx/render/command.h"
+#include "rx/render/frontend/command.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
 command_buffer::command_buffer(memory::allocator* _allocator, rx_size _size)
   : m_allocator{_allocator, _size}
@@ -24,4 +24,4 @@ void command_buffer::reset() {
   m_allocator.reset();
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend

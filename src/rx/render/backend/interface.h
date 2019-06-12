@@ -1,10 +1,10 @@
-#ifndef RX_RENDER_BACKEND_H
-#define RX_RENDER_BACKEND_H
+#ifndef RX_RENDER_BACKEND_INTERFACE_H
+#define RX_RENDER_BACKEND_INTERFACE_H
 
 #include "rx/core/types.h" // rx_byte
 #include "rx/core/concepts/interface.h" // concepts::interface
 
-namespace rx::render {
+namespace rx::render::backend {
 
 // sizes of resources reported by the backend
 struct allocation_info {
@@ -17,7 +17,7 @@ struct allocation_info {
   rx_size textureCM_size;
 };
 
-struct backend
+struct interface
   : concepts::interface
 {
   virtual allocation_info query_allocation_info() const = 0;
@@ -25,6 +25,6 @@ struct backend
   virtual void swap() = 0;
 };
 
-} // namespace rx::render
+} // namespace rx::render::backend
 
-#endif
+#endif // RX_RENDER_BACKEND_INTERFACE_H

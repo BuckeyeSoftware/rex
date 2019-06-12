@@ -1,13 +1,12 @@
 #include <stdarg.h> // va_list, va_start, va_end
 #include <string.h> // strlen
 
-#include "rx/render/frontend.h"
-#include "rx/render/backend.h"
-#include "rx/render/buffer.h"
-#include "rx/render/target.h"
-#include "rx/render/program.h"
-#include "rx/render/texture.h"
-#include "rx/render/technique.h"
+#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/buffer.h"
+#include "rx/render/frontend/target.h"
+#include "rx/render/frontend/program.h"
+#include "rx/render/frontend/texture.h"
+#include "rx/render/frontend/technique.h"
 
 #include "rx/core/concurrency/scope_lock.h"
 #include "rx/core/filesystem/directory.h"
@@ -28,12 +27,12 @@ RX_LOG("render", render_log);
 
 static constexpr const char* k_technique_path{"base/renderer/techniques"};
 
-namespace rx::render {
+namespace rx::render::frontend {
 
 #define allocate_command(data_type, type) \
   m_command_buffer.allocate(sizeof(data_type), (type), _info)
 
-frontend::frontend(memory::allocator* _allocator, backend* _backend)
+interface::interface(memory::allocator* _allocator, backend::interface* _backend)
   : m_allocator{_allocator}
   , m_allocation_info{_backend->query_allocation_info()}
   , m_buffer_pool{m_allocator, m_allocation_info.buffer_size + sizeof(buffer), static_cast<rx_size>(*max_buffers)}
@@ -69,12 +68,12 @@ frontend::frontend(memory::allocator* _allocator, backend* _backend)
   }
 }
 
-frontend::~frontend() {
+interface::~interface() {
   // {empty}
 }
 
 // create_*
-buffer* frontend::create_buffer(const command_header::info& _info) {
+buffer* interface::create_buffer(const command_header::info& _info) {
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -84,7 +83,7 @@ buffer* frontend::create_buffer(const command_header::info& _info) {
   return command->as_buffer;
 }
 
-target* frontend::create_target(const command_header::info& _info) {
+target* interface::create_target(const command_header::info& _info) {
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -94,7 +93,7 @@ target* frontend::create_target(const command_header::info& _info) {
   return command->as_target;
 }
 
-program* frontend::create_program(const command_header::info& _info) {
+program* interface::create_program(const command_header::info& _info) {
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -104,7 +103,7 @@ program* frontend::create_program(const command_header::info& _info) {
   return command->as_program;
 }
 
-texture1D* frontend::create_texture1D(const command_header::info& _info) {
+texture1D* interface::create_texture1D(const command_header::info& _info) {
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -114,7 +113,7 @@ texture1D* frontend::create_texture1D(const command_header::info& _info) {
   return command->as_texture1D;
 }
 
-texture2D* frontend::create_texture2D(const command_header::info& _info) {
+texture2D* interface::create_texture2D(const command_header::info& _info) {
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -124,7 +123,7 @@ texture2D* frontend::create_texture2D(const command_header::info& _info) {
   return command->as_texture2D;
 }
 
-texture3D* frontend::create_texture3D(const command_header::info& _info) {
+texture3D* interface::create_texture3D(const command_header::info& _info) {
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -134,7 +133,7 @@ texture3D* frontend::create_texture3D(const command_header::info& _info) {
   return command->as_texture3D;
 }
 
-textureCM* frontend::create_textureCM(const command_header::info& _info) {
+textureCM* interface::create_textureCM(const command_header::info& _info) {
   concurrency::scope_lock lock(m_mutex);
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -145,7 +144,7 @@ textureCM* frontend::create_textureCM(const command_header::info& _info) {
 }
 
 // initialize_*
-void frontend::initialize_buffer(const command_header::info& _info, buffer* _buffer) {
+void interface::initialize_buffer(const command_header::info& _info, buffer* _buffer) {
   RX_ASSERT(_buffer, "_buffer is null");
   _buffer->validate();
   concurrency::scope_lock lock(m_mutex);
@@ -156,7 +155,7 @@ void frontend::initialize_buffer(const command_header::info& _info, buffer* _buf
   m_commands.push_back(command_base);
 }
 
-void frontend::initialize_target(const command_header::info& _info, target* _target) {
+void interface::initialize_target(const command_header::info& _info, target* _target) {
   RX_ASSERT(_target, "_target is null");
   _target->validate();
   concurrency::scope_lock lock(m_mutex);
@@ -167,7 +166,7 @@ void frontend::initialize_target(const command_header::info& _info, target* _tar
   m_commands.push_back(command_base);
 }
 
-void frontend::initialize_program(const command_header::info& _info, program* _program) {
+void interface::initialize_program(const command_header::info& _info, program* _program) {
   RX_ASSERT(_program, "_program is null");
   _program->validate();
   concurrency::scope_lock lock(m_mutex);
@@ -178,7 +177,7 @@ void frontend::initialize_program(const command_header::info& _info, program* _p
   m_commands.push_back(command_base);
 }
 
-void frontend::initialize_texture(const command_header::info& _info, texture1D* _texture) {
+void interface::initialize_texture(const command_header::info& _info, texture1D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
   concurrency::scope_lock lock(m_mutex);
@@ -189,7 +188,7 @@ void frontend::initialize_texture(const command_header::info& _info, texture1D* 
   m_commands.push_back(command_base);
 }
 
-void frontend::initialize_texture(const command_header::info& _info, texture2D* _texture) {
+void interface::initialize_texture(const command_header::info& _info, texture2D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
   concurrency::scope_lock lock(m_mutex);
@@ -200,7 +199,7 @@ void frontend::initialize_texture(const command_header::info& _info, texture2D* 
   m_commands.push_back(command_base);
 }
 
-void frontend::initialize_texture(const command_header::info& _info, texture3D* _texture) {
+void interface::initialize_texture(const command_header::info& _info, texture3D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
   concurrency::scope_lock lock(m_mutex);
@@ -211,7 +210,7 @@ void frontend::initialize_texture(const command_header::info& _info, texture3D* 
   m_commands.push_back(command_base);
 }
 
-void frontend::initialize_texture(const command_header::info& _info, textureCM* _texture) {
+void interface::initialize_texture(const command_header::info& _info, textureCM* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
   concurrency::scope_lock lock(m_mutex);
@@ -223,7 +222,7 @@ void frontend::initialize_texture(const command_header::info& _info, textureCM* 
 }
 
 // update_*
-void frontend::update_buffer(const command_header::info& _info, buffer* _buffer) {
+void interface::update_buffer(const command_header::info& _info, buffer* _buffer) {
   if (_buffer) {
     concurrency::scope_lock lock(m_mutex);
     auto command_base{allocate_command(resource_command, command_type::k_resource_update)};
@@ -235,7 +234,7 @@ void frontend::update_buffer(const command_header::info& _info, buffer* _buffer)
 }
 
 // destroy_*
-void frontend::destroy_buffer(const command_header::info& _info, buffer* _buffer) {
+void interface::destroy_buffer(const command_header::info& _info, buffer* _buffer) {
   if (_buffer) {
     concurrency::scope_lock lock(m_mutex);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
@@ -247,7 +246,7 @@ void frontend::destroy_buffer(const command_header::info& _info, buffer* _buffer
   }
 }
 
-void frontend::destroy_target(const command_header::info& _info, target* _target) {
+void interface::destroy_target(const command_header::info& _info, target* _target) {
   if (_target) {
     concurrency::scope_lock lock(m_mutex);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
@@ -259,7 +258,7 @@ void frontend::destroy_target(const command_header::info& _info, target* _target
   }
 }
 
-void frontend::destroy_program(const command_header::info& _info, program* _program) {
+void interface::destroy_program(const command_header::info& _info, program* _program) {
   if (_program) {
     concurrency::scope_lock lock(m_mutex);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
@@ -271,7 +270,7 @@ void frontend::destroy_program(const command_header::info& _info, program* _prog
   }
 }
 
-void frontend::destroy_texture(const command_header::info& _info, texture1D* _texture) {
+void interface::destroy_texture(const command_header::info& _info, texture1D* _texture) {
   if (_texture) {
     concurrency::scope_lock lock(m_mutex);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
@@ -283,12 +282,12 @@ void frontend::destroy_texture(const command_header::info& _info, texture1D* _te
   }
 }
 
-void frontend::destroy_texture(const command_header::info& _info, texture2D* _texture) {
+void interface::destroy_texture(const command_header::info& _info, texture2D* _texture) {
   concurrency::scope_lock lock(m_mutex);
   destroy_texture_unlocked(_info, _texture);
 }
 
-void frontend::destroy_texture(const command_header::info& _info, texture3D* _texture) {
+void interface::destroy_texture(const command_header::info& _info, texture3D* _texture) {
   if (_texture) {
     concurrency::scope_lock lock(m_mutex);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
@@ -300,7 +299,7 @@ void frontend::destroy_texture(const command_header::info& _info, texture3D* _te
   }
 }
 
-void frontend::destroy_texture(const command_header::info& _info, textureCM* _texture) {
+void interface::destroy_texture(const command_header::info& _info, textureCM* _texture) {
   if (_texture) {
     concurrency::scope_lock lock(m_mutex);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
@@ -312,7 +311,7 @@ void frontend::destroy_texture(const command_header::info& _info, textureCM* _te
   }
 }
 
-void frontend::destroy_texture_unlocked(const command_header::info& _info, texture2D* _texture) {
+void interface::destroy_texture_unlocked(const command_header::info& _info, texture2D* _texture) {
   if (_texture) {
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -323,7 +322,7 @@ void frontend::destroy_texture_unlocked(const command_header::info& _info, textu
   }
 }
 
-void frontend::draw_elements(
+void interface::draw_elements(
   const command_header::info& _info,
   const state& _state,
   target* _target,
@@ -380,7 +379,7 @@ void frontend::draw_elements(
   m_draw_calls[0]++;
 }
 
-void frontend::clear(
+void interface::clear(
   const command_header::info& _info,
   target* _target,
   rx_u32 _clear_mask,
@@ -399,7 +398,7 @@ void frontend::clear(
   m_commands.push_back(command_base);
 }
 
-bool frontend::process() {
+bool interface::process() {
   concurrency::scope_lock lock(m_mutex);
 
   if (m_commands.is_empty()) {
@@ -461,7 +460,7 @@ bool frontend::process() {
   return true;
 }
 
-frontend::statistics frontend::stats(resource::type _type) const {
+interface::statistics interface::stats(resource::type _type) const {
   concurrency::scope_lock lock(m_mutex);
 
   const auto index{static_cast<rx_size>(_type)};
@@ -485,17 +484,17 @@ frontend::statistics frontend::stats(resource::type _type) const {
   RX_UNREACHABLE();
 }
 
-rx_size frontend::draw_calls() const {
+rx_size interface::draw_calls() const {
   return m_draw_calls[1];
 }
 
-bool frontend::swap() {
+bool interface::swap() {
   m_backend->swap();
   return m_timer.update();
 }
 
-technique* frontend::find_technique_by_name(const char* _name) {
+technique* interface::find_technique_by_name(const char* _name) {
   return m_techniques.find(_name);
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend

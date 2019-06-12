@@ -1,7 +1,7 @@
 #include <string.h>
 
-#include "rx/render/technique.h"
-#include "rx/render/frontend.h"
+#include "rx/render/frontend/technique.h"
+#include "rx/render/frontend/interface.h"
 
 #include "rx/core/log.h"
 #include "rx/core/optional.h"
@@ -9,7 +9,7 @@
 
 RX_LOG("render/technique", log_technique);
 
-namespace rx::render {
+namespace rx::render::frontend {
 
 // simple recursive descent parser and evaluator for declarative predicates
 // <ident> := [a-Z0-9_]
@@ -187,7 +187,7 @@ static optional<shader::inout_type> inout_type_from_string(const string& _type) 
   return nullopt;
 }
 
-technique::technique(frontend* _frontend)
+technique::technique(interface* _frontend)
   : m_frontend{_frontend}
   , m_programs{m_frontend->allocator()}
   , m_permute_flags{m_frontend->allocator()}
@@ -978,4 +978,4 @@ bool technique::parse_specialization(const json& _specialization,
   return true;
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend

@@ -1,6 +1,6 @@
-#include "rx/render/material.h"
-#include "rx/render/frontend.h"
-#include "rx/render/texture.h"
+#include "rx/render/frontend/material.h"
+#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/texture.h"
 
 #include "rx/core/filesystem/file.h"
 #include "rx/core/debug.h" // RX_MESSAGE
@@ -10,9 +10,9 @@
 
 RX_LOG("render/material", log_material);
 
-namespace rx::render {
+namespace rx::render::frontend {
 
-material::material(frontend* _frontend)
+material::material(interface* _frontend)
   : m_frontend{_frontend}
   , m_diffuse{nullptr}
   , m_normal{nullptr}
@@ -253,4 +253,4 @@ bool material::parse_wrap(texture2D* texture_, const json& _wrap) {
   return false;
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend

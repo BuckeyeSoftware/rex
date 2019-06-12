@@ -1,9 +1,9 @@
-#ifndef RX_RENDER_STATE_H
-#define RX_RENDER_STATE_H
+#ifndef RX_RENDER_FRONTEND_STATE_H
+#define RX_RENDER_FRONTEND_STATE_H
 
 #include "rx/math/vec2.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
 struct scissor_state {
   scissor_state();
@@ -586,6 +586,6 @@ inline bool polygon_state::operator!=(const polygon_state& _other) const {
   return !operator==(_other);
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend
 
-#endif
+#endif // RX_RENDER_FRONTEND_STATE_H

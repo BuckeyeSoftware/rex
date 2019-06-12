@@ -1,6 +1,6 @@
-#include "rx/render/state.h"
+#include "rx/render/frontend/state.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
 // scissor_state
 scissor_state::scissor_state()
@@ -287,4 +287,4 @@ rx_size polygon_state::flush() {
   return m_hash;
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend

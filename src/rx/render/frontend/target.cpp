@@ -1,11 +1,11 @@
-#include "rx/render/target.h"
-#include "rx/render/command.h"
-#include "rx/render/frontend.h"
+#include "rx/render/frontend/target.h"
+#include "rx/render/frontend/command.h"
+#include "rx/render/frontend/interface.h"
 
-#include "rx/console/console.h"
+#include "rx/console/interface.h"
 #include "rx/console/variable.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
 // checks if |_format| is a valid depth-only format
 static bool is_valid_depth_format(texture::data_format _format) {
@@ -100,7 +100,7 @@ static bool is_valid_depth_stencil_format(texture::data_format _format) {
   return false;
 }
 
-target::target(frontend* _frontend)
+target::target(interface* _frontend)
   : resource{_frontend, resource::type::k_target}
   , m_depth_texture{nullptr}
   , m_stencil_texture{nullptr}
@@ -127,7 +127,7 @@ void target::request_swapchain() {
   RX_ASSERT(m_flags == 0 && m_attachments.is_empty(), "target is not empty");
   m_is_swapchain = true;
 
-  auto display_resolution{console::console::get_from_name("display.resolution")};
+  auto display_resolution{console::interface::get_from_name("display.resolution")};
   RX_ASSERT(display_resolution, "display.resolution not found");
   m_dimensions = display_resolution->cast<math::vec2i>()->get().cast<rx_size>();
 }
@@ -308,4 +308,4 @@ void target::update_resource_usage() {
   resource::update_resource_usage(usage);
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend

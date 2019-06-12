@@ -1,5 +1,5 @@
-#ifndef RX_RENDER_FRONTEND_H
-#define RX_RENDER_FRONTEND_H
+#ifndef RX_RENDER_FRONTEND_INTERFACE_H
+#define RX_RENDER_FRONTEND_INTERFACE_H
 
 #include "rx/core/deferred_function.h"
 #include "rx/core/array.h"
@@ -11,12 +11,13 @@
 
 #include "rx/core/memory/pool_allocator.h"
 
-#include "rx/render/command.h"
-#include "rx/render/resource.h"
-#include "rx/render/backend.h"
-#include "rx/render/timer.h"
+#include "rx/render/frontend/command.h"
+#include "rx/render/frontend/resource.h"
+#include "rx/render/frontend/timer.h"
 
-namespace rx::render {
+#include "rx/render/backend/interface.h"
+
+namespace rx::render::frontend {
 
 struct buffer;
 struct target;
@@ -27,9 +28,9 @@ struct texture3D;
 struct textureCM;
 struct technique;
 
-struct frontend {
-  frontend(memory::allocator* _allocator, backend* _backend);
-  ~frontend();
+struct interface {
+  interface(memory::allocator* _allocator, backend::interface* _backend);
+  ~interface();
 
   buffer* create_buffer(const command_header::info& _info);
   target* create_target(const command_header::info& _info);
@@ -130,7 +131,7 @@ private:
   memory::allocator* m_allocator;          // protected by |m_mutex|
 
   // size of resources as reported by the backend
-  allocation_info m_allocation_info;
+  backend::allocation_info m_allocation_info;
 
   memory::pool_allocator m_buffer_pool;    // protected by |m_mutex|
   memory::pool_allocator m_target_pool;    // protected by |m_mutex|
@@ -151,29 +152,30 @@ private:
   array<rx_byte*> m_commands;              // protected by |m_mutex|
   command_buffer m_command_buffer;         // protected by |m_mutex|
 
-  backend* m_backend;                      // protected by |m_mutex|
+  backend::interface* m_backend;           // protected by |m_mutex|
 
   deferred_function<void()> m_deferred_process;
 
   map<string, technique> m_techniques; 
+
   frame_timer m_timer;
 
   rx_size m_resource_usage[resource::count()];
   concurrency::atomic<rx_size> m_draw_calls[2];
 };
 
-inline memory::allocator* frontend::allocator() const {
+inline memory::allocator* interface::allocator() const {
   return m_allocator;
 }
 
-inline const frame_timer& frontend::timer() const & {
+inline const frame_timer& interface::timer() const & {
   return m_timer;
 }
 
-inline const command_buffer& frontend::get_command_buffer() const & {
+inline const command_buffer& interface::get_command_buffer() const & {
   return m_command_buffer;
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend
 
-#endif // RX_RENDER_FRONTEND_H
+#endif // RX_RENDER_FRONTEND_INTERFACE_H

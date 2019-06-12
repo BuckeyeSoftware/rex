@@ -1,5 +1,5 @@
-#ifndef RX_RENDER_TECHNIQUE_H
-#define RX_RENDER_TECHNIQUE_H
+#ifndef RX_RENDER_FRONTEND_TECHNIQUE_H
+#define RX_RENDER_FRONTEND_TECHNIQUE_H
 
 #include "rx/core/string.h"
 #include "rx/core/array.h"
@@ -7,16 +7,18 @@
 #include "rx/core/map.h"
 #include "rx/core/log.h"
 
-#include "rx/render/program.h"
+#include "rx/render/frontend/program.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
-struct frontend;
+struct interface;
 struct technique;
 
-struct technique : concepts::no_copy {
+struct technique
+  : concepts::no_copy
+{
   technique() = default;
-  technique(frontend* _frontend);
+  technique(interface* _frontend);
   ~technique();
 
   technique(technique&& _technique);
@@ -114,7 +116,7 @@ private:
 
   void write_log(log::level _level, string&& _message) const;
 
-  frontend* m_frontend;
+  interface* m_frontend;
   type m_type;
   array<program*> m_programs;
   array<rx_u64> m_permute_flags;
@@ -142,6 +144,6 @@ inline void technique::log(log::level _level, const char* _format,
   write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend
 
-#endif // RX_RENDER_TECHNIQUE_H
+#endif // RX_RENDER_FRONTEND_TECHNIQUE_H

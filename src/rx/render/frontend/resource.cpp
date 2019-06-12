@@ -1,12 +1,12 @@
-#include "rx/render/resource.h"
-#include "rx/render/frontend.h"
+#include "rx/render/frontend/resource.h"
+#include "rx/render/frontend/interface.h"
 
 #include "rx/core/log.h"
 #include "rx/core/concurrency/scope_lock.h"
 
 RX_LOG("render/resource", log_resource);
 
-namespace rx::render {
+namespace rx::render::frontend {
 
 static constexpr const char* resource_type_to_string(resource::type _type) {
   switch (_type) {
@@ -28,7 +28,7 @@ static constexpr const char* resource_type_to_string(resource::type _type) {
   return "";
 }
 
-resource::resource(frontend* _frontend, type _type)
+resource::resource(interface* _frontend, type _type)
   : m_frontend{_frontend}
   , m_resource_type{_type}
   , m_resource_usage{0}
@@ -50,4 +50,4 @@ void resource::update_resource_usage(rx_size _bytes) {
   m_frontend->m_resource_usage[index] += m_resource_usage;
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend

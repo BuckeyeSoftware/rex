@@ -1,11 +1,11 @@
-#ifndef RX_CONSOLE_CONSOLE_H
-#define RX_CONSOLE_CONSOLE_H
+#ifndef RX_CONSOLE_INTERFACE_H
+#define RX_CONSOLE_INTERFACE_H
 
 #include "rx/console/variable.h"
 
 namespace rx::console {
 
-struct console {
+struct interface {
   // loads |_file_name| configuration
   static bool load(const char* _file_name);
 
@@ -43,4 +43,4 @@ private:
 
 } // namespace rx::console
 
-#endif // RX_CONSOLE_CONSOLE_H
+#endif // RX_CONSOLE_INTERFACE_H

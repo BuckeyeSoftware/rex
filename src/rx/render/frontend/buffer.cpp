@@ -1,9 +1,9 @@
 #include <string.h> // memcpy
 
-#include "rx/render/buffer.h"
-#include "rx/render/frontend.h"
+#include "rx/render/frontend/buffer.h"
+#include "rx/render/frontend/interface.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
 static rx_size size_for_element_type(buffer::element_type _type) {
   switch (_type) {
@@ -19,7 +19,7 @@ static rx_size size_for_element_type(buffer::element_type _type) {
   return 0;
 }
 
-buffer::buffer(frontend* _frontend)
+buffer::buffer(interface* _frontend)
   : resource{_frontend, resource::type::k_buffer}
   , m_vertices_store{m_frontend->allocator()}
   , m_elements_store{m_frontend->allocator()}
@@ -60,4 +60,4 @@ void buffer::validate() const {
   RX_ASSERT(m_recorded & k_type, "no type specified");
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend

@@ -8,13 +8,17 @@
 #include "rx/core/string.h"
 #include "rx/core/map.h"
 
-#include "rx/render/target.h"
-#include "rx/render/buffer.h"
-#include "rx/render/state.h"
+#include "rx/render/frontend/state.h"
 
 namespace rx::render {
 
-struct technique;
+namespace frontend {
+  struct buffer;
+  struct target;
+  struct technique;
+  struct texture2D;
+  struct interface;
+}
 
 struct immediate {
   enum class text_align {
@@ -125,10 +129,10 @@ struct immediate {
     array<char> m_string_table;
   };
 
-  immediate(frontend* _frontend);
+  immediate(frontend::interface* _frontend);
   ~immediate();
 
-  void render(target* _target);
+  void render(frontend::target* _target);
   queue& frame_queue();
 
   struct font {
@@ -152,7 +156,7 @@ struct immediate {
       bool operator==(const key& _key) const;
     };
 
-    font(const key& _key, frontend* _frontend);
+    font(const key& _key, frontend::interface* _frontend);
     font(font&& _font);
     ~font();
 
@@ -160,13 +164,13 @@ struct immediate {
     glyph glyph_for_code(rx_u32 _code) const;
 
     rx_s32 size() const;
-    render::texture2D* texture() const;
+    frontend::texture2D* texture() const;
   
   private:
-    frontend* m_frontend;
+    frontend::interface* m_frontend;
     rx_s32 m_size;
     rx_size m_resolution;
-    render::texture2D* m_texture;
+    frontend::texture2D* m_texture;
     array<glyph> m_glyphs;
   };
 
@@ -190,7 +194,7 @@ private:
     const math::vec2f& _position, text_align _align, const math::vec4f& _color);
 
   void add_batch(rx_size _offset, queue::command::type _type,
-    texture2D* _texture = nullptr);
+    frontend::texture2D* _texture = nullptr);
 
   struct vertex {
     math::vec2f position;
@@ -202,12 +206,12 @@ private:
     rx_size offset;
     rx_size count;
     queue::command::type kind;
-    state render_state;
-    texture2D* texture;
+    frontend::state render_state;
+    frontend::texture2D* texture;
   };
 
-  frontend* m_frontend;
-  technique* m_technique;
+  frontend::interface* m_frontend;
+  frontend::technique* m_technique;
 
   // loaded fonts
   map<font::key, font*> m_fonts;
@@ -229,7 +233,7 @@ private:
   rx_size m_rd_index;
   rx_size m_wr_index;
   array<batch> m_render_batches[k_buffers];
-  buffer* m_buffers[k_buffers];
+  frontend::buffer* m_buffers[k_buffers];
   queue m_render_queue[k_buffers];
 };
 
@@ -301,7 +305,7 @@ inline rx_s32 immediate::font::size() const {
   return m_size;
 }
 
-inline render::texture2D* immediate::font::texture() const {
+inline frontend::texture2D* immediate::font::texture() const {
   return m_texture;
 }
 

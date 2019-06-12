@@ -1,5 +1,5 @@
 #include "rx/console/variable.h"
-#include "rx/console/console.h"
+#include "rx/console/interface.h"
 
 namespace rx::console {
 
@@ -10,7 +10,7 @@ variable_reference::variable_reference(const char* name,
   , m_handle{handle}
   , m_type{type}
 {
-  m_next = console::add_variable_reference(this);
+  m_next = interface::add_variable_reference(this);
 }
 
 // instance for all console variable types here, we don't instance for

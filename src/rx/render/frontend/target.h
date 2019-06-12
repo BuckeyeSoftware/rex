@@ -1,17 +1,17 @@
-#ifndef RX_RENDER_TARGET_H
-#define RX_RENDER_TARGET_H
+#ifndef RX_RENDER_FRONTEND_TARGET_H
+#define RX_RENDER_FRONTEND_TARGET_H
 
 #include "rx/core/array.h"
 
-#include "rx/render/texture.h"
-#include "rx/render/resource.h"
+#include "rx/render/frontend/texture.h"
+#include "rx/render/frontend/resource.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
-struct frontend;
+struct interface;
 
 struct target : resource {
-  target(frontend* _frontend);
+  target(interface* _frontend);
   ~target();
 
   // request the swap chain for this target
@@ -95,6 +95,6 @@ inline const math::vec2z& target::dimensions() const {
   return m_dimensions;
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend
 
-#endif
+#endif // RX_RENDER_FRONTEND_TARGET_H

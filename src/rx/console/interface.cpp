@@ -2,7 +2,7 @@
 #include <stdlib.h> // strtoll, strtof
 #include <errno.h> // errno, ERANGE
 
-#include "rx/console/console.h"
+#include "rx/console/interface.h"
 #include "rx/console/variable.h"
 
 #include "rx/core/concurrency/spin_lock.h"
@@ -19,7 +19,7 @@ static variable_reference* g_head; // protected by |g_lock|
 
 RX_LOG("console", console_print);
 
-bool console::load(const char* file_name) {
+bool interface::load(const char* file_name) {
   // sort references
   {
     concurrency::scope_lock locked(g_lock);
@@ -64,7 +64,7 @@ bool console::load(const char* file_name) {
   return true;
 }
 
-bool console::save(const char* file_name) {
+bool interface::save(const char* file_name) {
   filesystem::file file(file_name, "w");
   if (!file) {
     return false;
@@ -265,7 +265,7 @@ bool console::save(const char* file_name) {
 
 // parse string contents into value for console
 template<>
-variable_status console::parse_string<bool>(const string& contents, bool& result) {
+variable_status interface::parse_string<bool>(const string& contents, bool& result) {
   if (contents == "true" || contents == "false") {
     result = contents == "true";
     return variable_status::k_success;
@@ -274,13 +274,13 @@ variable_status console::parse_string<bool>(const string& contents, bool& result
 }
 
 template<>
-variable_status console::parse_string<string>(const string& contents, string& result) {
+variable_status interface::parse_string<string>(const string& contents, string& result) {
   result = contents;
   return variable_status::k_success;
 }
 
 template<>
-variable_status console::parse_string<rx_s32>(const string& contents, rx_s32& result) {
+variable_status interface::parse_string<rx_s32>(const string& contents, rx_s32& result) {
   const char* input{contents.data()};
   char* scan{nullptr};
 
@@ -303,7 +303,7 @@ variable_status console::parse_string<rx_s32>(const string& contents, rx_s32& re
 }
 
 template<>
-variable_status console::parse_string<rx_f32>(const string& contents, rx_f32& result) {
+variable_status interface::parse_string<rx_f32>(const string& contents, rx_f32& result) {
   const char* input{contents.data()};
   char* scan{nullptr};
 
@@ -323,7 +323,7 @@ variable_status console::parse_string<rx_f32>(const string& contents, rx_f32& re
 
 // vec4
 template<>
-variable_status console::parse_string<math::vec4f>(const string& contents, math::vec4f& result) {
+variable_status interface::parse_string<math::vec4f>(const string& contents, math::vec4f& result) {
   math::vec4f value;
   if (contents.scan("{%f, %f, %f, %f}", &value.x, &value.y, &value.z, &value.w) != 4) {
     return variable_status::k_malformed;
@@ -333,7 +333,7 @@ variable_status console::parse_string<math::vec4f>(const string& contents, math:
 }
 
 template<>
-variable_status console::parse_string<math::vec4i>(const string& contents, math::vec4i& result) {
+variable_status interface::parse_string<math::vec4i>(const string& contents, math::vec4i& result) {
   math::vec4i value;
   if (contents.scan("{%d, %d, %d, %d}", &value.x, &value.y, &value.z, &value.w) != 4) {
     return variable_status::k_malformed;
@@ -344,7 +344,7 @@ variable_status console::parse_string<math::vec4i>(const string& contents, math:
 
 // vec3
 template<>
-variable_status console::parse_string<math::vec3f>(const string& contents, math::vec3f& result) {
+variable_status interface::parse_string<math::vec3f>(const string& contents, math::vec3f& result) {
   math::vec3f value;
   if (contents.scan("{%f, %f, %f}", &value.x, &value.y, &value.z) != 3) {
     return variable_status::k_malformed;
@@ -354,7 +354,7 @@ variable_status console::parse_string<math::vec3f>(const string& contents, math:
 }
 
 template<>
-variable_status console::parse_string<math::vec3i>(const string& contents, math::vec3i& result) {
+variable_status interface::parse_string<math::vec3i>(const string& contents, math::vec3i& result) {
   math::vec3i value;
   if (contents.scan("{%d, %d, %d}", &value.x, &value.y, &value.z) != 3) {
     return variable_status::k_malformed;
@@ -365,7 +365,7 @@ variable_status console::parse_string<math::vec3i>(const string& contents, math:
 
 // vec2
 template<>
-variable_status console::parse_string<math::vec2f>(const string& contents, math::vec2f& result) {
+variable_status interface::parse_string<math::vec2f>(const string& contents, math::vec2f& result) {
   math::vec2f value;
   if (contents.scan("{%f, %f}", &value.x, &value.y) != 2) {
     return variable_status::k_malformed;
@@ -375,7 +375,7 @@ variable_status console::parse_string<math::vec2f>(const string& contents, math:
 }
 
 template<>
-variable_status console::parse_string<math::vec2i>(const string& contents, math::vec2i& result) {
+variable_status interface::parse_string<math::vec2i>(const string& contents, math::vec2i& result) {
   math::vec2i value;
   if (contents.scan("{%d, %d}", &value.x, &value.y) != 2) {
     return variable_status::k_malformed;
@@ -385,7 +385,7 @@ variable_status console::parse_string<math::vec2i>(const string& contents, math:
 }
 
 template<typename T>
-variable_status console::set_from_string(const string& name, const string& value_string) {
+variable_status interface::set_from_string(const string& name, const string& value_string) {
   T value;
   variable_status status;
   if ((status = parse_string<T>(value_string, value)) == variable_status::k_success) {
@@ -395,7 +395,7 @@ variable_status console::set_from_string(const string& name, const string& value
 }
 
 template<typename T>
-variable_status console::set_from_value(const string& name, const T& value) {
+variable_status interface::set_from_value(const string& name, const T& value) {
   for (auto head{g_head}; head; head = head->m_next) {
     if (head->name() == name) {
       if (head->type() != variable_trait<T>::type) {
@@ -407,18 +407,18 @@ variable_status console::set_from_value(const string& name, const T& value) {
   return variable_status::k_not_found;
 }
 
-template variable_status console::set_from_value<bool>(const string& name, const bool& value);
-template variable_status console::set_from_value<string>(const string& name, const string& value);
-template variable_status console::set_from_value<rx_s32>(const string& name, const rx_s32& value);
-template variable_status console::set_from_value<rx_f32>(const string& name, const rx_f32& value);
-template variable_status console::set_from_value<math::vec4f>(const string& name, const math::vec4f& value);
-template variable_status console::set_from_value<math::vec4i>(const string& name, const math::vec4i& value);
-template variable_status console::set_from_value<math::vec3f>(const string& name, const math::vec3f& value);
-template variable_status console::set_from_value<math::vec3i>(const string& name, const math::vec3i& value);
-template variable_status console::set_from_value<math::vec2f>(const string& name, const math::vec2f& value);
-template variable_status console::set_from_value<math::vec2i>(const string& name, const math::vec2i& value);
+template variable_status interface::set_from_value<bool>(const string& name, const bool& value);
+template variable_status interface::set_from_value<string>(const string& name, const string& value);
+template variable_status interface::set_from_value<rx_s32>(const string& name, const rx_s32& value);
+template variable_status interface::set_from_value<rx_f32>(const string& name, const rx_f32& value);
+template variable_status interface::set_from_value<math::vec4f>(const string& name, const math::vec4f& value);
+template variable_status interface::set_from_value<math::vec4i>(const string& name, const math::vec4i& value);
+template variable_status interface::set_from_value<math::vec3f>(const string& name, const math::vec3f& value);
+template variable_status interface::set_from_value<math::vec3i>(const string& name, const math::vec3i& value);
+template variable_status interface::set_from_value<math::vec2f>(const string& name, const math::vec2f& value);
+template variable_status interface::set_from_value<math::vec2i>(const string& name, const math::vec2i& value);
 
-variable_status console::change(const string& name, const string& value) {
+variable_status interface::change(const string& name, const string& value) {
   for (variable_reference* head{g_head}; head; head = head->m_next) {
     if (head->name() != name) {
       continue;
@@ -451,7 +451,7 @@ variable_status console::change(const string& name, const string& value) {
   return variable_status::k_not_found;
 }
 
-variable_reference* console::get_from_name(const string& _name) {
+variable_reference* interface::get_from_name(const string& _name) {
   for (variable_reference* head{g_head}; head; head = head->m_next) {
     if (head->name() != _name) {
       continue;
@@ -463,7 +463,7 @@ variable_reference* console::get_from_name(const string& _name) {
   return nullptr;
 }
 
-variable_reference* console::add_variable_reference(variable_reference* reference) {
+variable_reference* interface::add_variable_reference(variable_reference* reference) {
   console_print(log::level::k_info, "registered '%s'", reference->m_name);
   concurrency::scope_lock locked(g_lock);
   variable_reference* next = g_head;
@@ -471,7 +471,7 @@ variable_reference* console::add_variable_reference(variable_reference* referenc
   return next;
 }
 
-variable_reference* console::split(variable_reference* reference) {
+variable_reference* interface::split(variable_reference* reference) {
   if (!reference || !reference->m_next) {
     return nullptr;
   }
@@ -481,7 +481,7 @@ variable_reference* console::split(variable_reference* reference) {
   return splitted;
 }
 
-variable_reference* console::merge(variable_reference* lhs, variable_reference* rhs) {
+variable_reference* interface::merge(variable_reference* lhs, variable_reference* rhs) {
   if (!lhs) {
     return rhs;
   }
@@ -499,7 +499,7 @@ variable_reference* console::merge(variable_reference* lhs, variable_reference* 
   return lhs;
 }
 
-variable_reference* console::sort(variable_reference* reference) {
+variable_reference* interface::sort(variable_reference* reference) {
   if (!reference) {
     return nullptr;
   }

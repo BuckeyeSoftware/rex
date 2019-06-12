@@ -1,14 +1,14 @@
-#ifndef RX_RENDER_COMMAND_H
-#define RX_RENDER_COMMAND_H
+#ifndef RX_RENDER_FRONTEND_COMMAND_H
+#define RX_RENDER_FRONTEND_COMMAND_H
 
-#include "rx/render/state.h"
+#include "rx/render/frontend/state.h"
 
 #include "rx/core/memory/bump_point_allocator.h"
 #include "rx/core/utility/construct.h"
 
 #include "rx/math/vec4.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
 struct target;
 struct buffer;
@@ -55,7 +55,7 @@ struct alignas(16) command_header {
 };
 
 #define RX_RENDER_TAG(description) \
-  ::rx::render::command_header::info{__FILE__, (description), __LINE__}
+  ::rx::render::frontend::command_header::info{__FILE__, (description), __LINE__}
 
 struct command_buffer {
   static constexpr const rx_size k_alignment{16};
@@ -137,6 +137,6 @@ inline rx_byte* draw_command::uniforms() {
   return reinterpret_cast<rx_byte*>(this) + sizeof *this;
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend
 
-#endif // RX_RENDER_COMMAND_H
+#endif // RX_RENDER_FRONTEND_COMMAND_H

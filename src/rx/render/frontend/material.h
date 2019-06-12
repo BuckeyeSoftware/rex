@@ -1,5 +1,5 @@
-#ifndef RX_RENDER_MATERIAL_H
-#define RX_RENDER_MATERIAL_H
+#ifndef RX_RENDER_FRONTEND_MATERIAL_H
+#define RX_RENDER_FRONTEND_MATERIAL_H
 
 #include "rx/core/string.h"
 #include "rx/core/json.h"
@@ -7,13 +7,13 @@
 
 #include "rx/core/concepts/no_copy.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
 struct texture2D;
-struct frontend;
+struct interface;
 
 struct material : concepts::no_copy {
-  material(frontend* _frontend);
+  material(interface* _frontend);
   ~material();
 
   material(material&& _material);
@@ -43,7 +43,7 @@ private:
 
   void write_log(log::level _level, string&& _message) const;
 
-  frontend* m_frontend;
+  interface* m_frontend;
 
   texture2D* m_diffuse;
   texture2D* m_normal;
@@ -114,6 +114,6 @@ inline void material::log(log::level _level, const char* _format,
   write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend
 
-#endif // RX_RENDER_MATERIAL_H
+#endif // RX_RENDER_FRONTEND_MATERIAL_H

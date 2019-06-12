@@ -1,8 +1,8 @@
 #include <SDL.h> // SDL_GetPerformance{Counter,Frequency}
 
-#include "rx/render/timer.h"
+#include "rx/render/frontend/timer.h"
 
-namespace rx::render {
+namespace rx::render::frontend {
 
 static rx_u64 timer_ticks() {
   return SDL_GetPerformanceCounter();
@@ -98,4 +98,4 @@ bool frame_timer::update() {
   return false;
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend

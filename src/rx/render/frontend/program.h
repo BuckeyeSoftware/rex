@@ -12,12 +12,11 @@
 
 #include "rx/core/concepts/no_copy.h"
 
-#include "rx/render/resource.h"
+#include "rx/render/frontend/resource.h"
 
-namespace rx::render
-{
+namespace rx::render::frontend {
 
-struct frontend;
+struct interface;
 struct program;
 
 struct uniform : concepts::no_copy {
@@ -127,7 +126,7 @@ struct shader {
 };
 
 struct program : resource {
-  program(frontend* _frontend);
+  program(interface* _frontend);
 
   void validate() const;
 
@@ -165,6 +164,6 @@ inline array<uniform>& program::uniforms() & {
   return m_uniforms;
 }
 
-} // namespace rx::render
+} // namespace rx::render::frontend
 
-#endif // RX_RENDER_PROGRAM_H
+#endif // RX_RENDER_FRONTEND_PROGRAM_H
