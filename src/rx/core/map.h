@@ -31,8 +31,8 @@ struct map {
   map& operator=(map&& _map);
   map& operator=(const map& _map);
 
-  void insert(const K& _key, V&& _value);
-  void insert(const K& _key, const V& _value);
+  V* insert(const K& _key, V&& _value);
+  V* insert(const K& _key, const V& _value);
 
   V* find(const K& _key);
   const V* find(const K& _key) const;
@@ -68,11 +68,11 @@ private:
   void grow();
 
   // move and non-move construction functions
-  void construct(rx_size _index, rx_size _hash, K&& _key, V&& _value);
+  V* construct(rx_size _index, rx_size _hash, K&& _key, V&& _value);
 
-  void inserter(rx_size _hash, K&& _key, V&& _value);
-  void inserter(rx_size _hash, const K& _key, const V& _value);
-  void inserter(rx_size _hash, const K& _key, V&& _value);
+  V* inserter(rx_size _hash, K&& _key, V&& _value);
+  V* inserter(rx_size _hash, const K& _key, const V& _value);
+  V* inserter(rx_size _hash, const K& _key, V&& _value);
 
   bool lookup_index(const K& _key, rx_size& _index) const;
 
@@ -201,19 +201,19 @@ inline void map<K, V>::initialize(memory::allocator* _allocator, rx_size _capaci
 }
 
 template<typename K, typename V>
-inline void map<K, V>::insert(const K& _key, V&& _value) {
+inline V* map<K, V>::insert(const K& _key, V&& _value) {
   if (++m_size >= m_resize_threshold) {
     grow();
   }
-  inserter(hash_key(_key), _key, utility::move(_value));
+  return inserter(hash_key(_key), _key, utility::move(_value));
 }
 
 template<typename K, typename V>
-inline void map<K, V>::insert(const K& _key, const V& _value) {
+inline V* map<K, V>::insert(const K& _key, const V& _value) {
   if (++m_size >= m_resize_threshold) {
     grow();
   }
-  inserter(hash_key(_key), _key, _value);
+  return inserter(hash_key(_key), _key, _value);
 }
 
 template<typename K, typename V>
@@ -351,27 +351,26 @@ inline void map<K, V>::grow() {
 }
 
 template<typename K, typename V>
-inline void map<K, V>::construct(rx_size _index, rx_size _hash, K&& _key, V&& _value) {
+inline V* map<K, V>::construct(rx_size _index, rx_size _hash, K&& _key, V&& _value) {
   utility::construct<K>(m_keys + _index, utility::move(_key));
   utility::construct<V>(m_values + _index, utility::move(_value));
   element_hash(_index) = _hash;
+  return m_values + _index;
 }
 
 template<typename K, typename V>
-inline void map<K, V>::inserter(rx_size _hash, K&& _key, V&& _value) {
+inline V* map<K, V>::inserter(rx_size _hash, K&& _key, V&& _value) {
   rx_size position{desired_position(_hash)};
   rx_size distance{0};
   for (;;) {
     if (element_hash(position) == 0) {
-      construct(position, _hash, utility::move(_key), utility::move(_value));
-      return;
+      return construct(position, _hash, utility::move(_key), utility::move(_value));
     }
 
     const rx_size existing_element_probe_distance{probe_distance(element_hash(position), position)};
     if (existing_element_probe_distance < distance) {
       if (is_deleted(element_hash(position))) {
-        construct(position, _hash, utility::move(_key), utility::move(_value));
-        return;
+        return construct(position, _hash, utility::move(_key), utility::move(_value));
       }
 
       utility::swap(_hash, element_hash(position));
@@ -384,16 +383,18 @@ inline void map<K, V>::inserter(rx_size _hash, K&& _key, V&& _value) {
     position = (position + 1) & m_mask;
     distance++;
   }
+
+  RX_UNREACHABLE();
 }
 
 template<typename K, typename V>
-inline void map<K, V>::inserter(rx_size _hash, const K& _key, V&& _value) {
+inline V* map<K, V>::inserter(rx_size _hash, const K& _key, V&& _value) {
   K key{_key};
   return inserter(_hash, utility::move(key), utility::move(_value));
 }
 
 template<typename K, typename V>
-inline void map<K, V>::inserter(rx_size _hash, const K& _key, const V& _value) {
+inline V* map<K, V>::inserter(rx_size _hash, const K& _key, const V& _value) {
   K key{_key};
   V value{_value};
   return inserter(_hash, utility::move(key), utility::move(value));

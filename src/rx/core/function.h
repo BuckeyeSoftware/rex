@@ -17,13 +17,16 @@ struct function<R(Ts...)> {
   constexpr function(memory::allocator* _allocator);
 
   template<typename F, typename = traits::enable_if<traits::is_callable<F, Ts...>>>
-  function(F _function);
+  function(F&& _function);
 
   template<typename F, typename = traits::enable_if<traits::is_callable<F, Ts...>>>
-  function(memory::allocator* _allocator, F _function);
+  function(memory::allocator* _allocator, F&& _function);
 
   function(const function& _function);
+  function(function&& _function);
+
   function& operator=(const function& _function);
+  function& operator=(function&& _function);
   function& operator=(rx_nullptr);
 
   ~function();
@@ -79,14 +82,14 @@ inline constexpr function<R(Ts...)>::function(memory::allocator* _allocator)
 
 template<typename R, typename... Ts>
 template<typename F, typename>
-inline function<R(Ts...)>::function(F _function)
-  : function{&memory::g_system_allocator, _function}
+inline function<R(Ts...)>::function(F&& _function)
+  : function{&memory::g_system_allocator, utility::forward<F>(_function)}
 {
 }
 
 template<typename R, typename... Ts>
 template<typename F, typename>
-inline function<R(Ts...)>::function(memory::allocator* _allocator, F _function)
+inline function<R(Ts...)>::function(memory::allocator* _allocator, F&& _function)
   : m_invoke{invoke<F>}
   , m_construct{construct<F>}
   , m_destruct{destruct<F>}
@@ -109,6 +112,18 @@ inline function<R(Ts...)>::function(const function& _function)
 }
 
 template<typename R, typename... Ts>
+inline function<R(Ts...)>::function(function&& _function)
+  : m_invoke{_function.m_invoke}
+  , m_construct{_function.m_construct}
+  , m_destruct{_function.m_destruct}
+  , m_data{utility::move(_function.m_data)}
+{
+  _function.m_invoke = nullptr;
+  _function.m_construct = nullptr;
+  _function.m_destruct = nullptr;
+}
+
+template<typename R, typename... Ts>
 inline function<R(Ts...)>& function<R(Ts...)>::operator=(const function& _function) {
   if (m_destruct) {
     m_destruct(m_data.data());
@@ -122,6 +137,24 @@ inline function<R(Ts...)>& function<R(Ts...)>::operator=(const function& _functi
     m_data.resize(_function.m_data.size());
     m_construct(m_data.data(), _function.m_data.data());
   }
+
+  return *this;
+}
+
+template<typename R, typename... Ts>
+inline function<R(Ts...)>& function<R(Ts...)>::operator=(function&& _function) {
+  if (m_destruct) {
+    m_destruct(m_data.data());
+  }
+
+  m_invoke = _function.m_invoke;
+  m_construct = _function.m_construct;
+  m_destruct = _function.m_destruct;
+  m_data = utility::move(_function.m_data);
+
+  _function.m_invoke = nullptr;
+  _function.m_construct = nullptr;
+  _function.m_destruct = nullptr;
 
   return *this;
 }

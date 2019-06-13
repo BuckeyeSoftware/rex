@@ -27,6 +27,7 @@ struct texture2D;
 struct texture3D;
 struct textureCM;
 struct technique;
+struct material;
 
 struct interface {
   interface(memory::allocator* _allocator, backend::interface* _backend);
@@ -156,7 +157,7 @@ private:
 
   deferred_function<void()> m_deferred_process;
 
-  map<string, technique> m_techniques; 
+  map<string, technique> m_techniques;
 
   frame_timer m_timer;
 

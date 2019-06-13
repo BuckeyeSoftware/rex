@@ -7,6 +7,7 @@
 #include "rx/render/frontend/program.h"
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/technique.h"
+#include "rx/render/frontend/material.h"
 
 #include "rx/core/concurrency/scope_lock.h"
 #include "rx/core/filesystem/directory.h"
