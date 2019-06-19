@@ -32,6 +32,7 @@ buffer::~buffer() {
 }
 
 void buffer::write_vertices_data(const rx_byte* _data, rx_size _size) {
+  RX_ASSERT(m_recorded & k_stride, "vertex stride not recorded");
   RX_ASSERT(_data, "_data is null");
   RX_ASSERT(_size != 0, "_size is zero");
   RX_ASSERT(_size % m_stride == 0, "_size not a multiple of vertex stride");
@@ -43,6 +44,7 @@ void buffer::write_vertices_data(const rx_byte* _data, rx_size _size) {
 }
 
 void buffer::write_elements_data(const rx_byte* _data, rx_size _size) {
+  RX_ASSERT(m_recorded & k_element_type, "element type not recorded");
   RX_ASSERT(_data, "_data is null");
   RX_ASSERT(_size != 0, "_size is zero");
   RX_ASSERT(_size % size_for_element_type(m_element_type) == 0, "_size is not a multiple of element size");

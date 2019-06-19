@@ -533,8 +533,8 @@ static rx_size utf16_len(const rx_u16* _data) {
 // wide_string
 wide_string::wide_string(memory::allocator* _allocator)
   : m_allocator{_allocator}
-  , m_size{0}
   , m_data{nullptr}
+  , m_size{0}
 {
 }
 

@@ -6,14 +6,18 @@
 namespace rx::model {
 
 interface::~interface() {
-  if (m_is_animated) {
-    utility::destruct<array<animated_vertex>>(&as_animated_vertices);
-  } else {
-    utility::destruct<array<vertex>>(&as_vertices);
+  if (m_flags & k_constructed) {
+    if (m_flags & k_animated) {
+      utility::destruct<array<animated_vertex>>(&as_animated_vertices);
+    } else {
+      utility::destruct<array<vertex>>(&as_vertices);
+    }
   }
 }
 
 bool interface::load(const string& _file_name) {
+  RX_ASSERT(!(m_flags & k_constructed), "already loaded");
+
   loader* new_loader{nullptr};
 
   // determine the model format based on the extension
@@ -35,17 +39,21 @@ bool interface::load(const string& _file_name) {
 
     if (animations.is_empty()) {
       utility::construct<array<vertex>>(&as_vertices, m_allocator, vertices);
+      m_flags |= k_constructed;
+
       for (rx_size i{0}; i < vertices; i++) {
         as_vertices[i].position = positions[i];
         as_vertices[i].normal = normals[i];
         as_vertices[i].tangent = tangents[i];
         as_vertices[i].coordinate = coordinates[i];
       }
-      m_is_animated = false;
     } else {
       const auto& blend_weights{new_loader->blend_weights()};
       const auto& blend_indices{new_loader->blend_indices()};
+
       utility::construct<array<animated_vertex>>(&as_animated_vertices, m_allocator, vertices);
+      m_flags |= k_constructed;
+
       for (rx_size i{0}; i < vertices; i++) {
         as_animated_vertices[i].position = positions[i];
         as_animated_vertices[i].normal = normals[i];
@@ -54,7 +62,7 @@ bool interface::load(const string& _file_name) {
         as_animated_vertices[i].blend_weights = blend_weights[i];
         as_animated_vertices[i].blend_indices = blend_indices[i];
       }
-      m_is_animated = true;
+      m_flags |= k_animated;
     }
 
     m_meshes = utility::move(new_loader->meshes());

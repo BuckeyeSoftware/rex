@@ -6,8 +6,6 @@
 
 #include "rx/core/memory/uninitialized_storage.h" // uninitialized_storage
 
-#include "rx/core/debug.h" // RX_MESSAGE
-
 namespace rx {
 
 struct static_node
@@ -50,8 +48,6 @@ inline constexpr static_node::static_node(const char* name,
 }
 
 inline void static_node::init_global() {
-  RX_MESSAGE("%08p: init static global '%s'", m_data.data(), m_name);
-
   if (m_enabled) {
     m_data.init();
   }
@@ -61,8 +57,6 @@ inline void static_node::fini_global() {
   if (m_enabled) {
     m_data.fini();
   }
-
-  RX_MESSAGE("%08p: fini static global '%s'", m_data.data(), m_name);
 }
 
 inline void static_node::init() {

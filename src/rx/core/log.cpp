@@ -4,6 +4,7 @@
 #include "rx/core/log.h" // log
 #include "rx/core/string.h" // string
 #include "rx/core/array.h" // array
+#include "rx/core/debug.h" // RX_MESSAGE
 #include "rx/core/algorithm/max.h"
 
 #include "rx/core/filesystem/file.h" // file

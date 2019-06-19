@@ -8,6 +8,7 @@ thread_pool::thread_pool(rx_size _threads)
   , m_ready{0}
 {
   RX_MESSAGE("starting thread pool with %zu threads", _threads);
+  m_threads.reserve(_threads);
 
   for (rx_size i{0}; i < _threads; i++) {
     m_threads.emplace_back("thread pool", [this](int _thread_id) {
@@ -16,7 +17,7 @@ thread_pool::thread_pool(rx_size _threads)
       {
         scope_lock lock(m_mutex);
         m_ready++;
-        m_ready_cond.signal();
+        m_ready_cond.signal();       
       }
 
       for (;;) {
@@ -28,9 +29,10 @@ thread_pool::thread_pool(rx_size _threads)
             RX_MESSAGE("stopping thread %d for pool", _thread_id);
             return;
           }
-          task = utility::move(m_queue.pop());
+          task = m_queue.pop();
         }
-        task(utility::move(_thread_id));
+        RX_MESSAGE("running a task on thread %d for pool", _thread_id);
+        task(_thread_id);
       }
     });
   }

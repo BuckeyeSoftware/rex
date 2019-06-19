@@ -22,6 +22,7 @@ struct queue {
   void emplace(Ts&&... _arguments);
 
   T pop();
+
   void clear();
 
   memory::allocator* allocator() const;
@@ -54,12 +55,14 @@ inline constexpr queue<T>::node::node(T&& _value)
 template<typename T>
 inline constexpr queue<T>::queue(memory::allocator* _allocator)
   : m_allocator{_allocator}
+  , m_first{nullptr}
+  , m_last{nullptr}
 {
 }
 
 template<typename T>
 inline constexpr queue<T>::queue()
-  : m_allocator{&memory::g_system_allocator}
+  : queue{&memory::g_system_allocator}
 {
 }
 
@@ -107,7 +110,7 @@ inline T queue<T>::pop() {
   auto this_node{m_first};
 
   T value{utility::move(this_node->m_value)};
-  m_first = utility::move(this_node->m_next);
+  m_first = this_node->m_next;
 
   utility::destruct_and_deallocate<T>(m_allocator, this_node);
 

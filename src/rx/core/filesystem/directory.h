@@ -24,7 +24,8 @@ struct directory {
 
     bool is_file() const;
     bool is_directory() const;
-    const string& name() const;
+    const string& name() const &;
+    string&& name() &&;
 
   private:
     friend struct directory;
@@ -71,8 +72,12 @@ inline bool directory::item::is_directory() const {
   return m_type == type::k_directory;
 }
 
-inline const string& directory::item::name() const {
+inline const string& directory::item::name() const & {
   return m_name;
+}
+
+inline string&& directory::item::name() && {
+  return utility::move(m_name);
 }
 
 inline directory::item::item(string&& _name, type _type)

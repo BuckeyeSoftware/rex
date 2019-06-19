@@ -43,7 +43,12 @@ private:
 
   memory::allocator* m_allocator;
 
-  bool m_is_animated;
+  enum /* m_flags */ {
+    k_constructed = 1 << 0,
+    k_animated = 1 << 1
+  };
+
+  int m_flags;
 
   union {
     utility::nat as_nat;
@@ -60,7 +65,7 @@ private:
 
 inline constexpr interface::interface(memory::allocator* _allocator)
   : m_allocator{_allocator}
-  , m_is_animated{false}
+  , m_flags{0}
   , as_nat{}
   , m_elements{m_allocator}
   , m_joints{0}
@@ -68,25 +73,26 @@ inline constexpr interface::interface(memory::allocator* _allocator)
 }
 
 inline bool interface::is_animated() const {
-  return m_is_animated;
+  return m_flags & k_animated;
 }
 
 inline const array<interface::vertex>& interface::vertices() const & {
-  RX_ASSERT(!m_is_animated, "not a static model");
+  RX_ASSERT(!is_animated(), "not a static model");
   return as_vertices;
 }
 
 inline array<interface::vertex>&& interface::vertices() && {
+  RX_ASSERT(!is_animated(), "not a static model");
   return utility::move(as_vertices);
 }
 
 inline const array<interface::animated_vertex> interface::animated_vertices() const & {
-  RX_ASSERT(m_is_animated, "not a animated model");
+  RX_ASSERT(is_animated(), "not a animated model");
   return as_animated_vertices;
 }
 
 inline array<interface::animated_vertex>&& interface::animated_vertices() && {
-  RX_ASSERT(m_is_animated, "not a animated model");
+  RX_ASSERT(is_animated(), "not a animated model");
   return utility::move(as_animated_vertices);
 }
 

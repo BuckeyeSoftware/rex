@@ -61,7 +61,9 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
     directory.each([this](const filesystem::directory::item& _item) {
       if (_item.is_file() && _item.name().ends_with(".json5")) {
         technique new_technique{this};
-        if (new_technique.load(string::format("%s/%s", k_technique_path, _item.name()))) {
+        const auto path{string::format("%s/%s", k_technique_path,
+          utility::move(_item.name()))};
+        if (new_technique.load(path)) {
           m_techniques.insert(new_technique.name(), utility::move(new_technique));
         }
       }
