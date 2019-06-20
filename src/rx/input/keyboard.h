@@ -19,9 +19,9 @@ struct keyboard_device {
 
 private:
   enum {
-    k_pressed = 1 << 0,
+    k_pressed  = 1 << 0,
     k_released = 1 << 1,
-    k_held = 1 << 2
+    k_held     = 1 << 2
   };
 
   int m_symbols[k_keys];

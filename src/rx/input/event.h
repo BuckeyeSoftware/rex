@@ -6,11 +6,16 @@
 
 #include "rx/core/utility/nat.h"
 
+#include "rx/input/controller.h"
+
 namespace rx::input {
 
 enum class event_type {
   k_none,
   k_keyboard,
+  k_controller_notification,
+  k_controller_button,
+  k_controller_motion,
   k_mouse_button,
   k_mouse_scroll,
   k_mouse_motion
@@ -20,6 +25,28 @@ struct keyboard_event {
   bool down;
   int scan_code;
   int symbol;
+};
+
+struct controller_notification_event {
+  enum class type {
+    k_connected,
+    k_disconnected
+  };
+
+  rx_size index;
+  type kind;
+};
+
+struct controller_button_event {
+  rx_size index;
+  bool down;
+  controller_device::button button;
+};
+
+struct controller_motion_event {
+  rx_size index;
+  controller_device::axis axis;
+  rx_f32 value;
 };
 
 struct mouse_button_event {
@@ -43,6 +70,9 @@ struct event {
   union {
     utility::nat as_nat;
     keyboard_event as_keyboard;
+    controller_notification_event as_controller_notification;
+    controller_button_event as_controller_button;
+    controller_motion_event as_controller_motion;
     mouse_button_event as_mouse_button;
     mouse_scroll_event as_mouse_scroll;
     mouse_motion_event as_mouse_motion;
