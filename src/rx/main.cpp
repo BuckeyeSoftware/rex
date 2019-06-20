@@ -307,10 +307,6 @@ int entry(int argc, char **argv) {
       }
       const auto& elements{model.elements()};
       model_buffer->write_elements(elements.data(), elements.size() * sizeof(rx_u32));
-
-      model.meshes().each_fwd([](const rx::model::mesh& _mesh) {
-        RX_MESSAGE("mesh: %s", _mesh.material.data());
-      });
     }
     frontend.initialize_buffer(RX_RENDER_TAG("model"), model_buffer);
 

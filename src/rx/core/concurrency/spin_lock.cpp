@@ -1,17 +1,5 @@
-#include "rx/core/config.h" // RX_PLATFORM_WINDOWS, __has_include
-
-#if defined(RX_PLATFORM_WINDOWS)
-#define _WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#define yield() SwitchToThread()
-#elif __has_include(<sched.h>)
-#include <sched.h> // sched_yield
-#define yield() sched_yield()
-#else
-#error "missing implementation of yield"
-#endif
-
 #include "rx/core/concurrency/spin_lock.h" // spin_lock
+#include "rx/core/concurrency/yield.h" // yield
 
 // ThreadSanitizer annotations
 #if defined(RX_TSAN)
