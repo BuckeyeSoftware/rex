@@ -19,16 +19,20 @@ using rx_ptrdiff = long;
 using rx_uintptr = rx_size;
 using rx_nullptr = decltype(nullptr);
 
-constexpr rx_size operator"" _z(unsigned long long value) {
-  return static_cast<rx_size>(value);
+constexpr rx_size operator"" _z(unsigned long long _value) {
+  return static_cast<rx_size>(_value);
 }
 
-constexpr rx_u32 operator"" _u32(unsigned long long value) {
-  return static_cast<rx_u32>(value);
+constexpr rx_u16 operator"" _u16(unsigned long long _value) {
+  return static_cast<rx_u16>(_value);
 }
 
-constexpr rx_u64 operator"" _u64(unsigned long long value) {
-  return static_cast<rx_u64>(value);
+constexpr rx_u32 operator"" _u32(unsigned long long _value) {
+  return static_cast<rx_u32>(_value);
+}
+
+constexpr rx_u64 operator"" _u64(unsigned long long _value) {
+  return static_cast<rx_u64>(_value);
 }
 
 #endif // RX_FOUNDATION_TYPES_H
