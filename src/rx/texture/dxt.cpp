@@ -196,7 +196,7 @@ static inline void lse_master_colors_clamp(rx_u16 (&colors_)[2],
 
   rx_f32 length{1.0f / (0.00001f + sumx2[0]*sumx2[0] + sumx2[1]*sumx2[1] + sumx2[2]*sumx2[2])};
 
-  // calcualte range for vector values
+  // calculate range for vector values
   rx_f32 dot_max{sumx2[0] * _uncompressed[0] +
                  sumx2[1] * _uncompressed[1] +
                  sumx2[2] * _uncompressed[2]};
@@ -263,7 +263,7 @@ static inline void compress_color_block(const rx_byte *const _uncompressed,
   unpack_565(encode_color[0], c0[0], c0[1], c0[2]);
   unpack_565(encode_color[1], c1[0], c1[1], c1[2]);
 
-  rx_f32 color_line[]{ 0.0f, 0.0f, 0.0f, 0.0f };
+  rx_f32 color_line[]{0.0f, 0.0f, 0.0f, 0.0f};
   rx_f32 length{0.0f};
   for (rx_size i{0}; i < 3; i++) {
     color_line[i] = float(c1[i] - c0[i]);
