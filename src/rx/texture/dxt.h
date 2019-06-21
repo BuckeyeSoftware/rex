@@ -2,7 +2,6 @@
 #define RX_TEXTURE_DXT_H
 
 #include "rx/core/array.h"
-#include "rx/math/vec2.h"
 
 namespace rx::texture {
 
