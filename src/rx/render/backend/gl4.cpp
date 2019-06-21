@@ -48,6 +48,9 @@ static void (GLAPIENTRYP pglTextureStorage3D)(GLuint, GLsizei, GLenum, GLsizei, 
 static void (GLAPIENTRYP pglTextureSubImage1D)(GLuint, GLint, GLint, GLsizei, GLenum, GLenum, const void*);
 static void (GLAPIENTRYP pglTextureSubImage2D)(GLuint, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const void*);
 static void (GLAPIENTRYP pglTextureSubImage3D)(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const void*);
+static void (GLAPIENTRYP pglCompressedTextureSubImage1D)(GLuint, GLint, GLint, GLsizei, GLenum, GLsizei, const void*);
+static void (GLAPIENTRYP pglCompressedTextureSubImage2D)(GLuint, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, const void*);
+static void (GLAPIENTRYP pglCompressedTextureSubImage3D)(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, const void*);
 static void (GLAPIENTRYP pglTextureParameteri)(GLuint, GLenum, GLint);
 static void (GLAPIENTRYP pglTextureParameterf)(GLuint, GLenum, GLfloat);
 static void (GLAPIENTRYP pglGenerateTextureMipmap)(GLuint);
@@ -241,6 +244,10 @@ static GLenum convert_texture_data_format(frontend::texture::data_format _data_f
     return GL_STENCIL_INDEX8;
   case frontend::texture::data_format::k_r_u8:
     return GL_R8;
+  case frontend::texture::data_format::k_dxt1:
+    return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+  case frontend::texture::data_format::k_dxt5:
+    return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
   }
   RX_UNREACHABLE();
 }
@@ -271,6 +278,10 @@ static GLenum convert_texture_format(frontend::texture::data_format _data_format
     return GL_STENCIL_INDEX;
   case frontend::texture::data_format::k_r_u8:
     return GL_RED;
+  case frontend::texture::data_format::k_dxt1:
+    return GL_RGB;
+  case frontend::texture::data_format::k_dxt5:
+    return GL_RGBA;
   }
   RX_UNREACHABLE();
 }
@@ -891,6 +902,9 @@ gl4::gl4(memory::allocator* _allocator, void* _data)
   fetch("glTextureSubImage1D", pglTextureSubImage1D);
   fetch("glTextureSubImage2D", pglTextureSubImage2D);
   fetch("glTextureSubImage3D", pglTextureSubImage3D);
+  fetch("glCompressedTextureSubImage1D", pglCompressedTextureSubImage1D);
+  fetch("glCompressedTextureSubImage2D", pglCompressedTextureSubImage2D);
+  fetch("glCompressedTextureSubImage3D", pglCompressedTextureSubImage3D);
   fetch("glTextureParameteri", pglTextureParameteri);
   fetch("glTextureParameterf", pglTextureParameterf);
   fetch("glGenerateTextureMipmap", pglGenerateTextureMipmap);
@@ -1217,14 +1231,25 @@ void gl4::process(rx_byte* _command) {
           if (data.size()) {
             for (GLint i{0}; i < levels; i++) {
               const auto level_info{render_texture->info_for_level(i)};
-              pglTextureSubImage1D(
-                texture->tex,
-                i,
-                0,
-                static_cast<GLsizei>(level_info.dimensions),
-                convert_texture_format(format),
-                GL_UNSIGNED_BYTE,
-                data.data() + level_info.offset);
+              if (render_texture->is_compressed()) {
+                pglCompressedTextureSubImage1D(
+                  texture->tex,
+                  i,
+                  0,
+                  static_cast<GLsizei>(level_info.dimensions),
+                  convert_texture_data_format(format),
+                  level_info.size,
+                  data.data() + level_info.offset);
+              } else {
+                pglTextureSubImage1D(
+                  texture->tex,
+                  i,
+                  0,
+                  static_cast<GLsizei>(level_info.dimensions),
+                  convert_texture_format(format),
+                  GL_UNSIGNED_BYTE,
+                  data.data() + level_info.offset);
+              }
             }
           }
         }
@@ -1259,16 +1284,29 @@ void gl4::process(rx_byte* _command) {
           if (data.size()) {
             for (GLint i{0}; i < levels; i++) {
               const auto level_info{render_texture->info_for_level(i)};
-              pglTextureSubImage2D(
-                texture->tex,
-                i,
-                0,
-                0,
-                static_cast<GLsizei>(level_info.dimensions.w),
-                static_cast<GLsizei>(level_info.dimensions.h),
-                convert_texture_format(format),
-                GL_UNSIGNED_BYTE,
-                data.data() + level_info.offset);
+              if (render_texture->is_compressed()) {
+                pglCompressedTextureSubImage2D(
+                  texture->tex,
+                  i,
+                  0,
+                  0,
+                  static_cast<GLsizei>(level_info.dimensions.w),
+                  static_cast<GLsizei>(level_info.dimensions.h),
+                  convert_texture_data_format(format),
+                  level_info.size,
+                  data.data() + level_info.offset);
+              } else {
+                pglTextureSubImage2D(
+                  texture->tex,
+                  i,
+                  0,
+                  0,
+                  static_cast<GLsizei>(level_info.dimensions.w),
+                  static_cast<GLsizei>(level_info.dimensions.h),
+                  convert_texture_format(format),
+                  GL_UNSIGNED_BYTE,
+                  data.data() + level_info.offset);
+              }
             }
           }
         }
@@ -1306,18 +1344,33 @@ void gl4::process(rx_byte* _command) {
           if (data.size()) {
             for (GLint i{0}; i < levels; i++) {
               const auto level_info{render_texture->info_for_level(i)};
-              pglTextureSubImage3D(
-                texture->tex,
-                i,
-                0,
-                0,
-                0,
-                static_cast<GLsizei>(level_info.dimensions.w),
-                static_cast<GLsizei>(level_info.dimensions.h),
-                static_cast<GLsizei>(level_info.dimensions.d),
-                convert_texture_format(format),
-                GL_UNSIGNED_BYTE,
-                data.data() + level_info.offset);
+              if (render_texture->is_compressed()) {
+                pglCompressedTextureSubImage3D(
+                  texture->tex,
+                  i,
+                  0,
+                  0,
+                  0,
+                  static_cast<GLsizei>(level_info.dimensions.w),
+                  static_cast<GLsizei>(level_info.dimensions.h),
+                  static_cast<GLsizei>(level_info.dimensions.d),
+                  convert_texture_data_format(format),
+                  level_info.size,
+                  data.data() + level_info.offset);
+              } else {
+                pglTextureSubImage3D(
+                  texture->tex,
+                  i,
+                  0,
+                  0,
+                  0,
+                  static_cast<GLsizei>(level_info.dimensions.w),
+                  static_cast<GLsizei>(level_info.dimensions.h),
+                  static_cast<GLsizei>(level_info.dimensions.d),
+                  convert_texture_format(format),
+                  GL_UNSIGNED_BYTE,
+                  data.data() + level_info.offset);
+              }
             }
           }
         }
@@ -1353,18 +1406,33 @@ void gl4::process(rx_byte* _command) {
             for (GLint i{0}; i < levels; i++) {
               const auto level_info{render_texture->info_for_level(i)};
               for (GLint j{0}; j < 6; j++) {
-                pglTextureSubImage3D(
-                  texture->tex,
-                  i,
-                  0,
-                  0,
-                  j,
-                  static_cast<GLsizei>(level_info.dimensions.w),
-                  static_cast<GLsizei>(level_info.dimensions.h),
-                  1,
-                  convert_texture_format(format),
-                  GL_UNSIGNED_BYTE,
-                  data.data() + level_info.offset * level_info.dimensions.area() * j);
+                if (render_texture->is_compressed()) {
+                  pglCompressedTextureSubImage3D(
+                    texture->tex,
+                    i,
+                    0,
+                    0,
+                    j,
+                    static_cast<GLsizei>(level_info.dimensions.w),
+                    static_cast<GLsizei>(level_info.dimensions.h),
+                    1,
+                    convert_texture_format(format),
+                    level_info.size,
+                    data.data() + level_info.offset * level_info.dimensions.area() * j);
+                } else {
+                  pglTextureSubImage3D(
+                    texture->tex,
+                    i,
+                    0,
+                    0,
+                    j,
+                    static_cast<GLsizei>(level_info.dimensions.w),
+                    static_cast<GLsizei>(level_info.dimensions.h),
+                    1,
+                    convert_texture_format(format),
+                    GL_UNSIGNED_BYTE,
+                    data.data() + level_info.offset * level_info.dimensions.area() * j);
+                }
               }
             }
           }

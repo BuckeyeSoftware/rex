@@ -251,7 +251,7 @@ int entry(int argc, char **argv) {
   SDL_GLContext context =
     SDL_GL_CreateContext(window);
 
-  SDL_GL_SetSwapInterval(0);
+  SDL_GL_SetSwapInterval(1);
 
   SDL_SetRelativeMouseMode(SDL_TRUE);
 

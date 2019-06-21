@@ -51,7 +51,9 @@ struct texture : resource {
     k_d32f,
     k_d24_s8,
     k_d32f_s8,
-    k_s8
+    k_s8,
+    k_dxt1,
+    k_dxt5
   };
 
   enum class type : rx_u8 {
@@ -60,8 +62,9 @@ struct texture : resource {
     k_dynamic
   };
 
-  // get byte size of |_format|
-  static rx_size byte_size_of_format(data_format _format);
+  // get byte size for one pixel of |_format|
+  // NOTE: can be fractional for compressed block formats
+  static rx_f32 byte_size_of_format(data_format _format);
 
   // get channel count of |_format|
   static rx_size channel_count_of_format(data_format _format);
@@ -82,6 +85,7 @@ struct texture : resource {
   filter_options filter() const;
   rx_size channels() const;
   type kind() const;
+  bool is_compressed() const;
 
 protected:
   enum : rx_u8 {
@@ -122,7 +126,6 @@ struct texture1D : texture {
 
 private:
   dimension_type m_dimensions;
-  dimension_type m_dimensions_log2;
   wrap_options m_wrap;
   array<level_info<dimension_type>> m_levels;
 };
@@ -150,7 +153,6 @@ struct texture2D : texture {
 
 private:
   dimension_type m_dimensions;
-  dimension_type m_dimensions_log2;
   wrap_options m_wrap;
   array<level_info<dimension_type>> m_levels;
 };
@@ -178,7 +180,6 @@ struct texture3D : texture {
 
 private:
   dimension_type m_dimensions;
-  dimension_type m_dimensions_log2;
   wrap_options m_wrap;
   array<level_info<dimension_type>> m_levels;
 };
@@ -215,7 +216,6 @@ struct textureCM : texture {
 
 private:
   dimension_type m_dimensions;
-  dimension_type m_dimensions_log2;
   wrap_options m_wrap;
   array<level_info<dimension_type>> m_levels;
 };
@@ -241,32 +241,70 @@ inline texture::type texture::kind() const {
   return m_type;
 }
 
-inline rx_size texture::byte_size_of_format(data_format _format) {
+inline bool texture::is_compressed() const {
+  switch (m_format) {
+  case data_format::k_rgba_u8:
+    return false;
+  case data_format::k_bgra_u8:
+    return false;
+  case data_format::k_rgba_f16:
+    return false;
+  case data_format::k_bgra_f16:
+    return false;
+  case data_format::k_d16:
+    return false;
+  case data_format::k_d24:
+    return false;
+  case data_format::k_d32:
+    return false;
+  case data_format::k_d32f:
+    return false;
+  case data_format::k_d24_s8:
+    return false;
+  case data_format::k_d32f_s8:
+    return false;
+  case data_format::k_s8:
+    return false;
+  case data_format::k_r_u8:
+    return false;
+  case data_format::k_dxt1:
+    return true;
+  case data_format::k_dxt5:
+    return true;
+  }
+  RX_UNREACHABLE();
+}
+
+inline rx_f32 texture::byte_size_of_format(data_format _format) {
   switch (_format) {
   case data_format::k_rgba_u8:
-    return 4;
+    return 4.0f;
   case data_format::k_bgra_u8:
-    return 4;
+    return 4.0f;
   case data_format::k_rgba_f16:
-    return 8;
+    return 8.0f;
   case data_format::k_bgra_f16:
-    return 8;
+    return 8.0f;
   case data_format::k_d16:
-    return 2;
+    return 2.0f;
   case data_format::k_d24:
-    return 3;
+    return 3.0f;
   case data_format::k_d32:
-    return 4;
+    return 4.0f;
   case data_format::k_d32f:
-    return 4;
+    return 4.0f;
   case data_format::k_d24_s8:
-    return 4;
+    return 4.0f;
   case data_format::k_d32f_s8:
-    return 5;
+    return 5.0f;
   case data_format::k_s8:
-    return 1;
+    return 1.0f;
   case data_format::k_r_u8:
-    return 1;
+    return 1.0f;
+  case data_format::k_dxt1:
+    return 0.5f;
+  case data_format::k_dxt5:
+    return 1.0f;
   }
   return 0;
 }
@@ -297,6 +335,10 @@ inline rx_size texture::channel_count_of_format(data_format _format) {
     return 1;
   case data_format::k_r_u8:
     return 1;
+  case data_format::k_dxt1:
+    return 3;
+  case data_format::k_dxt5:
+    return 4;
   }
   return 0;
 }
@@ -311,7 +353,14 @@ inline const texture1D::wrap_options& texture1D::wrap() const & {
 }
 
 inline rx_size texture1D::levels() const {
-  return m_filter.mipmaps ? math::log2(m_dimensions_log2) + 1 : 1;
+  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
+  RX_ASSERT(m_recorded & k_format, "format not recorded");
+
+  if (m_filter.mipmaps) {
+    const auto count{math::log2(m_dimensions) + 1};
+    return is_compressed() ? count - 2 : count;
+  }
+  return 1;
 }
 
 inline const texture::level_info<texture1D::dimension_type>&
@@ -329,7 +378,14 @@ inline const texture2D::wrap_options& texture2D::wrap() const & {
 }
 
 inline rx_size texture2D::levels() const {
-  return m_filter.mipmaps ? math::log2(m_dimensions.max_element()) + 1 : 1;
+  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
+  RX_ASSERT(m_recorded & k_format, "format not recorded");
+
+  if (m_filter.mipmaps) {
+    const auto count{math::log2(m_dimensions.max_element()) + 1};
+    return is_compressed() ? count - 2 : count;
+  }
+  return 1;
 }
 
 inline const texture::level_info<texture2D::dimension_type>&
@@ -347,7 +403,14 @@ inline const texture3D::wrap_options& texture3D::wrap() const & {
 }
 
 inline rx_size texture3D::levels() const {
-  return m_filter.mipmaps ? math::log2(m_dimensions.max_element()) + 1 : 1;
+  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
+  RX_ASSERT(m_recorded & k_format, "format not recorded");
+
+  if (m_filter.mipmaps) {
+    const auto count{math::log2(m_dimensions.max_element()) + 1};
+    return is_compressed() ? count - 2 : count;
+  }
+  return 1;
 }
 
 inline const texture::level_info<texture3D::dimension_type>&
@@ -365,7 +428,14 @@ inline const textureCM::wrap_options& textureCM::wrap() const & {
 }
 
 inline rx_size textureCM::levels() const {
-  return m_filter.mipmaps ? math::log2(m_dimensions.max_element()) + 1 : 1;
+  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
+  RX_ASSERT(m_recorded & k_format, "format not recorded");
+  
+  if (m_filter.mipmaps) {
+    const auto count{math::log2(m_dimensions.max_element()) + 1};
+    return is_compressed() ? count - 2 : count;
+  }
+  return 1;
 }
 
 inline const texture::level_info<textureCM::dimension_type>&

@@ -72,8 +72,9 @@ void texture1D::record_dimensions(const dimension_type& _dimensions) {
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_format, "format not recorded");
 
+  RX_ASSERT(!is_compressed(), "1D textures cannot be compressed");
+
   m_dimensions = _dimensions;
-  m_dimensions_log2 = math::log2(m_dimensions);
   m_recorded |= k_dimensions;
 
   if (m_type != type::k_attachment) {
@@ -81,7 +82,7 @@ void texture1D::record_dimensions(const dimension_type& _dimensions) {
     rx_size offset{0};
     const auto bpp{byte_size_of_format(m_format)};
     for (rx_size i{0}; i < levels(); i++) {
-      const rx_size size{dimensions * bpp};
+      const auto size{static_cast<rx_size>(dimensions * bpp)};
       m_levels.push_back({offset, size, dimensions});
       offset += size;
       dimensions /= 2;
@@ -131,8 +132,12 @@ void texture2D::record_dimensions(const math::vec2z& _dimensions) {
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_format, "format not recorded");
 
+  if (is_compressed()) {
+    RX_ASSERT(_dimensions.w >= 4 && _dimensions.h >= 4,
+      "too small for compression");
+  }
+
   m_dimensions = _dimensions;
-  m_dimensions_log2 = m_dimensions.map(math::log2<rx_size>);
   m_recorded |= k_dimensions;
 
   if (m_type != type::k_attachment) {
@@ -140,7 +145,7 @@ void texture2D::record_dimensions(const math::vec2z& _dimensions) {
     rx_size offset{0};
     const auto bpp{byte_size_of_format(m_format)};
     for (rx_size i{0}; i < levels(); i++) {
-      const rx_size size{dimensions.area() * bpp};
+      const auto size{static_cast<rx_size>(dimensions.area() * bpp)};
       m_levels.push_back({offset, size, dimensions});
       offset += size;
       dimensions /= 2;
@@ -190,8 +195,9 @@ void texture3D::record_dimensions(const math::vec3z& _dimensions) {
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_format, "format not recorded");
 
+  RX_ASSERT(!is_compressed(), "3D textures cannot be compressed");
+
   m_dimensions = _dimensions;
-  m_dimensions_log2 = m_dimensions.map(math::log2<rx_size>);
   m_recorded |= k_dimensions;
 
   if (m_type != type::k_attachment) {
@@ -199,7 +205,7 @@ void texture3D::record_dimensions(const math::vec3z& _dimensions) {
     rx_size offset{0};
     const auto bpp{byte_size_of_format(m_format)};
     for (rx_size i{0}; i < levels(); i++) {
-      const rx_size size{dimensions.area() * bpp};
+      const auto size{static_cast<rx_size>(dimensions.area() * bpp)};
       m_levels.push_back({offset, size, dimensions});
       offset += size;
       dimensions /= 2;
@@ -252,8 +258,12 @@ void textureCM::record_dimensions(const math::vec2z& _dimensions) {
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_format, "format not recorded");
 
+  if (is_compressed()) {
+    RX_ASSERT(_dimensions.w >= 4 && _dimensions.h >= 4,
+      "too small for compression");
+  }
+
   m_dimensions = _dimensions;
-  m_dimensions_log2 = m_dimensions.map(math::log2<rx_size>);
   m_recorded |= k_dimensions;
 
   if (m_type != type::k_attachment) {
@@ -261,7 +271,7 @@ void textureCM::record_dimensions(const math::vec2z& _dimensions) {
     rx_size offset{0};
     const auto bpp{byte_size_of_format(m_format)};
     for (rx_size i{0}; i < levels(); i++) {
-      const rx_size size{dimensions.area() * bpp * 6};
+      const auto size{static_cast<rx_size>(dimensions.area() * bpp * 6)};
       m_levels.push_back({offset, size, dimensions});
       offset += size;
       dimensions /= 2;

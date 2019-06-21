@@ -10,6 +10,7 @@ enum class dxt_type {
   k_dxt5
 };
 
+template<dxt_type T>
 array<rx_byte> dxt_compress(memory::allocator* _allocator,
   const rx_byte *const _uncompressed, rx_size _width, rx_size _height,
   rx_size _channels, rx_size& out_size_, rx_size& optimized_blocks_);
