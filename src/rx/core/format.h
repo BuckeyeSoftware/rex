@@ -28,7 +28,7 @@ struct format_size<rx_s32> {
 
 template<>
 struct format_size<rx_s64> {
-  static constexpr const rx_size size{3+(8*sizeof(rx_s32)/3)};
+  static constexpr const rx_size size{3+(8*sizeof(rx_s64)/3)};
 };
 
 template<typename T>
