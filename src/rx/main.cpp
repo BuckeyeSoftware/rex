@@ -184,6 +184,29 @@ static void render_stats(const rx::render::frontend::interface& _frontend, rx::r
     {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
+static void memory_stats(const rx::render::frontend::interface&, rx::render::immediate& _immediate) {
+  const auto stats{rx::memory::g_system_allocator->stats()};
+  const rx::math::vec2i& screen_size{*display_resolution};
+
+  int y = 25;
+  auto line{[&](const rx::string& _line){
+    _immediate.frame_queue().record_text(
+      "Consolas-Regular",
+      rx::math::vec2i{screen_size.x - 25, y},
+      16,
+      1.0f,
+      rx::render::immediate::text_align::k_right,
+      _line,
+      {1.0f, 1.0f, 1.0f, 1.0f});
+    y += 16;
+  }};
+
+  line(rx::string::format("used memory (requested): %s", rx::string::human_size_format(stats.used_request_bytes)));
+  line(rx::string::format("used memory (actual):    %s", rx::string::human_size_format(stats.used_actual_bytes)));
+  line(rx::string::format("peak memory (requested): %s", rx::string::human_size_format(stats.peak_request_bytes)));
+  line(rx::string::format("peak memory (actual):    %s", rx::string::human_size_format(stats.peak_actual_bytes)));
+}
+
 int entry(int argc, char **argv) {
   (void)argc;
   (void)argv;
@@ -459,26 +482,13 @@ int entry(int argc, char **argv) {
 
       frame_stats(frontend, immediate);
       render_stats(frontend, immediate);
+      memory_stats(frontend, immediate);
 
       immediate.render(target);
 
       if (frontend.process()) {
         if (frontend.swap()) {
-          const auto stats{rx::memory::g_system_allocator->stats()};
-          char format[1024];
-          snprintf(format, sizeof format, "%d fps | %.2f mspf | mem a/%zu, r/r:%zu a:%zu, d/%zu, u/r:%s a:%s, p/r:%s a:%s",
-            frontend.timer().fps(),
-            frontend.timer().mspf(),
-            stats.allocations,
-            stats.request_reallocations,
-            stats.actual_reallocations,
-            stats.deallocations,
-            rx::string::human_size_format(stats.used_request_bytes).data(),
-            rx::string::human_size_format(stats.used_actual_bytes).data(),
-            rx::string::human_size_format(stats.peak_request_bytes).data(),
-            rx::string::human_size_format(stats.peak_actual_bytes).data());
-
-          SDL_SetWindowTitle(window, format);
+          // SDL_SetWindowTitle(window, format);
         }
       }
     }
