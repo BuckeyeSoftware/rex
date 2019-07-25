@@ -24,8 +24,8 @@ namespace rx::concurrency {
 struct thread : concepts::no_copy {
   thread();
 
-  thread(const char* _name, function<void(int)>&& _function);
   thread(memory::allocator* _allocator, const char* _name, function<void(int)>&& _function);
+  thread(const char* _name, function<void(int)>&& _function);
   thread(thread&& _thread);
   ~thread();
 
