@@ -21,14 +21,13 @@ namespace rx {
 // 64-bit: 32 bytes
 template<typename T>
 struct array {
+  constexpr array(memory::allocator* _allocator);
+  array(memory::allocator* _allocator, rx_size _size, const T& _value = {});
+  array(memory::allocator* _allocator, const array& _other);
+
   constexpr array();
   array(rx_size _size, const T& value = {});
   array(const array& _other);
-
-  constexpr array(memory::allocator* _allocator);
-  array(memory::allocator* _allocator, rx_size _size, const T& value = {});
-  array(memory::allocator* _allocator, const array& _other);
-
   array(array&& _other);
   ~array();
 
@@ -94,24 +93,6 @@ private:
 };
 
 template<typename T>
-inline constexpr array<T>::array()
-  : array{&memory::g_system_allocator}
-{
-}
-
-template<typename T>
-inline array<T>::array(rx_size _size, const T& value)
-  : array{&memory::g_system_allocator, _size, value}
-{
-}
-
-template<typename T>
-inline array<T>::array(const array& _other)
-  : array{_other.m_allocator, _other}
-{
-}
-
-template<typename T>
 inline constexpr array<T>::array(memory::allocator* _allocator)
   : m_allocator{_allocator}
   , m_data{nullptr}
@@ -122,7 +103,7 @@ inline constexpr array<T>::array(memory::allocator* _allocator)
 }
 
 template<typename T>
-inline array<T>::array(memory::allocator* _allocator, rx_size _size, const T& value)
+inline array<T>::array(memory::allocator* _allocator, rx_size _size, const T& _value)
   : m_allocator{_allocator}
   , m_data{nullptr}
   , m_size{_size}
@@ -134,7 +115,7 @@ inline array<T>::array(memory::allocator* _allocator, rx_size _size, const T& va
   RX_ASSERT(m_data, "out of memory");
 
   for (rx_size i{0}; i < m_size; i++) {
-    utility::construct<T>(data() + i, value);
+    utility::construct<T>(data() + i, _value);
   }
 }
 
@@ -152,6 +133,24 @@ inline array<T>::array(memory::allocator* _allocator, const array& _other)
   for (rx_size i{0}; i < m_size; i++) {
     utility::construct<T>(data() + i, _other[i]);
   }
+}
+
+template<typename T>
+inline constexpr array<T>::array()
+  : array{&memory::g_system_allocator}
+{
+}
+
+template<typename T>
+inline array<T>::array(rx_size _size, const T& value)
+  : array{&memory::g_system_allocator, _size, value}
+{
+}
+
+template<typename T>
+inline array<T>::array(const array& _other)
+  : array{_other.m_allocator, _other}
+{
 }
 
 template<typename T>
