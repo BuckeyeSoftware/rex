@@ -248,8 +248,9 @@ immediate::font::font(const key& _key, frontend::interface* _frontend)
       
       if (result == -k_glyphs || result > 0) {
         // create a texture chain from this baked font bitmap
-        rx::texture::chain chain{utility::move(baked_atlas),
-          rx::texture::chain::pixel_format::k_r_u8, {m_resolution}, false, true};
+        rx::texture::chain chain{m_frontend->allocator()};
+        chain.generate(utility::move(baked_atlas),
+          rx::texture::chain::pixel_format::k_r_u8, {m_resolution}, false, true);
 
         // create and upload baked atlas
         m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("font"));

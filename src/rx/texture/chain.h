@@ -3,11 +3,15 @@
 
 #include "rx/texture/loader.h"
 
+#include "rx/core/concepts/no_copy.h"
+
 namespace rx::texture {
 
 struct loader;
 
-struct chain {
+struct chain 
+  : concepts::no_copy
+{
   enum class pixel_format {
     k_rgba_u8,
     k_bgra_u8,
@@ -22,17 +26,16 @@ struct chain {
     math::vec2z dimensions;
   };
 
-  // create texture data with given |_loader| data
-  chain(loader&& _loader, bool _want_mipchain);
+  chain();
+  chain(memory::allocator* _allocator);
+  chain(chain&& _chain);
 
-  chain(array<rx_byte>&& _data, pixel_format _format,
-    const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain);
-  chain(const rx_byte* _data, pixel_format _format,
-    const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain);
+  void generate(loader&& _loader, bool _has_mipchain, bool _want_mipchain);
 
-  chain(memory::allocator* _allocator, const rx_byte* _data,
-    pixel_format _format, const math::vec2z& _dimensions,
-    bool _has_mipchain, bool _want_mipchain);
+  void generate(array<rx_byte>&& _data, pixel_format _format,
+    const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain);
+  void generate(const rx_byte* _data, pixel_format _format,
+    const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain);
 
   void resize(const math::vec2z& _dimensions);
 
@@ -67,18 +70,26 @@ inline chain::pixel_format chain::pixel_format_for_loader_bpp(rx_size _bpp) {
   RX_UNREACHABLE();
 }
 
-inline chain::chain(loader&& _loader, bool _want_mipchain)
-  : chain{utility::move(_loader).data(),
-      pixel_format_for_loader_bpp(_loader.bpp()), _loader.dimensions(),
-      false, _want_mipchain}
+inline chain::chain(memory::allocator* _allocator)
+  : m_data{_allocator}
+  , m_levels{_allocator}
 {
 }
 
-inline chain::chain(const rx_byte* _data, pixel_format _pixel_format,
-    const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain)
-  : chain{&memory::g_system_allocator, _data, _pixel_format, _dimensions,
-      _has_mipchain, _want_mipchain}
+inline chain::chain(chain&& _chain)
+  : m_data{utility::move(_chain.m_data)}
+  , m_levels{utility::move(_chain.m_levels)}
+  , m_dimensions{_chain.m_dimensions}
+  , m_pixel_format{_chain.m_pixel_format}
 {
+}
+
+inline void chain::generate(loader&& _loader, bool _has_mipchain,
+  bool _want_mipchain)
+{
+  generate(utility::move(_loader).data(),
+    pixel_format_for_loader_bpp(_loader.bpp()), _loader.dimensions(),
+    _has_mipchain, _want_mipchain);
 }
 
 inline array<rx_byte>&& chain::data() && {

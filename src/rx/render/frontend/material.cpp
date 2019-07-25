@@ -149,11 +149,12 @@ bool material::parse_texture(const json& _texture) {
 
   rx::texture::loader texture_loader;
   if (texture_loader.load(file.as_string())) {
-    rx::texture::chain texture_chain{utility::move(texture_loader), texture->filter().mipmaps};
-    const auto& levels{texture_chain.levels()};
+    rx::texture::chain chain{m_frontend->allocator()};
+    chain.generate(utility::move(texture_loader), false, texture->filter().mipmaps);
+    const auto& levels{chain.levels()};
 
     // record the texture format, requires conversion from chain loader
-    switch (texture_chain.format()) {
+    switch (chain.format()) {
     case rx::texture::chain::pixel_format::k_rgba_u8:
       texture->record_format(texture::data_format::k_rgba_u8);
       break;
@@ -174,12 +175,12 @@ bool material::parse_texture(const json& _texture) {
     }
 
     // record the texture dimensions
-    texture->record_dimensions(texture_chain.dimensions());
+    texture->record_dimensions(chain.dimensions());
 
     // write each level from the texture chain into the render resource
     for (rx_size i{0}; i < levels.size(); i++) {
       const auto& level{levels[i]};
-      texture->write(texture_chain.data().data() + level.offset, i);
+      texture->write(chain.data().data() + level.offset, i);
     }
   } else {
     m_frontend->destroy_texture(RX_RENDER_TAG(tag_string), texture);

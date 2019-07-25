@@ -9,12 +9,21 @@
 
 namespace rx::texture {
 
-chain::chain(array<rx_byte>&& _data, pixel_format _pixel_format,
-    const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain)
-  : m_data{utility::move(_data)}
-  , m_dimensions{_dimensions}
-  , m_pixel_format{_pixel_format}
+void chain::generate(array<rx_byte>&& _data, pixel_format _format,
+  const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain)
 {
+  m_data = utility::move(_data);
+  m_dimensions = _dimensions;
+  m_pixel_format = _format;
+  generate_mipchain(_has_mipchain, _want_mipchain);
+}
+
+void chain::generate(const rx_byte* _data, pixel_format _format,
+  const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain)
+{
+  m_pixel_format = _format;
+  m_dimensions = _dimensions;
+  m_data.resize(_dimensions.area() * bpp());
   generate_mipchain(_has_mipchain, _want_mipchain);
 }
 
