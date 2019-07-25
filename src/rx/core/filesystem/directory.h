@@ -8,10 +8,10 @@
 namespace rx::filesystem {
 
 struct directory {
-  directory(const char* _path);
-  directory(const string& _path);
   directory(memory::allocator* _allocator, const char* _path);
   directory(memory::allocator* _allocator, const string& _path);
+  directory(const char* _path);
+  directory(const string& _path);
   ~directory();
 
   operator bool() const;
@@ -45,6 +45,11 @@ private:
   void* m_impl;
 };
 
+inline directory::directory(memory::allocator* _allocator, const string& _path)
+  : directory{_allocator, _path.data()}
+{
+}
+
 inline directory::directory(const char* _path)
   : directory{&memory::g_system_allocator, _path}
 {
@@ -52,11 +57,6 @@ inline directory::directory(const char* _path)
 
 inline directory::directory(const string& _path)
   : directory{&memory::g_system_allocator, _path}
-{
-}
-
-inline directory::directory(memory::allocator* _allocator, const string& _path)
-  : directory{_allocator, _path.data()}
 {
 }
 
