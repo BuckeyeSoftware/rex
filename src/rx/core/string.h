@@ -19,17 +19,17 @@ struct string {
   static constexpr const rx_size k_npos{-1_z};
   static constexpr const rx_size k_small_string{16};
 
-  string();
-  string(const string& _contents);
-  string(const char* _contents);
-  string(const char* _contents, rx_size _size);
-  string(const char* _first, const char* _last);
-
   string(memory::allocator* _allocator);
   string(memory::allocator* _allocator, const string& _contents);
   string(memory::allocator* _allocator, const char* _contents);
   string(memory::allocator* _allocator, const char* _contents, rx_size _size);
   string(memory::allocator* _allocator, const char* _first, const char* _last);
+
+  string();
+  string(const string& _contents);
+  string(const char* _contents);
+  string(const char* _contents, rx_size _size);
+  string(const char* _first, const char* _last);
 
   string(memory::view _view);
 
@@ -113,17 +113,17 @@ private:
 
 // utf-16, Windows compatible "wide-string"
 struct wide_string {
-  // constructors that use system allocator
-  wide_string();
-  wide_string(const wide_string& _other);
-  wide_string(const rx_u16* _contents);
-  wide_string(const rx_u16* _contents, rx_size _size);
-
   // custom allocator versions
   wide_string(memory::allocator* _allocator);
   wide_string(memory::allocator* _allocator, const wide_string& _other);
   wide_string(memory::allocator* _allocator, const rx_u16* _contents);
   wide_string(memory::allocator* _allocator, const rx_u16* _contents, rx_size _size);
+
+  // constructors that use system allocator
+  wide_string();
+  wide_string(const wide_string& _other);
+  wide_string(const rx_u16* _contents);
+  wide_string(const rx_u16* _contents, rx_size _size);
 
   wide_string(wide_string&& _other);
 
@@ -150,8 +150,11 @@ struct wide_string {
 
   string to_utf8() const;
 
+  memory::allocator* allocator() const;
+
 private:
   memory::allocator* m_allocator;
+
   rx_u16* m_data;
   rx_size m_size;
 };
@@ -324,6 +327,10 @@ inline rx_u16* wide_string::data() {
 
 inline const rx_u16* wide_string::data() const {
   return m_data;
+}
+
+inline memory::allocator* wide_string::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx

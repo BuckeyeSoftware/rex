@@ -7,11 +7,6 @@
 
 namespace rx {
 
-bitset::bitset(rx_size _size)
-  : bitset{&memory::g_system_allocator, _size}
-{
-}
-
 bitset::bitset(memory::allocator* _allocator, rx_size _size)
   : m_allocator{_allocator}
   , m_size{_size}

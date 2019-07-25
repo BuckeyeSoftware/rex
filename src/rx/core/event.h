@@ -17,14 +17,17 @@ struct event {
     rx_size m_index;
   };
 
-  constexpr event();
   constexpr event(memory::allocator* _allocator);
+  constexpr event();
 
   void signal(const T& _value);
   handle connect(delegate&& _function);
 
+  memory::allocator* allocator() const;
+
 private:
   friend struct handle;
+
   array<delegate> m_delegates;
 };
 
@@ -41,14 +44,14 @@ inline event<T>::handle::~handle() {
 }
 
 template<typename T>
-inline constexpr event<T>::event()
-  : event{&memory::g_system_allocator}
+inline constexpr event<T>::event(memory::allocator* _allocator)
+  : m_delegates{_allocator}
 {
 }
 
 template<typename T>
-inline constexpr event<T>::event(memory::allocator* _allocator)
-  : m_delegates{_allocator}
+inline constexpr event<T>::event()
+  : event{&memory::g_system_allocator}
 {
 }
 
@@ -71,6 +74,11 @@ inline typename event<T>::handle event<T>::connect(delegate&& _delegate) {
   }
   m_delegates.emplace_back(utility::move(_delegate));
   return {this, delegates};
+}
+
+template<typename T>
+inline memory::allocator* event<T>::allocator() const {
+  return m_delegates.allocator();
 }
 
 } // namespace rx

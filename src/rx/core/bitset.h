@@ -4,7 +4,7 @@
 #include "rx/core/utility/move.h"
 
 #include "rx/core/assert.h"
-#include "rx/core/memory/allocator.h"
+#include "rx/core/memory/system_allocator.h"
 
 #include "rx/core/traits/is_same.h"
 #include "rx/core/traits/return_type.h"
@@ -19,20 +19,10 @@ struct bitset {
   static constexpr const bit_type k_bit_one{1};
   static constexpr const rx_size k_word_bits{8 * sizeof(bit_type)};
 
-  bitset() = default;
-
-  // construct bitset with |_size| bits using system allocator
-  bitset(rx_size _size);
-
-  // construct bitset with |_size| bits using allocator |_allocator|
   bitset(memory::allocator* _allocator, rx_size _size);
-
-  // move construct from |_bitset|
+  bitset(rx_size _size);
   bitset(bitset&& _bitset);
-
-  // copy construct from |_bitset|
   bitset(const bitset& _bitset);
-
   ~bitset();
 
   // set |_bit|
@@ -70,6 +60,8 @@ struct bitset {
   template<typename F>
   void each_unset(F&& _function);
 
+  memory::allocator* allocator() const;
+
 private:
   static rx_size bytes_for_size(rx_size _size);
 
@@ -77,34 +69,40 @@ private:
   static rx_size offset(rx_size bit);
 
   memory::allocator* m_allocator;
+
   rx_size m_size;
   bit_type* m_data;
 };
 
-inline bitset::bitset(bitset&& set)
-  : m_allocator{set.m_allocator}
-  , m_data{set.m_data}
+inline bitset::bitset(rx_size _size)
+  : bitset{&memory::g_system_allocator, _size}
 {
-  set.m_data = nullptr;
+}
+
+inline bitset::bitset(bitset&& _bitset)
+  : m_allocator{_bitset.m_allocator}
+  , m_data{_bitset.m_data}
+{
+  _bitset.m_data = nullptr;
 }
 
 inline bitset::~bitset() {
   m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
 }
 
-inline void bitset::set(rx_size bit) {
-  RX_ASSERT(bit < m_size, "out of bounds");
-  m_data[index(bit)] |= k_bit_one << offset(bit);
+inline void bitset::set(rx_size _bit) {
+  RX_ASSERT(_bit < m_size, "out of bounds");
+  m_data[index(_bit)] |= k_bit_one << offset(_bit);
 }
 
-inline void bitset::clear(rx_size bit) {
-  RX_ASSERT(bit < m_size, "out of bounds");
-  m_data[index(bit)] &= ~(k_bit_one << offset(bit));
+inline void bitset::clear(rx_size _bit) {
+  RX_ASSERT(_bit < m_size, "out of bounds");
+  m_data[index(_bit)] &= ~(k_bit_one << offset(_bit));
 }
 
-inline bool bitset::test(rx_size bit) const {
-  RX_ASSERT(bit < m_size, "out of bounds");
-  return !!(m_data[index(bit)] & (k_bit_one << offset(bit)));
+inline bool bitset::test(rx_size _bit) const {
+  RX_ASSERT(_bit < m_size, "out of bounds");
+  return !!(m_data[index(_bit)] & (k_bit_one << offset(_bit)));
 }
 
 inline rx_size bitset::size() const {
@@ -115,12 +113,12 @@ inline rx_size bitset::bytes_for_size(rx_size _size) {
   return sizeof(bit_type) * (_size / k_word_bits + 1);
 }
 
-inline rx_size bitset::index(rx_size bit) {
-  return bit / k_word_bits;
+inline rx_size bitset::index(rx_size _bit) {
+  return _bit / k_word_bits;
 }
 
-inline rx_size bitset::offset(rx_size bit) {
-  return bit % k_word_bits;
+inline rx_size bitset::offset(rx_size _bit) {
+  return _bit % k_word_bits;
 }
 
 template<typename F>
@@ -151,6 +149,10 @@ inline void bitset::each_unset(F&& _function) {
       }
     }
   }
+}
+
+inline memory::allocator* bitset::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx

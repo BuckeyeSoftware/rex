@@ -16,8 +16,8 @@ namespace rx {
 
 struct json {
   constexpr json();
-  json(const string& _contents);
   json(memory::allocator* _allocator, const string& _contents);
+  json(const string& _contents);
   ~json();
 
   enum class type {
@@ -59,10 +59,13 @@ struct json {
   template<typename F>
   bool each(F&& _function) const;
 
+  memory::allocator* allocator() const;
+
 private:
   json(struct json_value_s* _head);
 
   memory::allocator* m_allocator;
+
   struct json_value_s* m_root;
   struct json_parse_result_s m_error;
 };
@@ -147,6 +150,10 @@ inline bool json::each(F&& _function) const {
     }
   }
   return true;
+}
+
+inline memory::allocator* json::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx

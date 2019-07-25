@@ -13,14 +13,14 @@ struct function;
 
 template<typename R, typename... Ts>
 struct function<R(Ts...)> {
-  constexpr function();
   constexpr function(memory::allocator* _allocator);
-
-  template<typename F, typename = traits::enable_if<traits::is_callable<F, Ts...>>>
-  function(F&& _function);
+  constexpr function();
 
   template<typename F, typename = traits::enable_if<traits::is_callable<F, Ts...>>>
   function(memory::allocator* _allocator, F&& _function);
+
+  template<typename F, typename = traits::enable_if<traits::is_callable<F, Ts...>>>
+  function(F&& _function);
 
   function(const function& _function);
   function(function&& _function);
@@ -34,6 +34,8 @@ struct function<R(Ts...)> {
   R operator()(Ts... _arguments);
 
   operator bool() const;
+
+  memory::allocator* allocator() const;
 
 private:
   using invoke_fn = R (*)(rx_byte*, Ts&&...);
@@ -66,17 +68,17 @@ private:
 };
 
 template<typename R, typename... Ts>
-inline constexpr function<R(Ts...)>::function()
-  : function{&memory::g_system_allocator}
-{
-}
-
-template<typename R, typename... Ts>
 inline constexpr function<R(Ts...)>::function(memory::allocator* _allocator)
   : m_invoke{nullptr}
   , m_construct{nullptr}
   , m_destruct{nullptr}
   , m_data{_allocator}
+{
+}
+
+template<typename R, typename... Ts>
+inline constexpr function<R(Ts...)>::function()
+  : function{&memory::g_system_allocator}
 {
 }
 
@@ -191,6 +193,11 @@ inline R function<R(Ts...)>::operator()(Ts... _arguments) {
 template<typename R, typename... Ts>
 function<R(Ts...)>::operator bool() const {
   return m_invoke != nullptr;
+}
+
+template<typename R, typename... Ts>
+inline memory::allocator* function<R(Ts...)>::allocator() const {
+  return m_data.allocator();
 }
 
 } // namespace rx::core
