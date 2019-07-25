@@ -40,6 +40,8 @@ struct directory {
   // NOTE: does not consider hidden files, symbolic links, block devices, or ..
   void each(function<void(const item&)>&& _function);
 
+  memory::allocator* allocator() const;
+
 private:
   memory::allocator* m_allocator;
   void* m_impl;
@@ -62,6 +64,10 @@ inline directory::directory(const string& _path)
 
 inline directory::operator bool() const {
   return m_impl;
+}
+
+inline memory::allocator* directory::allocator() const {
+  return m_allocator;
 }
 
 inline bool directory::item::is_file() const {
