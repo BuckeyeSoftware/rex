@@ -11,14 +11,19 @@
 namespace rx::concurrency {
 
 struct thread_pool {
-  thread_pool(rx_size _threads = 16);
+  thread_pool(memory::allocator* _allocator, rx_size _threads);
+  thread_pool(rx_size _threads);
   ~thread_pool();
 
   // insert |_task| into the thread pool to be executed, the integer passed
   // to |_task| is the thread id of the calling thread in the pool
   void add(function<void(int)>&& _task);
+
+  memory::allocator* allocator() const;
   
 private:
+  memory::allocator* m_allocator;
+
   mutex m_mutex;
   condition_variable m_task_cond;
   condition_variable m_ready_cond;
@@ -27,6 +32,15 @@ private:
   bool m_stop;                        // protected by |m_mutex|
   rx_size m_ready;                    // protected by |m_mutex|
 };
+
+inline thread_pool::thread_pool(rx_size _threads)
+  : thread_pool{&memory::g_system_allocator, _threads}
+{
+}
+
+inline memory::allocator* thread_pool::allocator() const {
+  return m_allocator;
+}
 
 } // namespace rx::concurrency
 

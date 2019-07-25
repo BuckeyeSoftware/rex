@@ -3,8 +3,11 @@
 
 namespace rx::concurrency {
 
-thread_pool::thread_pool(rx_size _threads)
-  : m_stop{false}
+thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads)
+  : m_allocator{_allocator}
+  , m_queue{m_allocator}
+  , m_threads{m_allocator}
+  , m_stop{false}
   , m_ready{0}
 {
   RX_MESSAGE("starting thread pool with %zu threads", _threads);
