@@ -24,6 +24,7 @@ void chain::generate(const rx_byte* _data, pixel_format _format,
   m_pixel_format = _format;
   m_dimensions = _dimensions;
   m_data.resize(_dimensions.area() * bpp());
+  memcpy(m_data.data(), _data, m_data.size());
   generate_mipchain(_has_mipchain, _want_mipchain);
 }
 
