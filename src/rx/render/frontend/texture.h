@@ -5,11 +5,12 @@
 
 #include "rx/core/array.h"
 #include "rx/core/algorithm/max.h"
+#include "rx/core/math/log2.h"
 
 #include "rx/math/vec2.h"
 #include "rx/math/vec3.h"
 #include "rx/math/vec4.h"
-#include "rx/math/log2.h"
+
 
 namespace rx::render::frontend {
 

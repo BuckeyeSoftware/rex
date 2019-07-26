@@ -20,17 +20,6 @@ rx_f32 sin(rx_f32 _x);
 rx_f32 cos(rx_f32 _x);
 rx_f32 tan(rx_f32 _x);
 rx_f32 sqrt(rx_f32 _x);
-rx_f32 abs(rx_f32 _x);
-rx_f32 mod(rx_f32 _x, rx_f32 _y);
-rx_f32 floor(rx_f32);
-
-rx_f64 sin(rx_f64 _x);
-rx_f64 cos(rx_f64 _x);
-rx_f64 tan(rx_f64 _x);
-rx_f64 sqrt(rx_f64 _x);
-rx_f64 abs(rx_f64 _x);
-rx_f64 mod(rx_f64 _x, rx_f64 _y);
-rx_f64 floor(rx_f64);
 
 } // namespace rx::math
 

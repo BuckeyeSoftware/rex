@@ -4,11 +4,10 @@
 #include "rx/core/config.h" // RX_PLATFORM_*
 
 #if defined(RX_PLATFORM_POSIX)
-#include <pthread.h>
+#include <pthread.h> // pthread_t
 #elif defined(RX_PLATFORM_WINDOWS)
 #define _WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <process.h>
+#include <windows.h> // HANDLE
 #undef interface
 #else
 #error "missing thread implementation"
@@ -21,7 +20,9 @@
 namespace rx::concurrency {
 
 // NOTE: thread names must be static strings
-struct thread : concepts::no_copy {
+struct thread
+  : concepts::no_copy
+{
   thread();
 
   thread(memory::allocator* _allocator, const char* _name, function<void(int)>&& _function);

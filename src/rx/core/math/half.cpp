@@ -1,30 +1,13 @@
-#include "rx/math/half.h" // half
+#include "rx/core/math/half.h" // half
+#include "rx/core/math/shape.h" // shape
 
 #include "rx/core/statics.h" // static_global
 
 namespace rx::math {
 
-union bits {
-  constexpr bits(rx_u32 u);
-  constexpr bits(rx_f32 f);
-
-  rx_u32 u;
-  rx_f32 f;
-};
-
-inline constexpr bits::bits(rx_u32 u)
-  : u{u}
-{
-}
-
-inline constexpr bits::bits(rx_f32 f)
-  : f{f}
-{
-}
-
 static constexpr const rx_u32 k_magic{113 << 23};
 static constexpr const rx_u32 k_shift_exp{0x7C00 << 13}; // exp mask after shift
-static constexpr bits k_magic_bits{k_magic};
+static constexpr shape<rx_f32> k_magic_bits{k_magic};
 
 struct half_lut {
   half_lut() {
@@ -65,24 +48,24 @@ struct half_lut {
 
 static const static_global<half_lut> g_table("half_lut");
 
-half half::to_half(rx_f32 f) {
-  const bits shape{f};
-  return half(static_cast<rx_u16>(g_table->base[(shape.u >> 23) & 0x1FF] +
-    ((shape.u & 0x007FFFFF) >> g_table->shift[(shape.u >> 23) & 0x1FF])));
+half half::to_half(rx_f32 _f) {
+  const shape u{_f};
+  return half(static_cast<rx_u16>(g_table->base[(u.as_u32 >> 23) & 0x1FF] +
+    ((u.as_u32 & 0x007FFFFF) >> g_table->shift[(u.as_u32 >> 23) & 0x1FF])));
 }
 
 rx_f32 half::to_f32() const {
-  bits out{static_cast<rx_u32>((m_bits & 0x7FFF) << 13)}; // exp/mantissa
-  const auto exp{k_shift_exp & out.u}; // exp
-  out.u += (127 - 15) << 23; // adjust exp
+  shape out{static_cast<rx_u32>((m_bits & 0x7FFF) << 13)}; // exp/mantissa
+  const auto exp{k_shift_exp & out.as_u32}; // exp
+  out.as_u32 += (127 - 15) << 23; // adjust exp
   if (exp == k_shift_exp) {
-    out.u += (128 - 16) << 23; // adjust for inf/nan
+    out.as_u32 += (128 - 16) << 23; // adjust for inf/nan
   } else if (exp == 0) {
-    out.u += 1 << 23; // adjust for zero/denorm
-    out.f -= k_magic_bits.f; // renormalize
+    out.as_u32 += 1 << 23; // adjust for zero/denorm
+    out.as_f32 -= k_magic_bits.as_f32; // renormalize
   }
-  out.u |= (m_bits & 0x8000) << 16; // sign bit
-  return out.f;
+  out.as_u32 |= (m_bits & 0x8000) << 16; // sign bit
+  return out.as_f32;
 }
 
 } // namespace rx::math

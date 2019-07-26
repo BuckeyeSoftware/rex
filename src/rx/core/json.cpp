@@ -2,7 +2,8 @@
 #include <string.h> // strcmp
 
 #include "rx/core/json.h"
-#include "rx/math/trig.h"
+
+#include "rx/core/math/floor.h"
 
 namespace rx {
 

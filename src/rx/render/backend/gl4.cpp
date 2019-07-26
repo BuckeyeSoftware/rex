@@ -9,12 +9,10 @@
 #include "rx/render/frontend/program.h"
 #include "rx/render/frontend/texture.h"
 
+#include "rx/core/algorithm/max.h"
+#include "rx/core/math/log2.h"
 #include "rx/core/debug.h"
 #include "rx/core/log.h"
-
-#include "rx/core/algorithm/max.h"
-
-#include "rx/math/log2.h"
 
 RX_LOG("render/gl4", gl4_log);
 

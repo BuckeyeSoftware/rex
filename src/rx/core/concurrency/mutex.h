@@ -4,10 +4,10 @@
 #include "rx/core/config.h" // RX_PLATFORM_*
 
 #if defined(RX_PLATFORM_POSIX)
-#include <pthread.h>
+#include <pthread.h> // pthread_mutex_t
 #elif defined(RX_PLATFORM_WINDOWS)
 #define _WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <windows.h> // CRITICAL_SECTION
 #undef interface
 #else
 #error "missing mutex implementation"

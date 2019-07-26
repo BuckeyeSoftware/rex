@@ -1,7 +1,8 @@
 #include "rx/model/animation.h"
 #include "rx/model/interface.h"
 
-#include "rx/math/trig.h"
+#include "rx/core/math/abs.h"
+#include "rx/core/math/mod.h"
 
 namespace rx::model {
 

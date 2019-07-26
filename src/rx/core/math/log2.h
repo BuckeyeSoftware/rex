@@ -1,23 +1,18 @@
-#ifndef RX_MATH_LOG2_H
-#define RX_MATH_LOG2_H
+#ifndef RX_CORE_MATH_LOG2_H
+#define RX_CORE_MATH_LOG2_H
 
 #include "rx/core/config.h"
 #include "rx/core/types.h"
 
 namespace rx::math {
 
-template<typename T>
-inline T log2(T _value);
-
 // use compiler intrinsics if available
 #if defined(RX_COMPILER_CLANG) || defined(RX_COMPILER_GCC)
-template<>
 inline rx_u32 log2(rx_u32 _value) {
   static_assert(traits::is_same<rx_u32, unsigned int>, "rx_u32 not unsigned int");
   return sizeof _value * 8 - __builtin_clz(_value) - 1;
 }
 
-template<>
 inline rx_u64 log2(rx_u64 _value) {
   if constexpr (traits::is_same<rx_u64, unsigned long>) {
     return sizeof _value * 8 - __builtin_clzl(_value) - 1;
@@ -26,7 +21,6 @@ inline rx_u64 log2(rx_u64 _value) {
   }
 }
 #else
-template<>
 inline rx_u32 log2(rx_u32 _value) {
   static constexpr const rx_u8 k_table[]{
     0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30, 8, 12,
@@ -40,7 +34,6 @@ inline rx_u32 log2(rx_u32 _value) {
   return k_table[rx_u32(_value * 0x07c4acdd) >> 27];
 }
 
-template<>
 inline rx_u64 log2(rx_u64 _value) {
   static constexpr const rx_u8 k_table[]{
     63, 0, 58, 1, 59, 47, 53, 2, 60, 39, 48, 27, 54, 33, 42, 3, 61, 51,

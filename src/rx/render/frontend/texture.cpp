@@ -1,7 +1,7 @@
 #include <string.h> // memcpy
 
 #include "rx/render/frontend/texture.h"
-#include "rx/math/log2.h"
+#include "rx/core/math/log2.h"
 
 namespace rx::render::frontend {
 

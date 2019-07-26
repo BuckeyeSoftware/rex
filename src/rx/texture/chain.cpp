@@ -1,9 +1,9 @@
-#include <string.h>
+#include <string.h> // memcpy
 
 #include "rx/texture/chain.h"
 #include "rx/texture/scale.h"
 
-#include "rx/math/log2.h"
+#include "rx/core/math/log2.h"
 
 #include "rx/core/utility/swap.h"
 

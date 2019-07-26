@@ -1,4 +1,4 @@
-#include <string.h>
+#include <string.h> // memcpy
 
 #include "rx/texture/loader.h"
 #include "rx/core/filesystem/file.h"

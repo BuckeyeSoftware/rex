@@ -1,4 +1,4 @@
-#include <string.h>
+#include <string.h> // strncmp
 
 #include "rx/render/frontend/technique.h"
 #include "rx/render/frontend/interface.h"
