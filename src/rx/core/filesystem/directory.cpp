@@ -1,4 +1,5 @@
 #include "rx/core/config.h" // RX_PLATFORM_*
+#include "rx/core/assert.h" // RX_ASSERT
 
 #if defined(RX_PLATFORM_POSIX)
 #include <dirent.h> // DIR, struct dirent, opendir, readdir, rewinddir, closedir
