@@ -12,11 +12,16 @@
 
 #if defined(RX_COMPILER_GCC)
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter" // unused parameter
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif defined(RX_COMPILER_CLANG)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 #include "lib/stb_image.h"
 
 #if defined(RX_COMPILER_GCC)
 #pragma GCC diagnostic pop
+#elif defined(RX_COMPILER_CLANG)
+#pragma clang diagnostic pop
 #endif
