@@ -6,7 +6,6 @@ extern "C" {
 float sinf(float);
 float cosf(float);
 float tanf(float);
-float sqrtf(float);
 }
 
 namespace rx::math {
@@ -21,10 +20,6 @@ rx_f32 cos(rx_f32 _x) {
 
 rx_f32 tan(rx_f32 _x) {
   return ::tanf(_x);
-}
-
-rx_f32 sqrt(rx_f32 _x) {
-  return ::sqrtf(_x);
 }
 
 } // namespace rx::math

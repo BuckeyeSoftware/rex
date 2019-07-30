@@ -1,4 +1,5 @@
-#include "rx/math/trig.h"
+#include "rx/core/math/sqrt.h"
+
 #include "rx/math/quat.h"
 #include "rx/math/mat3x3.h"
 #include "rx/math/mat3x4.h"

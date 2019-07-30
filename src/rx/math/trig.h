@@ -19,7 +19,6 @@ inline constexpr T rad_to_deg(T rad) {
 rx_f32 sin(rx_f32 _x);
 rx_f32 cos(rx_f32 _x);
 rx_f32 tan(rx_f32 _x);
-rx_f32 sqrt(rx_f32 _x);
 
 } // namespace rx::math
 
