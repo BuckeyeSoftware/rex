@@ -1,5 +1,5 @@
 #include "rx/core/math/mod.h"
-#include "rx/core/math/shape.h"
+#include "rx/core/math/isnan.h"
 
 namespace rx::math {
 
@@ -13,7 +13,7 @@ rx_f32 mod(rx_f32 _x, rx_f32 _y) {
   rx_u32 sx = ux.as_u32 & 0x80000000;
   rx_u32 uxi = ux.as_u32;
 
-  if (uy.as_u32 << 1 == 0 /*|| isnan(y)*/ || ex == 0xff) {
+  if (uy.as_u32 << 1 == 0 || isnan(_y) || ex == 0xff) {
     return (_x * _y) / (_x * _y);
   }
 

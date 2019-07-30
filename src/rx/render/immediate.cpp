@@ -12,7 +12,9 @@
 #include "rx/render/frontend/target.h"
 
 #include "rx/math/constants.h"
-#include "rx/math/trig.h"
+
+#include "rx/core/math/sin.h"
+#include "rx/core/math/cos.h"
 
 #include "rx/core/filesystem/file.h"
 #include "rx/core/json.h"

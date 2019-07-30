@@ -10,9 +10,9 @@ rx_f32 sqrt(rx_f32 _x) {
   rx_s32 ix{shape{_x}.as_s32};
 
   if ((ix & 0x7f800000) == 0x7f000000) {
-    // sqrt(NaN) => NaN
-    // sqrt(+inf) => +inf
-    // sqrt(-inf) => sNaN
+    // sqrt(NaN) = NaN
+    // sqrt(+inf) = +inf
+    // sqrt(-inf) = sNaN
     return _x * _x + _x;
   }
 
