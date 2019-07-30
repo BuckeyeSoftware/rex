@@ -9,10 +9,20 @@ static constexpr const rx_f64_eval k_to_int{1 / LDBL_EPSILON};
 
 namespace rx::math {
 
+static inline void force_eval(rx_f64 _x) {
+  [[maybe_unused]] volatile rx_f64 y;
+  y = _x;
+}
+
+static inline void force_eval(rx_f32 _x) {
+  [[maybe_unused]] volatile rx_f32 y;
+  y = _x;
+}
+
 rx_f64 floor(rx_f64 _x) {
   shape u{_x};
 
-  const auto e{static_cast<int>(u.as_u64 >> 52 & 0x7ff)};
+  const auto e{static_cast<rx_s32>(u.as_u64 >> 52 & 0x7ff)};
 
   if (e >= 0x3ff+52 || _x == 0) {
     return _x;
@@ -28,6 +38,7 @@ rx_f64 floor(rx_f64 _x) {
 
   // special case because of non-nearest rounding modes
   if (e <= 0x3ff-1) {
+    force_eval(y);
     return u.as_u64 >> 63 ? -1 : 0;
   }
 
@@ -47,9 +58,8 @@ rx_f32 floor(rx_f32 _x) {
     return _x;
   }
 
-  rx_u32 m;
   if (e >= 0) {
-    m = 0x007fffff >> e;
+    const auto m{static_cast<rx_u32>(0x007fffff >> e)};
     if ((u.as_u32 & m) == 0) {
       return _x;
     }
@@ -63,7 +73,7 @@ rx_f32 floor(rx_f32 _x) {
     if (u.as_u32 >> 31 == 0) {
       u.as_u32 = 0;
     } else if (u.as_u32 << 1) {
-      u.as_f32 = -1.0f;
+      u.as_f32 = -1.0;
     }
   }
 

@@ -1,6 +1,7 @@
 #include <math.h> // M_PI_2
 
 #include "rx/core/math/cos.h"
+#include "rx/core/math/sqrt.h"
 #include "rx/core/math/shape.h"
 
 namespace rx::math {
@@ -85,6 +86,60 @@ rx_f32 cos(rx_f32 _x) {
   // TODO(dweiler): general argument reduction
 
   return 0.0f;
+}
+
+static constexpr const rx_f32 k_pi_2_hi{1.5707962513e+00}; // 0x3fc90fda
+static constexpr const rx_f32 k_pi_2_lo{7.5497894159e-08}; // 0x33a22168
+static constexpr const rx_f32 k_p_s0{1.6666586697e-01};
+static constexpr const rx_f32 k_p_s1{-4.2743422091e-02};
+static constexpr const rx_f32 k_p_s2{-8.6563630030e-03};
+static constexpr const rx_f32 k_q_s1{-7.0662963390e-01};
+
+static rx_f32 R(rx_f32 _z) {
+  const rx_f32_eval p{_z*(k_p_s0+_z*(k_p_s1+_z*k_p_s2))};
+  const rx_f32_eval q{1.0f+_z*k_q_s1};
+  return p/q;
+}
+
+rx_f32 acos(rx_f32 _x) {
+  rx_u32 hx{shape{_x}.as_u32};
+  rx_u32 ix = hx & 0x7fffffff;
+
+  // |_x| >= 1 | NaN
+  if (ix >= 0x3f800000) {
+    if (ix == 0x3f000000) {
+      if (hx >> 31) {
+        return 2*k_pi_2_hi + 0x1p-120f;
+      }
+      return 0;
+    }
+    return 0/(_x-_x);
+  }
+
+  // |_x| < 0.5
+  if (ix < 0x3f000000) {
+    // |_x| < 2**-26
+    if (ix <= 0x32800000) {
+      return k_pi_2_hi + 0x1p-120f;
+    }
+    return k_pi_2_hi - (_x - (k_pi_2_lo - _x * R(_x*_x)));
+  }
+
+  // x < -0.5
+  if (hx >> 31) {
+    const rx_f32 z{(1+_x)*0.5f};
+    const rx_f32 s{sqrt(z)};
+    const rx_f32 w{R(z)*s-k_pi_2_lo};
+    return 2*(k_pi_2_lo - (s+w));
+  }
+
+  // x > 0.5
+  const rx_f32 z{(1-_x)*0.5f};
+  const rx_f32 s{sqrt(z)};
+  const rx_f32 df{shape{shape{s}.as_u32 & 0xfffff000}.as_f32};
+  const rx_f32 c{(z-df*df)/(s+df)};
+  const rx_f32 w{R(z)*s+c};
+  return 2*(df+w);
 }
 
 } // namespace rx::math

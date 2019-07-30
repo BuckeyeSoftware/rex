@@ -73,7 +73,6 @@ endif
 
 # linker flags
 LDFLAGS := -lpthread
-LDFLAGS += -lm
 LDFLAGS += `sdl2-config --libs`
 ifeq ($(LTO),1)
 	LDFLAGS += -flto
