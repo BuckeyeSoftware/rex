@@ -10,7 +10,10 @@
 
 namespace rx::concurrency {
 
-struct thread_pool {
+struct thread_pool
+  : concepts::no_copy
+  , concepts::no_move
+{
   thread_pool(memory::allocator* _allocator, rx_size _threads);
   thread_pool(rx_size _threads);
   ~thread_pool();

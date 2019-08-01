@@ -6,7 +6,9 @@
 
 namespace rx::memory {
 
-struct allocator : concepts::interface {
+struct allocator
+  : concepts::interface
+{
   // all allocators must align their data and round their sizes to this alignment
   // value as well, failure to do so will lead to unaligned reads and writes to
   // several engine interfaces that depend on this behavior and possible crashes

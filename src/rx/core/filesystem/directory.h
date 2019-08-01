@@ -3,11 +3,14 @@
 
 #include "rx/core/string.h"
 #include "rx/core/function.h"
+#include "rx/core/concepts/no_copy.h"
 #include "rx/core/memory/system_allocator.h"
 
 namespace rx::filesystem {
 
-struct directory {
+struct directory 
+  : concepts::no_copy
+{
   directory(memory::allocator* _allocator, const char* _path);
   directory(memory::allocator* _allocator, const string& _path);
   directory(const char* _path);

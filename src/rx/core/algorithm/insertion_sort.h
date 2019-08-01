@@ -12,7 +12,7 @@ inline void insertion_sort(T* start_, T* end_, F&& _compare) {
     if (_compare(*item1, *(item1 - 1))) {
       T temp{utility::move(*item1)};
       *item1 = utility::move(*(item1 - 1));
-      T* item2 = item1 - 1;
+      T* item2{item1 - 1};
       for (; item2 > start_ && _compare(temp, *(item2 - 1)); --item2) {
         *item2 = utility::move(*(item2 - 1));
       }

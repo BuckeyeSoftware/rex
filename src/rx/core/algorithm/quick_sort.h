@@ -2,7 +2,9 @@
 #define RX_CORE_ALGORITHM_QUICK_SORT_H
 
 #include "rx/core/algorithm/insertion_sort.h"
+
 #include "rx/core/utility/forward.h"
+#include "rx/core/utility/swap.h"
 
 namespace rx::algorithm {
 
@@ -39,7 +41,7 @@ void quick_sort(T* start_, T* end_, F&& _compare) {
       *start_ = utility::move(*middle);
     } else {
       pivot = utility::move(*middle);
-      swap(*start_, *(end_ - 1));
+      utility::swap(*start_, *(end_ - 1));
     }
 
     do {
@@ -55,7 +57,7 @@ void quick_sort(T* start_, T* end_, F&& _compare) {
         }
       }
 
-      swap(*item1, *item2);
+      utility::swap(*item1, *item2);
     } while (++item1 < item2);
 
 partitioned:

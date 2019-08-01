@@ -312,12 +312,12 @@ inline bool wide_string::is_empty() const {
 }
 
 inline rx_u16& wide_string::operator[](rx_size _index) {
-  RX_ASSERT(_index < m_size, "out of bounds");
+  RX_ASSERT(_index <= m_size, "out of bounds");
   return m_data[_index];
 }
 
 inline const rx_u16& wide_string::operator[](rx_size _index) const {
-  RX_ASSERT(_index < m_size, "out of bounds");
+  RX_ASSERT(_index <= m_size, "out of bounds");
   return m_data[_index];
 }
 
