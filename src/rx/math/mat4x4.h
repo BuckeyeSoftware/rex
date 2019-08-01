@@ -43,6 +43,8 @@ struct mat4x4 {
 private:
   static constexpr T det2x2(T a, T b, T c, T d);
   static constexpr T det3x3(T a1, T a2, T a3, T b1, T b2, T b3, T c1, T c2, T c3);
+
+  static constexpr vec3<T> reduce_rotation_angles(const vec3<T>& _rotate);
 };
 
 using mat4x4f = mat4x4<float>;
@@ -71,21 +73,22 @@ inline const T* mat4x4<T>::data() const {
 }
 
 template<typename T>
-inline constexpr mat4x4<T> mat4x4<T>::scale(const vec3<T>& scale) {
-  return {{scale.x, 0, 0, 0},
-          {0, scale.y, 0, 0},
-          {0, 0, scale.z, 0},
-          {0, 0, 0, 1}};
+inline constexpr mat4x4<T> mat4x4<T>::scale(const vec3<T>& _scale) {
+  return {{_scale.x, 0,        0,        0},
+          {0,        _scale.y, 0,        0},
+          {0,        0,        _scale.z, 0},
+          {0,        0,        0,        1}};
 }
 
 template<typename T>
-inline constexpr mat4x4<T> mat4x4<T>::rotate(const vec3<T>& rotate) {
-  const auto sx{sin(deg_to_rad(-rotate.x))};
-  const auto cx{cos(deg_to_rad(-rotate.x))};
-  const auto sy{sin(deg_to_rad(-rotate.y))};
-  const auto cy{cos(deg_to_rad(-rotate.y))};
-  const auto sz{sin(deg_to_rad(-rotate.z))};
-  const auto cz{cos(deg_to_rad(-rotate.z))};
+inline constexpr mat4x4<T> mat4x4<T>::rotate(const vec3<T>& _rotate) {
+  const auto reduce{reduce_rotation_angles(_rotate)};
+  const auto sx{sin(deg_to_rad(-reduce.x))};
+  const auto cx{cos(deg_to_rad(-reduce.x))};
+  const auto sy{sin(deg_to_rad(-reduce.y))};
+  const auto cy{cos(deg_to_rad(-reduce.y))};
+  const auto sz{sin(deg_to_rad(-reduce.z))};
+  const auto cz{cos(deg_to_rad(-reduce.z))};
   return {{ cy*cz,              cy*-sz,              sy,    0},
           {-sx*-sy*cz + cx*sz, -sx*-sy*-sz + cx*cz, -sx*cy, 0},
           { cx*-sy*cz + sx*sz,  cx*-sy*-sz + sx*cz,  cx*cy, 0},
@@ -93,27 +96,27 @@ inline constexpr mat4x4<T> mat4x4<T>::rotate(const vec3<T>& rotate) {
 }
 
 template<typename T>
-inline constexpr mat4x4<T> mat4x4<T>::translate(const vec3<T>& translate) {
-  return {{1,           0,           0,           0},
-          {0,           1,           0,           0},
-          {0,           0,           1,           0},
-          {translate.x, translate.y, translate.z, 1}};
+inline constexpr mat4x4<T> mat4x4<T>::translate(const vec3<T>& _translate) {
+  return {{1,            0,            0,            0},
+          {0,            1,            0,            0},
+          {0,            0,            1,            0},
+          {_translate.x, _translate.y, _translate.z, 1}};
 
 }
 
 template<typename T>
-inline constexpr mat4x4<T> mat4x4<T>::transpose(const mat4x4& mat) {
-  return {{mat.x.x, mat.y.x, mat.z.x, mat.w.x},
-          {mat.x.y, mat.y.y, mat.z.y, mat.w.y},
-          {mat.x.z, mat.y.z, mat.z.z, mat.w.z}};
+inline constexpr mat4x4<T> mat4x4<T>::transpose(const mat4x4& _mat) {
+  return {{_mat.x.x, _mat.y.x, _mat.z.x, _mat.w.x},
+          {_mat.x.y, _mat.y.y, _mat.z.y, _mat.w.y},
+          {_mat.x.z, _mat.y.z, _mat.z.z, _mat.w.z}};
 }
 
 template<typename T>
-inline constexpr mat4x4<T> mat4x4<T>::invert(const mat4x4& mat) {
-  const auto a1{mat.x.x}, a2{mat.x.y}, a3{mat.x.z}, a4{mat.x.w};
-  const auto b1{mat.y.x}, b2{mat.y.y}, b3{mat.y.z}, b4{mat.y.w};
-  const auto c1{mat.z.x}, c2{mat.z.y}, c3{mat.z.z}, c4{mat.z.w};
-  const auto d1{mat.w.x}, d2{mat.w.y}, d3{mat.w.z}, d4{mat.w.w};
+inline constexpr mat4x4<T> mat4x4<T>::invert(const mat4x4& _mat) {
+  const auto a1{_mat.x.x}, a2{_mat.x.y}, a3{_mat.x.z}, a4{_mat.x.w};
+  const auto b1{_mat.y.x}, b2{_mat.y.y}, b3{_mat.y.z}, b4{_mat.y.w};
+  const auto c1{_mat.z.x}, c2{_mat.z.y}, c3{_mat.z.z}, c4{_mat.z.w};
+  const auto d1{_mat.w.x}, d2{_mat.w.y}, d3{_mat.w.z}, d4{_mat.w.w};
 
   const auto det1{ det3x3(b2, b3, b4, c2, c3, c4, d2, d3, d4)};
   const auto det2{-det3x3(a2, a3, a4, c2, c3, c4, d2, d3, d4)};
@@ -151,17 +154,17 @@ inline constexpr mat4x4<T> mat4x4<T>::invert(const mat4x4& mat) {
 template<typename T>
 inline constexpr mat4x4<T> mat4x4<T>::perspective(T _fov, const range<T>& _planes, T _aspect) {
   const T range{_planes.min - _planes.max};
-  const T half{tan(deg_to_rad(_fov*T{.5}))};
-  if (_aspect < T{1}) {
-    return {{T{1} / half,             T{0},                    T{0},                                      T{0}},
-            {T{0},                    T{1} / (half / _aspect), T{0},                                      T{0}},
-            {T{0},                    T{0},                    -(_planes.min + _planes.max) / range,      T{1}},
-            {T{0},                    T{0},                    T{2} * _planes.max * _planes.min / range,  T{0}}};
+  const T half{tan(deg_to_rad(_fov*.5))};
+  if (_aspect < 1) {
+    return {{1 / half,             0,                    0,                                      0},
+            {0,                    1 / (half / _aspect), 0,                                      0},
+            {0,                    0,                    -(_planes.min + _planes.max) / range,   1},
+            {0,                    0,                    2 * _planes.max * _planes.min / range,  0}};
   } else {
-    return {{T{1} / (half * _aspect), T{0},                    T{0},                                      T{0}},
-            {T{0},                    T{1} / half,             T{0},                                      T{0}},
-            {T{0},                    T{0},                    -(_planes.min + _planes.max) / range,      T{1}},
-            {T{0},                    T{0},                    T{2} * _planes.max * _planes.min / range,  T{0}}};
+    return {{1 / (half * _aspect), 0,                    0,                                      0},
+            {0,                    1 / half,             0,                                      0},
+            {0,                    0,                    -(_planes.min + _planes.max) / range,   1},
+            {0,                    0,                    2 * _planes.max * _planes.min / range,  0}};
   }
 }
 
@@ -216,6 +219,21 @@ inline constexpr T mat4x4<T>::det2x2(T a, T b, T c, T d) {
 template<typename T>
 inline constexpr T mat4x4<T>::det3x3(T a1, T a2, T a3, T b1, T b2, T b3, T c1, T c2, T c3) {
   return a1 * det2x2(b2, b3, c2, c3) - b1 * det2x2(a2, a3, c2, c3) + c1 * det2x2(a2, a3, b2, b3);
+}
+
+template<typename T>
+inline constexpr vec3<T> mat4x4<T>::reduce_rotation_angles(const vec3<T>& _rotate) {
+  return _rotate.map([](T _angle) {
+    while (_angle >  180) {
+      _angle -= 360;
+    }
+
+    while (_angle < -180) {
+      _angle += 360;
+    }
+
+    return _angle;
+  });
 }
 
 } // namespace rx::math

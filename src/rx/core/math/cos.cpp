@@ -4,6 +4,10 @@
 #include "rx/core/math/sqrt.h"
 #include "rx/core/math/shape.h"
 
+#include "rx/core/assert.h"
+
+#include <math.h>
+
 namespace rx::math {
 
 static inline void force_eval(rx_f32 _x) {
@@ -31,11 +35,13 @@ static constexpr const rx_f64 k_c2_pi_2{2 * M_PI_2};
 static constexpr const rx_f64 k_c3_pi_2{3 * M_PI_2};
 static constexpr const rx_f64 k_c4_pi_2{4 * M_PI_2};
 
+rx_s32 rempio2(rx_f32 _x, rx_f64& y_); // sin.cpp
+
 rx_f32 cos(rx_f32 _x) {
   rx_u32 ix{shape{_x}.as_u32};
-  rx_u32 sign{ix >> 31};
+  const rx_u32 sign{ix >> 31};
 
-  ix &= 0x7ffffff;
+  ix &= 0x7fffffff;
 
   // |_x| ~<= pi/4
   if (ix <= 0x3f490fda) {
@@ -83,9 +89,19 @@ rx_f32 cos(rx_f32 _x) {
     return _x - _x;
   }
 
-  // TODO(dweiler): general argument reduction
+  rx_f64 y;
+  switch (rempio2(_x, y) & 3) {
+  case 0:
+    return cosdf(y);
+  case 1:
+    return sindf(-y);
+  case 2:
+    return -cosdf(y);
+  default:
+    return sindf(y);
+  }
 
-  return 0.0f;
+  RX_UNREACHABLE();
 }
 
 static constexpr const rx_f32 k_pi_2_hi{1.5707962513e+00}; // 0x3fc90fda

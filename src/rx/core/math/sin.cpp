@@ -3,6 +3,8 @@
 #include "rx/core/math/sin.h"
 #include "rx/core/math/shape.h"
 
+#include "rx/core/assert.h"
+
 namespace rx::math {
 
 static inline void force_eval(rx_f32 _x) {
@@ -25,6 +27,37 @@ rx_f32 sindf(rx_f64 _x) {
   return (_x + s*(k_s1 + z*k_s2)) + s*w*r;
 }
 
+
+#if FLT_EVAL_METHOD == 0 || FLT_EVAL_METHOD == 1
+static constexpr const rx_f64 k_toint{1.5 / DBL_EPSILON};
+#else
+static constexpr const rx_f64 k_toint{1.5 / LDBL_EPSILON};
+#endif 
+static constexpr const rx_f64 k_invpio2{6.36619772367581382433e-01};
+static constexpr const rx_f64 k_pio2_1{1.57079631090164184570e+00};
+static constexpr const rx_f64 k_pio2_1t{1.58932547735281966916e-08};
+
+rx_s32 rempio2(rx_f32 _x, rx_f64& y_) {
+  const shape u{_x};
+  const rx_u32 ix{u.as_u32 & 0x7fffffff};
+
+  // |_x| ~< 2^28*(pi/2)
+  if (ix < 0x4dc90fdb) {
+    const auto fn{static_cast<rx_f64_eval>(_x) * k_invpio2 + k_toint - k_toint};
+    const auto n{static_cast<rx_s32>(fn)};
+    y_ = _x - fn*k_pio2_1 - fn*k_pio2_1t;
+    return n;
+  }
+
+  // x is inf or NaN
+  if (ix >= 0x7f800000) {
+    y_ = _x - _x;
+    return 0;
+  }
+
+  rx::abort("range error");
+}
+
 // small multiplies of pi/2 rounded to double precision
 static constexpr rx_f64 k_s1_pi_2{1*M_PI_2};
 static constexpr rx_f64 k_s2_pi_2{2*M_PI_2};
@@ -33,9 +66,9 @@ static constexpr rx_f64 k_s4_pi_2{4*M_PI_2};
 
 rx_f32 sin(rx_f32 _x) {
   rx_u32 ix{shape{_x}.as_u32};
-  rx_u32 sign{ix >> 31};
+  const rx_u32 sign{ix >> 31};
 
-  ix &= 0x7ffffff;
+  ix &= 0x7fffffff;
 
   // |_x| ~<= pi/4
   if (ix <= 0x3f490fda) {
@@ -81,9 +114,19 @@ rx_f32 sin(rx_f32 _x) {
     return _x - _x;
   }
 
-  // TODO(dweiler): general argument reduction
+  rx_f64 y{0};
+  switch (rempio2(_x, y) & 3) {
+  case 0:
+    return sindf(y);
+  case 1:
+    return cosdf(y);
+  case 2:
+    return sindf(-y);
+  default:
+    return -cosdf(y);
+  }
 
-  return 0.0f;
+  RX_UNREACHABLE();
 }
 
 } // namespace rx::math
