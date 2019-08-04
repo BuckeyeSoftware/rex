@@ -1236,7 +1236,7 @@ void gl4::process(rx_byte* _command) {
                   0,
                   static_cast<GLsizei>(level_info.dimensions),
                   convert_texture_data_format(format),
-                  level_info.size,
+                  static_cast<GLsizei>(level_info.size),
                   data.data() + level_info.offset);
               } else {
                 pglTextureSubImage1D(
@@ -1291,7 +1291,7 @@ void gl4::process(rx_byte* _command) {
                   static_cast<GLsizei>(level_info.dimensions.w),
                   static_cast<GLsizei>(level_info.dimensions.h),
                   convert_texture_data_format(format),
-                  level_info.size,
+                  static_cast<GLsizei>(level_info.size),
                   data.data() + level_info.offset);
               } else {
                 pglTextureSubImage2D(
@@ -1353,7 +1353,7 @@ void gl4::process(rx_byte* _command) {
                   static_cast<GLsizei>(level_info.dimensions.h),
                   static_cast<GLsizei>(level_info.dimensions.d),
                   convert_texture_data_format(format),
-                  level_info.size,
+                  static_cast<GLsizei>(level_info.size),
                   data.data() + level_info.offset);
               } else {
                 pglTextureSubImage3D(
@@ -1415,7 +1415,7 @@ void gl4::process(rx_byte* _command) {
                     static_cast<GLsizei>(level_info.dimensions.h),
                     1,
                     convert_texture_format(format),
-                    level_info.size,
+                    static_cast<GLsizei>(level_info.size),
                     data.data() + level_info.offset * level_info.dimensions.area() * j);
                 } else {
                   pglTextureSubImage3D(

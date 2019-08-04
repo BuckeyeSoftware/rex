@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include <math.h> // M_PI_2
 
 #include "rx/core/math/cos.h"
@@ -6,7 +7,9 @@
 
 #include "rx/core/assert.h"
 
-#include <math.h>
+#if defined(RX_COMPILER_MSVC)
+#pragma warning(disable: 4723) // potential divide by 0
+#endif
 
 namespace rx::math {
 
@@ -26,7 +29,7 @@ rx_f32 cosdf(rx_f64 _x) {
   const rx_f64_eval z{_x*_x};
   const rx_f64_eval w{z*z};
   const rx_f64_eval r{k_c2+z*k_c3};
-  return ((1.0+z*k_c0) + w*k_c1) + (w*z)*r;
+  return static_cast<rx_f32>(((1.0+z*k_c0) + w*k_c1) + (w*z)*r);
 }
 
 // small multiplies of pi/2 rounded to double precision
@@ -114,7 +117,7 @@ static constexpr const rx_f32 k_q_s1{-7.0662963390e-01};
 static rx_f32 R(rx_f32 _z) {
   const rx_f32_eval p{_z*(k_p_s0+_z*(k_p_s1+_z*k_p_s2))};
   const rx_f32_eval q{1.0f+_z*k_q_s1};
-  return p/q;
+  return static_cast<rx_f32>(p/q);
 }
 
 rx_f32 acos(rx_f32 _x) {
@@ -129,7 +132,7 @@ rx_f32 acos(rx_f32 _x) {
       }
       return 0;
     }
-    return 0/(_x-_x);
+    return 0 / (_x - _x);
   }
 
   // |_x| < 0.5

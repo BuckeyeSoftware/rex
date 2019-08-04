@@ -154,7 +154,7 @@ inline constexpr mat4x4<T> mat4x4<T>::invert(const mat4x4& _mat) {
 template<typename T>
 inline constexpr mat4x4<T> mat4x4<T>::perspective(T _fov, const range<T>& _planes, T _aspect) {
   const T range{_planes.min - _planes.max};
-  const T half{tan(deg_to_rad(_fov*.5))};
+  const T half{tan(deg_to_rad(_fov*T{.5}))};
   if (_aspect < 1) {
     return {{1 / half,             0,                    0,                                      0},
             {0,                    1 / (half / _aspect), 0,                                      0},

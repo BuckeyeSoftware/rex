@@ -1,3 +1,5 @@
+#include <float.h> // DBL_EPSILON
+
 #include "rx/core/math/ceil.h"
 #include "rx/core/math/shape.h"
 
@@ -9,12 +11,12 @@ static constexpr const rx_f64_eval k_to_int{1 / LDBL_EPSILON};
 
 namespace rx::math {
 
-static inline void force_eval(rx_f64 _x) {
+static inline void force_eval_f64(rx_f64 _x) {
   [[maybe_unused]] volatile rx_f64 y;
   y = _x;
 }
 
-static inline void force_eval(rx_f32 _x) {
+static inline void force_eval_f32(rx_f32 _x) {
   [[maybe_unused]] volatile rx_f32 y;
   y = _x;
 }
@@ -38,7 +40,7 @@ rx_f64 ceil(rx_f64 _x) {
 
   // special case because of non-nearest rounding modes
   if (e <= 0x3ff-1) {
-    force_eval(y);
+    force_eval_f64(y);
     return u.as_u64 >> 63 ? -0.0 : 1;
   }
 
@@ -64,13 +66,13 @@ rx_f32 ceil(rx_f32 _x) {
       return _x;
     }
 
-    force_eval(_x + 0x1p120f);
+    force_eval_f32(_x + 0x1p120f);
     if (u.as_u32 >> 31 == 0) {
       u.as_u32 += m;
     }
     u.as_u32 &= ~m;
   } else {
-    force_eval(_x + 0x1p120f);
+    force_eval_f32(_x + 0x1p120f);
     if (u.as_u32 >> 31) {
       u.as_f32 = -0.0f;
     } else if (u.as_u32 << 1) {

@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include <math.h> // M_PI_2
 
 #include "rx/core/math/tan.h"
@@ -7,7 +8,7 @@
 
 namespace rx::math {
 
-static inline void force_eval(rx_f32 _x) {
+static inline void force_eval_f32(rx_f32 _x) {
   [[maybe_unused]] volatile rx_f32 y;
   y = _x;
 }
@@ -29,7 +30,7 @@ static rx_f32 tandf(rx_f64 _x) {
   const rx_f64_eval s{z*_x};
   const rx_f64_eval u{k_t0 + z*k_t1};
   const rx_f64_eval l{(_x + s*u) + (s*w) * (t + w*r)};
-  return Odd ? -1.0/l : l;
+  return static_cast<rx_f32>(Odd ? -1.0/l : l);
 }
 
 // small multiplies of pi/2 rounded to double precision
@@ -51,7 +52,7 @@ rx_f32 tan(rx_f32 _x) {
     // |_x| < 2**-12
     if (ix < 0x39800000) {
       // raise inexact if x != 0 and underflow if subnormal
-      force_eval(ix < 0x00800000 ? _x/0x1p120f : _x+0x1p120f);
+      force_eval_f32(ix < 0x00800000 ? _x/0x1p120f : _x+0x1p120f);
       return _x;
     }
     return tandf<false>(_x);

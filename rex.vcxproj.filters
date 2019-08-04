@@ -67,15 +67,15 @@
     <Filter Include="rx\render\frontend">
       <UniqueIdentifier>{7132470e-ddbe-4a82-9c76-65710031e747}</UniqueIdentifier>
     </Filter>
+    <Filter Include="rx\core\math">
+      <UniqueIdentifier>{395e9e26-9152-48b7-bf32-969f1660e73c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\lib\json.c">
       <Filter>lib</Filter>
     </ClCompile>
     <ClCompile Include="src\lib\stb_image.c">
-      <Filter>lib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\lib\stb_truetype.c">
       <Filter>lib</Filter>
     </ClCompile>
     <ClCompile Include="src\rx\console\interface.cpp">
@@ -126,9 +126,6 @@
     <ClCompile Include="src\rx\input\mouse.cpp">
       <Filter>rx\input</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\math\half.cpp">
-      <Filter>rx\math</Filter>
-    </ClCompile>
     <ClCompile Include="src\rx\math\mat3x3.cpp">
       <Filter>rx\math</Filter>
     </ClCompile>
@@ -136,9 +133,6 @@
       <Filter>rx\math</Filter>
     </ClCompile>
     <ClCompile Include="src\rx\math\quat.cpp">
-      <Filter>rx\math</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rx\math\trig.cpp">
       <Filter>rx\math</Filter>
     </ClCompile>
     <ClCompile Include="src\rx\math\vec2.cpp">
@@ -242,6 +236,45 @@
     </ClCompile>
     <ClCompile Include="src\rx\main.cpp">
       <Filter>rx</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\input\controller.cpp">
+      <Filter>rx\input</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\abs.cpp">
+      <Filter>rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\ceil.cpp">
+      <Filter>rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\cos.cpp">
+      <Filter>rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\floor.cpp">
+      <Filter>rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\half.cpp">
+      <Filter>rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\mod.cpp">
+      <Filter>rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\pow.cpp">
+      <Filter>rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\sin.cpp">
+      <Filter>rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\sqrt.cpp">
+      <Filter>rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\tan.cpp">
+      <Filter>rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\concurrency\yield.cpp">
+      <Filter>rx\core\concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\stb_truetype.cpp">
+      <Filter>lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -503,9 +536,6 @@
     <ClInclude Include="src\rx\math\constants.h">
       <Filter>rx\math</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\math\half.h">
-      <Filter>rx\math</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\math\log2.h">
       <Filter>rx\math</Filter>
     </ClInclude>
@@ -667,6 +697,51 @@
     </ClInclude>
     <ClInclude Include="src\rx\texture\scale.h">
       <Filter>rx\texture</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\input\controller.h">
+      <Filter>rx\input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\abs.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\ceil.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\cos.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\floor.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\half.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\isnan.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\log2.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\mod.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\pow.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\shape.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\sin.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\sqrt.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\tan.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\concurrency\yield.h">
+      <Filter>rx\core\concurrency</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

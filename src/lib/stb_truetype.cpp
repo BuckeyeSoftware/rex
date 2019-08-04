@@ -16,5 +16,14 @@
 #define STBTT_acos(_x) rx::math::acos(_x)
 #define STBTT_fabs(_x) rx::math::abs(_x)
 
+#if defined(RX_COMPILER_MSVC)
+#pragma warning(push)
+#pragma warning(disable: 4244) // 'argument' conversion from 'double' to 'float', possible loss of data
+#endif // defined(RX_COMPILER_MSVC)
+
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "lib/stb_truetype.h"
+
+#if defined(RX_COMPILER_MSVC)
+#pragma warning(pop)
+#endif // defined(RX_COMPILER_MSVC)

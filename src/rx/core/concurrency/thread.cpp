@@ -4,6 +4,10 @@
 #include "rx/core/string.h"
 #include "rx/core/debug.h" // RX_MESSAGE
 
+#if defined(RX_PLATFORM_WINDOWS)
+#include <process.h> // _beginthreadex
+#endif // defined(RX_PLATFORM_WINDOWS)
+
 namespace rx::concurrency {
 
 static atomic<int> g_thread_id;

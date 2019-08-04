@@ -278,7 +278,7 @@ int entry(int argc, char **argv) {
 
   SDL_SetRelativeMouseMode(SDL_TRUE);
 
-  rx::math::camera camera{rx::math::mat4x4f::perspective(90.0f, {0.01, 1024.0f}, 1600.0f/900.0f)};
+  rx::math::camera camera{rx::math::mat4x4f::perspective(90.0f, {0.01f, 1024.0f}, 1600.0f/900.0f)};
   camera.translate = { 0.0f, 2.5f, -5.0f };
   // camera.rotate = { 10.0f, 0.0f, 0.0f };
 
@@ -414,7 +414,7 @@ int entry(int argc, char **argv) {
       frontend.clear(RX_RENDER_TAG("gbuffer emission"),
         gbuffer.target(), RX_RENDER_CLEAR_COLOR(2), {0.0f, 0.0f, 1.0f, 1.0f});
 
-      rx::math::mat4x4f modelm{rx::math::mat4x4f::scale({2.0f, 2.0f, 2.0f}) * rx::math::mat4x4f::rotate({0, 90, 0})};
+      rx::math::mat4x4f modelm{rx::math::mat4x4f::scale({2.0f, 2.0f, 2.0f}) * rx::math::mat4x4f::rotate({0.0f, 90.0f, 0.0f})};
 
       rx::render::frontend::technique* gbuffer_test_technique{frontend.find_technique_by_name("geometry")};
       rx::render::frontend::technique* fs_quad_technique{frontend.find_technique_by_name("fs-quad")};

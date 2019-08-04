@@ -1,7 +1,10 @@
+#include <float.h> // {DBL,LDBL}_EPSILON
+
 #include "rx/core/math/floor.h"
 #include "rx/core/math/shape.h"
+#include "rx/core/config.h"
 
-#if FLT_EVAL_METHOD == 0 || FLT_EVAL_METHOD == 1
+#if RX_FLOAT_EVAL_METHOD == 0 || RX_FLOAT_EVAL_METHOD == 1
 static constexpr const rx_f64_eval k_to_int{1 / DBL_EPSILON};
 #else
 static constexpr const rx_f64_eval k_to_int{1 / LDBL_EPSILON};
@@ -9,12 +12,12 @@ static constexpr const rx_f64_eval k_to_int{1 / LDBL_EPSILON};
 
 namespace rx::math {
 
-static inline void force_eval(rx_f64 _x) {
+static inline void force_eval_f64(rx_f64 _x) {
   [[maybe_unused]] volatile rx_f64 y;
   y = _x;
 }
 
-static inline void force_eval(rx_f32 _x) {
+static inline void force_eval_f32(rx_f32 _x) {
   [[maybe_unused]] volatile rx_f32 y;
   y = _x;
 }
@@ -38,7 +41,7 @@ rx_f64 floor(rx_f64 _x) {
 
   // special case because of non-nearest rounding modes
   if (e <= 0x3ff-1) {
-    force_eval(y);
+    force_eval_f64(y);
     return u.as_u64 >> 63 ? -1 : 0;
   }
 

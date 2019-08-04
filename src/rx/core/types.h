@@ -1,8 +1,7 @@
 #ifndef RX_FOUNDATION_TYPES_H
 #define RX_FOUNDATION_TYPES_H
 
-#include <float.h> // FLT_EVAL_METHOD
-
+#include "rx/core/config.h"
 #include "rx/core/traits/conditional.h"
 
 using rx_size = decltype(sizeof 0);
@@ -21,7 +20,7 @@ using rx_ptrdiff = long;
 using rx_uintptr = rx_size;
 using rx_nullptr = decltype(nullptr);
 
-#if defined(FLT_EVAL_METHOD) && FLT_EVAL_METHOD == 0
+#if defined(RX_ARCHITECTURE_X86_64)
 using rx_f32_eval = rx_f32;
 using rx_f64_eval = rx_f64;
 #else

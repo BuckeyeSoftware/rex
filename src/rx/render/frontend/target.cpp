@@ -301,7 +301,7 @@ void target::update_resource_usage() {
   }};
 
   // calcualte memory usage for each attachment texture
-  rx_size usage{0};
+  rx_f32 usage{0};
   m_attachments.each_fwd([&](const texture2D* _texture) {
     usage += rt_usage(_texture);
   });
@@ -317,7 +317,7 @@ void target::update_resource_usage() {
     }
   }
 
-  resource::update_resource_usage(usage);
+  resource::update_resource_usage(static_cast<rx_size>(usage));
 }
 
 } // namespace rx::render::frontend

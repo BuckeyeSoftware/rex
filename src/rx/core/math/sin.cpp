@@ -1,4 +1,6 @@
+#define _USE_MATH_DEFINES
 #include <math.h> // M_PI_2
+#include <float.h> // {DBL,LDBL}_EPSILON
 
 #include "rx/core/math/sin.h"
 #include "rx/core/math/shape.h"
@@ -7,7 +9,7 @@
 
 namespace rx::math {
 
-static inline void force_eval(rx_f32 _x) {
+static inline void force_eval_f32(rx_f32 _x) {
   [[maybe_unused]] volatile rx_f32 y;
   y = _x;
 }
@@ -24,11 +26,11 @@ rx_f32 sindf(rx_f64 _x) {
   const rx_f64_eval w{z*z};
   const rx_f64_eval r{k_s3 + z*k_s4};
   const rx_f64_eval s{z*_x};
-  return (_x + s*(k_s1 + z*k_s2)) + s*w*r;
+  return static_cast<rx_f32>((_x + s*(k_s1 + z*k_s2)) + s*w*r);
 }
 
 
-#if FLT_EVAL_METHOD == 0 || FLT_EVAL_METHOD == 1
+#if RX_FLOAT_EVAL_METHOD == 0 || RX_FLOAT_EVAL_METHOD == 1
 static constexpr const rx_f64 k_toint{1.5 / DBL_EPSILON};
 #else
 static constexpr const rx_f64 k_toint{1.5 / LDBL_EPSILON};
@@ -75,7 +77,7 @@ rx_f32 sin(rx_f32 _x) {
     // |_x| < 2**-12
     if (ix < 0x39800000) {
       // raise inexact if x != 0 and underflow if subnormal
-      force_eval(ix < 0x00800000 ? _x/0x1p120f : _x+0x1p120f);
+      force_eval_f32(ix < 0x00800000 ? _x/0x1p120f : _x+0x1p120f);
       return _x;
     }
     return sindf(_x);

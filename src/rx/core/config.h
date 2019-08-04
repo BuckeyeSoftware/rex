@@ -50,6 +50,25 @@
 # error "unsupported platform"
 #endif
 
+// determine float rounding mode
+#if defined(__FLT_EVAL_METHOD__)
+# define RX_FLOAT_EVAL_METHOD __FLT_EVAL_METHOD__
+#elif defined(_M_IX86)
+# if _M_IX86_FP >= 2
+#   define RX_FLOAT_EVAL_METHOD 0 // float       -> float
+                                  // double      -> double
+                                  // long double -> long double
+# else
+#   define RX_FLOAT_EVAL_METHOD 2 // float       -> long double
+                                  // double      -> long double
+                                  // long double -> long double
+# endif
+#else
+# define RX_FLOAT_EVAL_METHOD 0   // float       -> float
+                                  // double      -> double
+                                  // long double -> long double
+#endif
+
 // determine endianess
 #if defined(__LITTLE_ENDIAN__)
 # if __LITTLE_ENDIAN__

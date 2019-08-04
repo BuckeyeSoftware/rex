@@ -1,6 +1,10 @@
 #include "rx/core/math/sqrt.h"
 #include "rx/core/math/shape.h"
 
+#if defined(RX_COMPILER_MSVC)
+#pragma warning(disable: 4723) // potential divide by 0
+#endif
+
 namespace rx::math {
 
 static constexpr const rx_f32 k_tiny{1.0e-30};
