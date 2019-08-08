@@ -41,13 +41,13 @@ static void* json_allocator(void* _user, rx_size _size) {
   return allocator->allocate(_size);
 }
 
-json::json(memory::allocator* _allocator, const string& _contents)
+json::json(memory::allocator* _allocator, const char* _contents, rx_size _length)
   : m_allocator{_allocator}
   , m_root{nullptr}
 {
   RX_ASSERT(m_allocator, "null allocator");
 
-  m_root = json_parse_ex(_contents.data(), _contents.size(),
+  m_root = json_parse_ex(_contents, _length,
     (json_parse_flags_allow_c_style_comments |
      json_parse_flags_allow_location_information |
      json_parse_flags_allow_unquoted_keys |
@@ -55,6 +55,16 @@ json::json(memory::allocator* _allocator, const string& _contents)
     json_allocator,
     m_allocator,
     &m_error);
+}
+
+json::json(memory::allocator* _allocator, const char* _contents)
+  : json{_allocator, _contents, strlen(_contents)}
+{
+}
+
+json::json(const char* _contents)
+  : json{&memory::g_system_allocator, _contents, strlen(_contents)}
+{
 }
 
 json::json(struct json_value_s *_value)
@@ -118,7 +128,7 @@ json json::operator[](rx_size _index) const {
     return {element->value};
   }
   
-  return {nullptr};
+  return {};
 }
 
 bool json::as_boolean() const {
@@ -149,7 +159,7 @@ json json::operator[](const char* _name) const {
       return {element->value};
     }
   }
-  return {nullptr};
+  return {};
 }
 
 string json::as_string() const {
