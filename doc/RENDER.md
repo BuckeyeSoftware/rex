@@ -172,6 +172,7 @@ rx_byte* map(rx_size _level);
 ```
 
 Assertions can be triggered in the following cases:
+* Not all miplevels were written.
 * A depth, stencil or combined depth-stencil format was recorded and `k_attachment` was not used for type.
 * An attempt was made to write or map a miplevel when `k_attachment` was recorded as the type.
 * An attempt was made to write or map a miplevel when `k_static` was recorded as the type after initialization.
@@ -179,6 +180,8 @@ Assertions can be triggered in the following cases:
 * An attempt was made to write or map a miplevel other than zero for a texture with no mipmaps.
 * An attempt was made to record dimensions that are greater than 4096 pixels in any dimension.
 * An attempt was made to modify the texture after it was initialized.
+
+All miplevels _must_ be provided to the render resource. There is no automatic derivation of miplevels in the render frontend or backend. You may derive the miplevels for a texture with `texture::chain` interface instead.
 
 #### Program
 
