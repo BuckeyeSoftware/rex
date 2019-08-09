@@ -24,7 +24,7 @@ documentation in that same file.
 When a type begins with a `'@'` it means the type is defined by the engine. The
 following engine defined types exist
   * `@Integer` A `Number` with no fractional component
-  * `@Float` A `Number`
+  * `@Float` A `Number` that can fit in an [IEEE 754 single-precision float](https://en.wikipedia.org/wiki/IEEE_754)
 
 Arrays support an optional syntax with the square brackets
   * `Array[T]` each element **will be** type `T` (_T is a type name_)

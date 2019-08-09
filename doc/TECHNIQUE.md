@@ -102,15 +102,15 @@ target.
   * `"samplerCM" => @Integer`
   * `"bool"      => Boolean`
   * `"int"       => @Integer`
-  * `"float"     => Number`
-  * `"vec2i"     => Array[#Integer, 2]`
-  * `"vec3i"     => Array[#Integer, 3]`
-  * `"vec4i"     => Array[#Integer, 4]`
-  * `"vec2f"     => Array[#Float, 2]`
-  * `"vec3f"     => Array[#Float, 3]`
-  * `"vec4f"     => Array[#Float, 4]`
-  * `"mat4x4f"   => Array[Array[#Float, 4], 4]`
-  * `"mat3x3f"   => Array[Array[#Float, 3], 3]`
+  * `"float"     => @Float`
+  * `"vec2i"     => Array[@Integer, 2]`
+  * `"vec3i"     => Array[@Integer, 3]`
+  * `"vec4i"     => Array[@Integer, 4]`
+  * `"vec2f"     => Array[@Float, 2]`
+  * `"vec3f"     => Array[@Float, 3]`
+  * `"vec4f"     => Array[@Float, 4]`
+  * `"mat4x4f"   => Array[Array[@Float, 4], 4]`
+  * `"mat3x3f"   => Array[Array[@Float, 3], 3]`
 
 A `value` cannot be specified for `bonesf`
 
