@@ -3,16 +3,11 @@
 
 #include "rx/core/math/tan.h"
 #include "rx/core/math/shape.h"
+#include "rx/core/math/force_eval.h"
 
 #include "rx/core/assert.h"
 
 namespace rx::math {
-
-static inline void force_eval_f32(rx_f32 _x) {
-  [[maybe_unused]] volatile rx_f32 y;
-  y = _x;
-}
-
 // |tan(x)/x - t(x)| < 2**-25.5 (~[-2e-08, 2e-08])
 static constexpr const rx_f64 k_t0{0x15554d3418c99f.0p-54}; // 0.333331395030791399758
 static constexpr const rx_f64 k_t1{0x1112fd38999f72.0p-55}; // 0.133392002712976742718

@@ -4,15 +4,11 @@
 
 #include "rx/core/math/sin.h"
 #include "rx/core/math/shape.h"
+#include "rx/core/math/force_eval.h"
 
 #include "rx/core/assert.h"
 
 namespace rx::math {
-
-static inline void force_eval_f32(rx_f32 _x) {
-  [[maybe_unused]] volatile rx_f32 y;
-  y = _x;
-}
 
 // |sin(x)/x - s(x)| < 2**-37.5 (~[-4.89e-12, 4.824e-12])
 static constexpr const rx_f64 k_s1{-0x15555554cbac77.0p-55}; // -0.166666666416265235595

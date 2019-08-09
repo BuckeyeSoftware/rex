@@ -2,6 +2,8 @@
 
 #include "rx/core/math/floor.h"
 #include "rx/core/math/shape.h"
+#include "rx/core/math/force_eval.h"
+
 #include "rx/core/config.h"
 
 #if RX_FLOAT_EVAL_METHOD == 0 || RX_FLOAT_EVAL_METHOD == 1
@@ -11,16 +13,6 @@ static constexpr const rx_f64_eval k_to_int{1 / LDBL_EPSILON};
 #endif
 
 namespace rx::math {
-
-static inline void force_eval_f64(rx_f64 _x) {
-  [[maybe_unused]] volatile rx_f64 y;
-  y = _x;
-}
-
-static inline void force_eval_f32(rx_f32 _x) {
-  [[maybe_unused]] volatile rx_f32 y;
-  y = _x;
-}
 
 rx_f64 floor(rx_f64 _x) {
   shape u{_x};

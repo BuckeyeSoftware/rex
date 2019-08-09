@@ -59,6 +59,7 @@ struct json {
 
   // # of elements for objects and arrays only
   rx_size size() const;
+  bool is_empty() const;
 
   template<typename F>
   bool each(F&& _function) const;
@@ -150,6 +151,10 @@ inline bool json::is_string() const {
 
 inline bool json::is_integer() const {
   return is_type(type::k_integer);
+}
+
+inline bool json::is_empty() const {
+  return size() != 0;
 }
 
 template<typename F>

@@ -104,7 +104,8 @@ bool json::is_type(type _type) const {
   case type::k_string:
     return m_root->type == json_type_string;
   }
-  return false;
+
+  RX_UNREACHABLE();
 }
 
 json json::operator[](rx_size _index) const {

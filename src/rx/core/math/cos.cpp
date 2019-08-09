@@ -4,6 +4,7 @@
 #include "rx/core/math/cos.h"
 #include "rx/core/math/sqrt.h"
 #include "rx/core/math/shape.h"
+#include "rx/core/math/force_eval.h"
 
 #include "rx/core/assert.h"
 
@@ -12,11 +13,6 @@
 #endif
 
 namespace rx::math {
-
-static inline void force_eval(rx_f32 _x) {
-  [[maybe_unused]] volatile rx_f32 y;
-  y = _x;
-}
 
 // |cos(x) - c(x)| < 2**-34.1 (~[-5.37e-11, 5.295e-11])
 static constexpr const rx_f64 k_c0{-0x1ffffffd0c5e81.0p-54}; // -0.499999997251031003120
@@ -51,7 +47,7 @@ rx_f32 cos(rx_f32 _x) {
     // |_x| < 2**-12
     if (ix < 0x39800000) {
       // raise inexact if _x != 0
-      force_eval(_x + 0x1p120f);
+      force_eval_f32(_x + 0x1p120f);
       return 1.0f;
     }
     return cosdf(_x);
