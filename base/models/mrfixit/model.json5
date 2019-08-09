@@ -1,0 +1,35 @@
+{
+  name: "mrfixit",
+  file: "base/models/mrfixit/model.iqm",
+  materials: [
+    {
+      name: "body",
+      textures: [
+        {
+          file: "base/models/mrfixit/body.png",
+          type: "diffuse",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ]
+        }
+      ]
+    },{
+      name: "head",
+      textures: [
+        {
+          file: "base/models/mrfixit/head.png",
+          type: "diffuse",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ]
+        }
+      ]
+    }
+  ]
+}
