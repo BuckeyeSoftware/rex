@@ -1,8 +1,8 @@
 # Materials
 
-Materials in Rex are described with a JSON5 file
+Materials in Rex are described with a JSON5
 
-Every material must define properties through a JSON5 file
+Every material must define properties through JSON5
 
 Information on how to read this schema is described [here](JSON5.md)
 
