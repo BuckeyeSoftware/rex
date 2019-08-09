@@ -42,6 +42,12 @@ struct buffer : resource {
   template<typename T>
   void write_elements(const T* _data, rx_size _size);
 
+  // map |_size| bytes of vertices
+  rx_byte* map_vertices(rx_size _size);
+
+  // map |_size| bytes of elements
+  rx_byte* map_elements(rx_size _size);
+
   // flush vertex and element store
   void flush();
 

@@ -54,26 +54,33 @@ void record_type(type _type);
 
 The contents of the buffer can be specified and updated by calling the following functions:
 ```cpp
-// write |_size| bytes from |_data| into vertex store
+// append |_size| bytes from |_data| into vertex store
 template<typename T>
 void write_vertices(const T* _data, rx_size _size);
 
-// write |_size| bytes from |_data| into element store
+// append |_size| bytes from |_data| into element store
 template<typename T>
 void write_elements(const T* _data, rx_size _size);
+
+// map |_size| bytes of vertices
+rx_byte* map_vertices(rx_size _size);
+
+// map |_size| bytes of elements
+rx_byte* map_elements(rx_size _size);
 ```
 
-The functions above _append_ to the vertex and element store, to empty the contents of the buffer call:
+The functions above _append_ to the vertex and element store, to empty the contents of everything call:
 ```cpp
 void flush();
 ```
 
 Assertions can be triggered in the following cases:
 * Not everything was recorded
-* The vertex store contains a byte size that is not a multiple of the recorded stride
+* The `map_vertices` function is called with a size that is not a multiple of the recorded vertex stride.
+* The `map_elements` function is called with a size that is not a multiple of the recorded element type's byte size.
 * The `write_vertices` or `write_elements` functions are called with a size that is not a multiple of `sizeof(T)`.
-* The `write_vertices` or `write_elements` functions are called with a recorded type that is `k_static` after the buffer has been initialized.
-* The `write_elements` function was called but this buffer has element type `k_none`.
+* The `write_vertices`, `write_elements`, `map_vertices` `map_elements`, or `flush` functions are called with a recorded type that is `k_static` after the buffer has been initialized.
+* The `write_elements` or `map_elements` function was called with a recorded element type `k_none`.
 * An attribute overlaps an existing attribute.
 * An attribute exceeds the recorded vertex stride.
 * An attempt was made to modify the buffer after it was initialized.

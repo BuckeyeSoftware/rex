@@ -32,27 +32,36 @@ buffer::~buffer() {
 }
 
 void buffer::write_vertices_data(const rx_byte* _data, rx_size _size) {
-  RX_ASSERT(m_recorded & k_stride, "vertex stride not recorded");
-  RX_ASSERT(_data, "_data is null");
-  RX_ASSERT(_size != 0, "_size is zero");
-  RX_ASSERT(_size % m_stride == 0, "_size not a multiple of vertex stride");
-
   const auto old_size{m_vertices_store.size()};
-  m_vertices_store.resize(old_size + _size);
-  update_resource_usage(size());
-  memcpy(m_vertices_store.data() + old_size, _data, _size);
+  memcpy(map_vertices(old_size + _size) + old_size, _data, _size);
 }
 
 void buffer::write_elements_data(const rx_byte* _data, rx_size _size) {
+  const auto old_size{m_elements_store.size()};
+  memcpy(map_elements(old_size + _size) + old_size, _data, _size);
+}
+
+rx_byte* buffer::map_vertices(rx_size _size) {
+  RX_ASSERT(m_recorded & k_stride, "vertex stride not recorded");
+  RX_ASSERT(_size != 0, "_size is zero");
+  RX_ASSERT(_size % m_stride == 0, "_size not a multiple of vertex stride");
+
+  m_vertices_store.resize(_size);
+  update_resource_usage(size());
+
+  return m_vertices_store.data();
+}
+
+rx_byte* buffer::map_elements(rx_size _size) {
   RX_ASSERT(m_recorded & k_element_type, "element type not recorded");
-  RX_ASSERT(_data, "_data is null");
+  RX_ASSERT(m_element_type != element_type::k_none, "element type is k_none");
   RX_ASSERT(_size != 0, "_size is zero");
   RX_ASSERT(_size % size_for_element_type(m_element_type) == 0, "_size is not a multiple of element size");
 
-  const auto old_size{m_elements_store.size()};
-  m_elements_store.resize(old_size + _size);
+  m_elements_store.resize(_size);
   update_resource_usage(size());
-  memcpy(m_elements_store.data() + old_size, _data, _size);
+
+  return m_elements_store.data();
 }
 
 void buffer::validate() const {
