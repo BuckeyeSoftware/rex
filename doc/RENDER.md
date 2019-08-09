@@ -378,8 +378,10 @@ quad->record_element_type(rx::render::frontend::buffer::element_type::k_u8);
 quad->record_stride(sizeof(quad_vertex));
 
 // record the attributes
-quad->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 2, offsetof(quad_vertex, position));
-quad->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 2, offsetof(quad_vertex, coordinate);
+quad->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 2,
+  offsetof(quad_vertex, position));
+quad->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 2,
+  offsetof(quad_vertex, coordinate);
 
 // write the vertices and elements into the buffer
 quad->write_vertices(k_quad_vertices, sizeof k_quad_vertices);
@@ -415,6 +417,11 @@ frontend.initialize_program(RX_RENER_TAG("quad"), program);
 rx::render::frontend::texture2D* texture{...};
 // ...
 frontend.initialize_texture(RX_RENER_TAG("quad"), texture);
+
+// we can record changes to the program here before
+// a draw call, e.g program->uniforms()[index]->set_float(1.0f)...
+//
+// the contents are _copied_ into the draw command when do you this
 
 // draw the textured quad into our target
 frontend.draw_elements(
