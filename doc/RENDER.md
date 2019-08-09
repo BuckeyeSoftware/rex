@@ -7,6 +7,8 @@ All rendering resources and commands happen through `frontend::interface`. Every
 
 The entire rendering interface is _thread safe_, any and all commands can be called from any thread at any time.
 
+The frontend **does not** do immediate rendering. Every command executed is only recorded into a command buffer for later execution by the backend. There's exactly one frame of latency incurred by this but it's also what permits thread-safety for APIs like OpenGL which cannot be called from multiple threads. The backend implements the `process` function and interprets commands. Every command is prefixed with that `RX_RENDER_TAG` so it's very easy to see where in the engine a command originated from.
+
 ### Resources
 There's multiple resource types provided by the frontend, they're listed here.
   * buffer
