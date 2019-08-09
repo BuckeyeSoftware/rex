@@ -1,13 +1,130 @@
 # Renderer
 
+## Frontend
 Rex employs a renderer abstraction interface to isolate graphics API code from the actual engine rendering. This is done by `srx/rx/render/frontend`. The documentation of how this frontend interface works is provided here to get you up to speed on how to render things.
 
-## Interface
+### Interface
 All rendering resources and commands happen through `frontend::interface`. Every command on the frontend is associated with a tag that tracks the file and line information of the command in the engine as well as a static string describing it, this is provided to the interface with the `RX_RENDER_TAG("string")` macro.
 
 The entire rendering interface is _thread safe_, any and all commands can be called from any thread at any time.
 
 The frontend **does not** do immediate rendering. Every command executed is only recorded into a command buffer for later execution by the backend. There's exactly one frame of latency incurred by this but it's also what permits thread-safety for APIs like OpenGL which cannot be called from multiple threads. The backend implements the `process` function and interprets commands. Every command is prefixed with that `RX_RENDER_TAG` so it's very easy to see where in the engine a command originated from.
+
+#### Drawing
+Drawing is done with one of two commands:
+  * `interface::draw_arrays`
+  * `interface::draw_elements`
+
+The `draw_arrays` function is only allowed with buffers that have no elements, e.g `element_kind == k_none`.
+
+Otherwise, the functions behave the exact same way, here's a definition
+
+```cpp
+void draw_elements(
+  const command_header::info& _info,
+  const state& _state,
+  target* _target,
+  buffer* _buffer,
+  program* _program,
+  rx_size _count,
+  rx_size _offset,
+  primitive_type _primitive_type,
+  const char* _textures,
+  ...);
+```
+
+Lets disect what everything is:
+* `_info` is the render tag containing file, line and static string information as described at the beginning of this document. You construct one with `RX_RENDER_TAG(...)`.
+* `_state` is the entire state vector to use.
+* `_target` is the render target to render into.
+* `_buffer` is the combined vertex and element buffer to source.
+* `_program` is the program to use.
+* `_count` is the number of elements to source.
+* `_offset` is the offset in the element buffer to begin renering from.
+* `_primitive_type` is the primitive type to render, e.g `k_triangles`.
+* `_textures` is the texture specification to use (described below)
+* `...` is a list of `texture{1D, 2D, 3D, CM}` to use for the draw.
+
+The texture specification string is a string-literal encoding the textures to use for this call using the following table
+  * `1` 1D texture
+  * `2` 2D texture
+  * `3` 3D texture
+  * `c` Cubemap texture
+
+The string can have a maximum length of eight, meaning you can have a maximum amount of eight textures. There must be exactly as many textures passed in `...` as this string's length. They must mach the specification, e.g passing a `texture1D*` when the string says anything other than `1` in that position will trigger an assertion.
+
+#### Clearing
+Clearing of a render target is done by `interface::clear`, here's the definition:
+
+```cpp
+void clear(
+  const command_header::info& _info,
+  target* _target,
+  rx_u32 _clear_mask,
+  const math::vec4f& _clear_color
+);
+```
+
+* `_info` is a `RX_RENDER_TAG(...)`
+* `_target` is the target to clear
+* `_clear_mask` can be one of:
+  * `RX_RENDER_CLEAR_DEPTH`
+  * `RX_RENDER_CLEAR_STENCIL`
+  * `RX_RENDER_CLEAR_COLOR(index)`
+  * `RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL`
+
+* `_clear_color` the color for the clear operation, for:
+  * `RX_RENDER_CLEAR_DEPTH`, `_clear_color.r` stores the depth clear value
+  * `RX_RENDER_CLEAR_STENCIL`, `_clear_color.r` stores the stencil clear value
+  * `RX_RENDER_CLEAR_COLOR(index)`, `_clear_color` stores the color clear value
+  * `RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL`, `_clear_color.r` stores the depth clear, `_clear_color.g` stores the stencil clear
+
+
+Any other combination of flags for `_clear_mask` is undefined.
+You **cannot** clear depth, color and stencil at the same time, likewise; you **cannot** clear multiple color attachments at the same time.
+
+
+#### Queries
+You may query information about the renderer with the following member functions:
+
+```cpp
+struct statistics {
+  rx_size total;
+  rx_size used;
+  rx_size cached;
+  rx_size memory;
+};
+
+statistics stats(resource::type _type) const;
+rx_size draw_calls() const;
+```
+
+The `stats` function in particular can tell you how many objects you can have of that type; `total`, how many are currently in use; `used`, how many are cached; `cached` and how much memory (in bytes) is being used currently for those used objects _last_ frame.
+
+The `draw_calls` function can tell you how many `draw_arrays` and `draw_elements` commands have happened _last_ frame.
+
+In addition, timing information for a frame can be accessed with the following member function:
+
+```cpp
+const frame_timer& timer() const &;
+```
+
+Which consists of a lot of information that can be queried with the following member functions:
+
+```cpp
+rx_f32 mspf() const;
+rx_u32 fps() const;
+rx_f32 delta_time() const;
+rx_f64 resolution() const;
+rx_u64 ticks() const;
+
+struct frame_time {
+  rx_f64 life;
+  rx_f64 frame;
+};
+
+const array<frame_time>& frame_times() const &;
+```
 
 ### Resources
 There's multiple resource types provided by the frontend, they're listed here.
@@ -130,7 +247,6 @@ Assertions can be triggered in the following cases:
 * An attempt was made to modify the target after it was initialized.
 
 #### Texture
-
 1D, 2D, 3D and Cubemap textures are used either for drawing to (if attached to a target) or for actual texture mapping during rendering.
 
 Before you can initialize a texture certain information must be recorded by the following member functions:
@@ -179,7 +295,6 @@ Assertions can be triggered in the following cases:
 All miplevels _must_ be provided to the render resource. There is no automatic derivation of miplevels in the render frontend or backend. You may derive the miplevels for a texture with `texture::chain` interface instead.
 
 #### Program
-
 This resource is not actually used directly. It's used to implement `frontend::technique` which provides specialization, variants and program permutations.
 
 It's listed here for completion sake.
@@ -199,7 +314,8 @@ Assertions can be triggered in the following cases:
 * A uniform was added that has already been added.
 * An attempt was made to modify the program after it was initialized.
 
-## State
+
+### State
 All rendering state aside from bound resources is completely isolated into one single state vector that is passed around for draw calls. This vector is described by `frontend::state` and consists of the following state:
 
 ```
@@ -213,144 +329,13 @@ polygon_state polygon;
 
 The state vector is hashed as well as the nested state objects to avoid excessive state changes in the backend. You do not need to manage any state when rendering, state bleed is not possible. This vector can be built every frame for every draw command.
 
-## Drawing
+### Technique
 
-Drawing is done with one of two commands:
-  * `interface::draw_arrays`
-  * `interface::draw_elements`
+Techniques are data-driven and described [here](TECHNIQUE.md)
 
-The `draw_arrays` function is only allowed with buffers that have no elements, e.g `element_kind == k_none`.
+Once a technique is loaded by `frontend::technique::load` you may fetch a program from that technique with the `operator program*()`, `variant()` or `permute()` function.
 
-Otherwise, the functions behave the exact same way, here's a definition
-
-```cpp
-void draw_elements(
-  const command_header::info& _info,
-  const state& _state,
-  target* _target,
-  buffer* _buffer,
-  program* _program,
-  rx_size _count,
-  rx_size _offset,
-  primitive_type _primitive_type,
-  const char* _textures,
-  ...);
-```
-
-Lets disect what everything is:
-* `_info` is the render tag containing file, line and static string information as described at the beginning of this document. You construct one with `RX_RENDER_TAG(...)`.
-* `_state` is the entire state vector to use.
-* `_target` is the render target to render into.
-* `_buffer` is the combined vertex and element buffer to source.
-* `_program` is the program to use.
-* `_count` is the number of elements to source.
-* `_offset` is the offset in the element buffer to begin renering from.
-* `_primitive_type` is the primitive type to render, e.g `k_triangles`.
-* `_textures` is the texture specification to use (described below)
-* `...` is a list of `texture{1D, 2D, 3D, CM}` to use for the draw.
-
-The texture specification string is a string-literal encoding the textures to use for this call using the following table
-  * `1` 1D texture
-  * `2` 2D texture
-  * `3` 3D texture
-  * `c` Cubemap texture
-
-The string can have a maximum length of eight, meaning you can have a maximum amount of eight textures. There must be exactly as many textures passed in `...` as this string's length. They must mach the specification, e.g passing a `texture1D*` when the string says anything other than `1` in that position will trigger an assertion.
-
-Here's an example:
-
-```cpp
-draw_elements(
-  RX_RENDER_TAG("test"),
-  state,
-  target,
-  buffer,
-  program,
-  3,
-  0,
-  primitive_type::k_triangles,
-  "123c",
-  texture_1d,
-  texture_2d,
-  texture_3d,
-  texture_cm
-);
-```
-
-## Clearing
-
-Clearing of a render target is done by `interface::clear`, here's the definition:
-
-```cpp
-void clear(
-  const command_header::info& _info,
-  target* _target,
-  rx_u32 _clear_mask,
-  const math::vec4f& _clear_color
-);
-```
-
-`_clear_mask` can be one of:
-* `RX_RENDER_CLEAR_DEPTH`
-* `RX_RENDER_CLEAR_STENCIL`
-* `RX_RENDER_CLEAR_COLOR(index)`
-* `RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL`
-
-Any other combination of flags is undefined.
-
-`_clear_color` the color for the clear operation, for:
-* `RX_RENDER_CLEAR_DEPTH`, `_clear_color.r` stores the depth clear value
-* `RX_RENDER_CLEAR_STENCIL`, `_clear_color.r` stores the stencil clear value
-* `RX_RENDER_CLEAR_COLOR(index)`, `_clear_color` stores the color clear value
-* `RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL`, `_clear_color.r` stores the depth clear, `_clear_color.g` stores the stencil clear
-
-
-You **cannot** clear depth, color and stencil at the same time. You **cannot** clear multiple color attachments at the same time.
-
-## Queries
-
-You may query information about the renderer with the following member functions:
-
-```cpp
-struct statistics {
-  rx_size total;
-  rx_size used;
-  rx_size cached;
-  rx_size memory;
-};
-
-statistics stats(resource::type _type) const;
-rx_size draw_calls() const;
-```
-
-The `stats` function in particular can tell you how many objects you can have of that type; `total`, how many are currently in use; `used`, how many are cached; `cached` and how much memory (in bytes) is being used currently for those used objects _last_ frame.
-
-The `draw_calls` function can tell you how many `draw_arrays` and `draw_elements` commands have happened _last_ frame.
-
-In addition, timing information for a frame can be accessed with the following member function:
-
-```cpp
-const frame_timer& timer() const &;
-```
-
-Which consists of a lot of information that can be queried with the following member functions:
-
-```cpp
-rx_f32 mspf() const;
-rx_u32 fps() const;
-rx_f32 delta_time() const;
-rx_f64 resolution() const;
-rx_u64 ticks() const;
-
-struct frame_time {
-  rx_f64 life;
-  rx_f64 frame;
-};
-
-const array<frame_time>& frame_times() const &;
-```
-
-# Minimal fullscreen quad example
+### Minimal fullscreen quad example
 Here's a simple example of rendering a textured quad
 ```cpp
 // vertex format
