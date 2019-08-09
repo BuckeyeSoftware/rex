@@ -12,9 +12,25 @@ RX_LOG("render/technique", log_technique);
 namespace rx::render::frontend {
 
 // simple recursive descent parser and evaluator for declarative predicates
-// <ident> := [a-Z0-9_]
-// <op>    := "&&"" | "||"
-// <expr>  := <ident> | (<expr>) | <expr> <op> <expr> | !<expr>
+//
+// letter     = "A" | "B" | "C" | "D" | "E" | "F" | "G"
+//            | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+//            | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+//            | "V" | "W" | "X" | "Y" | "Z" | "a" | "b"
+//            | "c" | "d" | "e" | "f" | "g" | "h" | "i"
+//            | "j" | "k" | "l" | "m" | "n" | "o" | "p"
+//            | "q" | "r" | "s" | "t" | "u" | "v" | "w"
+//            | "x" | "y" | "z" ;
+// digit      = "0" | "1" | "2" | "3" | "4" | "5" | "6"
+//            | "7" | "8" | "9" ;
+// identifier = letter , { letter | digit | "_" } ;
+// expression = expression, "&&", value
+//            | expression, "||", value
+//            | value ;
+// value      = element
+//            | "!", element ;
+// element    = "(", expression, ")"
+//            | identifier ;
 enum {
   k_unmatched_parenthesis        = -1,
   k_unexpected_character         = -2,

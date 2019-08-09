@@ -116,11 +116,26 @@ A `value` cannot be specified for `bonesf`
 
 `#When` is a `String` that can only be present if `variants` or `permutes`
 exists. It encodes a binary expression that is evaluated to conditionally
-include or exclude the given entity. The grammar of the expression is given
-```
-<ident> := [a-Z0-9_]
-<op>    := "&&"" | "||"
-<expr>  := <ident> | (<expr>) | <expr> <op> <expr> | !<expr>
+include or exclude the given entity. The grammar of the expression is given in [EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form):
+```ebnf
+letter     = "A" | "B" | "C" | "D" | "E" | "F" | "G"
+           | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+           | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+           | "V" | "W" | "X" | "Y" | "Z" | "a" | "b"
+           | "c" | "d" | "e" | "f" | "g" | "h" | "i"
+           | "j" | "k" | "l" | "m" | "n" | "o" | "p"
+           | "q" | "r" | "s" | "t" | "u" | "v" | "w"
+           | "x" | "y" | "z" ;
+digit      = "0" | "1" | "2" | "3" | "4" | "5" | "6"
+           | "7" | "8" | "9" ;
+identifier = letter , { letter | digit | "_" } ;
+expression = expression, "&&", value
+           | expression, "||", value
+           | value ;
+value      = element
+           | "!", element ;
+element    = "(", expression, ")"
+           | identifier ;
 ```
 
 The purpose of `variants` is to describe a list of tokens used to control shader
