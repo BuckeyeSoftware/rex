@@ -352,7 +352,7 @@ Once a technique is loaded by `frontend::technique::load` you may fetch a progra
 
 When getting a variant you pass an index of the variant you want to use. The variant used is the one listed in the `"variants"` array in the JSON5.
 
-When getting a permute you pass the flags of the permutations you want to use. The flags are listed in the `"permutes"` array in the JSON5. If you pass a value of `(1 << 0) | (1 << 1)` as man example, then you're selecting permute 0 and 1 from the `"permutes"` list in the JSON5.
+When getting a permute you pass the flags of the permutations you want to use. The flags are listed in the `"permutes"` array in the JSON5. If you pass a value of `(1 << 0) | (1 << 1)` as an example, then you're selecting permute 0 and 1 from the `"permutes"` list in the JSON5.
 
 ### Minimal fullscreen quad example
 Here's a simple example of rendering a textured quad
