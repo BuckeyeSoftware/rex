@@ -31,9 +31,22 @@ private:
   template<typename T>
   static variable_status parse_string(const string& _contents, T& value_);
 
-  // set variable |_name| with string encoded |_value|
+  // set variable |_name| with value |_value|
   template<typename T>
-  static variable_status set_from_string(const string& _name, const string& _value);
+  static variable_status set_from_name_and_value(const string& _name, const T& _value);
+
+  // set variable |_reference| with value |_value|
+  template<typename T>
+  static variable_status set_from_reference_and_value(variable_reference* _reference, const T& _value);
+
+
+  // set variable |_name| with string encoded value |_string_value|
+  template<typename T>
+  static variable_status set_from_name_and_string(const string& _name, const string& _string_value);
+
+  // set variable |_reference| with string encoded value alue |_string_value|
+  template<typename T>
+  static variable_status set_from_reference_and_string(variable_reference* _reference, const string& _string_value);
 
   // merge-sort variable references in alphabetical order
   static variable_reference* split(variable_reference* _reference);

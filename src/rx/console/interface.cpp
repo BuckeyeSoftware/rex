@@ -385,66 +385,115 @@ variable_status interface::parse_string<math::vec2i>(const string& contents, mat
 }
 
 template<typename T>
-variable_status interface::set_from_string(const string& name, const string& value_string) {
+variable_status interface::set_from_name_and_string(const string& name, const string& value_string) {
   T value;
   variable_status status;
   if ((status = parse_string<T>(value_string, value)) == variable_status::k_success) {
-    return set_from_value<T>(name, value);
+    return set_from_name_and_value<T>(name, value);
   }
   return status;
 }
 
+template variable_status interface::set_from_name_and_string<bool>(const string& _name, const string& _string_value);
+template variable_status interface::set_from_name_and_string<string>(const string& _name, const string& _string_value);
+template variable_status interface::set_from_name_and_string<rx_s32>(const string& _name, const string& _string_value);
+template variable_status interface::set_from_name_and_string<rx_f32>(const string& _name, const string& _string_value);
+template variable_status interface::set_from_name_and_string<math::vec4f>(const string& _name, const string& _string_value);
+template variable_status interface::set_from_name_and_string<math::vec4i>(const string& _name, const string& _string_value);
+template variable_status interface::set_from_name_and_string<math::vec3f>(const string& _name, const string& _string_value);
+template variable_status interface::set_from_name_and_string<math::vec3i>(const string& _name, const string& _string_value);
+template variable_status interface::set_from_name_and_string<math::vec2f>(const string& _name, const string& _string_value);
+template variable_status interface::set_from_name_and_string<math::vec2i>(const string& _name, const string& _string_value);
+
 template<typename T>
-variable_status interface::set_from_value(const string& name, const T& value) {
-  for (auto head{g_head}; head; head = head->m_next) {
-    if (head->name() == name) {
+variable_status interface::set_from_name_and_value(const string& _name, const T& _value) {
+  for (variable_reference* head{g_head}; head; head = head->m_next) {
+    if (head->name() == _name) {
       if (head->type() != variable_trait<T>::type) {
         return variable_status::k_type_mismatch;
       }
-      return head->cast<T>()->set(value);
+      return set_from_reference_and_value(head, _value);
     }
   }
   return variable_status::k_not_found;
 }
 
-template variable_status interface::set_from_value<bool>(const string& name, const bool& value);
-template variable_status interface::set_from_value<string>(const string& name, const string& value);
-template variable_status interface::set_from_value<rx_s32>(const string& name, const rx_s32& value);
-template variable_status interface::set_from_value<rx_f32>(const string& name, const rx_f32& value);
-template variable_status interface::set_from_value<math::vec4f>(const string& name, const math::vec4f& value);
-template variable_status interface::set_from_value<math::vec4i>(const string& name, const math::vec4i& value);
-template variable_status interface::set_from_value<math::vec3f>(const string& name, const math::vec3f& value);
-template variable_status interface::set_from_value<math::vec3i>(const string& name, const math::vec3i& value);
-template variable_status interface::set_from_value<math::vec2f>(const string& name, const math::vec2f& value);
-template variable_status interface::set_from_value<math::vec2i>(const string& name, const math::vec2i& value);
+template variable_status interface::set_from_name_and_value<bool>(const string& _name, const bool& _value);
+template variable_status interface::set_from_name_and_value<string>(const string& _name, const string& _value);
+template variable_status interface::set_from_name_and_value<rx_s32>(const string& _name, const rx_s32& _value);
+template variable_status interface::set_from_name_and_value<rx_f32>(const string& _name, const rx_f32& _value);
+template variable_status interface::set_from_name_and_value<math::vec4f>(const string& _name, const math::vec4f& _value);
+template variable_status interface::set_from_name_and_value<math::vec4i>(const string& _name, const math::vec4i& _value);
+template variable_status interface::set_from_name_and_value<math::vec3f>(const string& _name, const math::vec3f& _value);
+template variable_status interface::set_from_name_and_value<math::vec3i>(const string& _name, const math::vec3i& _value);
+template variable_status interface::set_from_name_and_value<math::vec2f>(const string& _name, const math::vec2f& _value);
+template variable_status interface::set_from_name_and_value<math::vec2i>(const string& _name, const math::vec2i& _value);
 
-variable_status interface::change(const string& name, const string& value) {
+template<typename T>
+variable_status interface::set_from_reference_and_value(variable_reference* _reference, const T& _value) {
+  return _reference->cast<T>()->set(_value);
+}
+
+template variable_status interface::set_from_reference_and_value<bool>(variable_reference* _reference, const bool& _value);
+template variable_status interface::set_from_reference_and_value<string>(variable_reference* _reference, const string& _value);
+template variable_status interface::set_from_reference_and_value<rx_s32>(variable_reference* _reference, const rx_s32& _value);
+template variable_status interface::set_from_reference_and_value<rx_f32>(variable_reference* _reference, const rx_f32& _value);
+template variable_status interface::set_from_reference_and_value<math::vec4f>(variable_reference* _reference, const math::vec4f& _value);
+template variable_status interface::set_from_reference_and_value<math::vec4i>(variable_reference* _reference, const math::vec4i& _value);
+template variable_status interface::set_from_reference_and_value<math::vec3f>(variable_reference* _reference, const math::vec3f& _value);
+template variable_status interface::set_from_reference_and_value<math::vec3i>(variable_reference* _reference, const math::vec3i& _value);
+template variable_status interface::set_from_reference_and_value<math::vec2f>(variable_reference* _reference, const math::vec2f& _value);
+template variable_status interface::set_from_reference_and_value<math::vec2i>(variable_reference* _reference, const math::vec2i& _value);
+
+
+template<typename T>
+variable_status interface::set_from_reference_and_string(variable_reference* _reference, const string& _value_string) {
+  T value;
+  variable_status status;
+  if ((status = parse_string<T>(_value_string, value)) == variable_status::k_success) {
+    return set_from_reference_and_value(_reference, value);
+  }
+  return status;
+}
+
+template variable_status interface::set_from_reference_and_string<bool>(variable_reference* _reference, const string& _string_value);
+template variable_status interface::set_from_reference_and_string<string>(variable_reference* _reference, const string& _string_value);
+template variable_status interface::set_from_reference_and_string<rx_s32>(variable_reference* _reference, const string& _string_value);
+template variable_status interface::set_from_reference_and_string<rx_f32>(variable_reference* _reference, const string& _string_value);
+template variable_status interface::set_from_reference_and_string<math::vec4f>(variable_reference* _reference, const string& _string_value);
+template variable_status interface::set_from_reference_and_string<math::vec4i>(variable_reference* _reference, const string& _string_value);
+template variable_status interface::set_from_reference_and_string<math::vec3f>(variable_reference* _reference, const string& _string_value);
+template variable_status interface::set_from_reference_and_string<math::vec3i>(variable_reference* _reference, const string& _string_value);
+template variable_status interface::set_from_reference_and_string<math::vec2f>(variable_reference* _reference, const string& _string_value);
+template variable_status interface::set_from_reference_and_string<math::vec2i>(variable_reference* _reference, const string& _string_value);
+
+variable_status interface::change(const string& _name, const string& _string_value) {
   for (variable_reference* head{g_head}; head; head = head->m_next) {
-    if (head->name() != name) {
+    if (head->name() != _name) {
       continue;
     }
 
     switch (head->type()) {
     case variable_type::k_boolean:
-      return set_from_string<bool>(name, value);
+      return set_from_reference_and_string<bool>(head, _string_value);
     case variable_type::k_int:
-      return set_from_string<rx_s32>(name, value);
+      return set_from_reference_and_string<rx_s32>(head, _string_value);
     case variable_type::k_float:
-      return set_from_string<rx_f32>(name, value);
+      return set_from_reference_and_string<rx_f32>(head, _string_value);
     case variable_type::k_string:
-      return set_from_string<string>(name, value);
+      return set_from_reference_and_string<string>(head, _string_value);
     case variable_type::k_vec4f:
-      return set_from_string<math::vec4f>(name, value);
+      return set_from_reference_and_string<math::vec4f>(head, _string_value);
     case variable_type::k_vec4i:
-      return set_from_string<math::vec4i>(name, value);
+      return set_from_reference_and_string<math::vec4i>(head, _string_value);
     case variable_type::k_vec3f:
-      return set_from_string<math::vec3f>(name, value);
+      return set_from_reference_and_string<math::vec3f>(head, _string_value);
     case variable_type::k_vec3i:
-      return set_from_string<math::vec3i>(name, value);
+      return set_from_reference_and_string<math::vec3i>(head, _string_value);
     case variable_type::k_vec2f:
-      return set_from_string<math::vec2f>(name, value);
+      return set_from_reference_and_string<math::vec2f>(head, _string_value);
     case variable_type::k_vec2i:
-      return set_from_string<math::vec2i>(name, value);
+      return set_from_reference_and_string<math::vec2i>(head, _string_value);
       break;
     }
   }
