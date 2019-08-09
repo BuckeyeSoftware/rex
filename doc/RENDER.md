@@ -342,3 +342,90 @@ struct frame_time {
 
 const array<frame_time>& frame_times() const &;
 ```
+
+# Minimal fullscreen quad example
+Here's a simple example of rendering a quad
+```cpp
+// vertex format
+struct quad_vertex {
+  rx::math::vec2f position;
+  rx::math::vec2f coordinate;
+};
+
+// vertices of our quad
+static constexpr const quad_vertex k_quad_vertices[]{
+  {{ -1.0f,  1.0f}, {0.0f, 1.0f}},
+  {{  1.0f,  1.0f}, {1.0f, 1.0f}},
+  {{ -1.0f, -1.0f}, {0.0f, 0.0f}},
+  {{  1.0f, -1.0f}, {1.0f, 0.0f}}
+};
+
+// elements of our quad
+static constexpr const rx_byte k_quad_elements[]{
+  0, 1, 2, 3
+};
+
+// create a buffer
+rx::render::frontend::buffer* quad{frontend.create_buffer(RX_RENDER_TAG("quad"))};
+
+// the contents will not change
+quad->record_type(rx::render::frontend::buffer::type::k_static);
+
+// record the element format
+quad->record_element_type(rx::render::frontend::buffer::element_type::k_u8);
+
+// record the vertex format
+quad->record_stride(sizeof(quad_vertex));
+
+// record the attributes
+quad->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 2, offsetof(quad_vertex, position));
+quad->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 2, offsetof(quad_vertex, coordinate);
+
+// write the vertices and elements into the buffer
+quad->write_vertices(k_quad_vertices, sizeof k_quad_vertices);
+quad->write_elements(k_quad_elements, sizeof k_quad_elements);
+
+// initialize it
+frontend.initialize_buffer(RX_RENDER_TAG("quad"), quad);
+
+// at this point nothing can be changed, we also cannot change the contents
+// because we used k_static for our buffer type
+
+// create a render target
+rx::render::frontend::target* target{frontend.create_target(RX_RENDER_TAG("default"))};
+
+// just request the swap chain on it
+target->request_swapchain();
+
+// initialize it
+frontend.initialize_target(RX_RENER_TAG("default"), target);
+
+// clear that target with red
+frontend.clear(RX_RENDER_TAG("gbuffer test"),
+  target,
+  RX_RENDER_CLEAR_COLOR(0),
+  {1.0f, 0.0f, 0.0f, 1.0f});
+
+// assume we have some program handle here, left out for brevity
+rx::render::frontend::program* program{...};
+// ...
+frontend.initialize_program(RX_RENER_TAG("quad"), program);
+
+// assume we have some texture2D handle here, left out for brevity
+rx::render::frontend::texture2D* texture{...};
+// ...
+frontend.initialize_texture(RX_RENER_TAG("quad"), texture);
+
+// draw the textured quad into our target
+frontend.draw_elements(
+  RX_RENDER_TAG("test"),
+  state,
+  target,
+  quad,
+  program,
+  4,
+  0,
+  rx::render::frontend::primitive_type::k_triangle_strip,
+  "2" // since 2D texture
+  texture);
+```
