@@ -344,7 +344,7 @@ const array<frame_time>& frame_times() const &;
 ```
 
 # Minimal fullscreen quad example
-Here's a simple example of rendering a quad
+Here's a simple example of rendering a textured quad
 ```cpp
 // vertex format
 struct quad_vertex {
