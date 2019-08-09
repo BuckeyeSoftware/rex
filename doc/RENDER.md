@@ -1,4 +1,19 @@
 # Renderer
+## Table of contents
+  * [Renderer](#renderer)
+    * [Frontend](#frontend)
+        * [Interface](#interface)
+          * [Drawing](#drawing)
+          * [Clearing](#clearing)
+          * [Queries](#queries)
+        * [Resources](#resources)
+          * [Buffer](#buffer)
+          * [Target](#target)
+          * [Texture](#texture)
+          * [Program](#program)
+        * [State](#state)
+        * [Technique](#technique)
+        * [Minimal fullscreen quad example](#minimal-fullscreen-quad-example)
 
 ## Frontend
 Rex employs a renderer abstraction interface to isolate graphics API code from the actual engine rendering. This is done by `srx/rx/render/frontend`. The documentation of how this frontend interface works is provided here to get you up to speed on how to render things.
