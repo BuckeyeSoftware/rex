@@ -346,7 +346,7 @@ The state vector is hashed as well as the nested state objects to avoid excessiv
 
 ### Technique
 
-Techniques are data-driven and described by JSON5. Information on how that's done is documented [here](TECHNIQUE.md)
+Techniques are [data-driven](https://en.wikipedia.org/wiki/Data-driven_programming) and described by JSON5. Information on how that's done is documented [here](TECHNIQUE.md)
 
 Once a technique is loaded by `frontend::technique::load` you may fetch a program from that technique with the `operator program*()`, `variant()` or `permute()` member functions depending on what is needed.
 
