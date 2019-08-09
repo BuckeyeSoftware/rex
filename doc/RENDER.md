@@ -1,6 +1,6 @@
 # Renderer
 
-Rex employes a renderer abstraction interface to isolate graphics API code from the actual engine rendering. This is done by `srx/rx/render/frontend`. The documentation of how this frontend interface works is provided here to get you up to speed on how to render things.
+Rex employs a renderer abstraction interface to isolate graphics API code from the actual engine rendering. This is done by `srx/rx/render/frontend`. The documentation of how this frontend interface works is provided here to get you up to speed on how to render things.
 
 ## Interface
 All rendering resources and commands happen through `frontend::interface`. Every command on the frontend is associated with a tag that tracks the file and line information of the command in the engine as well as a static string describing it, this is provided to the interface with the `RX_RENDER_TAG("string")` macro.
@@ -26,7 +26,7 @@ Once a resource is initialized it's properties are immutable, **you cannot reini
 
 While resources cannot have their properties reinitialized or respecified, their contents can be updated. This is done with the `interface::update_*()` functions.
 
-Every resource is validated when `interface::initialize_*()` is called. If at any point the resource is not fully specified (something was not recorded or requested), or and attempt was made to record a property or request a requirement that has already been recorded or requested, an assertion will be triggered. These assertions are disabled in release builds.
+Every resource is validated when `interface::initialize_*()` is called. If at any point the resource is not fully specified (something was not recorded or requested), or an attempt was made to record a property or request a requirement that has already been recorded or requested, an assertion will be triggered. These assertions are disabled in release builds.
 
 #### Buffer
 A buffer resource represents a combined vertex and element buffer for geometry. The properties that **must be** recorded are provided by the following:
