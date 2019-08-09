@@ -69,7 +69,7 @@ rx_byte* map_vertices(rx_size _size);
 rx_byte* map_elements(rx_size _size);
 ```
 
-The functions above _append_ to the vertex and element store, to empty the contents of everything call:
+The `write_*` functions above _append_ to the vertex and element store, to empty the contents of everything call:
 ```cpp
 void flush();
 ```
