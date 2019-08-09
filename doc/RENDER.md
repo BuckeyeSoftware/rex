@@ -74,8 +74,8 @@ Assertions can be triggered in the following cases:
 * The `map_vertices` function is called with a size that is not a multiple of the recorded vertex stride.
 * The `map_elements` function is called with a size that is not a multiple of the recorded element type's byte size.
 * The `write_vertices` or `write_elements` functions are called with a size that is not a multiple of `sizeof(T)`.
-* The `write_vertices`, `write_elements`, `map_vertices`, `map_elements`, or `flush` functions are called with a recorded type that is `k_static` after the buffer has been initialized.
-* The `write_elements` or `map_elements` function was called with a recorded element type `k_none`.
+* The `write_vertices`, `write_elements`, `map_vertices`, or `map_elements` functions are called with a recorded type that is `k_static` after the buffer has been initialized.
+* The `write_elements` or `map_elements` functions are called with a recorded element type `k_none`.
 * An attribute overlaps an existing attribute.
 * An attribute exceeds the recorded vertex stride.
 * An attempt was made to modify the buffer after it was initialized.
