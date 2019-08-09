@@ -70,7 +70,7 @@ Assertions can be triggered in the following cases:
 * Not everything was recorded
 * The vertex store contains a byte size that is not a multiple of the recorded stride
 * The `write_vertices` or `write_elements` functions are called with a size that is not a multiple of `sizeof(T)`.
-* The `write_vertices` or `write_elements` functions are called with a recorded type that is `k_static`.
+* The `write_vertices` or `write_elements` functions are called with a recorded type that is `k_static` after the buffer has been initialized.
 * The `write_elements` function was called but this buffer has element type `k_none`.
 * An attribute overlaps an existing attribute.
 * An attribute exceeds the recorded vertex stride.
@@ -121,8 +121,8 @@ Assertions can be triggered in the following cases:
 * An attempt was made to attach a non-depth and non-stencil texture which has different dimensions than the other attached non-depth and non-stencil textures.
 * An attempt was made to attach a non-depth and non-stencil texture which has a different format than the other attached non-depth and non-stencil textures.
 * An attempt was made to attach a depth, stencil or combined depth-stencil texture that has a recorded type which is not `k_attachment`.
-* An attempt was made to attach a depth texture when a stencil texture is already attached, you must use combined depth-stencil texture instead.
-* An attempt was made to attach a stencil texture when a depth texture is already attached, you must use combined depth-stencil texture instead.
+* An attempt was made to attach a depth texture when a stencil texture is already attached, you **must use combined depth-stencil** texture instead.
+* An attempt was made to attach a stencil texture when a depth texture is already attached, you **must use combined depth-stencil** texture instead.
 * An attempt was made to modify the target after it was initialized.
 
 #### Texture
@@ -164,7 +164,8 @@ rx_byte* map(rx_size _level);
 
 Assertions can be triggered in the following cases:
 * A depth, stencil or combined depth-stencil format was recorded and `k_attachment` was not used for type.
-* An attempt was made to write or map a miplevel when `k_attachment` or `k_static` was recorded as the type.
+* An attempt was made to write or map a miplevel when `k_attachment` was recorded as the type.
+* An attempt was made to write or map a miplevel when `k_static` was recorded as the type after initialization.
 * An attempt was made to write or map a miplevel that is out of bounds.
 * An attempt was made to write or map a miplevel other than zero for a texture with no mipmaps.
 * An attempt was made to record dimensions that are greater than 4096 pixels in any dimension.
@@ -203,7 +204,7 @@ stencil_state stencil;
 polygon_state polygon;
 ```
 
-The state vector is hashed as well as the nested state objects to avoid excessive state changes in the backend. You do not need to manage any state when rendering, state bleed is not possible. This vector can be built every frame for every draw command, the backend is responsible for everything.
+The state vector is hashed as well as the nested state objects to avoid excessive state changes in the backend. You do not need to manage any state when rendering, state bleed is not possible. This vector can be built every frame for every draw command.
 
 ## Drawing
 
@@ -242,12 +243,12 @@ Lets disect what everything is:
 * `...` is a list of `texture{1D, 2D, 3D, CM}` to use for the draw.
 
 The texture specification string is a string-literal encoding the textures to use for this call using the following table
-  * `1`
-  * `2`
-  * `3`
-  * `c`
+  * `1` 1D texture
+  * `2` 2D texture
+  * `3` 3D texture
+  * `c` Cubemap texture
 
-The string can have a maximum length of `8` (eight), meaning you can have a maximum amount of `8` (eight) textures. There must be exactly as many textures passed in `...` as this string's length. They must mach the specification, e.g passing a `texture1D` when the string says anything other than `1` in that position will trigger an assertion.
+The string can have a maximum length of eight, meaning you can have a maximum amount of eight textures. There must be exactly as many textures passed in `...` as this string's length. They must mach the specification, e.g passing a `texture1D*` when the string says anything other than `1` in that position will trigger an assertion.
 
 Here's an example:
 
