@@ -53,7 +53,7 @@ directory::~directory() {
 #endif
 }
 
-void directory::each(function<void(const item&)>&& _function) {
+void directory::each(function<void(item&&)>&& _function) {
   RX_ASSERT(m_impl, "invalid directory");
 
 #if defined(RX_PLATFORM_POSIX)

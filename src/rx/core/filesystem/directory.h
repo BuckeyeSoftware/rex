@@ -27,8 +27,8 @@ struct directory
 
     bool is_file() const;
     bool is_directory() const;
-    const string& name() const &;
-    string&& name() &&;
+    const string& name() const;
+    string&& name();
 
   private:
     friend struct directory;
@@ -41,7 +41,7 @@ struct directory
 
   // enumerate directory with |_function| being called for each item
   // NOTE: does not consider hidden files, symbolic links, block devices, or ..
-  void each(function<void(const item&)>&& _function);
+  void each(function<void(item&&)>&& _function);
 
   memory::allocator* allocator() const;
 
@@ -81,11 +81,11 @@ inline bool directory::item::is_directory() const {
   return m_type == type::k_directory;
 }
 
-inline const string& directory::item::name() const & {
+inline const string& directory::item::name() const {
   return m_name;
 }
 
-inline string&& directory::item::name() && {
+inline string&& directory::item::name() {
   return utility::move(m_name);
 }
 
