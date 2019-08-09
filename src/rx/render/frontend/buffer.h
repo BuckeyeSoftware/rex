@@ -48,9 +48,6 @@ struct buffer : resource {
   // map |_size| bytes of elements
   rx_byte* map_elements(rx_size _size);
 
-  // flush vertex and element store
-  void flush();
-
   // record attribute of |_count| elements of |_type| starting at |_offset|
   void record_attribute(attribute::type _type, rx_size _count, rx_size _offset);
 
@@ -112,13 +109,6 @@ inline void buffer::write_elements(const T* _data, rx_size _size) {
   } else if constexpr (traits::is_same<T, rx_u32>) {
     write_elements_data(reinterpret_cast<const rx_byte*>(_data), _size);
   }
-}
-
-inline void buffer::flush() {
-  m_vertices_store.clear();
-  m_elements_store.clear();
-
-  update_resource_usage(0);
 }
 
 inline void buffer::record_attribute(attribute::type _type, rx_size _count,

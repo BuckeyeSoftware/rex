@@ -438,7 +438,6 @@ void immediate::immediate::render(frontend::target* _target) {
     });
 
     // upload the geometry
-    m_buffers[m_wr_index]->flush();
     m_buffers[m_wr_index]->write_vertices(m_vertices.data(), m_vertices.size() * sizeof(vertex));
     m_buffers[m_wr_index]->write_elements(m_elements.data(), m_elements.size() * sizeof(rx_u32));
 

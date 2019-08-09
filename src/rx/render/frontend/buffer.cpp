@@ -32,13 +32,11 @@ buffer::~buffer() {
 }
 
 void buffer::write_vertices_data(const rx_byte* _data, rx_size _size) {
-  const auto old_size{m_vertices_store.size()};
-  memcpy(map_vertices(old_size + _size) + old_size, _data, _size);
+  memcpy(map_vertices(_size), _data, _size);
 }
 
 void buffer::write_elements_data(const rx_byte* _data, rx_size _size) {
-  const auto old_size{m_elements_store.size()};
-  memcpy(map_elements(old_size + _size) + old_size, _data, _size);
+  memcpy(map_elements(_size), _data, _size);
 }
 
 rx_byte* buffer::map_vertices(rx_size _size) {

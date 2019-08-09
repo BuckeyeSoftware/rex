@@ -54,11 +54,11 @@ void record_type(type _type);
 
 The contents of the buffer can be specified and updated by calling the following functions:
 ```cpp
-// append |_size| bytes from |_data| into vertex store
+// write |_size| bytes from |_data| into vertex store
 template<typename T>
 void write_vertices(const T* _data, rx_size _size);
 
-// append |_size| bytes from |_data| into element store
+// write |_size| bytes from |_data| into element store
 template<typename T>
 void write_elements(const T* _data, rx_size _size);
 
@@ -67,11 +67,6 @@ rx_byte* map_vertices(rx_size _size);
 
 // map |_size| bytes of elements
 rx_byte* map_elements(rx_size _size);
-```
-
-The `write_*` functions above _append_ to the vertex and element store, to empty the contents of everything call:
-```cpp
-void flush();
 ```
 
 Assertions can be triggered in the following cases:
