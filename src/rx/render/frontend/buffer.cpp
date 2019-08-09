@@ -32,10 +32,12 @@ buffer::~buffer() {
 }
 
 void buffer::write_vertices_data(const rx_byte* _data, rx_size _size) {
+  RX_ASSERT(_data, "null data");
   memcpy(map_vertices(_size), _data, _size);
 }
 
 void buffer::write_elements_data(const rx_byte* _data, rx_size _size) {
+  RX_ASSERT(_data, "null data");
   memcpy(map_elements(_size), _data, _size);
 }
 
