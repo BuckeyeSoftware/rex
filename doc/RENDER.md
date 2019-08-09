@@ -34,7 +34,7 @@ A buffer resource represents a combined vertex and element buffer for geometry. 
 // |_type| is the attribute type (e.g float, int)
 // |_count| is the # of elements of the attribute type (3 for a vec3)
 // |_offset| is the offset in the vertex format this attribute begins in bytes
-void record_attribute(attribute::type _type, rx_size _count rx_size _offset);
+void record_attribute(attribute::type _type, rx_size _count, rx_size _offset);
 
 // record vertex stride
 // |_stride| is the size of the vertex format in bytes
@@ -44,8 +44,9 @@ void record_stride(rx_size _stride);
 // |_type| is the element type, k_none for no elements
 void record_element_type(element_type _type);
 
-// record type
-// |_type| is the buffer type, k_dynamic or k_static
+// record type |_type|
+// k_static is for buffers that will not be updated
+// k_dynamic is for buffers that will be updated
 void record_type(type _type);
 ```
 
@@ -69,12 +70,14 @@ Assertions can be triggered in the following cases:
 * Not everything was recorded
 * The vertex store contains a byte size that is not a multiple of the recorded stride
 * The `write_vertices` or `write_elements` functions are called with a size that is not a multiple of `sizeof(T)`.
-* The `offset` of an attribute overlaps an existing attribute
-* The `offset` of an attribute exceeds the stride of a recorded vertex.
+* The `write_vertices` or `write_elements` functions are called with a recorded type that is `k_static`.
+* The `write_elements` function was called but this buffer has element type `k_none`.
+* An attribute overlaps an existing attribute.
+* An attribute exceeds the recorded vertex stride.
 * An attempt was made to modify the buffer after it was initialized.
 
 #### Target
-Targets are essentially frame buffer objects. They can contain multiple attachments and they are where the contents of draw call happen on.
+Targets are essentially frame buffer objects. They can contain multiple attachments.
 
 Before initializing a target you request certain requirements. Those requirements are requested with the following member functions:
 
@@ -100,11 +103,11 @@ A target can also be attached existing textures with the following member functi
 
 ```cpp
 // attach existing depth texture |_depth| to target
-// can only attach one depth
+// can only attach one depth texture
 void attach_depth(texture2D* _depth);
 
 // attach existing stencil texture |_stencil| to target
-// can only attach one stencil
+// can only attach one stencil texture
 void attach_stencil(texture2D* _stencil);
 
 // attach texture |_texture| to target
@@ -117,6 +120,9 @@ Assertions can be triggered in the following cases:
 * An attempt was made to attach more than one depth, stencil or combined depth stencil texture.
 * An attempt was made to attach a non-depth and non-stencil texture which has different dimensions than the other attached non-depth and non-stencil textures.
 * An attempt was made to attach a non-depth and non-stencil texture which has a different format than the other attached non-depth and non-stencil textures.
+* An attempt was made to attach a depth, stencil or combined depth-stencil texture that has a recorded type which is not `k_attachment`.
+* An attempt was made to attach a depth texture when a stencil texture is already attached, you must use combined depth-stencil texture instead.
+* An attempt was made to attach a stencil texture when a depth texture is already attached, you must use combined depth-stencil texture instead.
 * An attempt was made to modify the target after it was initialized.
 
 #### Texture
@@ -132,8 +138,8 @@ void record_format(data_format _format);
 // record type
 // |_type| can be one of k_static, k_dynamic, k_attachment
 // k_static is for textures that will not be updated
-// k_dynamic is for textutes that will be updated
-// k_attachment is for textures that will not be used in draw calls
+// k_dynamic is for textures that will be updated
+// k_attachment is for textures that will only be used as target attachments
 void record_type(type _type);
 
 // record filter options |_options|
@@ -157,10 +163,11 @@ rx_byte* map(rx_size _level);
 ```
 
 Assertions can be triggered in the following cases:
-* A depth or stencil format was recorded and `k_attachment` was not used for type.
+* A depth, stencil or combined depth-stencil format was recorded and `k_attachment` was not used for type.
+* An attempt was made to write or map a miplevel when `k_attachment` or `k_static` was recorded as the type.
 * An attempt was made to write or map a miplevel that is out of bounds.
 * An attempt was made to write or map a miplevel other than zero for a texture with no mipmaps.
-* An attempt was made to record dimensions that are greater than 4096 pixels in any dimensions.
+* An attempt was made to record dimensions that are greater than 4096 pixels in any dimension.
 * An attempt was made to modify the texture after it was initialized.
 
 #### Program
@@ -334,5 +341,3 @@ struct frame_time {
 
 const array<frame_time>& frame_times() const &;
 ```
-
-# Technique
