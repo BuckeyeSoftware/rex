@@ -1,6 +1,5 @@
 #ifndef RX_CORE_STATICS_H
 #define RX_CORE_STATICS_H
-
 #include "rx/core/concepts/no_copy.h" // no_copy
 #include "rx/core/concepts/no_move.h" // no_move
 

@@ -1,9 +1,6 @@
 #ifndef RX_CORE_BITSET_H
 #define RX_CORE_BITSET_H
-
 #include "rx/core/utility/move.h"
-
-#include "rx/core/assert.h"
 #include "rx/core/memory/system_allocator.h"
 
 #include "rx/core/traits/is_same.h"

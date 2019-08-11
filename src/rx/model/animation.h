@@ -1,6 +1,5 @@
 #ifndef RX_MODEL_ANIMATION_H
 #define RX_MODEL_ANIMATION_H
-
 #include "rx/core/array.h"
 
 #include "rx/math/vec2.h"

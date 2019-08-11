@@ -1,6 +1,5 @@
 #ifndef RX_RENDER_FRONTEND_MATERIAL_H
 #define RX_RENDER_FRONTEND_MATERIAL_H
-
 #include "rx/core/string.h"
 #include "rx/core/json.h"
 #include "rx/core/log.h"
@@ -12,7 +11,9 @@ namespace rx::render::frontend {
 struct texture2D;
 struct interface;
 
-struct material : concepts::no_copy {
+struct material
+  : concepts::no_copy
+{
   material(interface* _frontend);
   ~material();
 

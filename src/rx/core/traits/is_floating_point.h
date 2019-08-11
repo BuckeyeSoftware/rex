@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_IS_FLOATING_POINT
 #define RX_CORE_TRAITS_IS_FLOATING_POINT
-
 #include "rx/core/types.h" // rx_f32, rx_f64
 
 #include "rx/core/traits/is_same.h"

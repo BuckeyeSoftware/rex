@@ -1,6 +1,5 @@
 #ifndef RX_CORE_UTILITY_MOVE_H
 #define RX_CORE_UTILITY_MOVE_H
-
 #include "rx/core/traits/remove_reference.h"
 
 namespace rx::utility {

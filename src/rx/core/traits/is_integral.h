@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_IS_INTEGRAL_H
 #define RX_CORE_TRAITS_IS_INTEGRAL_H
-
 #include "rx/core/traits/is_same.h"
 #include "rx/core/traits/remove_cv.h"
 

@@ -1,6 +1,5 @@
 #ifndef RX_CORE_UTILITY_INTEGER_SEQUENCE_H
 #define RX_CORE_UTILITY_INTEGER_SEQUENCE_H
-
 #include "rx/core/traits/type_identity.h"
 
 namespace rx::utility {

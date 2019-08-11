@@ -1,6 +1,5 @@
 #ifndef RX_RENDER_FRONTEND_TIMER_H
 #define RX_RENDER_FRONTEND_TIMER_H
-
 #include "rx/core/array.h"
 
 namespace rx::render::frontend {

@@ -1,6 +1,5 @@
 #ifndef RX_CORE_FUNCTION_H
 #define RX_CORE_FUNCTION_H
-
 #include "rx/core/array.h"
 
 #include "rx/core/traits/is_callable.h"

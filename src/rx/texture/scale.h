@@ -1,6 +1,5 @@
 #ifndef RX_TEXTURE_SCALE_H
 #define RX_TEXTURE_SCALE_H
-
 #include "rx/core/types.h"
 
 namespace rx::texture {

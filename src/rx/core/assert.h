@@ -1,6 +1,5 @@
 #ifndef RX_CORE_ASSERT_H
 #define RX_CORE_ASSERT_H
-
 #include "rx/core/config.h" // __has_builtin, RX_COMPILER_{GCC, CLANG}
 #include "rx/core/abort.h" // rx::abort
 

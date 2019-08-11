@@ -1,6 +1,5 @@
 #ifndef RX_CORE_CONCURRENCY_MUTEX_H
 #define RX_CORE_CONCURRENCY_MUTEX_H
-
 #include "rx/core/config.h" // RX_PLATFORM_*
 
 #if defined(RX_PLATFORM_POSIX)

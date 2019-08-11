@@ -1,10 +1,9 @@
 #ifndef RX_CORE_TRAITS_IS_CALLABLE_H
 #define RX_CORE_TRAITS_IS_CALLABLE_H
+#include "rx/core/traits/is_same.h"
 
 #include "rx/core/utility/nat.h"
 #include "rx/core/utility/declval.h"
-
-#include "rx/core/traits/is_same.h"
 
 namespace rx::traits {
 

@@ -1,6 +1,5 @@
 #ifndef RX_RENDER_FRONTEND_TEXTURE_H
 #define RX_RENDER_FRONTEND_TEXTURE_H
-
 #include "rx/render/frontend/resource.h"
 
 #include "rx/core/array.h"
@@ -10,7 +9,6 @@
 #include "rx/math/vec2.h"
 #include "rx/math/vec3.h"
 #include "rx/math/vec4.h"
-
 
 namespace rx::render::frontend {
 

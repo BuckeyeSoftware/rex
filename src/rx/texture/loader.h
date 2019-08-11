@@ -1,6 +1,5 @@
 #ifndef RX_TEXTURE_LOADER_H
 #define RX_TEXTURE_LOADER_H
-
 #include "rx/core/array.h"
 #include "rx/core/string.h"
 

@@ -1,6 +1,5 @@
 #ifndef RX_CORE_ALGORITHM_INSERTION_SORT_H
 #define RX_CORE_ALGORITHM_INSERTION_SORT_H
-
 #include "rx/core/utility/move.h"
 
 namespace rx::algorithm {

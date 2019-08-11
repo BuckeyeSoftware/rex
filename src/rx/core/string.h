@@ -1,13 +1,12 @@
 #ifndef RX_CORE_STRING_H
 #define RX_CORE_STRING_H
-
 #include "rx/core/assert.h" // RX_ASSERT
 #include "rx/core/format.h" // format
 #include "rx/core/array.h" // array
 
-#include "rx/core/memory/system_allocator.h" // memory::{system_allocator, allocator, block}
-
 #include "rx/core/traits/remove_cvref.h"
+
+#include "rx/core/memory/system_allocator.h" // memory::{system_allocator, allocator}
 
 namespace rx {
 

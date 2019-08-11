@@ -1,6 +1,5 @@
 #ifndef RX_CORE_UTILITY_SWAP_H
 #define RX_CORE_UTILITY_SWAP_H
-
 #include "rx/core/utility/move.h"
 
 namespace rx::utility {

@@ -1,6 +1,5 @@
 #ifndef RX_RENDER_FRONTEND_STATE_H
 #define RX_RENDER_FRONTEND_STATE_H
-
 #include "rx/math/vec2.h"
 
 namespace rx::render::frontend {

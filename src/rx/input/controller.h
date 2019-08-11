@@ -1,7 +1,6 @@
 #ifndef RX_INPUT_CONTROLLER_H
 #define RX_INPUT_CONTROLLER_H
-
-#include "rx/core/function.h"
+#include "rx/core/types.h" // rx_size, rx_f32
 
 namespace rx::input {
 

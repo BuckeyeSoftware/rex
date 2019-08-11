@@ -1,6 +1,5 @@
 #ifndef RX_CORE_FORMAT_H
 #define RX_CORE_FORMAT_H
-
 #include <float.h> // {DBL,FLT}_MAX_10_EXP
 
 #include "rx/core/types.h" // rx_size

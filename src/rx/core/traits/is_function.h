@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_IS_FUNCTION_H
 #define RX_CORE_TRAITS_IS_FUNCTION_H
-
 #include "rx/core/config.h" // __has_feature
 
 namespace rx::traits {

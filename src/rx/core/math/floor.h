@@ -1,6 +1,5 @@
 #ifndef RX_CORE_MATH_FLOOR_H
 #define RX_CORE_MATH_FLOOR_H
-
 #include "rx/core/types.h"
 
 namespace rx::math {

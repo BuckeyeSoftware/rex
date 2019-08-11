@@ -1,6 +1,5 @@
 #ifndef RX_MATH_VEC2_H
 #define RX_MATH_VEC2_H
-
 #include "rx/core/types.h" // rx_size
 #include "rx/core/format.h" // format
 #include "rx/core/hash.h" // hash, hash_combine

@@ -1,6 +1,5 @@
 #ifndef RX_CORE_MEMORY_POOL_ALLOCATOR_H
 #define RX_CORE_MEMORY_POOL_ALLOCATOR_H
-
 #include "rx/core/bitset.h" // bitset
 
 #include "rx/core/concepts/no_copy.h" // no_copy

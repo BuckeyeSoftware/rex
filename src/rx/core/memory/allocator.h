@@ -1,6 +1,5 @@
 #ifndef RX_CORE_MEMORY_ALLOCATOR_H
 #define RX_CORE_MEMORY_ALLOCATOR_H
-
 #include "rx/core/types.h" // rx_size, rx_byte
 #include "rx/core/concepts/interface.h" // concepts::interface
 

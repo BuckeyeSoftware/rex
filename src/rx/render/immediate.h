@@ -1,7 +1,5 @@
 #ifndef RX_RENDER_IMMEDIATE_H
 #define RX_RENDER_IMMEDIATE_H
-#include <string.h> // strlen
-
 #include "rx/math/vec2.h"
 #include "rx/math/vec4.h"
 

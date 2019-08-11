@@ -1,6 +1,5 @@
 #ifndef RX_RENDER_FRONTEND_COMMAND_H
 #define RX_RENDER_FRONTEND_COMMAND_H
-
 #include "rx/render/frontend/state.h"
 
 #include "rx/core/memory/bump_point_allocator.h"

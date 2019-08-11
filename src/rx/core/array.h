@@ -1,6 +1,5 @@
 #ifndef RX_CORE_ARRAY_H
 #define RX_CORE_ARRAY_H
-
 #include "rx/core/assert.h" // RX_ASSERT
 
 #include "rx/core/traits/is_same.h"

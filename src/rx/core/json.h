@@ -1,6 +1,5 @@
 #ifndef RX_CORE_JSON_H
 #define RX_CORE_JSON_H
-
 #include "rx/core/string.h"
 #include "rx/core/optional.h"
 

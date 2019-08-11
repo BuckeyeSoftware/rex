@@ -7,7 +7,7 @@ template<typename T1, typename T2>
 inline constexpr const bool is_same{false};
 
 template<typename T>
-inline constexpr const bool is_same<T,T>{true};
+inline constexpr const bool is_same<T, T>{true};
 
 } // namespace rx::traits
 

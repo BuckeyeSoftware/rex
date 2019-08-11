@@ -1,6 +1,5 @@
 #ifndef RX_CORE_ALGORITHM_MAX_H
 #define RX_CORE_ALGORITHM_MAX_H
-
 #include "rx/core/utility/forward.h"
 
 namespace rx::algorithm {

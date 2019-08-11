@@ -1,7 +1,6 @@
 #ifndef RX_CORE_CONCURRENCY_SPIN_LOCK_H
 #define RX_CORE_CONCURRENCY_SPIN_LOCK_H
-
-#include "rx/core/concurrency/atomic.h"
+#include "rx/core/concurrency/atomic.h" // atomic_flag
 
 namespace rx::concurrency {
 

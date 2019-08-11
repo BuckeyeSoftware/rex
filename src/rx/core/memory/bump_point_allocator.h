@@ -1,7 +1,6 @@
 #ifndef RX_CORE_MEMORY_BUMP_POINT_ALLOCATOR_H
 #define RX_CORE_MEMORY_BUMP_POINT_ALLOCATOR_H
-
-#include "rx/core/types.h" // rx_size
+#include "rx/core/types.h"
 
 namespace rx::memory {
 

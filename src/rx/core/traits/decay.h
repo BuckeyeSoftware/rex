@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_DECAY_H
 #define RX_CORE_TRAITS_DECAY_H
-
 #include "rx/core/traits/is_array.h"
 #include "rx/core/traits/is_function.h"
 #include "rx/core/traits/remove_reference.h"

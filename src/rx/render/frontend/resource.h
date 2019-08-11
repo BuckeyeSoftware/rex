@@ -1,6 +1,5 @@
 #ifndef RX_RENDER_FRONTEND_RESOURCE_H
 #define RX_RENDER_FRONTEND_RESOURCE_H
-
 #include "rx/core/types.h"
 #include "rx/core/concepts/no_copy.h"
 

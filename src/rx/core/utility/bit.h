@@ -1,7 +1,5 @@
 #ifndef RX_CORE_UTILITY_BIT_H
 #define RX_CORE_UTILITY_BIT_H
-
-#include "rx/core/config.h" // RX_COMPILER_*
 #include "rx/core/types.h"
 
 template<typename T>

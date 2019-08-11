@@ -1,6 +1,5 @@
 #ifndef RX_CORE_UTILITY_FORWARD_H
 #define RX_CORE_UTILITY_FORWARD_H
-
 #include "rx/core/traits/remove_reference.h"
 #include "rx/core/traits/is_lvalue_reference.h"
 

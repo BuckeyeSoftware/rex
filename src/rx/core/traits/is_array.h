@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_IS_ARRAY_H
 #define RX_CORE_TRAITS_IS_ARRAY_H
-
 #include "rx/core/types.h" // rx_size
 
 namespace rx::traits {

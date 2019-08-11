@@ -1,10 +1,8 @@
 #ifndef RX_CORE_FILESYSTEM_DIRECTORY_H
 #define RX_CORE_FILESYSTEM_DIRECTORY_H
-
 #include "rx/core/string.h"
 #include "rx/core/function.h"
 #include "rx/core/concepts/no_copy.h"
-#include "rx/core/memory/system_allocator.h"
 
 namespace rx::filesystem {
 

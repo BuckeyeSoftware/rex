@@ -1,6 +1,5 @@
 #ifndef RX_CORE_UTILITY_DESTRUCT_H
 #define RX_CORE_UTILITY_DESTRUCT_H
-
 #include "rx/core/memory/allocator.h"
 
 namespace rx::utility {

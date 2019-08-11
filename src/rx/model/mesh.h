@@ -1,6 +1,5 @@
 #ifndef RX_MODEL_MESH_H
 #define RX_MODEL_MESH_H
-
 #include "rx/core/string.h"
 
 namespace rx::model {
@@ -11,6 +10,6 @@ struct mesh {
   string material;
 };
 
-}
+} // namespace rx::model
 
-#endif
+#endif // RX_MODEL_MESH_H

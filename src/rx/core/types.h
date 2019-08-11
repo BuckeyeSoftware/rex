@@ -1,6 +1,5 @@
 #ifndef RX_FOUNDATION_TYPES_H
 #define RX_FOUNDATION_TYPES_H
-
 #include "rx/core/config.h"
 #include "rx/core/traits/conditional.h"
 

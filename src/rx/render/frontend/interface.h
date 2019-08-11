@@ -1,6 +1,5 @@
 #ifndef RX_RENDER_FRONTEND_INTERFACE_H
 #define RX_RENDER_FRONTEND_INTERFACE_H
-
 #include "rx/core/deferred_function.h"
 #include "rx/core/array.h"
 #include "rx/core/string.h"

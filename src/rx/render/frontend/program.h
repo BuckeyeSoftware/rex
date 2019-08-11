@@ -1,6 +1,5 @@
 #ifndef RX_RENDER_PROGRAM_H
 #define RX_RENDER_PROGRAM_H
-
 #include "rx/core/string.h"
 #include "rx/core/array.h"
 #include "rx/core/map.h"
@@ -19,7 +18,9 @@ namespace rx::render::frontend {
 struct interface;
 struct program;
 
-struct uniform : concepts::no_copy {
+struct uniform
+  : concepts::no_copy
+{
   enum class type {
     k_sampler1D,
     k_sampler2D,

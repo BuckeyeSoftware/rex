@@ -1,6 +1,5 @@
 #ifndef RX_RENDER_FRONTEND_TECHNIQUE_H
 #define RX_RENDER_FRONTEND_TECHNIQUE_H
-
 #include "rx/core/string.h"
 #include "rx/core/array.h"
 #include "rx/core/json.h"

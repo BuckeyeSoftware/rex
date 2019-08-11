@@ -1,12 +1,12 @@
 #ifndef RX_MATH_MAT4X4_H
 #define RX_MATH_MAT4X4_H
-#include "rx/core/math/sin.h" // sin
-#include "rx/core/math/cos.h" // cos
-#include "rx/core/math/tan.h" // tan
-
 #include "rx/math/vec3.h" // vec3
 #include "rx/math/vec4.h" // vec4
 #include "rx/math/trig.h" // deg_to_rad
+
+#include "rx/core/math/sin.h" // sin
+#include "rx/core/math/cos.h" // cos
+#include "rx/core/math/tan.h" // tan
 
 namespace rx::math {
 

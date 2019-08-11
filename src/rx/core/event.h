@@ -1,6 +1,5 @@
 #ifndef RX_CORE_EVENT_H
 #define RX_CORE_EVENT_H
-
 #include "rx/core/function.h"
 
 namespace rx {

@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_IS_POINTER_H
 #define RX_CORE_TRAITS_IS_POINTER_H
-
 #include "rx/core/traits/remove_cv.h"
 
 namespace rx::traits {

@@ -1,7 +1,5 @@
 #ifndef RX_CORE_MATH_LOG2_H
 #define RX_CORE_MATH_LOG2_H
-
-#include "rx/core/config.h"
 #include "rx/core/types.h"
 
 namespace rx::math {

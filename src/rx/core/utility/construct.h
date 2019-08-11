@@ -1,6 +1,5 @@
 #ifndef RX_CORE_UTILITY_CONSTRUCT_H
 #define RX_CORE_UTILITY_CONSTRUCT_H
-
 #include "rx/core/types.h" // rx_size
 #include "rx/core/assert.h" // RX_ASSERT
 #include "rx/core/utility/forward.h"

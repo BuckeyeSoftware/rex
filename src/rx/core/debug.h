@@ -1,6 +1,5 @@
 #ifndef RX_CORE_DEBUG_H
 #define RX_CORE_DEBUG_H
-
 #include "rx/core/assert.h" // RX_FUNCTION
 
 namespace rx {

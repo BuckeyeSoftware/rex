@@ -1,6 +1,5 @@
 #ifndef RX_CONSOLE_INTERFACE_H
 #define RX_CONSOLE_INTERFACE_H
-
 #include "rx/console/variable.h"
 
 namespace rx::console {

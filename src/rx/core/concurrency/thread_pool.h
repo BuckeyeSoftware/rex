@@ -1,6 +1,5 @@
 #ifndef RX_CORE_CONCURRENCY_THREAD_POOL_H
 #define RX_CORE_CONCURRENCY_THREAD_POOL_H
-
 #include "rx/core/queue.h"
 #include "rx/core/function.h"
 

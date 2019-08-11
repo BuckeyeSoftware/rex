@@ -1,7 +1,7 @@
 #ifndef RX_CORE_OPTIONAL_H
 #define RX_CORE_OPTIONAL_H
-
 #include "rx/core/assert.h" // RX_ASSERT
+
 #include "rx/core/memory/uninitialized_storage.h" // uninitialized_storage
 
 namespace rx {

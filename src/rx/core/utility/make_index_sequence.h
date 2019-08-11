@@ -1,6 +1,5 @@
 #ifndef RX_CORE_UTILITY_MAKE_INDEX_SEQUENCE_H
 #define RX_CORE_UTILITY_MAKE_INDEX_SEQUENCE_H
-
 #include "rx/core/types.h" // rx_size
 #include "rx/core/utility/make_integer_sequence.h"
 

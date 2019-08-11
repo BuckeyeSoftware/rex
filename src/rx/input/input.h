@@ -1,6 +1,5 @@
 #ifndef RX_INPUT_INPUT_H
 #define RX_INPUT_INPUT_H
-
 #include "rx/core/array.h"
 
 #include "rx/input/mouse.h"

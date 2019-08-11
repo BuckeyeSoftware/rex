@@ -1,12 +1,12 @@
 #ifndef RX_CORE_MATH_HALF_H
 #define RX_CORE_MATH_HALF_H
-
-#include "rx/core/types.h" // rx_u16
+#include "rx/core/types.h"
 
 namespace rx::math {
 
 struct half {
   constexpr half(const half& _h);
+  constexpr half& operator=(const half& _h);
 
   half(rx_f32 _f);
   half(rx_f64 _f);
@@ -37,6 +37,11 @@ private:
 inline constexpr half::half(const half& _h)
   : m_bits{_h.m_bits}
 {
+}
+
+inline constexpr half& half::operator=(const half& _h) {
+  m_bits = _h.m_bits;
+  return *this;
 }
 
 inline half::half(rx_f32 _f)

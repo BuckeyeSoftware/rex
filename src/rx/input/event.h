@@ -1,6 +1,5 @@
 #ifndef RX_INPUT_EVENT_H
 #define RX_INPUT_EVENT_H
-
 #include "rx/math/vec2.h"
 #include "rx/math/vec4.h"
 

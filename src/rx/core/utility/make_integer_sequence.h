@@ -1,6 +1,5 @@
 #ifndef RX_CORE_UTILITY_MAKE_INTEGER_SEQUENCE_H
 #define RX_CORE_UTILITY_MAKE_INTEGER_SEQUENCE_H
-
 #include "rx/core/utility/integer_sequence.h"
 
 namespace rx::utility {

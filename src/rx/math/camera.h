@@ -1,6 +1,5 @@
 #ifndef RX_MATH_CAMERA_H
 #define RX_MATH_CAMERA_H
-
 #include "rx/math/transform.h"
 
 namespace rx::math {

@@ -1,6 +1,5 @@
 #ifndef RX_CORE_MEMORY_STATS_ALLOCATOR_H
 #define RX_CORE_MEMORY_STATS_ALLOCATOR_H
-
 #include "rx/core/memory/allocator.h"
 #include "rx/core/concurrency/spin_lock.h"
 

@@ -1,6 +1,5 @@
 #ifndef RX_TEXTURE_DXT_H
 #define RX_TEXTURE_DXT_H
-
 #include "rx/core/array.h"
 
 namespace rx::texture {

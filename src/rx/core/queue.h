@@ -1,6 +1,5 @@
 #ifndef RX_CORE_QUEUE_H
 #define RX_CORE_QUEUE_H
-
 #include "rx/core/utility/move.h"
 #include "rx/core/utility/forward.h"
 

@@ -1,6 +1,5 @@
 #ifndef RX_RENDER_FRONTEND_TARGET_H
 #define RX_RENDER_FRONTEND_TARGET_H
-
 #include "rx/core/array.h"
 
 #include "rx/render/frontend/texture.h"

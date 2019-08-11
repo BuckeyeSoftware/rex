@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_ADD_LVALUE_REFERENCE_H
 #define RX_CORE_TRAITS_ADD_LVALUE_REFERENCE_H
-
 #include "rx/core/traits/is_referenceable.h"
 #include "rx/core/traits/type_identity.h"
 

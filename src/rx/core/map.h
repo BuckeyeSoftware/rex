@@ -1,8 +1,5 @@
 #ifndef RX_CORE_MAP_H
 #define RX_CORE_MAP_H
-
-#include "rx/core/hash.h" // hash
-
 #include "rx/core/utility/construct.h"
 #include "rx/core/utility/destruct.h"
 #include "rx/core/utility/move.h"
@@ -12,6 +9,8 @@
 #include "rx/core/traits/is_same.h"
 
 #include "rx/core/memory/system_allocator.h" // allocator, g_system_allocator
+
+#include "rx/core/hash.h" // hash
 
 namespace rx {
 

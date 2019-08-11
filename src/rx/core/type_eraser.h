@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TYPE_ERASER_H
 #define RX_CORE_TYPE_ERASER_H
-
 #include "rx/core/utility/forward.h"
 #include "rx/core/utility/move.h"
 #include "rx/core/utility/nat.h"

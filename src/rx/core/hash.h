@@ -1,6 +1,5 @@
 #ifndef RX_CORE_HASH_H
 #define RX_CORE_HASH_H
-
 #include "rx/core/types.h"
 
 namespace rx {

@@ -1,6 +1,5 @@
 #ifndef RX_CORE_MATH_ABS_H
 #define RX_CORE_MATH_ABS_H
-
 #include "rx/core/types.h"
 
 namespace rx::math {

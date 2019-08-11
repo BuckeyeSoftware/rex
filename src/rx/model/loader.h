@@ -1,6 +1,5 @@
 #ifndef RX_MODEL_LOADER_H
 #define RX_MODEL_LOADER_H
-
 #include "rx/model/mesh.h"
 
 #include "rx/core/concepts/interface.h"

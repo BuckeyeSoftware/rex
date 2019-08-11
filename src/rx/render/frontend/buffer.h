@@ -1,7 +1,7 @@
 #ifndef RX_RENDER_FRONTEND_BUFFER_H
 #define RX_RENDER_FRONTEND_BUFFER_H
-
 #include "rx/core/array.h"
+
 #include "rx/render/frontend/resource.h"
 
 namespace rx::render::frontend {

@@ -1,6 +1,5 @@
 #ifndef RX_CORE_ALGORITHM_MIN_H
 #define RX_CORE_ALGORITHM_MIN_H
-
 #include "rx/core/utility/forward.h"
 
 namespace rx::algorithm {

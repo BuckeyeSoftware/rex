@@ -1,6 +1,5 @@
 #ifndef RX_CORE_LOG_H
 #define RX_CORE_LOG_H
-
 #include "rx/core/statics.h" // static_global
 #include "rx/core/string.h" // string
 #include "rx/core/pp.h" // RX_PP_STRINGIZE
