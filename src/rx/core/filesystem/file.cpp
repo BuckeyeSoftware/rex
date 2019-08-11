@@ -3,7 +3,8 @@
 #include <string.h> // strcmp, strerror
 
 #include "rx/core/assert.h" // RX_ASSERT
-#include "rx/core/log.h"
+#include "rx/core/log.h" // RX_LOG
+#include "rx/core/hint.h" // RX_HINT_UNLIKELY
 #include "rx/core/filesystem/file.h" // file
 
 RX_LOG("filesystem/file", log_file);
@@ -76,12 +77,12 @@ optional<rx_u64> file::size() {
   RX_ASSERT(strcmp(m_mode, "rb") == 0, "cannot get size with mode '%s'", m_mode);
 
   auto fp{static_cast<FILE*>(m_impl)};
-  if (fseek(fp, 0, SEEK_END) != 0) {
+  if (RX_HINT_UNLIKELY(fseek(fp, 0, SEEK_END) != 0)) {
     return nullopt;
   }
 
   auto result{ftell(fp)};
-  if (result == -1L) {
+  if (RX_HINT_UNLIKELY(result == -1L)) {
     fseek(fp, 0, SEEK_SET);
     return nullopt;
   }

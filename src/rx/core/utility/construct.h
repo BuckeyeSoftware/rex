@@ -2,6 +2,7 @@
 #define RX_CORE_UTILITY_CONSTRUCT_H
 #include "rx/core/types.h" // rx_size
 #include "rx/core/assert.h" // RX_ASSERT
+#include "rx/core/hint.h" // RX_HINT_LIKELY
 #include "rx/core/utility/forward.h"
 
 #include "rx/core/memory/allocator.h"
@@ -23,7 +24,7 @@ inline void construct(void *_data, Ts&&... _args) {
 template<typename T, typename... Ts>
 inline T* allocate_and_construct(memory::allocator* _allocator, Ts&&... _args) {
   void* data{_allocator->allocate(sizeof(T))};
-  if (data) {
+  if (RX_HINT_LIKELY(data)) {
     construct<T>(data, utility::forward<Ts>(_args)...);
     return reinterpret_cast<T*>(data);
   }
