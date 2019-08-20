@@ -116,6 +116,8 @@ inline optional<T>& optional<T>::operator=(const T& data) {
 
 template<typename T>
 inline optional<T>& optional<T>::operator=(optional&& other) {
+  RX_ASSERT(&other != this, "self assignment");
+
   if (m_init) {
     m_data.fini();
   }
@@ -130,6 +132,8 @@ inline optional<T>& optional<T>::operator=(optional&& other) {
 
 template<typename T>
 inline optional<T>& optional<T>::operator=(const optional& other) {
+  RX_ASSERT(&other != this, "self assignment");
+
   if (m_init) {
     m_data.fini();
   }

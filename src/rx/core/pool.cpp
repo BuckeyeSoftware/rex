@@ -24,6 +24,8 @@ inline pool::pool(pool&& pool_)
 }
 
 pool& pool::operator=(pool&& pool_) {
+  RX_ASSERT(&pool_ != this, "self assignment");
+
   m_allocator = pool_.m_allocator;
   m_object_size = pool_.m_object_size;
   m_capacity = pool_.m_capacity;

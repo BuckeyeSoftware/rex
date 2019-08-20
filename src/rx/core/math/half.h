@@ -40,6 +40,8 @@ inline constexpr half::half(const half& _h)
 }
 
 inline constexpr half& half::operator=(const half& _h) {
+  RX_ASSERT(&_h != this, "self assignment");
+
   m_bits = _h.m_bits;
   return *this;
 }

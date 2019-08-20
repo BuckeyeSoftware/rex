@@ -17,7 +17,7 @@ struct file
   file(file&& _other);
   ~file();
 
-  file& operator=(file&& _other);
+  file& operator=(file&& file_);
 
   // close file
   void close();

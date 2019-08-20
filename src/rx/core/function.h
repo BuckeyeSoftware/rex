@@ -25,7 +25,7 @@ struct function<R(Ts...)> {
   function(function&& _function);
 
   function& operator=(const function& _function);
-  function& operator=(function&& _function);
+  function& operator=(function&& function_);
   function& operator=(rx_nullptr);
 
   ~function();
@@ -126,6 +126,8 @@ inline function<R(Ts...)>::function(function&& _function)
 
 template<typename R, typename... Ts>
 inline function<R(Ts...)>& function<R(Ts...)>::operator=(const function& _function) {
+  RX_ASSERT(&_function != this, "self assignment");
+
   if (m_destruct) {
     m_destruct(m_data.data());
   }
@@ -143,19 +145,21 @@ inline function<R(Ts...)>& function<R(Ts...)>::operator=(const function& _functi
 }
 
 template<typename R, typename... Ts>
-inline function<R(Ts...)>& function<R(Ts...)>::operator=(function&& _function) {
+inline function<R(Ts...)>& function<R(Ts...)>::operator=(function&& function_) {
+  RX_ASSERT(&function_ != this, "self assignment");
+
   if (m_destruct) {
     m_destruct(m_data.data());
   }
 
-  m_invoke = _function.m_invoke;
-  m_construct = _function.m_construct;
-  m_destruct = _function.m_destruct;
-  m_data = utility::move(_function.m_data);
+  m_invoke = function_.m_invoke;
+  m_construct = function_.m_construct;
+  m_destruct = function_.m_destruct;
+  m_data = utility::move(function_.m_data);
 
-  _function.m_invoke = nullptr;
-  _function.m_construct = nullptr;
-  _function.m_destruct = nullptr;
+  function_.m_invoke = nullptr;
+  function_.m_construct = nullptr;
+  function_.m_destruct = nullptr;
 
   return *this;
 }

@@ -353,6 +353,8 @@ char string::pop_back() {
 
 // complicated because of small string optimization
 void string::swap(string& other_) {
+  RX_ASSERT(&other_ != this, "self swap");
+
   utility::swap(m_data, other_.m_data);
   utility::swap(m_last, other_.m_last);
   utility::swap(m_capacity, other_.m_capacity);

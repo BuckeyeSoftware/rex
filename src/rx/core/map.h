@@ -25,7 +25,7 @@ struct map {
   map(const map& _map);
   ~map();
 
-  map& operator=(map&& _map);
+  map& operator=(map&& map_);
   map& operator=(const map& _map);
 
   V* insert(const K& _key, V&& _value);
@@ -153,25 +153,29 @@ inline void map<K, V>::clear_and_deallocate() {
 }
 
 template<typename K, typename V>
-inline map<K, V>& map<K, V>::operator=(map<K, V>&& _map) {
+inline map<K, V>& map<K, V>::operator=(map<K, V>&& map_) {
+  RX_ASSERT(&_map != this, "self assignment");
+
   clear_and_deallocate();
 
-  m_allocator = _map.m_allocator;
-  m_keys = _map.m_keys;
-  m_values = _map.m_values;
-  m_hashes = _map.m_hashes;
-  m_size = _map.m_size;
-  m_capacity = _map.m_capacity;
-  m_resize_threshold = _map.m_resize_threshold;
-  m_mask = _map.m_mask;
+  m_allocator = map_.m_allocator;
+  m_keys = map_.m_keys;
+  m_values = map_.m_values;
+  m_hashes = map_.m_hashes;
+  m_size = map_.m_size;
+  m_capacity = map_.m_capacity;
+  m_resize_threshold = map_.m_resize_threshold;
+  m_mask = map_.m_mask;
 
-  _map.initialize(&memory::g_system_allocator, 0);
+  map_.initialize(&memory::g_system_allocator, 0);
 
   return *this;
 }
 
 template<typename K, typename V>
 inline map<K, V>& map<K, V>::operator=(const map<K, V>& _map) {
+  RX_ASSERT(&_map != this, "self assignment");
+
   clear_and_deallocate();
   initialize(_map.m_allocator, _map.m_capacity);
   allocate();

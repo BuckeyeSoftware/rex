@@ -171,6 +171,8 @@ inline array<T>::~array() {
 
 template<typename T>
 inline array<T>& array<T>::operator=(const array& _other) {
+  RX_ASSERT(&_other != this, "self assignment");
+
   clear();
   m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
 
@@ -188,19 +190,20 @@ inline array<T>& array<T>::operator=(const array& _other) {
 }
 
 template<typename T>
-inline array<T>& array<T>::operator=(array&& _other) {
+inline array<T>& array<T>::operator=(array&& other_) {
+  RX_ASSERT(&other_ != this, "self assignment");
+
   clear();
   m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
 
-  m_allocator = _other.m_allocator;
-  m_data = _other.m_data;
-  m_size = _other.m_size;
-  m_capacity = _other.m_capacity;
+  m_allocator = other_.m_allocator;
+  m_data = other_.m_data;
+  m_size = other_.m_size;
+  m_capacity = other_.m_capacity;
 
-  _other.m_allocator = &memory::g_system_allocator;
-  _other.m_data = nullptr;
-  _other.m_size = 0;
-  _other.m_capacity = 0;
+  other_.m_data = nullptr;
+  other_.m_size = 0;
+  other_.m_capacity = 0;
 
   return *this;
 }
