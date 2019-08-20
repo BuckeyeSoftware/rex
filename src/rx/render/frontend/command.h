@@ -3,7 +3,6 @@
 #include "rx/render/frontend/state.h"
 
 #include "rx/core/memory/bump_point_allocator.h"
-#include "rx/core/utility/construct.h"
 
 #include "rx/math/vec4.h"
 

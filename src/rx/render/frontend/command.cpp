@@ -1,5 +1,7 @@
 #include "rx/render/frontend/command.h"
 
+#include "rx/core/memory/allocator.h" // memory::allocator::round_to_alignment
+
 namespace rx::render::frontend {
 
 command_buffer::command_buffer(memory::allocator* _allocator, rx_size _size)

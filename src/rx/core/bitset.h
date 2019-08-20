@@ -1,10 +1,11 @@
 #ifndef RX_CORE_BITSET_H
 #define RX_CORE_BITSET_H
-#include "rx/core/utility/move.h"
-#include "rx/core/memory/system_allocator.h"
-
 #include "rx/core/traits/is_same.h"
 #include "rx/core/traits/return_type.h"
+
+#include "rx/core/memory/system_allocator.h"
+
+#include "rx/core/assert.h"
 
 namespace rx {
 
@@ -21,6 +22,9 @@ struct bitset {
   bitset(bitset&& _bitset);
   bitset(const bitset& _bitset);
   ~bitset();
+
+  bitset& operator=(bitset&& bitset_);
+  bitset& operator=(const bitset& _bitset);
 
   // set |_bit|
   void set(rx_size _bit);
@@ -51,11 +55,11 @@ struct bitset {
 
   // iterate bitset invoking |_function| with index of each set bit
   template<typename F>
-  void each_set(F&& _function);
+  void each_set(F&& _function) const;
 
   // iterate bitset invoking |_function| with index of each unset bit
   template<typename F>
-  void each_unset(F&& _function);
+  void each_unset(F&& _function) const;
 
   memory::allocator* allocator() const;
 
@@ -76,11 +80,12 @@ inline bitset::bitset(rx_size _size)
 {
 }
 
-inline bitset::bitset(bitset&& _bitset)
-  : m_allocator{_bitset.m_allocator}
-  , m_data{_bitset.m_data}
+inline bitset::bitset(bitset&& bitset_)
+  : m_allocator{bitset_.m_allocator}
+  , m_data{bitset_.m_data}
 {
-  _bitset.m_data = nullptr;
+  bitset_.m_size = 0;
+  bitset_.m_data = nullptr;
 }
 
 inline bitset::~bitset() {
@@ -119,7 +124,7 @@ inline rx_size bitset::offset(rx_size _bit) {
 }
 
 template<typename F>
-inline void bitset::each_set(F&& _function) {
+inline void bitset::each_set(F&& _function) const {
   for (rx_size i{0}; i < m_size; i++) {
     if (test(i)) {
       if constexpr (traits::is_same<bool, traits::return_type<F>>) {
@@ -134,7 +139,7 @@ inline void bitset::each_set(F&& _function) {
 }
 
 template<typename F>
-inline void bitset::each_unset(F&& _function) {
+inline void bitset::each_unset(F&& _function) const {
   for (rx_size i{0}; i < m_size; i++) {
     if (!test(i)) {
       if constexpr (traits::is_same<bool, traits::return_type<F>>) {

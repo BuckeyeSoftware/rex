@@ -6,7 +6,6 @@
 #include "rx/core/assert.h"
 
 #include "rx/core/utility/move.h"
-#include "rx/core/utility/construct.h"
 
 namespace rx::memory {
 

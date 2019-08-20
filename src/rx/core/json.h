@@ -1,13 +1,12 @@
 #ifndef RX_CORE_JSON_H
 #define RX_CORE_JSON_H
-#include "rx/core/string.h"
-#include "rx/core/optional.h"
-
-#include "rx/core/memory/allocator.h"
-#include "rx/core/memory/system_allocator.h"
-
 #include "rx/core/traits/return_type.h"
 #include "rx/core/traits/is_same.h"
+
+#include "rx/core/memory/system_allocator.h"
+
+#include "rx/core/string.h"
+#include "rx/core/optional.h"
 
 #include "lib/json.h"
 

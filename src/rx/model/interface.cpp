@@ -22,7 +22,7 @@ bool interface::load(const string& _file_name) {
 
   // determine the model format based on the extension
   if (_file_name.ends_with(".iqm")) {
-    new_loader = utility::allocate_and_construct<iqm>(m_allocator, m_allocator);
+    new_loader = m_allocator->create<iqm>(m_allocator);
   } else {
     // future model formats go here
     return false;
@@ -72,7 +72,7 @@ bool interface::load(const string& _file_name) {
     m_joints = utility::move(new_loader->joints());
   }
 
-  utility::destruct_and_deallocate<loader>(m_allocator, new_loader);
+  m_allocator->destroy<loader>(new_loader);
   return result;
 }
 

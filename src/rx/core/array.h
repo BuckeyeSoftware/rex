@@ -9,8 +9,6 @@
 
 #include "rx/core/utility/forward.h"
 #include "rx/core/utility/move.h"
-#include "rx/core/utility/construct.h"
-#include "rx/core/utility/destruct.h"
 
 #include "rx/core/memory/system_allocator.h" // memory::{system_allocator, allocator}
 

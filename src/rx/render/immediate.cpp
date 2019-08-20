@@ -381,7 +381,7 @@ immediate::~immediate() {
   }
 
   m_fonts.each([&](rx_size, const font::key&, font* _font) {
-    utility::destruct_and_deallocate<font>(m_frontend->allocator(), _font);
+    m_frontend->allocator()->destroy<font>(_font);
   });
 }
 
@@ -712,8 +712,7 @@ void immediate::generate_text(rx_s32 _size, const char* _font,
   if (find) {
     font_map = *find;
   } else {
-    font_map = utility::allocate_and_construct<font>(m_frontend->allocator(),
-      key, m_frontend);
+    font_map = m_frontend->allocator()->create<font>(key, m_frontend);
     m_fonts.insert(key, font_map);
   }
 

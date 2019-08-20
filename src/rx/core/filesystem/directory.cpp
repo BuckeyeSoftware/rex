@@ -28,7 +28,7 @@ directory::directory(memory::allocator* _allocator, const char* _path)
 #elif defined(RX_PLATFORM_WINDOWS)
   // WIN32 FindData does not support "rewinding" a directory so |each| must open it each time,
   // the only thing we can cache between reuses of a directory object is the path conversion
-  array<rx_u16>* path_data{utility::allocate_and_construct<array<rx_u16>>(m_allocator, m_allocator)};
+  array<rx_u16>* path_data{m_allocator->create<array<rx_u16>>(m_allocator)};
 
   const wide_string path_utf16{string(_path).to_utf16()};
   static constexpr const wchar_t k_path_extra[] = L"\\*";
@@ -48,7 +48,7 @@ directory::~directory() {
   }
 #elif defined(RX_PLATFORM_WINDOWS)
   if (m_impl) {
-    utility::destruct_and_deallocate<array<rx_u16>>(m_allocator, m_impl);
+    m_allocator->destroy<array<rx_u16>>(m_impl);
   }
 #endif
 }

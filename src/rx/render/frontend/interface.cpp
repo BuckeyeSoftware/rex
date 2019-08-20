@@ -81,7 +81,7 @@ buffer* interface::create_buffer(const command_header::info& _info) {
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_buffer;
-  command->as_buffer = m_buffer_pool.allocate_and_construct<buffer>(this);
+  command->as_buffer = m_buffer_pool.create<buffer>(this);
   m_commands.push_back(command_base);
   return command->as_buffer;
 }
@@ -91,7 +91,7 @@ target* interface::create_target(const command_header::info& _info) {
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_target;
-  command->as_target = m_target_pool.allocate_and_construct<target>(this);
+  command->as_target = m_target_pool.create<target>(this);
   m_commands.push_back(command_base);
   return command->as_target;
 }
@@ -101,7 +101,7 @@ program* interface::create_program(const command_header::info& _info) {
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_program;
-  command->as_program = m_program_pool.allocate_and_construct<program>(this);
+  command->as_program = m_program_pool.create<program>(this);
   m_commands.push_back(command_base);
   return command->as_program;
 }
@@ -111,7 +111,7 @@ texture1D* interface::create_texture1D(const command_header::info& _info) {
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_texture1D;
-  command->as_texture1D = m_texture1D_pool.allocate_and_construct<texture1D>(this);
+  command->as_texture1D = m_texture1D_pool.create<texture1D>(this);
   m_commands.push_back(command_base);
   return command->as_texture1D;
 }
@@ -121,7 +121,7 @@ texture2D* interface::create_texture2D(const command_header::info& _info) {
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_texture2D;
-  command->as_texture2D = m_texture2D_pool.allocate_and_construct<texture2D>(this);
+  command->as_texture2D = m_texture2D_pool.create<texture2D>(this);
   m_commands.push_back(command_base);
   return command->as_texture2D;
 }
@@ -131,7 +131,7 @@ texture3D* interface::create_texture3D(const command_header::info& _info) {
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_texture3D;
-  command->as_texture3D = m_texture3D_pool.allocate_and_construct<texture3D>(this);
+  command->as_texture3D = m_texture3D_pool.create<texture3D>(this);
   m_commands.push_back(command_base);
   return command->as_texture3D;
 }
@@ -141,7 +141,7 @@ textureCM* interface::create_textureCM(const command_header::info& _info) {
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_textureCM;
-  command->as_textureCM = m_textureCM_pool.allocate_and_construct<textureCM>(this);
+  command->as_textureCM = m_textureCM_pool.create<textureCM>(this);
   m_commands.push_back(command_base);
   return command->as_textureCM;
 }
@@ -417,31 +417,31 @@ bool interface::process() {
 
   // cleanup unreferenced resources
   m_destroy_buffers.each_fwd([this](buffer* _buffer) {
-    m_buffer_pool.destruct_and_deallocate<buffer>(_buffer);
+    m_buffer_pool.destroy<buffer>(_buffer);
   });
 
   m_destroy_targets.each_fwd([this](target* _target) {
-    m_target_pool.destruct_and_deallocate<target>(_target);
+    m_target_pool.destroy<target>(_target);
   });
 
   m_destroy_programs.each_fwd([this](program* _program) {
-    m_program_pool.destruct_and_deallocate<program>(_program);
+    m_program_pool.destroy<program>(_program);
   });
 
   m_destroy_textures1D.each_fwd([this](texture1D* _texture) {
-    m_texture1D_pool.destruct_and_deallocate<texture1D>(_texture);
+    m_texture1D_pool.destroy<texture1D>(_texture);
   });
 
   m_destroy_textures2D.each_fwd([this](texture2D* _texture) {
-    m_texture2D_pool.destruct_and_deallocate<texture2D>(_texture);
+    m_texture2D_pool.destroy<texture2D>(_texture);
   });
 
   m_destroy_textures3D.each_fwd([this](texture3D* _texture) {
-    m_texture3D_pool.destruct_and_deallocate<texture3D>(_texture);
+    m_texture3D_pool.destroy<texture3D>(_texture);
   });
 
   m_destroy_texturesCM.each_fwd([this](textureCM* _texture) {
-    m_textureCM_pool.destruct_and_deallocate<textureCM>(_texture);
+    m_textureCM_pool.destroy<textureCM>(_texture);
   });
 
   // clear lists

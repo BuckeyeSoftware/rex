@@ -1,7 +1,5 @@
 #ifndef RX_CORE_MAP_H
 #define RX_CORE_MAP_H
-#include "rx/core/utility/construct.h"
-#include "rx/core/utility/destruct.h"
 #include "rx/core/utility/move.h"
 #include "rx/core/utility/swap.h"
 

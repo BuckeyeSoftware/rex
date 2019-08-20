@@ -1,6 +1,6 @@
 #ifndef RX_CORE_UTILITY_DECLVAL_H
 #define RX_CORE_UTILITY_DECLVAL_H
-#include "rx/core/traits/add_rvalue_reference.h"
+#include "rx/core/traits/add_rvalue_reference.h" // traits::add_rvalue_reference
 
 namespace rx::utility {
   

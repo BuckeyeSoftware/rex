@@ -976,11 +976,11 @@ gl4::gl4(memory::allocator* _allocator, void* _data)
   fetch("glDrawArrays", pglDrawArrays);
   fetch("glDrawElements", pglDrawElements);
 
-  m_impl = utility::allocate_and_construct<detail::state>(m_allocator);
+  m_impl = m_allocator->create<detail::state>();
 }
 
 gl4::~gl4() {
-  utility::destruct_and_deallocate<detail::state>(m_allocator, m_impl);
+  m_allocator->destroy<detail::state>(m_impl);
 }
 
 void gl4::process(rx_byte* _command) {

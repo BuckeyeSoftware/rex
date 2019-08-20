@@ -5,6 +5,8 @@
 
 #include "rx/core/memory/system_allocator.h"
 
+#include "rx/core/assert.h"
+
 namespace rx {
 
 template<typename T>
@@ -77,7 +79,7 @@ inline bool queue<T>::is_empty() const {
 
 template<typename T>
 inline void queue<T>::push(const T& _value) {
-  auto new_node{utility::allocate_and_construct<node>(m_allocator, _value)};
+  auto new_node{m_allocator->create<node>(_value)};
   if (is_empty()) {
     m_first = new_node;
     m_last = m_first;
@@ -91,7 +93,7 @@ inline void queue<T>::push(const T& _value) {
 template<typename T>
 template<typename... Ts>
 inline void queue<T>::emplace(Ts&&... _arguments) {
-  auto new_node{utility::allocate_and_construct<node>(m_allocator, utility::forward<Ts>(_arguments)...)};
+  auto new_node{m_allocator->create<node>(utility::forward<Ts>(_arguments)...)};
   if (is_empty()) {
     m_first = new_node;
     m_last = m_first;
@@ -111,7 +113,7 @@ inline T queue<T>::pop() {
   T value{utility::move(this_node->m_value)};
   m_first = this_node->m_next;
 
-  utility::destruct_and_deallocate<T>(m_allocator, this_node);
+  m_allocator->destroy<T>(this_node);
 
   return value;
 }

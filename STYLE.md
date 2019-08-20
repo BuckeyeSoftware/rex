@@ -24,11 +24,10 @@
 * prefer `emplace` to `push` on collections
 * prefer `utility::move(value)` to copies
 * prefer `utility::forward<Ts>(value...)` to copies
-* don't use `new` or `delete`, use `array<rx_byte>` for raw memory or,
+* don't use `new` or `delete`, use `array<rx_byte>` for raw memory or
   appropriate allocator interfaces, construct objects with `utility::construct<T>(...)`
   and destruct them with `utility::destruct<T>(...)`, allocate and construct
-  with `utility::allocate_and_construct`, destruct and deallocate with
-  `utility::destruct_and_deallocate`.
+  with `allocator::create`, destruct and deallocate with `allocator::destroy`.
 * no exceptions, no runtime-type information (no `dynamic_cast` or `typeid`)
 * no multiple inheritence
 * string format with `string::format`, no `va_list`, use `Ts...` instead

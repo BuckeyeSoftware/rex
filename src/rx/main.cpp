@@ -28,6 +28,11 @@
 
 #include "rx/math/camera.h"
 
+#include "rx/scene/world.h"
+#include "rx/scene/component.h"
+
+#include "rx/core/debug.h"
+
 RX_CONSOLE_V2IVAR(
   display_resolution,
   "display.resolution",
@@ -281,6 +286,9 @@ int entry(int argc, char **argv) {
   rx::math::camera camera{rx::math::mat4x4f::perspective(90.0f, {0.01f, 1024.0f}, 1600.0f/900.0f)};
   camera.translate = { 0.0f, 2.5f, -5.0f };
   // camera.rotate = { 10.0f, 0.0f, 0.0f };
+
+  {
+  }
 
   {
     rx::render::backend::gl4 backend{&rx::memory::g_system_allocator, reinterpret_cast<void*>(window)};
