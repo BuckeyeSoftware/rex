@@ -6,7 +6,7 @@
 #include "rx/core/math/shape.h"
 #include "rx/core/math/force_eval.h"
 
-#include "rx/core/assert.h"
+#include "rx/core/hint.h" // RX_HINT_UNREACHABLE
 
 #if defined(RX_COMPILER_MSVC)
 #pragma warning(disable: 4723) // potential divide by 0
@@ -100,7 +100,7 @@ rx_f32 cos(rx_f32 _x) {
     return sindf(y);
   }
 
-  RX_UNREACHABLE();
+  RX_HINT_UNREACHABLE();
 }
 
 static constexpr const rx_f32 k_pi_2_hi{1.5707962513e+00}; // 0x3fc90fda

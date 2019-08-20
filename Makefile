@@ -18,8 +18,8 @@ CC ?= clang
 
 # C++ compiler
 # We use the C frontend with -xcpp to avoid linking in C++ runtime library
-CXX := gcc
-CXX ?= clang
+CXX := g++
+CXX ?= clang++
 
 SRCS := $(call rwildcard, src/, *cpp) $(call rwildcard, src/, *c)
 OBJS := $(filter %.o,$(SRCS:.cpp=.o)) $(filter %.o,$(SRCS:.c=.o))
@@ -92,7 +92,7 @@ BIN := rex
 all: $(BIN)
 
 %.o: %.cpp
-	$(CXX) -xc++ $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(CCFLAGS) -c -o $@ $<

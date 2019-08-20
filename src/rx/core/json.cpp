@@ -2,6 +2,7 @@
 #include <string.h> // strcmp
 
 #include "rx/core/json.h"
+#include "rx/core/hint.h"
 
 #include "rx/core/math/floor.h"
 
@@ -105,7 +106,7 @@ bool json::is_type(type _type) const {
     return m_root->type == json_type_string;
   }
 
-  RX_UNREACHABLE();
+  RX_HINT_UNREACHABLE();
 }
 
 json json::operator[](rx_size _index) const {

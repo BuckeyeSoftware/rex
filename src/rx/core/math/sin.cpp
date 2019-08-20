@@ -6,7 +6,8 @@
 #include "rx/core/math/shape.h"
 #include "rx/core/math/force_eval.h"
 
-#include "rx/core/assert.h"
+#include "rx/core/abort.h"
+#include "rx/core/hint.h" // RX_HINT_UNREACHABLE
 
 namespace rx::math {
 
@@ -124,7 +125,7 @@ rx_f32 sin(rx_f32 _x) {
     return -cosdf(y);
   }
 
-  RX_UNREACHABLE();
+  RX_HINT_UNREACHABLE();
 }
 
 } // namespace rx::math

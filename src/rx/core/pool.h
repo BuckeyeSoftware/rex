@@ -97,7 +97,7 @@ inline rx_size pool::size() const {
 
 inline rx_byte* pool::data_of(rx_size _index) const {
   RX_ASSERT(_index < m_capacity, "out of bounds");
-  RX_ASSERT(m_bitset.test(_index), "unallocate");
+  RX_ASSERT(m_bitset.test(_index), "unallocated (%zu)", _index);
   return m_data + m_object_size * _index;
 }
 

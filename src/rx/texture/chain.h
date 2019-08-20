@@ -1,8 +1,8 @@
 #ifndef RX_TEXTURE_CHAIN_H
 #define RX_TEXTURE_CHAIN_H
-
 #include "rx/texture/loader.h"
 
+#include "rx/core/hint.h"
 #include "rx/core/concepts/no_copy.h"
 
 namespace rx::texture {
@@ -67,7 +67,7 @@ inline chain::pixel_format chain::pixel_format_for_loader_bpp(rx_size _bpp) {
     return pixel_format::k_r_u8;
   }
 
-  RX_UNREACHABLE();
+  RX_HINT_UNREACHABLE();
 }
 
 inline chain::chain(memory::allocator* _allocator)

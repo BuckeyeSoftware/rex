@@ -1,4 +1,5 @@
 #include "rx/input/input.h"
+#include "rx/core/hint.h" // RX_HINT_UNREACHABLE
 
 namespace rx::input {
 
@@ -13,7 +14,7 @@ void input::update(rx_f32 _delta_time) {
 void input::handle_event(event&& _event) {
   switch (_event.type) {
   case event_type::k_none:
-    RX_UNREACHABLE();
+    RX_HINT_UNREACHABLE();
   case event_type::k_keyboard:
     m_keyboard.update_key(_event.as_keyboard.down, _event.as_keyboard.scan_code,
       _event.as_keyboard.symbol);

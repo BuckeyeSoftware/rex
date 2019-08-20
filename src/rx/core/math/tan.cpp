@@ -5,7 +5,7 @@
 #include "rx/core/math/shape.h"
 #include "rx/core/math/force_eval.h"
 
-#include "rx/core/assert.h"
+#include "rx/core/hint.h" // RX_HINT_UNREACHABLE
 
 namespace rx::math {
 // |tan(x)/x - t(x)| < 2**-25.5 (~[-2e-08, 2e-08])
@@ -89,7 +89,7 @@ rx_f32 tan(rx_f32 _x) {
     return tandf<false>(y);
   }
 
-  RX_UNREACHABLE();
+  RX_HINT_UNREACHABLE();
 }
 
 } // namespace rx::math

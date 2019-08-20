@@ -4,7 +4,7 @@ namespace rx {
 
 pool::pool(memory::allocator* _allocator, rx_size _object_size, rx_size _capacity)
   : m_allocator{_allocator}
-  , m_object_size{_object_size}
+  , m_object_size{memory::allocator::round_to_alignment(_object_size)}
   , m_capacity{_capacity}
   , m_data{_allocator->allocate(m_object_size * m_capacity)}
   , m_bitset{m_allocator, m_capacity}

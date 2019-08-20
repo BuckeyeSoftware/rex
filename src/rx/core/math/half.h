@@ -1,6 +1,7 @@
 #ifndef RX_CORE_MATH_HALF_H
 #define RX_CORE_MATH_HALF_H
 #include "rx/core/types.h"
+#include "rx/core/assert.h" // RX_ASSERT
 
 namespace rx::math {
 

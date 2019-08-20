@@ -9,6 +9,7 @@
 #include "rx/core/memory/system_allocator.h" // allocator, g_system_allocator
 
 #include "rx/core/hash.h" // hash
+#include "rx/core/hint.h" // RX_HINT_UNREACHABLE
 
 namespace rx {
 
@@ -154,7 +155,7 @@ inline void map<K, V>::clear_and_deallocate() {
 
 template<typename K, typename V>
 inline map<K, V>& map<K, V>::operator=(map<K, V>&& map_) {
-  RX_ASSERT(&_map != this, "self assignment");
+  RX_ASSERT(&map_ != this, "self assignment");
 
   clear_and_deallocate();
 
@@ -385,7 +386,7 @@ inline V* map<K, V>::inserter(rx_size _hash, K&& _key, V&& _value) {
     distance++;
   }
 
-  RX_UNREACHABLE();
+  RX_HINT_UNREACHABLE();
 }
 
 template<typename K, typename V>
@@ -418,7 +419,8 @@ inline bool map<K, V>::lookup_index(const K& _key, rx_size& _index) const {
     position = (position + 1) & m_mask;
     distance++;
   }
-  RX_UNREACHABLE();
+
+  RX_HINT_UNREACHABLE();
 }
 
 template<typename K, typename V>

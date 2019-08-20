@@ -3,6 +3,7 @@
 #include "rx/render/frontend/resource.h"
 
 #include "rx/core/array.h"
+#include "rx/core/hint.h"
 #include "rx/core/algorithm/max.h"
 #include "rx/core/math/log2.h"
 
@@ -271,7 +272,8 @@ inline bool texture::is_compressed() const {
   case data_format::k_dxt5:
     return true;
   }
-  RX_UNREACHABLE();
+
+  RX_HINT_UNREACHABLE();
 }
 
 inline rx_f32 texture::byte_size_of_format(data_format _format) {

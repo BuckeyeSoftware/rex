@@ -38,5 +38,6 @@
 * use `restrict` if pointers don't overlap
 * make everything as `const` as possible, excluding function parameters
 * use `[[fallthrough]]` in switch fallthroughs
-* use `RX_UNREACHABLE` if the code is unreachable
+* use `RX_HINT_UNREACHABLE` if the code is unreachable
+* use `RX_HINT_{LIKELY, UNLIKELY}` if the branches have heavy weight in a direction
 * use `RX_ASSERT` for pre conditions and post condition checking

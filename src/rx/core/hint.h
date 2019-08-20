@@ -10,4 +10,11 @@
 #define RX_HINT_UNLIKELY(x)  (x)
 #endif // defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG)
 
+#if defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG)
+#define RX_HINT_UNREACHABLE() \
+  __builtin_unreachable()
+#else
+#define RX_HINT_UNREACHABLE()
+#endif
+
 #endif // RX_CORE_HINT_H

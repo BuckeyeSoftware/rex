@@ -25,12 +25,4 @@ void assert_fail(const char* _expression, const char* _file,
   static_cast<void>(0)
 #endif // defined(RX_DEBUG)
 
-#if __has_builtin(__builtin_unreachable)
-#define RX_UNREACHABLE() \
-  __builtin_unreachable()
-#else
-#define RX_UNREACHABLE() \
-  ::rx::abort("unreachable code");
-#endif
-
 #endif // RX_CORE_ASSERT_H

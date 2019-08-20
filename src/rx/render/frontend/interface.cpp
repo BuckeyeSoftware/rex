@@ -484,7 +484,7 @@ interface::statistics interface::stats(resource::type _type) const {
     return {m_textureCM_pool.capacity(), m_textureCM_pool.size(), 0, m_resource_usage[index]};
   }
 
-  RX_UNREACHABLE();
+  RX_HINT_UNREACHABLE();
 }
 
 rx_size interface::draw_calls() const {
