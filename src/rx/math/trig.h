@@ -1,6 +1,5 @@
 #ifndef RX_MATH_TRIG_H
 #define RX_MATH_TRIG_H
-
 #include "rx/core/types.h" // f32, f64
 #include "rx/math/constants.h" // k_pi
 

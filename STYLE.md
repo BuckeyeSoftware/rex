@@ -31,7 +31,7 @@
 * no exceptions, no runtime-type information (no `dynamic_cast` or `typeid`)
 * no multiple inheritence
 * string format with `string::format`, no `va_list`, use `Ts...` instead
-* no naked static globals, use `static static_global<T> g_name{...}` instead
+* no naked static globals, use `RX_STATIC<T> g_name{...}` instead
 * avoid naked `lock` and `unlock` with syncronization primitives, use `scope_lock`
   and `scope_unlock` instead
 * no `volatile` or `register`

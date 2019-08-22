@@ -55,9 +55,8 @@ inline int log::line() const {
   return m_line;
 }
 
-#define RX_LOG(name, identifier) \
-  static ::rx::static_global<::rx::log> identifier \
-    ("log_" name, (name), __FILE__, __LINE__)
+#define RX_LOG(_name, _identifier) \
+  static RX_GLOBAL<::rx::log> _identifier{"log_" _name, (_name), __FILE__, __LINE__}
 
 } // namespace rx
 

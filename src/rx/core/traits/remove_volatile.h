@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_REMOVE_VOLATILE_H
 #define RX_CORE_TRAITS_REMOVE_VOLATILE_H
-
 #include "rx/core/traits/type_identity.h"
 
 namespace rx::traits {

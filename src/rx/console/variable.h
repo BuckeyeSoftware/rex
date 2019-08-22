@@ -1,6 +1,5 @@
 #ifndef RX_CONSOLE_VARIABLE_H
 #define RX_CONSOLE_VARIABLE_H
-
 #include <limits.h> // INT_{MIN, MAX}
 
 #include "rx/core/assert.h" // RX_ASSERT
@@ -700,12 +699,12 @@ inline typename variable<vec4<T>>::on_change_event::handle variable<vec4<T>>::on
 } // namespace rx::console
 
 #define RX_CONSOLE_TRVAR(_type, _label, _name, _description, _min, _max, _initial) \
-  static ::rx::static_global<::rx::console::variable<_type>> _label \
-    ("cvar_" _name, (_name), (_description), (_min), (_max), (_initial))
+  static RX_GLOBAL<::rx::console::variable<_type>> _label \
+    {"cvar_" _name, (_name), (_description), (_min), (_max), (_initial)}
 
 #define RX_CONSOLE_TUVAR(_type, _label, _name, _description, _initial) \
-  static ::rx::static_global<::rx::console::variable<_type>> _label \
-    ("cvar_" _name, (_name), (_description), (_initial))
+  static RX_GLOBAL<::rx::console::variable<_type>> _label \
+    {"cvar_" _name, (_name), (_description), (_initial)}
 
 // helper macros to define console variables
 #define RX_CONSOLE_BVAR(_label, _name, _description, _initial) \

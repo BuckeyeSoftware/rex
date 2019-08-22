@@ -1,6 +1,5 @@
 #ifndef RX_MATH_QUAT_H
 #define RX_MATH_QUAT_H
-
 #include "rx/core/types.h"
 
 namespace rx::math {

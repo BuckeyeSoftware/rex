@@ -1,0 +1,37 @@
+{
+  name: "skybox",
+  uniforms: [
+    { name: "u_transform", type: "mat4x4f" },
+    { name: "u_sampler",   type: "samplerCM", value: 0 }
+  ],
+  shaders: [
+    {
+      type: "vertex",
+      inputs: [
+        { name: "a_position",    type: "vec3f" }
+      ],
+      outputs: [
+        { name: "vs_coordinate", type: "vec3f" }
+      ],
+      source: "
+        void main() {
+          rx_position = (u_transform * vec4(a_position, 1.0)).xyww;
+          vs_coordinate = a_position;
+        }
+      "
+    },{
+      type: "fragment",
+      inputs: [
+        { name: "vs_coordinate", type: "vec3f" }
+      ],
+      outputs: [
+        { name: "fs_color",      type: "vec4f" }
+      ],
+      source: "
+        void main() {
+          fs_color = rx_textureCM(u_sampler, vs_coordinate);
+        }
+      "
+    }
+  ]
+}

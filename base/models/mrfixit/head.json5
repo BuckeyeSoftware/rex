@@ -1,0 +1,15 @@
+{
+  name: "head",
+  textures: [
+    {
+      file: "base/models/mrfixit/head.png",
+      type: "diffuse",
+      filter: "bilinear",
+      mipmaps: true,
+      wrap: [
+        "clamp_to_edge",
+        "clamp_to_edge"
+      ]
+    }
+  ]
+}

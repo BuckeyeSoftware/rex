@@ -1,6 +1,5 @@
 #ifndef RX_CORE_DEFERRED_FUNCTION_H
 #define RX_CORE_DEFERRED_FUNCTION_H
-
 #include "rx/core/function.h"
 
 namespace rx {

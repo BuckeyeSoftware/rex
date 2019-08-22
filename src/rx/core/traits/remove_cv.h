@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_REMOVE_CV_H
 #define RX_CORE_TRAITS_REMOVE_CV_H
-
 #include "rx/core/traits/remove_const.h"
 #include "rx/core/traits/remove_volatile.h"
 

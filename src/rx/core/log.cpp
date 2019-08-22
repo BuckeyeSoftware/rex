@@ -202,7 +202,7 @@ void logger::process(int thread_id) {
   RX_ASSERT(m_queue.is_empty(), "not all contents flushed");
 }
 
-static static_global<logger> g_logger("log");
+static RX_GLOBAL<logger> g_logger{"log"};
 
 void log::write(log::level level, string&& contents) {
   g_logger->write(this, utility::move(contents), level, time(nullptr));

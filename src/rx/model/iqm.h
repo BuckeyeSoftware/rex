@@ -1,6 +1,5 @@
 #ifndef RX_MODEL_IQM_H
 #define RX_MODEL_IQM_H
-
 #include "rx/model/loader.h"
 
 namespace rx::model {

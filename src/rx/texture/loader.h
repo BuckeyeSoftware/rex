@@ -17,7 +17,7 @@ struct loader {
   rx_size bpp() const;
   rx_size channels() const;
   const math::vec2z& dimensions() const &;
-  array<rx_byte>&& data() &&;
+  array<rx_byte>&& data();
 
 private:
   memory::allocator* m_allocator;
@@ -53,7 +53,7 @@ inline const math::vec2z& loader::dimensions() const & {
   return m_dimensions;
 }
 
-inline array<rx_byte>&& loader::data() && {
+inline array<rx_byte>&& loader::data() {
   return utility::move(m_data);
 }
 

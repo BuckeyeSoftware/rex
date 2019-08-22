@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_REMOVE_REFERENCE_H
 #define RX_CORE_TRAITS_REMOVE_REFERENCE_H
-
 #include "rx/core/traits/type_identity.h"
 
 namespace rx::traits {

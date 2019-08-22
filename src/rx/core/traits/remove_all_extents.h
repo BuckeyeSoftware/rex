@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_REMOVE_ALL_EXTENTS_H
 #define RX_CORE_TRAITS_REMOVE_ALL_EXTENTS_H
-
 #include "rx/core/types.h" // rx_size
 #include "rx/core/traits/type_identity.h"
 

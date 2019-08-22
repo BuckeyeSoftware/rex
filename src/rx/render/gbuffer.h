@@ -1,6 +1,5 @@
 #ifndef RX_RENDER_GBUFFER_H
 #define RX_RENDER_GBUFFER_H
-
 #include "rx/math/vec2.h"
 
 namespace rx::render {

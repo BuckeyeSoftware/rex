@@ -6,7 +6,7 @@ Every material must define properties through JSON5
 
 Information on how to read this schema is described [here](JSON5.md)
 
-The top level schema of a material looks like
+The top level schema of a material looks like:
 ```
 {
   name:     required String

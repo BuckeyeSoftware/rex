@@ -110,6 +110,7 @@ struct interface {
 
   statistics stats(resource::type _type) const;
   rx_size draw_calls() const;
+  rx_size clear_calls() const;
 
   technique* find_technique_by_name(const char* _name);
 
@@ -161,6 +162,7 @@ private:
 
   rx_size m_resource_usage[resource::count()];
   concurrency::atomic<rx_size> m_draw_calls[2];
+  concurrency::atomic<rx_size> m_clear_calls[2];
 };
 
 inline memory::allocator* interface::allocator() const {

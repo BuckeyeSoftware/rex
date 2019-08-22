@@ -1,6 +1,5 @@
 #ifndef RX_MATH_MAT3X4_H
 #define RX_MATH_MAT3X4_H
-
 #include "rx/math/vec4.h"
 
 namespace rx::math {

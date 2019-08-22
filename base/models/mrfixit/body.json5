@@ -1,0 +1,15 @@
+{
+  name: "body",
+  textures: [
+    {
+      file: "base/models/mrfixit/body.png",
+      type: "diffuse",
+      filter: "bilinear",
+      mipmaps: true,
+      wrap: [
+        "clamp_to_edge",
+        "clamp_to_edge"
+      ]
+    }
+  ]
+}

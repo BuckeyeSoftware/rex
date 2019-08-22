@@ -1,6 +1,5 @@
 #ifndef RX_CORE_MEMORY_UNINITIALIZED_STORAGE_H
 #define RX_CORE_MEMORY_UNINITIALIZED_STORAGE_H
-
 #include "rx/core/utility/forward.h"
 #include "rx/core/utility/nat.h"
 

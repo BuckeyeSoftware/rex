@@ -237,9 +237,7 @@ void textureCM::write(const rx_byte* _data, face _face, rx_size _level) {
   RX_ASSERT(_level < levels(), "mipmap level out of bounds");
   validate();
 
-  const auto& info{m_levels[_level]};
-  memcpy(m_data.data() + info.offset + info.dimensions.area()
-    * static_cast<rx_size>(_face), _data, info.size / 6);
+  memcpy(map(_level, _face), _data, m_levels[_level].size / 6);
 }
 
 rx_byte* textureCM::map(rx_size _level, face _face) {
@@ -247,8 +245,9 @@ rx_byte* textureCM::map(rx_size _level, face _face) {
   validate();
 
   const auto& info{m_levels[_level]};
-  return m_data.data() + info.offset + info.dimensions.area()
-    * static_cast<rx_size>(_face);
+  const auto face_size{info.size / 6};
+  const auto face_offset{face_size * static_cast<rx_size>(_face)};
+  return m_data.data() + info.offset + face_offset;
 }
 
 void textureCM::record_dimensions(const math::vec2z& _dimensions) {

@@ -444,6 +444,7 @@ namespace detail {
       pglDepthFunc(GL_LEQUAL);
       pglGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_swap_chain_fbo);
       pglDisable(GL_MULTISAMPLE);
+      pglPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
       const auto vendor{reinterpret_cast<const char*>(pglGetString(GL_VENDOR))};
       const auto renderer{reinterpret_cast<const char*>(pglGetString(GL_RENDERER))};
@@ -1424,7 +1425,7 @@ void gl4::process(rx_byte* _command) {
                     1,
                     convert_texture_format(format),
                     static_cast<GLsizei>(level_info.size),
-                    data.data() + level_info.offset * level_info.dimensions.area() * j);
+                    data.data() + level_info.offset + level_info.size / 6 * j);
                 } else {
                   pglTextureSubImage3D(
                     texture->tex,
@@ -1437,7 +1438,7 @@ void gl4::process(rx_byte* _command) {
                     1,
                     convert_texture_format(format),
                     GL_UNSIGNED_BYTE,
-                    data.data() + level_info.offset * level_info.dimensions.area() * j);
+                    data.data() + level_info.offset + level_info.size / 6 * j);
                 }
               }
             }

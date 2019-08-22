@@ -20,7 +20,7 @@ struct malloc_allocator : allocator {
   }
 };
 
-static_global<malloc_allocator> g_malloc_allocator("malloc_allocator");
-static_global<stats_allocator> g_system_allocator("system_allocator", &g_malloc_allocator);
+RX_GLOBAL<malloc_allocator> g_malloc_allocator{"malloc_allocator"};
+RX_GLOBAL<stats_allocator> g_system_allocator{"system_allocator", &g_malloc_allocator};
 
 } // namespace rx::memory

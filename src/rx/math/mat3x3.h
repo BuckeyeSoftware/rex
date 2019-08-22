@@ -1,6 +1,5 @@
 #ifndef RX_MATH_MAT3X3_H
 #define RX_MATH_MAT3X3_H
-
 #include "rx/math/vec3.h" // vec3
 #include "rx/math/trig.h" // deg_to_rad, sin, cos
 

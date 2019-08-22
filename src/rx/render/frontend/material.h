@@ -86,6 +86,10 @@ inline material& material::operator=(material&& _material) {
   return *this;
 }
 
+inline const string& material::name() const & {
+  return m_name;
+}
+
 inline texture2D* material::diffuse() const {
   return m_diffuse;
 }

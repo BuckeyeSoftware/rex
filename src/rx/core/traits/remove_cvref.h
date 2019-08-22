@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_REMOVE_CVREF_H
 #define RX_CORE_TRAITS_REMOVE_CVREF_H
-
 #include "rx/core/traits/remove_cv.h"
 #include "rx/core/traits/remove_reference.h"
 

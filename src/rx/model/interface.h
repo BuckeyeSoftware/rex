@@ -1,6 +1,5 @@
 #ifndef RX_MODEL_INTERFACE_H
 #define RX_MODEL_INTERFACE_H
-
 #include "rx/model/loader.h"
 
 namespace rx::model {

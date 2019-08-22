@@ -22,67 +22,70 @@
 
 #include "rx/render/immediate.h"
 #include "rx/render/gbuffer.h"
+#include "rx/render/skybox.h"
 
 #include "rx/model/interface.h"
 #include "rx/model/animation.h"
 
 #include "rx/math/camera.h"
 
+#include "rx/scene/world.h"
+
 #include "rx/core/debug.h"
 
 RX_CONSOLE_V2IVAR(
-  display_resolution,
-  "display.resolution",
-  "display resolution",
-  rx::math::vec2i(800, 600),
-  rx::math::vec2i(4096, 4096),
-  rx::math::vec2i(1600, 900));
+    display_resolution,
+    "display.resolution",
+    "display resolution",
+    rx::math::vec2i(800, 600),
+    rx::math::vec2i(4096, 4096),
+    rx::math::vec2i(1600, 900));
 
 RX_CONSOLE_IVAR(
-  display_fullscreen,
-  "display.fullscreen",
-  "fullscreen mode (0 = windowed, 1 = windowed borderless, 2 = fullscreen)",
-  0,
-  2,
-  0);
+    display_fullscreen,
+    "display.fullscreen",
+    "fullscreen mode (0 = windowed, 1 = windowed borderless, 2 = fullscreen)",
+    0,
+    2,
+    0);
 
 RX_CONSOLE_SVAR(
-  display_name,
-  "display.name",
-  "name of display to run on",
-  "");
+    display_name,
+    "display.name",
+    "name of display to run on",
+    "");
 
 RX_CONSOLE_BVAR(
-  display_resizable,
-  "display.resizable",
-  "if the display can be resized",
-  true);
+    display_resizable,
+    "display.resizable",
+    "if the display can be resized",
+    true);
 
 RX_CONSOLE_BVAR(
-  display_hdr,
-  "display.hdr",
-  "use HDR output if supported",
-  false);
+    display_hdr,
+    "display.hdr",
+    "use HDR output if supported",
+    false);
 
-struct quad_vertex {
+struct quad_vertex
+{
   rx::math::vec2f position;
   rx::math::vec2f coordinate;
 };
 
 static constexpr const quad_vertex k_quad_vertices[]{
-  {{ -1.0f,  1.0f}, {0.0f, 1.0f}},
-  {{  1.0f,  1.0f}, {1.0f, 1.0f}},
-  {{ -1.0f, -1.0f}, {0.0f, 0.0f}},
-  {{  1.0f, -1.0f}, {1.0f, 0.0f}}
-};
+    {{-1.0f, 1.0f}, {0.0f, 1.0f}},
+    {{1.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-1.0f, -1.0f}, {0.0f, 0.0f}},
+    {{1.0f, -1.0f}, {1.0f, 0.0f}}};
 
 static constexpr const rx_byte k_quad_elements[]{
-  0, 1, 2, 3
-};
+    0, 1, 2, 3};
 
-static void frame_stats(const rx::render::frontend::interface& _frontend, rx::render::immediate& _immediate) {
-  const rx::render::frontend::frame_timer& _timer{_frontend.timer()};
-  const rx::math::vec2i& screen_size{*display_resolution};
+static void frame_stats(const rx::render::frontend::interface &_frontend, rx::render::immediate &_immediate)
+{
+  const rx::render::frontend::frame_timer &_timer{_frontend.timer()};
+  const rx::math::vec2i &screen_size{*display_resolution};
   const rx::math::vec2i box_size{600, 200};
   const rx_s32 box_bottom{25};
   const rx_s32 box_middle{box_bottom + (box_size.h / 2)};
@@ -93,9 +96,9 @@ static void frame_stats(const rx::render::frontend::interface& _frontend, rx::re
 
   _immediate.frame_queue().record_rectangle({box_left, box_bottom}, box_size, 0, {0.0f, 0.0f, 0.0f, 0.5f});
 
-  const auto k_frame_scale{16.667*2.0f};
+  const auto k_frame_scale{16.667 * 2.0f};
   rx::array<rx::math::vec2i> points;
-  _timer.frame_times().each_fwd([&](const rx::render::frontend::frame_timer::frame_time& _time){
+  _timer.frame_times().each_fwd([&](const rx::render::frontend::frame_timer::frame_time &_time) {
     const auto delta_x{(_timer.ticks() * _timer.resolution() - _time.life) / rx::render::frontend::frame_timer::k_frame_history_seconds};
     const auto delta_y{rx::algorithm::min(_time.frame / k_frame_scale, 1.0)};
     const rx::math::vec2i point{box_right - rx_s32(delta_x * box_size.w), box_top - rx_s32(delta_y * box_size.h)};
@@ -103,30 +106,32 @@ static void frame_stats(const rx::render::frontend::interface& _frontend, rx::re
   });
 
   const rx_size n_points{points.size()};
-  for (rx_size i{1}; i < n_points; i++) {
+  for (rx_size i{1}; i < n_points; i++)
+  {
     _immediate.frame_queue().record_line(points[i - 1], points[i], 0, 1, {0.0f, 1.0f, 0.0f, 1.0f});
   }
 
-  _immediate.frame_queue().record_line({box_left,   box_bottom}, {box_left,   box_top},    0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_line({box_center, box_bottom}, {box_center, box_top},    0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_line({box_right,  box_bottom}, {box_right,  box_top},    0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_line({box_left,   box_bottom}, {box_right,  box_bottom}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_line({box_left,   box_middle}, {box_right,  box_middle}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_line({box_left,   box_top},    {box_right,  box_top},    0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_center,    box_top    + 5}, 18, 1.0f, rx::render::immediate::text_align::k_center, "Frame Time", {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_top    - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left,   "0.0",        {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_middle - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left,   rx::string::format("%.1f", k_frame_scale * .5), {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_bottom - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left,   rx::string::format("%.1f", k_frame_scale),      {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_line({box_left, box_bottom}, {box_left, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_line({box_center, box_bottom}, {box_center, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_line({box_right, box_bottom}, {box_right, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_line({box_left, box_bottom}, {box_right, box_bottom}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_line({box_left, box_middle}, {box_right, box_middle}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_line({box_left, box_top}, {box_right, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_center, box_top + 5}, 18, 1.0f, rx::render::immediate::text_align::k_center, "Frame Time", {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_top - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left, "0.0", {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_middle - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left, rx::string::format("%.1f", k_frame_scale * .5), {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_bottom - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left, rx::string::format("%.1f", k_frame_scale), {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
-static void render_stats(const rx::render::frontend::interface& _frontend, rx::render::immediate& _immediate) {
-  const auto& buffer_stats{_frontend.stats(rx::render::frontend::resource::type::k_buffer)};
-  const auto& program_stats{_frontend.stats(rx::render::frontend::resource::type::k_program)};
-  const auto& target_stats{_frontend.stats(rx::render::frontend::resource::type::k_target)};
-  const auto& texture1D_stats{_frontend.stats(rx::render::frontend::resource::type::k_texture1D)};
-  const auto& texture2D_stats{_frontend.stats(rx::render::frontend::resource::type::k_texture2D)};
-  const auto& texture3D_stats{_frontend.stats(rx::render::frontend::resource::type::k_texture3D)};
-  const auto& textureCM_stats{_frontend.stats(rx::render::frontend::resource::type::k_textureCM)};
+static void render_stats(const rx::render::frontend::interface &_frontend, rx::render::immediate &_immediate)
+{
+  const auto &buffer_stats{_frontend.stats(rx::render::frontend::resource::type::k_buffer)};
+  const auto &program_stats{_frontend.stats(rx::render::frontend::resource::type::k_program)};
+  const auto &target_stats{_frontend.stats(rx::render::frontend::resource::type::k_target)};
+  const auto &texture1D_stats{_frontend.stats(rx::render::frontend::resource::type::k_texture1D)};
+  const auto &texture2D_stats{_frontend.stats(rx::render::frontend::resource::type::k_texture2D)};
+  const auto &texture3D_stats{_frontend.stats(rx::render::frontend::resource::type::k_texture3D)};
+  const auto &textureCM_stats{_frontend.stats(rx::render::frontend::resource::type::k_textureCM)};
 
   rx::math::vec2i offset{25, 25};
 
@@ -141,26 +146,26 @@ static void render_stats(const rx::render::frontend::interface& _frontend, rx::r
            0xFF;
   }};
 
-  auto render_stat{[&](const char* _label, const auto& _stats) {
+  auto render_stat{[&](const char *_label, const auto &_stats) {
     const auto format{rx::string::format("^w%s: ^[%x]%zu ^wof ^m%zu ^g%s",
-      _label, color_ratio(_stats.used, _stats.total), _stats.used, _stats.total,
-      rx::string::human_size_format(_stats.memory))};
+                                         _label, color_ratio(_stats.used, _stats.total), _stats.used, _stats.total,
+                                         rx::string::human_size_format(_stats.memory))};
 
     _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
-      rx::render::immediate::text_align::k_left, format, {1.0f, 1.0f, 1.0f, 1.0f});
+                                         rx::render::immediate::text_align::k_left, format, {1.0f, 1.0f, 1.0f, 1.0f});
     offset.y += 20;
   }};
 
-  const auto& command_buffer{_frontend.get_command_buffer()};
+  const auto &command_buffer{_frontend.get_command_buffer()};
   const rx_size commands_used{command_buffer.used()};
   const rx_size commands_total{command_buffer.size()};
   _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
-    rx::render::immediate::text_align::k_left,
-    rx::string::format("commands: ^[%x]%s ^wof ^g%s",
-      color_ratio(commands_used, commands_total),
-      rx::string::human_size_format(commands_used),
-      rx::string::human_size_format(commands_total)),
-    {1.0f, 1.0f, 1.0f, 1.0f});
+                                       rx::render::immediate::text_align::k_left,
+                                       rx::string::format("commands: ^[%x]%s ^wof ^g%s",
+                                                          color_ratio(commands_used, commands_total),
+                                                          rx::string::human_size_format(commands_used),
+                                                          rx::string::human_size_format(commands_total)),
+                                       {1.0f, 1.0f, 1.0f, 1.0f});
 
   offset.y += 20;
 
@@ -172,34 +177,42 @@ static void render_stats(const rx::render::frontend::interface& _frontend, rx::r
   render_stat("buffers", buffer_stats);
   render_stat("targets", target_stats);
 
+
   _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
-    rx::render::immediate::text_align::k_left,
-    rx::string::format("draws: %zu", _frontend.draw_calls()),
-    {1.0f, 1.0f, 1.0f, 1.0f});
-  
+                                       rx::render::immediate::text_align::k_left,
+                                       rx::string::format("clears: %zu", _frontend.clear_calls()),
+                                       {1.0f, 1.0f, 1.0f, 1.0f});
+
+  offset.y += 20;
+  _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
+                                       rx::render::immediate::text_align::k_left,
+                                       rx::string::format("draws: %zu", _frontend.draw_calls()),
+                                       {1.0f, 1.0f, 1.0f, 1.0f});
+
   // mspf and fps
-  const auto& _timer{_frontend.timer()};
-  const rx::math::vec2i& screen_size{*display_resolution};
+  const auto &_timer{_frontend.timer()};
+  const rx::math::vec2i &screen_size{*display_resolution};
   _immediate.frame_queue().record_text("Consolas-Regular", screen_size - rx::math::vec2i{25, 25}, 16, 1.0f,
-    rx::render::immediate::text_align::k_right,
-    rx::string::format("MSPF: %.2f | FPS: %d", _timer.mspf(), _timer.fps()),
-    {1.0f, 1.0f, 1.0f, 1.0f});
+                                       rx::render::immediate::text_align::k_right,
+                                       rx::string::format("MSPF: %.2f | FPS: %d", _timer.mspf(), _timer.fps()),
+                                       {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
-static void memory_stats(const rx::render::frontend::interface&, rx::render::immediate& _immediate) {
+static void memory_stats(const rx::render::frontend::interface &, rx::render::immediate &_immediate)
+{
   const auto stats{rx::memory::g_system_allocator->stats()};
-  const rx::math::vec2i& screen_size{*display_resolution};
+  const rx::math::vec2i &screen_size{*display_resolution};
 
   int y = 25;
-  auto line{[&](const rx::string& _line){
+  auto line{[&](const rx::string &_line) {
     _immediate.frame_queue().record_text(
-      "Consolas-Regular",
-      rx::math::vec2i{screen_size.x - 25, y},
-      16,
-      1.0f,
-      rx::render::immediate::text_align::k_right,
-      _line,
-      {1.0f, 1.0f, 1.0f, 1.0f});
+        "Consolas-Regular",
+        rx::math::vec2i{screen_size.x - 25, y},
+        16,
+        1.0f,
+        rx::render::immediate::text_align::k_right,
+        _line,
+        {1.0f, 1.0f, 1.0f, 1.0f});
     y += 16;
   }};
 
@@ -209,11 +222,15 @@ static void memory_stats(const rx::render::frontend::interface&, rx::render::imm
   line(rx::string::format("peak memory (actual):    %s", rx::string::human_size_format(stats.peak_actual_bytes)));
 }
 
-int entry(int argc, char **argv) {
+using namespace rx;
+
+int entry(int argc, char **argv)
+{
   (void)argc;
   (void)argv;
 
-  if (!rx::console::interface::load("config.cfg")) {
+  if (!rx::console::interface::load("config.cfg"))
+  {
     // immediately save the default options on load failure
     rx::console::interface::save("config.cfg");
   }
@@ -221,29 +238,35 @@ int entry(int argc, char **argv) {
   // enumerate displays to find the one with the given name
   SDL_Init(SDL_INIT_VIDEO);
 
-  const rx::string& want_name{display_name->get()};
+  const rx::string &want_name{display_name->get()};
   int display_index{0};
   int displays{SDL_GetNumVideoDisplays()};
-  for (int i{0}; i < displays; i++) {
-    const char* name{SDL_GetDisplayName(i)};
-    if (name && want_name == name) {
+  for (int i{0}; i < displays; i++)
+  {
+    const char *name{SDL_GetDisplayName(i)};
+    if (name && want_name == name)
+    {
       display_index = i;
       break;
     }
   }
 
-  const char* name{SDL_GetDisplayName(display_index)};
+  const char *name{SDL_GetDisplayName(display_index)};
   display_name->set(name ? name : "");
 
   int flags{SDL_WINDOW_OPENGL};
 
-  if (*display_resizable) {
+  if (*display_resizable)
+  {
     flags |= SDL_WINDOW_RESIZABLE;
   }
 
-  if (*display_fullscreen == 1) {
+  if (*display_fullscreen == 1)
+  {
     flags |= SDL_WINDOW_FULLSCREEN;
-  } else if (*display_fullscreen == 2) {
+  }
+  else if (*display_fullscreen == 2)
+  {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
 
@@ -260,42 +283,46 @@ int entry(int argc, char **argv) {
   SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-  SDL_Window* window =
-    SDL_CreateWindow(
-      "rex",
-      SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
-      SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
-      display_resolution->get().x,
-      display_resolution->get().y,
-      flags);
+  SDL_Window *window =
+      SDL_CreateWindow(
+          "rex",
+          SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
+          SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
+          display_resolution->get().x,
+          display_resolution->get().y,
+          flags);
 
-  if (!window) {
+  if (!window)
+  {
     rx::abort("failed to create window");
   }
 
   SDL_GLContext context =
-    SDL_GL_CreateContext(window);
+      SDL_GL_CreateContext(window);
 
   SDL_GL_SetSwapInterval(1);
 
   SDL_SetRelativeMouseMode(SDL_TRUE);
 
-  rx::math::camera camera{rx::math::mat4x4f::perspective(90.0f, {0.01f, 1024.0f}, 1600.0f/900.0f)};
-  camera.translate = { 0.0f, 2.5f, -5.0f };
+  rx::math::camera camera{rx::math::mat4x4f::perspective(90.0f, {0.01f, 1024.0f}, 1600.0f / 900.0f)};
+  camera.translate = {0.0f, 2.5f, -5.0f};
   // camera.rotate = { 10.0f, 0.0f, 0.0f };
 
   {
-    rx::render::backend::gl4 backend{&rx::memory::g_system_allocator, reinterpret_cast<void*>(window)};
+    rx::render::backend::gl4 backend{&rx::memory::g_system_allocator, reinterpret_cast<void *>(window)};
     rx::render::frontend::interface frontend{&rx::memory::g_system_allocator, &backend};
     rx::render::immediate immediate{&frontend};
+    rx::render::skybox skybox{&frontend};
+    skybox.load("base/skyboxes/miramar.json");
+    // SDL_Delay(5000);
 
-    rx::render::frontend::target* target{frontend.create_target(RX_RENDER_TAG("default"))};
+    rx::render::frontend::target *target{frontend.create_target(RX_RENDER_TAG("default"))};
     target->request_swapchain();
 
     rx::render::gbuffer gbuffer{&frontend};
     gbuffer.create({1600, 900});
 
-    rx::render::frontend::buffer* model_buffer{frontend.create_buffer(RX_RENDER_TAG("model"))};
+    rx::render::frontend::buffer *model_buffer{frontend.create_buffer(RX_RENDER_TAG("model"))};
     model_buffer->record_element_type(rx::render::frontend::buffer::element_type::k_u32);
     model_buffer->record_type(rx::render::frontend::buffer::type::k_static);
     rx::model::interface model{&rx::memory::g_system_allocator};
@@ -303,15 +330,20 @@ int entry(int argc, char **argv) {
     // materials
     rx::map<rx::string, rx::render::frontend::material> materials;
     {
-      rx::render::frontend::material material{&frontend};
-      material.load("base/models/chest/material.json5");
-      materials.insert("chest", rx::utility::move(material));
+      rx::render::frontend::material head{&frontend};
+      rx::render::frontend::material body{&frontend};
+      head.load("base/models/mrfixit/head.json5");
+      body.load("base/models/mrfixit/body.json5");
+      materials.insert("Head.tga", rx::utility::move(head));
+      materials.insert("Body.tga", rx::utility::move(body));
     }
 
-    if (model.load("base/models/chest/model.iqm")) {
-      if (model.is_animated()) {
+    if (model.load("base/models/mrfixit/model.iqm"))
+    {
+      if (model.is_animated())
+      {
         using vertex = rx::model::interface::animated_vertex;
-        const auto& vertices{model.animated_vertices()};
+        const auto &vertices{model.animated_vertices()};
         model_buffer->record_stride(sizeof(vertex));
         model_buffer->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, position));
         model_buffer->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, normal));
@@ -320,9 +352,11 @@ int entry(int argc, char **argv) {
         model_buffer->record_attribute(rx::render::frontend::buffer::attribute::type::k_u8, 4, offsetof(vertex, blend_weights));
         model_buffer->record_attribute(rx::render::frontend::buffer::attribute::type::k_u8, 4, offsetof(vertex, blend_indices));
         model_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
-      } else {
+      }
+      else
+      {
         using vertex = rx::model::interface::vertex;
-        const auto& vertices{model.vertices()};
+        const auto &vertices{model.vertices()};
         model_buffer->record_stride(sizeof(vertex));
         model_buffer->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, position));
         model_buffer->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, normal));
@@ -330,12 +364,12 @@ int entry(int argc, char **argv) {
         model_buffer->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 2, offsetof(vertex, coordinate));
         model_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
       }
-      const auto& elements{model.elements()};
+      const auto &elements{model.elements()};
       model_buffer->write_elements(elements.data(), elements.size() * sizeof(rx_u32));
     }
     frontend.initialize_buffer(RX_RENDER_TAG("model"), model_buffer);
 
-    rx::render::frontend::buffer* quad{frontend.create_buffer(RX_RENDER_TAG("quad"))};
+    rx::render::frontend::buffer *quad{frontend.create_buffer(RX_RENDER_TAG("quad"))};
     quad->record_stride(sizeof(quad_vertex));
     quad->record_element_type(rx::render::frontend::buffer::element_type::k_u8);
     quad->record_type(rx::render::frontend::buffer::type::k_static);
@@ -346,16 +380,19 @@ int entry(int argc, char **argv) {
     frontend.initialize_buffer(RX_RENDER_TAG("quad"), quad);
 
     rx::input::input input;
-    // rx::model::animation animation{&model, 0};
-    while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
+    rx::model::animation animation{&model, 0};
+    while (!input.keyboard().is_released(SDLK_ESCAPE, false))
+    {
       input.update(0);
 
-      // animation.update(frontend.timer().delta_time(), true);
+      animation.update(frontend.timer().delta_time(), true);
 
       // translate SDL events
-      for (SDL_Event event; SDL_PollEvent(&event); ) {
+      for (SDL_Event event; SDL_PollEvent(&event);)
+      {
         rx::input::event ievent;
-        switch (event.type) {
+        switch (event.type)
+        {
         case SDL_KEYDOWN:
         case SDL_KEYUP:
           ievent.type = rx::input::event_type::k_keyboard;
@@ -373,62 +410,66 @@ int entry(int argc, char **argv) {
           break;
         case SDL_MOUSEMOTION:
           ievent.type = rx::input::event_type::k_mouse_motion;
-          ievent.as_mouse_motion.value = { event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel };
+          ievent.as_mouse_motion.value = {event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel};
           input.handle_event(rx::utility::move(ievent));
           break;
         case SDL_MOUSEWHEEL:
           ievent.type = rx::input::event_type::k_mouse_scroll;
-          ievent.as_mouse_scroll.value = { event.wheel.x, event.wheel.y };
+          ievent.as_mouse_scroll.value = {event.wheel.x, event.wheel.y};
           input.handle_event(rx::utility::move(ievent));
           break;
         }
       }
 
       const rx_f32 sens{0.2f};
-      const auto& delta{input.mouse().movement()};
+      const auto &delta{input.mouse().movement()};
       rx::math::vec3f move{static_cast<rx_f32>(delta.y) * sens, static_cast<rx_f32>(delta.x) * sens, 0.0f};
       camera.rotate = camera.rotate + move;
 
-      if (input.keyboard().is_held(SDL_SCANCODE_W, true)) {
+      if (input.keyboard().is_held(SDL_SCANCODE_W, true))
+      {
         const auto f{camera.to_mat4().z};
         camera.translate += rx::math::vec3f(f.x, f.y, f.z) * (10.0f * frontend.timer().delta_time());
       }
-      if (input.keyboard().is_held(SDL_SCANCODE_S, true)) {
+      if (input.keyboard().is_held(SDL_SCANCODE_S, true))
+      {
         const auto f{camera.to_mat4().z};
         camera.translate -= rx::math::vec3f(f.x, f.y, f.z) * (10.0f * frontend.timer().delta_time());
       }
-      if (input.keyboard().is_held(SDL_SCANCODE_D, true)) {
+      if (input.keyboard().is_held(SDL_SCANCODE_D, true))
+      {
         const auto l{camera.to_mat4().x};
         camera.translate += rx::math::vec3f(l.x, l.y, l.z) * (10.0f * frontend.timer().delta_time());
       }
-      if (input.keyboard().is_held(SDL_SCANCODE_A, true)) {
+      if (input.keyboard().is_held(SDL_SCANCODE_A, true))
+      {
         const auto l{camera.to_mat4().x};
         camera.translate -= rx::math::vec3f(l.x, l.y, l.z) * (10.0f * frontend.timer().delta_time());
       }
 
       // clear gbuffer albedo, normal & emission for testing
-      frontend.clear(RX_RENDER_TAG("gbuffer albedo"),
-        gbuffer.target(), RX_RENDER_CLEAR_COLOR(0), {1.0f, 0.0f, 0.0f, 1.0f});
+      //frontend.clear(RX_RENDER_TAG("gbuffer albedo"),
+      //               gbuffer.target(), RX_RENDER_CLEAR_COLOR(0), {1.0f, 0.0f, 0.0f, 1.0f});
 
-      frontend.clear(RX_RENDER_TAG("gbuffer normal"),
-        gbuffer.target(), RX_RENDER_CLEAR_COLOR(1), {0.0f, 1.0f, 0.0f, 1.0f});
+      //frontend.clear(RX_RENDER_TAG("gbuffer normal"),
+      //               gbuffer.target(), RX_RENDER_CLEAR_COLOR(1), {0.0f, 1.0f, 0.0f, 1.0f});
 
-      frontend.clear(RX_RENDER_TAG("gbuffer emission"),
-        gbuffer.target(), RX_RENDER_CLEAR_COLOR(2), {0.0f, 0.0f, 1.0f, 1.0f});
+      //frontend.clear(RX_RENDER_TAG("gbuffer emission"),
+      //               gbuffer.target(), RX_RENDER_CLEAR_COLOR(2), {0.0f, 0.0f, 1.0f, 1.0f});
 
       rx::math::mat4x4f modelm{rx::math::mat4x4f::scale({2.0f, 2.0f, 2.0f}) * rx::math::mat4x4f::rotate({0.0f, 90.0f, 0.0f})};
 
-      rx::render::frontend::technique* gbuffer_test_technique{frontend.find_technique_by_name("geometry")};
-      rx::render::frontend::technique* fs_quad_technique{frontend.find_technique_by_name("fs-quad")};
+      rx::render::frontend::technique *gbuffer_test_technique{frontend.find_technique_by_name("geometry")};
+      rx::render::frontend::technique *fs_quad_technique{frontend.find_technique_by_name("fs-quad")};
 
       RX_ASSERT(gbuffer_test_technique, "");
       RX_ASSERT(fs_quad_technique, "");
 
-      rx::render::frontend::program* gbuffer_test_program{gbuffer_test_technique->permute((1 << 1) | (1 << 1) | (1 << 2) | (1 << 3))};
-      rx::render::frontend::program* fs_quad_program{*fs_quad_technique};
+      rx::render::frontend::program *gbuffer_test_program{gbuffer_test_technique->permute((1 << 0) | (1 << 1))};
+      rx::render::frontend::program *fs_quad_program{*fs_quad_technique};
 
       gbuffer_test_program->uniforms()[0].record_mat4x4f(modelm * camera.view() * camera.projection());
-      // gbuffer_test_program->uniforms()[1].record_bones(animation.frames(), model.joints());
+      gbuffer_test_program->uniforms()[1].record_bones(animation.frames(), model.joints());
 
       fs_quad_program->uniforms()[0].record_sampler(0);
 
@@ -439,48 +480,51 @@ int entry(int argc, char **argv) {
       state.cull.record_front_face(rx::render::frontend::cull_state::front_face_type::k_clock_wise);
       state.cull.record_cull_face(rx::render::frontend::cull_state::cull_face_type::k_back);
 
-      frontend.clear(RX_RENDER_TAG("gbuffer test"),
-        gbuffer.target(),
-        RX_RENDER_CLEAR_COLOR(0),
-        {0.0f, 0.0f, 0.0f, 1.0f});
-      
-      frontend.clear(RX_RENDER_TAG("gbuffer test"),
-        gbuffer.target(),
-        RX_RENDER_CLEAR_DEPTH,
-        {1.0f, 0.0f, 0.0f, 0.0f});
+      //frontend.clear(RX_RENDER_TAG("gbuffer test"),
+      //               gbuffer.target(),
+      //               RX_RENDER_CLEAR_COLOR(0),
+      //               {0.0f, 0.0f, 0.0f, 1.0f});
 
-      model.meshes().each_fwd([&](const rx::model::mesh& _mesh) {
+      frontend.clear(RX_RENDER_TAG("gbuffer test"),
+                     gbuffer.target(),
+                     RX_RENDER_CLEAR_DEPTH,
+                     {1.0f, 0.0f, 0.0f, 0.0f});
+
+      skybox.render(gbuffer.target(), camera.view(), camera.projection());
+
+      model.meshes().each_fwd([&](const rx::model::mesh &_mesh) {
+        RX_MESSAGE("%s", _mesh.material.data());
         const auto material{materials.find(_mesh.material)};
         frontend.draw_elements(
-          RX_RENDER_TAG("gbuffer test"),
-          state,
-          gbuffer.target(),
-          model_buffer,
-          gbuffer_test_program,
-          _mesh.count,
-          _mesh.offset,
-          rx::render::frontend::primitive_type::k_triangles,
-          material ? "222" : "",
-          material ? material->diffuse() : nullptr,
-          material ? material->normal() : nullptr,
-          material ? material->metalness() : nullptr,
-          material ? material->roughness() : nullptr);
+            RX_RENDER_TAG("gbuffer test"),
+            state,
+            gbuffer.target(),
+            model_buffer,
+            gbuffer_test_program,
+            _mesh.count,
+            _mesh.offset,
+            rx::render::frontend::primitive_type::k_triangles,
+            material ? "2" : "",
+            material ? material->diffuse() : nullptr,
+            material ? material->normal() : nullptr,
+            material ? material->metalness() : nullptr,
+            material ? material->roughness() : nullptr);
       });
 
-      frontend.clear(RX_RENDER_TAG("default"),
-        target, RX_RENDER_CLEAR_COLOR(0), {1.0f, 0.0f, 0.0f, 1.0f});
+      //frontend.clear(RX_RENDER_TAG("default"),
+      //               target, RX_RENDER_CLEAR_COLOR(0), {1.0f, 0.0f, 0.0f, 1.0f});
 
       frontend.draw_elements(
-        RX_RENDER_TAG("test"),
-        {},
-        target,
-        quad,
-        fs_quad_program,
-        4,
-        0,
-        rx::render::frontend::primitive_type::k_triangle_strip,
-        "2",
-        gbuffer.albedo());
+          RX_RENDER_TAG("test"),
+          {},
+          target,
+          quad,
+          fs_quad_program,
+          4,
+          0,
+          rx::render::frontend::primitive_type::k_triangle_strip,
+          "2",
+          gbuffer.albedo());
 
       frame_stats(frontend, immediate);
       render_stats(frontend, immediate);
@@ -488,8 +532,10 @@ int entry(int argc, char **argv) {
 
       immediate.render(target);
 
-      if (frontend.process()) {
-        if (frontend.swap()) {
+      if (frontend.process())
+      {
+        if (frontend.swap())
+        {
           // SDL_SetWindowTitle(window, format);
         }
       }
@@ -509,7 +555,8 @@ int entry(int argc, char **argv) {
   return 0;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   // trigger allocator initialization first
   auto malloc_allocator{rx::static_globals::find("malloc_allocator")};
   auto system_allocator{rx::static_globals::find("system_allocator")};

@@ -399,6 +399,8 @@ void interface::clear(
   command->clear_color = _clear_color;
 
   m_commands.push_back(command_base);
+
+  m_clear_calls[0]++;
 }
 
 bool interface::process() {
@@ -457,8 +459,11 @@ bool interface::process() {
 
   m_command_buffer.reset();
 
-  m_draw_calls[1].store(m_draw_calls[0].load());
-  m_draw_calls[0].store(0);
+  m_draw_calls[1] = m_draw_calls[0].load();
+  m_draw_calls[0] = 0;
+
+  m_clear_calls[1] = m_clear_calls[0].load();
+  m_clear_calls[0] = 0;
 
   return true;
 }
@@ -488,7 +493,11 @@ interface::statistics interface::stats(resource::type _type) const {
 }
 
 rx_size interface::draw_calls() const {
-  return m_draw_calls[1];
+  return m_draw_calls[1].load();
+}
+
+rx_size interface::clear_calls() const {
+  return m_clear_calls[1].load();
 }
 
 bool interface::swap() {

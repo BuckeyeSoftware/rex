@@ -1,6 +1,5 @@
 #ifndef RX_CORE_TRAITS_ADD_POINTER_H
 #define RX_CORE_TRAITS_ADD_POINTER_H
-
 #include "rx/core/traits/remove_reference.h"
 #include "rx/core/traits/is_function.h"
 #include "rx/core/traits/type_identity.h"
