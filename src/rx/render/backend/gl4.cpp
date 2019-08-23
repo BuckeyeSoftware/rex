@@ -296,6 +296,10 @@ static GLenum convert_primitive_type(frontend::primitive_type _primitive_type) {
     return GL_TRIANGLES;
   case frontend::primitive_type::k_triangle_strip:
     return GL_TRIANGLE_STRIP;
+  case frontend::primitive_type::k_points:
+    return GL_POINTS;
+  case frontend::primitive_type::k_lines:
+    return GL_LINES;
   }
 
   RX_HINT_UNREACHABLE();
@@ -731,6 +735,8 @@ static constexpr const char* inout_to_string(frontend::shader::inout_type _type)
     return "vec4i";
   case frontend::shader::inout_type::k_vec4b:
     return "vec4b";
+  case frontend::shader::inout_type::k_float:
+    return "float";
   }
   return nullptr;
 }
@@ -799,6 +805,7 @@ static GLuint compile_shader(const array<frontend::uniform>& _uniforms,
     "#define rx_texture3D texture\n"
     "#define rx_textureCM texture\n"
     "#define rx_position gl_Position\n"
+    "#define rx_point_size gl_PointSize\n"
   };
 
   string contents{k_prelude};

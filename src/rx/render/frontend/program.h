@@ -111,7 +111,8 @@ struct shader {
     k_vec2f,
     k_vec3f,
     k_vec4f,
-    k_vec4b
+    k_vec4b,
+    k_float
   };
 
   type kind;

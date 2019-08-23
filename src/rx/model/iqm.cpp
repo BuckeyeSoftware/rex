@@ -298,15 +298,18 @@ bool iqm::read_meshes(const header& _header, const array<rx_byte>& _data) {
 }
 
 bool iqm::read_animations(const header& _header, const array<rx_byte>& _data) {
-  m_joints = static_cast<rx_size>(_header.joints);
+  const auto n_joints{static_cast<rx_size>(_header.joints)};
 
-  array<math::mat3x4f> generic_base_frame{m_allocator, m_joints};
-  array<math::mat3x4f> inverse_base_frame{m_allocator, m_joints};
+
+  array<math::mat3x4f> generic_base_frame{m_allocator, n_joints};
+  array<math::mat3x4f> inverse_base_frame{m_allocator, n_joints};
+
+  m_joints.resize(n_joints);
 
   const auto joints{reinterpret_cast<const iqm_joint*>(_data.data() + _header.joints_offset)};
 
   // read base pose
-  for (rx_size i{0}; i < m_joints; i++) {
+  for (rx_size i{0}; i < n_joints; i++) {
     const auto& this_joint{joints[i]};
 
     // IQM is Z up, we're Y up
@@ -321,6 +324,8 @@ bool iqm::read_animations(const header& _header, const array<rx_byte>& _data) {
       generic_base_frame[i] = generic_base_frame[this_joint.parent] * generic_base_frame[i];
       inverse_base_frame[i] *= inverse_base_frame[this_joint.parent];
     }
+
+    m_joints[i] = {generic_base_frame[i], this_joint.parent};
   }
 
   const char* string_table{reinterpret_cast<const char *>(_data.data() + _header.text_offset)};
@@ -331,7 +336,7 @@ bool iqm::read_animations(const header& _header, const array<rx_byte>& _data) {
       this_animation.num_frames, string_table + this_animation.name});
   }
 
-  m_frames.resize(m_joints * _header.frames);
+  m_frames.resize(n_joints * _header.frames);
   const auto* poses{reinterpret_cast<const iqm_pose*>(_data.data() + _header.poses_offset)};
   const rx_u16* frame_data{reinterpret_cast<const rx_u16*>(_data.data() + _header.frames_offset)};
 

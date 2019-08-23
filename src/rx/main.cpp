@@ -20,7 +20,8 @@
 
 #include "rx/render/backend/gl4.h"
 
-#include "rx/render/immediate.h"
+#include "rx/render/immediate2D.h"
+#include "rx/render/immediate3D.h"
 #include "rx/render/gbuffer.h"
 #include "rx/render/skybox.h"
 
@@ -82,7 +83,7 @@ static constexpr const quad_vertex k_quad_vertices[]{
 static constexpr const rx_byte k_quad_elements[]{
     0, 1, 2, 3};
 
-static void frame_stats(const rx::render::frontend::interface &_frontend, rx::render::immediate &_immediate)
+static void frame_stats(const rx::render::frontend::interface &_frontend, rx::render::immediate2D &_immediate)
 {
   const rx::render::frontend::frame_timer &_timer{_frontend.timer()};
   const rx::math::vec2i &screen_size{*display_resolution};
@@ -117,13 +118,13 @@ static void frame_stats(const rx::render::frontend::interface &_frontend, rx::re
   _immediate.frame_queue().record_line({box_left, box_bottom}, {box_right, box_bottom}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
   _immediate.frame_queue().record_line({box_left, box_middle}, {box_right, box_middle}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
   _immediate.frame_queue().record_line({box_left, box_top}, {box_right, box_top}, 0, 1, {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_center, box_top + 5}, 18, 1.0f, rx::render::immediate::text_align::k_center, "Frame Time", {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_top - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left, "0.0", {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_middle - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left, rx::string::format("%.1f", k_frame_scale * .5), {1.0f, 1.0f, 1.0f, 1.0f});
-  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_bottom - 5}, 18, 1.0f, rx::render::immediate::text_align::k_left, rx::string::format("%.1f", k_frame_scale), {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_center, box_top + 5}, 18, 1.0f, rx::render::immediate2D::text_align::k_center, "Frame Time", {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_top - 5}, 18, 1.0f, rx::render::immediate2D::text_align::k_left, "0.0", {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_middle - 5}, 18, 1.0f, rx::render::immediate2D::text_align::k_left, rx::string::format("%.1f", k_frame_scale * .5), {1.0f, 1.0f, 1.0f, 1.0f});
+  _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_bottom - 5}, 18, 1.0f, rx::render::immediate2D::text_align::k_left, rx::string::format("%.1f", k_frame_scale), {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
-static void render_stats(const rx::render::frontend::interface &_frontend, rx::render::immediate &_immediate)
+static void render_stats(const rx::render::frontend::interface &_frontend, rx::render::immediate2D &_immediate)
 {
   const auto &buffer_stats{_frontend.stats(rx::render::frontend::resource::type::k_buffer)};
   const auto &program_stats{_frontend.stats(rx::render::frontend::resource::type::k_program)};
@@ -152,7 +153,7 @@ static void render_stats(const rx::render::frontend::interface &_frontend, rx::r
                                          rx::string::human_size_format(_stats.memory))};
 
     _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
-                                         rx::render::immediate::text_align::k_left, format, {1.0f, 1.0f, 1.0f, 1.0f});
+                                         rx::render::immediate2D::text_align::k_left, format, {1.0f, 1.0f, 1.0f, 1.0f});
     offset.y += 20;
   }};
 
@@ -160,7 +161,7 @@ static void render_stats(const rx::render::frontend::interface &_frontend, rx::r
   const rx_size commands_used{command_buffer.used()};
   const rx_size commands_total{command_buffer.size()};
   _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
-                                       rx::render::immediate::text_align::k_left,
+                                       rx::render::immediate2D::text_align::k_left,
                                        rx::string::format("commands: ^[%x]%s ^wof ^g%s",
                                                           color_ratio(commands_used, commands_total),
                                                           rx::string::human_size_format(commands_used),
@@ -179,13 +180,13 @@ static void render_stats(const rx::render::frontend::interface &_frontend, rx::r
 
 
   _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
-                                       rx::render::immediate::text_align::k_left,
+                                       rx::render::immediate2D::text_align::k_left,
                                        rx::string::format("clears: %zu", _frontend.clear_calls()),
                                        {1.0f, 1.0f, 1.0f, 1.0f});
 
   offset.y += 20;
   _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
-                                       rx::render::immediate::text_align::k_left,
+                                       rx::render::immediate2D::text_align::k_left,
                                        rx::string::format("draws: %zu", _frontend.draw_calls()),
                                        {1.0f, 1.0f, 1.0f, 1.0f});
 
@@ -193,12 +194,12 @@ static void render_stats(const rx::render::frontend::interface &_frontend, rx::r
   const auto &_timer{_frontend.timer()};
   const rx::math::vec2i &screen_size{*display_resolution};
   _immediate.frame_queue().record_text("Consolas-Regular", screen_size - rx::math::vec2i{25, 25}, 16, 1.0f,
-                                       rx::render::immediate::text_align::k_right,
+                                       rx::render::immediate2D::text_align::k_right,
                                        rx::string::format("MSPF: %.2f | FPS: %d", _timer.mspf(), _timer.fps()),
                                        {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
-static void memory_stats(const rx::render::frontend::interface &, rx::render::immediate &_immediate)
+static void memory_stats(const rx::render::frontend::interface &, rx::render::immediate2D &_immediate)
 {
   const auto stats{rx::memory::g_system_allocator->stats()};
   const rx::math::vec2i &screen_size{*display_resolution};
@@ -210,7 +211,7 @@ static void memory_stats(const rx::render::frontend::interface &, rx::render::im
         rx::math::vec2i{screen_size.x - 25, y},
         16,
         1.0f,
-        rx::render::immediate::text_align::k_right,
+        rx::render::immediate2D::text_align::k_right,
         _line,
         {1.0f, 1.0f, 1.0f, 1.0f});
     y += 16;
@@ -311,7 +312,8 @@ int entry(int argc, char **argv)
   {
     rx::render::backend::gl4 backend{&rx::memory::g_system_allocator, reinterpret_cast<void *>(window)};
     rx::render::frontend::interface frontend{&rx::memory::g_system_allocator, &backend};
-    rx::render::immediate immediate{&frontend};
+    rx::render::immediate2D immediate2D{&frontend};
+    rx::render::immediate3D immediate3D{&frontend};
     rx::render::skybox skybox{&frontend};
     skybox.load("base/skyboxes/miramar.json");
     // SDL_Delay(5000);
@@ -469,7 +471,7 @@ int entry(int argc, char **argv)
       rx::render::frontend::program *fs_quad_program{*fs_quad_technique};
 
       gbuffer_test_program->uniforms()[0].record_mat4x4f(modelm * camera.view() * camera.projection());
-      gbuffer_test_program->uniforms()[1].record_bones(animation.frames(), model.joints());
+      gbuffer_test_program->uniforms()[1].record_bones(animation.frames(), model.joints().size());
 
       fs_quad_program->uniforms()[0].record_sampler(0);
 
@@ -526,11 +528,15 @@ int entry(int argc, char **argv)
           "2",
           gbuffer.albedo());
 
-      frame_stats(frontend, immediate);
-      render_stats(frontend, immediate);
-      memory_stats(frontend, immediate);
+      frame_stats(frontend, immediate2D);
+      render_stats(frontend, immediate2D);
+      memory_stats(frontend, immediate2D);
 
-      immediate.render(target);
+      // immediate3D.frame_queue().record_line({0.0f, -10.0f, 0.0f}, {0.0f, 10.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}, 0);
+      animation.render_skeleton(modelm, &immediate3D);
+    
+      immediate2D.render(target);
+      immediate3D.render(target, camera.view(), camera.projection());
 
       if (frontend.process())
       {

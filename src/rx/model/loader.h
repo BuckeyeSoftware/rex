@@ -29,6 +29,11 @@ struct loader : concepts::interface {
     string name;
   };
 
+  struct joint {
+    math::mat3x4f frame;
+    rx_s32 parent;
+  };
+
   const array<mesh>& meshes() const &;
   array<mesh>&& meshes() &&;
   const array<rx_u32>& elements() const &;
@@ -40,15 +45,16 @@ struct loader : concepts::interface {
   const array<math::vec4f>& tangents() const &;
 
   // for skeletally animated models
-  const array<math::mat3x4f>& frames() const &;
-  array<math::mat3x4f>&& frames() &&;
-  const array<animation>& animations() const &;
-  array<animation>&& animations() &&;
+  const array<math::mat3x4f>& frames() const;
+  array<math::mat3x4f>&& frames();
+  const array<animation>& animations() const;
+  array<animation>&& animations();
 
   const array<math::vec4b>& blend_indices() const &;
   const array<math::vec4b>& blend_weights() const &;
   
-  rx_size joints() const;
+  array<joint>&& joints();
+  const array<joint>& joints() const;
 
 protected:
   void generate_normals();
@@ -69,7 +75,7 @@ protected:
   array<math::vec4b> m_blend_weights;
   array<math::mat3x4f> m_frames;
   array<animation> m_animations;
-  rx_size m_joints;
+  array<joint> m_joints;
 
   string m_error;
 };
@@ -112,19 +118,19 @@ inline const array<math::vec4f>& loader::tangents() const & {
   return m_tangents;
 }
 
-inline const array<math::mat3x4f>& loader::frames() const & {
+inline const array<math::mat3x4f>& loader::frames() const {
   return m_frames;
 }
 
-inline array<math::mat3x4f>&& loader::frames() && {
+inline array<math::mat3x4f>&& loader::frames() {
   return utility::move(m_frames);
 }
 
-inline const array<loader::animation>& loader::animations() const & {
+inline const array<loader::animation>& loader::animations() const {
   return m_animations;
 }
 
-inline array<loader::animation>&& loader::animations() && {
+inline array<loader::animation>&& loader::animations() {
   return utility::move(m_animations);
 }
 
@@ -136,7 +142,11 @@ inline const array<math::vec4b>& loader::blend_weights() const & {
   return m_blend_weights;
 }
 
-inline rx_size loader::joints() const {
+inline array<loader::joint>&& loader::joints() {
+  return utility::move(m_joints);
+}
+
+inline const array<loader::joint>& loader::joints() const {
   return m_joints;
 }
 

@@ -1,9 +1,8 @@
-#include <stdlib.h> // abort
 #include <string.h> // strchr
 #include <stdio.h> // sscanf
 #include <inttypes.h> // PRIx32
 
-#include "rx/render/immediate.h"
+#include "rx/render/immediate2D.h"
 
 #include "rx/render/frontend/interface.h"
 #include "rx/render/frontend/technique.h"
@@ -25,14 +24,14 @@
 
 namespace rx::render {
 
-immediate::queue::queue(memory::allocator* _allocator)
+immediate2D::queue::queue(memory::allocator* _allocator)
   : m_allocator{_allocator}
   , m_commands{m_allocator}
   , m_string_table{m_allocator}
 {
 }
 
-immediate::queue::queue(queue&& _queue)
+immediate2D::queue::queue(queue&& _queue)
   : m_allocator{_queue.m_allocator}
   , m_commands{utility::move(_queue.m_commands)}
   , m_string_table{utility::move(_queue.m_string_table)}
@@ -40,7 +39,7 @@ immediate::queue::queue(queue&& _queue)
   _queue.m_allocator = nullptr;
 }
 
-immediate::queue& immediate::queue::operator=(queue&& _queue) {
+immediate2D::queue& immediate2D::queue::operator=(queue&& _queue) {
   RX_ASSERT(this != &_queue, "move from self");
   m_allocator = _queue.m_allocator;
   m_commands = utility::move(_queue.m_commands);
@@ -49,7 +48,7 @@ immediate::queue& immediate::queue::operator=(queue&& _queue) {
   return *this;
 }
 
-bool immediate::queue::command::operator!=(const command& _command) const {
+bool immediate2D::queue::command::operator!=(const command& _command) const {
   if (_command.hash != hash) {
     return true;
   }
@@ -84,7 +83,7 @@ bool immediate::queue::command::operator!=(const command& _command) const {
   return false;
 }
 
-void immediate::queue::record_scissor(const math::vec2i& _position,
+void immediate2D::queue::record_scissor(const math::vec2i& _position,
   const math::vec2i& _size)
 {
   command next_command;
@@ -102,7 +101,7 @@ void immediate::queue::record_scissor(const math::vec2i& _position,
   m_commands.push_back(utility::move(next_command));
 }
 
-void immediate::queue::record_rectangle(const math::vec2i& _position,
+void immediate2D::queue::record_rectangle(const math::vec2i& _position,
   const math::vec2i& _size, rx_s32 _roundness, const math::vec4f& _color)
 {
   command next_command;
@@ -114,6 +113,7 @@ void immediate::queue::record_rectangle(const math::vec2i& _position,
   next_command.as_rectangle.roundness = _roundness;
 
   next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.kind));
+  next_command.hash = hash_combine(next_command.hash, hash<rx_u32>{}(next_command.flags));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec4f>{}(next_command.color));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec2i>{}(next_command.as_rectangle.position));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec2i>{}(next_command.as_rectangle.size));
@@ -122,7 +122,7 @@ void immediate::queue::record_rectangle(const math::vec2i& _position,
   m_commands.push_back(utility::move(next_command));
 }
 
-void immediate::queue::record_line(const math::vec2i& _point_a,
+void immediate2D::queue::record_line(const math::vec2i& _point_a,
   const math::vec2i& _point_b, rx_s32 _roundness, rx_s32 _thickness,
   const math::vec4f& _color)
 {
@@ -140,7 +140,7 @@ void immediate::queue::record_line(const math::vec2i& _point_a,
   m_commands.push_back(utility::move(next_command));
 }
 
-void immediate::queue::record_triangle(const math::vec2i& _position,
+void immediate2D::queue::record_triangle(const math::vec2i& _position,
   const math::vec2i& _size, rx_u32 _flags, const math::vec4f& _color)
 {
   command next_command;
@@ -159,7 +159,7 @@ void immediate::queue::record_triangle(const math::vec2i& _position,
   m_commands.push_back(utility::move(next_command));
 }
 
-void immediate::queue::record_text(const char* _font, rx_size _font_length,
+void immediate2D::queue::record_text(const char* _font, rx_size _font_length,
   const math::vec2i& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
   const char* _text, rx_size _text_length, const math::vec4f& _color)
 {
@@ -198,7 +198,7 @@ void immediate::queue::record_text(const char* _font, rx_size _font_length,
   m_commands.push_back(utility::move(next_command));
 }
 
-bool immediate::queue::operator!=(const queue& _queue) const {
+bool immediate2D::queue::operator!=(const queue& _queue) const {
   if (_queue.m_commands.size() != m_commands.size()) {
     return true;
   }
@@ -222,12 +222,12 @@ bool immediate::queue::operator!=(const queue& _queue) const {
   return false;
 }
 
-void immediate::queue::clear() {
+void immediate2D::queue::clear() {
   m_commands.clear();
   m_string_table.clear();
 }
 
-immediate::font::font(const key& _key, frontend::interface* _frontend)
+immediate2D::font::font(const key& _key, frontend::interface* _frontend)
   : m_frontend{_frontend}
   , m_size{_key.size}
   , m_resolution{k_default_resolution}
@@ -294,7 +294,7 @@ immediate::font::font(const key& _key, frontend::interface* _frontend)
   RX_ASSERT(m_texture, "could not create font texture");
 }
 
-immediate::font::font(font&& _font)
+immediate2D::font::font(font&& _font)
   : m_frontend{_font.m_frontend}
   , m_size{_font.m_size}
   , m_resolution{_font.m_resolution}
@@ -306,11 +306,11 @@ immediate::font::font(font&& _font)
   _font.m_texture = nullptr;
 }
 
-immediate::font::~font() {
+immediate2D::font::~font() {
   m_frontend->destroy_texture(RX_RENDER_TAG("font"), m_texture);
 }
   
-immediate::font::quad immediate::font::quad_for_glyph(rx_size _glyph,
+immediate2D::font::quad immediate2D::font::quad_for_glyph(rx_size _glyph,
   rx_f32 _scale, math::vec2f& position_) const
 {
   const auto& glyph{m_glyphs[_glyph]};
@@ -342,9 +342,9 @@ immediate::font::quad immediate::font::quad_for_glyph(rx_size _glyph,
   return result;
 }
 
-immediate::immediate(frontend::interface* _frontend)
+immediate2D::immediate2D(frontend::interface* _frontend)
   : m_frontend{_frontend}
-  , m_technique{m_frontend->find_technique_by_name("immediate")}
+  , m_technique{m_frontend->find_technique_by_name("immediate2D")}
   , m_queue{m_frontend->allocator()}
   , m_vertices{m_frontend->allocator()}
   , m_elements{m_frontend->allocator()}
@@ -364,20 +364,20 @@ immediate::immediate(frontend::interface* _frontend)
   }
 
   for (rx_size i{0}; i < k_buffers; i++) {
-    m_buffers[i] = m_frontend->create_buffer(RX_RENDER_TAG("immediate"));
+    m_buffers[i] = m_frontend->create_buffer(RX_RENDER_TAG("immediate2D"));
     m_buffers[i]->record_stride(sizeof(vertex));
     m_buffers[i]->record_type(frontend::buffer::type::k_dynamic);
     m_buffers[i]->record_element_type(frontend::buffer::element_type::k_u32);
     m_buffers[i]->record_attribute(frontend::buffer::attribute::type::k_f32, 2, offsetof(vertex, position));
     m_buffers[i]->record_attribute(frontend::buffer::attribute::type::k_f32, 2, offsetof(vertex, coordinate));
     m_buffers[i]->record_attribute(frontend::buffer::attribute::type::k_f32, 4, offsetof(vertex, color));
-    m_frontend->initialize_buffer(RX_RENDER_TAG("immediate"), m_buffers[i]);
+    m_frontend->initialize_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[i]);
   }
 }
 
-immediate::~immediate() {
+immediate2D::~immediate2D() {
   for (rx_size i{0}; i < k_buffers; i++) {
-    m_frontend->destroy_buffer(RX_RENDER_TAG("immediate"), m_buffers[i]);
+    m_frontend->destroy_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[i]);
   }
 
   m_fonts.each([&](rx_size, const font::key&, font* _font) {
@@ -385,7 +385,7 @@ immediate::~immediate() {
   });
 }
 
-void immediate::immediate::render(frontend::target* _target) {
+void immediate2D::immediate2D::render(frontend::target* _target) {
   // avoid rendering if the last update did not produce any draw commands and
   // this iteration has no updates either
   const bool last_empty{m_render_queue[m_rd_index].is_empty()};
@@ -441,7 +441,7 @@ void immediate::immediate::render(frontend::target* _target) {
     m_buffers[m_wr_index]->write_vertices(m_vertices.data(), m_vertices.size() * sizeof(vertex));
     m_buffers[m_wr_index]->write_elements(m_elements.data(), m_elements.size() * sizeof(rx_u32));
 
-    m_frontend->update_buffer(RX_RENDER_TAG("immediate"), m_buffers[m_wr_index]);
+    m_frontend->update_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[m_wr_index]);
 
     // clear staging buffers
     m_vertices.clear();
@@ -503,7 +503,7 @@ void immediate::immediate::render(frontend::target* _target) {
 }
 
 template<rx_size E>
-void immediate::generate_polygon(const math::vec2f (&_coordinates)[E],
+void immediate2D::generate_polygon(const math::vec2f (&_coordinates)[E],
   const rx_f32 _thickness, const math::vec4f& _color, queue::command::type _from_type)
 {
   math::vec2f normals[E];
@@ -558,7 +558,7 @@ void immediate::generate_polygon(const math::vec2f (&_coordinates)[E],
   add_batch(offset, _from_type);
 }
 
-void immediate::generate_line(const math::vec2f& _point_a,
+void immediate2D::generate_line(const math::vec2f& _point_a,
   const math::vec2f& _point_b, rx_f32 _thickness, rx_f32 _roundness,
   const math::vec4f& _color)
 {
@@ -581,7 +581,7 @@ void immediate::generate_line(const math::vec2f& _point_a,
   generate_polygon(vertices, _thickness, _color, queue::command::type::k_line);
 }
 
-void immediate::generate_rectangle(const math::vec2f& _position, const math::vec2f& _size,
+void immediate2D::generate_rectangle(const math::vec2f& _position, const math::vec2f& _size,
   rx_f32 _roundness, const math::vec4f& _color)
 {
   if (_roundness > 0.0f) {
@@ -665,7 +665,7 @@ static rx_size calculate_text_color(const char* _contents, math::vec4f& color_) 
   return 0;
 }
 
-static rx_f32 calculate_text_length(immediate::font* _font, rx_f32 _scale,
+static rx_f32 calculate_text_length(immediate2D::font* _font, rx_f32 _scale,
   const string& _contents)
 {
   // _scale /= static_cast<rx_f32>(_font->size());
@@ -699,7 +699,7 @@ static rx_f32 calculate_text_length(immediate::font* _font, rx_f32 _scale,
   return span;
 }
 
-void immediate::generate_text(rx_s32 _size, const char* _font,
+void immediate2D::generate_text(rx_s32 _size, const char* _font,
   rx_size _font_length, const char* _contents, rx_size _contents_length,
   rx_f32 _scale, const math::vec2f& _position, text_align _align,
   const math::vec4f& _color)
@@ -764,7 +764,7 @@ void immediate::generate_text(rx_s32 _size, const char* _font,
   add_batch(offset, queue::command::type::k_text, font_map->texture());
 }
 
-void immediate::add_batch(rx_size _offset, queue::command::type _type,
+void immediate2D::add_batch(rx_size _offset, queue::command::type _type,
   frontend::texture2D* _texture)
 {
   const rx_size count{m_elements.size() - _offset};

@@ -22,7 +22,9 @@ struct textureCM;
 
 enum class primitive_type : rx_u8 {
   k_triangles,
-  k_triangle_strip
+  k_triangle_strip,
+  k_points,
+  k_lines
 };
 
 enum class command_type : rx_u8 {

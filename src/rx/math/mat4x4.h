@@ -2,7 +2,7 @@
 #define RX_MATH_MAT4X4_H
 #include "rx/math/vec3.h" // vec3
 #include "rx/math/vec4.h" // vec4
-#include "rx/math/trig.h" // deg_to_rad
+#include "rx/math/trig.h" // deg_to_ra
 
 #include "rx/core/math/sin.h" // sin
 #include "rx/core/math/cos.h" // cos
@@ -26,6 +26,9 @@ struct mat4x4 {
   static constexpr mat4x4 invert(const mat4x4& _mat);
   static constexpr mat4x4 perspective(T _fov, const range<T>& _planes, T _aspect);
 
+  static constexpr vec3<T> transform_point(const vec3<T>& _point, const mat4x4& _mat);
+  static constexpr vec3<T> transform_vector(const vec3<T>& _vector, const mat4x4& _mat);
+
   constexpr mat4x4 operator*(const mat4x4& _mat) const;
   constexpr mat4x4 operator+(const mat4x4& _mat) const;
 
@@ -37,6 +40,11 @@ struct mat4x4 {
 
   constexpr mat4x4& operator*=(T _scalar);
   constexpr mat4x4& operator+=(T _scalar);
+
+  template<typename U>
+  friend constexpr bool operator==(const mat4x4<U>& _lhs, const mat4x4<U>& _rhs);
+  template<typename U>
+  friend constexpr bool operator!=(const mat4x4<U>& _lhs, const mat4x4<U>& _rhs);
 
   vec x, y, z, w;
 
@@ -169,6 +177,20 @@ inline constexpr mat4x4<T> mat4x4<T>::perspective(T _fov, const range<T>& _plane
 }
 
 template<typename T>
+inline constexpr vec3<T> mat4x4<T>::transform_point(const vec3<T>& _point, const mat4x4<T>& _mat) {
+  const vec3<T>& w{_mat.w.x, _mat.w.y, _mat.w.z};
+  return transform_vector(_point, _mat) + w;
+}
+
+template<typename T>
+inline constexpr vec3<T> mat4x4<T>::transform_vector(const vec3<T>& _vector, const mat4x4<T>& _mat) {
+  const vec3<T>& x{_mat.x.x, _mat.x.y, _mat.x.z};
+  const vec3<T>& y{_mat.y.x, _mat.y.y, _mat.y.z};
+  const vec3<T>& z{_mat.z.x, _mat.z.y, _mat.z.z};
+  return x * _vector.x + y * _vector.y + z * _vector.z;
+}
+
+template<typename T>
 inline constexpr mat4x4<T> mat4x4<T>::operator*(const mat4x4& _mat) const {
   return {_mat.x*x.x + _mat.y*x.y + _mat.z*x.z + _mat.w*x.w,
           _mat.x*y.x + _mat.y*y.y + _mat.z*y.z + _mat.w*y.w,
@@ -211,6 +233,16 @@ inline constexpr mat4x4<T>& mat4x4<T>::operator+=(T _scalar) {
   return *this = *this + _scalar;
 }
 
+template<typename U>
+constexpr bool operator==(const mat4x4<U>& _lhs, const mat4x4<U>& _rhs) {
+  return _lhs.x == _rhs.x && _lhs.y == _rhs.y && _lhs.z == _rhs.z && _lhs.w == _rhs.w;
+}
+
+template<typename U>
+constexpr bool operator!=(const mat4x4<U>& _lhs, const mat4x4<U>& _rhs) {
+  return _lhs.x != _rhs.x || _lhs.y != _rhs.y || _lhs.z != _rhs.z || _lhs.w != _rhs.w;
+}
+
 template<typename T>
 inline constexpr T mat4x4<T>::det2x2(T a, T b, T c, T d) {
   return a*d - b*c;
@@ -237,5 +269,18 @@ inline constexpr vec3<T> mat4x4<T>::reduce_rotation_angles(const vec3<T>& _rotat
 }
 
 } // namespace rx::math
+
+namespace rx {
+  template<>
+  struct hash<math::mat4x4f> {
+    rx_size operator()(const math::mat4x4f& _value) {
+      const auto x{hash<math::vec4f>{}(_value.x)};
+      const auto y{hash<math::vec4f>{}(_value.y)};
+      const auto z{hash<math::vec4f>{}(_value.z)};
+      const auto w{hash<math::vec4f>{}(_value.w)};
+      return hash_combine(hash_combine(x, hash_combine(y, z)), w);
+    }
+  };
+}
 
 #endif // RX_MATH_MAT4X4_H

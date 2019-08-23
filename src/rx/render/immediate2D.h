@@ -1,5 +1,7 @@
-#ifndef RX_RENDER_IMMEDIATE_H
-#define RX_RENDER_IMMEDIATE_H
+#ifndef RX_RENDER_IMMEDIATE2D_H
+#define RX_RENDER_IMMEDIATE2D_H
+#include <string.h> // strlen
+
 #include "rx/math/vec2.h"
 #include "rx/math/vec4.h"
 
@@ -19,7 +21,7 @@ namespace frontend {
   struct interface;
 }
 
-struct immediate {
+struct immediate2D {
   enum class text_align {
     k_left,
     k_center,
@@ -121,15 +123,15 @@ struct immediate {
     bool is_empty() const;
 
   private:
-    friend struct immediate;
+    friend struct immediate2D;
 
     memory::allocator* m_allocator;
     array<command> m_commands;
     array<char> m_string_table;
   };
 
-  immediate(frontend::interface* _frontend);
-  ~immediate();
+  immediate2D(frontend::interface* _frontend);
+  ~immediate2D();
 
   void render(frontend::target* _target);
   queue& frame_queue();
@@ -236,26 +238,26 @@ private:
   queue m_render_queue[k_buffers];
 };
 
-inline bool immediate::queue::box::operator!=(const box& _box) const {
+inline bool immediate2D::queue::box::operator!=(const box& _box) const {
   return _box.position != position || _box.size != size;
 }
 
-inline bool immediate::queue::rectangle::operator!=(const rectangle& _rectangle) const {
+inline bool immediate2D::queue::rectangle::operator!=(const rectangle& _rectangle) const {
   return box::operator!=(_rectangle) || _rectangle.roundness != roundness;
 }
 
-inline bool immediate::queue::line::operator!=(const line& _line) const {
+inline bool immediate2D::queue::line::operator!=(const line& _line) const {
   return _line.points[0] != points[0] || _line.points[1] != points[1] ||
     _line.roundness != roundness || _line.thickness != thickness;
 }
 
-inline bool immediate::queue::text::operator!=(const text& _text) const {
+inline bool immediate2D::queue::text::operator!=(const text& _text) const {
   return _text.position != position || _text.size != size || _text.scale != scale
     || _text.font_index != font_index || _text.font_length != font_length
     || _text.text_index != text_index || _text.text_length != text_length;
 }
 
-inline constexpr immediate::queue::command::command()
+inline constexpr immediate2D::queue::command::command()
   : kind{queue::command::type::k_uninitialized}
   , flags{0}
   , hash{0}
@@ -264,7 +266,7 @@ inline constexpr immediate::queue::command::command()
 {
 }
 
-inline void immediate::queue::record_text(const char* _font,
+inline void immediate2D::queue::record_text(const char* _font,
   const math::vec2i& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
   const char* _contents, const math::vec4f& _color)
 {
@@ -272,7 +274,7 @@ inline void immediate::queue::record_text(const char* _font,
     strlen(_contents), _color);
 }
 
-inline void immediate::queue::record_text(const string& _font,
+inline void immediate2D::queue::record_text(const string& _font,
   const math::vec2i& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
   const string& _contents, const math::vec4f& _color)
 {
@@ -280,31 +282,31 @@ inline void immediate::queue::record_text(const string& _font,
     _contents.data(), _contents.size(), _color);
 }
 
-inline bool immediate::queue::is_empty() const {
+inline bool immediate2D::queue::is_empty() const {
   return m_commands.is_empty();
 }
 
-inline rx_size immediate::font::key::hash() const {
+inline rx_size immediate2D::font::key::hash() const {
   return hash_combine(name.hash(), rx::hash<rx_s32>{}(size));
 }
 
-inline immediate::queue& immediate::frame_queue() {
+inline immediate2D::queue& immediate2D::frame_queue() {
   return m_queue;
 }
 
-inline bool immediate::font::key::operator==(const key& _key) const {
+inline bool immediate2D::font::key::operator==(const key& _key) const {
   return name == _key.name && size == _key.size;
 }
 
-inline immediate::font::glyph immediate::font::glyph_for_code(rx_u32 _code) const {
+inline immediate2D::font::glyph immediate2D::font::glyph_for_code(rx_u32 _code) const {
   return m_glyphs[static_cast<rx_size>(_code)];
 }
 
-inline rx_s32 immediate::font::size() const {
+inline rx_s32 immediate2D::font::size() const {
   return m_size;
 }
 
-inline frontend::texture2D* immediate::font::texture() const {
+inline frontend::texture2D* immediate2D::font::texture() const {
   return m_texture;
 }
 

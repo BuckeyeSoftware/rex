@@ -1,5 +1,5 @@
 {
-  name: "immediate",
+  name: "immediate2D",
   variants: [
     "USE_SIMPLE",
     "USE_FONT"

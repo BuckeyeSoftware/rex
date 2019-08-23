@@ -35,7 +35,7 @@ struct interface {
   const array<mesh>& meshes() const &;
   const array<rx_u32>& elements() const &;
   array<rx_u32>&& elements() &&;
-  rx_size joints() const;
+  const array<loader::joint>& joints() const &;
 
 private:
   friend struct animation;
@@ -59,7 +59,7 @@ private:
   array<mesh> m_meshes;
   array<loader::animation> m_animations;
   array<math::mat3x4f> m_frames;
-  rx_size m_joints;
+  array<loader::joint> m_joints;
 };
 
 inline constexpr interface::interface(memory::allocator* _allocator)
@@ -67,7 +67,7 @@ inline constexpr interface::interface(memory::allocator* _allocator)
   , m_flags{0}
   , as_nat{}
   , m_elements{m_allocator}
-  , m_joints{0}
+  , m_joints{m_allocator}
 {
 }
 
@@ -107,7 +107,7 @@ inline array<rx_u32>&& interface::elements() && {
   return utility::move(m_elements);
 }
 
-inline rx_size interface::joints() const {
+inline const array<loader::joint>& interface::joints() const & {
   return m_joints;
 }
 

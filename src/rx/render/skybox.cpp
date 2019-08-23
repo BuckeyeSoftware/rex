@@ -121,7 +121,8 @@ bool skybox::load(const string& _file_name) {
   m_texture->record_filter({false, false, false});
   m_texture->record_type(frontend::texture::type::k_static);
   m_texture->record_format(frontend::texture::data_format::k_rgba_u8);
-  m_texture->record_wrap({frontend::texture::wrap_type::k_clamp_to_edge, frontend::texture::wrap_type::k_clamp_to_edge});
+  m_texture->record_wrap({frontend::texture::wrap_type::k_clamp_to_edge,
+    frontend::texture::wrap_type::k_clamp_to_edge});
 
   math::vec2z dimensions;
   for (const auto& face : k_faces) {

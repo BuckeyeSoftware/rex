@@ -24,6 +24,8 @@ loader::loader(memory::allocator* _allocator)
   , m_blend_indices{m_allocator}
   , m_blend_weights{m_allocator}
   , m_frames{m_allocator}
+  , m_animations{m_allocator}
+  , m_joints{m_allocator}
 {
 }
 

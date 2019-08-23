@@ -191,7 +191,8 @@ static optional<shader::inout_type> inout_type_from_string(const string& _type) 
     {"vec2f", shader::inout_type::k_vec2f},
     {"vec3f", shader::inout_type::k_vec3f},
     {"vec4f", shader::inout_type::k_vec4f},
-    {"vec4b", shader::inout_type::k_vec4b}
+    {"vec4b", shader::inout_type::k_vec4b},
+    {"float", shader::inout_type::k_float}
   };
 
   for (const auto& element : k_table) {
