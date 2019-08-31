@@ -19,7 +19,6 @@ void abort(const char* _message) {
   static_globals::find("log")->fini();
 
   static_globals::find("system_allocator")->fini();
-  static_globals::find("malloc_allocator")->fini();
 
 #if defined(RX_PLATFORM_WINDOWS)
   ::exit(3);

@@ -17,13 +17,6 @@ stats_allocator::stats_allocator(allocator* _allocator)
   RX_ASSERT(m_allocator, "null allocator");
 }
 
-stats_allocator::~stats_allocator() {
-  // concurrency::scope_lock lock(m_lock);
-  //RX_ASSERT(m_statistics.allocations == m_statistics.deallocations,
-  //  "leaked memory (%zu allocations, %zu deallocations)",
-  //  m_statistics.allocations, m_statistics.deallocations);
-}
-
 rx_byte* stats_allocator::allocate(rx_size _size) {
   const rx_uintptr size_as_multiple{round_to_alignment(_size)};
   const rx_uintptr actual_size{size_as_multiple + sizeof(header) + k_alignment};
@@ -34,7 +27,7 @@ rx_byte* stats_allocator::allocate(rx_size _size) {
   node->base = base;
 
   {
-    concurrency::scope_lock lock(m_lock);
+    concurrency::scope_lock locked{m_lock};
     m_statistics.allocations++;
     m_statistics.used_request_bytes += _size;
     m_statistics.used_actual_bytes += actual_size;
@@ -59,7 +52,7 @@ rx_byte* stats_allocator::reallocate(rx_byte* _data, rx_size _size) {
     node->base = resize;
 
     {
-      concurrency::scope_lock lock(m_lock);
+      concurrency::scope_lock locked{m_lock};
       m_statistics.request_reallocations++;
       if (resize == original) {
         m_statistics.actual_reallocations++;
@@ -82,7 +75,7 @@ void stats_allocator::deallocate(rx_byte* _data) {
     const rx_size actual_size{round_to_alignment(node->size) + sizeof(header) + k_alignment};
 
     {
-      concurrency::scope_lock lock(m_lock);
+      concurrency::scope_lock locked{m_lock};
       m_statistics.deallocations++;
       m_statistics.used_request_bytes -= request_size;
       m_statistics.used_actual_bytes -= actual_size;
@@ -92,8 +85,9 @@ void stats_allocator::deallocate(rx_byte* _data) {
   }
 }
 
-statistics stats_allocator::stats() {
-  concurrency::scope_lock lock(m_lock);
+stats_allocator::statistics stats_allocator::stats() {
+  // Hold a lock and make an entire copy of the structure atomically
+  concurrency::scope_lock locked{m_lock};
   return m_statistics;
 }
 

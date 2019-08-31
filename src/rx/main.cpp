@@ -564,11 +564,8 @@ int entry(int argc, char **argv)
 int main(int argc, char **argv)
 {
   // trigger allocator initialization first
-  auto malloc_allocator{rx::static_globals::find("malloc_allocator")};
   auto system_allocator{rx::static_globals::find("system_allocator")};
-  RX_ASSERT(malloc_allocator, "malloc allocator missing");
   RX_ASSERT(system_allocator, "system allocator missing");
-  malloc_allocator->init();
   system_allocator->init();
 
   // trigger log initialization
@@ -589,9 +586,8 @@ int main(int argc, char **argv)
   // finalize log
   log->fini();
 
-  // finalize allocators
+  // finalize allocator
   system_allocator->fini();
-  malloc_allocator->fini();
 
   return result;
 }

@@ -58,8 +58,6 @@ struct alignas(16) command_header {
   ::rx::render::frontend::command_header::info{__FILE__, (description), __LINE__}
 
 struct command_buffer {
-  static constexpr const rx_size k_alignment{16};
-
   command_buffer(memory::allocator* _allocator, rx_size _size);
   ~command_buffer();
 
@@ -71,6 +69,8 @@ struct command_buffer {
   rx_size size() const;
 
 private:
+  memory::allocator* m_base_allocator;
+  rx_byte* m_base_memory;
   memory::bump_point_allocator m_allocator;
 };
 

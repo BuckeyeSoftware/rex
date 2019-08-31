@@ -1,26 +1,24 @@
-#include <stdlib.h> // malloc, realloc, free
-
-#include "rx/core/memory/system_allocator.h" // system_allocator
-#include "rx/core/concurrency/scope_lock.h"
-#include "rx/core/algorithm/max.h"
+#include "rx/core/memory/system_allocator.h"
 
 namespace rx::memory {
 
-struct malloc_allocator : allocator {
-  virtual rx_byte* allocate(rx_size _size) {
-    return reinterpret_cast<rx_byte*>(malloc(_size));
-  }
+system_allocator::system_allocator()
+  : m_stats_allocator{&m_heap_allocator}
+{
+}
 
-  virtual rx_byte* reallocate(rx_byte* _data, rx_size _size) {
-    return reinterpret_cast<rx_byte*>(realloc(_data, _size));
-  }
+rx_byte* system_allocator::allocate(rx_size _size) {
+  return m_stats_allocator.allocate(_size);
+}
 
-  virtual void deallocate(rx_byte* _data) {
-    free(_data);
-  }
-};
+rx_byte* system_allocator::reallocate(rx_byte* _data, rx_size _size) {
+  return m_stats_allocator.reallocate(_data, _size);
+}
 
-RX_GLOBAL<malloc_allocator> g_malloc_allocator{"malloc_allocator"};
-RX_GLOBAL<stats_allocator> g_system_allocator{"system_allocator", &g_malloc_allocator};
+void system_allocator::deallocate(rx_byte* _data) {
+  return m_stats_allocator.deallocate(_data);
+}
+
+RX_GLOBAL<system_allocator> g_system_allocator{"system_allocator"};
 
 } // namespace rx::memory
