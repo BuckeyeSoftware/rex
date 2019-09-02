@@ -14,7 +14,7 @@ namespace rx::memory {
 // The purpose of this allocator is to provide a means to debug and track
 // information about any allocator.
 struct stats_allocator
-  : allocator
+  final : allocator
 {
   stats_allocator() = delete;
   stats_allocator(allocator* _allocator);

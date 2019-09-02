@@ -111,7 +111,7 @@ struct iqm::header {
   rx_u32 extensions_offset;
 };
 
-bool iqm::read(const array<rx_byte>& _data) {
+bool iqm::read(const vector<rx_byte>& _data) {
   const auto read_header{reinterpret_cast<const header*>(_data.data())};
   if (memcmp(read_header->magic, "INTERQUAKEMODEL\0", sizeof read_header->magic) != 0) {
     return error("malformed magic: %s", read_header->magic);
@@ -136,7 +136,7 @@ bool iqm::read(const array<rx_byte>& _data) {
   return true;
 }
 
-bool iqm::read_meshes(const header& _header, const array<rx_byte>& _data) {
+bool iqm::read_meshes(const header& _header, const vector<rx_byte>& _data) {
   const char* string_table{_header.text_offset ? reinterpret_cast<const char *>(_data.data() + _header.text_offset) : ""};
 
   const rx_f32* in_position{nullptr};
@@ -297,12 +297,12 @@ bool iqm::read_meshes(const header& _header, const array<rx_byte>& _data) {
   return true;
 }
 
-bool iqm::read_animations(const header& _header, const array<rx_byte>& _data) {
+bool iqm::read_animations(const header& _header, const vector<rx_byte>& _data) {
   const auto n_joints{static_cast<rx_size>(_header.joints)};
 
 
-  array<math::mat3x4f> generic_base_frame{m_allocator, n_joints};
-  array<math::mat3x4f> inverse_base_frame{m_allocator, n_joints};
+  vector<math::mat3x4f> generic_base_frame{m_allocator, n_joints};
+  vector<math::mat3x4f> inverse_base_frame{m_allocator, n_joints};
 
   m_joints.resize(n_joints);
 

@@ -2,7 +2,7 @@
 #define RX_RENDER_FRONTEND_TEXTURE_H
 #include "rx/render/frontend/resource.h"
 
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 #include "rx/core/hint.h"
 #include "rx/core/algorithm/max.h"
 #include "rx/core/math/log2.h"
@@ -80,7 +80,7 @@ struct texture : resource {
 
   void validate() const;
 
-  const array<rx_byte>& data() const &;
+  const vector<rx_byte>& data() const &;
   data_format format() const;
   filter_options filter() const;
   rx_size channels() const;
@@ -96,7 +96,7 @@ protected:
     k_dimensions = 1 << 4
   };
 
-  array<rx_byte> m_data;
+  vector<rx_byte> m_data;
   data_format m_format;
   type m_type;
   filter_options m_filter;
@@ -127,7 +127,7 @@ struct texture1D : texture {
 private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
-  array<level_info<dimension_type>> m_levels;
+  vector<level_info<dimension_type>> m_levels;
 };
 
 struct texture2D : texture {
@@ -154,7 +154,7 @@ struct texture2D : texture {
 private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
-  array<level_info<dimension_type>> m_levels;
+  vector<level_info<dimension_type>> m_levels;
 };
 
 struct texture3D : texture {
@@ -181,7 +181,7 @@ struct texture3D : texture {
 private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
-  array<level_info<dimension_type>> m_levels;
+  vector<level_info<dimension_type>> m_levels;
 };
 
 struct textureCM : texture {
@@ -217,11 +217,11 @@ struct textureCM : texture {
 private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
-  array<level_info<dimension_type>> m_levels;
+  vector<level_info<dimension_type>> m_levels;
 };
 
 // texture
-inline const array<rx_byte>& texture::data() const & {
+inline const vector<rx_byte>& texture::data() const & {
   return m_data;
 }
 

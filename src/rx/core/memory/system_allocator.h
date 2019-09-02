@@ -14,7 +14,7 @@ namespace rx::memory {
 // an allocator, this is the allocator used. More specifically, the global
 // g_system_allocator is used.
 struct system_allocator
-  : allocator
+  final : allocator
 {
   system_allocator();
 

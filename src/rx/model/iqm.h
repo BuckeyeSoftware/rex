@@ -10,11 +10,11 @@ struct iqm : loader {
 
   struct header;
 
-  virtual bool read(const array<rx_byte>& _data);
+  virtual bool read(const vector<rx_byte>& _data);
 
 private:
-  bool read_meshes(const header& _header, const array<rx_byte>& _data);
-  bool read_animations(const header& _header, const array<rx_byte>& _data);
+  bool read_meshes(const header& _header, const vector<rx_byte>& _data);
+  bool read_animations(const header& _header, const vector<rx_byte>& _data);
 };
 
 inline iqm::iqm()

@@ -2,7 +2,7 @@
 #define RX_CORE_STRING_H
 #include "rx/core/assert.h" // RX_ASSERT
 #include "rx/core/format.h" // format
-#include "rx/core/array.h" // array
+#include "rx/core/vector.h" // vector
 
 #include "rx/core/traits/remove_cvref.h"
 
@@ -65,7 +65,7 @@ struct string {
   string rstrip(const char* _set) const;
 
   // split string by |token| up to |count| times, use |count| of zero for no limit
-  array<string> split(int _ch, rx_size _count = 0) const;
+  vector<string> split(int _ch, rx_size _count = 0) const;
 
   // take substring from |offset| of |length|, use |length| of zero for whole string
   string substring(rx_size _offset, rx_size _length = 0) const;

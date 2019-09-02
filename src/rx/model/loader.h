@@ -3,7 +3,7 @@
 #include "rx/model/mesh.h"
 
 #include "rx/core/concepts/interface.h"
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 
 #include "rx/math/vec2.h"
 #include "rx/math/vec3.h"
@@ -17,7 +17,7 @@ struct loader : concepts::interface {
   bool load(const string& _file_name);
 
   // implemented by each model loader
-  virtual bool read(const array<rx_byte>& _data) = 0;
+  virtual bool read(const vector<rx_byte>& _data) = 0;
 
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments);
@@ -34,27 +34,27 @@ struct loader : concepts::interface {
     rx_s32 parent;
   };
 
-  const array<mesh>& meshes() const &;
-  array<mesh>&& meshes() &&;
-  const array<rx_u32>& elements() const &;
-  array<rx_u32>&& elements() &&;
+  const vector<mesh>& meshes() const &;
+  vector<mesh>&& meshes() &&;
+  const vector<rx_u32>& elements() const &;
+  vector<rx_u32>&& elements() &&;
 
-  const array<math::vec3f>& positions() const &;
-  const array<math::vec2f>& coordinates() const &;
-  const array<math::vec3f>& normals() const &;
-  const array<math::vec4f>& tangents() const &;
+  const vector<math::vec3f>& positions() const &;
+  const vector<math::vec2f>& coordinates() const &;
+  const vector<math::vec3f>& normals() const &;
+  const vector<math::vec4f>& tangents() const &;
 
   // for skeletally animated models
-  const array<math::mat3x4f>& frames() const;
-  array<math::mat3x4f>&& frames();
-  const array<animation>& animations() const;
-  array<animation>&& animations();
+  const vector<math::mat3x4f>& frames() const;
+  vector<math::mat3x4f>&& frames();
+  const vector<animation>& animations() const;
+  vector<animation>&& animations();
 
-  const array<math::vec4b>& blend_indices() const &;
-  const array<math::vec4b>& blend_weights() const &;
+  const vector<math::vec4b>& blend_indices() const &;
+  const vector<math::vec4b>& blend_weights() const &;
   
-  array<joint>&& joints();
-  const array<joint>& joints() const;
+  vector<joint>&& joints();
+  const vector<joint>& joints() const;
 
 protected:
   void generate_normals();
@@ -62,20 +62,20 @@ protected:
 
   memory::allocator* m_allocator;
 
-  array<mesh> m_meshes;
+  vector<mesh> m_meshes;
 
-  array<rx_u32> m_elements;
+  vector<rx_u32> m_elements;
 
-  array<math::vec3f> m_positions;
-  array<math::vec2f> m_coordinates;
-  array<math::vec3f> m_normals;
-  array<math::vec4f> m_tangents; // w = bitangent sign
+  vector<math::vec3f> m_positions;
+  vector<math::vec2f> m_coordinates;
+  vector<math::vec3f> m_normals;
+  vector<math::vec4f> m_tangents; // w = bitangent sign
 
-  array<math::vec4b> m_blend_indices;
-  array<math::vec4b> m_blend_weights;
-  array<math::mat3x4f> m_frames;
-  array<animation> m_animations;
-  array<joint> m_joints;
+  vector<math::vec4b> m_blend_indices;
+  vector<math::vec4b> m_blend_weights;
+  vector<math::mat3x4f> m_frames;
+  vector<animation> m_animations;
+  vector<joint> m_joints;
 
   string m_error;
 };
@@ -86,67 +86,67 @@ inline bool loader::error(const char* _format, Ts&&... _arguments) {
   return false;
 }
 
-inline const array<mesh>& loader::meshes() const & {
+inline const vector<mesh>& loader::meshes() const & {
   return m_meshes;
 }
 
-inline array<mesh>&& loader::meshes() && {
+inline vector<mesh>&& loader::meshes() && {
   return utility::move(m_meshes);
 }
 
-inline const array<rx_u32>& loader::elements() const & {
+inline const vector<rx_u32>& loader::elements() const & {
   return m_elements;
 }
 
-inline array<rx_u32>&& loader::elements() && {
+inline vector<rx_u32>&& loader::elements() && {
   return utility::move(m_elements);
 }
 
-inline const array<math::vec3f>& loader::positions() const & {
+inline const vector<math::vec3f>& loader::positions() const & {
   return m_positions;
 }
 
-inline const array<math::vec2f>& loader::coordinates() const & {
+inline const vector<math::vec2f>& loader::coordinates() const & {
   return m_coordinates;
 }
 
-inline const array<math::vec3f>& loader::normals() const & {
+inline const vector<math::vec3f>& loader::normals() const & {
   return m_normals;
 }
 
-inline const array<math::vec4f>& loader::tangents() const & {
+inline const vector<math::vec4f>& loader::tangents() const & {
   return m_tangents;
 }
 
-inline const array<math::mat3x4f>& loader::frames() const {
+inline const vector<math::mat3x4f>& loader::frames() const {
   return m_frames;
 }
 
-inline array<math::mat3x4f>&& loader::frames() {
+inline vector<math::mat3x4f>&& loader::frames() {
   return utility::move(m_frames);
 }
 
-inline const array<loader::animation>& loader::animations() const {
+inline const vector<loader::animation>& loader::animations() const {
   return m_animations;
 }
 
-inline array<loader::animation>&& loader::animations() {
+inline vector<loader::animation>&& loader::animations() {
   return utility::move(m_animations);
 }
 
-inline const array<math::vec4b>& loader::blend_indices() const & {
+inline const vector<math::vec4b>& loader::blend_indices() const & {
   return m_blend_indices;
 }
 
-inline const array<math::vec4b>& loader::blend_weights() const & {
+inline const vector<math::vec4b>& loader::blend_weights() const & {
   return m_blend_weights;
 }
 
-inline array<loader::joint>&& loader::joints() {
+inline vector<loader::joint>&& loader::joints() {
   return utility::move(m_joints);
 }
 
-inline const array<loader::joint>& loader::joints() const {
+inline const vector<loader::joint>& loader::joints() const {
   return m_joints;
 }
 

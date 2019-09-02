@@ -1,6 +1,6 @@
 #ifndef RX_RENDER_FRONTEND_BUFFER_H
 #define RX_RENDER_FRONTEND_BUFFER_H
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 
 #include "rx/render/frontend/resource.h"
 
@@ -60,9 +60,9 @@ struct buffer : resource {
   // record buffer type |_type|
   void record_type(type _type);
 
-  const array<rx_byte>& vertices() const &;
-  const array<rx_byte>& elements() const &;
-  const array<attribute>& attributes() const &;
+  const vector<rx_byte>& vertices() const &;
+  const vector<rx_byte>& elements() const &;
+  const vector<attribute>& attributes() const &;
   rx_size stride() const;
   element_type element_kind() const;
   type kind() const;
@@ -81,9 +81,9 @@ private:
     k_attribute    = 1 << 3
   };
 
-  array<rx_byte> m_vertices_store;
-  array<rx_byte> m_elements_store;
-  array<attribute> m_attributes;
+  vector<rx_byte> m_vertices_store;
+  vector<rx_byte> m_elements_store;
+  vector<attribute> m_attributes;
   element_type m_element_type;
   type m_type;
   rx_size m_stride;
@@ -136,15 +136,15 @@ inline void buffer::record_element_type(element_type _type) {
   m_element_type = _type;
 }
 
-inline const array<rx_byte>& buffer::vertices() const & {
+inline const vector<rx_byte>& buffer::vertices() const & {
   return m_vertices_store;
 }
 
-inline const array<rx_byte>& buffer::elements() const & {
+inline const vector<rx_byte>& buffer::elements() const & {
   return m_elements_store;
 }
 
-inline const array<buffer::attribute>& buffer::attributes() const & {
+inline const vector<buffer::attribute>& buffer::attributes() const & {
   return m_attributes;
 }
 

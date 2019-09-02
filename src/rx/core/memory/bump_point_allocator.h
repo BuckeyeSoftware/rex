@@ -22,7 +22,7 @@ namespace rx::memory {
 // The purpose of this allocator is to provide a very quick, linear burn 
 // scratch space to allocate shortly-lived objects and to reset.
 struct bump_point_allocator
-  : allocator
+  final : allocator
 {
   bump_point_allocator() = delete;
 

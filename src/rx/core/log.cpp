@@ -3,7 +3,7 @@
 
 #include "rx/core/log.h" // log
 #include "rx/core/string.h" // string
-#include "rx/core/array.h" // array
+#include "rx/core/vector.h" // vector
 #include "rx/core/debug.h" // RX_MESSAGE
 #include "rx/core/algorithm/max.h"
 
@@ -78,12 +78,12 @@ struct logger {
   };
 
   filesystem::file m_file;
-  array<static_node*> m_logs;
+  vector<static_node*> m_logs;
   rx_size m_max_name_length;
   rx_size m_max_level_length;
   int m_status;
   concurrency::mutex m_mutex;
-  array<message> m_queue; // protected by |m_mutex|
+  vector<message> m_queue; // protected by |m_mutex|
   concurrency::condition_variable m_ready_condition;
   concurrency::condition_variable m_flush_condition;
   concurrency::thread m_thread;

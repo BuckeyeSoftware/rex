@@ -40,7 +40,7 @@ bool interface::load(const char* file_name) {
     }
 
     // tokenize line contents
-    array<string> tokens{line.split(' ', 2)};
+    vector<string> tokens{line.split(' ', 2)};
     variable_status status{change(tokens[0], tokens[1])};
     switch (status) {
     case variable_status::k_malformed:

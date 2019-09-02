@@ -144,7 +144,7 @@ bool file::is_valid() const {
   return m_impl != nullptr;
 }
 
-optional<array<rx_byte>> read_binary_file(memory::allocator* _allocator, const char* _file_name) {
+optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const char* _file_name) {
   file open_file{_file_name, "rb"};
   if (!open_file) {
     log_file(log::level::k_error, "failed to open file '%s' [%s]", _file_name,
@@ -154,7 +154,7 @@ optional<array<rx_byte>> read_binary_file(memory::allocator* _allocator, const c
 
   const auto size{open_file.size()};
   if (size) {
-    array<rx_byte> data{_allocator, *size};
+    vector<rx_byte> data{_allocator, *size};
     if (!open_file.read(data.data(), data.size())) {
       log_file(log::level::k_error, "failed to read file '%s' [%s]", _file_name,
         strerror(errno));
@@ -163,7 +163,7 @@ optional<array<rx_byte>> read_binary_file(memory::allocator* _allocator, const c
     return data;
   } else {
     // NOTE: taking advantage of stdio buffering here to make this reasonable
-    array<rx_byte> data{_allocator, 1};
+    vector<rx_byte> data{_allocator, 1};
     for(rx_byte* cursor{data.data()}; open_file.read(cursor, 1); cursor++) {
       data.resize(data.size() + 1);
     }

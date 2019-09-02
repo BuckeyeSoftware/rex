@@ -296,10 +296,10 @@ rx_size string::scan(const char* _scan_format, ...) const {
   return static_cast<rx_size>(result);
 }
 
-array<string> string::split(int _token, rx_size _count) const {
+vector<string> string::split(int _token, rx_size _count) const {
   bool quoted{false};
   bool limit{_count > 0};
-  array<string> result;
+  vector<string> result;
 
   // when there is a limit we can reserve the storage upfront
   if (limit) {

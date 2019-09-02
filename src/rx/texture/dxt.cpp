@@ -335,7 +335,7 @@ static inline void compress_alpha_block(const rx_byte *const _uncompressed,
 }
 
 template<dxt_type T>
-array<rx_byte> dxt_compress(memory::allocator* _allocator,
+vector<rx_byte> dxt_compress(memory::allocator* _allocator,
   const rx_byte *const _uncompressed, rx_size _width, rx_size _height,
   rx_size _channels, rx_size& out_size_, rx_size& optimized_blocks_)
 {
@@ -345,7 +345,7 @@ array<rx_byte> dxt_compress(memory::allocator* _allocator,
 
   out_size_ = ((_width + 3) >> 2) * ((_height + 3) >> 2) * (T == dxt_type::k_dxt1 ? 8 : 16);
 
-  array<rx_byte> compressed{_allocator, out_size_};
+  vector<rx_byte> compressed{_allocator, out_size_};
 
   rx_byte ublock[16 * (T == dxt_type::k_dxt1 ? 3 : 4)];
   rx_byte cblock[8];
@@ -401,12 +401,12 @@ array<rx_byte> dxt_compress(memory::allocator* _allocator,
   return compressed;
 }
 
-template array<rx_byte> dxt_compress<dxt_type::k_dxt1>(
+template vector<rx_byte> dxt_compress<dxt_type::k_dxt1>(
   memory::allocator* _allocator, const rx_byte *const _uncompressed,
   rx_size _width, rx_size _height, rx_size _channels, rx_size& out_size_,
   rx_size& optimized_blocks_);
 
-template array<rx_byte> dxt_compress<dxt_type::k_dxt5>(
+template vector<rx_byte> dxt_compress<dxt_type::k_dxt5>(
   memory::allocator* _allocator, const rx_byte *const _uncompressed,
   rx_size _width, rx_size _height, rx_size _channels, rx_size& out_size_,
   rx_size& optimized_blocks_);

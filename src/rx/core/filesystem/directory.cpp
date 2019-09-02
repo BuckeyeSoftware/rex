@@ -16,7 +16,7 @@ namespace rx::filesystem {
 
 #if defined(RX_PLATFORM_WINDOWS)
 struct find_context {
-  array<rx_u16> path_data;
+  vector<rx_u16> path_data;
 };
 #endif
 
@@ -28,7 +28,7 @@ directory::directory(memory::allocator* _allocator, const char* _path)
 #elif defined(RX_PLATFORM_WINDOWS)
   // WIN32 FindData does not support "rewinding" a directory so |each| must open it each time,
   // the only thing we can cache between reuses of a directory object is the path conversion
-  array<rx_u16>* path_data{m_allocator->create<array<rx_u16>>(m_allocator)};
+  vector<rx_u16>* path_data{m_allocator->create<vector<rx_u16>>(m_allocator)};
 
   const wide_string path_utf16{string(_path).to_utf16()};
   static constexpr const wchar_t k_path_extra[] = L"\\*";
@@ -48,7 +48,7 @@ directory::~directory() {
   }
 #elif defined(RX_PLATFORM_WINDOWS)
   if (m_impl) {
-    m_allocator->destroy<array<rx_u16>>(m_impl);
+    m_allocator->destroy<vector<rx_u16>>(m_impl);
   }
 #endif
 }

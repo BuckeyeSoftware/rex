@@ -1,6 +1,6 @@
 #ifndef RX_RENDER_FRONTEND_TARGET_H
 #define RX_RENDER_FRONTEND_TARGET_H
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/resource.h"
@@ -40,7 +40,7 @@ struct target : resource {
   texture2D* depth() const;
   texture2D* stencil() const;
   texture2D* depth_stencil() const;
-  const array<texture2D*> attachments() const &;
+  const vector<texture2D*> attachments() const &;
   bool is_swapchain() const;
 
   const math::vec2z& dimensions() const;
@@ -51,9 +51,9 @@ private:
   void update_resource_usage();
 
   enum /* m_flags */ {
-    k_depth = 1 << 0,
-    k_stencil = 1 << 1,
-    k_dimensions = 1<< 2
+    k_depth      = 1 << 0,
+    k_stencil    = 1 << 1,
+    k_dimensions = 1 << 2
   };
 
   union {
@@ -64,7 +64,7 @@ private:
     texture2D* m_depth_stencil_texture;
   };
 
-  array<texture2D*> m_attachments;
+  vector<texture2D*> m_attachments;
   int m_flags;
   bool m_is_swapchain;
   math::vec2z m_dimensions;
@@ -82,7 +82,7 @@ inline texture2D* target::depth_stencil() const {
   return m_depth_stencil_texture;
 }
 
-inline const array<texture2D*> target::attachments() const & {
+inline const vector<texture2D*> target::attachments() const & {
   return m_attachments;
 }
 

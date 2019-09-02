@@ -125,8 +125,8 @@ void loader::generate_normals() {
 bool loader::generate_tangents() {
   const rx_size vertex_count{m_positions.size()};
 
-  array<math::vec3f> tangents{m_allocator, vertex_count};
-  array<math::vec3f> bitangents{m_allocator, vertex_count};
+  vector<math::vec3f> tangents{m_allocator, vertex_count};
+  vector<math::vec3f> bitangents{m_allocator, vertex_count};
 
   for (rx_size i{0}; i < m_elements.size(); i += 3) {
     const rx_u32 index0{m_elements[i+0]};

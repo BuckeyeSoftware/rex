@@ -32,16 +32,16 @@ struct chain
 
   void generate(loader&& _loader, bool _has_mipchain, bool _want_mipchain);
 
-  void generate(array<rx_byte>&& _data, pixel_format _format,
+  void generate(vector<rx_byte>&& _data, pixel_format _format,
     const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain);
   void generate(const rx_byte* _data, pixel_format _format,
     const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain);
 
   void resize(const math::vec2z& _dimensions);
 
-  array<rx_byte>&& data() &&;
-  const array<rx_byte>& data() const &;
-  const array<level>& levels() const &;
+  vector<rx_byte>&& data() &&;
+  const vector<rx_byte>& data() const &;
+  const vector<level>& levels() const &;
   const math::vec2z& dimensions() const &;
   pixel_format format() const;
   rx_size bpp() const;
@@ -51,8 +51,8 @@ private:
 
   static pixel_format pixel_format_for_loader_bpp(rx_size _bpp);
 
-  array<rx_byte> m_data;
-  array<level> m_levels;
+  vector<rx_byte> m_data;
+  vector<level> m_levels;
   math::vec2z m_dimensions;
   pixel_format m_pixel_format;
 };
@@ -92,15 +92,15 @@ inline void chain::generate(loader&& _loader, bool _has_mipchain,
     _has_mipchain, _want_mipchain);
 }
 
-inline array<rx_byte>&& chain::data() && {
+inline vector<rx_byte>&& chain::data() && {
   return utility::move(m_data);
 }
 
-inline const array<rx_byte>& chain::data() const & {
+inline const vector<rx_byte>& chain::data() const & {
   return m_data;
 }
 
-inline const array<chain::level>& chain::levels() const & {
+inline const vector<chain::level>& chain::levels() const & {
   return m_levels;
 }
 

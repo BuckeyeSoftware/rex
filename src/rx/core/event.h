@@ -27,7 +27,7 @@ struct event {
 private:
   friend struct handle;
 
-  array<delegate> m_delegates;
+  vector<delegate> m_delegates;
 };
 
 template<typename T>

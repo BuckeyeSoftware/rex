@@ -126,8 +126,8 @@ struct immediate2D {
     friend struct immediate2D;
 
     memory::allocator* m_allocator;
-    array<command> m_commands;
-    array<char> m_string_table;
+    vector<command> m_commands;
+    vector<char> m_string_table;
   };
 
   immediate2D(frontend::interface* _frontend);
@@ -172,7 +172,7 @@ struct immediate2D {
     rx_s32 m_size;
     rx_size m_resolution;
     frontend::texture2D* m_texture;
-    array<glyph> m_glyphs;
+    vector<glyph> m_glyphs;
   };
 
 private:
@@ -226,14 +226,14 @@ private:
 
   // generated commands, vertices, elements and batches
   queue m_queue;
-  array<vertex> m_vertices;
-  array<rx_u32> m_elements;
-  array<batch> m_batches;
+  vector<vertex> m_vertices;
+  vector<rx_u32> m_elements;
+  vector<batch> m_batches;
 
   // buffering of batched immediates
   rx_size m_rd_index;
   rx_size m_wr_index;
-  array<batch> m_render_batches[k_buffers];
+  vector<batch> m_render_batches[k_buffers];
   frontend::buffer* m_buffers[k_buffers];
   queue m_render_queue[k_buffers];
 };

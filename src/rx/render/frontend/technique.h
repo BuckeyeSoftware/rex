@@ -1,7 +1,7 @@
 #ifndef RX_RENDER_FRONTEND_TECHNIQUE_H
 #define RX_RENDER_FRONTEND_TECHNIQUE_H
 #include "rx/core/string.h"
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 #include "rx/core/json.h"
 #include "rx/core/map.h"
 #include "rx/core/log.h"
@@ -117,13 +117,13 @@ private:
 
   interface* m_frontend;
   type m_type;
-  array<program*> m_programs;
-  array<rx_u64> m_permute_flags;
+  vector<program*> m_programs;
+  vector<rx_u64> m_permute_flags;
   string m_name;
 
-  array<shader_definition> m_shader_definitions;
-  array<uniform_definition> m_uniform_definitions;
-  array<string> m_specializations;
+  vector<shader_definition> m_shader_definitions;
+  vector<uniform_definition> m_uniform_definitions;
+  vector<string> m_specializations;
 };
 
 inline const string& technique::name() const {

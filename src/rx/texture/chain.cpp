@@ -9,7 +9,7 @@
 
 namespace rx::texture {
 
-void chain::generate(array<rx_byte>&& _data, pixel_format _format,
+void chain::generate(vector<rx_byte>&& _data, pixel_format _format,
   const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain)
 {
   m_data = utility::move(_data);
@@ -28,10 +28,10 @@ void chain::generate(const rx_byte* _data, pixel_format _format,
   generate_mipchain(_has_mipchain, _want_mipchain);
 }
 
-static array<chain::level> generate_levels(memory::allocator* _allocator,
+static vector<chain::level> generate_levels(memory::allocator* _allocator,
   bool _want_mipchain, const math::vec2z& _dimensions, rx_size _bpp)
 {
-  array<chain::level> result{_allocator};
+  vector<chain::level> result{_allocator};
 
   if (_want_mipchain) {
     // levels = log2(max(w, h)+1)
@@ -130,7 +130,7 @@ void chain::resize(const math::vec2z& _dimensions) {
       generate_mipchain(true, true);
     } else {
       // resize mipchain image |best_index| to |_dimensions|
-      array<rx_byte> data{m_data.allocator(), _dimensions.area() * bpp()};
+      vector<rx_byte> data{m_data.allocator(), _dimensions.area() * bpp()};
     
       scale(m_data.data() + level.offset, level.dimensions.w,
         level.dimensions.h, bpp(), level.dimensions.w * bpp(), data.data(),
@@ -146,7 +146,7 @@ void chain::resize(const math::vec2z& _dimensions) {
     // no mipchain
 
     // resize and move data
-    array<rx_byte> data{m_data.allocator(), _dimensions.area() * bpp()};
+    vector<rx_byte> data{m_data.allocator(), _dimensions.area() * bpp()};
     scale(m_data.data(), m_dimensions.w, m_dimensions.h, bpp(),
       m_dimensions.w * bpp(), data.data(), _dimensions.w, _dimensions.h);
     

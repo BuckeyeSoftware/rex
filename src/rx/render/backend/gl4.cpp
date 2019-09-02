@@ -383,7 +383,7 @@ namespace detail {
     }
 
     GLuint handle;
-    array<GLint> uniforms;
+    vector<GLint> uniforms;
   };
 
   struct texture1D {
@@ -779,7 +779,7 @@ static constexpr const char* uniform_to_string(frontend::uniform::type _type) {
   return nullptr;
 }
 
-static GLuint compile_shader(const array<frontend::uniform>& _uniforms,
+static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
   const frontend::shader& _shader)
 {
   // emit prelude to every shader
@@ -863,7 +863,7 @@ static GLuint compile_shader(const array<frontend::uniform>& _uniforms,
     gl4_log(log::level::k_error, "failed compiling shader");
 
     if (log_size) {
-      array<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
+      vector<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
       pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
       gl4_log(log::level::k_error, "\n%s\n%s", error_log.data(), contents);
     }
@@ -1162,7 +1162,7 @@ void gl4::process(rx_byte* _command) {
           }
           // color attachments & draw buffers
           const auto& attachments{render_target->attachments()};
-          array<GLenum> draw_buffers{m_allocator, attachments.size()};
+          vector<GLenum> draw_buffers{m_allocator, attachments.size()};
           for (rx_size i{0}; i < attachments.size(); i++) {
             const auto attachment{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
             const auto render_texture{attachments[i]};
@@ -1181,7 +1181,7 @@ void gl4::process(rx_byte* _command) {
 
           const auto shaders{render_program->shaders()};
 
-          array<GLuint> shader_handles;
+          vector<GLuint> shader_handles;
           shaders.each_fwd([&](const frontend::shader& _shader) {
             GLuint shader_handle{compile_shader(render_program->uniforms(), _shader)};
             if (shader_handle != 0) {
@@ -1201,7 +1201,7 @@ void gl4::process(rx_byte* _command) {
             gl4_log(log::level::k_error, "failed linking program");
 
             if (log_size) {
-              array<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
+              vector<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
               pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
               gl4_log(log::level::k_error, "\n%s", error_log.data());
             }

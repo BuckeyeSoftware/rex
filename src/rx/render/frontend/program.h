@@ -1,7 +1,7 @@
 #ifndef RX_RENDER_PROGRAM_H
 #define RX_RENDER_PROGRAM_H
 #include "rx/core/string.h"
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 #include "rx/core/map.h"
 
 #include "rx/math/vec2.h"
@@ -57,7 +57,7 @@ struct uniform
   void record_vec4f(const math::vec4f& _value);
   void record_mat3x3f(const math::mat3x3f& _value);
   void record_mat4x4f(const math::mat4x4f& _value);
-  void record_bones(const array<math::mat3x4f>& _frames, rx_size _joints);
+  void record_bones(const vector<math::mat3x4f>& _frames, rx_size _joints);
   void record_raw(const rx_byte* _data, rx_size _size);
 
   type kind() const;
@@ -139,9 +139,9 @@ struct program : resource {
 
   void flush_dirty_uniforms(rx_byte* _data);
 
-  const array<uniform>& uniforms() const &;
-  const array<shader>& shaders() const &;
-  array<uniform>& uniforms() &;
+  const vector<uniform>& uniforms() const &;
+  const vector<shader>& shaders() const &;
+  vector<uniform>& uniforms() &;
 
 private:
   void update_resource_usage();
@@ -149,20 +149,20 @@ private:
   friend struct uniform;
 
   memory::allocator* m_allocator;
-  array<uniform> m_uniforms;
-  array<shader> m_shaders;
+  vector<uniform> m_uniforms;
+  vector<shader> m_shaders;
   rx_u64 m_dirty_uniforms;
 };
 
-inline const array<uniform>& program::uniforms() const & {
+inline const vector<uniform>& program::uniforms() const & {
   return m_uniforms;
 }
 
-inline const array<shader>& program::shaders() const & {
+inline const vector<shader>& program::shaders() const & {
   return m_shaders;
 }
 
-inline array<uniform>& program::uniforms() & {
+inline vector<uniform>& program::uniforms() & {
   return m_uniforms;
 }
 

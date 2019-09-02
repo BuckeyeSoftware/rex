@@ -8,9 +8,9 @@ namespace rx::model {
 interface::~interface() {
   if (m_flags & k_constructed) {
     if (m_flags & k_animated) {
-      utility::destruct<array<animated_vertex>>(&as_animated_vertices);
+      utility::destruct<vector<animated_vertex>>(&as_animated_vertices);
     } else {
-      utility::destruct<array<vertex>>(&as_vertices);
+      utility::destruct<vector<vertex>>(&as_vertices);
     }
   }
 }
@@ -38,7 +38,7 @@ bool interface::load(const string& _file_name) {
     const auto vertices{static_cast<rx_size>(positions.size())};
 
     if (animations.is_empty()) {
-      utility::construct<array<vertex>>(&as_vertices, m_allocator, vertices);
+      utility::construct<vector<vertex>>(&as_vertices, m_allocator, vertices);
       m_flags |= k_constructed;
 
       for (rx_size i{0}; i < vertices; i++) {
@@ -51,7 +51,7 @@ bool interface::load(const string& _file_name) {
       const auto& blend_weights{new_loader->blend_weights()};
       const auto& blend_indices{new_loader->blend_indices()};
 
-      utility::construct<array<animated_vertex>>(&as_animated_vertices, m_allocator, vertices);
+      utility::construct<vector<animated_vertex>>(&as_animated_vertices, m_allocator, vertices);
       m_flags |= k_constructed;
 
       for (rx_size i{0}; i < vertices; i++) {

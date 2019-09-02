@@ -1,6 +1,6 @@
 #ifndef RX_TEXTURE_LOADER_H
 #define RX_TEXTURE_LOADER_H
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 #include "rx/core/string.h"
 
 #include "rx/math/vec2.h"
@@ -17,11 +17,11 @@ struct loader {
   rx_size bpp() const;
   rx_size channels() const;
   const math::vec2z& dimensions() const &;
-  array<rx_byte>&& data();
+  vector<rx_byte>&& data();
 
 private:
   memory::allocator* m_allocator;
-  array<rx_byte> m_data;
+  vector<rx_byte> m_data;
   rx_size m_bpp;
   rx_size m_channels;
   math::vec2z m_dimensions;
@@ -53,7 +53,7 @@ inline const math::vec2z& loader::dimensions() const & {
   return m_dimensions;
 }
 
-inline array<rx_byte>&& loader::data() {
+inline vector<rx_byte>&& loader::data() {
   return utility::move(m_data);
 }
 

@@ -1,7 +1,7 @@
 #ifndef RX_RENDER_FRONTEND_INTERFACE_H
 #define RX_RENDER_FRONTEND_INTERFACE_H
 #include "rx/core/deferred_function.h"
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 #include "rx/core/string.h"
 #include "rx/core/pool.h"
 #include "rx/core/map.h"
@@ -141,15 +141,15 @@ private:
   pool m_texture3D_pool; // protected by |m_mutex|
   pool m_textureCM_pool; // protected by |m_mutex|
 
-  array<buffer*> m_destroy_buffers;        // protected by |m_mutex|
-  array<target*> m_destroy_targets;        // protected by |m_mutex|
-  array<program*> m_destroy_programs;      // protected by |m_mutex|
-  array<texture1D*> m_destroy_textures1D;  // protected by |m_mutex|
-  array<texture2D*> m_destroy_textures2D;  // protected by |m_mutex|
-  array<texture3D*> m_destroy_textures3D;  // protected by |m_mutex|
-  array<textureCM*> m_destroy_texturesCM;  // protected by |m_mutex|
+  vector<buffer*> m_destroy_buffers;       // protected by |m_mutex|
+  vector<target*> m_destroy_targets;       // protected by |m_mutex|
+  vector<program*> m_destroy_programs;     // protected by |m_mutex|
+  vector<texture1D*> m_destroy_textures1D; // protected by |m_mutex|
+  vector<texture2D*> m_destroy_textures2D; // protected by |m_mutex|
+  vector<texture3D*> m_destroy_textures3D; // protected by |m_mutex|
+  vector<textureCM*> m_destroy_texturesCM; // protected by |m_mutex|
 
-  array<rx_byte*> m_commands;              // protected by |m_mutex|
+  vector<rx_byte*> m_commands;             // protected by |m_mutex|
   command_buffer m_command_buffer;         // protected by |m_mutex|
 
   backend::interface* m_backend;           // protected by |m_mutex|

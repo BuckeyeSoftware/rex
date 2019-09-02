@@ -30,7 +30,7 @@ private:
   condition_variable m_task_cond;
   condition_variable m_ready_cond;
   queue<function<void(int)>> m_queue; // protected by |m_mutex|
-  array<thread> m_threads;            // protected by |m_mutex|
+  vector<thread> m_threads;            // protected by |m_mutex|
   bool m_stop;                        // protected by |m_mutex|
   rx_size m_ready;                    // protected by |m_mutex|
 };

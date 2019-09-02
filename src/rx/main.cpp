@@ -98,7 +98,7 @@ static void frame_stats(const rx::render::frontend::interface &_frontend, rx::re
   _immediate.frame_queue().record_rectangle({box_left, box_bottom}, box_size, 0, {0.0f, 0.0f, 0.0f, 0.5f});
 
   const auto k_frame_scale{16.667 * 2.0f};
-  rx::array<rx::math::vec2i> points;
+  rx::vector<rx::math::vec2i> points;
   _timer.frame_times().each_fwd([&](const rx::render::frontend::frame_timer::frame_time &_time) {
     const auto delta_x{(_timer.ticks() * _timer.resolution() - _time.life) / rx::render::frontend::frame_timer::k_frame_history_seconds};
     const auto delta_y{rx::algorithm::min(_time.frame / k_frame_scale, 1.0)};

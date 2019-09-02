@@ -194,7 +194,7 @@ void uniform::record_mat4x4f(const math::mat4x4f& _value) {
   }
 }
 
-void uniform::record_bones(const array<math::mat3x4f>& _frames, rx_size _joints) {
+void uniform::record_bones(const vector<math::mat3x4f>& _frames, rx_size _joints) {
   RX_ASSERT(m_type == type::k_bonesf, "not bones");
   const rx_size size{sizeof(math::mat3x4f) * algorithm::min(_joints, k_max_bones)};
   if (memcmp(as_float, _frames.data(), size) != 0) {

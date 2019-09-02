@@ -21,7 +21,7 @@ namespace rx::memory {
 // allocation, such as array and string to be made fixed-sized without introducing
 // fixed-size variants.
 struct single_shot_allocator
-  : allocator
+  final : allocator
 {
   single_shot_allocator() = delete;
   single_shot_allocator(rx_byte* _data, rx_size _size);

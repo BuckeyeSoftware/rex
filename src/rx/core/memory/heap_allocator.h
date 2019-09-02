@@ -13,7 +13,7 @@ namespace rx::memory {
 // The purpose of this allocator is to provide a generic, heap allocator
 // that can be used for anything.
 struct heap_allocator
-  : allocator
+  final : allocator
 {
   virtual rx_byte* allocate(rx_size _size);
   virtual rx_byte* reallocate(rx_byte* _data, rx_size _size);

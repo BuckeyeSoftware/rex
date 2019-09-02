@@ -138,7 +138,7 @@ struct frame_time {
   rx_f64 frame;
 };
 
-const array<frame_time>& frame_times() const &;
+const vector<frame_time>& frame_times() const &;
 ```
 
 ### Resources

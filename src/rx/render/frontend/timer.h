@@ -1,6 +1,6 @@
 #ifndef RX_RENDER_FRONTEND_TIMER_H
 #define RX_RENDER_FRONTEND_TIMER_H
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 
 namespace rx::render::frontend {
 
@@ -25,7 +25,7 @@ struct frame_timer {
     rx_f64 frame;
   };
 
-  const array<frame_time>& frame_times() const &;
+  const vector<frame_time>& frame_times() const &;
 
 private:
   rx_u64 m_frequency;
@@ -44,7 +44,7 @@ private:
   rx_u64 m_frame_max;
   rx_f32 m_frame_average;
   rx_u32 m_frames_per_second;
-  array<frame_time> m_frame_times;
+  vector<frame_time> m_frame_times;
 };
 
 inline rx_f32 frame_timer::mspf() const {
@@ -67,7 +67,7 @@ inline rx_u64 frame_timer::ticks() const {
   return m_current_ticks;
 }
 
-inline const array<frame_timer::frame_time>& frame_timer::frame_times() const & {
+inline const vector<frame_timer::frame_time>& frame_timer::frame_times() const & {
   return m_frame_times;
 }
 

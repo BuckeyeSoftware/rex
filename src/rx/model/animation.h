@@ -1,6 +1,6 @@
 #ifndef RX_MODEL_ANIMATION_H
 #define RX_MODEL_ANIMATION_H
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 
 #include "rx/math/vec2.h"
 #include "rx/math/mat3x4.h"
@@ -19,20 +19,20 @@ struct animation {
 
   void update(rx_f32 _delta_time, bool _loop);
 
-  const array<math::mat3x4f>& frames() const &;
+  const vector<math::mat3x4f>& frames() const &;
   rx_size joints() const;
 
   void render_skeleton(const math::mat4x4f& _world, render::immediate3D* _immediate);
 
 private:
   interface* m_model;
-  array<math::mat3x4f> m_frames;
+  vector<math::mat3x4f> m_frames;
   rx_size m_animation;
   rx_f32 m_current_frame;
   bool m_completed;
 };
 
-inline const array<math::mat3x4f>& animation::frames() const & {
+inline const vector<math::mat3x4f>& animation::frames() const & {
   return m_frames;
 }
 

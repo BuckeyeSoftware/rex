@@ -28,14 +28,14 @@ struct interface {
 
   bool is_animated() const;
 
-  const array<vertex>& vertices() const &;
-  array<vertex>&& vertices() &&;
-  const array<animated_vertex> animated_vertices() const &;
-  array<animated_vertex>&& animated_vertices() &&;
-  const array<mesh>& meshes() const &;
-  const array<rx_u32>& elements() const &;
-  array<rx_u32>&& elements() &&;
-  const array<loader::joint>& joints() const &;
+  const vector<vertex>& vertices() const &;
+  vector<vertex>&& vertices() &&;
+  const vector<animated_vertex> animated_vertices() const &;
+  vector<animated_vertex>&& animated_vertices() &&;
+  const vector<mesh>& meshes() const &;
+  const vector<rx_u32>& elements() const &;
+  vector<rx_u32>&& elements() &&;
+  const vector<loader::joint>& joints() const &;
 
 private:
   friend struct animation;
@@ -51,15 +51,15 @@ private:
 
   union {
     utility::nat as_nat;
-    array<vertex> as_vertices;
-    array<animated_vertex> as_animated_vertices;
+    vector<vertex> as_vertices;
+    vector<animated_vertex> as_animated_vertices;
   };
 
-  array<rx_u32> m_elements;
-  array<mesh> m_meshes;
-  array<loader::animation> m_animations;
-  array<math::mat3x4f> m_frames;
-  array<loader::joint> m_joints;
+  vector<rx_u32> m_elements;
+  vector<mesh> m_meshes;
+  vector<loader::animation> m_animations;
+  vector<math::mat3x4f> m_frames;
+  vector<loader::joint> m_joints;
 };
 
 inline constexpr interface::interface(memory::allocator* _allocator)
@@ -75,39 +75,39 @@ inline bool interface::is_animated() const {
   return m_flags & k_animated;
 }
 
-inline const array<interface::vertex>& interface::vertices() const & {
+inline const vector<interface::vertex>& interface::vertices() const & {
   RX_ASSERT(!is_animated(), "not a static model");
   return as_vertices;
 }
 
-inline array<interface::vertex>&& interface::vertices() && {
+inline vector<interface::vertex>&& interface::vertices() && {
   RX_ASSERT(!is_animated(), "not a static model");
   return utility::move(as_vertices);
 }
 
-inline const array<interface::animated_vertex> interface::animated_vertices() const & {
+inline const vector<interface::animated_vertex> interface::animated_vertices() const & {
   RX_ASSERT(is_animated(), "not a animated model");
   return as_animated_vertices;
 }
 
-inline array<interface::animated_vertex>&& interface::animated_vertices() && {
+inline vector<interface::animated_vertex>&& interface::animated_vertices() && {
   RX_ASSERT(is_animated(), "not a animated model");
   return utility::move(as_animated_vertices);
 }
 
-inline const array<mesh>& interface::meshes() const & {
+inline const vector<mesh>& interface::meshes() const & {
   return m_meshes;
 }
 
-inline const array<rx_u32>& interface::elements() const & {
+inline const vector<rx_u32>& interface::elements() const & {
   return m_elements;
 }
 
-inline array<rx_u32>&& interface::elements() && {
+inline vector<rx_u32>&& interface::elements() && {
   return utility::move(m_elements);
 }
 
-inline const array<loader::joint>& interface::joints() const & {
+inline const vector<loader::joint>& interface::joints() const & {
   return m_joints;
 }
 

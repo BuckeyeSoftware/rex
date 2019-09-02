@@ -2,7 +2,7 @@
 #define RX_RENDER_IMMEDIATE3D_H
 #include "rx/render/frontend/state.h"
 
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 
 #include "rx/math/vec3.h"
 #include "rx/math/mat4x4.h"
@@ -96,7 +96,7 @@ struct immediate3D {
     friend struct immediate3D;
   
     memory::allocator* m_allocator;
-    array<command> m_commands;
+    vector<command> m_commands;
   };
 
   immediate3D(frontend::interface* _frontend);
@@ -138,13 +138,13 @@ private:
   };
 
   queue m_queue;
-  array<vertex> m_vertices;
-  array<rx_u32> m_elements;
-  array<batch> m_batches;
+  vector<vertex> m_vertices;
+  vector<rx_u32> m_elements;
+  vector<batch> m_batches;
 
   rx_size m_rd_index;
   rx_size m_wr_index;
-  array<batch> m_render_batches[k_buffers];
+  vector<batch> m_render_batches[k_buffers];
   frontend::buffer* m_buffers[k_buffers];
   queue m_render_queue[k_buffers];
 };

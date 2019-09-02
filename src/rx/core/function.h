@@ -1,6 +1,6 @@
 #ifndef RX_CORE_FUNCTION_H
 #define RX_CORE_FUNCTION_H
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 
 #include "rx/core/traits/is_callable.h"
 #include "rx/core/traits/enable_if.h"
@@ -63,7 +63,7 @@ private:
   invoke_fn m_invoke;
   construct_fn m_construct;
   destruct_fn m_destruct;
-  array<rx_byte> m_data;
+  vector<rx_byte> m_data;
 };
 
 template<typename R, typename... Ts>
