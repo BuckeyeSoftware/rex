@@ -1,16 +1,7 @@
 #include <SDL.h>
-#include <stdio.h> // snprintf
-
-#include "rx/core/memory/system_allocator.h"
-
-#include "rx/core/statics.h"
-#include "rx/core/string.h"
-#include "rx/core/event.h"
 
 #include "rx/console/interface.h"
 #include "rx/console/variable.h"
-
-#include "rx/input/input.h"
 
 #include "rx/render/frontend/interface.h"
 #include "rx/render/frontend/technique.h"
@@ -31,8 +22,7 @@
 #include "rx/math/camera.h"
 #include "rx/math/transform.h"
 
-#include "rx/core/debug.h"
-
+#include "rx/input/input.h"
 
 using namespace rx;
 
@@ -78,23 +68,23 @@ RX_CONSOLE_IVAR(
     1,
     -1);
 
-struct quad_vertex
-{
+struct quad_vertex {
   math::vec2f position;
   math::vec2f coordinate;
 };
 
 static constexpr const quad_vertex k_quad_vertices[]{
-    {{-1.0f, 1.0f}, {0.0f, 1.0f}},
-    {{1.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-1.0f, -1.0f}, {0.0f, 0.0f}},
-    {{1.0f, -1.0f}, {1.0f, 0.0f}}};
+  {{-1.0f, 1.0f}, {0.0f, 1.0f}},
+  {{1.0f, 1.0f}, {1.0f, 1.0f}},
+  {{-1.0f, -1.0f}, {0.0f, 0.0f}},
+  {{1.0f, -1.0f}, {1.0f, 0.0f}}
+};
 
 static constexpr const rx_byte k_quad_elements[]{
-    0, 1, 2, 3};
+  0, 1, 2, 3
+};
 
-static void frame_stats(const render::frontend::interface &_frontend, render::immediate2D &_immediate)
-{
+static void frame_stats(const render::frontend::interface &_frontend, render::immediate2D &_immediate) {
   const render::frontend::frame_timer &_timer{_frontend.timer()};
   const math::vec2i &screen_size{*display_resolution};
   const math::vec2i box_size{600, 200};
@@ -134,8 +124,7 @@ static void frame_stats(const render::frontend::interface &_frontend, render::im
   _immediate.frame_queue().record_text("Inconsolata-Regular", {box_right + 5, box_bottom - 5}, 18, 1.0f, render::immediate2D::text_align::k_left, string::format("%.1f", k_frame_scale), {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
-static void render_stats(const render::frontend::interface &_frontend, render::immediate2D &_immediate)
-{
+static void render_stats(const render::frontend::interface &_frontend, render::immediate2D &_immediate) {
   const auto &buffer_stats{_frontend.stats(render::frontend::resource::type::k_buffer)};
   const auto &program_stats{_frontend.stats(render::frontend::resource::type::k_program)};
   const auto &target_stats{_frontend.stats(render::frontend::resource::type::k_target)};
@@ -236,13 +225,11 @@ static void memory_stats(const render::frontend::interface&, render::immediate2D
   line(string::format("peak memory (actual):    %s", string::human_size_format(stats.peak_actual_bytes)));
 }
 
-int entry(int argc, char **argv)
-{
+int entry(int argc, char **argv) {
   (void)argc;
   (void)argv;
 
-  if (!console::interface::load("config.cfg"))
-  {
+  if (!console::interface::load("config.cfg")) {
     // immediately save the default options on load failure
     console::interface::save("config.cfg");
   }
@@ -253,11 +240,9 @@ int entry(int argc, char **argv)
   const string &want_name{display_name->get()};
   int display_index{0};
   int displays{SDL_GetNumVideoDisplays()};
-  for (int i{0}; i < displays; i++)
-  {
+  for (int i{0}; i < displays; i++) {
     const char *name{SDL_GetDisplayName(i)};
-    if (name && want_name == name)
-    {
+    if (name && want_name == name) {
       display_index = i;
       break;
     }
@@ -268,17 +253,13 @@ int entry(int argc, char **argv)
 
   int flags{SDL_WINDOW_OPENGL};
 
-  if (*display_resizable)
-  {
+  if (*display_resizable) {
     flags |= SDL_WINDOW_RESIZABLE;
   }
 
-  if (*display_fullscreen == 1)
-  {
+  if (*display_fullscreen == 1) {
     flags |= SDL_WINDOW_FULLSCREEN;
-  }
-  else if (*display_fullscreen == 2)
-  {
+  } else if (*display_fullscreen == 2) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
 
@@ -323,7 +304,6 @@ int entry(int argc, char **argv)
   SDL_GLContext context{SDL_GL_CreateContext(window)};
 
   SDL_GL_SetSwapInterval(*display_swap_interval);
-
   SDL_SetRelativeMouseMode(SDL_TRUE);
 
   math::camera camera{math::mat4x4f::perspective(90.0f, {0.01f, 1024.0f},
@@ -449,23 +429,19 @@ int entry(int argc, char **argv)
       math::vec3f move{static_cast<rx_f32>(delta.y) * sens, static_cast<rx_f32>(delta.x) * sens, 0.0f};
       camera.rotate = camera.rotate + move;
 
-      if (input.keyboard().is_held(SDL_SCANCODE_W, true))
-      {
+      if (input.keyboard().is_held(SDL_SCANCODE_W, true)) {
         const auto f{camera.to_mat4().z};
         camera.translate += math::vec3f(f.x, f.y, f.z) * (10.0f * frontend.timer().delta_time());
       }
-      if (input.keyboard().is_held(SDL_SCANCODE_S, true))
-      {
+      if (input.keyboard().is_held(SDL_SCANCODE_S, true)) {
         const auto f{camera.to_mat4().z};
         camera.translate -= math::vec3f(f.x, f.y, f.z) * (10.0f * frontend.timer().delta_time());
       }
-      if (input.keyboard().is_held(SDL_SCANCODE_D, true))
-      {
+      if (input.keyboard().is_held(SDL_SCANCODE_D, true)) {
         const auto l{camera.to_mat4().x};
         camera.translate += math::vec3f(l.x, l.y, l.z) * (10.0f * frontend.timer().delta_time());
       }
-      if (input.keyboard().is_held(SDL_SCANCODE_A, true))
-      {
+      if (input.keyboard().is_held(SDL_SCANCODE_A, true)) {
         const auto l{camera.to_mat4().x};
         camera.translate -= math::vec3f(l.x, l.y, l.z) * (10.0f * frontend.timer().delta_time());
       }
@@ -558,10 +534,8 @@ int entry(int argc, char **argv)
 
       immediate2D.render(target);
 
-      if (frontend.process())
-      {
-        if (frontend.swap())
-        {
+      if (frontend.process()) {
+        if (frontend.swap()) {
           // SDL_SetWindowTitle(window, format);
         }
       }
@@ -581,8 +555,7 @@ int entry(int argc, char **argv)
   return 0;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   // trigger allocator initialization first
   auto system_allocator{static_globals::find("system_allocator")};
   RX_ASSERT(system_allocator, "system allocator missing");

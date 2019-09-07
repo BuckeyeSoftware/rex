@@ -9,7 +9,9 @@ namespace rx::memory {
 
 namespace rx::render::backend {
 
-struct gl4 : interface {
+struct gl4
+  : interface
+{
   allocation_info query_allocation_info() const;
   gl4(memory::allocator* _allocator, void* _data);
   ~gl4();
