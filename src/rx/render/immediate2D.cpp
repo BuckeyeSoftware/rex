@@ -862,13 +862,27 @@ void immediate2D::add_batch(rx_size _offset, queue::command::type _type,
   render_state.scissor.record_offset(m_scissor_position);
   render_state.scissor.record_size(m_scissor_size);
 
-  render_state.flush(); 
+  render_state.flush();
+
+  auto is_triangle_command{[](queue::command::type _type) {
+    return _type == queue::command::type::k_rectangle ||
+           _type == queue::command::type::k_triangle ||
+           _type == queue::command::type::k_line;
+  }};
 
   if (!m_batches.is_empty()) {
     auto& batch{m_batches.last()};
-    if (batch.kind == _type && batch.render_state == render_state && batch.texture == _texture) {
-      batch.count += count;
-      return;
+    if (batch.render_state == render_state) {
+      // When both batches are trivial triangle commands (no texture), coalesce.
+      if (is_triangle_command(batch.kind) && is_triangle_command(_type)) {
+        batch.count += count;
+        return;
+      } else if (batch.kind == _type && batch.texture == _texture) {
+        // When both batches are exactly the same command and share the same
+        // texture, coalesce.
+        batch.count += count;
+        return;
+      }
     }
   }
 
