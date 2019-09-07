@@ -5,15 +5,18 @@
 #include "rx/core/hash.h" // hash, hash_combine
 #include "rx/core/assert.h" // RX_ASSERT
 
-#include "rx/core/algorithm/min.h" // algorithm::min
-#include "rx/core/algorithm/max.h" // algorithm::max
+#include "rx/core/math/sqrt.h"
+#include "rx/core/math/sign.h"
+#include "rx/core/math/abs.h"
+
+#include "rx/core/algorithm/min.h"
+#include "rx/core/algorithm/max.h" 
 
 namespace rx::math {
 
 template<typename T>
 struct vec3 {
   constexpr vec3();
-  constexpr vec3(T _v);
   constexpr vec3(T _x, T _y, T _z);
 
   T& operator[](rx_size _i);
@@ -36,41 +39,13 @@ struct vec3 {
   template<typename T2>
   constexpr vec3<T2> cast() const;
 
-  constexpr vec3 operator-() const;
+  void operator+=(const vec3<T>& _v);
+  void operator-=(const vec3<T>& _v);
+  void operator*=(T _scalar);
+  void operator/=(T _scalar);
 
-  constexpr vec3 operator*(const vec3<T>& _vec) const;
-  constexpr vec3 operator/(const vec3<T>& _vec) const;
-  constexpr vec3 operator+(const vec3<T>& _vec) const;
-  constexpr vec3 operator-(const vec3<T>& _vec) const;
-
-  constexpr vec3& operator*=(const vec3<T>& _vec);
-  constexpr vec3& operator/=(const vec3<T>& _vec);
-  constexpr vec3& operator+=(const vec3<T>& _vec);
-  constexpr vec3& operator-=(const vec3<T>& _vec);
-
-  constexpr vec3 operator*(T _scalar) const;
-  constexpr vec3 operator/(T _scalar) const;
-  constexpr vec3 operator+(T _scalar) const;
-  constexpr vec3 operator-(T _scalar) const;
-
-  constexpr vec3& operator*=(T _scalar);
-  constexpr vec3& operator/=(T _scalar);
-  constexpr vec3& operator+=(T _scalar);
-  constexpr vec3& operator-=(T _scalar);
-
-  template<typename U>
-  friend constexpr vec3<U> operator*(U _scalar, const vec3<T>& _vec);
-  template<typename U>
-  friend constexpr vec3<U> operator/(U _scalar, const vec3<T>& _vec);
-  template<typename U>
-  friend constexpr vec3<U> operator+(U _scalar, const vec3<T>& _vec);
-  template<typename U>
-  friend constexpr vec3<U> operator-(U _scalar, const vec3<T>& _vec);
-
-  template<typename U>
-  friend constexpr bool operator==(const vec3<U>& _lhs, const vec3<U>& _rhs);
-  template<typename U>
-  friend constexpr bool operator!=(const vec3<U>& _lhs, const vec3<U>& _rhs);
+  // TODO: check
+  void operator*=(const vec3<T>& _v);
 
   union {
     struct { T x, y, z; };
@@ -90,14 +65,6 @@ inline constexpr vec3<T>::vec3()
   : x{0}
   , y{0}
   , z{0}
-{
-}
-
-template<typename T>
-inline constexpr vec3<T>::vec3(T _v)
-  : x{_v}
-  , y{_v}
-  , z{_v}
 {
 }
 
@@ -169,136 +136,209 @@ inline constexpr vec3<T2> vec3<T>::cast() const {
 }
 
 template<typename T>
-inline constexpr vec3<T> vec3<T>::operator-() const {
-  return {-x, -y, -z};
-}
-
-// (vec, vec)
-template<typename T>
-inline constexpr vec3<T> vec3<T>::operator*(const vec3<T>& _vec) const {
-  return {x*_vec.x, y*_vec.y, z*_vec.z};
+inline void vec3<T>::operator+=(const vec3<T>& _v) {
+  x += _v.x;
+  y += _v.y;
+  z += _v.z;
 }
 
 template<typename T>
-inline constexpr vec3<T> vec3<T>::operator/(const vec3<T>& _vec) const {
-  return {x/_vec.x, y/_vec.y, z/_vec.z};
+inline void vec3<T>::operator-=(const vec3<T>& _v) {
+  x -= _v.x;
+  y -= _v.y;
+  z -= _v.z;
 }
 
 template<typename T>
-inline constexpr vec3<T> vec3<T>::operator+(const vec3<T>& _vec) const {
-  return {x+_vec.x, y+_vec.y, z+_vec.z};
+inline void vec3<T>::operator*=(T _scalar) {
+  x *= _scalar;
+  y *= _scalar;
+  z *= _scalar;
 }
 
 template<typename T>
-inline constexpr vec3<T> vec3<T>::operator-(const vec3<T>& _vec) const {
-  return {x-_vec.x, y-_vec.y, z-_vec.z};
+inline void vec3<T>::operator/=(T _scalar) {
+  x /= _scalar;
+  y /= _scalar;
+  z /= _scalar;
+}
+
+// TODO: check
+template<typename T>
+inline void vec3<T>::operator*=(const vec3<T>& _v) {
+  x *= _v.x;
+  y *= _v.y;
+  z *= _v.z;
 }
 
 template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator*=(const vec3<T>& _vec) {
-  return *this = *this * _vec;
-}
-
-template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator/=(const vec3<T>& _vec) {
-  return *this = *this / _vec;
-}
-
-template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator+=(const vec3<T>& _vec) {
-  return *this = *this + _vec;
-}
-
-template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator-=(const vec3<T>& _vec) {
-  return *this = *this - _vec;
-}
-
-// (vec, scalar)
-template<typename T>
-inline constexpr vec3<T> vec3<T>::operator*(T _scalar) const {
-  return {x*_scalar, y*_scalar, z*_scalar};
-}
-
-template<typename T>
-inline constexpr vec3<T> vec3<T>::operator/(T _scalar) const {
-  return {x/_scalar, y/_scalar, z/_scalar};
-}
-
-template<typename T>
-inline constexpr vec3<T> vec3<T>::operator+(T _scalar) const {
-  return {x+_scalar, y+_scalar, z+_scalar};
-}
-
-template<typename T>
-inline constexpr vec3<T> vec3<T>::operator-(T _scalar) const {
-  return {x-_scalar, y-_scalar, z-_scalar};
-}
-
-template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator*=(T _scalar) {
-  return *this = *this * _scalar;
-}
-
-template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator/=(T _scalar) {
-  return *this = *this / _scalar;
-}
-
-template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator+=(T _scalar) {
-  return *this = *this + _scalar;
-}
-
-template<typename T>
-inline constexpr vec3<T>& vec3<T>::operator-=(T _scalar) {
-  return *this = *this - _scalar;
-}
-
-// (scalar, vec)
-template<typename U>
-inline constexpr vec3<U> operator*(U _scalar, const vec3<U>& _vec) {
-  return {_scalar*_vec.x, _scalar*_vec.y, _scalar*_vec.z};
-}
-
-template<typename U>
-inline constexpr vec3<U> operator/(U _scalar, const vec3<U>& _vec) {
-  return {_scalar/_vec.x, _scalar/_vec.y, _scalar/_vec.z};
-}
-
-template<typename U>
-inline constexpr vec3<U> operator+(U _scalar, const vec3<U>& _vec) {
-  return {_scalar+_vec.x, _scalar+_vec.y, _scalar+_vec.z};
-}
-
-template<typename U>
-inline constexpr vec3<U> operator-(U _scalar, const vec3<U>& _vec) {
-  return {_scalar-_vec.x, _scalar-_vec.y, _scalar-_vec.z};
-}
-
-template<typename U>
-inline constexpr bool operator==(const vec3<U>& _lhs, const vec3<U>& _rhs) {
+inline constexpr bool operator==(const vec3<T>& _lhs, const vec3<T>& _rhs) {
   return _lhs.x == _rhs.x && _lhs.y == _rhs.y && _lhs.z == _rhs.z;
 }
 
-template<typename U>
-inline constexpr bool operator!=(const vec3<U>& _lhs, const vec3<U>& _rhs) {
+template<typename T>
+inline constexpr bool operator!=(const vec3<T>& _lhs, const vec3<T>& _rhs) {
   return _lhs.x != _rhs.x || _lhs.y != _rhs.y || _lhs.z != _rhs.z;
 }
 
-// dot and cross product
+template<typename T>
+inline constexpr vec3<T> operator-(const vec3<T>& _v) {
+  return {-_v.x, -_v.y, -_v.z};
+}
+
+template<typename T>
+inline constexpr vec3<T> operator+(const vec3<T>& _lhs, const vec3<T>& _rhs) {
+  return {_lhs.x + _rhs.x, _lhs.y + _rhs.y, _lhs.z + _rhs.z};
+}
+
+template<typename T>
+inline constexpr vec3<T> operator-(const vec3<T>& _lhs, const vec3<T>& _rhs) {
+  return {_lhs.x - _rhs.x, _lhs.y - _rhs.y, _lhs.z - _rhs.z};
+}
+
+template<typename T>
+inline constexpr vec3<T> operator*(T _scalar, const vec3<T>& _v) {
+  return {_scalar * _v.x, _scalar * _v.y, _scalar * _v.z};
+}
+
+template<typename T>
+inline constexpr vec3<T> operator*(const vec3<T>& _v, T _scalar) {
+  return _scalar * _v;
+}
+
+// NOTE: check
+template<typename T>
+inline constexpr vec3<T> operator-(const vec3<T>& _v, T _scalar) {
+  return {_v.x - _scalar, _v.y - _scalar, _v.z - _scalar};
+}
+
+// NOTE: check
+template<typename T>
+inline constexpr vec3<T> operator+(const vec3<T>& _v, T _scalar) {
+  return {_v.x + _scalar, _v.y + _scalar, _v.z + _scalar};
+}
+
+// NOTE: check
+template<typename T>
+inline constexpr vec3<T> operator/(T _scalar, const vec3<T>& _v) {
+  return {_scalar / _v.x, _scalar / _v.y, _scalar / _v.z};
+}
+
+// NOTE: check
+template<typename T>
+inline constexpr vec3<T> operator/(const vec3<T>& _v, T _scalar) {
+  return {_v.x / _scalar, _v.y / _scalar, _v.z / _scalar};
+}
+
+// NOTE: check
+template<typename T>
+inline constexpr vec3<T> operator/(const vec3<T>& _lhs, const vec3<T>& _rhs) {
+  return {_lhs.x / _rhs.x, _lhs.y / _rhs.y, _lhs.z / _rhs.z};
+}
+
+// NOTE: check
+template<typename T>
+inline constexpr vec3<T> operator*(const vec3<T>& _lhs, const vec3<T>& _rhs) {
+  return {_lhs.x * _rhs.x, _lhs.y * _rhs.y, _lhs.z * _rhs.z};
+}
+
+// Functions.
 template<typename T>
 inline constexpr T dot(const vec3<T>& _lhs, const vec3<T>& _rhs) {
-  return _lhs.x*_rhs.x + _lhs.y*_rhs.y + _lhs.z*_rhs.z;
+  return _lhs.x * _rhs.x + _lhs.y * _rhs.y + _lhs.z * _rhs.z;
 }
 
 template<typename T>
 inline constexpr vec3<T> cross(const vec3<T>& _lhs, const vec3<T>& _rhs) {
-  return {_lhs.y*_rhs.z - _rhs.y*_lhs.z, _lhs.z*_rhs.x - _rhs.z*_lhs.x, _lhs.x*_rhs.y - _rhs.x*_lhs.y};
+  return {_lhs.y * _rhs.z - _rhs.y * _lhs.z,
+          _lhs.z * _rhs.x - _rhs.z * _lhs.x,
+          _lhs.x * _rhs.y - _rhs.x * _lhs.y};
 }
 
-rx_f32 length(const vec3f& _value);
-vec3f normalize(const vec3f& _value);
+// Compute the determinant of a matrix whose columns are three given vectors.
+template<typename T>
+inline constexpr T det(const vec3<T>& _a, const vec3<T>& _b, const vec3<T>& _c) {
+  return dot(_a, cross(_b, _c));
+}
+
+// Compute minimum vector between two vectors (per-element).
+template<typename T>
+inline constexpr vec3<T> min(const vec3<T>& _a, const vec3<T>& _b) {
+  return {algorithm::min(_a.x, _b.x), algorithm::min(_a.y, _b.y), algorithm::min(_a.z, _b.z)};
+}
+
+// Compute maximum vector between two vectors (per-element).
+template<typename T>
+inline constexpr vec3<T> max(const vec3<T>& _a, const vec3<T>& _b) {
+  return {algorithm::max(_a.x, _b.x), algorithm::max(_a.y, _b.y), algorithm::max(_a.z, _b.z)};
+}
+
+// Compute absolute vector of a given vectgor (per-element).
+template<typename T>
+inline vec3<T> abs(const vec3<T>& _v) {
+  return {abs(_v.x), abs(_v.y), abs(_v.y)};
+}
+
+// Only defined for floating point
+inline rx_f32 length_squared(const vec3f& _v) {
+  return dot(_v, _v);
+}
+
+inline rx_f32 length(const vec3f& _v) {
+  return sqrt(length_squared(_v));
+}
+
+inline vec3f normalize(const vec3f& _v) {
+  return (1.0f / length(_v)) * _v;
+}
+
+// Compute euclidean distance between two points.
+inline rx_f32 distance(const vec3f& _a, const vec3f& _b) {
+  return length(_a - _b);
+}
+
+// Compute squared distance between two points.
+inline rx_f32 distance_squared(const vec3f& _a, const vec3f& _b) {
+  return length_squared(_a - _b);
+}
+
+// Compute triangle area.
+inline rx_f32 area(const vec3f& _a, const vec3f& _b, const vec3f& _c) {
+  return 0.5f * length(cross(_b - _a, _c - _a));
+}
+
+// Compute squared triangle area.
+inline rx_f32 squared_area(const vec3f& _a, const vec3f& _b, const vec3f& _c) {
+  return 0.25f * length_squared(cross(_b - _a, _c - _a));
+}
+
+// Compute tetrahedron volume.
+inline rx_f32 volume(const vec3f& _a, const vec3f& _b, const vec3f& _c,
+  const vec3f& _d)
+{
+  const rx_f32 volume{det(_b - _a, _c - _a, _d - _a)};
+  return sign(volume) * (1.0f / 6.0f) * volume;
+}
+
+// Compute squared tetrahdron volume.
+inline rx_f32 volume_squared(const vec3f& _a, const vec3f& _b, const vec3f& _c,
+  const vec3f& _d)
+{
+  const rx_f32 result{volume(_a, _b, _c, _d)};
+  return result * result;
+}
+
+// Find a perpendicular vector to a vector.
+inline vec3f perp(const vec3f& _v) {
+  // Suppose vector a has all equal components and is a unit vector: a = (s, s, s)
+  // Then 3*s*s = 1, s = sqrt(1/3) = 0.57735. This means at least one component of
+  // a unit vector must be greater than or equal to 0.557735.
+  if (abs(_v.x) >= 0.557735f) {
+    return {_v.y, -_v.x, 0.0f};
+  }
+
+  return {0.0f, _v.z, -_v.x};
+}
 
 } // namespace rx::math
 

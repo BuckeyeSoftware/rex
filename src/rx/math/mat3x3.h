@@ -1,7 +1,10 @@
 #ifndef RX_MATH_MAT3X3_H
 #define RX_MATH_MAT3X3_H
+#include "rx/core/math/cos.h" // cos
+#include "rx/core/math/sin.h" // sin
+
 #include "rx/math/vec3.h" // vec3
-#include "rx/math/trig.h" // deg_to_rad, sin, cos
+#include "rx/math/trig.h" // deg_to_rad
 
 namespace rx::math {
 
@@ -38,6 +41,9 @@ struct mat3x3 {
   constexpr mat3x3& operator+=(T _scalar);
 
   vec x, y, z;
+
+private:
+  static constexpr vec3<T> reduce_rotation_angles(const vec3<T>& _rotate);
 };
 
 using mat3x3f = mat3x3<float>;
@@ -72,13 +78,14 @@ inline constexpr mat3x3<T> mat3x3<T>::scale(const vec3<T>& _scale) {
 
 template<typename T>
 inline constexpr mat3x3<T> mat3x3<T>::rotate(const vec3<T>& _rotate) {
-  const auto sx{sin(deg_to_rad(-_rotate.x))};
-  const auto cx{cos(deg_to_rad(-_rotate.x))};
-  const auto sy{sin(deg_to_rad(-_rotate.y))};
-  const auto cy{cos(deg_to_rad(-_rotate.y))};
-  const auto sz{sin(deg_to_rad(-_rotate.z))};
-  const auto cz{cos(deg_to_rad(-_rotate.z))};
-  return {{ cy*cz,              cy*-sz,              sy},
+  const auto reduce{reduce_rotation_angles(_rotate)};
+  const auto sx{sin(deg_to_rad(-reduce.x))};
+  const auto cx{cos(deg_to_rad(-reduce.x))};
+  const auto sy{sin(deg_to_rad(-reduce.y))};
+  const auto cy{cos(deg_to_rad(-reduce.y))};
+  const auto sz{sin(deg_to_rad(-reduce.z))};
+  const auto cz{cos(deg_to_rad(-reduce.z))};
+  return {{ cy*cz,              cy*-sz,              sy   },
           {-sx*-sy*cz + cx*sz, -sx*-sy*-sz + cx*cz, -sx*cy},
           { cx*-sy*cz + sx*sz,  cx*-sy*-sz + sx*cz,  cx*cy}};
 }
@@ -137,6 +144,21 @@ inline constexpr mat3x3<T>& mat3x3<T>::operator*=(T _scalar) {
 template<typename T>
 inline constexpr mat3x3<T>& mat3x3<T>::operator+=(T _scalar) {
   return *this = *this + _scalar;
+}
+
+template<typename T>
+inline constexpr vec3<T> mat3x3<T>::reduce_rotation_angles(const vec3<T>& _rotate) {
+  return _rotate.map([](T _angle) {
+    while (_angle >  180) {
+      _angle -= 360;
+    }
+
+    while (_angle < -180) {
+      _angle += 360;
+    }
+
+    return _angle;
+  });
 }
 
 } // namespace rx::math

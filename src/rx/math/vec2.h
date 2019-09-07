@@ -8,12 +8,13 @@
 #include "rx/core/algorithm/min.h" // algorithm::min
 #include "rx/core/algorithm/max.h" // algorithm::max
 
+#include "rx/core/math/sqrt.h" // sqrt
+
 namespace rx::math {
 
 template<typename T>
 struct vec2 {
   constexpr vec2();
-  constexpr vec2(T _v);
   constexpr vec2(T _x, T _y);
 
   T& operator[](rx_size _i);
@@ -36,41 +37,10 @@ struct vec2 {
   template<typename T2>
   constexpr vec2<T2> cast() const;
 
-  constexpr vec2 operator-() const;
-
-  constexpr vec2 operator*(const vec2<T>& _vec) const;
-  constexpr vec2 operator/(const vec2<T>& _vec) const;
-  constexpr vec2 operator+(const vec2<T>& _vec) const;
-  constexpr vec2 operator-(const vec2<T>& _vec) const;
-
-  constexpr vec2& operator*=(const vec2<T>& _vec);
-  constexpr vec2& operator/=(const vec2<T>& _vec);
-  constexpr vec2& operator+=(const vec2<T>& _vec);
-  constexpr vec2& operator-=(const vec2<T>& _vec);
-
-  constexpr vec2 operator*(T _scalar) const;
-  constexpr vec2 operator/(T _scalar) const;
-  constexpr vec2 operator+(T _scalar) const;
-  constexpr vec2 operator-(T _scalar) const;
-
-  constexpr vec2& operator*=(T _scalar);
-  constexpr vec2& operator/=(T _scalar);
-  constexpr vec2& operator+=(T _scalar);
-  constexpr vec2& operator-=(T _scalar);
-
-  template<typename U>
-  friend constexpr vec2<U> operator*(U _scalar, const vec2<T>& _vec);
-  template<typename U>
-  friend constexpr vec2<U> operator/(U _scalar, const vec2<T>& _vec);
-  template<typename U>
-  friend constexpr vec2<U> operator+(U _scalar, const vec2<T>& _vec);
-  template<typename U>
-  friend constexpr vec2<U> operator-(U _scalar, const vec2<T>& _vec);
-
-  template<typename U>
-  friend constexpr bool operator==(const vec2<U>& _lhs, const vec2<U>& _rhs);
-  template<typename U>
-  friend constexpr bool operator!=(const vec2<U>& _lhs, const vec2<U>& _rhs);
+  void operator+=(const vec2<T>& _v);
+  void operator-=(const vec2<T>& _v);
+  void operator*=(T _scalar);
+  void operator/=(T _scalar);
 
   union {
     struct { T x, y; };
@@ -92,14 +62,6 @@ inline constexpr vec2<T>::vec2()
   , y{0}
 {
 }
-
-template<typename T>
-inline constexpr vec2<T>::vec2(T _v)
-  : x{_v}
-  , y{_v}
-{
-}
-
 
 template<typename T>
 inline constexpr vec2<T>::vec2(T _x, T _y)
@@ -168,131 +130,118 @@ inline constexpr vec2<T2> vec2<T>::cast() const {
 }
 
 template<typename T>
-inline constexpr vec2<T> vec2<T>::operator-() const {
-  return {-x, -y};
-}
-
-// (vec, vec)
-template<typename T>
-inline constexpr vec2<T> vec2<T>::operator*(const vec2<T>& _vec) const {
-  return {x*_vec.x, y*_vec.y};
+inline void vec2<T>::operator+=(const vec2<T>& _v) {
+  x += _v.x;
+  y += _v.y;
 }
 
 template<typename T>
-inline constexpr vec2<T> vec2<T>::operator/(const vec2<T>& _vec) const {
-  return {x/_vec.x, y/_vec.y};
+inline void vec2<T>::operator-=(const vec2<T>& _v) {
+  x -= _v.x;
+  y -= _v.y;
 }
 
 template<typename T>
-inline constexpr vec2<T> vec2<T>::operator+(const vec2<T>& _vec) const {
-  return {x+_vec.x, y+_vec.y};
+inline void vec2<T>::operator*=(T _scalar) {
+  x *= _scalar;
+  y *= _scalar;
 }
 
 template<typename T>
-inline constexpr vec2<T> vec2<T>::operator-(const vec2<T>& _vec) const {
-  return {x-_vec.x, y-_vec.y};
+inline void vec2<T>::operator/=(T _scalar) {
+  x /= _scalar;
+  y /= _scalar;
 }
 
 template<typename T>
-inline constexpr vec2<T>& vec2<T>::operator*=(const vec2<T>& _vec) {
-  return *this = *this * _vec;
-}
-
-template<typename T>
-inline constexpr vec2<T>& vec2<T>::operator/=(const vec2<T>& _vec) {
-  return *this = *this / _vec;
-}
-
-template<typename T>
-inline constexpr vec2<T>& vec2<T>::operator+=(const vec2<T>& _vec) {
-  return *this = *this + _vec;
-}
-
-template<typename T>
-inline constexpr vec2<T>& vec2<T>::operator-=(const vec2<T>& _vec) {
-  return *this = *this - _vec;
-}
-
-// (vec, scalar)
-template<typename T>
-inline constexpr vec2<T> vec2<T>::operator*(T _scalar) const {
-  return {x*_scalar, y*_scalar};
-}
-
-template<typename T>
-inline constexpr vec2<T> vec2<T>::operator/(T _scalar) const {
-  return {x/_scalar, y/_scalar};
-}
-
-template<typename T>
-inline constexpr vec2<T> vec2<T>::operator+(T _scalar) const {
-  return {x+_scalar, y+_scalar};
-}
-
-template<typename T>
-inline constexpr vec2<T> vec2<T>::operator-(T _scalar) const {
-  return {x-_scalar, y-_scalar};
-}
-
-template<typename T>
-inline constexpr vec2<T>& vec2<T>::operator*=(T _scalar) {
-  return *this = *this * _scalar;
-}
-
-template<typename T>
-inline constexpr vec2<T>& vec2<T>::operator/=(T _scalar) {
-  return *this = *this / _scalar;
-}
-
-template<typename T>
-inline constexpr vec2<T>& vec2<T>::operator+=(T _scalar) {
-  return *this = *this + _scalar;
-}
-
-template<typename T>
-inline constexpr vec2<T>& vec2<T>::operator-=(T _scalar) {
-  return *this = *this - _scalar;
-}
-
-// (scalar, vec)
-template<typename U>
-inline constexpr vec2<U> operator*(U _scalar, const vec2<U>& _vec) {
-  return {_scalar*_vec.x, _scalar*_vec.y};
-}
-
-template<typename U>
-inline constexpr vec2<U> operator/(U _scalar, const vec2<U>& _vec) {
-  return {_scalar/_vec.x, _scalar/_vec.y};
-}
-
-template<typename U>
-inline constexpr vec2<U> operator+(U _scalar, const vec2<U>& _vec) {
-  return {_scalar+_vec.x, _scalar+_vec.y};
-}
-
-template<typename U>
-inline constexpr vec2<U> operator-(U _scalar, const vec2<U>& _vec) {
-  return {_scalar-_vec.x, _scalar-_vec.y};
-}
-
-template<typename U>
-inline constexpr bool operator==(const vec2<U>& _lhs, const vec2<U>& _rhs) {
+inline constexpr bool operator==(const vec2<T>& _lhs, const vec2<T>& _rhs) {
   return _lhs.x == _rhs.x && _lhs.y == _rhs.y;
 }
 
-template<typename U>
-inline constexpr bool operator!=(const vec2<U>& _lhs, const vec2<U>& _rhs) {
+template<typename T>
+inline constexpr bool operator!=(const vec2<T>& _lhs, const vec2<T>& _rhs) {
   return _lhs.x != _rhs.x || _lhs.y != _rhs.y;
 }
 
-// dot product
 template<typename T>
-inline constexpr T dot(const vec2<T> &_lhs, const vec2<T> &_rhs) {
-  return _lhs.x*_rhs.x + _lhs.y*_rhs.y;
+inline constexpr vec2<T> operator-(const vec2<T>& _v) {
+  return {-_v.x, -_v.y};
 }
 
-rx_f32 length(const vec2f& _value);
-vec2f normalize(const vec2f& _value);
+template<typename T>
+inline constexpr vec2<T> operator+(const vec2<T>& _a, const vec2<T>& _b) {
+  return {_a.x + _b.x, _a.y + _b.y};
+}
+
+template<typename T>
+inline constexpr vec2<T> operator-(const vec2<T>& _a, const vec2<T>& _b) {
+  return {_a.x - _b.x, _a.y - _b.y};
+}
+
+template<typename T>
+inline constexpr vec2<T> operator*(T _scalar, const vec2<T>& _v) {
+  return {_scalar * _v.x, _scalar * _v.y};
+}
+
+template<typename T>
+inline constexpr vec2<T> operator*(const vec2<T>& _v, T _scalar) {
+  return _scalar * _v;
+}
+
+// NOTE: check
+template<typename T>
+inline constexpr vec2<T> operator-(const vec2<T>& _v, T _scalar) {
+  return {_v.x - _scalar, _v.y - _scalar};
+}
+
+// NOTE: check
+template<typename T>
+inline constexpr vec2<T> operator+(const vec2<T>& _v, T _scalar) {
+  return {_v.x + _scalar, _v.y + _scalar};
+}
+
+// NOTE: check
+template<typename T>
+inline constexpr vec2<T> operator/(T _scalar, const vec2<T>& _v) {
+  return {_scalar / _v.x, _scalar / _v.y};
+}
+
+// NOTE: check
+template<typename T>
+inline constexpr vec2<T> operator/(const vec2<T>& _v, T _scalar) {
+  return {_v.x / _scalar, _v.y / _scalar};
+}
+
+// NOTE: check
+template<typename T>
+inline constexpr vec2<T> operator/(const vec2<T>& _a, const vec2<T>& _b) {
+  return {_a.x / _b.x, _a.y / _b.y};
+}
+
+// NOTE: check
+template<typename T>
+inline constexpr vec2<T> operator*(const vec2<T>& _a, const vec2<T>& _b) {
+  return {_a.x * _b.x, _a.y * _b.y};
+}
+
+template<typename T>
+inline constexpr T dot(const vec2<T>& _lhs, const vec2<T>& _rhs) {
+  return _lhs.x * _rhs.x + _lhs.y * _rhs.y;
+}
+
+// Only defined for floating point
+inline rx_f32 length(const vec2f& _value) {
+  return sqrt(dot(_value, _value));
+}
+
+template<typename T>
+inline rx_f32 distance(const vec2f& _a, const vec2f& _b) {
+  return length(_a - _b);
+}
+
+inline vec2f normalize(const vec2f& _v) {
+  return (1.0f / length(_v)) * _v;
+}
 
 } // namespace rx::math
 

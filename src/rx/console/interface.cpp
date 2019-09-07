@@ -147,7 +147,7 @@ bool interface::save(const char* file_name) {
       file.print("## %s (in range [%s, %s], defaults to %s)\n",
         head->description(), min_fmt, max_fmt, handle->initial());
       file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), handle->initial());
+        head->name(), handle->get());
     } else if (head->type() == variable_type::k_vec4i) {
       const auto handle{head->cast<vec4i>()};
       const auto min{handle->min()};
@@ -171,6 +171,8 @@ bool interface::save(const char* file_name) {
       }
       file.print("## %s (in range [%s, %s], defaults to %s)\n",
         head->name(), min_fmt, max_fmt, handle->initial());
+      file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
+        head->name(), handle->get());
     } else if (head->type() == variable_type::k_vec3f) {
       const auto handle{head->cast<vec3f>()};
       const auto min{handle->min()};
@@ -193,7 +195,7 @@ bool interface::save(const char* file_name) {
       file.print("## %s (in range [%s, %s], defaults to %s)\n",
         head->description(), min_fmt, max_fmt, handle->initial());
       file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), handle->initial());
+        head->name(), handle->get());
     } else if (head->type() == variable_type::k_vec3i) {
       const auto handle{head->cast<vec3i>()};
       const auto min{handle->min()};
@@ -215,6 +217,8 @@ bool interface::save(const char* file_name) {
       }
       file.print("## %s (in range [%s, %s], defaults to %s)\n",
         head->name(), min_fmt, max_fmt, handle->initial());
+      file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
+        head->name(), handle->get());
     } else if (head->type() == variable_type::k_vec2f) {
       const auto handle{head->cast<vec2f>()};
       const auto min{handle->min()};
@@ -235,7 +239,7 @@ bool interface::save(const char* file_name) {
       file.print("## %s (in range [%s, %s], defaults to %s)\n",
         head->description(), min_fmt, max_fmt, handle->initial());
       file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), handle->initial());
+        head->name(), handle->get());
     } else if (head->type() == variable_type::k_vec2i) {
       const auto handle{head->cast<vec2i>()};
       const auto min{handle->min()};
@@ -256,7 +260,7 @@ bool interface::save(const char* file_name) {
       file.print("## %s (in range [%s, %s], defaults to %s)\n",
         head->description(), min_fmt, max_fmt, handle->initial());
       file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), handle->initial());
+        head->name(), handle->get());
     }
   }
 

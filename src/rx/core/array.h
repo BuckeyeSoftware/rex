@@ -12,6 +12,7 @@ template<typename T, rx_size E>
 struct array<T[E]> {
   T& operator[](rx_size _index);
   const T& operator[](rx_size _index) const;
+
   T* data();
   const T* data() const;
   rx_size size() const;

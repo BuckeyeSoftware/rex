@@ -2,7 +2,8 @@
 #define RX_MATH_MAT4X4_H
 #include "rx/math/vec3.h" // vec3
 #include "rx/math/vec4.h" // vec4
-#include "rx/math/trig.h" // deg_to_ra
+#include "rx/math/trig.h" // deg_to_rad
+#include "rx/math/compare.h"
 
 #include "rx/core/math/sin.h" // sin
 #include "rx/core/math/cos.h" // cos
@@ -132,6 +133,11 @@ inline constexpr mat4x4<T> mat4x4<T>::invert(const mat4x4& _mat) {
   const auto det4{-det3x3(a2, a3, a4, b2, b3, b4, c2, c3, c4)};
 
   const auto det{a1*det1 + b1*det2 + c1*det3 + d1*det4};
+
+  if (epsilon_compare(det, 0.0f)) {
+    return {};
+  }
+
   const auto invdet{T{1} / det};
 
   return {

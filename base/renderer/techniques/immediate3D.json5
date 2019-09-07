@@ -17,7 +17,8 @@
         { name: "a_color",       type: "vec4f" }
       ],
       outputs: [
-        { name: "vs_color",      type: "vec4f" }
+        { name: "vs_color",      type: "vec4f" },
+        { name: "vs_view",       type: "vec3f", when: "USE_STANDARD" }
       ],
       source: "
         void main() {
@@ -31,20 +32,43 @@
           float distance = length(eye_position.xyz);
           float attenuation = inversesqrt(0.1 * distance);
           rx_point_size = a_size * attenuation;
+        #else
+          vs_view = (inverse(u_view) * eye_position).xyz;
         #endif
         }
       "
     },{
       type: "fragment",
       inputs: [
-        { name: "vs_color", type: "vec4f" }
+        { name: "vs_color", type: "vec4f" },
+        { name: "vs_view",  type: "vec3f", when: "USE_STANDARD" }
       ],
       outputs: [
         { name: "fs_color", type: "vec4f" }
       ],
       source: "
         void main() {
+        #if defined(USE_POINTS)
           fs_color = vs_color;
+        #else
+          // Calculate facet normals using partial derivatives
+          vec3f x_tangent = dFdx(vs_view);
+          vec3f y_tangent = dFdy(vs_view);
+
+          vec3f normal = normalize(cross(x_tangent, y_tangent));
+
+          const vec3f La = vec3f(0.5);
+          const vec3f Ld = vec3f(0.5);
+          vec3f L = normalize(vec3f(0.0, -1.0, 0.0));
+
+          vec3f Ma = vs_color.xyz;
+          vec3f Md = vs_color.xyz;
+
+          vec3f va = La * Ma;
+          vec3f vd = max(dot(normal, L), 0.0) * Ld * Md;
+
+          fs_color = vec4(va + vd, vs_color.a);
+        #endif
         }
       "
     }

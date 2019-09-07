@@ -80,7 +80,7 @@ void animation::render_skeleton(const math::mat4x4f& _world, render::immediate3D
     _immediate->frame_queue().record_solid_sphere(
       {16.0f, 16.0f},
       {0.5f, 0.5f, 1.0f, 1.0f},
-      math::mat4x4f::scale({0.1f}) * joint * _world,
+      math::mat4x4f::scale({0.1f, 0.1f, 0.1f}) * joint * _world,
       0);
   }
 

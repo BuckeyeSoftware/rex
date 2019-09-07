@@ -9,6 +9,7 @@
   ],
   uniforms: [
     { name: "u_transform", type: "mat4x4f" },
+    { name: "u_model",     type: "mat4x4f" },
     { name: "u_bones",     type: "bonesf",    when: "HAS_SKELETON" },
     { name: "u_diffuse",   type: "sampler2D", when: "HAS_DIFFUSE" },
     { name: "u_normal",    type: "sampler2D", when: "HAS_NORMAL" },
@@ -46,7 +47,7 @@
         #else
           vec4f position = vec4(a_position, 1.0);
         #endif
-          vs_normal     = a_normal;
+          vs_normal     = mat3x3f(transpose(inverse(u_model))) * a_normal;
           vs_tangent    = a_tangent;
           vs_coordinate = a_coordinate;
 
@@ -76,9 +77,6 @@
           mat3x3f tbn = mat3x3f(vs_tangent.xyz, bitangent, normal);
           normal = normalize(tbn * mapnormal);
         #endif
-          // consider model matrix
-          // TODO(dweiler): normalize((u_model * vec4(normal, 0.0))).xyz;
-          // FIXME(dweiler):
           normal = normalize(normal);
 
           // calculate metalness value

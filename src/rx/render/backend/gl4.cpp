@@ -434,7 +434,9 @@ namespace detail {
     GLuint tex;
   };
 
-  struct state : frontend::state {
+  struct state
+    : frontend::state
+  {
     state()
       : m_color_mask{0xff}
       , m_bound_vao{0}
@@ -701,6 +703,68 @@ namespace detail {
         m_bound_program = this_program->handle;
       }
     }
+
+
+    struct texture_unit {
+      GLuint texture1D;
+      GLuint texture2D;
+      GLuint texture3D;
+      GLuint textureCM;
+    };
+
+    template<typename Ft, typename Bt, GLuint texture_unit::*name>
+    void use_texture_template(const Ft* _render_texture, GLuint unit) {
+      const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
+      auto& texture_unit{m_texture_units[unit]};
+      if (texture_unit.*name != this_texture->tex) {
+        texture_unit.*name = this_texture->tex;
+        pglBindTextureUnit(unit, this_texture->tex);
+      }
+    }
+
+    template<typename Ft, typename Bt, GLuint texture_unit::*name>
+    void invalidate_texture_template(const Ft* _render_texture) {
+      const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
+      for (auto& texture_unit : m_texture_units) {
+        if (texture_unit.*name == this_texture->tex) {
+          texture_unit.*name = 0;
+        }
+      }
+    }
+
+    void use_texture(const frontend::texture1D* _render_texture, GLuint unit) {
+      use_texture_template<frontend::texture1D, texture1D, &texture_unit::texture1D>(_render_texture, unit);
+    }
+
+    void use_texture(const frontend::texture2D* _render_texture, GLuint unit) {
+      use_texture_template<frontend::texture2D, texture2D, &texture_unit::texture2D>(_render_texture, unit);
+    }
+
+    void use_texture(const frontend::texture3D* _render_texture, GLuint unit) {
+      use_texture_template<frontend::texture3D, texture3D, &texture_unit::texture3D>(_render_texture, unit);
+    }
+
+    void use_texture(const frontend::textureCM* _render_texture, GLuint unit) {
+      use_texture_template<frontend::textureCM, textureCM, &texture_unit::textureCM>(_render_texture, unit);
+    }
+
+    void invalidate_texture(const frontend::texture1D* _render_texture) {
+      invalidate_texture_template<frontend::texture1D, texture1D, &texture_unit::texture1D>(_render_texture);
+    }
+
+    void invalidate_texture(const frontend::texture2D* _render_texture) {
+      invalidate_texture_template<frontend::texture2D, texture2D, &texture_unit::texture2D>(_render_texture);
+    }
+
+    void invalidate_texture(const frontend::texture3D* _render_texture) {
+      invalidate_texture_template<frontend::texture3D, texture3D, &texture_unit::texture3D>(_render_texture);
+    }
+
+    void invalidate_texture(const frontend::textureCM* _render_texture) {
+      invalidate_texture_template<frontend::textureCM, textureCM, &texture_unit::textureCM>(_render_texture);
+    }
+
+    texture_unit m_texture_units[8];
 
     rx_u8 m_color_mask;
 
@@ -1058,15 +1122,19 @@ void gl4::process(rx_byte* _command) {
         utility::destruct<detail::program>(resource->as_program + 1);
         break;
       case frontend::resource_command::type::k_texture1D:
+        state->invalidate_texture(resource->as_texture1D);
         utility::destruct<detail::texture1D>(resource->as_texture1D + 1);
         break;
       case frontend::resource_command::type::k_texture2D:
+        state->invalidate_texture(resource->as_texture2D);
         utility::destruct<detail::texture2D>(resource->as_texture2D + 1);
         break;
       case frontend::resource_command::type::k_texture3D:
+        state->invalidate_texture(resource->as_texture3D);
         utility::destruct<detail::texture3D>(resource->as_texture3D + 1);
         break;
       case frontend::resource_command::type::k_textureCM:
+        state->invalidate_texture(resource->as_textureCM);
         utility::destruct<detail::textureCM>(resource->as_textureCM + 1);
         break;
       }
@@ -1651,16 +1719,16 @@ void gl4::process(rx_byte* _command) {
       for (GLuint i{0}; i < 8; i++) {
         switch (command->texture_types[i]) {
         case '1':
-          pglBindTextureUnit(i, reinterpret_cast<detail::texture1D*>(reinterpret_cast<frontend::texture1D*>(command->texture_binds[i]) + 1)->tex);
+          state->use_texture(reinterpret_cast<frontend::texture1D*>(command->texture_binds[i]), i);
           break;
         case '2':
-          pglBindTextureUnit(i, reinterpret_cast<detail::texture2D*>(reinterpret_cast<frontend::texture2D*>(command->texture_binds[i]) + 1)->tex);
+          state->use_texture(reinterpret_cast<frontend::texture2D*>(command->texture_binds[i]), i);
           break;
         case '3':
-          pglBindTextureUnit(i, reinterpret_cast<detail::texture3D*>(reinterpret_cast<frontend::texture3D*>(command->texture_binds[i]) + 1)->tex);
+          state->use_texture(reinterpret_cast<frontend::texture3D*>(command->texture_binds[i]), i);
           break;
         case 'c':
-          pglBindTextureUnit(i, reinterpret_cast<detail::textureCM*>(reinterpret_cast<frontend::textureCM*>(command->texture_binds[i]) + 1)->tex);
+          state->use_texture(reinterpret_cast<frontend::textureCM*>(command->texture_binds[i]), i);
           break;
         default:
           break;

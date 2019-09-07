@@ -18,12 +18,4 @@ const char* format_type<math::vec4i>::operator()(const math::vec4i& value) {
   return scratch;
 }
 
-rx_f32 math::length(const math::vec4f& _value) {
-  return sqrt(dot(_value, _value));
-}
-
-math::vec4f math::normalize(const math::vec4f& _value) {
-  return _value * (1.0f / math::length(_value));
-}
-
 } // namespace rx

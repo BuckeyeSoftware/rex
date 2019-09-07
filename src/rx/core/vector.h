@@ -1,5 +1,5 @@
-#ifndef RX_CORE_ARRAY_H
-#define RX_CORE_ARRAY_H
+#ifndef RX_CORE_VECTOR_H
+#define RX_CORE_VECTOR_H
 #include "rx/core/assert.h" // RX_ASSERT
 
 #include "rx/core/traits/is_same.h"
@@ -465,4 +465,4 @@ inline memory::view vector<T>::disown() {
 
 } // namespace rx
 
-#endif // RX_CORE_ARRAY_H
+#endif // RX_CORE_VECTOR_H

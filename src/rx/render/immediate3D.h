@@ -56,6 +56,11 @@ struct immediate3D {
       bool operator!=(const solid_sphere& _solid_sphere) const;
     };
 
+    struct solid_cube {
+      math::mat4x4f transform;
+      bool operator!=(const solid_cube& _solid_cube) const;
+    };
+
     struct command {
       constexpr command();
 
@@ -63,7 +68,8 @@ struct immediate3D {
         k_uninitialized,
         k_point,
         k_line,
-        k_solid_sphere
+        k_solid_sphere,
+        k_solid_cube
       };
 
       bool operator!=(const command& _command) const;
@@ -78,6 +84,7 @@ struct immediate3D {
         point as_point;
         line as_line;
         solid_sphere as_solid_sphere;
+        solid_cube as_solid_cube;
       };
     };
 
@@ -89,6 +96,9 @@ struct immediate3D {
 
     void record_solid_sphere(const math::vec2f& _slices_and_stacks,
       const math::vec4f& _color, const math::mat4x4f& _transform, rx_u8 _flags);
+
+    void record_solid_cube(const math::vec4f& _color,
+      const math::mat4x4f& _transform, rx_u8 _flags);
 
     bool is_empty() const;
 
@@ -116,6 +126,9 @@ private:
 
   void generate_solid_sphere(const math::vec2f& _slices_and_stacks,
     const math::mat4x4f& _transform, const math::vec4f& _color, rx_u32 _flags);
+
+  void generate_solid_cube(const math::mat4x4f& _transform,
+    const math::vec4f& _color, rx_u32 _flags);
 
   void add_batch(rx_size _offset, queue::command::type _type, rx_u32 _flags);
 
@@ -159,6 +172,10 @@ inline bool immediate3D::queue::line::operator!=(const line& _line) const {
 
 inline bool immediate3D::queue::solid_sphere::operator!=(const solid_sphere& _solid_sphere) const {
   return _solid_sphere.slices_and_stacks != slices_and_stacks || _solid_sphere.transform != transform;
+}
+
+inline bool immediate3D::queue::solid_cube::operator!=(const solid_cube& _solid_cube) const {
+  return _solid_cube.transform != transform;
 }
 
 inline constexpr immediate3D::queue::command::command()

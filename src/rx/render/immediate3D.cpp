@@ -55,6 +55,8 @@ bool immediate3D::queue::command::operator!=(const command& _command) const {
     return _command.as_line != as_line;
   case command::type::k_solid_sphere:
     return _command.as_solid_sphere != as_solid_sphere;
+  case command::type::k_solid_cube:
+    return _command.as_solid_cube != as_solid_cube;
   }
 
   return false;
@@ -113,6 +115,23 @@ void immediate3D::queue::record_solid_sphere(const math::vec2f& _slices_and_stac
   next_command.hash = hash_combine(next_command.hash, hash<math::vec4f>{}(next_command.color));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec2f>{}(next_command.as_solid_sphere.slices_and_stacks));
   next_command.hash = hash_combine(next_command.hash, hash<math::mat4x4f>{}(next_command.as_solid_sphere.transform));
+
+  m_commands.push_back(utility::move(next_command));
+}
+
+void immediate3D::queue::record_solid_cube(const math::vec4f& _color,
+  const math::mat4x4f& _transform, rx_u8 _flags)
+{
+  command next_command;
+  next_command.kind = command::type::k_solid_cube;
+  next_command.flags = _flags;
+  next_command.color = _color;
+  next_command.as_solid_cube.transform = _transform;
+
+  next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.kind));
+  next_command.hash = hash<rx_u32>{}(next_command.flags);
+  next_command.hash = hash_combine(next_command.hash, hash<math::vec4f>{}(next_command.color));
+  next_command.hash = hash_combine(next_command.hash, hash<math::mat4x4f>{}(next_command.as_solid_cube.transform));
 
   m_commands.push_back(utility::move(next_command));
 }
@@ -203,6 +222,11 @@ void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
           _command.color,
           _command.flags);
         break;
+      case queue::command::type::k_solid_cube:
+        generate_solid_cube(
+          _command.as_solid_cube.transform,
+          _command.color,
+          _command.flags);
       default:
         break;
       }
@@ -264,6 +288,8 @@ void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
           "");
         break;
       case queue::command::type::k_solid_sphere:
+        [[fallthrough]];
+      case queue::command::type::k_solid_cube:
         m_frontend->draw_elements(
           RX_RENDER_TAG("immediate3D triangles"),
           _batch.render_state,
@@ -357,6 +383,79 @@ void immediate3D::generate_solid_sphere(const math::vec2f& _slices_and_stacks,
   }
 
   return add_batch(offset, queue::command::type::k_solid_sphere, _flags);
+}
+
+void immediate3D::generate_solid_cube(const math::mat4x4f& _transform,
+  const math::vec4f& _color, rx_u32 _flags)
+{
+  const rx_f32 min[]{-1.0f, -1.0f, -1.0f};
+  const rx_f32 max[]{ 1.0f,  1.0f,  1.0f};
+
+  const auto offset{m_elements.size()};
+
+  auto element{static_cast<rx_u32>(m_vertices.size())};
+
+  auto face{[&, this](const math::vec3f& _a, const math::vec3f& _b,
+                      const math::vec3f& _c, const math::vec3f& _d)
+  {
+    m_vertices.push_back({_a, 0.0f, _color});
+    m_vertices.push_back({_b, 0.0f, _color});
+    m_vertices.push_back({_c, 0.0f, _color});
+    m_vertices.push_back({_d, 0.0f, _color});
+
+    m_elements.push_back(element + 0);
+    m_elements.push_back(element + 3);
+    m_elements.push_back(element + 2);
+    m_elements.push_back(element + 2);
+    m_elements.push_back(element + 1);
+    m_elements.push_back(element + 0);
+
+    element += 4;
+  }};
+
+  // Top!
+  const math::vec3f t1{math::mat4x4f::transform_point({min[0], max[1], min[2]}, _transform)};
+  const math::vec3f t2{math::mat4x4f::transform_point({max[0], max[1], min[2]}, _transform)};
+  const math::vec3f t3{math::mat4x4f::transform_point({max[0], max[1], max[2]}, _transform)};
+  const math::vec3f t4{math::mat4x4f::transform_point({min[0], max[1], max[2]}, _transform)};
+  face(t1, t2, t3, t4);
+
+  // Front!
+  const math::vec3f f1{math::mat4x4f::transform_point({min[0], max[1], max[2]}, _transform)};
+  const math::vec3f f2{math::mat4x4f::transform_point({max[0], max[1], max[2]}, _transform)};
+  const math::vec3f f3{math::mat4x4f::transform_point({max[0], min[1], max[2]}, _transform)};
+  const math::vec3f f4{math::mat4x4f::transform_point({min[0], min[1], max[2]}, _transform)};
+  face(f1, f2, f3, f4);
+
+  // Left
+  const math::vec3f l1{math::mat4x4f::transform_point({min[0], max[1], max[2]}, _transform)};
+  const math::vec3f l2{math::mat4x4f::transform_point({min[0], min[1], max[2]}, _transform)};
+  const math::vec3f l3{math::mat4x4f::transform_point({min[0], min[1], min[2]}, _transform)};
+  const math::vec3f l4{math::mat4x4f::transform_point({min[0], max[1], min[2]}, _transform)};
+  face(l1, l2, l3, l4);
+
+  // Bottom!
+  const math::vec3f b1{math::mat4x4f::transform_point({min[0], min[1], min[2]}, _transform)};
+  const math::vec3f b2{math::mat4x4f::transform_point({min[0], min[1], max[2]}, _transform)};
+  const math::vec3f b3{math::mat4x4f::transform_point({max[0], min[1], max[2]}, _transform)};
+  const math::vec3f b4{math::mat4x4f::transform_point({max[0], min[1], min[2]}, _transform)};
+  face(b1, b2, b3, b4);
+
+  // Back!
+  const math::vec3f B1{math::mat4x4f::transform_point({min[0], max[1], min[2]}, _transform)};
+  const math::vec3f B2{math::mat4x4f::transform_point({min[0], min[1], min[2]}, _transform)};
+  const math::vec3f B3{math::mat4x4f::transform_point({max[0], min[1], min[2]}, _transform)};
+  const math::vec3f B4{math::mat4x4f::transform_point({max[0], max[1], min[2]}, _transform)};
+  face(B1, B2, B3, B4);
+
+  // Right!
+  const math::vec3f r1{math::mat4x4f::transform_point({max[0], max[1], max[2]}, _transform)};
+  const math::vec3f r2{math::mat4x4f::transform_point({max[0], max[1], min[2]}, _transform)};
+  const math::vec3f r3{math::mat4x4f::transform_point({max[0], min[1], min[2]}, _transform)};
+  const math::vec3f r4{math::mat4x4f::transform_point({max[0], min[1], max[2]}, _transform)};
+  face(r1, r2, r3, r4);
+
+  add_batch(offset, queue::command::type::k_solid_cube, _flags);
 }
 
 void immediate3D::add_batch(rx_size _offset, queue::command::type _type,
