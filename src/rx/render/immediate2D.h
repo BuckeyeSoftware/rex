@@ -176,6 +176,20 @@ struct immediate2D {
   };
 
 private:
+  struct vertex {
+    math::vec2f position;
+    math::vec2f coordinate;
+    math::vec4f color;
+  };
+
+  struct batch {
+    rx_size offset;
+    rx_size count;
+    queue::command::type kind;
+    frontend::state render_state;
+    frontend::texture2D* texture;
+  };
+
   static constexpr const rx_size k_buffers{2};
   static constexpr const rx_size k_circle_vertices{16*4};
 
@@ -194,22 +208,18 @@ private:
     const char* _contents, rx_size _contents_length, rx_f32 _scale,
     const math::vec2f& _position, text_align _align, const math::vec4f& _color);
 
+  template<rx_size E>
+  void size_polygon(rx_size& n_vertices_, rx_size& n_elements_);
+  void size_rectangle(rx_f32 _roundness, rx_size& n_vertices_, rx_size& n_elements_);
+  void size_line(rx_size& n_vertices_, rx_size& n_elements_);
+  void size_text(const char* _contents, rx_size _contents_length,
+    rx_size& n_vertices_, rx_size& n_elements_);
+
   void add_batch(rx_size _offset, queue::command::type _type,
     frontend::texture2D* _texture = nullptr);
 
-  struct vertex {
-    math::vec2f position;
-    math::vec2f coordinate;
-    math::vec4f color;
-  };
-
-  struct batch {
-    rx_size offset;
-    rx_size count;
-    queue::command::type kind;
-    frontend::state render_state;
-    frontend::texture2D* texture;
-  };
+  void add_element(rx_u32 _element);
+  void add_vertex(vertex&& _vertex);
 
   frontend::interface* m_frontend;
   frontend::technique* m_technique;
@@ -229,6 +239,9 @@ private:
   vector<vertex> m_vertices;
   vector<rx_u32> m_elements;
   vector<batch> m_batches;
+
+  rx_size m_vertex_index;
+  rx_size m_element_index;
 
   // buffering of batched immediates
   rx_size m_rd_index;

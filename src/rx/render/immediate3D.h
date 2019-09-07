@@ -118,25 +118,6 @@ struct immediate3D {
   queue& frame_queue();
 
 private:
-  void generate_point(const math::vec3f& _position, rx_f32 _size,
-    const math::vec4f& _color, rx_u32 _flags);
-
-  void generate_line(const math::vec3f& _point_a, const math::vec3f& _point_b,
-    const math::vec4f& _color, rx_u32 _flags);
-
-  void generate_solid_sphere(const math::vec2f& _slices_and_stacks,
-    const math::mat4x4f& _transform, const math::vec4f& _color, rx_u32 _flags);
-
-  void generate_solid_cube(const math::mat4x4f& _transform,
-    const math::vec4f& _color, rx_u32 _flags);
-
-  void add_batch(rx_size _offset, queue::command::type _type, rx_u32 _flags);
-
-  static constexpr const rx_size k_buffers{2};
-
-  frontend::interface* m_frontend;
-  frontend::technique* m_technique;
-
   struct vertex {
     math::vec3f position;
     rx_f32 size;
@@ -150,10 +131,41 @@ private:
     frontend::state render_state;
   };
 
+  void generate_point(const math::vec3f& _position, rx_f32 _size,
+    const math::vec4f& _color, rx_u32 _flags);
+
+  void generate_line(const math::vec3f& _point_a, const math::vec3f& _point_b,
+    const math::vec4f& _color, rx_u32 _flags);
+
+  void generate_solid_sphere(const math::vec2f& _slices_and_stacks,
+    const math::mat4x4f& _transform, const math::vec4f& _color, rx_u32 _flags);
+
+  void generate_solid_cube(const math::mat4x4f& _transform,
+    const math::vec4f& _color, rx_u32 _flags);
+
+  void size_point(rx_size& n_vertices_, rx_size& n_elements_);
+  void size_line(rx_size& n_vertices_, rx_size& n_elements_);
+  void size_solid_sphere(const math::vec2f& _slices_and_stacks,
+    rx_size& n_vertices_, rx_size& n_elements_);
+  void size_solid_cube(rx_size& n_vertices_, rx_size& n_elements_);
+
+  void add_batch(rx_size _offset, queue::command::type _type, rx_u32 _flags);
+
+  void add_element(rx_u32 _element);
+  void add_vertex(vertex&& _vertex);
+
+  static constexpr const rx_size k_buffers{2};
+
+  frontend::interface* m_frontend;
+  frontend::technique* m_technique;
+
   queue m_queue;
   vector<vertex> m_vertices;
   vector<rx_u32> m_elements;
   vector<batch> m_batches;
+
+  rx_size m_vertex_index;
+  rx_size m_element_index;
 
   rx_size m_rd_index;
   rx_size m_wr_index;

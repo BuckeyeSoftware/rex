@@ -350,6 +350,8 @@ immediate2D::immediate2D(frontend::interface* _frontend)
   , m_vertices{m_frontend->allocator()}
   , m_elements{m_frontend->allocator()}
   , m_batches{m_frontend->allocator()}
+  , m_vertex_index{0}
+  , m_element_index{0}
   , m_rd_index{1}
   , m_wr_index{0}
 {
@@ -396,6 +398,39 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
 
   // avoid generating geomtry and uploading if the contents didn't change
   if (m_queue != m_render_queue[m_rd_index]) {
+    // calculate storage needed
+    rx_size n_vertices{0};
+    rx_size n_elements{0};
+    m_queue.m_commands.each_fwd([&](const queue::command& _command) {
+      switch (_command.kind) {
+      case queue::command::type::k_rectangle:
+        size_rectangle(
+          _command.as_rectangle.roundness,
+          n_vertices,
+          n_elements);
+          break;
+      case queue::command::type::k_line:
+        size_line(n_vertices, n_elements);
+        break;
+      case queue::command::type::k_triangle:
+        // TODO(dweiler): implement
+        break;
+      case queue::command::type::k_text:
+        size_text(
+          m_queue.m_string_table.data() + _command.as_text.text_index,
+          _command.as_text.text_length,
+          n_vertices,
+          n_elements);
+        break;
+      default:
+        break;
+      }
+    });
+
+    // allocate storage
+    m_vertices.resize(n_vertices);
+    m_elements.resize(n_elements);
+
     // generate geometry for a future frame
     m_queue.m_commands.each_fwd([this](const queue::command& _command) {
       switch (_command.kind) {
@@ -447,6 +482,9 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
     // clear staging buffers
     m_vertices.clear();
     m_elements.clear();
+
+    m_vertex_index = 0;
+    m_element_index = 0;
 
     // write buffer will be processed some time in the future
     m_render_batches[m_wr_index] = utility::move(m_batches);
@@ -510,7 +548,8 @@ void immediate2D::generate_polygon(const math::vec2f (&_coordinates)[E],
   math::vec2f normals[E];
   math::vec2f coordinates[E];
 
-  const rx_size offset{m_elements.size()};
+  const rx_size offset{m_element_index};
+
   for (rx_size i{0}, j{E-1}; i < E; j = i++) {
     const math::vec2f& f0{coordinates[j]};
     const math::vec2f& f1{coordinates[i]};
@@ -526,60 +565,37 @@ void immediate2D::generate_polygon(const math::vec2f (&_coordinates)[E],
   }
 
   // sanity check that we don't exceed the element format
-  RX_ASSERT(m_vertices.size() + E * 4 + (E -  2) * 3 <= 0xffffffff, "too many elements");
+  RX_ASSERT(m_vertex_index + E * 4 + (E -  2) * 3 <= 0xffffffff, "too many elements");
 
   for (rx_size i{0}, j{E-1}; i < E; j = i++) {
-    const auto element{static_cast<rx_u32>(m_vertices.size())};
+    const auto element{static_cast<rx_u32>(m_vertex_index)};
 
-    m_elements.push_back(element + 0);
-    m_elements.push_back(element + 1);
-    m_elements.push_back(element + 2);
-    m_elements.push_back(element + 2);
-    m_elements.push_back(element + 3);
-    m_elements.push_back(element + 0);
+    add_element(element + 0);
+    add_element(element + 1);
+    add_element(element + 2);
+    add_element(element + 2);
+    add_element(element + 3);
+    add_element(element + 0);
 
-    m_vertices.push_back({_coordinates[i], {}, _color});
-    m_vertices.push_back({_coordinates[j], {}, _color});
-    m_vertices.push_back({coordinates[j], {}, {_color.r, _color.g, _color.b, 0.0f}});
-    m_vertices.push_back({coordinates[i], {}, {_color.r, _color.g, _color.b, 0.0f}});
+    add_vertex({_coordinates[i], {}, _color});
+    add_vertex({_coordinates[j], {}, _color});
+    add_vertex({coordinates[j], {}, {_color.r, _color.g, _color.b, 0.0f}});
+    add_vertex({coordinates[i], {}, {_color.r, _color.g, _color.b, 0.0f}});
   }
 
   for (rx_size i{2}; i < E; i++) {
-    const auto element{static_cast<rx_u32>(m_vertices.size())};
+    const auto element{static_cast<rx_u32>(m_vertex_index)};
 
-    m_elements.push_back(element + 0);
-    m_elements.push_back(element + 1);
-    m_elements.push_back(element + 2);
+    add_element(element + 0);
+    add_element(element + 1);
+    add_element(element + 2);
 
-    m_vertices.push_back({_coordinates[0], {}, _color});
-    m_vertices.push_back({_coordinates[(i - 1)], {}, _color});
-    m_vertices.push_back({_coordinates[i], {}, _color});
+    add_vertex({_coordinates[0], {}, _color});
+    add_vertex({_coordinates[(i - 1)], {}, _color});
+    add_vertex({_coordinates[i], {}, _color});
   }
 
   add_batch(offset, _from_type);
-}
-
-void immediate2D::generate_line(const math::vec2f& _point_a,
-  const math::vec2f& _point_b, rx_f32 _thickness, rx_f32 _roundness,
-  const math::vec4f& _color)
-{
-  math::vec2f delta{math::normalize(_point_b - _point_a)};
-  math::vec2f normal{delta.y, -delta.x};
-
-  _roundness -= _thickness;
-  _roundness *= 0.5f;
-
-  delta = delta * math::vec2f{_roundness, _roundness};
-  normal = normal * math::vec2f{_roundness, _roundness};
-
-  const math::vec2f vertices[]{
-    _point_a - delta - normal,
-    _point_a - delta + normal,
-    _point_b + delta + normal,
-    _point_b + delta - normal
-  };
-
-  generate_polygon(vertices, _thickness, _color, queue::command::type::k_line);
 }
 
 void immediate2D::generate_rectangle(const math::vec2f& _position, const math::vec2f& _size,
@@ -620,6 +636,30 @@ void immediate2D::generate_rectangle(const math::vec2f& _position, const math::v
     generate_polygon(vertices, 1.0f, _color, queue::command::type::k_rectangle);
   }
 }
+
+void immediate2D::generate_line(const math::vec2f& _point_a,
+  const math::vec2f& _point_b, rx_f32 _thickness, rx_f32 _roundness,
+  const math::vec4f& _color)
+{
+  math::vec2f delta{math::normalize(_point_b - _point_a)};
+  math::vec2f normal{delta.y, -delta.x};
+
+  _roundness -= _thickness;
+  _roundness *= 0.5f;
+
+  delta = delta * math::vec2f{_roundness, _roundness};
+  normal = normal * math::vec2f{_roundness, _roundness};
+
+  const math::vec2f vertices[]{
+    _point_a - delta - normal,
+    _point_a - delta + normal,
+    _point_b + delta + normal,
+    _point_b + delta - normal
+  };
+
+  generate_polygon(vertices, _thickness, _color, queue::command::type::k_line);
+}
+
 
 static rx_size calculate_text_color(const char* _contents, math::vec4f& color_) {
   switch (*_contents) {
@@ -734,9 +774,8 @@ void immediate2D::generate_text(rx_s32 _size, const char* _font,
   // scale relative to font size
   // _scale /= static_cast<rx_f32>(font_map->size());
 
-  const rx_size offset{m_elements.size()};
-  const rx_size length{_contents_length};
-  for (rx_size i{0}; i < length; i++) {
+  const rx_size offset{m_element_index};
+  for (rx_size i{0}; i < _contents_length; i++) {
     const int ch{_contents[i]};
     if (ch == '^') {
       const char* next{_contents + i + 1};
@@ -747,28 +786,67 @@ void immediate2D::generate_text(rx_s32 _size, const char* _font,
     }
 
     const font::quad quad{font_map->quad_for_glyph(ch - 32, _scale, position)};
-    const rx_u32 element{static_cast<rx_u32>(m_vertices.size())};
+    const auto element{static_cast<rx_u32>(m_vertex_index)};
 
-    m_elements.push_back(element + 0);
-    m_elements.push_back(element + 1);
-    m_elements.push_back(element + 2);
-    m_elements.push_back(element + 0);
-    m_elements.push_back(element + 3);
-    m_elements.push_back(element + 1);
+    add_element(element + 0);
+    add_element(element + 1);
+    add_element(element + 2);
+    add_element(element + 0);
+    add_element(element + 3);
+    add_element(element + 1);
 
-    m_vertices.push_back({quad.position[0], quad.coordinate[0], color});
-    m_vertices.push_back({quad.position[1], quad.coordinate[1], color});
-    m_vertices.push_back({{quad.position[1].x, quad.position[0].y}, {quad.coordinate[1].s, quad.coordinate[0].t}, color});
-    m_vertices.push_back({{quad.position[0].x, quad.position[1].y}, {quad.coordinate[0].s, quad.coordinate[1].t}, color});
+    add_vertex({quad.position[0], quad.coordinate[0], color});
+    add_vertex({quad.position[1], quad.coordinate[1], color});
+    add_vertex({{quad.position[1].x, quad.position[0].y}, {quad.coordinate[1].s, quad.coordinate[0].t}, color});
+    add_vertex({{quad.position[0].x, quad.position[1].y}, {quad.coordinate[0].s, quad.coordinate[1].t}, color});
   }
 
   add_batch(offset, queue::command::type::k_text, font_map->texture());
 }
 
+template<rx_size E>
+void immediate2D::size_polygon(rx_size& n_vertices_, rx_size& n_elements_) {
+  n_vertices_ += 4 * E + 3 * (E - 2);
+  n_elements_ += 6 * E + 3 * (E - 2);
+}
+
+void immediate2D::size_rectangle(rx_f32 _roundness, rx_size& n_vertices_, rx_size& n_elements_) {
+  if (_roundness > 0.0f) {
+    static constexpr const rx_size k_round{k_circle_vertices/4};
+    size_polygon<(k_round + 1) * 4>(n_vertices_, n_elements_);
+  } else {
+    size_polygon<4>(n_vertices_, n_elements_);
+  }
+}
+
+void immediate2D::size_line(rx_size& n_vertices_, rx_size& n_elements_) {
+  size_polygon<4>(n_vertices_, n_elements_);
+}
+
+void immediate2D::size_text(const char* _contents, rx_size _contents_length,
+  rx_size& n_vertices_, rx_size& n_elements_)
+{
+  for (rx_size i{0}; i < _contents_length; i++) {
+    const int ch{_contents[i]};
+    if (ch == '^') {
+      const char* next{_contents + i + 1};
+      if (*next != '^') {
+        math::vec4f sink;
+        i += calculate_text_color(next, sink);
+        continue;
+      }
+    }
+
+    n_vertices_ += 4;
+    n_elements_ += 6;
+  }
+}
+
+
 void immediate2D::add_batch(rx_size _offset, queue::command::type _type,
   frontend::texture2D* _texture)
 {
-  const rx_size count{m_elements.size() - _offset};
+  const rx_size count{m_element_index - _offset};
 
   frontend::state render_state;
   render_state.blend.record_enable(true);
@@ -796,5 +874,14 @@ void immediate2D::add_batch(rx_size _offset, queue::command::type _type,
 
   m_batches.push_back({_offset, count, _type, render_state, _texture});
 }
+
+void immediate2D::add_element(rx_u32 _element) {
+  m_elements[m_element_index++] = _element;
+}
+
+void immediate2D::add_vertex(vertex&& _vertex) {
+  m_vertices[m_vertex_index++] = utility::move(_vertex);
+}
+
 
 } // namespace rx::render::frontend

@@ -161,6 +161,8 @@ immediate3D::immediate3D(frontend::interface* _frontend)
   , m_vertices{m_frontend->allocator()}
   , m_elements{m_frontend->allocator()}
   , m_batches{m_frontend->allocator()}
+  , m_vertex_index{0}
+  , m_element_index{0}
   , m_rd_index{1}
   , m_wr_index{0}
 {
@@ -190,15 +192,45 @@ immediate3D::~immediate3D() {
 void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
   const math::mat4x4f& _projection)
 {
-  // avoid renderinf if the last update did not produce any draw commands and
+  // avoid rendering if the last update did not produce any draw commands and
   // this iteration has no updates either
   const bool last_empty{m_render_queue[m_rd_index].is_empty()};
   if (last_empty && m_queue.is_empty()) {
     return;
   }
 
-  // avoid generation geometry and uploading if the contents didn't change
+  // avoid generating geomtry and uploading if the contents didn't change
   if (m_queue != m_render_queue[m_rd_index]) {
+    // calculate storage needed
+    rx_size n_vertices{0};
+    rx_size n_elements{0};
+    m_queue.m_commands.each_fwd([&](const queue::command& _command) {
+      switch (_command.kind) {
+      case queue::command::type::k_point:
+        size_point(n_vertices, n_elements);
+        break;
+      case queue::command::type::k_line:
+        size_line(n_vertices, n_elements);
+        break;
+      case queue::command::type::k_solid_sphere:
+        size_solid_sphere(
+          _command.as_solid_sphere.slices_and_stacks,
+          n_vertices,
+          n_elements);
+        break;
+      case queue::command::type::k_solid_cube:
+        size_solid_cube(n_vertices, n_elements);
+        break;
+      default:
+        break;
+      }
+    });
+
+    // allocate storage
+    m_vertices.resize(n_vertices);
+    m_elements.resize(n_elements);
+
+    // generate geometry for a future frame
     m_queue.m_commands.each_fwd([this](const queue::command& _command) {
       switch (_command.kind) {
       case queue::command::type::k_point:
@@ -241,6 +273,10 @@ void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
     // clear staging buffers
     m_vertices.clear();
     m_elements.clear();
+
+    // reset indices
+    m_vertex_index = 0;
+    m_element_index = 0;
 
     // write buffer will be processed some time in the future
     m_render_batches[m_wr_index] = utility::move(m_batches);
@@ -313,12 +349,11 @@ void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
 void immediate3D::generate_point(const math::vec3f& _position, rx_f32 _size,
   const math::vec4f& _color, rx_u32 _flags)
 {
-  const auto offset{m_elements.size()};
-  const auto element{static_cast<rx_u32>(m_vertices.size())};
+  const auto offset{m_element_index};
+  const auto element{static_cast<rx_u32>(m_vertex_index)};
 
-  m_elements.push_back(element + 0);
-
-  m_vertices.push_back({_position, _size, _color});
+  add_element(element);
+  add_vertex({_position, _size, _color});
 
   add_batch(offset, queue::command::type::k_point, _flags);
 }
@@ -326,14 +361,14 @@ void immediate3D::generate_point(const math::vec3f& _position, rx_f32 _size,
 void immediate3D::generate_line(const math::vec3f& _point_a,
   const math::vec3f& _point_b, const math::vec4f& _color, rx_u32 _flags)
 {
-  const auto offset{m_elements.size()};
-  const auto element{static_cast<rx_u32>(m_vertices.size())};
+  const auto offset{m_element_index};
+  const auto element{static_cast<rx_u32>(m_vertex_index)};
 
-  m_elements.push_back(element + 0);
-  m_elements.push_back(element + 1);
+  add_element(element + 0);
+  add_element(element + 1);
 
-  m_vertices.push_back({_point_a, 0.0f, _color});
-  m_vertices.push_back({_point_b, 0.0f, _color});
+  add_vertex({_point_a, 0.0f, _color});
+  add_vertex({_point_b, 0.0f, _color});
 
   add_batch(offset, queue::command::type::k_line, _flags);
 }
@@ -353,7 +388,7 @@ void immediate3D::generate_solid_sphere(const math::vec2f& _slices_and_stacks,
     return {cos_x * sin_y, cos_y, sin_x * sin_y};
   }};
 
-  const auto offset{m_elements.size()};
+  const auto offset{m_element_index};
   for (rx_f32 i{0.0f}; i < _slices_and_stacks.x; i++) {
     for (rx_f32 j{0.0f}; j < _slices_and_stacks.y; j++) {
       const rx_f32 ua{i * step.x + begin.x};
@@ -366,19 +401,19 @@ void immediate3D::generate_solid_sphere(const math::vec2f& _slices_and_stacks,
       const math::vec3f& c{math::mat4x4f::transform_point(parametric({ub, va}), _transform)};
       const math::vec3f& d{math::mat4x4f::transform_point(parametric({ub, vb}), _transform)};
 
-      const auto element{static_cast<rx_u32>(m_vertices.size())};
+      const auto element{static_cast<rx_u32>(m_vertex_index)};
 
-      m_elements.push_back(element + 0); // a
-      m_elements.push_back(element + 2); // c
-      m_elements.push_back(element + 1); // b
-      m_elements.push_back(element + 3); // d
-      m_elements.push_back(element + 1); // b
-      m_elements.push_back(element + 2); // c
-    
-      m_vertices.push_back({a, 0.0f, _color});
-      m_vertices.push_back({b, 0.0f, _color});
-      m_vertices.push_back({c, 0.0f, _color});
-      m_vertices.push_back({d, 0.0f, _color});
+      add_element(element + 0); // a
+      add_element(element + 2); // c
+      add_element(element + 1); // b
+      add_element(element + 3); // d
+      add_element(element + 1); // b
+      add_element(element + 2); // c
+
+      add_vertex({a, 0.0f, _color});
+      add_vertex({b, 0.0f, _color});
+      add_vertex({c, 0.0f, _color});
+      add_vertex({d, 0.0f, _color});
     }
   }
 
@@ -391,24 +426,23 @@ void immediate3D::generate_solid_cube(const math::mat4x4f& _transform,
   const rx_f32 min[]{-1.0f, -1.0f, -1.0f};
   const rx_f32 max[]{ 1.0f,  1.0f,  1.0f};
 
-  const auto offset{m_elements.size()};
-
-  auto element{static_cast<rx_u32>(m_vertices.size())};
+  auto offset{m_element_index};
+  auto element{static_cast<rx_u32>(m_vertex_index)};
 
   auto face{[&, this](const math::vec3f& _a, const math::vec3f& _b,
                       const math::vec3f& _c, const math::vec3f& _d)
   {
-    m_vertices.push_back({_a, 0.0f, _color});
-    m_vertices.push_back({_b, 0.0f, _color});
-    m_vertices.push_back({_c, 0.0f, _color});
-    m_vertices.push_back({_d, 0.0f, _color});
+    add_vertex({_a, 0.0f, _color});
+    add_vertex({_b, 0.0f, _color});
+    add_vertex({_c, 0.0f, _color});
+    add_vertex({_d, 0.0f, _color});
 
-    m_elements.push_back(element + 0);
-    m_elements.push_back(element + 3);
-    m_elements.push_back(element + 2);
-    m_elements.push_back(element + 2);
-    m_elements.push_back(element + 1);
-    m_elements.push_back(element + 0);
+    add_element(element + 0);
+    add_element(element + 3);
+    add_element(element + 2);
+    add_element(element + 2);
+    add_element(element + 1);
+    add_element(element + 0);
 
     element += 4;
   }};
@@ -458,10 +492,32 @@ void immediate3D::generate_solid_cube(const math::mat4x4f& _transform,
   add_batch(offset, queue::command::type::k_solid_cube, _flags);
 }
 
+void immediate3D::size_point(rx_size& n_vertices_, rx_size& n_elements_) {
+  n_vertices_ += 1;
+  n_elements_ += 1;
+}
+
+void immediate3D::size_line(rx_size& n_vertices_, rx_size& n_elements_) {
+  n_vertices_ += 2;
+  n_elements_ += 2;
+}
+
+void immediate3D::size_solid_sphere(const math::vec2f& _slices_and_stacks,
+  rx_size& n_vertices_, rx_size& n_elements_)
+{
+  n_vertices_ += 4 * _slices_and_stacks.area();
+  n_elements_ += 6 * _slices_and_stacks.area();
+}
+
+void immediate3D::size_solid_cube(rx_size& n_vertices_, rx_size& n_elements_) {
+  n_vertices_ += 4 * 6;
+  n_elements_ += 6 * 6;
+}
+
 void immediate3D::add_batch(rx_size _offset, queue::command::type _type,
   rx_u32 _flags)
 {
-  const rx_size count{m_elements.size() - _offset};
+  const rx_size count{m_element_index - _offset};
 
   frontend::state render_state;
 
@@ -493,6 +549,14 @@ void immediate3D::add_batch(rx_size _offset, queue::command::type _type,
   }
 
   m_batches.push_back({_offset, count, _type, render_state});
+}
+
+void immediate3D::add_element(rx_u32 _element) {
+  m_elements[m_element_index++] = _element;
+}
+
+void immediate3D::add_vertex(vertex&& _vertex) {
+  m_vertices[m_vertex_index++] = utility::move(_vertex);
 }
 
 } // namespace rx::render

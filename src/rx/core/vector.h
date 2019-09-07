@@ -109,6 +109,7 @@ inline vector<T>::vector(memory::allocator* _allocator, rx_size _size, const T& 
   RX_ASSERT(m_allocator, "null allocator");
 
   m_data = reinterpret_cast<T*>(m_allocator->allocate(m_size * sizeof *m_data));
+
   RX_ASSERT(m_data, "out of memory");
 
   for (rx_size i{0}; i < m_size; i++) {
