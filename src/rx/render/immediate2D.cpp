@@ -850,7 +850,8 @@ void immediate2D::add_batch(rx_size _offset, queue::command::type _type,
 
   frontend::state render_state;
   render_state.blend.record_enable(true);
-  render_state.blend.record_blend_factors(frontend::blend_state::factor_type::k_src_alpha,
+  render_state.blend.record_blend_factors(
+    frontend::blend_state::factor_type::k_src_alpha,
     frontend::blend_state::factor_type::k_one_minus_src_alpha);
   
   render_state.depth.record_test(false);

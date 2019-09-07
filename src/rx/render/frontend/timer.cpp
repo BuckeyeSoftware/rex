@@ -1,6 +1,7 @@
 #include <SDL.h> // SDL_GetPerformance{Counter,Frequency}
 
 #include "rx/render/frontend/timer.h"
+#include "rx/core/math/abs.h"
 
 namespace rx::render::frontend {
 
@@ -56,7 +57,8 @@ bool frame_timer::update() {
   const rx_f64 frame_time{(life_time - (m_last_frame_ticks * m_resolution)) * 1000.0};
   m_frame_times.push_back({life_time, frame_time});
 
-  // erase old frame times
+  // Erase old frame times. We only want a window that is |k_frame_history_seconds|
+  // in size.
   for (rx_size i{0}; i < m_frame_times.size(); i++) {
     if (m_frame_times[i].life >= life_time - k_frame_history_seconds) {
       if (i != 0) {
@@ -81,7 +83,14 @@ bool frame_timer::update() {
     m_average_ticks += m_current_ticks - ticks_before_delay;
   }
 
-  m_delta_time = m_resolution * (m_current_ticks - m_last_frame_ticks);
+  const rx_f64 delta{m_resolution * (m_current_ticks - m_last_frame_ticks)};
+
+  // Try to avoid the "heart-beat" issue where we're hitting vertical retrace
+  // but the delta time is slightly off leading to frame stutters.
+  if (math::abs(m_delta_time - delta) >= 0.25f) {
+    m_delta_time = delta;
+  }
+
   m_last_frame_ticks = m_current_ticks;
 
   if (m_current_ticks - m_last_second_ticks >= m_frequency) {
