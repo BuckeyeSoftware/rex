@@ -448,8 +448,8 @@ int entry(int argc, char **argv) {
       }
 
       math::mat4x4f modelm{math::mat4x4f::scale({2.0f, 2.0f, 2.0f})
-        * math::mat4x4f::rotate({0.0f, 45.0f, 0.0f})
-        * math::mat4x4f::translate({-45.0f, 0.0f, 10.0f})};
+        * math::mat4x4f::rotate({0.0f, 90.0f, 0.0f})
+        * math::mat4x4f::translate({0.0f, -5.0f, 10.0f})};
 
       render::frontend::technique *gbuffer_test_technique{frontend.find_technique_by_name("geometry")};
       render::frontend::technique *fs_quad_technique{frontend.find_technique_by_name("fs-quad")};

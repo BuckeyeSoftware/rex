@@ -1549,5 +1549,4 @@ void gl4::swap() {
 }
 
 } // namespace rx::backend
-
 #endif
