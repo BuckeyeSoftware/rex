@@ -10,6 +10,7 @@
 #include "rx/render/frontend/buffer.h"
 
 #include "rx/render/backend/gl4.h"
+#include "rx/render/backend/gl3.h"
 
 #include "rx/render/immediate2D.h"
 #include "rx/render/immediate3D.h"
@@ -311,7 +312,7 @@ int entry(int argc, char **argv) {
   camera.translate = {0.0f, 0.0f, -5.0f};
 
   {
-    render::backend::gl4 backend{&memory::g_system_allocator, reinterpret_cast<void *>(window)};
+    render::backend::gl3 backend{&memory::g_system_allocator, reinterpret_cast<void *>(window)};
     render::frontend::interface frontend{&memory::g_system_allocator, &backend};
     render::immediate2D immediate2D{&frontend};
     render::immediate3D immediate3D{&frontend};
