@@ -13,6 +13,7 @@ struct gl3
   : interface
 {
   allocation_info query_allocation_info() const;
+  device_info query_device_info() const;
   gl3(memory::allocator* _allocator, void* _data);
   ~gl3();
 

@@ -762,6 +762,14 @@ allocation_info gl3::query_allocation_info() const {
   return info;
 }
 
+device_info gl3::query_device_info() const {
+  return {
+    reinterpret_cast<const char*>(pglGetString(GL_VENDOR)),
+    reinterpret_cast<const char*>(pglGetString(GL_RENDERER)),
+    reinterpret_cast<const char*>(pglGetString(GL_VERSION))
+  };
+}
+
 gl3::gl3(memory::allocator* _allocator, void* _data)
   : m_allocator{_allocator}
   , m_data{_data}

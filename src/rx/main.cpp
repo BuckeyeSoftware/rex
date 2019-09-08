@@ -28,46 +28,52 @@
 using namespace rx;
 
 RX_CONSOLE_V2IVAR(
-    display_resolution,
-    "display.resolution",
-    "display resolution",
-    math::vec2i(800, 600),
-    math::vec2i(4096, 4096),
-    math::vec2i(1600, 900));
+  display_resolution,
+  "display.resolution",
+  "display resolution",
+  math::vec2i(800, 600),
+  math::vec2i(4096, 4096),
+  math::vec2i(1600, 900));
 
 RX_CONSOLE_IVAR(
-    display_fullscreen,
-    "display.fullscreen",
-    "fullscreen mode (0 = windowed, 1 = windowed borderless, 2 = fullscreen)",
-    0,
-    2,
-    0);
+  display_fullscreen,
+  "display.fullscreen",
+  "fullscreen mode (0 = windowed, 1 = windowed borderless, 2 = fullscreen)",
+  0,
+  2,
+  0);
 
 RX_CONSOLE_SVAR(
-    display_name,
-    "display.name",
-    "name of display to run on",
-    "");
+  display_name,
+  "display.name",
+  "name of display to run on",
+  "");
 
 RX_CONSOLE_BVAR(
-    display_resizable,
-    "display.resizable",
-    "if the display can be resized",
-    true);
+  display_resizable,
+  "display.resizable",
+  "if the display can be resized",
+  true);
 
 RX_CONSOLE_BVAR(
-    display_hdr,
-    "display.hdr",
-    "use HDR output if supported",
-    false);
+  display_hdr,
+  "display.hdr",
+  "use HDR output if supported",
+  false);
 
 RX_CONSOLE_IVAR(
-    display_swap_interval,
-    "display.swap_interval",
-    "swap interval (0 = immediate updates, 1 = updates syncronized with vertical retrace (vsync), -1 = adaptive vsync)",
-    -1,
-    1,
-    -1);
+  display_swap_interval,
+  "display.swap_interval",
+  "swap interval (0 = immediate updates, 1 = updates syncronized with vertical retrace (vsync), -1 = adaptive vsync)",
+  -1,
+  1,
+  -1);
+
+RX_CONSOLE_SVAR(
+  renderer_driver,
+  "renderer.driver",
+  "which driver to use for renderer (gl3, gl4, null)",
+  "gl4");
 
 struct quad_vertex {
   math::vec2f position;
@@ -190,9 +196,20 @@ static void render_stats(const render::frontend::interface &_frontend, render::i
                                        string::format("draws: %zu", _frontend.draw_calls()),
                                        {1.0f, 1.0f, 1.0f, 1.0f});
 
+  const math::vec2i &screen_size{*display_resolution};
+  const auto& info{_frontend.get_device_info()};
+
+  _immediate.frame_queue().record_text(
+    "Consolas-Regular",
+    {25, screen_size.h - 25},
+    16,
+    1.0f,
+    render::immediate2D::text_align::k_left,
+    string::format("%s via %s on %s by %s", renderer_driver->get(), info.version, info.renderer, info.vendor),
+    {1.0f, 1.0f, 1.0f, 1.0f});
+
   // mspf and fps
   const auto &_timer{_frontend.timer()};
-  const math::vec2i &screen_size{*display_resolution};
   _immediate.frame_queue().record_text(
     "Consolas-Regular",
     screen_size - math::vec2i{25, 25},
@@ -311,9 +328,18 @@ int entry(int argc, char **argv) {
     display_resolution->get().cast<rx_f32>().w / display_resolution->get().cast<rx_f32>().h)};
   camera.translate = {0.0f, 0.0f, -5.0f};
 
+  render::backend::interface* backend{nullptr};
+  if (renderer_driver->get() == "gl4") {
+    backend = memory::g_system_allocator->create<render::backend::gl4>(
+        &memory::g_system_allocator, reinterpret_cast<void*>(window));
+  } else if (renderer_driver->get() == "gl3") {
+    backend = memory::g_system_allocator->create<render::backend::gl3>(
+        &memory::g_system_allocator, reinterpret_cast<void*>(window));
+  }
+
   {
-    render::backend::gl3 backend{&memory::g_system_allocator, reinterpret_cast<void *>(window)};
-    render::frontend::interface frontend{&memory::g_system_allocator, &backend};
+    // render::backend::gl3 backend{&memory::g_system_allocator, reinterpret_cast<void *>(window)};
+    render::frontend::interface frontend{&memory::g_system_allocator, backend};
     render::immediate2D immediate2D{&frontend};
     render::immediate3D immediate3D{&frontend};
     render::skybox skybox{&frontend};
@@ -546,6 +572,8 @@ int entry(int argc, char **argv) {
     frontend.destroy_buffer(RX_RENDER_TAG("model"), model_buffer);
     frontend.destroy_buffer(RX_RENDER_TAG("quad"), quad);
   }
+
+  memory::g_system_allocator->destroy<render::backend::interface>(backend);
 
   console::interface::save("config.cfg");
 

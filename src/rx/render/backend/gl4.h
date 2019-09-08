@@ -13,6 +13,7 @@ struct gl4
   : interface
 {
   allocation_info query_allocation_info() const;
+  device_info query_device_info() const;
   gl4(memory::allocator* _allocator, void* _data);
   ~gl4();
 

@@ -17,10 +17,17 @@ struct allocation_info {
   rx_size textureCM_size;
 };
 
+struct device_info {
+  const char* vendor;
+  const char* renderer;
+  const char* version;
+};
+
 struct interface
   : concepts::interface
 {
   virtual allocation_info query_allocation_info() const = 0;
+  virtual device_info query_device_info() const = 0;
   virtual void process(rx_byte* _command) = 0;
   virtual void swap() = 0;
 };

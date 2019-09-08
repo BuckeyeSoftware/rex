@@ -108,6 +108,14 @@ struct interface {
     rx_size memory;
   };
 
+  struct device_info {
+    device_info(memory::allocator* _allocator);
+
+    string vendor;
+    string renderer;
+    string version;
+  };
+
   statistics stats(resource::type _type) const;
   rx_size draw_calls() const;
   rx_size clear_calls() const;
@@ -117,6 +125,8 @@ struct interface {
   const frame_timer& timer() const &;
 
   const command_buffer& get_command_buffer() const &;
+
+  const device_info& get_device_info() const &;
 
 private:
   friend struct target;
@@ -129,17 +139,18 @@ private:
   mutable concurrency::mutex m_mutex;
 
   memory::allocator* m_allocator;          // protected by |m_mutex|
+  backend::interface* m_backend;           // protected by |m_mutex|
 
   // size of resources as reported by the backend
   backend::allocation_info m_allocation_info;
 
-  pool m_buffer_pool;    // protected by |m_mutex|
-  pool m_target_pool;    // protected by |m_mutex|
-  pool m_program_pool;   // protected by |m_mutex|
-  pool m_texture1D_pool; // protected by |m_mutex|
-  pool m_texture2D_pool; // protected by |m_mutex|
-  pool m_texture3D_pool; // protected by |m_mutex|
-  pool m_textureCM_pool; // protected by |m_mutex|
+  pool m_buffer_pool;                      // protected by |m_mutex|
+  pool m_target_pool;                      // protected by |m_mutex|
+  pool m_program_pool;                     // protected by |m_mutex|
+  pool m_texture1D_pool;                   // protected by |m_mutex|
+  pool m_texture2D_pool;                   // protected by |m_mutex|
+  pool m_texture3D_pool;                   // protected by |m_mutex|
+  pool m_textureCM_pool;                   // protected by |m_mutex|
 
   vector<buffer*> m_destroy_buffers;       // protected by |m_mutex|
   vector<target*> m_destroy_targets;       // protected by |m_mutex|
@@ -152,18 +163,27 @@ private:
   vector<rx_byte*> m_commands;             // protected by |m_mutex|
   command_buffer m_command_buffer;         // protected by |m_mutex|
 
-  backend::interface* m_backend;           // protected by |m_mutex|
-
+  // NOTE(dweiler): Must be before m_techniques.
   deferred_function<void()> m_deferred_process;
 
-  map<string, technique> m_techniques;
-
-  frame_timer m_timer;
+  // NOTE(dweiler): Must be after m_deferred_process.
+  map<string, technique> m_techniques;     // protected by |m_mutex|
 
   rx_size m_resource_usage[resource::count()];
+
   concurrency::atomic<rx_size> m_draw_calls[2];
   concurrency::atomic<rx_size> m_clear_calls[2];
+
+  device_info m_device_info;
+  frame_timer m_timer;
 };
+
+inline interface::device_info::device_info(memory::allocator* _allocator)
+  : vendor{_allocator}
+  , renderer{_allocator}
+  , version{_allocator}
+{
+}
 
 inline memory::allocator* interface::allocator() const {
   return m_allocator;
@@ -175,6 +195,10 @@ inline const frame_timer& interface::timer() const & {
 
 inline const command_buffer& interface::get_command_buffer() const & {
   return m_command_buffer;
+}
+
+inline const interface::device_info& interface::get_device_info() const & {
+  return m_device_info;
 }
 
 } // namespace rx::render::frontend

@@ -35,7 +35,8 @@ namespace rx::render::frontend {
 
 interface::interface(memory::allocator* _allocator, backend::interface* _backend)
   : m_allocator{_allocator}
-  , m_allocation_info{_backend->query_allocation_info()}
+  , m_backend{_backend}
+  , m_allocation_info{m_backend->query_allocation_info()}
   , m_buffer_pool{m_allocator, m_allocation_info.buffer_size + sizeof(buffer), static_cast<rx_size>(*max_buffers)}
   , m_target_pool{m_allocator, m_allocation_info.target_size + sizeof(target), static_cast<rx_size>(*max_targets)}
   , m_program_pool{m_allocator, m_allocation_info.program_size + sizeof(program), static_cast<rx_size>(*max_programs)}
@@ -51,10 +52,16 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   , m_destroy_texturesCM{m_allocator}
   , m_commands{m_allocator}
   , m_command_buffer{m_allocator, static_cast<rx_size>(*command_memory * 1024 * 1024)}
-  , m_backend{_backend}
   , m_deferred_process{[this]() { process(); }}
+  , m_device_info{m_allocator}
 {
   memset(m_resource_usage, 0, sizeof m_resource_usage);
+
+  // Cache the device information from the backend.
+  const auto& info{m_backend->query_device_info()};
+  m_device_info.vendor = info.vendor;
+  m_device_info.renderer = info.renderer;
+  m_device_info.version = info.version;
 
   // load all techniques
   if (filesystem::directory directory{k_technique_path}) {
