@@ -1,4 +1,3 @@
-#if 1
 #include <SDL.h>
 
 #include "rx/render/backend/gl.h"
@@ -1549,4 +1548,3 @@ void gl4::swap() {
 }
 
 } // namespace rx::backend
-#endif
