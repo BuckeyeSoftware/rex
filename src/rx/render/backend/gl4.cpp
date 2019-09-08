@@ -1,4 +1,4 @@
-#if 0
+#if 1
 #include <SDL.h>
 
 #include "rx/render/backend/gl.h"
@@ -120,7 +120,7 @@ static const GLubyte* (GLAPIENTRYP pglGetStringi)(GLenum, GLuint);
 static void (GLAPIENTRYP pglDrawArrays)(GLenum, GLint, GLsizei);
 static void (GLAPIENTRYP pglDrawElements)(GLenum, GLsizei, GLenum, const GLvoid*);
 
-namespace detail {
+namespace detail_gl4 {
   struct buffer {
     buffer() {
       pglCreateBuffers(2, bo);
@@ -716,13 +716,13 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
 
 allocation_info gl4::query_allocation_info() const {
   allocation_info info;
-  info.buffer_size = sizeof(detail::buffer);
-  info.target_size = sizeof(detail::target);
-  info.program_size = sizeof(detail::program);
-  info.texture1D_size = sizeof(detail::texture1D);
-  info.texture2D_size = sizeof(detail::texture2D);
-  info.texture3D_size = sizeof(detail::texture3D);
-  info.textureCM_size = sizeof(detail::textureCM);
+  info.buffer_size = sizeof(detail_gl4::buffer);
+  info.target_size = sizeof(detail_gl4::target);
+  info.program_size = sizeof(detail_gl4::program);
+  info.texture1D_size = sizeof(detail_gl4::texture1D);
+  info.texture2D_size = sizeof(detail_gl4::texture2D);
+  info.texture3D_size = sizeof(detail_gl4::texture3D);
+  info.textureCM_size = sizeof(detail_gl4::textureCM);
   return info;
 }
 
@@ -828,15 +828,15 @@ gl4::gl4(memory::allocator* _allocator, void* _data)
   fetch("glDrawArrays", pglDrawArrays);
   fetch("glDrawElements", pglDrawElements);
 
-  m_impl = m_allocator->create<detail::state>();
+  m_impl = m_allocator->create<detail_gl4::state>();
 }
 
 gl4::~gl4() {
-  m_allocator->destroy<detail::state>(m_impl);
+  m_allocator->destroy<detail_gl4::state>(m_impl);
 }
 
 void gl4::process(rx_byte* _command) {
-  auto state{reinterpret_cast<detail::state*>(m_impl)};
+  auto state{reinterpret_cast<detail_gl4::state*>(m_impl)};
   auto header{reinterpret_cast<frontend::command_header*>(_command)};
   switch (header->type) {
   case frontend::command_type::k_resource_allocate:
@@ -844,30 +844,30 @@ void gl4::process(rx_byte* _command) {
       const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
       switch (resource->kind) {
       case frontend::resource_command::type::k_buffer:
-        utility::construct<detail::buffer>(resource->as_buffer + 1);
+        utility::construct<detail_gl4::buffer>(resource->as_buffer + 1);
         break;
       case frontend::resource_command::type::k_target:
         {
           const auto render_target{resource->as_target};
           if (!render_target->is_swapchain()) {
-            utility::construct<detail::target>(resource->as_target + 1);
+            utility::construct<detail_gl4::target>(resource->as_target + 1);
           }
         }
         break;
       case frontend::resource_command::type::k_program:
-        utility::construct<detail::program>(resource->as_program + 1);
+        utility::construct<detail_gl4::program>(resource->as_program + 1);
         break;
       case frontend::resource_command::type::k_texture1D:
-        utility::construct<detail::texture1D>(resource->as_texture1D + 1);
+        utility::construct<detail_gl4::texture1D>(resource->as_texture1D + 1);
         break;
       case frontend::resource_command::type::k_texture2D:
-        utility::construct<detail::texture2D>(resource->as_texture2D + 1);
+        utility::construct<detail_gl4::texture2D>(resource->as_texture2D + 1);
         break;
       case frontend::resource_command::type::k_texture3D:
-        utility::construct<detail::texture3D>(resource->as_texture3D + 1);
+        utility::construct<detail_gl4::texture3D>(resource->as_texture3D + 1);
         break;
       case frontend::resource_command::type::k_textureCM:
-        utility::construct<detail::textureCM>(resource->as_textureCM + 1);
+        utility::construct<detail_gl4::textureCM>(resource->as_textureCM + 1);
         break;
       }
     }
@@ -877,37 +877,37 @@ void gl4::process(rx_byte* _command) {
       const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
       switch (resource->kind) {
       case frontend::resource_command::type::k_buffer:
-        if (state->m_bound_vao == reinterpret_cast<detail::buffer*>(resource->as_buffer + 1)->va) {
+        if (state->m_bound_vao == reinterpret_cast<detail_gl4::buffer*>(resource->as_buffer + 1)->va) {
           state->m_bound_vao = 0;
         }
-        utility::destruct<detail::buffer>(resource->as_buffer + 1);
+        utility::destruct<detail_gl4::buffer>(resource->as_buffer + 1);
         break;
       case frontend::resource_command::type::k_target:
         {
           const auto render_target{resource->as_target};
           if (!render_target->is_swapchain()) {
-            utility::destruct<detail::target>(render_target + 1);
+            utility::destruct<detail_gl4::target>(render_target + 1);
           }
         } 
         break;
       case frontend::resource_command::type::k_program:
-        utility::destruct<detail::program>(resource->as_program + 1);
+        utility::destruct<detail_gl4::program>(resource->as_program + 1);
         break;
       case frontend::resource_command::type::k_texture1D:
         state->invalidate_texture(resource->as_texture1D);
-        utility::destruct<detail::texture1D>(resource->as_texture1D + 1);
+        utility::destruct<detail_gl4::texture1D>(resource->as_texture1D + 1);
         break;
       case frontend::resource_command::type::k_texture2D:
         state->invalidate_texture(resource->as_texture2D);
-        utility::destruct<detail::texture2D>(resource->as_texture2D + 1);
+        utility::destruct<detail_gl4::texture2D>(resource->as_texture2D + 1);
         break;
       case frontend::resource_command::type::k_texture3D:
         state->invalidate_texture(resource->as_texture3D);
-        utility::destruct<detail::texture3D>(resource->as_texture3D + 1);
+        utility::destruct<detail_gl4::texture3D>(resource->as_texture3D + 1);
         break;
       case frontend::resource_command::type::k_textureCM:
         state->invalidate_texture(resource->as_textureCM);
-        utility::destruct<detail::textureCM>(resource->as_textureCM + 1);
+        utility::destruct<detail_gl4::textureCM>(resource->as_textureCM + 1);
         break;
       }
     }
@@ -919,7 +919,7 @@ void gl4::process(rx_byte* _command) {
       case frontend::resource_command::type::k_buffer:
         {
           const auto render_buffer{resource->as_buffer};
-          auto buffer{reinterpret_cast<detail::buffer*>(render_buffer + 1)};
+          auto buffer{reinterpret_cast<detail_gl4::buffer*>(render_buffer + 1)};
           const auto& vertices{render_buffer->vertices()};
           const auto& elements{render_buffer->elements()};
           const auto type{render_buffer->kind() == frontend::buffer::type::k_dynamic
@@ -982,21 +982,21 @@ void gl4::process(rx_byte* _command) {
             break;
           }
 
-          const auto target{reinterpret_cast<const detail::target*>(render_target + 1)};
+          const auto target{reinterpret_cast<const detail_gl4::target*>(render_target + 1)};
           const auto depth_stencil{render_target->depth_stencil()};
           if (depth_stencil) {
             // combined depth stencil format
-            const auto texture{reinterpret_cast<const detail::texture2D*>(depth_stencil + 1)};
+            const auto texture{reinterpret_cast<const detail_gl4::texture2D*>(depth_stencil + 1)};
             pglNamedFramebufferTexture(target->fbo, GL_DEPTH_STENCIL_ATTACHMENT, texture->tex, 0);
           } else {
             const auto depth{render_target->depth()};
             const auto stencil{render_target->stencil()};
             if (depth) {
-              const auto texture{reinterpret_cast<const detail::texture2D*>(depth + 1)};
+              const auto texture{reinterpret_cast<const detail_gl4::texture2D*>(depth + 1)};
               pglNamedFramebufferTexture(target->fbo, GL_DEPTH_ATTACHMENT, texture->tex, 0);
             }
             if (stencil) {
-              const auto texture{reinterpret_cast<const detail::texture2D*>(stencil + 1)};
+              const auto texture{reinterpret_cast<const detail_gl4::texture2D*>(stencil + 1)};
               pglNamedFramebufferTexture(target->fbo, GL_STENCIL_ATTACHMENT, texture->tex, 0);
             }
           }
@@ -1006,7 +1006,7 @@ void gl4::process(rx_byte* _command) {
           for (rx_size i{0}; i < attachments.size(); i++) {
             const auto attachment{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
             const auto render_texture{attachments[i]};
-            const auto texture{reinterpret_cast<detail::texture2D*>(render_texture + 1)};
+            const auto texture{reinterpret_cast<detail_gl4::texture2D*>(render_texture + 1)};
             pglNamedFramebufferTexture(target->fbo, attachment, texture->tex, 0);
             draw_buffers[i] = attachment;
           }
@@ -1017,7 +1017,7 @@ void gl4::process(rx_byte* _command) {
       case frontend::resource_command::type::k_program:
         {
           const auto render_program{resource->as_program};
-          const auto program{reinterpret_cast<detail::program*>(render_program + 1)};
+          const auto program{reinterpret_cast<detail_gl4::program*>(render_program + 1)};
 
           const auto shaders{render_program->shaders()};
 
@@ -1061,7 +1061,7 @@ void gl4::process(rx_byte* _command) {
       case frontend::resource_command::type::k_texture1D:
         {
           const auto render_texture{resource->as_texture1D};
-          const auto texture{reinterpret_cast<const detail::texture1D*>(render_texture + 1)};
+          const auto texture{reinterpret_cast<const detail_gl4::texture1D*>(render_texture + 1)};
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap)};
           const auto dimensions{render_texture->dimensions()};
@@ -1111,7 +1111,7 @@ void gl4::process(rx_byte* _command) {
       case frontend::resource_command::type::k_texture2D:
         {
           const auto render_texture{resource->as_texture2D};
-          const auto texture{reinterpret_cast<const detail::texture2D*>(render_texture + 1)};
+          const auto texture{reinterpret_cast<const detail_gl4::texture2D*>(render_texture + 1)};
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
@@ -1168,7 +1168,7 @@ void gl4::process(rx_byte* _command) {
       case frontend::resource_command::type::k_texture3D:
         {
           const auto render_texture{resource->as_texture3D};
-          const auto texture{reinterpret_cast<const detail::texture3D*>(render_texture + 1)};
+          const auto texture{reinterpret_cast<const detail_gl4::texture3D*>(render_texture + 1)};
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
@@ -1232,7 +1232,7 @@ void gl4::process(rx_byte* _command) {
       case frontend::resource_command::type::k_textureCM:
         {
           const auto render_texture{resource->as_textureCM};
-          const auto texture{reinterpret_cast<const detail::textureCM*>(render_texture + 1)};
+          const auto texture{reinterpret_cast<const detail_gl4::textureCM*>(render_texture + 1)};
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
@@ -1302,7 +1302,7 @@ void gl4::process(rx_byte* _command) {
       case frontend::resource_command::type::k_buffer:
         {
           const auto render_buffer{resource->as_buffer};
-          auto buffer{reinterpret_cast<detail::buffer*>(render_buffer + 1)};
+          auto buffer{reinterpret_cast<detail_gl4::buffer*>(render_buffer + 1)};
           const auto& vertices{render_buffer->vertices()};
           const auto& elements{render_buffer->elements()};
           const auto type{render_buffer->kind() == frontend::buffer::type::k_dynamic
@@ -1334,7 +1334,7 @@ void gl4::process(rx_byte* _command) {
     {
       const auto command{reinterpret_cast<frontend::clear_command*>(header + 1)};
       const auto render_target{command->render_target};
-      const auto this_target{reinterpret_cast<detail::target*>(render_target + 1)};
+      const auto this_target{reinterpret_cast<detail_gl4::target*>(render_target + 1)};
       const bool clear_depth{!!(command->clear_mask & RX_RENDER_CLEAR_DEPTH)};
       const bool clear_stencil{!!(command->clear_mask & RX_RENDER_CLEAR_STENCIL)};  
       const auto clear_color{command->clear_mask & ~(RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL)};
@@ -1399,7 +1399,7 @@ void gl4::process(rx_byte* _command) {
       const auto render_target{command->render_target};
       const auto render_buffer{command->render_buffer};
       const auto render_program{command->render_program};
-      const auto this_program{reinterpret_cast<detail::program*>(render_program + 1)};
+      const auto this_program{reinterpret_cast<detail_gl4::program*>(render_program + 1)};
 
       state->use_target(render_target);
       state->use_buffer(render_buffer);
