@@ -22,6 +22,8 @@ struct json {
   json(const string& _contents);
   ~json();
 
+  json& operator=(const json& _json);
+
   enum class type {
     k_array,
     k_boolean,
@@ -54,6 +56,7 @@ struct json {
   rx_s32 as_integer() const;
   json operator[](const char* _name) const;
   string as_string() const;
+  string as_string_with_allocator(memory::allocator* _allocator) const;
 
   // # of elements for objects and arrays only
   rx_size size() const;
@@ -65,18 +68,28 @@ struct json {
   memory::allocator* allocator() const;
 
 private:
-  json(struct json_value_s* _head);
+  struct shared {
+    shared(memory::allocator* _allocator, const char* _contents, rx_size _length);
+    ~shared();
 
-  memory::allocator* m_allocator;
+    shared* acquire();
+    void release();
 
-  struct json_value_s* m_root;
-  struct json_parse_result_s m_error;
+    memory::allocator* m_allocator;
+    struct json_parse_result_s m_error;
+    struct json_value_s* m_root;
+    rx_size m_count;
+  };
+
+  json(shared* _shared, struct json_value_s* _head);
+
+  shared* m_shared;
+  struct json_value_s* m_value;
 };
 
 inline constexpr json::json()
-  : m_allocator{nullptr}
-  , m_root{nullptr}
-  , m_error{}
+  : m_shared{nullptr}
+  , m_value{nullptr}
 {
 }
 
@@ -96,7 +109,7 @@ inline json::json(const string& _contents)
 }
 
 inline json::operator bool() const {
-  return m_root;
+  return m_shared;
 }
 
 inline bool json::is_array() const {
@@ -155,6 +168,10 @@ inline bool json::is_empty() const {
   return size() != 0;
 }
 
+inline string json::as_string() const {
+  return as_string_with_allocator(&memory::g_system_allocator);
+}
+
 template<typename F>
 inline bool json::each(F&& _function) const {
   for (rx_size i{0}; i < size(); i++) {
@@ -170,7 +187,7 @@ inline bool json::each(F&& _function) const {
 }
 
 inline memory::allocator* json::allocator() const {
-  return m_allocator;
+  return m_shared ? m_shared->m_allocator : nullptr;
 }
 
 } // namespace rx

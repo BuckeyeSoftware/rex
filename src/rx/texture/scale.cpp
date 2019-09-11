@@ -79,13 +79,14 @@ void scale(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
   const rx_size d_area{_dw * _dh};
   const rx_size s_area{_sw * _sh};
 
-  rx_size area_oflow{0};
-  rx_size area_uflow{0};
+  rx_s32 area_oflow{0};
+  rx_s32 area_uflow{0};
   for (; (d_area >> area_oflow) > s_area; area_oflow++);
-  for (; (d_area << area_uflow) > s_area; area_uflow++);
+  for (; (d_area << area_uflow) < s_area; area_uflow++);
 
-  const rx_size c_scale{algorithm::clamp(area_uflow, area_oflow - 12, 12_z)};
-  const rx_size a_scale{algorithm::clamp(12 + area_uflow - area_oflow, 0_z, 24_z)};
+  const auto c_scale{static_cast<rx_size>(algorithm::clamp(area_uflow, area_oflow - 12, 12))};
+  const auto a_scale{static_cast<rx_size>(algorithm::clamp(12 + area_uflow - area_oflow, 0, 24))};
+
   const rx_size d_scale{a_scale + 12 - c_scale};
   const rx_size area{(static_cast<rx_u64>(d_area) << a_scale) / s_area};
 

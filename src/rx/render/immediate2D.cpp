@@ -410,7 +410,7 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
           n_elements);
           break;
       case queue::command::type::k_line:
-        size_line(n_vertices, n_elements);
+        size_line(_command.as_line.roundness, n_vertices, n_elements);
         break;
       case queue::command::type::k_triangle:
         // TODO(dweiler): implement
@@ -501,13 +501,9 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
   if (!last_empty) {
     m_render_batches[m_rd_index].each_fwd([&](const batch& _batch) {
       switch (_batch.kind) {
-      case queue::command::type::k_rectangle:
-        [[fallthrough]];
-      case queue::command::type::k_line:
-        [[fallthrough]];
-      case queue::command::type::k_triangle:
+      case batch::type::k_triangles:
         m_frontend->draw_elements(
-          RX_RENDER_TAG("immediate untextured"),
+          RX_RENDER_TAG("immediate triangles"),
           _batch.render_state,
           _target,
           m_buffers[m_rd_index],
@@ -517,9 +513,21 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
           frontend::primitive_type::k_triangles,
           "");
           break;
-      case queue::command::type::k_text:
+      case batch::type::k_lines:
         m_frontend->draw_elements(
-          RX_RENDER_TAG("immediate textures"),
+          RX_RENDER_TAG("immediate lines"),
+          _batch.render_state,
+          _target,
+          m_buffers[m_rd_index],
+          m_technique->variant(0),
+          _batch.count,
+          _batch.offset,
+          frontend::primitive_type::k_lines,
+          "");
+          break;
+      case batch::type::k_text:
+        m_frontend->draw_elements(
+          RX_RENDER_TAG("immediate text"),
           _batch.render_state,
           _target,
           m_buffers[m_rd_index],
@@ -543,7 +551,7 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
 
 template<rx_size E>
 void immediate2D::generate_polygon(const math::vec2f (&_coordinates)[E],
-  const rx_f32 _thickness, const math::vec4f& _color, queue::command::type _from_type)
+  const rx_f32 _thickness, const math::vec4f& _color)
 {
   math::vec2f normals[E];
   math::vec2f coordinates[E];
@@ -595,7 +603,7 @@ void immediate2D::generate_polygon(const math::vec2f (&_coordinates)[E],
     add_vertex({_coordinates[i], {}, _color});
   }
 
-  add_batch(offset, _from_type);
+  add_batch(offset, batch::type::k_triangles);
 }
 
 void immediate2D::generate_rectangle(const math::vec2f& _position, const math::vec2f& _size,
@@ -624,7 +632,7 @@ void immediate2D::generate_rectangle(const math::vec2f& _position, const math::v
 
     vertices[j++] = _position + math::vec2f{_size.w - _roundness, _roundness} + m_circle_vertices[0] * _roundness;
 
-    generate_polygon(vertices, 1.0f, _color, queue::command::type::k_rectangle);
+    generate_polygon(vertices, 1.0f, _color);
   } else {
     const math::vec2f vertices[]{
       {_position.x,           _position.y},
@@ -633,7 +641,7 @@ void immediate2D::generate_rectangle(const math::vec2f& _position, const math::v
       {_position.x,           _position.y + _size.h}
     };
     
-    generate_polygon(vertices, 1.0f, _color, queue::command::type::k_rectangle);
+    generate_polygon(vertices, 1.0f, _color);
   }
 }
 
@@ -641,23 +649,36 @@ void immediate2D::generate_line(const math::vec2f& _point_a,
   const math::vec2f& _point_b, rx_f32 _thickness, rx_f32 _roundness,
   const math::vec4f& _color)
 {
-  math::vec2f delta{math::normalize(_point_b - _point_a)};
-  math::vec2f normal{delta.y, -delta.x};
+  if (_roundness > 0.0f) {
+    math::vec2f delta{math::normalize(_point_b - _point_a)};
+    math::vec2f normal{delta.y, -delta.x};
 
-  _roundness -= _thickness;
-  _roundness *= 0.5f;
+    _roundness -= _thickness;
+    _roundness *= 0.5f;
 
-  delta = delta * math::vec2f{_roundness, _roundness};
-  normal = normal * math::vec2f{_roundness, _roundness};
+    delta = delta * math::vec2f{_roundness, _roundness};
+    normal = normal * math::vec2f{_roundness, _roundness};
 
-  const math::vec2f vertices[]{
-    _point_a - delta - normal,
-    _point_a - delta + normal,
-    _point_b + delta + normal,
-    _point_b + delta - normal
-  };
+    const math::vec2f vertices[]{
+      _point_a - delta - normal,
+      _point_a - delta + normal,
+      _point_b + delta + normal,
+      _point_b + delta - normal
+    };
 
-  generate_polygon(vertices, _thickness, _color, queue::command::type::k_line);
+    generate_polygon(vertices, _thickness, _color);
+  } else {
+    const rx_size offset{m_element_index};
+    const auto element{static_cast<rx_u32>(m_vertex_index)};
+
+    add_element(element + 0);
+    add_element(element + 1);
+
+    add_vertex({_point_a, {}, _color});
+    add_vertex({_point_b, {}, _color});
+
+    add_batch(offset, batch::type::k_lines);
+  }
 }
 
 
@@ -801,7 +822,7 @@ void immediate2D::generate_text(rx_s32 _size, const char* _font,
     add_vertex({{quad.position[0].x, quad.position[1].y}, {quad.coordinate[0].s, quad.coordinate[1].t}, color});
   }
 
-  add_batch(offset, queue::command::type::k_text, font_map->texture());
+  add_batch(offset, batch::type::k_text, font_map->texture());
 }
 
 template<rx_size E>
@@ -819,8 +840,13 @@ void immediate2D::size_rectangle(rx_f32 _roundness, rx_size& n_vertices_, rx_siz
   }
 }
 
-void immediate2D::size_line(rx_size& n_vertices_, rx_size& n_elements_) {
-  size_polygon<4>(n_vertices_, n_elements_);
+void immediate2D::size_line(rx_f32 _roundness, rx_size& n_vertices_, rx_size& n_elements_) {
+  if (_roundness > 0.0f) {
+    size_polygon<4>(n_vertices_, n_elements_);
+  } else {
+    n_vertices_ += 2;
+    n_elements_ += 2;
+  }
 }
 
 void immediate2D::size_text(const char* _contents, rx_size _contents_length,
@@ -843,7 +869,7 @@ void immediate2D::size_text(const char* _contents, rx_size _contents_length,
 }
 
 
-void immediate2D::add_batch(rx_size _offset, queue::command::type _type,
+void immediate2D::add_batch(rx_size _offset, batch::type _type,
   frontend::texture2D* _texture)
 {
   const rx_size count{m_element_index - _offset};
@@ -865,25 +891,11 @@ void immediate2D::add_batch(rx_size _offset, queue::command::type _type,
 
   render_state.flush();
 
-  auto is_triangle_command{[](queue::command::type _type) {
-    return _type == queue::command::type::k_rectangle ||
-           _type == queue::command::type::k_triangle ||
-           _type == queue::command::type::k_line;
-  }};
-
   if (!m_batches.is_empty()) {
     auto& batch{m_batches.last()};
-    if (batch.render_state == render_state) {
-      // When both batches are trivial triangle commands (no texture), coalesce.
-      if (is_triangle_command(batch.kind) && is_triangle_command(_type)) {
-        batch.count += count;
-        return;
-      } else if (batch.kind == _type && batch.texture == _texture) {
-        // When both batches are exactly the same command and share the same
-        // texture, coalesce.
-        batch.count += count;
-        return;
-      }
+    if (batch.render_state == render_state && batch.kind == _type && batch.texture == _texture) {
+      batch.count += count;
+      return;
     }
   }
 

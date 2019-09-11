@@ -1,6 +1,6 @@
 {
   name: "chest",
-  file: "base/models/chest/model.iqm",
+  file: "base/models/chest/chest.iqm",
   materials: [
     {
       name: "chest",

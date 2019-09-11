@@ -84,12 +84,14 @@ bool frame_timer::update() {
   }
 
   const rx_f64 delta{m_resolution * (m_current_ticks - m_last_frame_ticks)};
-
+  m_delta_time = delta;
+#if 0
   // Try to avoid the "heart-beat" issue where we're hitting vertical retrace
   // but the delta time is slightly off leading to frame stutters.
   if (math::abs(m_delta_time - delta) >= 0.25f) {
     m_delta_time = delta;
   }
+#endif
 
   m_last_frame_ticks = m_current_ticks;
 

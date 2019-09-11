@@ -1,97 +1,152 @@
 #ifndef RX_MODEL_LOADER_H
 #define RX_MODEL_LOADER_H
-#include "rx/model/mesh.h"
+#include "rx/model/importer.h"
 
-#include "rx/core/concepts/interface.h"
-#include "rx/core/vector.h"
-
-#include "rx/math/vec2.h"
-#include "rx/math/vec3.h"
-#include "rx/math/mat3x4.h"
+#include "rx/core/log.h"
+#include "rx/core/json.h"
 
 namespace rx::model {
 
-struct loader : concepts::interface {
+struct loader {
   loader(memory::allocator* _allocator);
+  ~loader();
 
   bool load(const string& _file_name);
+  bool parse(const json& _json);
 
-  // implemented by each model loader
-  virtual bool read(const vector<rx_byte>& _data) = 0;
-
-  template<typename... Ts>
-  bool error(const char* _format, Ts&&... _arguments);
-
-  struct animation {
-    rx_f32 frame_rate;
-    rx_size frame_offset;
-    rx_size frame_count;
-    string name;
+  struct vertex {
+    math::vec3f position;
+    math::vec3f normal;
+    math::vec4f tangent;
+    math::vec2f coordinate;
   };
 
-  struct joint {
-    math::mat3x4f frame;
-    rx_s32 parent;
+  struct animated_vertex {
+    math::vec3f position;
+    math::vec3f normal;
+    math::vec4f tangent;
+    math::vec2f coordinate;
+    math::vec4b blend_weights;
+    math::vec4b blend_indices;
   };
 
+  bool is_animated() const;
+
+  const vector<vertex>& vertices() const &;
+  vector<vertex>&& vertices() &&;
+  const vector<animated_vertex> animated_vertices() const &;
+  vector<animated_vertex>&& animated_vertices() &&;
   const vector<mesh>& meshes() const &;
-  vector<mesh>&& meshes() &&;
   const vector<rx_u32>& elements() const &;
   vector<rx_u32>&& elements() &&;
+  const vector<importer::joint>& joints() const &;
+  const json& materials() const &;
 
-  const vector<math::vec3f>& positions() const &;
-  const vector<math::vec2f>& coordinates() const &;
-  const vector<math::vec3f>& normals() const &;
-  const vector<math::vec4f>& tangents() const &;
+private:
+  friend struct animation;
 
-  // for skeletally animated models
-  const vector<math::mat3x4f>& frames() const;
-  vector<math::mat3x4f>&& frames();
-  const vector<animation>& animations() const;
-  vector<animation>&& animations();
+  template<typename... Ts>
+  bool error(const char* _format, Ts&&... _arguments) const;
 
-  const vector<math::vec4b>& blend_indices() const &;
-  const vector<math::vec4b>& blend_weights() const &;
-  
-  vector<joint>&& joints();
-  const vector<joint>& joints() const;
+  template<typename... Ts>
+  void log(log::level _level, const char* _format, Ts&&... _arguments) const;
 
-protected:
-  void generate_normals();
-  bool generate_tangents();
+  void write_log(log::level _level, string&& _message) const;
+
+  bool import(const string& _file_name);
+
+  enum {
+    k_constructed = 1 << 0,
+    k_animated    = 1 << 1
+  };
 
   memory::allocator* m_allocator;
 
-  vector<mesh> m_meshes;
+  union {
+    utility::nat as_nat;
+    vector<vertex> as_vertices;
+    vector<animated_vertex> as_animated_vertices;
+  };
 
   vector<rx_u32> m_elements;
-
-  vector<math::vec3f> m_positions;
-  vector<math::vec2f> m_coordinates;
-  vector<math::vec3f> m_normals;
-  vector<math::vec4f> m_tangents; // w = bitangent sign
-
-  vector<math::vec4b> m_blend_indices;
-  vector<math::vec4b> m_blend_weights;
+  vector<mesh> m_meshes;
+  vector<importer::animation> m_animations;
+  vector<importer::joint> m_joints;
   vector<math::mat3x4f> m_frames;
-  vector<animation> m_animations;
-  vector<joint> m_joints;
+  string m_name;
 
-  string m_error;
+  // TODO(dweiler):
+  // The following JSON object exists for |load| to populate to allow
+  // |m_materials| to exist potentially long after the contents are loaded
+  // since m_materials shares memory of the root JSON object.
+  //
+  // We need to implement some sort of JSON clone to support this correctly.
+  json m_definition;
+  
+  json m_materials;
+  int m_flags;
 };
 
 template<typename... Ts>
-inline bool loader::error(const char* _format, Ts&&... _arguments) {
-  m_error = string::format(_format, utility::forward<Ts>(_arguments)...);
+inline bool loader::error(const char* _format, Ts&&... _arguments) const {
+  log(log::level::k_error, _format, utility::forward<Ts>(_arguments)...);
   return false;
+}
+
+template<typename... Ts>
+inline void loader::log(log::level _level, const char* _format,
+  Ts&&... _arguments) const
+{
+  write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
+}
+
+inline loader::loader(memory::allocator* _allocator)
+  : m_allocator{_allocator}
+  , as_nat{}
+  , m_elements{m_allocator}
+  , m_meshes{m_allocator}
+  , m_joints{m_allocator}
+  , m_frames{m_allocator}
+  , m_flags{0}
+{
+}
+
+inline loader::~loader() {
+  if (m_flags & k_constructed) {
+    if (m_flags & k_animated) {
+      utility::destruct<vector<animated_vertex>>(&as_animated_vertices);
+    } else {
+      utility::destruct<vector<vertex>>(&as_vertices);
+    }
+  }
+}
+
+inline bool loader::is_animated() const {
+  return m_flags & k_animated;
+}
+
+inline const vector<loader::vertex>& loader::vertices() const & {
+  RX_ASSERT(!is_animated(), "not a static model");
+  return as_vertices;
+}
+
+inline vector<loader::vertex>&& loader::vertices() && {
+  RX_ASSERT(!is_animated(), "not a static model");
+  return utility::move(as_vertices);
+}
+
+inline const vector<loader::animated_vertex> loader::animated_vertices() const & {
+  RX_ASSERT(is_animated(), "not a animated model");
+  return as_animated_vertices;
+}
+
+inline vector<loader::animated_vertex>&& loader::animated_vertices() && {
+  RX_ASSERT(is_animated(), "not a animated model");
+  return utility::move(as_animated_vertices);
 }
 
 inline const vector<mesh>& loader::meshes() const & {
   return m_meshes;
-}
-
-inline vector<mesh>&& loader::meshes() && {
-  return utility::move(m_meshes);
 }
 
 inline const vector<rx_u32>& loader::elements() const & {
@@ -102,52 +157,12 @@ inline vector<rx_u32>&& loader::elements() && {
   return utility::move(m_elements);
 }
 
-inline const vector<math::vec3f>& loader::positions() const & {
-  return m_positions;
-}
-
-inline const vector<math::vec2f>& loader::coordinates() const & {
-  return m_coordinates;
-}
-
-inline const vector<math::vec3f>& loader::normals() const & {
-  return m_normals;
-}
-
-inline const vector<math::vec4f>& loader::tangents() const & {
-  return m_tangents;
-}
-
-inline const vector<math::mat3x4f>& loader::frames() const {
-  return m_frames;
-}
-
-inline vector<math::mat3x4f>&& loader::frames() {
-  return utility::move(m_frames);
-}
-
-inline const vector<loader::animation>& loader::animations() const {
-  return m_animations;
-}
-
-inline vector<loader::animation>&& loader::animations() {
-  return utility::move(m_animations);
-}
-
-inline const vector<math::vec4b>& loader::blend_indices() const & {
-  return m_blend_indices;
-}
-
-inline const vector<math::vec4b>& loader::blend_weights() const & {
-  return m_blend_weights;
-}
-
-inline vector<loader::joint>&& loader::joints() {
-  return utility::move(m_joints);
-}
-
-inline const vector<loader::joint>& loader::joints() const {
+inline const vector<importer::joint>& loader::joints() const & {
   return m_joints;
+}
+
+inline const json& loader::materials() const & {
+  return m_materials;
 }
 
 } // namespace rx::model

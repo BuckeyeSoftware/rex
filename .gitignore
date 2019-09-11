@@ -16,5 +16,9 @@
 # ignore TODO
 TODO.md
 
+# ignore san-miguel
+base/models/san-miguel
+base/models/elemental
+
 # ignore binary
 rex

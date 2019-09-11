@@ -14,9 +14,19 @@
 #include "rx/core/debug.h"
 #include "rx/core/log.h"
 
-RX_LOG("render/gl4", gl4_log);
+#include "rx/console/variable.h"
 
 namespace rx::render::backend {
+
+RX_LOG("render/gl4", gl4_log);
+
+RX_CONSOLE_IVAR(
+  anisotropy,
+  "gl4.anisotropy",
+  "anisotropy value (if supported)",
+  0,
+  16,
+  0);
 
 // 16MiB buffer slab size for unspecified buffer sizes
 static constexpr const rx_size k_buffer_slab_size{16<<20};
@@ -118,6 +128,13 @@ static const GLubyte* (GLAPIENTRYP pglGetStringi)(GLenum, GLuint);
 // draw calls
 static void (GLAPIENTRYP pglDrawArrays)(GLenum, GLint, GLsizei);
 static void (GLAPIENTRYP pglDrawElements)(GLenum, GLsizei, GLenum, const GLvoid*);
+
+#ifndef GL_TEXTURE_MAX_ANISOTROPY
+#define GL_TEXTURE_MAX_ANISOTROPY              0x84FE
+#endif
+#ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY
+#define GL_MAX_TEXTURE_MAX_ANISOTROPY          0x84FF
+#endif
 
 namespace detail_gl4 {
   struct buffer {
@@ -234,11 +251,23 @@ namespace detail_gl4 {
 
       gl4_log(log::level::k_info, "GL %s %s %s", vendor, version, renderer);
 
+      bool texture_filter_anisotropic{false};
       GLint extensions{0};
       pglGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
       for (GLint i{0}; i < extensions; i++) {
         const auto name{reinterpret_cast<const char*>(pglGetStringi(GL_EXTENSIONS, i))};
         gl4_log(log::level::k_verbose, "extension '%s' supported", name);
+
+        if (!strcmp(name, "GL_ARB_texture_filter_anisotropic")) {
+          rx_f32 max_aniso{0.0f};
+          pglGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &max_aniso);
+          anisotropy->set(static_cast<rx_s32>(max_aniso));
+          texture_filter_anisotropic = true;
+        }
+      }
+
+      if (!texture_filter_anisotropic) {
+        anisotropy->set(0);
       }
     }
 
@@ -1080,6 +1109,10 @@ void gl4::process(rx_byte* _command) {
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          if (*anisotropy) {
+            pglTextureParameterf(texture->tex, GL_TEXTURE_MAX_ANISOTROPY, static_cast<rx_f32>(*anisotropy));
+          }
+
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels);
@@ -1131,6 +1164,10 @@ void gl4::process(rx_byte* _command) {
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          if (*anisotropy) {
+            pglTextureParameterf(texture->tex, GL_TEXTURE_MAX_ANISOTROPY, static_cast<rx_f32>(*anisotropy));
+          }
+
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
@@ -1189,6 +1226,10 @@ void gl4::process(rx_byte* _command) {
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          if (*anisotropy) {
+            pglTextureParameterf(texture->tex, GL_TEXTURE_MAX_ANISOTROPY, static_cast<rx_f32>(*anisotropy));
+          }
+
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_R, wrap_r);
@@ -1252,6 +1293,10 @@ void gl4::process(rx_byte* _command) {
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          if (*anisotropy) {
+            pglTextureParameterf(texture->tex, GL_TEXTURE_MAX_ANISOTROPY, static_cast<rx_f32>(*anisotropy));
+          }
+
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);

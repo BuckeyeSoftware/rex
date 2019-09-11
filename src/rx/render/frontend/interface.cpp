@@ -348,6 +348,23 @@ void interface::draw_elements(
     return;
   }
 
+  m_vertices[0] += _count;
+
+  switch (_primitive_type) {
+  case primitive_type::k_lines:
+    m_lines[0] += _count / 2;
+    break;
+  case primitive_type::k_points:
+    m_points[0] += _count;
+    break;
+  case primitive_type::k_triangle_strip:
+    m_triangles[0] += _count - 2;
+    break;
+  case primitive_type::k_triangles:
+    m_triangles[0] += _count / 3;
+    break;
+  }
+
   concurrency::scope_lock lock(m_mutex);
 
   const auto dirty_uniforms_size{_program->dirty_uniforms_size()};
@@ -472,6 +489,18 @@ bool interface::process() {
   m_clear_calls[1] = m_clear_calls[0].load();
   m_clear_calls[0] = 0;
 
+  m_vertices[1] = m_vertices[0].load();
+  m_vertices[0] = 0;
+
+  m_points[1] = m_points[1].load();
+  m_points[0] = 0;
+
+  m_lines[1] = m_lines[0].load();
+  m_lines[0] = 0;
+
+  m_triangles[1] = m_triangles[0].load();
+  m_triangles[0] = 0;
+
   return true;
 }
 
@@ -497,14 +526,6 @@ interface::statistics interface::stats(resource::type _type) const {
   }
 
   RX_HINT_UNREACHABLE();
-}
-
-rx_size interface::draw_calls() const {
-  return m_draw_calls[1].load();
-}
-
-rx_size interface::clear_calls() const {
-  return m_clear_calls[1].load();
 }
 
 bool interface::swap() {

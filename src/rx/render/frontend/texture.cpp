@@ -85,7 +85,7 @@ void texture1D::record_dimensions(const dimension_type& _dimensions) {
       const auto size{static_cast<rx_size>(dimensions * bpp)};
       m_levels.push_back({offset, size, dimensions});
       offset += size;
-      dimensions /= 2;
+      dimensions = algorithm::max(dimensions / 2, 1_z);
     }
 
     m_data.resize(offset);
@@ -148,7 +148,9 @@ void texture2D::record_dimensions(const math::vec2z& _dimensions) {
       const auto size{static_cast<rx_size>(dimensions.area() * bpp)};
       m_levels.push_back({offset, size, dimensions});
       offset += size;
-      dimensions /= 2;
+      dimensions = dimensions.map([](rx_size _dim) {
+        return algorithm::max(_dim / 2, 1_z);
+      });
     }
 
     m_data.resize(offset);
@@ -208,7 +210,9 @@ void texture3D::record_dimensions(const math::vec3z& _dimensions) {
       const auto size{static_cast<rx_size>(dimensions.area() * bpp)};
       m_levels.push_back({offset, size, dimensions});
       offset += size;
-      dimensions /= 2;
+      dimensions = dimensions.map([](rx_size _dim) {
+        return algorithm::max(_dim / 2, 1_z);
+      });
     }
 
     m_data.resize(offset);
@@ -273,7 +277,9 @@ void textureCM::record_dimensions(const math::vec2z& _dimensions) {
       const auto size{static_cast<rx_size>(dimensions.area() * bpp * 6)};
       m_levels.push_back({offset, size, dimensions});
       offset += size;
-      dimensions /= 2;
+      dimensions = dimensions.map([](rx_size _dim) {
+        return algorithm::max(_dim / 2, 1_z);
+      });
     }
 
     m_data.resize(offset);

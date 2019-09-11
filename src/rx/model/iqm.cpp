@@ -300,7 +300,6 @@ bool iqm::read_meshes(const header& _header, const vector<rx_byte>& _data) {
 bool iqm::read_animations(const header& _header, const vector<rx_byte>& _data) {
   const auto n_joints{static_cast<rx_size>(_header.joints)};
 
-
   vector<math::mat3x4f> generic_base_frame{m_allocator, n_joints};
   vector<math::mat3x4f> inverse_base_frame{m_allocator, n_joints};
 
@@ -308,11 +307,11 @@ bool iqm::read_animations(const header& _header, const vector<rx_byte>& _data) {
 
   const auto joints{reinterpret_cast<const iqm_joint*>(_data.data() + _header.joints_offset)};
 
-  // read base pose
+  // Read base bind pose.
   for (rx_size i{0}; i < n_joints; i++) {
     const auto& this_joint{joints[i]};
 
-    // IQM is Z up, we're Y up
+    // Convert IQM's Z-up coordinate system to Y-up since that's what we use.
     const math::vec3f scale{this_joint.scale[0], this_joint.scale[2], this_joint.scale[1]};
     const math::quatf rotate{this_joint.rotate[0], this_joint.rotate[2], this_joint.rotate[1], -this_joint.rotate[3]};
     const math::vec3f translate{this_joint.translate[0], this_joint.translate[2], this_joint.translate[1]};
@@ -351,7 +350,7 @@ bool iqm::read_animations(const header& _header, const vector<rx_byte>& _data) {
         }
       }
 
-      // IQM is Z up, we're Y up
+      // Convert IQM's Z-up coordinate system to Y-up since that's what we use.
       const math::vec3f scale{channel_data[7], channel_data[9], channel_data[8]};
       const math::quatf rotate{channel_data[3], channel_data[5], channel_data[4], -channel_data[6]};
       const math::vec3f translate{channel_data[0], channel_data[2], channel_data[1]};
@@ -372,7 +371,7 @@ bool iqm::read_animations(const header& _header, const vector<rx_byte>& _data) {
       }
 
       // The parent multiplication is done here to avoid having to do it at animation time too,
-      // this will need to be moved to support more complicated animation blending
+      // this will need to be moved to support more complicated animation blending.
       if (joints[j].parent >= 0) {
         scale_rotate_translate = m_frames[i * _header.poses + joints[j].parent] * scale_rotate_translate;
       }

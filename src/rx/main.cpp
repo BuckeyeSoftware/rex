@@ -17,13 +17,17 @@
 #include "rx/render/gbuffer.h"
 #include "rx/render/skybox.h"
 
-#include "rx/model/interface.h"
+#include "rx/model/loader.h"
 #include "rx/model/animation.h"
 
 #include "rx/math/camera.h"
 #include "rx/math/transform.h"
 
 #include "rx/input/input.h"
+
+#include "rx/core/filesystem/file.h"
+
+#include "rx/material/loader.h"
 
 using namespace rx;
 
@@ -184,18 +188,21 @@ static void render_stats(const render::frontend::interface &_frontend, render::i
   render_stat("buffers", buffer_stats);
   render_stat("targets", target_stats);
 
+  auto render_number{[&](const char* _name, rx_size _number) {
+    _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
+                                        render::immediate2D::text_align::k_left,
+                                        string::format("%s: %zu", _name, _number),
+                                        {1.0f, 1.0f, 1.0f, 1.0f});
+    offset.y += 20;
+  }};
 
-  _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
-                                       render::immediate2D::text_align::k_left,
-                                       string::format("clears: %zu", _frontend.clear_calls()),
-                                       {1.0f, 1.0f, 1.0f, 1.0f});
-
-  offset.y += 20;
-  _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
-                                       render::immediate2D::text_align::k_left,
-                                       string::format("draws: %zu", _frontend.draw_calls()),
-                                       {1.0f, 1.0f, 1.0f, 1.0f});
-
+  render_number("points", _frontend.points());
+  render_number("lines", _frontend.lines());
+  render_number("triangles", _frontend.triangles());
+  render_number("vertices", _frontend.vertices());
+  render_number("clears", _frontend.clear_calls());
+  render_number("draws", _frontend.draw_calls());
+ 
   const math::vec2i &screen_size{*display_resolution};
   const auto& info{_frontend.get_device_info()};
 
@@ -282,8 +289,13 @@ int entry(int argc, char **argv) {
   }
 
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+  if (renderer_driver->get() == "gl4") {
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+  } else {
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+  }
 
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
@@ -292,7 +304,7 @@ int entry(int argc, char **argv) {
 
   SDL_Window* window{nullptr};
   int bit_depth{0};
-  for (const char* depth{"\x10\x8" + (*display_hdr ? 0 : 1)}; *depth; depth++) {
+  for (const char* depth{"\xa\x8" + (*display_hdr ? 0 : 1)}; *depth; depth++) {
     bit_depth = static_cast<int>(*depth);
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, bit_depth);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, bit_depth);
@@ -324,9 +336,9 @@ int entry(int argc, char **argv) {
   SDL_GL_SetSwapInterval(*display_swap_interval);
   SDL_SetRelativeMouseMode(SDL_TRUE);
 
-  math::camera camera{math::mat4x4f::perspective(90.0f, {0.01f, 1024.0f},
+  math::camera camera{math::mat4x4f::perspective(90.0f, {0.1f, 2048.0f},
     display_resolution->get().cast<rx_f32>().w / display_resolution->get().cast<rx_f32>().h)};
-  camera.translate = {0.0f, 0.0f, -5.0f};
+  camera.translate = {0.0f, 0.0f, -10.0f};
 
   render::backend::interface* backend{nullptr};
   if (renderer_driver->get() == "gl4") {
@@ -338,13 +350,11 @@ int entry(int argc, char **argv) {
   }
 
   {
-    // render::backend::gl3 backend{&memory::g_system_allocator, reinterpret_cast<void *>(window)};
     render::frontend::interface frontend{&memory::g_system_allocator, backend};
     render::immediate2D immediate2D{&frontend};
     render::immediate3D immediate3D{&frontend};
     render::skybox skybox{&frontend};
     skybox.load("base/skyboxes/miramar.json");
-    // SDL_Delay(5000);
 
     render::frontend::target *target{frontend.create_target(RX_RENDER_TAG("default"))};
     target->request_swapchain();
@@ -355,24 +365,17 @@ int entry(int argc, char **argv) {
     render::frontend::buffer *model_buffer{frontend.create_buffer(RX_RENDER_TAG("model"))};
     model_buffer->record_element_type(render::frontend::buffer::element_type::k_u32);
     model_buffer->record_type(render::frontend::buffer::type::k_static);
-    model::interface model{&memory::g_system_allocator};
+    model::loader model{&memory::g_system_allocator};
 
-    // materials
+    // TODO(dweiler): splash screen
+  
+    frontend.process();
+    frontend.swap();
+
     map<string, render::frontend::material> materials;
-    {
-      render::frontend::material head{&frontend};
-      render::frontend::material body{&frontend};
-      head.load("base/models/mrfixit/head.json5");
-      body.load("base/models/mrfixit/body.json5");
-      materials.insert("Head.tga", utility::move(head));
-      materials.insert("Body.tga", utility::move(body));
-    }
-
-    if (model.load("base/models/mrfixit/model.iqm"))
-    {
-      if (model.is_animated())
-      {
-        using vertex = model::interface::animated_vertex;
+    if (model.load("base/models/san-miguel/san-miguel.json5")) {
+      if (model.is_animated()) {
+        using vertex = model::loader::animated_vertex;
         const auto &vertices{model.animated_vertices()};
         model_buffer->record_stride(sizeof(vertex));
         model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, position));
@@ -382,10 +385,8 @@ int entry(int argc, char **argv) {
         model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_u8, 4, offsetof(vertex, blend_weights));
         model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_u8, 4, offsetof(vertex, blend_indices));
         model_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
-      }
-      else
-      {
-        using vertex = model::interface::vertex;
+      } else {
+        using vertex = model::loader::vertex;
         const auto &vertices{model.vertices()};
         model_buffer->record_stride(sizeof(vertex));
         model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, position));
@@ -396,8 +397,17 @@ int entry(int argc, char **argv) {
       }
       const auto &elements{model.elements()};
       model_buffer->write_elements(elements.data(), elements.size() * sizeof(rx_u32));
+      frontend.initialize_buffer(RX_RENDER_TAG("model"), model_buffer);
+
+      model.materials().each([&](const json& _mat) {
+        render::frontend::material mat{&frontend};
+        material::loader loader{frontend.allocator()};
+        if (loader.parse(_mat) && mat.load(utility::move(loader))) {
+          RX_MESSAGE("%s", mat.name().data());
+          materials.insert(mat.name(), utility::move(mat));
+        }
+      });
     }
-    frontend.initialize_buffer(RX_RENDER_TAG("model"), model_buffer);
 
     render::frontend::buffer *quad{frontend.create_buffer(RX_RENDER_TAG("quad"))};
     quad->record_stride(sizeof(quad_vertex));
@@ -410,12 +420,13 @@ int entry(int argc, char **argv) {
     frontend.initialize_buffer(RX_RENDER_TAG("quad"), quad);
 
     input::input input;
-    model::animation animation{&model, 0};
+
+    // model::animation animation{&model, 0};
     while (!input.keyboard().is_released(SDLK_ESCAPE, false))
     {
-      input.update(0);
+      input.update(frontend.timer().delta_time());
 
-      animation.update(frontend.timer().delta_time(), true);
+      // animation.update(frontend.timer().delta_time(), true);
 
       // translate SDL events
       for (SDL_Event event; SDL_PollEvent(&event);)
@@ -451,31 +462,43 @@ int entry(int argc, char **argv) {
         }
       }
 
+      rx_f32 move_speed{10.0f};
       const rx_f32 sens{0.2f};
       const auto &delta{input.mouse().movement()};
       math::vec3f move{static_cast<rx_f32>(delta.y) * sens, static_cast<rx_f32>(delta.x) * sens, 0.0f};
       camera.rotate = camera.rotate + move;
 
+      if (input.keyboard().is_held(SDL_SCANCODE_LSHIFT, true)) {
+        move_speed = 200.0f;
+      } else {
+        move_speed = 10.0f;
+      }
+
       if (input.keyboard().is_held(SDL_SCANCODE_W, true)) {
         const auto f{camera.to_mat4().z};
-        camera.translate += math::vec3f(f.x, f.y, f.z) * (10.0f * frontend.timer().delta_time());
+        camera.translate += math::vec3f(f.x, f.y, f.z) * (move_speed * frontend.timer().delta_time());
       }
       if (input.keyboard().is_held(SDL_SCANCODE_S, true)) {
         const auto f{camera.to_mat4().z};
-        camera.translate -= math::vec3f(f.x, f.y, f.z) * (10.0f * frontend.timer().delta_time());
+        camera.translate -= math::vec3f(f.x, f.y, f.z) * (move_speed * frontend.timer().delta_time());
       }
       if (input.keyboard().is_held(SDL_SCANCODE_D, true)) {
         const auto l{camera.to_mat4().x};
-        camera.translate += math::vec3f(l.x, l.y, l.z) * (10.0f * frontend.timer().delta_time());
+        camera.translate += math::vec3f(l.x, l.y, l.z) * (move_speed * frontend.timer().delta_time());
       }
       if (input.keyboard().is_held(SDL_SCANCODE_A, true)) {
         const auto l{camera.to_mat4().x};
-        camera.translate -= math::vec3f(l.x, l.y, l.z) * (10.0f * frontend.timer().delta_time());
+        camera.translate -= math::vec3f(l.x, l.y, l.z) * (move_speed * frontend.timer().delta_time());
       }
 
-      math::mat4x4f modelm{math::mat4x4f::scale({2.0f, 2.0f, 2.0f})
+      if (input.keyboard().is_released(SDL_SCANCODE_F3, true)) {
+        display_swap_interval->set(display_swap_interval->get() == 0 ? 1 : 0);
+        SDL_GL_SetSwapInterval(display_swap_interval->get());
+      }
+
+      math::mat4x4f modelm{math::mat4x4f::scale({0.2f, 0.2f, 0.2f})
         * math::mat4x4f::rotate({0.0f, 90.0f, 0.0f})
-        * math::mat4x4f::translate({0.0f, -5.0f, 10.0f})};
+        * math::mat4x4f::translate({0.0f, 0.0f, 0.0f})};
 
       render::frontend::technique *gbuffer_test_technique{frontend.find_technique_by_name("geometry")};
       render::frontend::technique *fs_quad_technique{frontend.find_technique_by_name("fs-quad")};
@@ -483,32 +506,22 @@ int entry(int argc, char **argv) {
       RX_ASSERT(gbuffer_test_technique, "");
       RX_ASSERT(fs_quad_technique, "");
 
-      render::frontend::program *gbuffer_test_program{gbuffer_test_technique->permute((1 << 0) | (1 << 1))};
       render::frontend::program *fs_quad_program{*fs_quad_technique};
-
-      gbuffer_test_program->uniforms()[0].record_mat4x4f(modelm * camera.view() * camera.projection());
-      gbuffer_test_program->uniforms()[1].record_mat4x4f(modelm);
-      gbuffer_test_program->uniforms()[2].record_bones(animation.frames(), model.joints().size());
 
       fs_quad_program->uniforms()[0].record_sampler(0);
 
       render::frontend::state state;
       state.depth.record_test(true);
       state.depth.record_write(true);
-      state.cull.record_enable(true);
+      state.cull.record_enable(false);
       state.cull.record_front_face(render::frontend::cull_state::front_face_type::k_clock_wise);
       state.cull.record_cull_face(render::frontend::cull_state::cull_face_type::k_back);
-
-      //frontend.clear(RX_RENDER_TAG("gbuffer test"),
-      //               gbuffer.target(),
-      //               RX_RENDER_CLEAR_COLOR(0),
-      //               {0.0f, 0.0f, 0.0f, 1.0f});
 
       frontend.clear(RX_RENDER_TAG("gbuffer test"),
                      gbuffer.target(),
                      RX_RENDER_CLEAR_DEPTH,
                      {1.0f, 0.0f, 0.0f, 0.0f});
-      
+
       frontend.clear(RX_RENDER_TAG("gbuffer test"),
         gbuffer.target(),
         RX_RENDER_CLEAR_COLOR(0),
@@ -517,8 +530,21 @@ int entry(int argc, char **argv) {
       skybox.render(gbuffer.target(), camera.view(), camera.projection());
 
       model.meshes().each_fwd([&](const model::mesh& _mesh) {
-        RX_MESSAGE("%s", _mesh.material.data());
         const auto material{materials.find(_mesh.material)};
+        int flags = 0; //1 << 0;
+        if (material->diffuse())    flags |= 1 << 1;
+        if (material->normal())     flags |= 1 << 2;
+        if (material->metalness())  flags |= 1 << 3;
+        if (material->roughness())  flags |= 1 << 4;
+        if (material->alpha_test()) flags |= 1 << 5;
+
+        render::frontend::program *gbuffer_test_program{gbuffer_test_technique->permute(flags)};
+        gbuffer_test_program->uniforms()[0].record_mat4x4f(modelm * camera.view() * camera.projection());
+        gbuffer_test_program->uniforms()[1].record_mat4x4f(modelm);
+        // gbuffer_test_program->uniforms()[2].record_bones(animation.frames(), model.joints().size());
+
+        state.cull.record_enable(material->alpha_test() ? false : true);
+
         frontend.draw_elements(
             RX_RENDER_TAG("gbuffer test"),
             state,
@@ -534,13 +560,13 @@ int entry(int argc, char **argv) {
             material ? material->metalness() : nullptr,
             material ? material->roughness() : nullptr);
       });
-
+    
       // immediate3D.frame_queue().record_line({0.0f, -10.0f, 0.0f}, {0.0f, 10.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}, 0);
-      animation.render_skeleton(modelm, &immediate3D);
+      // animation.render_skeleton(modelm, &immediate3D);
     
       immediate3D.render(gbuffer.target(), camera.view(), camera.projection());
 
-      //frontend.clear(RX_RENDER_TAG("default"),
+      // frontend.clear(RX_RENDER_TAG("default"),
       //               target, RX_RENDER_CLEAR_DEPTH, {1.0f});
 
       frontend.draw_elements(

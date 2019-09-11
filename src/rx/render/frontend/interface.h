@@ -119,6 +119,10 @@ struct interface {
   statistics stats(resource::type _type) const;
   rx_size draw_calls() const;
   rx_size clear_calls() const;
+  rx_size vertices() const;
+  rx_size triangles() const;
+  rx_size lines() const;
+  rx_size points() const;
 
   technique* find_technique_by_name(const char* _name);
 
@@ -174,6 +178,12 @@ private:
   concurrency::atomic<rx_size> m_draw_calls[2];
   concurrency::atomic<rx_size> m_clear_calls[2];
 
+  concurrency::atomic<rx_size> m_vertices[2];
+
+  concurrency::atomic<rx_size> m_triangles[2];
+  concurrency::atomic<rx_size> m_lines[2];
+  concurrency::atomic<rx_size> m_points[2];
+
   device_info m_device_info;
   frame_timer m_timer;
 };
@@ -187,6 +197,30 @@ inline interface::device_info::device_info(memory::allocator* _allocator)
 
 inline memory::allocator* interface::allocator() const {
   return m_allocator;
+}
+
+inline rx_size interface::draw_calls() const {
+  return m_draw_calls[1].load();
+}
+
+inline rx_size interface::clear_calls() const {
+  return m_clear_calls[1].load();
+}
+
+inline rx_size interface::vertices() const {
+  return m_vertices[1].load();
+}
+
+inline rx_size interface::triangles() const {
+  return m_triangles[1].load();
+}
+
+inline rx_size interface::lines() const {
+  return m_lines[1].load();
+}
+
+inline rx_size interface::points() const {
+  return m_points[1].load();
 }
 
 inline const frame_timer& interface::timer() const & {

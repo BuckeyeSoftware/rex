@@ -5,7 +5,8 @@
     "HAS_DIFFUSE",
     "HAS_NORMAL",
     "HAS_METALNESS",
-    "HAS_ROUGHNESS"
+    "HAS_ROUGHNESS",
+    "HAS_ALPHATEST"
   ],
   uniforms: [
     { name: "u_transform", type: "mat4x4f" },
@@ -92,12 +93,30 @@
         #endif
 
           // calculate diffuse color
-          vec3f diffuse = vec3f(0.0);
+          vec4f diffuse = vec4f(0.0);
         #if defined(HAS_DIFFUSE)
-          diffuse = rx_texture2D(u_diffuse, vs_coordinate).rgb;
+          diffuse = rx_texture2D(u_diffuse, vs_coordinate);
         #endif
 
-          fs_albedo = vec4f(diffuse, roughness);            // roughness stored in alpha
+        #if defined(HAS_ALPHATEST)
+          if (diffuse.a <= 0.5) {
+            discard;
+          }
+        #endif
+
+#if 1
+          const vec3f La = vec3f(0.5);
+          const vec3f Ld = vec3f(0.5);
+          vec3f L = normalize(vec3f(0.0, 1.0, 0.0));
+
+          vec3f Ma = diffuse.xyz;
+          vec3f Md = diffuse.xyz;
+
+          vec3f va = La * Ma;
+          vec3f vd = max(dot(normal, L), 0.0) * Ld * Md;
+#endif 
+
+          fs_albedo = vec4f(va + vd    ,        roughness); // roughness stored in alpha
           fs_normal = vec4f(normal * 0.5 + 0.5, metalness); // metalness stored in alpha
         }
       "

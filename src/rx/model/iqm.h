@@ -1,10 +1,12 @@
 #ifndef RX_MODEL_IQM_H
 #define RX_MODEL_IQM_H
-#include "rx/model/loader.h"
+#include "rx/model/importer.h"
 
 namespace rx::model {
 
-struct iqm : loader {
+struct iqm
+  : importer
+{
   iqm();
   iqm(memory::allocator* _allocator);
 
@@ -17,13 +19,8 @@ private:
   bool read_animations(const header& _header, const vector<rx_byte>& _data);
 };
 
-inline iqm::iqm()
-  : iqm{&memory::g_system_allocator}
-{
-}
-
 inline iqm::iqm(memory::allocator* _allocator)
-  : loader{_allocator}
+  : importer{_allocator}
 {
 }
 

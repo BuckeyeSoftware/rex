@@ -30,6 +30,8 @@ struct chain
   chain(memory::allocator* _allocator);
   chain(chain&& _chain);
 
+  chain& operator=(chain&& _chain);
+
   void generate(loader&& _loader, bool _has_mipchain, bool _want_mipchain);
 
   void generate(vector<rx_byte>&& _data, pixel_format _format,
@@ -40,6 +42,7 @@ struct chain
   void resize(const math::vec2z& _dimensions);
 
   vector<rx_byte>&& data() &&;
+  vector<level>&& levels() &&;
   const vector<rx_byte>& data() const &;
   const vector<level>& levels() const &;
   const math::vec2z& dimensions() const &;
@@ -82,6 +85,18 @@ inline chain::chain(chain&& _chain)
   , m_dimensions{_chain.m_dimensions}
   , m_pixel_format{_chain.m_pixel_format}
 {
+  _chain.m_dimensions = {};
+}
+
+inline chain& chain::operator=(chain&& _chain) {
+  m_data = utility::move(_chain.m_data);
+  m_levels = utility::move(_chain.m_levels);
+  m_dimensions = _chain.m_dimensions;
+  m_pixel_format = _chain.m_pixel_format;
+
+  _chain.m_dimensions = {};
+
+  return *this;
 }
 
 inline void chain::generate(loader&& _loader, bool _has_mipchain,
@@ -94,6 +109,10 @@ inline void chain::generate(loader&& _loader, bool _has_mipchain,
 
 inline vector<rx_byte>&& chain::data() && {
   return utility::move(m_data);
+}
+
+inline vector<chain::level>&& chain::levels() && {
+  return utility::move(m_levels);
 }
 
 inline const vector<rx_byte>& chain::data() const & {

@@ -6,6 +6,7 @@
 #include "rx/core/traits/is_trivially_copyable.h"
 #include "rx/core/traits/is_trivially_destructible.h"
 #include "rx/core/traits/return_type.h"
+#include "rx/core/traits/enable_if.h"
 
 #include "rx/core/utility/forward.h"
 #include "rx/core/utility/move.h"
@@ -228,11 +229,14 @@ bool vector<T>::grow_or_shrink_to(rx_size _size) {
   }
 
   if (_size < m_size) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waggressive-loop-optimizations"
     if constexpr (!traits::is_trivially_destructible<T>) {
       for (rx_size i{m_size-1}; i > _size; i--) {
         utility::destruct<T>(m_data + i);
       }
     }
+#pragma GCC diagnostic pop
   }
 
   return true;

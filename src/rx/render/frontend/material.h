@@ -1,10 +1,9 @@
 #ifndef RX_RENDER_FRONTEND_MATERIAL_H
 #define RX_RENDER_FRONTEND_MATERIAL_H
 #include "rx/core/string.h"
-#include "rx/core/json.h"
-#include "rx/core/log.h"
-
 #include "rx/core/concepts/no_copy.h"
+
+#include "rx/material/loader.h"
 
 namespace rx::render::frontend {
 
@@ -20,7 +19,9 @@ struct material
   material(material&& _material);
   material& operator=(material&& _material);
 
-  bool load(const string& _file_name);
+  bool load(rx::material::loader&& _loader);
+
+  bool alpha_test() const;
   const string& name() const &;
 
   texture2D* diffuse() const;
@@ -29,28 +30,12 @@ struct material
   texture2D* roughness() const;
 
 private:
-  void fini();
-
-  bool parse(const json& _data);
-  bool parse_texture(const json& _texture);
-  bool parse_wrap(texture2D* _texture, const json& _wrap);
-  bool parse_filter(texture2D* _texture, const json& _filter, bool _mipmaps);
-
-  template<typename... Ts>
-  bool error(const char* _format, Ts&&... _arguments) const;
-
-  template<typename... Ts>
-  void log(log::level _level, const char* _format, Ts&&... _arguments) const;
-
-  void write_log(log::level _level, string&& _message) const;
-
   interface* m_frontend;
-
   texture2D* m_diffuse;
   texture2D* m_normal;
   texture2D* m_metalness;
   texture2D* m_roughness;
-
+  bool m_alpha_test;
   string m_name;
 };
 
@@ -60,34 +45,42 @@ inline material::material(material&& _material)
   , m_normal{_material.m_normal}
   , m_metalness{_material.m_metalness}
   , m_roughness{_material.m_roughness}
+  , m_alpha_test{_material.m_alpha_test}
   , m_name{utility::move(_material.m_name)}
 {
   _material.m_diffuse = nullptr;
   _material.m_normal = nullptr;
   _material.m_metalness = nullptr;
   _material.m_roughness = nullptr;
+  _material.m_alpha_test = false;
 }
 
 inline material& material::operator=(material&& _material) {
-  fini();
+  this->~material();
 
   m_frontend = _material.m_frontend;
   m_diffuse = _material.m_diffuse;
   m_normal = _material.m_normal;
   m_metalness = _material.m_metalness;
   m_roughness = _material.m_roughness;
+  m_alpha_test = _material.m_alpha_test;
   m_name = utility::move(_material.m_name);
 
   _material.m_diffuse = nullptr;
   _material.m_normal = nullptr;
   _material.m_metalness = nullptr;
   _material.m_roughness = nullptr;
+  _material.m_alpha_test = false;
 
   return *this;
 }
 
 inline const string& material::name() const & {
   return m_name;
+}
+
+inline bool material::alpha_test() const {
+  return m_alpha_test;
 }
 
 inline texture2D* material::diffuse() const {
@@ -104,19 +97,6 @@ inline texture2D* material::metalness() const {
 
 inline texture2D* material::roughness() const {
   return m_roughness;
-}
-
-template<typename... Ts>
-inline bool material::error(const char* _format, Ts&&... _arguments) const {
-  log(log::level::k_error, "%s", string::format(_format, utility::forward<Ts>(_arguments)...));
-  return false;
-}
-
-template<typename... Ts>
-inline void material::log(log::level _level, const char* _format,
-  Ts&&... _arguments) const
-{
-  write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
 }
 
 } // namespace rx::render::frontend

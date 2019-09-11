@@ -45,7 +45,9 @@ static vector<chain::level> generate_levels(memory::allocator* _allocator,
       const rx_size size{dimensions.area() * _bpp};
       result.push_back({offset, size, dimensions});
       offset += size;
-      dimensions /= 2;
+      dimensions = dimensions.map([](rx_size _dim) {
+        return algorithm::max(_dim / 2, 1_z);
+      });
     };
   } else {
     result.push_back({0, _dimensions.area() * _bpp, _dimensions});

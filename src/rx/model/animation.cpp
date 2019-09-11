@@ -1,14 +1,14 @@
 #include "rx/render/immediate3D.h"
 
 #include "rx/model/animation.h"
-#include "rx/model/interface.h"
+#include "rx/model/loader.h"
 
 #include "rx/core/math/abs.h"
 #include "rx/core/math/mod.h"
 
 namespace rx::model {
 
-animation::animation(interface* _model, rx_size _index)
+animation::animation(loader* _model, rx_size _index)
   : m_model{_model}
   , m_animation{_index}
 {

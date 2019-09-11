@@ -183,9 +183,15 @@ private:
   };
 
   struct batch {
+    enum type {
+      k_text,
+      k_triangles,
+      k_lines,
+    };
+
     rx_size offset;
     rx_size count;
-    queue::command::type kind;
+    type kind;
     frontend::state render_state;
     frontend::texture2D* texture;
   };
@@ -195,7 +201,7 @@ private:
 
   template<rx_size E>
   void generate_polygon(const math::vec2f (&coordinates)[E],
-    rx_f32 _thickness, const math::vec4f& _color, queue::command::type _from_type);
+    rx_f32 _thickness, const math::vec4f& _color);
 
   void generate_rectangle(const math::vec2f& _position, const math::vec2f& _size,
     rx_f32 _roundness, const math::vec4f& _color);
@@ -211,11 +217,11 @@ private:
   template<rx_size E>
   void size_polygon(rx_size& n_vertices_, rx_size& n_elements_);
   void size_rectangle(rx_f32 _roundness, rx_size& n_vertices_, rx_size& n_elements_);
-  void size_line(rx_size& n_vertices_, rx_size& n_elements_);
+  void size_line(rx_f32 _roundness, rx_size& n_vertices_, rx_size& n_elements_);
   void size_text(const char* _contents, rx_size _contents_length,
     rx_size& n_vertices_, rx_size& n_elements_);
 
-  void add_batch(rx_size _offset, queue::command::type _type,
+  void add_batch(rx_size _offset, batch::type _type,
     frontend::texture2D* _texture = nullptr);
 
   void add_element(rx_u32 _element);
