@@ -873,7 +873,7 @@ static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp);
 #endif
 
 // this is not threadsafe
-static const char *stbi__g_failure_reason;
+_Thread_local static const char *stbi__g_failure_reason;
 
 STBIDEF const char *stbi_failure_reason(void)
 {

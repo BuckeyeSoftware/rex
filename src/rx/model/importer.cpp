@@ -28,6 +28,7 @@ importer::importer(memory::allocator* _allocator)
   , m_frames{m_allocator}
   , m_animations{m_allocator}
   , m_joints{m_allocator}
+  , m_file_name{m_allocator}
 {
 }
 
@@ -37,14 +38,14 @@ bool importer::load(const string& _file_name) {
     return false;
   }
 
+  m_file_name = _file_name;
+
   if (!read(*data)) {
-    logger(log::level::k_error, "failed to decode '%s' [%s]", _file_name, m_error);
     return false;
   }
 
   if (m_elements.is_empty() || m_positions.is_empty()) {
-    logger(log::level::k_error, "'%s' lacks vertices", _file_name);
-    return false;
+    return error("'%s' lacks vertices", _file_name);
   }
 
   // Ensure none of the elements go out of bounds.
@@ -55,8 +56,7 @@ bool importer::load(const string& _file_name) {
   });
 
   if (max_element >= vertices) {
-    logger(log::level::k_error, "'%s' element out of bounds", _file_name);
-    return false;
+    return error("'%s' element out of bounds", _file_name);
   }
 
   // Check for normals.
@@ -70,8 +70,7 @@ bool importer::load(const string& _file_name) {
     // Generating tangent vectors cannot be done unless the model contains
     // appropriate texture coordinates.
     if (m_coordinates.is_empty()) {
-      logger(log::level::k_error, "'%s' lacks tangents and texture coordinates bailing", _file_name);
-      return false;
+      return error("'%s' lacks tangents and texture coordinates bailing", _file_name);
     } else {
       logger(log::level::k_warning, "'%s' lacks tangents", _file_name);
       if (!generate_tangents()) {
@@ -227,6 +226,14 @@ bool importer::generate_tangents() {
   }
 
   return true;
+}
+
+void importer::write_log(log::level _level, string&& _message) const {
+  if (m_file_name.is_empty()) {
+    logger(_level, "%s", utility::move(_message));
+  } else {
+    logger(_level, "%s: %s", m_file_name, utility::move(_message));
+  }
 }
 
 } // namespace rx::model

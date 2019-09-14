@@ -105,24 +105,6 @@ json::json(shared* _shared, struct json_value_s* _value)
 {
 }
 
-json::~json() {
-  // One less reference to the shared state.
-  if (m_shared) {
-    m_shared->release();
-  }
-}
-
-json& json::operator=(const json& _json) {
-  if (m_shared) {
-    m_shared->release();
-  }
-
-  m_shared = _json.m_shared->acquire();
-  m_value = _json.m_value;
-
-  return *this;
-}
-
 optional<string> json::error() const {
   if (m_shared) {
     const auto code{static_cast<enum json_parse_error_e>(m_shared->m_error.error)};

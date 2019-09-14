@@ -332,7 +332,7 @@ void interface::destroy_texture_unlocked(const command_header::info& _info, text
   }
 }
 
-void interface::draw_elements(
+void interface::draw(
   const command_header::info& _info,
   const state& _state,
   target* _target,
@@ -370,7 +370,7 @@ void interface::draw_elements(
   const auto dirty_uniforms_size{_program->dirty_uniforms_size()};
 
   // allocate and fill out command
-  auto command_base{m_command_buffer.allocate(sizeof(draw_command) + dirty_uniforms_size, command_type::k_draw_elements, _info)};
+  auto command_base{m_command_buffer.allocate(sizeof(draw_command) + dirty_uniforms_size, command_type::k_draw, _info)};
   auto command{reinterpret_cast<draw_command*>(command_base + sizeof(command_header))};
   *reinterpret_cast<state*>(command) = _state;
   reinterpret_cast<state*>(command)->flush();
@@ -492,7 +492,7 @@ bool interface::process() {
   m_vertices[1] = m_vertices[0].load();
   m_vertices[0] = 0;
 
-  m_points[1] = m_points[1].load();
+  m_points[1] = m_points[0].load();
   m_points[0] = 0;
 
   m_lines[1] = m_lines[0].load();

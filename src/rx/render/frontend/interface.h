@@ -60,7 +60,7 @@ struct interface {
   void destroy_texture(const command_header::info& _info, texture3D* _texture);
   void destroy_texture(const command_header::info& _info, textureCM* _texture);
 
-  void draw_elements(
+  void draw(
     const command_header::info& _info,
     const state& _state,
     target* _target,

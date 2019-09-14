@@ -1443,8 +1443,6 @@ void gl4::process(rx_byte* _command) {
     }
     break;
   case frontend::command_type::k_draw:
-    [[fallthrough]];
-  case frontend::command_type::k_draw_elements:
     {
       const auto command{reinterpret_cast<frontend::draw_command*>(header + 1)};
       const auto render_state{reinterpret_cast<frontend::state*>(command)};
@@ -1559,37 +1557,34 @@ void gl4::process(rx_byte* _command) {
         }
       }
 
-      if (header->type == frontend::command_type::k_draw_elements) {
-        switch (render_buffer->element_kind()) {
-        case frontend::buffer::element_type::k_none:
-          RX_HINT_UNREACHABLE();
-        case frontend::buffer::element_type::k_u8:
-          pglDrawElements(
-            convert_primitive_type(command->type),
-            static_cast<GLsizei>(command->count),
-            GL_UNSIGNED_BYTE,
-            reinterpret_cast<void*>(sizeof(GLubyte) * command->offset));
-          break;
-        case frontend::buffer::element_type::k_u16:
-          pglDrawElements(
-            convert_primitive_type(command->type),
-            static_cast<GLsizei>(command->count),
-            GL_UNSIGNED_SHORT,
-            reinterpret_cast<void*>(sizeof(GLushort) * command->offset));
-          break;
-        case frontend::buffer::element_type::k_u32:
-          pglDrawElements(
-            convert_primitive_type(command->type),
-            static_cast<GLsizei>(command->count),
-            GL_UNSIGNED_INT,
-            reinterpret_cast<void*>(sizeof(GLuint) * command->offset));
-          break;
-        }
-      } else {
+      switch (render_buffer->element_kind()) {
+      case frontend::buffer::element_type::k_u8:
+        pglDrawElements(
+          convert_primitive_type(command->type),
+          static_cast<GLsizei>(command->count),
+          GL_UNSIGNED_BYTE,
+          reinterpret_cast<void*>(sizeof(GLubyte) * command->offset));
+        break;
+      case frontend::buffer::element_type::k_u16:
+        pglDrawElements(
+          convert_primitive_type(command->type),
+          static_cast<GLsizei>(command->count),
+          GL_UNSIGNED_SHORT,
+          reinterpret_cast<void*>(sizeof(GLushort) * command->offset));
+        break;
+      case frontend::buffer::element_type::k_u32:
+        pglDrawElements(
+          convert_primitive_type(command->type),
+          static_cast<GLsizei>(command->count),
+          GL_UNSIGNED_INT,
+          reinterpret_cast<void*>(sizeof(GLuint) * command->offset));
+        break;
+      case frontend::buffer::element_type::k_none:
         pglDrawArrays(
           convert_primitive_type(command->type),
           static_cast<GLint>(command->offset),
           static_cast<GLsizei>(command->count));
+        break;
       }
     }
     break;

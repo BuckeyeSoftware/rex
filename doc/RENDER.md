@@ -26,16 +26,11 @@ The entire rendering interface is _thread safe_, any and all commands can be cal
 The frontend **does not** do immediate rendering. Every command executed is only recorded into a command buffer for later execution by the backend. There's exactly one frame of latency incurred by this but it's also what permits thread-safety for APIs like OpenGL which cannot be called from multiple threads. The backend implements the `process` function and interprets commands. Every command is prefixed with that `RX_RENDER_TAG` so it's very easy to see where in the engine a command originated from.
 
 #### Drawing
-Drawing is done with one of two commands:
-  * `interface::draw_arrays`
-  * `interface::draw_elements`
+Indexed and non-indexed draws are done with `frontend.draw`. When a buffer has no elements, e.g `element_kind == k_none` the draw is treated as a non-indexed draw.
 
-The `draw_arrays` function is only allowed with buffers that have no elements, e.g `element_kind == k_none`.
-
-Otherwise, the functions behave the exact same way, here's a definition
-
+Here's the definition:
 ```cpp
-void draw_elements(
+void draw(
   const command_header::info& _info,
   const state& _state,
   target* _target,
@@ -116,7 +111,7 @@ rx_size draw_calls() const;
 
 The `stats` function in particular can tell you how many objects you can have of that type; `total`, how many are currently in use; `used`, how many are cached; `cached` and how much memory (in bytes) is being used currently for those used objects _last_ frame.
 
-The `draw_calls` function can tell you how many `draw_arrays` and `draw_elements` commands have happened _last_ frame.
+The `draw_calls` function can tell you how many `draw` commands happened _last_ frame.
 
 In addition, timing information for a frame can be accessed with the following member function:
 
@@ -435,7 +430,7 @@ frontend.initialize_texture(RX_RENER_TAG("quad"), texture);
 // the contents are _copied_ into the draw command when do you this
 
 // draw the textured quad into our target
-frontend.draw_elements(
+frontend.draw(
   RX_RENDER_TAG("test"),
   state,
   target,

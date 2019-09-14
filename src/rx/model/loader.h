@@ -2,12 +2,17 @@
 #define RX_MODEL_LOADER_H
 #include "rx/model/importer.h"
 
+#include "rx/material/loader.h"
+
 #include "rx/core/log.h"
 #include "rx/core/json.h"
 
 namespace rx::model {
 
-struct loader {
+struct loader 
+  : concepts::no_copy
+  , concepts::no_move
+{
   loader(memory::allocator* _allocator);
   ~loader();
 
@@ -32,15 +37,12 @@ struct loader {
 
   bool is_animated() const;
 
-  const vector<vertex>& vertices() const &;
-  vector<vertex>&& vertices() &&;
-  const vector<animated_vertex> animated_vertices() const &;
-  vector<animated_vertex>&& animated_vertices() &&;
-  const vector<mesh>& meshes() const &;
-  const vector<rx_u32>& elements() const &;
-  vector<rx_u32>&& elements() &&;
-  const vector<importer::joint>& joints() const &;
-  const json& materials() const &;
+  vector<vertex>&& vertices();
+  vector<animated_vertex>&& animated_vertices();
+  vector<mesh>&& meshes();
+  vector<rx_u32>&& elements();
+  vector<importer::joint>&& joints();
+  map<string, material::loader>&& materials();
 
 private:
   friend struct animation;
@@ -75,15 +77,7 @@ private:
   vector<math::mat3x4f> m_frames;
   string m_name;
 
-  // TODO(dweiler):
-  // The following JSON object exists for |load| to populate to allow
-  // |m_materials| to exist potentially long after the contents are loaded
-  // since m_materials shares memory of the root JSON object.
-  //
-  // We need to implement some sort of JSON clone to support this correctly.
-  json m_definition;
-  
-  json m_materials;
+  map<string, material::loader> m_materials;
   int m_flags;
 };
 
@@ -125,44 +119,30 @@ inline bool loader::is_animated() const {
   return m_flags & k_animated;
 }
 
-inline const vector<loader::vertex>& loader::vertices() const & {
-  RX_ASSERT(!is_animated(), "not a static model");
-  return as_vertices;
-}
-
-inline vector<loader::vertex>&& loader::vertices() && {
+inline vector<loader::vertex>&& loader::vertices() {
   RX_ASSERT(!is_animated(), "not a static model");
   return utility::move(as_vertices);
 }
 
-inline const vector<loader::animated_vertex> loader::animated_vertices() const & {
-  RX_ASSERT(is_animated(), "not a animated model");
-  return as_animated_vertices;
-}
-
-inline vector<loader::animated_vertex>&& loader::animated_vertices() && {
+inline vector<loader::animated_vertex>&& loader::animated_vertices() {
   RX_ASSERT(is_animated(), "not a animated model");
   return utility::move(as_animated_vertices);
 }
 
-inline const vector<mesh>& loader::meshes() const & {
-  return m_meshes;
+inline vector<mesh>&& loader::meshes() {
+  return utility::move(m_meshes);
 }
 
-inline const vector<rx_u32>& loader::elements() const & {
-  return m_elements;
-}
-
-inline vector<rx_u32>&& loader::elements() && {
+inline vector<rx_u32>&& loader::elements() {
   return utility::move(m_elements);
 }
 
-inline const vector<importer::joint>& loader::joints() const & {
-  return m_joints;
+inline vector<importer::joint>&& loader::joints() {
+  return utility::move(m_joints);
 }
 
-inline const json& loader::materials() const & {
-  return m_materials;
+inline map<string, material::loader>&& loader::materials() {
+  return utility::move(m_materials);
 }
 
 } // namespace rx::model

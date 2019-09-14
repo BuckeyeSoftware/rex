@@ -15,6 +15,26 @@ loader::loader(memory::allocator* _allocator)
 {
 }
 
+loader::loader(loader&& _loader)
+  : m_allocator{_loader.m_allocator}
+  , m_textures{utility::move(_loader.m_textures)}
+  , m_name{utility::move(_loader.m_name)}
+  , m_alpha_test{_loader.m_alpha_test}
+{
+  _loader.m_allocator = nullptr;
+  _loader.m_alpha_test = false;
+}
+
+void loader::operator=(loader&& _loader) {
+  m_allocator = _loader.m_allocator;
+  m_textures = utility::move(_loader.m_textures);
+  m_name = utility::move(_loader.m_name);
+  m_alpha_test = _loader.m_alpha_test;
+
+  _loader.m_allocator = nullptr;
+  _loader.m_alpha_test = false;
+}
+
 bool loader::load(const string& _file_name) {
   auto contents{filesystem::read_binary_file(m_allocator, _file_name)};
   if (!contents) {

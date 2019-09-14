@@ -300,7 +300,7 @@ void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
         RX_HINT_UNREACHABLE();
         break;
       case queue::command::type::k_point:
-        m_frontend->draw_elements(
+        m_frontend->draw(
           RX_RENDER_TAG("immediate3D points"),
           _batch.render_state,
           _target,
@@ -312,7 +312,7 @@ void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
           "");
         break;
       case queue::command::type::k_line:
-        m_frontend->draw_elements(
+        m_frontend->draw(
           RX_RENDER_TAG("immediate3D lines"),
           _batch.render_state,
           _target,
@@ -326,7 +326,7 @@ void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
       case queue::command::type::k_solid_sphere:
         [[fallthrough]];
       case queue::command::type::k_solid_cube:
-        m_frontend->draw_elements(
+        m_frontend->draw(
           RX_RENDER_TAG("immediate3D triangles"),
           _batch.render_state,
           _target,

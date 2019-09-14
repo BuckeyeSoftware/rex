@@ -502,8 +502,8 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
     m_render_batches[m_rd_index].each_fwd([&](const batch& _batch) {
       switch (_batch.kind) {
       case batch::type::k_triangles:
-        m_frontend->draw_elements(
-          RX_RENDER_TAG("immediate triangles"),
+        m_frontend->draw(
+          RX_RENDER_TAG("immediate2D triangles"),
           _batch.render_state,
           _target,
           m_buffers[m_rd_index],
@@ -514,8 +514,8 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
           "");
           break;
       case batch::type::k_lines:
-        m_frontend->draw_elements(
-          RX_RENDER_TAG("immediate lines"),
+        m_frontend->draw(
+          RX_RENDER_TAG("immediate2D lines"),
           _batch.render_state,
           _target,
           m_buffers[m_rd_index],
@@ -526,8 +526,8 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
           "");
           break;
       case batch::type::k_text:
-        m_frontend->draw_elements(
-          RX_RENDER_TAG("immediate text"),
+        m_frontend->draw(
+          RX_RENDER_TAG("immediate2D text"),
           _batch.render_state,
           _target,
           m_buffers[m_rd_index],

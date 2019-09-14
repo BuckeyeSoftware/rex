@@ -1,7 +1,11 @@
 #include "rx/model/loader.h"
 #include "rx/model/iqm.h"
 
+#include "rx/core/map.h"
 #include "rx/core/filesystem/file.h"
+#include "rx/core/concurrency/thread_pool.h"
+
+#include "rx/material/loader.h"
 
 namespace rx::model {
 
@@ -57,7 +61,29 @@ bool loader::parse(const json& _definition) {
     return false;
   }
 
-  m_materials = materials;
+  // Load all the materials across multiple threads.
+  concurrency::thread_pool pool{m_allocator, 32};
+  concurrency::mutex mutex;
+  concurrency::condition_variable condition_variable;
+  rx_size count{0};
+  materials.each([&](const json& _material) {
+    pool.add([&, _material](int) {
+      material::loader loader{m_allocator};
+      if (loader.parse(_material)) {
+        concurrency::scope_lock lock{mutex};
+        m_materials.insert(loader.name(), utility::move(loader));
+      }
+      {
+        concurrency::scope_lock lock{mutex};
+        count++;
+        condition_variable.signal();
+      }
+    });
+  });
+  {
+    concurrency::scope_lock lock{mutex};
+    condition_variable.wait(lock, [&]{ return count == materials.size(); });
+  }
 
   return true;
 }

@@ -1,3 +1,5 @@
+#include <SDL.h>
+
 #include "rx/core/concurrency/thread_pool.h"
 #include "rx/core/debug.h" // RX_MESSAGE
 
@@ -11,6 +13,7 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads)
   , m_ready{0}
 {
   RX_MESSAGE("starting thread pool with %zu threads", _threads);
+  const auto beg{SDL_GetPerformanceCounter()};
   m_threads.reserve(_threads);
 
   for (rx_size i{0}; i < _threads; i++) {
@@ -35,7 +38,11 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads)
           task = m_queue.pop();
         }
         RX_MESSAGE("running a task on thread %d for pool", _thread_id);
+        const auto beg{SDL_GetPerformanceCounter()};
         task(_thread_id);
+        const auto end{SDL_GetPerformanceCounter()};
+        const auto time{static_cast<rx_f64>(((end - beg) * 1000.0) / static_cast<rx_f64>(SDL_GetPerformanceFrequency()))};
+        RX_MESSAGE("task on thread %d took %f ms", _thread_id, time);
       }
     });
   }
@@ -46,7 +53,9 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads)
     m_ready_cond.wait(lock, [this] { return m_ready == m_threads.size(); });
   }
 
-  RX_MESSAGE("all threads started");
+  const auto end{SDL_GetPerformanceCounter()};
+  const auto time{static_cast<rx_f64>(((end - beg) * 1000.0) / static_cast<rx_f64>(SDL_GetPerformanceFrequency()))};
+  RX_MESSAGE("starting all threads took %f ms", time);
 }
 
 thread_pool::~thread_pool() {

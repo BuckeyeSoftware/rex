@@ -44,12 +44,14 @@ private:
 template<typename T>
 inline constexpr queue<T>::node::node(const T& _value)
   : m_value{_value}
+  , m_next{nullptr}
 {
 }
 
 template<typename T>
 inline constexpr queue<T>::node::node(T&& _value)
   : m_value{utility::move(_value)}
+  , m_next{nullptr}
 {
 }
 

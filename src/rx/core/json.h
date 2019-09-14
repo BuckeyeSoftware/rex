@@ -1,9 +1,9 @@
 #ifndef RX_CORE_JSON_H
 #define RX_CORE_JSON_H
+#include "rx/core/concurrency/atomic.h"
+
 #include "rx/core/traits/return_type.h"
 #include "rx/core/traits/is_same.h"
-
-#include "rx/core/memory/system_allocator.h"
 
 #include "rx/core/string.h"
 #include "rx/core/optional.h"
@@ -20,6 +20,8 @@ struct json {
   json(const char* _contents, rx_size _length);
   json(const char* _contents);
   json(const string& _contents);
+  json(const json& _json);
+  json(json&& _json);
   ~json();
 
   json& operator=(const json& _json);
@@ -78,7 +80,7 @@ private:
     memory::allocator* m_allocator;
     struct json_parse_result_s m_error;
     struct json_value_s* m_root;
-    rx_size m_count;
+    concurrency::atomic<rx_size> m_count;
   };
 
   json(shared* _shared, struct json_value_s* _head);
@@ -106,6 +108,37 @@ inline json::json(const char* _contents, rx_size _length)
 inline json::json(const string& _contents)
   : json{&memory::g_system_allocator, _contents.data(), _contents.size()}
 {
+}
+
+inline json::json(const json& _json)
+  : m_shared{_json.m_shared->acquire()}
+  , m_value{_json.m_value}
+{
+}
+
+inline json::json(json&& _json)
+  : m_shared{_json.m_shared}
+  , m_value{_json.m_value}
+{
+  _json.m_shared = nullptr;
+  _json.m_value = nullptr;
+}
+
+inline json::~json() {
+  if (m_shared) {
+    m_shared->release();
+  }
+}
+
+inline json& json::operator=(const json& _json) {
+  if (m_shared) {
+    m_shared->release();
+  }
+
+  m_shared = _json.m_shared->acquire();
+  m_value = _json.m_value;
+
+  return *this;
 }
 
 inline json::operator bool() const {

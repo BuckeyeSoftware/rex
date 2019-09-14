@@ -74,7 +74,7 @@ void skybox::render(frontend::target* _target, const math::mat4x4f& _view,
   state.depth.record_test(false);
   state.depth.record_write(false);
 
-  m_frontend->draw_elements(
+  m_frontend->draw(
       RX_RENDER_TAG("skybox"),
       state,
       _target,

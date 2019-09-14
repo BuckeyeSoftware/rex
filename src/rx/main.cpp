@@ -16,18 +16,12 @@
 #include "rx/render/immediate3D.h"
 #include "rx/render/gbuffer.h"
 #include "rx/render/skybox.h"
-
-#include "rx/model/loader.h"
-#include "rx/model/animation.h"
+#include "rx/render/model.h"
 
 #include "rx/math/camera.h"
 #include "rx/math/transform.h"
 
 #include "rx/input/input.h"
-
-#include "rx/core/filesystem/file.h"
-
-#include "rx/material/loader.h"
 
 using namespace rx;
 
@@ -351,63 +345,8 @@ int entry(int argc, char **argv) {
 
   {
     render::frontend::interface frontend{&memory::g_system_allocator, backend};
-    render::immediate2D immediate2D{&frontend};
-    render::immediate3D immediate3D{&frontend};
-    render::skybox skybox{&frontend};
-    skybox.load("base/skyboxes/miramar.json");
-
-    render::frontend::target *target{frontend.create_target(RX_RENDER_TAG("default"))};
-    target->request_swapchain();
-
-    render::gbuffer gbuffer{&frontend};
-    gbuffer.create(display_resolution->get().cast<rx_size>());
-
-    render::frontend::buffer *model_buffer{frontend.create_buffer(RX_RENDER_TAG("model"))};
-    model_buffer->record_element_type(render::frontend::buffer::element_type::k_u32);
-    model_buffer->record_type(render::frontend::buffer::type::k_static);
-    model::loader model{&memory::g_system_allocator};
-
-    // TODO(dweiler): splash screen
-  
     frontend.process();
     frontend.swap();
-
-    map<string, render::frontend::material> materials;
-    if (model.load("base/models/san-miguel/san-miguel.json5")) {
-      if (model.is_animated()) {
-        using vertex = model::loader::animated_vertex;
-        const auto &vertices{model.animated_vertices()};
-        model_buffer->record_stride(sizeof(vertex));
-        model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, position));
-        model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, normal));
-        model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_f32, 4, offsetof(vertex, tangent));
-        model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_f32, 2, offsetof(vertex, coordinate));
-        model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_u8, 4, offsetof(vertex, blend_weights));
-        model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_u8, 4, offsetof(vertex, blend_indices));
-        model_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
-      } else {
-        using vertex = model::loader::vertex;
-        const auto &vertices{model.vertices()};
-        model_buffer->record_stride(sizeof(vertex));
-        model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, position));
-        model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, normal));
-        model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_f32, 4, offsetof(vertex, tangent));
-        model_buffer->record_attribute(render::frontend::buffer::attribute::type::k_f32, 2, offsetof(vertex, coordinate));
-        model_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
-      }
-      const auto &elements{model.elements()};
-      model_buffer->write_elements(elements.data(), elements.size() * sizeof(rx_u32));
-      frontend.initialize_buffer(RX_RENDER_TAG("model"), model_buffer);
-
-      model.materials().each([&](const json& _mat) {
-        render::frontend::material mat{&frontend};
-        material::loader loader{frontend.allocator()};
-        if (loader.parse(_mat) && mat.load(utility::move(loader))) {
-          RX_MESSAGE("%s", mat.name().data());
-          materials.insert(mat.name(), utility::move(mat));
-        }
-      });
-    }
 
     render::frontend::buffer *quad{frontend.create_buffer(RX_RENDER_TAG("quad"))};
     quad->record_stride(sizeof(quad_vertex));
@@ -419,14 +358,24 @@ int entry(int argc, char **argv) {
     quad->write_elements(k_quad_elements, sizeof k_quad_elements);
     frontend.initialize_buffer(RX_RENDER_TAG("quad"), quad);
 
-    input::input input;
+    render::frontend::target *target{frontend.create_target(RX_RENDER_TAG("default"))};
+    target->request_swapchain();
 
-    // model::animation animation{&model, 0};
+    render::gbuffer gbuffer{&frontend};
+    gbuffer.create(display_resolution->get().cast<rx_size>());
+
+    render::immediate2D immediate2D{&frontend};
+    render::immediate3D immediate3D{&frontend};
+    render::skybox skybox{&frontend};
+    render::model model{&frontend};
+
+    skybox.load("base/skyboxes/miramar/miramar.json5");
+    model.load("base/models/elemental/elemental.json5");
+
+    input::input input;
     while (!input.keyboard().is_released(SDLK_ESCAPE, false))
     {
       input.update(frontend.timer().delta_time());
-
-      // animation.update(frontend.timer().delta_time(), true);
 
       // translate SDL events
       for (SDL_Event event; SDL_PollEvent(&event);)
@@ -496,80 +445,29 @@ int entry(int argc, char **argv) {
         SDL_GL_SetSwapInterval(display_swap_interval->get());
       }
 
-      math::mat4x4f modelm{math::mat4x4f::scale({0.2f, 0.2f, 0.2f})
-        * math::mat4x4f::rotate({0.0f, 90.0f, 0.0f})
-        * math::mat4x4f::translate({0.0f, 0.0f, 0.0f})};
+      frontend.clear(
+        RX_RENDER_TAG("gbuffer"),
+        gbuffer.target(),
+        RX_RENDER_CLEAR_DEPTH,
+        {1.0f, 0.0f, 0.0f, 0.0f});
 
-      render::frontend::technique *gbuffer_test_technique{frontend.find_technique_by_name("geometry")};
-      render::frontend::technique *fs_quad_technique{frontend.find_technique_by_name("fs-quad")};
-
-      RX_ASSERT(gbuffer_test_technique, "");
-      RX_ASSERT(fs_quad_technique, "");
-
-      render::frontend::program *fs_quad_program{*fs_quad_technique};
-
-      fs_quad_program->uniforms()[0].record_sampler(0);
-
-      render::frontend::state state;
-      state.depth.record_test(true);
-      state.depth.record_write(true);
-      state.cull.record_enable(false);
-      state.cull.record_front_face(render::frontend::cull_state::front_face_type::k_clock_wise);
-      state.cull.record_cull_face(render::frontend::cull_state::cull_face_type::k_back);
-
-      frontend.clear(RX_RENDER_TAG("gbuffer test"),
-                     gbuffer.target(),
-                     RX_RENDER_CLEAR_DEPTH,
-                     {1.0f, 0.0f, 0.0f, 0.0f});
-
-      frontend.clear(RX_RENDER_TAG("gbuffer test"),
+      frontend.clear(RX_RENDER_TAG("gbuffer"),
         gbuffer.target(),
         RX_RENDER_CLEAR_COLOR(0),
         {0.0f, 0.0f, 0.0f, 0.0f});
 
+      math::mat4x4f modelm{math::mat4x4f::scale({0.2f, 0.2f, 0.2f})
+        * math::mat4x4f::rotate({0.0f, 90.0f, 0.0f})
+        * math::mat4x4f::translate({0.0f, 0.0f, 0.0f})};
+
       skybox.render(gbuffer.target(), camera.view(), camera.projection());
-
-      model.meshes().each_fwd([&](const model::mesh& _mesh) {
-        const auto material{materials.find(_mesh.material)};
-        int flags = 0; //1 << 0;
-        if (material->diffuse())    flags |= 1 << 1;
-        if (material->normal())     flags |= 1 << 2;
-        if (material->metalness())  flags |= 1 << 3;
-        if (material->roughness())  flags |= 1 << 4;
-        if (material->alpha_test()) flags |= 1 << 5;
-
-        render::frontend::program *gbuffer_test_program{gbuffer_test_technique->permute(flags)};
-        gbuffer_test_program->uniforms()[0].record_mat4x4f(modelm * camera.view() * camera.projection());
-        gbuffer_test_program->uniforms()[1].record_mat4x4f(modelm);
-        // gbuffer_test_program->uniforms()[2].record_bones(animation.frames(), model.joints().size());
-
-        state.cull.record_enable(material->alpha_test() ? false : true);
-
-        frontend.draw_elements(
-            RX_RENDER_TAG("gbuffer test"),
-            state,
-            gbuffer.target(),
-            model_buffer,
-            gbuffer_test_program,
-            _mesh.count,
-            _mesh.offset,
-            render::frontend::primitive_type::k_triangles,
-            material ? "2" : "",
-            material ? material->diffuse() : nullptr,
-            material ? material->normal() : nullptr,
-            material ? material->metalness() : nullptr,
-            material ? material->roughness() : nullptr);
-      });
-    
-      // immediate3D.frame_queue().record_line({0.0f, -10.0f, 0.0f}, {0.0f, 10.0f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}, 0);
-      // animation.render_skeleton(modelm, &immediate3D);
-    
+      model.render(gbuffer.target(),  modelm, camera.view(), camera.projection());
       immediate3D.render(gbuffer.target(), camera.view(), camera.projection());
 
-      // frontend.clear(RX_RENDER_TAG("default"),
-      //               target, RX_RENDER_CLEAR_DEPTH, {1.0f});
-
-      frontend.draw_elements(
+      render::frontend::technique *fs_quad_technique{frontend.find_technique_by_name("fs-quad")};
+      render::frontend::program *fs_quad_program{*fs_quad_technique};
+      fs_quad_program->uniforms()[0].record_sampler(0);
+      frontend.draw(
           RX_RENDER_TAG("test"),
           {},
           target,
@@ -589,13 +487,11 @@ int entry(int argc, char **argv) {
 
       if (frontend.process()) {
         if (frontend.swap()) {
-          // SDL_SetWindowTitle(window, format);
         }
       }
     }
 
     frontend.destroy_target(RX_RENDER_TAG("default"), target);
-    frontend.destroy_buffer(RX_RENDER_TAG("model"), model_buffer);
     frontend.destroy_buffer(RX_RENDER_TAG("quad"), quad);
   }
 

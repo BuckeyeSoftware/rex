@@ -17,6 +17,9 @@ struct loader
   : concepts::no_copy
 {
   loader(memory::allocator* _allocator);
+  loader(loader&& _loader);
+
+  void operator=(loader&& _loader);
 
   bool load(const string& _file_name);
   bool parse(const json& _definition);
