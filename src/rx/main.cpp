@@ -453,6 +453,8 @@ int entry(int argc, char **argv) {
       for (SDL_Event event; SDL_PollEvent(&event);) {
         input::event ievent;
         switch (event.type) {
+        case SDL_QUIT:
+          goto shutdown;
         case SDL_KEYDOWN:
         case SDL_KEYUP:
           ievent.type = input::event_type::k_keyboard;
@@ -491,6 +493,7 @@ int entry(int argc, char **argv) {
     }
   }
 
+shutdown:
   memory::g_system_allocator->destroy<render::backend::interface>(backend);
 
   console::interface::save("config.cfg");
