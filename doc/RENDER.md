@@ -6,6 +6,7 @@
           * [Drawing](#drawing)
           * [Clearing](#clearing)
           * [Blitting](#blitting)
+         * [Swapchain](#swapchain)
           * [Queries](#queries)
         * [Resources](#resources)
           * [Buffer](#buffer)
@@ -85,7 +86,6 @@ void clear(
   * `RX_RENDER_CLEAR_STENCIL`
   * `RX_RENDER_CLEAR_COLOR(index)`
   * `RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL`
-
 * `_clear_color` the color for the clear operation, for:
   * `RX_RENDER_CLEAR_DEPTH`, `_clear_color.r` stores the depth clear value
   * `RX_RENDER_CLEAR_STENCIL`, `_clear_color.r` stores the stencil clear value
@@ -116,6 +116,12 @@ void blit(
 * `_dst_target` is the destination target to blit _to_.
 * `_dst_attachment` is the destination attachment to use for the _write_.
 
+#### Swapchain
+The swapchain target is exposed by `interface::swapchain()`.
+
+This target is special in that it's the target used to render to the window or display.
+
+It has exactly one color attachment that represents the window or display's back buffer.
 
 #### Queries
 You may query information about the renderer with the following member functions:
@@ -277,8 +283,10 @@ void attach_stencil(texture2D* _stencil);
 void attach_texture(texture2D* _texture);
 ```
 
+Targets are immutable. Once initially specified they can no longer be changed.
+
 Assertions can be triggered in the following cases:
-* An attempt was made to attach a texture that has already been attached
+* An attempt was made to attach a texture that has already been attached.
 * An attempt was made to attach more than one depth, stencil or combined depth stencil texture.
 * An attempt was made to attach a non-depth and non-stencil texture which has different dimensions than the other attached non-depth and non-stencil textures.
 * An attempt was made to attach a non-depth and non-stencil texture which has a different format than the other attached non-depth and non-stencil textures.
@@ -430,19 +438,10 @@ frontend.initialize_buffer(RX_RENDER_TAG("quad"), quad);
 // at this point nothing can be changed, we also cannot change the contents
 // because we used k_static for our buffer type
 
-// create a render target
-rx::render::frontend::target* target{frontend.create_target(RX_RENDER_TAG("default"))};
-
-// just request the swap chain on it
-target->request_swapchain();
-
-// initialize it
-frontend.initialize_target(RX_RENER_TAG("default"), target);
-
-// clear that target with red
-frontend.clear(RX_RENDER_TAG("gbuffer test"),
+// clear swapchain target with red
+frontend.clear(RX_RENDER_TAG("test"),
   {},
-  target,
+  frontend.swapchain(),
   RX_RENDER_CLEAR_COLOR(0),
   {1.0f, 0.0f, 0.0f, 1.0f});
 
@@ -461,11 +460,11 @@ frontend.initialize_texture(RX_RENER_TAG("quad"), texture);
 //
 // the contents are _copied_ into the draw command when do you this
 
-// draw the textured quad into our target
+// draw the textured quad to the swapchain
 frontend.draw(
   RX_RENDER_TAG("test"),
   state,
-  target,
+  frontend.swapchain(),
   quad,
   program,
   4,
