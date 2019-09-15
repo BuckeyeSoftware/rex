@@ -14,6 +14,7 @@
 #include "rx/core/log.h"
 
 #include "rx/console/variable.h"
+#include "rx/console/interface.h"
 
 RX_CONSOLE_IVAR(max_buffers, "render.max_buffers","maximum buffers", 16, 128, 64);
 RX_CONSOLE_IVAR(max_targets, "render.max_targets", "maximum targets", 16, 128, 16);
@@ -50,6 +51,8 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   , m_destroy_textures2D{m_allocator}
   , m_destroy_textures3D{m_allocator}
   , m_destroy_texturesCM{m_allocator}
+  , m_swapchain_target{nullptr}
+  , m_swapchain_texture{nullptr}
   , m_commands{m_allocator}
   , m_command_buffer{m_allocator, static_cast<rx_size>(*command_memory * 1024 * 1024)}
   , m_deferred_process{[this]() { process(); }}
@@ -76,10 +79,28 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
       }
     });
   }
+
+  // Generate swapchain target.
+  const auto& dimensions{console::interface::get_from_name("display.resolution")->cast<math::vec2i>()->get()};
+  const auto& hdr{console::interface::get_from_name("display.hdr")->cast<bool>()->get()};
+
+  m_swapchain_texture = create_texture2D(RX_RENDER_TAG("swapchain"));
+  m_swapchain_texture->record_type(texture::type::k_attachment);
+  m_swapchain_texture->record_filter({false, false, false});
+  m_swapchain_texture->record_format(hdr ? texture::data_format::k_rgba_f16 : texture::data_format::k_rgba_u8);
+  m_swapchain_texture->record_dimensions(dimensions.cast<rx_size>());
+  m_swapchain_texture->record_wrap({
+    texture::wrap_type::k_clamp_to_edge,
+    texture::wrap_type::k_clamp_to_edge});
+
+  m_swapchain_target = create_target(RX_RENDER_TAG("swapchain"));
+  m_swapchain_target->attach_texture(m_swapchain_texture);
+  m_swapchain_target->m_flags |= target::k_swapchain;
 }
 
 interface::~interface() {
-  // {empty}
+  destroy_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
+  destroy_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 }
 
 // create_*
@@ -408,23 +429,97 @@ void interface::draw(
 
 void interface::clear(
   const command_header::info& _info,
+  const state& _state,
   target* _target,
   rx_u32 _clear_mask,
   const math::vec4f& _clear_color)
 {
   RX_ASSERT(_clear_mask, "empty clear");
-  concurrency::scope_lock lock(m_mutex);
 
-  auto command_base{allocate_command(draw_command, command_type::k_clear)};
-  auto command{reinterpret_cast<clear_command*>(command_base + sizeof(command_header))};
+  {
+    concurrency::scope_lock lock(m_mutex);
 
-  command->render_target = _target;
-  command->clear_mask = _clear_mask;
-  command->clear_color = _clear_color;
+    auto command_base{allocate_command(draw_command, command_type::k_clear)};
+    auto command{reinterpret_cast<clear_command*>(command_base + sizeof(command_header))};
+    *reinterpret_cast<state*>(command) = _state;
+    reinterpret_cast<state*>(command)->flush();
 
-  m_commands.push_back(command_base);
+    command->render_target = _target;
+    command->clear_mask = _clear_mask;
+    command->clear_color = _clear_color;
+
+    m_commands.push_back(command_base);
+  }
 
   m_clear_calls[0]++;
+}
+
+void interface::blit(
+  const command_header::info& _info,
+  const state& _state,
+  target* _src_target,
+  rx_size _src_attachment,
+  target* _dst_target,
+  rx_size _dst_attachment)
+{
+  // Blitting from an attachment in a target to another attachment in the same
+  // target is not allowed.
+  RX_ASSERT(_src_target != _dst_target, "cannot blit to self");
+
+  // It's not valid to source the swapchain in a blit. The swapchain is only
+  // allowed to be a destination.
+  RX_ASSERT(!_src_target->is_swapchain(), "cannot use swapchain as source");
+
+  const auto& src_attachments{_src_target->attachments()};
+  RX_ASSERT(_src_attachment < src_attachments.size(),
+    "source attachment out of bounds");
+  const auto& dst_attachments{_dst_target->attachments()};
+  RX_ASSERT(_dst_attachment < dst_attachments.size(),
+    "destination attachment out of bounds");
+
+  texture2D* src_attachment{src_attachments[_src_attachment]};
+  texture2D* dst_attachment{dst_attachments[_dst_attachment]};
+
+  // It's possible for targets to be configured in a way where attachments are
+  // shared between them. Blitting to and from the same attachment doesn't make
+  // any sense.
+  RX_ASSERT(src_attachment != dst_attachment, "cannot blit to self");
+
+  // It's only valid to blit color attachments.
+  RX_ASSERT(src_attachment->is_color_format(),
+    "cannot blit with non-color source attachment");
+  RX_ASSERT(dst_attachment->is_color_format(),
+    "cannot blit with non-color destination attachment");
+
+  const auto is_float_color{[](texture::data_format _format) {
+    return  _format == texture::data_format::k_bgra_f16 ||
+            _format == texture::data_format::k_rgba_f16;
+  }};
+
+  // A blit from one target to another is only valid if the source and
+  // destination attachments contain similar data formats. That is they both
+  // must use floating-point attachments or integer attachments. Mixing is
+  // not allowed.
+  RX_ASSERT(is_float_color(src_attachment->format()) == is_float_color(dst_attachment->format()),
+    "incompatible formats between attachments");
+
+  {
+    concurrency::scope_lock lock{m_mutex};
+
+    auto command_base{allocate_command(blit_command, command_type::k_blit)};
+    auto command{reinterpret_cast<blit_command*>(command_base + sizeof(command_header))};
+    *reinterpret_cast<state*>(command) = _state;
+    reinterpret_cast<state*>(command)->flush();
+
+    command->src_target = _src_target;
+    command->src_attachment = _src_attachment;
+    command->dst_target = _dst_target;
+    command->dst_attachment = _dst_attachment;
+
+    m_commands.push_back(command_base);
+  }
+
+  m_blit_calls[0]++;
 }
 
 bool interface::process() {
@@ -483,23 +578,18 @@ bool interface::process() {
 
   m_command_buffer.reset();
 
-  m_draw_calls[1] = m_draw_calls[0].load();
-  m_draw_calls[0] = 0;
+  auto swap{[](concurrency::atomic<rx_size> (&_value)[2]) {
+    _value[1] = _value[0].load();
+    _value[0] = 0;
+  }};
 
-  m_clear_calls[1] = m_clear_calls[0].load();
-  m_clear_calls[0] = 0;
-
-  m_vertices[1] = m_vertices[0].load();
-  m_vertices[0] = 0;
-
-  m_points[1] = m_points[0].load();
-  m_points[0] = 0;
-
-  m_lines[1] = m_lines[0].load();
-  m_lines[0] = 0;
-
-  m_triangles[1] = m_triangles[0].load();
-  m_triangles[0] = 0;
+  swap(m_draw_calls);
+  swap(m_clear_calls);
+  swap(m_blit_calls);
+  swap(m_vertices);
+  swap(m_points);
+  swap(m_lines);
+  swap(m_triangles);
 
   return true;
 }

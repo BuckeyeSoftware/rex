@@ -112,8 +112,7 @@ static void frame_stats(const render::frontend::interface &_frontend, render::im
   });
 
   const rx_size n_points{points.size()};
-  for (rx_size i{1}; i < n_points; i++)
-  {
+  for (rx_size i{1}; i < n_points; i++) {
     _immediate.frame_queue().record_line(points[i - 1], points[i], 0, 1, {0.0f, 1.0f, 0.0f, 1.0f});
   }
 
@@ -167,9 +166,9 @@ static void render_stats(const render::frontend::interface &_frontend, render::i
   _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
                                        render::immediate2D::text_align::k_left,
                                        string::format("commands: ^[%x]%s ^wof ^g%s",
-                                                          color_ratio(commands_used, commands_total),
-                                                          string::human_size_format(commands_used),
-                                                          string::human_size_format(commands_total)),
+                                                      color_ratio(commands_used, commands_total),
+                                                      string::human_size_format(commands_used),
+                                                      string::human_size_format(commands_total)),
                                        {1.0f, 1.0f, 1.0f, 1.0f});
 
   offset.y += 20;
@@ -183,10 +182,14 @@ static void render_stats(const render::frontend::interface &_frontend, render::i
   render_stat("targets", target_stats);
 
   auto render_number{[&](const char* _name, rx_size _number) {
-    _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
-                                        render::immediate2D::text_align::k_left,
-                                        string::format("%s: %zu", _name, _number),
-                                        {1.0f, 1.0f, 1.0f, 1.0f});
+    _immediate.frame_queue().record_text(
+      "Consolas-Regular",
+      offset,
+      20,
+      1.0f,
+      render::immediate2D::text_align::k_left,
+      string::format("%s: %zu", _name, _number),
+      {1.0f, 1.0f, 1.0f, 1.0f});
     offset.y += 20;
   }};
 
@@ -194,6 +197,7 @@ static void render_stats(const render::frontend::interface &_frontend, render::i
   render_number("lines", _frontend.lines());
   render_number("triangles", _frontend.triangles());
   render_number("vertices", _frontend.vertices());
+  render_number("blits", _frontend.blit_calls());
   render_number("clears", _frontend.clear_calls());
   render_number("draws", _frontend.draw_calls());
  
@@ -228,13 +232,13 @@ static void memory_stats(const render::frontend::interface&, render::immediate2D
   int y = 25;
   auto line{[&](const string &_line) {
     _immediate.frame_queue().record_text(
-        "Consolas-Regular",
-        math::vec2i{screen_size.x - 25, y},
-        16,
-        1.0f,
-        render::immediate2D::text_align::k_right,
-        _line,
-        {1.0f, 1.0f, 1.0f, 1.0f});
+      "Consolas-Regular",
+      math::vec2i{screen_size.x - 25, y},
+      16,
+      1.0f,
+      render::immediate2D::text_align::k_right,
+      _line,
+      {1.0f, 1.0f, 1.0f, 1.0f});
     y += 16;
   }};
 
@@ -348,19 +352,6 @@ int entry(int argc, char **argv) {
     frontend.process();
     frontend.swap();
 
-    render::frontend::buffer *quad{frontend.create_buffer(RX_RENDER_TAG("quad"))};
-    quad->record_stride(sizeof(quad_vertex));
-    quad->record_element_type(render::frontend::buffer::element_type::k_u8);
-    quad->record_type(render::frontend::buffer::type::k_static);
-    quad->record_attribute(render::frontend::buffer::attribute::type::k_f32, 2, offsetof(quad_vertex, position));
-    quad->record_attribute(render::frontend::buffer::attribute::type::k_f32, 2, offsetof(quad_vertex, coordinate));
-    quad->write_vertices(k_quad_vertices, sizeof k_quad_vertices);
-    quad->write_elements(k_quad_elements, sizeof k_quad_elements);
-    frontend.initialize_buffer(RX_RENDER_TAG("quad"), quad);
-
-    render::frontend::target *target{frontend.create_target(RX_RENDER_TAG("default"))};
-    target->request_swapchain();
-
     render::gbuffer gbuffer{&frontend};
     gbuffer.create(display_resolution->get().cast<rx_size>());
 
@@ -375,42 +366,6 @@ int entry(int argc, char **argv) {
     input::input input;
     while (!input.keyboard().is_released(SDLK_ESCAPE, false))
     {
-      input.update(frontend.timer().delta_time());
-
-      // translate SDL events
-      for (SDL_Event event; SDL_PollEvent(&event);)
-      {
-        input::event ievent;
-        switch (event.type)
-        {
-        case SDL_KEYDOWN:
-        case SDL_KEYUP:
-          ievent.type = input::event_type::k_keyboard;
-          ievent.as_keyboard.down = event.type == SDL_KEYDOWN;
-          ievent.as_keyboard.scan_code = event.key.keysym.scancode;
-          ievent.as_keyboard.symbol = event.key.keysym.sym;
-          input.handle_event(utility::move(ievent));
-          break;
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:
-          ievent.type = input::event_type::k_mouse_button;
-          ievent.as_mouse_button.down = event.type == SDL_MOUSEBUTTONDOWN;
-          ievent.as_mouse_button.button = event.button.button;
-          input.handle_event(utility::move(ievent));
-          break;
-        case SDL_MOUSEMOTION:
-          ievent.type = input::event_type::k_mouse_motion;
-          ievent.as_mouse_motion.value = {event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel};
-          input.handle_event(utility::move(ievent));
-          break;
-        case SDL_MOUSEWHEEL:
-          ievent.type = input::event_type::k_mouse_scroll;
-          ievent.as_mouse_scroll.value = {event.wheel.x, event.wheel.y};
-          input.handle_event(utility::move(ievent));
-          break;
-        }
-      }
-
       rx_f32 move_speed{10.0f};
       const rx_f32 sens{0.2f};
       const auto &delta{input.mouse().movement()};
@@ -447,11 +402,14 @@ int entry(int argc, char **argv) {
 
       frontend.clear(
         RX_RENDER_TAG("gbuffer"),
+        {},
         gbuffer.target(),
         RX_RENDER_CLEAR_DEPTH,
         {1.0f, 0.0f, 0.0f, 0.0f});
 
-      frontend.clear(RX_RENDER_TAG("gbuffer"),
+      frontend.clear(
+        RX_RENDER_TAG("gbuffer"),
+        {},
         gbuffer.target(),
         RX_RENDER_CLEAR_COLOR(0),
         {0.0f, 0.0f, 0.0f, 0.0f});
@@ -464,35 +422,61 @@ int entry(int argc, char **argv) {
       model.render(gbuffer.target(),  modelm, camera.view(), camera.projection());
       immediate3D.render(gbuffer.target(), camera.view(), camera.projection());
 
-      render::frontend::technique *fs_quad_technique{frontend.find_technique_by_name("fs-quad")};
-      render::frontend::program *fs_quad_program{*fs_quad_technique};
-      fs_quad_program->uniforms()[0].record_sampler(0);
-      frontend.draw(
-          RX_RENDER_TAG("test"),
-          {},
-          target,
-          quad,
-          fs_quad_program,
-          4,
-          0,
-          render::frontend::primitive_type::k_triangle_strip,
-          "2",
-          gbuffer.albedo());
+      frontend.blit(
+        RX_RENDER_TAG("test"),
+        {},
+        gbuffer.target(),
+        0,
+        frontend.swapchain(),
+        0);
 
       frame_stats(frontend, immediate2D);
       render_stats(frontend, immediate2D);
       memory_stats(frontend, immediate2D);
 
-      immediate2D.render(target);
+      immediate2D.render(frontend.swapchain());
 
       if (frontend.process()) {
         if (frontend.swap()) {
         }
       }
-    }
 
-    frontend.destroy_target(RX_RENDER_TAG("default"), target);
-    frontend.destroy_buffer(RX_RENDER_TAG("quad"), quad);
+      input.update(frontend.timer().delta_time());
+
+      // translate SDL events
+      for (SDL_Event event; SDL_PollEvent(&event);)
+      {
+        input::event ievent;
+        switch (event.type)
+        {
+        case SDL_KEYDOWN:
+        case SDL_KEYUP:
+          ievent.type = input::event_type::k_keyboard;
+          ievent.as_keyboard.down = event.type == SDL_KEYDOWN;
+          ievent.as_keyboard.scan_code = event.key.keysym.scancode;
+          ievent.as_keyboard.symbol = event.key.keysym.sym;
+          input.handle_event(utility::move(ievent));
+          break;
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+          ievent.type = input::event_type::k_mouse_button;
+          ievent.as_mouse_button.down = event.type == SDL_MOUSEBUTTONDOWN;
+          ievent.as_mouse_button.button = event.button.button;
+          input.handle_event(utility::move(ievent));
+          break;
+        case SDL_MOUSEMOTION:
+          ievent.type = input::event_type::k_mouse_motion;
+          ievent.as_mouse_motion.value = {event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel};
+          input.handle_event(utility::move(ievent));
+          break;
+        case SDL_MOUSEWHEEL:
+          ievent.type = input::event_type::k_mouse_scroll;
+          ievent.as_mouse_scroll.value = {event.wheel.x, event.wheel.y};
+          input.handle_event(utility::move(ievent));
+          break;
+        }
+      }
+    }
   }
 
   memory::g_system_allocator->destroy<render::backend::interface>(backend);

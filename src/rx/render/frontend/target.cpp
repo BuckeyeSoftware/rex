@@ -7,118 +7,12 @@
 
 namespace rx::render::frontend {
 
-// checks if |_format| is a valid depth-only format
-static bool is_valid_depth_format(texture::data_format _format) {
-  switch (_format) {
-  case texture::data_format::k_rgba_u8:
-    return false;
-  case texture::data_format::k_bgra_u8:
-    return false;
-  case texture::data_format::k_rgba_f16:
-    return false;
-  case texture::data_format::k_bgra_f16:
-    return false;
-  case texture::data_format::k_d16:
-    return true;
-  case texture::data_format::k_d24:
-    return true;
-  case texture::data_format::k_d32:
-    return true;
-  case texture::data_format::k_d32f:
-    return true;
-  case texture::data_format::k_d24_s8:
-    return false;
-  case texture::data_format::k_d32f_s8:
-    return false;
-  case texture::data_format::k_s8:
-    return false;
-  case texture::data_format::k_r_u8:
-    return false;
-  case texture::data_format::k_dxt1:
-    return false;
-  case texture::data_format::k_dxt5:
-    return false;
-  }
-  return false;
-}
-
-// checks if |_format| is a valid stencil-only format
-static bool is_valid_stencil_format(texture::data_format _format) {
-  switch (_format) {
-  case texture::data_format::k_rgba_u8:
-    return false;
-  case texture::data_format::k_bgra_u8:
-    return false;
-  case texture::data_format::k_rgba_f16:
-    return false;
-  case texture::data_format::k_bgra_f16:
-    return false;
-  case texture::data_format::k_d16:
-    return false;
-  case texture::data_format::k_d24:
-    return false;
-  case texture::data_format::k_d32:
-    return false;
-  case texture::data_format::k_d32f:
-    return false;
-  case texture::data_format::k_d24_s8:
-    return false;
-  case texture::data_format::k_d32f_s8:
-    return false;
-  case texture::data_format::k_s8:
-    return true;
-  case texture::data_format::k_r_u8:
-    return false;
-  case texture::data_format::k_dxt1:
-    return false;
-  case texture::data_format::k_dxt5:
-    return false;
-  }
-  return false;
-}
-
-// checks if |_format| is a valid depth-stencil-only format
-static bool is_valid_depth_stencil_format(texture::data_format _format) {
-  switch (_format) {
-  case texture::data_format::k_rgba_u8:
-    return false;
-  case texture::data_format::k_bgra_u8:
-    return false;
-  case texture::data_format::k_rgba_f16:
-    return false;
-  case texture::data_format::k_bgra_f16:
-    return false;
-  case texture::data_format::k_d16:
-    return false;
-  case texture::data_format::k_d24:
-    return false;
-  case texture::data_format::k_d32:
-    return false;
-  case texture::data_format::k_d32f:
-    return false;
-  case texture::data_format::k_d24_s8:
-    return true;
-  case texture::data_format::k_d32f_s8:
-    return true;
-  case texture::data_format::k_s8:
-    return false;
-  case texture::data_format::k_r_u8:
-    return false;
-  case texture::data_format::k_dxt1:
-    return false;
-  case texture::data_format::k_dxt5:
-    return false;
-  }
-  return false;
-}
-
 target::target(interface* _frontend)
   : resource{_frontend, resource::type::k_target}
   , m_depth_texture{nullptr}
   , m_stencil_texture{nullptr}
   , m_attachments{_frontend->allocator()}
   , m_flags{0}
-  , m_is_swapchain{false}
 {
 }
 
@@ -135,20 +29,11 @@ target::~target() {
   }
 }
 
-void target::request_swapchain() {
-  RX_ASSERT(m_flags == 0 && m_attachments.is_empty(), "target is not empty");
-  m_is_swapchain = true;
-
-  auto display_resolution{console::interface::get_from_name("display.resolution")};
-  RX_ASSERT(display_resolution, "display.resolution not found");
-  m_dimensions = display_resolution->cast<math::vec2i>()->get().cast<rx_size>();
-}
-
 void target::request_depth(texture::data_format _format, const math::vec2z& _dimensions) {
   RX_ASSERT(!is_swapchain(), "request on swapchain");
   RX_ASSERT(!m_depth_texture, "already has depth attachment");
   RX_ASSERT(!m_stencil_texture, "use combined depth stencil");
-  RX_ASSERT(is_valid_depth_format(_format), "not a valid depth format");
+  RX_ASSERT(texture::is_depth_format(_format), "not a valid depth format");
 
   if (m_flags & k_dimensions) {
     RX_ASSERT(_dimensions == m_dimensions, "invalid dimensions");
@@ -176,7 +61,7 @@ void target::request_stencil(texture::data_format _format, const math::vec2z& _d
   RX_ASSERT(!is_swapchain(), "request on swapchain");
   RX_ASSERT(!m_stencil_texture, "already has stencil attachment");
   RX_ASSERT(!m_depth_texture, "use combined depth stencil");
-  RX_ASSERT(is_valid_stencil_format(_format), "not a valid stencil format");
+  RX_ASSERT(texture::is_stencil_format(_format), "not a valid stencil format");
 
   if (m_flags & k_dimensions) {
     RX_ASSERT(_dimensions == m_dimensions, "invalid dimensions");
@@ -201,7 +86,7 @@ void target::request_depth_stencil(texture::data_format _format, const math::vec
   RX_ASSERT(!is_swapchain(), "request on swapchain");
   RX_ASSERT(!m_depth_texture, "already has depth attachment");
   RX_ASSERT(!m_stencil_texture, "already had stencil attachment");
-  RX_ASSERT(is_valid_depth_stencil_format(_format), "not a valid depth stencil format");
+  RX_ASSERT(texture::is_depth_stencil_format(_format), "not a valid depth stencil format");
 
   if (m_flags & k_dimensions) {
     RX_ASSERT(_dimensions == m_dimensions, "invalid dimensions");
@@ -229,7 +114,7 @@ void target::request_depth_stencil(texture::data_format _format, const math::vec
 void target::attach_depth(texture2D* _depth) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
   RX_ASSERT(!m_depth_texture, "depth already attached");
-  RX_ASSERT(is_valid_depth_format(_depth->format()), "not a depth format texture");
+  RX_ASSERT(_depth->is_depth_format(), "not a depth format texture");
   RX_ASSERT(_depth->kind() == texture::type::k_attachment, "not attachable texture");
 
   if (m_flags & k_dimensions) {
@@ -247,7 +132,7 @@ void target::attach_depth(texture2D* _depth) {
 void target::attach_stencil(texture2D* _stencil) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
   RX_ASSERT(!m_stencil_texture, "stencil already attached");
-  RX_ASSERT(is_valid_stencil_format(_stencil->format()), "not a stencil format texture");
+  RX_ASSERT(_stencil->is_stencil_format(), "not a stencil format texture");
   RX_ASSERT(_stencil->kind() == texture::type::k_attachment, "not attachable texture");
 
   if (m_flags & k_dimensions) {
@@ -288,8 +173,10 @@ void target::attach_texture(texture2D* _texture) {
 void target::validate() const {
   RX_ASSERT(m_flags & k_dimensions, "dimensions not recorded");
 
-  if (m_is_swapchain) {
-    RX_ASSERT(m_attachments.is_empty(), "swapchain cannot have attachments");
+  if (m_flags & k_swapchain) {
+    // There is one attachment given to the swapchain target by |interface|.
+    RX_ASSERT(m_attachments.size() == 1,
+      "swapchain cannot have attachments");
   } else if (!m_depth_texture && !m_stencil_texture) {
     RX_ASSERT(!m_attachments.is_empty(), "no attachments");
   }

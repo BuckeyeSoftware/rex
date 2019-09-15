@@ -2,7 +2,6 @@
 #include <stdarg.h> // va_{list, start, end, copy}
 #include <stdio.h> // vsnprintf
 
-#include "rx/core/debug.h" // RX_MESSAGE
 #include "rx/core/string.h" // string
 
 #include "rx/core/utility/swap.h"
@@ -218,7 +217,6 @@ void string::reserve(rx_size _capacity) {
   if (m_data == m_buffer) {
     data = reinterpret_cast<char*>(m_allocator->allocate(_capacity + 1));
     if (size) {
-      RX_MESSAGE("string \"%s\" fell through small size optimization", m_data);
       memcpy(data, m_data, size + 1);
     }
   } else {

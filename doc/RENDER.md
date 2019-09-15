@@ -5,6 +5,7 @@
         * [Interface](#interface)
           * [Drawing](#drawing)
           * [Clearing](#clearing)
+          * [Blitting](#blitting)
           * [Queries](#queries)
         * [Resources](#resources)
           * [Buffer](#buffer)
@@ -69,14 +70,16 @@ Clearing of a render target is done by `interface::clear`, here's the definition
 ```cpp
 void clear(
   const command_header::info& _info,
+  const state& _state,
   target* _target,
   rx_u32 _clear_mask,
   const math::vec4f& _clear_color
 );
 ```
 
-* `_info` is a `RX_RENDER_TAG(...)`
-* `_target` is the target to clear
+* `_info` is a `RX_RENDER_TAG(...)`.
+* `_state` is the state vector to use.
+* `_target` is the target to clear.
 * `_clear_mask` can be one of:
   * `RX_RENDER_CLEAR_DEPTH`
   * `RX_RENDER_CLEAR_STENCIL`
@@ -93,6 +96,26 @@ void clear(
 Any other combination of flags for `_clear_mask` is undefined.
 You **cannot** clear depth, color and stencil at the same time, likewise; you **cannot** clear multiple color attachments at the same time.
 
+#### Blitting
+Blitting of a render target is done by `interface::blit`, here's the definition:
+
+```cpp
+void blit(
+  const command_header::info& _info,
+  target* _src_target,
+  rx_size _src_attachment,
+  target* _dst_target,
+  rx_size _dst_attachment
+);
+```
+
+* `_info` is a `RX_RENDER_TAG(...)`
+* `_state` is the entire state vector to use.
+* `_src_target` is the source target to blit _from_.
+* `_src_attachment` is the source attachment to use for the _read_.
+* `_dst_target` is the destination target to blit _to_.
+* `_dst_attachment` is the destination attachment to use for the _write_.
+
 
 #### Queries
 You may query information about the renderer with the following member functions:
@@ -107,11 +130,19 @@ struct statistics {
 
 statistics stats(resource::type _type) const;
 rx_size draw_calls() const;
+rx_size clear_calls() const;
+rx_size blit_calls() const;
+rx_size vertices() const;
+rx_size triangles() const;
+rx_size lines() const;
+rx_size points() const;
 ```
 
 The `stats` function in particular can tell you how many objects you can have of that type; `total`, how many are currently in use; `used`, how many are cached; `cached` and how much memory (in bytes) is being used currently for those used objects _last_ frame.
 
-The `draw_calls` function can tell you how many `draw` commands happened _last_ frame.
+The `draw_calls`, `clear_calls` and `blit_calls` tell you how many draws, clears and blits happened last frame.
+
+The `vertices`, `triangles`, `lines` and `points` tell you how many primitives were generated of each type last frame.
 
 In addition, timing information for a frame can be accessed with the following member function:
 
@@ -410,6 +441,7 @@ frontend.initialize_target(RX_RENER_TAG("default"), target);
 
 // clear that target with red
 frontend.clear(RX_RENDER_TAG("gbuffer test"),
+  {},
   target,
   RX_RENDER_CLEAR_COLOR(0),
   {1.0f, 0.0f, 0.0f, 1.0f});

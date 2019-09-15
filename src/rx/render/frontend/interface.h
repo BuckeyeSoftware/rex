@@ -91,9 +91,23 @@ struct interface {
   // in R and stencil always in G.
   void clear(
     const command_header::info& _info,
+    const state& _state,
     target* _target,
     rx_u32 _clear_mask,
     const math::vec4f& _clear_color
+  );
+
+  // Performs a blit from |_src| attachment |_src_attachment| to |_dst| attachment
+  // |_dst_attachment|.
+  //
+  // The blit considers depth, stencil and scissor state specified in |_state|.
+  void blit(
+    const command_header::info& _info,
+    const state& _state,
+    target* _src,
+    rx_size _src_attachment,
+    target* _dst,
+    rx_size _dst_attachment
   );
 
   bool process();
@@ -119,17 +133,18 @@ struct interface {
   statistics stats(resource::type _type) const;
   rx_size draw_calls() const;
   rx_size clear_calls() const;
+  rx_size blit_calls() const;
   rx_size vertices() const;
   rx_size triangles() const;
   rx_size lines() const;
   rx_size points() const;
 
+  target* swapchain() const;
+
   technique* find_technique_by_name(const char* _name);
 
   const frame_timer& timer() const &;
-
   const command_buffer& get_command_buffer() const &;
-
   const device_info& get_device_info() const &;
 
 private:
@@ -164,6 +179,9 @@ private:
   vector<texture3D*> m_destroy_textures3D; // protected by |m_mutex|
   vector<textureCM*> m_destroy_texturesCM; // protected by |m_mutex|
 
+  target* m_swapchain_target;              // protected by |m_mutex|
+  texture2D* m_swapchain_texture;          // protected by |m_mutex|
+
   vector<rx_byte*> m_commands;             // protected by |m_mutex|
   command_buffer m_command_buffer;         // protected by |m_mutex|
 
@@ -177,9 +195,8 @@ private:
 
   concurrency::atomic<rx_size> m_draw_calls[2];
   concurrency::atomic<rx_size> m_clear_calls[2];
-
+  concurrency::atomic<rx_size> m_blit_calls[2];
   concurrency::atomic<rx_size> m_vertices[2];
-
   concurrency::atomic<rx_size> m_triangles[2];
   concurrency::atomic<rx_size> m_lines[2];
   concurrency::atomic<rx_size> m_points[2];
@@ -207,6 +224,10 @@ inline rx_size interface::clear_calls() const {
   return m_clear_calls[1].load();
 }
 
+inline rx_size interface::blit_calls() const {
+  return m_blit_calls[1].load();
+}
+
 inline rx_size interface::vertices() const {
   return m_vertices[1].load();
 }
@@ -221,6 +242,10 @@ inline rx_size interface::lines() const {
 
 inline rx_size interface::points() const {
   return m_points[1].load();
+}
+
+inline target* interface::swapchain() const {
+  return m_swapchain_target;
 }
 
 inline const frame_timer& interface::timer() const & {

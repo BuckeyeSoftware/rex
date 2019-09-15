@@ -15,7 +15,9 @@ namespace rx::render::frontend {
 
 struct interface;
 
-struct texture : resource {
+struct texture
+  : resource
+{
   texture(interface* _frontend, resource::type _type);
 
   template<typename T>
@@ -85,7 +87,18 @@ struct texture : resource {
   filter_options filter() const;
   rx_size channels() const;
   type kind() const;
-  bool is_compressed() const;
+
+  static bool is_compressed_format(data_format _format);
+  static bool is_color_format(data_format _format);
+  static bool is_depth_format(data_format _format);
+  static bool is_stencil_format(data_format _format);
+  static bool is_depth_stencil_format(data_format _format);
+
+  bool is_compressed_format() const;
+  bool is_color_format() const;
+  bool is_depth_format() const;
+  bool is_stencil_format() const;
+  bool is_depth_stencil_format() const;
 
 protected:
   enum : rx_u8 {
@@ -241,39 +254,55 @@ inline texture::type texture::kind() const {
   return m_type;
 }
 
-inline bool texture::is_compressed() const {
-  switch (m_format) {
-  case data_format::k_rgba_u8:
-    return false;
-  case data_format::k_bgra_u8:
-    return false;
-  case data_format::k_rgba_f16:
-    return false;
-  case data_format::k_bgra_f16:
-    return false;
-  case data_format::k_d16:
-    return false;
-  case data_format::k_d24:
-    return false;
-  case data_format::k_d32:
-    return false;
-  case data_format::k_d32f:
-    return false;
-  case data_format::k_d24_s8:
-    return false;
-  case data_format::k_d32f_s8:
-    return false;
-  case data_format::k_s8:
-    return false;
-  case data_format::k_r_u8:
-    return false;
-  case data_format::k_dxt1:
-    return true;
-  case data_format::k_dxt5:
-    return true;
-  }
+inline bool texture::is_color_format(data_format _format) {
+  return _format == data_format::k_bgra_f16
+      || _format == data_format::k_bgra_u8
+      || _format == data_format::k_dxt1
+      || _format == data_format::k_dxt5
+      || _format == data_format::k_r_u8
+      || _format == data_format::k_rgba_f16
+      || _format == data_format::k_rgba_u8;
+}
 
-  RX_HINT_UNREACHABLE();
+inline bool texture::is_depth_format(data_format _format) {
+  return _format == data_format::k_d16
+      || _format == data_format::k_d24
+      || _format == data_format::k_d32
+      || _format == data_format::k_d32f;
+}
+
+inline bool texture::is_stencil_format(data_format _format) {
+  return _format == data_format::k_s8;
+}
+
+inline bool texture::is_depth_stencil_format(data_format _format) {
+  return _format == data_format::k_d24_s8
+      || _format == data_format::k_d32f_s8;
+}
+
+inline bool texture::is_compressed_format(data_format _format) {
+  return _format == data_format::k_dxt1
+      || _format == data_format::k_dxt5;
+}
+
+inline bool texture::is_compressed_format() const {
+  return is_compressed_format(m_format);
+}
+
+inline bool texture::is_color_format() const {
+  return is_color_format(m_format);
+}
+
+inline bool texture::is_depth_format() const {
+  return is_depth_format(m_format);
+}
+
+inline bool texture::is_stencil_format() const {
+  return is_stencil_format(m_format);
+}
+
+inline bool texture::is_depth_stencil_format() const {
+  return is_depth_stencil_format(m_format);
 }
 
 inline rx_f32 texture::byte_size_of_format(data_format _format) {
@@ -359,7 +388,7 @@ inline rx_size texture1D::levels() const {
 
   if (m_filter.mipmaps) {
     const auto count{math::log2(m_dimensions) + 1};
-    return is_compressed() ? count - 2 : count;
+    return is_compressed_format() ? count - 2 : count;
   }
   return 1;
 }
@@ -384,7 +413,7 @@ inline rx_size texture2D::levels() const {
 
   if (m_filter.mipmaps) {
     const auto count{math::log2(m_dimensions.max_element()) + 1};
-    return is_compressed() ? count - 2 : count;
+    return is_compressed_format() ? count - 2 : count;
   }
   return 1;
 }
@@ -409,7 +438,7 @@ inline rx_size texture3D::levels() const {
 
   if (m_filter.mipmaps) {
     const auto count{math::log2(m_dimensions.max_element()) + 1};
-    return is_compressed() ? count - 2 : count;
+    return is_compressed_format() ? count - 2 : count;
   }
   return 1;
 }
@@ -434,7 +463,7 @@ inline rx_size textureCM::levels() const {
   
   if (m_filter.mipmaps) {
     const auto count{math::log2(m_dimensions.max_element()) + 1};
-    return is_compressed() ? count - 2 : count;
+    return is_compressed_format() ? count - 2 : count;
   }
   return 1;
 }

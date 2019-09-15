@@ -33,7 +33,8 @@ enum class command_type : rx_u8 {
   k_resource_update,
   k_resource_destroy,
   k_clear,
-  k_draw
+  k_draw,
+  k_blit
 };
 
 struct alignas(16) command_header {
@@ -81,10 +82,17 @@ inline rx_size command_buffer::size() const {
   return m_allocator.size();
 }
 
-struct clear_command {
+struct clear_command : state {
   target* render_target;
   int clear_mask;
   math::vec4f clear_color;
+};
+
+struct blit_command : state {
+  target* src_target;
+  rx_size src_attachment;
+  target* dst_target;
+  rx_size dst_attachment;
 };
 
 struct resource_command {

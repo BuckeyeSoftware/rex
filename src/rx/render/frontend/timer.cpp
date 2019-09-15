@@ -1,7 +1,9 @@
 #include <SDL.h> // SDL_GetPerformance{Counter,Frequency}
 
 #include "rx/render/frontend/timer.h"
+
 #include "rx/core/math/abs.h"
+#include "rx/core/math/round.h"
 
 namespace rx::render::frontend {
 
@@ -30,6 +32,7 @@ frame_timer::frame_timer()
   , m_frame_max{0}
   , m_frame_average{0.0f}
   , m_frames_per_second{0}
+  , m_drift{0.0f}
 {
 }
 
@@ -85,14 +88,6 @@ bool frame_timer::update() {
 
   const rx_f64 delta{m_resolution * (m_current_ticks - m_last_frame_ticks)};
   m_delta_time = delta;
-#if 0
-  // Try to avoid the "heart-beat" issue where we're hitting vertical retrace
-  // but the delta time is slightly off leading to frame stutters.
-  if (math::abs(m_delta_time - delta) >= 0.25f) {
-    m_delta_time = delta;
-  }
-#endif
-
   m_last_frame_ticks = m_current_ticks;
 
   if (m_current_ticks - m_last_second_ticks >= m_frequency) {

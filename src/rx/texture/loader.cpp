@@ -1,9 +1,13 @@
 #include <string.h> // memcpy
 
 #include "rx/texture/loader.h"
+
 #include "rx/core/filesystem/file.h"
+#include "rx/core/log.h"
 
 #include "lib/stb_image.h"
+
+RX_LOG("texture/loader", logger);
 
 namespace rx::texture {
 
@@ -21,6 +25,7 @@ bool loader::load(const string& _file_name) {
     static_cast<int>(data.size()), &dimensions.w, &dimensions.h, &channels,
     4)}; // TODO(dweiler): add loader conversions ...
   if (!decoded_image) {
+    logger(log::level::k_error, "%s failed %s", _file_name, stbi_failure_reason());
     return false;
   }
 
@@ -32,6 +37,9 @@ bool loader::load(const string& _file_name) {
   memcpy(m_data.data(), decoded_image, m_data.size());
   
   stbi_image_free(decoded_image);
+
+  logger(log::level::k_verbose, "%s loaded %zux%zu @ %zu bpp", _file_name,
+    m_dimensions.w, m_dimensions.h, m_bpp);
 
   return true;
 }

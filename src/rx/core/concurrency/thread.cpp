@@ -47,7 +47,7 @@ void thread::join() {
 
 // state
 void* thread::state::wrap(void* _data) {
-  int thread_id{g_thread_id++};
+  const int thread_id{g_thread_id++};
   auto self{reinterpret_cast<state*>(_data)};
   self->m_function(utility::move(thread_id));
   return nullptr;

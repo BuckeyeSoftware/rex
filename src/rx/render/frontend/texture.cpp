@@ -72,7 +72,7 @@ void texture1D::record_dimensions(const dimension_type& _dimensions) {
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_format, "format not recorded");
 
-  RX_ASSERT(!is_compressed(), "1D textures cannot be compressed");
+  RX_ASSERT(!is_compressed_format(), "1D textures cannot be compressed");
 
   m_dimensions = _dimensions;
   m_recorded |= k_dimensions;
@@ -132,7 +132,7 @@ void texture2D::record_dimensions(const math::vec2z& _dimensions) {
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_format, "format not recorded");
 
-  if (is_compressed()) {
+  if (is_compressed_format()) {
     RX_ASSERT(_dimensions.w >= 4 && _dimensions.h >= 4,
       "too small for compression");
   }
@@ -197,7 +197,7 @@ void texture3D::record_dimensions(const math::vec3z& _dimensions) {
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_format, "format not recorded");
 
-  RX_ASSERT(!is_compressed(), "3D textures cannot be compressed");
+  RX_ASSERT(!is_compressed_format(), "3D textures cannot be compressed");
 
   m_dimensions = _dimensions;
   m_recorded |= k_dimensions;
@@ -261,7 +261,7 @@ void textureCM::record_dimensions(const math::vec2z& _dimensions) {
   RX_ASSERT(m_recorded & k_filter, "filter not recorded");
   RX_ASSERT(m_recorded & k_format, "format not recorded");
 
-  if (is_compressed()) {
+  if (is_compressed_format()) {
     RX_ASSERT(_dimensions.w >= 4 && _dimensions.h >= 4,
       "too small for compression");
   }

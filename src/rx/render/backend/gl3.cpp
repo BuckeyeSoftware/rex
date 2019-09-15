@@ -53,6 +53,9 @@ static void (GLAPIENTRYP pglGenFramebuffers)(GLsizei, GLuint*);
 static void (GLAPIENTRYP pglDeleteFramebuffers)(GLsizei, const GLuint*);
 static void (GLAPIENTRYP pglFramebufferTexture2D)(GLenum, GLenum, GLenum, GLuint, GLint);
 static void (GLAPIENTRYP pglBindFramebuffer)(GLenum, GLuint);
+static void (GLAPIENTRYP pglDrawBuffer)(GLenum);
+static void (GLAPIENTRYP pglReadBuffer)(GLenum);
+static void (GLAPIENTRYP pglBlitFramebuffer)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum);
 
 // shaders and programs
 static void (GLAPIENTRYP pglShaderSource)(GLuint, GLsizei, const GLchar**, const GLint*);
@@ -133,15 +136,26 @@ namespace detail_gl3 {
   };
 
   struct target {
-    target() {
+    target()
+      : owned{true}
+    {
       pglGenFramebuffers(1, &fbo);
     }
 
+    target(GLuint _fbo)
+      : fbo{_fbo}
+      , owned{false}
+    {
+    }
+
     ~target() {
-      pglDeleteFramebuffers(1, &fbo);
+      if (owned) {
+        pglDeleteFramebuffers(1, &fbo);
+      }
     }
 
     GLuint fbo;
+    bool owned;
   };
 
   struct program {
@@ -211,7 +225,8 @@ namespace detail_gl3 {
     state()
       : m_color_mask{0xff}
       , m_bound_vao{0}
-      , m_bound_fbo{0}
+      , m_bound_draw_fbo{0}
+      , m_bound_read_fbo{0}
       , m_bound_program{0}
     {
       pglEnable(GL_CULL_FACE);
@@ -450,12 +465,26 @@ namespace detail_gl3 {
       flush();
     }
 
-    void use_target(const frontend::target* _render_target) {
+    void use_target(const frontend::target* _render_target, bool _draw, bool _read) {
       const auto this_target{reinterpret_cast<const target*>(_render_target + 1)};
-      const GLuint fbo{_render_target->is_swapchain() ? m_swap_chain_fbo : this_target->fbo};
-      if (m_bound_fbo != fbo) {
-        pglBindFramebuffer(GL_FRAMEBUFFER, fbo);
-        m_bound_fbo = fbo;
+      if (_draw && _read) {
+        if (m_bound_draw_fbo != this_target->fbo && m_bound_read_fbo != this_target->fbo) {
+          pglBindFramebuffer(GL_FRAMEBUFFER, this_target->fbo);
+          m_bound_draw_fbo = this_target->fbo;
+          m_bound_read_fbo = this_target->fbo;
+        } else if (m_bound_draw_fbo != this_target->fbo) {
+          pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, this_target->fbo);
+          m_bound_draw_fbo = this_target->fbo;
+        } else if (m_bound_read_fbo != this_target->fbo) {
+          pglBindFramebuffer(GL_READ_FRAMEBUFFER, this_target->fbo);
+          m_bound_read_fbo = this_target->fbo;
+        }
+      } else if (_draw && m_bound_draw_fbo != this_target->fbo) {
+        pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, this_target->fbo);
+        m_bound_draw_fbo = this_target->fbo;
+      } else if (_read && m_bound_read_fbo != this_target->fbo) {
+        pglBindFramebuffer(GL_READ_FRAMEBUFFER, this_target->fbo);
+        m_bound_read_fbo = this_target->fbo;
       }
     }
 
@@ -578,7 +607,8 @@ namespace detail_gl3 {
     GLuint m_bound_vbo;
     GLuint m_bound_ebo;
     GLuint m_bound_vao;
-    GLuint m_bound_fbo;
+    GLuint m_bound_draw_fbo;
+    GLuint m_bound_read_fbo;
     GLuint m_bound_program;
 
     GLint m_swap_chain_fbo;
@@ -808,6 +838,9 @@ gl3::gl3(memory::allocator* _allocator, void* _data)
   fetch("glDeleteFramebuffers", pglDeleteFramebuffers);
   fetch("glFramebufferTexture2D", pglFramebufferTexture2D);
   fetch("glBindFramebuffer", pglBindFramebuffer);
+  fetch("glDrawBuffer", pglDrawBuffer);
+  fetch("glReadBuffer", pglReadBuffer);
+  fetch("glBlitFramebuffer", pglBlitFramebuffer);
 
   // shaders and programs
   fetch("glShaderSource", pglShaderSource);
@@ -887,7 +920,9 @@ void gl3::process(rx_byte* _command) {
       case frontend::resource_command::type::k_target:
         {
           const auto render_target{resource->as_target};
-          if (!render_target->is_swapchain()) {
+          if (render_target->is_swapchain()) {
+            utility::construct<detail_gl3::target>(resource->as_target + 1, state->m_swap_chain_fbo);
+          } else {
             utility::construct<detail_gl3::target>(resource->as_target + 1);
           }
         }
@@ -921,12 +956,7 @@ void gl3::process(rx_byte* _command) {
         utility::destruct<detail_gl3::buffer>(resource->as_buffer + 1);
         break;
       case frontend::resource_command::type::k_target:
-        {
-          const auto render_target{resource->as_target};
-          if (!render_target->is_swapchain()) {
-            utility::destruct<detail_gl3::target>(render_target + 1);
-          }
-        } 
+        utility::destruct<detail_gl3::target>(resource->as_target + 1);
         break;
       case frontend::resource_command::type::k_program:
         utility::destruct<detail_gl3::program>(resource->as_program + 1);
@@ -1021,7 +1051,7 @@ void gl3::process(rx_byte* _command) {
             break;
           }
 
-          state->use_target(render_target);
+          state->use_target(render_target, true, true);
 
           const auto depth_stencil{render_target->depth_stencil()};
           if (depth_stencil) {
@@ -1131,7 +1161,7 @@ void gl3::process(rx_byte* _command) {
           } else {
             for (GLint i{0}; i < levels; i++) {
               const auto level_info{render_texture->info_for_level(i)};
-              if (render_texture->is_compressed()) {
+              if (render_texture->is_compressed_format()) {
                 // TODO(dweiler): do
                 // pglTexCompressedImage1D
               } else {
@@ -1186,7 +1216,7 @@ void gl3::process(rx_byte* _command) {
           } else {
             for (GLint i{0}; i < levels; i++) {
               const auto level_info{render_texture->info_for_level(i)};
-              if (render_texture->is_compressed()) {
+              if (render_texture->is_compressed_format()) {
                 // TODO(dweiler): do
                 // pglTexCompressedImage2D
               } else {
@@ -1245,7 +1275,7 @@ void gl3::process(rx_byte* _command) {
           } else {
             for (GLint i{0}; i < levels; i++) {
               const auto level_info{render_texture->info_for_level(i)};
-              if (render_texture->is_compressed()) {
+              if (render_texture->is_compressed_format()) {
                 // TODO(dweiler): do
                 // pglTexCompressedImage3D
               } else {
@@ -1294,7 +1324,7 @@ void gl3::process(rx_byte* _command) {
             for (GLint i{0}; i < levels; i++) {
               const auto level_info{render_texture->info_for_level(i)};
               for (GLint j{0}; j < 6; j++) {
-                if (render_texture->is_compressed()) {
+                if (render_texture->is_compressed_format()) {
                   // TODO(dweiler): do
                   // pglTexCompressedImage2D
                 } else {
@@ -1360,49 +1390,20 @@ void gl3::process(rx_byte* _command) {
   case frontend::command_type::k_clear:
     {
       const auto command{reinterpret_cast<frontend::clear_command*>(header + 1)};
+      const auto render_state{reinterpret_cast<frontend::state*>(command)};
       const auto render_target{command->render_target};
-      // const auto this_target{reinterpret_cast<detail_gl3::target*>(render_target + 1)};
       const bool clear_depth{!!(command->clear_mask & RX_RENDER_CLEAR_DEPTH)};
       const bool clear_stencil{!!(command->clear_mask & RX_RENDER_CLEAR_STENCIL)};  
       const auto clear_color{command->clear_mask & ~(RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL)};
 
-      // ensure depth writes are enabled when clearing depth
-      if (state->depth.write() && clear_depth) {
-        pglDepthMask(GL_TRUE);
-        state->depth.record_write(true);
-        state->depth.flush();
-      }
-
-      // ensure stencil writes are enabled when clearing stencil
-      if (state->stencil.write_mask() != 0xff && clear_stencil) {
-        pglStencilMask(0xff);
-        state->stencil.record_write_mask(0xff);
-        state->stencil.flush();
-      }
-
-      // ensure scissor is disabled when clearing
-      if (state->scissor.enabled()) {
-        pglDisable(GL_SCISSOR_TEST);
-        state->scissor.record_enable(false);
-        state->scissor.flush();
-      }
-
-      // ensure color mask is appropriate for clear
-      if (state->blend.write_mask() != frontend::blend_state::k_mask_all && clear_color) {
-        pglColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        state->blend.record_write_mask(0xff);
-        state->blend.flush();
-      }
-
-      // treat swapchain specially since it's special in GL
-      // const GLuint fbo{render_target->is_swapchain() ? state->m_swap_chain_fbo : this_target->fbo};
-
-      state->use_target(render_target);
+      state->use_state(render_state);
+      state->use_target(render_target, true, false);
 
       if (clear_color) {
         for (rx_u32 i{0}; i < 32; i++) {
           if (clear_color & (1 << i)) {
-            pglClearBufferfv(GL_COLOR, static_cast<GLint>(i - 2), &command->clear_color[0]);
+            pglClearBufferfv(GL_COLOR, static_cast<GLint>(i - 2),
+              command->clear_color.data());
             break;
           }
         }
@@ -1427,7 +1428,7 @@ void gl3::process(rx_byte* _command) {
       const auto render_program{command->render_program};
       const auto this_program{reinterpret_cast<detail_gl3::program*>(render_program + 1)};
 
-      state->use_target(render_target);
+      state->use_target(render_target, true, false);
       state->use_buffer(render_buffer);
       state->use_program(render_program);
       state->use_state(render_state);
@@ -1564,6 +1565,51 @@ void gl3::process(rx_byte* _command) {
       }
     }
     break;
+  case frontend::command_type::k_blit:
+    {
+      const auto command{reinterpret_cast<frontend::blit_command*>(header + 1)};
+      const auto render_state{reinterpret_cast<frontend::state*>(command)};
+
+      // TODO(dweiler): optimize use_state to only consider the things that matter
+      // during a blit operation:
+      //
+      // * scissor test
+      // * blend write mask
+      state->use_state(render_state);
+
+      const auto* src_render_target{command->src_target};
+      const auto* dst_render_target{command->dst_target};
+
+      const auto src_attachment{command->src_attachment};
+      const auto dst_attachment{command->dst_attachment};
+
+      const auto src_dimensions{src_render_target->attachments()[src_attachment]->dimensions().cast<GLint>()};
+      const auto dst_dimensions{dst_render_target->attachments()[dst_attachment]->dimensions().cast<GLint>()};
+
+      state->use_target(src_render_target, false, true);
+      pglReadBuffer(static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + src_attachment));
+
+      state->use_target(dst_render_target, true, false);
+
+      // Can't change the draw buffer on the swapchain.
+      if (!dst_render_target->is_swapchain()) {
+        pglDrawBuffer(static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + dst_attachment));
+      }
+
+      pglBlitFramebuffer(
+        0,
+        0,
+        src_dimensions.w,
+        src_dimensions.h,
+        0,
+        0,
+        dst_dimensions.w,
+        dst_dimensions.h,
+        GL_COLOR_BUFFER_BIT,
+        GL_NEAREST);
+
+      break;
+    }
   }
 }
 

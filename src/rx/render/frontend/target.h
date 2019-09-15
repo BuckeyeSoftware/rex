@@ -13,9 +13,6 @@ struct target : resource {
   target(interface* _frontend);
   ~target();
 
-  // request the swap chain for this target
-  void request_swapchain();
-
   // request target have depth attachment |_format| with size |_dimensions|
   void request_depth(texture::data_format _format,
     const math::vec2z& _dimensions);
@@ -48,12 +45,15 @@ struct target : resource {
   void validate() const;
 
 private:
+  friend struct interface;
+
   void update_resource_usage();
 
   enum /* m_flags */ {
     k_depth      = 1 << 0,
     k_stencil    = 1 << 1,
-    k_dimensions = 1 << 2
+    k_dimensions = 1 << 2,
+    k_swapchain  = 1 << 3
   };
 
   union {
@@ -65,9 +65,8 @@ private:
   };
 
   vector<texture2D*> m_attachments;
-  int m_flags;
-  bool m_is_swapchain;
   math::vec2z m_dimensions;
+  int m_flags;
 };
 
 inline texture2D* target::depth() const {
@@ -87,7 +86,7 @@ inline const vector<texture2D*> target::attachments() const & {
 }
 
 inline bool target::is_swapchain() const {
-  return m_is_swapchain;
+  return m_flags & k_swapchain;
 }
 
 inline const math::vec2z& target::dimensions() const {
