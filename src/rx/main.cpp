@@ -332,7 +332,8 @@ int entry(int argc, char **argv) {
   SDL_GLContext context{SDL_GL_CreateContext(window)};
 
   SDL_GL_SetSwapInterval(*display_swap_interval);
-  SDL_SetRelativeMouseMode(SDL_TRUE);
+
+  //SDL_SetRelativeMouseMode(SDL_TRUE);
 
   math::camera camera{math::mat4x4f::perspective(90.0f, {0.1f, 2048.0f},
     display_resolution->get().cast<rx_f32>().w / display_resolution->get().cast<rx_f32>().h)};
@@ -400,16 +401,19 @@ int entry(int argc, char **argv) {
         SDL_GL_SetSwapInterval(display_swap_interval->get());
       }
 
+      render::frontend::state state;
+      state.viewport.record_dimensions(gbuffer.target()->dimensions());
+
       frontend.clear(
         RX_RENDER_TAG("gbuffer"),
-        {},
+        state,
         gbuffer.target(),
         RX_RENDER_CLEAR_DEPTH,
         {1.0f, 0.0f, 0.0f, 0.0f});
 
       frontend.clear(
         RX_RENDER_TAG("gbuffer"),
-        {},
+        state,
         gbuffer.target(),
         RX_RENDER_CLEAR_COLOR(0),
         {0.0f, 0.0f, 0.0f, 0.0f});
@@ -422,9 +426,11 @@ int entry(int argc, char **argv) {
       model.render(gbuffer.target(),  modelm, camera.view(), camera.projection());
       immediate3D.render(gbuffer.target(), camera.view(), camera.projection());
 
+      state.viewport.record_dimensions(display_resolution->get().cast<rx_size>());
+
       frontend.blit(
         RX_RENDER_TAG("test"),
-        {},
+        state,
         gbuffer.target(),
         0,
         frontend.swapchain(),
@@ -444,11 +450,9 @@ int entry(int argc, char **argv) {
       input.update(frontend.timer().delta_time());
 
       // translate SDL events
-      for (SDL_Event event; SDL_PollEvent(&event);)
-      {
+      for (SDL_Event event; SDL_PollEvent(&event);) {
         input::event ievent;
-        switch (event.type)
-        {
+        switch (event.type) {
         case SDL_KEYDOWN:
         case SDL_KEYUP:
           ievent.type = input::event_type::k_keyboard;
@@ -474,6 +478,14 @@ int entry(int argc, char **argv) {
           ievent.as_mouse_scroll.value = {event.wheel.x, event.wheel.y};
           input.handle_event(utility::move(ievent));
           break;
+        case SDL_WINDOWEVENT:
+          switch (event.window.event) {
+          case SDL_WINDOWEVENT_SIZE_CHANGED:
+            display_resolution->set({event.window.data1, event.window.data2});
+            gbuffer.resize(display_resolution->get().cast<rx_size>());
+            frontend.resize(display_resolution->get().cast<rx_size>());
+            break;
+          }
         }
       }
     }

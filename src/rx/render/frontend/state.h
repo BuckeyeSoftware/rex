@@ -247,6 +247,29 @@ private:
   mode_type m_mode;
 };
 
+struct viewport_state {
+  viewport_state();
+
+  void record_offset(const math::vec2i& _offset);
+  void record_dimensions(const math::vec2z& _dimensions);
+
+  const math::vec2i& offset() const &;
+  const math::vec2z& dimensions() const &;
+
+  bool operator!=(const viewport_state& _other) const;
+  bool operator==(const viewport_state& _other) const;
+
+  rx_size flush();
+
+private:
+  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
+  rx_size m_hash;
+
+  math::vec2i m_offset;
+  math::vec2z m_dimensions;
+};
+
+
 struct state {
   scissor_state scissor;
   blend_state blend;
@@ -254,48 +277,12 @@ struct state {
   cull_state cull;
   stencil_state stencil;
   polygon_state polygon;
+  viewport_state viewport;
 
-  void flush() {
-    m_hash = scissor.flush();
-    m_hash = hash_combine(m_hash, blend.flush());
-    m_hash = hash_combine(m_hash, depth.flush());
-    m_hash = hash_combine(m_hash, cull.flush());
-    m_hash = hash_combine(m_hash, stencil.flush());
-    m_hash = hash_combine(m_hash, polygon.flush());
-  }
+  void flush();
 
-  bool operator==(const state& _state) const
-  {
-    if (_state.m_hash != m_hash) {
-      return false;
-    }
-
-    if (_state.scissor != scissor) {
-      return false;
-    }
-
-    if (_state.blend != blend) {
-      return false;
-    }
-
-    if (_state.depth != depth) {
-      return false;
-    }
-
-    if (_state.cull != cull) {
-      return false;
-    }
-
-    if (_state.stencil != stencil) {
-      return false;
-    }
-
-    if (_state.polygon != polygon) {
-      return false;
-    }
-
-    return true;
-  }
+  bool operator==(const state& _state) const;
+  bool operator!=(const state& _state) const;
 
 private:
   rx_size m_hash;
@@ -583,6 +570,38 @@ inline polygon_state::mode_type polygon_state::mode() const {
 
 inline bool polygon_state::operator!=(const polygon_state& _other) const {
   return !operator==(_other);
+}
+
+// viewport_state
+inline void viewport_state::record_offset(const math::vec2i& _offset) {
+  m_offset = _offset;
+  m_hash |= k_dirty_bit;
+}
+
+inline void viewport_state::record_dimensions(const math::vec2z& _dimensions) {
+  m_dimensions = _dimensions;
+  m_hash |= k_dirty_bit;
+}
+
+inline const math::vec2i& viewport_state::offset() const & {
+  return m_offset;
+}
+
+inline const math::vec2z& viewport_state::dimensions() const & {
+  return m_dimensions;
+}
+
+inline bool viewport_state::operator!=(const viewport_state& _other) const {
+  return !operator==(_other);
+}
+
+inline bool viewport_state::operator==(const viewport_state& _other) const {
+  return m_dimensions == _other.m_dimensions && m_offset == _other.m_offset;
+}
+
+// state
+inline bool state::operator!=(const state& _state) const {
+  return !operator==(_state);
 }
 
 } // namespace rx::render::frontend

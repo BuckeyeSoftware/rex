@@ -165,6 +165,8 @@ struct texture2D : texture {
   const level_info<dimension_type>& info_for_level(rx_size _index) const &;
 
 private:
+  friend struct interface;
+
   dimension_type m_dimensions;
   wrap_options m_wrap;
   vector<level_info<dimension_type>> m_levels;

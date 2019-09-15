@@ -287,4 +287,67 @@ rx_size polygon_state::flush() {
   return m_hash;
 }
 
+// viewport_state
+viewport_state::viewport_state()
+  : m_hash{k_dirty_bit}
+{
+  flush();
+}
+
+rx_size viewport_state::flush() {
+  if (m_hash & k_dirty_bit) {
+    m_hash = hash_combine(m_hash, hash<math::vec2i>{}(m_offset));
+    m_hash = hash_combine(m_hash, hash<math::vec2z>{}(m_dimensions));
+    m_hash &= ~k_dirty_bit;
+  }
+  return m_hash;
+}
+
+// state
+void state::flush() {
+  m_hash = scissor.flush();
+  m_hash = hash_combine(m_hash, blend.flush());
+  m_hash = hash_combine(m_hash, depth.flush());
+  m_hash = hash_combine(m_hash, cull.flush());
+  m_hash = hash_combine(m_hash, stencil.flush());
+  m_hash = hash_combine(m_hash, polygon.flush());
+  m_hash = hash_combine(m_hash, viewport.flush());
+}
+
+bool state::operator==(const state& _state) const {
+  if (_state.m_hash != m_hash) {
+    return false;
+  }
+
+  if (_state.scissor != scissor) {
+    return false;
+  }
+
+  if (_state.blend != blend) {
+    return false;
+  }
+
+  if (_state.depth != depth) {
+    return false;
+  }
+
+  if (_state.cull != cull) {
+    return false;
+  }
+
+  if (_state.stencil != stencil) {
+    return false;
+  }
+
+  if (_state.polygon != polygon) {
+    return false;
+  }
+
+  if (_state.viewport != viewport) {
+    return false;
+  }
+
+  return true;
+}
+
 } // namespace rx::render::frontend

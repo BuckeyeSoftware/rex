@@ -300,7 +300,8 @@ namespace detail_gl4 {
       const auto& cull{_render_state->cull};
       const auto& stencil{_render_state->stencil};
       const auto& polygon{_render_state->polygon};
-      const auto& this_depth{_render_state->depth};
+      const auto& depth{_render_state->depth};
+      const auto& viewport(_render_state->viewport);
 
       if (this->scissor != scissor) {
         const auto enabled{scissor.enabled()};
@@ -365,9 +366,9 @@ namespace detail_gl4 {
         }
       }
 
-      if (this->depth != this_depth) {
-        const auto test{this_depth.test()};
-        const auto write{this_depth.write()};
+      if (this->depth != depth) {
+        const auto test{depth.test()};
+        const auto write{depth.write()};
 
         if (this->depth.test() != test) {
           use_enable(GL_DEPTH_TEST, test);
@@ -493,6 +494,14 @@ namespace detail_gl4 {
         const auto mode{polygon.mode()};
         pglPolygonMode(GL_FRONT_AND_BACK, convert_polygon_mode(mode));
         this->polygon.record_mode(mode);
+      }
+
+      if (this->viewport != viewport) {
+        const auto& offset{viewport.offset().cast<GLuint>()};
+        const auto& dimensions{viewport.dimensions().cast<GLsizei>()};
+        pglViewport(offset.x, offset.y, dimensions.w, dimensions.h);
+        this->viewport.record_offset(viewport.offset());
+        this->viewport.record_dimensions(viewport.dimensions());
       }
 
       // flush all changes to this for updated hash

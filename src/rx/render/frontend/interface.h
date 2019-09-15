@@ -110,6 +110,8 @@ struct interface {
     rx_size _dst_attachment
   );
 
+  void resize(const math::vec2z& _resolution);
+
   bool process();
   bool swap();
 

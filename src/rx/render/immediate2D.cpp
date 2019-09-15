@@ -499,7 +499,10 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
   m_technique->variant(1)->uniforms()[0].record_vec2i(dimensions);
 
   if (!last_empty) {
-    m_render_batches[m_rd_index].each_fwd([&](const batch& _batch) {
+    m_render_batches[m_rd_index].each_fwd([&](batch& _batch) {
+
+      _batch.render_state.viewport.record_dimensions(_target->dimensions());
+
       switch (_batch.kind) {
       case batch::type::k_triangles:
         m_frontend->draw(

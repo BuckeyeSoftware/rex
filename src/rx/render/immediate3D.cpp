@@ -2,6 +2,7 @@
 
 #include "rx/render/frontend/interface.h"
 #include "rx/render/frontend/technique.h"
+#include "rx/render/frontend/target.h"
 #include "rx/render/frontend/buffer.h"
 
 #include "rx/render/immediate3D.h"
@@ -294,7 +295,9 @@ void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
     m_technique->variant(1)->uniforms()[1].record_mat4x4f(_projection);
 
     // process the batches
-    m_render_batches[m_rd_index].each_fwd([&](const batch& _batch) {
+    m_render_batches[m_rd_index].each_fwd([&](batch& _batch) {
+      _batch.render_state.viewport.record_dimensions(_target->dimensions());
+
       switch (_batch.kind) {
       case queue::command::type::k_uninitialized:
         RX_HINT_UNREACHABLE();

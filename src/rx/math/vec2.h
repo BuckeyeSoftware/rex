@@ -275,6 +275,15 @@ namespace rx {
       return hash_combine(x, y);
     }
   };
+
+  template<>
+  struct hash<math::vec2z> {
+    rx_size operator()(const math::vec2z& _value) {
+      const auto x{hash<rx_size>{}(_value.x)};
+      const auto y{hash<rx_size>{}(_value.y)};
+      return hash_combine(x, y);
+    }
+  };
 } // namespace rx
 
 #endif // RX_MATH_VEC2_H

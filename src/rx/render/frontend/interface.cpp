@@ -522,6 +522,12 @@ void interface::blit(
   m_blit_calls[0]++;
 }
 
+void interface::resize(const math::vec2z& _resolution) {
+  // Resizing the swapchain is just a matter of updating these fields.
+  m_swapchain_texture->m_dimensions = _resolution;
+  m_swapchain_target->m_dimensions = _resolution;
+}
+
 bool interface::process() {
   concurrency::scope_lock lock(m_mutex);
 

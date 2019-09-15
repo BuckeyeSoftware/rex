@@ -2,6 +2,7 @@
 
 #include "rx/render/frontend/interface.h"
 #include "rx/render/frontend/technique.h"
+#include "rx/render/frontend/target.h"
 #include "rx/render/frontend/buffer.h"
 
 #include "rx/model/loader.h"
@@ -92,6 +93,8 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
   state.cull.record_cull_face(frontend::cull_state::cull_face_type::k_back);
 
   state.blend.record_enable(false);
+
+  state.viewport.record_dimensions(_target->dimensions());
 
   m_meshes.each_fwd([&](const mesh& _mesh) {
     const auto& material{m_materials[_mesh.material]};

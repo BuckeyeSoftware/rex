@@ -1,8 +1,9 @@
 #include "rx/render/skybox.h"
 #include "rx/render/frontend/interface.h"
 #include "rx/render/frontend/technique.h"
-#include "rx/render/frontend/buffer.h"
 #include "rx/render/frontend/texture.h"
+#include "rx/render/frontend/target.h"
+#include "rx/render/frontend/buffer.h"
 
 #include "rx/math/vec3.h"
 
@@ -73,6 +74,8 @@ void skybox::render(frontend::target* _target, const math::mat4x4f& _view,
   frontend::state state;
   state.depth.record_test(false);
   state.depth.record_write(false);
+
+  state.viewport.record_dimensions(_target->dimensions());
 
   m_frontend->draw(
       RX_RENDER_TAG("skybox"),
