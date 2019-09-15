@@ -6,7 +6,7 @@
           * [Drawing](#drawing)
           * [Clearing](#clearing)
           * [Blitting](#blitting)
-         * [Swapchain](#swapchain)
+          * [Swapchain](#swapchain)
           * [Queries](#queries)
         * [Resources](#resources)
           * [Buffer](#buffer)
