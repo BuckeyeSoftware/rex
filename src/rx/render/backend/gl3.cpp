@@ -461,6 +461,14 @@ namespace detail_gl3 {
         this->polygon.record_mode(mode);
       }
 
+      if (this->viewport != viewport) {
+        const auto& offset{viewport.offset().cast<GLuint>()};
+        const auto& dimensions{viewport.dimensions().cast<GLsizei>()};
+        pglViewport(offset.x, offset.y, dimensions.w, dimensions.h);
+        this->viewport.record_offset(viewport.offset());
+        this->viewport.record_dimensions(viewport.dimensions());
+      }
+
       // flush all changes to this for updated hash
       flush();
     }
