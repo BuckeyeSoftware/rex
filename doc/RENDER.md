@@ -2,7 +2,7 @@
 ## Table of contents
   * [Renderer](#renderer)
     * [Frontend](#frontend)
-        * [Interface](#interface)
+        * [Interface](#frontend-interface)
           * [Drawing](#drawing)
           * [Clearing](#clearing)
           * [Blitting](#blitting)
@@ -16,11 +16,15 @@
         * [State](#state)
         * [Technique](#technique)
         * [Minimal fullscreen quad example](#minimal-fullscreen-quad-example)
+    * [Backend](#backend)
+        * [Command Buffer](#command-buffer)
+          * [Commands](#commands)
+        * [Interface](#backend-interface)
 
 ## Frontend
 Rex employs a renderer abstraction interface to isolate graphics API code from the actual engine rendering. This is done by `srx/rx/render/frontend`. The documentation of how this frontend interface works is provided here to get you up to speed on how to render things.
 
-### Interface
+### Frontend Interface
 All rendering resources and commands happen through `frontend::interface`. Every command on the frontend is associated with a tag that tracks the file and line information of the command in the engine as well as a static string describing it, this is provided to the interface with the `RX_RENDER_TAG("string")` macro.
 
 The entire rendering interface is _thread safe_, any and all commands can be called from any thread at any time.
@@ -473,3 +477,177 @@ frontend.draw(
   "2" // since 2D texture
   texture);
 ```
+
+## Backend
+While the frontend abstraction is used to isolate graphics API code from the actual engine rendering.
+The backend abstraction is used to hook up that abstraction to the API code. This is done by `src/rx/render/backend`. The documentation of how this backend interface works is provided here to get you up to speed on how to write a backend.
+
+The following backends already exist:
+  * GL3 `src/rx/render/backend/gl3.{h,cpp}`
+  * GL4 `src/rx/render/backend/gl4.{h,cpp}`
+  * NVN `src/rx/render/backend/nvn.{h,cpp}`
+
+### Command Buffer
+The [frontend interface](#frontend-interface) allocates commands from a command buffer which are executed by the [backend interface](#backend-interface) `process()` function.
+
+Each command has a 16-byte memory alignment and memory layout that includes a `command_header`.
+
+The lifetime of a command lasts for exactly one frame, for the command buffer is cleared by `frontend::process` every frame.
+
+Every command on the command buffer is prefixed with a command header which indicates the command type as well as an info object, called a tag that can be used to track where the command origniated from.
+
+The command header looks like this:
+
+```cpp
+struct alignas(16) command_header {
+  struct info {
+    constexpr info(const char* _file, const char* _description, int _line)
+      : file{_file}
+      , description{_description}
+      , line{_line}
+    {
+    }
+    const char* file;
+    const char* description;
+    int line;
+  };
+
+  command_type type;
+  info tag;
+};
+```
+
+The `RX_RENDER_TAG(...)` macro is what constructs the `command_header::info` object which allows for file, line and a description string to be tracked through the frontend and the backend for debugging purposes.
+
+#### Commands
+The following command types exist:
+
+```cpp
+enum class command_type : rx_u8 {
+  k_resource_allocate,
+  k_resource_construct,
+  k_resource_update,
+  k_resource_destroy,
+  k_clear,
+  k_draw,
+  k_blit
+};
+```
+
+As well as their appropriate structures:
+
+```cpp
+struct resource_command {
+  enum class type : rx_u8 {
+    k_buffer,
+    k_target,
+    k_program,
+    k_texture1D,
+    k_texture2D,
+    k_texture3D,
+    k_textureCM
+  };
+
+  type kind;
+
+  union {
+    target* as_target;
+    buffer* as_buffer;
+    program* as_program;
+    texture1D* as_texture1D;
+    texture2D* as_texture2D;
+    texture3D* as_texture3D;
+    textureCM* as_textureCM;
+  };
+};
+
+struct clear_command : state {
+  target* render_target;
+  int clear_mask;
+  math::vec4f clear_color;
+};
+
+struct blit_command : state {
+  target* src_target;
+  rx_size src_attachment;
+  target* dst_target;
+  rx_size dst_attachment;
+};
+
+struct draw_command : state {
+  target* render_target;
+  buffer* render_buffer;
+  program* render_program;
+  rx_size count;
+  rx_size offset;
+  char texture_types[8];
+  void* texture_binds[8];
+  primitive_type type;
+  rx_u64 dirty_uniforms_bitset;
+
+  const rx_byte* uniforms() const;
+  rx_byte* uniforms();
+};
+```
+
+All command structures, aside from `resource_command`, include a `frontend::state` object that represents the state vector to use for that operation.
+
+The `resource_command` structure is used by all the resource commands and merely represents a tagged union of which resource to `allocate`, `construct`, `update`, or `destroy`.
+
+The `draw_command` is special in that it's size is actually variable. The `frontend::interface::draw` function over allocates `draw_command` from the command buffer to make room to store the raw data of any changed uniforms of `render_program`. The member function `uniforms()` actually returns a pointer to `this + 1` to reach into that memory. The `dirty_uniform_bitset` has a set bit for each uniform in `render_program` that has changed. The index of these set bits are the uniform indices in `render_program`. The sizes of each uniform can be read from there as well as their type.
+The uniform data in `draw_command` is tightly packed. An example of unpacking this data is provided:
+
+```cpp
+if (command->dirty_uniforms_bitset) {
+  const auto& program_uniforms{render_program->uniforms()};
+  const rx_byte* draw_uniforms{command->uniforms()};
+
+  for (rx_size i{0}; i < 64; i++) {
+    if (command->dirty_uniforms_bitset & (1_u64 << i)) {
+      const auto& uniform{program_uniforms[i]};
+
+      // data for uniform is in draw_uniforms
+
+      // bump the pointer along to the next changed uniform's data
+      draw_uniforms += uniform.size();
+    }
+  }
+}
+```
+
+### Backend Interface
+Rendering backends implement a small interface which looks like:
+
+```cpp
+// sizes of resources reported by the backend
+struct allocation_info {
+  rx_size buffer_size;
+  rx_size target_size;
+  rx_size program_size;
+  rx_size texture1D_size;
+  rx_size texture2D_size;
+  rx_size texture3D_size;
+  rx_size textureCM_size;
+};
+
+struct device_info {
+  const char* vendor;
+  const char* renderer;
+  const char* version;
+};
+
+struct interface
+  : concepts::interface
+{
+  virtual allocation_info query_allocation_info() const = 0;
+  virtual device_info query_device_info() const = 0;
+  virtual void process(rx_byte* _command) = 0;
+  virtual void swap() = 0;
+};
+```
+
+The purposes of `query_allocation_info()` is to allow the frontend to over allocate objects on the render pool so that frontend objects have a 1:1 mapping with backend objects in memory. Or rather, taking the `this` pointer from a frontend object and adding one to it will get you to the memory of the backend object. This is also how virtual functions are avoided for rendering objects.
+
+The `process(rx_byte* _command)` function implements the processing of commands as mentioned above. One call is made for every command.
+
+The `swap()` function is used to swap the swapchain.
