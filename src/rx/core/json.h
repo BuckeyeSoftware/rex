@@ -142,7 +142,7 @@ inline json& json::operator=(const json& _json) {
 }
 
 inline json::operator bool() const {
-  return m_shared;
+  return m_shared && m_shared->m_root;
 }
 
 inline bool json::is_array() const {

@@ -5,6 +5,8 @@
 #include "rx/core/filesystem/file.h"
 #include "rx/core/concurrency/thread_pool.h"
 
+#include "rx/core/algorithm/clamp.h"
+
 #include "rx/material/loader.h"
 
 namespace rx::model {
@@ -36,6 +38,7 @@ bool loader::parse(const json& _definition) {
   const auto& name{_definition["name"]};
   const auto& file{_definition["file"]};
   const auto& materials{_definition["materials"]};
+  const auto& transform{_definition["transform"]};
 
   if (!name) {
     return error("missing 'name'");
@@ -55,8 +58,19 @@ bool loader::parse(const json& _definition) {
     return error("expected String for 'file'");
   }
 
-  const auto& file_name{file.as_string()};
+  if (!materials) {
+    return error("missing 'materials'");
+  }
 
+  if (!materials.is_array_of(json::type::k_object)) {
+    return error("expected Array[Object] for 'materials'");
+  }
+
+  if (transform && !parse_transform(transform)) {
+    return false;
+  }
+
+  const auto& file_name{file.as_string()};
   if (!import(file.as_string())) {
     return false;
   }
@@ -109,14 +123,17 @@ bool loader::import(const string& _file_name) {
     const auto& coordinates{new_loader->coordinates()};
     const auto vertices{static_cast<rx_size>(positions.size())};
 
+    const math::mat4x4f& transform{m_transform.to_mat4()};
     if (animations.is_empty()) {
       utility::construct<vector<vertex>>(&as_vertices, m_allocator, vertices);
       m_flags |= k_constructed;
 
       for (rx_size i{0}; i < vertices; i++) {
-        as_vertices[i].position = positions[i];
-        as_vertices[i].normal = normals[i];
-        as_vertices[i].tangent = tangents[i];
+        as_vertices[i].position = math::mat4x4f::transform_point(positions[i], transform);
+        as_vertices[i].normal = math::mat4x4f::transform_vector(normals[i], transform);
+
+        const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
+        as_vertices[i].tangent = {tangent.x, tangent.w, tangent.z, tangents[i].w};
         as_vertices[i].coordinate = coordinates[i];
       }
     } else {
@@ -127,9 +144,11 @@ bool loader::import(const string& _file_name) {
       m_flags |= k_constructed;
 
       for (rx_size i{0}; i < vertices; i++) {
-        as_animated_vertices[i].position = positions[i];
-        as_animated_vertices[i].normal = normals[i];
-        as_animated_vertices[i].tangent = tangents[i];
+        as_animated_vertices[i].position = math::mat4x4f::transform_point(positions[i], transform);
+        as_animated_vertices[i].normal = math::mat4x4f::transform_vector(normals[i], transform);
+
+        const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
+        as_animated_vertices[i].tangent = {tangent.x, tangent.w, tangent.z, tangents[i].w};
         as_animated_vertices[i].coordinate = coordinates[i];
         as_animated_vertices[i].blend_weights = blend_weights[i];
         as_animated_vertices[i].blend_indices = blend_indices[i];
@@ -146,6 +165,36 @@ bool loader::import(const string& _file_name) {
 
   m_allocator->destroy<importer>(new_loader);
   return result;
+}
+
+bool loader::parse_transform(const json& _transform) {
+  const auto& scale{_transform["scale"]};
+  const auto& rotate{_transform["rotate"]};
+  const auto& translate{_transform["translate"]};
+
+  auto parse_vec3{[&](const json& _array, const char* _tag, math::vec3f& result_) {
+    if (!_array.is_array_of(json::type::k_number) || _array.size() != 3) {
+      return error("expected Array[Number, 3] for '%s'", _tag);
+    }
+    result_.x = algorithm::clamp(_array[0_z].as_number(), 0.0, 360.0);
+    result_.y = algorithm::clamp(_array[1_z].as_number(), 0.0, 360.0);
+    result_.z = algorithm::clamp(_array[2_z].as_number(), 0.0, 360.0);
+    return true;
+  }};
+
+  if (scale && !parse_vec3(scale, "scale", m_transform.scale)) {
+    return false;
+  }
+
+  if (rotate && !parse_vec3(rotate, "rotate", m_transform.rotate)) {
+    return false;
+  }
+
+  if (translate && !parse_vec3(translate, "translate", m_transform.translate)) {
+    return false;
+  }
+
+  return true;
 }
 
 void loader::write_log(log::level _level, string&& _message) const {

@@ -7,6 +7,8 @@
 #include "rx/core/log.h"
 #include "rx/core/json.h"
 
+#include "rx/math/transform.h"
+
 namespace rx::model {
 
 struct loader 
@@ -56,6 +58,7 @@ private:
   void write_log(log::level _level, string&& _message) const;
 
   bool import(const string& _file_name);
+  bool parse_transform(const json& _transform);
 
   enum {
     k_constructed = 1 << 0,
@@ -76,7 +79,7 @@ private:
   vector<importer::joint> m_joints;
   vector<math::mat3x4f> m_frames;
   string m_name;
-
+  math::transform m_transform;
   map<string, material::loader> m_materials;
   int m_flags;
 };

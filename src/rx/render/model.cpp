@@ -99,7 +99,7 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
   m_meshes.each_fwd([&](const mesh& _mesh) {
     const auto& material{m_materials[_mesh.material]};
 
-    int flags{0};
+    rx_u64 flags{0};
     if (material.diffuse())    flags |= 1 << 1;
     if (material.normal())     flags |= 1 << 2;
     if (material.metalness())  flags |= 1 << 3;
@@ -124,7 +124,7 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
       _mesh.count,
       _mesh.offset,
       render::frontend::primitive_type::k_triangles,
-      "2",
+      material.normal() ? "22" : "2",
       material.diffuse(),
       material.normal(),
       material.metalness(),

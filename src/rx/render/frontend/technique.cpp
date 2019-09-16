@@ -185,14 +185,16 @@ static optional<shader::inout_type> inout_type_from_string(const string& _type) 
     const char* match;
     shader::inout_type kind;
   } k_table[]{
-    {"vec2i", shader::inout_type::k_vec2i},
-    {"vec3i", shader::inout_type::k_vec3i},
-    {"vec4i", shader::inout_type::k_vec4i},
-    {"vec2f", shader::inout_type::k_vec2f},
-    {"vec3f", shader::inout_type::k_vec3f},
-    {"vec4f", shader::inout_type::k_vec4f},
-    {"vec4b", shader::inout_type::k_vec4b},
-    {"float", shader::inout_type::k_float}
+    {"mat4x4f", shader::inout_type::k_mat4x4f},
+    {"mat3x3f", shader::inout_type::k_mat3x3f},
+    {"vec2i",   shader::inout_type::k_vec2i},
+    {"vec3i",   shader::inout_type::k_vec3i},
+    {"vec4i",   shader::inout_type::k_vec4i},
+    {"vec2f",   shader::inout_type::k_vec2f},
+    {"vec3f",   shader::inout_type::k_vec3f},
+    {"vec4f",   shader::inout_type::k_vec4f},
+    {"vec4b",   shader::inout_type::k_vec4b},
+    {"float",   shader::inout_type::k_float}
   };
 
   for (const auto& element : k_table) {
@@ -365,7 +367,11 @@ bool technique::compile() {
 
     m_uniform_definitions.each_fwd([&](const uniform_definition& _uniform_definition) {
       if (evaluate_when_for_basic(_uniform_definition.when)) {
-        program->add_uniform(_uniform_definition.name, _uniform_definition.kind);
+        auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind)};
+        if (_uniform_definition.has_value) {
+          const auto* data{reinterpret_cast<const rx_byte*>(&_uniform_definition.value)};
+          uniform.record_raw(data, uniform.size());
+        }
       }
     });
 
@@ -416,7 +422,11 @@ bool technique::compile() {
       // emit uniforms
       m_uniform_definitions.each_fwd([&](const uniform_definition& _uniform_definition) {
         if (evaluate_when_for_permute(_uniform_definition.when, _flags)) {
-          program->add_uniform(_uniform_definition.name, _uniform_definition.kind);
+          auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind)};
+          if (_uniform_definition.has_value) {
+            const auto* data{reinterpret_cast<const rx_byte*>(&_uniform_definition.value)};
+            uniform.record_raw(data, uniform.size());
+          }
         }
       });
 
@@ -467,7 +477,11 @@ bool technique::compile() {
       // emit uniforms
       m_uniform_definitions.each_fwd([&](const uniform_definition& _uniform_definition) {
         if (evaluate_when_for_variant(_uniform_definition.when, i)) {
-          program->add_uniform(_uniform_definition.name, _uniform_definition.kind);
+          auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind)};
+          if (_uniform_definition.has_value) {
+            const auto* data{reinterpret_cast<const rx_byte*>(&_uniform_definition.value)};
+            uniform.record_raw(data, uniform.size());
+          }
         }
       });
     
@@ -822,7 +836,7 @@ bool technique::parse_uniform(const json& _uniform) {
     }
   }
 
-  m_uniform_definitions.push_back({*kind, name_string, when ? when.as_string() : "", constant});
+  m_uniform_definitions.push_back({*kind, name_string, when ? when.as_string() : "", constant, value ? true : false});
   return true;
 }
 

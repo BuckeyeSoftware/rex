@@ -333,7 +333,7 @@ int entry(int argc, char **argv) {
 
   SDL_GL_SetSwapInterval(*display_swap_interval);
 
-  //SDL_SetRelativeMouseMode(SDL_TRUE);
+  SDL_SetRelativeMouseMode(SDL_TRUE);
 
   math::camera camera{math::mat4x4f::perspective(90.0f, {0.1f, 2048.0f},
     display_resolution->get().cast<rx_f32>().w / display_resolution->get().cast<rx_f32>().h)};
@@ -365,8 +365,10 @@ int entry(int argc, char **argv) {
     model.load("base/models/elemental/elemental.json5");
 
     input::input input;
-    while (!input.keyboard().is_released(SDLK_ESCAPE, false))
-    {
+    while (!input.keyboard().is_released(SDLK_ESCAPE, false)) {
+      camera.projection = math::mat4x4f::perspective(90.0f, {0.1f, 2048.0f},
+        display_resolution->get().cast<rx_f32>().w / display_resolution->get().cast<rx_f32>().h);
+
       rx_f32 move_speed{10.0f};
       const rx_f32 sens{0.2f};
       const auto &delta{input.mouse().movement()};
@@ -418,13 +420,13 @@ int entry(int argc, char **argv) {
         RX_RENDER_CLEAR_COLOR(0),
         {0.0f, 0.0f, 0.0f, 0.0f});
 
-      math::mat4x4f modelm{math::mat4x4f::scale({0.2f, 0.2f, 0.2f})
+      math::mat4x4f modelm{math::mat4x4f::scale({1.0f, 1.0f, 1.0f})
         * math::mat4x4f::rotate({0.0f, 90.0f, 0.0f})
         * math::mat4x4f::translate({0.0f, 0.0f, 0.0f})};
 
-      skybox.render(gbuffer.target(), camera.view(), camera.projection());
-      model.render(gbuffer.target(),  modelm, camera.view(), camera.projection());
-      immediate3D.render(gbuffer.target(), camera.view(), camera.projection());
+      skybox.render(gbuffer.target(), camera.view(), camera.projection);
+      model.render(gbuffer.target(),  modelm, camera.view(), camera.projection);
+      immediate3D.render(gbuffer.target(), camera.view(), camera.projection);
 
       state.viewport.record_dimensions(display_resolution->get().cast<rx_size>());
 
@@ -432,7 +434,7 @@ int entry(int argc, char **argv) {
         RX_RENDER_TAG("test"),
         state,
         gbuffer.target(),
-        0,
+        1,
         frontend.swapchain(),
         0);
 

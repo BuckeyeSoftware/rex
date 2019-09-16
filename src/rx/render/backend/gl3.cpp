@@ -634,6 +634,10 @@ static void fetch(const char* _name, F& function_) {
 
 static constexpr const char* inout_to_string(frontend::shader::inout_type _type) {
   switch (_type) {
+  case frontend::shader::inout_type::k_mat4x4f:
+    return "mat4";
+  case frontend::shader::inout_type::k_mat3x3f:
+    return "mat3";
   case frontend::shader::inout_type::k_vec2f:
     return "vec2f";
   case frontend::shader::inout_type::k_vec3f:

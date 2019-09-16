@@ -12,10 +12,10 @@
     { name: "u_transform", type: "mat4x4f" },
     { name: "u_model",     type: "mat4x4f" },
     { name: "u_bones",     type: "bonesf",    when: "HAS_SKELETON" },
-    { name: "u_diffuse",   type: "sampler2D", when: "HAS_DIFFUSE" },
-    { name: "u_normal",    type: "sampler2D", when: "HAS_NORMAL" },
-    { name: "u_metal",     type: "sampler2D", when: "HAS_METALNESS" },
-    { name: "u_roughness", type: "sampler2D", when: "HAS_ROUGHNESS" }
+    { name: "u_diffuse",   type: "sampler2D", value: 0, when: "HAS_DIFFUSE" },
+    { name: "u_normal",    type: "sampler2D", value: 1, when: "HAS_NORMAL" },
+    { name: "u_metal",     type: "sampler2D", value: 2, when: "HAS_METALNESS" },
+    { name: "u_roughness", type: "sampler2D", value: 3, when: "HAS_ROUGHNESS" }
   ],
   shaders: [
     {
@@ -31,7 +31,8 @@
       outputs: [
         { name: "vs_normal",       type: "vec3f" },
         { name: "vs_tangent",      type: "vec4f" },
-        { name: "vs_coordinate",   type: "vec2f" }
+        { name: "vs_coordinate",   type: "vec2f" },
+        { name: "vs_tbn",          type: "mat3x3f", when: "HAS_NORMAL" }
       ],
       source: "
         void main() {
@@ -48,9 +49,18 @@
         #else
           vec4f position = vec4(a_position, 1.0);
         #endif
-          vs_normal     = mat3x3f(transpose(inverse(u_model))) * a_normal;
+          vs_normal     = a_normal;
           vs_tangent    = a_tangent;
           vs_coordinate = a_coordinate;
+
+        #if defined(HAS_NORMAL)
+          mat4x4f xform = inverse(transpose(u_model));
+          vec3f t = normalize(vec3(xform * vec4(a_tangent.xyz, 0.0)));
+          vec3f n = normalize(vec3(xform * vec4(a_normal, 0.0)));
+          vec3f b = normalize(cross(n, t) * a_tangent.w);
+
+          vs_tbn = mat3x3f(t, b, n);
+        #endif
 
           rx_position   = u_transform * position;
         }
@@ -60,7 +70,8 @@
       inputs: [
         { name: "vs_normal",       type: "vec3f" },
         { name: "vs_tangent",      type: "vec4f" },
-        { name: "vs_coordinate",   type: "vec2f" }
+        { name: "vs_coordinate",   type: "vec2f" },
+        { name: "vs_tbn",          type: "mat3x3f", when: "HAS_NORMAL" }
       ],
       outputs: [
         { name: "fs_albedo",       type: "vec4f" },
@@ -69,16 +80,15 @@
       ],
       source: "
         void main() {
-          // calculate normal
-          vec3f normal = vs_normal;
         #if defined(HAS_NORMAL)
-          // tangent space normal map texture
-          vec3f bitangent = cross(normal, vs_tangent.xyz) * vs_tangent.w;
-          vec3f mapnormal = rx_texture2D(u_normal, vs_coordinate).rgb * 2.0 - 1.0;
-          mat3x3f tbn = mat3x3f(vs_tangent.xyz, bitangent, normal);
-          normal = normalize(tbn * mapnormal);
+          // Fetch normal from normal map texture and transform to range [-1, 1]
+          vec3f normal_map = normalize(rx_texture2D(u_normal, vs_coordinate).rgb * 2.0 - 1.0);
+
+          // Transform normal map with TBN matrix to get final normal.
+          vec3f normal = normalize(vs_tbn * normal_map);
+        #else
+          vec3f normal = normalize(vs_normal);
         #endif
-          normal = normalize(normal);
 
           // calculate metalness value
           float metalness = 0;

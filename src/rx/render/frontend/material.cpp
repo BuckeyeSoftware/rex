@@ -51,7 +51,35 @@ bool material::load(rx::material::loader&& _loader) {
   m_name = utility::move(_loader.name());
   m_alpha_test = _loader.alpha_test();
 
-  return _loader.textures().each_fwd([this](rx::material::texture& _texture) {
+  // Simple table to map type strings to texture2D destinations in this object.
+  struct {
+    texture2D** texture;
+    const char* match;
+  } table[] {
+    { &m_diffuse,    "diffuse"   },
+    { &m_normal,     "normal"    },
+    { &m_metalness,  "metalness" },
+    { &m_roughness,  "roughness" }
+  };
+
+  return _loader.textures().each_fwd([this, &table](rx::material::texture& _texture) {
+    const auto& type{_texture.type()};
+
+    // Search for the texture in the table.
+    texture2D** destination{nullptr};
+    for (const auto& item : table) {
+      if (item.match == type) {
+        destination = item.texture;
+        break;
+      }
+    }
+
+    // The texture destination could not be found or we already have a texture
+    // constructed in that place.
+    if (!destination || *destination) {
+      return false;
+    }
+
     rx::texture::chain&& chain{utility::move(_texture.chain())};
     const auto& filter{_texture.filter()};
     const auto& wrap{_texture.wrap()};
@@ -89,18 +117,9 @@ bool material::load(rx::material::loader&& _loader) {
 
     m_frontend->initialize_texture(RX_RENDER_TAG("material"), texture);
 
-    // TODO(dweiler): smarter mapping that also allows custom types
-    const auto& type{_texture.type()};
-    if (type == "diffuse") {
-      m_diffuse = texture;
-    } else if (type == "normal") {
-      m_normal = texture;
-    } else if (type == "metalness") {
-      m_metalness = texture;
-    } else if (type == "roughness") {
-      m_roughness = texture;
-    }
-  
+    // Store it.
+    *destination = texture;
+
     return true;
   });
 }

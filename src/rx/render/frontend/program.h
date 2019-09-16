@@ -105,6 +105,8 @@ struct shader {
   };
 
   enum class inout_type {
+    k_mat4x4f,
+    k_mat3x3f,
     k_vec2i,
     k_vec3i,
     k_vec4i,

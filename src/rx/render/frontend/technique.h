@@ -70,6 +70,7 @@ private:
     string name;
     string when;
     variant value;
+    bool has_value;
   };
 
   struct shader_definition {
