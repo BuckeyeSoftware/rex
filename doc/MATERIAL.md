@@ -17,11 +17,12 @@ The top level schema of a material looks like:
 `#Texture` schema looks like:
 ```
 {
-  file:    required String
-  type:    required #TextureType
-  filter:  required #Filter
-  wrap:    required Array[#Wrap]
-  mipmaps: optional Boolean
+  file:       required String
+  type:       required #TextureType
+  filter:     required #Filter
+  wrap:       required Array[#Wrap]
+  mipmaps:    optional Boolean
+  alpha_test: optional Boolean
 }
 ```
 
