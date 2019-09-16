@@ -53,6 +53,7 @@ static void (GLAPIENTRYP pglGenFramebuffers)(GLsizei, GLuint*);
 static void (GLAPIENTRYP pglDeleteFramebuffers)(GLsizei, const GLuint*);
 static void (GLAPIENTRYP pglFramebufferTexture2D)(GLenum, GLenum, GLenum, GLuint, GLint);
 static void (GLAPIENTRYP pglBindFramebuffer)(GLenum, GLuint);
+static void (GLAPIENTRYP pglDrawBuffers)(GLsizei, const GLenum*);
 static void (GLAPIENTRYP pglDrawBuffer)(GLenum);
 static void (GLAPIENTRYP pglReadBuffer)(GLenum);
 static void (GLAPIENTRYP pglBlitFramebuffer)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum);
@@ -224,10 +225,14 @@ namespace detail_gl3 {
   {
     state()
       : m_color_mask{0xff}
+      , m_bound_vbo{0}
+      , m_bound_ebo{0}
       , m_bound_vao{0}
       , m_bound_draw_fbo{0}
       , m_bound_read_fbo{0}
       , m_bound_program{0}
+      , m_swap_chain_fbo{0}
+      , m_active_texture{0}
     {
       pglEnable(GL_CULL_FACE);
       pglCullFace(GL_BACK);
@@ -266,7 +271,8 @@ namespace detail_gl3 {
       const auto& cull{_render_state->cull};
       const auto& stencil{_render_state->stencil};
       const auto& polygon{_render_state->polygon};
-      const auto& this_depth{_render_state->depth};
+      const auto& depth{_render_state->depth};
+      const auto& viewport{_render_state->viewport};
 
       if (this->scissor != scissor) {
         const auto enabled{scissor.enabled()};
@@ -331,9 +337,9 @@ namespace detail_gl3 {
         }
       }
 
-      if (this->depth != this_depth) {
-        const auto test{this_depth.test()};
-        const auto write{this_depth.write()};
+      if (this->depth != depth) {
+        const auto test{depth.test()};
+        const auto write{depth.write()};
 
         if (this->depth.test() != test) {
           use_enable(GL_DEPTH_TEST, test);
@@ -487,12 +493,24 @@ namespace detail_gl3 {
           pglBindFramebuffer(GL_READ_FRAMEBUFFER, this_target->fbo);
           m_bound_read_fbo = this_target->fbo;
         }
-      } else if (_draw && m_bound_draw_fbo != this_target->fbo) {
-        pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, this_target->fbo);
-        m_bound_draw_fbo = this_target->fbo;
-      } else if (_read && m_bound_read_fbo != this_target->fbo) {
-        pglBindFramebuffer(GL_READ_FRAMEBUFFER, this_target->fbo);
-        m_bound_read_fbo = this_target->fbo;
+      } else if (_draw) {
+        if (m_bound_read_fbo == this_target->fbo) {
+          pglBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+          m_bound_read_fbo = 0;
+        }
+        if (m_bound_draw_fbo != this_target->fbo) {
+          pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, this_target->fbo);
+          m_bound_draw_fbo = this_target->fbo;
+        }
+      } else if (_read) {
+        if (m_bound_draw_fbo == this_target->fbo) {
+          pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+          m_bound_draw_fbo = 0;
+        }
+        if (m_bound_read_fbo != this_target->fbo) {
+          pglBindFramebuffer(GL_READ_FRAMEBUFFER, this_target->fbo);
+          m_bound_read_fbo = this_target->fbo;
+        }
       }
     }
 
@@ -850,6 +868,7 @@ gl3::gl3(memory::allocator* _allocator, void* _data)
   fetch("glDeleteFramebuffers", pglDeleteFramebuffers);
   fetch("glFramebufferTexture2D", pglFramebufferTexture2D);
   fetch("glBindFramebuffer", pglBindFramebuffer);
+  fetch("glDrawBuffers", pglDrawBuffers);
   fetch("glDrawBuffer", pglDrawBuffer);
   fetch("glReadBuffer", pglReadBuffer);
   fetch("glBlitFramebuffer", pglBlitFramebuffer);
@@ -1092,7 +1111,7 @@ void gl3::process(rx_byte* _command) {
             pglFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture->tex, 0);
             draw_buffers[i] = attachment;
           }
-          // TODO(dweiler): draw buffers
+          pglDrawBuffers(draw_buffers.size(), draw_buffers.data());
         }
         break;
       case frontend::resource_command::type::k_program:

@@ -250,6 +250,7 @@ namespace detail_gl4 {
       , m_bound_vao{0}
       , m_bound_fbo{0}
       , m_bound_program{0}
+      , m_swap_chain_fbo{0}
     {
       pglEnable(GL_CULL_FACE);
       pglCullFace(GL_BACK);

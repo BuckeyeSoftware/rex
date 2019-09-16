@@ -4,8 +4,7 @@
 
 namespace rx::input {
 
-controller_device::controller_device()
-{
+controller_device::controller_device() {
   memset(m_buttons, 0, sizeof m_buttons);
   memset(m_axis_values, 0, sizeof m_axis_values);
 }

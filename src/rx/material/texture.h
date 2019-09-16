@@ -46,7 +46,7 @@ struct texture
 
 private:
   bool parse_type(const json& _type);
-  bool parse_filter(const json& _filter, bool _mipmaps);
+  bool parse_filter(const json& _filter, bool& _mipmaps);
   bool parse_wrap(const json& _wrap);
 
   template<typename... Ts>

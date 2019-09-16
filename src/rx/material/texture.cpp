@@ -59,7 +59,8 @@ bool texture::parse(const json& _definition) {
     return error("expected Boolean for 'mipmaps'");
   }
 
-  if (!parse_filter(filter, mipmaps.as_boolean())) {
+  bool has_mipmaps{mipmaps ? mipmaps.as_boolean() : false};
+  if (!parse_filter(filter, has_mipmaps)) {
     return false;
   }
 
@@ -72,7 +73,7 @@ bool texture::parse(const json& _definition) {
     return false;
   }
 
-  m_chain.generate(utility::move(loader), false, mipmaps.as_boolean());
+  m_chain.generate(utility::move(loader), false, has_mipmaps);
 
   return true;
 }
@@ -99,7 +100,7 @@ bool texture::parse_type(const json& _type) {
   return error("unknown type '%s'", _type.as_string());
 }
 
-bool texture::parse_filter(const json& _filter, bool _mipmaps) {
+bool texture::parse_filter(const json& _filter, bool& _mipmaps) {
   if (!_filter.is_string()) {
     return error("expected String");
   }
@@ -120,6 +121,8 @@ bool texture::parse_filter(const json& _filter, bool _mipmaps) {
       m_filter.trilinear = trilinear;
       m_filter.bilinear = bilinear;
       m_filter.mipmaps = mipmaps;
+
+      _mipmaps = mipmaps;
 
       return true;
     }
