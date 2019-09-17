@@ -83,7 +83,10 @@ bool loader::parse(const json& _definition) {
   materials.each([&](const json& _material) {
     pool.add([&, _material](int) {
       material::loader loader{m_allocator};
-      if (loader.parse(_material)) {
+      if (_material.is_string() && loader.load(_material.as_string())) {
+        concurrency::scope_lock lock{mutex};
+        m_materials.insert(loader.name(), utility::move(loader));
+      } else if (_material.is_object() && loader.parse(_material)) {
         concurrency::scope_lock lock{mutex};
         m_materials.insert(loader.name(), utility::move(loader));
       }

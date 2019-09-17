@@ -1,8 +1,8 @@
 # Models
 
-Models in Rex are described with a JSON5 file
+Models in Rex are described with JSON5.
 
-Every model must define properties through a JSON5 file
+Every model must define properties through JSON5.
 
 Information on how to read this schema is described [here](JSON5.md)
 
@@ -33,7 +33,7 @@ The `#ModelTransform` is used to transform all vertices in the model on load.
 > Rex uses a +Y up coordinate system where +X goes right.
 
 `#ModelMaterial` is either a:
-  * `String` path to a JSON5 containing a `#Material` or,
+  * `String` path to a JSON5 file containing a `#Material` or,
   * `#Material`
 
 Information on `#Material` is described [here](MATERIAL.md)

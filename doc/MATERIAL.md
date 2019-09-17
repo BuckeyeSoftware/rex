@@ -10,42 +10,17 @@ The top level schema of a material looks like:
 ```
 {
   name:       required String
-  textures:   required Array[#Texture]
-  alpha_test: optional Boolean
+  textures:   required Array[#MaterialTexture]
   transform:  optional #MaterialTransform
+  alpha_test: optional Boolean
 }
 ```
 
-`#Texture` schema looks like:
-```
-{
-  file:       required String
-  type:       required #TextureType
-  filter:     required #Filter
-  wrap:       required Array[#Wrap]
-  mipmaps:    optional Boolean
-}
-```
+`#MaterialTexture` is either a:
+  * `String` path to a JSON5 file containing a `#Texture` or,
+  * `#Texture`
 
-`#TextureType` is a `String` that is one of:
-  * `"albedo"`
-  * `"normal"`
-  * `"metalness"`
-  * `"roughness"`
-
-`#Filter` is a `String` that is one of:
-  * `"nearest"`
-  * `"bilinear"`
-  * `"trilinear"`
-
-When filter is `"trilinear"` `#Texture.mipmaps` is always treated as `true`
-
-`#Wrap` is a `String` that is one of:
-  * `"clamp_to_edge"`
-  * `"clamp_to_border"`
-  * `"mirrored_repeat"`
-  * `"repeat"`
-  * `"mirror_clamp_to_edge"`
+Information on `#Texture` is described [here](TEXTURE.md)
 
 `#MaterialTransform` schema looks like:
 ```
