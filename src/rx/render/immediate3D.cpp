@@ -358,7 +358,7 @@ void immediate3D::generate_point(const math::vec3f& _position, rx_f32 _size,
   add_element(element);
   add_vertex({_position, _size, _color});
 
-  add_batch(offset, queue::command::type::k_point, _flags);
+  add_batch(offset, queue::command::type::k_point, _flags, _color.a < 1.0f);
 }
 
 void immediate3D::generate_line(const math::vec3f& _point_a,
@@ -373,7 +373,7 @@ void immediate3D::generate_line(const math::vec3f& _point_a,
   add_vertex({_point_a, 0.0f, _color});
   add_vertex({_point_b, 0.0f, _color});
 
-  add_batch(offset, queue::command::type::k_line, _flags);
+  add_batch(offset, queue::command::type::k_line, _flags, _color.a < 1.0f);
 }
 
 void immediate3D::generate_solid_sphere(const math::vec2f& _slices_and_stacks,
@@ -420,7 +420,7 @@ void immediate3D::generate_solid_sphere(const math::vec2f& _slices_and_stacks,
     }
   }
 
-  return add_batch(offset, queue::command::type::k_solid_sphere, _flags);
+  return add_batch(offset, queue::command::type::k_solid_sphere, _flags, _color.a < 1.0f);
 }
 
 void immediate3D::generate_solid_cube(const math::mat4x4f& _transform,
@@ -492,7 +492,7 @@ void immediate3D::generate_solid_cube(const math::mat4x4f& _transform,
   const math::vec3f r4{math::mat4x4f::transform_point({max[0], min[1], max[2]}, _transform)};
   face(r1, r2, r3, r4);
 
-  add_batch(offset, queue::command::type::k_solid_cube, _flags);
+  add_batch(offset, queue::command::type::k_solid_cube, _flags, _color.a < 1.0f);
 }
 
 void immediate3D::size_point(rx_size& n_vertices_, rx_size& n_elements_) {
@@ -518,19 +518,20 @@ void immediate3D::size_solid_cube(rx_size& n_vertices_, rx_size& n_elements_) {
 }
 
 void immediate3D::add_batch(rx_size _offset, queue::command::type _type,
-  rx_u32 _flags)
+  rx_u32 _flags, bool _blend)
 {
   const rx_size count{m_element_index - _offset};
 
   frontend::state render_state;
 
-  // disable blending
-  render_state.blend.record_enable(true);
-
-  // alpha blending
-  render_state.blend.record_blend_factors(
-    frontend::blend_state::factor_type::k_src_alpha,
-    frontend::blend_state::factor_type::k_one_minus_src_alpha);
+  if (_blend) {
+    render_state.blend.record_enable(true);
+    render_state.blend.record_blend_factors(
+      frontend::blend_state::factor_type::k_src_alpha,
+      frontend::blend_state::factor_type::k_one_minus_src_alpha);
+  } else {
+    render_state.blend.record_enable(false);
+  }
 
   // determing depth state from flags
   render_state.depth.record_test(!!(_flags & k_depth_test));

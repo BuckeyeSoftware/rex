@@ -149,7 +149,8 @@ private:
     rx_size& n_vertices_, rx_size& n_elements_);
   void size_solid_cube(rx_size& n_vertices_, rx_size& n_elements_);
 
-  void add_batch(rx_size _offset, queue::command::type _type, rx_u32 _flags);
+  void add_batch(rx_size _offset, queue::command::type _type, rx_u32 _flags,
+    bool _blend);
 
   void add_element(rx_u32 _element);
   void add_vertex(vertex&& _vertex);

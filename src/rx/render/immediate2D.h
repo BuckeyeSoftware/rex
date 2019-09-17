@@ -221,7 +221,7 @@ private:
   void size_text(const char* _contents, rx_size _contents_length,
     rx_size& n_vertices_, rx_size& n_elements_);
 
-  void add_batch(rx_size _offset, batch::type _type,
+  void add_batch(rx_size _offset, batch::type _type, bool _blend,
     frontend::texture2D* _texture = nullptr);
 
   void add_element(rx_u32 _element);

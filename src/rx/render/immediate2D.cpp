@@ -606,7 +606,7 @@ void immediate2D::generate_polygon(const math::vec2f (&_coordinates)[E],
     add_vertex({_coordinates[i], {}, _color});
   }
 
-  add_batch(offset, batch::type::k_triangles);
+  add_batch(offset, batch::type::k_triangles, _color.a < 1.0f);
 }
 
 void immediate2D::generate_rectangle(const math::vec2f& _position, const math::vec2f& _size,
@@ -680,7 +680,7 @@ void immediate2D::generate_line(const math::vec2f& _point_a,
     add_vertex({_point_a, {}, _color});
     add_vertex({_point_b, {}, _color});
 
-    add_batch(offset, batch::type::k_lines);
+    add_batch(offset, batch::type::k_lines, _color.a < 1.0f);
   }
 }
 
@@ -825,7 +825,7 @@ void immediate2D::generate_text(rx_s32 _size, const char* _font,
     add_vertex({{quad.position[0].x, quad.position[1].y}, {quad.coordinate[0].s, quad.coordinate[1].t}, color});
   }
 
-  add_batch(offset, batch::type::k_text, font_map->texture());
+  add_batch(offset, batch::type::k_text, _color.a < 1.0f, font_map->texture());
 }
 
 template<rx_size E>
@@ -872,17 +872,22 @@ void immediate2D::size_text(const char* _contents, rx_size _contents_length,
 }
 
 
-void immediate2D::add_batch(rx_size _offset, batch::type _type,
+void immediate2D::add_batch(rx_size _offset, batch::type _type, bool _blend,
   frontend::texture2D* _texture)
 {
   const rx_size count{m_element_index - _offset};
 
   frontend::state render_state;
-  render_state.blend.record_enable(true);
-  render_state.blend.record_blend_factors(
-    frontend::blend_state::factor_type::k_src_alpha,
-    frontend::blend_state::factor_type::k_one_minus_src_alpha);
-  
+
+  if (_blend) {
+    render_state.blend.record_enable(true);
+    render_state.blend.record_blend_factors(
+      frontend::blend_state::factor_type::k_src_alpha,
+      frontend::blend_state::factor_type::k_one_minus_src_alpha);
+  } else {
+    render_state.blend.record_enable(false);
+  }
+
   render_state.depth.record_test(false);
   render_state.depth.record_write(false);
 
