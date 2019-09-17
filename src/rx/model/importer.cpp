@@ -18,6 +18,7 @@ namespace rx::model {
 
 importer::importer(memory::allocator* _allocator)
   : m_allocator{_allocator}
+  , m_meshes{m_allocator}
   , m_elements{m_allocator}
   , m_positions{m_allocator}
   , m_coordinates{m_allocator}

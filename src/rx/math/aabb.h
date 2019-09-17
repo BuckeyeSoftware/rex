@@ -43,7 +43,6 @@ inline const vec3f& aabb::max() const & {
   return m_max;
 }
 
-
 inline vec3f aabb::origin() const {
   return (m_min + m_max) * 0.5f;
 }
