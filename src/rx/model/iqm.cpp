@@ -283,7 +283,7 @@ bool iqm::read_meshes(const header& _header, const vector<rx_byte>& _data) {
   for (rx_u32 i{0}; i < _header.meshes; i++) {
     const auto& this_mesh{meshes[i]};
     const char* material_name{string_table + this_mesh.material};
-    m_meshes.push_back({this_mesh.first_triangle * 3, this_mesh.num_triangles * 3, material_name});
+    m_meshes.push_back({this_mesh.first_triangle * 3, this_mesh.num_triangles * 3, material_name, {}});
   }
 
   m_elements.resize(_header.triangles * 3);

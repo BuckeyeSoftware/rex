@@ -1,7 +1,9 @@
 #ifndef RX_RENDER_MODEL_H
 #define RX_RENDER_MODEL_H
 #include "rx/render/frontend/material.h"
+
 #include "rx/math/mat4x4.h"
+#include "rx/math/aabb.h"
 
 namespace rx::render {
 
@@ -16,6 +18,13 @@ struct model {
   model(frontend::interface* _frontend);
   ~model();
 
+ struct mesh {
+    rx_size offset;
+    rx_size count;
+    rx_size material;
+    math::aabb bounds;
+  };
+
   void render(frontend::target* _target, const math::mat4x4f& _model,
     const math::mat4x4f& _view, const math::mat4x4f& _projection);
   
@@ -26,13 +35,6 @@ private:
   frontend::technique* m_technique;
   frontend::buffer* m_buffer;
   vector<frontend::material> m_materials;
-
-  struct mesh {
-    rx_size offset;
-    rx_size count;
-    rx_size material;
-  };
-
   vector<mesh> m_meshes;
 };
 

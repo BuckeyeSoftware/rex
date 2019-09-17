@@ -74,7 +74,7 @@ bool model::load(const string& _file_name) {
   // Resolve all the meshes of the loaded model.
   model.meshes().each_fwd([this, &material_indices](const rx::model::mesh& _mesh) {
     if (auto* find = material_indices.find(_mesh.material)) {
-      m_meshes.push_back({_mesh.offset, _mesh.count, *find});
+      m_meshes.push_back({_mesh.offset, _mesh.count, *find, _mesh.bounds});
     }
   });
 

@@ -79,7 +79,7 @@ private:
   vector<importer::joint> m_joints;
   vector<math::mat3x4f> m_frames;
   string m_name;
-  math::transform m_transform;
+  optional<math::transform> m_transform;
   map<string, material::loader> m_materials;
   int m_flags;
 };

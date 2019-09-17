@@ -103,29 +103,36 @@ bool importer::load(const string& _file_name) {
   struct batch {
     rx_size offset;
     rx_size count;
+    math::aabb bounds;
   };
 
   map<string, vector<batch>> batches{m_allocator};
   m_meshes.each_fwd([&](const mesh& _mesh) {
+    math::aabb bounds;
+    for (rx_size i{0}; i < _mesh.count; i++) {
+      bounds.expand(m_positions[m_elements[_mesh.offset + i]]);
+    }
     if (auto* find{batches.find(_mesh.material)}) {
-      find->push_back({_mesh.offset, _mesh.count});
+      find->push_back({_mesh.offset, _mesh.count, bounds});
     } else {
-      batches.insert(_mesh.material, {m_allocator, 1, batch{_mesh.offset, _mesh.count}});
+      batches.insert(_mesh.material, {m_allocator, 1, batch{_mesh.offset, _mesh.count, bounds}});
     }
   });
 
   vector<mesh> optimized_meshes{m_allocator};
   vector<rx_u32> optimized_elements{m_allocator};
   batches.each([&](rx_size, const string& _material_name, const vector<batch>& _batches) {
+    math::aabb bounds;
     const rx_size elements{optimized_elements.size()};
     _batches.each_fwd([&](const batch& _batch) {
       const rx_size count{optimized_elements.size()};
       optimized_elements.resize(count + _batch.count);
       memcpy(optimized_elements.data() + count,
         m_elements.data() + _batch.offset, sizeof(rx_u32) * _batch.count);
+      bounds.expand(_batch.bounds);
     });
     const rx_size count{optimized_elements.size() - elements};
-    optimized_meshes.push_back({elements, count, _material_name});
+    optimized_meshes.push_back({elements, count, _material_name, bounds});
   });
 
   if (optimized_meshes.size() < m_meshes.size()) {

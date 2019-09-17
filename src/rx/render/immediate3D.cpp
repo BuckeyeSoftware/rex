@@ -525,7 +525,7 @@ void immediate3D::add_batch(rx_size _offset, queue::command::type _type,
   frontend::state render_state;
 
   // disable blending
-  render_state.blend.record_enable(false);
+  render_state.blend.record_enable(true);
 
   // alpha blending
   render_state.blend.record_blend_factors(

@@ -123,37 +123,57 @@ bool loader::import(const string& _file_name) {
     const auto& coordinates{new_loader->coordinates()};
     const auto vertices{static_cast<rx_size>(positions.size())};
 
-    const math::mat4x4f& transform{m_transform.to_mat4()};
-    if (animations.is_empty()) {
-      utility::construct<vector<vertex>>(&as_vertices, m_allocator, vertices);
-      m_flags |= k_constructed;
+    // Hoist the transform check outside the for loops for faster model loading.
+    if (m_transform) {
+      const auto transform{m_transform->to_mat4()};
+      if (animations.is_empty()) {
+        utility::construct<vector<vertex>>(&as_vertices, m_allocator, vertices);
+        m_flags |= k_constructed;
 
-      for (rx_size i{0}; i < vertices; i++) {
-        as_vertices[i].position = math::mat4x4f::transform_point(positions[i], transform);
-        as_vertices[i].normal = math::mat4x4f::transform_vector(normals[i], transform);
+        for (rx_size i{0}; i < vertices; i++) {
+          const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
+          as_vertices[i].position = math::mat4x4f::transform_point(positions[i], transform);
+          as_vertices[i].normal = math::mat4x4f::transform_vector(normals[i], transform);
+          as_vertices[i].tangent = {tangent.x, tangent.w, tangent.z, tangents[i].w};
+          as_vertices[i].coordinate = coordinates[i];
+        }
+      } else {
+        utility::construct<vector<animated_vertex>>(&as_animated_vertices, m_allocator, vertices);
+        m_flags |= k_constructed;
+        m_flags |= k_animated;
 
-        const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
-        as_vertices[i].tangent = {tangent.x, tangent.w, tangent.z, tangents[i].w};
-        as_vertices[i].coordinate = coordinates[i];
+        const auto& blend_weights{new_loader->blend_weights()};
+        const auto& blend_indices{new_loader->blend_indices()};
+        for (rx_size i{0}; i < vertices; i++) {
+          const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
+          as_animated_vertices[i].position = math::mat4x4f::transform_point(positions[i], transform);
+          as_animated_vertices[i].normal = math::mat4x4f::transform_vector(normals[i], transform);
+          as_animated_vertices[i].tangent = {tangent.x, tangent.w, tangent.z, tangents[i].w};
+          as_animated_vertices[i].coordinate = coordinates[i];
+          as_animated_vertices[i].blend_weights = blend_weights[i];
+          as_animated_vertices[i].blend_indices = blend_indices[i];
+        }
       }
     } else {
-      const auto& blend_weights{new_loader->blend_weights()};
-      const auto& blend_indices{new_loader->blend_indices()};
-
-      utility::construct<vector<animated_vertex>>(&as_animated_vertices, m_allocator, vertices);
-      m_flags |= k_constructed;
-
-      for (rx_size i{0}; i < vertices; i++) {
-        as_animated_vertices[i].position = math::mat4x4f::transform_point(positions[i], transform);
-        as_animated_vertices[i].normal = math::mat4x4f::transform_vector(normals[i], transform);
-
-        const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
-        as_animated_vertices[i].tangent = {tangent.x, tangent.w, tangent.z, tangents[i].w};
-        as_animated_vertices[i].coordinate = coordinates[i];
-        as_animated_vertices[i].blend_weights = blend_weights[i];
-        as_animated_vertices[i].blend_indices = blend_indices[i];
+      if (animations.is_empty()) {
+        for (rx_size i{0}; i < vertices; i++) {
+          as_vertices[i].position = positions[i];
+          as_vertices[i].normal = normals[i];
+          as_vertices[i].tangent = tangents[i];
+          as_vertices[i].coordinate = coordinates[i];
+        }
+      } else {
+        const auto& blend_weights{new_loader->blend_weights()};
+        const auto& blend_indices{new_loader->blend_indices()};
+        for (rx_size i{0}; i < vertices; i++) {
+          as_animated_vertices[i].position =positions[i];
+          as_animated_vertices[i].normal = normals[i];
+          as_animated_vertices[i].tangent = tangents[i];
+          as_animated_vertices[i].coordinate = coordinates[i];
+          as_animated_vertices[i].blend_weights = blend_weights[i];
+          as_animated_vertices[i].blend_indices = blend_indices[i];
+        }
       }
-      m_flags |= k_animated;
     }
 
     m_meshes = utility::move(new_loader->meshes());
@@ -161,6 +181,21 @@ bool loader::import(const string& _file_name) {
     m_animations = utility::move(new_loader->animations());
     m_frames = utility::move(new_loader->frames());
     m_joints = utility::move(new_loader->joints());
+
+    // Bounds need to be recalculated if there was a transform
+    if (m_transform) {
+      m_meshes.each_fwd([&](mesh& _mesh) {
+        math::aabb bounds;
+        for (rx_size i{0}; i < _mesh.count; i++) {
+          if (animations.is_empty()) {
+            bounds.expand(as_vertices[m_elements[_mesh.offset + i]].position);
+          } else {
+            bounds.expand(as_animated_vertices[m_elements[_mesh.offset + i]].position);
+          }
+        }
+        _mesh.bounds = bounds;
+      });
+    }
   }
 
   m_allocator->destroy<importer>(new_loader);
@@ -182,18 +217,20 @@ bool loader::parse_transform(const json& _transform) {
     return true;
   }};
 
-  if (scale && !parse_vec3(scale, "scale", m_transform.scale)) {
+  math::transform transform;
+  if (scale && !parse_vec3(scale, "scale", transform.scale)) {
     return false;
   }
 
-  if (rotate && !parse_vec3(rotate, "rotate", m_transform.rotate)) {
+  if (rotate && !parse_vec3(rotate, "rotate", transform.rotate)) {
     return false;
   }
 
-  if (translate && !parse_vec3(translate, "translate", m_transform.translate)) {
+  if (translate && !parse_vec3(translate, "translate", transform.translate)) {
     return false;
   }
 
+  m_transform = transform;
   return true;
 }
 

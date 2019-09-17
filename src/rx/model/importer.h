@@ -6,6 +6,7 @@
 
 #include "rx/math/vec2.h"
 #include "rx/math/vec3.h"
+#include "rx/math/aabb.h"
 #include "rx/math/mat3x4.h"
 
 namespace rx::model {
@@ -14,6 +15,7 @@ struct mesh {
   rx_size offset;
   rx_size count;
   string material;
+  math::aabb bounds;
 };
 
 struct importer

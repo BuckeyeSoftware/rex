@@ -430,6 +430,7 @@ int entry(int argc, char **argv) {
 
       skybox.render(gbuffer.target(), camera.view(), camera.projection);
       model.render(gbuffer.target(),  model_xform.to_mat4(), camera.view(), camera.projection);
+
       immediate3D.render(gbuffer.target(), camera.view(), camera.projection);
 
       state.viewport.record_dimensions(display_resolution->get().cast<rx_size>());
