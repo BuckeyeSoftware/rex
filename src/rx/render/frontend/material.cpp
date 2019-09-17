@@ -98,11 +98,11 @@ bool material::load(rx::material::loader&& _loader) {
       texture->record_format(texture::data_format::k_bgra_u8);
       break;
     case rx::texture::chain::pixel_format::k_rgb_u8:
-      // TODO(dweiler): convert the texture chain to RGBA
-      return false;
+      texture->record_format(texture::data_format::k_rgb_u8);
+      break;
     case rx::texture::chain::pixel_format::k_bgr_u8:
-      // TODO(dweiler): convert the texture chain to BGRA
-      return false;
+      texture->record_format(texture::data_format::k_bgr_u8);
+      break;
     case rx::texture::chain::pixel_format::k_r_u8:
       texture->record_format(texture::data_format::k_r_u8);
       break;

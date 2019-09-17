@@ -18,6 +18,7 @@ struct loader {
   rx_size channels() const;
   const math::vec2z& dimensions() const &;
   vector<rx_byte>&& data();
+  bool has_alpha() const;
 
 private:
   memory::allocator* m_allocator;
@@ -25,6 +26,7 @@ private:
   rx_size m_bpp;
   rx_size m_channels;
   math::vec2z m_dimensions;
+  bool m_has_alpha;
 };
 
 inline constexpr loader::loader()
@@ -38,6 +40,7 @@ inline constexpr loader::loader(memory::allocator* _allocator)
   , m_bpp{0}
   , m_channels{0}
   , m_dimensions{}
+  , m_has_alpha{false}
 {
 }
 

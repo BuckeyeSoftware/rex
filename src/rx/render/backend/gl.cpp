@@ -102,8 +102,12 @@ GLenum convert_texture_data_format(frontend::texture::data_format _data_format) 
   switch (_data_format) {
   case frontend::texture::data_format::k_rgba_u8:
     return GL_RGBA8;
+  case frontend::texture::data_format::k_rgb_u8:
+    return GL_RGB8;
   case frontend::texture::data_format::k_bgra_u8:
     return GL_RGBA8; // not a bug
+  case frontend::texture::data_format::k_bgr_u8:
+    return GL_RGB8; // not a bug
   case frontend::texture::data_format::k_rgba_f16:
     return GL_RGBA16F;
   case frontend::texture::data_format::k_bgra_f16:
@@ -158,8 +162,12 @@ GLenum convert_texture_format(frontend::texture::data_format _data_format) {
   switch (_data_format) {
   case frontend::texture::data_format::k_rgba_u8:
     return GL_RGBA;
+  case frontend::texture::data_format::k_rgb_u8:
+    return GL_RGB;
   case frontend::texture::data_format::k_bgra_u8:
     return GL_BGRA;
+  case frontend::texture::data_format::k_bgr_u8:
+    return GL_BGR;
   case frontend::texture::data_format::k_rgba_f16:
     return GL_RGBA;
   case frontend::texture::data_format::k_bgra_f16:
