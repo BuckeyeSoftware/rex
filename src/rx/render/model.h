@@ -35,7 +35,8 @@ private:
   frontend::technique* m_technique;
   frontend::buffer* m_buffer;
   vector<frontend::material> m_materials;
-  vector<mesh> m_meshes;
+  vector<mesh> m_opaque_meshes;
+  vector<mesh> m_transparent_meshes;
 };
 
 } // namespace rx::render

@@ -30,6 +30,7 @@ struct loader
   vector<texture>&& textures();
   string&& name();
   bool alpha_test() const;
+  bool has_alpha() const;
   const math::transform& transform() const &;
 
 private:
@@ -41,10 +42,13 @@ private:
 
   void write_log(log::level _level, string&& _message) const;
 
+  bool parse_textures(const json& _textures);
+
   memory::allocator* m_allocator;
   vector<texture> m_textures;
   string m_name;
   bool m_alpha_test;
+  bool m_has_alpha;
   math::transform m_transform;
 };
 
@@ -62,6 +66,10 @@ inline string&& loader::name() {
 
 inline bool loader::alpha_test() const {
   return m_alpha_test;
+}
+
+inline bool loader::has_alpha() const {
+  return m_has_alpha;
 }
 
 inline const math::transform& loader::transform() const & {

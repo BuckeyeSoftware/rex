@@ -12,6 +12,7 @@ loader::loader(memory::allocator* _allocator)
   , m_textures{_allocator}
   , m_name{_allocator}
   , m_alpha_test{false}
+  , m_has_alpha{false}
 {
 }
 
@@ -20,9 +21,11 @@ loader::loader(loader&& _loader)
   , m_textures{utility::move(_loader.m_textures)}
   , m_name{utility::move(_loader.m_name)}
   , m_alpha_test{_loader.m_alpha_test}
+  , m_has_alpha{_loader.m_has_alpha}
 {
   _loader.m_allocator = nullptr;
   _loader.m_alpha_test = false;
+  _loader.m_has_alpha = false;
 }
 
 void loader::operator=(loader&& _loader) {
@@ -30,9 +33,11 @@ void loader::operator=(loader&& _loader) {
   m_textures = utility::move(_loader.m_textures);
   m_name = utility::move(_loader.m_name);
   m_alpha_test = _loader.m_alpha_test;
+  m_has_alpha = _loader.m_has_alpha;
 
   _loader.m_allocator = nullptr;
   _loader.m_alpha_test = false;
+  _loader.m_has_alpha = false;
 }
 
 bool loader::load(const string& _file_name) {
@@ -110,11 +115,39 @@ bool loader::parse(const json& _definition) {
   }
 
   m_textures.reserve(textures.size());
-  return textures.each([this](const json& _texture) {
-    texture new_texture{m_allocator};
-    if (new_texture.parse(_texture)) {
-      m_textures.push_back(utility::move(new_texture));
+  if (!parse_textures(textures)) {
+    return false;
+  }
+
+  // Determine if the diffuse texture has an alpha channel.
+  m_textures.each_fwd([this](const texture& _texture) {
+    if (_texture.type() != "diffuse") {
+      return true;
     }
+
+    if (_texture.chain().bpp() == 4) {
+      m_has_alpha = true;
+    } else if (m_alpha_test) {
+      logger(log::level::k_warning, "'alpha_test' disabled (\"diffuse\" has no alpha channel)");
+      m_alpha_test = false;
+    }
+    return false;
+  });
+
+  return true;
+}
+
+bool loader::parse_textures(const json& _textures) {
+  return _textures.each([this](const json& _texture) {
+    texture new_texture{m_allocator};
+    if (_texture.is_string() && new_texture.load(_texture.as_string())) {
+      m_textures.push_back(utility::move(new_texture));
+    } else if (_texture.is_object() && new_texture.parse(_texture)) {
+      m_textures.push_back(utility::move(new_texture));
+    } else {
+      return false;;
+    }
+    return true;
   });
 }
 

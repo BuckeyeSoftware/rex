@@ -42,6 +42,7 @@ struct texture
   const wrap_options& wrap() const &;
   const string& type() const &;
 
+  const rx::texture::chain& chain() const;
   rx::texture::chain&& chain();
 
 private:
@@ -110,6 +111,10 @@ inline const texture::wrap_options& texture::wrap() const & {
 
 inline const string& texture::type() const & {
   return m_type;
+}
+
+inline const rx::texture::chain& texture::chain() const {
+  return m_chain;
 }
 
 inline rx::texture::chain&& texture::chain() {

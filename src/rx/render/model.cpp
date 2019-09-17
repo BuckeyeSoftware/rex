@@ -13,6 +13,9 @@ model::model(frontend::interface* _frontend)
   : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("geometry")}
   , m_buffer{nullptr}
+  , m_materials{m_frontend->allocator()}
+  , m_opaque_meshes{m_frontend->allocator()}
+  , m_transparent_meshes{m_frontend->allocator()}
 {
 }
 
@@ -74,7 +77,11 @@ bool model::load(const string& _file_name) {
   // Resolve all the meshes of the loaded model.
   model.meshes().each_fwd([this, &material_indices](const rx::model::mesh& _mesh) {
     if (auto* find = material_indices.find(_mesh.material)) {
-      m_meshes.push_back({_mesh.offset, _mesh.count, *find, _mesh.bounds});
+      if (m_materials[*find].has_alpha()) {
+        m_transparent_meshes.push_back({_mesh.offset, _mesh.count, *find, _mesh.bounds});
+      } else {
+        m_opaque_meshes.push_back({_mesh.offset, _mesh.count, *find, _mesh.bounds});
+      }
     }
   });
 
@@ -96,7 +103,7 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
 
   state.viewport.record_dimensions(_target->dimensions());
 
-  m_meshes.each_fwd([&](const mesh& _mesh) {
+  m_opaque_meshes.each_fwd([&](const mesh& _mesh) {
     const auto& material{m_materials[_mesh.material]};
 
     rx_u64 flags{0};

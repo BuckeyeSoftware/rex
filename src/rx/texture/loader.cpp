@@ -37,7 +37,6 @@ bool loader::load(const string& _file_name) {
 
   m_dimensions = dimensions.cast<rx_size>();
   m_channels = channels;
-  m_has_alpha = channels == 4;
   m_bpp = m_channels;
 
   m_data.resize(m_dimensions.area() * m_bpp);
@@ -46,7 +45,7 @@ bool loader::load(const string& _file_name) {
   stbi_image_free(decoded_image);
 
   // When there's an alpha channel but it encodes fully opaque, remove it.
-  if (m_has_alpha) {
+  if (channels == 4) {
     bool can_remove_alpha{true};
     for (int y{0}; y < dimensions.h; y++) {
       int scan_line_offset{dimensions.w * y};
@@ -78,7 +77,6 @@ bool loader::load(const string& _file_name) {
       m_channels = 3;
       m_bpp = 3;
       m_data = utility::move(data);
-      m_has_alpha = false;
       logger(log::level::k_info, "%s removed alpha channel (not used)", _file_name);
     }
   }

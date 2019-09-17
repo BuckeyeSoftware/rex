@@ -24,6 +24,7 @@ struct material
   bool load(rx::material::loader&& _loader);
 
   bool alpha_test() const;
+  bool has_alpha() const;
   const math::transform& transform() const &;
   const string& name() const &;
 
@@ -39,6 +40,7 @@ private:
   texture2D* m_metalness;
   texture2D* m_roughness;
   bool m_alpha_test;
+  bool m_has_alpha;
   string m_name;
   math::transform m_transform;
 };
@@ -50,6 +52,7 @@ inline material::material(material&& _material)
   , m_metalness{_material.m_metalness}
   , m_roughness{_material.m_roughness}
   , m_alpha_test{_material.m_alpha_test}
+  , m_has_alpha{_material.m_has_alpha}
   , m_name{utility::move(_material.m_name)}
 {
   _material.m_diffuse = nullptr;
@@ -57,6 +60,7 @@ inline material::material(material&& _material)
   _material.m_metalness = nullptr;
   _material.m_roughness = nullptr;
   _material.m_alpha_test = false;
+  _material.m_has_alpha = false;
 }
 
 inline material& material::operator=(material&& _material) {
@@ -68,6 +72,7 @@ inline material& material::operator=(material&& _material) {
   m_metalness = _material.m_metalness;
   m_roughness = _material.m_roughness;
   m_alpha_test = _material.m_alpha_test;
+  m_has_alpha = _material.m_has_alpha;
   m_name = utility::move(_material.m_name);
 
   _material.m_diffuse = nullptr;
@@ -75,6 +80,7 @@ inline material& material::operator=(material&& _material) {
   _material.m_metalness = nullptr;
   _material.m_roughness = nullptr;
   _material.m_alpha_test = false;
+  _material.m_has_alpha = false;
 
   return *this;
 }
@@ -85,6 +91,10 @@ inline const string& material::name() const & {
 
 inline bool material::alpha_test() const {
   return m_alpha_test;
+}
+
+inline bool material::has_alpha() const {
+  return m_has_alpha;
 }
 
 inline const math::transform& material::transform() const & {
