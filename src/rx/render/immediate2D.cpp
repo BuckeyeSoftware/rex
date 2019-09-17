@@ -825,7 +825,7 @@ void immediate2D::generate_text(rx_s32 _size, const char* _font,
     add_vertex({{quad.position[0].x, quad.position[1].y}, {quad.coordinate[0].s, quad.coordinate[1].t}, color});
   }
 
-  add_batch(offset, batch::type::k_text, _color.a < 1.0f, font_map->texture());
+  add_batch(offset, batch::type::k_text, true, font_map->texture());
 }
 
 template<rx_size E>

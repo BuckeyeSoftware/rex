@@ -56,8 +56,15 @@ bool importer::load(const string& _file_name) {
   });
 
   if (max_element >= vertices) {
-    return error("'%s' element out of bounds", _file_name);
+    return error("element %zu out of bounds", max_element);
   }
+
+  if (m_elements.size() % 3 != 0) {
+    return error("unfinished triangles");
+  }
+
+  logger(log::level::k_verbose, "%zu triangles, %zu vertices, %zu meshes",
+    m_elements.size() / 3, m_positions.size(), m_meshes.size());
 
   // Check for normals.
   if (m_normals.is_empty()) {
@@ -82,19 +89,19 @@ bool importer::load(const string& _file_name) {
   // Ensure none of the normals, tangents or coordinates go out of bounds of
   // the loaded model.
   if (m_normals.size() != vertices) {
-    logger(log::level::k_warning, "'%s' has too %s normals",
+    logger(log::level::k_warning, "too %s normals",
       m_normals.size() > vertices ? "many" : "few");
     m_normals.resize(vertices);
   }
 
   if (m_tangents.size() != vertices) {
-    logger(log::level::k_warning, "'%s' has too %s tangents",
+    logger(log::level::k_warning, "too %s tangents",
       m_tangents.size() > vertices ? "many" : "few");
     m_tangents.resize(vertices);
   }
 
   if (!m_coordinates.is_empty() && m_coordinates.size() != vertices) {
-    logger(log::level::k_warning, "'%s' has too %s coordinates",
+    logger(log::level::k_warning, "too %s coordinates",
       m_coordinates.size() > vertices ? "many" : "few");
     m_coordinates.resize(vertices);
   }
