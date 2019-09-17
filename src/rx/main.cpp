@@ -398,11 +398,19 @@ int entry(int argc, char **argv) {
         camera.translate -= math::vec3f(l.x, l.y, l.z) * (move_speed * frontend.timer().delta_time());
       }
 
+      if (input.keyboard().is_released(SDL_SCANCODE_F1, true)) {
+        SDL_SetRelativeMouseMode(SDL_GetRelativeMouseMode() ? SDL_FALSE : SDL_TRUE);
+      }
+
       if (input.keyboard().is_released(SDL_SCANCODE_F3, true)) {
         display_swap_interval->set(display_swap_interval->get() == 0 ? 1 : 0);
         SDL_GL_SetSwapInterval(display_swap_interval->get());
       }
 
+      math::transform model_xform;
+      model_xform.rotate = {0.0f, 90.0f, 0.0f};
+
+      // render geometry buffer
       render::frontend::state state;
       state.viewport.record_dimensions(gbuffer.target()->dimensions());
 
@@ -420,12 +428,8 @@ int entry(int argc, char **argv) {
         RX_RENDER_CLEAR_COLOR(0),
         {0.0f, 0.0f, 0.0f, 0.0f});
 
-      math::mat4x4f modelm{math::mat4x4f::scale({1.0f, 1.0f, 1.0f})
-        * math::mat4x4f::rotate({0.0f, 90.0f, 0.0f})
-        * math::mat4x4f::translate({0.0f, 0.0f, 0.0f})};
-
       skybox.render(gbuffer.target(), camera.view(), camera.projection);
-      model.render(gbuffer.target(),  modelm, camera.view(), camera.projection);
+      model.render(gbuffer.target(),  model_xform.to_mat4(), camera.view(), camera.projection);
       immediate3D.render(gbuffer.target(), camera.view(), camera.projection);
 
       state.viewport.record_dimensions(display_resolution->get().cast<rx_size>());
@@ -434,7 +438,7 @@ int entry(int argc, char **argv) {
         RX_RENDER_TAG("test"),
         state,
         gbuffer.target(),
-        1,
+        0,
         frontend.swapchain(),
         0);
 

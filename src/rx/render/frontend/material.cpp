@@ -50,6 +50,7 @@ material::~material() {
 bool material::load(rx::material::loader&& _loader) {
   m_name = utility::move(_loader.name());
   m_alpha_test = _loader.alpha_test();
+  m_transform = _loader.transform();
 
   // Simple table to map type strings to texture2D destinations in this object.
   struct {

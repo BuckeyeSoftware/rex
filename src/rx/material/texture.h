@@ -1,7 +1,7 @@
 #ifndef RX_MATERIAL_TEXTURE_H
 #define RX_MATERIAL_TEXTURE_H
 #include "rx/core/log.h"
-#include "rx/math/vec2.h"
+#include "rx/math/transform.h"
 
 #include "rx/texture/chain.h"
 
@@ -48,6 +48,7 @@ private:
   bool parse_type(const json& _type);
   bool parse_filter(const json& _filter, bool& _mipmaps);
   bool parse_wrap(const json& _wrap);
+  bool parse_transform(const json& _transform);
 
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments) const;

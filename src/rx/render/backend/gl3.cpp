@@ -1084,34 +1084,38 @@ void gl3::process(rx_byte* _command) {
 
           state->use_target(render_target, true, true);
 
-          const auto depth_stencil{render_target->depth_stencil()};
-          if (depth_stencil) {
+          if (render_target->has_depth_stencil()) {
+            const auto depth_stencil{render_target->depth_stencil()};
             // combined depth stencil format
             const auto texture{reinterpret_cast<const detail_gl3::texture2D*>(depth_stencil + 1)};
-            pglFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0);
+            pglFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0);
           } else {
-            const auto depth{render_target->depth()};
-            const auto stencil{render_target->stencil()};
-            if (depth) {
+            if (render_target->has_depth()) {
+              const auto depth{render_target->depth()};
               const auto texture{reinterpret_cast<const detail_gl3::texture2D*>(depth + 1)};
-              pglFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0);
-            }
-            if (stencil) {
+              pglFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0);
+            } else if (render_target->has_stencil()) {
+              const auto stencil{render_target->stencil()};
               const auto texture{reinterpret_cast<const detail_gl3::texture2D*>(stencil + 1)};
-              pglFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0);
+              pglFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0);
             }
           }
           // color attachments & draw buffers
           const auto& attachments{render_target->attachments()};
-          vector<GLenum> draw_buffers{m_allocator, attachments.size()};
-          for (rx_size i{0}; i < attachments.size(); i++) {
-            const auto attachment{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
-            const auto render_texture{attachments[i]};
-            const auto texture{reinterpret_cast<detail_gl3::texture2D*>(render_texture + 1)};
-            pglFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture->tex, 0);
-            draw_buffers[i] = attachment;
+          if (attachments.is_empty()) {
+            pglDrawBuffer(GL_NONE);
+            pglReadBuffer(GL_NONE);
+          } else {
+            vector<GLenum> draw_buffers{m_allocator, attachments.size()};
+            for (rx_size i{0}; i < attachments.size(); i++) {
+              const auto attachment{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
+              const auto render_texture{attachments[i]};
+              const auto texture{reinterpret_cast<detail_gl3::texture2D*>(render_texture + 1)};
+              pglFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture->tex, 0);
+              draw_buffers[i] = attachment;
+            }
+            pglDrawBuffers(draw_buffers.size(), draw_buffers.data());
           }
-          pglDrawBuffers(draw_buffers.size(), draw_buffers.data());
         }
         break;
       case frontend::resource_command::type::k_program:

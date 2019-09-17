@@ -114,6 +114,7 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
 
     uniforms[0].record_mat4x4f(_model * _view * _projection);
     uniforms[1].record_mat4x4f(_model);
+    uniforms[2].record_mat3x3f(material.transform().to_mat3());
 
     m_frontend->draw(
       RX_RENDER_TAG("model mesh"),

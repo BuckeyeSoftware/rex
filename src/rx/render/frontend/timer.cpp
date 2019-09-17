@@ -3,7 +3,6 @@
 #include "rx/render/frontend/timer.h"
 
 #include "rx/core/math/abs.h"
-#include "rx/core/math/round.h"
 
 namespace rx::render::frontend {
 

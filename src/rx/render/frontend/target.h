@@ -40,6 +40,10 @@ struct target : resource {
   const vector<texture2D*> attachments() const &;
   bool is_swapchain() const;
 
+  bool has_depth() const;
+  bool has_stencil() const;
+  bool has_depth_stencil() const;
+
   const math::vec2z& dimensions() const;
 
   void validate() const;
@@ -50,10 +54,12 @@ private:
   void update_resource_usage();
 
   enum /* m_flags */ {
-    k_depth      = 1 << 0,
-    k_stencil    = 1 << 1,
-    k_dimensions = 1 << 2,
-    k_swapchain  = 1 << 3
+    k_has_depth    = 1 << 0,
+    k_has_stencil  = 1 << 1,
+    k_owns_stencil = 1 << 2,
+    k_owns_depth   = 1 << 3,
+    k_dimensions   = 1 << 4,
+    k_swapchain    = 1 << 5
   };
 
   union {
@@ -87,6 +93,18 @@ inline const vector<texture2D*> target::attachments() const & {
 
 inline bool target::is_swapchain() const {
   return m_flags & k_swapchain;
+}
+
+inline bool target::has_depth() const {
+  return m_flags & k_has_depth;
+}
+
+inline bool target::has_stencil() const {
+  return m_flags & k_has_stencil;
+}
+
+inline bool target::has_depth_stencil() const {
+  return has_depth() && has_stencil();
 }
 
 inline const math::vec2z& target::dimensions() const {

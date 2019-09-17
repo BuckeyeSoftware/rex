@@ -5,6 +5,8 @@
 #include "rx/core/map.h"
 #include "rx/core/log.h"
 
+#include "rx/math/transform.h"
+
 #include "rx/material/texture.h"
 
 namespace rx {
@@ -28,6 +30,7 @@ struct loader
   vector<texture>&& textures();
   string&& name();
   bool alpha_test() const;
+  const math::transform& transform() const &;
 
 private:
   template<typename... Ts>
@@ -42,6 +45,7 @@ private:
   vector<texture> m_textures;
   string m_name;
   bool m_alpha_test;
+  math::transform m_transform;
 };
 
 inline memory::allocator* loader::allocator() const {
@@ -58,6 +62,10 @@ inline string&& loader::name() {
 
 inline bool loader::alpha_test() const {
   return m_alpha_test;
+}
+
+inline const math::transform& loader::transform() const & {
+  return m_transform;
 }
 
 template<typename... Ts>

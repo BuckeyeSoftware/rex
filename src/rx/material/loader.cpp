@@ -71,6 +71,35 @@ bool loader::parse(const json& _definition) {
 
   m_alpha_test = alpha_test ? alpha_test.as_boolean() : false;
 
+  if (const auto& transform{_definition["transform"]}) {
+    const auto& scale{transform["scale"]};
+    const auto& rotate{transform["rotate"]};
+    const auto& translate{transform["translate"]};
+
+    auto parse{[&](const auto& _vec, const char* _tag, math::vec3f& result_) {
+      if (!_vec.is_array_of(json::type::k_number) || _vec.size() != 2) {
+        return error("expected Array[Number, 2] for '%s'", _tag);
+      }
+      result_.x = _vec[0_z].as_float();
+      result_.y = _vec[1_z].as_float();
+      return true;
+    }};
+
+    if (scale && !parse(scale, "scale", m_transform.scale)) {
+      return false;
+    }
+
+    if (rotate && !parse(rotate, "rotate", m_transform.rotate)) {
+      return false;
+    }
+
+    if (translate && !parse(translate, "translate", m_transform.translate)) {
+      return false;
+    }
+
+    return true;
+  }
+
   const auto& textures{_definition["textures"]};
   if (!textures) {
     return error("missing 'textures'");

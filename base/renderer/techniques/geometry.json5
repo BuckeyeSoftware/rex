@@ -11,6 +11,7 @@
   uniforms: [
     { name: "u_transform", type: "mat4x4f" },
     { name: "u_model",     type: "mat4x4f" },
+    { name: "u_mat_xform", type: "mat3x3f" },
     { name: "u_bones",     type: "bonesf",    when: "HAS_SKELETON" },
     { name: "u_diffuse",   type: "sampler2D", value: 0, when: "HAS_DIFFUSE" },
     { name: "u_normal",    type: "sampler2D", value: 1, when: "HAS_NORMAL" },
@@ -29,49 +30,60 @@
         { name: "a_blend_indices", type: "vec4b", when: "HAS_SKELETON" }
       ],
       outputs: [
-        { name: "vs_normal",       type: "vec3f" },
-        { name: "vs_tangent",      type: "vec4f" },
-        { name: "vs_coordinate",   type: "vec2f" },
-        { name: "vs_tbn",          type: "mat3x3f", when: "HAS_NORMAL" }
+        { name: "vs_tbn",          type: "mat3x3f", when: "HAS_NORMAL" },
+        { name: "vs_normal",       type: "vec3f",   when: "!HAS_NORMAL" },
+        { name: "vs_coordinate",   type: "vec2f" }
       ],
       source: "
         void main() {
         #if defined(HAS_SKELETON)
+          // Calculate transform from bone influences and weights.
           mat3x4f transform  = u_bones[int(a_blend_indices.x)] * a_blend_weights.x / 255.0;
                   transform += u_bones[int(a_blend_indices.y)] * a_blend_weights.y / 255.0;
                   transform += u_bones[int(a_blend_indices.z)] * a_blend_weights.z / 255.0;
                   transform += u_bones[int(a_blend_indices.w)] * a_blend_weights.w / 255.0;
 
-          vec4f position = vec4(vec4(a_position, 1.0) * transform, 1.0);
-          mat3x3f adjust_transform = mat3(cross(transform[1].xyz, transform[2].xyz),
-                                          cross(transform[2].xyz, transform[0].xyz),
-                                          cross(transform[0].xyz, transform[1].xyz));
+          // Transform position by skeletal transform.
+          vec4f this_position = vec4(vec4(a_position, 1.0) * transform, 1.0);
         #else
-          vec4f position = vec4(a_position, 1.0);
+          vec4f this_position = vec4(a_position, 1.0);
         #endif
-          vs_normal     = a_normal;
-          vs_tangent    = a_tangent;
-          vs_coordinate = a_coordinate;
+
+          // Transform position into clip space.
+          vec4f position = u_transform * this_position;
+
+          // Calculate inverse transpose of the model matrix.
+          mat4x4f inverse_transpose = inverse(transpose(u_model));
+
+          // Transform the normal with the inverse transpose.
+          vec3f normal = (inverse_transpose * vec4(a_normal, 0.0)).xyz;
+
+          // Transform the coordinate with material transform.
+          vec2f coordinate = (u_mat_xform * vec3(a_coordinate, 0.0)).xy;
 
         #if defined(HAS_NORMAL)
-          mat4x4f xform = inverse(transpose(u_model));
-          vec3f t = normalize(vec3(xform * vec4(a_tangent.xyz, 0.0)));
-          vec3f n = normalize(vec3(xform * vec4(a_normal, 0.0)));
-          vec3f b = normalize(cross(n, t) * a_tangent.w);
+          // Transform the tangent with the inverse transpose.
+          vec3f tangent = (inverse_transpose * vec4(a_tangent.xyz, 0.0)).xyz;
 
-          vs_tbn = mat3x3f(t, b, n);
+          // Derive bitangent by taking the cross product between normal and tangent.
+          vec3f bitangent = cross(normal, tangent) * a_tangent.w;
+
+          // Construct TBN matrix.
+          vs_tbn = mat3x3f(normalize(tangent), normalize(bitangent), normalize(normal));
+        #else
+          vs_normal = normal;
         #endif
 
-          rx_position   = u_transform * position;
+          vs_coordinate = coordinate;
+          rx_position   = position;
         }
       "
     },{
       type: "fragment",
       inputs: [
-        { name: "vs_normal",       type: "vec3f" },
-        { name: "vs_tangent",      type: "vec4f" },
-        { name: "vs_coordinate",   type: "vec2f" },
-        { name: "vs_tbn",          type: "mat3x3f", when: "HAS_NORMAL" }
+        { name: "vs_tbn",          type: "mat3x3f", when: "HAS_NORMAL" },
+        { name: "vs_normal",       type: "vec3f",   when: "!HAS_NORMAL" },
+        { name: "vs_coordinate",   type: "vec2f" }
       ],
       outputs: [
         { name: "fs_albedo",       type: "vec4f" },
@@ -81,33 +93,37 @@
       source: "
         void main() {
         #if defined(HAS_NORMAL)
-          // Fetch normal from normal map texture and transform to range [-1, 1]
-          vec3f normal_map = normalize(rx_texture2D(u_normal, vs_coordinate).rgb * 2.0 - 1.0);
+          // Fetch tangent space normal from normal map texture.
+          vec3f normal_map_sample = rx_texture2D(u_normal, vs_coordinate).rgb;
 
-          // Transform normal map with TBN matrix to get final normal.
+          // Transform sample to range [-1, 1] and normalize.
+          vec3f normal_map = normalize(normal_map_sample * 2.0 - 1.0);
+
+          // Transform tangent space normal map and normalize.
           vec3f normal = normalize(vs_tbn * normal_map);
         #else
           vec3f normal = normalize(vs_normal);
         #endif
 
-          // calculate metalness value
+          // Calculate metalness facor from material if present.
           float metalness = 0;
         #if defined(HAS_METALNESS)
           metalness = rx_texture2D(u_metal, vs_coordinate).r;
         #endif
 
-          // calculate roughness value
+          // Calculate roughness factor from material if present.
           float roughness = 0;
         #if defined(HAS_ROUGHNESS)
           roughness = rx_texture2D(u_roughness, vs_coordinate).r;
         #endif
 
-          // calculate diffuse color
+          // Calculate diffuse factor from material if present.
           vec4f diffuse = vec4f(0.0);
         #if defined(HAS_DIFFUSE)
           diffuse = rx_texture2D(u_diffuse, vs_coordinate);
         #endif
 
+          // Alpha testing.
         #if defined(HAS_ALPHATEST)
           if (diffuse.a <= 0.5) {
             discard;
@@ -115,9 +131,9 @@
         #endif
 
 #if 1
-          const vec3f La = vec3f(0.5);
+          const vec3f La = vec3f(0.25);
           const vec3f Ld = vec3f(0.5);
-          vec3f L = normalize(vec3f(0.0, 1.0, 0.0));
+          vec3f L = normalize(vec3f(1.0, 1.0, 0.0));
 
           vec3f Ma = diffuse.xyz;
           vec3f Md = diffuse.xyz;

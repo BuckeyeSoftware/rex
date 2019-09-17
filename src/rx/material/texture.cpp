@@ -1,6 +1,8 @@
 #include "rx/core/filesystem/file.h"
-#include "rx/core/json.h"
 #include "rx/core/math/log2.h"
+#include "rx/core/json.h"
+
+#include "rx/math/transform.h"
 
 #include "rx/material/texture.h"
 

@@ -10,10 +10,11 @@ struct transform {
   constexpr transform();
   constexpr transform(transform* parent);
   mat4x4f to_mat4() const;
+  mat3x3f to_mat3() const;
   vec3f scale;
   vec3f rotate;
   vec3f translate;
-  transform *parent;
+  const transform *parent;
 };
 
 inline constexpr transform::transform()
@@ -33,6 +34,12 @@ inline mat4x4f transform::to_mat4() const {
   const auto local{mat4x4f::scale(scale) * mat4x4f::rotate(rotate) *
     mat4x4f::translate(translate)};
   return parent ? local * parent->to_mat4() : local;
+}
+
+inline mat3x3f transform::to_mat3() const {
+  const auto local{mat3x3f::scale(scale) * mat3x3f::rotate(rotate) *
+    mat3x3f::translate(translate)};
+  return parent ? local * parent->to_mat3() : local;
 }
 
 } // namespace rx::math

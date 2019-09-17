@@ -3,6 +3,8 @@
 #include "rx/core/string.h"
 #include "rx/core/concepts/no_copy.h"
 
+#include "rx/math/transform.h"
+
 #include "rx/material/loader.h"
 
 namespace rx::render::frontend {
@@ -22,6 +24,7 @@ struct material
   bool load(rx::material::loader&& _loader);
 
   bool alpha_test() const;
+  const math::transform& transform() const &;
   const string& name() const &;
 
   texture2D* diffuse() const;
@@ -37,6 +40,7 @@ private:
   texture2D* m_roughness;
   bool m_alpha_test;
   string m_name;
+  math::transform m_transform;
 };
 
 inline material::material(material&& _material)
@@ -81,6 +85,10 @@ inline const string& material::name() const & {
 
 inline bool material::alpha_test() const {
   return m_alpha_test;
+}
+
+inline const math::transform& material::transform() const & {
+  return m_transform;
 }
 
 inline texture2D* material::diffuse() const {
