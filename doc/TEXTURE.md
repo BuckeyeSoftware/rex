@@ -46,12 +46,12 @@ This provides five possible filter configurations and what they do are listed:
 | `#TextureFilter`    | `mipmaps` | Minification          | Magnification | Description
 | ------------------- | --------- | :-------------------: | :-----------: | -----------
 | `"nearest"`         | `false`   | nearest               | nearest       | Uses element that is nearest, (in [Manhattan distance](https://en.wikipedia.org/wiki/Taxicab_geometry)) to the center of pixel being textured.
-| `"nearest"`         | `true`    | nearst_mipmap_nearest | nearest       | Chooses the mipmap that most closely matches the size of the pixel being textured and uses the criteron one above (texture element nearest to center of the pixel) to produce a texture value.
-| `"bilinear"`        | `false`   | linear                | linear        | Uses weighted average of the foru texture elements that are closest to the center of the pixel being textured.
-| `"bilinear"`        | `true`    | linear_mipmap_nearest | linear        | Chooses the mipmap that most closely matches the size of pixel being textured and uses the criteron one above (a weighted average of the four texture elements that are closest to the center of the pixel) to produce a texture value.
-| `"trilinear"`       | `true`    | linear_mipmap_linear  | linear        | Chooses the two mipmaps that most closely match the size of the pixel being textured and uses the criteron two above (a weighted average of the four texture elements that are closest to the center of the pixel) to produce a texture value from each mipmap. The final texture value is a weighted average of those two values.
+| `"nearest"`         | `true`    | nearst_mipmap_nearest | nearest       | Chooses the mipmap that most closely matches the size of the pixel being textured and uses the criteron above to produce a texture value.
+| `"bilinear"`        | `false`   | linear                | linear        | Uses weighted average of the four texture elements that are closest to the center of the pixel being textured.
+| `"bilinear"`        | `true`    | linear_mipmap_nearest | linear        | Chooses the mipmap that most closely matches the size of pixel being textured and uses the criteron above to produce a texture value.
+| `"trilinear"`       | `true`    | linear_mipmap_linear  | linear        | Chooses the two mipmaps that most closely match the size of the pixel being textured and uses the criteron two above to produce a texture value from each mipmap. The final texture value is a weighted average of those two values.
 
-There is no filter combination that produces a minification of `nearest_mipmap_linear`. All trilinear filtering implies bilinear filtering in Rex. This is consistent with UE4 and NV's control panel's "quality" setting which makes `nearest_mipmap_linear` and alias for `linear_mipmap_linear`.
+There is no filter combination that produces a minification of `nearest_mipmap_linear`. All trilinear filtering implies bilinear filtering in Rex. This is consistent with UE4 and NV's control panel's "quality" setting which makes `nearest_mipmap_linear` an alias for `linear_mipmap_linear`.
 
 `#TextureWrap` is a `String` that is one of:
   * `"clamp_to_edge"`
