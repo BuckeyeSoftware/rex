@@ -1,6 +1,8 @@
 #include <SDL.h>
 
 #include "rx/core/concurrency/thread_pool.h"
+#include "rx/core/concurrency/wait_group.h"
+
 #include "rx/core/log.h"
 
 namespace rx::concurrency {
@@ -12,26 +14,22 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads)
   , m_queue{m_allocator}
   , m_threads{m_allocator}
   , m_stop{false}
-  , m_ready{0}
 {
   logger(log::level::k_info, "starting pool with %zu threads", _threads);
   const auto beg{SDL_GetPerformanceCounter()};
   m_threads.reserve(_threads);
 
+  wait_group group;
   for (rx_size i{0}; i < _threads; i++) {
-    m_threads.emplace_back("thread pool", [this](int _thread_id) {
+    m_threads.emplace_back("thread pool", [this, &group](int _thread_id) {
       logger(log::level::k_info, "starting thread %d", _thread_id);
 
-      {
-        scope_lock lock(m_mutex);
-        m_ready++;
-        m_ready_cond.signal();       
-      }
+      group.signal();
 
       for (;;) {
         function<void(int)> task;
         {
-          scope_lock lock(m_mutex);
+          scope_lock lock{m_mutex};
           m_task_cond.wait(lock, [this] { return m_stop || !m_queue.is_empty(); });
           if (m_stop && m_queue.is_empty()) {
             logger(log::level::k_info, "stopping thread %d", _thread_id);
@@ -51,10 +49,7 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads)
   }
 
   // wait for all threads to start
-  {
-    scope_lock lock(m_mutex);
-    m_ready_cond.wait(lock, [this] { return m_ready == m_threads.size(); });
-  }
+  group.wait(m_threads.size());
 
   const auto end{SDL_GetPerformanceCounter()};
   const auto time{static_cast<rx_f64>(((end - beg) * 1000.0) / static_cast<rx_f64>(SDL_GetPerformanceFrequency()))};

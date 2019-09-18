@@ -3,9 +3,10 @@
 
 #include "rx/core/map.h"
 #include "rx/core/filesystem/file.h"
-#include "rx/core/concurrency/thread_pool.h"
-
 #include "rx/core/algorithm/clamp.h"
+
+#include "rx/core/concurrency/thread_pool.h"
+#include "rx/core/concurrency/wait_group.h"
 
 #include "rx/material/loader.h"
 
@@ -78,8 +79,7 @@ bool loader::parse(const json& _definition) {
   // Load all the materials across multiple threads.
   concurrency::thread_pool pool{m_allocator, 32};
   concurrency::mutex mutex;
-  concurrency::condition_variable condition_variable;
-  rx_size count{0};
+  concurrency::wait_group group;
   materials.each([&](const json& _material) {
     pool.add([&, _material](int) {
       material::loader loader{m_allocator};
@@ -90,18 +90,10 @@ bool loader::parse(const json& _definition) {
         concurrency::scope_lock lock{mutex};
         m_materials.insert(loader.name(), utility::move(loader));
       }
-      {
-        concurrency::scope_lock lock{mutex};
-        count++;
-        condition_variable.signal();
-      }
+      group.signal();
     });
   });
-  {
-    concurrency::scope_lock lock{mutex};
-    condition_variable.wait(lock, [&]{ return count == materials.size(); });
-  }
-
+  group.wait(materials.size());
   return true;
 }
 
