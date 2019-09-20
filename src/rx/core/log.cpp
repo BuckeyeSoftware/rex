@@ -88,7 +88,11 @@ struct logger {
   concurrency::condition_variable m_ready_condition;
   concurrency::condition_variable m_flush_condition;
   concurrency::thread m_thread;
+
+  static RX_GLOBAL<logger> s_logger;
 };
+
+RX_GLOBAL<logger> logger::s_logger{"logger"};
 
 logger::logger()
   : m_file{"log.log", "w"}
@@ -203,10 +207,8 @@ void logger::process(int thread_id) {
   RX_ASSERT(m_queue.is_empty(), "not all contents flushed");
 }
 
-static RX_GLOBAL<logger> g_logger{"logger"};
-
 void log::write(log::level level, string&& contents) {
-  g_logger->write(this, utility::move(contents), level, time(nullptr));
+  logger::s_logger->write(this, utility::move(contents), level, time(nullptr));
 }
 
 } // namespace rx

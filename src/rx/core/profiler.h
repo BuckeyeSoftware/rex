@@ -6,9 +6,6 @@
 namespace rx {
 
 struct profiler {
-  profiler();
-  ~profiler();
-
   struct cpu_sample {
     cpu_sample(const char* _tag);
     ~cpu_sample();
