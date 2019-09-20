@@ -7,8 +7,9 @@
 
 #include "rx/math/vec3.h"
 
-#include "rx/core/json.h"
 #include "rx/core/filesystem/file.h"
+#include "rx/core/json.h"
+#include "rx/core/profiler.h"
 
 #include "rx/texture/loader.h"
 #include "rx/texture/chain.h"
@@ -59,6 +60,8 @@ skybox::~skybox() {
 void skybox::render(frontend::target* _target, const math::mat4x4f& _view,
   const math::mat4x4f& _projection)
 {
+  profiler::cpu_sample sample{"skybox::render"};
+
   if (!m_texture) {
     return;
   }
@@ -72,8 +75,10 @@ void skybox::render(frontend::target* _target, const math::mat4x4f& _view,
   program->uniforms()[0].record_mat4x4f(view * _projection);
 
   frontend::state state;
-  state.depth.record_test(false);
-  state.depth.record_write(false);
+  state.depth.record_test(true);
+  state.depth.record_write(true);
+
+  state.blend.record_enable(false);
 
   state.viewport.record_dimensions(_target->dimensions());
 

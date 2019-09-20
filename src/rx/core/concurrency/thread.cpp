@@ -3,6 +3,7 @@
 #include "rx/core/memory/system_allocator.h"
 #include "rx/core/string.h"
 #include "rx/core/debug.h" // RX_MESSAGE
+#include "rx/core/profiler.h"
 
 #if defined(RX_PLATFORM_WINDOWS)
 #include <process.h> // _beginthreadex
@@ -49,6 +50,7 @@ void thread::join() {
 void* thread::state::wrap(void* _data) {
   const int thread_id{g_thread_id++};
   auto self{reinterpret_cast<state*>(_data)};
+  profiler::instance().set_thread_name(self->m_name);
   self->m_function(utility::move(thread_id));
   return nullptr;
 }
@@ -61,6 +63,7 @@ thread::state::state()
 thread::state::state(const char* _name, function<void(int)>&& _function)
   : m_function{utility::move(_function)}
   , m_joined{false}
+  , m_name{_name}
 {
 #if defined(RX_PLATFORM_POSIX)
   if (pthread_create(&m_thread, nullptr, wrap, reinterpret_cast<void*>(this)) != 0) {

@@ -40,31 +40,20 @@ struct importer
     rx_s32 parent;
   };
 
-  const vector<mesh>& meshes() const &;
-  vector<mesh>&& meshes() &&;
-  const vector<rx_u32>& elements() const &;
-  vector<rx_u32>&& elements() &&;
+  vector<mesh>&& meshes();
+  vector<rx_u32>&& elements();
+  vector<math::vec3f>&& positions();
+  vector<joint>&& joints();
 
-  const vector<math::vec3f>& positions() const &;
   const vector<math::vec2f>& coordinates() const &;
   const vector<math::vec3f>& normals() const &;
   const vector<math::vec4f>& tangents() const &;
 
   // for skeletally animated models
-  const vector<math::mat3x4f>& frames() const;
-
   vector<math::mat3x4f>&& frames();
-  const vector<animation>& animations() const;
   vector<animation>&& animations();
-
   const vector<math::vec4b>& blend_indices() const &;
   const vector<math::vec4b>& blend_weights() const &;
-
-  vector<joint>&& joints();
-  const vector<joint>& joints() const;
-
-  vector<string>&& materials();
-  const vector<string>& materials() const;
 
 protected:
   template<typename... Ts>
@@ -107,24 +96,20 @@ inline void importer::log(log::level _level, const char* _format,
   write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
 }
 
-inline const vector<mesh>& importer::meshes() const & {
-  return m_meshes;
-}
-
-inline vector<mesh>&& importer::meshes() && {
+inline vector<mesh>&& importer::meshes() {
   return utility::move(m_meshes);
 }
 
-inline const vector<rx_u32>& importer::elements() const & {
-  return m_elements;
-}
-
-inline vector<rx_u32>&& importer::elements() && {
+inline vector<rx_u32>&& importer::elements() {
   return utility::move(m_elements);
 }
 
-inline const vector<math::vec3f>& importer::positions() const & {
-  return m_positions;
+inline vector<math::vec3f>&& importer::positions() {
+  return utility::move(m_positions);
+}
+
+inline vector<importer::joint>&& importer::joints() {
+  return utility::move(m_joints);
 }
 
 inline const vector<math::vec2f>& importer::coordinates() const & {
@@ -139,16 +124,8 @@ inline const vector<math::vec4f>& importer::tangents() const & {
   return m_tangents;
 }
 
-inline const vector<math::mat3x4f>& importer::frames() const {
-  return m_frames;
-}
-
 inline vector<math::mat3x4f>&& importer::frames() {
   return utility::move(m_frames);
-}
-
-inline const vector<importer::animation>& importer::animations() const {
-  return m_animations;
 }
 
 inline vector<importer::animation>&& importer::animations() {
@@ -156,19 +133,11 @@ inline vector<importer::animation>&& importer::animations() {
 }
 
 inline const vector<math::vec4b>& importer::blend_indices() const & {
-  return m_blend_indices;
+  return utility::move(m_blend_indices);
 }
 
 inline const vector<math::vec4b>& importer::blend_weights() const & {
-  return m_blend_weights;
-}
-
-inline vector<importer::joint>&& importer::joints() {
-  return utility::move(m_joints);
-}
-
-inline const vector<importer::joint>& importer::joints() const {
-  return m_joints;
+  return utility::move(m_blend_weights);
 }
 
 } // namespace rx::model

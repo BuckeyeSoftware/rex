@@ -7,6 +7,8 @@
 
 #include "rx/render/immediate3D.h"
 
+#include "rx/core/profiler.h"
+
 namespace rx::render {
 
 immediate3D::queue::queue(memory::allocator* _allocator)
@@ -193,6 +195,8 @@ immediate3D::~immediate3D() {
 void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
   const math::mat4x4f& _projection)
 {
+  profiler::cpu_sample sample{"immediate3D::render"};
+
   // avoid rendering if the last update did not produce any draw commands and
   // this iteration has no updates either
   const bool last_empty{m_render_queue[m_rd_index].is_empty()};

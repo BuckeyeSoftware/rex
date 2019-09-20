@@ -9,12 +9,16 @@
 
 #include "rx/core/algorithm/max.h"
 #include "rx/core/math/log2.h"
+
+#include "rx/core/profiler.h"
 #include "rx/core/debug.h"
 #include "rx/core/log.h"
 
-RX_LOG("render/gl3", gl3_log);
+#include "lib/remotery.h"
 
 namespace rx::render::backend {
+
+RX_LOG("render/gl3", gl3_log);
 
 // 16MiB buffer slab size for unspecified buffer sizes
 static constexpr const rx_size k_buffer_slab_size{16<<20};
@@ -117,6 +121,8 @@ static const GLubyte* (GLAPIENTRYP pglGetStringi)(GLenum, GLuint);
 // draw calls
 static void (GLAPIENTRYP pglDrawArrays)(GLenum, GLint, GLsizei);
 static void (GLAPIENTRYP pglDrawElements)(GLenum, GLsizei, GLenum, const GLvoid*);
+
+static void (GLAPIENTRYP pglFinish)(void);
 
 namespace detail_gl3 {
   struct buffer {
@@ -266,6 +272,8 @@ namespace detail_gl3 {
     }
 
     void use_state(const frontend::state* _render_state) {
+      profiler::cpu_sample sample{"use_state"};
+
       const auto& scissor{_render_state->scissor};
       const auto& blend{_render_state->blend};
       const auto& cull{_render_state->cull};
@@ -480,6 +488,8 @@ namespace detail_gl3 {
     }
 
     void use_target(const frontend::target* _render_target, bool _draw, bool _read) {
+      profiler::cpu_sample sample{"use_target"};
+
       const auto this_target{reinterpret_cast<const target*>(_render_target + 1)};
       if (_draw && _read) {
         if (m_bound_draw_fbo != this_target->fbo && m_bound_read_fbo != this_target->fbo) {
@@ -515,6 +525,8 @@ namespace detail_gl3 {
     }
 
     void use_program(const frontend::program* _render_program) {
+      profiler::cpu_sample sample{"use_program"};
+
       const auto this_program{reinterpret_cast<const program*>(_render_program + 1)};
       if (this_program->handle != m_bound_program) {
         pglUseProgram(this_program->handle);
@@ -523,6 +535,8 @@ namespace detail_gl3 {
     }
 
     void use_buffer(const frontend::buffer* _render_buffer) {
+      profiler::cpu_sample sample{"use_buffer"};
+
       const auto this_buffer{reinterpret_cast<const buffer*>(_render_buffer + 1)};
       if (this_buffer->va != m_bound_vao) {
         pglBindVertexArray(this_buffer->va);
@@ -531,6 +545,8 @@ namespace detail_gl3 {
     }
 
     void use_vbo(GLuint _vbo) {
+      profiler::cpu_sample sample{"use_vbo"};
+
       if (m_bound_vbo != _vbo) {
         pglBindBuffer(GL_ARRAY_BUFFER, _vbo);
         m_bound_vbo = _vbo;
@@ -538,6 +554,8 @@ namespace detail_gl3 {
     }
 
     void use_ebo(GLuint _ebo) {
+      profiler::cpu_sample sample{"use_ebo"};
+
       if (m_bound_ebo != _ebo) {
         pglBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
         m_bound_ebo = _ebo;
@@ -553,6 +571,8 @@ namespace detail_gl3 {
 
     template<GLuint texture_unit::*name, typename Bt, typename Ft>
     void use_texture_template(GLenum _type, const Ft* _render_texture) {
+      profiler::cpu_sample sample{"use_texture"};
+
       const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
       auto& texture_unit{m_texture_units[m_active_texture]};
       if (texture_unit.*name != this_texture->tex) {
@@ -930,6 +950,8 @@ gl3::gl3(memory::allocator* _allocator, void* _data)
   fetch("glDrawArrays", pglDrawArrays);
   fetch("glDrawElements", pglDrawElements);
 
+  fetch("glFinish", pglFinish);
+
   m_impl = m_allocator->create<detail_gl3::state>();
 }
 
@@ -938,6 +960,8 @@ gl3::~gl3() {
 }
 
 void gl3::process(rx_byte* _command) {
+  profiler::cpu_sample sample{"gl3::process"};
+
   auto state{reinterpret_cast<detail_gl3::state*>(m_impl)};
   auto header{reinterpret_cast<frontend::command_header*>(_command)};
   switch (header->type) {
@@ -1424,6 +1448,8 @@ void gl3::process(rx_byte* _command) {
     break;
   case frontend::command_type::k_clear:
     {
+      profiler::cpu_sample sample{"clear"};
+
       const auto command{reinterpret_cast<frontend::clear_command*>(header + 1)};
       const auto render_state{reinterpret_cast<frontend::state*>(command)};
       const auto render_target{command->render_target};
@@ -1456,6 +1482,8 @@ void gl3::process(rx_byte* _command) {
     break;
   case frontend::command_type::k_draw:
     {
+      profiler::cpu_sample sample{"draw"};
+
       const auto command{reinterpret_cast<frontend::draw_command*>(header + 1)};
       const auto render_state{reinterpret_cast<frontend::state*>(command)};
       const auto render_target{command->render_target};
@@ -1602,6 +1630,8 @@ void gl3::process(rx_byte* _command) {
     break;
   case frontend::command_type::k_blit:
     {
+      profiler::cpu_sample sample{"blit"};
+
       const auto command{reinterpret_cast<frontend::blit_command*>(header + 1)};
       const auto render_state{reinterpret_cast<frontend::state*>(command)};
 
@@ -1645,10 +1675,21 @@ void gl3::process(rx_byte* _command) {
 
       break;
     }
+  case frontend::command_type::k_profile:
+    {
+      const auto command{reinterpret_cast<frontend::profile_command*>(header + 1)};
+      if (command->tag) {
+        rmt_BeginOpenGLSampleDynamic(command->tag);
+      } else {
+        rmt_EndOpenGLSample();
+      }
+      break;
+    }
   }
 }
 
 void gl3::swap() {
+  profiler::cpu_sample sample{"gl3::swap"};
   SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(m_data));
 }
 

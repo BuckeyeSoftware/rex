@@ -11,6 +11,8 @@
 
 #include "rx/core/concurrency/scope_lock.h"
 #include "rx/core/filesystem/directory.h"
+
+#include "rx/core/profiler.h"
 #include "rx/core/log.h"
 
 #include "rx/console/variable.h"
@@ -23,7 +25,7 @@ RX_CONSOLE_IVAR(max_texture1D, "render.max_texture1D", "maximum 1D textures", 16
 RX_CONSOLE_IVAR(max_texture2D, "render.max_texture2D", "maximum 2D textures", 16, 4096, 1024);
 RX_CONSOLE_IVAR(max_texture3D, "render.max_texture3D", "maximum 3D textures", 16, 128, 16);
 RX_CONSOLE_IVAR(max_textureCM, "render.max_textureCM", "maximum CM textures", 16, 128, 16);
-RX_CONSOLE_IVAR(command_memory, "render.command_memory", "memory for command buffer in MiB", 16, 64, 16);
+RX_CONSOLE_IVAR(command_memory, "render.command_memory", "memory for command buffer in MiB", 1, 4, 2);
 
 RX_LOG("render", render_log);
 
@@ -54,7 +56,7 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   , m_swapchain_target{nullptr}
   , m_swapchain_texture{nullptr}
   , m_commands{m_allocator}
-  , m_command_buffer{m_allocator, static_cast<rx_size>(*command_memory * 1024 * 1024)}
+  , m_command_buffer{m_allocator, static_cast<rx_size>(*command_memory) * 1024 * 1024}
   , m_deferred_process{[this]() { process(); }}
   , m_device_info{m_allocator}
 {
@@ -522,6 +524,17 @@ void interface::blit(
   m_blit_calls[0]++;
 }
 
+void interface::profile(const char* _tag) {
+  concurrency::scope_lock lock{m_mutex};
+
+  auto command_base{m_command_buffer.allocate(sizeof(profile_command),
+    command_type::k_profile, RX_RENDER_TAG("profile"))};
+  auto command{reinterpret_cast<profile_command*>(command_base + sizeof(command_header))};
+  command->tag = _tag;
+
+  m_commands.push_back(command_base);
+}
+
 void interface::resize(const math::vec2z& _resolution) {
   // Resizing the swapchain is just a matter of updating these fields.
   m_swapchain_texture->m_dimensions = _resolution;
@@ -529,7 +542,9 @@ void interface::resize(const math::vec2z& _resolution) {
 }
 
 bool interface::process() {
-  concurrency::scope_lock lock(m_mutex);
+  profiler::cpu_sample sample{"frontend::process"};
+
+  // concurrency::scope_lock lock(m_mutex);
 
   if (m_commands.is_empty()) {
     return false;
@@ -625,6 +640,8 @@ interface::statistics interface::stats(resource::type _type) const {
 }
 
 bool interface::swap() {
+  profiler::cpu_sample sample{"frontend::swap"};
+
   m_backend->swap();
   return m_timer.update();
 }

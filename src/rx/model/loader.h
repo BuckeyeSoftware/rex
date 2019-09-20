@@ -40,11 +40,14 @@ struct loader
   bool is_animated() const;
 
   vector<vertex>&& vertices();
-  vector<animated_vertex>&& animated_vertices();
   vector<mesh>&& meshes();
   vector<rx_u32>&& elements();
-  vector<importer::joint>&& joints();
   map<string, material::loader>&& materials();
+
+  // Only valid for animated models.
+  vector<animated_vertex>&& animated_vertices();
+  vector<importer::joint>&& joints();
+  const vector<importer::animation>& animations() const &;
 
 private:
   friend struct animation;
@@ -77,10 +80,11 @@ private:
   vector<mesh> m_meshes;
   vector<importer::animation> m_animations;
   vector<importer::joint> m_joints;
+  vector<math::vec3f> m_positions;
   vector<math::mat3x4f> m_frames;
-  string m_name;
   optional<math::transform> m_transform;
   map<string, material::loader> m_materials;
+  string m_name;
   int m_flags;
 };
 
@@ -102,8 +106,12 @@ inline loader::loader(memory::allocator* _allocator)
   , as_nat{}
   , m_elements{m_allocator}
   , m_meshes{m_allocator}
+  , m_animations{m_allocator}
   , m_joints{m_allocator}
+  , m_positions{m_allocator}
   , m_frames{m_allocator}
+  , m_materials{m_allocator}
+  , m_name{m_allocator}
   , m_flags{0}
 {
 }
@@ -127,11 +135,6 @@ inline vector<loader::vertex>&& loader::vertices() {
   return utility::move(as_vertices);
 }
 
-inline vector<loader::animated_vertex>&& loader::animated_vertices() {
-  RX_ASSERT(is_animated(), "not a animated model");
-  return utility::move(as_animated_vertices);
-}
-
 inline vector<mesh>&& loader::meshes() {
   return utility::move(m_meshes);
 }
@@ -140,12 +143,22 @@ inline vector<rx_u32>&& loader::elements() {
   return utility::move(m_elements);
 }
 
+inline map<string, material::loader>&& loader::materials() {
+  return utility::move(m_materials);
+}
+
+inline vector<loader::animated_vertex>&& loader::animated_vertices() {
+  RX_ASSERT(is_animated(), "not a animated model");
+  return utility::move(as_animated_vertices);
+}
+
 inline vector<importer::joint>&& loader::joints() {
+  RX_ASSERT(is_animated(), "not a animated model");
   return utility::move(m_joints);
 }
 
-inline map<string, material::loader>&& loader::materials() {
-  return utility::move(m_materials);
+inline const vector<importer::animation>& loader::animations() const & {
+  return m_animations;
 }
 
 } // namespace rx::model

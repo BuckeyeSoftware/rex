@@ -70,6 +70,10 @@ else
 	# Enable assertions in release temporarily.
 	CFLAGS += -DRX_DEBUG
 
+	# Remotery
+	CFLAGS += -DRMT_ENABLED=1
+	CFLAGS += -DRMT_USE_OPENGL=1
+
 	# Highest optimization flag in release builds.
 	CFLAGS += -O3
 
@@ -104,7 +108,7 @@ endif
 # C compilation flags.
 #
 CCFLAGS := $(CFLAGS)
-CCFLAGS += -std=c11
+CCFLAGS += -std=c11 -D_DEFAULT_SOURCE
 
 #
 # C++ compilation flags.

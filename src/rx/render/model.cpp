@@ -7,6 +7,8 @@
 
 #include "rx/model/loader.h"
 
+#include "rx/core/profiler.h"
+
 namespace rx::render {
 
 model::model(frontend::interface* _frontend)
@@ -91,6 +93,9 @@ bool model::load(const string& _file_name) {
 void model::render(frontend::target* _target, const math::mat4x4f& _model,
   const math::mat4x4f& _view, const math::mat4x4f& _projection)
 {
+  profiler::cpu_sample cpu_sample{"model::render"};
+  profiler::gpu_sample gpu_sample{"model::render"};
+
   frontend::state state;
   state.depth.record_test(true);
   state.depth.record_write(true);
@@ -104,6 +109,9 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
   state.viewport.record_dimensions(_target->dimensions());
 
   m_opaque_meshes.each_fwd([&](const mesh& _mesh) {
+    profiler::cpu_sample cpu_sample{"batch"};
+    profiler::gpu_sample gpu_sample{"batch"};
+
     const auto& material{m_materials[_mesh.material]};
 
     rx_u64 flags{0};

@@ -111,37 +111,44 @@ bool loader::import(const string& _file_name) {
 
   const bool result{new_loader->load(_file_name)};
   if (result) {
+    m_positions = utility::move(new_loader->positions());
+    m_meshes = utility::move(new_loader->meshes());
+    m_elements = utility::move(new_loader->elements());
+    m_animations = utility::move(new_loader->animations());
+    m_frames = utility::move(new_loader->frames());
+    m_joints = utility::move(new_loader->joints());
+
     const auto& animations{new_loader->animations()};
-    const auto& positions{new_loader->positions()};
     const auto& normals{new_loader->normals()};
     const auto& tangents{new_loader->tangents()};
     const auto& coordinates{new_loader->coordinates()};
-    const auto vertices{static_cast<rx_size>(positions.size())};
+
+    const rx_size n_vertices{m_positions.size()};
 
     // Hoist the transform check outside the for loops for faster model loading.
     if (m_transform) {
       const auto transform{m_transform->to_mat4()};
       if (animations.is_empty()) {
-        utility::construct<vector<vertex>>(&as_vertices, m_allocator, vertices);
+        utility::construct<vector<vertex>>(&as_vertices, m_allocator, n_vertices);
         m_flags |= k_constructed;
 
-        for (rx_size i{0}; i < vertices; i++) {
+        for (rx_size i{0}; i < n_vertices; i++) {
           const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
-          as_vertices[i].position = math::mat4x4f::transform_point(positions[i], transform);
+          as_vertices[i].position = math::mat4x4f::transform_point(m_positions[i], transform);
           as_vertices[i].normal = math::mat4x4f::transform_vector(normals[i], transform);
           as_vertices[i].tangent = {tangent.x, tangent.w, tangent.z, tangents[i].w};
           as_vertices[i].coordinate = coordinates[i];
         }
       } else {
-        utility::construct<vector<animated_vertex>>(&as_animated_vertices, m_allocator, vertices);
+        utility::construct<vector<animated_vertex>>(&as_animated_vertices, m_allocator, n_vertices);
         m_flags |= k_constructed;
         m_flags |= k_animated;
 
         const auto& blend_weights{new_loader->blend_weights()};
         const auto& blend_indices{new_loader->blend_indices()};
-        for (rx_size i{0}; i < vertices; i++) {
+        for (rx_size i{0}; i < n_vertices; i++) {
           const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
-          as_animated_vertices[i].position = math::mat4x4f::transform_point(positions[i], transform);
+          as_animated_vertices[i].position = math::mat4x4f::transform_point(m_positions[i], transform);
           as_animated_vertices[i].normal = math::mat4x4f::transform_vector(normals[i], transform);
           as_animated_vertices[i].tangent = {tangent.x, tangent.w, tangent.z, tangents[i].w};
           as_animated_vertices[i].coordinate = coordinates[i];
@@ -151,8 +158,8 @@ bool loader::import(const string& _file_name) {
       }
     } else {
       if (animations.is_empty()) {
-        for (rx_size i{0}; i < vertices; i++) {
-          as_vertices[i].position = positions[i];
+        for (rx_size i{0}; i < n_vertices; i++) {
+          as_vertices[i].position = m_positions[i];
           as_vertices[i].normal = normals[i];
           as_vertices[i].tangent = tangents[i];
           as_vertices[i].coordinate = coordinates[i];
@@ -160,8 +167,8 @@ bool loader::import(const string& _file_name) {
       } else {
         const auto& blend_weights{new_loader->blend_weights()};
         const auto& blend_indices{new_loader->blend_indices()};
-        for (rx_size i{0}; i < vertices; i++) {
-          as_animated_vertices[i].position =positions[i];
+        for (rx_size i{0}; i < n_vertices; i++) {
+          as_animated_vertices[i].position = m_positions[i];
           as_animated_vertices[i].normal = normals[i];
           as_animated_vertices[i].tangent = tangents[i];
           as_animated_vertices[i].coordinate = coordinates[i];
@@ -170,12 +177,6 @@ bool loader::import(const string& _file_name) {
         }
       }
     }
-
-    m_meshes = utility::move(new_loader->meshes());
-    m_elements = utility::move(new_loader->elements());
-    m_animations = utility::move(new_loader->animations());
-    m_frames = utility::move(new_loader->frames());
-    m_joints = utility::move(new_loader->joints());
 
     // Bounds need to be recalculated if there was a transform
     if (m_transform) {

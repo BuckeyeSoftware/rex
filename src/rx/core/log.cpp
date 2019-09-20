@@ -5,6 +5,7 @@
 #include "rx/core/string.h" // string
 #include "rx/core/vector.h" // vector
 #include "rx/core/debug.h" // RX_MESSAGE
+#include "rx/core/profiler.h" // g_profiler
 #include "rx/core/algorithm/max.h"
 
 #include "rx/core/filesystem/file.h" // file
@@ -174,7 +175,7 @@ void logger::flush(rx_size max_padding) {
 }
 
 void logger::process(int thread_id) {
-  concurrency::scope_lock locked(m_mutex);
+  concurrency::scope_lock locked{m_mutex};
 
   // wait until ready
   m_ready_condition.wait(locked, [this]{ return m_status & k_ready; });
@@ -202,7 +203,7 @@ void logger::process(int thread_id) {
   RX_ASSERT(m_queue.is_empty(), "not all contents flushed");
 }
 
-static RX_GLOBAL<logger> g_logger{"log"};
+static RX_GLOBAL<logger> g_logger{"logger"};
 
 void log::write(log::level level, string&& contents) {
   g_logger->write(this, utility::move(contents), level, time(nullptr));

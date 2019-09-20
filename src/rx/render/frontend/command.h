@@ -34,7 +34,8 @@ enum class command_type : rx_u8 {
   k_resource_destroy,
   k_clear,
   k_draw,
-  k_blit
+  k_blit,
+  k_profile
 };
 
 struct alignas(16) command_header {
@@ -93,6 +94,10 @@ struct blit_command : state {
   rx_size src_attachment;
   target* dst_target;
   rx_size dst_attachment;
+};
+
+struct profile_command {
+  const char* tag;
 };
 
 struct resource_command {

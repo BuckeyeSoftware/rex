@@ -110,6 +110,15 @@ struct interface {
     rx_size _dst_attachment
   );
 
+  // Used by profile::gpu_sample to insert profile markers. The backend is
+  // supposed to consume the k_profile command and when a tag is specified,
+  // begin timing some commands. When a tag is not specified, i.e nullptr is
+  // passed, stop the timing.
+  //
+  // The |_tag| passed here must be a static string literal. The lifetime
+  // must exist for the lifetime of the whole program.
+  void profile(const char* _tag);
+
   void resize(const math::vec2z& _resolution);
 
   bool process();

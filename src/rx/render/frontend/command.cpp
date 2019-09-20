@@ -17,6 +17,7 @@ command_buffer::~command_buffer() {
 
 rx_byte* command_buffer::allocate(rx_size _size, command_type _command, const command_header::info& _info) {
   rx_byte* data{m_allocator.allocate(sizeof(command_header) + _size)};
+  RX_ASSERT(data, "out of memory in command buffer");
   command_header* header{reinterpret_cast<command_header*>(data)};
   header->type = _command;
   header->tag = _info;

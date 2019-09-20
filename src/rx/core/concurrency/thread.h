@@ -49,6 +49,7 @@ private:
 
     function<void(int)> m_function;
     bool m_joined;
+    const char* m_name;
   };
 
   memory::allocator* m_allocator;

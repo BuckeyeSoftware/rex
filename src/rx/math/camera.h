@@ -4,19 +4,16 @@
 
 namespace rx::math {
 
-//! camera
-struct camera : transform {
-  //! construct with projection matrix and optional parent transform
-  constexpr camera(const mat4x4f& _projection, transform* _parent = nullptr);
-
+struct camera
+  : transform
+{
+  constexpr camera(transform* _parent = nullptr);
   mat4x4f view() const;
-
   mat4x4f projection;
 };
 
-inline constexpr camera::camera(const mat4x4f& _projection, transform* _parent)
+inline constexpr camera::camera(transform* _parent)
   : transform{_parent}
-  , projection{_projection}
 {
 }
 

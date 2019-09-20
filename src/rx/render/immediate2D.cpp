@@ -16,6 +16,7 @@
 #include "rx/core/math/cos.h"
 
 #include "rx/core/filesystem/file.h"
+#include "rx/core/profiler.h"
 #include "rx/core/json.h"
 
 #include "rx/texture/chain.h"
@@ -86,6 +87,8 @@ bool immediate2D::queue::command::operator!=(const command& _command) const {
 void immediate2D::queue::record_scissor(const math::vec2i& _position,
   const math::vec2i& _size)
 {
+  profiler::cpu_sample sample{"immediate2D::queue::record_scissor"};
+
   command next_command;
   next_command.kind = command::type::k_scissor;
   next_command.flags = _position.x < 0 ? 0 : 1;
@@ -104,6 +107,8 @@ void immediate2D::queue::record_scissor(const math::vec2i& _position,
 void immediate2D::queue::record_rectangle(const math::vec2i& _position,
   const math::vec2i& _size, rx_s32 _roundness, const math::vec4f& _color)
 {
+  profiler::cpu_sample sample{"immediate2D::queue::record_rectangle"};
+
   command next_command;
   next_command.kind = command::type::k_rectangle;
   next_command.flags = 0;
@@ -126,6 +131,8 @@ void immediate2D::queue::record_line(const math::vec2i& _point_a,
   const math::vec2i& _point_b, rx_s32 _roundness, rx_s32 _thickness,
   const math::vec4f& _color)
 {
+  profiler::cpu_sample sample{"immediate2D::queue::record_line"};
+
   command next_command;
   next_command.kind = command::type::k_line;
   next_command.flags = 0;
@@ -143,6 +150,8 @@ void immediate2D::queue::record_line(const math::vec2i& _point_a,
 void immediate2D::queue::record_triangle(const math::vec2i& _position,
   const math::vec2i& _size, rx_u32 _flags, const math::vec4f& _color)
 {
+  profiler::cpu_sample sample{"immediate2D::queue::record_triangle"};
+
   command next_command;
   next_command.kind = command::type::k_triangle;
   next_command.flags = _flags;
@@ -163,6 +172,8 @@ void immediate2D::queue::record_text(const char* _font, rx_size _font_length,
   const math::vec2i& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
   const char* _text, rx_size _text_length, const math::vec4f& _color)
 {
+  profiler::cpu_sample sample{"immediate2D::queue::record_text"};
+
   command next_command;
   next_command.kind = command::type::k_text;
   next_command.flags = static_cast<rx_u32>(_align);
@@ -389,6 +400,8 @@ immediate2D::~immediate2D() {
 }
 
 void immediate2D::immediate2D::render(frontend::target* _target) {
+  profiler::cpu_sample sample{"immediate2D::render"};
+
   // avoid rendering if the last update did not produce any draw commands and
   // this iteration has no updates either
   const bool last_empty{m_render_queue[m_rd_index].is_empty()};
@@ -556,6 +569,8 @@ template<rx_size E>
 void immediate2D::generate_polygon(const math::vec2f (&_coordinates)[E],
   const rx_f32 _thickness, const math::vec4f& _color)
 {
+  profiler::cpu_sample sample{"immediate2D::generate_polygon"};
+
   math::vec2f normals[E];
   math::vec2f coordinates[E];
 
@@ -612,6 +627,8 @@ void immediate2D::generate_polygon(const math::vec2f (&_coordinates)[E],
 void immediate2D::generate_rectangle(const math::vec2f& _position, const math::vec2f& _size,
   rx_f32 _roundness, const math::vec4f& _color)
 {
+  profiler::cpu_sample sample{"immediate2D::generate_rectangle"};
+
   if (_roundness > 0.0f) {
     static constexpr const rx_size k_round{k_circle_vertices/4};
     math::vec2f vertices[(k_round + 1) * 4];
@@ -652,6 +669,8 @@ void immediate2D::generate_line(const math::vec2f& _point_a,
   const math::vec2f& _point_b, rx_f32 _thickness, rx_f32 _roundness,
   const math::vec4f& _color)
 {
+  profiler::cpu_sample smaple{"immediate2D::generate_line"};
+
   if (_roundness > 0.0f) {
     math::vec2f delta{math::normalize(_point_b - _point_a)};
     math::vec2f normal{delta.y, -delta.x};
@@ -683,7 +702,6 @@ void immediate2D::generate_line(const math::vec2f& _point_a,
     add_batch(offset, batch::type::k_lines, _color.a < 1.0f);
   }
 }
-
 
 static rx_size calculate_text_color(const char* _contents, math::vec4f& color_) {
   switch (*_contents) {
@@ -769,6 +787,8 @@ void immediate2D::generate_text(rx_s32 _size, const char* _font,
   rx_f32 _scale, const math::vec2f& _position, text_align _align,
   const math::vec4f& _color)
 {
+  profiler::cpu_sample sample{"immediate2D::generate_text"};
+
   (void)_font_length;
 
   const font::key key{_size, _font};
@@ -875,6 +895,8 @@ void immediate2D::size_text(const char* _contents, rx_size _contents_length,
 void immediate2D::add_batch(rx_size _offset, batch::type _type, bool _blend,
   frontend::texture2D* _texture)
 {
+  profiler::cpu_sample sample{"immediate2D::add_batch"};
+
   const rx_size count{m_element_index - _offset};
 
   frontend::state render_state;

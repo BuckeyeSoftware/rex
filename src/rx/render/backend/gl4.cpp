@@ -11,11 +11,15 @@
 
 #include "rx/core/algorithm/max.h"
 #include "rx/core/math/log2.h"
+
+#include "rx/core/profiler.h"
 #include "rx/core/debug.h"
 #include "rx/core/log.h"
 
 #include "rx/console/variable.h"
 #include "rx/console/interface.h"
+
+#include "lib/remotery.h"
 
 namespace rx::render::backend {
 
@@ -133,12 +137,28 @@ static const GLubyte* (GLAPIENTRYP pglGetStringi)(GLenum, GLuint);
 static void (GLAPIENTRYP pglDrawArrays)(GLenum, GLint, GLsizei);
 static void (GLAPIENTRYP pglDrawElements)(GLenum, GLsizei, GLenum, const GLvoid*);
 
+static void (GLAPIENTRYP pglFinish)(void);
+
 #ifndef GL_TEXTURE_MAX_ANISOTROPY
 #define GL_TEXTURE_MAX_ANISOTROPY              0x84FE
 #endif
 #ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY          0x84FF
 #endif
+
+struct profile_sample {
+  profile_sample(const char* _tag)
+    : m_cpu_sample{_tag}
+  {
+    rmt_BeginOpenGLSampleDynamic(_tag);
+  }
+
+  ~profile_sample() {
+    rmt_EndOpenGLSample();
+  }
+private:
+  profiler::cpu_sample m_cpu_sample;
+};
 
 namespace detail_gl4 {
   struct buffer {
@@ -296,6 +316,8 @@ namespace detail_gl4 {
     }
 
     void use_state(const frontend::state* _render_state) {
+      profile_sample sample{"use_state"};
+
       const auto& scissor{_render_state->scissor};
       const auto& blend{_render_state->blend};
       const auto& cull{_render_state->cull};
@@ -510,6 +532,7 @@ namespace detail_gl4 {
     }
 
     void use_target(const frontend::target* _render_target) {
+      profile_sample sample{"use_target"};
       const auto this_target{reinterpret_cast<const target*>(_render_target + 1)};
       if (this_target->fbo != m_bound_fbo) {
         pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, this_target->fbo);
@@ -518,6 +541,7 @@ namespace detail_gl4 {
     }
 
     void use_program(const frontend::program* _render_program) {
+      profile_sample sample{"use_program"};
       const auto this_program{reinterpret_cast<const program*>(_render_program + 1)};
       if (this_program->handle != m_bound_program) {
         pglUseProgram(this_program->handle);
@@ -526,6 +550,7 @@ namespace detail_gl4 {
     }
 
     void use_buffer(const frontend::buffer* _render_buffer) {
+      profile_sample sample{"use_buffer"};
       const auto this_buffer{reinterpret_cast<const buffer*>(_render_buffer + 1)};
       if (this_buffer->va != m_bound_vao) {
         pglBindVertexArray(this_buffer->va);
@@ -542,6 +567,8 @@ namespace detail_gl4 {
 
     template<typename Ft, typename Bt, GLuint texture_unit::*name>
     void use_texture_template(const Ft* _render_texture, GLuint unit) {
+      profile_sample sample{"use_texture"};
+
       const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
       auto& texture_unit{m_texture_units[unit]};
       if (texture_unit.*name != this_texture->tex) {
@@ -895,6 +922,8 @@ gl4::gl4(memory::allocator* _allocator, void* _data)
   fetch("glDrawArrays", pglDrawArrays);
   fetch("glDrawElements", pglDrawElements);
 
+  fetch("glFinish", pglFinish);
+
   m_impl = m_allocator->create<detail_gl4::state>();
 }
 
@@ -903,6 +932,8 @@ gl4::~gl4() {
 }
 
 void gl4::process(rx_byte* _command) {
+  profiler::cpu_sample sample{"gl4::process"};
+
   auto state{reinterpret_cast<detail_gl4::state*>(m_impl)};
   auto header{reinterpret_cast<frontend::command_header*>(_command)};
   switch (header->type) {
@@ -1383,10 +1414,14 @@ void gl4::process(rx_byte* _command) {
     break;
   case frontend::command_type::k_resource_update:
     {
+      profiler::cpu_sample sample{"update"};
+
       const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
       switch (resource->kind) {
       case frontend::resource_command::type::k_buffer:
         {
+          profiler::cpu_sample sampler{"buffer"};
+
           const auto render_buffer{resource->as_buffer};
           auto buffer{reinterpret_cast<detail_gl4::buffer*>(render_buffer + 1)};
           const auto& vertices{render_buffer->vertices()};
@@ -1399,6 +1434,7 @@ void gl4::process(rx_byte* _command) {
             buffer->vertices_size = vertices.size();
             pglNamedBufferData(buffer->bo[0], vertices.size(), vertices.data(), type);
           } else {
+            pglNamedBufferData(buffer->bo[0], buffer->vertices_size, nullptr, type);
             pglNamedBufferSubData(buffer->bo[0], 0, vertices.size(), vertices.data());
           }
 
@@ -1407,6 +1443,7 @@ void gl4::process(rx_byte* _command) {
             buffer->elements_size = elements.size();
             pglNamedBufferData(buffer->bo[1], elements.size(), elements.data(), type);
           } else {
+            pglNamedBufferData(buffer->bo[1], buffer->elements_size, nullptr, type);
             pglNamedBufferSubData(buffer->bo[1], 0, elements.size(), elements.data());
           }
         }
@@ -1418,6 +1455,8 @@ void gl4::process(rx_byte* _command) {
     break;
   case frontend::command_type::k_clear:
     {
+      profile_sample sample{"clear"};
+
       const auto command{reinterpret_cast<frontend::clear_command*>(header + 1)};
       const auto render_state{reinterpret_cast<frontend::state*>(command)};
       const auto render_target{command->render_target};
@@ -1459,6 +1498,8 @@ void gl4::process(rx_byte* _command) {
     break;
   case frontend::command_type::k_draw:
     {
+      profile_sample sample{"draw"};
+    
       const auto command{reinterpret_cast<frontend::draw_command*>(header + 1)};
       const auto render_state{reinterpret_cast<frontend::state*>(command)};
       const auto render_target{command->render_target};
@@ -1605,6 +1646,8 @@ void gl4::process(rx_byte* _command) {
     break;
   case frontend::command_type::k_blit:
     {
+      profile_sample sample{"blit"};
+
       const auto command{reinterpret_cast<frontend::blit_command*>(header + 1)};
       const auto render_state{reinterpret_cast<frontend::state*>(command)};
 
@@ -1654,10 +1697,21 @@ void gl4::process(rx_byte* _command) {
 
       break;
     }
+  case frontend::command_type::k_profile:
+    {
+      const auto command{reinterpret_cast<frontend::profile_command*>(header + 1)};
+      if (command->tag) {
+        rmt_BeginOpenGLSampleDynamic(command->tag);
+      } else {
+        rmt_EndOpenGLSample();
+      }
+      break;
+    }
   }
 }
 
 void gl4::swap() {
+  profiler::cpu_sample sample{"gl4::swap"};
   SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(m_data));
 }
 
