@@ -5,13 +5,13 @@ namespace rx::concurrency {
 
 void wait_group::signal() {
   scope_lock lock{m_mutex};
-  m_count++;
+  m_signaled_count++;
   m_condition_variable.signal();
 }
 
-void wait_group::wait(rx_size _count) {
+void wait_group::wait() {
   scope_lock lock{m_mutex};
-  m_condition_variable.wait(lock, [&]{ return _count == m_count; });
+  m_condition_variable.wait(lock, [&]{ return m_signaled_count == m_count; });
 }
 
 } // namespace rx::concurrency

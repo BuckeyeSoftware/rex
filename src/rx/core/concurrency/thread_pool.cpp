@@ -19,7 +19,7 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads)
   const auto beg{SDL_GetPerformanceCounter()};
   m_threads.reserve(_threads);
 
-  wait_group group;
+  wait_group group{_threads};
   for (rx_size i{0}; i < _threads; i++) {
     m_threads.emplace_back("thread pool", [this, &group](int _thread_id) {
       logger(log::level::k_info, "starting thread %d", _thread_id);
@@ -49,7 +49,7 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads)
   }
 
   // wait for all threads to start
-  group.wait(m_threads.size());
+  group.wait();
 
   const auto end{SDL_GetPerformanceCounter()};
   const auto time{static_cast<rx_f64>(((end - beg) * 1000.0) / static_cast<rx_f64>(SDL_GetPerformanceFrequency()))};
@@ -58,7 +58,7 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads)
 
 thread_pool::~thread_pool() {
   {
-    scope_lock lock(m_mutex);
+    scope_lock lock{m_mutex};
     m_stop = true;
   }
   m_task_cond.broadcast();

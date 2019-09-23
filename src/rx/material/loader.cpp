@@ -142,7 +142,7 @@ bool loader::parse(const json& _definition) {
 bool loader::parse_textures(const json& _textures) {
   const rx_size n_textures{_textures.size()};
   concurrency::thread_pool threads{m_allocator, n_textures};
-  concurrency::wait_group group;
+  concurrency::wait_group group{n_textures};
   concurrency::atomic<bool> success{true};
   _textures.each([&](const json& _texture) {
     threads.add([&, _texture](int) {
@@ -158,7 +158,7 @@ bool loader::parse_textures(const json& _textures) {
     });
     return true;
   });
-  group.wait(n_textures);
+  group.wait();
   return success.load();
 }
 

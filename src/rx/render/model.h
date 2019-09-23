@@ -27,8 +27,11 @@ struct model {
 
   void render(frontend::target* _target, const math::mat4x4f& _model,
     const math::mat4x4f& _view, const math::mat4x4f& _projection);
-  
+
   bool load(const string& _file_name);
+
+  const vector<mesh>& opaque_meshes() const &;
+  const vector<mesh>& transparent_meshes() const &;
 
 private:
   frontend::interface* m_frontend;
@@ -38,6 +41,14 @@ private:
   vector<mesh> m_opaque_meshes;
   vector<mesh> m_transparent_meshes;
 };
+
+inline const vector<model::mesh>& model::opaque_meshes() const & {
+  return m_opaque_meshes;
+}
+
+inline const vector<model::mesh>& model::transparent_meshes() const & {
+  return m_transparent_meshes;
+}
 
 } // namespace rx::render
 

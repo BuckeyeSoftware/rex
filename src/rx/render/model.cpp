@@ -7,6 +7,8 @@
 
 #include "rx/model/loader.h"
 
+#include "rx/math/frustum.h"
+
 #include "rx/core/profiler.h"
 
 namespace rx::render {
@@ -93,6 +95,8 @@ bool model::load(const string& _file_name) {
 void model::render(frontend::target* _target, const math::mat4x4f& _model,
   const math::mat4x4f& _view, const math::mat4x4f& _projection)
 {
+  math::frustum frustum{_view * _projection};
+
   profiler::cpu_sample cpu_sample{"model::render"};
   profiler::gpu_sample gpu_sample{"model::render"};
 
@@ -109,6 +113,10 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
   state.viewport.record_dimensions(_target->dimensions());
 
   m_opaque_meshes.each_fwd([&](const mesh& _mesh) {
+    if (!frustum.is_aabb_inside(_mesh.bounds.transform(_model))) {
+      return true;
+    }
+
     profiler::cpu_sample cpu_sample{"batch"};
     profiler::gpu_sample gpu_sample{"batch"};
 
@@ -120,7 +128,7 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
     if (material.metalness())  flags |= 1 << 3;
     if (material.roughness())  flags |= 1 << 4;
     if (material.alpha_test()) flags |= 1 << 5;
-    
+
     // Disable backface culling for alpha-tested geometry.
     state.cull.record_enable(!material.alpha_test());
 
@@ -145,6 +153,8 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
       material.normal(),
       material.metalness(),
       material.roughness());
+
+    return true;
   });
 }
 

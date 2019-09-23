@@ -8,19 +8,27 @@
 namespace rx::concurrency {
 
 struct wait_group {
+  wait_group(rx_size _count);
   wait_group();
 
   void signal();
-  void wait(rx_size _count);
+  void wait();
 
 private:
-  rx_size m_count; // protected by |m_mutex|
+  rx_size m_signaled_count; // protected by |m_mutex|
+  rx_size m_count;          // protected by |m_mutex|
   mutex m_mutex;
   condition_variable m_condition_variable;
 };
 
+inline wait_group::wait_group(rx_size _count)
+  : m_signaled_count{0}
+  , m_count{_count}
+{
+}
+
 inline wait_group::wait_group()
-  : m_count{0}
+  : wait_group{0}
 {
 }
 

@@ -7,11 +7,19 @@
 
 namespace rx::math {
 
+template<typename T>
+struct mat4x4;
+
+using mat4x4f = mat4x4<rx_f32>;
+
 struct aabb {
   constexpr aabb();
+  constexpr aabb(const vec3f& _min, const vec3f& _max);
 
   void expand(const vec3f& _point);
   void expand(const aabb& _bounds);
+
+  aabb transform(const mat4x4f& _mat) const;
 
   const vec3f& min() const &;
   const vec3f& max() const &;
@@ -27,6 +35,12 @@ private:
 inline constexpr aabb::aabb()
   : m_min{ FLT_MAX,  FLT_MAX,  FLT_MAX}
   , m_max{-FLT_MIN, -FLT_MAX, -FLT_MAX}
+{
+}
+
+inline constexpr aabb::aabb(const vec3f& _min, const vec3f& _max)
+  : m_min{_min}
+  , m_max{_max}
 {
 }
 

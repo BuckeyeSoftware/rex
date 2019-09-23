@@ -22,7 +22,7 @@ struct thread_pool
   void add(function<void(int)>&& _task);
 
   memory::allocator* allocator() const;
-  
+
 private:
   memory::allocator* m_allocator;
 

@@ -178,7 +178,7 @@ struct test_game
     , m_skybox{&m_frontend}
     , m_model{&m_frontend}
   {
-    m_camera.translate = {-1.0f, 55.0f, -405.0f};
+    m_camera.translate = {-1.0f, 60.0f, -1000.0f};
   }
 
   virtual bool on_init() {
