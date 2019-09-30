@@ -4,7 +4,6 @@
 #include "rx/core/log.h" // log
 #include "rx/core/string.h" // string
 #include "rx/core/vector.h" // vector
-#include "rx/core/debug.h" // RX_MESSAGE
 #include "rx/core/profiler.h" // g_profiler
 #include "rx/core/algorithm/max.h"
 
@@ -101,8 +100,6 @@ logger::logger()
   , m_status{k_running}
   , m_thread{"logger", [this](int id){ process(id); }}
 {
-  RX_MESSAGE("starting logger... (messages will be flushed once started)");
-
   // initialize all loggers
   static_globals::each([this](static_node* node) {
     const char* name{node->name()};
@@ -178,18 +175,11 @@ void logger::flush(rx_size max_padding) {
   m_queue.clear();
 }
 
-void logger::process(int thread_id) {
+void logger::process(int) {
   concurrency::scope_lock locked{m_mutex};
 
   // wait until ready
   m_ready_condition.wait(locked, [this]{ return m_status & k_ready; });
-
-  {
-    // don't hold a lock for RX_MESSAGE since it acquires this same lock
-    concurrency::scope_unlock unlocked(m_mutex);
-    RX_MESSAGE("logger started on thread %d", thread_id);
-    RX_MESSAGE("flushed all messages above at this time");
-  }
 
   const auto max_padding{m_max_name_length + m_max_level_length};
   flush(max_padding);

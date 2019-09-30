@@ -1,13 +1,15 @@
 #include <string.h> // strcmp
 
 #include "rx/core/statics.h"
-#include "rx/core/debug.h" // RX_MESSAGE
+#include "rx/core/log.h"
 
 #include "rx/core/concurrency/spin_lock.h"
 #include "rx/core/concurrency/scope_lock.h"
 #include "rx/core/concurrency/scope_unlock.h"
 
 namespace rx {
+
+RX_LOG("statics", logger);
 
 static concurrency::spin_lock g_lock;
 
@@ -30,19 +32,21 @@ void static_node::link() {
 }
 
 void static_globals::init() {
-  RX_MESSAGE("init static globals");
+  logger(log::level::k_verbose, "init static globals");
   concurrency::scope_lock locked(g_lock);
   for (auto node{g_head}; node; node = node->m_next) {
     concurrency::scope_unlock unlocked(g_lock);
+    logger(log::level::k_verbose, "init \"%s\"", node->name());
     node->init_global();
   }
 }
 
 void static_globals::fini() {
-  RX_MESSAGE("fini static globals");
+  logger(log::level::k_verbose, "fini static globals");
   concurrency::scope_lock locked(g_lock);
   for (auto node{g_tail}; node; node = node->m_prev) {
     concurrency::scope_unlock unlocked(g_lock);
+    logger(log::level::k_verbose, "fini \"%s\"", node->name());
     node->fini_global();
   }
 }

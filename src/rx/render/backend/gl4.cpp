@@ -13,7 +13,6 @@
 #include "rx/core/math/log2.h"
 
 #include "rx/core/profiler.h"
-#include "rx/core/debug.h"
 #include "rx/core/log.h"
 
 #include "rx/console/variable.h"
@@ -1462,7 +1461,7 @@ void gl4::process(rx_byte* _command) {
       const auto render_target{command->render_target};
       const auto this_target{reinterpret_cast<detail_gl4::target*>(render_target + 1)};
       const bool clear_depth{!!(command->clear_mask & RX_RENDER_CLEAR_DEPTH)};
-      const bool clear_stencil{!!(command->clear_mask & RX_RENDER_CLEAR_STENCIL)};  
+      const bool clear_stencil{!!(command->clear_mask & RX_RENDER_CLEAR_STENCIL)};
       const auto clear_color{command->clear_mask & ~(RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL)};
 
       // TODO(dweiler): optimize use_state to only consider the following
@@ -1499,7 +1498,7 @@ void gl4::process(rx_byte* _command) {
   case frontend::command_type::k_draw:
     {
       profile_sample sample{"draw"};
-    
+
       const auto command{reinterpret_cast<frontend::draw_command*>(header + 1)};
       const auto render_state{reinterpret_cast<frontend::state*>(command)};
       const auto render_target{command->render_target};

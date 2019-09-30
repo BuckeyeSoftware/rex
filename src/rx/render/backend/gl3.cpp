@@ -11,7 +11,6 @@
 #include "rx/core/math/log2.h"
 
 #include "rx/core/profiler.h"
-#include "rx/core/debug.h"
 #include "rx/core/log.h"
 
 #include "lib/remotery.h"
@@ -580,7 +579,7 @@ namespace detail_gl3 {
         pglBindTexture(_type, this_texture->tex);
       }
     }
-  
+
     template<GLuint texture_unit::*name, typename Bt, typename Ft>
     void use_active_texture_template(GLenum _type, const Ft* _render_texture, rx_size _unit) {
       if (m_active_texture != _unit) {
@@ -589,7 +588,7 @@ namespace detail_gl3 {
       }
       use_texture_template<name, Bt, Ft>(_type, _render_texture);
     }
-  
+
     template<typename Ft, typename Bt, GLuint texture_unit::*name>
     void invalidate_texture_template(const Ft* _render_texture) {
       const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
@@ -1047,7 +1046,7 @@ void gl3::process(rx_byte* _command) {
           const auto& elements{render_buffer->elements()};
           const auto type{render_buffer->kind() == frontend::buffer::type::k_dynamic
             ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW};
-          
+
           state->use_buffer(render_buffer);
 
           state->use_vbo(buffer->bo[0]);
@@ -1454,7 +1453,7 @@ void gl3::process(rx_byte* _command) {
       const auto render_state{reinterpret_cast<frontend::state*>(command)};
       const auto render_target{command->render_target};
       const bool clear_depth{!!(command->clear_mask & RX_RENDER_CLEAR_DEPTH)};
-      const bool clear_stencil{!!(command->clear_mask & RX_RENDER_CLEAR_STENCIL)};  
+      const bool clear_stencil{!!(command->clear_mask & RX_RENDER_CLEAR_STENCIL)};
       const auto clear_color{command->clear_mask & ~(RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL)};
 
       state->use_state(render_state);

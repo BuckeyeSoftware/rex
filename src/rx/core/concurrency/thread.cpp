@@ -2,7 +2,6 @@
 #include "rx/core/concurrency/atomic.h"
 #include "rx/core/memory/system_allocator.h"
 #include "rx/core/string.h"
-#include "rx/core/debug.h" // RX_MESSAGE
 #include "rx/core/profiler.h"
 
 #if defined(RX_PLATFORM_WINDOWS)
@@ -69,9 +68,9 @@ thread::state::state(const char* _name, function<void(int)>&& _function)
   if (pthread_create(&m_thread, nullptr, wrap, reinterpret_cast<void*>(this)) != 0) {
     RX_ASSERT(false, "thread creation failed");
   }
-  if (pthread_setname_np(m_thread, _name) != 0) {
-    RX_MESSAGE("failed to set thread name");
-  }
+
+  pthread_setname_np(m_thread, _name);
+
 #elif defined(RX_PLATFORM_WINDOWS)
   // _beginthreadex on windows expects unsigned int return and __stdcall,
   auto wrap_win32{[](void* _data) -> unsigned {
