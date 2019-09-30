@@ -2,14 +2,14 @@
 #define RX_TEXTURE_CHAIN_H
 #include "rx/texture/loader.h"
 
-#include "rx/core/hint.h"
+#include "rx/core/hints/unreachable.h"
 #include "rx/core/concepts/no_copy.h"
 
 namespace rx::texture {
 
 struct loader;
 
-struct chain 
+struct chain
   : concepts::no_copy
 {
   enum class pixel_format {

@@ -7,7 +7,7 @@
 #include "rx/core/math/force_eval.h"
 
 #include "rx/core/abort.h"
-#include "rx/core/hint.h" // RX_HINT_UNREACHABLE
+#include "rx/core/hints/unreachable.h"
 
 namespace rx::math {
 
@@ -31,7 +31,7 @@ rx_f32 sindf(rx_f64 _x) {
 static constexpr const rx_f64 k_toint{1.5 / DBL_EPSILON};
 #else
 static constexpr const rx_f64 k_toint{1.5 / LDBL_EPSILON};
-#endif 
+#endif
 static constexpr const rx_f64 k_invpio2{6.36619772367581382433e-01};
 static constexpr const rx_f64 k_pio2_1{1.57079631090164184570e+00};
 static constexpr const rx_f64 k_pio2_1t{1.58932547735281966916e-08};

@@ -1,5 +1,6 @@
 #include "rx/input/input.h"
-#include "rx/core/hint.h" // RX_HINT_UNREACHABLE
+
+#include "rx/core/hints/unreachable.h"
 
 namespace rx::input {
 

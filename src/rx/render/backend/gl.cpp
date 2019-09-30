@@ -1,5 +1,7 @@
 #include "rx/render/backend/gl.h"
 
+#include "rx/core/hints/unreachable.h"
+
 namespace rx::render {
 
 GLenum convert_blend_factor(frontend::blend_state::factor_type _factor_type) {

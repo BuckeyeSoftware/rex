@@ -1,8 +1,10 @@
 #include "rx/core/memory/bump_point_allocator.h"
 #include "rx/core/concurrency/scope_lock.h"
 
+#include "rx/core/hints/likely.h"
+#include "rx/core/hints/unlikely.h"
+
 #include "rx/core/assert.h"
-#include "rx/core/hint.h"
 
 namespace rx::memory {
 

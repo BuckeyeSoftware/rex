@@ -3,7 +3,6 @@
 #include "rx/render/frontend/resource.h"
 
 #include "rx/core/vector.h"
-#include "rx/core/hint.h"
 #include "rx/core/algorithm/max.h"
 #include "rx/core/math/log2.h"
 
@@ -472,7 +471,7 @@ inline const textureCM::wrap_options& textureCM::wrap() const & {
 inline rx_size textureCM::levels() const {
   RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
   RX_ASSERT(m_recorded & k_format, "format not recorded");
-  
+
   if (m_filter.mipmaps) {
     const auto count{math::log2(m_dimensions.max_element()) + 1};
     return is_compressed_format() ? count - 2 : count;

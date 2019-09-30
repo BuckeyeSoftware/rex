@@ -2,7 +2,7 @@
 #include <string.h> // strcmp
 
 #include "rx/core/json.h"
-#include "rx/core/hint.h"
+#include "rx/core/hints/unreachable.h"
 
 #include "rx/core/math/floor.h"
 
@@ -155,7 +155,7 @@ json json::operator[](rx_size _index) const {
     }
     return {m_shared, element->value};
   }
-  
+
   return {};
 }
 

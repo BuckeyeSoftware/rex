@@ -6,7 +6,7 @@
 #include "rx/core/math/shape.h"
 #include "rx/core/math/force_eval.h"
 
-#include "rx/core/hint.h" // RX_HINT_UNREACHABLE
+#include "rx/core/hints/unreachable.h"
 
 #if defined(RX_COMPILER_MSVC)
 #pragma warning(disable: 4723) // potential divide by 0

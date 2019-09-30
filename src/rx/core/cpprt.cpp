@@ -1,7 +1,6 @@
 #include "rx/core/types.h"
 #include "rx/core/assert.h"
 #include "rx/core/abort.h"
-#include "rx/core/hint.h"
 
 #include "rx/core/concurrency/atomic.h"
 #include "rx/core/concurrency/yield.h"

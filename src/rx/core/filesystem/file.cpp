@@ -2,10 +2,10 @@
 #include <errno.h> // errno
 #include <string.h> // strcmp, strerror
 
-#include "rx/core/assert.h" // RX_ASSERT
-#include "rx/core/log.h" // RX_LOG
-#include "rx/core/hint.h" // RX_HINT_UNLIKELY
-#include "rx/core/filesystem/file.h" // file
+#include "rx/core/log.h"
+#include "rx/core/assert.h"
+#include "rx/core/hints/unlikely.h"
+#include "rx/core/filesystem/file.h"
 
 RX_LOG("filesystem/file", log_file);
 

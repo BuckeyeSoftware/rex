@@ -1,12 +1,13 @@
 #ifndef RX_CORE_POOL_H
 #define RX_CORE_POOL_H
 #include "rx/core/bitset.h"
-#include "rx/core/hint.h" // RX_HINT_UNLIKELY
-#include "rx/core/assert.h" // RX_ASSERT
+#include "rx/core/assert.h"
+
+#include "rx/core/hints/unlikely.h"
 
 namespace rx {
 
-struct pool 
+struct pool
   : concepts::no_copy
 {
   pool(memory::allocator* _allocator, rx_size _object_size, rx_size _object_count);

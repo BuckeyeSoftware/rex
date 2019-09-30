@@ -1,7 +1,9 @@
 #include "rx/core/memory/single_shot_allocator.h"
 
+#include "rx/core/hints/likely.h"
+#include "rx/core/hints/unlikely.h"
+
 #include "rx/core/assert.h"
-#include "rx/core/hint.h"
 
 namespace rx::memory {
 
@@ -54,6 +56,6 @@ void single_shot_allocator::deallocate(rx_byte* _data) {
     RX_ASSERT(_data == m_data, "invalid pointer");
     m_allocated = false;
   }
-} 
+}
 
 } // namespace rx::memory
