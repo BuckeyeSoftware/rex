@@ -28,6 +28,7 @@ struct interface
 {
   virtual allocation_info query_allocation_info() const = 0;
   virtual device_info query_device_info() const = 0;
+  virtual bool init() = 0;
   virtual void process(rx_byte* _command) = 0;
   virtual void swap() = 0;
 };

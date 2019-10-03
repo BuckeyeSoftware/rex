@@ -853,6 +853,13 @@ gl3::gl3(memory::allocator* _allocator, void* _data)
   : m_allocator{_allocator}
   , m_data{_data}
 {
+}
+
+gl3::~gl3() {
+  m_allocator->destroy<detail_gl3::state>(m_impl);
+}
+
+bool gl3::init() {
   // buffers
   fetch("glGenBuffers", pglGenBuffers);
   fetch("glDeleteBuffers", pglDeleteBuffers);
@@ -952,10 +959,8 @@ gl3::gl3(memory::allocator* _allocator, void* _data)
   fetch("glFinish", pglFinish);
 
   m_impl = m_allocator->create<detail_gl3::state>();
-}
 
-gl3::~gl3() {
-  m_allocator->destroy<detail_gl3::state>(m_impl);
+  return true;
 }
 
 void gl3::process(rx_byte* _command) {

@@ -17,6 +17,7 @@ struct gl4
   gl4(memory::allocator* _allocator, void* _data);
   ~gl4();
 
+  bool init();
   void process(rx_byte* _command);
   void swap();
 

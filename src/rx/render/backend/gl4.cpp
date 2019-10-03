@@ -820,6 +820,13 @@ gl4::gl4(memory::allocator* _allocator, void* _data)
   : m_allocator{_allocator}
   , m_data{_data}
 {
+}
+
+gl4::~gl4() {
+  m_allocator->destroy<detail_gl4::state>(m_impl);
+}
+
+bool gl4::init() {
   // buffers
   fetch("glCreateBuffers", pglCreateBuffers);
   fetch("glDeleteBuffers", pglDeleteBuffers);
@@ -924,10 +931,8 @@ gl4::gl4(memory::allocator* _allocator, void* _data)
   fetch("glFinish", pglFinish);
 
   m_impl = m_allocator->create<detail_gl4::state>();
-}
 
-gl4::~gl4() {
-  m_allocator->destroy<detail_gl4::state>(m_impl);
+  return true;
 }
 
 void gl4::process(rx_byte* _command) {

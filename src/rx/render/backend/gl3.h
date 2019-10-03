@@ -17,6 +17,7 @@ struct gl3
   gl3(memory::allocator* _allocator, void* _data);
   ~gl3();
 
+  bool init();
   void process(rx_byte* _command);
   void swap();
 

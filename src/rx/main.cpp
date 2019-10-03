@@ -193,6 +193,10 @@ int main(int _argc, char** _argv) {
         &memory::g_system_allocator, reinterpret_cast<void*>(window));
   }
 
+  if (!backend->init()) {
+    abort("failed to initialize rendering backend");
+  }
+
   {
     render::frontend::interface frontend{&memory::g_system_allocator, backend};
 
