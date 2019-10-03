@@ -10,16 +10,18 @@
 
 #include "rx/core/log.h"
 
+#include "rx/core/assert.h"
+
 RX_LOG("render/vk", vk_log);
 
 
 #define LOCAL_INST_LOAD(_name) \
 PFN_##_name _name = (PFN_##_name) ( ctx.vkGetInstanceProcAddr(ctx.instance, #_name)); \
-if( _name == nullptr) vk_log(log::level::k_error, "could not load function pointer %s", #_name);
+RX_ASSERT(_name, "can't load vulkan function pointer %s", #_name);
 
 #define INST_LOAD(_instance, _name) \
 _name = (PFN_##_name) ( vkGetInstanceProcAddr(_instance, #_name)); \
-if( _name == nullptr) vk_log(log::level::k_error, "could not load function pointer %s", #_name);
+RX_ASSERT(_name, "can't load vulkan function pointer %s", #_name);
 
 
 
@@ -39,7 +41,7 @@ namespace detail_vk {
   
 }
 
-bool checkLayers(detail_vk::context& ctx, rx::vector<const char *>& layerNames) {
+bool check_layers(detail_vk::context& ctx, rx::vector<const char *>& layerNames) {
   
   LOCAL_INST_LOAD(vkEnumerateInstanceLayerProperties);
   uint32_t count;
@@ -48,33 +50,23 @@ bool checkLayers(detail_vk::context& ctx, rx::vector<const char *>& layerNames) 
   rx::vector<VkLayerProperties> availableLayers(ctx.allocator, count);
   vkEnumerateInstanceLayerProperties(&count, availableLayers.data());
   
-  if(!layerNames.each_fwd([&](const char* layerName) {
+  return layerNames.each_fwd([&](const char* layerName) -> bool {
     
-    bool layerFound = false;
-
-    availableLayers.each_fwd([&](const VkLayerProperties& layerProperties) {
-      if (strcmp(layerName, layerProperties.layerName) == 0) {
-        layerFound = true;
-        return false;
-      }
-      return true;
-    });
-
-    if (!layerFound) {
+    if (
+      availableLayers.each_fwd([&](const VkLayerProperties& layerProperties) {
+        return strcmp(layerName, layerProperties.layerName) == 0;
+      })
+    ) {
       vk_log(log::level::k_error, "could not find layer %s", layerName);
       return false;
     }
     return true;
     
-  })) {
-    return false;
-  }
-
-  return true;
+  });
   
 }
 
-bool checkInstanceExtensions(detail_vk::context& ctx, rx::vector<const char *> extensionNames) {
+bool check_instance_extensions(detail_vk::context& ctx, rx::vector<const char *> extensionNames) {
     
   LOCAL_INST_LOAD(vkEnumerateInstanceExtensionProperties);
   uint32_t count;
@@ -83,34 +75,24 @@ bool checkInstanceExtensions(detail_vk::context& ctx, rx::vector<const char *> e
   rx::vector<VkExtensionProperties> availableExtensions(ctx.allocator, count);
   vkEnumerateInstanceExtensionProperties(nullptr, &count, availableExtensions.data());
   
-  if(!extensionNames.each_fwd([&](const char* extensionName) {
-    
-    bool extensionFound = false;
-
-    availableExtensions.each_fwd([&](const VkExtensionProperties& extensionProperties) {
-      if (strcmp(extensionName, extensionProperties.extensionName) == 0) {
-        extensionFound = true;
-        return false;
-      }
-      return true;
-    });
-
-    if (!extensionFound) {
+  return extensionNames.each_fwd([&](const char* extensionName) {
+  
+    if (
+      availableExtensions.each_fwd([&](const VkExtensionProperties& extensionProperties) -> bool {
+        return strcmp(extensionName, extensionProperties.extensionName) == 0;
+      })
+    ) {
       vk_log(log::level::k_error, "could not find layer %s", extensionName);
       return false;
     }
     return true;
     
-  })) {
-    return false;
-  }
-
-  return true;
+  });
     
 }
 
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback (
   VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
   VkDebugUtilsMessageTypeFlagsEXT messageType,
   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
@@ -148,13 +130,13 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (
 }
 
 #ifndef NDEBUG
-inline void checkResult(VkResult result) {
+inline void check_result(VkResult result) {
   if(result != VK_SUCCESS) {
     vk_log(log::level::k_error, "vulkan call failed with result %i", result);
   }
 }
 #else
-inline void checkResult(VkResult result) {
+inline void check_result(VkResult result) {
   
 }
 #endif
@@ -171,7 +153,7 @@ vk::vk(memory::allocator* _allocator, void* _data) {
   
   // load the only entry point function from loader
   ctx.vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr) SDL_Vulkan_GetVkGetInstanceProcAddr();
-  if(ctx.vkGetInstanceProcAddr == nullptr) {
+  if(!ctx.vkGetInstanceProcAddr) {
     vk_log(log::level::k_error, "could not load vulkan library");
   }
   
@@ -201,12 +183,12 @@ vk::vk(memory::allocator* _allocator, void* _data) {
   #endif
     
     // check for extension support
-    if(!checkInstanceExtensions(ctx, extensions)) {
+    if(!check_instance_extensions(ctx, extensions)) {
       vk_log(log::level::k_error, "missing necessary extension");
     }
     
     // check for extension support
-    if(!checkLayers(ctx, layers)) {
+    if(!check_layers(ctx, layers)) {
       vk_log(log::level::k_warning, "missing optional layers");
       layers.clear();
     }
@@ -231,19 +213,19 @@ vk::vk(memory::allocator* _allocator, void* _data) {
     createInfo.pApplicationInfo = &appInfo;
     
     LOCAL_INST_LOAD(vkCreateInstance)
-    checkResult(vkCreateInstance(&createInfo, nullptr, &ctx.instance));
+    check_result(vkCreateInstance(&createInfo, nullptr, &ctx.instance));
   }
   
 #ifndef NDEBUG
-  {
+  { // create debug callback
     VkDebugUtilsMessengerCreateInfoEXT info {};
     info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
     info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-    info.pfnUserCallback = &debugCallback;
+    info.pfnUserCallback = &debug_callback;
 
     LOCAL_INST_LOAD(vkCreateDebugUtilsMessengerEXT);
-    checkResult(vkCreateDebugUtilsMessengerEXT(ctx.instance, &info, nullptr, &ctx.callback));
+    check_result(vkCreateDebugUtilsMessengerEXT(ctx.instance, &info, nullptr, &ctx.callback));
   }
 #endif
   
@@ -252,6 +234,9 @@ vk::vk(memory::allocator* _allocator, void* _data) {
 vk::~vk() {
   
   detail_vk::context& ctx{*reinterpret_cast<detail_vk::context*> (m_impl)};
+  
+  LOCAL_INST_LOAD(vkDestroyDebugUtilsMessengerEXT);
+  vkDestroyDebugUtilsMessengerEXT(ctx.instance, ctx.callback, nullptr);
   
   LOCAL_INST_LOAD(vkDestroyInstance)
   vkDestroyInstance(ctx.instance, nullptr);
@@ -275,6 +260,9 @@ allocation_info vk::query_allocation_info() const {
 
 device_info vk::query_device_info() const {
   device_info info = {};
+  info.renderer = "";
+  info.vendor = "";
+  info.version = "";
   return info;
 }
 
