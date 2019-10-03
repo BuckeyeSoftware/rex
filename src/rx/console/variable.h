@@ -4,7 +4,7 @@
 
 #include "rx/core/assert.h" // RX_ASSERT
 #include "rx/core/string.h" // string
-#include "rx/core/statics.h" // static_global
+#include "rx/core/global.h" // global
 #include "rx/core/event.h" // event
 
 #include "rx/math/vec2.h" // vec2{f,i}
@@ -700,11 +700,11 @@ inline typename variable<vec4<T>>::on_change_event::handle variable<vec4<T>>::on
 
 #define RX_CONSOLE_TRVAR(_type, _label, _name, _description, _min, _max, _initial) \
   static RX_GLOBAL<::rx::console::variable<_type>> _label \
-    {"cvar_" _name, (_name), (_description), (_min), (_max), (_initial)}
+    {"cvars", (_name), (_name), (_description), (_min), (_max), (_initial)}
 
 #define RX_CONSOLE_TUVAR(_type, _label, _name, _description, _initial) \
   static RX_GLOBAL<::rx::console::variable<_type>> _label \
-    {"cvar_" _name, (_name), (_description), (_initial)}
+    {"cvars", (_name), (_name), (_description), (_initial)}
 
 // helper macros to define console variables
 #define RX_CONSOLE_BVAR(_label, _name, _description, _initial) \

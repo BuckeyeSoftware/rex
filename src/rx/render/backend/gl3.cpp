@@ -17,7 +17,7 @@
 
 namespace rx::render::backend {
 
-RX_LOG("render/gl3", gl3_log);
+RX_LOG("render/gl3", logger);
 
 // 16MiB buffer slab size for unspecified buffer sizes
 static constexpr const rx_size k_buffer_slab_size{16<<20};
@@ -252,13 +252,13 @@ namespace detail_gl3 {
       const auto renderer{reinterpret_cast<const char*>(pglGetString(GL_RENDERER))};
       const auto version{reinterpret_cast<const char*>(pglGetString(GL_VERSION))};
 
-      gl3_log(log::level::k_info, "GL %s %s %s", vendor, version, renderer);
+      logger(log::level::k_info, "GL %s %s %s", vendor, version, renderer);
 
       GLint extensions{0};
       pglGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
       for (GLint i{0}; i < extensions; i++) {
         const auto name{reinterpret_cast<const char*>(pglGetStringi(GL_EXTENSIONS, i))};
-        gl3_log(log::level::k_verbose, "extension '%s' supported", name);
+        logger(log::level::k_verbose, "extension '%s' supported", name);
       }
     }
 
@@ -665,7 +665,7 @@ namespace detail_gl3 {
 template<typename F>
 static void fetch(const char* _name, F& function_) {
   auto address{SDL_GL_GetProcAddress(_name)};
-  gl3_log(log::level::k_verbose, "loaded %08p '%s'", address, _name);
+  logger(log::level::k_verbose, "loaded %08p '%s'", address, _name);
   *reinterpret_cast<void**>(&function_) = address;
 }
 
@@ -814,12 +814,12 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     GLint log_size{0};
     pglGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_size);
 
-    gl3_log(log::level::k_error, "failed compiling shader");
+    logger(log::level::k_error, "failed compiling shader");
 
     if (log_size) {
       vector<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
       pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
-      gl3_log(log::level::k_error, "\n%s\n%s", error_log.data(), contents);
+      logger(log::level::k_error, "\n%s\n%s", error_log.data(), contents);
     }
 
     pglDeleteShader(handle);
@@ -1165,12 +1165,12 @@ void gl3::process(rx_byte* _command) {
             GLint log_size{0};
             pglGetProgramiv(program->handle, GL_INFO_LOG_LENGTH, &log_size);
 
-            gl3_log(log::level::k_error, "failed linking program");
+            logger(log::level::k_error, "failed linking program");
 
             if (log_size) {
               vector<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
               pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
-              gl3_log(log::level::k_error, "\n%s", error_log.data());
+              logger(log::level::k_error, "\n%s", error_log.data());
             }
           }
 

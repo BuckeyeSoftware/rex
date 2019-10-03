@@ -3,7 +3,7 @@
 #include "rx/core/memory/heap_allocator.h"
 #include "rx/core/memory/stats_allocator.h"
 
-#include "rx/core/statics.h"
+#include "rx/core/global.h"
 
 namespace rx::memory {
 

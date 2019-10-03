@@ -22,7 +22,7 @@
 
 namespace rx::render::backend {
 
-RX_LOG("render/gl4", gl4_log);
+RX_LOG("render/gl4", logger);
 
 RX_CONSOLE_IVAR(
   anisotropy,
@@ -284,14 +284,14 @@ namespace detail_gl4 {
       const auto renderer{reinterpret_cast<const char*>(pglGetString(GL_RENDERER))};
       const auto version{reinterpret_cast<const char*>(pglGetString(GL_VERSION))};
 
-      gl4_log(log::level::k_info, "GL %s %s %s", vendor, version, renderer);
+      logger(log::level::k_info, "GL %s %s %s", vendor, version, renderer);
 
       bool texture_filter_anisotropic{false};
       GLint extensions{0};
       pglGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
       for (GLint i{0}; i < extensions; i++) {
         const auto name{reinterpret_cast<const char*>(pglGetStringi(GL_EXTENSIONS, i))};
-        gl4_log(log::level::k_verbose, "extension '%s' supported", name);
+        logger(log::level::k_verbose, "extension '%s' supported", name);
 
         if (!strcmp(name, "GL_ARB_texture_filter_anisotropic")) {
           rx_f32 max_aniso{0.0f};
@@ -632,7 +632,7 @@ namespace detail_gl4 {
 template<typename F>
 static void fetch(const char* _name, F& function_) {
   auto address{SDL_GL_GetProcAddress(_name)};
-  gl4_log(log::level::k_verbose, "loaded %08p '%s'", address, _name);
+  logger(log::level::k_verbose, "loaded %08p '%s'", address, _name);
   *reinterpret_cast<void**>(&function_) = address;
 }
 
@@ -781,12 +781,12 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     GLint log_size{0};
     pglGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_size);
 
-    gl4_log(log::level::k_error, "failed compiling shader");
+    logger(log::level::k_error, "failed compiling shader");
 
     if (log_size) {
       vector<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
       pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
-      gl4_log(log::level::k_error, "\n%s\n%s", error_log.data(), contents);
+      logger(log::level::k_error, "\n%s\n%s", error_log.data(), contents);
     }
 
     pglDeleteShader(handle);
@@ -1138,12 +1138,12 @@ void gl4::process(rx_byte* _command) {
             GLint log_size{0};
             pglGetProgramiv(program->handle, GL_INFO_LOG_LENGTH, &log_size);
 
-            gl4_log(log::level::k_error, "failed linking program");
+            logger(log::level::k_error, "failed linking program");
 
             if (log_size) {
               vector<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
               pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
-              gl4_log(log::level::k_error, "\n%s", error_log.data());
+              logger(log::level::k_error, "\n%s", error_log.data());
             }
           }
 

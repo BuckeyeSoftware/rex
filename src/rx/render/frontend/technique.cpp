@@ -7,7 +7,7 @@
 #include "rx/core/optional.h"
 #include "rx/core/filesystem/file.h"
 
-RX_LOG("render/technique", log_technique);
+RX_LOG("render/technique", logger);
 
 namespace rx::render::frontend {
 
@@ -484,7 +484,7 @@ bool technique::compile() {
           }
         }
       });
-    
+
       // initialize and track
       m_frontend->initialize_program(RX_RENDER_TAG("technique"), program);
       m_programs.push_back(program);
@@ -600,9 +600,9 @@ bool technique::parse(const json& _description) {
 
 void technique::write_log(log::level _level, string&& _message) const {
   if (m_name.is_empty()) {
-    log_technique(_level, "%s", _message);
+    logger(_level, "%s", _message);
   } else {
-    log_technique(_level, "technique '%s': %s", m_name, _message);
+    logger(_level, "technique '%s': %s", m_name, _message);
   }
 }
 
@@ -906,7 +906,7 @@ bool technique::parse_shader(const json& _shader) {
       definition.source.append(reinterpret_cast<const char*>(data->data()), data->size());
       return true;
     })};
-  
+
     if (!result) {
       return false;
     }

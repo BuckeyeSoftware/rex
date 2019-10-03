@@ -1,7 +1,7 @@
 #include "rx/core/math/half.h" // half
 #include "rx/core/math/shape.h" // shape
 
-#include "rx/core/statics.h" // static_global
+#include "rx/core/global.h"
 
 namespace rx::math {
 
@@ -46,7 +46,7 @@ struct half_lut {
   rx_u8 shift[512];
 };
 
-static const RX_GLOBAL<half_lut> g_table{"half_lut"};
+static const RX_GLOBAL<half_lut> g_table{"system", "half"};
 
 half half::to_half(rx_f32 _f) {
   const shape u{_f};

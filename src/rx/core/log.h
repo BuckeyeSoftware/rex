@@ -1,7 +1,7 @@
 #ifndef RX_CORE_LOG_H
 #define RX_CORE_LOG_H
-#include "rx/core/statics.h" // static_global
-#include "rx/core/string.h" // string
+#include "rx/core/global.h"
+#include "rx/core/string.h"
 
 namespace rx {
 
@@ -55,7 +55,7 @@ inline int log::line() const {
 }
 
 #define RX_LOG(_name, _identifier) \
-  static RX_GLOBAL<::rx::log> _identifier{"log_" _name, (_name), __FILE__, __LINE__}
+  static RX_GLOBAL<::rx::log> _identifier{"loggers", (_name), (_name), __FILE__, __LINE__}
 
 } // namespace rx
 

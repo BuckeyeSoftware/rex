@@ -1,25 +1,16 @@
 #include <stdlib.h> // abort
 
 #include "rx/core/abort.h"
-#include "rx/core/statics.h"
+#include "rx/core/global.h"
 #include "rx/core/log.h"
 
-RX_LOG("abort", abort_log);
+RX_LOG("abort", logger);
 
 namespace rx {
 
 [[noreturn]]
 void abort(const char* _message) {
-  // deinitialize all static globals that were not manually initialized
-  static_globals::fini();
-
-  abort_log(log::level::k_error, "%s", _message);
-
-  // deinitialize static globals that were manually initialized
-  static_globals::find("log")->fini();
-
-  static_globals::find("system_allocator")->fini();
-
+  logger(log::level::k_error, "%s", _message);
 #if defined(RX_PLATFORM_WINDOWS)
   ::exit(3);
 #else

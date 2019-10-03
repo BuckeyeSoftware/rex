@@ -9,6 +9,7 @@
 #include "rx/render/backend/gl3.h"
 
 #include "rx/core/profiler.h"
+#include "rx/core/global.h"
 
 #include "rx/game.h"
 
@@ -89,25 +90,17 @@ int main(int _argc, char** _argv) {
   signal(SIGSTOP, catch_signal);
 #endif
 
-  auto system_allocator{static_globals::find("system_allocator")};
-  if (!system_allocator) {
-    return 1;
-  }
+  // Link all globals into their respective groups.
+  globals::link();
 
-  auto logger{static_globals::find("logger")};
-  if (!logger) {
-    return 1;
-  }
+  // Explicitly initialize globals that need to be initialized in a specific
+  // order for things to work.
+  globals::find("system")->find("allocator")->init();
+  globals::find("system")->find("logger")->init();
+  globals::find("system")->find("profiler")->init();
 
-  auto profiler{static_globals::find("profiler")};
-  if (!profiler) {
-    return 1;
-  }
-
-  system_allocator->init();
-  logger->init();
-  profiler->init();
-  static_globals::init();
+  // Initialize the others in any order.
+  globals::init();
 
   if (!console::interface::load("config.cfg")) {
     console::interface::save("config.cfg");
@@ -341,10 +334,11 @@ int main(int _argc, char** _argv) {
   SDL_DestroyWindow(window);
   SDL_Quit();
 
-  static_globals::fini();
-  profiler->fini();
-  logger->fini();
-  system_allocator->fini();
+  globals::fini();
+
+  globals::find("system")->find("profiler")->fini();
+  globals::find("system")->find("logger")->fini();
+  globals::find("system")->find("allocator")->fini();
 
   return 0;
 }

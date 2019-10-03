@@ -7,7 +7,7 @@
 #include "rx/core/hints/unlikely.h"
 #include "rx/core/filesystem/file.h"
 
-RX_LOG("filesystem/file", log_file);
+RX_LOG("filesystem/file", logger);
 
 namespace rx::filesystem {
 
@@ -147,7 +147,7 @@ bool file::is_valid() const {
 optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const char* _file_name) {
   file open_file{_file_name, "rb"};
   if (!open_file) {
-    log_file(log::level::k_error, "failed to open file '%s' [%s]", _file_name,
+    logger(log::level::k_error, "failed to open file '%s' [%s]", _file_name,
       strerror(errno));
     return nullopt;
   }
@@ -156,7 +156,7 @@ optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const 
   if (size) {
     vector<rx_byte> data{_allocator, *size};
     if (!open_file.read(data.data(), data.size())) {
-      log_file(log::level::k_error, "failed to read file '%s' [%s]", _file_name,
+      logger(log::level::k_error, "failed to read file '%s' [%s]", _file_name,
         strerror(errno));
       return nullopt;
     }
