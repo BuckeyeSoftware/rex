@@ -8,6 +8,7 @@
 namespace rx::concurrency {
 
 RX_LOG("thread_pool", logger);
+RX_GLOBAL<thread_pool> thread_pool::s_thread_pool{"system", "thread_pool", 4};
 
 thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads)
   : m_allocator{_allocator}
@@ -57,6 +58,7 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads)
 }
 
 thread_pool::~thread_pool() {
+  const auto beg{SDL_GetPerformanceCounter()};
   {
     scope_lock lock{m_mutex};
     m_stop = true;
@@ -66,6 +68,10 @@ thread_pool::~thread_pool() {
   m_threads.each_fwd([](thread &_thread) {
     _thread.join();
   });
+
+  const auto end{SDL_GetPerformanceCounter()};
+  const auto time{static_cast<rx_f64>(((end - beg) * 1000.0) / static_cast<rx_f64>(SDL_GetPerformanceFrequency()))};
+  logger(log::level::k_verbose, "stopped pool with %zu threads (took %.2f ms)", m_threads.size(), time);
 }
 
 void thread_pool::add(function<void(int)>&& _task) {

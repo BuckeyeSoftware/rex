@@ -15,7 +15,7 @@ struct global_node {
   void init();
   void fini();
 
-  template<typename T, typename... Ts>
+  template<typename... Ts>
   void init(Ts&&... _arguments);
 
   constexpr const char* name() const;
@@ -241,20 +241,16 @@ inline global_node::global_node(const char* _group, const char* _name,
   globals::link(this);
 }
 
-template<typename T, typename... Ts>
+template<typename... Ts>
 inline void global_node::init(Ts&&... _arguments) {
   static_assert(sizeof...(Ts) != 0,
     "use void init() for default construction");
-
-  RX_ASSERT(m_fini_global != &utility::destruct<T>, "incompatible type |T|");
 
   if (m_fini_arguments) {
     m_fini_arguments(m_argument_store);
   }
 
   construct_arguments<Ts...>(m_argument_store, utility::forward<Ts>(_arguments)...);
-  m_fini_arguments = destruct_arguments<Ts...>;
-  m_init_global = construct_global<T, Ts...>;
 
   init();
 }

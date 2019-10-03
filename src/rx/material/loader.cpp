@@ -140,12 +140,28 @@ bool loader::parse(const json& _definition) {
 }
 
 bool loader::parse_textures(const json& _textures) {
+  bool success{true};
+  _textures.each([&](const json& _texture) {
+    texture new_texture{m_allocator};
+    if (_texture.is_string() && new_texture.load(_texture.as_string())) {
+      m_textures.push_back(utility::move(new_texture));
+    } else if (_texture.is_object() && new_texture.parse(_texture)) {
+      m_textures.push_back(utility::move(new_texture));
+    } else {
+      success = false;
+    }
+  });
+  return success;
+
+
+  // Revisit with wait groups
+#if 0
   const rx_size n_textures{_textures.size()};
-  concurrency::thread_pool threads{m_allocator, n_textures};
+  // concurrency::thread_pool threads{m_allocator, n_textures};
   concurrency::wait_group group{n_textures};
   concurrency::atomic<bool> success{true};
   _textures.each([&](const json& _texture) {
-    threads.add([&, _texture](int) {
+    concurrency::thread_pool::instance().add([&, _texture](int) {
       texture new_texture{m_allocator};
       if (_texture.is_string() && new_texture.load(_texture.as_string())) {
         m_textures.push_back(utility::move(new_texture));
@@ -160,6 +176,7 @@ bool loader::parse_textures(const json& _textures) {
   });
   group.wait();
   return success.load();
+#endif
 }
 
 void loader::write_log(log::level _level, string&& _message) const {

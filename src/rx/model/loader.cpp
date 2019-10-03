@@ -77,11 +77,11 @@ bool loader::parse(const json& _definition) {
   }
 
   // Load all the materials across multiple threads.
-  concurrency::thread_pool pool{m_allocator, 32};
+  // concurrency::thread_pool pool{m_allocator, 32};
   concurrency::mutex mutex;
   concurrency::wait_group group{materials.size()};
   materials.each([&](const json& _material) {
-    pool.add([&, _material](int) {
+    concurrency::thread_pool::instance().add([&, _material](int) {
       material::loader loader{m_allocator};
       if (_material.is_string() && loader.load(_material.as_string())) {
         concurrency::scope_lock lock{mutex};

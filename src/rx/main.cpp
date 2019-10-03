@@ -97,6 +97,7 @@ int main(int _argc, char** _argv) {
   // order for things to work.
   globals::find("system")->find("allocator")->init();
   globals::find("system")->find("logger")->init();
+  globals::find("system")->find("thread_pool")->init(SDL_GetCPUCount());
   globals::find("system")->find("profiler")->init();
 
   // Initialize the others in any order.
@@ -340,6 +341,7 @@ int main(int _argc, char** _argv) {
 
   globals::fini();
 
+  globals::find("system")->find("thread_pool")->fini();
   globals::find("system")->find("profiler")->fini();
   globals::find("system")->find("logger")->fini();
   globals::find("system")->find("allocator")->fini();

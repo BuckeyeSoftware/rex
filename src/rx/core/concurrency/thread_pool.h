@@ -23,6 +23,8 @@ struct thread_pool
 
   memory::allocator* allocator() const;
 
+  static thread_pool& instance();
+
 private:
   memory::allocator* m_allocator;
 
@@ -32,6 +34,8 @@ private:
   queue<function<void(int)>> m_queue; // protected by |m_mutex|
   vector<thread> m_threads;           // protected by |m_mutex|
   bool m_stop;                        // protected by |m_mutex|
+
+  static RX_GLOBAL<thread_pool> s_thread_pool;
 };
 
 inline thread_pool::thread_pool(rx_size _threads)
@@ -41,6 +45,10 @@ inline thread_pool::thread_pool(rx_size _threads)
 
 inline memory::allocator* thread_pool::allocator() const {
   return m_allocator;
+}
+
+inline thread_pool& thread_pool::instance() {
+  return *s_thread_pool;
 }
 
 } // namespace rx::concurrency
