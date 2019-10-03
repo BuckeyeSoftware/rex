@@ -1,8 +1,9 @@
 #ifndef RX_MATERIAL_TEXTURE_H
 #define RX_MATERIAL_TEXTURE_H
 #include "rx/core/log.h"
-#include "rx/math/transform.h"
+#include "rx/core/optional.h"
 
+#include "rx/math/transform.h"
 #include "rx/texture/chain.h"
 
 namespace rx {
@@ -11,7 +12,7 @@ namespace rx {
 
 namespace rx::material {
 
-struct texture 
+struct texture
   : concepts::no_copy
 {
   struct filter_options {
@@ -49,7 +50,7 @@ private:
   bool parse_type(const json& _type);
   bool parse_filter(const json& _filter, bool& _mipmaps);
   bool parse_wrap(const json& _wrap);
-  bool parse_transform(const json& _transform);
+  bool parse_border(const json& _border);
 
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments) const;
@@ -64,6 +65,7 @@ private:
   filter_options m_filter;
   wrap_options m_wrap;
   string m_type;
+  optional<math::vec4f> m_border;
 };
 
 template<typename... Ts>

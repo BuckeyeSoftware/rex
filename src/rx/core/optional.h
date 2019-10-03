@@ -101,7 +101,7 @@ inline optional<T>& optional<T>::operator=(T&& data) {
     m_data.fini();
   }
   m_init = true;
-  m_data.init(utility::move(*data.data()));
+  m_data.init(utility::move(data));
   return *this;
 }
 
