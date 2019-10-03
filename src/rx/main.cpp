@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <SDL_vulkan.h>
 #include <signal.h>
 
 #include "rx/console/interface.h"
@@ -7,6 +8,7 @@
 #include "rx/render/frontend/interface.h"
 #include "rx/render/backend/gl4.h"
 #include "rx/render/backend/gl3.h"
+#include "rx/render/backend/vk.h"
 
 #include "rx/core/profiler.h"
 
@@ -61,7 +63,7 @@ RX_CONSOLE_IVAR(
 RX_CONSOLE_SVAR(
   renderer_driver,
   "renderer.driver",
-  "which driver to use for renderer (gl3, gl4, null)",
+  "which driver to use for renderer (gl3, gl4, vk, null)",
   "gl4");
 
 static concurrency::atomic<bool> g_running{true};
@@ -130,8 +132,12 @@ int main(int _argc, char** _argv) {
 
   const char *name{SDL_GetDisplayName(display_index)};
   display_name->set(name ? name : "");
-
-  int flags{SDL_WINDOW_OPENGL};
+  
+  bool opengl = renderer_driver->get() == "gl3" || renderer_driver->get() == "gl4";
+  bool vulkan = renderer_driver->get() == "vk";
+  
+  int flags{};
+  
   if (*display_resizable) {
     flags |= SDL_WINDOW_RESIZABLE;
   }
@@ -140,29 +146,55 @@ int main(int _argc, char** _argv) {
   } else if (*display_fullscreen == 2) {
     flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   }
+  
+  if(opengl) {
+    flags |= SDL_WINDOW_OPENGL;
 
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-  if (renderer_driver->get() == "gl4") {
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
-  } else {
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    if (renderer_driver->get() == "gl4") {
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+    } else {
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    }
+
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   }
-
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
-  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
-  SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  
+  if(vulkan) {
+    
+    flags |= SDL_WINDOW_VULKAN;
+    
+  }
 
   SDL_Window* window{nullptr};
   int bit_depth{0};
-  for (const char* depth{"\xa\x8" + (*display_hdr ? 0 : 1)}; *depth; depth++) {
-    bit_depth = static_cast<int>(*depth);
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, bit_depth);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, bit_depth);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, bit_depth);
+  if(opengl) {
+    for (const char* depth{"\xa\x8" + (*display_hdr ? 0 : 1)}; *depth; depth++) {
+      bit_depth = static_cast<int>(*depth);
+      SDL_GL_SetAttribute(SDL_GL_RED_SIZE, bit_depth);
+      SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, bit_depth);
+      SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, bit_depth);
 
+      window = SDL_CreateWindow(
+        "rex",
+        SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
+        SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
+        display_resolution->get().w,
+        display_resolution->get().h,
+        flags);
+
+      if (window) {
+        break;
+      }
+    }
+  }
+  
+  if(vulkan) {
     window = SDL_CreateWindow(
       "rex",
       SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
@@ -170,26 +202,25 @@ int main(int _argc, char** _argv) {
       display_resolution->get().w,
       display_resolution->get().h,
       flags);
-
-    if (window) {
-      break;
-    }
   }
 
   if (!window) {
     abort("failed to create window");
   }
+  
+  SDL_GLContext context = nullptr;
+  if(opengl) {
+    if (bit_depth != 10) {
+      display_hdr->set(false);
+    }
+    
+    context = SDL_GL_CreateContext(window);
+    if (!context) {
+      abort("failed to create context");
+    }
 
-  if (bit_depth != 10) {
-    display_hdr->set(false);
+    SDL_GL_SetSwapInterval(*display_swap_interval);
   }
-
-  SDL_GLContext context{SDL_GL_CreateContext(window)};
-  if (!context) {
-    abort("failed to create context");
-  }
-
-  SDL_GL_SetSwapInterval(*display_swap_interval);
 
   render::backend::interface* backend{nullptr};
   if (renderer_driver->get() == "gl4") {
@@ -197,6 +228,9 @@ int main(int _argc, char** _argv) {
         &memory::g_system_allocator, reinterpret_cast<void*>(window));
   } else if (renderer_driver->get() == "gl3") {
     backend = memory::g_system_allocator->create<render::backend::gl3>(
+        &memory::g_system_allocator, reinterpret_cast<void*>(window));
+  } else if (renderer_driver->get() == "vk") {
+    backend = memory::g_system_allocator->create<render::backend::vk>(
         &memory::g_system_allocator, reinterpret_cast<void*>(window));
   }
 
@@ -209,7 +243,7 @@ int main(int _argc, char** _argv) {
         rmt_SetCurrentThreadName(_name);
       }};
 
-      rmt_BindOpenGL();
+      if(opengl) rmt_BindOpenGL();
 
       profiler::instance().bind_cpu({
         reinterpret_cast<void*>(remotery),
@@ -254,10 +288,12 @@ int main(int _argc, char** _argv) {
       SDL_GetWindowSize(window, &size.w, &size.h);
       g->on_resize(size.cast<rx_size>());
     })};
-
-    auto on_swap_interval_change{display_swap_interval->on_change([&](rx_s32 _value) {
-      SDL_GL_SetSwapInterval(_value);
-    })};
+    
+    if(opengl) {
+      auto on_swap_interval_change{display_swap_interval->on_change([&](rx_s32 _value) {
+        SDL_GL_SetSwapInterval(_value);
+      })};
+    }
 
     if (!g->on_init()) {
       memory::g_system_allocator->destroy<game>(g);
@@ -328,7 +364,7 @@ int main(int _argc, char** _argv) {
       profiler::instance().unbind_cpu();
       profiler::instance().unbind_gpu();
 
-      rmt_UnbindOpenGL();
+      if(opengl) rmt_UnbindOpenGL();
       rmt_DestroyGlobalInstance(remotery);
     }
   }
@@ -337,7 +373,7 @@ int main(int _argc, char** _argv) {
 
   console::interface::save("config.cfg");
 
-  SDL_GL_DeleteContext(context);
+  if(opengl) SDL_GL_DeleteContext(context);
   SDL_DestroyWindow(window);
   SDL_Quit();
 

@@ -77,7 +77,7 @@ bool loader::parse(const json& _definition) {
   }
 
   // Load all the materials across multiple threads.
-  concurrency::thread_pool pool{m_allocator, 32};
+  concurrency::thread_pool pool{m_allocator, 8};
   concurrency::mutex mutex;
   concurrency::wait_group group{materials.size()};
   materials.each([&](const json& _material) {

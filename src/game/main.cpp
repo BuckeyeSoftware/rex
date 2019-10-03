@@ -184,7 +184,7 @@ struct test_game
   virtual bool on_init() {
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
     m_skybox.load("base/skyboxes/miramar/miramar.json5");
-    m_model.load("base/models/elemental/elemental.json5");
+    m_model.load("base/models/chest/chestd.json5");
     return true;
   }
 
