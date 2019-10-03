@@ -182,7 +182,6 @@ bool texture::parse_wrap(const json& _wrap) {
   return false;
 }
 
-
 bool texture::parse_border(const json& _border) {
   if (!_border.is_array_of(json::type::k_number) || _border.size() != 4) {
     return error("expected Array[Number, 4]");

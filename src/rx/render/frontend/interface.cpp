@@ -643,6 +643,7 @@ bool interface::swap() {
   profiler::cpu_sample sample{"frontend::swap"};
 
   m_backend->swap();
+
   return m_timer.update();
 }
 

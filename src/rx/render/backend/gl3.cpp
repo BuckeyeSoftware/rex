@@ -228,7 +228,7 @@ namespace detail_gl3 {
   struct state
     : frontend::state
   {
-    state()
+    state(SDL_GLContext _context)
       : m_color_mask{0xff}
       , m_bound_vbo{0}
       , m_bound_ebo{0}
@@ -238,6 +238,7 @@ namespace detail_gl3 {
       , m_bound_program{0}
       , m_swap_chain_fbo{0}
       , m_active_texture{0}
+      , m_context{_context}
     {
       pglEnable(GL_CULL_FACE);
       pglCullFace(GL_BACK);
@@ -260,6 +261,10 @@ namespace detail_gl3 {
         const auto name{reinterpret_cast<const char*>(pglGetStringi(GL_EXTENSIONS, i))};
         logger(log::level::k_verbose, "extension '%s' supported", name);
       }
+    }
+
+    ~state() {
+      SDL_GL_DeleteContext(m_context);
     }
 
     void use_enable(GLenum _thing, bool _enable) {
@@ -659,6 +664,8 @@ namespace detail_gl3 {
     GLint m_swap_chain_fbo;
     texture_unit m_texture_units[8];
     rx_size m_active_texture;
+
+    SDL_GLContext m_context;
   };
 };
 
@@ -860,6 +867,11 @@ gl3::~gl3() {
 }
 
 bool gl3::init() {
+  SDL_GLContext context{SDL_GL_CreateContext(reinterpret_cast<SDL_Window*>(m_data))};
+  if (!context) {
+    return false;
+  }
+
   // buffers
   fetch("glGenBuffers", pglGenBuffers);
   fetch("glDeleteBuffers", pglDeleteBuffers);
@@ -958,7 +970,7 @@ bool gl3::init() {
 
   fetch("glFinish", pglFinish);
 
-  m_impl = m_allocator->create<detail_gl3::state>();
+  m_impl = m_allocator->create<detail_gl3::state>(context);
 
   return true;
 }

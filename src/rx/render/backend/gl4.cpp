@@ -264,12 +264,13 @@ namespace detail_gl4 {
   struct state
     : frontend::state
   {
-    state()
+    state(SDL_GLContext _context)
       : m_color_mask{0xff}
       , m_bound_vao{0}
       , m_bound_fbo{0}
       , m_bound_program{0}
       , m_swap_chain_fbo{0}
+      , m_context{_context}
     {
       pglEnable(GL_CULL_FACE);
       pglCullFace(GL_BACK);
@@ -304,6 +305,10 @@ namespace detail_gl4 {
       if (!texture_filter_anisotropic) {
         anisotropy->set(0);
       }
+    }
+
+    ~state() {
+      SDL_GL_DeleteContext(m_context);
     }
 
     void use_enable(GLenum _thing, bool _enable) {
@@ -626,6 +631,8 @@ namespace detail_gl4 {
 
     GLint m_swap_chain_fbo;
     texture_unit m_texture_units[8];
+
+    SDL_GLContext m_context;
   };
 };
 
@@ -827,6 +834,11 @@ gl4::~gl4() {
 }
 
 bool gl4::init() {
+  SDL_GLContext context{SDL_GL_CreateContext(reinterpret_cast<SDL_Window*>(m_data))};
+  if (!context) {
+    return false;
+  }
+
   // buffers
   fetch("glCreateBuffers", pglCreateBuffers);
   fetch("glDeleteBuffers", pglDeleteBuffers);
@@ -930,7 +942,7 @@ bool gl4::init() {
 
   fetch("glFinish", pglFinish);
 
-  m_impl = m_allocator->create<detail_gl4::state>();
+  m_impl = m_allocator->create<detail_gl4::state>(context);
 
   return true;
 }
