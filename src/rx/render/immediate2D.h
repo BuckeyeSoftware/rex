@@ -28,14 +28,14 @@ struct immediate2D {
     k_right
   };
 
-  struct queue 
+  struct queue
     : concepts::no_copy
   {
     queue() = default;
     queue(memory::allocator* _allocator);
-    queue(queue&& _queue);
+    queue(queue&& queue_);
 
-    queue& operator=(queue&& _queue);
+    queue& operator=(queue&& queue_);
 
     struct box {
       math::vec2i position;
@@ -158,7 +158,7 @@ struct immediate2D {
     };
 
     font(const key& _key, frontend::interface* _frontend);
-    font(font&& _font);
+    font(font&& font_);
     ~font();
 
     quad quad_for_glyph(rx_size _glyph, rx_f32 _scale, math::vec2f& position_) const;
@@ -166,7 +166,7 @@ struct immediate2D {
 
     rx_s32 size() const;
     frontend::texture2D* texture() const;
-  
+
   private:
     frontend::interface* m_frontend;
     rx_s32 m_size;
@@ -225,7 +225,7 @@ private:
     frontend::texture2D* _texture = nullptr);
 
   void add_element(rx_u32 _element);
-  void add_vertex(vertex&& _vertex);
+  void add_vertex(vertex&& vertex_);
 
   frontend::interface* m_frontend;
   frontend::technique* m_technique;

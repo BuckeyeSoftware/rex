@@ -17,7 +17,7 @@ struct queue {
   ~queue();
   bool is_empty() const;
 
-  void push(const T& value);
+  void push(const T& _value);
 
   template<typename... Ts>
   void emplace(Ts&&... _arguments);
@@ -30,8 +30,8 @@ struct queue {
 
 private:
   struct node {
-    constexpr node(const T& value);
-    constexpr node(T&& value);
+    constexpr node(const T& _value);
+    constexpr node(T&& value_);
     T m_value;
     node* m_next;
   };
@@ -49,8 +49,8 @@ inline constexpr queue<T>::node::node(const T& _value)
 }
 
 template<typename T>
-inline constexpr queue<T>::node::node(T&& _value)
-  : m_value{utility::move(_value)}
+inline constexpr queue<T>::node::node(T&& value_)
+  : m_value{utility::move(value_)}
   , m_next{nullptr}
 {
 }

@@ -221,29 +221,33 @@ technique::~technique() {
   fini();
 }
 
-technique::technique(technique&& _technique)
-  : m_frontend{_technique.m_frontend}
-  , m_type{_technique.m_type}
-  , m_programs{utility::move(_technique.m_programs)}
-  , m_permute_flags{utility::move(_technique.m_permute_flags)}
-  , m_name{utility::move(_technique.m_name)}
-  , m_shader_definitions{utility::move(_technique.m_shader_definitions)}
-  , m_uniform_definitions{utility::move(_technique.m_uniform_definitions)}
-  , m_specializations{utility::move(_technique.m_specializations)}
+technique::technique(technique&& technique_)
+  : m_frontend{technique_.m_frontend}
+  , m_type{technique_.m_type}
+  , m_programs{utility::move(technique_.m_programs)}
+  , m_permute_flags{utility::move(technique_.m_permute_flags)}
+  , m_name{utility::move(technique_.m_name)}
+  , m_shader_definitions{utility::move(technique_.m_shader_definitions)}
+  , m_uniform_definitions{utility::move(technique_.m_uniform_definitions)}
+  , m_specializations{utility::move(technique_.m_specializations)}
 {
-  _technique.m_frontend = nullptr;
+  technique_.m_frontend = nullptr;
 }
 
-technique& technique::operator=(technique&& _technique) {
+technique& technique::operator=(technique&& technique_) {
+  RX_ASSERT(&technique_ != this, "self assignment");
+
   fini();
 
-  m_frontend = _technique.m_frontend;
-  m_type = _technique.m_type;
-  m_programs = utility::move(_technique.m_programs);
-  m_name = utility::move(_technique.m_name);
-  m_shader_definitions = utility::move(_technique.m_shader_definitions);
-  m_uniform_definitions = utility::move(_technique.m_uniform_definitions);
-  m_specializations = utility::move(_technique.m_specializations);
+  m_frontend = technique_.m_frontend;
+  m_type = technique_.m_type;
+  m_programs = utility::move(technique_.m_programs);
+  m_name = utility::move(technique_.m_name);
+  m_shader_definitions = utility::move(technique_.m_shader_definitions);
+  m_uniform_definitions = utility::move(technique_.m_uniform_definitions);
+  m_specializations = utility::move(technique_.m_specializations);
+
+  technique_.m_frontend = nullptr;
 
   return *this;
 }
@@ -598,11 +602,11 @@ bool technique::parse(const json& _description) {
   return true;
 }
 
-void technique::write_log(log::level _level, string&& _message) const {
+void technique::write_log(log::level _level, string&& message_) const {
   if (m_name.is_empty()) {
-    logger(_level, "%s", _message);
+    logger(_level, "%s", utility::move(message_));
   } else {
-    logger(_level, "technique '%s': %s", m_name, _message);
+    logger(_level, "technique '%s': %s", m_name, utility::move(message_));
   }
 }
 

@@ -230,11 +230,11 @@ bool loader::parse_transform(const json& _transform) {
   return true;
 }
 
-void loader::write_log(log::level _level, string&& _message) const {
+void loader::write_log(log::level _level, string&& message_) const {
   if (m_name.is_empty()) {
-    logger(_level, "%s", utility::move(_message));
+    logger(_level, "%s", utility::move(message_));
   } else {
-    logger(_level, "%s: %s", m_name, utility::move(_message));
+    logger(_level, "%s: %s", m_name, utility::move(message_));
   }
 }
 

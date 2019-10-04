@@ -21,10 +21,11 @@ struct json {
   json(const char* _contents);
   json(const string& _contents);
   json(const json& _json);
-  json(json&& _json);
+  json(json&& json_);
   ~json();
 
   json& operator=(const json& _json);
+  json& operator=(json&& json_);
 
   enum class type {
     k_array,
@@ -116,12 +117,12 @@ inline json::json(const json& _json)
 {
 }
 
-inline json::json(json&& _json)
-  : m_shared{_json.m_shared}
-  , m_value{_json.m_value}
+inline json::json(json&& json_)
+  : m_shared{json_.m_shared}
+  , m_value{json_.m_value}
 {
-  _json.m_shared = nullptr;
-  _json.m_value = nullptr;
+  json_.m_shared = nullptr;
+  json_.m_value = nullptr;
 }
 
 inline json::~json() {
@@ -131,12 +132,25 @@ inline json::~json() {
 }
 
 inline json& json::operator=(const json& _json) {
+  RX_ASSERT(&_json != this, "self assignment");
+
   if (m_shared) {
     m_shared->release();
   }
 
   m_shared = _json.m_shared->acquire();
   m_value = _json.m_value;
+
+  return *this;
+}
+
+inline json& json::operator=(json&& json_) {
+  RX_ASSERT(&json_ != this, "self assignment");
+
+  m_shared = json_.m_shared;
+  m_value = json_.m_value;
+  json_.m_shared = nullptr;
+  json_.m_value = nullptr;
 
   return *this;
 }

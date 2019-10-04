@@ -19,7 +19,7 @@ struct thread_pool
 
   // insert |_task| into the thread pool to be executed, the integer passed
   // to |_task| is the thread id of the calling thread in the pool
-  void add(function<void(int)>&& _task);
+  void add(function<void(int)>&& task_);
 
   memory::allocator* allocator() const;
 

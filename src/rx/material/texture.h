@@ -32,9 +32,9 @@ struct texture
   using wrap_options = math::vec2<wrap_type>;
 
   texture(memory::allocator* _allocator);
-  texture(texture&& _texture);
+  texture(texture&& texture_);
 
-  texture& operator=(texture&& _texture);
+  texture& operator=(texture&& texture_);
 
   bool load(const string& _file_name);
   bool parse(const json& _definition);
@@ -58,7 +58,7 @@ private:
   template<typename... Ts>
   void log(log::level _level, const char* _format, Ts&&... _arguments) const;
 
-  void write_log(log::level _level, string&& _message) const;
+  void write_log(log::level _level, string&& message_) const;
 
   memory::allocator* m_allocator;
   rx::texture::chain m_chain;
@@ -85,21 +85,24 @@ inline texture::texture(memory::allocator* _allocator)
 {
 }
 
-inline texture::texture(texture&& _texture)
-  : m_allocator{_texture.m_allocator}
-  , m_chain{utility::move(_texture.m_chain)}
-  , m_filter{_texture.m_filter}
-  , m_wrap{_texture.m_wrap}
-  , m_type{utility::move(_texture.m_type)}
+inline texture::texture(texture&& texture_)
+  : m_allocator{texture_.m_allocator}
+  , m_chain{utility::move(texture_.m_chain)}
+  , m_filter{texture_.m_filter}
+  , m_wrap{texture_.m_wrap}
+  , m_type{utility::move(texture_.m_type)}
 {
 }
 
-inline texture& texture::operator=(texture&& _texture) {
-  m_allocator = _texture.m_allocator;
-  m_chain = utility::move(_texture.m_chain);
-  m_filter = _texture.m_filter;
-  m_wrap = _texture.m_wrap;
-  m_type = utility::move(_texture.m_type);
+inline texture& texture::operator=(texture&& texture_) {
+  RX_ASSERT(&texture_ != this, "self assignment");
+
+  m_allocator = texture_.m_allocator;
+  m_chain = utility::move(texture_.m_chain);
+  m_filter = texture_.m_filter;
+  m_wrap = texture_.m_wrap;
+  m_type = utility::move(texture_.m_type);
+
   return *this;
 }
 

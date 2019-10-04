@@ -25,14 +25,14 @@ file::file(const char* _file_name, const char* _mode)
 {
 }
 
-file::file(file&& other)
-  : m_impl{other.m_impl}
-  , m_file_name{other.m_file_name}
-  , m_mode{other.m_mode}
+file::file(file&& other_)
+  : m_impl{other_.m_impl}
+  , m_file_name{other_.m_file_name}
+  , m_mode{other_.m_mode}
 {
-  other.m_impl = nullptr;
-  other.m_file_name = nullptr;
-  other.m_mode = nullptr;
+  other_.m_impl = nullptr;
+  other_.m_file_name = nullptr;
+  other_.m_mode = nullptr;
 }
 
 file::~file() {
@@ -93,10 +93,10 @@ optional<rx_u64> file::size() {
   return result;
 }
 
-bool file::print(string&& contents) {
+bool file::print(string&& contents_) {
   RX_ASSERT(m_impl, "invalid");
   RX_ASSERT(strcmp(m_mode, "w") == 0, "cannot print with mode '%s'", m_mode);
-  return fprintf(static_cast<FILE*>(m_impl), "%s", contents.data()) > 0;
+  return fprintf(static_cast<FILE*>(m_impl), "%s", contents_.data()) > 0;
 }
 
 bool file::flush() {
@@ -106,15 +106,15 @@ bool file::flush() {
   return fflush(static_cast<FILE*>(m_impl)) == 0;
 }
 
-bool file::read_line(string& line) {
+bool file::read_line(string& line_) {
   auto* fp = static_cast<FILE*>(m_impl);
 
-  line.clear();
+  line_.clear();
   for (;;) {
     char buffer[4096];
     if (!fgets(buffer, sizeof buffer, fp)) {
       if (feof(fp)) {
-        return !line.is_empty();
+        return !line_.is_empty();
       }
 
       return false;
@@ -130,7 +130,7 @@ bool file::read_line(string& line) {
       length--;
     }
 
-    line.append(buffer, length);
+    line_.append(buffer, length);
 
     if (length < sizeof buffer - 1) {
       return true;

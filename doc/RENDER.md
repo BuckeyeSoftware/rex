@@ -356,7 +356,7 @@ Shaders and uniforms are added to a constructed program before initialization wi
 
 ```cpp
 // add a shader definition |_shader|
-void add_shader(shader&& _shader);
+void add_shader(shader&& shader_);
 
 // add a uniform with name |_name| and type |_type|
 uniform& add_uniform(const string& _name, uniform::type _type);

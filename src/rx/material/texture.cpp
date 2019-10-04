@@ -197,11 +197,11 @@ bool texture::parse_border(const json& _border) {
   return true;
 }
 
-void texture::write_log(log::level _level, string&& _message) const {
+void texture::write_log(log::level _level, string&& message_) const {
   if (m_type.is_empty()) {
-    logger(_level, "%s", utility::move(_message));
+    logger(_level, "%s", utility::move(message_));
   } else {
-    logger(_level, "%s: %s", m_type, utility::move(_message));
+    logger(_level, "%s: %s", m_type, utility::move(message_));
   }
 }
 

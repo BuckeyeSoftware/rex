@@ -22,7 +22,7 @@ struct function<R(Ts...)> {
   function(F&& _function);
 
   function(const function& _function);
-  function(function&& _function);
+  function(function&& function_);
 
   function& operator=(const function& _function);
   function& operator=(function&& function_);
@@ -113,15 +113,15 @@ inline function<R(Ts...)>::function(const function& _function)
 }
 
 template<typename R, typename... Ts>
-inline function<R(Ts...)>::function(function&& _function)
-  : m_invoke{_function.m_invoke}
-  , m_construct{_function.m_construct}
-  , m_destruct{_function.m_destruct}
-  , m_data{utility::move(_function.m_data)}
+inline function<R(Ts...)>::function(function&& function_)
+  : m_invoke{function_.m_invoke}
+  , m_construct{function_.m_construct}
+  , m_destruct{function_.m_destruct}
+  , m_data{utility::move(function_.m_data)}
 {
-  _function.m_invoke = nullptr;
-  _function.m_construct = nullptr;
-  _function.m_destruct = nullptr;
+  function_.m_invoke = nullptr;
+  function_.m_construct = nullptr;
+  function_.m_destruct = nullptr;
 }
 
 template<typename R, typename... Ts>

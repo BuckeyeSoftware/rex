@@ -13,27 +13,27 @@ struct log {
     k_error
   };
 
-  constexpr log(const char* name, const char* file_name, int line);
+  constexpr log(const char* _name, const char* _file_name, int _line);
 
   template<typename... Ts>
-  void operator()(level lvl, const char* fmt, Ts&&... args);
+  void operator()(level _level, const char* _fmt, Ts&&... _args);
 
   const char* name() const;
   const char* file_name() const;
   int line() const;
 
 private:
-  void write(level lvl, string&& contents);
+  void write(level _level, string&& contents_);
 
   const char* m_name;
   const char* m_file_name;
   int m_line;
 };
 
-inline constexpr log::log(const char* name, const char* file_name, int line)
-  : m_name{name}
-  , m_file_name{file_name}
-  , m_line{line}
+inline constexpr log::log(const char* _name, const char* _file_name, int _line)
+  : m_name{_name}
+  , m_file_name{_file_name}
+  , m_line{_line}
 {
 }
 

@@ -14,7 +14,7 @@ struct file
   file(void* _impl, const char* _file_name, const char* _mode);
   file(const char* _file_name, const char* _mode);
   file(const string& _file_name, const char* _mode);
-  file(file&& _other);
+  file(file&& other_);
   ~file();
 
   file& operator=(file&& file_);
@@ -30,14 +30,14 @@ struct file
 
   // print |fmt| with |args| to file using |alloc| for formatting
   template<typename... Ts>
-  bool print(memory::allocator* alloc, const char* fmt, Ts&&... args);
+  bool print(memory::allocator* _alloc, const char* _fmt, Ts&&... _args);
 
   // print |fmt| with |args| to file
   template<typename... Ts>
-  bool print(const char* fmt, Ts&&... args);
+  bool print(const char* _fmt, Ts&&... _args);
 
   // seek to |where| in file
-  bool seek(rx_u64 where);
+  bool seek(rx_u64 _where);
 
   // get size of file, returns nullopt if operation not supported
   optional<rx_u64> size();
@@ -45,13 +45,13 @@ struct file
   // flush to disk
   bool flush();
 
-  bool read_line(string& line);
+  bool read_line(string& line_);
 
   bool is_valid() const;
 
   operator bool() const;
 
-  bool print(string&& contents);
+  bool print(string&& contents_);
 
 private:
   friend struct process;

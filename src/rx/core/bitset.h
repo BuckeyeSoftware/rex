@@ -19,7 +19,7 @@ struct bitset {
 
   bitset(memory::allocator* _allocator, rx_size _size);
   bitset(rx_size _size);
-  bitset(bitset&& _bitset);
+  bitset(bitset&& bitset_);
   bitset(const bitset& _bitset);
   ~bitset();
 

@@ -10,6 +10,7 @@
 
 #include "rx/core/profiler.h"
 #include "rx/core/global.h"
+#include "rx/core/abort.h"
 
 #include "rx/game.h"
 
@@ -324,24 +325,24 @@ int main(int _argc, char** _argv) {
             ievent.as_keyboard.down = event.type == SDL_KEYDOWN;
             ievent.as_keyboard.scan_code = event.key.keysym.scancode;
             ievent.as_keyboard.symbol = event.key.keysym.sym;
-            input.handle_event(utility::move(ievent));
+            input.handle_event(ievent);
             break;
           case SDL_MOUSEBUTTONDOWN:
           case SDL_MOUSEBUTTONUP:
             ievent.type = input::event_type::k_mouse_button;
             ievent.as_mouse_button.down = event.type == SDL_MOUSEBUTTONDOWN;
             ievent.as_mouse_button.button = event.button.button;
-            input.handle_event(utility::move(ievent));
+            input.handle_event(ievent);
             break;
           case SDL_MOUSEMOTION:
             ievent.type = input::event_type::k_mouse_motion;
             ievent.as_mouse_motion.value = {event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel};
-            input.handle_event(utility::move(ievent));
+            input.handle_event(ievent);
             break;
           case SDL_MOUSEWHEEL:
             ievent.type = input::event_type::k_mouse_scroll;
             ievent.as_mouse_scroll.value = {event.wheel.x, event.wheel.y};
-            input.handle_event(utility::move(ievent));
+            input.handle_event(ievent);
             break;
           case SDL_WINDOWEVENT:
             switch (event.window.event) {

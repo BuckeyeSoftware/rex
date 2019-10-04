@@ -42,7 +42,7 @@ struct uniform
 
   uniform();
   uniform(program* _program, rx_size _index, const string& _name, type _type);
-  uniform(uniform&& _uniform);
+  uniform(uniform&& uniform_);
   ~uniform();
 
   void record_sampler(int _sampler);
@@ -134,7 +134,7 @@ struct program : resource {
 
   void validate() const;
 
-  void add_shader(shader&& _shader);
+  void add_shader(shader&& shader_);
   uniform& add_uniform(const string& _name, uniform::type _type);
   rx_u64 dirty_uniforms_bitset() const;
   rx_size dirty_uniforms_size() const;

@@ -25,7 +25,7 @@ immediate3D::queue::queue(queue&& queue_)
 }
 
 immediate3D::queue& immediate3D::queue::operator=(queue&& queue_) {
-  RX_ASSERT(this != &queue_, "move from self");
+  RX_ASSERT(this != &queue_, "self assignment");
   m_allocator = queue_.m_allocator;
   m_commands = utility::move(queue_.m_commands);
   queue_.m_allocator = nullptr;
@@ -563,8 +563,8 @@ void immediate3D::add_element(rx_u32 _element) {
   m_elements[m_element_index++] = _element;
 }
 
-void immediate3D::add_vertex(vertex&& _vertex) {
-  m_vertices[m_vertex_index++] = utility::move(_vertex);
+void immediate3D::add_vertex(vertex&& vertex_) {
+  m_vertices[m_vertex_index++] = utility::move(vertex_);
 }
 
 } // namespace rx::render

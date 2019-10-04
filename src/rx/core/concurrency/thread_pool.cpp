@@ -74,10 +74,10 @@ thread_pool::~thread_pool() {
   logger(log::level::k_verbose, "stopped pool with %zu threads (took %.2f ms)", m_threads.size(), time);
 }
 
-void thread_pool::add(function<void(int)>&& _task) {
+void thread_pool::add(function<void(int)>&& task_) {
   {
     scope_lock lock(m_mutex);
-    m_queue.push(utility::move(_task));
+    m_queue.push(utility::move(task_));
   }
   m_task_cond.signal();
 }

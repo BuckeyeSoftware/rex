@@ -22,7 +22,7 @@ struct uninitialized_storage
 
   // explicitly initialize the storage with |args|
   template<typename... Ts>
-  void init(Ts&&... args);
+  void init(Ts&&... _args);
 
   // explicitly finalize the storage
   void fini();
@@ -47,8 +47,8 @@ inline constexpr uninitialized_storage<T>::uninitialized_storage()
 
 template<typename T>
 template<typename... Ts>
-inline void uninitialized_storage<T>::init(Ts&&... args) {
-  utility::construct<T>(reinterpret_cast<void*>(m_data), utility::forward<Ts>(args)...);
+inline void uninitialized_storage<T>::init(Ts&&... _args) {
+  utility::construct<T>(reinterpret_cast<void*>(m_data), utility::forward<Ts>(_args)...);
 }
 
 template<typename T>

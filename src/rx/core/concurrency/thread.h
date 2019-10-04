@@ -25,9 +25,9 @@ struct thread
 {
   thread();
 
-  thread(memory::allocator* _allocator, const char* _name, function<void(int)>&& _function);
-  thread(const char* _name, function<void(int)>&& _function);
-  thread(thread&& _thread);
+  thread(memory::allocator* _allocator, const char* _name, function<void(int)>&& function_);
+  thread(const char* _name, function<void(int)>&& function_);
+  thread(thread&& thread_);
   ~thread();
 
   void join();
@@ -37,7 +37,7 @@ private:
     static void* wrap(void* data);
 
     state();
-    state(const char* _name, function<void(int)>&& _function);
+    state(const char* _name, function<void(int)>&& function_);
 
     void join();
 
@@ -56,8 +56,8 @@ private:
   state* m_state;
 };
 
-inline thread::thread(const char* _name, function<void(int)>&& _function)
-  : thread{&memory::g_system_allocator, _name, utility::move(_function)}
+inline thread::thread(const char* _name, function<void(int)>&& function_)
+  : thread{&memory::g_system_allocator, _name, utility::move(function_)}
 {
 }
 

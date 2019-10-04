@@ -38,12 +38,12 @@ struct string {
   template<typename... Ts>
   static string format(const char* _format, Ts&&... _arguments);
 
-  string(string&& _contents);
+  string(string&& contents_);
 
   ~string();
 
   string& operator=(const string& _contents);
-  string& operator=(string&& _contents);
+  string& operator=(string&& contents_);
 
   void reserve(rx_size _size);
   void resize(rx_size _size);
@@ -124,7 +124,7 @@ struct wide_string {
   wide_string(const rx_u16* _contents);
   wide_string(const rx_u16* _contents, rx_size _size);
 
-  wide_string(wide_string&& _other);
+  wide_string(wide_string&& other_);
 
   ~wide_string();
 

@@ -26,11 +26,11 @@ struct vector {
   constexpr vector();
   vector(rx_size _size, const T& value = {});
   vector(const vector& _other);
-  vector(vector&& _other);
+  vector(vector&& other_);
   ~vector();
 
   vector& operator=(const vector& _other);
-  vector& operator=(vector&& _other);
+  vector& operator=(vector&& other_);
 
   T& operator[](rx_size _index);
   const T& operator[](rx_size _index) const;
@@ -46,7 +46,7 @@ struct vector {
   // append |data| by copy
   bool push_back(const T& _data);
   // append |data| by move
-  bool push_back(T&& _data);
+  bool push_back(T&& data_);
 
   // append new |T| construct with |args|
   template<typename... Ts>
@@ -153,16 +153,16 @@ inline vector<T>::vector(const vector& _other)
 }
 
 template<typename T>
-inline vector<T>::vector(vector&& _other)
-  : m_allocator{_other.m_allocator}
-  , m_data{_other.m_data}
-  , m_size{_other.m_size}
-  , m_capacity{_other.m_capacity}
+inline vector<T>::vector(vector&& other_)
+  : m_allocator{other_.m_allocator}
+  , m_data{other_.m_data}
+  , m_size{other_.m_size}
+  , m_capacity{other_.m_capacity}
 {
-  _other.m_allocator = &memory::g_system_allocator;
-  _other.m_data = nullptr;
-  _other.m_size = 0;
-  _other.m_capacity = 0;
+  other_.m_allocator = &memory::g_system_allocator;
+  other_.m_data = nullptr;
+  other_.m_size = 0;
+  other_.m_capacity = 0;
 }
 
 template<typename T>
@@ -317,13 +317,13 @@ inline bool vector<T>::push_back(const T& _value) {
 }
 
 template<typename T>
-inline bool vector<T>::push_back(T&& _value) {
+inline bool vector<T>::push_back(T&& value_) {
   if (!grow_or_shrink_to(m_size + 1)) {
     return false;
   }
 
   // move construct object
-  utility::construct<T>(m_data + m_size, utility::move(_value));
+  utility::construct<T>(m_data + m_size, utility::move(value_));
 
   m_size++;
   return true;

@@ -19,9 +19,9 @@ struct loader
   : concepts::no_copy
 {
   loader(memory::allocator* _allocator);
-  loader(loader&& _loader);
+  loader(loader&& loader_);
 
-  void operator=(loader&& _loader);
+  void operator=(loader&& loader_);
 
   bool load(const string& _file_name);
   bool parse(const json& _definition);
@@ -40,7 +40,7 @@ private:
   template<typename... Ts>
   void log(log::level _level, const char* _format, Ts&&... _arguments) const;
 
-  void write_log(log::level _level, string&& _message) const;
+  void write_log(log::level _level, string&& message_) const;
 
   bool parse_textures(const json& _textures);
 

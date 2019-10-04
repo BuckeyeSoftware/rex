@@ -243,11 +243,11 @@ bool importer::generate_tangents() {
   return true;
 }
 
-void importer::write_log(log::level _level, string&& _message) const {
+void importer::write_log(log::level _level, string&& message_) const {
   if (m_file_name.is_empty()) {
-    logger(_level, "%s", utility::move(_message));
+    logger(_level, "%s", utility::move(message_));
   } else {
-    logger(_level, "%s: %s", m_file_name, utility::move(_message));
+    logger(_level, "%s: %s", m_file_name, utility::move(message_));
   }
 }
 

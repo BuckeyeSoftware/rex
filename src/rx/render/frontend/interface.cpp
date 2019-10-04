@@ -70,11 +70,11 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
 
   // load all techniques
   if (filesystem::directory directory{k_technique_path}) {
-    directory.each([this](filesystem::directory::item&& _item) {
-      if (_item.is_file() && _item.name().ends_with(".json5")) {
+    directory.each([this](filesystem::directory::item&& item_) {
+      if (item_.is_file() && item_.name().ends_with(".json5")) {
         technique new_technique{this};
         const auto path{string::format("%s/%s", k_technique_path,
-          utility::move(_item.name()))};
+          utility::move(item_.name()))};
         if (new_technique.load(path)) {
           m_techniques.insert(new_technique.name(), utility::move(new_technique));
         }

@@ -54,11 +54,11 @@ time_stamp(time_t time, const char* fmt) {
 
 struct message {
   message() = default;
-  message(const log* owner, string&& contents, log::level level, time_t time)
-    : m_owner{owner}
-    , m_contents{utility::move(contents)}
-    , m_level{level}
-    , m_time{time}
+  message(const log* _owner, string&& contents_, log::level _level, time_t _time)
+    : m_owner{_owner}
+    , m_contents{utility::move(contents_)}
+    , m_level{_level}
+    , m_time{_time}
   {
   }
   const log* m_owner;
@@ -71,10 +71,10 @@ struct logger {
   logger();
   ~logger();
 
-  void write(const log* owner, string&& contents, log::level level, time_t time);
-  void flush(rx_size max_padding);
+  void write(const log* _owner, string&& contents_, log::level _level, time_t _time);
+  void flush(rx_size _max_padding);
 
-  void process(int thread_id); // running in |m_thread|
+  void process(int _thread_id); // running in |m_thread|
 
   enum {
     k_running = 1 << 0,
@@ -142,9 +142,9 @@ logger::~logger() {
   g_group_loggers.fini();
 }
 
-void logger::write(const log* owner, string&& contents, log::level level, time_t time) {
+void logger::write(const log* _owner, string&& contents_, log::level _level, time_t _time) {
   concurrency::scope_lock locked{m_mutex};
-  m_queue.emplace_back(owner, utility::move(contents), level, time);
+  m_queue.emplace_back(_owner, utility::move(contents_), _level, _time);
   //if (m_queue.size() >= k_flush_threshold) {
     m_flush_condition.signal();
   //}

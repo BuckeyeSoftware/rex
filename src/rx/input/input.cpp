@@ -12,7 +12,7 @@ void input::update(rx_f32 _delta_time) {
   });
 }
 
-void input::handle_event(event&& _event) {
+void input::handle_event(const event& _event) {
   switch (_event.type) {
   case event_type::k_none:
     RX_HINT_UNREACHABLE();
