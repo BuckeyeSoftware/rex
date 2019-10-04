@@ -68,7 +68,7 @@ else ifeq ($(PROFILE),1)
 	CFLAGS += -fno-optimize-sibling-calls
 else
 	# Enable assertions in release temporarily.
-	# CFLAGS += -DRX_DEBUG
+	CFLAGS += -DRX_DEBUG
 
 	# Remotery
 	CFLAGS += -DRMT_ENABLED=1

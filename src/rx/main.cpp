@@ -103,11 +103,16 @@ int main(int _argc, char** _argv) {
   }};
 
   signal(SIGINT, catch_signal);
+  signal(SIGTERM, catch_signal);
+
+  // Don't catch these signals in debug.
+#if !defined(RX_DEBUG)
   signal(SIGILL, catch_signal);
   signal(SIGABRT, catch_signal);
   signal(SIGFPE, catch_signal);
   signal(SIGSEGV, catch_signal);
-  signal(SIGTERM, catch_signal);
+#endif
+
 #if !defined(RX_PLATFORM_WINDOWS)
   signal(SIGHUP, catch_signal);
   signal(SIGQUIT, catch_signal);
