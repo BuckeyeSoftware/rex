@@ -18,6 +18,7 @@ struct gl4
   ~gl4();
 
   bool init();
+  void process(const vector<rx_byte*>& _commands);
   void process(rx_byte* _command);
   void swap();
 

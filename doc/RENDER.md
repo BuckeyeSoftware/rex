@@ -642,7 +642,7 @@ struct interface
   virtual allocation_info query_allocation_info() const = 0;
   virtual device_info query_device_info() const = 0;
   virtual bool init() = 0;
-  virtual void process(rx_byte* _command) = 0;
+  virtual void process(const vector<rx_byte*>& _commands) = 0;
   virtual void swap() = 0;
 };
 ```
@@ -651,6 +651,6 @@ The purposes of `query_allocation_info()` is to allow the frontend to over alloc
 
 The `init()` function implements the _initialization_ of the backend. It should return `false` on failure. Do not do initialization work in the constructor since there's no way to indicate errors as exceptions are not used in Rex.
 
-The `process(rx_byte* _command)` function implements the processing of commands as mentioned above. One call is made for every command.
+The `process(const vector<rx_byte*>& _commands)` function implements the processing of commands as mentioned above. One call is made for every command.
 
 The `swap()` function is used to swap the swapchain.

@@ -975,6 +975,12 @@ bool gl3::init() {
   return true;
 }
 
+void gl3::process(const vector<rx_byte*>& _commands) {
+  _commands.each_fwd([this](rx_byte* _command) {
+    process(_command);
+  });
+}
+
 void gl3::process(rx_byte* _command) {
   profiler::cpu_sample sample{"gl3::process"};
 

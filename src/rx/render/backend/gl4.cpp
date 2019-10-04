@@ -954,6 +954,12 @@ bool gl4::init() {
   return true;
 }
 
+void gl4::process(const vector<rx_byte*>& _commands) {
+  _commands.each_fwd([this](rx_byte* _command) {
+    process(_command);
+  });
+}
+
 void gl4::process(rx_byte* _command) {
   profiler::cpu_sample sample{"gl4::process"};
 

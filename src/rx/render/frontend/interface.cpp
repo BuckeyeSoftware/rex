@@ -544,17 +544,15 @@ void interface::resize(const math::vec2z& _resolution) {
 bool interface::process() {
   profiler::cpu_sample sample{"frontend::process"};
 
-  // concurrency::scope_lock lock(m_mutex);
-
   if (m_commands.is_empty()) {
     return false;
   }
 
+  concurrency::scope_lock lock{m_mutex};
+
   // consume all commands
   if (m_backend) {
-    m_commands.each_fwd([this](rx_byte* _command) {
-      m_backend->process(_command);
-    });
+    m_backend->process(m_commands);
   }
 
   // cleanup unreferenced resources
