@@ -20,8 +20,8 @@ struct technique
   technique(interface* _frontend);
   ~technique();
 
-  technique(technique&& _technique);
-  technique& operator=(technique&& _technique);
+  technique(technique&& technique_);
+  technique& operator=(technique&& technique_);
 
   enum class type {
     k_basic,
@@ -114,7 +114,7 @@ private:
   template<typename... Ts>
   void log(log::level _level, const char* _format, Ts&&... _arguments) const;
 
-  void write_log(log::level _level, string&& _message) const;
+  void write_log(log::level _level, string&& message_) const;
 
   interface* m_frontend;
   type m_type;

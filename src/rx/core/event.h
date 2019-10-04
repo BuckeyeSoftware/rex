@@ -20,7 +20,7 @@ struct event {
   constexpr event();
 
   void signal(const T& _value);
-  handle connect(delegate&& _function);
+  handle connect(delegate&& function_);
 
   memory::allocator* allocator() const;
 
@@ -64,14 +64,14 @@ inline void event<T>::signal(const T& _value) {
 }
 
 template<typename T>
-inline typename event<T>::handle event<T>::connect(delegate&& _delegate) {
+inline typename event<T>::handle event<T>::connect(delegate&& delegate_) {
   const rx_size delegates{m_delegates.size()};
   for (rx_size i{0}; i < delegates; i++) {
     if (!m_delegates[i]) {
       return {this, i};
     }
   }
-  m_delegates.emplace_back(utility::move(_delegate));
+  m_delegates.emplace_back(utility::move(delegate_));
   return {this, delegates};
 }
 

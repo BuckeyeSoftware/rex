@@ -71,17 +71,16 @@ bool loader::parse(const json& _definition) {
     return false;
   }
 
-  const auto& file_name{file.as_string()};
   if (!import(file.as_string())) {
     return false;
   }
 
   // Load all the materials across multiple threads.
-  concurrency::thread_pool pool{m_allocator, 8};
+  // concurrency::thread_pool pool{m_allocator, 32};
   concurrency::mutex mutex;
   concurrency::wait_group group{materials.size()};
   materials.each([&](const json& _material) {
-    pool.add([&, _material](int) {
+    concurrency::thread_pool::instance().add([&, _material](int) {
       material::loader loader{m_allocator};
       if (_material.is_string() && loader.load(_material.as_string())) {
         concurrency::scope_lock lock{mutex};
@@ -230,11 +229,11 @@ bool loader::parse_transform(const json& _transform) {
   return true;
 }
 
-void loader::write_log(log::level _level, string&& _message) const {
+void loader::write_log(log::level _level, string&& message_) const {
   if (m_name.is_empty()) {
-    logger(_level, "%s", utility::move(_message));
+    logger(_level, "%s", utility::move(message_));
   } else {
-    logger(_level, "%s: %s", m_name, utility::move(_message));
+    logger(_level, "%s: %s", m_name, utility::move(message_));
   }
 }
 

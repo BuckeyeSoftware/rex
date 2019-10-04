@@ -7,6 +7,7 @@
 #include "rx/render/frontend/interface.h"
 #include "rx/render/backend/gl4.h"
 #include "rx/render/backend/gl3.h"
+#include "rx/render/backend/vk.h"
 
 #include "rx/core/profiler.h"
 #include "rx/core/global.h"
@@ -63,7 +64,7 @@ RX_CONSOLE_IVAR(
 RX_CONSOLE_SVAR(
   renderer_driver,
   "renderer.driver",
-  "which driver to use for renderer (gl3, gl4, null)",
+  "which driver to use for renderer (gl3, gl4, vk, null)",
   "gl4");
 
 RX_CONSOLE_BVAR(
@@ -189,6 +190,9 @@ int main(int _argc, char** _argv) {
     if (is_opengl) {
       flags |= SDL_WINDOW_OPENGL;
     }
+    if(renderer_driver->get() == "vk") {
+      flags |= SDL_WINDOW_VULKAN;
+    }
     if (*display_resizable) {
       flags |= SDL_WINDOW_RESIZABLE;
     }
@@ -253,6 +257,9 @@ int main(int _argc, char** _argv) {
           &memory::g_system_allocator, reinterpret_cast<void*>(window));
     } else if (renderer_driver->get() == "gl3") {
       backend = memory::g_system_allocator->create<render::backend::gl3>(
+          &memory::g_system_allocator, reinterpret_cast<void*>(window));
+    } else if(renderer_driver->get() == "vk") {
+      backend = memory::g_system_allocator->create<render::backend::vk>(
           &memory::g_system_allocator, reinterpret_cast<void*>(window));
     }
 

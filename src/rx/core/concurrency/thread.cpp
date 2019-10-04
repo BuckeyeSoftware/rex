@@ -17,19 +17,19 @@ thread::thread()
 {
 }
 
-thread::thread(thread&& _thread)
-  : m_allocator{_thread.m_allocator}
-  , m_state{utility::move(_thread.m_state)}
+thread::thread(thread&& thread_)
+  : m_allocator{thread_.m_allocator}
+  , m_state{utility::move(thread_.m_state)}
 {
-  _thread.m_allocator = nullptr;
+  thread_.m_allocator = nullptr;
 }
 
-thread::thread(memory::allocator* _allocator, const char* _name, function<void(int)>&& _function)
+thread::thread(memory::allocator* _allocator, const char* _name, function<void(int)>&& function_)
   : m_allocator{_allocator}
 {
   RX_ASSERT(m_allocator, "null allocator");
 
-  m_state = m_allocator->create<state>(_name, utility::move(_function));
+  m_state = m_allocator->create<state>(_name, utility::move(function_));
 }
 
 thread::~thread() {
@@ -59,8 +59,8 @@ thread::state::state()
 {
 }
 
-thread::state::state(const char* _name, function<void(int)>&& _function)
-  : m_function{utility::move(_function)}
+thread::state::state(const char* _name, function<void(int)>&& function_)
+  : m_function{utility::move(function_)}
   , m_joined{false}
   , m_name{_name}
 {

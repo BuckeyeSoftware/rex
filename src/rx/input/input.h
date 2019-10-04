@@ -13,8 +13,8 @@ struct input {
   input();
   input(memory::allocator* _allocator);
 
-  void handle_event(event&& _event);
-  void update(rx_f32 delta_time);
+  void handle_event(const event& _event);
+  void update(rx_f32 _delta_time);
 
   const mouse_device& mouse() const;
   const keyboard_device& keyboard() const;

@@ -134,7 +134,7 @@ struct draw_command : state {
   void* texture_binds[8];
   primitive_type type;
   rx_u64 dirty_uniforms_bitset;
-  
+
   const rx_byte* uniforms() const;
   rx_byte* uniforms();
 };

@@ -15,7 +15,11 @@
 #include "rx/core/concurrency/scope_unlock.h" // scope_unlock
 #include "rx/core/concurrency/thread.h" // thread
 
+#include "rx/core/global.h"
+
 namespace rx {
+
+RX_GLOBAL_GROUP("loggers", g_group_loggers);
 
 static constexpr const rx_size k_flush_threshold{1000}; // 1000 messages
 
@@ -50,11 +54,11 @@ time_stamp(time_t time, const char* fmt) {
 
 struct message {
   message() = default;
-  message(const log* owner, string&& contents, log::level level, time_t time)
-    : m_owner{owner}
-    , m_contents{utility::move(contents)}
-    , m_level{level}
-    , m_time{time}
+  message(const log* _owner, string&& contents_, log::level _level, time_t _time)
+    : m_owner{_owner}
+    , m_contents{utility::move(contents_)}
+    , m_level{_level}
+    , m_time{_time}
   {
   }
   const log* m_owner;
@@ -67,10 +71,10 @@ struct logger {
   logger();
   ~logger();
 
-  void write(const log* owner, string&& contents, log::level level, time_t time);
-  void flush(rx_size max_padding);
+  void write(const log* _owner, string&& contents_, log::level _level, time_t _time);
+  void flush(rx_size _max_padding);
 
-  void process(int thread_id); // running in |m_thread|
+  void process(int _thread_id); // running in |m_thread|
 
   enum {
     k_running = 1 << 0,
@@ -78,7 +82,6 @@ struct logger {
   };
 
   filesystem::file m_file;
-  vector<static_node*> m_logs;
   rx_size m_max_name_length;
   rx_size m_max_level_length;
   int m_status;
@@ -91,7 +94,7 @@ struct logger {
   static RX_GLOBAL<logger> s_logger;
 };
 
-RX_GLOBAL<logger> logger::s_logger{"logger"};
+RX_GLOBAL<logger> logger::s_logger{"system", "logger"};
 
 logger::logger()
   : m_file{"log.log", "w"}
@@ -100,21 +103,13 @@ logger::logger()
   , m_status{k_running}
   , m_thread{"logger", [this](int id){ process(id); }}
 {
-  // initialize all loggers
-  static_globals::each([this](static_node* node) {
-    const char* name{node->name()};
-    if (!strncmp(name, "log_", 4)) {
-      node->init();
-
-      // remember for finalization
-      m_logs.push_back(node);
-
-      // calculate maximum name length
-      const auto name_length{strlen(name)};
-      m_max_name_length = algorithm::max(m_max_name_length, name_length);
-    }
-    return true;
+  // Calculate the maximum name length for all the loggers.
+  g_group_loggers.each([&](global_node* _node) {
+    m_max_name_length = algorithm::max(m_max_name_length, strlen(_node->name()));
   });
+
+  // Initialize the loggers.
+  g_group_loggers.init();
 
   // calculate maximum level string length
   const auto level0{strlen(get_level_string(log::level::k_warning))};
@@ -144,29 +139,33 @@ logger::~logger() {
   m_thread.join();
 
   // deinitialize all loggers
-  m_logs.each_rev([](static_node* node) {
-    node->fini();
-  });
+  g_group_loggers.fini();
 }
 
-void logger::write(const log* owner, string&& contents, log::level level, time_t time) {
-  concurrency::scope_lock locked(m_mutex);
-  m_queue.emplace_back(owner, utility::move(contents), level, time);
-  //if (m_queue.size() >= k_flush_threshold) {
+void logger::write(const log* _owner, string&& contents_, log::level _level, time_t _time) {
+  concurrency::scope_lock locked{m_mutex};
+  m_queue.emplace_back(_owner, utility::move(contents_), _level, _time);
+
+#if defined(RX_DEBUG)
+  (void)k_flush_threshold;
+  m_flush_condition.signal();
+#else
+  if (m_queue.size() >= k_flush_threshold) {
     m_flush_condition.signal();
-  //}
+  }
+#endif
 }
 
 void logger::flush(rx_size max_padding) {
   m_queue.each_fwd([&](const message& _message) {
     const auto name_string{_message.m_owner->name()};
     const auto level_string{get_level_string(_message.m_level)};
-    const auto padding{strlen(name_string) + strlen(level_string) + 4}; // 4 additional characters for " []/"
+    const auto padding{strlen(name_string) + strlen(level_string) + 1}; // +1 for '/'
     m_file.print("[%s] [%s/%s]%*s | %s\n",
       time_stamp(_message.m_time, "%Y-%m-%d %H:%M:%S"),
       name_string,
       level_string,
-      static_cast<int>(max_padding-padding),
+      static_cast<int>(max_padding - padding),
       "",
       _message.m_contents);
     return true;

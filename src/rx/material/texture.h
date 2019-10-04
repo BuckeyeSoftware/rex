@@ -1,8 +1,9 @@
 #ifndef RX_MATERIAL_TEXTURE_H
 #define RX_MATERIAL_TEXTURE_H
 #include "rx/core/log.h"
-#include "rx/math/transform.h"
+#include "rx/core/optional.h"
 
+#include "rx/math/transform.h"
 #include "rx/texture/chain.h"
 
 namespace rx {
@@ -11,7 +12,7 @@ namespace rx {
 
 namespace rx::material {
 
-struct texture 
+struct texture
   : concepts::no_copy
 {
   struct filter_options {
@@ -31,9 +32,9 @@ struct texture
   using wrap_options = math::vec2<wrap_type>;
 
   texture(memory::allocator* _allocator);
-  texture(texture&& _texture);
+  texture(texture&& texture_);
 
-  texture& operator=(texture&& _texture);
+  texture& operator=(texture&& texture_);
 
   bool load(const string& _file_name);
   bool parse(const json& _definition);
@@ -49,7 +50,7 @@ private:
   bool parse_type(const json& _type);
   bool parse_filter(const json& _filter, bool& _mipmaps);
   bool parse_wrap(const json& _wrap);
-  bool parse_transform(const json& _transform);
+  bool parse_border(const json& _border);
 
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments) const;
@@ -57,13 +58,14 @@ private:
   template<typename... Ts>
   void log(log::level _level, const char* _format, Ts&&... _arguments) const;
 
-  void write_log(log::level _level, string&& _message) const;
+  void write_log(log::level _level, string&& message_) const;
 
   memory::allocator* m_allocator;
   rx::texture::chain m_chain;
   filter_options m_filter;
   wrap_options m_wrap;
   string m_type;
+  optional<math::vec4f> m_border;
 };
 
 template<typename... Ts>
@@ -83,21 +85,24 @@ inline texture::texture(memory::allocator* _allocator)
 {
 }
 
-inline texture::texture(texture&& _texture)
-  : m_allocator{_texture.m_allocator}
-  , m_chain{utility::move(_texture.m_chain)}
-  , m_filter{_texture.m_filter}
-  , m_wrap{_texture.m_wrap}
-  , m_type{utility::move(_texture.m_type)}
+inline texture::texture(texture&& texture_)
+  : m_allocator{texture_.m_allocator}
+  , m_chain{utility::move(texture_.m_chain)}
+  , m_filter{texture_.m_filter}
+  , m_wrap{texture_.m_wrap}
+  , m_type{utility::move(texture_.m_type)}
 {
 }
 
-inline texture& texture::operator=(texture&& _texture) {
-  m_allocator = _texture.m_allocator;
-  m_chain = utility::move(_texture.m_chain);
-  m_filter = _texture.m_filter;
-  m_wrap = _texture.m_wrap;
-  m_type = utility::move(_texture.m_type);
+inline texture& texture::operator=(texture&& texture_) {
+  RX_ASSERT(&texture_ != this, "self assignment");
+
+  m_allocator = texture_.m_allocator;
+  m_chain = utility::move(texture_.m_chain);
+  m_filter = texture_.m_filter;
+  m_wrap = texture_.m_wrap;
+  m_type = utility::move(texture_.m_type);
+
   return *this;
 }
 

@@ -22,7 +22,7 @@
 
 namespace rx::render::backend {
 
-RX_LOG("render/gl4", gl4_log);
+RX_LOG("render/gl4", logger);
 
 RX_CONSOLE_IVAR(
   anisotropy,
@@ -149,12 +149,19 @@ struct profile_sample {
   profile_sample(const char* _tag)
     : m_cpu_sample{_tag}
   {
-    rmt_BeginOpenGLSampleDynamic(_tag);
+    static auto profile_gpu{console::interface::get_from_name("profile.gpu")->cast<bool>()};
+    if (*profile_gpu) {
+      rmt_BeginOpenGLSampleDynamic(_tag);
+    }
   }
 
   ~profile_sample() {
-    rmt_EndOpenGLSample();
+    static auto profile_gpu{console::interface::get_from_name("profile.gpu")->cast<bool>()};
+    if (*profile_gpu) {
+      rmt_EndOpenGLSample();
+    }
   }
+
 private:
   profiler::cpu_sample m_cpu_sample;
 };
@@ -264,12 +271,13 @@ namespace detail_gl4 {
   struct state
     : frontend::state
   {
-    state()
+    state(SDL_GLContext _context)
       : m_color_mask{0xff}
       , m_bound_vao{0}
       , m_bound_fbo{0}
       , m_bound_program{0}
       , m_swap_chain_fbo{0}
+      , m_context{_context}
     {
       pglEnable(GL_CULL_FACE);
       pglCullFace(GL_BACK);
@@ -284,14 +292,14 @@ namespace detail_gl4 {
       const auto renderer{reinterpret_cast<const char*>(pglGetString(GL_RENDERER))};
       const auto version{reinterpret_cast<const char*>(pglGetString(GL_VERSION))};
 
-      gl4_log(log::level::k_info, "GL %s %s %s", vendor, version, renderer);
+      logger(log::level::k_info, "GL %s %s %s", vendor, version, renderer);
 
       bool texture_filter_anisotropic{false};
       GLint extensions{0};
       pglGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
       for (GLint i{0}; i < extensions; i++) {
         const auto name{reinterpret_cast<const char*>(pglGetStringi(GL_EXTENSIONS, i))};
-        gl4_log(log::level::k_verbose, "extension '%s' supported", name);
+        logger(log::level::k_verbose, "extension '%s' supported", name);
 
         if (!strcmp(name, "GL_ARB_texture_filter_anisotropic")) {
           rx_f32 max_aniso{0.0f};
@@ -304,6 +312,10 @@ namespace detail_gl4 {
       if (!texture_filter_anisotropic) {
         anisotropy->set(0);
       }
+    }
+
+    ~state() {
+      SDL_GL_DeleteContext(m_context);
     }
 
     void use_enable(GLenum _thing, bool _enable) {
@@ -626,13 +638,15 @@ namespace detail_gl4 {
 
     GLint m_swap_chain_fbo;
     texture_unit m_texture_units[8];
+
+    SDL_GLContext m_context;
   };
 };
 
 template<typename F>
 static void fetch(const char* _name, F& function_) {
   auto address{SDL_GL_GetProcAddress(_name)};
-  gl4_log(log::level::k_verbose, "loaded %08p '%s'", address, _name);
+  logger(log::level::k_verbose, "loaded %08p '%s'", address, _name);
   *reinterpret_cast<void**>(&function_) = address;
 }
 
@@ -781,12 +795,12 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     GLint log_size{0};
     pglGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_size);
 
-    gl4_log(log::level::k_error, "failed compiling shader");
+    logger(log::level::k_error, "failed compiling shader");
 
     if (log_size) {
       vector<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
       pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
-      gl4_log(log::level::k_error, "\n%s\n%s", error_log.data(), contents);
+      logger(log::level::k_error, "\n%s\n%s", error_log.data(), contents);
     }
 
     pglDeleteShader(handle);
@@ -820,6 +834,18 @@ gl4::gl4(memory::allocator* _allocator, void* _data)
   : m_allocator{_allocator}
   , m_data{_data}
 {
+}
+
+gl4::~gl4() {
+  m_allocator->destroy<detail_gl4::state>(m_impl);
+}
+
+bool gl4::init() {
+  SDL_GLContext context{SDL_GL_CreateContext(reinterpret_cast<SDL_Window*>(m_data))};
+  if (!context) {
+    return false;
+  }
+
   // buffers
   fetch("glCreateBuffers", pglCreateBuffers);
   fetch("glDeleteBuffers", pglDeleteBuffers);
@@ -923,11 +949,15 @@ gl4::gl4(memory::allocator* _allocator, void* _data)
 
   fetch("glFinish", pglFinish);
 
-  m_impl = m_allocator->create<detail_gl4::state>();
+  m_impl = m_allocator->create<detail_gl4::state>(context);
+
+  return true;
 }
 
-gl4::~gl4() {
-  m_allocator->destroy<detail_gl4::state>(m_impl);
+void gl4::process(const vector<rx_byte*>& _commands) {
+  _commands.each_fwd([this](rx_byte* _command) {
+    process(_command);
+  });
 }
 
 void gl4::process(rx_byte* _command) {
@@ -1138,12 +1168,12 @@ void gl4::process(rx_byte* _command) {
             GLint log_size{0};
             pglGetProgramiv(program->handle, GL_INFO_LOG_LENGTH, &log_size);
 
-            gl4_log(log::level::k_error, "failed linking program");
+            logger(log::level::k_error, "failed linking program");
 
             if (log_size) {
               vector<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
               pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
-              gl4_log(log::level::k_error, "\n%s", error_log.data());
+              logger(log::level::k_error, "\n%s", error_log.data());
             }
           }
 

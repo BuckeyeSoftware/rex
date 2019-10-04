@@ -356,7 +356,7 @@ Shaders and uniforms are added to a constructed program before initialization wi
 
 ```cpp
 // add a shader definition |_shader|
-void add_shader(shader&& _shader);
+void add_shader(shader&& shader_);
 
 // add a uniform with name |_name| and type |_type|
 uniform& add_uniform(const string& _name, uniform::type _type);
@@ -641,13 +641,16 @@ struct interface
 {
   virtual allocation_info query_allocation_info() const = 0;
   virtual device_info query_device_info() const = 0;
-  virtual void process(rx_byte* _command) = 0;
+  virtual bool init() = 0;
+  virtual void process(const vector<rx_byte*>& _commands) = 0;
   virtual void swap() = 0;
 };
 ```
 
 The purposes of `query_allocation_info()` is to allow the frontend to over allocate objects on the render pool so that frontend objects have a 1:1 mapping with backend objects in memory. Or rather, taking the `this` pointer from a frontend object and adding one to it will get you to the memory of the backend object. This is also how virtual functions are avoided for rendering objects.
 
-The `process(rx_byte* _command)` function implements the processing of commands as mentioned above. One call is made for every command.
+The `init()` function implements the _initialization_ of the backend. It should return `false` on failure. Do not do initialization work in the constructor since there's no way to indicate errors as exceptions are not used in Rex.
+
+The `process(const vector<rx_byte*>& _commands)` function implements the processing of commands as mentioned above. One call is made for every command.
 
 The `swap()` function is used to swap the swapchain.

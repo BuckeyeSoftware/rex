@@ -12,7 +12,7 @@ inline void* operator new(rx_size, void* _data, rx_placement_new) {
 namespace rx::utility {
 
 template<typename T, typename... Ts>
-inline T* construct(void *_data, Ts&&... _args) {
+inline T* construct(void* _data, Ts&&... _args) {
   return new (_data, rx_placement_new{}) T(utility::forward<Ts>(_args)...);
 }
 

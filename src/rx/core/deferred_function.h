@@ -30,7 +30,7 @@ inline deferred_function<T>::deferred_function(memory::allocator* _allocator, F&
 
 template<typename T>
 template<typename F>
-inline deferred_function<T>::deferred_function(F &&_function)
+inline deferred_function<T>::deferred_function(F&& _function)
   : deferred_function{&memory::g_system_allocator, utility::forward<F>(_function)}
 {
 }

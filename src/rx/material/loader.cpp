@@ -18,28 +18,30 @@ loader::loader(memory::allocator* _allocator)
 {
 }
 
-loader::loader(loader&& _loader)
-  : m_allocator{_loader.m_allocator}
-  , m_textures{utility::move(_loader.m_textures)}
-  , m_name{utility::move(_loader.m_name)}
-  , m_alpha_test{_loader.m_alpha_test}
-  , m_has_alpha{_loader.m_has_alpha}
+loader::loader(loader&& loader_)
+  : m_allocator{loader_.m_allocator}
+  , m_textures{utility::move(loader_.m_textures)}
+  , m_name{utility::move(loader_.m_name)}
+  , m_alpha_test{loader_.m_alpha_test}
+  , m_has_alpha{loader_.m_has_alpha}
 {
-  _loader.m_allocator = nullptr;
-  _loader.m_alpha_test = false;
-  _loader.m_has_alpha = false;
+  loader_.m_allocator = nullptr;
+  loader_.m_alpha_test = false;
+  loader_.m_has_alpha = false;
 }
 
-void loader::operator=(loader&& _loader) {
-  m_allocator = _loader.m_allocator;
-  m_textures = utility::move(_loader.m_textures);
-  m_name = utility::move(_loader.m_name);
-  m_alpha_test = _loader.m_alpha_test;
-  m_has_alpha = _loader.m_has_alpha;
+void loader::operator=(loader&& loader_) {
+  RX_ASSERT(&loader_ != this, "self assignment");
 
-  _loader.m_allocator = nullptr;
-  _loader.m_alpha_test = false;
-  _loader.m_has_alpha = false;
+  m_allocator = loader_.m_allocator;
+  m_textures = utility::move(loader_.m_textures);
+  m_name = utility::move(loader_.m_name);
+  m_alpha_test = loader_.m_alpha_test;
+  m_has_alpha = loader_.m_has_alpha;
+
+  loader_.m_allocator = nullptr;
+  loader_.m_alpha_test = false;
+  loader_.m_has_alpha = false;
 }
 
 bool loader::load(const string& _file_name) {
@@ -140,12 +142,28 @@ bool loader::parse(const json& _definition) {
 }
 
 bool loader::parse_textures(const json& _textures) {
+  bool success{true};
+  _textures.each([&](const json& _texture) {
+    texture new_texture{m_allocator};
+    if (_texture.is_string() && new_texture.load(_texture.as_string())) {
+      m_textures.push_back(utility::move(new_texture));
+    } else if (_texture.is_object() && new_texture.parse(_texture)) {
+      m_textures.push_back(utility::move(new_texture));
+    } else {
+      success = false;
+    }
+  });
+  return success;
+
+
+  // Revisit with wait groups
+#if 0
   const rx_size n_textures{_textures.size()};
-  concurrency::thread_pool threads{m_allocator, n_textures};
+  // concurrency::thread_pool threads{m_allocator, n_textures};
   concurrency::wait_group group{n_textures};
   concurrency::atomic<bool> success{true};
   _textures.each([&](const json& _texture) {
-    threads.add([&, _texture](int) {
+    concurrency::thread_pool::instance().add([&, _texture](int) {
       texture new_texture{m_allocator};
       if (_texture.is_string() && new_texture.load(_texture.as_string())) {
         m_textures.push_back(utility::move(new_texture));
@@ -160,13 +178,14 @@ bool loader::parse_textures(const json& _textures) {
   });
   group.wait();
   return success.load();
+#endif
 }
 
-void loader::write_log(log::level _level, string&& _message) const {
+void loader::write_log(log::level _level, string&& message_) const {
   if (m_name.is_empty()) {
-    logger(_level, "%s", utility::move(_message));
+    logger(_level, "%s", utility::move(message_));
   } else {
-    logger(_level, "%s: %s", m_name, utility::move(_message));
+    logger(_level, "%s: %s", m_name, utility::move(message_));
   }
 }
 

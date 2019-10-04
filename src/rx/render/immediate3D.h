@@ -26,7 +26,7 @@ struct immediate3D {
     k_depth_write = 1 << 1
   };
 
-  struct queue 
+  struct queue
     : concepts::no_copy
   {
     queue() = default;
@@ -90,7 +90,7 @@ struct immediate3D {
 
     void record_point(const math::vec3f& _point, const math::vec4f& _color,
       rx_f32 _size, rx_u8 _flags);
-  
+
     void record_line(const math::vec3f& _point_a, const math::vec3f& _point_b,
       const math::vec4f& _color, rx_u8 _flags);
 
@@ -104,7 +104,7 @@ struct immediate3D {
 
   private:
     friend struct immediate3D;
-  
+
     memory::allocator* m_allocator;
     vector<command> m_commands;
   };
@@ -153,7 +153,7 @@ private:
     bool _blend);
 
   void add_element(rx_u32 _element);
-  void add_vertex(vertex&& _vertex);
+  void add_vertex(vertex&& vertex_);
 
   static constexpr const rx_size k_buffers{2};
 

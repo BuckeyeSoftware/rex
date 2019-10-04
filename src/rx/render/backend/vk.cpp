@@ -592,6 +592,10 @@ vk::vk(memory::allocator* _allocator, void* _data) {
   
 }
 
+bool vk::init() {
+  return true;
+}
+
 vk::~vk() {
   
   detail_vk::context& ctx{*reinterpret_cast<detail_vk::context*> (m_impl)};
@@ -603,6 +607,10 @@ vk::~vk() {
   destroy_instance(ctx);
   
   ctx.allocator->destroy<detail_vk::context>(m_impl);
+  
+}
+
+void vk::process(const vector<rx_byte*>& _commands) {
   
 }
 

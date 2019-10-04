@@ -25,7 +25,7 @@ static bool is_sampler(uniform::type _type) {
   }
 }
 
-uniform::uniform() 
+uniform::uniform()
   : m_program{nullptr}
 {
 }
@@ -39,14 +39,14 @@ uniform::uniform(program* _program, rx_size _index, const string& _name, type _t
   as_opaque = m_program->m_allocator->allocate(size());
 }
 
-uniform::uniform(uniform&& _uniform)
-  : m_program{_uniform.m_program}
-  , m_mask{_uniform.m_mask}
-  , m_type{_uniform.m_type}
-  , m_name{utility::move(_uniform.m_name)}
+uniform::uniform(uniform&& uniform_)
+  : m_program{uniform_.m_program}
+  , m_mask{uniform_.m_mask}
+  , m_type{uniform_.m_type}
+  , m_name{utility::move(uniform_.m_name)}
 {
-  as_opaque = _uniform.as_opaque;
-  _uniform.as_opaque = nullptr;
+  as_opaque = uniform_.as_opaque;
+  uniform_.as_opaque = nullptr;
 }
 
 uniform::~uniform() {
@@ -217,8 +217,8 @@ program::program(interface* _frontend)
 {
 }
 
-void program::add_shader(shader&& _shader) {
-  m_shaders.push_back(utility::move(_shader));
+void program::add_shader(shader&& shader_) {
+  m_shaders.push_back(utility::move(shader_));
 }
 
 void program::validate() const {

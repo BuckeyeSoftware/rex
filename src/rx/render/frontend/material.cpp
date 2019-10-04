@@ -48,11 +48,11 @@ material::~material() {
   m_frontend->destroy_texture(tag, m_roughness);
 }
 
-bool material::load(rx::material::loader&& _loader) {
-  m_name = utility::move(_loader.name());
-  m_alpha_test = _loader.alpha_test();
-  m_has_alpha = _loader.has_alpha();
-  m_transform = _loader.transform();
+bool material::load(rx::material::loader&& loader_) {
+  m_name = utility::move(loader_.name());
+  m_alpha_test = loader_.alpha_test();
+  m_has_alpha = loader_.has_alpha();
+  m_transform = loader_.transform();
 
   // Simple table to map type strings to texture2D destinations in this object.
   struct {
@@ -65,8 +65,8 @@ bool material::load(rx::material::loader&& _loader) {
     { &m_roughness,  "roughness" }
   };
 
-  return _loader.textures().each_fwd([this, &table](rx::material::texture& _texture) {
-    const auto& type{_texture.type()};
+  return loader_.textures().each_fwd([this, &table](rx::material::texture& texture_) {
+    const auto& type{texture_.type()};
 
     // Search for the texture in the table.
     texture2D** destination{nullptr};
@@ -83,9 +83,9 @@ bool material::load(rx::material::loader&& _loader) {
       return false;
     }
 
-    rx::texture::chain&& chain{utility::move(_texture.chain())};
-    const auto& filter{_texture.filter()};
-    const auto& wrap{_texture.wrap()};
+    rx::texture::chain&& chain{utility::move(texture_.chain())};
+    const auto& filter{texture_.filter()};
+    const auto& wrap{texture_.wrap()};
 
     texture2D* texture{m_frontend->create_texture2D(RX_RENDER_TAG("material"))};
     texture->record_type(texture::type::k_static);

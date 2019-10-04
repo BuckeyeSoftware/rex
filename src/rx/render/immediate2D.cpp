@@ -32,20 +32,22 @@ immediate2D::queue::queue(memory::allocator* _allocator)
 {
 }
 
-immediate2D::queue::queue(queue&& _queue)
-  : m_allocator{_queue.m_allocator}
-  , m_commands{utility::move(_queue.m_commands)}
-  , m_string_table{utility::move(_queue.m_string_table)}
+immediate2D::queue::queue(queue&& queue_)
+  : m_allocator{queue_.m_allocator}
+  , m_commands{utility::move(queue_.m_commands)}
+  , m_string_table{utility::move(queue_.m_string_table)}
 {
-  _queue.m_allocator = nullptr;
+  queue_.m_allocator = nullptr;
 }
 
-immediate2D::queue& immediate2D::queue::operator=(queue&& _queue) {
-  RX_ASSERT(this != &_queue, "move from self");
-  m_allocator = _queue.m_allocator;
-  m_commands = utility::move(_queue.m_commands);
-  m_string_table = utility::move(_queue.m_string_table);
-  _queue.m_allocator = nullptr;
+immediate2D::queue& immediate2D::queue::operator=(queue&& queue_) {
+  RX_ASSERT(&queue_ != this, "self assignment");
+
+  m_allocator = queue_.m_allocator;
+  m_commands = utility::move(queue_.m_commands);
+  m_string_table = utility::move(queue_.m_string_table);
+  queue_.m_allocator = nullptr;
+
   return *this;
 }
 
@@ -258,7 +260,7 @@ immediate2D::font::font(const key& _key, frontend::interface* _frontend)
         static_cast<rx_f32>(m_size), baked_atlas.data(),
         static_cast<int>(m_resolution), static_cast<int>(m_resolution), 32,
         k_glyphs, baked_glyphs.data())};
-      
+
       if (result == -k_glyphs || result > 0) {
         // create a texture chain from this baked font bitmap
         rx::texture::chain chain{m_frontend->allocator()};
@@ -275,13 +277,13 @@ immediate2D::font::font(const key& _key, frontend::interface* _frontend)
         m_texture->record_wrap({
           frontend::texture::wrap_type::k_clamp_to_edge,
           frontend::texture::wrap_type::k_clamp_to_edge});
-        
+
         const auto& levels{chain.levels()};
         for (rx_size i{0}; i < levels.size(); i++) {
           const auto& level{levels[i]};
           m_texture->write(chain.data().data() + level.offset, i);
         }
-          
+
         m_frontend->initialize_texture(RX_RENDER_TAG("font"), m_texture);
 
         // copy glyph information
@@ -306,22 +308,22 @@ immediate2D::font::font(const key& _key, frontend::interface* _frontend)
   RX_ASSERT(m_texture, "could not create font texture");
 }
 
-immediate2D::font::font(font&& _font)
-  : m_frontend{_font.m_frontend}
-  , m_size{_font.m_size}
-  , m_resolution{_font.m_resolution}
-  , m_texture{_font.m_texture}
-  , m_glyphs{utility::move(_font.m_glyphs)}
+immediate2D::font::font(font&& font_)
+  : m_frontend{font_.m_frontend}
+  , m_size{font_.m_size}
+  , m_resolution{font_.m_resolution}
+  , m_texture{font_.m_texture}
+  , m_glyphs{utility::move(font_.m_glyphs)}
 {
-  _font.m_size = 0;
-  _font.m_resolution = k_default_resolution;
-  _font.m_texture = nullptr;
+  font_.m_size = 0;
+  font_.m_resolution = k_default_resolution;
+  font_.m_texture = nullptr;
 }
 
 immediate2D::font::~font() {
   m_frontend->destroy_texture(RX_RENDER_TAG("font"), m_texture);
 }
-  
+
 immediate2D::font::quad immediate2D::font::quad_for_glyph(rx_size _glyph,
   rx_f32 _scale, math::vec2f& position_) const
 {
@@ -660,7 +662,7 @@ void immediate2D::generate_rectangle(const math::vec2f& _position, const math::v
       {_position.x + _size.w, _position.y + _size.h},
       {_position.x,           _position.y + _size.h}
     };
-    
+
     generate_polygon(vertices, 1.0f, _color);
   }
 }
@@ -775,7 +777,7 @@ static rx_f32 calculate_text_length(immediate2D::font* _font, rx_f32 _scale,
     span = round
       + static_cast<rx_f32>(glyph.position[1].x) * _scale
       - static_cast<rx_f32>(glyph.position[0].x) * _scale;
-    
+
     position += glyph.x_advance * _scale;
   }
 
@@ -936,8 +938,8 @@ void immediate2D::add_element(rx_u32 _element) {
   m_elements[m_element_index++] = _element;
 }
 
-void immediate2D::add_vertex(vertex&& _vertex) {
-  m_vertices[m_vertex_index++] = utility::move(_vertex);
+void immediate2D::add_vertex(vertex&& vertex_) {
+  m_vertices[m_vertex_index++] = utility::move(vertex_);
 }
 
 

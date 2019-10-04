@@ -5,7 +5,7 @@
 #include "rx/core/log.h" // RX_LOG, rx::log
 #include "rx/core/abort.h" // rx::abort
 
-RX_LOG("assert", assert_print);
+RX_LOG("assert", logger);
 
 namespace rx {
 
@@ -28,7 +28,7 @@ void assert_fail(const char* _expression, const char* _file,
   vsnprintf(contents.data(), contents.size() + 1, _message, va);
   va_end(va);
 
-  assert_print(log::level::k_error, "Assertion failed: %s (%s:%d %s) \"%s\"",
+  logger(log::level::k_error, "Assertion failed: %s (%s:%d %s) \"%s\"",
     _expression, _file, _line, _function, utility::move(contents));
 
   abort(contents.data());

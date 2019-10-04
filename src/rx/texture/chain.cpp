@@ -9,10 +9,10 @@
 
 namespace rx::texture {
 
-void chain::generate(vector<rx_byte>&& _data, pixel_format _format,
+void chain::generate(vector<rx_byte>&& data_, pixel_format _format,
   const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain)
 {
-  m_data = utility::move(_data);
+  m_data = utility::move(data_);
   m_dimensions = _dimensions;
   m_pixel_format = _format;
   generate_mipchain(_has_mipchain, _want_mipchain);
@@ -133,14 +133,14 @@ void chain::resize(const math::vec2z& _dimensions) {
     } else {
       // resize mipchain image |best_index| to |_dimensions|
       vector<rx_byte> data{m_data.allocator(), _dimensions.area() * bpp()};
-    
+
       scale(m_data.data() + level.offset, level.dimensions.w,
         level.dimensions.h, bpp(), level.dimensions.w * bpp(), data.data(),
         _dimensions.w, _dimensions.h);
-  
+
       // replace the data with the resized |best_index| level
       m_data = utility::move(data);
-  
+
       // generate new mipchain
       generate_mipchain(false /*_has_mipchain*/, true /*_want_mipchain*/);
     }
@@ -151,7 +151,7 @@ void chain::resize(const math::vec2z& _dimensions) {
     vector<rx_byte> data{m_data.allocator(), _dimensions.area() * bpp()};
     scale(m_data.data(), m_dimensions.w, m_dimensions.h, bpp(),
       m_dimensions.w * bpp(), data.data(), _dimensions.w, _dimensions.h);
-    
+
     m_data = utility::move(data);
 
     generate_mipchain(false /*_has_mipchain*/, false /*_want_mipchain*/);

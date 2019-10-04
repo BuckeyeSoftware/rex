@@ -6,7 +6,7 @@
 
 namespace rx::filesystem {
 
-struct directory 
+struct directory
   : concepts::no_copy
 {
   directory(memory::allocator* _allocator, const char* _path);
@@ -30,8 +30,8 @@ struct directory
 
   private:
     friend struct directory;
-  
-    item(string&& _name, type _type);
+
+    item(string&& name_, type _type);
 
     string m_name;
     type m_type;
@@ -87,8 +87,8 @@ inline string&& directory::item::name() {
   return utility::move(m_name);
 }
 
-inline directory::item::item(string&& _name, type _type)
-  : m_name{utility::move(_name)}
+inline directory::item::item(string&& name_, type _type)
+  : m_name{utility::move(name_)}
   , m_type{_type}
 {
 }

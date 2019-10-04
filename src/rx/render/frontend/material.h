@@ -18,10 +18,10 @@ struct material
   material(interface* _frontend);
   ~material();
 
-  material(material&& _material);
-  material& operator=(material&& _material);
+  material(material&& material_);
+  material& operator=(material&& material_);
 
-  bool load(rx::material::loader&& _loader);
+  bool load(rx::material::loader&& loader_);
 
   bool alpha_test() const;
   bool has_alpha() const;
@@ -45,42 +45,44 @@ private:
   math::transform m_transform;
 };
 
-inline material::material(material&& _material)
-  : m_frontend{_material.m_frontend}
-  , m_diffuse{_material.m_diffuse}
-  , m_normal{_material.m_normal}
-  , m_metalness{_material.m_metalness}
-  , m_roughness{_material.m_roughness}
-  , m_alpha_test{_material.m_alpha_test}
-  , m_has_alpha{_material.m_has_alpha}
-  , m_name{utility::move(_material.m_name)}
+inline material::material(material&& material_)
+  : m_frontend{material_.m_frontend}
+  , m_diffuse{material_.m_diffuse}
+  , m_normal{material_.m_normal}
+  , m_metalness{material_.m_metalness}
+  , m_roughness{material_.m_roughness}
+  , m_alpha_test{material_.m_alpha_test}
+  , m_has_alpha{material_.m_has_alpha}
+  , m_name{utility::move(material_.m_name)}
 {
-  _material.m_diffuse = nullptr;
-  _material.m_normal = nullptr;
-  _material.m_metalness = nullptr;
-  _material.m_roughness = nullptr;
-  _material.m_alpha_test = false;
-  _material.m_has_alpha = false;
+  material_.m_diffuse = nullptr;
+  material_.m_normal = nullptr;
+  material_.m_metalness = nullptr;
+  material_.m_roughness = nullptr;
+  material_.m_alpha_test = false;
+  material_.m_has_alpha = false;
 }
 
-inline material& material::operator=(material&& _material) {
+inline material& material::operator=(material&& material_) {
+  RX_ASSERT(&material_ != this, "self assignment");
+
   this->~material();
 
-  m_frontend = _material.m_frontend;
-  m_diffuse = _material.m_diffuse;
-  m_normal = _material.m_normal;
-  m_metalness = _material.m_metalness;
-  m_roughness = _material.m_roughness;
-  m_alpha_test = _material.m_alpha_test;
-  m_has_alpha = _material.m_has_alpha;
-  m_name = utility::move(_material.m_name);
+  m_frontend = material_.m_frontend;
+  m_diffuse = material_.m_diffuse;
+  m_normal = material_.m_normal;
+  m_metalness = material_.m_metalness;
+  m_roughness = material_.m_roughness;
+  m_alpha_test = material_.m_alpha_test;
+  m_has_alpha = material_.m_has_alpha;
+  m_name = utility::move(material_.m_name);
 
-  _material.m_diffuse = nullptr;
-  _material.m_normal = nullptr;
-  _material.m_metalness = nullptr;
-  _material.m_roughness = nullptr;
-  _material.m_alpha_test = false;
-  _material.m_has_alpha = false;
+  material_.m_diffuse = nullptr;
+  material_.m_normal = nullptr;
+  material_.m_metalness = nullptr;
+  material_.m_roughness = nullptr;
+  material_.m_alpha_test = false;
+  material_.m_has_alpha = false;
 
   return *this;
 }

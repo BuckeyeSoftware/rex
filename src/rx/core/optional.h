@@ -1,6 +1,7 @@
 #ifndef RX_CORE_OPTIONAL_H
 #define RX_CORE_OPTIONAL_H
 #include "rx/core/assert.h" // RX_ASSERT
+#include "rx/core/utility/move.h"
 
 #include "rx/core/memory/uninitialized_storage.h" // uninitialized_storage
 
@@ -16,17 +17,17 @@ template<typename T>
 struct optional {
   constexpr optional(detail::nullopt);
   constexpr optional();
-  constexpr optional(T&& data);
-  constexpr optional(const T& data);
-  constexpr optional(optional&& other);
-  constexpr optional(const optional& other);
+  constexpr optional(T&& data_);
+  constexpr optional(const T& _data);
+  constexpr optional(optional&& other_);
+  constexpr optional(const optional& _other);
 
   ~optional();
 
-  optional& operator=(T&& data);
-  optional& operator=(const T& data);
-  optional& operator=(optional&& other);
-  optional& operator=(const optional& other);
+  optional& operator=(T&& data_);
+  optional& operator=(const T& _data);
+  optional& operator=(optional&& other_);
+  optional& operator=(const optional& _other);
 
   operator bool() const;
 
@@ -55,92 +56,98 @@ inline constexpr optional<T>::optional()
 }
 
 template<typename T>
-inline constexpr optional<T>::optional(T&& data)
+inline constexpr optional<T>::optional(T&& data_)
   : m_data{}
   , m_init{true}
 {
-  m_data.init(utility::move(data));
+  m_data.init(utility::move(data_));
 }
 
 template<typename T>
-inline constexpr optional<T>::optional(const T& data)
+inline constexpr optional<T>::optional(const T& _data)
   : m_data{}
   , m_init{true}
 {
-  m_data.init(data);
+  m_data.init(_data);
 }
 
 template<typename T>
-inline constexpr optional<T>::optional(optional&& other)
+inline constexpr optional<T>::optional(optional&& other_)
   : m_data{}
-  , m_init{other.m_init}
+  , m_init{other_.m_init}
 {
   if (m_init) {
-    auto& data{other.m_data};
+    auto& data{other_.m_data};
     m_data.init(utility::move(*data.data()));
     data.fini();
   }
-  other.m_init = false;
+  other_.m_init = false;
 }
 
 template<typename T>
-inline constexpr optional<T>::optional(const optional& other)
+inline constexpr optional<T>::optional(const optional& _other)
   : m_data{}
-  , m_init{other.m_init}
+  , m_init{_other.m_init}
 {
   if (m_init) {
-    const auto& data{other.m_data};
+    const auto& data{_other.m_data};
     m_data.init(*data.data());
   }
 }
 
 template<typename T>
-inline optional<T>& optional<T>::operator=(T&& data) {
+inline optional<T>& optional<T>::operator=(T&& data_) {
   if (m_init) {
     m_data.fini();
   }
   m_init = true;
-  m_data.init(utility::move(*data.data()));
+  m_data.init(utility::move(data_));
   return *this;
 }
 
 template<typename T>
-inline optional<T>& optional<T>::operator=(const T& data) {
+inline optional<T>& optional<T>::operator=(const T& _data) {
   if (m_init) {
     m_data.fini();
   }
   m_init = true;
-  m_data.init(data);
+  m_data.init(_data);
   return *this;
 }
 
 template<typename T>
-inline optional<T>& optional<T>::operator=(optional&& other) {
-  RX_ASSERT(&other != this, "self assignment");
+inline optional<T>& optional<T>::operator=(optional&& other_) {
+  RX_ASSERT(&other_ != this, "self assignment");
 
   if (m_init) {
     m_data.fini();
   }
-  m_init = other.m_init;
+
+  m_init = other_.m_init;
+
   if (m_init) {
-    auto& data{other.m_data};
+    auto& data{other_.m_data};
     m_data.init(utility::move(*data.data()));
     data.fini();
   }
+
+  other_.m_init = false;
+
   return *this;
 }
 
 template<typename T>
-inline optional<T>& optional<T>::operator=(const optional& other) {
-  RX_ASSERT(&other != this, "self assignment");
+inline optional<T>& optional<T>::operator=(const optional& _other) {
+  RX_ASSERT(&_other != this, "self assignment");
 
   if (m_init) {
     m_data.fini();
   }
 
-  m_init = other.m_init;
+  m_init = _other.m_init;
+
   if (m_init) {
-    const auto& data{other.m_data};
+    const auto& data{_other.m_data};
     m_data.init(*data.data());
   }
 

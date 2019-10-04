@@ -17,6 +17,8 @@ struct vk
   vk(memory::allocator* _allocator, void* _data);
   ~vk();
 
+  bool init();
+  void process(const vector<rx_byte*>& _commands);
   void process(rx_byte* _command);
   void swap();
 

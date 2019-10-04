@@ -62,7 +62,7 @@ protected:
   template<typename... Ts>
   void log(log::level _level, const char* _format, Ts&&... _arguments) const;
 
-  void write_log(log::level _level, string&& _message) const;
+  void write_log(log::level _level, string&& message_) const;
 
   void generate_normals();
   bool generate_tangents();

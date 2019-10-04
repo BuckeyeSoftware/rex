@@ -1,4 +1,5 @@
 #include "rx/core/pool.h"
+#include "rx/core/utility/move.h"
 
 namespace rx {
 

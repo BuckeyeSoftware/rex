@@ -41,7 +41,7 @@ bool loader::load(const string& _file_name) {
 
   m_data.resize(m_dimensions.area() * m_bpp);
   memcpy(m_data.data(), decoded_image, m_data.size());
-  
+
   stbi_image_free(decoded_image);
 
   // When there's an alpha channel but it encodes fully opaque, remove it.

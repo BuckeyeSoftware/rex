@@ -168,27 +168,27 @@ string::string(memory::view _view)
 {
 }
 
-string::string(string&& _contents)
-  : m_allocator{_contents.m_allocator}
+string::string(string&& contents_)
+  : m_allocator{contents_.m_allocator}
 {
   RX_ASSERT(m_allocator, "null allocator");
 
-  if (_contents.m_data == _contents.m_buffer) {
+  if (contents_.m_data == contents_.m_buffer) {
     m_data = m_buffer;
     m_last = m_buffer;
     m_capacity = m_buffer + k_small_string;
-    reserve(_contents.size());
-    append(_contents.data(), _contents.size());
+    reserve(contents_.size());
+    append(contents_.data(), contents_.size());
   } else {
-    m_data = _contents.m_data;
-    m_last = _contents.m_last;
-    m_capacity = _contents.m_capacity;
+    m_data = contents_.m_data;
+    m_last = contents_.m_last;
+    m_capacity = contents_.m_capacity;
   }
 
-  _contents.m_data = _contents.m_buffer;
-  _contents.m_last = _contents.m_buffer;
-  _contents.m_capacity = _contents.m_buffer + k_small_string;
-  _contents.resize(0);
+  contents_.m_data = contents_.m_buffer;
+  contents_.m_last = contents_.m_buffer;
+  contents_.m_capacity = contents_.m_buffer + k_small_string;
+  contents_.resize(0);
 }
 
 string::~string() {
@@ -198,12 +198,14 @@ string::~string() {
 }
 
 string& string::operator=(const string& _contents) {
+  RX_ASSERT(&_contents != this, "self assignment");
   string(_contents).swap(*this);
   return *this;
 }
 
-string& string::operator=(string&& _contents) {
-  string(utility::move(_contents)).swap(*this);
+string& string::operator=(string&& contents_) {
+  RX_ASSERT(&contents_ != this, "self assignment");
+  string(utility::move(contents_)).swap(*this);
   return *this;
 }
 
@@ -447,8 +449,18 @@ string string::human_size_format(rx_size _size) {
   RX_ASSERT(i != sizeof k_suffixes / sizeof *k_suffixes, "out of bounds");
 
   char buffer[2*(DBL_MANT_DIG + DBL_MAX_EXP)];
+
+  // NOTE: The truncation is wanted here!
+#if defined(RX_COMPILER_GCC)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
   const int result{snprintf(buffer, sizeof buffer, "%.*f",
-    static_cast<int>(sizeof buffer), bytes)}; // NOTE: we want truncation here
+    static_cast<int>(sizeof buffer), bytes)};
+#if defined(RX_COMPILER_GCC)
+#pragma GCC diagnostic pop
+#endif
+
   RX_ASSERT(result > 0, "failed to format");
   char* period{strchr(buffer, '.')};
   RX_ASSERT(period, "failed to format");
@@ -561,13 +573,13 @@ wide_string::wide_string(memory::allocator* _allocator, const rx_u16* _contents,
   memcpy(m_data, _contents, sizeof(rx_u16) * (_size + 1));
 }
 
-wide_string::wide_string(wide_string&& _other)
-  : m_allocator{_other.m_allocator}
-  , m_data{_other.m_data}
-  , m_size{_other.m_size}
+wide_string::wide_string(wide_string&& other_)
+  : m_allocator{other_.m_allocator}
+  , m_data{other_.m_data}
+  , m_size{other_.m_size}
 {
-  _other.m_data = nullptr;
-  _other.m_size = 0;
+  other_.m_data = nullptr;
+  other_.m_size = 0;
 }
 
 wide_string::~wide_string() {

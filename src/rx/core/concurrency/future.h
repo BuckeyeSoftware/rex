@@ -42,10 +42,10 @@ struct shared {
     make_ready();
   }
 
-  void set(T&& _value) {
+  void set(T&& value_) {
     scope_lock lock(m_mutex);
     RX_ASSERT(!m_ready, "already ready");
-    m_storage.init(utility::move(_value));
+    m_storage.init(utility::move(value_));
     make_ready();
   }
 
@@ -87,10 +87,10 @@ struct future {
   {
   }
 
-  future(future&& _future)
-    : m_state{_future.m_state}
+  future(future&& future_)
+    : m_state{future_.m_state}
   {
-    _future.m_state = nullptr;
+    future_.m_state = nullptr;
   }
 
   future(const future& _future)
@@ -98,14 +98,18 @@ struct future {
   {
   }
 
-  future& operator=(future&& _future) {
+  future& operator=(future&& future_) {
+    RX_ASSERT(&future_ != this, "self assignment");
+
     release();
-    m_state = _future.m_state;
-    _future.m_state = nullptr;
+    m_state = future_.m_state;
+    future_.m_state = nullptr;
     return *this;
   }
 
   future& operator=(const future& _future) {
+    RX_ASSERT(&_future != this, "self assignment");
+
     release();
     m_state = _future.acquire();
     return *this;
@@ -168,10 +172,10 @@ struct promise {
   {
   }
 
-  promise(promise&& _promise)
-    : m_state{_promise.m_state}
+  promise(promise&& promise_)
+    : m_state{promise_.m_state}
   {
-    _promise.m_state = nullptr;
+    promise_.m_state = nullptr;
   }
 
   promise(const promise& _promise)
@@ -179,14 +183,18 @@ struct promise {
   {
   }
 
-  promise& operator=(promise&& _promise) {
+  promise& operator=(promise&& promise_) {
+    RX_ASSERT(&promise_ != this, "self assignment");
+
     release();
-    m_state = _promise.m_state;
-    _promise.m_state = nullptr;
+    m_state = promise_.m_state;
+    promise_.m_state = nullptr;
     return *this;
   }
 
   promise& operator=(const promise& _promise) {
+    RX_ASSERT(&_promise != this, "self assignment");
+
     release();
     m_state = _promise.acquire();
     return *this;
@@ -205,9 +213,9 @@ struct promise {
     m_state->set(_value);
   }
 
-  void set(T&& _value) {
+  void set(T&& value_) {
     RX_ASSERT(m_state, "no shared state");
-    m_state->set(utility::move(_value));
+    m_state->set(utility::move(value_));
   }
 
 private:

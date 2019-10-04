@@ -11,7 +11,7 @@
 
 namespace rx::model {
 
-struct loader 
+struct loader
   : concepts::no_copy
   , concepts::no_move
 {
@@ -58,7 +58,7 @@ private:
   template<typename... Ts>
   void log(log::level _level, const char* _format, Ts&&... _arguments) const;
 
-  void write_log(log::level _level, string&& _message) const;
+  void write_log(log::level _level, string&& message_) const;
 
   bool import(const string& _file_name);
   bool parse_transform(const json& _transform);

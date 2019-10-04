@@ -27,7 +27,7 @@ RX_CONSOLE_IVAR(max_texture3D, "render.max_texture3D", "maximum 3D textures", 16
 RX_CONSOLE_IVAR(max_textureCM, "render.max_textureCM", "maximum CM textures", 16, 128, 16);
 RX_CONSOLE_IVAR(command_memory, "render.command_memory", "memory for command buffer in MiB", 1, 4, 2);
 
-RX_LOG("render", render_log);
+RX_LOG("render", logger);
 
 static constexpr const char* k_technique_path{"base/renderer/techniques"};
 
@@ -70,11 +70,11 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
 
   // load all techniques
   if (filesystem::directory directory{k_technique_path}) {
-    directory.each([this](filesystem::directory::item&& _item) {
-      if (_item.is_file() && _item.name().ends_with(".json5")) {
+    directory.each([this](filesystem::directory::item&& item_) {
+      if (item_.is_file() && item_.name().ends_with(".json5")) {
         technique new_technique{this};
         const auto path{string::format("%s/%s", k_technique_path,
-          utility::move(_item.name()))};
+          utility::move(item_.name()))};
         if (new_technique.load(path)) {
           m_techniques.insert(new_technique.name(), utility::move(new_technique));
         }
@@ -544,17 +544,15 @@ void interface::resize(const math::vec2z& _resolution) {
 bool interface::process() {
   profiler::cpu_sample sample{"frontend::process"};
 
-  // concurrency::scope_lock lock(m_mutex);
-
   if (m_commands.is_empty()) {
     return false;
   }
 
+  concurrency::scope_lock lock{m_mutex};
+
   // consume all commands
   if (m_backend) {
-    m_commands.each_fwd([this](rx_byte* _command) {
-      m_backend->process(_command);
-    });
+    m_backend->process(m_commands);
   }
 
   // cleanup unreferenced resources
@@ -643,6 +641,7 @@ bool interface::swap() {
   profiler::cpu_sample sample{"frontend::swap"};
 
   m_backend->swap();
+
   return m_timer.update();
 }
 

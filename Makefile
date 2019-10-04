@@ -147,6 +147,12 @@ ifeq ($(UBSAN),1)
 	LDFLAGS += -fsanitize=undefined
 endif
 
+ifneq (,$(findstring RX_DEBUG,$(CFLAGS)))
+	STRIP := true
+else
+	STRIP := strip
+endif
+
 BIN := rex
 
 all: $(BIN)
@@ -159,6 +165,7 @@ all: $(BIN)
 
 $(BIN): $(OBJS)
 	$(CXX) $(OBJS) $(LDFLAGS) -o $@
+	$(STRIP) $@
 
 clean:
 	rm -rf $(OBJS) $(DEPS) $(BIN)

@@ -1,6 +1,6 @@
 #ifndef RX_CORE_PROFILER_H
 #define RX_CORE_PROFILER_H
-#include "rx/core/statics.h"
+#include "rx/core/global.h"
 #include "rx/core/optional.h"
 
 namespace rx {

@@ -1,7 +1,6 @@
 #ifndef RX_CORE_ASSERT_H
 #define RX_CORE_ASSERT_H
-#include "rx/core/config.h" // __has_builtin, RX_COMPILER_{GCC, CLANG}
-#include "rx/core/abort.h" // rx::abort
+#include "rx/core/config.h" // RX_COMPILER_{GCC, CLANG}
 
 namespace rx {
 
@@ -18,11 +17,11 @@ void assert_fail(const char* _expression, const char* _file,
 #endif // defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG)
 
 #if defined(RX_DEBUG)
-#define RX_ASSERT(condition, ...) \
-  (static_cast<void>((condition) || (::rx::assert_fail(#condition, __FILE__, RX_FUNCTION, __LINE__, __VA_ARGS__), 0)))
+#define RX_ASSERT(_condition, ...) \
+  (static_cast<void>((_condition) || (::rx::assert_fail(#_condition, __FILE__, RX_FUNCTION, __LINE__, __VA_ARGS__), 0)))
 #else // defined(RX_DEBUG)
-#define RX_ASSERT(condition, ...) \
-  static_cast<void>(0)
+#define RX_ASSERT(_condition, ...) \
+  static_cast<void>((_condition) || 0)
 #endif // defined(RX_DEBUG)
 
 #endif // RX_CORE_ASSERT_H

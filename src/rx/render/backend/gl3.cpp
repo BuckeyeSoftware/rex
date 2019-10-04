@@ -17,7 +17,7 @@
 
 namespace rx::render::backend {
 
-RX_LOG("render/gl3", gl3_log);
+RX_LOG("render/gl3", logger);
 
 // 16MiB buffer slab size for unspecified buffer sizes
 static constexpr const rx_size k_buffer_slab_size{16<<20};
@@ -228,7 +228,7 @@ namespace detail_gl3 {
   struct state
     : frontend::state
   {
-    state()
+    state(SDL_GLContext _context)
       : m_color_mask{0xff}
       , m_bound_vbo{0}
       , m_bound_ebo{0}
@@ -238,6 +238,7 @@ namespace detail_gl3 {
       , m_bound_program{0}
       , m_swap_chain_fbo{0}
       , m_active_texture{0}
+      , m_context{_context}
     {
       pglEnable(GL_CULL_FACE);
       pglCullFace(GL_BACK);
@@ -252,14 +253,18 @@ namespace detail_gl3 {
       const auto renderer{reinterpret_cast<const char*>(pglGetString(GL_RENDERER))};
       const auto version{reinterpret_cast<const char*>(pglGetString(GL_VERSION))};
 
-      gl3_log(log::level::k_info, "GL %s %s %s", vendor, version, renderer);
+      logger(log::level::k_info, "GL %s %s %s", vendor, version, renderer);
 
       GLint extensions{0};
       pglGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
       for (GLint i{0}; i < extensions; i++) {
         const auto name{reinterpret_cast<const char*>(pglGetStringi(GL_EXTENSIONS, i))};
-        gl3_log(log::level::k_verbose, "extension '%s' supported", name);
+        logger(log::level::k_verbose, "extension '%s' supported", name);
       }
+    }
+
+    ~state() {
+      SDL_GL_DeleteContext(m_context);
     }
 
     void use_enable(GLenum _thing, bool _enable) {
@@ -659,13 +664,15 @@ namespace detail_gl3 {
     GLint m_swap_chain_fbo;
     texture_unit m_texture_units[8];
     rx_size m_active_texture;
+
+    SDL_GLContext m_context;
   };
 };
 
 template<typename F>
 static void fetch(const char* _name, F& function_) {
   auto address{SDL_GL_GetProcAddress(_name)};
-  gl3_log(log::level::k_verbose, "loaded %08p '%s'", address, _name);
+  logger(log::level::k_verbose, "loaded %08p '%s'", address, _name);
   *reinterpret_cast<void**>(&function_) = address;
 }
 
@@ -814,12 +821,12 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     GLint log_size{0};
     pglGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_size);
 
-    gl3_log(log::level::k_error, "failed compiling shader");
+    logger(log::level::k_error, "failed compiling shader");
 
     if (log_size) {
       vector<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
       pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
-      gl3_log(log::level::k_error, "\n%s\n%s", error_log.data(), contents);
+      logger(log::level::k_error, "\n%s\n%s", error_log.data(), contents);
     }
 
     pglDeleteShader(handle);
@@ -853,6 +860,18 @@ gl3::gl3(memory::allocator* _allocator, void* _data)
   : m_allocator{_allocator}
   , m_data{_data}
 {
+}
+
+gl3::~gl3() {
+  m_allocator->destroy<detail_gl3::state>(m_impl);
+}
+
+bool gl3::init() {
+  SDL_GLContext context{SDL_GL_CreateContext(reinterpret_cast<SDL_Window*>(m_data))};
+  if (!context) {
+    return false;
+  }
+
   // buffers
   fetch("glGenBuffers", pglGenBuffers);
   fetch("glDeleteBuffers", pglDeleteBuffers);
@@ -951,11 +970,15 @@ gl3::gl3(memory::allocator* _allocator, void* _data)
 
   fetch("glFinish", pglFinish);
 
-  m_impl = m_allocator->create<detail_gl3::state>();
+  m_impl = m_allocator->create<detail_gl3::state>(context);
+
+  return true;
 }
 
-gl3::~gl3() {
-  m_allocator->destroy<detail_gl3::state>(m_impl);
+void gl3::process(const vector<rx_byte*>& _commands) {
+  _commands.each_fwd([this](rx_byte* _command) {
+    process(_command);
+  });
 }
 
 void gl3::process(rx_byte* _command) {
@@ -1165,12 +1188,12 @@ void gl3::process(rx_byte* _command) {
             GLint log_size{0};
             pglGetProgramiv(program->handle, GL_INFO_LOG_LENGTH, &log_size);
 
-            gl3_log(log::level::k_error, "failed linking program");
+            logger(log::level::k_error, "failed linking program");
 
             if (log_size) {
               vector<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
               pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
-              gl3_log(log::level::k_error, "\n%s", error_log.data());
+              logger(log::level::k_error, "\n%s", error_log.data());
             }
           }
 
@@ -1356,11 +1379,9 @@ void gl3::process(rx_byte* _command) {
       case frontend::resource_command::type::k_textureCM:
         {
           const auto render_texture{resource->as_textureCM};
-          // const auto texture{reinterpret_cast<const detail_gl3::textureCM*>(render_texture + 1)};
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
-          const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{render_texture->filter()};
           const auto& data{render_texture->data()};

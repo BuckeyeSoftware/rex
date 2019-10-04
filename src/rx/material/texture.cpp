@@ -1,4 +1,5 @@
 #include "rx/core/filesystem/file.h"
+#include "rx/core/algorithm/clamp.h"
 #include "rx/core/math/log2.h"
 #include "rx/core/json.h"
 
@@ -36,6 +37,7 @@ bool texture::parse(const json& _definition) {
   const auto& filter{_definition["filter"]};
   const auto& wrap{_definition["wrap"]};
   const auto& mipmaps{_definition["mipmaps"]};
+  const auto& border{_definition["border"]};
 
   if (!file) {
     return error("missing 'file'");
@@ -53,12 +55,16 @@ bool texture::parse(const json& _definition) {
     return error("expected String for 'file'");
   }
 
-  if (!parse_type(type)) {
+  if (mipmaps && !mipmaps.is_boolean()) {
+    return error("expected Boolean for 'mipmaps'");
+  }
+
+  if (border && !parse_border(border)) {
     return false;
   }
 
-  if (mipmaps && !mipmaps.is_boolean()) {
-    return error("expected Boolean for 'mipmaps'");
+  if (!parse_type(type)) {
+    return false;
   }
 
   bool has_mipmaps{mipmaps ? mipmaps.as_boolean() : false};
@@ -68,6 +74,10 @@ bool texture::parse(const json& _definition) {
 
   if (!parse_wrap(wrap)) {
     return false;
+  }
+
+  if (m_wrap.is_any(wrap_type::k_clamp_to_border) && !m_border) {
+    return error("missing 'border' for \"clamp_to_border\"");
   }
 
   rx::texture::loader loader{m_allocator};
@@ -172,11 +182,26 @@ bool texture::parse_wrap(const json& _wrap) {
   return false;
 }
 
-void texture::write_log(log::level _level, string&& _message) const {
+bool texture::parse_border(const json& _border) {
+  if (!_border.is_array_of(json::type::k_number) || _border.size() != 4) {
+    return error("expected Array[Number, 4]");
+  }
+
+  m_border = {
+    algorithm::clamp(_border[0_z].as_float(), 0.0f, 1.0f),
+    algorithm::clamp(_border[1_z].as_float(), 0.0f, 1.0f),
+    algorithm::clamp(_border[2_z].as_float(), 0.0f, 1.0f),
+    algorithm::clamp(_border[3_z].as_float(), 0.0f, 1.0f)
+  };
+
+  return true;
+}
+
+void texture::write_log(log::level _level, string&& message_) const {
   if (m_type.is_empty()) {
-    logger(_level, "%s", utility::move(_message));
+    logger(_level, "%s", utility::move(message_));
   } else {
-    logger(_level, "%s: %s", m_type, utility::move(_message));
+    logger(_level, "%s: %s", m_type, utility::move(message_));
   }
 }
 

@@ -4,7 +4,7 @@
 #include "rx/core/log.h"
 #include "rx/core/concurrency/scope_lock.h"
 
-RX_LOG("render/resource", log_resource);
+RX_LOG("render/resource", logger);
 
 namespace rx::render::frontend {
 
@@ -33,14 +33,14 @@ resource::resource(interface* _frontend, type _type)
   , m_resource_type{_type}
   , m_resource_usage{0}
 {
-  log_resource(log::level::k_verbose, "%p init %s", this, resource_type_to_string(m_resource_type));
+  logger(log::level::k_verbose, "%p init %s", this, resource_type_to_string(m_resource_type));
 }
 
 resource::~resource() {
   const auto index{static_cast<rx_size>(m_resource_type)};
   m_frontend->m_resource_usage[index] -= m_resource_usage;
 
-  log_resource(log::level::k_verbose, "%p fini %s", this, resource_type_to_string(m_resource_type));
+  logger(log::level::k_verbose, "%p fini %s", this, resource_type_to_string(m_resource_type));
 }
 
 void resource::update_resource_usage(rx_size _bytes) {
