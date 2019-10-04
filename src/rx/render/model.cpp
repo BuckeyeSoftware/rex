@@ -69,9 +69,9 @@ bool model::load(const string& _file_name) {
   // Map all the loaded material::loader's to render::frontend::material's while
   // using indices to refer to them rather than strings.
   map<string, rx_size> material_indices{m_frontend->allocator()};
-  model.materials().each([this, &material_indices](rx_size, const string& _name, material::loader& _material) {
+  model.materials().each([this, &material_indices](rx_size, const string& _name, material::loader& material_) {
     frontend::material material{m_frontend};
-    if (material.load(utility::move(_material))) {
+    if (material.load(utility::move(material_))) {
       const rx_size material_index{m_materials.size()};
       material_indices.insert(_name, material_index);
       m_materials.push_back(utility::move(material));

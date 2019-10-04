@@ -71,7 +71,6 @@ bool loader::parse(const json& _definition) {
     return false;
   }
 
-  const auto& file_name{file.as_string()};
   if (!import(file.as_string())) {
     return false;
   }

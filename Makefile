@@ -68,7 +68,7 @@ else ifeq ($(PROFILE),1)
 	CFLAGS += -fno-optimize-sibling-calls
 else
 	# Enable assertions in release temporarily.
-	CFLAGS += -DRX_DEBUG
+	# CFLAGS += -DRX_DEBUG
 
 	# Remotery
 	CFLAGS += -DRMT_ENABLED=1
@@ -147,6 +147,12 @@ ifeq ($(UBSAN),1)
 	LDFLAGS += -fsanitize=undefined
 endif
 
+ifneq (,$(findstring RX_DEBUG,$(CFLAGS)))
+	STRIP := true
+else
+	STRIP := strip
+endif
+
 BIN := rex
 
 all: $(BIN)
@@ -159,6 +165,7 @@ all: $(BIN)
 
 $(BIN): $(OBJS)
 	$(CXX) $(OBJS) $(LDFLAGS) -o $@
+	$(STRIP) $@
 
 clean:
 	rm -rf $(OBJS) $(DEPS) $(BIN)

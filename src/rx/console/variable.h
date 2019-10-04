@@ -378,8 +378,8 @@ inline variable_status variable<T>::set(const T& _value) {
 }
 
 template<typename T>
-inline typename variable<T>::on_change_event::handle variable<T>::on_change(typename on_change_event::delegate&& _on_change) {
-  return m_on_change.connect(utility::move(_on_change));
+inline typename variable<T>::on_change_event::handle variable<T>::on_change(typename on_change_event::delegate&& on_change_) {
+  return m_on_change.connect(utility::move(on_change_));
 }
 
 // variable<bool>
@@ -427,8 +427,8 @@ inline void variable<bool>::toggle() {
   m_on_change.signal(*this);
 }
 
-inline typename variable<bool>::on_change_event::handle variable<bool>::on_change(typename on_change_event::delegate&& _on_change) {
-  return m_on_change.connect(utility::move(_on_change));
+inline typename variable<bool>::on_change_event::handle variable<bool>::on_change(typename on_change_event::delegate&& on_change_) {
+  return m_on_change.connect(utility::move(on_change_));
 }
 
 // variable<string>
@@ -479,8 +479,8 @@ inline variable_status variable<string>::set(const string& _value) {
   return variable_status::k_success;
 }
 
-inline typename variable<string>::on_change_event::handle variable<string>::on_change(typename on_change_event::delegate&& _on_change) {
-  return m_on_change.connect(utility::move(_on_change));
+inline typename variable<string>::on_change_event::handle variable<string>::on_change(typename on_change_event::delegate&& on_change_) {
+  return m_on_change.connect(utility::move(on_change_));
 }
 
 // variable<vec2<T>>
@@ -550,8 +550,8 @@ inline variable_status variable<vec2<T>>::set(const vec2<T>& _value) {
 }
 
 template<typename T>
-inline typename variable<vec2<T>>::on_change_event::handle variable<vec2<T>>::on_change(typename on_change_event::delegate&& _on_change) {
-  return m_on_change.connect(utility::move(_on_change));
+inline typename variable<vec2<T>>::on_change_event::handle variable<vec2<T>>::on_change(typename on_change_event::delegate&& on_change_) {
+  return m_on_change.connect(utility::move(on_change_));
 }
 
 // variable<vec3<T>>
@@ -621,8 +621,8 @@ inline variable_status variable<vec3<T>>::set(const vec3<T>& _value) {
 }
 
 template<typename T>
-inline typename variable<vec3<T>>::on_change_event::handle variable<vec3<T>>::on_change(typename on_change_event::delegate&& _on_change) {
-  return m_on_change.connect(utility::move(_on_change));
+inline typename variable<vec3<T>>::on_change_event::handle variable<vec3<T>>::on_change(typename on_change_event::delegate&& on_change_) {
+  return m_on_change.connect(utility::move(on_change_));
 }
 
 // variable<vec4<T>>
@@ -692,8 +692,8 @@ inline variable_status variable<vec4<T>>::set(const vec4<T>& _value) {
 }
 
 template<typename T>
-inline typename variable<vec4<T>>::on_change_event::handle variable<vec4<T>>::on_change(typename on_change_event::delegate&& _on_change) {
-  return m_on_change.connect(utility::move(_on_change));
+inline typename variable<vec4<T>>::on_change_event::handle variable<vec4<T>>::on_change(typename on_change_event::delegate&& on_change_) {
+  return m_on_change.connect(utility::move(on_change_));
 }
 
 } // namespace rx::console

@@ -66,6 +66,32 @@ RX_CONSOLE_SVAR(
   "which driver to use for renderer (gl3, gl4, null)",
   "gl4");
 
+RX_CONSOLE_BVAR(
+  profile_cpu,
+  "profile.cpu",
+  "collect cpu proflile samples",
+  true);
+
+RX_CONSOLE_BVAR(
+  profile_gpu,
+  "profile.gpu",
+  "collect gpu profile samples",
+  false);
+
+RX_CONSOLE_BVAR(
+  profile_local,
+  "profile.local",
+  "restrict profiling to localhost",
+  true);
+
+RX_CONSOLE_IVAR(
+  profile_port,
+  "profile.port",
+  "port to run profiler on",
+  1024,
+  65536,
+  0x4597);
+
 static concurrency::atomic<game::status> g_status{game::status::k_restart};
 
 int main(int _argc, char** _argv) {
@@ -185,7 +211,7 @@ int main(int _argc, char** _argv) {
 
     SDL_Window* window{nullptr};
     int bit_depth{0};
-    for (const char* depth{"\xa\x8" + (*display_hdr ? 0 : 1)}; *depth; depth++) {
+    for (const char* depth{&"\xa\x8"[*display_hdr ? 0 : 1]}; *depth; depth++) {
       bit_depth = static_cast<int>(*depth);
       if (is_opengl) {
         SDL_GL_SetAttribute(SDL_GL_RED_SIZE, bit_depth);
@@ -232,35 +258,58 @@ int main(int _argc, char** _argv) {
     {
       render::frontend::interface frontend{&memory::g_system_allocator, backend};
 
+      rmtSettings* settings{rmt_Settings()};
+
+      settings->reuse_open_port = RMT_TRUE;
+      settings->maxNbMessagesPerUpdate = 128;
+      settings->port = *profile_port;
+      settings->limit_connections_to_localhost = *profile_local;
+
+      settings->malloc = [](void*, rx_u32 _bytes) -> void* {
+        return memory::g_system_allocator->allocate(_bytes);
+      };
+
+      settings->realloc = [](void*, void* _data, rx_u32 _bytes) ->void* {
+        return memory::g_system_allocator->reallocate(reinterpret_cast<rx_byte*>(_data), _bytes);
+      };
+
+      settings->free = [](void*, void* _data) {
+        memory::g_system_allocator->deallocate(reinterpret_cast<rx_byte*>(_data));
+      };
+
       Remotery* remotery{nullptr};
       if (rmt_CreateGlobalInstance(&remotery) == RMT_ERROR_NONE) {
         auto set_thread_name{[](void*, const char* _name) {
           rmt_SetCurrentThreadName(_name);
         }};
 
-        rmt_BindOpenGL();
+        if (*profile_cpu) {
+          profiler::instance().bind_cpu({
+            reinterpret_cast<void*>(remotery),
+            set_thread_name,
+            [](void*, const char* _tag) {
+              rmt_BeginCPUSampleDynamic(_tag, RMTSF_Aggregate);
+            },
+            [](void*) {
+              rmt_EndCPUSample();
+            }
+          });
+        }
 
-        profiler::instance().bind_cpu({
-          reinterpret_cast<void*>(remotery),
-          set_thread_name,
-          [](void*, const char* _tag) {
-            rmt_BeginCPUSampleDynamic(_tag, 0);
-          },
-          [](void*) {
-            rmt_EndCPUSample();
-          }
-        });
+        if (*profile_gpu) {
+          rmt_BindOpenGL();
 
-        profiler::instance().bind_gpu({
-          reinterpret_cast<void*>(&frontend),
-          set_thread_name,
-          [](void* _context, const char* _tag) {
-            reinterpret_cast<render::frontend::interface*>(_context)->profile(_tag);
-          },
-          [](void* _context) {
-            reinterpret_cast<render::frontend::interface*>(_context)->profile(nullptr);
-          }
-        });
+          profiler::instance().bind_gpu({
+            reinterpret_cast<void*>(&frontend),
+            set_thread_name,
+            [](void* _context, const char* _tag) {
+              reinterpret_cast<render::frontend::interface*>(_context)->profile(_tag);
+            },
+            [](void* _context) {
+              reinterpret_cast<render::frontend::interface*>(_context)->profile(nullptr);
+            }
+          });
+        }
       }
 
       // Quickly get a black screen.

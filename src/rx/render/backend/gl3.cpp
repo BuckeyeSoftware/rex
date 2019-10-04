@@ -1373,11 +1373,9 @@ void gl3::process(rx_byte* _command) {
       case frontend::resource_command::type::k_textureCM:
         {
           const auto render_texture{resource->as_textureCM};
-          // const auto texture{reinterpret_cast<const detail_gl3::textureCM*>(render_texture + 1)};
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
-          const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{render_texture->filter()};
           const auto& data{render_texture->data()};

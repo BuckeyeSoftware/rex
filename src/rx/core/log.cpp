@@ -145,9 +145,15 @@ logger::~logger() {
 void logger::write(const log* _owner, string&& contents_, log::level _level, time_t _time) {
   concurrency::scope_lock locked{m_mutex};
   m_queue.emplace_back(_owner, utility::move(contents_), _level, _time);
-  //if (m_queue.size() >= k_flush_threshold) {
+
+#if defined(RX_DEBUG)
+  (void)k_flush_threshold;
+  m_flush_condition.signal();
+#else
+  if (m_queue.size() >= k_flush_threshold) {
     m_flush_condition.signal();
-  //}
+  }
+#endif
 }
 
 void logger::flush(rx_size max_padding) {

@@ -31,7 +31,6 @@ frame_timer::frame_timer()
   , m_frame_max{0}
   , m_frame_average{0.0f}
   , m_frames_per_second{0}
-  , m_drift{0.0f}
 {
 }
 

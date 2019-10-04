@@ -149,12 +149,19 @@ struct profile_sample {
   profile_sample(const char* _tag)
     : m_cpu_sample{_tag}
   {
-    rmt_BeginOpenGLSampleDynamic(_tag);
+    static auto profile_gpu{console::interface::get_from_name("profile.gpu")->cast<bool>()};
+    if (*profile_gpu) {
+      rmt_BeginOpenGLSampleDynamic(_tag);
+    }
   }
 
   ~profile_sample() {
-    rmt_EndOpenGLSample();
+    static auto profile_gpu{console::interface::get_from_name("profile.gpu")->cast<bool>()};
+    if (*profile_gpu) {
+      rmt_EndOpenGLSample();
+    }
   }
+
 private:
   profiler::cpu_sample m_cpu_sample;
 };

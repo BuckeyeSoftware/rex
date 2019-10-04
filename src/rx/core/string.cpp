@@ -449,8 +449,18 @@ string string::human_size_format(rx_size _size) {
   RX_ASSERT(i != sizeof k_suffixes / sizeof *k_suffixes, "out of bounds");
 
   char buffer[2*(DBL_MANT_DIG + DBL_MAX_EXP)];
+
+  // NOTE: The truncation is wanted here!
+#if defined(RX_COMPILER_GCC)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
   const int result{snprintf(buffer, sizeof buffer, "%.*f",
-    static_cast<int>(sizeof buffer), bytes)}; // NOTE: we want truncation here
+    static_cast<int>(sizeof buffer), bytes)};
+#if defined(RX_COMPILER_GCC)
+#pragma GCC diagnostic pop
+#endif
+
   RX_ASSERT(result > 0, "failed to format");
   char* period{strchr(buffer, '.')};
   RX_ASSERT(period, "failed to format");

@@ -44,7 +44,6 @@ private:
   rx_u64 m_frame_max;
   rx_f32 m_frame_average;
   rx_u32 m_frames_per_second;
-  rx_f32 m_drift;
   vector<frame_time> m_frame_times;
 };
 

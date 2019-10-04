@@ -21,7 +21,7 @@ void assert_fail(const char* _expression, const char* _file,
   (static_cast<void>((_condition) || (::rx::assert_fail(#_condition, __FILE__, RX_FUNCTION, __LINE__, __VA_ARGS__), 0)))
 #else // defined(RX_DEBUG)
 #define RX_ASSERT(_condition, ...) \
-  static_cast<void>((_condition), 0)
+  static_cast<void>((_condition) || 0)
 #endif // defined(RX_DEBUG)
 
 #endif // RX_CORE_ASSERT_H
