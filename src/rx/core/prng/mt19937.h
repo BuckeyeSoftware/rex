@@ -9,11 +9,11 @@ struct mt19937 {
 
   void seed(rx_u32 _seed);
 
-  rx_u32 rand_u32();
+  rx_u32 u32();
+  rx_u64 u64();
 
-  rx_u64 rand_u64();
-  rx_f32 rand_f32();
-  rx_f64 rand_f64();
+  rx_f32 f32();
+  rx_f64 f64();
 
 private:
   static constexpr const rx_size k_size{624};
@@ -31,16 +31,16 @@ inline mt19937::mt19937()
 {
 }
 
-inline rx_u64 mt19937::rand_u64() {
-  return static_cast<rx_u64>(rand_u32()) << 32 | rand_u32();
+inline rx_u64 mt19937::u64() {
+  return static_cast<rx_u64>(u32()) << 32_u64 | u32();
 }
 
-inline rx_f32 mt19937::rand_f32() {
-  return static_cast<rx_f32>(rand_u32()) / k_max;
+inline rx_f32 mt19937::f32() {
+  return static_cast<rx_f32>(u32()) / k_max;
 }
 
-inline rx_f64 mt19937::rand_f64() {
-  return static_cast<rx_f64>(rand_u32()) / k_max;
+inline rx_f64 mt19937::f64() {
+  return static_cast<rx_f64>(u32()) / k_max;
 }
 
 };

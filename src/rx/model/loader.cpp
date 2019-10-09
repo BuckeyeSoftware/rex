@@ -124,13 +124,19 @@ bool loader::import(const string& _file_name) {
 
     const rx_size n_vertices{m_positions.size()};
 
+    if (animations.is_empty()) {
+      utility::construct<vector<vertex>>(&as_vertices, m_allocator, n_vertices);
+      m_flags |= k_constructed;
+    } else {
+      utility::construct<vector<animated_vertex>>(&as_animated_vertices, m_allocator, n_vertices);
+      m_flags |= k_constructed;
+      m_flags |= k_animated;
+    }
+
     // Hoist the transform check outside the for loops for faster model loading.
     if (m_transform) {
       const auto transform{m_transform->to_mat4()};
       if (animations.is_empty()) {
-        utility::construct<vector<vertex>>(&as_vertices, m_allocator, n_vertices);
-        m_flags |= k_constructed;
-
         for (rx_size i{0}; i < n_vertices; i++) {
           const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
           as_vertices[i].position = math::mat4x4f::transform_point(m_positions[i], transform);
@@ -139,10 +145,6 @@ bool loader::import(const string& _file_name) {
           as_vertices[i].coordinate = coordinates[i];
         }
       } else {
-        utility::construct<vector<animated_vertex>>(&as_animated_vertices, m_allocator, n_vertices);
-        m_flags |= k_constructed;
-        m_flags |= k_animated;
-
         const auto& blend_weights{new_loader->blend_weights()};
         const auto& blend_indices{new_loader->blend_indices()};
         for (rx_size i{0}; i < n_vertices; i++) {

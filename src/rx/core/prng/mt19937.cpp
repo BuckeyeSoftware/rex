@@ -23,7 +23,7 @@ void mt19937::seed(rx_u32 _seed) {
   }
 }
 
-rx_u32 mt19937::rand_u32() {
+rx_u32 mt19937::u32() {
   if (RX_HINT_UNLIKELY(m_index == 0)) {
     generate();
   }

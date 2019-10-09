@@ -350,13 +350,13 @@ struct test_game
     , m_skybox{&m_frontend}
     , m_model{&m_frontend}
   {
-    m_camera.translate = {-1.0f, 60.0f, -1000.0f};
+    // m_camera.translate = {-1.0f, 60.0f, -1000.0f};
   }
 
   virtual bool on_init() {
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
     m_skybox.load("base/skyboxes/miramar/miramar.json5");
-    m_model.load("base/models/elemental/elemental.json5");
+    m_model.load("base/models/chest/chest.json5");
     return true;
   }
 

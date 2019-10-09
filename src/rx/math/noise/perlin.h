@@ -1,27 +1,26 @@
 #ifndef RX_MATH_NOISE_PERLIN_H
 #define RX_MATH_NOISE_PERLIN_H
 #include "rx/core/types.h"
-#include "rx/core/prng/mt19937.h"
+
+namespace rx::prng {
+  struct mt19937;
+}
 
 namespace rx::math::noise {
 
 struct perlin {
-  perlin(rx_u32 _seed);
-
-  void seed(rx_u32 _seed);
+  perlin(prng::mt19937& _mt19937);
 
   rx_f32 noise(rx_f32 _x) const;
   rx_f32 noise(rx_f32 _x, rx_f32 _y) const;
   rx_f32 noise(rx_f32 _x, rx_f32 _y, rx_f32 _z) const;
 
+  void reseed();
+
 private:
-  prng::mt19937 m_prng;
+  prng::mt19937& m_mt19937;
   rx_byte m_data[512];
 };
-
-inline perlin::perlin(rx_u32 _seed) {
-  seed(_seed);
-}
 
 inline rx_f32 perlin::noise(rx_f32 _x) const {
   return noise(_x, 0.0f, 0.0f);

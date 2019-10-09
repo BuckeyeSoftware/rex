@@ -2,6 +2,7 @@
 
 #include "rx/math/noise/perlin.h"
 #include "rx/core/math/floor.h"
+#include "rx/core/prng/mt19937.h"
 #include "rx/core/utility/swap.h"
 
 namespace rx::math::noise {
@@ -21,16 +22,20 @@ static inline rx_f32 grad(rx_byte _hash, rx_f32 _x, rx_f32 _y, rx_f32 _z) {
   return ((_hash & 1) == 0 ? u : -u) + ((hash & 2) == 0 ? v : -v);
 }
 
-void perlin::seed(rx_u32 _seed) {
-  m_prng.seed(_seed);
+perlin::perlin(prng::mt19937& _mt19937)
+  : m_mt19937{_mt19937}
+{
+  reseed();
+}
 
+void perlin::reseed() {
   for (rx_size i{0}; i < 256; i++) {
     m_data[i] = static_cast<rx_byte>(i);
   }
 
   rx_size n{256};
   for (rx_size i{0}; i < n - 1; i++) {
-    const rx_size j{m_prng.rand_u32() % (i + 1)};
+    const rx_size j{m_mt19937.u32() % (i + 1)};
     utility::swap(m_data[i], m_data[j]);
   }
 

@@ -368,13 +368,6 @@ int main(int _argc, char** _argv) {
             break;
           case SDL_KEYDOWN:
           case SDL_KEYUP:
-            // Simple engine restart.
-            if (event.type == SDL_KEYUP && event.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
-              printf("restarting\n");
-              g_status = game::status::k_restart;
-              break;
-            }
-
             ievent.type = input::event_type::k_keyboard;
             ievent.as_keyboard.down = event.type == SDL_KEYDOWN;
             ievent.as_keyboard.scan_code = event.key.keysym.scancode;
