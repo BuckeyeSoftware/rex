@@ -122,12 +122,19 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
 
     const auto& material{m_materials[_mesh.material]};
 
+    char texture_types[8];
+    char* type{texture_types};
+    void* texture_binds[8];
+    void** bind{texture_binds};
+
     rx_u64 flags{0};
-    if (material.diffuse())    flags |= 1 << 1;
-    if (material.normal())     flags |= 1 << 2;
-    if (material.metalness())  flags |= 1 << 3;
-    if (material.roughness())  flags |= 1 << 4;
+    if (material.diffuse())    flags |= 1 << 1, *type++ = '2', *bind++ = reinterpret_cast<void*>(material.diffuse());
+    if (material.normal())     flags |= 1 << 2, *type++ = '2', *bind++ = reinterpret_cast<void*>(material.normal());
+    if (material.metalness())  flags |= 1 << 3, *type++ = '2', *bind++ = reinterpret_cast<void*>(material.metalness());
+    if (material.roughness())  flags |= 1 << 4, *type++ = '2', *bind++ = reinterpret_cast<void*>(material.roughness());
     if (material.alpha_test()) flags |= 1 << 5;
+
+    *type++ = '\0';
 
     // Disable backface culling for alpha-tested geometry.
     state.cull.record_enable(!material.alpha_test());
@@ -143,16 +150,17 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
       RX_RENDER_TAG("model mesh"),
       state,
       _target,
+      "0123",
       m_buffer,
       program,
       _mesh.count,
       _mesh.offset,
       render::frontend::primitive_type::k_triangles,
-      material.normal() ? "22" : "2",
-      material.diffuse(),
-      material.normal(),
-      material.metalness(),
-      material.roughness());
+      texture_types,
+      texture_binds[0],
+      texture_binds[1],
+      texture_binds[2],
+      texture_binds[3]);
 
     return true;
   });

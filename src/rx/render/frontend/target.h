@@ -13,6 +13,26 @@ struct target : resource {
   target(interface* _frontend);
   ~target();
 
+  struct attachment {
+    enum class type {
+      k_texture2D,
+      k_textureCM
+    };
+
+    type kind;
+
+    union {
+      struct {
+        texture2D* texture;
+      } as_texture2D;
+
+      struct {
+        textureCM* texture;
+        textureCM::face face;
+      } as_textureCM;
+    };
+  };
+
   // request target have depth attachment |_format| with size |_dimensions|
   void request_depth(texture::data_format _format,
     const math::vec2z& _dimensions);
@@ -34,10 +54,17 @@ struct target : resource {
   // attach texture |_texture| to target
   void attach_texture(texture2D* _texture);
 
+  // attach cubemap face |_face| texture |_texture|
+  void attach_texture(textureCM* _texture, textureCM::face _face);
+
+  // attach cubemap texture |_texture|
+  // attaches _all_ faces in -x, +x, -y, +y, -z, +z order
+  void attach_texture(textureCM* _texture);
+
   texture2D* depth() const;
   texture2D* stencil() const;
   texture2D* depth_stencil() const;
-  const vector<texture2D*> attachments() const &;
+  const vector<attachment> attachments() const &;
   bool is_swapchain() const;
 
   bool has_depth() const;
@@ -70,10 +97,19 @@ private:
     texture2D* m_depth_stencil_texture;
   };
 
-  vector<texture2D*> m_attachments;
+  vector<attachment> m_attachments;
   math::vec2z m_dimensions;
   int m_flags;
 };
+
+inline void target::attach_texture(textureCM* _texture) {
+  attach_texture(_texture, textureCM::face::k_right);  // +x
+  attach_texture(_texture, textureCM::face::k_left);   // -x
+  attach_texture(_texture, textureCM::face::k_top);    // +y
+  attach_texture(_texture, textureCM::face::k_bottom); // -y
+  attach_texture(_texture, textureCM::face::k_front);  // +z
+  attach_texture(_texture, textureCM::face::k_back);   // -z
+}
 
 inline texture2D* target::depth() const {
   return m_depth_texture;
@@ -87,7 +123,7 @@ inline texture2D* target::depth_stencil() const {
   return m_depth_stencil_texture;
 }
 
-inline const vector<texture2D*> target::attachments() const & {
+inline const vector<target::attachment> target::attachments() const & {
   return m_attachments;
 }
 

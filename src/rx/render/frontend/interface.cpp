@@ -359,6 +359,7 @@ void interface::draw(
   const command_header::info& _info,
   const state& _state,
   target* _target,
+  const char* _draw_buffers,
   buffer* _buffer,
   program* _program,
   rx_size _count,
@@ -367,9 +368,13 @@ void interface::draw(
   const char* _textures,
   ...)
 {
-  if (_count == 0) {
-    return;
-  }
+  RX_ASSERT(_state.viewport.dimensions().area() > 0, "empty viewport");
+
+  RX_ASSERT(_draw_buffers, "misisng draw buffers");
+  RX_ASSERT(_buffer, "expected buffer");
+  RX_ASSERT(_program, "expected program");
+  RX_ASSERT(_count != 0, "empty draw call");
+  RX_ASSERT(_textures, "expected textures");
 
   m_vertices[0] += _count;
 
@@ -388,43 +393,51 @@ void interface::draw(
     break;
   }
 
-  concurrency::scope_lock lock(m_mutex);
+  {
+    concurrency::scope_lock lock{m_mutex};
+    const auto dirty_uniforms_size{_program->dirty_uniforms_size()};
 
-  const auto dirty_uniforms_size{_program->dirty_uniforms_size()};
+    auto command_base{m_command_buffer.allocate(sizeof(draw_command) + dirty_uniforms_size, command_type::k_draw, _info)};
+    auto command{reinterpret_cast<draw_command*>(command_base + sizeof(command_header))};
+    *reinterpret_cast<state*>(command) = _state;
+    reinterpret_cast<state*>(command)->flush();
+    command->render_target = _target;
+    command->render_buffer = _buffer;
+    command->render_program = _program;
+    command->count = _count;
+    command->offset = _offset;
+    command->type = _primitive_type;
+    command->dirty_uniforms_bitset = _program->dirty_uniforms_bitset();
 
-  // allocate and fill out command
-  auto command_base{m_command_buffer.allocate(sizeof(draw_command) + dirty_uniforms_size, command_type::k_draw, _info)};
-  auto command{reinterpret_cast<draw_command*>(command_base + sizeof(command_header))};
-  *reinterpret_cast<state*>(command) = _state;
-  reinterpret_cast<state*>(command)->flush();
-  command->render_target = _target;
-  command->render_buffer = _buffer;
-  command->render_program = _program;
-  command->count = _count;
-  command->offset = _offset;
-  command->type = _primitive_type;
-  command->dirty_uniforms_bitset = _program->dirty_uniforms_bitset();
-
-  // copy the uniforms directly into the command structure, if any
-  if (dirty_uniforms_size) {
-    _program->flush_dirty_uniforms(command->uniforms());
-  }
-
-  memset(command->texture_types, 0, sizeof command->texture_types);
-
-  rx_size textures{strlen(_textures)};
-  if (textures) {
-    va_list va;
-    va_start(va, _textures);
-    for (rx_size i{0}; i < textures; i++) {
-      const char ch{_textures[i]};
-      command->texture_types[i] = ch;
-      command->texture_binds[i] = va_arg(va, void*);
+    // Copy the uniforms directly into the command.
+    if (dirty_uniforms_size) {
+      _program->flush_dirty_uniforms(command->uniforms());
     }
-    va_end(va);
-  }
 
-  m_commands.push_back(command_base);
+    // Decode the draw buffers into the command.
+    memset(&command->draw_buffers, 0, sizeof command->draw_buffers);
+    for (const char* draw_buffer{_draw_buffers}; *draw_buffer; draw_buffer++) {
+      command->draw_buffers.add(*draw_buffer - '0');
+    }
+
+    // Copy and decode textures into the command.
+    if (*_textures) {
+      va_list va;
+      va_start(va, _textures);
+      for (rx_size i{0}; i < draw_command::k_max_textures; i++) {
+        if (const int ch{_textures[i]}; ch != '\0') {
+          command->texture_types[i] = ch;
+          command->texture_binds[i] = va_arg(va, void*);
+        } else {
+          command->texture_types[i] = '\0';
+          break;
+        }
+      }
+      va_end(va);
+    }
+
+    m_commands.push_back(command_base);
+  }
 
   m_draw_calls[0]++;
 }
@@ -433,13 +446,23 @@ void interface::clear(
   const command_header::info& _info,
   const state& _state,
   target* _target,
+  const char* _draw_buffers,
   rx_u32 _clear_mask,
-  const math::vec4f& _clear_color)
+  ...)
 {
-  RX_ASSERT(_clear_mask, "empty clear");
+  RX_ASSERT(_state.viewport.dimensions().area() > 0, "empty viewport");
+
+  RX_ASSERT(_target, "expected target");
+  RX_ASSERT(_draw_buffers, "expected draw buffers");
+  RX_ASSERT(_clear_mask != 0, "empty clear");
+
+  const bool clear_depth{!!(_clear_mask & RX_RENDER_CLEAR_DEPTH)};
+  const bool clear_stencil{!!(_clear_mask & RX_RENDER_CLEAR_STENCIL)};
+
+  _clear_mask >>= 2;
 
   {
-    concurrency::scope_lock lock(m_mutex);
+    concurrency::scope_lock lock{m_mutex};
 
     auto command_base{allocate_command(draw_command, command_type::k_clear)};
     auto command{reinterpret_cast<clear_command*>(command_base + sizeof(command_header))};
@@ -447,8 +470,37 @@ void interface::clear(
     reinterpret_cast<state*>(command)->flush();
 
     command->render_target = _target;
-    command->clear_mask = _clear_mask;
-    command->clear_color = _clear_color;
+    command->clear_depth = clear_depth;
+    command->clear_stencil = clear_stencil;
+    command->clear_colors = _clear_mask;
+
+    // Decode the draw buffers into the command.
+    memset(&command->draw_buffers, 0, sizeof command->draw_buffers);
+    for (const char* draw_buffer{_draw_buffers}; *draw_buffer; draw_buffer++) {
+      command->draw_buffers.add(*draw_buffer - '0');
+    }
+
+    // Decode and copy the clear values into the command.
+    va_list va;
+    va_start(va, _clear_mask);
+    if (clear_depth) {
+      command->depth_value = static_cast<rx_f32>(va_arg(va, rx_f64));
+    }
+
+    if (clear_stencil) {
+      command->stencil_value = va_arg(va, rx_s32);
+    }
+
+    for (rx_u32 i{0}; i < 8; i++) {
+      if (_clear_mask & (1 << i)) {
+        const rx_f32* color{va_arg(va, rx_f32*)};
+        command->color_values[i].r = color[0];
+        command->color_values[i].g = color[1];
+        command->color_values[i].b = color[2];
+        command->color_values[i].a = color[3];
+      }
+    }
+    va_end(va);
 
     m_commands.push_back(command_base);
   }
@@ -479,8 +531,14 @@ void interface::blit(
   RX_ASSERT(_dst_attachment < dst_attachments.size(),
     "destination attachment out of bounds");
 
-  texture2D* src_attachment{src_attachments[_src_attachment]};
-  texture2D* dst_attachment{dst_attachments[_dst_attachment]};
+  using attachment = target::attachment::type;
+  RX_ASSERT(src_attachments[_src_attachment].kind == attachment::k_texture2D,
+    "source attachment not a 2D texture");
+  RX_ASSERT(dst_attachments[_dst_attachment].kind == attachment::k_texture2D,
+    "destination attachment not a 2D texture");
+
+  texture2D* src_attachment{src_attachments[_src_attachment].as_texture2D.texture};
+  texture2D* dst_attachment{dst_attachments[_dst_attachment].as_texture2D.texture};
 
   // It's possible for targets to be configured in a way where attachments are
   // shared between them. Blitting to and from the same attachment doesn't make

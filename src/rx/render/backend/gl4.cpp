@@ -73,8 +73,10 @@ static void (GLAPIENTRYP pglPixelStorei)(GLenum, GLint);
 static void (GLAPIENTRYP pglCreateFramebuffers)(GLsizei, GLuint*);
 static void (GLAPIENTRYP pglDeleteFramebuffers)(GLsizei, const GLuint*);
 static void (GLAPIENTRYP pglNamedFramebufferTexture)(GLuint, GLenum, GLuint, GLint);
+static void (GLAPIENTRYP pglNamedFramebufferTextureLayer)(GLuint, GLenum, GLuint, GLint, GLint);
 static void (GLAPIENTRYP pglBindFramebuffer)(GLenum, GLuint);
 static void (GLAPIENTRYP pglClearNamedFramebufferfv)(GLuint, GLenum, GLint, const GLfloat*);
+static void (GLAPIENTRYP pglClearNamedFramebufferiv)(GLuint, GLenum, GLint, const GLint*);
 static void (GLAPIENTRYP pglClearNamedFramebufferfi)(GLuint, GLenum, GLint, GLfloat, GLint);
 static void (GLAPIENTRYP pglNamedFramebufferDrawBuffers)(GLuint, GLsizei, const GLenum*);
 static void (GLAPIENTRYP pglBlitNamedFramebuffer)(GLuint, GLuint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum);
@@ -188,6 +190,8 @@ namespace detail_gl4 {
     target()
       : owned{true}
     {
+      memset(&draw_buffers, 0, sizeof draw_buffers);
+      memset(&read_buffers, 0, sizeof read_buffers);
       pglCreateFramebuffers(1, &fbo);
     }
 
@@ -205,6 +209,8 @@ namespace detail_gl4 {
 
     GLuint fbo;
     bool owned;
+    frontend::buffers draw_buffers;
+    frontend::buffers read_buffers;
   };
 
   struct program {
@@ -542,12 +548,35 @@ namespace detail_gl4 {
       flush();
     }
 
-    void use_target(const frontend::target* _render_target) {
-      profile_sample sample{"use_target"};
+    void use_draw_target(frontend::target* _render_target, const frontend::buffers* _draw_buffers) {
+      profile_sample sample{"use_draw_target"};
+
       const auto this_target{reinterpret_cast<const target*>(_render_target + 1)};
       if (this_target->fbo != m_bound_fbo) {
         pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, this_target->fbo);
         m_bound_fbo = this_target->fbo;
+      }
+
+      // Changing draw buffers?
+      if (_draw_buffers && !_render_target->is_swapchain()) {
+        auto this_target{reinterpret_cast<target*>(_render_target + 1)};
+        // The draw buffers changed.
+        if (this_target->draw_buffers != *_draw_buffers) {
+          if (_draw_buffers->index == 0) {
+            pglNamedFramebufferDrawBuffer(this_target->fbo, GL_NONE);
+          } else {
+            vector<GLenum> draw_buffers;
+            for (rx_u8 i{0}; i < _draw_buffers->index; i++) {
+              draw_buffers.push_back(GL_COLOR_ATTACHMENT0 + _draw_buffers->elements[i]);
+            }
+            pglNamedFramebufferDrawBuffers(
+              this_target->fbo,
+              static_cast<GLsizei>(draw_buffers.size()),
+              draw_buffers.data());
+          }
+
+          this_target->draw_buffers = *_draw_buffers;
+        }
       }
     }
 
@@ -884,8 +913,10 @@ bool gl4::init() {
   fetch("glCreateFramebuffers", pglCreateFramebuffers);
   fetch("glDeleteFramebuffers", pglDeleteFramebuffers);
   fetch("glNamedFramebufferTexture", pglNamedFramebufferTexture);
+  fetch("glNamedFramebufferTextureLayer", pglNamedFramebufferTextureLayer);
   fetch("glBindFramebuffer", pglBindFramebuffer);
   fetch("glClearNamedFramebufferfv", pglClearNamedFramebufferfv);
+  fetch("glClearNamedFramebufferiv", pglClearNamedFramebufferiv);
   fetch("glClearNamedFramebufferfi", pglClearNamedFramebufferfi);
   fetch("glNamedFramebufferDrawBuffers", pglNamedFramebufferDrawBuffers);
   fetch("glBlitNamedFramebuffer", pglBlitNamedFramebuffer);
@@ -1132,11 +1163,26 @@ void gl4::process(rx_byte* _command) {
           } else {
             vector<GLenum> draw_buffers{m_allocator, attachments.size()};
             for (rx_size i{0}; i < attachments.size(); i++) {
-              const auto attachment{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
-              const auto render_texture{attachments[i]};
-              const auto texture{reinterpret_cast<detail_gl4::texture2D*>(render_texture + 1)};
-              pglNamedFramebufferTexture(target->fbo, attachment, texture->tex, 0);
-              draw_buffers[i] = attachment;
+              const auto& attachment{attachments[i]};
+              const auto attachment_enum{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
+              switch (attachment.kind) {
+              case frontend::target::attachment::type::k_texture2D:
+                pglNamedFramebufferTexture(
+                  target->fbo,
+                  attachment_enum,
+                  reinterpret_cast<detail_gl4::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
+                  0);
+                break;
+              case frontend::target::attachment::type::k_textureCM:
+                pglNamedFramebufferTextureLayer(
+                  target->fbo,
+                  attachment_enum,
+                  reinterpret_cast<detail_gl4::textureCM*>(attachment.as_textureCM.texture + 1)->tex,
+                  0,
+                  static_cast<GLint>(attachment.as_textureCM.face));
+                break;
+              }
+              draw_buffers[i] = static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i);
             }
             // draw buffers
             pglNamedFramebufferDrawBuffers(target->fbo,
@@ -1490,9 +1536,8 @@ void gl4::process(rx_byte* _command) {
       const auto render_state{reinterpret_cast<frontend::state*>(command)};
       const auto render_target{command->render_target};
       const auto this_target{reinterpret_cast<detail_gl4::target*>(render_target + 1)};
-      const bool clear_depth{!!(command->clear_mask & RX_RENDER_CLEAR_DEPTH)};
-      const bool clear_stencil{!!(command->clear_mask & RX_RENDER_CLEAR_STENCIL)};
-      const auto clear_color{command->clear_mask & ~(RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL)};
+      const bool clear_depth{command->clear_depth};
+      const bool clear_stencil{command->clear_stencil};
 
       // TODO(dweiler): optimize use_state to only consider the following
       // pieces of state that interact with a clear:
@@ -1502,26 +1547,27 @@ void gl4::process(rx_byte* _command) {
       // * scissor test
       // * blend write mask
       state->use_state(render_state);
+      state->use_draw_target(render_target, &command->draw_buffers);
 
       const GLuint fbo{this_target->fbo};
 
-      if (clear_color) {
+      if (command->clear_colors) {
         for (rx_u32 i{0}; i < 32; i++) {
-          if (clear_color & (1 << i)) {
-            // NOTE: -2 because depth stencil attachments behave as index 0 and 1 respectively
-            pglClearNamedFramebufferfv(fbo, GL_COLOR, static_cast<GLint>(i - 2),
-              &command->clear_color[0]);
-            break;
+          if (command->clear_colors & (1 << i)) {
+            pglClearNamedFramebufferfv(fbo, GL_COLOR, static_cast<GLint>(i),
+              command->color_values[i].data());
           }
         }
       }
+
       if (clear_depth && clear_stencil) {
-        pglClearNamedFramebufferfi(fbo, GL_DEPTH_STENCIL,
-          0, command->clear_color.r, static_cast<GLint>(command->clear_color.g));
+        pglClearNamedFramebufferfi(fbo, GL_DEPTH_STENCIL, 0,
+          command->depth_value, static_cast<GLint>(command->stencil_value));
       } else if (clear_depth) {
-        pglClearNamedFramebufferfv(fbo, GL_DEPTH, 0, &command->clear_color.r);
+        pglClearNamedFramebufferfv(fbo, GL_DEPTH, 0, &command->depth_value);
       } else if (clear_stencil) {
-        pglClearNamedFramebufferfv(fbo, GL_STENCIL, 0, &command->clear_color.g);
+        const GLint stencil{command->stencil_value};
+        pglClearNamedFramebufferiv(fbo, GL_STENCIL, 0, &stencil);
       }
     }
     break;
@@ -1536,7 +1582,7 @@ void gl4::process(rx_byte* _command) {
       const auto render_program{command->render_program};
       const auto this_program{reinterpret_cast<detail_gl4::program*>(render_program + 1)};
 
-      state->use_target(render_target);
+      state->use_draw_target(render_target, &command->draw_buffers);
       state->use_buffer(render_buffer);
       state->use_program(render_program);
       state->use_state(render_state);
@@ -1693,8 +1739,8 @@ void gl4::process(rx_byte* _command) {
       const auto src_attachment{command->src_attachment};
       const auto dst_attachment{command->dst_attachment};
 
-      const auto src_dimensions{src_render_target->attachments()[src_attachment]->dimensions().cast<GLint>()};
-      const auto dst_dimensions{dst_render_target->attachments()[dst_attachment]->dimensions().cast<GLint>()};
+      const auto src_dimensions{src_render_target->attachments()[src_attachment].as_texture2D.texture->dimensions().cast<GLint>()};
+      const auto dst_dimensions{dst_render_target->attachments()[dst_attachment].as_texture2D.texture->dimensions().cast<GLint>()};
 
       const GLuint src_fbo{reinterpret_cast<const detail_gl4::target*>(src_render_target + 1)->fbo};
       const GLuint dst_fbo{reinterpret_cast<const detail_gl4::target*>(dst_render_target + 1)->fbo};

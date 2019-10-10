@@ -166,8 +166,11 @@ void target::attach_texture(texture2D* _texture) {
     RX_ASSERT(_texture->dimensions() == m_dimensions, "invalid dimensions");
   }
 
-  m_attachments.each_fwd([_texture](texture2D* _attachment) {
-    RX_ASSERT(_texture != _attachment, "texture already attached");
+  m_attachments.each_fwd([_texture](const attachment& _attachment) {
+    if (_attachment.kind == attachment::type::k_texture2D) {
+      RX_ASSERT(_texture != _attachment.as_texture2D.texture,
+        "texture already attached");
+    }
   });
 
   if (!(m_flags & k_dimensions)) {
@@ -175,7 +178,43 @@ void target::attach_texture(texture2D* _texture) {
     m_flags |= k_dimensions;
   }
 
-  m_attachments.push_back(_texture);
+  attachment new_attachment;
+  new_attachment.kind = attachment::type::k_texture2D;
+  new_attachment.as_texture2D.texture = _texture;
+  m_attachments.push_back(new_attachment);
+
+  update_resource_usage();
+}
+
+void target::attach_texture(textureCM* _texture, textureCM::face _face) {
+  RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
+  RX_ASSERT(_texture->kind() == texture::type::k_attachment,
+    "not attachable texture");
+
+  if (m_flags & k_dimensions) {
+    RX_ASSERT(_texture->dimensions() == m_dimensions, "invalid dimensions");
+  }
+
+  // Don't allow attaching the same cubemap face multiple times.
+  m_attachments.each_fwd([_texture, _face](const attachment& _attachment) {
+    if (_attachment.kind == attachment::type::k_textureCM
+      && _attachment.as_textureCM.texture == _texture)
+    {
+      RX_ASSERT(_attachment.as_textureCM.face != _face,
+        "texture already attached");
+    }
+  });
+
+  if (!(m_flags & k_dimensions)) {
+    m_dimensions = _texture->dimensions();
+    m_flags |= k_dimensions;
+  }
+
+  attachment new_attachment;
+  new_attachment.kind = attachment::type::k_textureCM;
+  new_attachment.as_textureCM.texture = _texture;
+  new_attachment.as_textureCM.face = _face;
+  m_attachments.push_back(new_attachment);
 
   update_resource_usage();
 }
@@ -193,17 +232,24 @@ void target::validate() const {
 }
 
 void target::update_resource_usage() {
-  const auto rt_usage{[](const texture2D* _texture){
+  const auto rt_usage{[](const auto* _texture){
     return _texture->dimensions().area() * texture::byte_size_of_format(_texture->format());
   }};
 
-  // calcualte memory usage for each attachment texture
+  // Calculate memory usage for each attachment texture.
   rx_f32 usage{0};
-  m_attachments.each_fwd([&](const texture2D* _texture) {
-    usage += rt_usage(_texture);
+  m_attachments.each_fwd([&](const attachment& _attachment) {
+    switch (_attachment.kind) {
+    case attachment::type::k_texture2D:
+      usage += rt_usage(_attachment.as_texture2D.texture);
+      break;
+    case attachment::type::k_textureCM:
+      usage += rt_usage(_attachment.as_textureCM.texture);
+      break;
+    }
   });
 
-  // as well as any usage for depth and stencil textures
+  // Calculate memory usage of any depth, stencil or depth stencil attachments.
   if (has_depth_stencil()) {
     usage += rt_usage(m_depth_stencil_texture);
   } else {

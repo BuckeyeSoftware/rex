@@ -475,15 +475,19 @@ struct test_game
       RX_RENDER_TAG("gbuffer"),
       state,
       m_gbuffer.target(),
-      RX_RENDER_CLEAR_DEPTH,
-      {1.0f, 0.0f, 0.0f, 0.0f});
-
-    m_frontend.clear(
-      RX_RENDER_TAG("gbuffer"),
-      state,
-      m_gbuffer.target(),
-      RX_RENDER_CLEAR_COLOR(0),
-      {0.0f, 0.0f, 0.0f, 0.0f});
+      "0123",
+      RX_RENDER_CLEAR_DEPTH |
+      RX_RENDER_CLEAR_STENCIL |
+      RX_RENDER_CLEAR_COLOR(0) |
+      RX_RENDER_CLEAR_COLOR(1) |
+      RX_RENDER_CLEAR_COLOR(2) |
+      RX_RENDER_CLEAR_COLOR(3),
+      1.0f,
+      0,
+      math::vec4f{1.0f, 0.0f, 0.0f, 1.0f}.data(),
+      math::vec4f{0.0f, 1.0f, 0.0f, 1.0f}.data(),
+      math::vec4f{0.0f, 0.0f, 1.0f, 1.0f}.data(),
+      math::vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data());
 
     m_model.render(m_gbuffer.target(), model_xform.to_mat4(), m_camera.view(), m_camera.projection);
     m_skybox.render(m_gbuffer.target(), m_camera.view(), m_camera.projection);
