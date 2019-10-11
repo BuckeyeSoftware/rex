@@ -122,22 +122,12 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
 
     const auto& material{m_materials[_mesh.material]};
 
-    char texture_types[8];
-    char* type{texture_types};
-    void* texture_binds[8];
-    void** bind{texture_binds};
-
     rx_u64 flags{0};
-    if (material.diffuse())    flags |= 1 << 1, *type++ = '2', *bind++ = reinterpret_cast<void*>(material.diffuse());
-    if (material.normal())     flags |= 1 << 2, *type++ = '2', *bind++ = reinterpret_cast<void*>(material.normal());
-    if (material.metalness())  flags |= 1 << 3, *type++ = '2', *bind++ = reinterpret_cast<void*>(material.metalness());
-    if (material.roughness())  flags |= 1 << 4, *type++ = '2', *bind++ = reinterpret_cast<void*>(material.roughness());
+    if (material.diffuse())    flags |= 1 << 1;
+    if (material.normal())     flags |= 1 << 2;
+    if (material.metalness())  flags |= 1 << 3;
+    if (material.roughness())  flags |= 1 << 4;
     if (material.alpha_test()) flags |= 1 << 5;
-
-    *type++ = '\0';
-
-    // Disable backface culling for alpha-tested geometry.
-    state.cull.record_enable(!material.alpha_test());
 
     frontend::program* program{m_technique->permute(flags)};
     auto& uniforms{program->uniforms()};
@@ -145,6 +135,20 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
     uniforms[0].record_mat4x4f(_model * _view * _projection);
     uniforms[1].record_mat4x4f(_model);
     uniforms[2].record_mat3x3f(material.transform().to_mat3());
+
+    // TODO: skeletal.
+
+    // Record all the textures.
+    frontend::draw_textures textures;
+    if (material.diffuse())   uniforms[4].record_sampler(textures.add(material.diffuse()));
+    if (material.normal())    uniforms[5].record_sampler(textures.add(material.normal()));
+    if (material.metalness()) uniforms[6].record_sampler(textures.add(material.metalness()));
+    if (material.roughness()) uniforms[7].record_sampler(textures.add(material.roughness()));
+
+    // Disable backface culling for alpha-tested geometry.
+    state.cull.record_enable(!material.alpha_test());
+
+    void* const* handles{textures.handles()};
 
     m_frontend->draw(
       RX_RENDER_TAG("model mesh"),
@@ -156,11 +160,11 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
       _mesh.count,
       _mesh.offset,
       render::frontend::primitive_type::k_triangles,
-      texture_types,
-      texture_binds[0],
-      texture_binds[1],
-      texture_binds[2],
-      texture_binds[3]);
+      textures.specification(),
+      handles[0],
+      handles[1],
+      handles[2],
+      handles[3]);
 
     return true;
   });

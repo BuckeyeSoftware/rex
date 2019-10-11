@@ -265,6 +265,57 @@ private:
   frame_timer m_timer;
 };
 
+struct draw_textures {
+  draw_textures();
+
+  template<typename T>
+  int add(T* _texture);
+
+  void* const* handles() const;
+  const char* specification() const;
+
+private:
+  void* m_handles[draw_command::k_max_textures];
+  char m_specification[draw_command::k_max_textures + 1];
+  int m_index;
+};
+
+inline draw_textures::draw_textures()
+  : m_specification{'\0'}
+  , m_index{0}
+{
+}
+
+template<typename T>
+inline int draw_textures::add(T* _texture) {
+  const int index{m_index};
+
+  m_handles[index] = static_cast<void*>(_texture);
+
+  if constexpr (traits::is_same<T, texture1D>) {
+    m_specification[index] = '1';
+  } else if constexpr (traits::is_same<T, texture2D>) {
+    m_specification[index] = '2';
+  } else if constexpr (traits::is_same<T, texture3D>) {
+    m_specification[index] = '3';
+  } else if constexpr (traits::is_same<T, textureCM>) {
+    m_specification[index] = 'c';
+  }
+
+  m_index++;
+  m_specification[m_index] = '\0';
+
+  return index;
+}
+
+inline void* const* draw_textures::handles() const {
+  return m_handles;
+}
+
+inline const char* draw_textures::specification() const {
+  return m_specification;
+}
+
 inline interface::device_info::device_info(memory::allocator* _allocator)
   : vendor{_allocator}
   , renderer{_allocator}
