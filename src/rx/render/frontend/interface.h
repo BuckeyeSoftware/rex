@@ -152,6 +152,20 @@ struct interface {
   bool process();
   bool swap();
 
+  buffer* cached_buffer(const string& _key);
+  target* cached_target(const string& _key);
+  texture1D* cached_texture1D(const string& _key);
+  texture2D* cached_texture2D(const string& _key);
+  texture3D* cached_texture3D(const string& _key);
+  textureCM* cached_textureCM(const string& _key);
+
+  void cache_buffer(buffer* _buffer, const string& _key);
+  void cache_target(target* _target, const string& _key);
+  void cache_texture(texture1D* _texture, const string& _key);
+  void cache_texture(texture2D* _texture, const string& _key);
+  void cache_texture(texture3D* _texture, const string& _key);
+  void cache_texture(textureCM* _texture, const string& _key);
+
   memory::allocator* allocator() const;
 
   struct statistics {
@@ -228,9 +242,14 @@ private:
   deferred_function<void()> m_deferred_process;
 
   // NOTE(dweiler): Must be after m_deferred_process.
-  map<string, technique> m_techniques;     // protected by |m_mutex|
+  map<string, technique> m_techniques;         // protected by |m_mutex|
 
-  rx_size m_resource_usage[resource::count()];
+  map<string, buffer*> m_cached_buffers;       // protected by |m_mutex|
+  map<string, target*> m_cached_targets;       // protected by |m_mutex|
+  map<string, texture1D*> m_cached_textures1D; // protected by |m_mutex|
+  map<string, texture2D*> m_cached_textures2D; // protected by |m_mutex|
+  map<string, texture3D*> m_cached_textures3D; // protected by |m_mutex|
+  map<string, textureCM*> m_cached_texturesCM; // protected by |m_mutex|
 
   concurrency::atomic<rx_size> m_draw_calls[2];
   concurrency::atomic<rx_size> m_clear_calls[2];
@@ -239,6 +258,8 @@ private:
   concurrency::atomic<rx_size> m_triangles[2];
   concurrency::atomic<rx_size> m_lines[2];
   concurrency::atomic<rx_size> m_points[2];
+
+  rx_size m_resource_usage[resource::count()];
 
   device_info m_device_info;
   frame_timer m_timer;

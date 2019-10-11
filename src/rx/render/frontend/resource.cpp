@@ -32,6 +32,7 @@ resource::resource(interface* _frontend, type _type)
   : m_frontend{_frontend}
   , m_resource_type{_type}
   , m_resource_usage{0}
+  , m_reference_count{1}
 {
   logger(log::level::k_verbose, "%p init %s", this, resource_type_to_string(m_resource_type));
 }

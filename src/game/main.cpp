@@ -11,6 +11,7 @@
 #include "rx/render/gbuffer.h"
 #include "rx/render/skybox.h"
 #include "rx/render/model.h"
+#include "rx/render/irradiance_map.h"
 
 #include "rx/math/camera.h"
 #include "rx/math/noise/perlin.h"
@@ -83,10 +84,10 @@ static void render_stats(const render::frontend::interface &_frontend, render::i
   }};
 
   auto render_stat{[&](const char *_label, const auto &_stats) {
-    const auto format{string::format("^w%s: ^[%x]%zu ^wof ^m%zu ^g%s",
-                                         _label, color_ratio(_stats.used, _stats.total), _stats.used, _stats.total,
-                                         string::human_size_format(_stats.memory))};
-
+    const auto format{string::format("^w%s: ^[%x]%zu ^wof ^m%zu ^g%s ^w(%zu cached)",
+                                      _label, color_ratio(_stats.used, _stats.total), _stats.used, _stats.total,
+                                      string::human_size_format(_stats.memory),
+                                      _stats.cached)};
     _immediate.frame_queue().record_text("Consolas-Regular", offset, 20, 1.0f,
                                          render::immediate2D::text_align::k_left, format, {1.0f, 1.0f, 1.0f, 1.0f});
     offset.y += 20;
@@ -349,7 +350,9 @@ struct test_game
     , m_immediate3D{&m_frontend}
     , m_skybox{&m_frontend}
     , m_model{&m_frontend}
+    , m_irradiance_map{&m_frontend, {256, 256}}
   {
+       model_xform.rotate = {0.0f, 90.0f, 0.0f};
     // m_camera.translate = {-1.0f, 60.0f, -1000.0f};
   }
 
@@ -357,6 +360,7 @@ struct test_game
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
     m_skybox.load("base/skyboxes/miramar/miramar.json5");
     m_model.load("base/models/chest/chest.json5");
+    m_irradiance_map.render(m_skybox);
     return true;
   }
 
@@ -465,9 +469,6 @@ struct test_game
       display_fullscreen->set((display_fullscreen->get() + 1) % 3);
     }
 
-    math::transform model_xform;
-    model_xform.rotate = {0.0f, 90.0f, 0.0f};
-
     render::frontend::state state;
     state.viewport.record_dimensions(display_resolution->get().cast<rx_size>());
 
@@ -489,6 +490,7 @@ struct test_game
       math::vec4f{0.0f, 0.0f, 1.0f, 1.0f}.data(),
       math::vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data());
 
+    model_xform.rotate += math::vec3f(0.0f, 20.0f, 0.0f) * m_frontend.timer().delta_time();
     m_model.render(m_gbuffer.target(), model_xform.to_mat4(), m_camera.view(), m_camera.projection);
     m_skybox.render(m_gbuffer.target(), m_camera.view(), m_camera.projection);
 
@@ -525,6 +527,8 @@ struct test_game
   render::immediate3D m_immediate3D;
   render::skybox m_skybox;
   render::model m_model;
+  render::irradiance_map m_irradiance_map;
+  math::transform model_xform;
 
   math::camera m_camera;
 };
