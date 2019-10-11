@@ -1142,7 +1142,7 @@ void gl4::process(rx_byte* _command) {
         {
           const auto render_target{resource->as_target};
           if (render_target->is_swapchain()) {
-            // swap chain targets don't have an user-defined attachments
+            // Swap chain targets don't have an user-defined attachments.
             break;
           }
 
@@ -1180,14 +1180,14 @@ void gl4::process(rx_byte* _command) {
                   target->fbo,
                   attachment_enum,
                   reinterpret_cast<detail_gl4::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
-                  0);
+                  static_cast<GLint>(attachment.level));
                 break;
               case frontend::target::attachment::type::k_textureCM:
                 pglNamedFramebufferTextureLayer(
                   target->fbo,
                   attachment_enum,
                   reinterpret_cast<detail_gl4::textureCM*>(attachment.as_textureCM.texture + 1)->tex,
-                  0,
+                  static_cast<GLint>(attachment.level),
                   static_cast<GLint>(attachment.as_textureCM.face));
                 break;
               }

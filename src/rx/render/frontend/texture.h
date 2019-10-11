@@ -98,6 +98,7 @@ struct texture
   bool is_stencil_format() const;
   bool is_depth_stencil_format() const;
   bool is_swapchain() const;
+  bool is_level_in_range(rx_size _level) const;
 
 protected:
   enum : rx_u8 {
@@ -118,8 +119,6 @@ protected:
   filter_options m_filter;
   rx_u16 m_flags;
   rx_size m_levels;
-
-  bool is_level_in_range(rx_size _level) const;
 };
 
 struct texture1D : texture {
@@ -317,6 +316,10 @@ inline bool texture::is_swapchain() const {
   return m_flags & k_swapchain;
 }
 
+inline bool texture::is_level_in_range(rx_size _level) const {
+  return _level < m_levels;
+}
+
 inline rx_f32 texture::byte_size_of_format(data_format _format) {
   switch (_format) {
   case data_format::k_rgba_u8:
@@ -391,10 +394,6 @@ inline rx_size texture::channel_count_of_format(data_format _format) {
     return 4;
   }
   return 0;
-}
-
-inline bool texture::is_level_in_range(rx_size _level) const {
-  return _level <= m_levels;
 }
 
 // texture1D

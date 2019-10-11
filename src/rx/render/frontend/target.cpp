@@ -159,9 +159,11 @@ void target::attach_stencil(texture2D* _stencil) {
   update_resource_usage();
 }
 
-void target::attach_texture(texture2D* _texture) {
+void target::attach_texture(texture2D* _texture, rx_size _level) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
-  RX_ASSERT(_texture->kind() == texture::type::k_attachment, "not attachable texture");
+  RX_ASSERT(_texture->kind() == texture::type::k_attachment,
+    "not attachable texture");
+  RX_ASSERT(_texture->is_level_in_range(_level), "level out of bounds");
 
   if (m_flags & k_dimensions) {
     RX_ASSERT(_texture->dimensions() == m_dimensions, "invalid dimensions");
@@ -181,16 +183,18 @@ void target::attach_texture(texture2D* _texture) {
 
   attachment new_attachment;
   new_attachment.kind = attachment::type::k_texture2D;
+  new_attachment.level = _level;
   new_attachment.as_texture2D.texture = _texture;
   m_attachments.push_back(new_attachment);
 
   update_resource_usage();
 }
 
-void target::attach_texture(textureCM* _texture, textureCM::face _face) {
+void target::attach_texture(textureCM* _texture, textureCM::face _face, rx_size _level) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
   RX_ASSERT(_texture->kind() == texture::type::k_attachment,
     "not attachable texture");
+  RX_ASSERT(_texture->is_level_in_range(_level), "level out of bounds");
 
   if (m_flags & k_dimensions) {
     RX_ASSERT(_texture->dimensions() == m_dimensions, "invalid dimensions");
@@ -213,6 +217,7 @@ void target::attach_texture(textureCM* _texture, textureCM::face _face) {
 
   attachment new_attachment;
   new_attachment.kind = attachment::type::k_textureCM;
+  new_attachment.level = _level;
   new_attachment.as_textureCM.texture = _texture;
   new_attachment.as_textureCM.face = _face;
   m_attachments.push_back(new_attachment);
@@ -233,7 +238,7 @@ void target::validate() const {
 }
 
 void target::update_resource_usage() {
-  const auto rt_usage{[](const auto* _texture){
+  const auto rt_usage{[](const auto* _texture) {
     return _texture->dimensions().area() * texture::byte_size_of_format(_texture->format());
   }};
 

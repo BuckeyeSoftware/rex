@@ -62,9 +62,9 @@ void gbuffer::create(const math::vec2z& _resolution) {
 
   m_target = m_frontend->create_target(RX_RENDER_TAG("gbuffer"));
   m_target->request_depth_stencil(frontend::texture::data_format::k_d24_s8, _resolution);
-  m_target->attach_texture(m_albedo_texture);
-  m_target->attach_texture(m_normal_texture);
-  m_target->attach_texture(m_emission_texture);
+  m_target->attach_texture(m_albedo_texture, 0);
+  m_target->attach_texture(m_normal_texture, 0);
+  m_target->attach_texture(m_emission_texture, 0);
   m_frontend->initialize_target(RX_RENDER_TAG("gbuffer"), m_target);
 }
 

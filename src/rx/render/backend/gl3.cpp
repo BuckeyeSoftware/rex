@@ -1189,7 +1189,7 @@ void gl3::process(rx_byte* _command) {
                 attachment_enum,
                 GL_TEXTURE_2D,
                 reinterpret_cast<detail_gl3::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
-                0);
+                static_cast<GLint>(attachment.level));
               break;
             case frontend::target::attachment::type::k_textureCM:
               pglFramebufferTexture2D(
@@ -1197,7 +1197,7 @@ void gl3::process(rx_byte* _command) {
                 attachment_enum,
                 GL_TEXTURE_CUBE_MAP_POSITIVE_X + static_cast<GLenum>(attachment.as_textureCM.face),
                 reinterpret_cast<detail_gl3::textureCM*>(attachment.as_textureCM.texture + 1)->tex,
-                0);
+                static_cast<GLint>(attachment.level));
               break;
             }
           }

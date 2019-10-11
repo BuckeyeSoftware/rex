@@ -99,7 +99,7 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   initialize_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 
   m_swapchain_target = create_target(RX_RENDER_TAG("swapchain"));
-  m_swapchain_target->attach_texture(m_swapchain_texture);
+  m_swapchain_target->attach_texture(m_swapchain_texture, 0);
   m_swapchain_target->m_flags |= target::k_swapchain;
   initialize_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
 }
