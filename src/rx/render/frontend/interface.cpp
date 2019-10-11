@@ -94,6 +94,7 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   m_swapchain_texture->record_wrap({
     texture::wrap_type::k_clamp_to_edge,
     texture::wrap_type::k_clamp_to_edge});
+  m_swapchain_texture->m_flags |= texture::k_swapchain;
   initialize_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 
   m_swapchain_target = create_target(RX_RENDER_TAG("swapchain"));

@@ -100,6 +100,7 @@ struct texture
   bool is_depth_format() const;
   bool is_stencil_format() const;
   bool is_depth_stencil_format() const;
+  bool is_swapchain() const;
 
 protected:
   enum : rx_u8 {
@@ -107,14 +108,17 @@ protected:
     k_type       = 1 << 1,
     k_filter     = 1 << 2,
     k_wrap       = 1 << 3,
-    k_dimensions = 1 << 4
+    k_dimensions = 1 << 4,
+    k_swapchain  = 1 << 5
   };
+
+  friend struct interface;
 
   vector<rx_byte> m_data;
   data_format m_format;
   type m_type;
   filter_options m_filter;
-  rx_u16 m_recorded;
+  rx_u16 m_flags;
 };
 
 struct texture1D : texture {
@@ -308,6 +312,10 @@ inline bool texture::is_depth_stencil_format() const {
   return is_depth_stencil_format(m_format);
 }
 
+inline bool texture::is_swapchain() const {
+  return m_flags & k_swapchain;
+}
+
 inline rx_f32 texture::byte_size_of_format(data_format _format) {
   switch (_format) {
   case data_format::k_rgba_u8:
@@ -394,8 +402,8 @@ inline const texture1D::wrap_options& texture1D::wrap() const & {
 }
 
 inline rx_size texture1D::levels() const {
-  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
+  RX_ASSERT(m_flags & k_dimensions, "dimensions not recorded");
+  RX_ASSERT(m_flags & k_format, "format not recorded");
 
   if (m_filter.mipmaps) {
     const auto count{math::log2(m_dimensions) + 1};
@@ -419,8 +427,8 @@ inline const texture2D::wrap_options& texture2D::wrap() const & {
 }
 
 inline rx_size texture2D::levels() const {
-  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
+  RX_ASSERT(m_flags & k_dimensions, "dimensions not recorded");
+  RX_ASSERT(m_flags & k_format, "format not recorded");
 
   if (m_filter.mipmaps) {
     const auto count{math::log2(m_dimensions.max_element()) + 1};
@@ -444,8 +452,8 @@ inline const texture3D::wrap_options& texture3D::wrap() const & {
 }
 
 inline rx_size texture3D::levels() const {
-  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
+  RX_ASSERT(m_flags & k_dimensions, "dimensions not recorded");
+  RX_ASSERT(m_flags & k_format, "format not recorded");
 
   if (m_filter.mipmaps) {
     const auto count{math::log2(m_dimensions.max_element()) + 1};
@@ -469,8 +477,8 @@ inline const textureCM::wrap_options& textureCM::wrap() const & {
 }
 
 inline rx_size textureCM::levels() const {
-  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
+  RX_ASSERT(m_flags & k_dimensions, "dimensions not recorded");
+  RX_ASSERT(m_flags & k_format, "format not recorded");
 
   if (m_filter.mipmaps) {
     const auto count{math::log2(m_dimensions.max_element()) + 1};

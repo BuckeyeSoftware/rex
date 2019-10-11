@@ -1024,6 +1024,9 @@ void gl4::process(rx_byte* _command) {
         utility::construct<detail_gl4::texture1D>(resource->as_texture1D + 1);
         break;
       case frontend::resource_command::type::k_texture2D:
+        if (resource->as_texture2D->is_swapchain()) {
+          break;
+        }
         utility::construct<detail_gl4::texture2D>(resource->as_texture2D + 1);
         break;
       case frontend::resource_command::type::k_texture3D:
@@ -1056,6 +1059,9 @@ void gl4::process(rx_byte* _command) {
         utility::destruct<detail_gl4::texture1D>(resource->as_texture1D + 1);
         break;
       case frontend::resource_command::type::k_texture2D:
+        if (resource->as_texture2D->is_swapchain()) {
+          break;
+        }
         state->invalidate_texture(resource->as_texture2D);
         utility::destruct<detail_gl4::texture2D>(resource->as_texture2D + 1);
         break;
@@ -1299,6 +1305,10 @@ void gl4::process(rx_byte* _command) {
       case frontend::resource_command::type::k_texture2D:
         {
           const auto render_texture{resource->as_texture2D};
+          if (render_texture->is_swapchain()) {
+            break;
+          }
+
           const auto texture{reinterpret_cast<const detail_gl4::texture2D*>(render_texture + 1)};
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};

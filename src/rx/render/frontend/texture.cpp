@@ -7,37 +7,37 @@ namespace rx::render::frontend {
 
 texture::texture(interface* _frontend, resource::type _type)
   : resource{_frontend, _type}
-  , m_recorded{0}
+  , m_flags{0}
 {
 }
 
 void texture::record_format(data_format _format) {
-  RX_ASSERT(!(m_recorded & k_format), "format already recorded");
+  RX_ASSERT(!(m_flags & k_format), "format already recorded");
 
   m_format = _format;
-  m_recorded |= k_format;
+  m_flags |= k_format;
 }
 
 void texture::record_type(type _type) {
-  RX_ASSERT(!(m_recorded & k_type), "type already recorded");
+  RX_ASSERT(!(m_flags & k_type), "type already recorded");
 
   m_type = _type;
-  m_recorded |= k_type;
+  m_flags |= k_type;
 }
 
 void texture::record_filter(const filter_options& _options) {
-  RX_ASSERT(!(m_recorded & k_filter), "filter already recorded");
+  RX_ASSERT(!(m_flags & k_filter), "filter already recorded");
 
   m_filter = _options;
-  m_recorded |= k_filter;
+  m_flags |= k_filter;
 }
 
 void texture::validate() const {
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
-  RX_ASSERT(m_recorded & k_type, "type not recorded");
-  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
-  RX_ASSERT(m_recorded & k_wrap, "wrap not recorded");
-  RX_ASSERT(m_recorded & k_dimensions, "dimensions not recorded");
+  RX_ASSERT(m_flags & k_format, "format not recorded");
+  RX_ASSERT(m_flags & k_type, "type not recorded");
+  RX_ASSERT(m_flags & k_filter, "filter not recorded");
+  RX_ASSERT(m_flags & k_wrap, "wrap not recorded");
+  RX_ASSERT(m_flags & k_dimensions, "dimensions not recorded");
 }
 
 // texture1D
@@ -66,16 +66,16 @@ rx_byte* texture1D::map(rx_size _level) {
 }
 
 void texture1D::record_dimensions(const dimension_type& _dimensions) {
-  RX_ASSERT(!(m_recorded & k_dimensions), "dimensions already recorded");
+  RX_ASSERT(!(m_flags & k_dimensions), "dimensions already recorded");
 
-  RX_ASSERT(m_recorded & k_type, "type not recorded");
-  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
+  RX_ASSERT(m_flags & k_type, "type not recorded");
+  RX_ASSERT(m_flags & k_filter, "filter not recorded");
+  RX_ASSERT(m_flags & k_format, "format not recorded");
 
   RX_ASSERT(!is_compressed_format(), "1D textures cannot be compressed");
 
   m_dimensions = _dimensions;
-  m_recorded |= k_dimensions;
+  m_flags |= k_dimensions;
 
   if (m_type != type::k_attachment) {
     dimension_type dimensions{m_dimensions};
@@ -94,10 +94,10 @@ void texture1D::record_dimensions(const dimension_type& _dimensions) {
 }
 
 void texture1D::record_wrap(const wrap_options& _wrap) {
-  RX_ASSERT(!(m_recorded & k_wrap), "wrap already recorded");
+  RX_ASSERT(!(m_flags & k_wrap), "wrap already recorded");
 
   m_wrap = _wrap;
-  m_recorded |= k_wrap;
+  m_flags |= k_wrap;
 }
 
 // texture2D
@@ -126,11 +126,11 @@ rx_byte* texture2D::map(rx_size _level) {
 }
 
 void texture2D::record_dimensions(const math::vec2z& _dimensions) {
-  RX_ASSERT(!(m_recorded & k_dimensions), "dimensions already recorded");
+  RX_ASSERT(!(m_flags & k_dimensions), "dimensions already recorded");
 
-  RX_ASSERT(m_recorded & k_type, "type not recorded");
-  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
+  RX_ASSERT(m_flags & k_type, "type not recorded");
+  RX_ASSERT(m_flags & k_filter, "filter not recorded");
+  RX_ASSERT(m_flags & k_format, "format not recorded");
 
   if (is_compressed_format()) {
     RX_ASSERT(_dimensions.w >= 4 && _dimensions.h >= 4,
@@ -138,7 +138,7 @@ void texture2D::record_dimensions(const math::vec2z& _dimensions) {
   }
 
   m_dimensions = _dimensions;
-  m_recorded |= k_dimensions;
+  m_flags |= k_dimensions;
 
   if (m_type != type::k_attachment) {
     dimension_type dimensions{m_dimensions};
@@ -159,10 +159,10 @@ void texture2D::record_dimensions(const math::vec2z& _dimensions) {
 }
 
 void texture2D::record_wrap(const wrap_options& _wrap) {
-  RX_ASSERT(!(m_recorded & k_wrap), "wrap already recorded");
+  RX_ASSERT(!(m_flags & k_wrap), "wrap already recorded");
 
   m_wrap = _wrap;
-  m_recorded |= k_wrap;
+  m_flags |= k_wrap;
 }
 
 // texture3D
@@ -191,16 +191,16 @@ rx_byte* texture3D::map(rx_size _level) {
 }
 
 void texture3D::record_dimensions(const math::vec3z& _dimensions) {
-  RX_ASSERT(!(m_recorded & k_dimensions), "dimensions already recorded");
+  RX_ASSERT(!(m_flags & k_dimensions), "dimensions already recorded");
 
-  RX_ASSERT(m_recorded & k_type, "type not recorded");
-  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
+  RX_ASSERT(m_flags & k_type, "type not recorded");
+  RX_ASSERT(m_flags & k_filter, "filter not recorded");
+  RX_ASSERT(m_flags & k_format, "format not recorded");
 
   RX_ASSERT(!is_compressed_format(), "3D textures cannot be compressed");
 
   m_dimensions = _dimensions;
-  m_recorded |= k_dimensions;
+  m_flags |= k_dimensions;
 
   if (m_type != type::k_attachment) {
     dimension_type dimensions{m_dimensions};
@@ -221,10 +221,10 @@ void texture3D::record_dimensions(const math::vec3z& _dimensions) {
 }
 
 void texture3D::record_wrap(const wrap_options& _wrap) {
-  RX_ASSERT(!(m_recorded & k_wrap), "wrap already recorded");
+  RX_ASSERT(!(m_flags & k_wrap), "wrap already recorded");
 
   m_wrap = _wrap;
-  m_recorded |= k_wrap;
+  m_flags |= k_wrap;
 }
 
 // textureCM
@@ -255,11 +255,11 @@ rx_byte* textureCM::map(rx_size _level, face _face) {
 }
 
 void textureCM::record_dimensions(const math::vec2z& _dimensions) {
-  RX_ASSERT(!(m_recorded & k_dimensions), "dimensions already recorded");
+  RX_ASSERT(!(m_flags & k_dimensions), "dimensions already recorded");
 
-  RX_ASSERT(m_recorded & k_type, "type not recorded");
-  RX_ASSERT(m_recorded & k_filter, "filter not recorded");
-  RX_ASSERT(m_recorded & k_format, "format not recorded");
+  RX_ASSERT(m_flags & k_type, "type not recorded");
+  RX_ASSERT(m_flags & k_filter, "filter not recorded");
+  RX_ASSERT(m_flags & k_format, "format not recorded");
 
   if (is_compressed_format()) {
     RX_ASSERT(_dimensions.w >= 4 && _dimensions.h >= 4,
@@ -267,7 +267,7 @@ void textureCM::record_dimensions(const math::vec2z& _dimensions) {
   }
 
   m_dimensions = _dimensions;
-  m_recorded |= k_dimensions;
+  m_flags |= k_dimensions;
 
   if (m_type != type::k_attachment) {
     dimension_type dimensions{m_dimensions};
@@ -288,10 +288,10 @@ void textureCM::record_dimensions(const math::vec2z& _dimensions) {
 }
 
 void textureCM::record_wrap(const wrap_options& _wrap) {
-  RX_ASSERT(!(m_recorded & k_wrap), "wrap already recorded");
+  RX_ASSERT(!(m_flags & k_wrap), "wrap already recorded");
 
   m_wrap = _wrap;
-  m_recorded |= k_wrap;
+  m_flags |= k_wrap;
 }
 
 } // namespace rx::render::frontend
