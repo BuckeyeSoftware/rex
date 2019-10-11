@@ -88,10 +88,6 @@ bool material::load(rx::material::loader&& loader_) {
     const auto& wrap{texture_.wrap()};
 
     texture2D* texture{m_frontend->create_texture2D(RX_RENDER_TAG("material"))};
-    texture->record_type(texture::type::k_static);
-    texture->record_filter({filter.bilinear, filter.trilinear, filter.mipmaps});
-    texture->record_wrap(convert_material_wrap(wrap));
-
     switch (chain.format()) {
     case rx::texture::chain::pixel_format::k_rgba_u8:
       texture->record_format(texture::data_format::k_rgba_u8);
@@ -110,7 +106,11 @@ bool material::load(rx::material::loader&& loader_) {
       break;
     }
 
+    texture->record_type(texture::type::k_static);
+    texture->record_levels(chain.levels().size());
     texture->record_dimensions(chain.dimensions());
+    texture->record_filter({filter.bilinear, filter.trilinear, filter.mipmaps});
+    texture->record_wrap(convert_material_wrap(wrap));
 
     const auto& levels{chain.levels()};
     for (rx_size i{0}; i < levels.size(); i++) {

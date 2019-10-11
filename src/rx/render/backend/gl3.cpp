@@ -1255,10 +1255,8 @@ void gl3::process(rx_byte* _command) {
       case frontend::resource_command::type::k_texture1D:
         {
           const auto render_texture{resource->as_texture1D};
-          // const auto texture{reinterpret_cast<const detail_gl3::texture1D*>(render_texture + 1)};
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap)};
-          const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{render_texture->filter()};
           const auto& data{render_texture->data()};
@@ -1271,35 +1269,22 @@ void gl3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, levels - 1);
 
-          if (data.is_empty()) {
-            pglTexImage1D(
-              GL_TEXTURE_1D,
-              0,
-              convert_texture_data_format(format),
-              static_cast<GLsizei>(dimensions),
-              0,
-              convert_texture_format(format),
-              convert_texture_data_type(format),
-              nullptr);
-          } else {
-            for (GLint i{0}; i < levels; i++) {
-              const auto level_info{render_texture->info_for_level(i)};
-              if (render_texture->is_compressed_format()) {
-                // TODO(dweiler): do
-                // pglTexCompressedImage1D
-              } else {
-                pglTexImage1D(
-                  GL_TEXTURE_1D,
-                  i,
-                  convert_texture_data_format(format),
-                  static_cast<GLsizei>(level_info.dimensions),
-                  0,
-                  convert_texture_format(format),
-                  convert_texture_data_type(format),
-                  data.data() + level_info.offset);
-              }
+          for (GLint i{0}; i < levels; i++) {
+            const auto level_info{render_texture->info_for_level(i)};
+            if (render_texture->is_compressed_format()) {
+              // TODO(dweiler): implement
+            } else {
+              pglTexImage1D(
+                GL_TEXTURE_1D,
+                i,
+                convert_texture_data_format(format),
+                static_cast<GLsizei>(level_info.dimensions),
+                0,
+                convert_texture_format(format),
+                convert_texture_data_type(format),
+                data.is_empty() ? nullptr : data.data() + level_info.offset);
             }
           }
         }
@@ -1310,7 +1295,7 @@ void gl3::process(rx_byte* _command) {
           if (render_texture->is_swapchain()) {
             break;
           }
-          // const auto texture{reinterpret_cast<const detail_gl3::texture2D*>(render_texture + 1)};
+
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
@@ -1328,37 +1313,23 @@ void gl3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levels - 1);
 
-          if (data.is_empty()) {
-            pglTexImage2D(
-              GL_TEXTURE_2D,
-              0,
-              convert_texture_data_format(format),
-              static_cast<GLsizei>(dimensions.w),
-              static_cast<GLsizei>(dimensions.h),
-              0,
-              convert_texture_format(format),
-              convert_texture_data_type(format),
-              nullptr);
-          } else {
-            for (GLint i{0}; i < levels; i++) {
-              const auto level_info{render_texture->info_for_level(i)};
-              if (render_texture->is_compressed_format()) {
-                // TODO(dweiler): do
-                // pglTexCompressedImage2D
-              } else {
-                pglTexImage2D(
-                  GL_TEXTURE_2D,
-                  i,
-                  convert_texture_data_format(format),
-                  static_cast<GLsizei>(level_info.dimensions.w),
-                  static_cast<GLsizei>(level_info.dimensions.h),
-                  0,
-                  convert_texture_format(format),
-                  convert_texture_data_type(format),
-                  data.data() + level_info.offset);
-              }
+          for (GLint i{0}; i < levels; i++) {
+            const auto level_info{render_texture->info_for_level(i)};
+            if (render_texture->is_compressed_format()) {
+              // TODO(dweiler): implement
+            } else {
+              pglTexImage2D(
+                GL_TEXTURE_2D,
+                i,
+                convert_texture_data_format(format),
+                static_cast<GLsizei>(level_info.dimensions.w),
+                static_cast<GLsizei>(level_info.dimensions.h),
+                0,
+                convert_texture_format(format),
+                convert_texture_data_type(format),
+                data.is_empty() ? nullptr : data.data() + level_info.offset);
             }
           }
         }
@@ -1366,7 +1337,6 @@ void gl3::process(rx_byte* _command) {
       case frontend::resource_command::type::k_texture3D:
         {
           const auto render_texture{resource->as_texture3D};
-          // const auto texture{reinterpret_cast<const detail_gl3::texture3D*>(render_texture + 1)};
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
@@ -1386,39 +1356,24 @@ void gl3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, wrap_t);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, wrap_r);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, levels - 1);
 
-          if (data.is_empty()) {
-            pglTexImage3D(
-              GL_TEXTURE_3D,
-              0,
-              convert_texture_data_format(format),
-              static_cast<GLsizei>(dimensions.w),
-              static_cast<GLsizei>(dimensions.h),
-              static_cast<GLsizei>(dimensions.d),
-              0,
-              convert_texture_format(format),
-              convert_texture_data_type(format),
-              nullptr);
-          } else {
-            for (GLint i{0}; i < levels; i++) {
-              const auto level_info{render_texture->info_for_level(i)};
-              if (render_texture->is_compressed_format()) {
-                // TODO(dweiler): do
-                // pglTexCompressedImage3D
-              } else {
-                pglTexImage3D(
-                  GL_TEXTURE_3D,
-                  i,
-                  convert_texture_data_format(format),
-                  static_cast<GLsizei>(level_info.dimensions.w),
-                  static_cast<GLsizei>(level_info.dimensions.h),
-                  static_cast<GLsizei>(level_info.dimensions.d),
-                  0,
-                  convert_texture_format(format),
-                  convert_texture_data_type(format),
-                  data.data() + level_info.offset);
-              }
+          for (GLint i{0}; i < levels; i++) {
+            const auto level_info{render_texture->info_for_level(i)};
+            if (render_texture->is_compressed_format()) {
+              // TODO(dweiler): implement
+            } else {
+              pglTexImage3D(
+                GL_TEXTURE_3D,
+                i,
+                convert_texture_data_format(format),
+                static_cast<GLsizei>(level_info.dimensions.w),
+                static_cast<GLsizei>(level_info.dimensions.h),
+                static_cast<GLsizei>(level_info.dimensions.d),
+                0,
+                convert_texture_format(format),
+                convert_texture_data_type(format),
+                data.is_empty() ? nullptr : data.data() + level_info.offset);
             }
           }
         }
@@ -1443,40 +1398,24 @@ void gl3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, wrap_t);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, levels - 1);
 
-          if (data.is_empty()) {
+          for (GLint i{0}; i < levels; i++) {
+            const auto level_info{render_texture->info_for_level(i)};
             for (GLint j{0}; j < 6; j++) {
-              pglTexImage2D(
-                GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
-                0,
-                convert_texture_data_format(format),
-                static_cast<GLsizei>(dimensions.w),
-                static_cast<GLsizei>(dimensions.h),
-                0,
-                convert_texture_format(format),
-                convert_texture_data_type(format),
-                nullptr);
-            }
-          } else {
-            for (GLint i{0}; i < levels; i++) {
-              const auto level_info{render_texture->info_for_level(i)};
-              for (GLint j{0}; j < 6; j++) {
-                if (render_texture->is_compressed_format()) {
-                  // TODO(dweiler): do
-                  // pglTexCompressedImage2D
-                } else {
-                  pglTexImage2D(
-                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
-                    i,
-                    convert_texture_data_format(format),
-                    static_cast<GLsizei>(level_info.dimensions.w),
-                    static_cast<GLsizei>(level_info.dimensions.h),
-                    0,
-                    convert_texture_format(format),
-                    convert_texture_data_type(format),
-                    data.data() + level_info.offset + level_info.size / 6 * j);
-                }
+              if (render_texture->is_compressed_format()) {
+                // TODO(dweiler): implement
+              } else {
+                pglTexImage2D(
+                  GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
+                  i,
+                  convert_texture_data_format(format),
+                  static_cast<GLsizei>(level_info.dimensions.w),
+                  static_cast<GLsizei>(level_info.dimensions.h),
+                  0,
+                  convert_texture_format(format),
+                  convert_texture_data_type(format),
+                  data.is_empty() ? nullptr : data.data() + level_info.offset + level_info.size / 6 * j);
               }
             }
           }

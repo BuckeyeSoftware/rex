@@ -19,10 +19,11 @@ irradiance_map::irradiance_map(frontend::interface* _frontend,
   , m_target{m_frontend->create_target(RX_RENDER_TAG("irradiance map"))}
   , m_texture{m_frontend->create_textureCM(RX_RENDER_TAG("irradiance map"))}
 {
-  m_texture->record_type(frontend::texture::type::k_attachment);
-  m_texture->record_filter({false, false, false});
   m_texture->record_format(frontend::texture::data_format::k_rgba_u8);
+  m_texture->record_type(frontend::texture::type::k_attachment);
+  m_texture->record_levels(1);
   m_texture->record_dimensions(_dimensions);
+  m_texture->record_filter({false, false, false});
   m_texture->record_wrap({
     frontend::texture::wrap_type::k_clamp_to_edge,
     frontend::texture::wrap_type::k_clamp_to_edge});

@@ -72,14 +72,10 @@ struct texture
   // get channel count of |_format|
   static rx_size channel_count_of_format(data_format _format);
 
-  // record format |_format|
   void record_format(data_format _format);
-
-  // record type |_type|
   void record_type(type _type);
-
-  // record filter options |_options|
   void record_filter(const filter_options& _options);
+  void record_levels(rx_size _levels); // the number of levels including the base level
 
   void validate() const;
 
@@ -88,6 +84,7 @@ struct texture
   filter_options filter() const;
   rx_size channels() const;
   type kind() const;
+  rx_size levels() const;
 
   static bool is_compressed_format(data_format _format);
   static bool is_color_format(data_format _format);
@@ -109,7 +106,8 @@ protected:
     k_filter     = 1 << 2,
     k_wrap       = 1 << 3,
     k_dimensions = 1 << 4,
-    k_swapchain  = 1 << 5
+    k_swapchain  = 1 << 5,
+    k_levels     = 1 << 6
   };
 
   friend struct interface;
@@ -119,6 +117,9 @@ protected:
   type m_type;
   filter_options m_filter;
   rx_u16 m_flags;
+  rx_size m_levels;
+
+  bool is_level_in_range(rx_size _level) const;
 };
 
 struct texture1D : texture {
@@ -139,13 +140,12 @@ struct texture1D : texture {
 
   const dimension_type& dimensions() const &;
   const wrap_options& wrap() const &;
-  rx_size levels() const;
   const level_info<dimension_type>& info_for_level(rx_size _index) const &;
 
 private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
-  vector<level_info<dimension_type>> m_levels;
+  vector<level_info<dimension_type>> m_level_info;
 };
 
 struct texture2D : texture {
@@ -166,7 +166,6 @@ struct texture2D : texture {
 
   const dimension_type& dimensions() const &;
   const wrap_options& wrap() const &;
-  rx_size levels() const;
   const level_info<dimension_type>& info_for_level(rx_size _index) const &;
 
 private:
@@ -174,7 +173,7 @@ private:
 
   dimension_type m_dimensions;
   wrap_options m_wrap;
-  vector<level_info<dimension_type>> m_levels;
+  vector<level_info<dimension_type>> m_level_info;
 };
 
 struct texture3D : texture {
@@ -195,13 +194,12 @@ struct texture3D : texture {
 
   const dimension_type& dimensions() const &;
   const wrap_options& wrap() const &;
-  rx_size levels() const;
   const level_info<dimension_type>& info_for_level(rx_size _index) const &;
 
 private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
-  vector<level_info<dimension_type>> m_levels;
+  vector<level_info<dimension_type>> m_level_info;
 };
 
 struct textureCM : texture {
@@ -231,13 +229,12 @@ struct textureCM : texture {
 
   const dimension_type& dimensions() const &;
   const wrap_options& wrap() const &;
-  rx_size levels() const;
   const level_info<dimension_type>& info_for_level(rx_size _index) const &;
 
 private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
-  vector<level_info<dimension_type>> m_levels;
+  vector<level_info<dimension_type>> m_level_info;
 };
 
 // texture
@@ -259,6 +256,10 @@ inline rx_size texture::channels() const {
 
 inline texture::type texture::kind() const {
   return m_type;
+}
+
+inline rx_size texture::levels() const {
+  return m_levels;
 }
 
 inline bool texture::is_color_format(data_format _format) {
@@ -392,6 +393,10 @@ inline rx_size texture::channel_count_of_format(data_format _format) {
   return 0;
 }
 
+inline bool texture::is_level_in_range(rx_size _level) const {
+  return _level <= m_levels;
+}
+
 // texture1D
 inline const texture1D::dimension_type& texture1D::dimensions() const & {
   return m_dimensions;
@@ -401,20 +406,9 @@ inline const texture1D::wrap_options& texture1D::wrap() const & {
   return m_wrap;
 }
 
-inline rx_size texture1D::levels() const {
-  RX_ASSERT(m_flags & k_dimensions, "dimensions not recorded");
-  RX_ASSERT(m_flags & k_format, "format not recorded");
-
-  if (m_filter.mipmaps) {
-    const auto count{math::log2(m_dimensions) + 1};
-    return is_compressed_format() ? count - 2 : count;
-  }
-  return 1;
-}
-
 inline const texture::level_info<texture1D::dimension_type>&
 texture1D::info_for_level(rx_size _index) const & {
-  return m_levels[_index];
+  return m_level_info[_index];
 }
 
 // texture2D
@@ -426,20 +420,9 @@ inline const texture2D::wrap_options& texture2D::wrap() const & {
   return m_wrap;
 }
 
-inline rx_size texture2D::levels() const {
-  RX_ASSERT(m_flags & k_dimensions, "dimensions not recorded");
-  RX_ASSERT(m_flags & k_format, "format not recorded");
-
-  if (m_filter.mipmaps) {
-    const auto count{math::log2(m_dimensions.max_element()) + 1};
-    return is_compressed_format() ? count - 2 : count;
-  }
-  return 1;
-}
-
 inline const texture::level_info<texture2D::dimension_type>&
 texture2D::info_for_level(rx_size _index) const & {
-  return m_levels[_index];
+  return m_level_info[_index];
 }
 
 // texture3D
@@ -451,20 +434,9 @@ inline const texture3D::wrap_options& texture3D::wrap() const & {
   return m_wrap;
 }
 
-inline rx_size texture3D::levels() const {
-  RX_ASSERT(m_flags & k_dimensions, "dimensions not recorded");
-  RX_ASSERT(m_flags & k_format, "format not recorded");
-
-  if (m_filter.mipmaps) {
-    const auto count{math::log2(m_dimensions.max_element()) + 1};
-    return is_compressed_format() ? count - 2 : count;
-  }
-  return 1;
-}
-
 inline const texture::level_info<texture3D::dimension_type>&
 texture3D::info_for_level(rx_size _index) const & {
-  return m_levels[_index];
+  return m_level_info[_index];
 }
 
 // textureCM
@@ -476,20 +448,9 @@ inline const textureCM::wrap_options& textureCM::wrap() const & {
   return m_wrap;
 }
 
-inline rx_size textureCM::levels() const {
-  RX_ASSERT(m_flags & k_dimensions, "dimensions not recorded");
-  RX_ASSERT(m_flags & k_format, "format not recorded");
-
-  if (m_filter.mipmaps) {
-    const auto count{math::log2(m_dimensions.max_element()) + 1};
-    return is_compressed_format() ? count - 2 : count;
-  }
-  return 1;
-}
-
 inline const texture::level_info<textureCM::dimension_type>&
 textureCM::info_for_level(rx_size _index) const & {
-  return m_levels[_index];
+  return m_level_info[_index];
 }
 
 } // namespace rx::render::frontend

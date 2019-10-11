@@ -1269,7 +1269,8 @@ void gl4::process(rx_byte* _command) {
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
+
           pglTextureStorage1D(
             texture->tex,
             levels,
@@ -1329,7 +1330,7 @@ void gl4::process(rx_byte* _command) {
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
           pglTextureStorage2D(
             texture->tex,
             levels,
@@ -1392,7 +1393,7 @@ void gl4::process(rx_byte* _command) {
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_R, wrap_r);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
           pglTextureStorage3D(
             texture->tex,
             levels,
@@ -1458,7 +1459,7 @@ void gl4::process(rx_byte* _command) {
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
           pglTextureStorage2D(
             texture->tex,
             levels,

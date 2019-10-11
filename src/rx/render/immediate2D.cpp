@@ -272,8 +272,9 @@ immediate2D::font::font(const key& _key, frontend::interface* _frontend)
         m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("font"));
         m_texture->record_format(frontend::texture::data_format::k_r_u8);
         m_texture->record_type(frontend::texture::type::k_static);
-        m_texture->record_filter({true, false, true});
+        m_texture->record_levels(chain.levels().size());
         m_texture->record_dimensions({m_resolution, m_resolution});
+        m_texture->record_filter({true, false, true});
         m_texture->record_wrap({
           frontend::texture::wrap_type::k_clamp_to_edge,
           frontend::texture::wrap_type::k_clamp_to_edge});

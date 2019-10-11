@@ -103,6 +103,7 @@ void target::request_depth_stencil(texture::data_format _format, const math::vec
   m_depth_stencil_texture->record_format(_format);
   m_depth_stencil_texture->record_type(texture::type::k_attachment);
   m_depth_stencil_texture->record_filter({false, false, false});
+  m_depth_stencil_texture->record_levels(1);
   m_depth_stencil_texture->record_dimensions(_dimensions);
   m_depth_stencil_texture->record_wrap({
     texture::wrap_type::k_clamp_to_edge,
