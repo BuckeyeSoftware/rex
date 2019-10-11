@@ -553,6 +553,7 @@ bool interface::process() {
   // consume all commands
   if (m_backend) {
     m_backend->process(m_commands);
+    m_commands.clear();
   }
 
   // cleanup unreferenced resources
@@ -585,6 +586,7 @@ bool interface::process() {
   });
 
   // clear lists
+  m_backend->process(m_commands);
   m_commands.clear();
 
   m_destroy_buffers.clear();
