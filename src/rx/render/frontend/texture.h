@@ -203,7 +203,7 @@ private:
 
 struct textureCM : texture {
   using dimension_type = math::vec2z;
-  using wrap_options = math::vec2<wrap_type>;
+  using wrap_options = math::vec3<wrap_type>;
 
   enum class face : rx_u8 {
     k_right,  // +x

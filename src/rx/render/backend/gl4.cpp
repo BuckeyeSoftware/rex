@@ -1443,6 +1443,7 @@ void gl4::process(rx_byte* _command) {
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
+          const auto wrap_p{convert_texture_wrap(wrap.p)};
           const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{render_texture->filter()};
@@ -1458,6 +1459,7 @@ void gl4::process(rx_byte* _command) {
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_R, wrap_p);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
           pglTextureStorage2D(

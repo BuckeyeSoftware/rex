@@ -133,6 +133,7 @@ bool skybox::load(const string& _file_name) {
   m_texture->record_filter({false, false, false});
   m_texture->record_wrap({
     frontend::texture::wrap_type::k_clamp_to_edge,
+    frontend::texture::wrap_type::k_clamp_to_edge,
     frontend::texture::wrap_type::k_clamp_to_edge});
 
   math::vec2z dimensions;
