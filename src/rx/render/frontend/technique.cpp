@@ -370,12 +370,11 @@ bool technique::compile() {
     });
 
     m_uniform_definitions.each_fwd([&](const uniform_definition& _uniform_definition) {
-      if (evaluate_when_for_basic(_uniform_definition.when)) {
-        auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind)};
-        if (_uniform_definition.has_value) {
-          const auto* data{reinterpret_cast<const rx_byte*>(&_uniform_definition.value)};
-          uniform.record_raw(data, uniform.size());
-        }
+      auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind,
+        !evaluate_when_for_basic(_uniform_definition.when))};
+      if (_uniform_definition.has_value) {
+        const auto* data{reinterpret_cast<const rx_byte*>(&_uniform_definition.value)};
+        uniform.record_raw(data, uniform.size());
       }
     });
 
@@ -425,12 +424,11 @@ bool technique::compile() {
 
       // emit uniforms
       m_uniform_definitions.each_fwd([&](const uniform_definition& _uniform_definition) {
-        if (evaluate_when_for_permute(_uniform_definition.when, _flags)) {
-          auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind)};
-          if (_uniform_definition.has_value) {
-            const auto* data{reinterpret_cast<const rx_byte*>(&_uniform_definition.value)};
-            uniform.record_raw(data, uniform.size());
-          }
+        auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind,
+          !evaluate_when_for_permute(_uniform_definition.when, _flags))};
+        if (_uniform_definition.has_value) {
+          const auto* data{reinterpret_cast<const rx_byte*>(&_uniform_definition.value)};
+          uniform.record_raw(data, uniform.size());
         }
       });
 
@@ -480,12 +478,11 @@ bool technique::compile() {
 
       // emit uniforms
       m_uniform_definitions.each_fwd([&](const uniform_definition& _uniform_definition) {
-        if (evaluate_when_for_variant(_uniform_definition.when, i)) {
-          auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind)};
-          if (_uniform_definition.has_value) {
-            const auto* data{reinterpret_cast<const rx_byte*>(&_uniform_definition.value)};
-            uniform.record_raw(data, uniform.size());
-          }
+        auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind,
+          !evaluate_when_for_variant(_uniform_definition.when, i))};
+        if (_uniform_definition.has_value) {
+          const auto* data{reinterpret_cast<const rx_byte*>(&_uniform_definition.value)};
+          uniform.record_raw(data, uniform.size());
         }
       });
 

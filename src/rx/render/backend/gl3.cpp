@@ -820,7 +820,10 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
 
   // emit uniforms
   _uniforms.each_fwd([&](const frontend::uniform& _uniform) {
-    contents.append(string::format("uniform %s %s;\n", uniform_to_string(_uniform.kind()), _uniform.name()));
+    // Don't emit padding uniforms.
+    if (!_uniform.is_padding()) {
+      contents.append(string::format("uniform %s %s;\n", uniform_to_string(_uniform.kind()), _uniform.name()));
+    }
   });
 
   // to get good diagnostics
@@ -1234,7 +1237,12 @@ void gl3::process(rx_byte* _command) {
 
           // fetch uniform locations
           render_program->uniforms().each_fwd([program](const frontend::uniform& _uniform) {
-            program->uniforms.push_back(pglGetUniformLocation(program->handle, _uniform.name().data()));
+            if (_uniform.is_padding()) {
+              // Padding uniforms have index -1.
+              program->uniforms.push_back(-1);
+            } else {
+              program->uniforms.push_back(pglGetUniformLocation(program->handle, _uniform.name().data()));
+            }
           });
         }
         break;

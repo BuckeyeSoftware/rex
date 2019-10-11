@@ -94,10 +94,12 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   m_swapchain_texture->record_wrap({
     texture::wrap_type::k_clamp_to_edge,
     texture::wrap_type::k_clamp_to_edge});
+  initialize_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 
   m_swapchain_target = create_target(RX_RENDER_TAG("swapchain"));
   m_swapchain_target->attach_texture(m_swapchain_texture);
   m_swapchain_target->m_flags |= target::k_swapchain;
+  initialize_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
 }
 
 interface::~interface() {
@@ -643,6 +645,7 @@ bool interface::process() {
   if (m_backend) {
     m_backend->process(m_commands);
   }
+  m_commands.clear();
 
   // cleanup unreferenced resources
   m_destroy_buffers.each_fwd([this](buffer* _buffer) {
@@ -673,7 +676,10 @@ bool interface::process() {
     m_textureCM_pool.destroy<textureCM>(_texture);
   });
 
-  // clear lists
+  // consume all commands
+  if (m_backend) {
+    m_backend->process(m_commands);
+  }
   m_commands.clear();
 
   m_destroy_buffers.clear();
