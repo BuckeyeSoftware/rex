@@ -350,7 +350,7 @@ struct test_game
     , m_immediate3D{&m_frontend}
     , m_skybox{&m_frontend}
     , m_model{&m_frontend}
-    , m_irradiance_map{&m_frontend, {256, 256}}
+    , m_irradiance_map{&m_frontend, 256}
   {
        model_xform.rotate = {0.0f, 90.0f, 0.0f};
     // m_camera.translate = {-1.0f, 60.0f, -1000.0f};
@@ -360,7 +360,7 @@ struct test_game
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
     m_skybox.load("base/skyboxes/miramar/miramar.json5");
     m_model.load("base/models/chest/chest.json5");
-    m_irradiance_map.render(m_skybox);
+    m_irradiance_map.render(m_skybox.cubemap());
     return true;
   }
 
