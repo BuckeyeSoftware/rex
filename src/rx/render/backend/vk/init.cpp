@@ -11,6 +11,7 @@
 #include "rx/console/interface.h"
 #include "rx/core/algorithm/clamp.h"
 
+
 namespace rx::render::backend {
   
 RX_CONSOLE_IVAR(
@@ -21,9 +22,11 @@ RX_CONSOLE_IVAR(
   3,
   2);
   
-#define PFN(_name) PFN_##_name _name;
+#define DEV_FUN(_name) PFN_##_name _name;
+#define INST_FUN(_name) PFN_##_name _name;
 #include "prototypes.h"
-#undef PFN
+#undef DEV_FUN
+#undef INST_FUN
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback (
   VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -463,28 +466,20 @@ void destroy_swapchain(detail_vk::context& ctx_) {
 }
 
 void load_function_pointers(detail_vk::context& ctx_) {
-  
-  INST_LOAD(vkGetPhysicalDeviceSurfaceCapabilitiesKHR)
-  INST_LOAD(vkGetPhysicalDeviceSurfacePresentModesKHR)
-  INST_LOAD(vkGetPhysicalDeviceSurfaceFormatsKHR)
-  DEV_LOAD(vkCreateSwapchainKHR)
-  DEV_LOAD(vkDestroySwapchainKHR)
-  
-  DEV_LOAD(vkCreateBuffer)
-  DEV_LOAD(vkDestroyBuffer)
-  DEV_LOAD(vkCreateImage)
-  DEV_LOAD(vkDestroyImage)
-  DEV_LOAD(vkCreateImageView)
-  DEV_LOAD(vkDestroyImageView)
-  DEV_LOAD(vkGetBufferMemoryRequirements)
-  DEV_LOAD(vkGetImageMemoryRequirements)
-  DEV_LOAD(vkBindBufferMemory)
-  DEV_LOAD(vkBindImageMemory)
-  DEV_LOAD(vkAllocateMemory)
-  DEV_LOAD(vkFreeMemory)
-  DEV_LOAD(vkMapMemory)
-  DEV_LOAD(vkUnmapMemory)
-  
+
+#define DEV_FUN(_name) \
+_name = reinterpret_cast<PFN_##_name> (ctx_.vkGetDeviceProcAddr(ctx_.device, #_name)); \
+RX_ASSERT(_name, "can't load vulkan function pointer %s", #_name);
+
+#define INST_FUN(_name) \
+_name = reinterpret_cast<PFN_##_name> (ctx_.vkGetInstanceProcAddr(ctx_.instance, #_name)); \
+RX_ASSERT(_name, "can't load vulkan function pointer %s", #_name);
+
+#include "prototypes.h"
+
+#undef INST_LOAD
+#undef DEV_LOAD
+
 }
 
 }

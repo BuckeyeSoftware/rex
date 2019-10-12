@@ -13,26 +13,21 @@
 PFN_##_name _name = reinterpret_cast<PFN_##_name> (ctx_.vkGetInstanceProcAddr(ctx_.instance, #_name)); \
 RX_ASSERT(_name, "can't load vulkan function pointer %s", #_name);
 
-#define INST_LOAD(_name) \
-_name = reinterpret_cast<PFN_##_name> (ctx_.vkGetInstanceProcAddr(ctx_.instance, #_name)); \
-RX_ASSERT(_name, "can't load vulkan function pointer %s", #_name);
-
-
 #define LOCAL_DEV_LOAD(_name) \
 PFN_##_name _name = reinterpret_cast<PFN_##_name> (ctx_.vkGetDeviceProcAddr(ctx_.device, #_name)); \
 RX_ASSERT(_name, "can't load vulkan function pointer %s", #_name);
 
-#define DEV_LOAD(_name) \
-_name = reinterpret_cast<PFN_##_name> (ctx_.vkGetDeviceProcAddr(ctx_.device, #_name)); \
-RX_ASSERT(_name, "can't load vulkan function pointer %s", #_name);
+
 
 namespace rx::render::backend {
 
 RX_LOG("render/vk", vk_log);
 
-#define PFN(_name) extern PFN_##_name _name;
+#define DEV_FUN(_name) extern PFN_##_name _name;
+#define INST_FUN(_name) extern PFN_##_name _name;
 #include "prototypes.h"
-#undef PFN
+#undef DEV_FUN
+#undef INST_FUN
 
 namespace detail_vk {
   

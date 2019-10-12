@@ -20,7 +20,6 @@
 #include "rx/render/frontend/state.h"
 #include "rx/render/frontend/command.h"
 
-
 namespace rx::render::backend {
 
 vk::vk(memory::allocator* _allocator, void* _data) {
