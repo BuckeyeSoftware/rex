@@ -1,0 +1,57 @@
+{
+  name: "prefilter_environment_map",
+  uniforms: [
+    { name: "u_sampler",   type: "samplerCM", value: 0 },
+    { name: "u_roughness", type: "float" }
+  ],
+  shaders: [
+    {
+      type: "vertex",
+      inputs: [
+        { name: "a_position",    type: "vec2f" },
+        { name: "a_coordinate",  type: "vec2f" }
+      ],
+      outputs: [
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      source: "
+        void main() {
+          rx_position = vec4(a_position, 0.0, 1.0);
+          vs_coordinate = a_coordinate;
+        }
+      "
+    },{
+      type: "fragment",
+      inputs: [
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      outputs: [
+        { name: "fs_color_px", type: "vec4f" },
+        { name: "fs_color_nx", type: "vec4f" },
+        { name: "fs_color_py", type: "vec4f" },
+        { name: "fs_color_ny", type: "vec4f" },
+        { name: "fs_color_pz", type: "vec4f" },
+        { name: "fs_color_nz", type: "vec4f" }
+      ],
+      source: "
+        void main() {
+          const mat3x3f rotations[6] = mat3x3f[](
+            mat3x3f(vec3f( 0.0, 0.0, -1.0), vec3f(0.0, 1.0,  0.0), vec3f( 1.0,  0.0,  0.0)),  // y =  90
+            mat3x3f(vec3f( 0.0, 0.0,  1.0), vec3f(0.0, 1.0,  0.0), vec3f(-1.0,  0.0,  0.0)),  // y =  270
+            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, 0.0,  1.0), vec3f( 0.0, -1.0,  0.0)),  // x =  90
+            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, 0.0, -1.0), vec3f( 0.0,  1.0,  0.0)),  // x = -90
+            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, 1.0,  0.0), vec3f( 0.0,  0.0,  1.0)),  // y =  0
+            mat3x3f(vec3f(-1.0, 0.0,  0.0), vec3f(0.0, 1.0,  0.0), vec3f( 0.0,  0.0, -1.0))); // y =  180
+
+
+          fs_color_px = vec4f(0.1, 0.2, 0.3, 1.0);
+          fs_color_nx = vec4f(0.4, 0.5, 0.6, 1.0);
+          fs_color_py = vec4f(0.7, 0.8, 0.9, 1.0);
+          fs_color_ny = vec4f(0.9, 0.8, 0.7, 1.0);
+          fs_color_pz = vec4f(0.6, 0.5, 0.4, 1.0);
+          fs_color_nz = vec4f(0.3, 0.2, 0.1, 1.0);
+        }
+      "
+    }
+  ]
+}

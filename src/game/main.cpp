@@ -11,7 +11,7 @@
 #include "rx/render/gbuffer.h"
 #include "rx/render/skybox.h"
 #include "rx/render/model.h"
-#include "rx/render/irradiance_map.h"
+#include "rx/render/ibl.h"
 
 #include "rx/math/camera.h"
 #include "rx/math/noise/perlin.h"
