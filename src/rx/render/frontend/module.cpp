@@ -65,7 +65,9 @@ bool resolve_module_dependencies(
 {
   sorter_.add(_current_module.name());
 
+  // For each dependency of this module.
   return _current_module.dependencies().each_fwd([&](const string& _dependency) {
+    // Add the dependency to the topological sorter.
     if (!sorter_.add(_current_module.name(), _dependency)) {
       return false;
     }
@@ -77,6 +79,7 @@ bool resolve_module_dependencies(
 
     visited_.insert(_dependency);
 
+    // Recursively apply dependencies.
     if (auto find{_modules.find(_dependency)}) {
       return resolve_module_dependencies(_modules, *find, visited_, sorter_);
     }

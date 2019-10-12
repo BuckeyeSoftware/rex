@@ -1033,7 +1033,7 @@ bool technique::resolve_dependencies(const map<string, module>& _modules) {
     }
 
     const auto& dependencies{sorter.sort()};
-    // Cycled are formed in the resolution. We cannot satisfy this.
+    // When cycles are formed in the resolution we cannot satisfy.
     if (dependencies.cycled.size()) {
       dependencies.cycled.each_fwd([&](const string& _module) {
         error("dependency '%s' forms a cycle", _module);
