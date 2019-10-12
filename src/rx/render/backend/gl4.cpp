@@ -1164,38 +1164,28 @@ void gl4::process(rx_byte* _command) {
             }
           }
 
-          // color attachments & draw buffers
+          // color attachments
           const auto& attachments{render_target->attachments()};
-          if (attachments.is_empty()) {
-            pglNamedFramebufferDrawBuffer(target->fbo, GL_NONE);
-            pglNamedFramebufferReadBuffer(target->fbo, GL_NONE);
-          } else {
-            vector<GLenum> draw_buffers{m_allocator, attachments.size()};
-            for (rx_size i{0}; i < attachments.size(); i++) {
-              const auto& attachment{attachments[i]};
-              const auto attachment_enum{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
-              switch (attachment.kind) {
-              case frontend::target::attachment::type::k_texture2D:
-                pglNamedFramebufferTexture(
-                  target->fbo,
-                  attachment_enum,
-                  reinterpret_cast<detail_gl4::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
-                  static_cast<GLint>(attachment.level));
-                break;
-              case frontend::target::attachment::type::k_textureCM:
-                pglNamedFramebufferTextureLayer(
-                  target->fbo,
-                  attachment_enum,
-                  reinterpret_cast<detail_gl4::textureCM*>(attachment.as_textureCM.texture + 1)->tex,
-                  static_cast<GLint>(attachment.level),
-                  static_cast<GLint>(attachment.as_textureCM.face));
-                break;
-              }
-              draw_buffers[i] = static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i);
+          for (rx_size i{0}; i < attachments.size(); i++) {
+            const auto& attachment{attachments[i]};
+            const auto attachment_enum{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
+            switch (attachment.kind) {
+            case frontend::target::attachment::type::k_texture2D:
+              pglNamedFramebufferTexture(
+                target->fbo,
+                attachment_enum,
+                reinterpret_cast<detail_gl4::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
+                static_cast<GLint>(attachment.level));
+              break;
+            case frontend::target::attachment::type::k_textureCM:
+              pglNamedFramebufferTextureLayer(
+                target->fbo,
+                attachment_enum,
+                reinterpret_cast<detail_gl4::textureCM*>(attachment.as_textureCM.texture + 1)->tex,
+                static_cast<GLint>(attachment.level),
+                static_cast<GLint>(attachment.as_textureCM.face));
+              break;
             }
-            // draw buffers
-            pglNamedFramebufferDrawBuffers(target->fbo,
-              static_cast<GLsizei>(draw_buffers.size()), draw_buffers.data());
           }
         }
         break;

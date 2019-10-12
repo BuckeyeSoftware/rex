@@ -409,11 +409,12 @@ inline bool map<K, V>::lookup_index(const K& _key, rx_size& _index) const {
   rx_size position{desired_position(hash)};
   rx_size distance{0};
   for (;;) {
-    if (element_hash(position) == 0) {
+    const rx_size hash_element{element_hash(position)};
+    if (hash_element == 0 || is_deleted(hash_element)) {
       return false;
-    } else if (distance > probe_distance(element_hash(position), position)) {
+    } else if (distance > probe_distance(hash_element, position)) {
       return false;
-    } else if (element_hash(position) == hash && m_keys[position] == _key) {
+    } else if (hash_element == hash && m_keys[position] == _key) {
       _index = position;
       return true;
     }
@@ -443,11 +444,6 @@ inline bool map<K, V>::each(F&& _function) {
 }
 
 template<typename K, typename V>
-inline memory::allocator* map<K, V>::allocator() const {
-  return m_allocator;
-}
-
-template<typename K, typename V>
 template<typename F>
 inline bool map<K, V>::each(F&& _function) const {
   for (rx_size i{0}; i < m_capacity; i++) {
@@ -463,6 +459,12 @@ inline bool map<K, V>::each(F&& _function) const {
     }
   }
   return true;
+}
+
+
+template<typename K, typename V>
+inline memory::allocator* map<K, V>::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx
