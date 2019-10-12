@@ -41,7 +41,7 @@ struct uniform
   };
 
   uniform();
-  uniform(program* _program, rx_size _index, const string& _name, type _type);
+  uniform(program* _program, rx_u64 _bit, const string& _name, type _type);
   uniform(uniform&& uniform_);
   ~uniform();
 
@@ -64,6 +64,7 @@ struct uniform
   const rx_byte* data() const;
   const string& name() const;
   rx_size size() const;
+  bool is_padding() const;
 
   void flush(rx_byte* _data);
 
@@ -71,7 +72,7 @@ private:
   static rx_size size_for_type(type _type);
 
   program* m_program;
-  rx_u64 m_mask;
+  rx_u64 m_bit;
   type m_type;
   union {
     rx_byte* as_opaque;
@@ -81,22 +82,6 @@ private:
   };
   string m_name;
 };
-
-inline uniform::type uniform::kind() const {
-  return m_type;
-}
-
-inline const rx_byte* uniform::data() const {
-  return as_opaque;
-}
-
-inline const string& uniform::name() const {
-  return m_name;
-}
-
-inline rx_size uniform::size() const {
-  return size_for_type(m_type);
-}
 
 struct shader {
   enum class type {
@@ -135,7 +120,7 @@ struct program : resource {
   void validate() const;
 
   void add_shader(shader&& shader_);
-  uniform& add_uniform(const string& _name, uniform::type _type);
+  uniform& add_uniform(const string& _name, uniform::type _type, bool _is_padding);
   rx_u64 dirty_uniforms_bitset() const;
   rx_size dirty_uniforms_size() const;
 
@@ -150,12 +135,37 @@ private:
 
   friend struct uniform;
 
+  void mark_uniform_dirty(rx_size _uniform_index);
+
   memory::allocator* m_allocator;
   vector<uniform> m_uniforms;
   vector<shader> m_shaders;
   rx_u64 m_dirty_uniforms;
+  rx_u64 m_padding_uniforms;
 };
 
+// uniform
+inline uniform::type uniform::kind() const {
+  return m_type;
+}
+
+inline const rx_byte* uniform::data() const {
+  return as_opaque;
+}
+
+inline const string& uniform::name() const {
+  return m_name;
+}
+
+inline rx_size uniform::size() const {
+  return size_for_type(m_type);
+}
+
+inline bool uniform::is_padding() const {
+  return !!(m_program->m_padding_uniforms & m_bit);
+}
+
+// program
 inline const vector<uniform>& program::uniforms() const & {
   return m_uniforms;
 }

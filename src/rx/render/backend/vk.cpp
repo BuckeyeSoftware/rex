@@ -8,6 +8,7 @@
 
 #include "rx/core/memory/allocator.h"
 #include "rx/core/vector.h"
+#include "rx/core/array.h"
 #include "rx/core/log.h"
 #include "rx/core/assert.h"
 #include "rx/console/variable.h"
@@ -56,6 +57,8 @@ _name = reinterpret_cast<PFN_##_name> (ctx_.vkGetDeviceProcAddr(ctx_.device, #_n
 RX_ASSERT(_name, "can't load vulkan function pointer %s", #_name);
 
 
+namespace rx::render::backend {
+
 PFN(vkGetPhysicalDeviceSurfaceCapabilitiesKHR)
 PFN(vkGetPhysicalDeviceSurfaceFormatsKHR)
 PFN(vkGetPhysicalDeviceSurfacePresentModesKHR)
@@ -78,9 +81,9 @@ PFN(vkMapMemory)
 PFN(vkUnmapMemory)
 
 
-namespace rx::render::backend {
-
 namespace detail_vk {
+  
+  constexpr rx_size buffered = 2;
   
   struct context {
     
@@ -113,8 +116,12 @@ namespace detail_vk {
     rx::vector<allocation> staging_allocations;
     
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
-    rx::vector<VkImage> swap_images;
-    rx::vector<VkImageView> swap_image_view;
+    rx_size num_frames = 3;
+    rx::array<VkImage[3]> swap_images;
+    rx::array<VkImageView[3]> swap_image_view;
+    
+    VkCommandPool transfer_pool;
+    rx::array<VkCommandBuffer[buffered]> transfer_commands;
     
   };
   
@@ -1143,9 +1150,7 @@ void detail_vk::texture::destroy(detail_vk::context& ctx_, frontend::texture* te
   
 }
 
-detail_vk::buffer_builder::buffer_builder(detail_vk::context& ctx_) {
-  
-}
+detail_vk::buffer_builder::buffer_builder(detail_vk::context& ctx_) {}
 
 void detail_vk::buffer_builder::construct(detail_vk::context& ctx_, frontend::buffer* buffer) {
   
@@ -1217,12 +1222,14 @@ void detail_vk::buffer_builder::construct2(detail_vk::context& ctx_, frontend::b
   VkMemoryRequirements req;
   vkGetBufferMemoryRequirements(ctx_.device, buf->handle, &req);
   
+  current_buffer_size = math::ceil((rx_f32) (current_buffer_size/req.alignment))*req.alignment;
+  
   vkBindBufferMemory(ctx_.device, buf->handle, buffer_memory, current_buffer_size);
   
   memcpy(buffer_staging_pointer + current_buffer_size, buffer->vertices().data(), buffer->vertices().size());
   memcpy(buffer_staging_pointer + current_buffer_size + buffer->vertices().size(), buffer->elements().data(), buffer->elements().size());
   
-  current_buffer_size = (current_buffer_size/req.alignment + 1)*req.alignment + req.size;
+  current_buffer_size += req.size;
   
   if(ctx_.is_dedicated) {
     // TODO : copy
@@ -1338,7 +1345,7 @@ void detail_vk::texture_builder::interpass(detail_vk::context& ctx_) {
   }
   
   // staging memory
-  {
+  if(current_image_staging_size > 0) {
     
     VkMemoryAllocateInfo info {};
     info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -1393,13 +1400,15 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
   
   current_image_size += req.size;
   
-  memcpy(image_staging_pointer + current_image_staging_size, texture->data().data(), texture->data().size());
-  
-  current_image_staging_size += texture->data().size() * sizeof(rx_byte);
-  
-  // TODO : copy
-  
-  
+  if(texture->data().size() > 0) {
+    
+    memcpy(image_staging_pointer + current_image_staging_size, texture->data().data(), texture->data().size());
+    
+    current_image_staging_size += texture->data().size() * sizeof(rx_byte);
+    
+    // TODO : copy
+    
+  }
   
 }
 

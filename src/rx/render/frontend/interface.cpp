@@ -94,20 +94,46 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   m_swapchain_texture->record_wrap({
     texture::wrap_type::k_clamp_to_edge,
     texture::wrap_type::k_clamp_to_edge});
+  initialize_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 
   m_swapchain_target = create_target(RX_RENDER_TAG("swapchain"));
   m_swapchain_target->attach_texture(m_swapchain_texture);
   m_swapchain_target->m_flags |= target::k_swapchain;
+  initialize_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
 }
 
 interface::~interface() {
   destroy_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
   destroy_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
+
+  m_cached_buffers.each([this](rx_size, const string&, buffer* _buffer) {
+    destroy_buffer(RX_RENDER_TAG("cached buffer"), _buffer);
+  });
+
+  m_cached_targets.each([this](rx_size, const string&, target* _target) {
+    destroy_target(RX_RENDER_TAG("cached target"), _target);
+  });
+
+  m_cached_textures1D.each([this](rx_size, const string&, texture1D* _texture) {
+    destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
+  });
+
+  m_cached_textures2D.each([this](rx_size, const string&, texture2D* _texture) {
+    destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
+  });
+
+  m_cached_textures3D.each([this](rx_size, const string&, texture3D* _texture) {
+    destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
+  });
+
+  m_cached_texturesCM.each([this](rx_size, const string&, textureCM* _texture) {
+    destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
+  });
 }
 
 // create_*
 buffer* interface::create_buffer(const command_header::info& _info) {
-  concurrency::scope_lock lock(m_mutex);
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_buffer;
@@ -117,7 +143,7 @@ buffer* interface::create_buffer(const command_header::info& _info) {
 }
 
 target* interface::create_target(const command_header::info& _info) {
-  concurrency::scope_lock lock(m_mutex);
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_target;
@@ -127,7 +153,7 @@ target* interface::create_target(const command_header::info& _info) {
 }
 
 program* interface::create_program(const command_header::info& _info) {
-  concurrency::scope_lock lock(m_mutex);
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_program;
@@ -137,7 +163,7 @@ program* interface::create_program(const command_header::info& _info) {
 }
 
 texture1D* interface::create_texture1D(const command_header::info& _info) {
-  concurrency::scope_lock lock(m_mutex);
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_texture1D;
@@ -147,7 +173,7 @@ texture1D* interface::create_texture1D(const command_header::info& _info) {
 }
 
 texture2D* interface::create_texture2D(const command_header::info& _info) {
-  concurrency::scope_lock lock(m_mutex);
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_texture2D;
@@ -157,7 +183,7 @@ texture2D* interface::create_texture2D(const command_header::info& _info) {
 }
 
 texture3D* interface::create_texture3D(const command_header::info& _info) {
-  concurrency::scope_lock lock(m_mutex);
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_texture3D;
@@ -167,7 +193,7 @@ texture3D* interface::create_texture3D(const command_header::info& _info) {
 }
 
 textureCM* interface::create_textureCM(const command_header::info& _info) {
-  concurrency::scope_lock lock(m_mutex);
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_textureCM;
@@ -180,7 +206,8 @@ textureCM* interface::create_textureCM(const command_header::info& _info) {
 void interface::initialize_buffer(const command_header::info& _info, buffer* _buffer) {
   RX_ASSERT(_buffer, "_buffer is null");
   _buffer->validate();
-  concurrency::scope_lock lock(m_mutex);
+
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_buffer;
@@ -191,7 +218,8 @@ void interface::initialize_buffer(const command_header::info& _info, buffer* _bu
 void interface::initialize_target(const command_header::info& _info, target* _target) {
   RX_ASSERT(_target, "_target is null");
   _target->validate();
-  concurrency::scope_lock lock(m_mutex);
+
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_target;
@@ -202,7 +230,8 @@ void interface::initialize_target(const command_header::info& _info, target* _ta
 void interface::initialize_program(const command_header::info& _info, program* _program) {
   RX_ASSERT(_program, "_program is null");
   _program->validate();
-  concurrency::scope_lock lock(m_mutex);
+
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_program;
@@ -213,7 +242,8 @@ void interface::initialize_program(const command_header::info& _info, program* _
 void interface::initialize_texture(const command_header::info& _info, texture1D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
-  concurrency::scope_lock lock(m_mutex);
+
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_texture1D;
@@ -224,7 +254,8 @@ void interface::initialize_texture(const command_header::info& _info, texture1D*
 void interface::initialize_texture(const command_header::info& _info, texture2D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
-  concurrency::scope_lock lock(m_mutex);
+
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_texture2D;
@@ -235,7 +266,8 @@ void interface::initialize_texture(const command_header::info& _info, texture2D*
 void interface::initialize_texture(const command_header::info& _info, texture3D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
-  concurrency::scope_lock lock(m_mutex);
+
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_texture3D;
@@ -246,7 +278,8 @@ void interface::initialize_texture(const command_header::info& _info, texture3D*
 void interface::initialize_texture(const command_header::info& _info, textureCM* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
-  concurrency::scope_lock lock(m_mutex);
+
+  concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
   command->kind = resource_command::type::k_textureCM;
@@ -268,8 +301,8 @@ void interface::update_buffer(const command_header::info& _info, buffer* _buffer
 
 // destroy_*
 void interface::destroy_buffer(const command_header::info& _info, buffer* _buffer) {
-  if (_buffer) {
-    concurrency::scope_lock lock(m_mutex);
+  if (_buffer && _buffer->release_reference()) {
+    concurrency::scope_lock lock{m_mutex};
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_buffer;
@@ -280,8 +313,8 @@ void interface::destroy_buffer(const command_header::info& _info, buffer* _buffe
 }
 
 void interface::destroy_target(const command_header::info& _info, target* _target) {
-  if (_target) {
-    concurrency::scope_lock lock(m_mutex);
+  if (_target && _target->release_reference()) {
+    concurrency::scope_lock lock{m_mutex};
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_target;
@@ -292,8 +325,8 @@ void interface::destroy_target(const command_header::info& _info, target* _targe
 }
 
 void interface::destroy_program(const command_header::info& _info, program* _program) {
-  if (_program) {
-    concurrency::scope_lock lock(m_mutex);
+  if (_program && _program->release_reference()) {
+    concurrency::scope_lock lock{m_mutex};
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_program;
@@ -304,8 +337,8 @@ void interface::destroy_program(const command_header::info& _info, program* _pro
 }
 
 void interface::destroy_texture(const command_header::info& _info, texture1D* _texture) {
-  if (_texture) {
-    concurrency::scope_lock lock(m_mutex);
+  if (_texture && _texture->release_reference()) {
+    concurrency::scope_lock lock{m_mutex};
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_texture1D;
@@ -316,13 +349,13 @@ void interface::destroy_texture(const command_header::info& _info, texture1D* _t
 }
 
 void interface::destroy_texture(const command_header::info& _info, texture2D* _texture) {
-  concurrency::scope_lock lock(m_mutex);
+  concurrency::scope_lock lock{m_mutex};
   destroy_texture_unlocked(_info, _texture);
 }
 
 void interface::destroy_texture(const command_header::info& _info, texture3D* _texture) {
-  if (_texture) {
-    concurrency::scope_lock lock(m_mutex);
+  if (_texture && _texture->release_reference()) {
+    concurrency::scope_lock lock{m_mutex};
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_texture3D;
@@ -333,8 +366,8 @@ void interface::destroy_texture(const command_header::info& _info, texture3D* _t
 }
 
 void interface::destroy_texture(const command_header::info& _info, textureCM* _texture) {
-  if (_texture) {
-    concurrency::scope_lock lock(m_mutex);
+  if (_texture && _texture->release_reference()) {
+    concurrency::scope_lock lock{m_mutex};
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_textureCM;
@@ -345,7 +378,7 @@ void interface::destroy_texture(const command_header::info& _info, textureCM* _t
 }
 
 void interface::destroy_texture_unlocked(const command_header::info& _info, texture2D* _texture) {
-  if (_texture) {
+  if (_texture && _texture->release_reference()) {
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_texture2D;
@@ -359,6 +392,7 @@ void interface::draw(
   const command_header::info& _info,
   const state& _state,
   target* _target,
+  const char* _draw_buffers,
   buffer* _buffer,
   program* _program,
   rx_size _count,
@@ -367,9 +401,13 @@ void interface::draw(
   const char* _textures,
   ...)
 {
-  if (_count == 0) {
-    return;
-  }
+  RX_ASSERT(_state.viewport.dimensions().area() > 0, "empty viewport");
+
+  RX_ASSERT(_draw_buffers, "misisng draw buffers");
+  RX_ASSERT(_buffer, "expected buffer");
+  RX_ASSERT(_program, "expected program");
+  RX_ASSERT(_count != 0, "empty draw call");
+  RX_ASSERT(_textures, "expected textures");
 
   m_vertices[0] += _count;
 
@@ -388,43 +426,51 @@ void interface::draw(
     break;
   }
 
-  concurrency::scope_lock lock(m_mutex);
+  {
+    concurrency::scope_lock lock{m_mutex};
+    const auto dirty_uniforms_size{_program->dirty_uniforms_size()};
 
-  const auto dirty_uniforms_size{_program->dirty_uniforms_size()};
+    auto command_base{m_command_buffer.allocate(sizeof(draw_command) + dirty_uniforms_size, command_type::k_draw, _info)};
+    auto command{reinterpret_cast<draw_command*>(command_base + sizeof(command_header))};
+    *reinterpret_cast<state*>(command) = _state;
+    reinterpret_cast<state*>(command)->flush();
+    command->render_target = _target;
+    command->render_buffer = _buffer;
+    command->render_program = _program;
+    command->count = _count;
+    command->offset = _offset;
+    command->type = _primitive_type;
+    command->dirty_uniforms_bitset = _program->dirty_uniforms_bitset();
 
-  // allocate and fill out command
-  auto command_base{m_command_buffer.allocate(sizeof(draw_command) + dirty_uniforms_size, command_type::k_draw, _info)};
-  auto command{reinterpret_cast<draw_command*>(command_base + sizeof(command_header))};
-  *reinterpret_cast<state*>(command) = _state;
-  reinterpret_cast<state*>(command)->flush();
-  command->render_target = _target;
-  command->render_buffer = _buffer;
-  command->render_program = _program;
-  command->count = _count;
-  command->offset = _offset;
-  command->type = _primitive_type;
-  command->dirty_uniforms_bitset = _program->dirty_uniforms_bitset();
-
-  // copy the uniforms directly into the command structure, if any
-  if (dirty_uniforms_size) {
-    _program->flush_dirty_uniforms(command->uniforms());
-  }
-
-  memset(command->texture_types, 0, sizeof command->texture_types);
-
-  rx_size textures{strlen(_textures)};
-  if (textures) {
-    va_list va;
-    va_start(va, _textures);
-    for (rx_size i{0}; i < textures; i++) {
-      const char ch{_textures[i]};
-      command->texture_types[i] = ch;
-      command->texture_binds[i] = va_arg(va, void*);
+    // Copy the uniforms directly into the command.
+    if (dirty_uniforms_size) {
+      _program->flush_dirty_uniforms(command->uniforms());
     }
-    va_end(va);
-  }
 
-  m_commands.push_back(command_base);
+    // Decode the draw buffers into the command.
+    memset(&command->draw_buffers, 0, sizeof command->draw_buffers);
+    for (const char* draw_buffer{_draw_buffers}; *draw_buffer; draw_buffer++) {
+      command->draw_buffers.add(*draw_buffer - '0');
+    }
+
+    // Copy and decode textures into the command.
+    if (*_textures) {
+      va_list va;
+      va_start(va, _textures);
+      for (rx_size i{0}; i < draw_command::k_max_textures; i++) {
+        if (const int ch{_textures[i]}; ch != '\0') {
+          command->texture_types[i] = ch;
+          command->texture_binds[i] = va_arg(va, void*);
+        } else {
+          command->texture_types[i] = '\0';
+          break;
+        }
+      }
+      va_end(va);
+    }
+
+    m_commands.push_back(command_base);
+  }
 
   m_draw_calls[0]++;
 }
@@ -433,13 +479,23 @@ void interface::clear(
   const command_header::info& _info,
   const state& _state,
   target* _target,
+  const char* _draw_buffers,
   rx_u32 _clear_mask,
-  const math::vec4f& _clear_color)
+  ...)
 {
-  RX_ASSERT(_clear_mask, "empty clear");
+  RX_ASSERT(_state.viewport.dimensions().area() > 0, "empty viewport");
+
+  RX_ASSERT(_target, "expected target");
+  RX_ASSERT(_draw_buffers, "expected draw buffers");
+  RX_ASSERT(_clear_mask != 0, "empty clear");
+
+  const bool clear_depth{!!(_clear_mask & RX_RENDER_CLEAR_DEPTH)};
+  const bool clear_stencil{!!(_clear_mask & RX_RENDER_CLEAR_STENCIL)};
+
+  _clear_mask >>= 2;
 
   {
-    concurrency::scope_lock lock(m_mutex);
+    concurrency::scope_lock lock{m_mutex};
 
     auto command_base{allocate_command(draw_command, command_type::k_clear)};
     auto command{reinterpret_cast<clear_command*>(command_base + sizeof(command_header))};
@@ -447,8 +503,37 @@ void interface::clear(
     reinterpret_cast<state*>(command)->flush();
 
     command->render_target = _target;
-    command->clear_mask = _clear_mask;
-    command->clear_color = _clear_color;
+    command->clear_depth = clear_depth;
+    command->clear_stencil = clear_stencil;
+    command->clear_colors = _clear_mask;
+
+    // Decode the draw buffers into the command.
+    memset(&command->draw_buffers, 0, sizeof command->draw_buffers);
+    for (const char* draw_buffer{_draw_buffers}; *draw_buffer; draw_buffer++) {
+      command->draw_buffers.add(*draw_buffer - '0');
+    }
+
+    // Decode and copy the clear values into the command.
+    va_list va;
+    va_start(va, _clear_mask);
+    if (clear_depth) {
+      command->depth_value = static_cast<rx_f32>(va_arg(va, rx_f64));
+    }
+
+    if (clear_stencil) {
+      command->stencil_value = va_arg(va, rx_s32);
+    }
+
+    for (rx_u32 i{0}; i < 8; i++) {
+      if (_clear_mask & (1 << i)) {
+        const rx_f32* color{va_arg(va, rx_f32*)};
+        command->color_values[i].r = color[0];
+        command->color_values[i].g = color[1];
+        command->color_values[i].b = color[2];
+        command->color_values[i].a = color[3];
+      }
+    }
+    va_end(va);
 
     m_commands.push_back(command_base);
   }
@@ -479,8 +564,14 @@ void interface::blit(
   RX_ASSERT(_dst_attachment < dst_attachments.size(),
     "destination attachment out of bounds");
 
-  texture2D* src_attachment{src_attachments[_src_attachment]};
-  texture2D* dst_attachment{dst_attachments[_dst_attachment]};
+  using attachment = target::attachment::type;
+  RX_ASSERT(src_attachments[_src_attachment].kind == attachment::k_texture2D,
+    "source attachment not a 2D texture");
+  RX_ASSERT(dst_attachments[_dst_attachment].kind == attachment::k_texture2D,
+    "destination attachment not a 2D texture");
+
+  texture2D* src_attachment{src_attachments[_src_attachment].as_texture2D.texture};
+  texture2D* dst_attachment{dst_attachments[_dst_attachment].as_texture2D.texture};
 
   // It's possible for targets to be configured in a way where attachments are
   // shared between them. Blitting to and from the same attachment doesn't make
@@ -553,8 +644,8 @@ bool interface::process() {
   // consume all commands
   if (m_backend) {
     m_backend->process(m_commands);
-    m_commands.clear();
   }
+  m_commands.clear();
 
   // cleanup unreferenced resources
   m_destroy_buffers.each_fwd([this](buffer* _buffer) {
@@ -585,8 +676,10 @@ bool interface::process() {
     m_textureCM_pool.destroy<textureCM>(_texture);
   });
 
-  // clear lists
-  m_backend->process(m_commands);
+  // consume all commands
+  if (m_backend) {
+    m_backend->process(m_commands);
+  }
   m_commands.clear();
 
   m_destroy_buffers.clear();
@@ -621,19 +714,19 @@ interface::statistics interface::stats(resource::type _type) const {
   const auto index{static_cast<rx_size>(_type)};
   switch (_type) {
   case resource::type::k_buffer:
-    return {m_buffer_pool.capacity(), m_buffer_pool.size(), 0, m_resource_usage[index]};
+    return {m_buffer_pool.capacity(), m_buffer_pool.size(), m_cached_buffers.size(), m_resource_usage[index]};
   case resource::type::k_program:
     return {m_program_pool.capacity(), m_program_pool.size(), 0, m_resource_usage[index]};
   case resource::type::k_target:
-    return {m_target_pool.capacity(), m_target_pool.size(), 0, m_resource_usage[index]};
+    return {m_target_pool.capacity(), m_target_pool.size(), m_cached_targets.size(), m_resource_usage[index]};
   case resource::type::k_texture1D:
-    return {m_texture1D_pool.capacity(), m_texture1D_pool.size(), 0, m_resource_usage[index]};
+    return {m_texture1D_pool.capacity(), m_texture1D_pool.size(), m_cached_textures1D.size(), m_resource_usage[index]};
   case resource::type::k_texture2D:
-    return {m_texture2D_pool.capacity(), m_texture2D_pool.size(), 0, m_resource_usage[index]};
+    return {m_texture2D_pool.capacity(), m_texture2D_pool.size(), m_cached_textures2D.size(), m_resource_usage[index]};
   case resource::type::k_texture3D:
-    return {m_texture3D_pool.capacity(), m_texture3D_pool.size(), 0, m_resource_usage[index]};
+    return {m_texture3D_pool.capacity(), m_texture3D_pool.size(), m_cached_textures3D.size(), m_resource_usage[index]};
   case resource::type::k_textureCM:
-    return {m_textureCM_pool.capacity(), m_textureCM_pool.size(), 0, m_resource_usage[index]};
+    return {m_textureCM_pool.capacity(), m_textureCM_pool.size(), m_cached_texturesCM.size(), m_resource_usage[index]};
   }
 
   RX_HINT_UNREACHABLE();
@@ -645,6 +738,96 @@ bool interface::swap() {
   m_backend->swap();
 
   return m_timer.update();
+}
+
+buffer* interface::cached_buffer(const string& _key) {
+  concurrency::scope_lock lock{m_mutex};
+  if (auto find{m_cached_buffers.find(_key)}) {
+    auto result{*find};
+    result->acquire_reference();
+    return result;
+  }
+  return nullptr;
+}
+
+target* interface::cached_target(const string& _key) {
+  concurrency::scope_lock lock{m_mutex};
+  if (auto find{m_cached_targets.find(_key)}) {
+    auto result{*find};
+    result->acquire_reference();
+    return result;
+  }
+  return nullptr;
+}
+
+texture1D* interface::cached_texture1D(const string& _key) {
+  concurrency::scope_lock lock{m_mutex};
+  if (auto find{m_cached_textures1D.find(_key)}) {
+    auto result{*find};
+    result->acquire_reference();
+    return result;
+  }
+  return nullptr;
+}
+
+texture2D* interface::cached_texture2D(const string& _key) {
+  concurrency::scope_lock lock{m_mutex};
+  if (auto find{m_cached_textures2D.find(_key)}) {
+    auto result{*find};
+    result->acquire_reference();
+    return result;
+  }
+  return nullptr;
+}
+
+texture3D* interface::cached_texture3D(const string& _key) {
+  concurrency::scope_lock lock{m_mutex};
+  if (auto find{m_cached_textures3D.find(_key)}) {
+    auto result{*find};
+    result->acquire_reference();
+    return result;
+  }
+  return nullptr;
+}
+
+textureCM* interface::cached_textureCM(const string& _key) {
+  concurrency::scope_lock lock{m_mutex};
+  if (auto find{m_cached_texturesCM.find(_key)}) {
+    auto result{*find};
+    result->acquire_reference();
+    return result;
+  }
+  return nullptr;
+}
+
+void interface::cache_buffer(buffer* _buffer, const string& _key) {
+  concurrency::scope_lock lock{m_mutex};
+  m_cached_buffers.insert(_key, _buffer);
+}
+
+void interface::cache_target(target* _target, const string& _key) {
+  concurrency::scope_lock lock{m_mutex};
+  m_cached_targets.insert(_key, _target);
+}
+
+void interface::cache_texture(texture1D* _texture, const string& _key) {
+  concurrency::scope_lock lock{m_mutex};
+  m_cached_textures1D.insert(_key, _texture);
+}
+
+void interface::cache_texture(texture2D* _texture, const string& _key) {
+  concurrency::scope_lock lock{m_mutex};
+  m_cached_textures2D.insert(_key, _texture);
+}
+
+void interface::cache_texture(texture3D* _texture, const string& _key) {
+  concurrency::scope_lock lock{m_mutex};
+  m_cached_textures3D.insert(_key, _texture);
+}
+
+void interface::cache_texture(textureCM* _texture, const string& _key) {
+  concurrency::scope_lock lock{m_mutex};
+  m_cached_texturesCM.insert(_key, _texture);
 }
 
 technique* interface::find_technique_by_name(const char* _name) {

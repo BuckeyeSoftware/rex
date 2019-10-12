@@ -25,12 +25,18 @@ struct skybox {
 
   bool load(const string& _file_name);
 
+  frontend::textureCM* cubemap() const;
+
 private:
   frontend::interface* m_frontend;
   frontend::technique* m_technique;
   frontend::textureCM* m_texture;
   frontend::buffer* m_buffer;
 };
+
+inline frontend::textureCM* skybox::cubemap() const {
+  return m_texture;
+}
 
 } // namespace rx::render
 

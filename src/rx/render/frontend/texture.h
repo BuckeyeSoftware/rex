@@ -205,12 +205,12 @@ struct textureCM : texture {
   using wrap_options = math::vec2<wrap_type>;
 
   enum class face : rx_u8 {
-    k_right,
-    k_left,
-    k_top,
-    k_bottom,
-    k_front,
-    k_back
+    k_right,  // +x
+    k_left,   // -x
+    k_top,    // +y
+    k_bottom, // -y
+    k_front,  // +z
+    k_back    // -z
   };
 
   textureCM(interface* _frontend);

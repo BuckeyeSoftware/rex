@@ -64,6 +64,7 @@ struct interface {
     const command_header::info& _info,
     const state& _state,
     target* _target,
+    const char* _draw_buffers,
     buffer* _buffer,
     program* _program,
     rx_size _count,
@@ -72,29 +73,56 @@ struct interface {
     const char* _textures,
     ...);
 
-  // _clear_mask can be one of
-  //  RX_RENDER_CLEAR_DEPTH,
-  //  RX_RENDER_CLEAR_STENCIL,
-  //  RX_RENDER_CLEAR_COLOR(index)
-  //  RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL
-  //  any other combinaiton of flags is undefined
+  // Performs a clear operation on |_target| with specified draw buffer layout
+  // |_draw_buffers| and state |_state|. The clear mask specified by |_clear_mask|
+  // describes the packet layout of |...|.
   //
-  // _clear_color stores the color for the clear operation, for
-  //  RX_RENDER_CLEAR_DEPTH, _clear_color.r stores the depth clear value
-  //  RX_RENDER_CLEAR_STENCIL, _clear_color.r stores the stencil clear value
-  //  RX_RENDER_CLEAR_COLOR, _clear_color stores the color clear value
-  //  RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL, _clear_color.r stores the
-  //  depth clear, _clear_color.g stores the stencil clear
+  // The packet data described in |...| is passed, parsed and interpreted in
+  // the following order.
+  //  depth:   rx_f64 (truncated to rx_f32)
+  //  stencil: rx_s32
+  //  colors:  const rx_f32*
   //
-  // NOTE: in the combined depth stencil clear, the order of the bitflags does
-  // not matter but the order of the values in _clear_color does, depth is alway
-  // in R and stencil always in G.
+  // When RX_RENDER_CLEAR_DEPTH is present in |_clear_mask|, the depth clear
+  // value is expected as rx_f64 (truncated to rx_f32) in first position.
+  //
+  // When RX_RENDER_CLEAR_STENCIL is present in |_clear_mask|, the stencil
+  // clear value is expected as rx_s32 in one of two positions depending on
+  // if RX_RENDER_CLEAR_DEPTH is supplied. When RX_RENDER_CLEAR_DEPTH isn't
+  // supplied, the stencil clear value is expected in first position, otherwise
+  // it's expected in second position.
+  //
+  // When RX_RENDER_CLEAR_COLOR(n) for any |n| is present in |_clear_mask|, the
+  // clear value is expected as a pointer to rx_f32 (rx_f32*) containing four
+  // color values in normalized range in RGBA order. The |n| refers to the index
+  // in the |_draw_buffers| specification to clear. The association of the clear
+  // value in |...| and the |n| is done in order. When a RX_RENDER_CLEAR_COLOR
+  // does not exist for a given |n|, the one proceeding it takes it's place,
+  // thus gaps are skipped.
+  //
+  // Example:
+  //  clear(
+  //    RX_RENDER_TAG("annotation"),
+  //    {},
+  //    target,
+  //    "310",
+  //    RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL | RX_RENDER_CLEAR_COLOR(0) | RX_RENDER_CLEAR_COLOR(2),
+  //    1.0f,
+  //    0,
+  //    math::vec4f(1.0f, 0.0f, 0.0f, 1.0f).data(),
+  //    math::vec4f(0.0f, 1.0f, 0.0f, 1.0f).data());
+  //
+  //  The following clear will clear |target| with attachments 3, 1 and 0 enabled
+  //  as draw buffers 0, 1, 2. Clearing depth to a value of 1.0, stencil to 0,
+  //  draw buffer 0 (attachment 3) to red, and draw buffer 2 (attachment 0)
+  //  to green, leaving draw buffer 1 (attachment 1) untouched.
   void clear(
     const command_header::info& _info,
     const state& _state,
     target* _target,
+    const char* _draw_buffers,
     rx_u32 _clear_mask,
-    const math::vec4f& _clear_color
+    ...
   );
 
   // Performs a blit from |_src| attachment |_src_attachment| to |_dst| attachment
@@ -123,6 +151,20 @@ struct interface {
 
   bool process();
   bool swap();
+
+  buffer* cached_buffer(const string& _key);
+  target* cached_target(const string& _key);
+  texture1D* cached_texture1D(const string& _key);
+  texture2D* cached_texture2D(const string& _key);
+  texture3D* cached_texture3D(const string& _key);
+  textureCM* cached_textureCM(const string& _key);
+
+  void cache_buffer(buffer* _buffer, const string& _key);
+  void cache_target(target* _target, const string& _key);
+  void cache_texture(texture1D* _texture, const string& _key);
+  void cache_texture(texture2D* _texture, const string& _key);
+  void cache_texture(texture3D* _texture, const string& _key);
+  void cache_texture(textureCM* _texture, const string& _key);
 
   memory::allocator* allocator() const;
 
@@ -200,9 +242,14 @@ private:
   deferred_function<void()> m_deferred_process;
 
   // NOTE(dweiler): Must be after m_deferred_process.
-  map<string, technique> m_techniques;     // protected by |m_mutex|
+  map<string, technique> m_techniques;         // protected by |m_mutex|
 
-  rx_size m_resource_usage[resource::count()];
+  map<string, buffer*> m_cached_buffers;       // protected by |m_mutex|
+  map<string, target*> m_cached_targets;       // protected by |m_mutex|
+  map<string, texture1D*> m_cached_textures1D; // protected by |m_mutex|
+  map<string, texture2D*> m_cached_textures2D; // protected by |m_mutex|
+  map<string, texture3D*> m_cached_textures3D; // protected by |m_mutex|
+  map<string, textureCM*> m_cached_texturesCM; // protected by |m_mutex|
 
   concurrency::atomic<rx_size> m_draw_calls[2];
   concurrency::atomic<rx_size> m_clear_calls[2];
@@ -212,9 +259,62 @@ private:
   concurrency::atomic<rx_size> m_lines[2];
   concurrency::atomic<rx_size> m_points[2];
 
+  rx_size m_resource_usage[resource::count()];
+
   device_info m_device_info;
   frame_timer m_timer;
 };
+
+struct draw_textures {
+  draw_textures();
+
+  template<typename T>
+  int add(T* _texture);
+
+  void* const* handles() const;
+  const char* specification() const;
+
+private:
+  void* m_handles[draw_command::k_max_textures];
+  char m_specification[draw_command::k_max_textures + 1];
+  int m_index;
+};
+
+inline draw_textures::draw_textures()
+  : m_specification{'\0'}
+  , m_index{0}
+{
+}
+
+template<typename T>
+inline int draw_textures::add(T* _texture) {
+  const int index{m_index};
+
+  m_handles[index] = static_cast<void*>(_texture);
+
+  if constexpr (traits::is_same<T, texture1D>) {
+    m_specification[index] = '1';
+  } else if constexpr (traits::is_same<T, texture2D>) {
+    m_specification[index] = '2';
+  } else if constexpr (traits::is_same<T, texture3D>) {
+    m_specification[index] = '3';
+  } else if constexpr (traits::is_same<T, textureCM>) {
+    m_specification[index] = 'c';
+  }
+
+  m_index++;
+  m_specification[m_index] = '\0';
+
+  return index;
+}
+
+inline void* const* draw_textures::handles() const {
+  return m_handles;
+}
+
+inline const char* draw_textures::specification() const {
+  return m_specification;
+}
 
 inline interface::device_info::device_info(memory::allocator* _allocator)
   : vendor{_allocator}

@@ -1,0 +1,82 @@
+{
+  name: "irradiance_map",
+  uniforms: [
+    { name: "u_sampler", type: "samplerCM", value: 0 }
+  ],
+  shaders: [
+    {
+      type: "vertex",
+      inputs: [
+        { name: "a_position",    type: "vec2f" },
+        { name: "a_coordinate",  type: "vec2f" }
+      ],
+      outputs: [
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      source: "
+        void main() {
+          rx_position = vec4(a_position, 0.0, 1.0);
+          vs_coordinate = a_coordinate;
+        }
+      "
+    },{
+      type: "fragment",
+      inputs: [
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      outputs: [
+        { name: "fs_color_px", type: "vec4f" },
+        { name: "fs_color_nx", type: "vec4f" },
+        { name: "fs_color_py", type: "vec4f" },
+        { name: "fs_color_ny", type: "vec4f" },
+        { name: "fs_color_pz", type: "vec4f" },
+        { name: "fs_color_nz", type: "vec4f" }
+      ],
+      source: "
+        void main() {
+          const mat3x3f rotations[6] = mat3x3f[](
+            mat3x3f(vec3f( 0.0, 0.0, -1.0), vec3f(0.0, 1.0,  0.0), vec3f( 1.0,  0.0,  0.0)),  // y =  90
+            mat3x3f(vec3f( 0.0, 0.0,  1.0), vec3f(0.0, 1.0,  0.0), vec3f(-1.0,  0.0,  0.0)),  // y =  270
+            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, 0.0,  1.0), vec3f( 0.0, -1.0,  0.0)),  // x =  90
+            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, 0.0, -1.0), vec3f( 0.0,  1.0,  0.0)),  // x = -90
+            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, 1.0,  0.0), vec3f( 0.0,  0.0,  1.0)),  // y =  0
+            mat3x3f(vec3f(-1.0, 0.0,  0.0), vec3f(0.0, 1.0,  0.0), vec3f( 0.0,  0.0, -1.0))); // y =  180
+
+          const int w = 256;
+          const int h = 256;
+
+          vec3f base_normal = normalize(vec3(vs_coordinate * 2.0 - 1.0, 1.0));
+
+          vec4f colors[6] = vec4f[](
+            vec4f(0.0),
+            vec4f(0.0),
+            vec4f(0.0),
+            vec4f(0.0),
+            vec4f(0.0),
+            vec4f(0.0));
+
+          for (int i = 0; i < 6; i++) {
+            vec3f normal = rotations[i] * base_normal;
+            for (int j = 0; j < 6; j++) {
+              mat3x3f rotation = rotations[j];
+              for (int x = 0; x < w; x++) {
+                for (int y = 0; y < h; y++) {
+                  vec3f direction = rotation * normalize(vec3((x - 128) / 256.0, (y - 128) / 256.0, 1.0));
+                  float mul = max(dot(normal, direction), 0.0);
+                  colors[i] += vec4f(rx_textureCM(u_sampler, direction).rgb * mul, mul);
+                }
+              }
+            }
+          }
+
+          fs_color_px = vec4f(colors[0].rgb / colors[0].a, 1.0);
+          fs_color_nx = vec4f(colors[1].rgb / colors[1].a, 1.0);
+          fs_color_py = vec4f(colors[2].rgb / colors[2].a, 1.0);
+          fs_color_ny = vec4f(colors[3].rgb / colors[3].a, 1.0);
+          fs_color_pz = vec4f(colors[4].rgb / colors[4].a, 1.0);
+          fs_color_nz = vec4f(colors[5].rgb / colors[5].a, 1.0);
+        }
+      "
+    }
+  ]
+}

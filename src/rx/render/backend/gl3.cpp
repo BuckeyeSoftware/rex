@@ -106,10 +106,9 @@ static void (GLAPIENTRYP pglStencilFunc)(GLenum, GLint, GLuint);
 static void (GLAPIENTRYP pglStencilOpSeparate)(GLenum, GLenum, GLenum, GLenum);
 static void (GLAPIENTRYP pglPolygonMode)(GLenum, GLenum);
 static void (GLAPIENTRYP pglViewport)(GLint, GLint, GLsizei, GLsizei);
-//static void (GLAPIENTRYP pglClearColor)(GLclampf, GLclampf, GLclampf, GLclampf);
-//static void (GLAPIENTRYP pglClear)(GLbitfield);
 static void (GLAPIENTRYP pglClearBufferfi)(GLenum, GLint, GLfloat, GLint);
 static void (GLAPIENTRYP pglClearBufferfv)(GLenum, GLint, const GLfloat*);
+static void (GLAPIENTRYP pglClearBufferiv)(GLenum, GLint, const GLint*);
 
 // query
 static void (GLAPIENTRYP pglGetIntegerv)(GLenum, GLint*);
@@ -145,6 +144,8 @@ namespace detail_gl3 {
     target()
       : owned{true}
     {
+      memset(&draw_buffers, 0, sizeof draw_buffers);
+      memset(&read_buffers, 0, sizeof read_buffers);
       pglGenFramebuffers(1, &fbo);
     }
 
@@ -162,6 +163,8 @@ namespace detail_gl3 {
 
     GLuint fbo;
     bool owned;
+    frontend::buffers draw_buffers;
+    frontend::buffers read_buffers;
   };
 
   struct program {
@@ -491,40 +494,53 @@ namespace detail_gl3 {
       flush();
     }
 
-    void use_target(const frontend::target* _render_target, bool _draw, bool _read) {
-      profiler::cpu_sample sample{"use_target"};
+    void use_draw_target(frontend::target* _render_target, const frontend::buffers* _draw_buffers) {
+      profiler::cpu_sample sample{"use_draw_target"};
 
-      const auto this_target{reinterpret_cast<const target*>(_render_target + 1)};
-      if (_draw && _read) {
-        if (m_bound_draw_fbo != this_target->fbo && m_bound_read_fbo != this_target->fbo) {
-          pglBindFramebuffer(GL_FRAMEBUFFER, this_target->fbo);
-          m_bound_draw_fbo = this_target->fbo;
-          m_bound_read_fbo = this_target->fbo;
-        } else if (m_bound_draw_fbo != this_target->fbo) {
-          pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, this_target->fbo);
-          m_bound_draw_fbo = this_target->fbo;
-        } else if (m_bound_read_fbo != this_target->fbo) {
-          pglBindFramebuffer(GL_READ_FRAMEBUFFER, this_target->fbo);
-          m_bound_read_fbo = this_target->fbo;
+      auto this_target{reinterpret_cast<target*>(_render_target + 1)};
+      if (m_bound_draw_fbo != this_target->fbo) {
+        pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, this_target->fbo);
+        m_bound_draw_fbo = this_target->fbo;
+      }
+
+      // Changing draw buffers?
+      if (_draw_buffers && !_render_target->is_swapchain()) {
+        // The draw buffers changed.
+        if (this_target->draw_buffers != *_draw_buffers) {
+          if (_draw_buffers->index == 0) {
+            pglDrawBuffer(GL_NONE);
+          } else {
+            vector<GLenum> draw_buffers;
+            for (rx_u8 i{0}; i < sizeof _draw_buffers->index; i++) {
+              draw_buffers.push_back(GL_COLOR_ATTACHMENT0 + _draw_buffers->elements[i]);
+            }
+            pglDrawBuffers(static_cast<GLsizei>(draw_buffers.size()), draw_buffers.data());
+          }
+          this_target->draw_buffers = *_draw_buffers;
         }
-      } else if (_draw) {
-        if (m_bound_read_fbo == this_target->fbo) {
-          pglBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-          m_bound_read_fbo = 0;
+      }
+    }
+
+    void use_read_target(frontend::target* _render_target, const frontend::buffers* _read_buffers) {
+      profiler::cpu_sample sample{"use_read_target"};
+
+      auto this_target{reinterpret_cast<target*>(_render_target + 1)};
+      if (m_bound_read_fbo != this_target->fbo) {
+        pglBindFramebuffer(GL_READ_FRAMEBUFFER, this_target->fbo);
+        m_bound_read_fbo = this_target->fbo;
+      }
+
+      // Changing read buffer?
+      if (_read_buffers && !_render_target->is_swapchain()) {
+        // The read buffer changed.
+        if (this_target->read_buffers != *_read_buffers) {
+          if (_read_buffers->index == 0) {
+            pglReadBuffer(GL_NONE);
+          } else {
+            pglReadBuffer(GL_COLOR_ATTACHMENT0 + _read_buffers->elements[_read_buffers->index - 1]);
+          }
         }
-        if (m_bound_draw_fbo != this_target->fbo) {
-          pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, this_target->fbo);
-          m_bound_draw_fbo = this_target->fbo;
-        }
-      } else if (_read) {
-        if (m_bound_draw_fbo == this_target->fbo) {
-          pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-          m_bound_draw_fbo = 0;
-        }
-        if (m_bound_read_fbo != this_target->fbo) {
-          pglBindFramebuffer(GL_READ_FRAMEBUFFER, this_target->fbo);
-          m_bound_read_fbo = this_target->fbo;
-        }
+        this_target->read_buffers = *_read_buffers;
       }
     }
 
@@ -587,11 +603,16 @@ namespace detail_gl3 {
 
     template<GLuint texture_unit::*name, typename Bt, typename Ft>
     void use_active_texture_template(GLenum _type, const Ft* _render_texture, rx_size _unit) {
-      if (m_active_texture != _unit) {
-        pglActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + _unit));
-        m_active_texture = _unit;
+      const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
+      auto& texture_unit{m_texture_units[_unit]};
+      if (texture_unit.*name != this_texture->tex) {
+        if (m_active_texture != _unit) {
+          pglActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + _unit));
+          m_active_texture = _unit;
+        }
+        texture_unit.*name = this_texture->tex;
+        pglBindTexture(_type, this_texture->tex);
       }
-      use_texture_template<name, Bt, Ft>(_type, _render_texture);
     }
 
     template<typename Ft, typename Bt, GLuint texture_unit::*name>
@@ -799,7 +820,10 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
 
   // emit uniforms
   _uniforms.each_fwd([&](const frontend::uniform& _uniform) {
-    contents.append(string::format("uniform %s %s;\n", uniform_to_string(_uniform.kind()), _uniform.name()));
+    // Don't emit padding uniforms.
+    if (!_uniform.is_padding()) {
+      contents.append(string::format("uniform %s %s;\n", uniform_to_string(_uniform.kind()), _uniform.name()));
+    }
   });
 
   // to get good diagnostics
@@ -910,6 +934,9 @@ bool gl3::init() {
   fetch("glDrawBuffer", pglDrawBuffer);
   fetch("glReadBuffer", pglReadBuffer);
   fetch("glBlitFramebuffer", pglBlitFramebuffer);
+  fetch("glClearBufferfv", pglClearBufferfv);
+  fetch("glClearBufferiv", pglClearBufferiv);
+  fetch("glClearBufferfi", pglClearBufferfi);
 
   // shaders and programs
   fetch("glShaderSource", pglShaderSource);
@@ -928,7 +955,6 @@ bool gl3::init() {
   fetch("glUseProgram", pglUseProgram);
   fetch("glGetUniformLocation", pglGetUniformLocation);
   fetch("glUniform1i", pglUniform1i);
-  // fetch("glUniform1iv", pglUniform1iv);
   fetch("glUniform2iv", pglUniform2iv);
   fetch("glUniform3iv", pglUniform3iv);
   fetch("glUniform4iv", pglUniform4iv);
@@ -955,8 +981,6 @@ bool gl3::init() {
   fetch("glStencilOpSeparate", pglStencilOpSeparate);
   fetch("glPolygonMode", pglPolygonMode);
   fetch("glViewport", pglViewport);
-  fetch("glClearBufferfv", pglClearBufferfv);
-  fetch("glClearBufferfi", pglClearBufferfi);
 
   // query
   fetch("glGetIntegerv", pglGetIntegerv);
@@ -1128,7 +1152,7 @@ void gl3::process(rx_byte* _command) {
             break;
           }
 
-          state->use_target(render_target, true, true);
+          state->use_draw_target(render_target, nullptr);
 
           if (render_target->has_depth_stencil()) {
             const auto depth_stencil{render_target->depth_stencil()};
@@ -1146,21 +1170,30 @@ void gl3::process(rx_byte* _command) {
               pglFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0);
             }
           }
+
           // color attachments & draw buffers
           const auto& attachments{render_target->attachments()};
-          if (attachments.is_empty()) {
-            pglDrawBuffer(GL_NONE);
-            pglReadBuffer(GL_NONE);
-          } else {
-            vector<GLenum> draw_buffers{m_allocator, attachments.size()};
-            for (rx_size i{0}; i < attachments.size(); i++) {
-              const auto attachment{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
-              const auto render_texture{attachments[i]};
-              const auto texture{reinterpret_cast<detail_gl3::texture2D*>(render_texture + 1)};
-              pglFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture->tex, 0);
-              draw_buffers[i] = attachment;
+          for (rx_size i{0}; i < attachments.size(); i++) {
+            const auto& attachment{attachments[i]};
+            const auto attachment_enum{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
+            switch (attachment.kind) {
+            case frontend::target::attachment::type::k_texture2D:
+              pglFramebufferTexture2D(
+                GL_DRAW_FRAMEBUFFER,
+                attachment_enum,
+                GL_TEXTURE_2D,
+                reinterpret_cast<detail_gl3::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
+                0);
+              break;
+            case frontend::target::attachment::type::k_textureCM:
+              pglFramebufferTexture2D(
+                GL_DRAW_FRAMEBUFFER,
+                attachment_enum,
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X + static_cast<GLenum>(attachment.as_textureCM.face),
+                reinterpret_cast<detail_gl3::textureCM*>(attachment.as_textureCM.texture + 1)->tex,
+                0);
+              break;
             }
-            pglDrawBuffers(draw_buffers.size(), draw_buffers.data());
           }
         }
         break;
@@ -1204,7 +1237,12 @@ void gl3::process(rx_byte* _command) {
 
           // fetch uniform locations
           render_program->uniforms().each_fwd([program](const frontend::uniform& _uniform) {
-            program->uniforms.push_back(pglGetUniformLocation(program->handle, _uniform.name().data()));
+            if (_uniform.is_padding()) {
+              // Padding uniforms have index -1.
+              program->uniforms.push_back(-1);
+            } else {
+              program->uniforms.push_back(pglGetUniformLocation(program->handle, _uniform.name().data()));
+            }
           });
         }
         break;
@@ -1382,6 +1420,7 @@ void gl3::process(rx_byte* _command) {
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
+          const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{render_texture->filter()};
           const auto& data{render_texture->data()};
@@ -1398,7 +1437,18 @@ void gl3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, levels);
 
           if (data.is_empty()) {
-            // TODO(dweiler): implement
+            for (GLint j{0}; j < 6; j++) {
+              pglTexImage2D(
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
+                0,
+                convert_texture_data_format(format),
+                static_cast<GLsizei>(dimensions.w),
+                static_cast<GLsizei>(dimensions.h),
+                0,
+                convert_texture_format(format),
+                convert_texture_data_type(format),
+                nullptr);
+            }
           } else {
             for (GLint i{0}; i < levels; i++) {
               const auto level_info{render_texture->info_for_level(i)};
@@ -1473,30 +1523,29 @@ void gl3::process(rx_byte* _command) {
       const auto command{reinterpret_cast<frontend::clear_command*>(header + 1)};
       const auto render_state{reinterpret_cast<frontend::state*>(command)};
       const auto render_target{command->render_target};
-      const bool clear_depth{!!(command->clear_mask & RX_RENDER_CLEAR_DEPTH)};
-      const bool clear_stencil{!!(command->clear_mask & RX_RENDER_CLEAR_STENCIL)};
-      const auto clear_color{command->clear_mask & ~(RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL)};
+      const bool clear_depth{command->clear_depth};
+      const bool clear_stencil{command->clear_stencil};
 
       state->use_state(render_state);
-      state->use_target(render_target, true, false);
+      state->use_draw_target(render_target, &command->draw_buffers);
 
-      if (clear_color) {
-        for (rx_u32 i{0}; i < 32; i++) {
-          if (clear_color & (1 << i)) {
-            pglClearBufferfv(GL_COLOR, static_cast<GLint>(i - 2),
-              command->clear_color.data());
-            break;
+      if (command->clear_colors) {
+        for (rx_u32 i{0}; i < 8; i++) {
+          if (command->clear_colors & (1 << i)) {
+            pglClearBufferfv(GL_COLOR, static_cast<GLint>(i),
+              command->color_values[i].data());
           }
         }
       }
 
       if (clear_depth && clear_stencil) {
-        pglClearBufferfi(GL_DEPTH_STENCIL, 0, command->clear_color.r,
-          static_cast<GLint>(command->clear_color.g));
+        pglClearBufferfi(GL_DEPTH_STENCIL, 0, command->depth_value,
+          command->stencil_value);
       } else if (clear_depth) {
-        pglClearBufferfv(GL_DEPTH, 0, &command->clear_color.r);
+        pglClearBufferfv(GL_DEPTH, 0, &command->depth_value);
       } else if (clear_stencil) {
-        pglClearBufferfv(GL_STENCIL, 0, &command->clear_color.g);
+        const GLint value{command->stencil_value};
+        pglClearBufferiv(GL_STENCIL, 0, &value);
       }
     }
     break;
@@ -1511,7 +1560,7 @@ void gl3::process(rx_byte* _command) {
       const auto render_program{command->render_program};
       const auto this_program{reinterpret_cast<detail_gl3::program*>(render_program + 1)};
 
-      state->use_target(render_target, true, false);
+      state->use_draw_target(render_target, &command->draw_buffers);
       state->use_buffer(render_buffer);
       state->use_program(render_program);
       state->use_state(render_state);
@@ -1598,7 +1647,7 @@ void gl3::process(rx_byte* _command) {
       }
 
       // apply any textures
-      for (GLuint i{0}; i < 8; i++) {
+      for (GLuint i{0}; i < frontend::draw_command::k_max_textures; i++) {
         switch (command->texture_types[i]) {
         case '1':
           state->use_active_texture(reinterpret_cast<frontend::texture1D*>(command->texture_binds[i]), i);
@@ -1662,24 +1711,24 @@ void gl3::process(rx_byte* _command) {
       // * blend write mask
       state->use_state(render_state);
 
-      const auto* src_render_target{command->src_target};
-      const auto* dst_render_target{command->dst_target};
+      auto* src_render_target{command->src_target};
+      auto* dst_render_target{command->dst_target};
 
       const auto src_attachment{command->src_attachment};
       const auto dst_attachment{command->dst_attachment};
 
-      const auto src_dimensions{src_render_target->attachments()[src_attachment]->dimensions().cast<GLint>()};
-      const auto dst_dimensions{dst_render_target->attachments()[dst_attachment]->dimensions().cast<GLint>()};
+      const auto src_dimensions{src_render_target->attachments()[src_attachment].as_texture2D.texture->dimensions().cast<GLint>()};
+      const auto dst_dimensions{dst_render_target->attachments()[dst_attachment].as_texture2D.texture->dimensions().cast<GLint>()};
 
-      state->use_target(src_render_target, false, true);
-      pglReadBuffer(static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + src_attachment));
+      frontend::buffers draw_buffers;
+      frontend::buffers read_buffers;
+      memset(&draw_buffers, 0, sizeof draw_buffers);
+      memset(&read_buffers, 0, sizeof read_buffers);
+      draw_buffers.add(dst_attachment);
+      read_buffers.add(src_attachment);
 
-      state->use_target(dst_render_target, true, false);
-
-      // Can't change the draw buffer on the swapchain.
-      if (!dst_render_target->is_swapchain()) {
-        pglDrawBuffer(static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + dst_attachment));
-      }
+      state->use_read_target(src_render_target, &read_buffers);
+      state->use_draw_target(dst_render_target, &draw_buffers);
 
       pglBlitFramebuffer(
         0,

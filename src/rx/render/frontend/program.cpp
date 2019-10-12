@@ -30,9 +30,9 @@ uniform::uniform()
 {
 }
 
-uniform::uniform(program* _program, rx_size _index, const string& _name, type _type)
+uniform::uniform(program* _program, rx_u64 _bit, const string& _name, type _type)
   : m_program{_program}
-  , m_mask{1_u64 << _index}
+  , m_bit{_bit}
   , m_type{_type}
   , m_name{_name}
 {
@@ -41,7 +41,7 @@ uniform::uniform(program* _program, rx_size _index, const string& _name, type _t
 
 uniform::uniform(uniform&& uniform_)
   : m_program{uniform_.m_program}
-  , m_mask{uniform_.m_mask}
+  , m_bit{uniform_.m_bit}
   , m_type{uniform_.m_type}
   , m_name{utility::move(uniform_.m_name)}
 {
@@ -54,9 +54,9 @@ uniform::~uniform() {
 }
 
 void uniform::flush(rx_byte* _flush) {
-  RX_ASSERT(m_program->m_dirty_uniforms & m_mask, "flush on non-dirty uniform");
+  RX_ASSERT(m_program->m_dirty_uniforms & m_bit, "flush on non-dirty uniform");
   memcpy(_flush, as_opaque, size());
-  m_program->m_dirty_uniforms &= ~m_mask;
+  m_program->m_dirty_uniforms &= ~m_bit;
 }
 
 rx_size uniform::size_for_type(type _type) {
@@ -102,7 +102,7 @@ void uniform::record_sampler(int _sampler) {
   RX_ASSERT(is_sampler(m_type), "not a sampler");
   if (*as_int != _sampler) {
     *as_int = _sampler;
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
@@ -110,7 +110,7 @@ void uniform::record_int(int _value) {
   RX_ASSERT(m_type == type::k_int, "not an int");
   if (*as_int != _value) {
     *as_int = _value;
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
@@ -118,7 +118,7 @@ void uniform::record_vec2i(const math::vec2i& _value) {
   RX_ASSERT(m_type == type::k_vec2i, "not a vec2i");
   if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
     memcpy(as_int, _value.data(), sizeof _value);
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
@@ -126,7 +126,7 @@ void uniform::record_vec3i(const math::vec3i& _value) {
   RX_ASSERT(m_type == type::k_vec3i, "not a vec3i");
   if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
     memcpy(as_int, _value.data(), sizeof _value);
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
@@ -134,7 +134,7 @@ void uniform::record_vec4i(const math::vec4i& _value) {
   RX_ASSERT(m_type == type::k_vec4i, "not a vec4i");
   if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
     memcpy(as_int, _value.data(), sizeof _value);
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
@@ -142,7 +142,7 @@ void uniform::record_bool(bool _value) {
   RX_ASSERT(m_type == type::k_bool, "not a bool");
   if (*as_boolean != _value) {
     *as_boolean = _value;
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
@@ -150,7 +150,7 @@ void uniform::record_float(rx_f32 _value) {
   RX_ASSERT(m_type == type::k_float, "not a float");
   if (*as_float != _value) {
     *as_float = _value;
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
@@ -158,7 +158,7 @@ void uniform::record_vec2f(const math::vec2f& _value) {
   RX_ASSERT(m_type == type::k_vec2f, "not a vec2f");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
@@ -166,7 +166,7 @@ void uniform::record_vec3f(const math::vec3f& _value) {
   RX_ASSERT(m_type == type::k_vec3f, "not a vec3f");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
@@ -174,7 +174,7 @@ void uniform::record_vec4f(const math::vec4f& _value) {
   RX_ASSERT(m_type == type::k_vec4f, "not a vec4f");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
@@ -182,7 +182,7 @@ void uniform::record_mat3x3f(const math::mat3x3f& _value) {
   RX_ASSERT(m_type == type::k_mat3x3f, "not a mat3x3f");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
@@ -190,7 +190,7 @@ void uniform::record_mat4x4f(const math::mat4x4f& _value) {
   RX_ASSERT(m_type == type::k_mat4x4f, "not a mat4x4f");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
@@ -199,14 +199,14 @@ void uniform::record_bones(const vector<math::mat3x4f>& _frames, rx_size _joints
   const rx_size size{sizeof(math::mat3x4f) * algorithm::min(_joints, k_max_bones)};
   if (memcmp(as_float, _frames.data(), size) != 0) {
     memcpy(as_float, _frames.data(), size);
-    m_program->m_dirty_uniforms |= m_mask;
+    m_program->mark_uniform_dirty(m_bit);
   }
 }
 
 void uniform::record_raw(const rx_byte* _data, rx_size _size) {
   RX_ASSERT(_size == size_for_type(m_type), "invalid size");
   memcpy(as_opaque, _data, _size);
-  m_program->m_dirty_uniforms |= m_mask;
+  m_program->mark_uniform_dirty(m_bit);
 }
 
 program::program(interface* _frontend)
@@ -214,6 +214,7 @@ program::program(interface* _frontend)
   , m_allocator{_frontend->allocator()}
   , m_uniforms{m_allocator}
   , m_dirty_uniforms{0}
+  , m_padding_uniforms{0}
 {
 }
 
@@ -225,8 +226,12 @@ void program::validate() const {
   RX_ASSERT(!m_shaders.is_empty(), "no shaders specified");
 }
 
-uniform& program::add_uniform(const string& _name, uniform::type _type) {
-  m_uniforms.emplace_back(this, m_uniforms.size(), _name, _type);
+uniform& program::add_uniform(const string& _name, uniform::type _type, bool _is_padding) {
+  const rx_u64 bit{1_u64 << m_uniforms.size()};
+  m_uniforms.emplace_back(this, bit, _name, _type);
+  if (_is_padding) {
+    m_padding_uniforms |= bit;
+  }
   update_resource_usage();
   return m_uniforms.last();
 }
@@ -259,6 +264,12 @@ void program::update_resource_usage() {
     usage += _uniform.size();
   });
   resource::update_resource_usage(usage);
+}
+
+void program::mark_uniform_dirty(rx_u64 _uniform_bit) {
+  if (!(m_padding_uniforms & _uniform_bit)) {
+    m_dirty_uniforms |= _uniform_bit;
+  }
 }
 
 } // namespace rx::render::frontend

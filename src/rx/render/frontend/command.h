@@ -83,10 +83,80 @@ inline rx_size command_buffer::size() const {
   return m_allocator.size();
 }
 
+struct buffers {
+  rx_u8 elements[8];
+  rx_u8 index;
+  void add(rx_u8 _buffer);
+  bool operator==(const buffers& _buffers) const;
+  bool operator!=(const buffers& _buffers) const;
+};
+
+struct draw_command : state {
+  static constexpr const rx_size k_max_textures{8};
+
+  target* render_target;
+  buffer* render_buffer;
+  program* render_program;
+  rx_size count;
+  rx_size offset;
+  buffers draw_buffers;
+  char texture_types[k_max_textures + 1];
+  void* texture_binds[k_max_textures + 1];
+  primitive_type type;
+  rx_u64 dirty_uniforms_bitset;
+
+  const rx_byte* uniforms() const;
+  rx_byte* uniforms();
+};
+
+inline void buffers::add(rx_u8 _buffer) {
+  RX_ASSERT(index < sizeof elements / sizeof *elements,
+    "too many draw buffers (%d >= %d)", static_cast<int>(index),
+    static_cast<int>(sizeof elements / sizeof *elements));
+
+  elements[index++] = _buffer;
+}
+
+inline bool buffers::operator==(const buffers& _buffers) const {
+  // Comparing buffers is approximate and not exact. When we share
+  // a common initial sequence of elements we compare equal provided
+  // the sequence length isn't larger than ours.
+  if (_buffers.index > index) {
+    return false;
+  }
+
+  for (rx_u8 i{0}; i < _buffers.index; i++) {
+    if (_buffers.elements[i] != elements[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+inline bool buffers::operator!=(const buffers& _buffers) const {
+  return !operator==(_buffers);
+}
+
+inline const rx_byte* draw_command::uniforms() const {
+  // NOTE: standard permits aliasing with char (rx_byte)
+  return reinterpret_cast<const rx_byte*>(this) + sizeof *this;
+}
+
+inline rx_byte* draw_command::uniforms() {
+  // NOTE: standard permits aliasing with char (rx_byte)
+  return reinterpret_cast<rx_byte*>(this) + sizeof *this;
+}
+
 struct clear_command : state {
   target* render_target;
-  int clear_mask;
-  math::vec4f clear_color;
+  buffers draw_buffers;
+  bool clear_depth;
+  bool clear_stencil;
+  rx_u8 clear_colors;
+  rx_u8 stencil_value;
+  rx_f32 depth_value;
+  math::vec4f color_values[8];
 };
 
 struct blit_command : state {
@@ -123,31 +193,6 @@ struct resource_command {
     textureCM* as_textureCM;
   };
 };
-
-struct draw_command : state {
-  target* render_target;
-  buffer* render_buffer;
-  program* render_program;
-  rx_size count;
-  rx_size offset;
-  char texture_types[8];
-  void* texture_binds[8];
-  primitive_type type;
-  rx_u64 dirty_uniforms_bitset;
-
-  const rx_byte* uniforms() const;
-  rx_byte* uniforms();
-};
-
-inline const rx_byte* draw_command::uniforms() const {
-  // NOTE: standard permits aliasing with char (rx_byte)
-  return reinterpret_cast<const rx_byte*>(this) + sizeof *this;
-}
-
-inline rx_byte* draw_command::uniforms() {
-  // NOTE: standard permits aliasing with char (rx_byte)
-  return reinterpret_cast<rx_byte*>(this) + sizeof *this;
-}
 
 } // namespace rx::render::frontend
 

@@ -129,9 +129,6 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
     if (material.roughness())  flags |= 1 << 4;
     if (material.alpha_test()) flags |= 1 << 5;
 
-    // Disable backface culling for alpha-tested geometry.
-    state.cull.record_enable(!material.alpha_test());
-
     frontend::program* program{m_technique->permute(flags)};
     auto& uniforms{program->uniforms()};
 
@@ -139,20 +136,35 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
     uniforms[1].record_mat4x4f(_model);
     uniforms[2].record_mat3x3f(material.transform().to_mat3());
 
+    // TODO: skeletal.
+
+    // Record all the textures.
+    frontend::draw_textures textures;
+    if (material.diffuse())   uniforms[4].record_sampler(textures.add(material.diffuse()));
+    if (material.normal())    uniforms[5].record_sampler(textures.add(material.normal()));
+    if (material.metalness()) uniforms[6].record_sampler(textures.add(material.metalness()));
+    if (material.roughness()) uniforms[7].record_sampler(textures.add(material.roughness()));
+
+    // Disable backface culling for alpha-tested geometry.
+    state.cull.record_enable(!material.alpha_test());
+
+    void* const* handles{textures.handles()};
+
     m_frontend->draw(
       RX_RENDER_TAG("model mesh"),
       state,
       _target,
+      "0123",
       m_buffer,
       program,
       _mesh.count,
       _mesh.offset,
       render::frontend::primitive_type::k_triangles,
-      material.normal() ? "22" : "2",
-      material.diffuse(),
-      material.normal(),
-      material.metalness(),
-      material.roughness());
+      textures.specification(),
+      handles[0],
+      handles[1],
+      handles[2],
+      handles[3]);
 
     return true;
   });
