@@ -108,27 +108,27 @@ interface::~interface() {
   destroy_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
   destroy_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 
-  m_cached_buffers.each([this](rx_size, const string&, buffer* _buffer) {
+  m_cached_buffers.each_value([this](buffer* _buffer) {
     destroy_buffer(RX_RENDER_TAG("cached buffer"), _buffer);
   });
 
-  m_cached_targets.each([this](rx_size, const string&, target* _target) {
+  m_cached_targets.each_value([this](target* _target) {
     destroy_target(RX_RENDER_TAG("cached target"), _target);
   });
 
-  m_cached_textures1D.each([this](rx_size, const string&, texture1D* _texture) {
+  m_cached_textures1D.each_value([this](texture1D* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
 
-  m_cached_textures2D.each([this](rx_size, const string&, texture2D* _texture) {
+  m_cached_textures2D.each_value([this](texture2D* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
 
-  m_cached_textures3D.each([this](rx_size, const string&, texture3D* _texture) {
+  m_cached_textures3D.each_value([this](texture3D* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
 
-  m_cached_texturesCM.each([this](rx_size, const string&, textureCM* _texture) {
+  m_cached_texturesCM.each_value([this](textureCM* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
 }

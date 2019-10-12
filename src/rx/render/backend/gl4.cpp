@@ -779,22 +779,22 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
   case frontend::shader::type::k_vertex:
     type = GL_VERTEX_SHADER;
     // emit vertex attributes inputs
-    _shader.inputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
+    _shader.inputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("layout(location = %zu) in %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
     });
     // emit vertex outputs
-    _shader.outputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
+    _shader.outputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("out %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     break;
   case frontend::shader::type::k_fragment:
     type = GL_FRAGMENT_SHADER;
     // emit fragment inputs
-    _shader.inputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
+    _shader.inputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("in %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     // emit fragment outputs
-    _shader.outputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
+    _shader.outputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("layout(location = %d) out %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
     });
     break;

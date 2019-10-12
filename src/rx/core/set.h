@@ -43,7 +43,6 @@ struct set {
 
   template<typename F>
   bool each(F&& _function);
-
   template<typename F>
   bool each(F&& _function) const;
 
@@ -398,11 +397,11 @@ inline bool set<K>::each(F&& _function) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (traits::is_same<traits::return_type<F>, bool>) {
-        if (!_function(m_hashes[i], m_keys[i])) {
+        if (!_function(m_keys[i])) {
           return false;
         }
       } else {
-        _function(m_hashes[i], m_keys[i]);
+        _function(m_keys[i]);
       }
     }
   }
@@ -416,11 +415,11 @@ inline bool set<K>::each(F&& _function) const {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (traits::is_same<traits::return_type<F>, bool>) {
-        if (!_function(m_hashes[i], m_keys[i])) {
+        if (!_function(m_keys[i])) {
           return false;
         }
       } else {
-        _function(m_hashes[i], m_keys[i]);
+        _function(m_keys[i]);
       }
     }
   }

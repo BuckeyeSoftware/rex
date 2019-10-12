@@ -301,7 +301,7 @@ bool technique::compile() {
     // ensure all fragment inputs wire correctly into vertex outputs
     const bool check_inouts{
       // enumerate all vertex outputs and check for matching fragment inputs
-      vertex->outputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout_definition) {
+      vertex->outputs.each_pair([&](const string& _name, const shader_definition::inout& _inout_definition) {
         const auto check{fragment->inputs.find(_name)};
         if (!check) {
           return error("could not find fragment input for vertex output '%s'", _name);
@@ -316,7 +316,7 @@ bool technique::compile() {
       })
       &&
       // enumerate all fragment inputs and check for matching vertex outputs
-      fragment->inputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout_definition) {
+      fragment->inputs.each_pair([&](const string& _name, const shader_definition::inout& _inout_definition) {
         const auto check{vertex->outputs.find(_name)};
         if (!check) {
           return error("could not find vertex output for fragment input '%s'", _name);
@@ -352,14 +352,14 @@ bool technique::compile() {
         specialized_shader.source = _shader_definition.source;
 
         // emit inputs
-        _shader_definition.inputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout) {
+        _shader_definition.inputs.each_pair([&](const string& _name, const shader_definition::inout& _inout) {
           if (evaluate_when_for_basic(_inout.when)) {
             specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
           }
         });
 
         // emit outputs
-        _shader_definition.outputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout){
+        _shader_definition.outputs.each_pair([&](const string& _name, const shader_definition::inout& _inout){
           if (evaluate_when_for_basic(_inout.when)) {
             specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
           }
@@ -405,14 +405,14 @@ bool technique::compile() {
           specialized_shader.source.append(_shader_definition.source);
 
           // emit inputs
-          _shader_definition.inputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout) {
+          _shader_definition.inputs.each_pair([&](const string& _name, const shader_definition::inout& _inout) {
             if (evaluate_when_for_permute(_inout.when, _flags)) {
               specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
             }
           });
 
           // emit outputs
-          _shader_definition.outputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout){
+          _shader_definition.outputs.each_pair([&](const string& _name, const shader_definition::inout& _inout) {
             if (evaluate_when_for_permute(_inout.when, _flags)) {
               specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
             }
@@ -459,14 +459,14 @@ bool technique::compile() {
           specialized_shader.source.append(_shader_definition.source);
 
           // emit inputs
-          _shader_definition.inputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout) {
+          _shader_definition.inputs.each_pair([&](const string& _name, const shader_definition::inout& _inout) {
             if (evaluate_when_for_variant(_inout.when, i)) {
               specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
             }
           });
 
           // emit outputs
-          _shader_definition.outputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout){
+          _shader_definition.outputs.each_pair([&](const string& _name, const shader_definition::inout& _inout){
             if (evaluate_when_for_variant(_inout.when, i)) {
               specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
             }

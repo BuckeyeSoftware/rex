@@ -129,7 +129,7 @@ bool importer::load(const string& _file_name) {
 
   vector<mesh> optimized_meshes{m_allocator};
   vector<rx_u32> optimized_elements{m_allocator};
-  batches.each([&](rx_size, const string& _material_name, const vector<batch>& _batches) {
+  batches.each_pair([&](const string& _material_name, const vector<batch>& _batches) {
     math::aabb bounds;
     const rx_size elements{optimized_elements.size()};
     _batches.each_fwd([&](const batch& _batch) {
