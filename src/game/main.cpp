@@ -351,6 +351,7 @@ struct test_game
     , m_skybox{&m_frontend}
     , m_model{&m_frontend}
     , m_irradiance_map{&m_frontend, 256}
+    , m_prefilter_environment_map{&m_frontend, 2048}
   {
        model_xform.rotate = {0.0f, 90.0f, 0.0f};
     // m_camera.translate = {-1.0f, 60.0f, -1000.0f};
@@ -361,6 +362,7 @@ struct test_game
     m_skybox.load("base/skyboxes/miramar/miramar.json5");
     m_model.load("base/models/chest/chest.json5");
     m_irradiance_map.render(m_skybox.cubemap());
+    m_prefilter_environment_map.render(m_skybox.cubemap());
     return true;
   }
 
@@ -528,6 +530,7 @@ struct test_game
   render::skybox m_skybox;
   render::model m_model;
   render::irradiance_map m_irradiance_map;
+  render::prefilter_environment_map m_prefilter_environment_map;
   math::transform model_xform;
 
   math::camera m_camera;

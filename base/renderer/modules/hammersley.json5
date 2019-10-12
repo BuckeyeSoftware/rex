@@ -1,0 +1,11 @@
+{
+  name: "hammersley",
+  imports: [
+    "radical_inverse"
+  ],
+  source: "
+    vec2f hammersley(uint i, uint samples) {
+      return vec2f(float(i) / float(samples), radical_inverse(i));
+    }
+  "
+}

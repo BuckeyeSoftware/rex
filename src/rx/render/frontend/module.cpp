@@ -21,6 +21,15 @@ bool module::load(const string& _file_name) {
 }
 
 bool module::parse(const json& _description) {
+  if (!_description) {
+    const auto json_error{_description.error()};
+    if (json_error) {
+      return error("%s", *json_error);
+    } else {
+      return error("empty description");
+    }
+  }
+
   const json& name{_description["name"]};
   const json& source{_description["source"]};
 
