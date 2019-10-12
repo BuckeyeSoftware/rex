@@ -121,7 +121,7 @@ logger::logger()
 
   // signal the logging thread to begin
   {
-    concurrency::scope_lock locked(m_mutex);
+    concurrency::scope_lock locked{m_mutex};
     m_status |= k_ready;
     m_ready_condition.signal();
   }
@@ -180,7 +180,7 @@ void logger::process(int) {
   // wait until ready
   m_ready_condition.wait(locked, [this]{ return m_status & k_ready; });
 
-  const auto max_padding{m_max_name_length + m_max_level_length};
+  const auto max_padding{m_max_name_length + m_max_level_length + 1};
   flush(max_padding);
 
   while (m_status & k_running) {

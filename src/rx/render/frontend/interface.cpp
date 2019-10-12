@@ -7,6 +7,7 @@
 #include "rx/render/frontend/program.h"
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/technique.h"
+#include "rx/render/frontend/module.h"
 #include "rx/render/frontend/material.h"
 
 #include "rx/core/concurrency/scope_lock.h"
@@ -30,6 +31,7 @@ RX_CONSOLE_IVAR(command_memory, "render.command_memory", "memory for command buf
 RX_LOG("render", logger);
 
 static constexpr const char* k_technique_path{"base/renderer/techniques"};
+static constexpr const char* k_module_path{"base/renderer/modules"};
 
 namespace rx::render::frontend {
 
@@ -68,15 +70,30 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   m_device_info.renderer = info.renderer;
   m_device_info.version = info.version;
 
-  // load all techniques
+  // load all modules
+  if (filesystem::directory directory{k_module_path}) {
+    directory.each([this](filesystem::directory::item&& item_) {
+      if (item_.is_file() && item_.name().ends_with(".json5")) {
+        module new_module{m_allocator};
+        const auto path{string::format("%s/%s", k_module_path,
+          utility::move(item_.name()))};
+        if (new_module.load(path)) {
+          m_modules.insert(new_module.name(), utility::move(new_module));
+        }
+      }
+    });
+  }
+
+  // Load all the techniques.
   if (filesystem::directory directory{k_technique_path}) {
     directory.each([this](filesystem::directory::item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
         technique new_technique{this};
         const auto path{string::format("%s/%s", k_technique_path,
           utility::move(item_.name()))};
-        if (new_technique.load(path)) {
-          m_techniques.insert(new_technique.name(), utility::move(new_technique));
+        if (new_technique.load(path) && new_technique.compile(m_modules)) {
+          m_techniques.insert(new_technique.name(),
+            utility::move(new_technique));
         }
       }
     });

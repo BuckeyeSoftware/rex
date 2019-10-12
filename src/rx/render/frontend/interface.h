@@ -25,6 +25,7 @@ struct texture2D;
 struct texture3D;
 struct textureCM;
 struct technique;
+struct module;
 struct material;
 
 struct interface {
@@ -243,6 +244,7 @@ private:
 
   // NOTE(dweiler): Must be after m_deferred_process.
   map<string, technique> m_techniques;         // protected by |m_mutex|
+  map<string, module> m_modules;               // protected by |m_mutex|
 
   map<string, buffer*> m_cached_buffers;       // protected by |m_mutex|
   map<string, target*> m_cached_targets;       // protected by |m_mutex|

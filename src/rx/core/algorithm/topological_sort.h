@@ -61,8 +61,7 @@ inline bool topological_sort<K>::add(const K& _key) {
   if (m_map.find(_key)) {
     return false;
   }
-  m_map.insert(_key, {m_allocator});
-  return true;
+  return m_map.insert(_key, {m_allocator}) != nullptr;
 }
 
 template<typename K>

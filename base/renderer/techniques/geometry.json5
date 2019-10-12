@@ -140,7 +140,7 @@
 
           vec3f va = La * Ma;
           vec3f vd = max(dot(normal, L), 0.0) * Ld * Md;
-#endif 
+#endif
 
           fs_albedo = vec4f(va + vd    ,        roughness); // roughness stored in alpha
           fs_normal = vec4f(normal * 0.5 + 0.5, metalness); // metalness stored in alpha
