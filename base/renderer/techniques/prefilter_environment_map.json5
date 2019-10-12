@@ -64,12 +64,12 @@
 
         void main() {
           const mat3x3f rotations[6] = mat3x3f[](
-            mat3x3f(vec3f( 0.0, 0.0, -1.0), vec3f(0.0, 1.0,  0.0), vec3f( 1.0,  0.0,  0.0)),  // y =  90
-            mat3x3f(vec3f( 0.0, 0.0,  1.0), vec3f(0.0, 1.0,  0.0), vec3f(-1.0,  0.0,  0.0)),  // y =  270
-            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, 0.0,  1.0), vec3f( 0.0, -1.0,  0.0)),  // x =  90
-            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, 0.0, -1.0), vec3f( 0.0,  1.0,  0.0)),  // x = -90
-            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, 1.0,  0.0), vec3f( 0.0,  0.0,  1.0)),  // y =  0
-            mat3x3f(vec3f(-1.0, 0.0,  0.0), vec3f(0.0, 1.0,  0.0), vec3f( 0.0,  0.0, -1.0))); // y =  180
+            mat3x3f(vec3f( 0.0, 0.0, -1.0), vec3f(0.0, -1.0,  0.0), vec3f(-1.0,  0.0,  0.0)),  // right
+            mat3x3f(vec3f( 0.0, 0.0,  1.0), vec3f(0.0, -1.0,  0.0), vec3f( 1.0,  0.0,  0.0)),  // left
+            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0,  0.0,  1.0), vec3f( 0.0, -1.0,  0.0)),  // top
+            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0,  0.0, -1.0), vec3f( 0.0,  1.0,  0.0)),  // bottom
+            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, -1.0,  0.0), vec3f( 0.0,  0.0, -1.0)),  // front
+            mat3x3f(vec3f(-1.0, 0.0,  0.0), vec3f(0.0, -1.0,  0.0), vec3f( 0.0,  0.0,  1.0))); // back
 
           vec3f direction = normalize(vec3f(vs_coordinate * 2.0 - 1.0, -1.0));
 
