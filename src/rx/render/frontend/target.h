@@ -20,6 +20,7 @@ struct target : resource {
     };
 
     type kind;
+    rx_size level;
 
     union {
       struct {
@@ -51,15 +52,15 @@ struct target : resource {
   // attach existing stencil texture |_stencil| to target
   void attach_stencil(texture2D* _stencil);
 
-  // attach texture |_texture| to target
-  void attach_texture(texture2D* _texture);
+  // attach texture |_texture| level |_level| to target
+  void attach_texture(texture2D* _texture, rx_size _level);
 
-  // attach cubemap face |_face| texture |_texture|
-  void attach_texture(textureCM* _texture, textureCM::face _face);
+  // attach cubemap face |_face| texture |_texture| level |_level| to target
+  void attach_texture(textureCM* _texture, textureCM::face _face, rx_size _level);
 
-  // attach cubemap texture |_texture|
+  // attach cubemap texture |_texture| level |_level| to target
   // attaches _all_ faces in -x, +x, -y, +y, -z, +z order
-  void attach_texture(textureCM* _texture);
+  void attach_texture(textureCM* _texture, rx_size _level);
 
   texture2D* depth() const;
   texture2D* stencil() const;
@@ -102,13 +103,13 @@ private:
   int m_flags;
 };
 
-inline void target::attach_texture(textureCM* _texture) {
-  attach_texture(_texture, textureCM::face::k_right);  // +x
-  attach_texture(_texture, textureCM::face::k_left);   // -x
-  attach_texture(_texture, textureCM::face::k_top);    // +y
-  attach_texture(_texture, textureCM::face::k_bottom); // -y
-  attach_texture(_texture, textureCM::face::k_front);  // +z
-  attach_texture(_texture, textureCM::face::k_back);   // -z
+inline void target::attach_texture(textureCM* _texture, rx_size _level) {
+  attach_texture(_texture, textureCM::face::k_right, _level);  // +x
+  attach_texture(_texture, textureCM::face::k_left, _level);   // -x
+  attach_texture(_texture, textureCM::face::k_top, _level);    // +y
+  attach_texture(_texture, textureCM::face::k_bottom, _level); // -y
+  attach_texture(_texture, textureCM::face::k_front, _level);  // +z
+  attach_texture(_texture, textureCM::face::k_back, _level);   // -z
 }
 
 inline texture2D* target::depth() const {

@@ -87,17 +87,19 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   static auto& hdr{console::interface::get_from_name("display.hdr")->cast<bool>()->get()};
 
   m_swapchain_texture = create_texture2D(RX_RENDER_TAG("swapchain"));
-  m_swapchain_texture->record_type(texture::type::k_attachment);
-  m_swapchain_texture->record_filter({false, false, false});
   m_swapchain_texture->record_format(hdr ? texture::data_format::k_rgba_f16 : texture::data_format::k_rgba_u8);
+  m_swapchain_texture->record_type(texture::type::k_attachment);
+  m_swapchain_texture->record_levels(1);
   m_swapchain_texture->record_dimensions(dimensions.cast<rx_size>());
+  m_swapchain_texture->record_filter({false, false, false});
   m_swapchain_texture->record_wrap({
     texture::wrap_type::k_clamp_to_edge,
     texture::wrap_type::k_clamp_to_edge});
+  m_swapchain_texture->m_flags |= texture::k_swapchain;
   initialize_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 
   m_swapchain_target = create_target(RX_RENDER_TAG("swapchain"));
-  m_swapchain_target->attach_texture(m_swapchain_texture);
+  m_swapchain_target->attach_texture(m_swapchain_texture, 0);
   m_swapchain_target->m_flags |= target::k_swapchain;
   initialize_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
 }

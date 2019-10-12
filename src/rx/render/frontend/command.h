@@ -125,7 +125,7 @@ inline bool buffers::operator==(const buffers& _buffers) const {
     return false;
   }
 
-  for (rx_u8 i{0}; i < _buffers.index; i++) {
+  for (rx_u8 i{0}; i < index; i++) {
     if (_buffers.elements[i] != elements[i]) {
       return false;
     }

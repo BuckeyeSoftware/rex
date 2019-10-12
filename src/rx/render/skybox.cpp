@@ -127,10 +127,12 @@ bool skybox::load(const string& _file_name) {
 
   m_frontend->destroy_texture(RX_RENDER_TAG("skybox"), m_texture);
   m_texture = m_frontend->create_textureCM(RX_RENDER_TAG("skybox"));
-  m_texture->record_filter({false, false, false});
   m_texture->record_type(frontend::texture::type::k_static);
   m_texture->record_format(frontend::texture::data_format::k_rgb_u8);
-  m_texture->record_wrap({frontend::texture::wrap_type::k_clamp_to_edge,
+  m_texture->record_levels(1);
+  m_texture->record_filter({false, false, false});
+  m_texture->record_wrap({
+    frontend::texture::wrap_type::k_clamp_to_edge,
     frontend::texture::wrap_type::k_clamp_to_edge});
 
   math::vec2z dimensions;
@@ -156,7 +158,6 @@ bool skybox::load(const string& _file_name) {
   }
 
   m_frontend->initialize_texture(RX_RENDER_TAG("skybox"), m_texture);
-
   return true;
 }
 

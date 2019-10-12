@@ -1024,6 +1024,9 @@ void gl4::process(rx_byte* _command) {
         utility::construct<detail_gl4::texture1D>(resource->as_texture1D + 1);
         break;
       case frontend::resource_command::type::k_texture2D:
+        if (resource->as_texture2D->is_swapchain()) {
+          break;
+        }
         utility::construct<detail_gl4::texture2D>(resource->as_texture2D + 1);
         break;
       case frontend::resource_command::type::k_texture3D:
@@ -1056,6 +1059,9 @@ void gl4::process(rx_byte* _command) {
         utility::destruct<detail_gl4::texture1D>(resource->as_texture1D + 1);
         break;
       case frontend::resource_command::type::k_texture2D:
+        if (resource->as_texture2D->is_swapchain()) {
+          break;
+        }
         state->invalidate_texture(resource->as_texture2D);
         utility::destruct<detail_gl4::texture2D>(resource->as_texture2D + 1);
         break;
@@ -1136,7 +1142,7 @@ void gl4::process(rx_byte* _command) {
         {
           const auto render_target{resource->as_target};
           if (render_target->is_swapchain()) {
-            // swap chain targets don't have an user-defined attachments
+            // Swap chain targets don't have an user-defined attachments.
             break;
           }
 
@@ -1174,14 +1180,14 @@ void gl4::process(rx_byte* _command) {
                   target->fbo,
                   attachment_enum,
                   reinterpret_cast<detail_gl4::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
-                  0);
+                  static_cast<GLint>(attachment.level));
                 break;
               case frontend::target::attachment::type::k_textureCM:
                 pglNamedFramebufferTextureLayer(
                   target->fbo,
                   attachment_enum,
                   reinterpret_cast<detail_gl4::textureCM*>(attachment.as_textureCM.texture + 1)->tex,
-                  0,
+                  static_cast<GLint>(attachment.level),
                   static_cast<GLint>(attachment.as_textureCM.face));
                 break;
               }
@@ -1263,7 +1269,8 @@ void gl4::process(rx_byte* _command) {
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
+
           pglTextureStorage1D(
             texture->tex,
             levels,
@@ -1299,6 +1306,10 @@ void gl4::process(rx_byte* _command) {
       case frontend::resource_command::type::k_texture2D:
         {
           const auto render_texture{resource->as_texture2D};
+          if (render_texture->is_swapchain()) {
+            break;
+          }
+
           const auto texture{reinterpret_cast<const detail_gl4::texture2D*>(render_texture + 1)};
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
@@ -1319,7 +1330,7 @@ void gl4::process(rx_byte* _command) {
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
           pglTextureStorage2D(
             texture->tex,
             levels,
@@ -1382,7 +1393,7 @@ void gl4::process(rx_byte* _command) {
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_R, wrap_r);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
           pglTextureStorage3D(
             texture->tex,
             levels,
@@ -1448,7 +1459,7 @@ void gl4::process(rx_byte* _command) {
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
           pglTextureStorage2D(
             texture->tex,
             levels,
