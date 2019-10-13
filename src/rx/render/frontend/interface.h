@@ -25,6 +25,7 @@ struct texture2D;
 struct texture3D;
 struct textureCM;
 struct technique;
+struct module;
 struct material;
 
 struct interface {
@@ -243,6 +244,7 @@ private:
 
   // NOTE(dweiler): Must be after m_deferred_process.
   map<string, technique> m_techniques;         // protected by |m_mutex|
+  map<string, module> m_modules;               // protected by |m_mutex|
 
   map<string, buffer*> m_cached_buffers;       // protected by |m_mutex|
   map<string, target*> m_cached_targets;       // protected by |m_mutex|
@@ -288,7 +290,7 @@ inline draw_textures::draw_textures()
 
 template<typename T>
 inline int draw_textures::add(T* _texture) {
-  const int index{m_index};
+  const int index{m_index++};
 
   m_handles[index] = static_cast<void*>(_texture);
 
@@ -302,8 +304,7 @@ inline int draw_textures::add(T* _texture) {
     m_specification[index] = 'c';
   }
 
-  m_index++;
-  m_specification[m_index] = '\0';
+  m_specification[index + 1] = '\0';
 
   return index;
 }

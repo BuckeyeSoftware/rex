@@ -84,7 +84,8 @@ inline rx_size command_buffer::size() const {
 }
 
 struct buffers {
-  rx_u8 elements[8];
+  static constexpr rx_size k_max_buffers{8};
+  rx_u8 elements[k_max_buffers];
   rx_u8 index;
   void add(rx_u8 _buffer);
   bool operator==(const buffers& _buffers) const;
@@ -153,10 +154,10 @@ struct clear_command : state {
   buffers draw_buffers;
   bool clear_depth;
   bool clear_stencil;
-  rx_u8 clear_colors;
+  rx_u32 clear_colors;
   rx_u8 stencil_value;
   rx_f32 depth_value;
-  math::vec4f color_values[8];
+  math::vec4f color_values[buffers::k_max_buffers];
 };
 
 struct blit_command : state {

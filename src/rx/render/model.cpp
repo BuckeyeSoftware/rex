@@ -1,4 +1,5 @@
 #include "rx/render/model.h"
+#include "rx/render/ibl.h"
 
 #include "rx/render/frontend/interface.h"
 #include "rx/render/frontend/technique.h"
@@ -69,7 +70,7 @@ bool model::load(const string& _file_name) {
   // Map all the loaded material::loader's to render::frontend::material's while
   // using indices to refer to them rather than strings.
   map<string, rx_size> material_indices{m_frontend->allocator()};
-  model.materials().each([this, &material_indices](rx_size, const string& _name, material::loader& material_) {
+  model.materials().each_pair([this, &material_indices](const string& _name, material::loader& material_) {
     frontend::material material{m_frontend};
     if (material.load(utility::move(material_))) {
       const rx_size material_index{m_materials.size()};
@@ -92,7 +93,7 @@ bool model::load(const string& _file_name) {
   return true;
 }
 
-void model::render(frontend::target* _target, const math::mat4x4f& _model,
+void model::render(ibl* _ibl, frontend::target* _target, const math::mat4x4f& _model,
   const math::mat4x4f& _view, const math::mat4x4f& _projection)
 {
   math::frustum frustum{_view * _projection};
@@ -132,18 +133,24 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
     frontend::program* program{m_technique->permute(flags)};
     auto& uniforms{program->uniforms()};
 
-    uniforms[0].record_mat4x4f(_model * _view * _projection);
-    uniforms[1].record_mat4x4f(_model);
-    uniforms[2].record_mat3x3f(material.transform().to_mat3());
+    const auto& camera{math::mat4x4f::invert(_view).w};
+    uniforms[0].record_mat4x4f(_model);
+    uniforms[1].record_mat4x4f(_view);
+    uniforms[2].record_mat4x4f(_projection);
+    uniforms[3].record_vec3f({camera.x, camera.y, camera.z});
+    uniforms[4].record_mat3x3f(material.transform().to_mat3());
 
     // TODO: skeletal.
 
     // Record all the textures.
     frontend::draw_textures textures;
-    if (material.diffuse())   uniforms[4].record_sampler(textures.add(material.diffuse()));
-    if (material.normal())    uniforms[5].record_sampler(textures.add(material.normal()));
-    if (material.metalness()) uniforms[6].record_sampler(textures.add(material.metalness()));
-    if (material.roughness()) uniforms[7].record_sampler(textures.add(material.roughness()));
+    uniforms[6].record_sampler(textures.add(_ibl->irradiance()));
+    uniforms[7].record_sampler(textures.add(_ibl->prefilter()));
+    uniforms[8].record_sampler(textures.add(_ibl->scale_bias()));
+    if (material.diffuse())   uniforms[ 9].record_sampler(textures.add(material.diffuse()));
+    if (material.normal())    uniforms[10].record_sampler(textures.add(material.normal()));
+    if (material.metalness()) uniforms[11].record_sampler(textures.add(material.metalness()));
+    if (material.roughness()) uniforms[12].record_sampler(textures.add(material.roughness()));
 
     // Disable backface culling for alpha-tested geometry.
     state.cull.record_enable(!material.alpha_test());
@@ -164,7 +171,10 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
       handles[0],
       handles[1],
       handles[2],
-      handles[3]);
+      handles[3],
+      handles[4],
+      handles[5],
+      handles[6]);
 
     return true;
   });

@@ -165,8 +165,10 @@ void target::attach_texture(texture2D* _texture, rx_size _level) {
     "not attachable texture");
   RX_ASSERT(_texture->is_level_in_range(_level), "level out of bounds");
 
+  const auto& dimensions{_texture->info_for_level(_level).dimensions};
+
   if (m_flags & k_dimensions) {
-    RX_ASSERT(_texture->dimensions() == m_dimensions, "invalid dimensions");
+    RX_ASSERT(dimensions == m_dimensions, "invalid dimensions");
   }
 
   m_attachments.each_fwd([_texture](const attachment& _attachment) {
@@ -177,7 +179,7 @@ void target::attach_texture(texture2D* _texture, rx_size _level) {
   });
 
   if (!(m_flags & k_dimensions)) {
-    m_dimensions = _texture->dimensions();
+    m_dimensions = dimensions;
     m_flags |= k_dimensions;
   }
 
@@ -196,8 +198,10 @@ void target::attach_texture(textureCM* _texture, textureCM::face _face, rx_size 
     "not attachable texture");
   RX_ASSERT(_texture->is_level_in_range(_level), "level out of bounds");
 
+  const auto& dimensions{_texture->info_for_level(_level).dimensions};
+
   if (m_flags & k_dimensions) {
-    RX_ASSERT(_texture->dimensions() == m_dimensions, "invalid dimensions");
+    RX_ASSERT(dimensions == m_dimensions, "invalid dimensions");
   }
 
   // Don't allow attaching the same cubemap face multiple times.
@@ -211,7 +215,7 @@ void target::attach_texture(textureCM* _texture, textureCM::face _face, rx_size 
   });
 
   if (!(m_flags & k_dimensions)) {
-    m_dimensions = _texture->dimensions();
+    m_dimensions = dimensions;
     m_flags |= k_dimensions;
   }
 

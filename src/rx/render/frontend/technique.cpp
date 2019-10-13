@@ -2,10 +2,12 @@
 
 #include "rx/render/frontend/technique.h"
 #include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/module.h"
 
-#include "rx/core/log.h"
+#include "rx/core/json.h"
 #include "rx/core/optional.h"
 #include "rx/core/filesystem/file.h"
+#include "rx/core/algorithm/topological_sort.h"
 
 RX_LOG("render/technique", logger);
 
@@ -159,6 +161,7 @@ static optional<uniform::type> uniform_type_from_string(const string& _type) {
     {"sampler3D",  uniform::type::k_sampler3D},
     {"samplerCM",  uniform::type::k_samplerCM},
     {"bool",       uniform::type::k_bool},
+    {"int",        uniform::type::k_int},
     {"float",      uniform::type::k_float},
     {"vec2i",      uniform::type::k_vec2i},
     {"vec3i",      uniform::type::k_vec3i},
@@ -280,7 +283,12 @@ bool technique::evaluate_when_for_basic(const string& _when) const {
   return _when.is_empty();
 }
 
-bool technique::compile() {
+bool technique::compile(const map<string, module>& _modules) {
+  // Resolve each shaders dependencies.
+  if (!resolve_dependencies(_modules)) {
+    return false;
+  }
+
   shader_definition* vertex{nullptr};
   shader_definition* fragment{nullptr};
   m_shader_definitions.each_fwd([&](shader_definition& _shader) {
@@ -301,7 +309,7 @@ bool technique::compile() {
     // ensure all fragment inputs wire correctly into vertex outputs
     const bool check_inouts{
       // enumerate all vertex outputs and check for matching fragment inputs
-      vertex->outputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout_definition) {
+      vertex->outputs.each_pair([&](const string& _name, const shader_definition::inout& _inout_definition) {
         const auto check{fragment->inputs.find(_name)};
         if (!check) {
           return error("could not find fragment input for vertex output '%s'", _name);
@@ -316,7 +324,7 @@ bool technique::compile() {
       })
       &&
       // enumerate all fragment inputs and check for matching vertex outputs
-      fragment->inputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout_definition) {
+      fragment->inputs.each_pair([&](const string& _name, const shader_definition::inout& _inout_definition) {
         const auto check{vertex->outputs.find(_name)};
         if (!check) {
           return error("could not find vertex output for fragment input '%s'", _name);
@@ -352,14 +360,14 @@ bool technique::compile() {
         specialized_shader.source = _shader_definition.source;
 
         // emit inputs
-        _shader_definition.inputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout) {
+        _shader_definition.inputs.each_pair([&](const string& _name, const shader_definition::inout& _inout) {
           if (evaluate_when_for_basic(_inout.when)) {
             specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
           }
         });
 
         // emit outputs
-        _shader_definition.outputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout){
+        _shader_definition.outputs.each_pair([&](const string& _name, const shader_definition::inout& _inout){
           if (evaluate_when_for_basic(_inout.when)) {
             specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
           }
@@ -405,14 +413,14 @@ bool technique::compile() {
           specialized_shader.source.append(_shader_definition.source);
 
           // emit inputs
-          _shader_definition.inputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout) {
+          _shader_definition.inputs.each_pair([&](const string& _name, const shader_definition::inout& _inout) {
             if (evaluate_when_for_permute(_inout.when, _flags)) {
               specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
             }
           });
 
           // emit outputs
-          _shader_definition.outputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout){
+          _shader_definition.outputs.each_pair([&](const string& _name, const shader_definition::inout& _inout) {
             if (evaluate_when_for_permute(_inout.when, _flags)) {
               specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
             }
@@ -459,14 +467,14 @@ bool technique::compile() {
           specialized_shader.source.append(_shader_definition.source);
 
           // emit inputs
-          _shader_definition.inputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout) {
+          _shader_definition.inputs.each_pair([&](const string& _name, const shader_definition::inout& _inout) {
             if (evaluate_when_for_variant(_inout.when, i)) {
               specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
             }
           });
 
           // emit outputs
-          _shader_definition.outputs.each([&](rx_size, const string& _name, const shader_definition::inout& _inout){
+          _shader_definition.outputs.each_pair([&](const string& _name, const shader_definition::inout& _inout){
             if (evaluate_when_for_variant(_inout.when, i)) {
               specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
             }
@@ -529,7 +537,7 @@ bool technique::load(const string& _file_name) {
     return false;
   }
 
-  return compile();
+  return true;
 }
 
 void technique::fini() {
@@ -895,16 +903,14 @@ bool technique::parse_shader(const json& _shader) {
   shader_definition definition;
   definition.kind = shader_type;
   definition.when = when ? when.as_string() : "";
+  definition.source = source.as_string();
 
-  // process imports for this shader
   if (imports) {
     const auto result{imports.each([this, &definition](const json& _import) {
-      const auto& file_name{_import.as_string()};
-      const auto& data{filesystem::read_binary_file(file_name)};
-      if (!data) {
-        return error("failed to import '%s'", file_name);
+      if (!_import.is_string()) {
+        return error("expected String for import");
       }
-      definition.source.append(reinterpret_cast<const char*>(data->data()), data->size());
+      definition.dependencies.push_back(_import.as_string());
       return true;
     })};
 
@@ -912,7 +918,6 @@ bool technique::parse_shader(const json& _shader) {
       return false;
     }
   }
-  definition.source.append(_shader["source"].as_string());
 
   const auto& inputs{_shader["inputs"]};
   if (inputs && !parse_inouts(inputs, "input", definition.inputs)) {
@@ -1008,6 +1013,71 @@ bool technique::parse_specialization(const json& _specialization,
 
   m_specializations.push_back(_specialization.as_string());
   return true;
+}
+
+bool technique::resolve_dependencies(const map<string, module>& _modules) {
+  // For every shader in technique.
+  return m_shader_definitions.each_fwd([&](shader_definition& _shader) {
+    algorithm::topological_sort<string> sorter;
+    set<string> visited;
+
+    // For every dependency in the shader.
+    const bool result{_shader.dependencies.each_fwd([&](const string& _dependency) {
+      if (auto find{_modules.find(_dependency)}) {
+        return resolve_module_dependencies(_modules, *find, visited, sorter);
+      }
+      return false;
+    })};
+
+    if (!result) {
+      return error("could not satisfy all dependencies");
+    }
+
+    const auto& dependencies{sorter.sort()};
+    // When cycles are formed in the resolution we cannot satisfy.
+    if (dependencies.cycled.size()) {
+      dependencies.cycled.each_fwd([&](const string& _module) {
+        error("dependency '%s' forms a cycle", _module);
+      });
+      return false;
+    }
+
+    // Fill out the source with all the modules in sorted order.
+    string source;
+    if (dependencies.sorted.size()) {
+      const char* shader_type{""};
+      switch (_shader.kind) {
+      case shader::type::k_fragment:
+        shader_type = "fragment";
+        break;
+      case shader::type::k_vertex:
+        shader_type = "vertex";
+        break;
+      }
+
+      logger(log::level::k_verbose, "'%s': %s shader has %zu dependencies",
+        m_name, shader_type, dependencies.sorted.size());
+
+      dependencies.sorted.each_fwd([&](const string& _module) {
+        const auto find{_modules.find(_module)};
+        RX_ASSERT(find, "module '%s' not found", _module.data());
+
+        logger(log::level::k_verbose, "'%s': %s shader requires module '%s'",
+          m_name, shader_type, _module);
+
+        source.append(string::format("// Module %s\n", _module));
+        source.append("// {\n");
+        source.append(find->source());
+        source.append("// }\n");
+      });
+      source.append(_shader.source);
+
+      // Replace the shader source with the new injected modules
+      _shader.source = utility::move(source);
+    }
+
+    return true;
+  });
 }
 
 } // namespace rx::render::frontend

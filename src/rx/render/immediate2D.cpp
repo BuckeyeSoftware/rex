@@ -397,7 +397,7 @@ immediate2D::~immediate2D() {
     m_frontend->destroy_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[i]);
   }
 
-  m_fonts.each([&](rx_size, const font::key&, font* _font) {
+  m_fonts.each_value([this](font* _font) {
     m_frontend->allocator()->destroy<font>(_font);
   });
 }

@@ -7,6 +7,7 @@
 #include "rx/render/frontend/program.h"
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/technique.h"
+#include "rx/render/frontend/module.h"
 #include "rx/render/frontend/material.h"
 
 #include "rx/core/concurrency/scope_lock.h"
@@ -30,6 +31,7 @@ RX_CONSOLE_IVAR(command_memory, "render.command_memory", "memory for command buf
 RX_LOG("render", logger);
 
 static constexpr const char* k_technique_path{"base/renderer/techniques"};
+static constexpr const char* k_module_path{"base/renderer/modules"};
 
 namespace rx::render::frontend {
 
@@ -68,15 +70,30 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   m_device_info.renderer = info.renderer;
   m_device_info.version = info.version;
 
-  // load all techniques
+  // load all modules
+  if (filesystem::directory directory{k_module_path}) {
+    directory.each([this](filesystem::directory::item&& item_) {
+      if (item_.is_file() && item_.name().ends_with(".json5")) {
+        module new_module{m_allocator};
+        const auto path{string::format("%s/%s", k_module_path,
+          utility::move(item_.name()))};
+        if (new_module.load(path)) {
+          m_modules.insert(new_module.name(), utility::move(new_module));
+        }
+      }
+    });
+  }
+
+  // Load all the techniques.
   if (filesystem::directory directory{k_technique_path}) {
     directory.each([this](filesystem::directory::item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
         technique new_technique{this};
         const auto path{string::format("%s/%s", k_technique_path,
           utility::move(item_.name()))};
-        if (new_technique.load(path)) {
-          m_techniques.insert(new_technique.name(), utility::move(new_technique));
+        if (new_technique.load(path) && new_technique.compile(m_modules)) {
+          m_techniques.insert(new_technique.name(),
+            utility::move(new_technique));
         }
       }
     });
@@ -108,27 +125,27 @@ interface::~interface() {
   destroy_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
   destroy_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 
-  m_cached_buffers.each([this](rx_size, const string&, buffer* _buffer) {
+  m_cached_buffers.each_value([this](buffer* _buffer) {
     destroy_buffer(RX_RENDER_TAG("cached buffer"), _buffer);
   });
 
-  m_cached_targets.each([this](rx_size, const string&, target* _target) {
+  m_cached_targets.each_value([this](target* _target) {
     destroy_target(RX_RENDER_TAG("cached target"), _target);
   });
 
-  m_cached_textures1D.each([this](rx_size, const string&, texture1D* _texture) {
+  m_cached_textures1D.each_value([this](texture1D* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
 
-  m_cached_textures2D.each([this](rx_size, const string&, texture2D* _texture) {
+  m_cached_textures2D.each_value([this](texture2D* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
 
-  m_cached_textures3D.each([this](rx_size, const string&, texture3D* _texture) {
+  m_cached_textures3D.each_value([this](texture3D* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
 
-  m_cached_texturesCM.each([this](rx_size, const string&, textureCM* _texture) {
+  m_cached_texturesCM.each_value([this](textureCM* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
 }
@@ -469,6 +486,8 @@ void interface::draw(
         }
       }
       va_end(va);
+    } else {
+      command->texture_types[0] = '\0';
     }
 
     m_commands.push_back(command_base);
@@ -526,7 +545,7 @@ void interface::clear(
       command->stencil_value = va_arg(va, rx_s32);
     }
 
-    for (rx_u32 i{0}; i < 8; i++) {
+    for (rx_u32 i{0}; i < buffers::k_max_buffers; i++) {
       if (_clear_mask & (1 << i)) {
         const rx_f32* color{va_arg(va, rx_f32*)};
         command->color_values[i].r = color[0];

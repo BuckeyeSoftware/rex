@@ -243,6 +243,8 @@ namespace detail_gl3 {
       , m_active_texture{0}
       , m_context{_context}
     {
+      memset(m_texture_units, 0, sizeof m_texture_units);
+
       pglEnable(GL_CULL_FACE);
       pglCullFace(GL_BACK);
       pglFrontFace(GL_CW);
@@ -683,7 +685,7 @@ namespace detail_gl3 {
     GLuint m_bound_program;
 
     GLint m_swap_chain_fbo;
-    texture_unit m_texture_units[8];
+    texture_unit m_texture_units[frontend::draw_command::k_max_textures];
     rx_size m_active_texture;
 
     SDL_GLContext m_context;
@@ -786,6 +788,10 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     "#define rx_texture2D texture\n"
     "#define rx_texture3D texture\n"
     "#define rx_textureCM texture\n"
+    "#define rx_texture1DLod textureLod\n"
+    "#define rx_texture2DLod textureLod\n"
+    "#define rx_texture3DLod textureLod\n"
+    "#define rx_textureCMLod textureLod\n"
     "#define rx_position gl_Position\n"
     "#define rx_point_size gl_PointSize\n"
   };
@@ -797,22 +803,22 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
   case frontend::shader::type::k_vertex:
     type = GL_VERTEX_SHADER;
     // emit vertex attributes inputs
-    _shader.inputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
+    _shader.inputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("layout(location = %zu) in %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
     });
     // emit vertex outputs
-    _shader.outputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
+    _shader.outputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("out %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     break;
   case frontend::shader::type::k_fragment:
     type = GL_FRAGMENT_SHADER;
     // emit fragment inputs
-    _shader.inputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
+    _shader.inputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("in %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     // emit fragment outputs
-    _shader.outputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
+    _shader.outputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("layout(location = %d) out %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
     });
     break;
@@ -1060,6 +1066,9 @@ void gl3::process(rx_byte* _command) {
         utility::destruct<detail_gl3::buffer>(resource->as_buffer + 1);
         break;
       case frontend::resource_command::type::k_target:
+        if (state->m_bound_draw_fbo == reinterpret_cast<detail_gl3::target*>(resource->as_target + 1)->fbo) {
+          state->m_bound_draw_fbo = 0;
+        }
         utility::destruct<detail_gl3::target>(resource->as_target + 1);
         break;
       case frontend::resource_command::type::k_program:
@@ -1154,7 +1163,7 @@ void gl3::process(rx_byte* _command) {
         {
           const auto render_target{resource->as_target};
           if (render_target->is_swapchain()) {
-            // swap chain targets don't have an user-defined attachments
+            // Swap chain targets don't have an user-defined attachments.
             break;
           }
 
@@ -1177,7 +1186,7 @@ void gl3::process(rx_byte* _command) {
             }
           }
 
-          // color attachments & draw buffers
+          // color attachments
           const auto& attachments{render_target->attachments()};
           for (rx_size i{0}; i < attachments.size(); i++) {
             const auto& attachment{attachments[i]};
@@ -1299,7 +1308,6 @@ void gl3::process(rx_byte* _command) {
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
-          const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{render_texture->filter()};
           const auto& data{render_texture->data()};
@@ -1341,7 +1349,6 @@ void gl3::process(rx_byte* _command) {
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
           const auto wrap_r{convert_texture_wrap(wrap.p)};
-          const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{render_texture->filter()};
           const auto& data{render_texture->data()};
@@ -1384,7 +1391,7 @@ void gl3::process(rx_byte* _command) {
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
-          const auto dimensions{render_texture->dimensions()};
+          const auto wrap_p{convert_texture_wrap(wrap.p)};
           const auto format{render_texture->format()};
           const auto filter{render_texture->filter()};
           const auto& data{render_texture->data()};
@@ -1397,6 +1404,7 @@ void gl3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, wrap_t);
+          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, wrap_p);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, levels - 1);
 
@@ -1478,7 +1486,7 @@ void gl3::process(rx_byte* _command) {
       state->use_draw_target(render_target, &command->draw_buffers);
 
       if (command->clear_colors) {
-        for (rx_u32 i{0}; i < 8; i++) {
+        for (rx_u32 i{0}; i < sizeof command->color_values / sizeof *command->color_values; i++) {
           if (command->clear_colors & (1 << i)) {
             pglClearBufferfv(GL_COLOR, static_cast<GLint>(i),
               command->color_values[i].data());
@@ -1595,8 +1603,12 @@ void gl3::process(rx_byte* _command) {
       }
 
       // apply any textures
-      for (GLuint i{0}; i < frontend::draw_command::k_max_textures; i++) {
-        switch (command->texture_types[i]) {
+      for (rx_size i{0}; i < frontend::draw_command::k_max_textures; i++) {
+        const int ch{command->texture_types[i]};
+        if (ch == '\0') {
+          break;
+        }
+        switch (ch) {
         case '1':
           state->use_active_texture(reinterpret_cast<frontend::texture1D*>(command->texture_binds[i]), i);
           break;

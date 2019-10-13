@@ -2,16 +2,21 @@
 #define RX_RENDER_FRONTEND_TECHNIQUE_H
 #include "rx/core/string.h"
 #include "rx/core/vector.h"
-#include "rx/core/json.h"
 #include "rx/core/map.h"
 #include "rx/core/log.h"
 
 #include "rx/render/frontend/program.h"
 
+namespace rx {
+  struct json;
+}
+
 namespace rx::render::frontend {
 
-struct interface;
+struct program;
 struct technique;
+struct interface;
+struct module;
 
 struct technique
   : concepts::no_copy
@@ -39,6 +44,8 @@ struct technique
   program* variant(rx_size _index) const;
 
   bool load(const string& _file_name);
+  bool parse(const json& _description);
+  bool compile(const map<string, module>& _modules);
 
   const string& name() const;
 
@@ -82,6 +89,7 @@ private:
 
     shader::type kind;
     string source;
+    vector<string> dependencies;
     map<string, inout> inputs;
     map<string, inout> outputs;
     string when;
@@ -90,9 +98,6 @@ private:
   bool evaluate_when_for_permute(const string& _when, rx_u64 _flags) const;
   bool evaluate_when_for_variant(const string& _when, rx_size _index) const;
   bool evaluate_when_for_basic(const string& _when) const;
-
-  bool parse(const json& _description);
-  bool compile();
 
   bool parse_uniforms(const json& _uniforms);
   bool parse_shaders(const json& _shaders);
@@ -107,6 +112,8 @@ private:
 
   bool parse_specializations(const json& _specializations, const char* _type);
   bool parse_specialization(const json& _specialization, const char* _type);
+
+  bool resolve_dependencies(const map<string, module>& _modules);
 
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments) const;

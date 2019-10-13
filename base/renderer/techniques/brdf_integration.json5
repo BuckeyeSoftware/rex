@@ -1,0 +1,69 @@
+{
+  name: "brdf_integration",
+  shaders: [
+    {
+      type: "vertex",
+      inputs: [
+        { name: "a_position",    type: "vec2f" },
+        { name: "a_coordinate",  type: "vec2f" }
+      ],
+      outputs: [
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      source: "
+        void main() {
+          rx_position = vec4(a_position, 0.0, 1.0);
+          vs_coordinate = a_coordinate;
+        }
+      "
+    },{
+      type: "fragment",
+      inputs: [
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      outputs: [
+        { name: "fs_color", type: "vec4f" }
+      ],
+      imports: [
+        "hammersley",
+        "importance_sample_ggx",
+        "schlick"
+      ],
+      source: "
+        vec2f integrate_brdf(float roughness, float n_dot_v) {
+          vec3f v = vec3f(sqrt(1.0 - n_dot_v * n_dot_v), 0, n_dot_v);
+
+          float a = 0.0;
+          float b = 0.0;
+
+          uint samples = 512u;
+          for (uint i = 0u; i < samples; i++) {
+            vec2f Xi = hammersley(i, samples);
+            vec3f h = importance_sample_ggx(Xi, roughness, vec3f(0.0, 0.0, 1.0));
+            vec3f l = reflect(-v, h);
+
+            float n_dot_l = clamp(l.z, 0.0, 1.0);
+            float n_dot_h = clamp(h.z, 0.0, 1.0);
+            float v_dot_h = clamp(dot(v, h), 0.0, 1.0);
+
+            if (n_dot_l > 0.0) {
+              float g = schlick(n_dot_l, n_dot_v, roughness);
+              float v = g * n_dot_h / (n_dot_h * n_dot_v);
+              float f = pow(1.0 - v_dot_h, 5.0);
+
+              a += (1.0 - f) * v;
+              b += f * v;
+            }
+          }
+
+          return vec2f(a, b) / samples;
+        }
+
+        void main() {
+          vec2f scale_bias = integrate_brdf(vs_coordinate.x, vs_coordinate.y);
+          fs_color = vec4f(scale_bias, 0.0, 1.0);
+        }
+      "
+    }
+  ]
+}

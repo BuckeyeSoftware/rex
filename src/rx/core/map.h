@@ -43,10 +43,19 @@ struct map {
   void clear();
 
   template<typename F>
-  bool each(F&& _function);
+  bool each_key(F&& _function);
+  template<typename F>
+  bool each_key(F&& _function) const;
 
   template<typename F>
-  bool each(F&& _function) const;
+  bool each_value(F&& _function);
+  template<typename F>
+  bool each_value(F&& _function) const;
+
+  template<typename F>
+  bool each_pair(F&& _function);
+  template<typename F>
+  bool each_pair(F&& _function) const;
 
   memory::allocator* allocator() const;
 
@@ -409,11 +418,12 @@ inline bool map<K, V>::lookup_index(const K& _key, rx_size& _index) const {
   rx_size position{desired_position(hash)};
   rx_size distance{0};
   for (;;) {
-    if (element_hash(position) == 0) {
+    const rx_size hash_element{element_hash(position)};
+    if (hash_element == 0 || is_deleted(hash_element)) {
       return false;
-    } else if (distance > probe_distance(element_hash(position), position)) {
+    } else if (distance > probe_distance(hash_element, position)) {
       return false;
-    } else if (element_hash(position) == hash && m_keys[position] == _key) {
+    } else if (hash_element == hash && m_keys[position] == _key) {
       _index = position;
       return true;
     }
@@ -426,16 +436,106 @@ inline bool map<K, V>::lookup_index(const K& _key, rx_size& _index) const {
 
 template<typename K, typename V>
 template<typename F>
-inline bool map<K, V>::each(F&& _function) {
+inline bool map<K, V>::each_key(F&& _function) {
+ for (rx_size i{0}; i < m_capacity; i++) {
+    const auto hash{m_hashes[i]};
+    if (hash != 0 && !is_deleted(hash)) {
+      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+        if (!_function(m_keys[i])) {
+          return false;
+        }
+      } else {
+        _function(m_keys[i]);
+      }
+    }
+  }
+  return true;
+}
+
+template<typename K, typename V>
+template<typename F>
+inline bool map<K, V>::each_key(F&& _function) const {
+ for (rx_size i{0}; i < m_capacity; i++) {
+    const auto hash{m_hashes[i]};
+    if (hash != 0 && !is_deleted(hash)) {
+      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+        if (!_function(m_keys[i])) {
+          return false;
+        }
+      } else {
+        _function(m_keys[i]);
+      }
+    }
+  }
+  return true;
+}
+
+template<typename K, typename V>
+template<typename F>
+inline bool map<K, V>::each_value(F&& _function) {
+ for (rx_size i{0}; i < m_capacity; i++) {
+    const auto hash{m_hashes[i]};
+    if (hash != 0 && !is_deleted(hash)) {
+      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+        if (!_function(m_values[i])) {
+          return false;
+        }
+      } else {
+        _function(m_values[i]);
+      }
+    }
+  }
+  return true;
+}
+
+template<typename K, typename V>
+template<typename F>
+inline bool map<K, V>::each_value(F&& _function) const {
+ for (rx_size i{0}; i < m_capacity; i++) {
+    const auto hash{m_hashes[i]};
+    if (hash != 0 && !is_deleted(hash)) {
+      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+        if (!_function(m_values[i])) {
+          return false;
+        }
+      } else {
+        _function(m_values[i]);
+      }
+    }
+  }
+  return true;
+}
+
+template<typename K, typename V>
+template<typename F>
+inline bool map<K, V>::each_pair(F&& _function) {
   for (rx_size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (traits::is_same<traits::return_type<F>, bool>) {
-        if (!_function(m_hashes[i], m_keys[i], m_values[i])) {
+        if (!_function(m_keys[i], m_values[i])) {
           return false;
         }
       } else {
-        _function(m_hashes[i], m_keys[i], m_values[i]);
+        _function(m_keys[i], m_values[i]);
+      }
+    }
+  }
+  return true;
+}
+
+template<typename K, typename V>
+template<typename F>
+inline bool map<K, V>::each_pair(F&& _function) const {
+  for (rx_size i{0}; i < m_capacity; i++) {
+    const auto hash{m_hashes[i]};
+    if (hash != 0 && !is_deleted(hash)) {
+      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+        if (!_function(m_keys[i], m_values[i])) {
+          return false;
+        }
+      } else {
+        _function(m_keys[i], m_values[i]);
       }
     }
   }
@@ -445,24 +545,6 @@ inline bool map<K, V>::each(F&& _function) {
 template<typename K, typename V>
 inline memory::allocator* map<K, V>::allocator() const {
   return m_allocator;
-}
-
-template<typename K, typename V>
-template<typename F>
-inline bool map<K, V>::each(F&& _function) const {
-  for (rx_size i{0}; i < m_capacity; i++) {
-    const auto hash{m_hashes[i]};
-    if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
-        if (!_function(m_hashes[i], m_keys[i], m_values[i])) {
-          return false;
-        }
-      } else {
-        _function(m_hashes[i], m_keys[i], m_values[i]);
-      }
-    }
-  }
-  return true;
 }
 
 } // namespace rx

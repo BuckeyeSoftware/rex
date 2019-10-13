@@ -285,6 +285,8 @@ namespace detail_gl4 {
       , m_swap_chain_fbo{0}
       , m_context{_context}
     {
+      memset(m_texture_units, 0, sizeof m_texture_units);
+
       pglEnable(GL_CULL_FACE);
       pglCullFace(GL_BACK);
       pglFrontFace(GL_CW);
@@ -666,7 +668,7 @@ namespace detail_gl4 {
     GLuint m_bound_program;
 
     GLint m_swap_chain_fbo;
-    texture_unit m_texture_units[8];
+    texture_unit m_texture_units[frontend::draw_command::k_max_textures];
 
     SDL_GLContext m_context;
   };
@@ -768,6 +770,10 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     "#define rx_texture2D texture\n"
     "#define rx_texture3D texture\n"
     "#define rx_textureCM texture\n"
+    "#define rx_texture1DLod textureLod\n"
+    "#define rx_texture2DLod textureLod\n"
+    "#define rx_texture3DLod textureLod\n"
+    "#define rx_textureCMLod textureLod\n"
     "#define rx_position gl_Position\n"
     "#define rx_point_size gl_PointSize\n"
   };
@@ -779,22 +785,22 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
   case frontend::shader::type::k_vertex:
     type = GL_VERTEX_SHADER;
     // emit vertex attributes inputs
-    _shader.inputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
+    _shader.inputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("layout(location = %zu) in %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
     });
     // emit vertex outputs
-    _shader.outputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
+    _shader.outputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("out %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     break;
   case frontend::shader::type::k_fragment:
     type = GL_FRAGMENT_SHADER;
     // emit fragment inputs
-    _shader.inputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
+    _shader.inputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("in %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     // emit fragment outputs
-    _shader.outputs.each([&](rx_size, const string& _name, const frontend::shader::inout& _inout) {
+    _shader.outputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
       contents.append(string::format("layout(location = %d) out %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
     });
     break;
@@ -1049,6 +1055,9 @@ void gl4::process(rx_byte* _command) {
         utility::destruct<detail_gl4::buffer>(resource->as_buffer + 1);
         break;
       case frontend::resource_command::type::k_target:
+        if (state->m_bound_fbo == reinterpret_cast<detail_gl4::target*>(resource->as_target + 1)->fbo) {
+          state->m_bound_fbo = 0;
+        }
         utility::destruct<detail_gl4::target>(resource->as_target + 1);
         break;
       case frontend::resource_command::type::k_program:
@@ -1164,38 +1173,28 @@ void gl4::process(rx_byte* _command) {
             }
           }
 
-          // color attachments & draw buffers
+          // color attachments
           const auto& attachments{render_target->attachments()};
-          if (attachments.is_empty()) {
-            pglNamedFramebufferDrawBuffer(target->fbo, GL_NONE);
-            pglNamedFramebufferReadBuffer(target->fbo, GL_NONE);
-          } else {
-            vector<GLenum> draw_buffers{m_allocator, attachments.size()};
-            for (rx_size i{0}; i < attachments.size(); i++) {
-              const auto& attachment{attachments[i]};
-              const auto attachment_enum{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
-              switch (attachment.kind) {
-              case frontend::target::attachment::type::k_texture2D:
-                pglNamedFramebufferTexture(
-                  target->fbo,
-                  attachment_enum,
-                  reinterpret_cast<detail_gl4::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
-                  static_cast<GLint>(attachment.level));
-                break;
-              case frontend::target::attachment::type::k_textureCM:
-                pglNamedFramebufferTextureLayer(
-                  target->fbo,
-                  attachment_enum,
-                  reinterpret_cast<detail_gl4::textureCM*>(attachment.as_textureCM.texture + 1)->tex,
-                  static_cast<GLint>(attachment.level),
-                  static_cast<GLint>(attachment.as_textureCM.face));
-                break;
-              }
-              draw_buffers[i] = static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i);
+          for (rx_size i{0}; i < attachments.size(); i++) {
+            const auto& attachment{attachments[i]};
+            const auto attachment_enum{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
+            switch (attachment.kind) {
+            case frontend::target::attachment::type::k_texture2D:
+              pglNamedFramebufferTexture(
+                target->fbo,
+                attachment_enum,
+                reinterpret_cast<detail_gl4::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
+                static_cast<GLint>(attachment.level));
+              break;
+            case frontend::target::attachment::type::k_textureCM:
+              pglNamedFramebufferTextureLayer(
+                target->fbo,
+                attachment_enum,
+                reinterpret_cast<detail_gl4::textureCM*>(attachment.as_textureCM.texture + 1)->tex,
+                static_cast<GLint>(attachment.level),
+                static_cast<GLint>(attachment.as_textureCM.face));
+              break;
             }
-            // draw buffers
-            pglNamedFramebufferDrawBuffers(target->fbo,
-              static_cast<GLsizei>(draw_buffers.size()), draw_buffers.data());
           }
         }
         break;
@@ -1443,6 +1442,7 @@ void gl4::process(rx_byte* _command) {
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
+          const auto wrap_p{convert_texture_wrap(wrap.p)};
           const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{render_texture->filter()};
@@ -1458,6 +1458,7 @@ void gl4::process(rx_byte* _command) {
 
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
+          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_R, wrap_p);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
           pglTextureStorage2D(
@@ -1688,8 +1689,12 @@ void gl4::process(rx_byte* _command) {
       }
 
       // apply any textures
-      for (rx_size i{0}; i < 8; i++) {
-        switch (command->texture_types[i]) {
+      for (rx_size i{0}; i < frontend::draw_command::k_max_textures; i++) {
+        const int ch{command->texture_types[i]};
+        if (ch == '\0') {
+          break;
+        }
+        switch (ch) {
         case '1':
           state->use_texture(reinterpret_cast<frontend::texture1D*>(command->texture_binds[i]), i);
           break;
