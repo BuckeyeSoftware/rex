@@ -5,6 +5,7 @@
 #include "helper.h"
 
 #include "rx/core/math/ceil.h"
+#include "rx/core/algorithm/max.h"
 
 namespace rx::render::backend {
 
@@ -335,8 +336,10 @@ void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const front
   VkMemoryRequirements req;
   vkGetImageMemoryRequirements(ctx_.device, tex->handle, &req);
 
-  current_image_size = math::ceil((rx_f32) (current_image_size)/req.alignment)*req.alignment + req.size;
-  current_image_staging_size = math::ceil((rx_f32) (current_image_staging_size + texture->data().size() * sizeof(rx_byte))/4)*4;
+  current_image_size = math::ceil((rx_f32) (current_image_size + req.size)/req.alignment)*req.alignment;
+  rx_size alignment = texture->byte_size_of_format(texture->format());
+  if(alignment < 4) alignment *= 4;
+  current_image_staging_size = math::ceil((rx_f32) (current_image_staging_size + texture->data().size() * sizeof(rx_byte))/alignment)*alignment;
   image_type_bits &= req.memoryTypeBits;
   
 }
@@ -426,16 +429,14 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
       break;
     default:
       break;
-  }
+  } 
   
   VkMemoryRequirements req;
   vkGetImageMemoryRequirements(ctx_.device, tex->handle, &req);
   
-  current_image_size = math::ceil((rx_f32) (current_image_size)/req.alignment)*req.alignment;
-  
   vkBindImageMemory(ctx_.device, tex->handle, image_memory, current_image_size);
   
-  current_image_size += req.size;
+  current_image_size = math::ceil((rx_f32) (current_image_size + req.size)/req.alignment)*req.alignment;
   
   if(texture->data().size() > 0) {
     
@@ -499,7 +500,6 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
           auto texture = resource->as_texture2D;
           auto level_info = texture->info_for_level(level);
           copy.bufferOffset = current_image_staging_size + level_info.offset;
-          vk_log(log::level::k_verbose, "%u, %d, %d", current_image_staging_size, level_info.offset, texture->data().size());
           auto dim  = level_info.dimensions;
           copy.imageExtent.width = dim.x;
           copy.imageExtent.height = dim.y;
@@ -533,7 +533,6 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
     
     vkCmdCopyBufferToImage(command, staging_buffer, tex->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture->levels(), &copies[0]);
     
-    
     barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -541,7 +540,10 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
     vkCmdPipelineBarrier(command, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_DEPENDENCY_BY_REGION_BIT,
                          0, nullptr, 0, nullptr, 1, &barrier);
     
-    current_image_staging_size = math::ceil( (rx_f32) (current_image_staging_size + texture->data().size() * sizeof(rx_byte)) / 4) * 4;
+    rx_size alignment = texture->byte_size_of_format(texture->format());
+    if(alignment < 4) alignment *= 4;
+    current_image_staging_size = math::ceil( (rx_f32) (current_image_staging_size + texture->data().size() * sizeof(rx_byte)) / alignment) * alignment;
+    vk_log(log::level::k_verbose, "%lu", alignment);
     
   }
   
