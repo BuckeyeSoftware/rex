@@ -1,7 +1,8 @@
 {
   name: "irradiance_map",
   uniforms: [
-    { name: "u_sampler", type: "samplerCM", value: 0 }
+    { name: "u_sampler",      type: "samplerCM", value: 0  },
+    { name: "u_texture_size", type: "int" }
   ],
   shaders: [
     {
@@ -42,10 +43,7 @@
             mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, -1.0,  0.0), vec3f( 0.0,  0.0, -1.0)),  // front
             mat3x3f(vec3f(-1.0, 0.0,  0.0), vec3f(0.0, -1.0,  0.0), vec3f( 0.0,  0.0,  1.0))); // back
 
-          const int w = 256;
-          const int h = 256;
-
-          vec3f base_normal = normalize(vec3(vs_coordinate * 2.0 - 1.0, 1.0));
+          vec3f base_normal = normalize(vec3f(vs_coordinate * 2.0 - 1.0, -1.0));
 
           vec4f colors[6] = vec4f[](
             vec4f(0.0),
@@ -55,26 +53,29 @@
             vec4f(0.0),
             vec4f(0.0));
 
-          for (int i = 0; i < 6; i++) {
-            vec3f normal = rotations[i] * base_normal;
-            for (int j = 0; j < 6; j++) {
-              mat3x3f rotation = rotations[j];
-              for (int x = 0; x < w; x++) {
-                for (int y = 0; y < h; y++) {
-                  vec3f direction = rotation * normalize(vec3((x - 128) / 256.0, (y - 128) / 256.0, 1.0));
+          for (int face = 0; face < 6; face++) {
+            vec3f normal = rotations[face] * base_normal;
+            vec4f color = vec4f(0.0);
+            for (int i = 0; i < 6; i++) {
+              mat3x3f rotation = rotations[i];
+              for (int x = 0; x < u_texture_size; x++) {
+                for (int y = 0; y < u_texture_size; y++) {
+                  vec2f coordinate = vec2f(float(x) / u_texture_size, float(y) / u_texture_size);
+                  vec3f direction = rotation * normalize(vec3f(coordinate * 2.0 - 1.0, -1.0));
                   float mul = max(dot(normal, direction), 0.0);
-                  colors[i] += vec4f(rx_textureCM(u_sampler, direction).rgb * mul, mul);
+                  color += vec4f(rx_textureCM(u_sampler, direction).rgb * mul, mul);
                 }
               }
             }
+            colors[face] = vec4f(color.rgb / color.a, 1.0);
           }
 
-          fs_color_px = vec4f(colors[0].rgb / colors[0].a, 1.0);
-          fs_color_nx = vec4f(colors[1].rgb / colors[1].a, 1.0);
-          fs_color_py = vec4f(colors[2].rgb / colors[2].a, 1.0);
-          fs_color_ny = vec4f(colors[3].rgb / colors[3].a, 1.0);
-          fs_color_pz = vec4f(colors[4].rgb / colors[4].a, 1.0);
-          fs_color_nz = vec4f(colors[5].rgb / colors[5].a, 1.0);
+          fs_color_px = colors[0];
+          fs_color_nx = colors[1];
+          fs_color_py = colors[2];
+          fs_color_ny = colors[3];
+          fs_color_pz = colors[4];
+          fs_color_nz = colors[5];
         }
       "
     }

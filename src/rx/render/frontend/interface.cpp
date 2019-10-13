@@ -486,6 +486,8 @@ void interface::draw(
         }
       }
       va_end(va);
+    } else {
+      command->texture_types[0] = '\0';
     }
 
     m_commands.push_back(command_base);
@@ -543,7 +545,7 @@ void interface::clear(
       command->stencil_value = va_arg(va, rx_s32);
     }
 
-    for (rx_u32 i{0}; i < 8; i++) {
+    for (rx_u32 i{0}; i < buffers::k_max_buffers; i++) {
       if (_clear_mask & (1 << i)) {
         const rx_f32* color{va_arg(va, rx_f32*)};
         command->color_values[i].r = color[0];

@@ -243,6 +243,8 @@ namespace detail_gl3 {
       , m_active_texture{0}
       , m_context{_context}
     {
+      memset(m_texture_units, 0, sizeof m_texture_units);
+
       pglEnable(GL_CULL_FACE);
       pglCullFace(GL_BACK);
       pglFrontFace(GL_CW);
@@ -683,7 +685,7 @@ namespace detail_gl3 {
     GLuint m_bound_program;
 
     GLint m_swap_chain_fbo;
-    texture_unit m_texture_units[8];
+    texture_unit m_texture_units[frontend::draw_command::k_max_textures];
     rx_size m_active_texture;
 
     SDL_GLContext m_context;
@@ -786,6 +788,10 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     "#define rx_texture2D texture\n"
     "#define rx_texture3D texture\n"
     "#define rx_textureCM texture\n"
+    "#define rx_texture1DLod textureLod\n"
+    "#define rx_texture2DLod textureLod\n"
+    "#define rx_texture3DLod textureLod\n"
+    "#define rx_textureCMLod textureLod\n"
     "#define rx_position gl_Position\n"
     "#define rx_point_size gl_PointSize\n"
   };
@@ -1060,6 +1066,9 @@ void gl3::process(rx_byte* _command) {
         utility::destruct<detail_gl3::buffer>(resource->as_buffer + 1);
         break;
       case frontend::resource_command::type::k_target:
+        if (state->m_bound_draw_fbo == reinterpret_cast<detail_gl3::target*>(resource->as_target + 1)->fbo) {
+          state->m_bound_draw_fbo = 0;
+        }
         utility::destruct<detail_gl3::target>(resource->as_target + 1);
         break;
       case frontend::resource_command::type::k_program:
@@ -1477,7 +1486,7 @@ void gl3::process(rx_byte* _command) {
       state->use_draw_target(render_target, &command->draw_buffers);
 
       if (command->clear_colors) {
-        for (rx_u32 i{0}; i < 8; i++) {
+        for (rx_u32 i{0}; i < sizeof command->color_values / sizeof *command->color_values; i++) {
           if (command->clear_colors & (1 << i)) {
             pglClearBufferfv(GL_COLOR, static_cast<GLint>(i),
               command->color_values[i].data());
@@ -1594,8 +1603,12 @@ void gl3::process(rx_byte* _command) {
       }
 
       // apply any textures
-      for (GLuint i{0}; i < frontend::draw_command::k_max_textures; i++) {
-        switch (command->texture_types[i]) {
+      for (rx_size i{0}; i < frontend::draw_command::k_max_textures; i++) {
+        const int ch{command->texture_types[i]};
+        if (ch == '\0') {
+          break;
+        }
+        switch (ch) {
         case '1':
           state->use_active_texture(reinterpret_cast<frontend::texture1D*>(command->texture_binds[i]), i);
           break;

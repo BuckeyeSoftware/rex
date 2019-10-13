@@ -285,6 +285,8 @@ namespace detail_gl4 {
       , m_swap_chain_fbo{0}
       , m_context{_context}
     {
+      memset(m_texture_units, 0, sizeof m_texture_units);
+
       pglEnable(GL_CULL_FACE);
       pglCullFace(GL_BACK);
       pglFrontFace(GL_CW);
@@ -666,7 +668,7 @@ namespace detail_gl4 {
     GLuint m_bound_program;
 
     GLint m_swap_chain_fbo;
-    texture_unit m_texture_units[8];
+    texture_unit m_texture_units[frontend::draw_command::k_max_textures];
 
     SDL_GLContext m_context;
   };
@@ -768,6 +770,10 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     "#define rx_texture2D texture\n"
     "#define rx_texture3D texture\n"
     "#define rx_textureCM texture\n"
+    "#define rx_texture1DLod textureLod\n"
+    "#define rx_texture2DLod textureLod\n"
+    "#define rx_texture3DLod textureLod\n"
+    "#define rx_textureCMLod textureLod\n"
     "#define rx_position gl_Position\n"
     "#define rx_point_size gl_PointSize\n"
   };
@@ -1049,6 +1055,9 @@ void gl4::process(rx_byte* _command) {
         utility::destruct<detail_gl4::buffer>(resource->as_buffer + 1);
         break;
       case frontend::resource_command::type::k_target:
+        if (state->m_bound_fbo == reinterpret_cast<detail_gl4::target*>(resource->as_target + 1)->fbo) {
+          state->m_bound_fbo = 0;
+        }
         utility::destruct<detail_gl4::target>(resource->as_target + 1);
         break;
       case frontend::resource_command::type::k_program:
@@ -1680,8 +1689,12 @@ void gl4::process(rx_byte* _command) {
       }
 
       // apply any textures
-      for (rx_size i{0}; i < 8; i++) {
-        switch (command->texture_types[i]) {
+      for (rx_size i{0}; i < frontend::draw_command::k_max_textures; i++) {
+        const int ch{command->texture_types[i]};
+        if (ch == '\0') {
+          break;
+        }
+        switch (ch) {
         case '1':
           state->use_texture(reinterpret_cast<frontend::texture1D*>(command->texture_binds[i]), i);
           break;

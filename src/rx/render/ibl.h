@@ -1,60 +1,46 @@
 #ifndef RX_RENDER_IBL_H
 #define RX_RENDER_IBL_H
-#include "rx/math/vec2.h"
-#include "rx/core/vector.h"
+#include "rx/core/array.h"
 
 namespace rx::render {
 
 namespace frontend {
+  struct texture2D;
   struct textureCM;
-  struct target;
-  struct buffer;
-  struct interface;
+
   struct technique;
-}
+  struct interface;
+} // namespace frontend
 
-struct skybox;
+struct ibl {
+  ibl(frontend::interface* _interface);
+  ~ibl();
 
-struct irradiance_map {
-  irradiance_map(frontend::interface* _frontend, rx_size _resolution);
-  ~irradiance_map();
+  void render(frontend::textureCM* _environment, rx_size _irradiance_map_size);
 
-  void render(frontend::textureCM* _environment_map);
-
-  frontend::textureCM* cubemap() const;
-
-private:
-  frontend::interface* m_frontend;
-  frontend::technique* m_technique;
-  frontend::buffer* m_buffer;
-  frontend::target* m_target;
-  frontend::textureCM* m_texture;
-};
-
-struct prefilter_environment_map {
-  prefilter_environment_map(frontend::interface* _frontend, rx_size _resolution);
-  ~prefilter_environment_map();
-
-  void render(frontend::textureCM* _environment_map);
-
-  frontend::textureCM* cubemap() const;
+  frontend::textureCM* irradiance() const;
+  frontend::textureCM* prefilter() const;
+  frontend::texture2D* scale_bias() const;
 
 private:
   frontend::interface* m_frontend;
-  frontend::technique* m_technique;
-  frontend::buffer* m_buffer;
-  vector<frontend::target*> m_targets;
-  frontend::textureCM* m_texture;
+  frontend::textureCM* m_irradiance_texture;
+  frontend::textureCM* m_prefilter_texture;
+  frontend::texture2D* m_scale_bias_texture;
 };
 
-inline frontend::textureCM* irradiance_map::cubemap() const {
-  return m_texture;
+inline frontend::textureCM* ibl::irradiance() const {
+  return m_irradiance_texture;
 }
 
-inline frontend::textureCM* prefilter_environment_map::cubemap() const {
-  return m_texture;
+inline frontend::textureCM* ibl::prefilter() const {
+  return m_prefilter_texture;
+}
+
+inline frontend::texture2D* ibl::scale_bias() const {
+  return m_scale_bias_texture;
 }
 
 } // namespace rx::render
 
-#endif // RX_RENDER_IRRADENCE_MAP_H
+#endif // RX_RENDER_IBL_H

@@ -1,0 +1,11 @@
+{
+  name: "schlick",
+  source: "
+    float schlick(float n_dot_l, float n_dot_v, float a) {
+      float k = (a * a) / 2.0;
+      float g1 = n_dot_l / (n_dot_l * (1.0 - k) + k);
+      float g2 = n_dot_v / (n_dot_v * (1.0 - k) + k);
+      return g1 * g2;
+    }
+  "
+}

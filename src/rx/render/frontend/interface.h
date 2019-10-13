@@ -290,7 +290,7 @@ inline draw_textures::draw_textures()
 
 template<typename T>
 inline int draw_textures::add(T* _texture) {
-  const int index{m_index};
+  const int index{m_index++};
 
   m_handles[index] = static_cast<void*>(_texture);
 
@@ -304,8 +304,7 @@ inline int draw_textures::add(T* _texture) {
     m_specification[index] = 'c';
   }
 
-  m_index++;
-  m_specification[m_index] = '\0';
+  m_specification[index + 1] = '\0';
 
   return index;
 }

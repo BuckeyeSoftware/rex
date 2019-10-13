@@ -14,6 +14,8 @@ namespace frontend {
   struct target;
 }
 
+struct ibl;
+
 struct model {
   model(frontend::interface* _frontend);
   ~model();
@@ -25,7 +27,7 @@ struct model {
     math::aabb bounds;
   };
 
-  void render(frontend::target* _target, const math::mat4x4f& _model,
+  void render(ibl* _ibl, frontend::target* _target, const math::mat4x4f& _model,
     const math::mat4x4f& _view, const math::mat4x4f& _projection);
 
   bool load(const string& _file_name);

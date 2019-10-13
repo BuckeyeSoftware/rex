@@ -161,6 +161,7 @@ static optional<uniform::type> uniform_type_from_string(const string& _type) {
     {"sampler3D",  uniform::type::k_sampler3D},
     {"samplerCM",  uniform::type::k_samplerCM},
     {"bool",       uniform::type::k_bool},
+    {"int",        uniform::type::k_int},
     {"float",      uniform::type::k_float},
     {"vec2i",      uniform::type::k_vec2i},
     {"vec3i",      uniform::type::k_vec3i},

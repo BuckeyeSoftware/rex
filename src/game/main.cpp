@@ -350,8 +350,7 @@ struct test_game
     , m_immediate3D{&m_frontend}
     , m_skybox{&m_frontend}
     , m_model{&m_frontend}
-    , m_irradiance_map{&m_frontend, 256}
-    , m_prefilter_environment_map{&m_frontend, 2048}
+    , m_ibl{&m_frontend}
   {
        model_xform.rotate = {0.0f, 90.0f, 0.0f};
     // m_camera.translate = {-1.0f, 60.0f, -1000.0f};
@@ -361,8 +360,7 @@ struct test_game
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
     m_skybox.load("base/skyboxes/miramar/miramar.json5");
     m_model.load("base/models/chest/chest.json5");
-    m_irradiance_map.render(m_skybox.cubemap());
-    m_prefilter_environment_map.render(m_skybox.cubemap());
+    m_ibl.render(m_skybox.cubemap(), 256);
     return true;
   }
 
@@ -493,7 +491,7 @@ struct test_game
       math::vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data());
 
     model_xform.rotate += math::vec3f(0.0f, 20.0f, 0.0f) * m_frontend.timer().delta_time();
-    m_model.render(m_gbuffer.target(), model_xform.to_mat4(), m_camera.view(), m_camera.projection);
+    m_model.render(&m_ibl, m_gbuffer.target(), model_xform.to_mat4(), m_camera.view(), m_camera.projection);
     m_skybox.render(m_gbuffer.target(), m_camera.view(), m_camera.projection);
 
     m_immediate3D.render(m_gbuffer.target(), m_camera.view(), m_camera.projection);
@@ -529,8 +527,7 @@ struct test_game
   render::immediate3D m_immediate3D;
   render::skybox m_skybox;
   render::model m_model;
-  render::irradiance_map m_irradiance_map;
-  render::prefilter_environment_map m_prefilter_environment_map;
+  render::ibl m_ibl;
   math::transform model_xform;
 
   math::camera m_camera;
