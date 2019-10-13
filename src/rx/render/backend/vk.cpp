@@ -47,6 +47,12 @@ bool vk::init() {
   
   load_function_pointers(ctx);
   
+  create_swapchain(ctx);
+  
+  swap();
+  
+  ctx.transfer.init(ctx);
+  
   return true;
   
 }
@@ -71,6 +77,10 @@ vk::~vk() {
     vkFreeMemory(ctx_.device, alloc.memory, nullptr);
   });
   
+  ctx_.transfer.destroy(ctx_);
+  
+  destroy_swapchain(ctx_);
+  
   destroy_device(ctx_);
   
   destroy_instance(ctx_);
@@ -82,6 +92,8 @@ vk::~vk() {
 void vk::process(const vector<rx_byte*>& _commands) {
   
   detail_vk::context& ctx{*reinterpret_cast<detail_vk::context*> (m_impl)};
+  
+  ctx.transfer.start(ctx);
   
   detail_vk::buffer_builder b_builder(ctx);
   detail_vk::texture_builder t_builder(ctx);
@@ -133,15 +145,17 @@ void vk::process(const vector<rx_byte*>& _commands) {
             break;
           }
           case frontend::resource_command::type::k_target: {
-            auto target = resource->as_target;
-            if(target->is_swapchain()) {
-              create_swapchain(ctx);
-            }
             break;
           }
           case frontend::resource_command::type::k_program:
             break;
+          case frontend::resource_command::type::k_texture2D:
+            if(resource->as_texture2D->is_swapchain()) {
+              break;
+            }
+            [[fallthrough]];
           default:
+            vk_log(log::level::k_verbose, "%s", header->tag.description);
             t_builder.construct(ctx, resource);
         }
         break;
@@ -219,10 +233,6 @@ void vk::process(const vector<rx_byte*>& _commands) {
             utility::destruct<detail_vk::buffer>(resource->as_buffer + 1);
             break;
           case frontend::resource_command::type::k_target: {
-            auto target = resource->as_target;
-            if(target->is_swapchain()) {
-              destroy_swapchain(ctx);
-            }
             utility::destruct<detail_vk::target>(resource->as_target + 1);
             break;
           }
@@ -234,7 +244,11 @@ void vk::process(const vector<rx_byte*>& _commands) {
             utility::destruct<detail_vk::texture>(resource->as_texture1D + 1);
             break;
           case frontend::resource_command::type::k_texture2D:
-            reinterpret_cast<detail_vk::texture*>(resource->as_texture2D + 1)->destroy(ctx, resource->as_texture2D);
+            if(resource->as_texture2D->is_swapchain()) {
+              destroy_swapchain(ctx);
+            } else {
+              reinterpret_cast<detail_vk::texture*>(resource->as_texture2D + 1)->destroy(ctx, resource->as_texture2D);
+            }
             utility::destruct<detail_vk::texture>(resource->as_texture2D + 1);
             break;
           case frontend::resource_command::type::k_texture3D:
@@ -262,6 +276,11 @@ void vk::process(const vector<rx_byte*>& _commands) {
           case frontend::resource_command::type::k_program:
             
             break;
+          case frontend::resource_command::type::k_texture2D:
+            if(resource->as_texture2D->is_swapchain()) {
+              break;
+            }
+            [[fallthrough]];
           default: {
             t_builder.construct2(ctx, resource);
             break;
@@ -286,7 +305,9 @@ void vk::process(const vector<rx_byte*>& _commands) {
             
             break;
           case frontend::resource_command::type::k_texture2D:
-            
+            if(resource->as_texture2D->is_swapchain()) {
+              break;
+            }
             break;
           case frontend::resource_command::type::k_texture3D:
             
@@ -321,6 +342,9 @@ void vk::process(const vector<rx_byte*>& _commands) {
     
   });
   
+  
+  ctx.transfer.end(ctx);
+  
 }
 
 void vk::process(rx_byte* _command) {
@@ -328,6 +352,31 @@ void vk::process(rx_byte* _command) {
 }
 
 void vk::swap() {
+  
+  detail_vk::context& ctx{*reinterpret_cast<detail_vk::context*> (m_impl)};
+  
+  if (ctx.swapchain == VK_NULL_HANDLE) return;
+  
+  if (ctx.acquired) {
+  
+    VkPresentInfoKHR info {};
+    info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    info.swapchainCount = 1;
+    info.pSwapchains = &ctx.swapchain;
+    info.pImageIndices = &ctx.frame_index;
+    info.waitSemaphoreCount = 1;
+    info.pWaitSemaphores = &ctx.end_semaphore;
+    
+    check_result(vkQueuePresentKHR(ctx.graphics, &info));
+  
+  }
+  
+  {
+    
+    check_result(vkAcquireNextImageKHR(ctx.device, ctx.swapchain, 1000000000000L, ctx.end_semaphore, VK_NULL_HANDLE, &ctx.frame_index));
+    ctx.acquired = true;
+    
+  }
   
 }
 

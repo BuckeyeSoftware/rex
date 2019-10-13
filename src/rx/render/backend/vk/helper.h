@@ -1,12 +1,21 @@
 #ifndef RX_RENDER_BACKEND_VK_HELPER_H
 #define RX_RENDER_BACKEND_VK_HELPER_H
 
-#include "context.h"
+#define VK_NO_PROTOTYPES
+#include "vulkan/vulkan.h"
 
 #include "rx/core/vector.h"
 #include "rx/core/log.h"
 
 namespace rx::render::backend {
+  
+namespace detail_vk {
+  struct context;
+}
+
+RX_LOG("render/vk", vk_log);
+
+constexpr rx_size k_buffered = 2;
 
 // helper functions
 bool check_layers(detail_vk::context& ctx_, rx::vector<const char *>& layerNames);
@@ -22,7 +31,7 @@ inline void check_result(VkResult result) {
 }
 #else
 inline void check_result(VkResult result) {
-  
+  (void)result;
 }
 #endif
 

@@ -1,9 +1,11 @@
 #ifndef RX_RENDER_BACKEND_VK_INIT_H
 #define RX_RENDER_BACKEND_VK_INIT_H
 
-#include "context.h"
-
 namespace rx::render::backend {
+  
+namespace detail_vk {
+  struct context;
+}
 
 bool create_instance(detail_vk::context& ctx_);
 

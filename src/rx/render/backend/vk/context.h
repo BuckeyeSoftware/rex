@@ -4,10 +4,9 @@
 #define VK_NO_PROTOTYPES
 #include <vulkan/vulkan.h>
 
-#include <SDL.h>
+#include "data_builder.h"
 
-#include "rx/core/array.h"
-#include "rx/core/log.h"
+#include <SDL.h>
 
 #define LOCAL_INST_LOAD(_name) \
 PFN_##_name _name = reinterpret_cast<PFN_##_name> (ctx_.vkGetInstanceProcAddr(ctx_.instance, #_name)); \
@@ -18,10 +17,7 @@ PFN_##_name _name = reinterpret_cast<PFN_##_name> (ctx_.vkGetDeviceProcAddr(ctx_
 RX_ASSERT(_name, "can't load vulkan function pointer %s", #_name);
 
 
-
 namespace rx::render::backend {
-
-RX_LOG("render/vk", vk_log);
 
 #define DEV_FUN(_name) extern PFN_##_name _name;
 #define INST_FUN(_name) extern PFN_##_name _name;
@@ -30,8 +26,6 @@ RX_LOG("render/vk", vk_log);
 #undef INST_FUN
 
 namespace detail_vk {
-  
-  constexpr rx_size buffered = 2;
   
   struct context {
     
@@ -67,9 +61,12 @@ namespace detail_vk {
     rx_size num_frames = 3;
     rx::array<VkImage[3]> swap_images;
     rx::array<VkImageView[3]> swap_image_view;
+    uint32_t frame_index;
+    bool acquired = false;
     
-    VkCommandPool transfer_pool;
-    rx::array<VkCommandBuffer[buffered]> transfer_commands;
+    VkSemaphore start_semaphore, end_semaphore;
+    
+    Transfer transfer;
     
   };
   

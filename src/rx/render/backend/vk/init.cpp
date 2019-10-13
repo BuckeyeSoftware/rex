@@ -2,6 +2,8 @@
 
 #include "helper.h"
 
+#include "context.h"
+
 #include <SDL.h>
 #include <SDL_vulkan.h>
 
@@ -10,7 +12,6 @@
 #include "rx/console/variable.h"
 #include "rx/console/interface.h"
 #include "rx/core/algorithm/clamp.h"
-
 
 namespace rx::render::backend {
   
@@ -453,13 +454,34 @@ void create_swapchain(detail_vk::context& ctx_) {
       vkDestroySwapchainKHR(ctx_.device, old_swapchain, nullptr);
     }
     
+    uint32_t count;
+    vkGetSwapchainImagesKHR(ctx_.device, ctx_.swapchain, &count, nullptr);
+    ctx_.num_frames = count;
+    
+    vkGetSwapchainImagesKHR(ctx_.device, ctx_.swapchain, &count, ctx_.swap_images.data());
+    
+  }
+  
+  {
+    
+    VkSemaphoreCreateInfo info {};
+    info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    
+    vkCreateSemaphore(ctx_.device, &info, nullptr, &ctx_.start_semaphore);
+    vkCreateSemaphore(ctx_.device, &info, nullptr, &ctx_.end_semaphore);
+    
   }
   
 }
 
 void destroy_swapchain(detail_vk::context& ctx_) {
   
+  vkDestroySemaphore(ctx_.device, ctx_.start_semaphore, nullptr);
+  vkDestroySemaphore(ctx_.device, ctx_.end_semaphore, nullptr);
+  
   vkDestroySwapchainKHR(ctx_.device, ctx_.swapchain, nullptr);
+  
+  ctx_.swapchain = VK_NULL_HANDLE;
   
   vk_log(log::level::k_info, "vulkan swapchain destroyed");
   

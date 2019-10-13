@@ -1,5 +1,7 @@
 #include "helper.h"
 
+#include "context.h"
+
 namespace rx::render::backend {
 
 // helper functions

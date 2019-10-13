@@ -1,7 +1,10 @@
 #ifndef RX_RENDER_BACKEND_VK_DATA_BUILDER_H
 #define RX_RENDER_BACKEND_VK_DATA_BUILDER_H
 
-#include "context.h"
+#define VK_NO_PROTOTYPES
+#include "vulkan/vulkan.h"
+
+#include "helper.h"
 
 #include "rx/render/frontend/buffer.h"
 #include "rx/render/frontend/target.h"
@@ -10,9 +13,13 @@
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/command.h"
 
+#include "rx/core/array.h"
+
 namespace rx::render::backend {
 
 namespace detail_vk {
+  
+  struct context;
   
   struct buffer {
     
@@ -49,6 +56,7 @@ namespace detail_vk {
     
     VkImage handle = VK_NULL_HANDLE;
     VkFormat format;
+    VkExtent3D extent;
     uint32_t offset;
     VkImageView view = VK_NULL_HANDLE;
     
@@ -69,6 +77,7 @@ namespace detail_vk {
     uint32_t buffer_type_bits = 0xffffffff;
     VkDeviceMemory buffer_memory = VK_NULL_HANDLE;
     VkDeviceMemory staging_memory = VK_NULL_HANDLE;
+    VkBuffer staging_buffer = VK_NULL_HANDLE;
     rx_byte* buffer_staging_pointer = nullptr;
   };
   
@@ -87,7 +96,26 @@ namespace detail_vk {
     uint32_t image_type_bits = 0xffffffff;
     VkDeviceMemory image_memory = VK_NULL_HANDLE;
     VkDeviceMemory staging_memory = VK_NULL_HANDLE;
+    VkBuffer staging_buffer = VK_NULL_HANDLE;
     rx_byte* image_staging_pointer = nullptr;
+  };
+  
+  class Transfer {
+  public:
+    void init(context& ctx_);
+    void start(context& ctx_);
+    void end(context& ctx_);
+    void destroy(context& ctx_);
+    
+    VkCommandBuffer get();
+    
+  private:
+    
+    VkCommandPool pool;
+    rx::array<VkCommandBuffer[k_buffered]> commands;
+    rx::array<VkFence[k_buffered]> fences;
+    uint32_t index = 0;
+    bool written = true;
   };
   
 }
