@@ -45,8 +45,8 @@
           vec3f color = vec3f(0.0);
           float total_weight = 0.0;
 
-          uint samples = 512;
-          for (uint i = 0; i < samples; i++) {
+          uint samples = 512u;
+          for (uint i = 0u; i < samples; i++) {
             vec2f Xi = hammersley(i, samples);
             vec3f h = importance_sample_ggx(Xi, roughness, n);
             vec3f l = 2.0 * dot(v, h) * h - v;

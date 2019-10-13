@@ -18,14 +18,8 @@ using rx_f64 = double;
 using rx_ptrdiff = long;
 using rx_uintptr = rx_size;
 using rx_nullptr = decltype(nullptr);
-
-#if defined(RX_ARCHITECTURE_X86_64)
 using rx_f32_eval = rx_f32;
 using rx_f64_eval = rx_f64;
-#else
-using rx_f32_eval = long double;
-using rx_f64_eval = long double;
-#endif
 
 constexpr rx_size operator"" _z(unsigned long long _value) {
   return static_cast<rx_size>(_value);
