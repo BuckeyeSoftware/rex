@@ -167,24 +167,6 @@ void ibl::render(frontend::textureCM* _environment, rx_size _irradiance_map_size
       frontend::state state;
       state.viewport.record_dimensions(target->dimensions());
 
-      m_frontend->clear(
-        RX_RENDER_TAG("ibl: prefilter"),
-        state,
-        target,
-        "012345",
-        RX_RENDER_CLEAR_COLOR(0) |
-        RX_RENDER_CLEAR_COLOR(1) |
-        RX_RENDER_CLEAR_COLOR(2) |
-        RX_RENDER_CLEAR_COLOR(3) |
-        RX_RENDER_CLEAR_COLOR(4) |
-        RX_RENDER_CLEAR_COLOR(5),
-        math::vec4f{1.0f, 0.0f, 0.0f, 1.0f}.data(),
-        math::vec4f{1.0f, 0.0f, 0.0f, 1.0f}.data(),
-        math::vec4f{1.0f, 0.0f, 0.0f, 1.0f}.data(),
-        math::vec4f{1.0f, 0.0f, 0.0f, 1.0f}.data(),
-        math::vec4f{1.0f, 0.0f, 0.0f, 1.0f}.data(),
-        math::vec4f{1.0f, 0.0f, 0.0f, 1.0f}.data());
-
       m_frontend->draw(
         RX_RENDER_TAG("ibl: prefilter"),
         state,
