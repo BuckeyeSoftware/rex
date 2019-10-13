@@ -467,7 +467,7 @@ void interface::draw(
     }
 
     // Decode the draw buffers into the command.
-    memset(&command->draw_buffers, 0, sizeof command->draw_buffers);
+    command->draw_buffers.index = 0;
     for (const char* draw_buffer{_draw_buffers}; *draw_buffer; draw_buffer++) {
       command->draw_buffers.add(*draw_buffer - '0');
     }

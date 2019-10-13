@@ -513,7 +513,7 @@ namespace detail_gl3 {
             pglDrawBuffer(GL_NONE);
           } else {
             vector<GLenum> draw_buffers;
-            for (rx_u8 i{0}; i < sizeof _draw_buffers->index; i++) {
+            for (rx_u8 i{0}; i < _draw_buffers->index; i++) {
               draw_buffers.push_back(GL_COLOR_ATTACHMENT0 + _draw_buffers->elements[i]);
             }
             pglDrawBuffers(static_cast<GLsizei>(draw_buffers.size()), draw_buffers.data());
@@ -1060,10 +1060,19 @@ void gl3::process(rx_byte* _command) {
       const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
       switch (resource->kind) {
       case frontend::resource_command::type::k_buffer:
-        if (state->m_bound_vao == reinterpret_cast<detail_gl3::buffer*>(resource->as_buffer + 1)->va) {
-          state->m_bound_vao = 0;
+        {
+          auto buffer{reinterpret_cast<detail_gl3::buffer*>(resource->as_buffer + 1)};
+          if (state->m_bound_vbo == buffer->bo[0]) {
+            state->m_bound_vbo = 0;
+          }
+          if (state->m_bound_ebo == buffer->bo[1]) {
+            state->m_bound_ebo = 0;
+          }
+          if (state->m_bound_vao == buffer->va) {
+            state->m_bound_vao = 0;
+          }
+          utility::destruct<detail_gl3::buffer>(resource->as_buffer + 1);
         }
-        utility::destruct<detail_gl3::buffer>(resource->as_buffer + 1);
         break;
       case frontend::resource_command::type::k_target:
         if (state->m_bound_draw_fbo == reinterpret_cast<detail_gl3::target*>(resource->as_target + 1)->fbo) {
