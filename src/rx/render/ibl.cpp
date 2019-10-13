@@ -54,7 +54,7 @@ ibl::ibl(frontend::interface* _frontend)
   m_scale_bias_texture->record_type(frontend::texture::type::k_attachment);
   m_scale_bias_texture->record_levels(1);
   m_scale_bias_texture->record_dimensions({256, 256});
-  m_scale_bias_texture->record_filter({false, false, false});
+  m_scale_bias_texture->record_filter({true, false, false});
   m_scale_bias_texture->record_wrap({
     frontend::texture::wrap_type::k_clamp_to_edge,
     frontend::texture::wrap_type::k_clamp_to_edge,});
@@ -137,6 +137,7 @@ void ibl::render(frontend::textureCM* _environment, rx_size _irradiance_map_size
 
     frontend::state state;
     state.viewport.record_dimensions(target->dimensions());
+
     m_frontend->draw(
       RX_RENDER_TAG("irradiance map"),
       state,

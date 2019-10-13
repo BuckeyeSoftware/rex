@@ -1075,10 +1075,16 @@ void gl3::process(rx_byte* _command) {
         }
         break;
       case frontend::resource_command::type::k_target:
-        if (state->m_bound_draw_fbo == reinterpret_cast<detail_gl3::target*>(resource->as_target + 1)->fbo) {
-          state->m_bound_draw_fbo = 0;
+        {
+          auto target{reinterpret_cast<detail_gl3::target*>(resource->as_target + 1)};
+          if (state->m_bound_draw_fbo == target->fbo) {
+            state->m_bound_draw_fbo = 0;
+          }
+          if (state->m_bound_read_fbo == target->fbo) {
+            state->m_bound_read_fbo = 0;
+          }
+          utility::destruct<detail_gl3::target>(resource->as_target + 1);
         }
-        utility::destruct<detail_gl3::target>(resource->as_target + 1);
         break;
       case frontend::resource_command::type::k_program:
         utility::destruct<detail_gl3::program>(resource->as_program + 1);
