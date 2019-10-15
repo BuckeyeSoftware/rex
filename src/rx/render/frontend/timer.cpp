@@ -18,14 +18,14 @@ frame_timer::frame_timer()
   : m_frequency{timer_frequency()}
   , m_resolution{1.0 / m_frequency}
   , m_max_frame_ticks{0.0f}
-  , m_last_second_ticks{timer_ticks()}
+  , m_last_second_ticks{0}
   , m_frame_count{0}
   , m_min_ticks{0}
   , m_max_ticks{0}
   , m_average_ticks{0.0f}
   , m_delta_time{0.0f}
-  , m_last_frame_ticks{m_last_second_ticks}
-  , m_current_ticks{m_last_second_ticks}
+  , m_last_frame_ticks{timer_ticks()}
+  , m_current_ticks{0}
   , m_target_ticks{0}
   , m_frame_min{0}
   , m_frame_max{0}
@@ -40,11 +40,13 @@ void frame_timer::cap_fps(rx_f32 _max_fps) {
 }
 
 void frame_timer::reset() {
+  m_last_second_ticks = timer_ticks();
+  m_frequency = timer_frequency();
+  m_resolution = 1.0 / m_frequency;
   m_frame_count = 0;
   m_min_ticks = m_frequency;
   m_max_ticks = 0;
   m_average_ticks = 0.0;
-  m_last_second_ticks = timer_ticks();
 }
 
 bool frame_timer::update() {
@@ -79,7 +81,7 @@ bool frame_timer::update() {
 
   if (m_target_ticks && m_current_ticks < m_target_ticks) {
     const auto ticks_before_delay{timer_ticks()};
-    SDL_Delay(static_cast<Uint32>(m_target_ticks - m_current_ticks));
+    SDL_Delay(static_cast<rx_u64>((m_target_ticks - m_current_ticks) * 1000) / m_frequency);
     m_current_ticks = timer_ticks();
     m_average_ticks += m_current_ticks - ticks_before_delay;
   }
