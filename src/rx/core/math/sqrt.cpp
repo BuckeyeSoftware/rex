@@ -91,7 +91,7 @@ rx_f32 sqrt(rx_f32 _x) {
   }
 
   ix = (q >> 1) + 0x3f000000;
-  ix += m << 23;
+  ix += static_cast<rx_u32>(m) << 23;
 
   return shape{ix}.as_f32;
 }
