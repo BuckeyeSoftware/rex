@@ -14,10 +14,10 @@
 namespace rx::render {
 
 static frontend::buffer* quad_buffer(frontend::interface* _frontend) {
-  // frontend::buffer* buffer{_frontend->cached_buffer("quad")};
-  // if (buffer) {
-  //   return buffer;
-  // }
+  frontend::buffer* buffer{_frontend->cached_buffer("quad")};
+  if (buffer) {
+    return buffer;
+  }
 
   static constexpr const struct vertex {
     math::vec2f position;
@@ -29,7 +29,7 @@ static frontend::buffer* quad_buffer(frontend::interface* _frontend) {
     {{ 1.0f, -1.0f}, {1.0f, 0.0f}}
   };
 
-  frontend::buffer* buffer = _frontend->create_buffer(RX_RENDER_TAG("quad"));
+  buffer = _frontend->create_buffer(RX_RENDER_TAG("quad"));
   buffer->record_type(frontend::buffer::type::k_static);
   buffer->record_element_type(frontend::buffer::element_type::k_none);
   buffer->record_stride(sizeof(vertex));
@@ -38,7 +38,7 @@ static frontend::buffer* quad_buffer(frontend::interface* _frontend) {
   buffer->write_vertices(k_quad_vertices, sizeof k_quad_vertices);
 
   _frontend->initialize_buffer(RX_RENDER_TAG("quad"), buffer);
-  // _frontend->cache_buffer(buffer, "quad");
+  _frontend->cache_buffer(buffer, "quad");
 
   return buffer;
 }
@@ -92,6 +92,9 @@ ibl::~ibl() {
 }
 
 void ibl::render(frontend::textureCM* _environment, rx_size _irradiance_map_size) {
+  // NOTE(dweiler): Artifically limit the maximum size of IRM to avoid TDR.
+  _irradiance_map_size = algorithm::max(_irradiance_map_size, 32_z);
+
   frontend::buffer* buffer{quad_buffer(m_frontend)};
 
   frontend::technique* irradiance_technique{m_frontend->find_technique_by_name("irradiance_map")};

@@ -209,6 +209,9 @@ private:
   void destroy_texture_unlocked(const command_header::info& _info,
     texture2D* _texture);
 
+  template<typename T>
+  void remove_from_cache(map<string, T*>& cache_, T* _object);
+
   mutable concurrency::mutex m_mutex;
 
   memory::allocator* m_allocator;          // protected by |m_mutex|
@@ -322,6 +325,17 @@ inline interface::device_info::device_info(memory::allocator* _allocator)
   , renderer{_allocator}
   , version{_allocator}
 {
+}
+
+template<typename T>
+inline void interface::remove_from_cache(map<string, T*>& cache_, T* _object) {
+  cache_.each_pair([&](const string& _key, T* _value) {
+    if (_value != _object) {
+      return true;
+    }
+    cache_.erase(_key);
+    return false;
+  });
 }
 
 inline memory::allocator* interface::allocator() const {
