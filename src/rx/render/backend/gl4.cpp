@@ -287,12 +287,16 @@ namespace detail_gl4 {
     {
       memset(m_texture_units, 0, sizeof m_texture_units);
 
+      // There's no unsigned variant of glGetIntegerv
+      GLint swap_chain_fbo;
+      pglGetIntegerv(GL_FRAMEBUFFER_BINDING, &swap_chain_fbo);
+      m_swap_chain_fbo = static_cast<GLuint>(swap_chain_fbo);
+
       pglEnable(GL_CULL_FACE);
       pglCullFace(GL_BACK);
       pglFrontFace(GL_CW);
 
       pglDepthFunc(GL_LEQUAL);
-      pglGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_swap_chain_fbo);
       pglDisable(GL_MULTISAMPLE);
       pglPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -667,7 +671,7 @@ namespace detail_gl4 {
     GLuint m_bound_fbo;
     GLuint m_bound_program;
 
-    GLint m_swap_chain_fbo;
+    GLuint m_swap_chain_fbo;
     texture_unit m_texture_units[frontend::draw_command::k_max_textures];
 
     SDL_GLContext m_context;

@@ -6,7 +6,7 @@ namespace rx::concurrency {
 // generic scoped lock
 template<typename T>
 struct scope_lock {
-  explicit constexpr scope_lock(T& lock);
+  explicit constexpr scope_lock(T& lock_);
   ~scope_lock();
 private:
   friend struct condition_variable;
@@ -14,8 +14,8 @@ private:
 };
 
 template<typename T>
-inline constexpr scope_lock<T>::scope_lock(T& lock)
-  : m_lock{lock}
+inline constexpr scope_lock<T>::scope_lock(T& lock_)
+  : m_lock{lock_}
 {
   m_lock.lock();
 }

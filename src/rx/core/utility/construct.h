@@ -13,7 +13,7 @@ namespace rx::utility {
 
 template<typename T, typename... Ts>
 inline T* construct(void* _data, Ts&&... _args) {
-  return new (_data, rx_placement_new{}) T(utility::forward<Ts>(_args)...);
+  return new (_data, rx_placement_new{}) T{utility::forward<Ts>(_args)...};
 }
 
 } // namespace rx::utility

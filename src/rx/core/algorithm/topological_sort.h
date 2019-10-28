@@ -119,13 +119,13 @@ inline typename topological_sort<K>::result topological_sort<K>::sort() {
 
   // Check dependents of the ones with no dependencies and store for each
   // resolved dependency.
-  for (rx_size i{0}; i < sorted.size(); i++) {
-    map.find(sorted[i])->dependents.each([&](const K& _key) {
+  sorted.each_fwd([&](const K& _root_key) {
+    map.find(_root_key)->dependents.each([&](const K& _key) {
       if (!--map.find(_key)->dependencies) {
         sorted.push_back(_key);
       }
     });
-  }
+  });
 
   // When there's remaining dependencies of a relation then we've formed a cycle.
   map.each_pair([&](const K& _key, const relations& _relations) {

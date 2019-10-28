@@ -5,12 +5,12 @@
 namespace rx::algorithm {
 
 template<typename T>
-inline T max(T _a) {
+inline constexpr T max(T _a) {
   return _a;
 }
 
 template<typename T, typename... Ts>
-inline T max(T _a, T _b, Ts&&... _args) {
+inline constexpr T max(T _a, T _b, Ts&&... _args) {
   return max(_a > _b ? _a : _b, utility::forward<Ts>(_args)...);
 }
 
