@@ -1,0 +1,8 @@
+{
+	right:  "base/skyboxes/nebula/right.png",
+	left:   "base/skyboxes/nebula/left.png",
+	top:    "base/skyboxes/nebula/top.png",
+	bottom: "base/skyboxes/nebula/bottom.png",
+	front:  "base/skyboxes/nebula/front.png",
+	back:   "base/skyboxes/nebula/back.png"
+}

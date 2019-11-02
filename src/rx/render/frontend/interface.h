@@ -100,6 +100,7 @@ struct interface {
   // value in |...| and the |n| is done in order. When a RX_RENDER_CLEAR_COLOR
   // does not exist for a given |n|, the one proceeding it takes it's place,
   // thus gaps are skipped.
+
   //
   // Example:
   //  clear(
