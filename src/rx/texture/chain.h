@@ -12,14 +12,6 @@ struct loader;
 struct chain
   : concepts::no_copy
 {
-  enum class pixel_format {
-    k_rgba_u8,
-    k_bgra_u8,
-    k_rgb_u8,
-    k_bgr_u8,
-    k_r_u8
-  };
-
   struct level {
     rx_size offset;
     rx_size size;
@@ -60,7 +52,7 @@ private:
   pixel_format m_pixel_format;
 };
 
-inline chain::pixel_format chain::pixel_format_for_loader_bpp(rx_size _bpp) {
+inline pixel_format chain::pixel_format_for_loader_bpp(rx_size _bpp) {
   switch (_bpp) {
   case 4:
     return pixel_format::k_rgba_u8;
@@ -129,7 +121,7 @@ inline const math::vec2z& chain::dimensions() const {
   return m_dimensions;
 }
 
-inline chain::pixel_format chain::format() const {
+inline pixel_format chain::format() const {
   return m_pixel_format;
 }
 

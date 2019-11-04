@@ -7,6 +7,14 @@
 
 namespace rx::texture {
 
+enum class pixel_format {
+  k_rgba_u8,
+  k_bgra_u8,
+  k_rgb_u8,
+  k_bgr_u8,
+  k_r_u8
+};
+
 struct loader {
   constexpr loader();
   constexpr loader(memory::allocator* _allocator);
