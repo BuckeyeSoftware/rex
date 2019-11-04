@@ -12,7 +12,7 @@
 #include "rx/core/profiler.h"
 
 #include "rx/texture/loader.h"
-#include "rx/texture/chain.h"
+#include "rx/texture/convert.h"
 
 namespace rx::render {
 
@@ -155,7 +155,18 @@ bool skybox::load(const string& _file_name) {
       return false;
     }
 
-    m_texture->write(texture.data().data(), face.face, 0);
+    if (texture.format() != texture::pixel_format::k_rgb_u8) {
+      // Convert everything to RGB8 if not already.
+      const vector<rx_byte>& data{texture::convert(
+        m_frontend->allocator(),
+        texture.data().data(),
+        texture.dimensions().area(),
+        texture.format(),
+        texture::pixel_format::k_rgb_u8)};
+      m_texture->write(data.data(), face.face, 0);
+    } else {
+      m_texture->write(texture.data().data(), face.face, 0);
+    }
   }
 
   m_frontend->initialize_texture(RX_RENDER_TAG("skybox"), m_texture);

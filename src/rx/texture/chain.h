@@ -47,27 +47,12 @@ struct chain
 private:
   void generate_mipchain(bool _has_mipchain, bool _want_mipchain);
 
-  static pixel_format pixel_format_for_loader_bpp(rx_size _bpp);
-
   memory::allocator* m_allocator;
   vector<rx_byte> m_data;
   vector<level> m_levels;
   math::vec2z m_dimensions;
   pixel_format m_pixel_format;
 };
-
-inline pixel_format chain::pixel_format_for_loader_bpp(rx_size _bpp) {
-  switch (_bpp) {
-  case 4:
-    return pixel_format::k_rgba_u8;
-  case 3:
-    return pixel_format::k_rgb_u8;
-  case 1:
-    return pixel_format::k_r_u8;
-  }
-
-  RX_HINT_UNREACHABLE();
-}
 
 inline chain::chain(memory::allocator* _allocator)
   : m_data{_allocator}
@@ -104,16 +89,15 @@ inline chain& chain::operator=(chain&& chain_) {
 inline void chain::generate(loader&& loader_, bool _has_mipchain,
   bool _want_mipchain)
 {
-  const pixel_format format{pixel_format_for_loader_bpp(loader_.bpp())};
+  const pixel_format format{loader_.format()};
   generate(utility::move(loader_.data()), format, format, loader_.dimensions(),
-    _has_mipchain, -_want_mipchain);
+    _has_mipchain, _want_mipchain);
 }
 
 inline void chain::generate(loader&& loader_, pixel_format _want_format,
   bool _has_mipchain, bool _want_mipchain)
 {
-  generate(utility::move(loader_.data()),
-    pixel_format_for_loader_bpp(loader_.bpp()), _want_format,
+  generate(utility::move(loader_.data()), loader_.format(), _want_format,
     loader_.dimensions(), _has_mipchain, _want_mipchain);
 }
 

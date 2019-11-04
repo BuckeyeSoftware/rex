@@ -3,6 +3,8 @@
 #include "rx/core/vector.h"
 #include "rx/core/string.h"
 
+#include "rx/core/hints/unreachable.h"
+
 #include "rx/math/vec2.h"
 
 namespace rx::texture {
@@ -26,6 +28,7 @@ struct loader {
   rx_size channels() const;
   const math::vec2z& dimensions() const &;
   vector<rx_byte>&& data();
+  pixel_format format() const;
 
 private:
   memory::allocator* m_allocator;
@@ -63,6 +66,18 @@ inline const math::vec2z& loader::dimensions() const & {
 
 inline vector<rx_byte>&& loader::data() {
   return utility::move(m_data);
+}
+
+inline pixel_format loader::format() const {
+  switch (m_bpp) {
+  case 4:
+    return pixel_format::k_rgba_u8;
+  case 3:
+    return pixel_format::k_rgb_u8;
+  case 1:
+    return pixel_format::k_r_u8;
+  }
+  RX_HINT_UNREACHABLE();
 }
 
 } // namespace rx::texture
