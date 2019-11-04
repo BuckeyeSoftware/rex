@@ -9,16 +9,13 @@
 *.log
 *.cfg
 
+# ignore binary
+rex
+
 # ignore hidden files and directories but not .gitignore
 .*
 !/.gitignore
 
-# ignore TODO
-TODO.md
-
 # ignore san-miguel
 base/models/san-miguel
 base/models/elemental
-
-# ignore binary
-rex
