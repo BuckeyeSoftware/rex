@@ -49,6 +49,7 @@ static void (GLAPIENTRYP pglCompressedTexImage1D)(GLenum, GLint, GLenum, GLsizei
 static void (GLAPIENTRYP pglCompressedTexImage2D)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid*);
 static void (GLAPIENTRYP pglCompressedTexImage3D)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, const GLvoid*);
 static void (GLAPIENTRYP pglTexParameteri)(GLenum, GLenum, GLint);
+static void (GLAPIENTRYP pglTexParameteriv)(GLenum, GLenum, const GLint*);
 static void (GLAPIENTRYP pglTexParameterf)(GLenum, GLenum, GLfloat);
 static void (GLAPIENTRYP pglBindTexture)(GLuint, GLuint);
 static void (GLAPIENTRYP pglActiveTexture)(GLenum);
@@ -936,6 +937,7 @@ bool gl3::init() {
   fetch("glCompressedTexImage2D", pglCompressedTexImage2D);
   fetch("glCompressedTexImage3D", pglCompressedTexImage3D);
   fetch("glTexParameteri", pglTexParameteri);
+  fetch("glTexParameteriv", pglTexParameteriv);
   fetch("glTexParameterf", pglTexParameterf);
   fetch("glBindTexture", pglBindTexture);
   fetch("glActiveTexture", pglActiveTexture);
@@ -1292,18 +1294,22 @@ void gl3::process(rx_byte* _command) {
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap)};
           const auto format{render_texture->format()};
-          const auto filter{render_texture->filter()};
+          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
           state->use_texture(render_texture);
 
-          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
-          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, filter.min);
+          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, filter.mag);
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, levels - 1);
+          if (filter.requires_border_color()) {
+            const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
+            pglTexParameteriv(GL_TEXTURE_1D, GL_TEXTURE_BORDER_COLOR, color.data());
+          }
 
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
@@ -1341,19 +1347,23 @@ void gl3::process(rx_byte* _command) {
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
           const auto format{render_texture->format()};
-          const auto filter{render_texture->filter()};
+          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
           state->use_texture(render_texture);
 
-          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
-          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter.min);
+          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter.mag);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levels - 1);
+          if (filter.requires_border_color()) {
+            const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
+            pglTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color.data());
+          }
 
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
@@ -1390,20 +1400,24 @@ void gl3::process(rx_byte* _command) {
           const auto wrap_t{convert_texture_wrap(wrap.t)};
           const auto wrap_r{convert_texture_wrap(wrap.p)};
           const auto format{render_texture->format()};
-          const auto filter{render_texture->filter()};
+          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
           state->use_texture(render_texture);
 
-          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
-          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, filter.min);
+          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, filter.mag);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, wrap_t);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, wrap_r);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, levels - 1);
+          if (filter.requires_border_color()) {
+            const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
+            pglTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, color.data());
+          }
 
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
@@ -1442,20 +1456,24 @@ void gl3::process(rx_byte* _command) {
           const auto wrap_t{convert_texture_wrap(wrap.t)};
           const auto wrap_p{convert_texture_wrap(wrap.p)};
           const auto format{render_texture->format()};
-          const auto filter{render_texture->filter()};
+          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
           state->use_texture(render_texture);
 
-          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
-          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, filter.min);
+          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, filter.mag);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, wrap_t);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, wrap_p);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, levels - 1);
+          if (filter.requires_border_color()) {
+            const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
+            pglTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BORDER_COLOR, color.data());
+          }
 
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};

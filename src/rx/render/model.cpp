@@ -138,7 +138,9 @@ void model::render(ibl* _ibl, frontend::target* _target, const math::mat4x4f& _m
     uniforms[1].record_mat4x4f(_view);
     uniforms[2].record_mat4x4f(_projection);
     uniforms[3].record_vec3f({camera.x, camera.y, camera.z});
-    uniforms[4].record_mat3x3f(material.transform().to_mat3());
+    if (const auto transform{material.transform()}) {
+      uniforms[4].record_mat3x3f(transform->to_mat3());
+    }
 
     // TODO: skeletal.
 

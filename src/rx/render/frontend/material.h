@@ -25,7 +25,7 @@ struct material
 
   bool alpha_test() const;
   bool has_alpha() const;
-  const math::transform& transform() const &;
+  const optional<math::transform>& transform() const &;
   const string& name() const &;
 
   texture2D* diffuse() const;
@@ -42,7 +42,7 @@ private:
   bool m_alpha_test;
   bool m_has_alpha;
   string m_name;
-  math::transform m_transform;
+  optional<math::transform> m_transform;
 };
 
 inline material::material(material&& material_)
@@ -54,6 +54,7 @@ inline material::material(material&& material_)
   , m_alpha_test{material_.m_alpha_test}
   , m_has_alpha{material_.m_has_alpha}
   , m_name{utility::move(material_.m_name)}
+  , m_transform{utility::move(material_.m_transform)}
 {
   material_.m_diffuse = nullptr;
   material_.m_normal = nullptr;
@@ -76,6 +77,7 @@ inline material& material::operator=(material&& material_) {
   m_alpha_test = material_.m_alpha_test;
   m_has_alpha = material_.m_has_alpha;
   m_name = utility::move(material_.m_name);
+  m_transform = utility::move(material_.m_transform);
 
   material_.m_diffuse = nullptr;
   material_.m_normal = nullptr;
@@ -99,7 +101,7 @@ inline bool material::has_alpha() const {
   return m_has_alpha;
 }
 
-inline const math::transform& material::transform() const & {
+inline const optional<math::transform>& material::transform() const & {
   return m_transform;
 }
 

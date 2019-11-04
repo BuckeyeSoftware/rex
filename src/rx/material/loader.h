@@ -31,7 +31,7 @@ struct loader
   string&& name();
   bool alpha_test() const;
   bool has_alpha() const;
-  const math::transform& transform() const &;
+  const optional<math::transform>& transform() const &;
 
 private:
   template<typename... Ts>
@@ -49,7 +49,7 @@ private:
   string m_name;
   bool m_alpha_test;
   bool m_has_alpha;
-  math::transform m_transform;
+  optional<math::transform> m_transform;
 };
 
 inline memory::allocator* loader::allocator() const {
@@ -72,7 +72,7 @@ inline bool loader::has_alpha() const {
   return m_has_alpha;
 }
 
-inline const math::transform& loader::transform() const & {
+inline const optional<math::transform>& loader::transform() const & {
   return m_transform;
 }
 

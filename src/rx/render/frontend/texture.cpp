@@ -37,6 +37,14 @@ void texture::record_levels(rx_size _levels) {
   m_flags |= k_levels;
 }
 
+void texture::record_border(const math::vec4f& _border) {
+  RX_ASSERT(!(m_flags & k_border), "border already recorded");
+  RX_ASSERT(m_flags & k_wrap, "wrap not recorded");
+
+  m_border = _border;
+  m_flags |= k_border;
+}
+
 void texture::validate() const {
   RX_ASSERT(m_flags & k_format, "format not recorded");
   RX_ASSERT(m_flags & k_type, "type not recorded");

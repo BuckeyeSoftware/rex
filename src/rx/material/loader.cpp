@@ -94,17 +94,20 @@ bool loader::parse(const json& _definition) {
       return true;
     }};
 
-    if (scale && !parse(scale, "scale", m_transform.scale)) {
+    math::transform xform;
+    if (scale && !parse(scale, "scale", xform.scale)) {
       return false;
     }
 
-    if (rotate && !parse(rotate, "rotate", m_transform.rotate)) {
+    if (rotate && !parse(rotate, "rotate", xform.rotate)) {
       return false;
     }
 
-    if (translate && !parse(translate, "translate", m_transform.translate)) {
+    if (translate && !parse(translate, "translate", xform.translate)) {
       return false;
     }
+
+    m_transform = xform;
 
     return true;
   }

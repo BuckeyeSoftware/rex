@@ -55,31 +55,31 @@ bool material::load(rx::material::loader&& loader_) {
   m_transform = loader_.transform();
 
   // Simple table to map type strings to texture2D destinations in this object.
-  struct {
+  struct entry {
     texture2D** texture;
     const char* match;
+    bool        srgb;
   } table[] {
-    { &m_diffuse,    "diffuse"   },
-    { &m_normal,     "normal"    },
-    { &m_metalness,  "metalness" },
-    { &m_roughness,  "roughness" }
+    { &m_diffuse,    "diffuse",   true  },
+    { &m_normal,     "normal",    false },
+    { &m_metalness,  "metalness", false },
+    { &m_roughness,  "roughness", false }
   };
 
   return loader_.textures().each_fwd([this, &table](rx::material::texture& texture_) {
     const auto& type{texture_.type()};
 
     // Search for the texture in the table.
-    texture2D** destination{nullptr};
+    const entry* find{nullptr};
     for (const auto& item : table) {
       if (item.match == type) {
-        destination = item.texture;
-        break;
+        find = &item;
       }
     }
 
     // The texture destination could not be found or we already have a texture
     // constructed in that place.
-    if (!destination || *destination) {
+    if (!find || *find->texture) {
       return false;
     }
 
@@ -111,6 +111,9 @@ bool material::load(rx::material::loader&& loader_) {
     texture->record_dimensions(chain.dimensions());
     texture->record_filter({filter.bilinear, filter.trilinear, filter.mipmaps});
     texture->record_wrap(convert_material_wrap(wrap));
+    if (const auto border{texture_.border()}) {
+      texture->record_border(*border);
+    }
 
     const auto& levels{chain.levels()};
     for (rx_size i{0}; i < levels.size(); i++) {
@@ -121,7 +124,7 @@ bool material::load(rx::material::loader&& loader_) {
     m_frontend->initialize_texture(RX_RENDER_TAG("material"), texture);
 
     // Store it.
-    *destination = texture;
+    *find->texture = texture;
 
     return true;
   });
