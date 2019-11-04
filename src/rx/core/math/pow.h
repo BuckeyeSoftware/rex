@@ -4,7 +4,6 @@
 
 namespace rx::math {
 
-// TODO(dweiler): rx_f64 pow(rx_f64 _x, rx_f64 _y)
 rx_f32 pow(rx_f32 _x, rx_f32 _y);
 
 } // namespace rx::math

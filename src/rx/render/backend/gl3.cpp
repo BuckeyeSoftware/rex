@@ -45,6 +45,9 @@ static void (GLAPIENTRYP pglTexImage3D)(GLenum, GLint, GLint, GLsizei, GLsizei, 
 static void (GLAPIENTRYP pglTexSubImage1D)(GLenum, GLint, GLint, GLsizei, GLenum, GLenum, const GLvoid*);
 static void (GLAPIENTRYP pglTexSubImage2D)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const GLvoid*);
 static void (GLAPIENTRYP pglTexSubImage3D)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid*);
+static void (GLAPIENTRYP pglCompressedTexImage1D)(GLenum, GLint, GLenum, GLsizei, GLint, GLsizei, const GLvoid*);
+static void (GLAPIENTRYP pglCompressedTexImage2D)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid*);
+static void (GLAPIENTRYP pglCompressedTexImage3D)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, const GLvoid*);
 static void (GLAPIENTRYP pglTexParameteri)(GLenum, GLenum, GLint);
 static void (GLAPIENTRYP pglTexParameterf)(GLenum, GLenum, GLfloat);
 static void (GLAPIENTRYP pglBindTexture)(GLuint, GLuint);
@@ -929,6 +932,9 @@ bool gl3::init() {
   fetch("glTexSubImage1D", pglTexSubImage1D);
   fetch("glTexSubImage2D", pglTexSubImage2D);
   fetch("glTexSubImage3D", pglTexSubImage3D);
+  fetch("glCompressedTexImage1D", pglCompressedTexImage1D);
+  fetch("glCompressedTexImage2D", pglCompressedTexImage2D);
+  fetch("glCompressedTexImage3D", pglCompressedTexImage3D);
   fetch("glTexParameteri", pglTexParameteri);
   fetch("glTexParameterf", pglTexParameterf);
   fetch("glBindTexture", pglBindTexture);
@@ -1302,7 +1308,14 @@ void gl3::process(rx_byte* _command) {
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
             if (render_texture->is_compressed_format()) {
-              // TODO(dweiler): implement
+              pglCompressedTexImage1D(
+                GL_TEXTURE_1D,
+                i,
+                convert_texture_data_format(format),
+                static_cast<GLsizei>(level_info.dimensions),
+                0,
+                level_info.size,
+                data.is_empty() ? nullptr : data.data() + level_info.offset);
             } else {
               pglTexImage1D(
                 GL_TEXTURE_1D,
@@ -1345,7 +1358,15 @@ void gl3::process(rx_byte* _command) {
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
             if (render_texture->is_compressed_format()) {
-              // TODO(dweiler): implement
+              pglCompressedTexImage2D(
+                GL_TEXTURE_2D,
+                i,
+                convert_texture_data_format(format),
+                static_cast<GLsizei>(level_info.dimensions.w),
+                static_cast<GLsizei>(level_info.dimensions.h),
+                0,
+                level_info.size,
+                data.is_empty() ? nullptr : data.data() + level_info.offset);
             } else {
               pglTexImage2D(
                 GL_TEXTURE_2D,
@@ -1387,7 +1408,16 @@ void gl3::process(rx_byte* _command) {
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
             if (render_texture->is_compressed_format()) {
-              // TODO(dweiler): implement
+              pglCompressedTexImage3D(
+                GL_TEXTURE_3D,
+                i,
+                convert_texture_data_format(format),
+                static_cast<GLsizei>(level_info.dimensions.w),
+                static_cast<GLsizei>(level_info.dimensions.h),
+                static_cast<GLsizei>(level_info.dimensions.d),
+                0,
+                level_info.size,
+                data.is_empty() ? nullptr : data.data() + level_info.offset);
             } else {
               pglTexImage3D(
                 GL_TEXTURE_3D,
@@ -1431,7 +1461,15 @@ void gl3::process(rx_byte* _command) {
             const auto level_info{render_texture->info_for_level(i)};
             for (GLint j{0}; j < 6; j++) {
               if (render_texture->is_compressed_format()) {
-                // TODO(dweiler): implement
+                pglCompressedTexImage2D(
+                  GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
+                  i,
+                  convert_texture_data_format(format),
+                  static_cast<GLsizei>(level_info.dimensions.w),
+                  static_cast<GLsizei>(level_info.dimensions.h),
+                  0,
+                  level_info.size / 6,
+                  data.is_empty() ? nullptr : data.data() + level_info.offset + level_info.size / 6 * j);
               } else {
                 pglTexImage2D(
                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,

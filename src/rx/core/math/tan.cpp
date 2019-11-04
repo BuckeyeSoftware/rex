@@ -28,7 +28,7 @@ static rx_f32 tandf(rx_f64 _x) {
   return static_cast<rx_f32>(Odd ? -1.0/l : l);
 }
 
-// small multiplies of pi/2 rounded to double precision
+// small multiples of pi/2 rounded to double precision
 static constexpr const rx_f64 k_t1_pi_2{1*M_PI_2};
 static constexpr const rx_f64 k_t2_pi_2{2*M_PI_2};
 static constexpr const rx_f64 k_t3_pi_2{3*M_PI_2};

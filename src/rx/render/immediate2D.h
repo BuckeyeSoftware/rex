@@ -202,17 +202,16 @@ private:
   template<rx_size E>
   void generate_polygon(const math::vec2f (&coordinates)[E],
     rx_f32 _thickness, const math::vec4f& _color);
-
   void generate_rectangle(const math::vec2f& _position, const math::vec2f& _size,
     rx_f32 _roundness, const math::vec4f& _color);
-
   void generate_line(const math::vec2f& _point_a,
     const math::vec2f& _point_b, rx_f32 _thickness, rx_f32 _roundness,
     const math::vec4f& _color);
-
   void generate_text(rx_s32 _size, const char* _font, rx_size _font_length,
     const char* _contents, rx_size _contents_length, rx_f32 _scale,
     const math::vec2f& _position, text_align _align, const math::vec4f& _color);
+  void generate_triangle(const math::vec2f& _positions,
+    const math::vec2f& _size, const math::vec4f& _color);
 
   template<rx_size E>
   void size_polygon(rx_size& n_vertices_, rx_size& n_elements_);
@@ -220,7 +219,7 @@ private:
   void size_line(rx_f32 _roundness, rx_size& n_vertices_, rx_size& n_elements_);
   void size_text(const char* _contents, rx_size _contents_length,
     rx_size& n_vertices_, rx_size& n_elements_);
-
+  void size_triangle(rx_size& n_vertices_, rx_size& n_elements_);
   void add_batch(rx_size _offset, batch::type _type, bool _blend,
     frontend::texture2D* _texture = nullptr);
 
