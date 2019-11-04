@@ -180,13 +180,11 @@ static RX_HINT_FORCE_INLINE rx_size bpp_for_pixel_format(pixel_format _format) {
   RX_HINT_UNREACHABLE();
 }
 
-vector<rx_byte> convert(memory::allocator* _allocator,
-  const vector<rx_byte>& _data, const math::vec2z& _dimensions,
-  pixel_format _in_format, pixel_format _out_format)
+vector<rx_byte> convert(memory::allocator* _allocator, const rx_byte* _data,
+  rx_size _samples, pixel_format _in_format, pixel_format _out_format)
 {
-  const rx_size samples{_dimensions.area()};
-  vector<rx_byte> result{_allocator, samples * bpp_for_pixel_format(_out_format)};
-  const rx_byte *RX_HINT_RESTRICT src{_data.data()};
+  vector<rx_byte> result{_allocator, _samples * bpp_for_pixel_format(_out_format)};
+  const rx_byte *RX_HINT_RESTRICT src{_data};
   rx_byte *RX_HINT_RESTRICT dst{result.data()};
 
   switch (_in_format) {
@@ -195,86 +193,86 @@ vector<rx_byte> convert(memory::allocator* _allocator,
     case pixel_format::k_rgba_u8:
       break;
     case pixel_format::k_bgra_u8:
-      rgba_to_bgra(dst, src, samples);
+      rgba_to_bgra(dst, src, _samples);
       break;
     case pixel_format::k_rgb_u8:
-      rgba_to_rgb(dst, src, samples);
+      rgba_to_rgb(dst, src, _samples);
       break;
     case pixel_format::k_bgr_u8:
-      rgba_to_bgr(dst, src, samples);
+      rgba_to_bgr(dst, src, _samples);
       break;
     case pixel_format::k_r_u8:
-      rgba_to_r(dst, src, samples);
+      rgba_to_r(dst, src, _samples);
       break;
     }
     break;
   case pixel_format::k_bgra_u8:
     switch (_out_format) {
     case pixel_format::k_rgba_u8:
-      bgra_to_rgba(dst, src, samples);
+      bgra_to_rgba(dst, src, _samples);
       break;
     case pixel_format::k_bgra_u8:
       break;
     case pixel_format::k_rgb_u8:
-      bgra_to_rgb(dst, src, samples);
+      bgra_to_rgb(dst, src, _samples);
       break;
     case pixel_format::k_bgr_u8:
-      bgra_to_bgr(dst, src, samples);
+      bgra_to_bgr(dst, src, _samples);
       break;
     case pixel_format::k_r_u8:
-      bgra_to_r(dst, src, samples);
+      bgra_to_r(dst, src, _samples);
       break;
     }
     break;
   case pixel_format::k_rgb_u8:
     switch (_out_format) {
     case pixel_format::k_rgba_u8:
-      rgb_to_rgba(dst, src, samples);
+      rgb_to_rgba(dst, src, _samples);
       break;
     case pixel_format::k_bgra_u8:
-      rgb_to_bgra(dst, src, samples);
+      rgb_to_bgra(dst, src, _samples);
       break;
     case pixel_format::k_rgb_u8:
       break;
     case pixel_format::k_bgr_u8:
-      rgb_to_bgr(dst, src, samples);
+      rgb_to_bgr(dst, src, _samples);
       break;
     case pixel_format::k_r_u8:
-      rgb_to_r(dst, src, samples);
+      rgb_to_r(dst, src, _samples);
       break;
     }
     break;
   case pixel_format::k_bgr_u8:
     switch (_out_format) {
     case pixel_format::k_rgba_u8:
-      bgr_to_rgba(dst, src, samples);
+      bgr_to_rgba(dst, src, _samples);
       break;
     case pixel_format::k_bgra_u8:
-      bgr_to_bgra(dst, src, samples);
+      bgr_to_bgra(dst, src, _samples);
       break;
     case pixel_format::k_rgb_u8:
-      bgr_to_rgb(dst, src, samples);
+      bgr_to_rgb(dst, src, _samples);
       break;
     case pixel_format::k_bgr_u8:
       break;
     case pixel_format::k_r_u8:
-      bgr_to_r(dst, src, samples);
+      bgr_to_r(dst, src, _samples);
       break;
     }
     break;
   case pixel_format::k_r_u8:
     switch (_out_format) {
     case pixel_format::k_rgba_u8:
-      r_to_rgba(dst, src, samples);
+      r_to_rgba(dst, src, _samples);
       break;
     case pixel_format::k_bgra_u8:
-      r_to_bgra(dst, src, samples);
+      r_to_bgra(dst, src, _samples);
       break;
     case pixel_format::k_rgb_u8:
-      r_to_rgb(dst, src, samples);
+      r_to_rgb(dst, src, _samples);
       break;
     case pixel_format::k_bgr_u8:
-      r_to_bgr(dst, src, samples);
+      r_to_bgr(dst, src, _samples);
       break;
     case pixel_format::k_r_u8:
       break;

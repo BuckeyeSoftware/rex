@@ -4,9 +4,8 @@
 
 namespace rx::texture {
 
-vector<rx_byte> convert(memory::allocator* _allocator,
-  const vector<rx_byte>& _data, pixel_format _in_format,
-  pixel_format _out_format);
+vector<rx_byte> convert(memory::allocator* _allocator, const rx_byte* _data,
+  rx_size _samples, pixel_format _in_format, pixel_format _out_format);
 
 } // namespace rx::texture
 

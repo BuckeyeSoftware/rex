@@ -25,11 +25,14 @@ struct chain
   chain& operator=(chain&& chain_);
 
   void generate(loader&& loader_, bool _has_mipchain, bool _want_mipchain);
-
-  void generate(vector<rx_byte>&& data_, pixel_format _format,
-    const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain);
-  void generate(const rx_byte* _data, pixel_format _format,
-    const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain);
+  void generate(loader&& loader_, pixel_format _want_format,
+    bool _has_mipchain, bool _want_mipchain);
+  void generate(vector<rx_byte>&& data_, pixel_format _has_format,
+    pixel_format _want_format, const math::vec2z& _dimensions,
+    bool _has_mipchain, bool _want_mipchain);
+  void generate(const rx_byte* _data, pixel_format _has_format,
+    pixel_format _want_format, const math::vec2z& _dimensions,
+    bool _has_mipchain, bool _want_mipchain);
 
   void resize(const math::vec2z& _dimensions);
 
@@ -46,6 +49,7 @@ private:
 
   static pixel_format pixel_format_for_loader_bpp(rx_size _bpp);
 
+  memory::allocator* m_allocator;
   vector<rx_byte> m_data;
   vector<level> m_levels;
   math::vec2z m_dimensions;
@@ -72,22 +76,26 @@ inline chain::chain(memory::allocator* _allocator)
 }
 
 inline chain::chain(chain&& chain_)
-  : m_data{utility::move(chain_.m_data)}
+  : m_allocator{chain_.m_allocator}
+  , m_data{utility::move(chain_.m_data)}
   , m_levels{utility::move(chain_.m_levels)}
   , m_dimensions{chain_.m_dimensions}
   , m_pixel_format{chain_.m_pixel_format}
 {
+  chain_.m_allocator = nullptr;
   chain_.m_dimensions = {};
 }
 
 inline chain& chain::operator=(chain&& chain_) {
   RX_ASSERT(&chain_ != this, "self assignment");
 
+  m_allocator = chain_.m_allocator;
   m_data = utility::move(chain_.m_data);
   m_levels = utility::move(chain_.m_levels);
   m_dimensions = chain_.m_dimensions;
   m_pixel_format = chain_.m_pixel_format;
 
+  chain_.m_allocator = nullptr;
   chain_.m_dimensions = {};
 
   return *this;
@@ -96,9 +104,17 @@ inline chain& chain::operator=(chain&& chain_) {
 inline void chain::generate(loader&& loader_, bool _has_mipchain,
   bool _want_mipchain)
 {
+  const pixel_format format{pixel_format_for_loader_bpp(loader_.bpp())};
+  generate(utility::move(loader_.data()), format, format, loader_.dimensions(),
+    _has_mipchain, -_want_mipchain);
+}
+
+inline void chain::generate(loader&& loader_, pixel_format _want_format,
+  bool _has_mipchain, bool _want_mipchain)
+{
   generate(utility::move(loader_.data()),
-    pixel_format_for_loader_bpp(loader_.bpp()), loader_.dimensions(),
-    _has_mipchain, _want_mipchain);
+    pixel_format_for_loader_bpp(loader_.bpp()), _want_format,
+    loader_.dimensions(), _has_mipchain, _want_mipchain);
 }
 
 inline vector<rx_byte>&& chain::data() {
