@@ -20,6 +20,17 @@ Everything in the core library takes a pointer to a polymorphic allocator. There
 
 One downside to this is most types end up consuming more memory than most standard library types because that pointer requires additional memory in the structure to store.
 
+## No new or delete
+Since everything should go through the polymorphic allocators, all forms of `new` and `delete` are disabled, including array variants. You cannot call them, they just forward to `abort`.
+
+## No runtime support
+The C++ runtime support library for things like `new` and `delete`, exceptions and RTTI is simply disabled from the builds. Instead a very minimal, stublet implementation exists to call `abort` if it encounters such things being used.
+
+## Performance
+The core library needs to be fast. Cache aware optimizations are made, small container optimizations, things like that. What is less obvious is that the core components need to be fast even under debug builds. This tends to not be the case with the standard C++ library where debug builds often lead to slow performance.
+
+Build performance is a major concern too. Careful design and consideration was made here to keep files small and only include what is used. In contrast the standard C++ library tends to have very large header files that include even more header files which are also large. This leads to slower build times.
+
 ## Algorithm
 
 There's a few algorithm implementations:
@@ -167,11 +178,24 @@ A very small subset of the functionality found by `<utility>` exists here.
 ## Containers
   * `array` Similar to `std::array`.
   * `bitset` A fixed-capacity bitset.
-  * `function` A fast delegate system that is similar to `std::function`.
+  * `function` A fast delegate that is similar to `std::function`.
+  * `deferred_function` A fast delegate that gets called when the function goes out of scope.
   * `global` Global variables are wrapped with this type.
   * `map` An unordered map using Robin-hood hashing.
+  * `optional` Optional type implementation.
   * `pool` A fixed-capacity object pool.
   * `queue` Queue implementation.
   * `set` An unordered set using Robin-hood hashing.
   * `string` A UTF8-safe string and a UTF16 conversion interface for Windows.
   * `vector` A dynamic resizing array.
+
+## Misc
+  * `abort` Take down the runtime safely while logging an abortion message.
+  * `assert` Runtime assertions for `RX_DEBUG` builds. With optional messages.
+  * `event` An event system with signal and slots. Slot adds a delegate, signal calls all delegates.
+  * `format` Type safe formatting of types for printing.
+  * `hash` Hash functions for various types and generalized hash combiner.
+  * `json` A JSON5 reader and parser into a tree-like structure.
+  * `log` Generalized, thread-safe, concurrent logging framework.
+  * `profiler` A CPU and GPU profiler framework.
+  * `types` Sized types like `rx_{u,s}{8,16,32,64}`.
