@@ -146,10 +146,10 @@ bool importer::load(const string& _file_name) {
   if (optimized_meshes.size() < m_meshes.size()) {
     logger(log::level::k_info, "reduced %zu meshes to %zu", m_meshes.size(),
       optimized_meshes.size());
-
-    m_meshes = utility::move(optimized_meshes);
-    m_elements = utility::move(optimized_elements);
   }
+
+  m_meshes = utility::move(optimized_meshes);
+  m_elements = utility::move(optimized_elements);
 
   return true;
 }
