@@ -1,5 +1,5 @@
-#ifndef RX_RENDER_BACKEND_GL3_H
-#define RX_RENDER_BACKEND_GL3_H
+#ifndef RX_RENDER_BACKEND_ES3_H
+#define RX_RENDER_BACKEND_ES3_H
 
 #include "rx/render/backend/interface.h"
 
@@ -9,13 +9,13 @@ namespace rx::memory {
 
 namespace rx::render::backend {
 
-struct gl3
+struct es3
   : interface
 {
   allocation_info query_allocation_info() const;
   device_info query_device_info() const;
-  gl3(memory::allocator* _allocator, void* _data);
-  ~gl3();
+  es3(memory::allocator* _allocator, void* _data);
+  ~es3();
 
   bool init();
   void process(const vector<rx_byte*>& _commands);
@@ -30,4 +30,4 @@ private:
 
 } // namespace rx::render::backend
 
-#endif // RX_RENDER_BACKEND_GL3_H
+#endif // RX_RENDER_BACKEND_ES3_H
