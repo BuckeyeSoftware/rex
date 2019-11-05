@@ -64,7 +64,7 @@ The following concurrency primitives are implemented:
   * `thread_pool` A generic thread pool.
   * `thread` A kernel thread.
   * `wait_group` Helper primitive to wait for a group of work to complete.
-  * `yield` Relinquish the thread to the OS
+  * `yield` Relinquish the thread to the OS.
 
 ## Filesystem
 
