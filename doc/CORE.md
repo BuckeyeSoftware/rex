@@ -6,12 +6,13 @@ Rex does not make use of the C++ standard library. Instead it implements a core 
 There's many differences between our core library and the standard. They're outlines here.
 
 ### No exceptions
-We don't make use of exceptions. Nothing can throw, this leads to a far simpler and more managable set of interfaces that don't need to think of what happens when something throws.
+We don't make use of exceptions. Nothing can throw, this leads to a far simpler and more managable set of interfaces that don't need to think of what happens when something throws. It also leads to much faster code since everything is implicitly `noexcept`.
 
 ### No iterators
-It was discovered that the exception to the rule of iterating through all elements in a container is quite rare in most code and the amount of code to implement iterators is quite significant for something that is quite rare. Instead all containers implement an `each` method that can take a callback. Most containers are safe to mutate while inside the callback too. This callback is implemented in terms of a template so it's always inlined.
+It was discovered that the exception to the rule of iterating through all elements in a container is quite rare in most code and the amount of code to implement iterators is quite significant for something that is quite rare. Making it a poor fit to implement at all. Instead, all containers implement an `each` method that can take a callback. Care was taken to make it safe to mutate while inside the callback too. The callback itself is implemented as a template argument so it's _always_ inlined.
 
-When you do need to manage an index into a container like a `vector` or `string` you can just use `rx_size`. Since `map` and `set` are unordered an iterator for the purposes of inserting or removing before or after makes little since. The `find` interface of the unordered containers give you a pointer to the node already so that can be stored.
+When you do need to manage an index into a container like a `vector` or `string` you can just use `rx_size`. Since `map` and `set` are unordered, an iterator for the purposes of inserting or removing an element before or after another makes little since. The `find` interface of the unordered containers also gives you a pointer to the node
+which can be used to store and refer to elements later, like an iterator. One other nice benefit is that, provided the containers do not resize, these pointers are safe from invalidation caused by mutation to `map` and `set`.
 
 One downside to this is that most generic algorithms cannot be implemented for our types.
 
@@ -27,9 +28,9 @@ Since everything should go through the polymorphic allocators, all forms of `new
 The C++ runtime support library for things like `new` and `delete`, exceptions and RTTI is simply disabled from the builds. Instead a very minimal, stublet implementation exists to call `abort` if it encounters such things being used.
 
 ## Performance
-The core library needs to be fast. Cache aware optimizations are made, small container optimizations, things like that. What is less obvious is that the core components need to be fast even under debug builds. This tends to not be the case with the standard C++ library where debug builds often lead to slow performance.
+Performance of runtime and debug builds as well as build performance were all major considerations for the core library. The C++ standard library often has poor runtime performance for debug builds and is known for it's slow build times. We don't have those problems as very careful design choices were made early on.
 
-Build performance is a major concern too. Careful design and consideration was made here to keep files small and only include what is used. In contrast the standard C++ library tends to have very large header files that include even more header files which are also large. This leads to slower build times.
+Cache efficient is also a major design choice which led to our `map` and `set` implementations to use Robinhood hashing. This isn't possible with the standard interface in `std::unordered_{map,set}` since the standard requires the key and value be stored together leading to poor cache utilization.
 
 ## Algorithm
 
