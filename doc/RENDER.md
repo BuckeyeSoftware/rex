@@ -22,14 +22,14 @@
         * [Interface](#backend-interface)
 
 ## Frontend
-Rex employs a renderer abstraction interface to isolate graphics API code from the actual engine rendering. This is done by `srx/rx/render/frontend`. The documentation of how this frontend interface works is provided here to get you up to speed on how to render things.
+Rex employs a renderer abstraction interface to isolate graphics API code from the actual engine rendering. This is done by `src/rx/render/frontend`. The documentation of how this frontend interface works is provided here to get you up to speed on how to render things.
 
 ### Frontend Interface
 All rendering resources and commands happen through `frontend::interface`. Every command on the frontend is associated with a tag that tracks the file and line information of the command in the engine as well as a static string describing it, this is provided to the interface with the `RX_RENDER_TAG("string")` macro.
 
 The entire rendering interface is _thread safe_, any and all commands can be called from any thread at any time.
 
-The frontend **does not** do immediate rendering. Every command executed is only recorded into a command buffer for later execution by the backend. There's exactly one frame of latency incurred by this but it's also what permits thread-safety for APIs like OpenGL which cannot be called from multiple threads. The backend implements the `process` function and interprets commands. Every command is prefixed with that `RX_RENDER_TAG` so it's very easy to see where in the engine a command originated from.
+The frontend **does not** do immediate rendering. Every command executed is only recorded into a command buffer for later execution by the backend. There's exactly a frame of latency incurred by this but it's also what permits thread-safety for APIs like OpenGL which cannot be called from multiple threads. The backend implements the `process` function and interprets commands. Every command is prefixed with that `RX_RENDER_TAG` so it's very easy to see where in the engine a command originated from.
 
 #### Drawing
 Indexed and non-indexed draws are done with `frontend.draw`. When a buffer has no elements, e.g `element_kind == k_none` the draw is treated as a non-indexed draw.
@@ -40,6 +40,7 @@ void draw(
   const command_header::info& _info,
   const state& _state,
   target* _target,
+  const char* _draw_buffers,
   buffer* _buffer,
   program* _program,
   rx_size _count,
@@ -53,12 +54,13 @@ Lets disect what everything is:
 * `_info` is the render tag containing file, line and static string information as described at the beginning of this document. You construct one with `RX_RENDER_TAG(...)`.
 * `_state` is the entire state vector to use.
 * `_target` is the render target to render into.
+* `_draw_buffers` is the draw buffer specification to use (described below.)
 * `_buffer` is the combined vertex and element buffer to source.
 * `_program` is the program to use.
 * `_count` is the number of elements to source.
 * `_offset` is the offset in the element buffer to begin renering from.
 * `_primitive_type` is the primitive type to render, e.g `k_triangles`.
-* `_textures` is the texture specification to use (described below)
+* `_textures` is the texture specification to use (described below.)
 * `...` is a list of `texture{1D, 2D, 3D, CM}` to use for the draw.
 
 The texture specification string is a string-literal encoding the textures to use for this call using the following table
@@ -67,38 +69,43 @@ The texture specification string is a string-literal encoding the textures to us
   * `3` 3D texture
   * `c` Cubemap texture
 
-The string can have a maximum length of eight, meaning you can have a maximum amount of eight textures. There must be exactly as many textures passed in `...` as this string's length. They must mach the specification, e.g passing a `texture1D*` when the string says anything other than `1` in that position will trigger an assertion.
+The string can have a maximum length of eight, meaning you can have a maximum amount of eight textures. There must be exactly as many textures passed in `...` as this string's length. They must mach the specification, e.g
+
+The draw buffer specification string is a string-literal encoding the attachments to use for this draw and in which order those attachments should be configured as draw buffers. The string can have a maximum of eight characters.
 
 #### Clearing
 Clearing of a render target is done by `interface::clear`, here's the definition:
 
 ```cpp
-void clear(
-  const command_header::info& _info,
-  const state& _state,
-  target* _target,
-  rx_u32 _clear_mask,
-  const math::vec4f& _clear_color
-);
+  void clear(
+    const command_header::info& _info,
+    const state& _state,
+    target* _target,
+    const char* _draw_buffers,
+    rx_u32 _clear_mask,
+    ...
+  );
 ```
 
 * `_info` is a `RX_RENDER_TAG(...)`.
 * `_state` is the state vector to use.
 * `_target` is the target to clear.
-* `_clear_mask` can be one of:
-  * `RX_RENDER_CLEAR_DEPTH`
-  * `RX_RENDER_CLEAR_STENCIL`
-  * `RX_RENDER_CLEAR_COLOR(index)`
-  * `RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL`
-* `_clear_color` the color for the clear operation, for:
-  * `RX_RENDER_CLEAR_DEPTH`, `_clear_color.r` stores the depth clear value
-  * `RX_RENDER_CLEAR_STENCIL`, `_clear_color.r` stores the stencil clear value
-  * `RX_RENDER_CLEAR_COLOR(index)`, `_clear_color` stores the color clear value
-  * `RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL`, `_clear_color.r` stores the depth clear, `_clear_color.g` stores the stencil clear
+* `_draw_buffers` is the draw buffer specification.
+* `_clear_mask` is a combination of bitor clear options.
+* `...` is the clear packet data
 
+Performs a clear operation on `_target` with specified draw buffer layout `_draw_buffers` and state `_state`. The clear mask specified by `clear_mask` describes the packet layout of `...`.
 
-Any other combination of flags for `_clear_mask` is undefined.
-You **cannot** clear depth, color and stencil at the same time, likewise; you **cannot** clear multiple color attachments at the same time.
+The packet data described in `...` is passed, parsed and interpreted in the following order:
+  * depth:   `rx_f64` _truncated to `rx_f32`_
+  * stencil: `rx_s32`
+  * colors:  `const rx_f32*`
+
+When `RX_RENDER_CLEAR_DEPTH` is present in `_clear_mask`, the depth clear value is expected as `rx_f64` (truncated to rx_f32) in first position.
+
+When `RX_RENDER_CLEAR_STENCIL` is present in `_clear_mask|`, the stencil clear value is expected as `rx_s32` in one of two positions depending on if `RX_RENDER_CLEAR_DEPTH` is supplied. When `RX_RENDER_CLEAR_DEPTH` isn't supplied, the stencil clear value is expected in first position, otherwise it's expected in second position.
+
+When `RX_RENDER_CLEAR_COLOR(n)` for any `n` is present in `_clear_mask`, the clear value is expected as a pointer to `rx_f32` (`const rx_f32*`) containing four color values in normalized range in RGBA order. The `n` refers to the index in the `_draw_buffers` specification to clear. The association of the clear value in `...` and the `n` is done in order. When a `RX_RENDER_CLEAR_COLOR` does not exist for a given `n`, the one proceeding it takes it's place, thus gaps are skipped.
 
 #### Blitting
 Blitting of a render target is done by `interface::blit`, here's the definition:
@@ -485,6 +492,7 @@ The backend abstraction is used to hook up that abstraction to the API code. Thi
 The following backends already exist:
   * GL3 `src/rx/render/backend/gl3.{h,cpp}`
   * GL4 `src/rx/render/backend/gl4.{h,cpp}`
+  * ES3 `src/rx/render/backend/es3.{h,cpp}`
   * NVN `src/rx/render/backend/nvn.{h,cpp}`
 
 ### Command Buffer
