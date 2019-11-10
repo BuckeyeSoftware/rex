@@ -32,6 +32,8 @@ struct material
   texture2D* normal() const;
   texture2D* metalness() const;
   texture2D* roughness() const;
+  texture2D* ambient() const;
+  texture2D* emission() const;
 
 private:
   interface* m_frontend;
@@ -39,6 +41,8 @@ private:
   texture2D* m_normal;
   texture2D* m_metalness;
   texture2D* m_roughness;
+  texture2D* m_ambient;
+  texture2D* m_emission;
   bool m_alpha_test;
   bool m_has_alpha;
   string m_name;
@@ -51,6 +55,8 @@ inline material::material(material&& material_)
   , m_normal{material_.m_normal}
   , m_metalness{material_.m_metalness}
   , m_roughness{material_.m_roughness}
+  , m_ambient{material_.m_ambient}
+  , m_emission{material_.m_emission}
   , m_alpha_test{material_.m_alpha_test}
   , m_has_alpha{material_.m_has_alpha}
   , m_name{utility::move(material_.m_name)}
@@ -60,6 +66,8 @@ inline material::material(material&& material_)
   material_.m_normal = nullptr;
   material_.m_metalness = nullptr;
   material_.m_roughness = nullptr;
+  material_.m_ambient = nullptr;
+  material_.m_emission = nullptr;
   material_.m_alpha_test = false;
   material_.m_has_alpha = false;
 }
@@ -74,6 +82,8 @@ inline material& material::operator=(material&& material_) {
   m_normal = material_.m_normal;
   m_metalness = material_.m_metalness;
   m_roughness = material_.m_roughness;
+  m_ambient = material_.m_ambient;
+  m_emission = material_.m_emission;
   m_alpha_test = material_.m_alpha_test;
   m_has_alpha = material_.m_has_alpha;
   m_name = utility::move(material_.m_name);
@@ -83,6 +93,8 @@ inline material& material::operator=(material&& material_) {
   material_.m_normal = nullptr;
   material_.m_metalness = nullptr;
   material_.m_roughness = nullptr;
+  material_.m_ambient = nullptr;
+  material_.m_emission = nullptr;
   material_.m_alpha_test = false;
   material_.m_has_alpha = false;
 
@@ -119,6 +131,14 @@ inline texture2D* material::metalness() const {
 
 inline texture2D* material::roughness() const {
   return m_roughness;
+}
+
+inline texture2D* material::ambient() const {
+  return m_ambient;
+}
+
+inline texture2D* material::emission() const {
+  return m_emission;
 }
 
 } // namespace rx::render::frontend

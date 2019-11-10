@@ -276,13 +276,15 @@ inline const math::vec4f& texture::border() const & {
 }
 
 inline bool texture::is_color_format(data_format _format) {
-  return _format == data_format::k_bgra_f16
+  return _format == data_format::k_r_u8
+      || _format == data_format::k_rgb_u8
+      || _format == data_format::k_rgba_u8
+      || _format == data_format::k_bgr_u8
       || _format == data_format::k_bgra_u8
+      || _format == data_format::k_rgba_f16
+      || _format == data_format::k_bgra_f16
       || _format == data_format::k_dxt1
       || _format == data_format::k_dxt5
-      || _format == data_format::k_r_u8
-      || _format == data_format::k_rgba_f16
-      || _format == data_format::k_rgba_u8
       || _format == data_format::k_srgb_u8
       || _format == data_format::k_srgba_u8;
 }

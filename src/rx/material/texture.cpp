@@ -99,7 +99,9 @@ bool texture::parse_type(const json& _type) {
     "diffuse",
     "normal",
     "metalness",
-    "roughness"
+    "roughness",
+    "ambient",
+    "emission"
   };
 
   for (const auto& match : k_matches) {

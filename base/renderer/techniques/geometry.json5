@@ -6,7 +6,9 @@
     "HAS_NORMAL",
     "HAS_METALNESS",
     "HAS_ROUGHNESS",
-    "HAS_ALPHATEST"
+    "HAS_ALPHATEST",
+    "HAS_AMBIENT",
+    "HAS_EMISSION"
   ],
   uniforms: [
     { name: "u_model",      type: "mat4x4f" },
@@ -21,7 +23,9 @@
     { name: "u_diffuse",    type: "sampler2D", value: 3, when: "HAS_DIFFUSE" },
     { name: "u_normal",     type: "sampler2D", value: 4, when: "HAS_NORMAL" },
     { name: "u_metal",      type: "sampler2D", value: 5, when: "HAS_METALNESS" },
-    { name: "u_roughness",  type: "sampler2D", value: 6, when: "HAS_ROUGHNESS" }
+    { name: "u_roughness",  type: "sampler2D", value: 6, when: "HAS_ROUGHNESS" },
+    { name: "u_ambient",    type: "sampler2D", value: 7, when: "HAS_AMBIENT" },
+    { name: "u_emission",   type: "sampler2D", value: 8, when: "HAS_EMISSION" }
   ],
   shaders: [
     {
@@ -77,7 +81,10 @@
       outputs: [
         { name: "fs_albedo",       type: "vec4f" },
         { name: "fs_normal",       type: "vec4f" },
-        { name: "fs_emissive",     type: "vec4f" }
+        { name: "fs_emission",     type: "vec4f" }
+      ],
+      imports: [
+        "normal_encode"
       ],
       source: "
         vec3f approximate_specular_ibl(vec3f specular_color, float roughness, vec3f n, vec3f v) {
@@ -94,17 +101,21 @@
           vec3f position = (u_model * vec4(vs_position, 1.0)).xyz;
 
         #if defined(HAS_NORMAL)
-          // Fetch tangent space normal from normal map texture.
+          // Fetch tangent space normal sample from normal map texture.
           vec3f normal_map_sample = rx_texture2D(u_normal, vs_coordinate).rgb;
 
-          // Transform sample to range [-1, 1] and normalize.
-          vec3f normal_map = normalize(normal_map_sample * 2.0 - 1.0);
+          // Transform normal map sample to range [-1, 1].
+          vec3f normal_map = normal_map_sample * 2.0 - 1.0;
 
-          // Construct bitangent from tangent and normal.
-          vec3f bitangent = cross(vs_tangent.xyz, vs_normal) * vs_tangent.w;
+          // Construct bitangent from tangent and normal and apply the bitangent
+          // sign which is stored in vs_tangent.w.
+          vec3f bitangent = cross(vs_normal, vs_tangent.xyz) * vs_tangent.w;
 
-          // Transform tangent space normal map and normalize.
-          vec3f normal = normalize(mat3x3f(vs_tangent.xyz, bitangent, vs_normal) * normal_map);
+          // Construct TBN matrix from tangent, bitangent and normal.
+          mat3x3f tbn = mat3x3f(vs_tangent.xyz, bitangent, vs_normal);
+
+          // Transform tangent space normal map with TBN matrix and normalize.
+          vec3f normal = normalize(tbn * normal_map);
         #else
           vec3f normal = normalize(vs_normal);
         #endif
@@ -112,7 +123,7 @@
           normal = normalize(u_model * vec4f(normal, 0.0)).xyz;
 
           // Calculate metalness facor from material if present.
-          float metalness = 1.0;
+          float metalness = 0.0;
         #if defined(HAS_METALNESS)
           metalness = rx_texture2D(u_metal, vs_coordinate).r;
         #endif
@@ -129,6 +140,18 @@
           diffuse = rx_texture2D(u_diffuse, vs_coordinate);
         #endif
 
+          // Calculate ambient factor from material if present.
+          float ambient = 0.0;
+        #if defined(HAS_AMBIENT)
+          ambient = rx_texture2D(u_ambient, vs_coordinate).r;
+        #endif
+
+          // Calculate emission from material if present.
+          vec3f emission = vec3f(0.0);
+        #if defined(HAS_EMISSION)
+          emission = rx_texture2D(u_emission, vs_coordinate).rgb;
+        #endif
+
           // Alpha testing.
         #if defined(HAS_ALPHATEST)
           if (diffuse.a <= 0.5) {
@@ -136,21 +159,16 @@
           }
         #endif
 
-          vec3f base_color = diffuse.rgb;
-
-          vec3f v = normalize(u_camera - position);
-          vec3f r = normalize(reflect(-v, normal));
-
-          vec3f diffuse_color = base_color * (1.0 - metalness);
-          vec3f specular_color = mix(vec3f(0.1), base_color, metalness);
-
-          vec3f indirect_diffuse = base_color * rx_textureCM(u_irradiance, r).rgb;
-          vec3f indirect_specular = approximate_specular_ibl(specular_color, roughness*0.5, normal, v);
-
-          vec3f color = indirect_diffuse + indirect_specular;
-
-          fs_albedo = vec4f(color             , roughness); // roughness stored in alpha
-          fs_normal = vec4f(normal * 0.5 + 0.5, metalness); // metalness stored in alpha
+          // GBuffer layout:
+          //
+          // R            G          B           A
+          // ---------------------------------------------
+          // albedo.r,   albedo.g,   albedo.b,   ao
+          // normal.r,   normal.g,   roughness,  metalness
+          // emission.r, emission.g, emission.b, 0.0
+          fs_albedo   = vec4f(diffuse.rgb,           ambient);
+          fs_normal   = vec4f(normal_encode(normal), roughness, metalness);
+          fs_emission = vec4f(emission,              0.0);
         }
       "
     }

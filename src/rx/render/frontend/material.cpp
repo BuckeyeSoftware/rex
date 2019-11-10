@@ -33,6 +33,8 @@ material::material(interface* _frontend)
   , m_normal{nullptr}
   , m_metalness{nullptr}
   , m_roughness{nullptr}
+  , m_ambient{nullptr}
+  , m_emission{nullptr}
   , m_alpha_test{false}
   , m_has_alpha{false}
   , m_name{m_frontend->allocator()}
@@ -46,6 +48,8 @@ material::~material() {
   m_frontend->destroy_texture(tag, m_normal);
   m_frontend->destroy_texture(tag, m_metalness);
   m_frontend->destroy_texture(tag, m_roughness);
+  m_frontend->destroy_texture(tag, m_ambient);
+  m_frontend->destroy_texture(tag, m_emission);
 }
 
 bool material::load(rx::material::loader&& loader_) {
@@ -63,7 +67,9 @@ bool material::load(rx::material::loader&& loader_) {
     { &m_diffuse,    "diffuse",   true  },
     { &m_normal,     "normal",    false },
     { &m_metalness,  "metalness", false },
-    { &m_roughness,  "roughness", false }
+    { &m_roughness,  "roughness", false },
+    { &m_ambient,    "ambient",   false },
+    { &m_emission,   "emission",  false }
   };
 
   return loader_.textures().each_fwd([this, &table](rx::material::texture& texture_) {

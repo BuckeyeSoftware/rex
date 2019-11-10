@@ -1,0 +1,83 @@
+{
+  name: "deferred_indirect",
+  uniforms: [
+    { name: "u_albedo",             type: "sampler2D", value: 0 },
+    { name: "u_normal",             type: "sampler2D", value: 1 },
+    { name: "u_emission",           type: "sampler2D", value: 2 },
+    { name: "u_depth",              type: "sampler2D", value: 3 },
+    { name: "u_irradiance",         type: "samplerCM", value: 4 },
+    { name: "u_prefilter",          type: "samplerCM", value: 5 },
+    { name: "u_scale_bias",         type: "sampler2D", value: 6 },
+    { name: "u_inverse_projection", type: "mat4x4f" },
+    { name: "u_camera_position",    type: "vec3f" }
+  ],
+  shaders: [
+    {
+      type: "vertex",
+      inputs: [
+        { name: "a_position",    type: "vec2f" },
+        { name: "a_coordinate",  type: "vec2f" }
+      ],
+      outputs: [
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      source: "
+        void main() {
+          rx_position = vec4(a_position, 0.0, 1.0);
+          vs_coordinate = a_coordinate;
+        }
+      "
+    },{
+      type: "fragment",
+      inputs: [
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      outputs: [
+        { name: "fs_color",      type: "vec4f" }
+      ],
+      imports: [
+        "position_from_depth",
+        "normal_decode"
+      ],
+      source: "
+        vec3f approximate_specular_ibl(vec3f specular_color, float roughness, vec3f n, vec3f v) {
+          float n_dot_v = clamp(dot(n, v), 0.0, 1.0);
+          vec3f r = reflect(-v, n);
+          vec3f prefiltered_color = rx_textureCMLod(u_prefilter, r, roughness * 5.0).rgb;
+          vec2f brdf = rx_texture2D(u_scale_bias, vec2f(roughness, n_dot_v)).rg;
+
+          return prefiltered_color * (specular_color * brdf.x + brdf.y);
+        }
+
+        void main() {
+          vec4f sample_albedo = rx_texture2D(u_albedo, vs_coordinate);
+          vec4f sample_normal = rx_texture2D(u_normal, vs_coordinate);
+          float sample_depth = rx_texture2D(u_depth, vs_coordinate).r;
+
+          vec3f albedo = sample_albedo.rgb;
+          vec3f normal = normal_decode(sample_normal.rg);
+
+          float roughness = sample_normal.b;
+          float metalness = sample_normal.a;
+
+          vec3f position = position_from_depth(
+            vs_coordinate, u_inverse_projection, sample_depth);
+
+          vec3f v = normalize(u_camera_position - position);
+          vec3f r = normalize(reflect(-v, normal));
+
+          vec3f base_color = sample_albedo.rgb;
+          vec3f diffuse_color = base_color * (1.0 - metalness);
+          vec3f specular_color = mix(vec3f(0.04), base_color, metalness);
+
+          vec3f irradiance = rx_textureCM(u_irradiance, r).rgb;
+          vec3f indirect_diffuse = diffuse_color * irradiance;
+          vec3f indirect_specular = approximate_specular_ibl(
+            specular_color, roughness, normal, v);
+
+          fs_color = vec4f(sample_albedo.a * indirect_diffuse + indirect_specular, 1.0);
+        }
+      "
+    }
+  ]
+}

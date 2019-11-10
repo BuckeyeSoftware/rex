@@ -6,8 +6,38 @@
       name: "Body.tga",
       textures: [
         {
-          file: "base/models/mrfixit/body.png",
+          file: "base/models/mrfixit/body_a.png",
           type: "diffuse",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ]
+        },
+        {
+          file: "base/models/mrfixit/body_n.png",
+          type: "normal",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ]
+        },
+        {
+          file: "base/models/mrfixit/body_r.png",
+          type: "roughness",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ]
+        },
+        {
+          file: "base/models/mrfixit/body_m.png",
+          type: "metalness",
           filter: "bilinear",
           mipmaps: true,
           wrap: [
@@ -20,8 +50,38 @@
       name: "Head.tga",
       textures: [
         {
-          file: "base/models/mrfixit/head.png",
+          file: "base/models/mrfixit/head_a.png",
           type: "diffuse",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ]
+        },
+        {
+          file: "base/models/mrfixit/head_n.png",
+          type: "normal",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ]
+        },
+        {
+          file: "base/models/mrfixit/head_r.png",
+          type: "roughness",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ]
+        },
+        {
+          file: "base/models/mrfixit/head_m.png",
+          type: "metalness",
           filter: "bilinear",
           mipmaps: true,
           wrap: [

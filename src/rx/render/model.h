@@ -14,13 +14,14 @@ namespace frontend {
   struct target;
 }
 
+struct immediate3D;
 struct ibl;
 
 struct model {
   model(frontend::interface* _frontend);
   ~model();
 
- struct mesh {
+  struct mesh {
     rx_size offset;
     rx_size count;
     rx_size material;
@@ -29,6 +30,8 @@ struct model {
 
   void render(ibl* _ibl, frontend::target* _target, const math::mat4x4f& _model,
     const math::mat4x4f& _view, const math::mat4x4f& _projection);
+
+  void render_normals(const math::mat4x4f& _world, render::immediate3D* _immediate);
 
   bool load(const string& _file_name);
 

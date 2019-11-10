@@ -1,5 +1,6 @@
 #include "rx/render/model.h"
 #include "rx/render/ibl.h"
+#include "rx/render/immediate3D.h"
 
 #include "rx/render/frontend/interface.h"
 #include "rx/render/frontend/technique.h"
@@ -129,6 +130,8 @@ void model::render(ibl* _ibl, frontend::target* _target, const math::mat4x4f& _m
     if (material.metalness())  flags |= 1 << 3;
     if (material.roughness())  flags |= 1 << 4;
     if (material.alpha_test()) flags |= 1 << 5;
+    if (material.ambient())    flags |= 1 << 6;
+    if (material.emission())   flags |= 1 << 7;
 
     frontend::program* program{m_technique->permute(flags)};
     auto& uniforms{program->uniforms()};
@@ -153,6 +156,8 @@ void model::render(ibl* _ibl, frontend::target* _target, const math::mat4x4f& _m
     if (material.normal())    uniforms[10].record_sampler(textures.add(material.normal()));
     if (material.metalness()) uniforms[11].record_sampler(textures.add(material.metalness()));
     if (material.roughness()) uniforms[12].record_sampler(textures.add(material.roughness()));
+    if (material.ambient())   uniforms[13].record_sampler(textures.add(material.ambient()));
+    if (material.emission())  uniforms[14].record_sampler(textures.add(material.emission()));
 
     // Disable backface culling for alpha-tested geometry.
     state.cull.record_enable(!material.alpha_test());
@@ -176,10 +181,36 @@ void model::render(ibl* _ibl, frontend::target* _target, const math::mat4x4f& _m
       handles[3],
       handles[4],
       handles[5],
-      handles[6]);
+      handles[6],
+      handles[7],
+      handles[8]);
 
     return true;
   });
+}
+
+void model::render_normals(const math::mat4x4f& _world, render::immediate3D* _immediate) {
+  const vector<rx_byte>& vertices{m_buffer->vertices()};
+  const rx_size stride{m_buffer->stride()};
+  const rx_size n_vertices{vertices.size() / stride};
+  const rx_byte* vertex{vertices.data()};
+
+  for (rx_size i = 0; i < n_vertices; i++) {
+    const auto* position{reinterpret_cast<const math::vec3f*>(vertex)};
+    const auto* normal{reinterpret_cast<const math::vec3f*>(vertex + sizeof *position)};
+
+    const math::vec3f point_a{math::mat4x4f::transform_point(*position, _world)};
+    const math::vec3f point_b{math::mat4x4f::transform_point(*position + *normal * 0.05f, _world)};
+
+    const math::vec3f color{*normal * 0.5f + 0.5f};
+    _immediate->frame_queue().record_line(
+      point_a,
+      point_b,
+      {color.r, color.g, color.b, 1.0f},
+      immediate3D::k_depth_test | immediate3D::k_depth_write);
+
+    vertex += stride;
+  }
 }
 
 } // namespace rx::render
