@@ -11,8 +11,10 @@ The top level schema of a material looks like:
 {
   name:       required String
   textures:   required Array[#MaterialTexture]
-  transform:  optional #MaterialTransform
   alpha_test: optional Boolean
+  roughness:  optional Float
+  metalness:  optional Float
+  transform:  optional #MaterialTransform
 }
 ```
 
@@ -21,6 +23,10 @@ The top level schema of a material looks like:
   * `#Texture`
 
 Information on `#Texture` is described [here](TEXTURE.md)
+
+* `alpha_test` controls if surfaces with this material will be alpha tested or not.
+* `roughness` saturated value in [0, 1] range which acts as the roughness for the whole surface when a roughness map isn't present or as a multiplier if present. A val
+* `metalness` saturated value in [0, 1] range which acts as the metalness for the whole surface when a metalness map isn't present or as a multiplier if present.
 
 `#MaterialTransform` schema looks like:
 ```

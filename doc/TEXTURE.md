@@ -24,13 +24,15 @@ The top level schema of a texture looks like:
   * `"metalness"`
   * `"roughness"`
   * `"ambient"`
+  * `"emissive"`
 
 Where the types are:
 * `"albedo"` an albedo texture, like diffuse but without shadows or highlights.
 * `"normal"` tangent space normal map. Tangent space normals assume `0.5` is a _null_ component, `0.0` is a `-1` component and `1.0` is a `+1` component. Where RGB is XYZ respectively.
 * `"metalness"` PBR metalness map (like those exported by [Substance Painter](https://www.substance3d.com/products/substance-painter) or [Marmoset Toolbag](https://marmoset.co/toolbag/))
 * `"roughness"` PBR roughness map (like those exported by [Substance Painter](https://www.substance3d.com/products/substance-painter) or [Marmoset Toolbag](https://marmoset.co/toolbag/))
-* `"ambient"` PBR ambient occlusion map (like those exported by [Substance Painter](https://www.substance3d.com/products/substance-painter) or [Marmoset Toolbag](https://marmoset.co/))
+* `"ambient"` ambient occlusion map to apply to indirect diffuse lighting.
+* `"emissive"` emissive lighting map.
 
 See the [Physically-Based Shading at Disney](https://disney-animation.s3.amazonaws.com/library/s2012_pbs_disney_brdf_notes_v2.pdf) paper for more information on PBR materials and the shading Rex uses.
 

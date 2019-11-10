@@ -7,7 +7,7 @@
       textures: [
         {
           file: "base/models/mrfixit/body_a.png",
-          type: "diffuse",
+          type: "albedo",
           filter: "bilinear",
           mipmaps: true,
           wrap: [
@@ -51,7 +51,7 @@
       textures: [
         {
           file: "base/models/mrfixit/head_a.png",
-          type: "diffuse",
+          type: "albedo",
           filter: "bilinear",
           mipmaps: true,
           wrap: [

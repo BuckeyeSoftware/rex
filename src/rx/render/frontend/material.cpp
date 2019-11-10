@@ -29,14 +29,16 @@ convert_material_wrap(const rx::material::texture::wrap_options& _wrap) {
 
 material::material(interface* _frontend)
   : m_frontend{_frontend}
-  , m_diffuse{nullptr}
+  , m_albedo{nullptr}
   , m_normal{nullptr}
-  , m_metalness{nullptr}
   , m_roughness{nullptr}
+  , m_metalness{nullptr}
   , m_ambient{nullptr}
-  , m_emission{nullptr}
+  , m_emissive{nullptr}
   , m_alpha_test{false}
   , m_has_alpha{false}
+  , m_roughness_value{1.0f}
+  , m_metalness_value{0.0f}
   , m_name{m_frontend->allocator()}
 {
 }
@@ -44,18 +46,20 @@ material::material(interface* _frontend)
 material::~material() {
   const auto& tag{RX_RENDER_TAG("finalizer")};
 
-  m_frontend->destroy_texture(tag, m_diffuse);
+  m_frontend->destroy_texture(tag, m_albedo);
   m_frontend->destroy_texture(tag, m_normal);
-  m_frontend->destroy_texture(tag, m_metalness);
   m_frontend->destroy_texture(tag, m_roughness);
+  m_frontend->destroy_texture(tag, m_metalness);
   m_frontend->destroy_texture(tag, m_ambient);
-  m_frontend->destroy_texture(tag, m_emission);
+  m_frontend->destroy_texture(tag, m_emissive);
 }
 
 bool material::load(rx::material::loader&& loader_) {
   m_name = utility::move(loader_.name());
   m_alpha_test = loader_.alpha_test();
   m_has_alpha = loader_.has_alpha();
+  m_roughness_value = loader_.roughness();
+  m_metalness_value = loader_.metalness();
   m_transform = loader_.transform();
 
   // Simple table to map type strings to texture2D destinations in this object.
@@ -64,12 +68,12 @@ bool material::load(rx::material::loader&& loader_) {
     const char* match;
     bool        srgb;
   } table[] {
-    { &m_diffuse,    "diffuse",   true  },
+    { &m_albedo,     "albedo",    true  },
     { &m_normal,     "normal",    false },
     { &m_metalness,  "metalness", false },
     { &m_roughness,  "roughness", false },
     { &m_ambient,    "ambient",   false },
-    { &m_emission,   "emission",  false }
+    { &m_emissive,   "emissive",  false }
   };
 
   return loader_.textures().each_fwd([this, &table](rx::material::texture& texture_) {

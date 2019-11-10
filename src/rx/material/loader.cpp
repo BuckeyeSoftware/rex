@@ -15,6 +15,8 @@ loader::loader(memory::allocator* _allocator)
   , m_name{_allocator}
   , m_alpha_test{false}
   , m_has_alpha{false}
+  , m_roughness{1.0f}
+  , m_metalness{0.0f}
 {
 }
 
@@ -24,10 +26,14 @@ loader::loader(loader&& loader_)
   , m_name{utility::move(loader_.m_name)}
   , m_alpha_test{loader_.m_alpha_test}
   , m_has_alpha{loader_.m_has_alpha}
+  , m_roughness{loader_.m_roughness}
+  , m_metalness{loader_.m_metalness}
 {
   loader_.m_allocator = nullptr;
   loader_.m_alpha_test = false;
   loader_.m_has_alpha = false;
+  loader_.m_roughness = 1.0f;
+  loader_.m_metalness = 0.0f;
 }
 
 void loader::operator=(loader&& loader_) {
@@ -38,10 +44,14 @@ void loader::operator=(loader&& loader_) {
   m_name = utility::move(loader_.m_name);
   m_alpha_test = loader_.m_alpha_test;
   m_has_alpha = loader_.m_has_alpha;
+  m_roughness = loader_.m_roughness;
+  m_metalness = loader_.m_metalness;
 
   loader_.m_allocator = nullptr;
   loader_.m_alpha_test = false;
   loader_.m_has_alpha = false;
+  loader_.m_roughness = 1.0f;
+  loader_.m_metalness = 0.0f;
 }
 
 bool loader::load(const string& _file_name) {

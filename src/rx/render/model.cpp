@@ -94,7 +94,7 @@ bool model::load(const string& _file_name) {
   return true;
 }
 
-void model::render(ibl* _ibl, frontend::target* _target, const math::mat4x4f& _model,
+void model::render(frontend::target* _target, const math::mat4x4f& _model,
   const math::mat4x4f& _view, const math::mat4x4f& _projection)
 {
   math::frustum frustum{_view * _projection};
@@ -125,39 +125,37 @@ void model::render(ibl* _ibl, frontend::target* _target, const math::mat4x4f& _m
     const auto& material{m_materials[_mesh.material]};
 
     rx_u64 flags{0};
-    if (material.diffuse())    flags |= 1 << 1;
+    if (material.albedo())     flags |= 1 << 1;
     if (material.normal())     flags |= 1 << 2;
     if (material.metalness())  flags |= 1 << 3;
     if (material.roughness())  flags |= 1 << 4;
     if (material.alpha_test()) flags |= 1 << 5;
     if (material.ambient())    flags |= 1 << 6;
-    if (material.emission())   flags |= 1 << 7;
+    if (material.emissive())   flags |= 1 << 7;
 
     frontend::program* program{m_technique->permute(flags)};
     auto& uniforms{program->uniforms()};
 
-    const auto& camera{math::mat4x4f::invert(_view).w};
     uniforms[0].record_mat4x4f(_model);
     uniforms[1].record_mat4x4f(_view);
     uniforms[2].record_mat4x4f(_projection);
-    uniforms[3].record_vec3f({camera.x, camera.y, camera.z});
     if (const auto transform{material.transform()}) {
-      uniforms[4].record_mat3x3f(transform->to_mat3());
+      uniforms[3].record_mat3x3f(transform->to_mat3());
     }
 
-    // TODO: skeletal.
+    // TODO(dweiler): skeletal animation
+    // uniforms[4].record_bones();
+
+    uniforms[5].record_vec2f({material.roughness_value(), material.metalness_value()});
 
     // Record all the textures.
     frontend::draw_textures textures;
-    uniforms[6].record_sampler(textures.add(_ibl->irradiance()));
-    uniforms[7].record_sampler(textures.add(_ibl->prefilter()));
-    uniforms[8].record_sampler(textures.add(_ibl->scale_bias()));
-    if (material.diffuse())   uniforms[ 9].record_sampler(textures.add(material.diffuse()));
-    if (material.normal())    uniforms[10].record_sampler(textures.add(material.normal()));
-    if (material.metalness()) uniforms[11].record_sampler(textures.add(material.metalness()));
-    if (material.roughness()) uniforms[12].record_sampler(textures.add(material.roughness()));
-    if (material.ambient())   uniforms[13].record_sampler(textures.add(material.ambient()));
-    if (material.emission())  uniforms[14].record_sampler(textures.add(material.emission()));
+    if (material.albedo())    uniforms[ 6].record_sampler(textures.add(material.albedo()));
+    if (material.normal())    uniforms[ 7].record_sampler(textures.add(material.normal()));
+    if (material.metalness()) uniforms[ 8].record_sampler(textures.add(material.metalness()));
+    if (material.roughness()) uniforms[ 9].record_sampler(textures.add(material.roughness()));
+    if (material.ambient())   uniforms[10].record_sampler(textures.add(material.ambient()));
+    if (material.emissive())  uniforms[11].record_sampler(textures.add(material.emissive()));
 
     // Disable backface culling for alpha-tested geometry.
     state.cull.record_enable(!material.alpha_test());

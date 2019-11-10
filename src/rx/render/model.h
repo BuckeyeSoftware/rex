@@ -28,7 +28,7 @@ struct model {
     math::aabb bounds;
   };
 
-  void render(ibl* _ibl, frontend::target* _target, const math::mat4x4f& _model,
+  void render(frontend::target* _target, const math::mat4x4f& _model,
     const math::mat4x4f& _view, const math::mat4x4f& _projection);
 
   void render_normals(const math::mat4x4f& _world, render::immediate3D* _immediate);

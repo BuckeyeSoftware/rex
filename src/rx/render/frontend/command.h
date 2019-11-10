@@ -93,7 +93,7 @@ struct buffers {
 };
 
 struct draw_command : state {
-  static constexpr const rx_size k_max_textures{16};
+  static constexpr const rx_size k_max_textures{8};
 
   target* render_target;
   buffer* render_buffer;

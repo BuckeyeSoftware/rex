@@ -262,7 +262,8 @@ bool technique::evaluate_when_for_permute(const string& _when, rx_u64 _flags) co
   }
   const int result{binexp_evaluate(_when.data(), values)};
   if (result < 0) {
-    return error("when expression evaluation failed: %s", binexp_result_to_string(result));
+    return error("when expression evaluation failed: %s for \"%s\"",
+      binexp_result_to_string(result), _when);
   }
   return result;
 }
@@ -274,7 +275,8 @@ bool technique::evaluate_when_for_variant(const string& _when, rx_size _index) c
   }
   const int result{binexp_evaluate(_when.data(), values)};
   if (result < 0) {
-    return error("when expression evaluation failed: %s", binexp_result_to_string(result));
+    return error("when expression evaluation failed: %s for \"%s\"",
+      binexp_result_to_string(result), _when);
   }
   return result;
 }

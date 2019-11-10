@@ -3,11 +3,10 @@
   uniforms: [
     { name: "u_albedo",             type: "sampler2D", value: 0 },
     { name: "u_normal",             type: "sampler2D", value: 1 },
-    { name: "u_emission",           type: "sampler2D", value: 2 },
-    { name: "u_depth",              type: "sampler2D", value: 3 },
-    { name: "u_irradiance",         type: "samplerCM", value: 4 },
-    { name: "u_prefilter",          type: "samplerCM", value: 5 },
-    { name: "u_scale_bias",         type: "sampler2D", value: 6 },
+    { name: "u_depth",              type: "sampler2D", value: 2 },
+    { name: "u_irradiance",         type: "samplerCM", value: 3 },
+    { name: "u_prefilter",          type: "samplerCM", value: 4 },
+    { name: "u_scale_bias",         type: "sampler2D", value: 5 },
     { name: "u_inverse_projection", type: "mat4x4f" },
     { name: "u_camera_position",    type: "vec3f" }
   ],

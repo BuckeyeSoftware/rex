@@ -96,12 +96,12 @@ bool texture::parse_type(const json& _type) {
   }
 
   static constexpr const char* k_matches[]{
-    "diffuse",
+    "albedo",
     "normal",
     "metalness",
     "roughness",
     "ambient",
-    "emission"
+    "emissive"
   };
 
   for (const auto& match : k_matches) {
