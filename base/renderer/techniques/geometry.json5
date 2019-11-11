@@ -108,7 +108,7 @@
         #endif
 
           // Calculate ambient factor from material if present.
-          float ambient = 0.0;
+          float ambient = 1.0;
         #if defined(HAS_AMBIENT)
           ambient = rx_texture2D(u_ambient, vs_coordinate).r;
         #endif

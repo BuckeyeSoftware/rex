@@ -1,8 +1,11 @@
 {
-	right:  "base/skyboxes/yokohama/posx.jpg",
-	left:   "base/skyboxes/yokohama/negx.jpg",
-	top:    "base/skyboxes/yokohama/posy.jpg",
-	bottom: "base/skyboxes/yokohama/negy.jpg",
-	front:  "base/skyboxes/yokohama/posz.jpg",
-	back:   "base/skyboxes/yokohama/negz.jpg"
+	name: "yokohama",
+	faces: [
+		"base/skyboxes/yokohama/posx.jpg",
+		"base/skyboxes/yokohama/negx.jpg",
+		"base/skyboxes/yokohama/posy.jpg",
+		"base/skyboxes/yokohama/negy.jpg",
+		"base/skyboxes/yokohama/posz.jpg",
+		"base/skyboxes/yokohama/negz.jpg"
+	]
 }

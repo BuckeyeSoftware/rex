@@ -1,8 +1,11 @@
 {
-	right: "base/skyboxes/miramar/right.png",
-	left: "base/skyboxes/miramar/left.png",
-	top: "base/skyboxes/miramar/top.png",
-	bottom: "base/skyboxes/miramar/bottom.png",
-	front: "base/skyboxes/miramar/front.png",
-	back: "base/skyboxes/miramar/back.png" 
+	name: "miramar",
+	faces: [
+		"base/skyboxes/miramar/right.png",
+		"base/skyboxes/miramar/left.png",
+		"base/skyboxes/miramar/top.png",
+		"base/skyboxes/miramar/bottom.png",
+		"base/skyboxes/miramar/front.png",
+		"base/skyboxes/miramar/back.png"
+	]
 }

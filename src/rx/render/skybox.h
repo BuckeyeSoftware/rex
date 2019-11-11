@@ -1,10 +1,7 @@
 #ifndef RX_RENDER_SKYBOX_H
 #define RX_RENDER_SKYBOX_H
 #include "rx/math/mat4x4.h"
-
-namespace rx {
-  struct string;
-}
+#include "rx/core/string.h"
 
 namespace rx::render {
 
@@ -27,15 +24,22 @@ struct skybox {
 
   frontend::textureCM* cubemap() const;
 
+  const string& name() const &;
+
 private:
   frontend::interface* m_frontend;
   frontend::technique* m_technique;
   frontend::textureCM* m_texture;
   frontend::buffer* m_buffer;
+  string m_name;
 };
 
 inline frontend::textureCM* skybox::cubemap() const {
   return m_texture;
+}
+
+inline const string& skybox::name() const & {
+  return m_name;
 }
 
 } // namespace rx::render

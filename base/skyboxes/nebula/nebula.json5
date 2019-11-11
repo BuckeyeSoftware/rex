@@ -1,8 +1,11 @@
 {
-	right:  "base/skyboxes/nebula/right.png",
-	left:   "base/skyboxes/nebula/left.png",
-	top:    "base/skyboxes/nebula/top.png",
-	bottom: "base/skyboxes/nebula/bottom.png",
-	front:  "base/skyboxes/nebula/front.png",
-	back:   "base/skyboxes/nebula/back.png"
+	name: "nebula",
+	faces: [
+		"base/skyboxes/nebula/right.png",
+		"base/skyboxes/nebula/left.png",
+		"base/skyboxes/nebula/top.png",
+		"base/skyboxes/nebula/bottom.png",
+		"base/skyboxes/nebula/front.png",
+		"base/skyboxes/nebula/back.png"
+	]
 }
