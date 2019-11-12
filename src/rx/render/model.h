@@ -2,6 +2,9 @@
 #define RX_RENDER_MODEL_H
 #include "rx/render/frontend/material.h"
 
+#include "rx/model/loader.h"
+#include "rx/model/animation.h"
+
 #include "rx/math/mat4x4.h"
 #include "rx/math/aabb.h"
 
@@ -28,10 +31,15 @@ struct model {
     math::aabb bounds;
   };
 
+  void animate(rx_size _index, bool _loop);
+
+  void update(rx_f32 _delta_time);
+
   void render(frontend::target* _target, const math::mat4x4f& _model,
     const math::mat4x4f& _view, const math::mat4x4f& _projection);
 
   void render_normals(const math::mat4x4f& _world, render::immediate3D* _immediate);
+  void render_skeleton(const math::mat4x4f& _world, render::immediate3D* _immediate);
 
   bool load(const string& _file_name);
 
@@ -45,6 +53,8 @@ private:
   vector<frontend::material> m_materials;
   vector<mesh> m_opaque_meshes;
   vector<mesh> m_transparent_meshes;
+  rx::model::loader m_model;
+  optional<rx::model::animation> m_animation;
 };
 
 inline const vector<model::mesh>& model::opaque_meshes() const & {

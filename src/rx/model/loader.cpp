@@ -8,6 +8,8 @@
 #include "rx/core/concurrency/thread_pool.h"
 #include "rx/core/concurrency/wait_group.h"
 
+#include "rx/math/quat.h"
+
 #include "rx/material/loader.h"
 
 namespace rx::model {
@@ -117,14 +119,13 @@ bool loader::import(const string& _file_name) {
     m_frames = utility::move(new_loader->frames());
     m_joints = utility::move(new_loader->joints());
 
-    const auto& animations{new_loader->animations()};
     const auto& normals{new_loader->normals()};
     const auto& tangents{new_loader->tangents()};
     const auto& coordinates{new_loader->coordinates()};
 
     const rx_size n_vertices{m_positions.size()};
 
-    if (animations.is_empty()) {
+    if (m_animations.is_empty()) {
       utility::construct<vector<vertex>>(&as_vertices, m_allocator, n_vertices);
       m_flags |= k_constructed;
     } else {
@@ -136,12 +137,12 @@ bool loader::import(const string& _file_name) {
     // Hoist the transform check outside the for loops for faster model loading.
     if (m_transform) {
       const auto transform{m_transform->to_mat4()};
-      if (animations.is_empty()) {
+      if (m_animations.is_empty()) {
         for (rx_size i{0}; i < n_vertices; i++) {
           const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
           as_vertices[i].position = math::mat4x4f::transform_point(m_positions[i], transform);
           as_vertices[i].normal = math::mat4x4f::transform_vector(normals[i], transform);
-          as_vertices[i].tangent = {tangent.x, tangent.w, tangent.z, tangents[i].w};
+          as_vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangents[i].w};
           as_vertices[i].coordinate = coordinates[i];
         }
       } else {
@@ -151,14 +152,14 @@ bool loader::import(const string& _file_name) {
           const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
           as_animated_vertices[i].position = math::mat4x4f::transform_point(m_positions[i], transform);
           as_animated_vertices[i].normal = math::mat4x4f::transform_vector(normals[i], transform);
-          as_animated_vertices[i].tangent = {tangent.x, tangent.w, tangent.z, tangents[i].w};
+          as_animated_vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangents[i].w};
           as_animated_vertices[i].coordinate = coordinates[i];
           as_animated_vertices[i].blend_weights = blend_weights[i];
           as_animated_vertices[i].blend_indices = blend_indices[i];
         }
       }
     } else {
-      if (animations.is_empty()) {
+      if (m_animations.is_empty()) {
         for (rx_size i{0}; i < n_vertices; i++) {
           as_vertices[i].position = m_positions[i];
           as_vertices[i].normal = normals[i];
@@ -184,7 +185,7 @@ bool loader::import(const string& _file_name) {
       m_meshes.each_fwd([&](mesh& _mesh) {
         math::aabb bounds;
         for (rx_size i{0}; i < _mesh.count; i++) {
-          if (animations.is_empty()) {
+          if (m_animations.is_empty()) {
             bounds.expand(as_vertices[m_elements[_mesh.offset + i]].position);
           } else {
             bounds.expand(as_animated_vertices[m_elements[_mesh.offset + i]].position);
