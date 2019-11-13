@@ -455,6 +455,8 @@ void create_swapchain(detail_vk::context& ctx_) {
     
     vk_log(log::level::k_info, "vulkan swapchain created");
     
+    set_name(ctx_, VK_OBJECT_TYPE_SWAPCHAIN_KHR, (uint64_t) ctx_.swap.swapchain, ctx_.current_command->tag.description);
+    
     if(old_swapchain != VK_NULL_HANDLE) {
       vkDestroySwapchainKHR(ctx_.device, old_swapchain, nullptr);
     }
@@ -480,6 +482,8 @@ void create_swapchain(detail_vk::context& ctx_) {
   
   for(rx_size i {0}; i<ctx_.swap.num_frames; i++) {
     
+    SET_NAME(ctx_, VK_OBJECT_TYPE_IMAGE, ctx_.swap.images[i], ctx_.current_command->tag.description);
+    
     VkImageViewCreateInfo info {};
     info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -496,6 +500,8 @@ void create_swapchain(detail_vk::context& ctx_) {
     info.viewType = VK_IMAGE_VIEW_TYPE_2D;
     
     check_result(vkCreateImageView(ctx_.device, &info, nullptr, &ctx_.swap.image_views[i]));
+    
+    SET_NAME(ctx_, VK_OBJECT_TYPE_IMAGE_VIEW, ctx_.swap.image_views[i], ctx_.current_command->tag.description);
     
   }
   

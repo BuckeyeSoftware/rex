@@ -80,6 +80,18 @@ bool is_dedicated(detail_vk::context& ctx_) {
 
 
 
+#if defined(RX_DEBUG)
+void detail_vk::set_name(context& ctx_, VkObjectType type, uint64_t handle, const char* name) {
+  VkDebugUtilsObjectNameInfoEXT info {};
+  info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+  info.objectType = type;
+  info.objectHandle = handle;
+  info.pObjectName = name;
+  vkSetDebugUtilsObjectNameEXT(ctx_.device, &info);
+}
+#endif
+
+
 
 
 

@@ -6,6 +6,7 @@
 
 #include "helper.h"
 
+#include "rx/render/frontend/command.h"
 
 #include <SDL.h>
 
@@ -78,6 +79,8 @@ namespace detail_vk {
     
     Command graphics;
     Command transfer;
+    
+    const frontend::command_header* current_command;
     
   };
   

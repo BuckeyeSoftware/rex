@@ -40,6 +40,8 @@ void detail_vk::buffer_builder::construct(detail_vk::context& ctx_, frontend::bu
   
   check_result(vkCreateBuffer(ctx_.device, &info, nullptr, &buf->handle));
   
+  SET_NAME(ctx_, VK_OBJECT_TYPE_BUFFER, buf->handle, ctx_.current_command->tag.description);
+  
   VkMemoryRequirements req;
   vkGetBufferMemoryRequirements(ctx_.device, buf->handle, &req);
   
@@ -237,6 +239,12 @@ void detail_vk::texture::construct_base(detail_vk::context& ctx_, frontend::text
     case frontend::texture::data_format::k_s8:
       info.format = VK_FORMAT_S8_UINT;
       break;
+    case frontend::texture::data_format::k_srgb_u8:
+      info.format = VK_FORMAT_S8_UINT;
+      break;
+    case frontend::texture::data_format::k_srgba_u8:
+      info.format = VK_FORMAT_S8_UINT;
+      break;
   }
   
   format = info.format;
@@ -393,6 +401,8 @@ void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const front
   info.extent = tex->extent;
 
   check_result(vkCreateImage(ctx_.device, &info, nullptr, &tex->handle));
+  
+  SET_NAME(ctx_, VK_OBJECT_TYPE_IMAGE, tex->handle, ctx_.current_command->tag.description);
 
   VkMemoryRequirements req;
   vkGetImageMemoryRequirements(ctx_.device, tex->handle, &req);

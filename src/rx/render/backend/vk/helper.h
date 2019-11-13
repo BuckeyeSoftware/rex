@@ -37,6 +37,14 @@ inline void check_result(VkResult result) {
 }
 #endif
 
+#if defined(RX_DEBUG)
+#define SET_NAME(CTX, TYPE, HANDLE, NAME) \
+set_name(CTX, TYPE, (uint64_t) HANDLE, NAME)
+#else
+#define SET_NAME(CTX, TYPE, HANDLE, NAME)
+#endif
+
+
 namespace detail_vk {
   
   class Command {
@@ -56,6 +64,13 @@ namespace detail_vk {
     uint32_t index = 0;
     bool written = true;
   };
+  
+  #if defined(RX_DEBUG)
+  void set_name(context& ctx_, VkObjectType type, uint64_t handle, const char* name);
+  #else
+  inline void set_name(context&, VkObjectType, uint64_t, const char*) {}
+  #endif
+  
   
 }
 

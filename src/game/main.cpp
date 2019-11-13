@@ -491,7 +491,7 @@ struct test_game
       math::vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data());
 
     model_xform.rotate += math::vec3f(0.0f, 20.0f, 0.0f) * m_frontend.timer().delta_time();
-    m_model.render(&m_ibl, m_gbuffer.target(), model_xform.to_mat4(), m_camera.view(), m_camera.projection);
+    m_model.render(m_gbuffer.target(), model_xform.to_mat4(), m_camera.view(), m_camera.projection);
     m_skybox.render(m_gbuffer.target(), m_camera.view(), m_camera.projection);
 
     m_immediate3D.render(m_gbuffer.target(), m_camera.view(), m_camera.projection);

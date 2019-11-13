@@ -5,6 +5,8 @@
 #include "vk/helper.h"
 #include "vk/init.h"
 #include "vk/draw.h"
+#include "vk/renderpass.h"
+#include "vk/program.h"
 
 #include <SDL_vulkan.h>
 
@@ -48,6 +50,10 @@ bool vk::init() {
   create_device(ctx);
   
   load_function_pointers(ctx);
+  
+  SET_NAME(ctx, VK_OBJECT_TYPE_INSTANCE, ctx.instance, "instance");
+  
+  SET_NAME(ctx, VK_OBJECT_TYPE_DEVICE, ctx.device, "device");
   
   ctx.graphics.init(ctx, ctx.graphics_index);
   ctx.transfer.init(ctx, ctx.graphics_index);
@@ -99,11 +105,14 @@ void vk::process(const vector<rx_byte*>& _commands) {
   detail_vk::buffer_builder b_builder(ctx);
   detail_vk::texture_builder t_builder(ctx);
   
+  detail_vk::frame_render frame;
+  
   
   // pre process
   _commands.each_fwd([&](rx_byte* _command) {
     
-    auto header {reinterpret_cast<frontend::command_header*>(_command)};
+    auto header {reinterpret_cast<const frontend::command_header*>(_command)};
+    ctx.current_command = header;
     switch (header->type) {
       
       case frontend::command_type::k_resource_allocate: {
@@ -186,16 +195,15 @@ void vk::process(const vector<rx_byte*>& _commands) {
         break;
       }
       case frontend::command_type::k_draw: {
-        detail_vk::pre_draw(ctx, reinterpret_cast<const frontend::draw_command*>(header + 1));
+        frame.pre_draw(ctx, reinterpret_cast<const frontend::draw_command*>(header + 1));
         break;
       }
       case frontend::command_type::k_clear: {
-        const auto clear {reinterpret_cast<const frontend::clear_command*>(header + 1)};
-        reinterpret_cast<detail_vk::target*> (clear->render_target + 1)->clear(ctx, clear->render_target, clear);
+        frame.pre_clear(ctx, reinterpret_cast<const frontend::clear_command*>(header + 1));
         break;
       }
       case frontend::command_type::k_blit: {
-        detail_vk::pre_blit(ctx, reinterpret_cast<const frontend::blit_command*>(header + 1));
+        frame.pre_blit(ctx, reinterpret_cast<const frontend::blit_command*>(header + 1));
         break;
       }
       case frontend::command_type::k_profile: {
@@ -301,16 +309,15 @@ void vk::process(const vector<rx_byte*>& _commands) {
         break;
       }
       case frontend::command_type::k_draw: {
-        detail_vk::draw(ctx, reinterpret_cast<const frontend::draw_command*>(header + 1));
+        frame.draw(ctx, reinterpret_cast<const frontend::draw_command*>(header + 1));
         break;
       }
       case frontend::command_type::k_clear: {
-        const auto clear {reinterpret_cast<const frontend::clear_command*>(header + 1)};
-        
+        frame.clear(ctx, reinterpret_cast<const frontend::clear_command*>(header + 1));
         break;
       }
       case frontend::command_type::k_blit: {
-        detail_vk::blit(ctx, reinterpret_cast<const frontend::blit_command*>(header + 1));
+        frame.blit(ctx, reinterpret_cast<const frontend::blit_command*>(header + 1));
         break;
       }
       case frontend::command_type::k_profile: {
@@ -325,7 +332,7 @@ void vk::process(const vector<rx_byte*>& _commands) {
   if(ctx.swap.image != nullptr) {
     auto& use = ctx.swap.image->frame_uses.next();
     if(ctx.swap.image->current_layout != use.required_layout || (use.sync_before && ctx.swap.image->frame_uses.has_last() && ctx.swap.image->frame_uses.last().sync_after) ) {
-      ctx.swap.image->transfer_layout(ctx, reinterpret_cast<frontend::texture*> (ctx.swap.image) - 1, ctx.graphics.get(), use);
+      ctx.swap.image->transfer_layout(ctx, reinterpret_cast<frontend::texture2D*> (ctx.swap.image) - 1, ctx.graphics.get(), use);
     }
     ctx.swap.image->frame_uses.pop();
   }
