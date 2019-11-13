@@ -49,3 +49,11 @@ DEV_FUN(vkCreateSemaphore)
 DEV_FUN(vkDestroySemaphore)
 
 DEV_FUN(vkQueueSubmit)
+
+DEV_FUN(vkCreateFramebuffer)
+DEV_FUN(vkDestroyFramebuffer)
+DEV_FUN(vkCreateRenderPass)
+DEV_FUN(vkDestroyRenderPass)
+
+DEV_FUN(vkCmdBlitImage);
+DEV_FUN(vkCmdDraw)

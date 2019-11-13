@@ -4,6 +4,8 @@
 
 #include "context.h"
 
+#include "data_builder.h"
+
 #include <SDL.h>
 #include <SDL_vulkan.h>
 
@@ -325,7 +327,7 @@ void create_device(detail_vk::context& ctx_) {
   {
     
     LOCAL_DEV_LOAD(vkGetDeviceQueue)
-    vkGetDeviceQueue(ctx_.device, ctx_.graphics_index, 0, &ctx_.graphics);
+    vkGetDeviceQueue(ctx_.device, ctx_.graphics_index, 0, &ctx_.graphics_queue);
     
   }
   
@@ -361,12 +363,14 @@ void create_swapchain(detail_vk::context& ctx_) {
       
       info.minImageCount = num_frames->get();
       
+      
       info.imageExtent = surface_capabilities.currentExtent;
+      ctx_.swap.extent = info.imageExtent;
       
       vk_log(log::level::k_verbose, "swapchain extent : (%i, %i)", info.imageExtent.width, info.imageExtent.height);
       
       info.imageArrayLayers = 1;
-      info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+      info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
       info.preTransform = surface_capabilities.currentTransform;
       info.compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
       
@@ -396,6 +400,7 @@ void create_swapchain(detail_vk::context& ctx_) {
         vk_log(log::level::k_error, "could not find a surface format with format : %d", target_format);
       }
       
+      ctx_.swap.image->format = info.imageFormat;
       vk_log(log::level::k_verbose, "surface format : %d with color space : %d", info.imageFormat, info.imageColorSpace);
       
     }
@@ -443,10 +448,10 @@ void create_swapchain(detail_vk::context& ctx_) {
     info.queueFamilyIndexCount = 1;
     info.pQueueFamilyIndices = &ctx_.graphics_index;
     
-    VkSwapchainKHR old_swapchain = ctx_.swapchain;
+    VkSwapchainKHR old_swapchain = ctx_.swap.swapchain;
     info.oldSwapchain = old_swapchain;
     
-    check_result(vkCreateSwapchainKHR(ctx_.device, &info, nullptr, &ctx_.swapchain));
+    check_result(vkCreateSwapchainKHR(ctx_.device, &info, nullptr, &ctx_.swap.swapchain));
     
     vk_log(log::level::k_info, "vulkan swapchain created");
     
@@ -455,10 +460,42 @@ void create_swapchain(detail_vk::context& ctx_) {
     }
     
     uint32_t count;
-    vkGetSwapchainImagesKHR(ctx_.device, ctx_.swapchain, &count, nullptr);
-    ctx_.num_frames = count;
+    vkGetSwapchainImagesKHR(ctx_.device, ctx_.swap.swapchain, &count, nullptr);
+    ctx_.swap.num_frames = count;
     
-    vkGetSwapchainImagesKHR(ctx_.device, ctx_.swapchain, &count, ctx_.swap_images.data());
+    vkGetSwapchainImagesKHR(ctx_.device, ctx_.swap.swapchain, &count, ctx_.swap.images.data());
+    
+    ctx_.swap.image->current_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    
+    ctx_.swap.image->extent.width = ctx_.swap.extent.width;
+    ctx_.swap.image->extent.height = ctx_.swap.extent.height;
+    ctx_.swap.image->extent.depth = 1;
+    
+    ctx_.swap.image->layers = info.imageArrayLayers;
+    ctx_.swap.image->offset = 0;
+    
+    ctx_.swap.image->handle = VK_NULL_HANDLE;
+    
+  }
+  
+  for(rx_size i {0}; i<ctx_.swap.num_frames; i++) {
+    
+    VkImageViewCreateInfo info {};
+    info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    info.format = ctx_.swap.image->format;
+    info.image = ctx_.swap.images[i];
+    info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    info.subresourceRange.baseArrayLayer = 0;
+    info.subresourceRange.baseMipLevel = 0;
+    info.subresourceRange.layerCount = 1;
+    info.subresourceRange.levelCount = 1;
+    info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    
+    check_result(vkCreateImageView(ctx_.device, &info, nullptr, &ctx_.swap.image_views[i]));
     
   }
   
@@ -479,9 +516,11 @@ void destroy_swapchain(detail_vk::context& ctx_) {
   vkDestroySemaphore(ctx_.device, ctx_.start_semaphore, nullptr);
   vkDestroySemaphore(ctx_.device, ctx_.end_semaphore, nullptr);
   
-  vkDestroySwapchainKHR(ctx_.device, ctx_.swapchain, nullptr);
+  for(rx_size i {0}; i<ctx_.swap.num_frames; i++) {
+    vkDestroyImageView(ctx_.device, ctx_.swap.image_views[i], nullptr);
+  }
   
-  ctx_.swapchain = VK_NULL_HANDLE;
+  vkDestroySwapchainKHR(ctx_.device, ctx_.swap.swapchain, nullptr);
   
   vk_log(log::level::k_info, "vulkan swapchain destroyed");
   

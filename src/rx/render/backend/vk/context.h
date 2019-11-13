@@ -4,7 +4,8 @@
 #define VK_NO_PROTOTYPES
 #include <vulkan/vulkan.h>
 
-#include "data_builder.h"
+#include "helper.h"
+
 
 #include <SDL.h>
 
@@ -16,7 +17,6 @@ RX_ASSERT(_name, "can't load vulkan function pointer %s", #_name);
 PFN_##_name _name = reinterpret_cast<PFN_##_name> (ctx_.vkGetDeviceProcAddr(ctx_.device, #_name)); \
 RX_ASSERT(_name, "can't load vulkan function pointer %s", #_name);
 
-
 namespace rx::render::backend {
 
 #define DEV_FUN(_name) extern PFN_##_name _name;
@@ -26,6 +26,8 @@ namespace rx::render::backend {
 #undef INST_FUN
 
 namespace detail_vk {
+  
+  struct texture;
   
   struct context {
     
@@ -47,7 +49,7 @@ namespace detail_vk {
     PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr = nullptr;
     
     uint32_t graphics_index;
-    VkQueue graphics;
+    VkQueue graphics_queue;
     
     struct allocation {
       VkDeviceMemory memory;
@@ -56,17 +58,26 @@ namespace detail_vk {
     rx::vector<allocation> buffer_allocations;
     rx::vector<allocation> image_allocations;
     rx::vector<allocation> staging_allocations;
+    rx::vector<VkBuffer> staging_allocation_buffers;
     
-    VkSwapchainKHR swapchain = VK_NULL_HANDLE;
-    rx_size num_frames = 3;
-    rx::array<VkImage[3]> swap_images;
-    rx::array<VkImageView[3]> swap_image_view;
-    uint32_t frame_index;
-    bool acquired = false;
+    struct {
+    
+      texture* image = nullptr;
+      
+      VkExtent2D extent;
+      rx_size num_frames = k_max_frames;
+      VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+      rx::array<VkImage[k_max_frames]> images;
+      rx::array<VkImageView[k_max_frames]> image_views;
+      uint32_t frame_index;
+      bool acquired = false;
+      
+    } swap;
     
     VkSemaphore start_semaphore, end_semaphore;
     
-    Transfer transfer;
+    Command graphics;
+    Command transfer;
     
   };
   

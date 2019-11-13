@@ -4,6 +4,7 @@
 #include "vk/data_builder.h"
 #include "vk/helper.h"
 #include "vk/init.h"
+#include "vk/draw.h"
 
 #include <SDL_vulkan.h>
 
@@ -33,6 +34,7 @@ vk::vk(memory::allocator* _allocator, void* _data) {
   ctx.buffer_allocations = {ctx.allocator};
   ctx.image_allocations = {ctx.allocator};
   ctx.staging_allocations = {ctx.allocator};
+  ctx.staging_allocation_buffers = {ctx.allocator};
   
 }
 
@@ -47,11 +49,8 @@ bool vk::init() {
   
   load_function_pointers(ctx);
   
-  create_swapchain(ctx);
-  
-  swap();
-  
-  ctx.transfer.init(ctx);
+  ctx.graphics.init(ctx, ctx.graphics_index);
+  ctx.transfer.init(ctx, ctx.graphics_index);
   
   return true;
   
@@ -73,13 +72,17 @@ vk::~vk() {
   ctx_.image_allocations.each_fwd([&](detail_vk::context::allocation& alloc) {
     vkFreeMemory(ctx_.device, alloc.memory, nullptr);
   });
+  ctx_.staging_allocation_buffers.each_fwd([&](VkBuffer alloc) {
+    vkDestroyBuffer(ctx_.device, alloc, nullptr);
+  });
   ctx_.staging_allocations.each_fwd([&](detail_vk::context::allocation& alloc) {
     vkFreeMemory(ctx_.device, alloc.memory, nullptr);
   });
   
+  ctx_.graphics.destroy(ctx_);
   ctx_.transfer.destroy(ctx_);
   
-  destroy_swapchain(ctx_);
+  //destroy_swapchain(ctx_);
   
   destroy_device(ctx_);
   
@@ -92,8 +95,6 @@ vk::~vk() {
 void vk::process(const vector<rx_byte*>& _commands) {
   
   detail_vk::context& ctx{*reinterpret_cast<detail_vk::context*> (m_impl)};
-  
-  ctx.transfer.start(ctx);
   
   detail_vk::buffer_builder b_builder(ctx);
   detail_vk::texture_builder t_builder(ctx);
@@ -110,25 +111,25 @@ void vk::process(const vector<rx_byte*>& _commands) {
         
         switch (resource->kind) {
           case frontend::resource_command::type::k_buffer:
-            utility::construct<detail_vk::buffer>(resource->as_buffer + 1, ctx, resource->as_buffer);
+            utility::construct<detail_vk::buffer>(resource->as_buffer + 1);
             break;
           case frontend::resource_command::type::k_target:
-            utility::construct<detail_vk::target>(resource->as_target + 1, ctx, resource->as_target);
+            utility::construct<detail_vk::target>(resource->as_target + 1);
             break;
           case frontend::resource_command::type::k_program:
-            utility::construct<detail_vk::program>(resource->as_program + 1, ctx, resource->as_program);
+            utility::construct<detail_vk::program>(resource->as_program + 1);
             break;
           case frontend::resource_command::type::k_texture1D:
-            utility::construct<detail_vk::texture>(resource->as_texture1D + 1, ctx, resource->as_texture1D);
+            utility::construct<detail_vk::texture>(resource->as_texture1D + 1);
             break;
           case frontend::resource_command::type::k_texture2D:
-            utility::construct<detail_vk::texture>(resource->as_texture2D + 1, ctx, resource->as_texture2D);
+            utility::construct<detail_vk::texture>(resource->as_texture2D + 1);
             break;
           case frontend::resource_command::type::k_texture3D:
-            utility::construct<detail_vk::texture>(resource->as_texture3D + 1, ctx, resource->as_texture3D);
+            utility::construct<detail_vk::texture>(resource->as_texture3D + 1);
             break;
           case frontend::resource_command::type::k_textureCM:
-            utility::construct<detail_vk::texture>(resource->as_textureCM + 1, ctx, resource->as_textureCM);
+            utility::construct<detail_vk::texture>(resource->as_textureCM + 1);
             break;
         }
         break;
@@ -148,14 +149,17 @@ void vk::process(const vector<rx_byte*>& _commands) {
             break;
           }
           case frontend::resource_command::type::k_program:
+            reinterpret_cast<detail_vk::program*>(resource->as_program + 1)->construct(ctx, resource->as_program);
             break;
           case frontend::resource_command::type::k_texture2D:
             if(resource->as_texture2D->is_swapchain()) {
+              ctx.swap.image = reinterpret_cast<detail_vk::texture*>(resource->as_texture2D + 1);
+              create_swapchain(ctx);
+              swap();
               break;
             }
             [[fallthrough]];
           default:
-            vk_log(log::level::k_verbose, "%s", header->tag.description);
             t_builder.construct(ctx, resource);
         }
         break;
@@ -182,18 +186,16 @@ void vk::process(const vector<rx_byte*>& _commands) {
         break;
       }
       case frontend::command_type::k_draw: {
-        const auto draw {reinterpret_cast<const frontend::draw_command*>(header + 1)};
-        
+        detail_vk::pre_draw(ctx, reinterpret_cast<const frontend::draw_command*>(header + 1));
         break;
       }
       case frontend::command_type::k_clear: {
         const auto clear {reinterpret_cast<const frontend::clear_command*>(header + 1)};
-        
+        reinterpret_cast<detail_vk::target*> (clear->render_target + 1)->clear(ctx, clear->render_target, clear);
         break;
       }
       case frontend::command_type::k_blit: {
-        
-        const auto blit {reinterpret_cast<const frontend::blit_command*>(header + 1)};
+        detail_vk::pre_blit(ctx, reinterpret_cast<const frontend::blit_command*>(header + 1));
         break;
       }
       case frontend::command_type::k_profile: {
@@ -205,6 +207,8 @@ void vk::process(const vector<rx_byte*>& _commands) {
     
   });
   
+  if(ctx.swap.image != nullptr) ctx.swap.image->frame_uses.push(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, true, false, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+  
   // end first pass
   
   
@@ -213,6 +217,8 @@ void vk::process(const vector<rx_byte*>& _commands) {
   t_builder.interpass(ctx);
   
   
+  ctx.graphics.start(ctx);
+  ctx.transfer.start(ctx);
   
   // main process
   
@@ -233,10 +239,12 @@ void vk::process(const vector<rx_byte*>& _commands) {
             utility::destruct<detail_vk::buffer>(resource->as_buffer + 1);
             break;
           case frontend::resource_command::type::k_target: {
+            reinterpret_cast<detail_vk::target*>(resource->as_target + 1)->destroy(ctx, resource->as_target);
             utility::destruct<detail_vk::target>(resource->as_target + 1);
             break;
           }
           case frontend::resource_command::type::k_program:
+            reinterpret_cast<detail_vk::program*>(resource->as_program + 1)->destroy(ctx, resource->as_program);
             utility::destruct<detail_vk::program>(resource->as_program + 1);
             break;
           case frontend::resource_command::type::k_texture1D:
@@ -246,6 +254,7 @@ void vk::process(const vector<rx_byte*>& _commands) {
           case frontend::resource_command::type::k_texture2D:
             if(resource->as_texture2D->is_swapchain()) {
               destroy_swapchain(ctx);
+              ctx.swap.image = nullptr;
             } else {
               reinterpret_cast<detail_vk::texture*>(resource->as_texture2D + 1)->destroy(ctx, resource->as_texture2D);
             }
@@ -271,7 +280,7 @@ void vk::process(const vector<rx_byte*>& _commands) {
             break;
           }
           case frontend::resource_command::type::k_target:
-            
+            reinterpret_cast<detail_vk::target*>(resource->as_target + 1)->construct(ctx, resource->as_target);
             break;
           case frontend::resource_command::type::k_program:
             
@@ -289,38 +298,10 @@ void vk::process(const vector<rx_byte*>& _commands) {
         break;
       }
       case frontend::command_type::k_resource_update: {
-        const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
-        
-        switch (resource->kind) {
-          case frontend::resource_command::type::k_buffer:
-            
-            break;
-          case frontend::resource_command::type::k_target:
-            
-            break;
-          case frontend::resource_command::type::k_program:
-            
-            break;
-          case frontend::resource_command::type::k_texture1D:
-            
-            break;
-          case frontend::resource_command::type::k_texture2D:
-            if(resource->as_texture2D->is_swapchain()) {
-              break;
-            }
-            break;
-          case frontend::resource_command::type::k_texture3D:
-            
-            break;
-          case frontend::resource_command::type::k_textureCM:
-            
-            break;
-        }
         break;
       }
       case frontend::command_type::k_draw: {
-        const auto draw {reinterpret_cast<const frontend::draw_command*>(header + 1)};
-        
+        detail_vk::draw(ctx, reinterpret_cast<const frontend::draw_command*>(header + 1));
         break;
       }
       case frontend::command_type::k_clear: {
@@ -329,8 +310,7 @@ void vk::process(const vector<rx_byte*>& _commands) {
         break;
       }
       case frontend::command_type::k_blit: {
-        
-        const auto blit {reinterpret_cast<const frontend::blit_command*>(header + 1)};
+        detail_vk::blit(ctx, reinterpret_cast<const frontend::blit_command*>(header + 1));
         break;
       }
       case frontend::command_type::k_profile: {
@@ -342,8 +322,17 @@ void vk::process(const vector<rx_byte*>& _commands) {
     
   });
   
+  if(ctx.swap.image != nullptr) {
+    auto& use = ctx.swap.image->frame_uses.next();
+    if(ctx.swap.image->current_layout != use.required_layout || (use.sync_before && ctx.swap.image->frame_uses.has_last() && ctx.swap.image->frame_uses.last().sync_after) ) {
+      ctx.swap.image->transfer_layout(ctx, reinterpret_cast<frontend::texture*> (ctx.swap.image) - 1, ctx.graphics.get(), use);
+    }
+    ctx.swap.image->frame_uses.pop();
+  }
   
-  ctx.transfer.end(ctx);
+  
+  ctx.graphics.end(ctx, ctx.graphics_queue);
+  ctx.transfer.end(ctx, ctx.graphics_queue);
   
 }
 
@@ -355,26 +344,27 @@ void vk::swap() {
   
   detail_vk::context& ctx{*reinterpret_cast<detail_vk::context*> (m_impl)};
   
-  if (ctx.swapchain == VK_NULL_HANDLE) return;
+  if (ctx.swap.swapchain == VK_NULL_HANDLE) return;
   
-  if (ctx.acquired) {
+  if (ctx.swap.acquired) {
   
     VkPresentInfoKHR info {};
     info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     info.swapchainCount = 1;
-    info.pSwapchains = &ctx.swapchain;
-    info.pImageIndices = &ctx.frame_index;
+    info.pSwapchains = &ctx.swap.swapchain;
+    info.pImageIndices = &ctx.swap.frame_index;
     info.waitSemaphoreCount = 1;
     info.pWaitSemaphores = &ctx.end_semaphore;
     
-    check_result(vkQueuePresentKHR(ctx.graphics, &info));
+    check_result(vkQueuePresentKHR(ctx.graphics_queue, &info));
   
   }
   
   {
     
-    check_result(vkAcquireNextImageKHR(ctx.device, ctx.swapchain, 1000000000000L, ctx.end_semaphore, VK_NULL_HANDLE, &ctx.frame_index));
-    ctx.acquired = true;
+    check_result(vkAcquireNextImageKHR(ctx.device, ctx.swap.swapchain, 1000000000000L, ctx.end_semaphore, VK_NULL_HANDLE, &ctx.swap.frame_index));
+    ctx.swap.acquired = true;
+    ctx.swap.image->handle = ctx.swap.images[ctx.swap.frame_index];
     
   }
   
