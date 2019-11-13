@@ -2,6 +2,7 @@
 
 #include "rx/texture/chain.h"
 #include "rx/texture/scale.h"
+#include "rx/texture/convert.h"
 
 #include "rx/core/math/log2.h"
 
@@ -9,22 +10,34 @@
 
 namespace rx::texture {
 
-void chain::generate(vector<rx_byte>&& data_, pixel_format _format,
-  const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain)
+void chain::generate(vector<rx_byte>&& data_, pixel_format _has_format,
+  pixel_format _want_format, const math::vec2z& _dimensions, bool _has_mipchain,
+  bool _want_mipchain)
 {
-  m_data = utility::move(data_);
+  if (_has_format == _want_format) {
+    m_data = utility::move(data_);
+  } else {
+    m_data = convert(m_allocator, data_.data(), _dimensions.area(),
+      _has_format, _want_format);
+  }
   m_dimensions = _dimensions;
-  m_pixel_format = _format;
+  m_pixel_format = _want_format;
   generate_mipchain(_has_mipchain, _want_mipchain);
 }
 
-void chain::generate(const rx_byte* _data, pixel_format _format,
-  const math::vec2z& _dimensions, bool _has_mipchain, bool _want_mipchain)
+void chain::generate(const rx_byte* _data, pixel_format _has_format,
+  pixel_format _want_format, const math::vec2z& _dimensions, bool _has_mipchain,
+  bool _want_mipchain)
 {
-  m_pixel_format = _format;
+  m_pixel_format = _want_format;
   m_dimensions = _dimensions;
   m_data.resize(_dimensions.area() * bpp());
-  memcpy(m_data.data(), _data, m_data.size());
+  if (_has_format == _want_format) {
+    memcpy(m_data.data(), _data, m_data.size());
+  } else {
+    m_data = convert(m_allocator, _data, _dimensions.area(),
+      _has_format, _want_format);
+  }
   generate_mipchain(_has_mipchain, _want_mipchain);
 }
 

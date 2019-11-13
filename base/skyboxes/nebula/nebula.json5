@@ -1,0 +1,11 @@
+{
+	name: "nebula",
+	faces: [
+		"base/skyboxes/nebula/right.png",
+		"base/skyboxes/nebula/left.png",
+		"base/skyboxes/nebula/top.png",
+		"base/skyboxes/nebula/bottom.png",
+		"base/skyboxes/nebula/front.png",
+		"base/skyboxes/nebula/back.png"
+	]
+}

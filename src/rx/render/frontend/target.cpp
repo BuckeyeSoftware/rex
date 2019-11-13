@@ -159,6 +159,28 @@ void target::attach_stencil(texture2D* _stencil) {
   update_resource_usage();
 }
 
+void target::attach_depth_stencil(texture2D* _depth_stencil) {
+  RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
+  RX_ASSERT(!(m_flags & k_has_depth), "depth aleady attached");
+  RX_ASSERT(!(m_flags & k_has_stencil), "stencil already attached");
+  RX_ASSERT(_depth_stencil->is_depth_stencil_format(), "not a depth stencil format texture");
+  RX_ASSERT(_depth_stencil->kind() == texture::type::k_attachment, "not attachable texture");
+
+  if (m_flags & k_dimensions) {
+    RX_ASSERT(_depth_stencil->dimensions() == m_dimensions, "invalid dimensions");
+  } else {
+    m_dimensions = _depth_stencil->dimensions();
+    m_flags |= k_dimensions;
+  }
+
+  m_depth_stencil_texture = _depth_stencil;
+
+  m_flags |= k_has_depth;
+  m_flags |= k_has_stencil;
+
+  update_resource_usage();
+}
+
 void target::attach_texture(texture2D* _texture, rx_size _level) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
   RX_ASSERT(_texture->kind() == texture::type::k_attachment,

@@ -48,7 +48,7 @@
 
             if (n_dot_l > 0.0) {
               float g = schlick(n_dot_l, n_dot_v, roughness);
-              float v = g * n_dot_h / (n_dot_h * n_dot_v);
+              float v = g * v_dot_h / (n_dot_h * n_dot_v);
               float f = pow(1.0 - v_dot_h, 5.0);
 
               a += (1.0 - f) * v;

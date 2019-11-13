@@ -12,7 +12,7 @@ pool::pool(memory::allocator* _allocator, rx_size _object_size, rx_size _capacit
 {
 }
 
-inline pool::pool(pool&& pool_)
+pool::pool(pool&& pool_)
   : m_allocator{pool_.m_allocator}
   , m_object_size{pool_.m_object_size}
   , m_capacity{pool_.m_capacity}

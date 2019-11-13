@@ -2,26 +2,27 @@
   name: "geometry",
   permutes: [
     "HAS_SKELETON",
-    "HAS_DIFFUSE",
+    "HAS_ALBEDO",
     "HAS_NORMAL",
     "HAS_METALNESS",
     "HAS_ROUGHNESS",
-    "HAS_ALPHATEST"
+    "HAS_ALPHATEST",
+    "HAS_AMBIENT",
+    "HAS_EMISSIVE"
   ],
   uniforms: [
     { name: "u_model",      type: "mat4x4f" },
     { name: "u_view",       type: "mat4x4f" },
     { name: "u_projection", type: "mat4x4f" },
-    { name: "u_camera",     type: "vec3f"   },
-    { name: "u_mat_xform",  type: "mat3x3f" },
-    { name: "u_bones",      type: "bonesf",    when: "HAS_SKELETON" },
-    { name: "u_irradiance", type: "samplerCM", value: 0 },
-    { name: "u_prefilter",  type: "samplerCM", value: 1 },
-    { name: "u_scale_bias", type: "sampler2D", value: 2 },
-    { name: "u_diffuse",    type: "sampler2D", value: 3, when: "HAS_DIFFUSE" },
-    { name: "u_normal",     type: "sampler2D", value: 4, when: "HAS_NORMAL" },
-    { name: "u_metal",      type: "sampler2D", value: 5, when: "HAS_METALNESS" },
-    { name: "u_roughness",  type: "sampler2D", value: 6, when: "HAS_ROUGHNESS" }
+    { name: "u_transform",  type: "mat3x3f", value: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]},
+    { name: "u_bones",      type: "bonesf", when: "HAS_SKELETON" },
+    { name: "u_properties", type: "vec2f" },
+    { name: "u_albedo",     type: "sampler2D", value: 0, when: "HAS_ALBEDO" },
+    { name: "u_normal",     type: "sampler2D", value: 1, when: "HAS_NORMAL" },
+    { name: "u_metalness",  type: "sampler2D", value: 2, when: "HAS_METALNESS" },
+    { name: "u_roughness",  type: "sampler2D", value: 3, when: "HAS_ROUGHNESS" },
+    { name: "u_ambient",    type: "sampler2D", value: 4, when: "HAS_AMBIENT" },
+    { name: "u_emissive",   type: "sampler2D", value: 5, when: "HAS_EMISSIVE" }
   ],
   shaders: [
     {
@@ -37,8 +38,7 @@
       outputs: [
         { name: "vs_normal",       type: "vec3f" },
         { name: "vs_tangent",      type: "vec4f" },
-        { name: "vs_coordinate",   type: "vec2f" },
-        { name: "vs_position",     type: "vec3f" }
+        { name: "vs_coordinate",   type: "vec2f" }
       ],
       source: "
         void main() {
@@ -60,8 +60,7 @@
 
           vs_normal     = a_normal;
           vs_tangent    = a_tangent;
-          vs_coordinate = a_coordinate;
-          vs_position   = a_position;
+          vs_coordinate = (u_transform * vec3f(a_coordinate, 1.0)).xy;
 
           rx_position   = clip_position;
         }
@@ -71,86 +70,81 @@
       inputs: [
         { name: "vs_normal",       type: "vec3f" },
         { name: "vs_tangent",      type: "vec4f" },
-        { name: "vs_coordinate",   type: "vec2f" },
-        { name: "vs_position",     type: "vec3f" }
+        { name: "vs_coordinate",   type: "vec2f" }
       ],
       outputs: [
         { name: "fs_albedo",       type: "vec4f" },
         { name: "fs_normal",       type: "vec4f" },
-        { name: "fs_emissive",     type: "vec4f" }
+        { name: "fs_emission",     type: "vec4f" }
+      ],
+      imports: [
+        "normal_encode"
       ],
       source: "
-        vec3f approximate_specular_ibl(vec3f specular_color, float roughness, vec3f n, vec3f v) {
-          float n_dot_v = clamp(dot(n, v), 0.0, 1.0);
-          vec3f r = reflect(-v, n);
-          vec3f prefiltered_color = rx_textureCMLod(u_prefilter, r, roughness * 5).rgb;
-          vec2f brdf = rx_texture2D(u_scale_bias, vec2f(roughness, n_dot_v)).rg;
-
-          return prefiltered_color * (specular_color * brdf.x + brdf.y);
-        }
-
         void main() {
-          // Transform position into model space.
-          vec3f position = (u_model * vec4(vs_position, 1.0)).xyz;
+          // Calculate albedo factor from material if present.
+          vec4f albedo = vec4f(1.0);
+        #if defined(HAS_ALBEDO)
+          albedo = rx_texture2D(u_albedo, vs_coordinate);
+        #endif
 
+          // Alpha testing as early as possible.
+        #if defined(HAS_ALPHATEST)
+          if (albedo.a <= 0.5) {
+            discard;
+          }
+        #endif
+
+          // Calculate roughness factor from material if present.
+          float roughness = u_properties.x;
+        #if defined(HAS_ROUGHNESS)
+          roughness *= rx_texture2D(u_roughness, vs_coordinate).r;
+        #endif
+
+          // Calculate metalness facor from material if present.
+          float metalness = u_properties.y;
+        #if defined(HAS_METALNESS)
+          metalness = (1.0 - metalness) * rx_texture2D(u_metalness, vs_coordinate).r;
+        #endif
+
+          // Calculate ambient factor from material if present.
+          float ambient = 1.0;
+        #if defined(HAS_AMBIENT)
+          ambient = rx_texture2D(u_ambient, vs_coordinate).r;
+        #endif
+
+          // Calculate emissiveness from material if present.
+          vec3f emission = vec3f(0.0);
+        #if defined(HAS_EMISSIVE)
+          emission = rx_texture2D(u_emissive, vs_coordinate).rgb;
+        #endif
+
+          // Calculate normal.
         #if defined(HAS_NORMAL)
-          // Fetch tangent space normal from normal map texture.
+          // Fetch tangent space normal sample from normal map texture.
           vec3f normal_map_sample = rx_texture2D(u_normal, vs_coordinate).rgb;
 
-          // Transform sample to range [-1, 1] and normalize.
-          vec3f normal_map = normalize(normal_map_sample * 2.0 - 1.0);
+          // Transform normal map sample to range [-1, 1].
+          vec3f normal_map = normal_map_sample * 2.0 - 1.0;
 
-          // Construct bitangent from tangent and normal.
-          vec3f bitangent = cross(vs_tangent.xyz, vs_normal) * vs_tangent.w;
+          // Construct bitangent from tangent and normal and apply the bitangent
+          // sign which is stored in vs_tangent.w.
+          vec3f bitangent = cross(vs_normal, vs_tangent.xyz) * vs_tangent.w;
 
-          // Transform tangent space normal map and normalize.
-          vec3f normal = normalize(mat3x3f(vs_tangent.xyz, bitangent, vs_normal) * normal_map);
+          // Construct TBN matrix from tangent, bitangent and normal.
+          mat3x3f tbn = mat3x3f(vs_tangent.xyz, bitangent, vs_normal);
+
+          // Transform tangent space normal map with TBN matrix and normalize.
+          vec3f normal = normalize(tbn * normal_map);
         #else
           vec3f normal = normalize(vs_normal);
         #endif
           // Transform normal into model space.
           normal = normalize(u_model * vec4f(normal, 0.0)).xyz;
 
-          // Calculate metalness facor from material if present.
-          float metalness = 1.0;
-        #if defined(HAS_METALNESS)
-          metalness = rx_texture2D(u_metal, vs_coordinate).r;
-        #endif
-
-          // Calculate roughness factor from material if present.
-          float roughness = 1.0;
-        #if defined(HAS_ROUGHNESS)
-          roughness = rx_texture2D(u_roughness, vs_coordinate).r;
-        #endif
-
-          // Calculate diffuse factor from material if present.
-          vec4f diffuse = vec4f(1.0);
-        #if defined(HAS_DIFFUSE)
-          diffuse = rx_texture2D(u_diffuse, vs_coordinate);
-        #endif
-
-          // Alpha testing.
-        #if defined(HAS_ALPHATEST)
-          if (diffuse.a <= 0.5) {
-            discard;
-          }
-        #endif
-
-          vec3f base_color = diffuse.rgb;
-
-          vec3f v = normalize(u_camera - position);
-          vec3f r = normalize(reflect(-v, normal));
-
-          vec3f diffuse_color = base_color * (1.0 - metalness);
-          vec3f specular_color = mix(vec3f(0.1), base_color, metalness);
-
-          vec3f indirect_diffuse = base_color * rx_textureCM(u_irradiance, r).rgb;
-          vec3f indirect_specular = approximate_specular_ibl(specular_color, roughness*0.5, normal, v);
-
-          vec3f color = indirect_diffuse + indirect_specular;
-
-          fs_albedo = vec4f(color             , roughness); // roughness stored in alpha
-          fs_normal = vec4f(normal * 0.5 + 0.5, metalness); // metalness stored in alpha
+          fs_albedo   = vec4f(albedo.rgb,            ambient);
+          fs_normal   = vec4f(normal_encode(normal), roughness, metalness);
+          fs_emission = vec4f(emission,              0.0);
         }
       "
     }

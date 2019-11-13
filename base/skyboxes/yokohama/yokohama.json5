@@ -1,0 +1,11 @@
+{
+	name: "yokohama",
+	faces: [
+		"base/skyboxes/yokohama/posx.jpg",
+		"base/skyboxes/yokohama/negx.jpg",
+		"base/skyboxes/yokohama/posy.jpg",
+		"base/skyboxes/yokohama/negy.jpg",
+		"base/skyboxes/yokohama/posz.jpg",
+		"base/skyboxes/yokohama/negz.jpg"
+	]
+}

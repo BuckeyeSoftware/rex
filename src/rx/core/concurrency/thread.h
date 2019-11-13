@@ -1,7 +1,7 @@
 #ifndef RX_CORE_CONCURRENCY_THREAD_H
 #define RX_CORE_CONCURRENCY_THREAD_H
-
 #include "rx/core/config.h" // RX_PLATFORM_*
+#include "rx/core/function.h"
 
 #if defined(RX_PLATFORM_POSIX)
 #include <pthread.h> // pthread_t
@@ -12,10 +12,6 @@
 #else
 #error "missing thread implementation"
 #endif
-
-#include "rx/core/function.h"
-#include "rx/core/concepts/no_copy.h"
-#include "rx/core/memory/allocator.h"
 
 namespace rx::concurrency {
 

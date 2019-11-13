@@ -25,7 +25,6 @@ struct mat3x4 {
   explicit mat3x4(const vec3<T>& _scale, const quat<T>& _rotation, const vec3<T>& _translation);
 
   static mat3x4 invert(const mat3x4& _mat);
-  static mat3x4 transpose(const mat3x4& _mat);
 
   const T* data() const;
 
@@ -64,7 +63,7 @@ inline mat3x4<T> mat3x4<T>::invert(const mat3x4& _mat) {
   vec3<T> inverse_rotation_x{_mat.x.x, _mat.y.x, _mat.z.x};
   vec3<T> inverse_rotation_y{_mat.x.y, _mat.y.y, _mat.z.y};
   vec3<T> inverse_rotation_z{_mat.x.z, _mat.y.z, _mat.z.z};
-                        
+
   inverse_rotation_x /= dot(inverse_rotation_x, inverse_rotation_x);
   inverse_rotation_y /= dot(inverse_rotation_y, inverse_rotation_y);
   inverse_rotation_z /= dot(inverse_rotation_z, inverse_rotation_z);
@@ -74,13 +73,6 @@ inline mat3x4<T> mat3x4<T>::invert(const mat3x4& _mat) {
   return {{inverse_rotation_x.x, inverse_rotation_x.y, inverse_rotation_x.z, dot(-inverse_rotation_x, translate)},
           {inverse_rotation_y.x, inverse_rotation_y.y, inverse_rotation_y.z, dot(-inverse_rotation_y, translate)},
           {inverse_rotation_z.x, inverse_rotation_z.y, inverse_rotation_z.z, dot(-inverse_rotation_z, translate)}};
-}
-
-template<typename T>
-inline mat3x4<T> mat3x4<T>::transpose(const mat3x4& _mat) {
-  return {{_mat.a.x, _mat.b.x, _mat.c.x, _mat.d.x},
-          {_mat.a.y, _mat.b.y, _mat.c.y, _mat.d.y},
-          {_mat.a.z, _mat.b.z, _mat.c.z, _mat.d.z}};
 }
 
 template<typename T>

@@ -8,6 +8,7 @@
 #include "rx/render/backend/gl4.h"
 #include "rx/render/backend/gl3.h"
 #include "rx/render/backend/vk.h"
+#include "rx/render/backend/es3.h"
 
 #include "rx/core/profiler.h"
 #include "rx/core/global.h"
@@ -64,7 +65,7 @@ RX_CONSOLE_IVAR(
 RX_CONSOLE_SVAR(
   renderer_driver,
   "renderer.driver",
-  "which driver to use for renderer (gl3, gl4, vk, null)",
+  "which driver to use for renderer (gl3, gl4, vk, es3, null)",
   "gl4");
 
 RX_CONSOLE_BVAR(
@@ -185,9 +186,12 @@ int main(int _argc, char** _argv) {
     const char *name{SDL_GetDisplayName(display_index)};
     display_name->set(name ? name : "");
 
-    const bool is_opengl{renderer_driver->get().begins_with("gl")};
+    const auto& driver_name{renderer_driver->get()};
+    const bool is_gl{driver_name.begins_with("gl")};
+    const bool is_es{driver_name.begins_with("es")};
+
     int flags{0};
-    if (is_opengl) {
+    if (is_gl || is_es) {
       flags |= SDL_WINDOW_OPENGL;
     }
     if(renderer_driver->get() == "vk") {
@@ -202,14 +206,22 @@ int main(int _argc, char** _argv) {
       flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
     }
 
-    if (is_opengl) {
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-      if (renderer_driver->get() == "gl4") {
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
-      } else if (renderer_driver->get() == "gl3") {
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    if (is_gl || is_es) {
+      if (is_gl) {
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+        if (driver_name == "gl4") {
+          SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+          SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+        } else if (driver_name == "gl3") {
+          SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+          SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+        }
+      } else if (is_es) {
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+        if (driver_name == "es3") {
+          SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+          SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+        }
       }
 
       SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
@@ -222,7 +234,7 @@ int main(int _argc, char** _argv) {
     int bit_depth{0};
     for (const char* depth{&"\xa\x8"[*display_hdr ? 0 : 1]}; *depth; depth++) {
       bit_depth = static_cast<int>(*depth);
-      if (is_opengl) {
+      if (is_gl || is_es) {
         SDL_GL_SetAttribute(SDL_GL_RED_SIZE, bit_depth);
         SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, bit_depth);
         SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, bit_depth);
@@ -252,15 +264,18 @@ int main(int _argc, char** _argv) {
     //SDL_GL_SetSwapInterval(*display_swap_interval);
 
     render::backend::interface* backend{nullptr};
-    if (renderer_driver->get() == "gl4") {
+    if (driver_name == "gl4") {
       backend = memory::g_system_allocator->create<render::backend::gl4>(
-          &memory::g_system_allocator, reinterpret_cast<void*>(window));
-    } else if (renderer_driver->get() == "gl3") {
+        &memory::g_system_allocator, reinterpret_cast<void*>(window));
+    } else if (driver_name == "gl3") {
       backend = memory::g_system_allocator->create<render::backend::gl3>(
-          &memory::g_system_allocator, reinterpret_cast<void*>(window));
+        &memory::g_system_allocator, reinterpret_cast<void*>(window));
     } else if(renderer_driver->get() == "vk") {
       backend = memory::g_system_allocator->create<render::backend::vk>(
-          &memory::g_system_allocator, reinterpret_cast<void*>(window));
+        &memory::g_system_allocator, reinterpret_cast<void*>(window));
+    } else if (driver_name == "es3") {
+      backend = memory::g_system_allocator->create<render::backend::es3>(
+        &memory::g_system_allocator, reinterpret_cast<void*>(window));
     }
 
     if (!backend->init()) {
@@ -309,7 +324,9 @@ int main(int _argc, char** _argv) {
         }
 
         if (*profile_gpu) {
-          rmt_BindOpenGL();
+          if (is_gl || is_es) {
+            rmt_BindOpenGL();
+          }
 
           profiler::instance().bind_gpu({
             reinterpret_cast<void*>(&frontend),
@@ -347,7 +364,7 @@ int main(int _argc, char** _argv) {
       })};
 
       auto on_swap_interval_change{display_swap_interval->on_change([&](rx_s32 _value) {
-        if (is_opengl) {
+        if (is_gl || is_es) {
           SDL_GL_SetSwapInterval(_value);
         } else {
           // TODO? this should be part of the backend.

@@ -7,7 +7,7 @@
       textures: [
         {
           file: "base/models/chest/albedo.png",
-          type: "diffuse",
+          type: "albedo",
           filter: "bilinear",
           mipmaps: true,
           wrap: [

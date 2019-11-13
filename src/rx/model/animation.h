@@ -6,10 +6,6 @@
 #include "rx/math/mat3x4.h"
 #include "rx/math/mat4x4.h"
 
-namespace rx::render {
-  struct immediate3D;
-}
-
 namespace rx::model {
 
 struct loader;
@@ -21,8 +17,6 @@ struct animation {
 
   const vector<math::mat3x4f>& frames() const &;
   rx_size joints() const;
-
-  void render_skeleton(const math::mat4x4f& _world, render::immediate3D* _immediate);
 
 private:
   loader* m_model;

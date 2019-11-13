@@ -14,10 +14,10 @@
 namespace rx::render {
 
 static frontend::buffer* quad_buffer(frontend::interface* _frontend) {
-  // frontend::buffer* buffer{_frontend->cached_buffer("quad")};
-  // if (buffer) {
-  //   return buffer;
-  // }
+  frontend::buffer* buffer{_frontend->cached_buffer("quad")};
+  if (buffer) {
+    return buffer;
+  }
 
   static constexpr const struct vertex {
     math::vec2f position;
@@ -29,7 +29,7 @@ static frontend::buffer* quad_buffer(frontend::interface* _frontend) {
     {{ 1.0f, -1.0f}, {1.0f, 0.0f}}
   };
 
-  frontend::buffer* buffer = _frontend->create_buffer(RX_RENDER_TAG("quad"));
+  buffer = _frontend->create_buffer(RX_RENDER_TAG("quad"));
   buffer->record_type(frontend::buffer::type::k_static);
   buffer->record_element_type(frontend::buffer::element_type::k_none);
   buffer->record_stride(sizeof(vertex));
@@ -38,7 +38,7 @@ static frontend::buffer* quad_buffer(frontend::interface* _frontend) {
   buffer->write_vertices(k_quad_vertices, sizeof k_quad_vertices);
 
   _frontend->initialize_buffer(RX_RENDER_TAG("quad"), buffer);
-  // _frontend->cache_buffer(buffer, "quad");
+  _frontend->cache_buffer(buffer, "quad");
 
   return buffer;
 }
@@ -54,7 +54,7 @@ ibl::ibl(frontend::interface* _frontend)
   m_scale_bias_texture->record_type(frontend::texture::type::k_attachment);
   m_scale_bias_texture->record_levels(1);
   m_scale_bias_texture->record_dimensions({256, 256});
-  m_scale_bias_texture->record_filter({false, false, false});
+  m_scale_bias_texture->record_filter({true, false, false});
   m_scale_bias_texture->record_wrap({
     frontend::texture::wrap_type::k_clamp_to_edge,
     frontend::texture::wrap_type::k_clamp_to_edge,});
@@ -92,6 +92,9 @@ ibl::~ibl() {
 }
 
 void ibl::render(frontend::textureCM* _environment, rx_size _irradiance_map_size) {
+  // NOTE(dweiler): Artifically limit the maximum size of IRM to avoid TDR.
+  _irradiance_map_size = algorithm::max(_irradiance_map_size, 32_z);
+
   frontend::buffer* buffer{quad_buffer(m_frontend)};
 
   frontend::technique* irradiance_technique{m_frontend->find_technique_by_name("irradiance_map")};
@@ -137,6 +140,7 @@ void ibl::render(frontend::textureCM* _environment, rx_size _irradiance_map_size
 
     frontend::state state;
     state.viewport.record_dimensions(target->dimensions());
+
     m_frontend->draw(
       RX_RENDER_TAG("irradiance map"),
       state,

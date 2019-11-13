@@ -42,6 +42,7 @@ struct texture
   const filter_options& filter() const &;
   const wrap_options& wrap() const &;
   const string& type() const &;
+  const optional<math::vec4f>& border() const &;
 
   const rx::texture::chain& chain() const;
   rx::texture::chain&& chain();
@@ -116,6 +117,10 @@ inline const texture::wrap_options& texture::wrap() const & {
 
 inline const string& texture::type() const & {
   return m_type;
+}
+
+inline const optional<math::vec4f>& texture::border() const & {
+  return m_border;
 }
 
 inline const rx::texture::chain& texture::chain() const {

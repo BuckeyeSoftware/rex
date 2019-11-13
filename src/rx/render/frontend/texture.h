@@ -56,7 +56,9 @@ struct texture
     k_d32f_s8,
     k_s8,
     k_dxt1,
-    k_dxt5
+    k_dxt5,
+    k_srgb_u8,
+    k_srgba_u8
   };
 
   enum class type : rx_u8 {
@@ -76,6 +78,7 @@ struct texture
   void record_type(type _type);
   void record_filter(const filter_options& _options);
   void record_levels(rx_size _levels); // the number of levels including the base level
+  void record_border(const math::vec4f& _color);
 
   void validate() const;
 
@@ -85,18 +88,22 @@ struct texture
   rx_size channels() const;
   type kind() const;
   rx_size levels() const;
+  const math::vec4f& border() const &;
 
   static bool is_compressed_format(data_format _format);
   static bool is_color_format(data_format _format);
   static bool is_depth_format(data_format _format);
   static bool is_stencil_format(data_format _format);
   static bool is_depth_stencil_format(data_format _format);
+  static bool is_srgb_color_format(data_format _format);
 
   bool is_compressed_format() const;
   bool is_color_format() const;
   bool is_depth_format() const;
   bool is_stencil_format() const;
   bool is_depth_stencil_format() const;
+  bool is_srgb_color_format() const;
+
   bool is_swapchain() const;
   bool is_level_in_range(rx_size _level) const;
 
@@ -108,7 +115,8 @@ protected:
     k_wrap       = 1 << 3,
     k_dimensions = 1 << 4,
     k_swapchain  = 1 << 5,
-    k_levels     = 1 << 6
+    k_levels     = 1 << 6,
+    k_border     = 1 << 7
   };
 
   friend struct interface;
@@ -119,6 +127,7 @@ protected:
   filter_options m_filter;
   rx_u16 m_flags;
   rx_size m_levels;
+  math::vec4f m_border;
 };
 
 struct texture1D : texture {
@@ -261,14 +270,23 @@ inline rx_size texture::levels() const {
   return m_levels;
 }
 
+inline const math::vec4f& texture::border() const & {
+  RX_ASSERT(m_flags & k_border, "border not recorded");
+  return m_border;
+}
+
 inline bool texture::is_color_format(data_format _format) {
-  return _format == data_format::k_bgra_f16
+  return _format == data_format::k_r_u8
+      || _format == data_format::k_rgb_u8
+      || _format == data_format::k_rgba_u8
+      || _format == data_format::k_bgr_u8
       || _format == data_format::k_bgra_u8
+      || _format == data_format::k_rgba_f16
+      || _format == data_format::k_bgra_f16
       || _format == data_format::k_dxt1
       || _format == data_format::k_dxt5
-      || _format == data_format::k_r_u8
-      || _format == data_format::k_rgba_f16
-      || _format == data_format::k_rgba_u8;
+      || _format == data_format::k_srgb_u8
+      || _format == data_format::k_srgba_u8;
 }
 
 inline bool texture::is_depth_format(data_format _format) {
@@ -292,6 +310,11 @@ inline bool texture::is_compressed_format(data_format _format) {
       || _format == data_format::k_dxt5;
 }
 
+inline bool texture::is_srgb_color_format(data_format _format) {
+  return _format == data_format::k_srgb_u8
+      || _format == data_format::k_srgba_u8;
+}
+
 inline bool texture::is_compressed_format() const {
   return is_compressed_format(m_format);
 }
@@ -310,6 +333,10 @@ inline bool texture::is_stencil_format() const {
 
 inline bool texture::is_depth_stencil_format() const {
   return is_depth_stencil_format(m_format);
+}
+
+inline bool texture::is_srgb_color_format() const {
+  return is_srgb_color_format(m_format);
 }
 
 inline bool texture::is_swapchain() const {
@@ -354,6 +381,10 @@ inline rx_f32 texture::byte_size_of_format(data_format _format) {
     return 0.5f;
   case data_format::k_dxt5:
     return 1.0f;
+  case data_format::k_srgb_u8:
+    return 3.0f;
+  case data_format::k_srgba_u8:
+    return 4.0f;
   }
   return 0;
 }
@@ -391,6 +422,10 @@ inline rx_size texture::channel_count_of_format(data_format _format) {
   case data_format::k_dxt1:
     return 3;
   case data_format::k_dxt5:
+    return 4;
+  case data_format::k_srgb_u8:
+    return 3;
+  case data_format::k_srgba_u8:
     return 4;
   }
   return 0;

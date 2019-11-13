@@ -12,7 +12,7 @@
 #include "rx/core/profiler.h"
 
 #include "rx/texture/loader.h"
-#include "rx/texture/chain.h"
+#include "rx/texture/convert.h"
 
 namespace rx::render {
 
@@ -113,17 +113,17 @@ bool skybox::load(const string& _file_name) {
     return false;
   }
 
-  static constexpr const struct {
-    const char* name;
-    frontend::textureCM::face face;
-  } k_faces[]{
-    { "right",  frontend::textureCM::face::k_right },
-    { "left",   frontend::textureCM::face::k_left },
-    { "top",    frontend::textureCM::face::k_top },
-    { "bottom", frontend::textureCM::face::k_bottom },
-    { "front",  frontend::textureCM::face::k_front },
-    { "back",   frontend::textureCM::face::k_back },
-  };
+  const auto& name{description["name"]};
+  if (!name || !name.is_string()) {
+    return false;
+  }
+
+  const auto& faces{description["faces"]};
+  if (!faces || !faces.is_array_of(json::type::k_string) || faces.size() != 6) {
+    return false;
+  }
+
+  m_name = name.as_string();
 
   m_frontend->destroy_texture(RX_RENDER_TAG("skybox"), m_texture);
   m_texture = m_frontend->create_textureCM(RX_RENDER_TAG("skybox"));
@@ -137,12 +137,8 @@ bool skybox::load(const string& _file_name) {
     frontend::texture::wrap_type::k_clamp_to_edge});
 
   math::vec2z dimensions;
-  for (const auto& face : k_faces) {
-    const auto& file_name{description[face.name]};
-    if (!file_name || !file_name.is_string()) {
-      return false;
-    }
-
+  frontend::textureCM::face face{frontend::textureCM::face::k_right};
+  bool result{faces.each([&](const json& file_name) {
     texture::loader texture{m_frontend->allocator()};
     if (!texture.load(file_name.as_string())) {
       return false;
@@ -155,11 +151,28 @@ bool skybox::load(const string& _file_name) {
       return false;
     }
 
-    m_texture->write(texture.data().data(), face.face, 0);
+    if (texture.format() != texture::pixel_format::k_rgb_u8) {
+      // Convert everything to RGB8 if not already.
+      const vector<rx_byte>& data{texture::convert(
+        m_frontend->allocator(),
+        texture.data().data(),
+        texture.dimensions().area(),
+        texture.format(),
+        texture::pixel_format::k_rgb_u8)};
+      m_texture->write(data.data(), face, 0);
+    } else {
+      m_texture->write(texture.data().data(), face, 0);
+    }
+    face = static_cast<frontend::textureCM::face>(static_cast<rx_size>(face) + 1);
+    return true;
+  })};
+
+  if (result) {
+    m_frontend->initialize_texture(RX_RENDER_TAG("skybox"), m_texture);
+    return true;
   }
 
-  m_frontend->initialize_texture(RX_RENDER_TAG("skybox"), m_texture);
-  return true;
+  return false;
 }
 
 } // namespace rx::render

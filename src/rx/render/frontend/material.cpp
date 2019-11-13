@@ -29,12 +29,16 @@ convert_material_wrap(const rx::material::texture::wrap_options& _wrap) {
 
 material::material(interface* _frontend)
   : m_frontend{_frontend}
-  , m_diffuse{nullptr}
+  , m_albedo{nullptr}
   , m_normal{nullptr}
-  , m_metalness{nullptr}
   , m_roughness{nullptr}
+  , m_metalness{nullptr}
+  , m_ambient{nullptr}
+  , m_emissive{nullptr}
   , m_alpha_test{false}
   , m_has_alpha{false}
+  , m_roughness_value{1.0f}
+  , m_metalness_value{0.0f}
   , m_name{m_frontend->allocator()}
 {
 }
@@ -42,44 +46,50 @@ material::material(interface* _frontend)
 material::~material() {
   const auto& tag{RX_RENDER_TAG("finalizer")};
 
-  m_frontend->destroy_texture(tag, m_diffuse);
+  m_frontend->destroy_texture(tag, m_albedo);
   m_frontend->destroy_texture(tag, m_normal);
-  m_frontend->destroy_texture(tag, m_metalness);
   m_frontend->destroy_texture(tag, m_roughness);
+  m_frontend->destroy_texture(tag, m_metalness);
+  m_frontend->destroy_texture(tag, m_ambient);
+  m_frontend->destroy_texture(tag, m_emissive);
 }
 
 bool material::load(rx::material::loader&& loader_) {
   m_name = utility::move(loader_.name());
   m_alpha_test = loader_.alpha_test();
   m_has_alpha = loader_.has_alpha();
+  m_roughness_value = loader_.roughness();
+  m_metalness_value = loader_.metalness();
   m_transform = loader_.transform();
 
   // Simple table to map type strings to texture2D destinations in this object.
-  struct {
+  struct entry {
     texture2D** texture;
     const char* match;
+    bool        srgb;
   } table[] {
-    { &m_diffuse,    "diffuse"   },
-    { &m_normal,     "normal"    },
-    { &m_metalness,  "metalness" },
-    { &m_roughness,  "roughness" }
+    { &m_albedo,     "albedo",    true  },
+    { &m_normal,     "normal",    false },
+    { &m_metalness,  "metalness", false },
+    { &m_roughness,  "roughness", false },
+    { &m_ambient,    "ambient",   false },
+    { &m_emissive,   "emissive",  false }
   };
 
   return loader_.textures().each_fwd([this, &table](rx::material::texture& texture_) {
     const auto& type{texture_.type()};
 
     // Search for the texture in the table.
-    texture2D** destination{nullptr};
+    const entry* find{nullptr};
     for (const auto& item : table) {
       if (item.match == type) {
-        destination = item.texture;
-        break;
+        find = &item;
       }
     }
 
     // The texture destination could not be found or we already have a texture
     // constructed in that place.
-    if (!destination || *destination) {
+    if (!find || *find->texture) {
       return false;
     }
 
@@ -89,19 +99,19 @@ bool material::load(rx::material::loader&& loader_) {
 
     texture2D* texture{m_frontend->create_texture2D(RX_RENDER_TAG("material"))};
     switch (chain.format()) {
-    case rx::texture::chain::pixel_format::k_rgba_u8:
+    case rx::texture::pixel_format::k_rgba_u8:
       texture->record_format(texture::data_format::k_rgba_u8);
       break;
-    case rx::texture::chain::pixel_format::k_bgra_u8:
+    case rx::texture::pixel_format::k_bgra_u8:
       texture->record_format(texture::data_format::k_bgra_u8);
       break;
-    case rx::texture::chain::pixel_format::k_rgb_u8:
+    case rx::texture::pixel_format::k_rgb_u8:
       texture->record_format(texture::data_format::k_rgb_u8);
       break;
-    case rx::texture::chain::pixel_format::k_bgr_u8:
+    case rx::texture::pixel_format::k_bgr_u8:
       texture->record_format(texture::data_format::k_bgr_u8);
       break;
-    case rx::texture::chain::pixel_format::k_r_u8:
+    case rx::texture::pixel_format::k_r_u8:
       texture->record_format(texture::data_format::k_r_u8);
       break;
     }
@@ -111,6 +121,9 @@ bool material::load(rx::material::loader&& loader_) {
     texture->record_dimensions(chain.dimensions());
     texture->record_filter({filter.bilinear, filter.trilinear, filter.mipmaps});
     texture->record_wrap(convert_material_wrap(wrap));
+    if (const auto border{texture_.border()}) {
+      texture->record_border(*border);
+    }
 
     const auto& levels{chain.levels()};
     for (rx_size i{0}; i < levels.size(); i++) {
@@ -121,7 +134,7 @@ bool material::load(rx::material::loader&& loader_) {
     m_frontend->initialize_texture(RX_RENDER_TAG("material"), texture);
 
     // Store it.
-    *destination = texture;
+    *find->texture = texture;
 
     return true;
   });

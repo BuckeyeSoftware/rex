@@ -8,7 +8,7 @@
 namespace rx::concurrency {
 
 RX_LOG("thread_pool", logger);
-RX_GLOBAL<thread_pool> thread_pool::s_thread_pool{"system", "thread_pool", 4};
+RX_GLOBAL<thread_pool> thread_pool::s_thread_pool{"system", "thread_pool", 4_z};
 
 thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads)
   : m_allocator{_allocator}

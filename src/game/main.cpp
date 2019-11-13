@@ -529,7 +529,6 @@ struct test_game
   render::model m_model;
   render::ibl m_ibl;
   math::transform model_xform;
-
   math::camera m_camera;
 };
 

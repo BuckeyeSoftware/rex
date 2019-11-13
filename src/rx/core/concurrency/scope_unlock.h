@@ -6,15 +6,15 @@ namespace rx::concurrency {
 // generic scoped unlock
 template<typename T>
 struct scope_unlock {
-  explicit constexpr scope_unlock(T& lock);
+  explicit constexpr scope_unlock(T& lock_);
   ~scope_unlock();
 private:
   T& m_lock;
 };
 
 template<typename T>
-inline constexpr scope_unlock<T>::scope_unlock(T& lock)
-  : m_lock{lock}
+inline constexpr scope_unlock<T>::scope_unlock(T& lock_)
+  : m_lock{lock_}
 {
   m_lock.unlock();
 }

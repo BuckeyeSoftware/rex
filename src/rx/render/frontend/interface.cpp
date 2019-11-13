@@ -322,6 +322,7 @@ void interface::update_buffer(const command_header::info& _info, buffer* _buffer
 void interface::destroy_buffer(const command_header::info& _info, buffer* _buffer) {
   if (_buffer && _buffer->release_reference()) {
     concurrency::scope_lock lock{m_mutex};
+    remove_from_cache(m_cached_buffers, _buffer);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_buffer;
@@ -334,6 +335,7 @@ void interface::destroy_buffer(const command_header::info& _info, buffer* _buffe
 void interface::destroy_target(const command_header::info& _info, target* _target) {
   if (_target && _target->release_reference()) {
     concurrency::scope_lock lock{m_mutex};
+    remove_from_cache(m_cached_targets, _target);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_target;
@@ -346,6 +348,7 @@ void interface::destroy_target(const command_header::info& _info, target* _targe
 void interface::destroy_program(const command_header::info& _info, program* _program) {
   if (_program && _program->release_reference()) {
     concurrency::scope_lock lock{m_mutex};
+    // remove_from_cache(m_cached_programs, _program);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_program;
@@ -358,6 +361,7 @@ void interface::destroy_program(const command_header::info& _info, program* _pro
 void interface::destroy_texture(const command_header::info& _info, texture1D* _texture) {
   if (_texture && _texture->release_reference()) {
     concurrency::scope_lock lock{m_mutex};
+    remove_from_cache(m_cached_textures1D, _texture);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_texture1D;
@@ -375,6 +379,7 @@ void interface::destroy_texture(const command_header::info& _info, texture2D* _t
 void interface::destroy_texture(const command_header::info& _info, texture3D* _texture) {
   if (_texture && _texture->release_reference()) {
     concurrency::scope_lock lock{m_mutex};
+    remove_from_cache(m_cached_textures3D, _texture);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_texture3D;
@@ -387,6 +392,7 @@ void interface::destroy_texture(const command_header::info& _info, texture3D* _t
 void interface::destroy_texture(const command_header::info& _info, textureCM* _texture) {
   if (_texture && _texture->release_reference()) {
     concurrency::scope_lock lock{m_mutex};
+    remove_from_cache(m_cached_texturesCM, _texture);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_textureCM;
@@ -398,6 +404,7 @@ void interface::destroy_texture(const command_header::info& _info, textureCM* _t
 
 void interface::destroy_texture_unlocked(const command_header::info& _info, texture2D* _texture) {
   if (_texture && _texture->release_reference()) {
+    remove_from_cache(m_cached_textures2D, _texture);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
     auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
     command->kind = resource_command::type::k_texture2D;

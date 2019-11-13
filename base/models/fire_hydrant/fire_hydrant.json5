@@ -1,0 +1,51 @@
+{
+  name: "fire_hydrant",
+  file: "base/models/fire_hydrant/fire_hydrant.iqm",
+  materials: [
+    {
+      name: "fire_hydrant",
+      textures: [
+        {
+          file: "base/models/fire_hydrant/albedo.png",
+          type: "albedo",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "repeat",
+            "repeat"
+          ]
+        },
+        {
+          file: "base/models/fire_hydrant/normal.png",
+          type: "normal",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "repeat",
+            "repeat"
+          ]
+        },
+        {
+          file: "base/models/fire_hydrant/metalness.png",
+          type: "metalness",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "repeat",
+            "repeat"
+          ]
+        },
+        {
+          file: "base/models/fire_hydrant/roughness.png",
+          type: "roughness",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "repeat",
+            "repeat"
+          ]
+        }
+      ]
+    }
+  ]
+}

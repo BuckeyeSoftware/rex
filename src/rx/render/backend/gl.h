@@ -21,9 +21,14 @@ GLenum convert_texture_wrap(const frontend::texture::wrap_type _type);
 struct filter {
   GLuint min;
   GLuint mag;
+  bool requires_border_color() const;
 };
 
 filter convert_texture_filter(const frontend::texture::filter_options& _filter_options);
+
+inline bool filter::requires_border_color() const {
+  return min == GL_CLAMP_TO_BORDER || mag == GL_CLAMP_TO_BORDER;
+}
 
 } // namespace rx::render
 

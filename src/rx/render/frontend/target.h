@@ -52,6 +52,9 @@ struct target : resource {
   // attach existing stencil texture |_stencil| to target
   void attach_stencil(texture2D* _stencil);
 
+  // attach existing depth stencil texture |_depth_stencil| to target
+  void attach_depth_stencil(texture2D* _depth_stencil);
+
   // attach texture |_texture| level |_level| to target
   void attach_texture(texture2D* _texture, rx_size _level);
 

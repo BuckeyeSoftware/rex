@@ -31,7 +31,9 @@ struct loader
   string&& name();
   bool alpha_test() const;
   bool has_alpha() const;
-  const math::transform& transform() const &;
+  rx_f32 roughness() const;
+  rx_f32 metalness() const;
+  const optional<math::transform>& transform() const &;
 
 private:
   template<typename... Ts>
@@ -49,7 +51,9 @@ private:
   string m_name;
   bool m_alpha_test;
   bool m_has_alpha;
-  math::transform m_transform;
+  rx_f32 m_roughness;
+  rx_f32 m_metalness;
+  optional<math::transform> m_transform;
 };
 
 inline memory::allocator* loader::allocator() const {
@@ -72,7 +76,15 @@ inline bool loader::has_alpha() const {
   return m_has_alpha;
 }
 
-inline const math::transform& loader::transform() const & {
+inline rx_f32 loader::roughness() const {
+  return m_roughness;
+}
+
+inline rx_f32 loader::metalness() const {
+  return m_metalness;
+}
+
+inline const optional<math::transform>& loader::transform() const & {
   return m_transform;
 }
 

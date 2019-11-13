@@ -134,6 +134,10 @@ GLenum convert_texture_data_format(frontend::texture::data_format _data_format) 
     return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
   case frontend::texture::data_format::k_dxt5:
     return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+  case frontend::texture::data_format::k_srgb_u8:
+    return GL_SRGB8;
+  case frontend::texture::data_format::k_srgba_u8:
+    return GL_SRGB8_ALPHA8;
   }
 
   RX_HINT_UNREACHABLE();
@@ -193,6 +197,10 @@ GLenum convert_texture_format(frontend::texture::data_format _data_format) {
   case frontend::texture::data_format::k_dxt1:
     return GL_RGB;
   case frontend::texture::data_format::k_dxt5:
+    return GL_RGBA;
+  case frontend::texture::data_format::k_srgb_u8:
+    return GL_RGB;
+  case frontend::texture::data_format::k_srgba_u8:
     return GL_RGBA;
   }
 

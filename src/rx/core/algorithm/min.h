@@ -5,12 +5,12 @@
 namespace rx::algorithm {
 
 template<typename T>
-inline T min(T _value) {
+inline constexpr T min(T _value) {
   return _value;
 }
 
 template<typename T, typename... Ts>
-inline T min(T _a, T _b, Ts&&... _args) {
+inline constexpr T min(T _a, T _b, Ts&&... _args) {
   return min(_a < _b ? _a : _b, utility::forward<Ts>(_args)...);
 }
 

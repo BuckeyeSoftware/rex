@@ -45,7 +45,11 @@ static void (GLAPIENTRYP pglTexImage3D)(GLenum, GLint, GLint, GLsizei, GLsizei, 
 static void (GLAPIENTRYP pglTexSubImage1D)(GLenum, GLint, GLint, GLsizei, GLenum, GLenum, const GLvoid*);
 static void (GLAPIENTRYP pglTexSubImage2D)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const GLvoid*);
 static void (GLAPIENTRYP pglTexSubImage3D)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid*);
+static void (GLAPIENTRYP pglCompressedTexImage1D)(GLenum, GLint, GLenum, GLsizei, GLint, GLsizei, const GLvoid*);
+static void (GLAPIENTRYP pglCompressedTexImage2D)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid*);
+static void (GLAPIENTRYP pglCompressedTexImage3D)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, const GLvoid*);
 static void (GLAPIENTRYP pglTexParameteri)(GLenum, GLenum, GLint);
+static void (GLAPIENTRYP pglTexParameteriv)(GLenum, GLenum, const GLint*);
 static void (GLAPIENTRYP pglTexParameterf)(GLenum, GLenum, GLfloat);
 static void (GLAPIENTRYP pglBindTexture)(GLuint, GLuint);
 static void (GLAPIENTRYP pglActiveTexture)(GLenum);
@@ -245,12 +249,16 @@ namespace detail_gl3 {
     {
       memset(m_texture_units, 0, sizeof m_texture_units);
 
+      // There's no unsigned variant of glGetIntegerv
+      GLint swap_chain_fbo;
+      pglGetIntegerv(GL_FRAMEBUFFER_BINDING, &swap_chain_fbo);
+      m_swap_chain_fbo = static_cast<GLuint>(swap_chain_fbo);
+
       pglEnable(GL_CULL_FACE);
       pglCullFace(GL_BACK);
       pglFrontFace(GL_CW);
 
       pglDepthFunc(GL_LEQUAL);
-      pglGetIntegerv(GL_FRAMEBUFFER_BINDING, &m_swap_chain_fbo);
       pglDisable(GL_MULTISAMPLE);
       pglPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -684,7 +692,7 @@ namespace detail_gl3 {
     GLuint m_bound_read_fbo;
     GLuint m_bound_program;
 
-    GLint m_swap_chain_fbo;
+    GLuint m_swap_chain_fbo;
     texture_unit m_texture_units[frontend::draw_command::k_max_textures];
     rx_size m_active_texture;
 
@@ -925,7 +933,11 @@ bool gl3::init() {
   fetch("glTexSubImage1D", pglTexSubImage1D);
   fetch("glTexSubImage2D", pglTexSubImage2D);
   fetch("glTexSubImage3D", pglTexSubImage3D);
+  fetch("glCompressedTexImage1D", pglCompressedTexImage1D);
+  fetch("glCompressedTexImage2D", pglCompressedTexImage2D);
+  fetch("glCompressedTexImage3D", pglCompressedTexImage3D);
   fetch("glTexParameteri", pglTexParameteri);
+  fetch("glTexParameteriv", pglTexParameteriv);
   fetch("glTexParameterf", pglTexParameterf);
   fetch("glBindTexture", pglBindTexture);
   fetch("glActiveTexture", pglActiveTexture);
@@ -1075,10 +1087,16 @@ void gl3::process(rx_byte* _command) {
         }
         break;
       case frontend::resource_command::type::k_target:
-        if (state->m_bound_draw_fbo == reinterpret_cast<detail_gl3::target*>(resource->as_target + 1)->fbo) {
-          state->m_bound_draw_fbo = 0;
+        {
+          auto target{reinterpret_cast<detail_gl3::target*>(resource->as_target + 1)};
+          if (state->m_bound_draw_fbo == target->fbo) {
+            state->m_bound_draw_fbo = 0;
+          }
+          if (state->m_bound_read_fbo == target->fbo) {
+            state->m_bound_read_fbo = 0;
+          }
+          utility::destruct<detail_gl3::target>(resource->as_target + 1);
         }
-        utility::destruct<detail_gl3::target>(resource->as_target + 1);
         break;
       case frontend::resource_command::type::k_program:
         utility::destruct<detail_gl3::program>(resource->as_program + 1);
@@ -1276,23 +1294,34 @@ void gl3::process(rx_byte* _command) {
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap)};
           const auto format{render_texture->format()};
-          const auto filter{render_texture->filter()};
+          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
           state->use_texture(render_texture);
 
-          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
-          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, filter.min);
+          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, filter.mag);
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, levels - 1);
+          if (filter.requires_border_color()) {
+            const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
+            pglTexParameteriv(GL_TEXTURE_1D, GL_TEXTURE_BORDER_COLOR, color.data());
+          }
 
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
             if (render_texture->is_compressed_format()) {
-              // TODO(dweiler): implement
+              pglCompressedTexImage1D(
+                GL_TEXTURE_1D,
+                i,
+                convert_texture_data_format(format),
+                static_cast<GLsizei>(level_info.dimensions),
+                0,
+                level_info.size,
+                data.is_empty() ? nullptr : data.data() + level_info.offset);
             } else {
               pglTexImage1D(
                 GL_TEXTURE_1D,
@@ -1318,24 +1347,36 @@ void gl3::process(rx_byte* _command) {
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
           const auto format{render_texture->format()};
-          const auto filter{render_texture->filter()};
+          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
           state->use_texture(render_texture);
 
-          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
-          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter.min);
+          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter.mag);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levels - 1);
+          if (filter.requires_border_color()) {
+            const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
+            pglTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color.data());
+          }
 
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
             if (render_texture->is_compressed_format()) {
-              // TODO(dweiler): implement
+              pglCompressedTexImage2D(
+                GL_TEXTURE_2D,
+                i,
+                convert_texture_data_format(format),
+                static_cast<GLsizei>(level_info.dimensions.w),
+                static_cast<GLsizei>(level_info.dimensions.h),
+                0,
+                level_info.size,
+                data.is_empty() ? nullptr : data.data() + level_info.offset);
             } else {
               pglTexImage2D(
                 GL_TEXTURE_2D,
@@ -1359,25 +1400,38 @@ void gl3::process(rx_byte* _command) {
           const auto wrap_t{convert_texture_wrap(wrap.t)};
           const auto wrap_r{convert_texture_wrap(wrap.p)};
           const auto format{render_texture->format()};
-          const auto filter{render_texture->filter()};
+          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
           state->use_texture(render_texture);
 
-          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
-          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, filter.min);
+          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, filter.mag);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, wrap_t);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, wrap_r);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, levels - 1);
+          if (filter.requires_border_color()) {
+            const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
+            pglTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, color.data());
+          }
 
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
             if (render_texture->is_compressed_format()) {
-              // TODO(dweiler): implement
+              pglCompressedTexImage3D(
+                GL_TEXTURE_3D,
+                i,
+                convert_texture_data_format(format),
+                static_cast<GLsizei>(level_info.dimensions.w),
+                static_cast<GLsizei>(level_info.dimensions.h),
+                static_cast<GLsizei>(level_info.dimensions.d),
+                0,
+                level_info.size,
+                data.is_empty() ? nullptr : data.data() + level_info.offset);
             } else {
               pglTexImage3D(
                 GL_TEXTURE_3D,
@@ -1402,26 +1456,38 @@ void gl3::process(rx_byte* _command) {
           const auto wrap_t{convert_texture_wrap(wrap.t)};
           const auto wrap_p{convert_texture_wrap(wrap.p)};
           const auto format{render_texture->format()};
-          const auto filter{render_texture->filter()};
+          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
           state->use_texture(render_texture);
 
-          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, convert_texture_filter(filter).min);
-          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, convert_texture_filter(filter).mag);
+          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, filter.min);
+          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, filter.mag);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, wrap_t);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, wrap_p);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, levels - 1);
+          if (filter.requires_border_color()) {
+            const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
+            pglTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BORDER_COLOR, color.data());
+          }
 
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
             for (GLint j{0}; j < 6; j++) {
               if (render_texture->is_compressed_format()) {
-                // TODO(dweiler): implement
+                pglCompressedTexImage2D(
+                  GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
+                  i,
+                  convert_texture_data_format(format),
+                  static_cast<GLsizei>(level_info.dimensions.w),
+                  static_cast<GLsizei>(level_info.dimensions.h),
+                  0,
+                  level_info.size / 6,
+                  data.is_empty() ? nullptr : data.data() + level_info.offset + level_info.size / 6 * j);
               } else {
                 pglTexImage2D(
                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,

@@ -264,8 +264,11 @@ immediate2D::font::font(const key& _key, frontend::interface* _frontend)
       if (result == -k_glyphs || result > 0) {
         // create a texture chain from this baked font bitmap
         rx::texture::chain chain{m_frontend->allocator()};
-        chain.generate(utility::move(baked_atlas),
-          rx::texture::chain::pixel_format::k_r_u8, {m_resolution, m_resolution},
+        chain.generate(
+          utility::move(baked_atlas),
+          rx::texture::pixel_format::k_r_u8,
+          rx::texture::pixel_format::k_r_u8,
+          {m_resolution, m_resolution},
           false, true);
 
         // create and upload baked atlas
@@ -429,7 +432,7 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
         size_line(_command.as_line.roundness, n_vertices, n_elements);
         break;
       case queue::command::type::k_triangle:
-        // TODO(dweiler): implement
+        size_triangle(n_vertices, n_elements);
         break;
       case queue::command::type::k_text:
         size_text(
@@ -466,7 +469,10 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
           _command.color);
         break;
       case queue::command::type::k_triangle:
-        // TODO(dweiler): implement
+        generate_triangle(
+          _command.as_triangle.position.cast<rx_f32>(),
+          _command.as_triangle.size.cast<rx_f32>(),
+          _command.color);
         break;
       case queue::command::type::k_text:
         generate_text(
@@ -854,6 +860,17 @@ void immediate2D::generate_text(rx_s32 _size, const char* _font,
   add_batch(offset, batch::type::k_text, true, font_map->texture());
 }
 
+void immediate2D::generate_triangle(const math::vec2f& _position,
+  const math::vec2f& _size, const math::vec4f& _color)
+{
+  const math::vec2f coordinates[]{
+    _position,
+    {_position.x + _size.w, _position.y + _size.h / 2.0f},
+    {_position.x, _position.y + _size.h}
+  };
+  generate_polygon(coordinates, 1.0f, _color);
+}
+
 template<rx_size E>
 void immediate2D::size_polygon(rx_size& n_vertices_, rx_size& n_elements_) {
   n_vertices_ += 4 * E + 3 * (E - 2);
@@ -897,6 +914,9 @@ void immediate2D::size_text(const char* _contents, rx_size _contents_length,
   }
 }
 
+void immediate2D::size_triangle(rx_size& n_vertices_, rx_size& n_elements_) {
+  size_polygon<3>(n_vertices_, n_elements_);
+}
 
 void immediate2D::add_batch(rx_size _offset, batch::type _type, bool _blend,
   frontend::texture2D* _texture)

@@ -1,7 +1,6 @@
 #include "rx/math/aabb.h"
 #include "rx/math/mat4x4.h"
 
-
 namespace rx::math {
 
 void aabb::expand(const vec3f& _point) {

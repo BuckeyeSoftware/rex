@@ -30,4 +30,4 @@ private:
 
 } // namespace rx::render::backend
 
-#endif // RX_RENDER_BACKEND_GL4_H
+#endif // RX_RENDER_BACKEND_GL3_H
