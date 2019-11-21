@@ -165,16 +165,13 @@ int main(int _argc, char** _argv) {
 
   console::interface::add_command("exit", "",
     [](const vector<console::command::argument>&) {
-      printf("%p before %d\n", &g_status, static_cast<int>(g_status.load()));
-      g_status.store(game::status::k_shutdown);
-      printf("%p after to %d\n", &g_status, static_cast<int>(g_status.load()));
+      g_status = game::status::k_shutdown;
       return true;
     });
 
   console::interface::add_command("quit", "",
     [&](const vector<console::command::argument>&) {
-      g_status.store(game::status::k_shutdown);
-      printf("status changed!\n");
+      g_status = game::status::k_shutdown;
       return true;
     });
 

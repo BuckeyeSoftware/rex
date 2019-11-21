@@ -139,6 +139,8 @@ struct immediate2D {
   queue& frame_queue();
   frontend::interface* frontend() const;
 
+  rx_f32 measure_text_length(const string& _font, const char* _text,
+    rx_size _text_length, rx_s32 _size, rx_f32 _scale);
   rx_f32 measure_text_length(const char* _font, const char* _text,
     rx_size _text_length, rx_s32 _size, rx_f32 _scale);
 
@@ -321,6 +323,12 @@ inline immediate2D::queue& immediate2D::frame_queue() {
 
 inline frontend::interface* immediate2D::frontend() const {
   return m_frontend;
+}
+
+inline rx_f32 immediate2D::measure_text_length(const string& _font,
+  const char* _text, rx_size _text_length, rx_s32 _size, rx_f32 _scale)
+{
+  return measure_text_length(_font.data(), _text, _text_length, _size, _scale);
 }
 
 inline bool immediate2D::font::key::operator==(const key& _key) const {

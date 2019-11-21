@@ -13,6 +13,36 @@
 
 namespace rx::hud {
 
+RX_CONSOLE_SVAR(
+  console_font_name,
+  "console.font_name",
+  "name of the font to use for the console (should be a monospaced font)",
+  "Consolas-Regular");
+
+RX_CONSOLE_IVAR(
+  console_font_size,
+  "console.font_size",
+  "size of the font to use for the console",
+  8,
+  56,
+  30);
+
+RX_CONSOLE_IVAR(
+  console_output_lines,
+  "console.output_lines",
+  "number of lines of visible output",
+  5,
+  50,
+  10);
+
+RX_CONSOLE_IVAR(
+  console_suggestion_lines,
+  "console.suggestion_lines",
+  "number of lines of visible suggestions",
+  5,
+  20,
+  8);
+
 RX_CONSOLE_V4FVAR(
   console_background_color,
   "console.background_color",
@@ -79,9 +109,9 @@ void console::render() {
   const math::vec2f& resolution{frontend.swapchain()->dimensions().cast<rx_f32>()};
 
   rx_f32 padding{10.0f};
-  rx_f32 font_size{30.0f};
-  rx_size suggestion_lines{12};
-  rx_size console_lines{12};
+  rx_f32 font_size{static_cast<rx_f32>(*console_font_size)};
+  rx_size suggestion_lines{static_cast<rx_size>(*console_suggestion_lines)};
+  rx_size console_lines{static_cast<rx_size>(*console_output_lines)};
 
   rx_f32 base_y{0.0f};
   rx_f32 console_h{console_lines*font_size+padding*2.0f};
@@ -114,7 +144,7 @@ void console::render() {
   // Render every line for the console, lines outside will be scissored.
   lines.each_fwd([&](const string& _line) {
     m_immediate->frame_queue().record_text(
-      "Consolas-Regular",
+      *console_font_name,
       {padding, resolution.h - text_y},
       static_cast<rx_s32>(font_size),
       1.0f,
@@ -162,7 +192,7 @@ void console::render() {
 
   // Render the current input text inside the box, centered.
   m_immediate->frame_queue().record_text(
-    "Consolas-Regular",
+    *console_font_name,
     {padding, resolution.h - textbox_y - font_size * 0.75f},
     static_cast<rx_s32>(font_size),
     1.0f,
@@ -175,7 +205,7 @@ void console::render() {
     if (selection[0] != selection[1]) {
       // Measure the text up to selection[0] for start
       const rx_f32 skip{m_immediate->measure_text_length(
-        "Consolas-Regular",
+        *console_font_name,
         m_text.contents().data(),
         selection[0],
         font_size,
@@ -183,7 +213,7 @@ void console::render() {
 
       // Measure text from selection[0] to selection[1]
       const rx_f32 size{m_immediate->measure_text_length(
-        "Consolas-Regular",
+        *console_font_name,
         m_text.contents().data() + selection[0],
         selection[1] - selection[0],
         font_size,
@@ -203,7 +233,7 @@ void console::render() {
     // the text up to the cursor position.
     const rx_f32 cursor{
       m_immediate->measure_text_length(
-        "Consolas-Regular",
+        *console_font_name,
         m_text.contents().data(),
         m_text.cursor(),
         font_size,
@@ -225,14 +255,14 @@ void console::render() {
   // Draw a box below everything else for suggestions.
   m_immediate->frame_queue().record_rectangle(
     {0.0f,                 resolution.h - base_y - selection_h},
-    {resolution.w * 0.25f, selection_h},
+    {resolution.w * 0.50f, selection_h},
     0.0f,
-    {1.0f, 0.0f, 0.0f, 1.0f});
+    *console_background_color);
 
   // Scissor inside the suggestions box so anything outside does not render.
   m_immediate->frame_queue().record_scissor(
     {0.0f,                 resolution.h - base_y - selection_h},
-    {resolution.w * 0.25f, selection_h});
+    {resolution.w * 0.50f, selection_h});
 
   // Scrolling of the text by offsetting it inside the box. Scissor will remove
   // the text outside.
@@ -244,14 +274,14 @@ void console::render() {
   // Render a bar indicating which item is selected based on the selection index.
   m_immediate->frame_queue().record_rectangle(
     {0.0f,                 resolution.h - suggestion_y - font_size * m_selection},
-    {resolution.w * 0.25f, font_size},
+    {resolution.w * 0.50f, font_size},
     0.0f,
-    {0.0f, 0.0f, 1.0f, 1.0f});
+    *console_selection_highlight_background_color);
 
   // Draw each suggestion now inside that box.
   m_suggestions.each_fwd([&](const string& _suggestion){
     m_immediate->frame_queue().record_text(
-      "Consolas-Regular",
+      *console_font_name,
       {padding, resolution.h - suggestion_y + font_size*0.15f},
       font_size,
       1.0f,
