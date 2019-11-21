@@ -2,10 +2,13 @@
 #define RX_CORE_LOG_H
 #include "rx/core/global.h"
 #include "rx/core/string.h"
+#include "rx/core/event.h"
 
 namespace rx {
 
 struct log {
+  using event_type = event<string>;
+
   enum class level {
     k_warning,
     k_info,
@@ -22,12 +25,16 @@ struct log {
   const char* file_name() const;
   int line() const;
 
+  event_type::handle on_write(function<void(string)>&& callback_);
+
 private:
   void write(level _level, string&& contents_);
 
   const char* m_name;
   const char* m_file_name;
   int m_line;
+
+  event_type m_events;
 };
 
 inline constexpr log::log(const char* _name, const char* _file_name, int _line)
@@ -52,6 +59,10 @@ inline const char* log::file_name() const {
 
 inline int log::line() const {
   return m_line;
+}
+
+inline log::event_type::handle log::on_write(function<void(string)>&& callback_) {
+  return m_events.connect(utility::move(callback_));
 }
 
 #define RX_LOG(_name, _identifier) \

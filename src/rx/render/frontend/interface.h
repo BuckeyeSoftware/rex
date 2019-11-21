@@ -221,34 +221,27 @@ private:
   // size of resources as reported by the backend
   backend::allocation_info m_allocation_info;
 
-  pool m_buffer_pool;                      // protected by |m_mutex|
-  pool m_target_pool;                      // protected by |m_mutex|
-  pool m_program_pool;                     // protected by |m_mutex|
-  pool m_texture1D_pool;                   // protected by |m_mutex|
-  pool m_texture2D_pool;                   // protected by |m_mutex|
-  pool m_texture3D_pool;                   // protected by |m_mutex|
-  pool m_textureCM_pool;                   // protected by |m_mutex|
+  pool m_buffer_pool;                          // protected by |m_mutex|
+  pool m_target_pool;                          // protected by |m_mutex|
+  pool m_program_pool;                         // protected by |m_mutex|
+  pool m_texture1D_pool;                       // protected by |m_mutex|
+  pool m_texture2D_pool;                       // protected by |m_mutex|
+  pool m_texture3D_pool;                       // protected by |m_mutex|
+  pool m_textureCM_pool;                       // protected by |m_mutex|
 
-  vector<buffer*> m_destroy_buffers;       // protected by |m_mutex|
-  vector<target*> m_destroy_targets;       // protected by |m_mutex|
-  vector<program*> m_destroy_programs;     // protected by |m_mutex|
-  vector<texture1D*> m_destroy_textures1D; // protected by |m_mutex|
-  vector<texture2D*> m_destroy_textures2D; // protected by |m_mutex|
-  vector<texture3D*> m_destroy_textures3D; // protected by |m_mutex|
-  vector<textureCM*> m_destroy_texturesCM; // protected by |m_mutex|
+  vector<buffer*> m_destroy_buffers;           // protected by |m_mutex|
+  vector<target*> m_destroy_targets;           // protected by |m_mutex|
+  vector<program*> m_destroy_programs;         // protected by |m_mutex|
+  vector<texture1D*> m_destroy_textures1D;     // protected by |m_mutex|
+  vector<texture2D*> m_destroy_textures2D;     // protected by |m_mutex|
+  vector<texture3D*> m_destroy_textures3D;     // protected by |m_mutex|
+  vector<textureCM*> m_destroy_texturesCM;     // protected by |m_mutex|
 
-  target* m_swapchain_target;              // protected by |m_mutex|
-  texture2D* m_swapchain_texture;          // protected by |m_mutex|
+  target* m_swapchain_target;                  // protected by |m_mutex|
+  texture2D* m_swapchain_texture;              // protected by |m_mutex|
 
-  vector<rx_byte*> m_commands;             // protected by |m_mutex|
-  command_buffer m_command_buffer;         // protected by |m_mutex|
-
-  // NOTE(dweiler): Must be before m_techniques.
-  deferred_function<void()> m_deferred_process;
-
-  // NOTE(dweiler): Must be after m_deferred_process.
-  map<string, technique> m_techniques;         // protected by |m_mutex|
-  map<string, module> m_modules;               // protected by |m_mutex|
+  vector<rx_byte*> m_commands;                 // protected by |m_mutex|
+  command_buffer m_command_buffer;             // protected by |m_mutex|
 
   map<string, buffer*> m_cached_buffers;       // protected by |m_mutex|
   map<string, target*> m_cached_targets;       // protected by |m_mutex|
@@ -256,6 +249,14 @@ private:
   map<string, texture2D*> m_cached_textures2D; // protected by |m_mutex|
   map<string, texture3D*> m_cached_textures3D; // protected by |m_mutex|
   map<string, textureCM*> m_cached_texturesCM; // protected by |m_mutex|
+
+  // NOTE(dweiler): This has to come before techniques and modules. Everything
+  // above must stay alive for the destruction of m_techniques and m_modules
+  // to work.
+  deferred_function<void()> m_deferred_process;
+
+  map<string, technique> m_techniques;         // protected by |m_mutex|
+  map<string, module> m_modules;               // protected by |m_mutex|
 
   concurrency::atomic<rx_size> m_draw_calls[2];
   concurrency::atomic<rx_size> m_clear_calls[2];

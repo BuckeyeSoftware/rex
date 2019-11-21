@@ -1,6 +1,7 @@
 #ifndef RX_CORE_GLOBAL_H
 #define RX_CORE_GLOBAL_H
 #include "rx/core/memory/uninitialized_storage.h"
+#include "rx/core/assert.h"
 
 namespace rx {
 
@@ -18,7 +19,16 @@ struct global_node {
   template<typename... Ts>
   void init(Ts&&... _arguments);
 
-  constexpr const char* name() const;
+  const char* name() const;
+
+  rx_byte* data();
+  const rx_byte* data() const;
+
+  template<typename T>
+  T* cast();
+
+  template<typename T>
+  const T* cast() const;
 
 private:
   friend struct globals;
@@ -106,6 +116,11 @@ private:
 
   rx_byte* m_global_store;
   rx_byte* m_argument_store;
+
+  struct {
+    rx_u16 size;
+    rx_u16 alignment;
+  } m_global_traits;
 
   void (*m_init_global)(rx_byte* _storage, rx_byte* _argument_store);
   void (*m_fini_global)(rx_byte* _storage);
@@ -230,6 +245,9 @@ inline global_node::global_node(const char* _group, const char* _name,
   , m_enabled{true}
   , m_initialized{false}
 {
+  m_global_traits.size = sizeof(T);
+  m_global_traits.alignment = alignof(T);
+
   if constexpr (sizeof...(Ts) != 0) {
     static_assert(sizeof(arguments<Ts...>) <= sizeof _argument_store,
       "too much constructor data to store for global");
@@ -255,8 +273,31 @@ inline void global_node::init(Ts&&... _arguments) {
   init();
 }
 
-inline constexpr const char* global_node::name() const {
+inline const char* global_node::name() const {
   return m_name;
+}
+
+inline rx_byte* global_node::data() {
+  return m_global_store;
+}
+
+inline const rx_byte* global_node::data() const {
+  return m_global_store;
+}
+
+template<typename T>
+inline T* global_node::cast() {
+  RX_ASSERT(m_global_traits.size == sizeof(T)
+    && m_global_traits.alignment == alignof(T), "invalid type cast");
+
+  return reinterpret_cast<T*>(m_global_store);
+}
+
+template<typename T>
+inline const T* global_node::cast() const {
+  RX_ASSERT(m_global_traits.size == sizeof(T)
+    && m_global_traits.alignment == alignof(T), "invalid type cast");
+  return reinterpret_cast<const T*>(m_global_store);
 }
 
 // global_group

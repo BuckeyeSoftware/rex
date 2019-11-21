@@ -187,9 +187,9 @@ inline function<R(Ts...)>::~function() {
 template<typename R, typename... Ts>
 inline R function<R(Ts...)>::operator()(Ts... _arguments) {
   if constexpr(traits::is_same<R, void>) {
-    return m_invoke(m_data.data(), utility::forward<Ts>(_arguments)...);
-  } else {
     m_invoke(m_data.data(), utility::forward<Ts>(_arguments)...);
+  } else {
+    return m_invoke(m_data.data(), utility::forward<Ts>(_arguments)...);
   }
 }
 

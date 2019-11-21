@@ -4,11 +4,13 @@
 
 #include "rx/console/interface.h"
 #include "rx/console/variable.h"
+#include "rx/console/command.h"
 
 #include "rx/core/concurrency/spin_lock.h"
 #include "rx/core/concurrency/scope_lock.h"
 
 #include "rx/core/filesystem/file.h"
+#include "rx/core/map.h"
 
 #include "rx/core/log.h" // RX_LOG
 
@@ -20,6 +22,68 @@ static variable_reference* g_head; // protected by |g_lock|
 RX_LOG("console", logger);
 
 static RX_GLOBAL_GROUP("cvars", g_group_cvars);
+static RX_GLOBAL_GROUP("console", g_group_console);
+
+// TODO(dweiler): limited line count queue for messages on the console.
+static RX_GLOBAL<vector<string>> g_lines{"console", "lines", &memory::g_system_allocator};
+static RX_GLOBAL<map<string, command>> g_commands{"console", "commands", &memory::g_system_allocator};
+
+void interface::write(const string& message_) {
+  g_lines->push_back(message_);
+}
+
+void interface::clear() {
+  g_lines->clear();
+}
+
+const vector<string>& interface::lines() {
+  return *g_lines;
+}
+
+void interface::add_command(const string& _name, const char* _signature,
+  function<bool(const vector<command::argument>&)>&& _function)
+{
+  g_commands->insert(_name, {_signature, utility::move(_function)});
+}
+
+bool interface::execute(const string& _contents) {
+  const auto& split{_contents.split(' ', 2)};
+  if (split.is_empty()) {
+    return false;
+  }
+
+  // Search for the console variable given by the first part.
+  if (split.size() == 2) {
+    for (variable_reference* node{g_head}; node; node = node->m_next) {
+      if (!strncmp(node->m_name, split[0].data(), split[0].size())) {
+        switch (change(split[0], split[1])) {
+        case variable_status::k_success:
+          return true;
+        default:
+          return false;
+        }
+      }
+    }
+  }
+
+  if (auto* find{g_commands->find(split[0])}) {
+    return find->execute_string(split.size() > 1 ? split[1]: "");
+  } else {
+    print("Could not find variable or command: \"%s\"", split[0]);
+    return false;
+  }
+}
+
+vector<string> interface::complete(const string& _prefix) {
+  // TODO(dweiler): prefix tree
+  vector<string> results;
+  for (variable_reference* node{g_head}; node; node = node->m_next) {
+    if (!strncmp(node->m_name, _prefix.data(), _prefix.size())) {
+      results.push_back(node->m_name);
+    }
+  }
+  return results;
+}
 
 bool interface::load(const char* file_name) {
   // sort references
@@ -451,7 +515,6 @@ template variable_status interface::set_from_reference_and_value<math::vec3i>(va
 template variable_status interface::set_from_reference_and_value<math::vec2f>(variable_reference* _reference, const math::vec2f& _value);
 template variable_status interface::set_from_reference_and_value<math::vec2i>(variable_reference* _reference, const math::vec2i& _value);
 
-
 template<typename T>
 variable_status interface::set_from_reference_and_string(variable_reference* _reference, const string& _value_string) {
   T value;
@@ -472,6 +535,22 @@ template variable_status interface::set_from_reference_and_string<math::vec3f>(v
 template variable_status interface::set_from_reference_and_string<math::vec3i>(variable_reference* _reference, const string& _string_value);
 template variable_status interface::set_from_reference_and_string<math::vec2f>(variable_reference* _reference, const string& _string_value);
 template variable_status interface::set_from_reference_and_string<math::vec2i>(variable_reference* _reference, const string& _string_value);
+
+template<typename T>
+void interface::reset_from_reference(variable_reference* _reference) {
+  _reference->cast<T>()->reset();
+}
+
+template void interface::reset_from_reference<bool>(variable_reference* _reference);
+template void interface::reset_from_reference<string>(variable_reference* _reference);
+template void interface::reset_from_reference<rx_s32>(variable_reference* _reference);
+template void interface::reset_from_reference<rx_f32>(variable_reference* _reference);
+template void interface::reset_from_reference<math::vec4f>(variable_reference* _reference);
+template void interface::reset_from_reference<math::vec4i>(variable_reference* _reference);
+template void interface::reset_from_reference<math::vec3f>(variable_reference* _reference);
+template void interface::reset_from_reference<math::vec3i>(variable_reference* _reference);
+template void interface::reset_from_reference<math::vec2f>(variable_reference* _reference);
+template void interface::reset_from_reference<math::vec2i>(variable_reference* _reference);
 
 variable_status interface::change(const string& _name, const string& _string_value) {
   for (variable_reference* head{g_head}; head; head = head->m_next) {
@@ -504,6 +583,48 @@ variable_status interface::change(const string& _name, const string& _string_val
     }
   }
   return variable_status::k_not_found;
+}
+
+bool interface::reset(const string& _name) {
+  for (variable_reference* head{g_head}; head; head = head->m_next) {
+    if (head->name() != _name) {
+      continue;
+    }
+    switch (head->type()) {
+    case variable_type::k_boolean:
+      reset_from_reference<bool>(head);
+      break;
+    case variable_type::k_string:
+      reset_from_reference<string>(head);
+      break;
+    case variable_type::k_int:
+      reset_from_reference<rx_s32>(head);
+      break;
+    case variable_type::k_float:
+      reset_from_reference<rx_f32>(head);
+      break;
+    case variable_type::k_vec4f:
+      reset_from_reference<math::vec4f>(head);
+      break;
+    case variable_type::k_vec4i:
+      reset_from_reference<math::vec4i>(head);
+      break;
+    case variable_type::k_vec3f:
+      reset_from_reference<math::vec3f>(head);
+      break;
+    case variable_type::k_vec3i:
+      reset_from_reference<math::vec3i>(head);
+      break;
+    case variable_type::k_vec2f:
+      reset_from_reference<math::vec2f>(head);
+      break;
+    case variable_type::k_vec2i:
+      reset_from_reference<math::vec2i>(head);
+      break;
+    }
+    return true;
+  }
+  return false;
 }
 
 variable_reference* interface::get_from_name(const string& _name) {

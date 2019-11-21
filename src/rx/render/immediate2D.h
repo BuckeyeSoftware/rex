@@ -7,6 +7,7 @@
 
 #include "rx/core/utility/nat.h"
 #include "rx/core/string.h"
+#include "rx/core/optional.h"
 #include "rx/core/map.h"
 
 #include "rx/render/frontend/state.h"
@@ -38,13 +39,13 @@ struct immediate2D {
     queue& operator=(queue&& queue_);
 
     struct box {
-      math::vec2i position;
-      math::vec2i size;
+      math::vec2f position;
+      math::vec2f size;
       bool operator!=(const box& _box) const;
     };
 
     struct rectangle : box {
-      rx_s32 roundness;
+      rx_f32 roundness;
       bool operator!=(const rectangle& _rectangle) const;
     };
 
@@ -52,14 +53,14 @@ struct immediate2D {
     struct scissor : box {};
 
     struct line {
-      math::vec2i points[2];
-      rx_s32 roundness;
-      rx_s32 thickness;
+      math::vec2f points[2];
+      rx_f32 roundness;
+      rx_f32 thickness;
       bool operator!=(const line& _line) const;
     };
 
     struct text {
-      math::vec2i position;
+      math::vec2f position;
       rx_s32 size;
       rx_f32 scale;
       rx_size font_index;
@@ -98,23 +99,23 @@ struct immediate2D {
       };
     };
 
-    void record_scissor(const math::vec2i& _position, const math::vec2i& _size);
-    void record_rectangle(const math::vec2i& _position, const math::vec2i& _size,
-      rx_s32 _roundness, const math::vec4f& _color);
-    void record_line(const math::vec2i& _point_a, const math::vec2i& _point_b,
-      rx_s32 _roundness, rx_s32 _thickness, const math::vec4f& _color);
-    void record_triangle(const math::vec2i& _position, const math::vec2i& _size,
+    void record_scissor(const math::vec2f& _position, const math::vec2f& _size);
+    void record_rectangle(const math::vec2f& _position, const math::vec2f& _size,
+      rx_f32 _roundness, const math::vec4f& _color);
+    void record_line(const math::vec2f& _point_a, const math::vec2f& _point_b,
+      rx_f32 _roundness, rx_f32 _thickness, const math::vec4f& _color);
+    void record_triangle(const math::vec2f& _position, const math::vec2f& _size,
       rx_u32 _flags, const math::vec4f& _color);
 
     void record_text(const char* _font, rx_size _font_length,
-      const math::vec2i& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
+      const math::vec2f& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
       const char* _contents, rx_size _contents_length, const math::vec4f& _color);
 
-    void record_text(const char* _font, const math::vec2i& _position,
+    void record_text(const char* _font, const math::vec2f& _position,
       rx_s32 _size, rx_f32 _scale, text_align _align, const char* _contents,
       const math::vec4f& _color);
 
-    void record_text(const string& _font, const math::vec2i& _position,
+    void record_text(const string& _font, const math::vec2f& _position,
       rx_s32 _size, rx_f32 _scale, text_align _align, const string& _contents,
       const math::vec4f& _color);
 
@@ -128,6 +129,7 @@ struct immediate2D {
     memory::allocator* m_allocator;
     vector<command> m_commands;
     vector<char> m_string_table;
+    optional<box> m_scissor;
   };
 
   immediate2D(frontend::interface* _frontend);
@@ -135,6 +137,10 @@ struct immediate2D {
 
   void render(frontend::target* _target);
   queue& frame_queue();
+  frontend::interface* frontend() const;
+
+  rx_f32 measure_text_length(const char* _font, const char* _text,
+    rx_size _text_length, rx_s32 _size, rx_f32 _scale);
 
   struct font {
     static constexpr const rx_size k_default_resolution{128};
@@ -166,6 +172,7 @@ struct immediate2D {
 
     rx_s32 size() const;
     frontend::texture2D* texture() const;
+    frontend::interface* frontend() const;
 
   private:
     frontend::interface* m_frontend;
@@ -285,7 +292,7 @@ inline constexpr immediate2D::queue::command::command()
 }
 
 inline void immediate2D::queue::record_text(const char* _font,
-  const math::vec2i& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
+  const math::vec2f& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
   const char* _contents, const math::vec4f& _color)
 {
   record_text(_font, strlen(_font), _position, _size, _scale, _align, _contents,
@@ -293,7 +300,7 @@ inline void immediate2D::queue::record_text(const char* _font,
 }
 
 inline void immediate2D::queue::record_text(const string& _font,
-  const math::vec2i& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
+  const math::vec2f& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
   const string& _contents, const math::vec4f& _color)
 {
   record_text(_font.data(), _font.size(), _position, _size, _scale, _align,
@@ -312,6 +319,10 @@ inline immediate2D::queue& immediate2D::frame_queue() {
   return m_queue;
 }
 
+inline frontend::interface* immediate2D::frontend() const {
+  return m_frontend;
+}
+
 inline bool immediate2D::font::key::operator==(const key& _key) const {
   return name == _key.name && size == _key.size;
 }
@@ -326,6 +337,10 @@ inline rx_s32 immediate2D::font::size() const {
 
 inline frontend::texture2D* immediate2D::font::texture() const {
   return m_texture;
+}
+
+inline frontend::interface* immediate2D::font::frontend() const {
+  return m_frontend;
 }
 
 } // namespace rx::render

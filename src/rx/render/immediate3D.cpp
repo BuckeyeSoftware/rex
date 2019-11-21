@@ -25,7 +25,7 @@ immediate3D::queue::queue(queue&& queue_)
 }
 
 immediate3D::queue& immediate3D::queue::operator=(queue&& queue_) {
-  RX_ASSERT(this != &queue_, "self assignment");
+  RX_ASSERT(&queue_ != this, "self assignment");
   m_allocator = queue_.m_allocator;
   m_commands = utility::move(queue_.m_commands);
   queue_.m_allocator = nullptr;

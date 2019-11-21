@@ -86,28 +86,34 @@ bool immediate2D::queue::command::operator!=(const command& _command) const {
   return false;
 }
 
-void immediate2D::queue::record_scissor(const math::vec2i& _position,
-  const math::vec2i& _size)
+void immediate2D::queue::record_scissor(const math::vec2f& _position,
+  const math::vec2f& _size)
 {
   profiler::cpu_sample sample{"immediate2D::queue::record_scissor"};
 
+  if (_position.x < 0.0f) {
+    m_scissor = nullopt;
+  } else {
+    m_scissor = box{_position, _size};
+  }
+
   command next_command;
   next_command.kind = command::type::k_scissor;
-  next_command.flags = _position.x < 0 ? 0 : 1;
+  next_command.flags = _position.x < 0.0f ? 0.0f : 1.0f;
   next_command.color = {};
   next_command.as_scissor.position = _position;
   next_command.as_scissor.size = _size;
 
   next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.kind));
   next_command.hash = hash_combine(next_command.hash, hash<rx_u32>{}(next_command.flags));
-  next_command.hash = hash_combine(next_command.hash, hash<math::vec2i>{}(next_command.as_scissor.position));
-  next_command.hash = hash_combine(next_command.hash, hash<math::vec2i>{}(next_command.as_scissor.size));
+  next_command.hash = hash_combine(next_command.hash, hash<math::vec2f>{}(next_command.as_scissor.position));
+  next_command.hash = hash_combine(next_command.hash, hash<math::vec2f>{}(next_command.as_scissor.size));
 
   m_commands.push_back(utility::move(next_command));
 }
 
-void immediate2D::queue::record_rectangle(const math::vec2i& _position,
-  const math::vec2i& _size, rx_s32 _roundness, const math::vec4f& _color)
+void immediate2D::queue::record_rectangle(const math::vec2f& _position,
+  const math::vec2f& _size, rx_f32 _roundness, const math::vec4f& _color)
 {
   profiler::cpu_sample sample{"immediate2D::queue::record_rectangle"};
 
@@ -122,15 +128,15 @@ void immediate2D::queue::record_rectangle(const math::vec2i& _position,
   next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.kind));
   next_command.hash = hash_combine(next_command.hash, hash<rx_u32>{}(next_command.flags));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec4f>{}(next_command.color));
-  next_command.hash = hash_combine(next_command.hash, hash<math::vec2i>{}(next_command.as_rectangle.position));
-  next_command.hash = hash_combine(next_command.hash, hash<math::vec2i>{}(next_command.as_rectangle.size));
-  next_command.hash = hash_combine(next_command.hash, hash<rx_s32>{}(next_command.as_rectangle.roundness));
+  next_command.hash = hash_combine(next_command.hash, hash<math::vec2f>{}(next_command.as_rectangle.position));
+  next_command.hash = hash_combine(next_command.hash, hash<math::vec2f>{}(next_command.as_rectangle.size));
+  next_command.hash = hash_combine(next_command.hash, hash<rx_f32>{}(next_command.as_rectangle.roundness));
 
   m_commands.push_back(utility::move(next_command));
 }
 
-void immediate2D::queue::record_line(const math::vec2i& _point_a,
-  const math::vec2i& _point_b, rx_s32 _roundness, rx_s32 _thickness,
+void immediate2D::queue::record_line(const math::vec2f& _point_a,
+  const math::vec2f& _point_b, rx_f32 _roundness, rx_f32 _thickness,
   const math::vec4f& _color)
 {
   profiler::cpu_sample sample{"immediate2D::queue::record_line"};
@@ -149,8 +155,8 @@ void immediate2D::queue::record_line(const math::vec2i& _point_a,
   m_commands.push_back(utility::move(next_command));
 }
 
-void immediate2D::queue::record_triangle(const math::vec2i& _position,
-  const math::vec2i& _size, rx_u32 _flags, const math::vec4f& _color)
+void immediate2D::queue::record_triangle(const math::vec2f& _position,
+  const math::vec2f& _size, rx_u32 _flags, const math::vec4f& _color)
 {
   profiler::cpu_sample sample{"immediate2D::queue::record_triangle"};
 
@@ -164,17 +170,40 @@ void immediate2D::queue::record_triangle(const math::vec2i& _position,
   next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.kind));
   next_command.hash = hash_combine(next_command.hash, hash<rx_u32>{}(next_command.flags));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec4f>{}(next_command.color));
-  next_command.hash = hash<math::vec2i>{}(next_command.as_triangle.position);
-  next_command.hash = hash<math::vec2i>{}(next_command.as_triangle.size);
+  next_command.hash = hash<math::vec2f>{}(next_command.as_triangle.position);
+  next_command.hash = hash<math::vec2f>{}(next_command.as_triangle.size);
 
   m_commands.push_back(utility::move(next_command));
 }
 
 void immediate2D::queue::record_text(const char* _font, rx_size _font_length,
-  const math::vec2i& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
+  const math::vec2f& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
   const char* _text, rx_size _text_length, const math::vec4f& _color)
 {
   profiler::cpu_sample sample{"immediate2D::queue::record_text"};
+
+  if (_text_length == 0) {
+    return;
+  }
+
+  // Quick and dirty rejection of text outside the scissor.
+  if (m_scissor) {
+    // The text is above the scissor rectangle.
+    if (_position.y > m_scissor->position.y + m_scissor->size.h) {
+      return;
+    }
+
+    // The text is below the scissor rectangle.
+    if (_position.y < m_scissor->position.y) {
+      return;
+    }
+
+    // Text is outside the right edge of the scissor while not right aligned.
+    if (_align != text_align::k_right
+      && _position.x > m_scissor->position.x + m_scissor->size.w) {
+      return;
+    }
+  }
 
   command next_command;
   next_command.kind = command::type::k_text;
@@ -200,7 +229,7 @@ void immediate2D::queue::record_text(const char* _font, rx_size _font_length,
   next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.kind));
   next_command.hash = hash_combine(next_command.hash, hash<rx_u32>{}(next_command.flags));
   next_command.hash = hash_combine(next_command.hash, hash<math::vec4f>{}(next_command.color));
-  next_command.hash = hash_combine(next_command.hash, hash<math::vec2i>{}(next_command.as_text.position));
+  next_command.hash = hash_combine(next_command.hash, hash<math::vec2f>{}(next_command.as_text.position));
   next_command.hash = hash_combine(next_command.hash, hash<rx_s32>{}(next_command.as_text.size));
   next_command.hash = hash_combine(next_command.hash, hash<rx_f32>{}(next_command.as_text.scale));
   next_command.hash = hash_combine(next_command.hash, hash<rx_size>{}(next_command.as_text.font_index));
@@ -487,8 +516,8 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
           _command.color);
         break;
       case queue::command::type::k_scissor:
-        m_scissor_position = _command.as_scissor.position;
-        m_scissor_size = _command.as_scissor.size;
+        m_scissor_position = _command.as_scissor.position.cast<rx_s32>();
+        m_scissor_size = _command.as_scissor.size.cast<rx_s32>();
         break;
       default:
         break;
@@ -761,19 +790,14 @@ static rx_size calculate_text_color(const char* _contents, math::vec4f& color_) 
 }
 
 static rx_f32 calculate_text_length(immediate2D::font* _font, rx_f32 _scale,
-  const string& _contents)
+  const char* _text, rx_size _text_length)
 {
-  // _scale /= static_cast<rx_f32>(_font->size());
-
-  const rx_size length{_contents.size()};
-
   rx_f32 position{0.0f};
-  rx_f32 span{0.0f};
 
-  for (rx_size i{0}; i < length; i++) {
-    const int ch{_contents[i]};
+  for (rx_size i{0}; i < _text_length; i++) {
+    const int ch{_text[i]};
     if (ch == '^') {
-      const char* next{_contents.data() + i + 1};
+      const char* next{_text + i + 1};
       if (*next != '^') {
         math::vec4f ignore;
         i += calculate_text_color(next, ignore);
@@ -782,16 +806,28 @@ static rx_f32 calculate_text_length(immediate2D::font* _font, rx_f32 _scale,
     }
 
     const auto glyph{_font->glyph_for_code(ch - 32)};
-    const auto round{position + glyph.offset.x};
-
-    span = round
-      + static_cast<rx_f32>(glyph.position[1].x) * _scale
-      - static_cast<rx_f32>(glyph.position[0].x) * _scale;
-
     position += glyph.x_advance * _scale;
   }
 
-  return span;
+  return position;
+}
+
+rx_f32 immediate2D::measure_text_length(const char* _font,
+  const char* _text, rx_size _text_length, rx_s32 _size, rx_f32 _scale)
+{
+  profiler::cpu_sample sample{"immediate2D::measure_text_length"};
+
+  const font::key key{_size, _font};
+  const auto find{m_fonts.find(key)};
+  font* font_map{nullptr};
+  if (find) {
+    font_map = *find;
+  } else {
+    font_map = m_frontend->allocator()->create<font>(key, m_frontend);
+    m_fonts.insert(key, font_map);
+  }
+
+  return calculate_text_length(font_map, _scale, _text, _text_length);
 }
 
 void immediate2D::generate_text(rx_s32 _size, const char* _font,
@@ -818,10 +854,10 @@ void immediate2D::generate_text(rx_s32 _size, const char* _font,
 
   switch (_align) {
   case text_align::k_center:
-    position.x -= calculate_text_length(font_map, _scale, _contents) * .5f;
+    position.x -= calculate_text_length(font_map, _scale, _contents, _contents_length) * .5f;
     break;
   case text_align::k_right:
-    position.x -= calculate_text_length(font_map, _scale, _contents);
+    position.x -= calculate_text_length(font_map, _scale, _contents, _contents_length);
     break;
   case text_align::k_left:
     break;
@@ -924,6 +960,10 @@ void immediate2D::add_batch(rx_size _offset, batch::type _type, bool _blend,
   profiler::cpu_sample sample{"immediate2D::add_batch"};
 
   const rx_size count{m_element_index - _offset};
+  if (count == 0) {
+    // Generated no geometry for this batch, discard it.
+    return;
+  }
 
   frontend::state render_state;
 

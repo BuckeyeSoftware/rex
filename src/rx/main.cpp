@@ -12,6 +12,7 @@
 #include "rx/core/profiler.h"
 #include "rx/core/global.h"
 #include "rx/core/abort.h"
+#include "rx/core/log.h"
 
 #include "rx/game.h"
 
@@ -133,8 +134,49 @@ int main(int _argc, char** _argv) {
   globals::find("system")->find("thread_pool")->init(SDL_GetCPUCount());
   globals::find("system")->find("profiler")->init();
 
+  globals::find("console")->init();
+
+  // Register an event handler for every log's "on_write" method which will
+  // recieve messages from the log and replicate it on the engine console. When
+  // the handles go out of scope, the console will no longer recieve those
+  // messages.
+  vector<log::event_type::handle> logging_event_handles;
+  globals::find("loggers")->each([&](global_node* _logger) {
+    logging_event_handles.push_back(_logger->cast<rx::log>()->on_write([](const string& _message) {
+      console::interface::write(_message);
+    }));
+  });
+
   // Initialize the others in any order.
   globals::init();
+
+  // Bind some useful console commands early
+  console::interface::add_command("reset", "s",
+    [](const vector<console::command::argument>& _arguments) {
+      console::interface::reset(_arguments[0].as_string);
+      return true;
+    });
+
+  console::interface::add_command("clear", "",
+    [](const vector<console::command::argument>&) {
+      console::interface::clear();
+      return true;
+    });
+
+  console::interface::add_command("exit", "",
+    [](const vector<console::command::argument>&) {
+      printf("%p before %d\n", &g_status, static_cast<int>(g_status.load()));
+      g_status.store(game::status::k_shutdown);
+      printf("%p after to %d\n", &g_status, static_cast<int>(g_status.load()));
+      return true;
+    });
+
+  console::interface::add_command("quit", "",
+    [&](const vector<console::command::argument>&) {
+      g_status.store(game::status::k_shutdown);
+      printf("status changed!\n");
+      return true;
+    });
 
   SDL_SetMemoryFunctions(
     [](rx_size _size) -> void* {
@@ -257,7 +299,7 @@ int main(int _argc, char** _argv) {
       display_hdr->set(false);
     }
 
-    //SDL_GL_SetSwapInterval(*display_swap_interval);
+    SDL_StartTextInput();
 
     render::backend::interface* backend{nullptr};
     if (driver_name == "gl4") {
@@ -274,6 +316,8 @@ int main(int _argc, char** _argv) {
     if (!backend->init()) {
       abort("failed to initialize rendering backend");
     }
+
+    SDL_GL_SetSwapInterval(*display_swap_interval);
 
     {
       render::frontend::interface frontend{&memory::g_system_allocator, backend};
@@ -376,7 +420,7 @@ int main(int _argc, char** _argv) {
       frontend.swap();
 
       input::input input;
-      while (g_status.load() == game::status::k_running) {
+      while (g_status == game::status::k_running) {
         for (SDL_Event event; SDL_PollEvent(&event);) {
           input::event ievent;
           switch (event.type) {
@@ -415,6 +459,24 @@ int main(int _argc, char** _argv) {
               g->on_resize(display_resolution->get().cast<rx_size>());
               break;
             }
+            break;
+          case SDL_TEXTINPUT:
+            ievent.type = input::event_type::k_text_input;
+            strcpy(ievent.as_text_input.contents, event.text.text);
+            input.handle_event(ievent);
+            break;
+          case SDL_CLIPBOARDUPDATE:
+            // input.update_clipboard();
+            {
+              char* text{SDL_GetClipboardText()};
+              if (text) {
+                ievent.type = input::event_type::k_clipboard;
+                utility::construct<string>(&ievent.as_clipboard.contents, text);
+                SDL_free(text);
+                input.handle_event(ievent);
+              }
+            }
+            break;
           }
         }
 
@@ -423,7 +485,13 @@ int main(int _argc, char** _argv) {
         }
 
         // Execute one slice of the game.
-        g_status = g->on_slice(input);
+        const game::status status{g->on_slice(input)};
+
+        if (g_status != game::status::k_running) {
+          break;
+        }
+
+        g_status = status;
 
         // Update the input system.
         input.update(frontend.timer().delta_time());
@@ -454,12 +522,16 @@ int main(int _argc, char** _argv) {
     SDL_DestroyWindow(window);
   }
 
+  logging_event_handles.clear();
+
   SDL_Quit();
 
   globals::fini();
 
-  globals::find("system")->find("thread_pool")->fini();
+  globals::find("console")->fini();
+
   globals::find("system")->find("profiler")->fini();
+  globals::find("system")->find("thread_pool")->fini();
   globals::find("system")->find("logger")->fini();
   globals::find("system")->find("allocator")->fini();
 

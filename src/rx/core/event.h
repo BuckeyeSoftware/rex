@@ -8,8 +8,11 @@ template<typename T>
 struct event {
   using delegate = function<void(T)>;
 
-  struct handle {
+  struct handle
+    : concepts::no_copy
+  {
     constexpr handle(event* _event, rx_size _index);
+    constexpr handle(handle&& _existing);
     ~handle();
   private:
     event* m_event;
@@ -38,8 +41,19 @@ inline constexpr event<T>::handle::handle(event<T>* _event, rx_size _index)
 }
 
 template<typename T>
+inline constexpr event<T>::handle::handle(handle&& handle_)
+  : m_event{handle_.m_event}
+  , m_index{handle_.m_index}
+{
+  handle_.m_event = nullptr;
+  handle_.m_index = 0;
+}
+
+template<typename T>
 inline event<T>::handle::~handle() {
-  m_event->m_delegates[m_index] = nullptr;
+  if (m_event) {
+    m_event->m_delegates[m_index] = nullptr;
+  }
 }
 
 template<typename T>
