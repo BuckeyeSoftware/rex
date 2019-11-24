@@ -1,6 +1,7 @@
 #ifndef RX_CONSOLE_COMMAND_H
 #define RX_CONSOLE_COMMAND_H
 #include "rx/console/variable.h"
+#include "rx/console/parser.h"
 
 namespace rx::console {
 
@@ -49,25 +50,30 @@ struct command
 
   using delegate = function<bool(const vector<argument>& _arguments)>;
 
-  command(memory::allocator* _allocator, const char* _signature, delegate&& _function);
-  command(const char* _signature, delegate&& _function);
+  command(memory::allocator* _allocator, const string& _name,
+    const char* _signature, delegate&& _function);
+  command(const string& _name, const char* _signature, delegate&& _function);
   command(command&& command_);
-  ~command();
 
   command& operator=(command&& command_);
 
   template<typename... Ts>
   bool execute_arguments(Ts&&... _arguments);
 
-  bool execute_string(const string& _contents);
+  bool execute_tokens(const vector<token>& _tokens);
+
+  const string& name() const &;
 
 private:
   bool execute();
-  bool parse_string(const string& _contents);
 
+  memory::allocator* m_allocator;
   delegate m_delegate;
   vector<argument> m_arguments;
+  string m_declaration;
+  string m_name;
   const char* m_signature;
+  rx_size m_argument_count;
 };
 
 inline command::argument::argument(bool _value)
@@ -130,27 +136,37 @@ inline command::argument::argument(const math::vec2i& _value)
   as_vec2i = _value;
 }
 
-inline command::command(const char* _signature, delegate&& _function)
-  : command{&memory::g_system_allocator, _signature, utility::move(_function)}
+inline command::command(const string& _name, const char* _signature, delegate&& _function)
+  : command{&memory::g_system_allocator, _name, _signature, utility::move(_function)}
 {
 }
 
 inline command::command(command&& command_)
-  : m_delegate{utility::move(command_.m_delegate)}
+  : m_allocator{command_.m_allocator}
+  , m_delegate{utility::move(command_.m_delegate)}
   , m_arguments{utility::move(command_.m_arguments)}
+  , m_declaration{utility::move(command_.m_declaration)}
+  , m_name{utility::move(command_.m_name)}
   , m_signature{command_.m_signature}
+  , m_argument_count{command_.m_argument_count}
 {
   command_.m_signature = nullptr;
+  command_.m_argument_count = 0;
 }
 
 inline command& command::operator=(command&& command_) {
   RX_ASSERT(&command_ != this, "self assignment");
 
+  m_allocator = command_.m_allocator;
   m_delegate = utility::move(command_.m_delegate);
   m_arguments = utility::move(command_.m_arguments);
+  m_declaration = utility::move(command_.m_declaration);
+  m_name = utility::move(command_.m_name);
   m_signature = command_.m_signature;
+  m_argument_count = command_.m_argument_count;
 
   command_.m_signature = nullptr;
+  command_.m_argument_count = 0;
 
   return *this;
 }
@@ -160,6 +176,10 @@ inline bool command::execute_arguments(Ts&&... _arguments) {
   m_arguments.clear();
   (m_arguments.emplace_back(_arguments), ...);
   return execute();
+}
+
+inline const string& command::name() const & {
+  return m_name;
 }
 
 } // namespace rx::console

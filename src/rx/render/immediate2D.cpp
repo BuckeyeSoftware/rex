@@ -995,7 +995,7 @@ void immediate2D::add_batch(rx_size _offset, batch::type _type, bool _blend,
     }
   }
 
-  m_batches.push_back({_offset, count, _type, render_state, _texture});
+  m_batches.emplace_back(_offset, count, _type, render_state, _texture);
 }
 
 void immediate2D::add_element(rx_u32 _element) {

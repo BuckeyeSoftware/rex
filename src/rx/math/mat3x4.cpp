@@ -5,10 +5,10 @@
 namespace rx::math {
 
 template<typename T>
-mat3x4<T>::mat3x4(const mat3x3<T>& _rotation, const vec3<T>& _translation)
-  : x{_rotation.x.x, _rotation.x.y, _rotation.x.z, _translation.x}
-  , y{_rotation.y.x, _rotation.y.y, _rotation.y.z, _translation.y}
-  , z{_rotation.z.x, _rotation.z.y, _rotation.z.z, _translation.z}
+mat3x4<T>::mat3x4(const mat3x3<T>& _scale_rotate, const vec3<T>& _translation)
+  : x{_scale_rotate.x.x, _scale_rotate.x.y, _scale_rotate.x.z, _translation.x}
+  , y{_scale_rotate.y.x, _scale_rotate.y.y, _scale_rotate.y.z, _translation.y}
+  , z{_scale_rotate.z.x, _scale_rotate.z.y, _scale_rotate.z.z, _translation.z}
 {
 }
 

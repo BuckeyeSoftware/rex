@@ -197,7 +197,11 @@ void logger::process(int) {
 }
 
 void log::write(log::level level, string&& contents_) {
-  m_events.signal(contents_);
+  {
+    concurrency::scope_lock lock{m_mutex};
+    m_events.signal(contents_);
+  }
+
   logger::s_logger->write(this, utility::move(contents_), level, time(nullptr));
 }
 

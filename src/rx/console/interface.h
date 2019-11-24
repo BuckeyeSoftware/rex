@@ -5,7 +5,7 @@
 
 namespace rx::console {
 
-struct auto_complete;
+struct token;
 
 struct interface {
   // loads |_file_name| configuration
@@ -18,16 +18,9 @@ struct interface {
   // initialization into global linked-list representation
   static variable_reference* add_variable_reference(variable_reference* _reference);
 
-  // set variable |_name| with typed value |_value|
-  template<typename T>
-  static variable_status set_from_value(const string& _name, const T& _value);
-
   // reset variable |_name|
   template<typename T>
   static void reset_from_reference(variable_reference* _reference);
-
-  // change variable |_name| with string encoded |_value|
-  static variable_status change(const string& _name, const string& _value);
 
   // reset variable |_name|
   static bool reset(const string& _name);
@@ -50,22 +43,16 @@ struct interface {
   static vector<string> complete(const string& _prefix);
 
 private:
-  // parse string |_contents| into typed value |value_|
-  template<typename T>
-  static variable_status parse_string(const string& _contents, T& value_);
-
   // set variable |_name| with value |_value|
   template<typename T>
   static variable_status set_from_name_and_value(const string& _name, const T& _value);
 
+  // set variable |_reference| with token |_token|
+  static variable_status set_from_reference_and_token(variable_reference* _reference, const token& _token);
+
   // set variable |_reference| with value |_value|
   template<typename T>
   static variable_status set_from_reference_and_value(variable_reference* _reference, const T& _value);
-
-
-  // set variable |_name| with string encoded value |_string_value|
-  template<typename T>
-  static variable_status set_from_name_and_string(const string& _name, const string& _string_value);
 
   // set variable |_reference| with string encoded value alue |_string_value|
   template<typename T>

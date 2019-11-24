@@ -335,7 +335,7 @@ vector<string> string::split(int _token, rx_size _count) const {
     }
 
     // handle quoted strings
-    if (*ch == '\"') {
+    if (_count && *ch == '\"') {
       quoted = !quoted;
       continue;
     }

@@ -4,6 +4,9 @@
 #include "rx/core/string.h"
 #include "rx/core/event.h"
 
+#include "rx/core/concurrency/mutex.h"
+#include "rx/core/concurrency/scope_lock.h"
+
 namespace rx {
 
 struct log {
@@ -16,7 +19,7 @@ struct log {
     k_error
   };
 
-  constexpr log(const char* _name, const char* _file_name, int _line);
+  log(const char* _name, const char* _file_name, int _line);
 
   template<typename... Ts>
   void operator()(level _level, const char* _fmt, Ts&&... _args);
@@ -34,10 +37,11 @@ private:
   const char* m_file_name;
   int m_line;
 
+  concurrency::mutex m_mutex;
   event_type m_events;
 };
 
-inline constexpr log::log(const char* _name, const char* _file_name, int _line)
+inline log::log(const char* _name, const char* _file_name, int _line)
   : m_name{_name}
   , m_file_name{_file_name}
   , m_line{_line}
@@ -62,6 +66,7 @@ inline int log::line() const {
 }
 
 inline log::event_type::handle log::on_write(function<void(string)>&& callback_) {
+  concurrency::scope_lock lock{m_mutex};
   return m_events.connect(utility::move(callback_));
 }
 

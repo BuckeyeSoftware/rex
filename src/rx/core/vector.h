@@ -440,6 +440,16 @@ inline bool vector<T>::each_rev(F&& _func) const {
 }
 
 template<typename T>
+inline const T& vector<T>::first() const {
+  return m_data[0];
+}
+
+template<typename T>
+inline T& vector<T>::first() {
+  return m_data[0];
+}
+
+template<typename T>
 inline const T& vector<T>::last() const {
   return m_data[m_size - 1];
 }

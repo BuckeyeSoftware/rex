@@ -370,10 +370,12 @@ inline variable_status variable<T>::set(const T& _value) {
   if (_value < m_min || _value > m_max) {
     return variable_status::k_out_of_range;
   }
+
   if (m_current != _value) {
     m_current = _value;
     m_on_change.signal(*this);
   }
+
   return variable_status::k_success;
 }
 
@@ -476,6 +478,7 @@ inline variable_status variable<string>::set(const string& _value) {
     m_current = _value;
     m_on_change.signal(*this);
   }
+
   return variable_status::k_success;
 }
 
@@ -542,10 +545,12 @@ inline variable_status variable<vec2<T>>::set(const vec2<T>& _value) {
   {
     return variable_status::k_out_of_range;
   }
+
   if (m_current != _value) {
     m_current = _value;
     m_on_change.signal(*this);
   }
+
   return variable_status::k_success;
 }
 

@@ -55,6 +55,7 @@ private:
   vector<mesh> m_transparent_meshes;
   rx::model::loader m_model;
   optional<rx::model::animation> m_animation;
+  math::aabb m_aabb;
 };
 
 inline const vector<model::mesh>& model::opaque_meshes() const & {

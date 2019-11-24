@@ -175,6 +175,18 @@ int main(int _argc, char** _argv) {
       return true;
     });
 
+  console::interface::add_command("test", "ifsv2iv3fb",
+    [&](const vector<console::command::argument>& _arguments) {
+      console::interface::print("i=%d, f=%f, s=%s, v2i=%s, v3f=%s, b=%s",
+        _arguments[0].as_int,
+        _arguments[1].as_float,
+        _arguments[2].as_string,
+        _arguments[3].as_vec2i,
+        _arguments[4].as_vec3f,
+        _arguments[5].as_boolean ? "true" : "false");
+      return true;
+    });
+
   SDL_SetMemoryFunctions(
     [](rx_size _size) -> void* {
       return memory::g_system_allocator->allocate(_size);

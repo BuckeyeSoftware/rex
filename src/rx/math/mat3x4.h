@@ -70,9 +70,9 @@ inline mat3x4<T> mat3x4<T>::invert(const mat3x4& _mat) {
 
   const vec3<T> translate{_mat.x.w, _mat.y.w, _mat.z.w};
 
-  return {{inverse_rotation_x.x, inverse_rotation_x.y, inverse_rotation_x.z, dot(-inverse_rotation_x, translate)},
-          {inverse_rotation_y.x, inverse_rotation_y.y, inverse_rotation_y.z, dot(-inverse_rotation_y, translate)},
-          {inverse_rotation_z.x, inverse_rotation_z.y, inverse_rotation_z.z, dot(-inverse_rotation_z, translate)}};
+  return {{inverse_rotation_x.x, inverse_rotation_x.y, inverse_rotation_x.z, -dot(inverse_rotation_x, translate)},
+          {inverse_rotation_y.x, inverse_rotation_y.y, inverse_rotation_y.z, -dot(inverse_rotation_y, translate)},
+          {inverse_rotation_z.x, inverse_rotation_z.y, inverse_rotation_z.z, -dot(inverse_rotation_z, translate)}};
 }
 
 template<typename T>

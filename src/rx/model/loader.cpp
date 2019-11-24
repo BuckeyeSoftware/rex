@@ -158,6 +158,22 @@ bool loader::import(const string& _file_name) {
           as_animated_vertices[i].blend_indices = blend_indices[i];
         }
       }
+
+      const math::mat3x4f& xform{
+        {transform.x.x, transform.y.x, transform.z.x, transform.w.x},
+        {transform.x.y, transform.y.y, transform.z.y, transform.w.y},
+        {transform.x.z, transform.y.z, transform.z.z, transform.w.z}};
+
+      const math::mat3x4f& inv_xform{math::mat3x4f::invert(xform)};
+
+      m_frames.each_fwd([&](math::mat3x4f& frame_) {
+        frame_ = xform * frame_ * inv_xform;
+      });
+
+      m_joints.each_fwd([&](importer::joint& joint_) {
+        joint_.frame = xform * joint_.frame * inv_xform;
+      });
+
     } else {
       if (m_animations.is_empty()) {
         for (rx_size i{0}; i < n_vertices; i++) {
