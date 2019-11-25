@@ -22,7 +22,7 @@ The placeholder values `-inf` and `+inf` represent the smallest and largest poss
 
 All variables persist between engine invocations and are stored in the engine configuration file, `config.cfg`.
 
-Specifying a value for a variable with a different type than the variable will result in a `"Type mistmatch"` error.
+Specifying a value for a variable with a different type than the variable will result in a `"Type mismatch"` error.
 
 # Commands
 

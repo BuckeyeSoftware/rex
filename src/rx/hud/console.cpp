@@ -17,7 +17,7 @@ RX_CONSOLE_SVAR(
   console_font_name,
   "console.font_name",
   "name of the font to use for the console (should be a monospaced font)",
-  "Consolas-Regular");
+  "Inconsolata-Regular");
 
 RX_CONSOLE_IVAR(
   console_font_size,

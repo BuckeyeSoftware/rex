@@ -5,7 +5,23 @@
 
 #include "rx/render/immediate2D.h"
 
+#include "rx/console/variable.h"
+
 namespace rx::hud {
+
+RX_CONSOLE_SVAR(
+  font_name,
+  "hud.memory_stats.font_name",
+  "font name of memory stats hud",
+  "Inconsolata-Regular");
+
+RX_CONSOLE_IVAR(
+  font_size,
+  "hud.memory_stats.font_size",
+  "font size of memory stats hud",
+  16,
+  64,
+  25);
 
 memory_stats::memory_stats(render::immediate2D* _immediate)
   : m_immediate{_immediate}
@@ -20,14 +36,14 @@ void memory_stats::render() {
   rx_f32 y = 25.0f;
   auto line{[&](const string &_line) {
     m_immediate->frame_queue().record_text(
-      "Consolas-Regular",
+      *font_name,
       math::vec2f{screen_size.x - 25.0f, y},
-      16,
+      *font_size,
       1.0f,
       render::immediate2D::text_align::k_right,
       _line,
       {1.0f, 1.0f, 1.0f, 1.0f});
-    y += 16.0f;
+    y += *font_size;
   }};
 
   line(string::format("used memory (requested): %s", string::human_size_format(stats.used_request_bytes)));

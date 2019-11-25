@@ -5,7 +5,23 @@
 
 #include "rx/render/immediate2D.h"
 
+#include "rx/console/variable.h"
+
 namespace rx::hud {
+
+RX_CONSOLE_SVAR(
+  font_name,
+  "hud.render_stats.font_name",
+  "font name of render stats hud",
+  "Inconsolata-Regular");
+
+RX_CONSOLE_IVAR(
+  font_size,
+  "hud.render_stats.font_size",
+  "font size of render stats hud",
+  16,
+  64,
+  25);
 
 render_stats::render_stats(render::immediate2D* _immediate)
   : m_immediate{_immediate}
@@ -47,24 +63,24 @@ void render_stats::render() {
         _stats.cached)};
 
     m_immediate->frame_queue().record_text(
-      "Consolas-Regular",
+      *font_name,
       offset,
-      20,
+      *font_size,
       1.0f,
       render::immediate2D::text_align::k_left,
       format,
       {1.0f, 1.0f, 1.0f, 1.0f});
 
-    offset.y += 20.0f;
+    offset.y += *font_size;
   }};
 
   const auto &command_buffer{frontend.get_command_buffer()};
   const rx_size commands_used{command_buffer.used()};
   const rx_size commands_total{command_buffer.size()};
   m_immediate->frame_queue().record_text(
-    "Consolas-Regular",
+    *font_name,
     offset,
-    20,
+    *font_size,
     1.0f,
     render::immediate2D::text_align::k_left,
     string::format(
@@ -74,7 +90,7 @@ void render_stats::render() {
       string::human_size_format(commands_total)),
     {1.0f, 1.0f, 1.0f, 1.0f});
 
-  offset.y += 20.0f;
+  offset.y += *font_size;
 
   render_stat("texturesCM", textureCM_stats);
   render_stat("textures3D", texture3D_stats);
@@ -86,14 +102,14 @@ void render_stats::render() {
 
   auto render_number{[&](const char* _name, rx_size _number) {
     m_immediate->frame_queue().record_text(
-      "Consolas-Regular",
+      *font_name,
       offset,
-      20,
+      *font_size,
       1.0f,
       render::immediate2D::text_align::k_left,
       string::format("%s: %zu", _name, _number),
       {1.0f, 1.0f, 1.0f, 1.0f});
-    offset.y += 20.0f;
+    offset.y += *font_size;
   }};
 
   render_number("points", frontend.points());
@@ -109,9 +125,9 @@ void render_stats::render() {
   // mspf and fps
   const auto& _timer{frontend.timer()};
   m_immediate->frame_queue().record_text(
-    "Consolas-Regular",
+    *font_name,
     screen_size - math::vec2f{25, 25},
-    16,
+    *font_size,
     1.0f,
     render::immediate2D::text_align::k_right,
     string::format(

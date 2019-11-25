@@ -202,6 +202,12 @@ int main(int _argc, char** _argv) {
         return true;
       });
 
+    console::interface::add_command("restart", "",
+      [&](const vector<console::command::argument>&) {
+        g_status = game::status::k_restart;
+        return true;
+      });
+
     // Replace SDL2s allocator with our system allocator so we can track it's
     // memory usage.
     SDL_SetMemoryFunctions(
