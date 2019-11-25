@@ -331,6 +331,7 @@ int main(int _argc, char** _argv) {
         display_hdr->set(false);
       }
 
+      SDL_RaiseWindow(window);
       SDL_StartTextInput();
 
       render::backend::interface* backend{nullptr};
@@ -413,6 +414,8 @@ int main(int _argc, char** _argv) {
         // Quickly get a black screen.
         frontend.process();
         frontend.swap();
+
+        SDL_SetRelativeMouseMode(SDL_TRUE);
 
         // Create the game.
         extern game* create(render::frontend::interface&);

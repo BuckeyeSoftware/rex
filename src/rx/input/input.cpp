@@ -1,4 +1,5 @@
-#include <SDL.h>
+#include <SDL_clipboard.h> // TODO(dweiler): SetClipboardText
+
 #include "rx/input/input.h"
 
 #include "rx/core/hints/unreachable.h"

@@ -1,5 +1,3 @@
-#include <SDL.h> // TODO remove
-
 #include "rx/game.h"
 
 #include "rx/render/frontend/interface.h"
@@ -173,33 +171,37 @@ struct test_game
     m_camera.projection = math::mat4x4f::perspective(90.0f, {0.01f, 2048.0f},
       dimensions.w / dimensions.h);
 
-    rx_f32 move_speed{0.0f};
-    const rx_f32 sens{0.2f};
-    const auto &delta{_input.mouse().movement()};
-    math::vec3f move{static_cast<rx_f32>(delta.y) * sens, static_cast<rx_f32>(delta.x) * sens, 0.0f};
-    m_camera.rotate = m_camera.rotate + move;
+    if (!_input.active_text()) {
+      rx_f32 move_speed{0.0f};
+      const rx_f32 sens{0.2f};
+      const auto &delta{_input.mouse().movement()};
 
-    if (_input.keyboard().is_held(input::scan_code::k_left_control)) {
-      move_speed = 10.0f;
-    } else {
-      move_speed = 5.0f;
-    }
 
-    if (_input.keyboard().is_held(input::scan_code::k_w)) {
-      const auto f{m_camera.to_mat4().z};
-      m_camera.translate += math::vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
-    }
-    if (_input.keyboard().is_held(input::scan_code::k_s)) {
-      const auto f{m_camera.to_mat4().z};
-      m_camera.translate -= math::vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
-    }
-    if (_input.keyboard().is_held(input::scan_code::k_d)) {
-      const auto l{m_camera.to_mat4().x};
-      m_camera.translate += math::vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
-    }
-    if (_input.keyboard().is_held(input::scan_code::k_a)) {
-      const auto l{m_camera.to_mat4().x};
-      m_camera.translate -= math::vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
+      math::vec3f move{static_cast<rx_f32>(delta.y) * sens, static_cast<rx_f32>(delta.x) * sens, 0.0f};
+      m_camera.rotate = m_camera.rotate + move;
+
+      if (_input.keyboard().is_held(input::scan_code::k_left_control)) {
+        move_speed = 10.0f;
+      } else {
+        move_speed = 5.0f;
+      }
+
+      if (_input.keyboard().is_held(input::scan_code::k_w)) {
+        const auto f{m_camera.to_mat4().z};
+        m_camera.translate += math::vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
+      }
+      if (_input.keyboard().is_held(input::scan_code::k_s)) {
+        const auto f{m_camera.to_mat4().z};
+        m_camera.translate -= math::vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
+      }
+      if (_input.keyboard().is_held(input::scan_code::k_d)) {
+        const auto l{m_camera.to_mat4().x};
+        m_camera.translate += math::vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
+      }
+      if (_input.keyboard().is_held(input::scan_code::k_a)) {
+        const auto l{m_camera.to_mat4().x};
+        m_camera.translate -= math::vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
+      }
     }
 
     if (_input.keyboard().is_released(input::scan_code::k_f1)) {
