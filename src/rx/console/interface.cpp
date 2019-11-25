@@ -47,60 +47,6 @@ void interface::add_command(const string& _name, const char* _signature,
   g_commands->insert(_name, {_name, _signature, utility::move(_function)});
 }
 
-static const char* variable_type_string(variable_type _type) {
-  switch (_type) {
-  case variable_type::k_boolean:
-    return "bool";
-  case variable_type::k_string:
-    return "string";
-  case variable_type::k_int:
-    return "int";
-  case variable_type::k_float:
-    return "float";
-  case variable_type::k_vec4f:
-    return "vec4f";
-  case variable_type::k_vec4i:
-    return "vec4i";
-  case variable_type::k_vec3f:
-    return "vec3f";
-  case variable_type::k_vec3i:
-    return "vec3i";
-  case variable_type::k_vec2f:
-    return "vec2f";
-  case variable_type::k_vec2i:
-    return "vec2i";
-  }
-  RX_HINT_UNREACHABLE();
-}
-
-static const char* token_type_string(token::type _token_type) {
-  switch (_token_type) {
-  case token::type::k_identifier:
-    return "identifier";
-  case token::type::k_string:
-    return "string";
-  case token::type::k_boolean:
-    return "boolean";
-  case token::type::k_int:
-    return "int";
-  case token::type::k_float:
-    return "float";
-  case token::type::k_vec4f:
-    return "vec4f";
-  case token::type::k_vec4i:
-    return "vec4i";
-  case token::type::k_vec3f:
-    return "vec3f";
-  case token::type::k_vec3i:
-    return "vec2i";
-  case token::type::k_vec2f:
-    return "vec2f";
-  case token::type::k_vec2i:
-    return "vec2i";
-  }
-  RX_HINT_UNREACHABLE();
-}
-
 static bool type_check(variable_type _variable_type, token::type _token_type) {
   switch (_variable_type) {
   case variable_type::k_boolean:
@@ -159,31 +105,58 @@ bool interface::execute(const string& _contents) {
     return false;
   }
 
-  if (tokens[0].kind() != token::type::k_identifier) {
-    print("^rerror: ^wexpected identifier");
+  if (tokens[0].kind() != token::type::k_atom) {
+    print("^rerror: ^wexpected atom");
     return false;
   }
 
-  if (auto* variable{get_from_name(tokens[0].as_identifier())}) {
-    set_from_reference_and_token(variable, tokens[1]);
-  } else if (auto* command{g_commands->find(tokens[0].as_identifier())}) {
+  const auto& atom{tokens[0].as_atom()};
+  if (auto* variable{find_variable_by_name(atom)}) {
+    if (tokens.size() > 1) {
+      switch (set_from_reference_and_token(variable, tokens[1])) {
+      case variable_status::k_success:
+        print("^gsuccess: ^wChanged: \"%s\" to %s", atom, tokens[1].print());
+        break;
+      case variable_status::k_out_of_range:
+        print("^rerror: ^wOut of range: \"%s\" has range %s", atom,
+          variable->print_range());
+        break;
+      case variable_status::k_type_mismatch:
+        print("^rerror: ^wType mismatch: \"%s\" expected %s, got %s", atom,
+          variable_type_as_string(variable->type()),
+          token_type_as_string(tokens[1].kind()));
+        break;
+      }
+    } else {
+      print("^cinfo: ^w%s = %s", atom, variable->print_value());
+    }
+  } else if (auto* command{g_commands->find(atom)}) {
     tokens.erase(0, 1);
     command->execute_tokens(tokens);
   } else {
-    print("^rerror: ^m%s: ^wcommand or variable not found", tokens[0].as_identifier());
+    print("^rerror: ^wCommand or variable \"%s\", not found", atom);
   }
 
   return true;
 }
 
-vector<string> interface::complete(const string& _prefix) {
-  // TODO(dweiler): prefix tree
+vector<string> interface::auto_complete_variables(const string& _prefix) {
   vector<string> results;
   for (variable_reference* node{g_head}; node; node = node->m_next) {
     if (!strncmp(node->m_name, _prefix.data(), _prefix.size())) {
       results.push_back(node->m_name);
     }
   }
+  return results;
+}
+
+vector<string> interface::auto_complete_commands(const string& _prefix) {
+  vector<string> results;
+  g_commands->each_key([&](const string& _key) {
+    if (!strncmp(_key.data(), _prefix.data(), _prefix.size())) {
+      results.push_back(_key);
+    }
+  });
   return results;
 }
 
@@ -218,14 +191,15 @@ bool interface::load(const char* file_name) {
         continue;
       }
 
-      if (tokens[0].kind() != token::type::k_identifier) {
+      if (tokens[0].kind() != token::type::k_atom) {
         continue;
       }
 
-      if (auto* variable{get_from_name(tokens[0].as_identifier())}) {
+      const auto& atom{tokens[0].as_atom()};
+      if (auto* variable{find_variable_by_name(atom)}) {
         set_from_reference_and_token(variable, tokens[1]);
       } else {
-        logger(log::level::k_error, "'%s' not found", tokens[0].as_identifier());
+        logger(log::level::k_error, "'%s' not found", atom);
       }
     }
   }
@@ -437,32 +411,12 @@ bool interface::save(const char* file_name) {
 }
 
 template<typename T>
-variable_status interface::set_from_name_and_value(const string& _name, const T& _value) {
-  for (variable_reference* head{g_head}; head; head = head->m_next) {
-    if (head->name() == _name) {
-      if (head->type() != variable_trait<T>::type) {
-        return variable_status::k_type_mismatch;
-      }
-      return set_from_reference_and_value(head, _value);
-    }
-  }
-  return variable_status::k_not_found;
-}
-
-template variable_status interface::set_from_name_and_value<bool>(const string& _name, const bool& _value);
-template variable_status interface::set_from_name_and_value<string>(const string& _name, const string& _value);
-template variable_status interface::set_from_name_and_value<rx_s32>(const string& _name, const rx_s32& _value);
-template variable_status interface::set_from_name_and_value<rx_f32>(const string& _name, const rx_f32& _value);
-template variable_status interface::set_from_name_and_value<math::vec4f>(const string& _name, const math::vec4f& _value);
-template variable_status interface::set_from_name_and_value<math::vec4i>(const string& _name, const math::vec4i& _value);
-template variable_status interface::set_from_name_and_value<math::vec3f>(const string& _name, const math::vec3f& _value);
-template variable_status interface::set_from_name_and_value<math::vec3i>(const string& _name, const math::vec3i& _value);
-template variable_status interface::set_from_name_and_value<math::vec2f>(const string& _name, const math::vec2f& _value);
-template variable_status interface::set_from_name_and_value<math::vec2i>(const string& _name, const math::vec2i& _value);
-
-template<typename T>
 variable_status interface::set_from_reference_and_value(variable_reference* _reference, const T& _value) {
-  return _reference->cast<T>()->set(_value);
+  if (auto* cast{_reference->try_cast<T>()}) {
+    return cast->set(_value);
+  } else {
+    return variable_status::k_type_mismatch;
+  }
 }
 
 template variable_status interface::set_from_reference_and_value<bool>(variable_reference* _reference, const bool& _value);
@@ -504,80 +458,19 @@ variable_status interface::set_from_reference_and_token(variable_reference* refe
     return reference_->cast<math::vec2i>()->set(_token.as_vec2i());
   }
 
-  return variable_status::k_malformed;
+  RX_HINT_UNREACHABLE();
 }
 
-template<typename T>
-void interface::reset_from_reference(variable_reference* _reference) {
-  _reference->cast<T>()->reset();
-}
-
-template void interface::reset_from_reference<bool>(variable_reference* _reference);
-template void interface::reset_from_reference<string>(variable_reference* _reference);
-template void interface::reset_from_reference<rx_s32>(variable_reference* _reference);
-template void interface::reset_from_reference<rx_f32>(variable_reference* _reference);
-template void interface::reset_from_reference<math::vec4f>(variable_reference* _reference);
-template void interface::reset_from_reference<math::vec4i>(variable_reference* _reference);
-template void interface::reset_from_reference<math::vec3f>(variable_reference* _reference);
-template void interface::reset_from_reference<math::vec3i>(variable_reference* _reference);
-template void interface::reset_from_reference<math::vec2f>(variable_reference* _reference);
-template void interface::reset_from_reference<math::vec2i>(variable_reference* _reference);
-
-bool interface::reset(const string& _name) {
+variable_reference* interface::find_variable_by_name(const char* _name) {
   for (variable_reference* head{g_head}; head; head = head->m_next) {
-    if (head->name() != _name) {
-      continue;
+    if (!strcmp(head->name(), _name)) {
+      return head;
     }
-    switch (head->type()) {
-    case variable_type::k_boolean:
-      reset_from_reference<bool>(head);
-      break;
-    case variable_type::k_string:
-      reset_from_reference<string>(head);
-      break;
-    case variable_type::k_int:
-      reset_from_reference<rx_s32>(head);
-      break;
-    case variable_type::k_float:
-      reset_from_reference<rx_f32>(head);
-      break;
-    case variable_type::k_vec4f:
-      reset_from_reference<math::vec4f>(head);
-      break;
-    case variable_type::k_vec4i:
-      reset_from_reference<math::vec4i>(head);
-      break;
-    case variable_type::k_vec3f:
-      reset_from_reference<math::vec3f>(head);
-      break;
-    case variable_type::k_vec3i:
-      reset_from_reference<math::vec3i>(head);
-      break;
-    case variable_type::k_vec2f:
-      reset_from_reference<math::vec2f>(head);
-      break;
-    case variable_type::k_vec2i:
-      reset_from_reference<math::vec2i>(head);
-      break;
-    }
-    return true;
   }
-  return false;
-}
-
-variable_reference* interface::get_from_name(const string& _name) {
-  for (variable_reference* head{g_head}; head; head = head->m_next) {
-    if (head->name() != _name) {
-      continue;
-    }
-
-    return head;
-  }
-
   return nullptr;
 }
 
-variable_reference* interface::add_variable_reference(variable_reference* reference) {
+variable_reference* interface::add_variable(variable_reference* reference) {
   logger(log::level::k_info, "registered '%s'", reference->m_name);
   concurrency::scope_lock locked(g_lock);
   variable_reference* next = g_head;

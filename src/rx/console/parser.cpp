@@ -5,14 +5,44 @@
 #include "rx/console/parser.h"
 #include "rx/console/variable.h"
 
+#include "rx/core/hints/unreachable.h"
+
 namespace rx::console {
+
+const char* token_type_as_string(token::type _type) {
+  switch (_type) {
+  case token::type::k_atom:
+    return "atom";
+  case token::type::k_string:
+    return "string";
+  case token::type::k_boolean:
+    return "boolean";
+  case token::type::k_int:
+    return "int";
+  case token::type::k_float:
+    return "float";
+  case token::type::k_vec4f:
+    return "vec4f";
+  case token::type::k_vec4i:
+    return "vec4i";
+  case token::type::k_vec3f:
+    return "vec3f";
+  case token::type::k_vec3i:
+    return "vec3i";
+  case token::type::k_vec2f:
+    return "vec2f";
+  case token::type::k_vec2i:
+    return "vec2i";
+  }
+  RX_HINT_UNREACHABLE();
+}
 
 token::token(type _type, string&& value_)
   : m_type{_type}
 {
   switch (m_type) {
-  case type::k_identifier:
-    utility::construct<string>(&m_as_identifier, utility::move(value_));
+  case type::k_atom:
+    utility::construct<string>(&m_as_atom, utility::move(value_));
     break;
   case type::k_string:
     utility::construct<string>(&m_as_string, utility::move(value_));
@@ -41,9 +71,9 @@ void token::assign(token&& token_) {
   m_type = token_.m_type;
 
   switch (m_type) {
-  case type::k_identifier:
-    utility::construct<string>(&m_as_identifier, utility::move(token_.m_as_identifier));
-    utility::destruct<string>(&token_.m_as_identifier);
+  case type::k_atom:
+    utility::construct<string>(&m_as_atom, utility::move(token_.m_as_atom));
+    utility::destruct<string>(&token_.m_as_atom);
     break;
   case type::k_string:
     utility::construct<string>(&m_as_string, utility::move(token_.m_as_string));
@@ -84,8 +114,8 @@ void token::destroy() {
   case type::k_string:
     utility::destruct<string>(&m_as_string);
     break;
-  case type::k_identifier:
-    utility::destruct<string>(&m_as_identifier);
+  case type::k_atom:
+    utility::destruct<string>(&m_as_atom);
     break;
   default:
     break;
@@ -94,8 +124,8 @@ void token::destroy() {
 
 string token::print() const {
   switch (m_type) {
-  case type::k_identifier:
-    return m_as_identifier;
+  case type::k_atom:
+    return m_as_atom;
   case type::k_string:
     return string::format("\"%s\"", m_as_string);
   case type::k_boolean:
@@ -296,7 +326,7 @@ bool parser::parse(const string& _contents) {
       while (is_identifier(*m_ch) || is_digit(*m_ch) || *m_ch == '.') {
         contents += *m_ch++;
       }
-      m_tokens.emplace_back(token::type::k_identifier, utility::move(contents));
+      m_tokens.emplace_back(token::type::k_atom, utility::move(contents));
       record_span();
     }
 

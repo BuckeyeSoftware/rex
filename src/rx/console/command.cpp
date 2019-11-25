@@ -236,8 +236,8 @@ bool command::execute_tokens(const vector<token>& _tokens) {
   m_arguments.clear();
   _tokens.each_fwd([&](const token& _token) {
     switch (_token.kind()) {
-    case token::type::k_identifier:
-      m_arguments.emplace_back(_token.as_identifier());
+    case token::type::k_atom:
+      m_arguments.emplace_back(_token.as_atom());
       break;
     case token::type::k_string:
       m_arguments.emplace_back(_token.as_string());

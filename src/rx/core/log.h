@@ -10,14 +10,14 @@
 namespace rx {
 
 struct log {
-  using event_type = event<string>;
-
   enum class level {
     k_warning,
     k_info,
     k_verbose,
     k_error
   };
+
+   using event_type = event<level, string>;
 
   log(const char* _name, const char* _file_name, int _line);
 
@@ -28,7 +28,7 @@ struct log {
   const char* file_name() const;
   int line() const;
 
-  event_type::handle on_write(function<void(string)>&& callback_);
+  event_type::handle on_write(function<void(level, string)>&& callback_);
 
 private:
   void write(level _level, string&& contents_);
@@ -65,7 +65,7 @@ inline int log::line() const {
   return m_line;
 }
 
-inline log::event_type::handle log::on_write(function<void(string)>&& callback_) {
+inline log::event_type::handle log::on_write(function<void(level, string)>&& callback_) {
   concurrency::scope_lock lock{m_mutex};
   return m_events.connect(utility::move(callback_));
 }

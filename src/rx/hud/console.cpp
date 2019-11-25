@@ -89,7 +89,9 @@ void console::update(input::input& _input) {
     m_text.clear();
   }
 
-  m_suggestions = rx::console::interface::complete(m_text.contents());
+  m_suggestions  = rx::console::interface::auto_complete_variables(m_text.contents());
+  m_suggestions += rx::console::interface::auto_complete_commands(m_text.contents());
+
   if (m_suggestions.is_empty()) {
     m_selection = 0;
   } else {

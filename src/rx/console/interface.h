@@ -8,55 +8,34 @@ namespace rx::console {
 struct token;
 
 struct interface {
-  // loads |_file_name| configuration
   static bool load(const char* _file_name);
-
-  // saves configuration to |_file_name|
   static bool save(const char* _file_name);
 
-  // thread type-erased static global variable |_reference| during static
-  // initialization into global linked-list representation
-  static variable_reference* add_variable_reference(variable_reference* _reference);
-
-  // reset variable |_name|
-  template<typename T>
-  static void reset_from_reference(variable_reference* _reference);
-
-  // reset variable |_name|
-  static bool reset(const string& _name);
-
-  // get variable |_name|
-  static variable_reference* get_from_name(const string& _name);
-
-  static bool execute(const string& _contents);
-
-  static const vector<string>& lines();
-
+  static variable_reference* add_variable(variable_reference* _reference);
   static void add_command(const string& _name, const char* _signature,
     function<bool(const vector<command::argument>&)>&& _function);
+
+  static variable_reference* find_variable_by_name(const string& _name);
+  static variable_reference* find_variable_by_name(const char* _name);
+
+  static bool execute(const string& _contents);
 
   template<typename... Ts>
   static void print(const char* _format, Ts&&... _arguments);
   static void write(const string& _message);
   static void clear();
+  static const vector<string>& lines();
 
-  static vector<string> complete(const string& _prefix);
+  static vector<string> auto_complete_variables(const string& _prefix);
+  static vector<string> auto_complete_commands(const string& _prefix);
 
 private:
-  // set variable |_name| with value |_value|
-  template<typename T>
-  static variable_status set_from_name_and_value(const string& _name, const T& _value);
-
   // set variable |_reference| with token |_token|
   static variable_status set_from_reference_and_token(variable_reference* _reference, const token& _token);
 
   // set variable |_reference| with value |_value|
   template<typename T>
   static variable_status set_from_reference_and_value(variable_reference* _reference, const T& _value);
-
-  // set variable |_reference| with string encoded value alue |_string_value|
-  template<typename T>
-  static variable_status set_from_reference_and_string(variable_reference* _reference, const string& _string_value);
 
   // merge-sort variable references in alphabetical order
   static variable_reference* split(variable_reference* _reference);
@@ -67,6 +46,10 @@ private:
 template<typename... Ts>
 inline void interface::print(const char* _format, Ts&&... _arguments) {
   write(string::format(_format, utility::forward<Ts>(_arguments)...));
+}
+
+inline variable_reference* interface::find_variable_by_name(const string& _name) {
+  return find_variable_by_name(_name.data());
 }
 
 } // namespace rx::console

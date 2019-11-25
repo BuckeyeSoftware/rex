@@ -97,7 +97,7 @@ struct test_game
     m_model2.load("base/models/mrfixit/mrfixit.json5");
     m_ibl.render(m_skybox.cubemap(), 256);
 
-    static auto display_resolution{console::interface::get_from_name("display.resolution")->cast<math::vec2i>()};
+    static auto display_resolution{console::interface::find_variable_by_name("display.resolution")->cast<math::vec2i>()};
     m_dic->record_type(render::frontend::texture::type::k_attachment);
     m_dic->record_format(render::frontend::texture::data_format::k_rgb_u8);
     m_dic->record_filter({false, false, false});
@@ -165,9 +165,9 @@ struct test_game
     abort();
 #endif
 
-    static auto display_resolution{console::interface::get_from_name("display.resolution")->cast<math::vec2i>()};
-    static auto display_swap_interval{console::interface::get_from_name("display.swap_interval")->cast<rx_s32>()};
-    static auto display_fullscreen{console::interface::get_from_name("display.fullscreen")->cast<rx_s32>()};
+    static auto display_resolution{console::interface::find_variable_by_name("display.resolution")->cast<math::vec2i>()};
+    static auto display_swap_interval{console::interface::find_variable_by_name("display.swap_interval")->cast<rx_s32>()};
+    static auto display_fullscreen{console::interface::find_variable_by_name("display.fullscreen")->cast<rx_s32>()};
 
     const auto& dimensions{display_resolution->get().cast<rx_f32>()};
     m_camera.projection = math::mat4x4f::perspective(90.0f, {0.01f, 2048.0f},

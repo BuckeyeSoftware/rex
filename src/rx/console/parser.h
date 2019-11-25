@@ -16,7 +16,7 @@ struct token
   : concepts::no_copy
 {
   enum class type {
-    k_identifier,
+    k_atom,
     k_string,
     k_boolean,
     k_int,
@@ -46,7 +46,7 @@ struct token
 
   constexpr type kind() const;
 
-  const string& as_identifier() const &;
+  const string& as_atom() const &;
   const string& as_string() const &;
   bool as_boolean() const;
   rx_s32 as_int() const;
@@ -67,7 +67,7 @@ private:
   type m_type;
 
   union {
-    string m_as_identifier;
+    string m_as_atom;
     string m_as_string;
     bool m_as_boolean;
     rx_s32 m_as_int;
@@ -139,9 +139,9 @@ inline constexpr token::type token::kind() const {
   return m_type;
 }
 
-inline const string& token::as_identifier() const & {
-  RX_ASSERT(m_type == type::k_identifier, "invalid type");
-  return m_as_identifier;
+inline const string& token::as_atom() const & {
+  RX_ASSERT(m_type == type::k_atom, "invalid type");
+  return m_as_atom;
 }
 
 inline const string& token::as_string() const & {
@@ -254,6 +254,8 @@ inline bool parser::error(bool _caret, const char* _format, Ts&&... _arguments) 
   m_diagnostic.message = string::format(m_allocator, _format, utility::forward<Ts>(_arguments)...);
   return false;
 }
+
+const char* token_type_as_string(token::type _type);
 
 } // namespace rx::console
 

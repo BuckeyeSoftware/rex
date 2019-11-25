@@ -152,14 +152,14 @@ struct profile_sample {
   profile_sample(const char* _tag)
     : m_cpu_sample{_tag}
   {
-    static auto profile_gpu{console::interface::get_from_name("profile.gpu")->cast<bool>()};
+    static auto profile_gpu{console::interface::find_variable_by_name("profile.gpu")->cast<bool>()};
     if (*profile_gpu) {
       rmt_BeginOpenGLSampleDynamic(_tag);
     }
   }
 
   ~profile_sample() {
-    static auto profile_gpu{console::interface::get_from_name("profile.gpu")->cast<bool>()};
+    static auto profile_gpu{console::interface::find_variable_by_name("profile.gpu")->cast<bool>()};
     if (*profile_gpu) {
       rmt_EndOpenGLSample();
     }

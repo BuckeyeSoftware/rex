@@ -100,8 +100,8 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   }
 
   // Generate swapchain target.
-  static auto& dimensions{console::interface::get_from_name("display.resolution")->cast<math::vec2i>()->get()};
-  static auto& hdr{console::interface::get_from_name("display.hdr")->cast<bool>()->get()};
+  static auto& dimensions{console::interface::find_variable_by_name("display.resolution")->cast<math::vec2i>()->get()};
+  static auto& hdr{console::interface::find_variable_by_name("display.hdr")->cast<bool>()->get()};
 
   m_swapchain_texture = create_texture2D(RX_RENDER_TAG("swapchain"));
   m_swapchain_texture->record_format(hdr ? texture::data_format::k_rgba_f16 : texture::data_format::k_rgba_u8);
