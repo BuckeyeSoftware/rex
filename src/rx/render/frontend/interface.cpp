@@ -674,6 +674,7 @@ bool interface::process() {
     m_backend->process(m_commands);
   }
   m_commands.clear();
+  m_command_buffer.reset();
 
   // cleanup unreferenced resources
   m_destroy_buffers.each_fwd([this](buffer* _buffer) {
@@ -717,44 +718,6 @@ bool interface::process() {
     m_backend->process(m_commands);
   }
   m_commands.clear();
-
-  // cleanup unreferenced resources
-  m_destroy_buffers.each_fwd([this](buffer* _buffer) {
-    m_buffer_pool.destroy<buffer>(_buffer);
-  });
-
-  m_destroy_targets.each_fwd([this](target* _target) {
-    m_target_pool.destroy<target>(_target);
-  });
-
-  m_destroy_programs.each_fwd([this](program* _program) {
-    m_program_pool.destroy<program>(_program);
-  });
-
-  m_destroy_textures1D.each_fwd([this](texture1D* _texture) {
-    m_texture1D_pool.destroy<texture1D>(_texture);
-  });
-
-  m_destroy_textures2D.each_fwd([this](texture2D* _texture) {
-    m_texture2D_pool.destroy<texture2D>(_texture);
-  });
-
-  m_destroy_textures3D.each_fwd([this](texture3D* _texture) {
-    m_texture3D_pool.destroy<texture3D>(_texture);
-  });
-
-  m_destroy_texturesCM.each_fwd([this](textureCM* _texture) {
-    m_textureCM_pool.destroy<textureCM>(_texture);
-  });
-
-  m_destroy_buffers.clear();
-  m_destroy_targets.clear();
-  m_destroy_programs.clear();
-  m_destroy_textures1D.clear();
-  m_destroy_textures2D.clear();
-  m_destroy_textures3D.clear();
-  m_destroy_texturesCM.clear();
-
   m_command_buffer.reset();
 
   auto swap{[](concurrency::atomic<rx_size> (&_value)[2]) {

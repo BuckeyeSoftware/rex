@@ -116,11 +116,11 @@ void ibl::render(frontend::textureCM* _environment, rx_size _irradiance_map_size
     frontend::texture::wrap_type::k_clamp_to_edge});
   m_frontend->initialize_texture(RX_RENDER_TAG("ibl: irradiance"), m_irradiance_texture);
 
-  static constexpr const rx_size k_max_prefilter_levels{6};
+  static constexpr const rx_size k_max_prefilter_levels{5};
   m_prefilter_texture = m_frontend->create_textureCM(RX_RENDER_TAG("ibl: prefilter"));
   m_prefilter_texture->record_format(frontend::texture::data_format::k_rgba_u8);
   m_prefilter_texture->record_type(frontend::texture::type::k_attachment);
-  m_prefilter_texture->record_levels(k_max_prefilter_levels);
+  m_prefilter_texture->record_levels(k_max_prefilter_levels + 1);
   m_prefilter_texture->record_dimensions(_environment->dimensions());
   m_prefilter_texture->record_filter({true, false, true});
   m_prefilter_texture->record_wrap({
@@ -159,12 +159,12 @@ void ibl::render(frontend::textureCM* _environment, rx_size _irradiance_map_size
 
   // Render prefilter environment map.
   {
-    for (rx_size i{0}; i < k_max_prefilter_levels; i++) {
+    for (rx_size i{0}; i <= k_max_prefilter_levels; i++) {
       frontend::target* target{m_frontend->create_target(RX_RENDER_TAG("ibl: prefilter"))};
       target->attach_texture(m_prefilter_texture, i);
       m_frontend->initialize_target(RX_RENDER_TAG("ibl: prefilter"), target);
 
-      const rx_f32 roughness{static_cast<rx_f32>(i) / (k_max_prefilter_levels - 1)};
+      const rx_f32 roughness{static_cast<rx_f32>(i) / k_max_prefilter_levels};
       frontend::program* program{*prefilter_technique};
       program->uniforms()[1].record_float(roughness);
 
