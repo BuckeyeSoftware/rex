@@ -128,7 +128,7 @@ bool interface::execute(const string& _contents) {
         break;
       }
     } else {
-      print("^cinfo: ^w%s = %s", atom, variable->print_value());
+      print("^cinfo: ^w%s = %s", atom, variable->print_current());
     }
   } else if (auto* command{g_commands->find(atom)}) {
     tokens.erase(0, 1);
@@ -215,195 +215,16 @@ bool interface::save(const char* file_name) {
 
   logger(log::level::k_info, "saving '%s'", file_name);
   for (const variable_reference *head{g_head}; head; head = head->m_next) {
-    if (head->type() == variable_type::k_boolean) {
-      const auto handle{head->cast<bool>()};
+    if (variable_type_is_ranged(head->type())) {
+      file.print("## %s (in range %s, defaults to %s)\n",
+        head->description(), head->print_range(), head->print_initial());
+      file.print(head->is_initial() ? ";%s %s\n" : "%s %s\n",
+        head->name(), head->print_current());
+    } else {
       file.print("## %s (defaults to %s)\n",
-        head->description(), handle->initial() ? "true" : "false");
-      file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), handle->get() ? "true" : "false");
-    } else if (head->type() == variable_type::k_int) {
-      const auto handle{head->cast<rx_s32>()};
-      const auto min{handle->min()};
-      const auto max{handle->max()};
-      const auto min_fmt{min == k_int_min ? "-inf" : string::format("%d", min)};
-      const auto max_fmt{max == k_int_max ? "+inf" : string::format("%d", max)};
-      file.print("## %s (in range [%s, %s], defaults to %d)\n",
-        head->description(), min_fmt, max_fmt, handle->initial());
-      file.print(handle->get() == handle->initial() ? ";%s %d\n" : "%s %d\n",
-        head->name(), handle->get());
-    } else if (head->type() == variable_type::k_float) {
-      const auto handle{head->cast<rx_f32>()};
-      const auto min{handle->min()};
-      const auto max{handle->max()};
-      const auto min_fmt{min == k_float_min ? "-inf" : string::format("%f", min)};
-      const auto max_fmt{max == k_float_max ? "+inf" : string::format("%f", max)};
-      file.print("## %s (in range [%s, %s], defaults to %f)\n",
-        head->description(), min_fmt, max_fmt, handle->initial());
-      file.print(handle->get() == handle->initial() ? ";%s %f\n" : "%s %f\n",
-        head->name(), handle->get());
-    } else if (head->type() == variable_type::k_string) {
-      const auto escape = [](const string& contents) {
-        string result;
-        result.reserve(contents.size() * 4);
-        for (rx_size i{0}; i < contents.size(); i++) {
-          switch (contents[i]) {
-          case '"':
-            [[fallthrough]];
-          case '\\':
-            result += '\\';
-            [[fallthrough]];
-          default:
-            result += contents[i];
-            break;
-          }
-        }
-        return result;
-      };
-      const auto handle{head->cast<string>()};
-      const auto get_escaped{escape(handle->get())};
-      const auto initial_escaped{escape(handle->initial())};
-      file.print("## %s (defaults to \"%s\")\n",
-        head->description(), initial_escaped);
-      file.print(get_escaped == initial_escaped ? ";%s \"%s\"\n" : "%s \"%s\"\n",
-        head->name(), get_escaped);
-    } else if (head->type() == variable_type::k_vec4f) {
-      const auto handle{head->cast<vec4f>()};
-      const auto min{handle->min()};
-      const auto max{handle->max()};
-      string min_fmt;
-      string max_fmt;
-      if (min.is_any(k_float_min) || max.is_any(k_float_max)) {
-        const auto min_x{min.x == k_float_min ? "-inf" : string::format("%f", min.x)};
-        const auto min_y{min.y == k_float_min ? "-inf" : string::format("%f", min.y)};
-        const auto min_z{min.z == k_float_min ? "-inf" : string::format("%f", min.z)};
-        const auto min_w{min.w == k_float_min ? "-inf" : string::format("%f", min.w)};
-        const auto max_x{max.x == k_float_max ? "+inf" : string::format("%f", max.x)};
-        const auto max_y{max.y == k_float_max ? "+inf" : string::format("%f", max.y)};
-        const auto max_z{max.z == k_float_max ? "+inf" : string::format("%f", max.z)};
-        const auto max_w{max.w == k_float_max ? "+inf" : string::format("%f", max.w)};
-        min_fmt = string::format("{%s, %s, %s, %s}", min_x, min_y, min_z, min_w);
-        max_fmt = string::format("{%s, %s, %s, %s}", max_x, max_y, max_z, max_w);
-      } else {
-        min_fmt = string::format("%s", min);
-        max_fmt = string::format("%s", max);
-      }
-      file.print("## %s (in range [%s, %s], defaults to %s)\n",
-        head->description(), min_fmt, max_fmt, handle->initial());
-      file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), handle->get());
-    } else if (head->type() == variable_type::k_vec4i) {
-      const auto handle{head->cast<vec4i>()};
-      const auto min{handle->min()};
-      const auto max{handle->max()};
-      string min_fmt;
-      string max_fmt;
-      if (min.is_any(k_int_min) || max.is_any(k_int_max)) {
-        const auto min_x{min.x == k_int_min ? "-inf" : string::format("%d", min.x)};
-        const auto min_y{min.y == k_int_min ? "-inf" : string::format("%d", min.y)};
-        const auto min_z{min.z == k_int_min ? "-inf" : string::format("%d", min.z)};
-        const auto min_w{min.w == k_int_min ? "-inf" : string::format("%d", min.w)};
-        const auto max_x{max.x == k_int_max ? "+inf" : string::format("%d", max.x)};
-        const auto max_y{max.y == k_int_max ? "+inf" : string::format("%d", max.y)};
-        const auto max_z{max.z == k_int_max ? "+inf" : string::format("%d", max.z)};
-        const auto max_w{min.w == k_int_min ? "+inf" : string::format("%d", max.w)};
-        min_fmt = string::format("{%s, %s, %s, %s}", min_x, min_y, min_z, min_w);
-        max_fmt = string::format("{%s, %s, %s, %s}", max_x, max_y, max_z, max_w);
-      } else {
-        min_fmt = string::format("%s", min);
-        max_fmt = string::format("%s", max);
-      }
-      file.print("## %s (in range [%s, %s], defaults to %s)\n",
-        head->name(), min_fmt, max_fmt, handle->initial());
-      file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), handle->get());
-    } else if (head->type() == variable_type::k_vec3f) {
-      const auto handle{head->cast<vec3f>()};
-      const auto min{handle->min()};
-      const auto max{handle->max()};
-      string min_fmt;
-      string max_fmt;
-      if (min.is_any(k_float_min) || max.is_any(k_float_max)) {
-        const auto min_x{min.x == k_float_min ? "-inf" : string::format("%f", min.x)};
-        const auto min_y{min.y == k_float_min ? "-inf" : string::format("%f", min.y)};
-        const auto min_z{min.z == k_float_min ? "-inf" : string::format("%f", min.z)};
-        const auto max_x{max.x == k_float_max ? "+inf" : string::format("%f", max.x)};
-        const auto max_y{max.y == k_float_max ? "+inf" : string::format("%f", max.y)};
-        const auto max_z{max.z == k_float_max ? "+inf" : string::format("%f", max.z)};
-        min_fmt = string::format("{%s, %s, %s}", min_x, min_y, min_z);
-        max_fmt = string::format("{%s, %s, %s}", max_x, max_y, max_z);
-      } else {
-        min_fmt = string::format("%s", min);
-        max_fmt = string::format("%s", max);
-      }
-      file.print("## %s (in range [%s, %s], defaults to %s)\n",
-        head->description(), min_fmt, max_fmt, handle->initial());
-      file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), handle->get());
-    } else if (head->type() == variable_type::k_vec3i) {
-      const auto handle{head->cast<vec3i>()};
-      const auto min{handle->min()};
-      const auto max{handle->max()};
-      string min_fmt;
-      string max_fmt;
-      if (min.is_any(k_int_min) || max.is_any(k_int_max)) {
-        const auto min_x{min.x == k_int_min ? "-inf" : string::format("%d", min.x)};
-        const auto min_y{min.y == k_int_min ? "-inf" : string::format("%d", min.y)};
-        const auto min_z{min.z == k_int_min ? "-inf" : string::format("%d", min.z)};
-        const auto max_x{max.x == k_int_max ? "+inf" : string::format("%d", max.x)};
-        const auto max_y{max.y == k_int_max ? "+inf" : string::format("%d", max.y)};
-        const auto max_z{max.z == k_int_max ? "+inf" : string::format("%d", max.z)};
-        min_fmt = string::format("{%s, %s, %s}", min_x, min_y, min_z);
-        max_fmt = string::format("{%s, %s, %s}", max_x, max_y, max_z);
-      } else {
-        min_fmt = string::format("%s", min);
-        max_fmt = string::format("%s", max);
-      }
-      file.print("## %s (in range [%s, %s], defaults to %s)\n",
-        head->name(), min_fmt, max_fmt, handle->initial());
-      file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), handle->get());
-    } else if (head->type() == variable_type::k_vec2f) {
-      const auto handle{head->cast<vec2f>()};
-      const auto min{handle->min()};
-      const auto max{handle->max()};
-      string min_fmt;
-      string max_fmt;
-      if (min.is_any(k_float_min) || max.is_any(k_float_max)) {
-        const auto min_x{min.x == k_float_min ? "-inf" : string::format("%f", min.x)};
-        const auto min_y{min.y == k_float_min ? "-inf" : string::format("%f", min.y)};
-        const auto max_x{max.x == k_float_max ? "+inf" : string::format("%f", max.x)};
-        const auto max_y{max.y == k_float_max ? "+inf" : string::format("%f", max.y)};
-        min_fmt = string::format("{%s, %s}", min_x, min_y);
-        max_fmt = string::format("{%s, %s}", max_x, max_y);
-      } else {
-        min_fmt = string::format("%s", min);
-        max_fmt = string::format("%s", max);
-      }
-      file.print("## %s (in range [%s, %s], defaults to %s)\n",
-        head->description(), min_fmt, max_fmt, handle->initial());
-      file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), handle->get());
-    } else if (head->type() == variable_type::k_vec2i) {
-      const auto handle{head->cast<vec2i>()};
-      const auto min{handle->min()};
-      const auto max{handle->max()};
-      string min_fmt;
-      string max_fmt;
-      if (min.is_any(k_int_min) || max.is_any(k_int_max)) {
-        const auto min_x{min.x == k_int_min ? "-inf" : string::format("%d", min.x)};
-        const auto min_y{min.y == k_int_min ? "-inf" : string::format("%d", min.y)};
-        const auto max_x{max.x == k_int_max ? "+inf" : string::format("%d", max.x)};
-        const auto max_y{max.y == k_int_max ? "+inf" : string::format("%d", max.y)};
-        min_fmt = string::format("{%s, %s}", min_x, min_y);
-        max_fmt = string::format("{%s, %s}", max_x, max_y);
-      } else {
-        min_fmt = string::format("%s", min);
-        max_fmt = string::format("%s", max);
-      }
-      file.print("## %s (in range [%s, %s], defaults to %s)\n",
-        head->description(), min_fmt, max_fmt, handle->initial());
-      file.print(handle->get() == handle->initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), handle->get());
+        head->description(), head->print_initial());
+      file.print(head->is_initial() ? ";%s %s\n" : "%s %s\n",
+        head->name(), head->print_current());
     }
   }
 

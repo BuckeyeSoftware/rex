@@ -65,8 +65,8 @@ RX_CONSOLE_IVAR(
   -1);
 
 RX_CONSOLE_SVAR(
-  renderer_driver,
-  "renderer.driver",
+  render_driver,
+  "render.driver",
   "which driver to use for renderer (gl3, gl4, es3, null)",
   "gl4");
 
@@ -259,7 +259,7 @@ int main(int _argc, char** _argv) {
       const char *name{SDL_GetDisplayName(display_index)};
       display_name->set(name ? name : "");
 
-      const auto& driver_name{renderer_driver->get()};
+      const auto& driver_name{render_driver->get()};
       const bool is_gl{driver_name.begins_with("gl")};
       const bool is_es{driver_name.begins_with("es")};
 

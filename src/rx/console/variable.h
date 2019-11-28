@@ -91,8 +91,11 @@ struct variable_reference {
   variable_type type() const;
 
   void reset();
-  string print_value() const;
+  string print_current() const;
   string print_range() const;
+  string print_initial() const;
+
+  bool is_initial() const;
 
 private:
   friend struct interface;
@@ -704,6 +707,10 @@ inline typename variable<vec4<T>>::on_change_event::handle variable<vec4<T>>::on
 }
 
 const char* variable_type_as_string(variable_type _type);
+
+inline bool variable_type_is_ranged(variable_type _type) {
+  return _type != variable_type::k_boolean && _type != variable_type::k_string;
+}
 
 } // namespace rx::console
 
