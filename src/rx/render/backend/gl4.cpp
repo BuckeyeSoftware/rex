@@ -280,6 +280,7 @@ namespace detail_gl4 {
   {
     state(SDL_GLContext _context)
       : m_color_mask{0xff}
+      , m_empty_vao{0}
       , m_bound_vao{0}
       , m_bound_fbo{0}
       , m_bound_program{0}
@@ -300,6 +301,8 @@ namespace detail_gl4 {
       pglDepthFunc(GL_LEQUAL);
       pglDisable(GL_MULTISAMPLE);
       pglPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+      pglCreateVertexArrays(1, &m_empty_vao);
 
       const auto vendor{reinterpret_cast<const char*>(pglGetString(GL_VENDOR))};
       const auto renderer{reinterpret_cast<const char*>(pglGetString(GL_RENDERER))};
@@ -328,6 +331,8 @@ namespace detail_gl4 {
     }
 
     ~state() {
+      pglDeleteVertexArrays(1, &m_empty_vao);
+
       SDL_GL_DeleteContext(m_context);
     }
 
@@ -598,10 +603,15 @@ namespace detail_gl4 {
 
     void use_buffer(const frontend::buffer* _render_buffer) {
       profile_sample sample{"use_buffer"};
-      const auto this_buffer{reinterpret_cast<const buffer*>(_render_buffer + 1)};
-      if (this_buffer->va != m_bound_vao) {
-        pglBindVertexArray(this_buffer->va);
-        m_bound_vao = this_buffer->va;
+      if (_render_buffer) {
+        const auto this_buffer{reinterpret_cast<const buffer*>(_render_buffer + 1)};
+        if (this_buffer->va != m_bound_vao) {
+          pglBindVertexArray(this_buffer->va);
+          m_bound_vao = this_buffer->va;
+        }
+      } else if (!m_bound_vao) {
+        pglBindVertexArray(m_empty_vao);
+        m_bound_vao = m_empty_vao;
       }
     }
 
@@ -667,6 +677,8 @@ namespace detail_gl4 {
     }
 
     rx_u8 m_color_mask;
+
+    GLuint m_empty_vao;
 
     GLuint m_bound_vao;
     GLuint m_bound_fbo;
@@ -780,6 +792,7 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     "#define rx_texture3DLod textureLod\n"
     "#define rx_textureCMLod textureLod\n"
     "#define rx_position gl_Position\n"
+    "#define rx_vertex_id gl_VertexID\n"
     "#define rx_point_size gl_PointSize\n"
   };
 
@@ -1737,34 +1750,41 @@ void gl4::process(rx_byte* _command) {
         }
       }
 
-      switch (render_buffer->element_kind()) {
-      case frontend::buffer::element_type::k_u8:
-        pglDrawElements(
-          convert_primitive_type(command->type),
-          static_cast<GLsizei>(command->count),
-          GL_UNSIGNED_BYTE,
-          reinterpret_cast<void*>(sizeof(GLubyte) * command->offset));
-        break;
-      case frontend::buffer::element_type::k_u16:
-        pglDrawElements(
-          convert_primitive_type(command->type),
-          static_cast<GLsizei>(command->count),
-          GL_UNSIGNED_SHORT,
-          reinterpret_cast<void*>(sizeof(GLushort) * command->offset));
-        break;
-      case frontend::buffer::element_type::k_u32:
-        pglDrawElements(
-          convert_primitive_type(command->type),
-          static_cast<GLsizei>(command->count),
-          GL_UNSIGNED_INT,
-          reinterpret_cast<void*>(sizeof(GLuint) * command->offset));
-        break;
-      case frontend::buffer::element_type::k_none:
+      if (render_buffer) {
+        switch (render_buffer->element_kind()) {
+        case frontend::buffer::element_type::k_u8:
+          pglDrawElements(
+            convert_primitive_type(command->type),
+            static_cast<GLsizei>(command->count),
+            GL_UNSIGNED_BYTE,
+            reinterpret_cast<void*>(sizeof(GLubyte) * command->offset));
+          break;
+        case frontend::buffer::element_type::k_u16:
+          pglDrawElements(
+            convert_primitive_type(command->type),
+            static_cast<GLsizei>(command->count),
+            GL_UNSIGNED_SHORT,
+            reinterpret_cast<void*>(sizeof(GLushort) * command->offset));
+          break;
+        case frontend::buffer::element_type::k_u32:
+          pglDrawElements(
+            convert_primitive_type(command->type),
+            static_cast<GLsizei>(command->count),
+            GL_UNSIGNED_INT,
+            reinterpret_cast<void*>(sizeof(GLuint) * command->offset));
+          break;
+        case frontend::buffer::element_type::k_none:
+          pglDrawArrays(
+            convert_primitive_type(command->type),
+            static_cast<GLint>(command->offset),
+            static_cast<GLsizei>(command->count));
+          break;
+        }
+      } else {
         pglDrawArrays(
           convert_primitive_type(command->type),
-          static_cast<GLint>(command->offset),
-          static_cast<GLsizei>(command->count));
-        break;
+          0,
+          static_cast<GLint>(command->count));
       }
     }
     break;

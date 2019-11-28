@@ -3,17 +3,17 @@
   shaders: [
     {
       type: "vertex",
-      inputs: [
-        { name: "a_position",    type: "vec2f" },
-        { name: "a_coordinate",  type: "vec2f" }
-      ],
       outputs: [
         { name: "vs_coordinate", type: "vec2f" }
       ],
+      imports: [
+        "fullscreen_triangle"
+      ],
       source: "
         void main() {
-          rx_position = vec4(a_position, 0.0, 1.0);
-          vs_coordinate = a_coordinate;
+          vec4f triangle = fullscreen_triangle();
+          rx_position = vec4f(triangle.xy, 0.0, 1.0);
+          vs_coordinate = triangle.zw;
         }
       "
     },{

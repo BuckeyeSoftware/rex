@@ -1,14 +1,13 @@
 #include "rx/game.h"
 
 #include "rx/render/frontend/interface.h"
-#include "rx/render/frontend/technique.h"
-#include "rx/render/frontend/buffer.h"
 #include "rx/render/frontend/target.h"
 
-#include "rx/render/gbuffer.h"
-#include "rx/render/ibl.h"
+#include "rx/render/indirect_lighting_pass.h"
 #include "rx/render/immediate2D.h"
 #include "rx/render/immediate3D.h"
+#include "rx/render/gbuffer.h"
+#include "rx/render/ibl.h"
 #include "rx/render/skybox.h"
 #include "rx/render/model.h"
 
@@ -22,36 +21,6 @@
 #include "rx/math/camera.h"
 
 using namespace rx;
-
-static render::frontend::buffer* quad_buffer(render::frontend::interface* _frontend) {
-  render::frontend::buffer* buffer{_frontend->cached_buffer("quad")};
-  if (buffer) {
-    return buffer;
-  }
-
-  static constexpr const struct vertex {
-    math::vec2f position;
-    math::vec2f coordinate;
-  } k_quad_vertices[]{
-    {{-1.0f,  1.0f}, {0.0f, 1.0f}},
-    {{ 1.0f,  1.0f}, {1.0f, 1.0f}},
-    {{-1.0f, -1.0f}, {0.0f, 0.0f}},
-    {{ 1.0f, -1.0f}, {1.0f, 0.0f}}
-  };
-
-  buffer = _frontend->create_buffer(RX_RENDER_TAG("quad"));
-  buffer->record_type(render::frontend::buffer::type::k_static);
-  buffer->record_element_type(render::frontend::buffer::element_type::k_none);
-  buffer->record_stride(sizeof(vertex));
-  buffer->record_attribute(render::frontend::buffer::attribute::type::k_f32, 2, offsetof(vertex, position));
-  buffer->record_attribute(render::frontend::buffer::attribute::type::k_f32, 2, offsetof(vertex, coordinate));
-  buffer->write_vertices(k_quad_vertices, sizeof k_quad_vertices);
-
-  _frontend->initialize_buffer(RX_RENDER_TAG("quad"), buffer);
-  _frontend->cache_buffer(buffer, "quad");
-
-  return buffer;
-}
 
 struct test_game
   : game
@@ -70,10 +39,7 @@ struct test_game
     , m_model1{&m_frontend}
     , m_model2{&m_frontend}
     , m_ibl{&m_frontend}
-    , m_di{m_frontend.create_target(RX_RENDER_TAG("di"))}
-    , m_dic{m_frontend.create_texture2D(RX_RENDER_TAG("dic"))}
-    , m_dit{m_frontend.find_technique_by_name("deferred_indirect")}
-    , m_b{quad_buffer(&m_frontend)}
+    , m_indirect_lighting_pass{&m_frontend, &m_gbuffer, &m_ibl}
   {
     model_transform[0].translate = {-5.0f, 0.0f, 0.0f};
     model_transform[0].scale     = { 2.0f, 2.0f, 2.0f};
@@ -82,9 +48,6 @@ struct test_game
   }
 
   ~test_game() {
-    m_frontend.destroy_target(RX_RENDER_TAG("di"), m_di);
-    m_frontend.destroy_texture(RX_RENDER_TAG("dic"), m_dic);
-    m_frontend.destroy_buffer(RX_RENDER_TAG("b"), m_b);
   }
 
   virtual bool on_init() {
@@ -95,20 +58,7 @@ struct test_game
     m_model2.load("base/models/mrfixit/mrfixit.json5");
     m_ibl.render(m_skybox.cubemap(), 256);
 
-    static auto display_resolution{console::interface::find_variable_by_name("display.resolution")->cast<math::vec2i>()};
-    m_dic->record_type(render::frontend::texture::type::k_attachment);
-    m_dic->record_format(render::frontend::texture::data_format::k_rgb_u8);
-    m_dic->record_filter({false, false, false});
-    m_dic->record_levels(1);
-    m_dic->record_dimensions(display_resolution->get().cast<rx_size>());
-    m_dic->record_wrap({
-      render::frontend::texture::wrap_type::k_clamp_to_edge,
-      render::frontend::texture::wrap_type::k_clamp_to_edge});
-    m_frontend.initialize_texture(RX_RENDER_TAG("dic"), m_dic);
-
-    m_di->attach_texture(m_dic, 0);
-    m_di->attach_depth_stencil(m_gbuffer.depth_stencil());
-    m_frontend.initialize_target(RX_RENDER_TAG("di"), m_di);
+    m_indirect_lighting_pass.create(m_frontend.swapchain()->dimensions());
 
     m_model0.animate(0, true);
     m_model1.animate(0, true);
@@ -239,12 +189,6 @@ struct test_game
     render::frontend::state state;
     state.viewport.record_dimensions(display_resolution->get().cast<rx_size>());
 
-    //state.depth.record_test(false);
-    //state.depth.record_write(true);
-
-    // state.stencil.record_enable(true);
-    state.stencil.record_write_mask(0xff);
-
     m_frontend.clear(
       RX_RENDER_TAG("gbuffer"),
       state,
@@ -272,77 +216,19 @@ struct test_game
     m_model1.render(m_gbuffer.target(), model_transform[1].to_mat4(), m_camera.view(), m_camera.projection);
     m_model2.render(m_gbuffer.target(), model_transform[2].to_mat4(), m_camera.view(), m_camera.projection);
 
-    // m_model0.render_normals(model_transform[0].to_mat4(), &m_immediate3D);
-    // m_model1.render_normals(model_transform[1].to_mat4(), &m_immediate3D);
-    // m_model2.render_normals(model_transform[2].to_mat4(), &m_immediate3D);
-
-    // m_model0.render_skeleton(model_transform[0].to_mat4(), &m_immediate3D);
-    // m_model1.render_skeleton(model_transform[1].to_mat4(), &m_immediate3D);
-    // m_model2.render_skeleton(model_transform[2].to_mat4(), &m_immediate3D);
-
-    // m_model.render_normals(model_xform.to_mat4(), &m_immediate3D);
-
-    // m_immediate3D.render(m_gbuffer.target(), m_camera.view(), m_camera.projection);
-
-    state.viewport.record_dimensions(display_resolution->get().cast<rx_size>());
-
-    rx::render::frontend::program* p = *m_dit;
-    p->uniforms()[6].record_mat4x4f(math::mat4x4f::invert(m_camera.view() * m_camera.projection));
-    p->uniforms()[7].record_vec3f(m_camera.translate);
-
-    m_frontend.clear(
-      RX_RENDER_TAG(""),
-      state,
-      m_di,
-      "0",
-      RX_RENDER_CLEAR_COLOR(0),
-      math::vec4f{0.0f, 0.0f, 0.0f, 1.0f}.data());
-
-    // Only apply indirect lighting to areas in the stencil filled with 1s
-    // glEnable(GL_STENCIL_TEST)
-    //state.stencil.record_enable(false);
-
-    // glStencilFunc(GL_EQUAL, 1, 0xFF)
-    // state.stencil.record_function(render::frontend::stencil_state::function_type::k_equal);
-    // state.stencil.record_reference(1);
-    // state.stencil.record_mask(0xff);
-
-    // glStencilMask(0x00)
-    // state.stencil.record_write_mask(0x00);
-
-    // state.stencil.record_fail_action(render::frontend::stencil_state::operation_type::k_keep);
-    // state.stencil.record_depth_fail_action(render::frontend::stencil_state::operation_type::k_keep);
-    // state.stencil.record_depth_pass_action(render::frontend::stencil_state::operation_type::k_replace);
-
-    m_frontend.draw(
-      RX_RENDER_TAG("di"),
-      state,
-      m_di,
-      "0",
-      m_b,
-      p,
-      4,
-      0,
-      render::frontend::primitive_type::k_triangle_strip,
-      "222cc2",
-      m_gbuffer.albedo(),
-      m_gbuffer.normal(),
-      m_gbuffer.depth_stencil(),
-      m_ibl.irradiance(),
-      m_ibl.prefilter(),
-      m_ibl.scale_bias());
+    m_indirect_lighting_pass.render(m_camera);
 
     // Render the skybox absolutely last.
-    m_skybox.render(m_di, m_camera.view(), m_camera.projection);
+    m_skybox.render(m_indirect_lighting_pass.target(), m_camera.view(), m_camera.projection);
 
     // Then 3D immediates.
-    m_immediate3D.render(m_di, m_camera.view(), m_camera.projection);
+    m_immediate3D.render(m_indirect_lighting_pass.target(), m_camera.view(), m_camera.projection);
 
     // Blit indirect diffuse pass to backbuffer
     m_frontend.blit(
       RX_RENDER_TAG("test"),
       state,
-      m_di,
+      m_indirect_lighting_pass.target(),
       0,
       m_frontend.swapchain(),
       0);
@@ -361,6 +247,7 @@ struct test_game
 
   void on_resize(const math::vec2z& _dimensions) {
     m_gbuffer.resize(_dimensions);
+    m_indirect_lighting_pass.resize(_dimensions);
     m_frontend.resize(_dimensions);
   }
 
@@ -382,11 +269,7 @@ struct test_game
 
   render::ibl m_ibl;
 
-  // TODO(dweiler): indirect diffuse renderable
-  render::frontend::target* m_di;
-  render::frontend::texture2D* m_dic;
-  render::frontend::technique* m_dit;
-  render::frontend::buffer* m_b;
+  render::indirect_lighting_pass m_indirect_lighting_pass;
 
   math::transform model_transform[3];
   math::camera m_camera;

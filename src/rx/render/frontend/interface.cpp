@@ -1,4 +1,5 @@
 #include <stdarg.h> // va_list, va_start, va_end
+#include <stddef.h> // offsetof
 #include <string.h> // strlen
 
 #include "rx/render/frontend/interface.h"
@@ -430,10 +431,13 @@ void interface::draw(
   RX_ASSERT(_state.viewport.dimensions().area() > 0, "empty viewport");
 
   RX_ASSERT(_draw_buffers, "misisng draw buffers");
-  RX_ASSERT(_buffer, "expected buffer");
   RX_ASSERT(_program, "expected program");
   RX_ASSERT(_count != 0, "empty draw call");
   RX_ASSERT(_textures, "expected textures");
+
+  if (!_buffer) {
+    RX_ASSERT(_offset == 0, "bufferless draws cannot have an offset");
+  }
 
   m_vertices[0] += _count;
 

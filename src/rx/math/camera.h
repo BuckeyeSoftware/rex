@@ -17,7 +17,7 @@ inline constexpr camera::camera(transform* _parent)
 {
 }
 
-mat4x4f camera::view() const {
+inline mat4x4f camera::view() const {
   return mat4x4f::invert(to_mat4());
 }
 
