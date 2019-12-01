@@ -4,6 +4,7 @@
 #include "rx/core/utility/swap.h"
 
 #include "rx/core/traits/return_type.h"
+#include "rx/core/traits/is_trivially_destructible.h"
 #include "rx/core/traits/is_same.h"
 
 #include "rx/core/hints/unreachable.h"
