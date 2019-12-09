@@ -2,8 +2,6 @@
 #include "rx/core/hints/unreachable.h"
 #include "rx/core/utility/swap.h"
 
-#include <stdio.h>
-
 namespace rx::input {
 
 text::text()
