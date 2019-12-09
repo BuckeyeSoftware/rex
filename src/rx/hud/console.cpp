@@ -11,8 +11,6 @@
 
 #include "rx/core/algorithm/clamp.h"
 
-#include <SDL.h> // TODO(dweiler): SetRelativeMouseMode stuff
-
 namespace rx::hud {
 
 RX_CONSOLE_SVAR(
@@ -77,8 +75,8 @@ console::console(render::immediate2D* _immediate)
 void console::update(input::input& _input) {
   bool made_selection = false;
   if (_input.keyboard().is_pressed(input::scan_code::k_grave)) {
-    _input.accept_text(_input.active_text() == &m_text ? nullptr : &m_text);
-    SDL_SetRelativeMouseMode(_input.active_text() ? SDL_FALSE : SDL_TRUE);
+    _input.capture_text(_input.active_text() == &m_text ? nullptr : &m_text);
+    _input.capture_mouse(_input.active_text() ? false : true);
   } else if (_input.keyboard().is_pressed(input::scan_code::k_down)) {
     m_selection++;
   } else if (_input.keyboard().is_pressed(input::scan_code::k_up)) {

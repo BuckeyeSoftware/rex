@@ -1,12 +1,10 @@
-#include <SDL_clipboard.h> // TODO(dweiler): SetClipboardText
-
 #include "rx/input/input.h"
 
 #include "rx/core/hints/unreachable.h"
 
 namespace rx::input {
 
-void input::update(rx_f32 _delta_time) {
+int input::update(rx_f32 _delta_time) {
   // Handle line editing features for the active text.
   if (m_active_text) {
     if (m_keyboard.is_held(scan_code::k_left_control)
@@ -17,19 +15,16 @@ void input::update(rx_f32 _delta_time) {
         m_active_text->select_all();
       } else if (m_keyboard.is_pressed(scan_code::k_c)) {
         // Control+C = Copy
-        m_clipboard = m_active_text->copy();
-        SDL_SetClipboardText(m_clipboard.data());
+        change_clipboard_text(m_active_text->copy());
       } else if (m_keyboard.is_pressed(scan_code::k_v)) {
         // Control+V = Paste
         m_active_text->paste(m_clipboard);
       } else if (m_keyboard.is_pressed(scan_code::k_x)) {
         // Control+X = Cut
-        m_clipboard = m_active_text->cut();
-        SDL_SetClipboardText(m_clipboard.data());
+        change_clipboard_text(m_active_text->cut());
       } else if (m_keyboard.is_pressed(scan_code::k_insert)) {
         // Control+Insert = Copy
-        m_clipboard = m_active_text->copy();
-        SDL_SetClipboardText(m_clipboard.data());
+        change_clipboard_text(m_active_text->copy());
       }
     }
 
@@ -38,8 +33,7 @@ void input::update(rx_f32 _delta_time) {
     {
       if (m_keyboard.is_pressed(scan_code::k_delete)) {
         // Shift+Delete = Cut
-        m_clipboard = m_active_text->cut();
-        SDL_SetClipboardText(m_clipboard.data());
+        change_clipboard_text(m_active_text->cut());
       } else if (m_keyboard.is_pressed(scan_code::k_insert)) {
         // Shift+Insert = Paste
         m_active_text->paste(m_clipboard);
@@ -64,7 +58,11 @@ void input::update(rx_f32 _delta_time) {
     if (m_keyboard.is_pressed(scan_code::k_backspace)) {
       m_active_text->erase();
     }
+  }
 
+  int updated{m_updated};
+
+  if (m_active_text) {
     m_active_text->update(_delta_time);
   }
 
@@ -73,6 +71,10 @@ void input::update(rx_f32 _delta_time) {
   m_controllers.each_fwd([_delta_time](controller_device& _device) {
     _device.update(_delta_time);
   });
+
+  m_updated = 0;
+
+  return updated;
 }
 
 void input::handle_event(const event& _event) {

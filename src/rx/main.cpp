@@ -529,7 +529,14 @@ int main(int _argc, char** _argv) {
           g_status = status;
 
           // Update the input system.
-          input.update(frontend.timer().delta_time());
+          const int updated{input.update(frontend.timer().delta_time())};
+          if (updated & input::input::k_clipboard) {
+            SDL_SetClipboardText(input.clipboard().data());
+          }
+
+          if (updated & input::input::k_mouse_capture) {
+            SDL_SetRelativeMouseMode(input.is_mouse_captured() ? SDL_TRUE : SDL_FALSE);
+          }
 
           // Submit all rendering work.
           if (frontend.process()) {
