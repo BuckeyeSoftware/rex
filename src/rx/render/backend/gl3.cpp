@@ -1318,7 +1318,7 @@ void gl3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, wrap_s);
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, levels - 1);
-          if (filter.requires_border_color()) {
+          if (requires_border_color(wrap_s)) {
             const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
             pglTexParameteriv(GL_TEXTURE_1D, GL_TEXTURE_BORDER_COLOR, color.data());
           }
@@ -1372,7 +1372,7 @@ void gl3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levels - 1);
-          if (filter.requires_border_color()) {
+          if (requires_border_color(wrap_s, wrap_t)) {
             const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
             pglTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color.data());
           }
@@ -1426,7 +1426,7 @@ void gl3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, wrap_r);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, levels - 1);
-          if (filter.requires_border_color()) {
+          if (requires_border_color(wrap_s, wrap_t, wrap_r)) {
             const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
             pglTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, color.data());
           }
@@ -1482,7 +1482,7 @@ void gl3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, wrap_p);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, levels - 1);
-          if (filter.requires_border_color()) {
+          if (requires_border_color(wrap_s, wrap_t, wrap_p)) {
             const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
             pglTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BORDER_COLOR, color.data());
           }
