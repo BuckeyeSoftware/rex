@@ -1,6 +1,7 @@
 #ifndef RX_CORE_VECTOR_H
 #define RX_CORE_VECTOR_H
 #include "rx/core/assert.h" // RX_ASSERT
+#include "rx/core/config.h" // RX_COMPILER_GCC
 
 #include "rx/core/traits/is_same.h"
 #include "rx/core/traits/is_trivially_copyable.h"
@@ -251,19 +252,11 @@ bool vector<T>::grow_or_shrink_to(rx_size _size) {
   }
 
   if (_size < m_size) {
-#if defined(RX_COMPILER_GCC)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Waggressive-loop-optimizations"
-#endif
     if constexpr (!traits::is_trivially_destructible<T>) {
-      for (rx_size i{m_size-1}; i > _size; i--) {
+      for (rx_size i{m_size-1}; i >= _size; i--) {
         utility::destruct<T>(m_data + i);
       }
     }
-#if defined(RX_COMPILER_GCC)
-#pragma GCC diagnostic pop
-#endif
-
   }
 
   return true;

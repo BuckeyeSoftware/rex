@@ -12,6 +12,8 @@
 #define STBI_NO_HDR
 #define STBI_NO_LINEAR
 
+#define STBI_ASSERT(x) ((void)(x))
+
 #if defined(RX_COMPILER_GCC)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"

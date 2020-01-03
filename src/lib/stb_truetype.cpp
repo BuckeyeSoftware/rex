@@ -16,6 +16,8 @@
 #define STBTT_acos(_x) rx::math::acos(_x)
 #define STBTT_fabs(_x) rx::math::abs(_x)
 
+#define STBTT_assert(x) ((void)(x))
+
 #if defined(RX_COMPILER_MSVC)
 #pragma warning(push)
 #pragma warning(disable: 4244) // 'argument' conversion from 'double' to 'float', possible loss of data

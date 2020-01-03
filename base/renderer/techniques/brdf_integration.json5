@@ -36,7 +36,7 @@
           float a = 0.0;
           float b = 0.0;
 
-          uint samples = 512u;
+          uint samples = 1024u;
           for (uint i = 0u; i < samples; i++) {
             vec2f Xi = hammersley(i, samples);
             vec3f h = importance_sample_ggx(Xi, roughness, vec3f(0.0, 0.0, 1.0));

@@ -51,7 +51,7 @@
             vec3f h = importance_sample_ggx(Xi, roughness, n);
             vec3f l = 2.0 * dot(v, h) * h - v;
 
-            float n_dot_l = clamp(dot(n, l), 0.0, 1.0);
+            float n_dot_l = max(0.0, dot(n, l));
 
             if (n_dot_l > 0.0) {
               color += rx_textureCM(u_sampler, l).rgb * n_dot_l;

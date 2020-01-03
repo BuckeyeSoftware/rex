@@ -284,7 +284,7 @@ static rmtU32 msTimer_Get()
         #endif
 
         return msTime;
-        
+
     #endif
 }
 
@@ -820,7 +820,7 @@ static rmtError VirtualMirrorBuffer_Constructor(VirtualMirrorBuffer* buffer, rmt
         if (buffer->file_map_handle == NULL)
             break;
 
-		
+
 #ifndef _UWP // NON-UWP Windows Desktop Version
 
 		// Reserve two contiguous pages of virtual memory
@@ -833,7 +833,7 @@ static rmtError VirtualMirrorBuffer_Constructor(VirtualMirrorBuffer* buffer, rmt
 		// address range from underneath us so multiple attempts need to be made.
 		VirtualFree(desired_addr, 0, MEM_RELEASE);
 
-		// Immediately try to point both pages at the file mapping		
+		// Immediately try to point both pages at the file mapping
 		if (MapViewOfFileEx(buffer->file_map_handle, FILE_MAP_ALL_ACCESS, 0, 0, size, desired_addr) == desired_addr &&
 			MapViewOfFileEx(buffer->file_map_handle, FILE_MAP_ALL_ACCESS, 0, 0, size, desired_addr + size) == desired_addr + size)
 		{
@@ -841,23 +841,23 @@ static rmtError VirtualMirrorBuffer_Constructor(VirtualMirrorBuffer* buffer, rmt
 			break;
 		}
 
-#else   // UWP 
+#else   // UWP
 
 		// Implementation based on example from: https://docs.microsoft.com/en-us/windows/desktop/api/memoryapi/nf-memoryapi-virtualalloc2
 		//
 		// Notes
-		//  - just replaced the non-uwp functions by the uwp variants. 
+		//  - just replaced the non-uwp functions by the uwp variants.
 		//  - Both versions could be rewritten to not need the try-loop, see the example mentioned above. I just keep it as is for now.
 		//  - Successfully tested on Hololens
 		desired_addr = (rmtU8*) VirtualAlloc2FromApp(NULL, NULL, 2 * size,MEM_RESERVE | MEM_RESERVE_PLACEHOLDER,PAGE_NOACCESS,NULL, 0);
 
 		// Split the placeholder region into two regions of equal size.
 		VirtualFree(desired_addr, size,	MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
-		
-		// Immediately try to point both pages at the file mapping. 
+
+		// Immediately try to point both pages at the file mapping.
 		if(MapViewOfFile3FromApp(buffer->file_map_handle,NULL, desired_addr, 0, size, MEM_REPLACE_PLACEHOLDER,PAGE_READWRITE,NULL,0)==desired_addr &&
    		   MapViewOfFile3FromApp(buffer->file_map_handle,NULL, desired_addr+size, 0, size, MEM_REPLACE_PLACEHOLDER,PAGE_READWRITE,NULL,0)== desired_addr + size) {
-			buffer->ptr = desired_addr;			
+			buffer->ptr = desired_addr;
 			break;
 		}
 #endif
@@ -1022,7 +1022,7 @@ static void VirtualMirrorBuffer_Destructor(VirtualMirrorBuffer* buffer)
         {
 			// FIXME, don't we need to unmap the file views obtained in VirtualMirrorBuffer_Constructor, both for uwp/non-uwp
 			// See example https://docs.microsoft.com/en-us/windows/desktop/api/memoryapi/nf-memoryapi-virtualalloc2
-	
+
             CloseHandle(buffer->file_map_handle);
             buffer->file_map_handle = NULL;
         }
@@ -3304,13 +3304,13 @@ static void WriteSize(rmtU32 size, rmtU8* dest, rmtU32 dest_size, rmtU32 dest_of
 
 static void WebSocket_PrepareBuffer(Buffer* buffer)
 {
-    char empty_frame_header[WEBSOCKET_MAX_FRAME_HEADER_SIZE];
+    char empty_frame_header[WEBSOCKET_MAX_FRAME_HEADER_SIZE] = {0};
 
     assert(buffer != NULL);
- 
+
     // Reset to start
     buffer->bytes_used = 0;
- 
+
     // Allocate enough space for a maximum-sized frame header
     Buffer_Write(buffer, empty_frame_header, sizeof(empty_frame_header));
 }
@@ -3332,7 +3332,7 @@ static void WebSocket_WriteFrameHeader(WebSocket* web_socket, rmtU8* dest, rmtU3
     rmtU8 frame_type = (rmtU8)web_socket->mode;
 
     dest[0] = final_fragment | frame_type;
- 
+
      // Construct the frame header, correctly applying the narrowest size
      if (length <= 125)
      {
@@ -4610,7 +4610,7 @@ static rmtError Remotery_SendLogTextMessage(Remotery* rmt, Message* message)
 
     assert(rmt != NULL);
     assert(message != NULL);
-    
+
     bin_buf = rmt->server->bin_buf;
     WebSocket_PrepareBuffer(bin_buf);
     Buffer_Write(bin_buf, message->payload, message->payload_size);
@@ -5494,7 +5494,7 @@ static void MapMessageQueueAndWait(Remotery* rmt, void (*map_message_queue_fn)(R
     // Basic spin lock on the map function itself
     while (AtomicCompareAndSwapPointer((long* volatile*)&rmt->map_message_queue_fn, NULL, (long*)map_message_queue_fn) == RMT_FALSE)
         msSleep(1);
-    
+
     StoreReleasePointer((long* volatile*)&rmt->map_message_queue_data, (long*)data);
 
     // Wait until map completes
@@ -6279,10 +6279,10 @@ RMT_API void _rmt_UnbindD3D11(void)
         // Stall waiting for the D3D queue to empty into the Remotery queue
         while (!rmtMessageQueue_IsEmpty(d3d11->mq_to_d3d11_main))
             UpdateD3D11Frame();
-        
+
         // There will be a whole bunch of D3D11 sample trees queued up the remotery queue that need releasing
         FreePendingSampleTrees(g_Remotery, SampleType_D3D11, d3d11->flush_samples);
-        
+
         // Inform sampler to not add any more samples
         d3d11->device = NULL;
         d3d11->context = NULL;
@@ -6920,7 +6920,7 @@ RMT_API void _rmt_UnbindOpenGL(void)
 
         // There will be a whole bunch of OpenGL sample trees queued up the remotery queue that need releasing
         FreePendingSampleTrees(g_Remotery, SampleType_OpenGL, opengl->flush_samples);
-        
+
         // Forcefully delete sample tree on this thread to release time stamps from
         // the same thread that created them
         Remotery_DeleteSampleTree(g_Remotery, SampleType_OpenGL);
@@ -7382,7 +7382,7 @@ RMT_API void _rmt_EndMetalSample(void)
         {
             if (metal_sample->timestamp != NULL)
                 MetalTimestamp_End(metal_sample->timestamp);
-            
+
             // Send to the update loop for ready-polling
             if (ThreadSampler_Pop(ts, g_Remotery->metal->mq_to_metal_main, (Sample*)metal_sample))
                 // Perform ready-polling on popping of the root sample
