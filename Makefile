@@ -5,14 +5,12 @@
 # * UBSAN     - Undefined behavior sanitizer
 # * DEBUG     - Debug build
 # * PROFILE   - Profile build
-# * TIMETRACE - Enable build timing and tracing. Forces clang as compiler.
 LTO ?= 0
 ASAN ?= 0
 TSAN ?= 0
 UBSAN ?= 0
 DEBUG ?= 0
 PROFILE ?= 0
-TIMETRACE ?= 0
 
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 
@@ -38,16 +36,6 @@ CFLAGS += `sdl2-config --cflags`
 
 # Disable some unneeded features.
 CFLAGS += -fno-asynchronous-unwind-tables
-
-ifeq ($(TIMETRACE),1)
-ifneq ($(CC),clang)
-	CC=clang
-	CXX=$(CC)
-endif
-	CFLAGS += -ftime-trace
-	TIMETRACES := $(filter %.json,$(SRCS:.cpp=.json))
-	TIMETRACES += $(filter %.json,$(SRCS:.c=.json))
-endif
 
 # Enable link-time optimizations if requested.
 ifeq ($(LTO),1)
@@ -79,12 +67,13 @@ else ifeq ($(PROFILE),1)
 	CFLAGS += -fno-optimize-sibling-calls
 else
 	# Enable assertions in release temporarily.
-	# CFLAGS += -DRX_DEBUG
+	CFLAGS += -DRX_DEBUG
 
 	# Remotery
-	# CFLAGS += -DRMT_ENABLED=1
-	# CFLAGS += -DRMT_USE_OPENGL=1
+	CFLAGS += -DRMT_ENABLED=1
+	CFLAGS += -DRMT_USE_OPENGL=1
 
+	# Disable default C assertions.
 	CFLAGS += -DNDEBUG
 
 	# Highest optimization flag in release builds.
@@ -181,7 +170,7 @@ $(BIN): $(OBJS)
 	$(STRIP) $@
 
 clean:
-	rm -rf $(OBJS) $(DEPS) $(BIN) $(TIMETRACES)
+	rm -rf $(OBJS) $(DEPS) $(BIN)
 
 .PHONY: clean
 
