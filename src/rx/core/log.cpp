@@ -196,8 +196,13 @@ void logger::process(int) {
   RX_ASSERT(m_queue.is_empty(), "not all contents flushed");
 }
 
-void log::write(log::level level, string&& contents) {
-  logger::s_logger->write(this, utility::move(contents), level, time(nullptr));
+void log::write(log::level level, string&& contents_) {
+  {
+    concurrency::scope_lock lock{m_mutex};
+    m_events.signal(level, contents_);
+  }
+
+  logger::s_logger->write(this, utility::move(contents_), level, time(nullptr));
 }
 
 } // namespace rx

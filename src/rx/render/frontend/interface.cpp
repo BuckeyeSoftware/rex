@@ -1,4 +1,5 @@
 #include <stdarg.h> // va_list, va_start, va_end
+#include <stddef.h> // offsetof
 #include <string.h> // strlen
 
 #include "rx/render/frontend/interface.h"
@@ -100,8 +101,8 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   }
 
   // Generate swapchain target.
-  static auto& dimensions{console::interface::get_from_name("display.resolution")->cast<math::vec2i>()->get()};
-  static auto& hdr{console::interface::get_from_name("display.hdr")->cast<bool>()->get()};
+  static auto& dimensions{console::interface::find_variable_by_name("display.resolution")->cast<math::vec2i>()->get()};
+  static auto& hdr{console::interface::find_variable_by_name("display.hdr")->cast<bool>()->get()};
 
   m_swapchain_texture = create_texture2D(RX_RENDER_TAG("swapchain"));
   m_swapchain_texture->record_format(hdr ? texture::data_format::k_rgba_f16 : texture::data_format::k_rgba_u8);
@@ -430,10 +431,13 @@ void interface::draw(
   RX_ASSERT(_state.viewport.dimensions().area() > 0, "empty viewport");
 
   RX_ASSERT(_draw_buffers, "misisng draw buffers");
-  RX_ASSERT(_buffer, "expected buffer");
   RX_ASSERT(_program, "expected program");
   RX_ASSERT(_count != 0, "empty draw call");
   RX_ASSERT(_textures, "expected textures");
+
+  if (!_buffer) {
+    RX_ASSERT(_offset == 0, "bufferless draws cannot have an offset");
+  }
 
   m_vertices[0] += _count;
 
@@ -674,6 +678,7 @@ bool interface::process() {
     m_backend->process(m_commands);
   }
   m_commands.clear();
+  m_command_buffer.reset();
 
   // cleanup unreferenced resources
   m_destroy_buffers.each_fwd([this](buffer* _buffer) {
@@ -704,12 +709,6 @@ bool interface::process() {
     m_textureCM_pool.destroy<textureCM>(_texture);
   });
 
-  // consume all commands
-  if (m_backend) {
-    m_backend->process(m_commands);
-  }
-  m_commands.clear();
-
   m_destroy_buffers.clear();
   m_destroy_targets.clear();
   m_destroy_programs.clear();
@@ -718,6 +717,11 @@ bool interface::process() {
   m_destroy_textures3D.clear();
   m_destroy_texturesCM.clear();
 
+  // consume all commands
+  if (m_backend) {
+    m_backend->process(m_commands);
+  }
+  m_commands.clear();
   m_command_buffer.reset();
 
   auto swap{[](concurrency::atomic<rx_size> (&_value)[2]) {

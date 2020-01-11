@@ -13,17 +13,17 @@
   shaders: [
     {
       type: "vertex",
-      inputs: [
-        { name: "a_position",    type: "vec2f" },
-        { name: "a_coordinate",  type: "vec2f" }
+      imports: [
+        "fullscreen_triangle"
       ],
       outputs: [
         { name: "vs_coordinate", type: "vec2f" }
       ],
       source: "
         void main() {
-          rx_position = vec4(a_position, 0.0, 1.0);
-          vs_coordinate = a_coordinate;
+          vec4f triangle = fullscreen_triangle();
+          rx_position = vec4f(triangle.xy, 0.0, 1.0);
+          vs_coordinate = triangle.zw;
         }
       "
     },{
@@ -40,7 +40,7 @@
       ],
       source: "
         vec3f approximate_specular_ibl(vec3f specular_color, float roughness, vec3f n, vec3f v) {
-          float n_dot_v = clamp(dot(n, v), 0.0, 1.0);
+          float n_dot_v = max(0.0, dot(n, v));
           vec3f r = reflect(-v, n);
           vec3f prefiltered_color = rx_textureCMLod(u_prefilter, r, roughness * 5.0).rgb;
           vec2f brdf = rx_texture2D(u_scale_bias, vec2f(roughness, n_dot_v)).rg;

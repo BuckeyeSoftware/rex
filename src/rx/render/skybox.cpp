@@ -140,7 +140,7 @@ bool skybox::load(const string& _file_name) {
   frontend::textureCM::face face{frontend::textureCM::face::k_right};
   bool result{faces.each([&](const json& file_name) {
     texture::loader texture{m_frontend->allocator()};
-    if (!texture.load(file_name.as_string())) {
+    if (!texture.load(file_name.as_string(), texture::pixel_format::k_rgb_u8)) {
       return false;
     }
 

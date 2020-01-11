@@ -89,7 +89,7 @@ rx_size bitset::find_first_unset() const {
       return i;
     }
   }
-  return 1_z;
+  return -1_z;
 }
 
 rx_size bitset::find_first_set() const {
@@ -98,7 +98,7 @@ rx_size bitset::find_first_set() const {
       return i;
     }
   }
-  return 1_z;
+  return -1_z;
 }
 
 } // namespace rx

@@ -81,7 +81,17 @@ bool texture::parse(const json& _definition) {
   }
 
   rx::texture::loader loader{m_allocator};
-  if (!loader.load(file.as_string())) {
+
+  rx::texture::pixel_format want_format;
+  if (m_type == "albedo") {
+    want_format = rx::texture::pixel_format::k_rgba_u8;
+  } else if (m_type == "metalness" || m_type == "roughness") {
+    want_format = rx::texture::pixel_format::k_r_u8;
+  } else {
+    want_format = rx::texture::pixel_format::k_rgb_u8;
+  }
+
+  if (!loader.load(file.as_string(), want_format)) {
     return false;
   }
 

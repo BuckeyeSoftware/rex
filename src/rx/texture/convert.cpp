@@ -33,8 +33,8 @@ static RX_HINT_NO_INLINE void r_to_rgb(rx_byte *RX_HINT_RESTRICT dst_,
   }
 }
 
-#define r_to_bgra r_to_rgba
-#define r_to_bgr r_to_rgb
+static const constexpr auto r_to_bgra{r_to_rgba};
+static const constexpr auto r_to_bgr{r_to_rgb};
 
 // RGB => R
 // RGB => BGR
@@ -92,9 +92,9 @@ static RX_HINT_NO_INLINE void bgr_to_r(rx_byte *RX_HINT_RESTRICT dst_,
   }
 }
 
-#define bgr_to_rgb rgb_to_bgr
-#define bgr_to_rgba rgb_to_bgra
-#define bgr_to_bgra rgb_to_rgba
+static const constexpr auto bgr_to_rgb{rgb_to_bgr};
+static const constexpr auto bgr_to_rgba{rgb_to_bgra};
+static const constexpr auto bgr_to_bgra{rgb_to_rgba};
 
 // RGBA => R
 // RGBA => RGB
@@ -161,8 +161,8 @@ static RX_HINT_NO_INLINE void bgra_to_rgb(rx_byte *RX_HINT_RESTRICT dst_,
   }
 }
 
-#define bgra_to_bgr rgba_to_rgb
-#define bgra_to_rgba rgba_to_bgra
+static const constexpr auto bgra_to_bgr{rgba_to_rgb};
+static const constexpr auto bgra_to_rgba{rgba_to_bgra};
 
 static RX_HINT_FORCE_INLINE rx_size bpp_for_pixel_format(pixel_format _format) {
   switch (_format) {

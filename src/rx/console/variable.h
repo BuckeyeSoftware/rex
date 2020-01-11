@@ -44,9 +44,7 @@ enum class variable_type {
 enum class variable_status {
   k_success,
   k_out_of_range,
-  k_type_mismatch,
-  k_not_found,
-  k_malformed
+  k_type_mismatch
 };
 
 // type traits
@@ -91,6 +89,13 @@ struct variable_reference {
   const char* description() const;
   const char* name() const;
   variable_type type() const;
+
+  void reset();
+  string print_current() const;
+  string print_range() const;
+  string print_initial() const;
+
+  bool is_initial() const;
 
 private:
   friend struct interface;
@@ -370,10 +375,12 @@ inline variable_status variable<T>::set(const T& _value) {
   if (_value < m_min || _value > m_max) {
     return variable_status::k_out_of_range;
   }
+
   if (m_current != _value) {
     m_current = _value;
     m_on_change.signal(*this);
   }
+
   return variable_status::k_success;
 }
 
@@ -476,6 +483,7 @@ inline variable_status variable<string>::set(const string& _value) {
     m_current = _value;
     m_on_change.signal(*this);
   }
+
   return variable_status::k_success;
 }
 
@@ -542,10 +550,12 @@ inline variable_status variable<vec2<T>>::set(const vec2<T>& _value) {
   {
     return variable_status::k_out_of_range;
   }
+
   if (m_current != _value) {
     m_current = _value;
     m_on_change.signal(*this);
   }
+
   return variable_status::k_success;
 }
 
@@ -694,6 +704,12 @@ inline variable_status variable<vec4<T>>::set(const vec4<T>& _value) {
 template<typename T>
 inline typename variable<vec4<T>>::on_change_event::handle variable<vec4<T>>::on_change(typename on_change_event::delegate&& on_change_) {
   return m_on_change.connect(utility::move(on_change_));
+}
+
+const char* variable_type_as_string(variable_type _type);
+
+inline bool variable_type_is_ranged(variable_type _type) {
+  return _type != variable_type::k_boolean && _type != variable_type::k_string;
 }
 
 } // namespace rx::console

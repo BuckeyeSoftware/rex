@@ -80,7 +80,6 @@ rx_f32 tan(rx_f32 _x) {
     return _x - _x;
   }
 
-  // TODO(dweiler): general argument reduction
   rx_f64 y;
   const rx_s32 n{rempio2(_x, y)};
   if (n&1) {

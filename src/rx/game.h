@@ -16,7 +16,7 @@ struct game
   };
 
   virtual bool on_init() = 0;
-  virtual status on_slice(const input::input& _input) = 0;
+  virtual status on_slice(input::input& _input) = 0;
   virtual void on_resize(const math::vec2z& _resolution) = 0;
 };
 

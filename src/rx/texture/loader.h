@@ -22,7 +22,7 @@ struct loader {
   constexpr loader(memory::allocator* _allocator);
   ~loader() = default;
 
-  bool load(const string& _file_name);
+  bool load(const string& _file_name, pixel_format _want_format);
 
   rx_size bpp() const;
   rx_size channels() const;

@@ -1,6 +1,7 @@
 #ifndef RX_CORE_VECTOR_H
 #define RX_CORE_VECTOR_H
 #include "rx/core/assert.h" // RX_ASSERT
+#include "rx/core/config.h" // RX_COMPILER_GCC
 
 #include "rx/core/traits/is_same.h"
 #include "rx/core/traits/is_trivially_copyable.h"
@@ -31,6 +32,9 @@ struct vector {
 
   vector& operator=(const vector& _other);
   vector& operator=(vector&& other_);
+
+  vector& operator+=(const vector& _other);
+  vector& operator+=(vector&& other_);
 
   T& operator[](rx_size _index);
   const T& operator[](rx_size _index) const;
@@ -211,6 +215,25 @@ inline vector<T>& vector<T>::operator=(vector&& other_) {
 }
 
 template<typename T>
+inline vector<T>& vector<T>::operator+=(const vector& _other) {
+  reserve(size() + _other.size());
+  _other.each_fwd([this](const T& _value) {
+    push_back(_value);
+  });
+  return *this;
+}
+
+template<typename T>
+inline vector<T>& vector<T>::operator+=(vector&& other_) {
+  reserve(size() + other_.size());
+  other_.each_fwd([this](T& value_) {
+    push_back(utility::move(value_));
+  });
+  other_.clear();
+  return *this;
+}
+
+template<typename T>
 inline T& vector<T>::operator[](rx_size _index) {
   RX_ASSERT(_index < m_size, "out of bounds (%zu >= %zu)", _index, m_size);
   return m_data[_index];
@@ -229,19 +252,11 @@ bool vector<T>::grow_or_shrink_to(rx_size _size) {
   }
 
   if (_size < m_size) {
-#if defined(RX_COMPILER_GCC)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Waggressive-loop-optimizations"
-#endif
     if constexpr (!traits::is_trivially_destructible<T>) {
-      for (rx_size i{m_size-1}; i > _size; i--) {
+      for (rx_size i{m_size-1}; i >= _size; i--) {
         utility::destruct<T>(m_data + i);
       }
     }
-#if defined(RX_COMPILER_GCC)
-#pragma GCC diagnostic pop
-#endif
-
   }
 
   return true;
@@ -437,6 +452,16 @@ inline bool vector<T>::each_rev(F&& _func) const {
     }
   }
   return true;
+}
+
+template<typename T>
+inline const T& vector<T>::first() const {
+  return m_data[0];
+}
+
+template<typename T>
+inline T& vector<T>::first() {
+  return m_data[0];
 }
 
 template<typename T>

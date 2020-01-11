@@ -58,6 +58,8 @@ struct string {
   string& append(const string& _contents);
   string& append(char _ch);
 
+  void insert_at(rx_size _position, const string& _contents);
+
   // returns copy of string with leading characters in set removed
   string lstrip(const char* _set) const;
 
@@ -75,6 +77,8 @@ struct string {
 
   char pop_back();
 
+  void erase(rx_size _begin, rx_size _end);
+
   char& operator[](rx_size _index);
   const char& operator[](rx_size _index) const;
 
@@ -90,6 +94,8 @@ struct string {
   bool begins_with(const string& _prefix) const;
   bool ends_with(const char* _suffix) const;
   bool ends_with(const string& _suffix) const;
+  bool contains(const char* _needle) const;
+  bool contains(const string& _needle) const;
 
   rx_size hash() const;
 
@@ -253,22 +259,31 @@ inline const char* string::data() const {
   return m_data;
 }
 
-inline string operator+(const string& lhs, const char* rhs) {
-  return string(lhs).append(rhs);
+inline string operator+(const string& _lhs, const char* _rhs) {
+  return string(_lhs).append(_rhs);
 }
 
-inline string operator+(const string& lhs, const string& rhs) {
-  return string(lhs).append(rhs);
+inline string operator+(const string& _lhs, const string& _rhs) {
+  return string(_lhs).append(_rhs);
 }
 
-inline string& operator+=(string &lhs, const char* rhs) {
-  lhs.append(rhs);
-  return lhs;
+inline string operator+(const string& _lhs, const char _ch) {
+  return string(_lhs).append(_ch);
 }
 
-inline string& operator+=(string &lhs, char ch) {
-  lhs.append(ch);
-  return lhs;
+inline string& operator+=(string& lhs_, const char* rhs) {
+  lhs_.append(rhs);
+  return lhs_;
+}
+
+inline string& operator+=(string& lhs_, char ch) {
+  lhs_.append(ch);
+  return lhs_;
+}
+
+inline string& operator+=(string& lhs_, const string& _contents) {
+  lhs_.append(_contents);
+  return lhs_;
 }
 
 // not inlined since it would explode code size

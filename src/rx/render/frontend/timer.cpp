@@ -1,21 +1,13 @@
-#include <SDL.h> // SDL_GetPerformance{Counter,Frequency}
-
 #include "rx/render/frontend/timer.h"
 
 #include "rx/core/math/abs.h"
+#include "rx/core/time.h"
+#include "rx/core/concurrency/delay.h"
 
 namespace rx::render::frontend {
 
-static rx_u64 timer_ticks() {
-  return SDL_GetPerformanceCounter();
-}
-
-static rx_u64 timer_frequency() {
-  return SDL_GetPerformanceFrequency();
-}
-
 frame_timer::frame_timer()
-  : m_frequency{timer_frequency()}
+  : m_frequency{query_performance_counter_frequency()}
   , m_resolution{1.0 / m_frequency}
   , m_max_frame_ticks{0.0f}
   , m_last_second_ticks{0}
@@ -24,7 +16,7 @@ frame_timer::frame_timer()
   , m_max_ticks{0}
   , m_average_ticks{0.0f}
   , m_delta_time{0.0f}
-  , m_last_frame_ticks{timer_ticks()}
+  , m_last_frame_ticks{query_performance_counter_ticks()}
   , m_current_ticks{0}
   , m_target_ticks{0}
   , m_frame_min{0}
@@ -40,8 +32,8 @@ void frame_timer::cap_fps(rx_f32 _max_fps) {
 }
 
 void frame_timer::reset() {
-  m_last_second_ticks = timer_ticks();
-  m_frequency = timer_frequency();
+  m_last_second_ticks = query_performance_counter_ticks();
+  m_frequency = query_performance_counter_frequency();
   m_resolution = 1.0 / m_frequency;
   m_frame_count = 0;
   m_min_ticks = m_frequency;
@@ -53,7 +45,7 @@ bool frame_timer::update() {
   m_frame_count++;
   m_target_ticks = m_max_frame_ticks != -1.0f
     ? m_last_second_ticks + rx_u64(m_frame_count * m_max_frame_ticks) : 0;
-  m_current_ticks = timer_ticks();
+  m_current_ticks = query_performance_counter_ticks();
   m_average_ticks += m_current_ticks - m_last_frame_ticks;
 
   const rx_f64 life_time{m_current_ticks * m_resolution};
@@ -80,9 +72,9 @@ bool frame_timer::update() {
   }
 
   if (m_target_ticks && m_current_ticks < m_target_ticks) {
-    const auto ticks_before_delay{timer_ticks()};
-    SDL_Delay(static_cast<rx_u64>((m_target_ticks - m_current_ticks) * 1000) / m_frequency);
-    m_current_ticks = timer_ticks();
+    const auto ticks_before_delay{query_performance_counter_ticks()};
+    concurrency::delay_this_thread(static_cast<rx_u64>((m_target_ticks - m_current_ticks) * 1000) / m_frequency);
+    m_current_ticks = query_performance_counter_ticks();
     m_average_ticks += m_current_ticks - ticks_before_delay;
   }
 

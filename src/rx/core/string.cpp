@@ -266,6 +266,15 @@ string& string::append(const char* _contents) {
   return append(_contents, strlen(_contents));
 }
 
+void string::insert_at(rx_size _position, const string& _contents) {
+  const rx_size old_this_size{size()};
+  const rx_size old_that_size{_contents.size()};
+  resize(old_this_size + old_that_size);
+  char* cursor{m_data + _position};
+  memmove(cursor + old_that_size, cursor, old_this_size - _position);
+  memmove(cursor, _contents.data(), old_that_size);
+}
+
 string string::lstrip(const char* _set) const {
   const char* ch{m_data};
   for (; strchr(_set, *ch); ch++);
@@ -284,8 +293,9 @@ string string::substring(rx_size _offset, rx_size _length) const {
   if (_length == 0) {
     return {m_allocator, begin};
   }
-  RX_ASSERT(begin + _length < m_data + size(), "out of bounds");
-  return {m_allocator, begin, begin + _length};
+  // NOTE(dweiler): you can substring the whole string.
+  RX_ASSERT(begin + _length <= m_data + size(), "out of bounds");
+  return {m_allocator, begin, _length};
 }
 
 rx_size string::scan(const char* _scan_format, ...) const {
@@ -325,7 +335,7 @@ vector<string> string::split(int _token, rx_size _count) const {
     }
 
     // handle quoted strings
-    if (*ch == '\"') {
+    if (_count && *ch == '\"') {
       quoted = !quoted;
       continue;
     }
@@ -349,6 +359,17 @@ char string::pop_back() {
   const char last{static_cast<char>(*m_last)};
   *m_last = 0;
   return last;
+}
+
+void string::erase(rx_size _begin, rx_size _end) {
+  char *const begin{m_data + _begin};
+  char *const end{m_data + _end};
+
+  const auto length{m_last - end};
+
+  memmove(begin, end, length);
+  m_last = begin + length;
+  *m_last = '\0';
 }
 
 // complicated because of small string optimization
@@ -490,6 +511,14 @@ bool string::ends_with(const string& _suffix) const {
   }
 
   return strcmp(m_data + size() - _suffix.size(), _suffix.data()) == 0;
+}
+
+bool string::contains(const char* _needle) const {
+  return strstr(m_data, _needle);
+}
+
+bool string::contains(const string& _needle) const {
+  return strstr(m_data, _needle.data());
 }
 
 rx_size string::hash() const {

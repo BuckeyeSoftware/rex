@@ -1,31 +1,48 @@
 # Compilation options:
-# * LTO     - Link time optimization
-# * ASAN    - Address sanitizer
-# * TSAN    - Thread sanitizer
-# * UBSAN   - Undefined behavior sanitizer
-# * DEBUG   - Debug build
-# * PROFILE - Profile build
+# * LTO       - Link time optimization
+# * ASAN      - Address sanitizer
+# * TSAN      - Thread sanitizer
+# * UBSAN     - Undefined behavior sanitizer
+# * DEBUG     - Debug build
+# * PROFILE   - Profile build
+# * SRCDIR    - Out of tree builds
 LTO ?= 0
 ASAN ?= 0
 TSAN ?= 0
 UBSAN ?= 0
 DEBUG ?= 0
 PROFILE ?= 0
+SRCDIR ?= src
 
+#
+# Some recursive make functions to avoid shelling out
+#
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+uniq = $(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
 
 # C compiler
 CC := gcc
 CC ?= clang
 
 # C++ compiler
-# We use the C frontend with -xcpp to avoid linking in C++ runtime library
-CXX := gcc
-CXX ?= clang
+# We use the C frontend with -xcpp to avoid linking in C++ runtime library.
+CXX := $(CC)
 
-SRCS := $(call rwildcard, src/, *cpp) $(call rwildcard, src/, *c)
-OBJS := $(filter %.o,$(SRCS:.cpp=.o)) $(filter %.o,$(SRCS:.c=.o))
-DEPS := $(filter %.d,$(SRCS:.cpp=.d)) $(filter %.d,$(SRCS:.c=.d))
+# Build artifact directories
+OBJDIR := .build/objs
+DEPDIR := .build/deps
+
+# Collect all .cpp, .c and .S files for build in the source directory.
+SRCS := $(call rwildcard, $(SRCDIR)/, *cpp)
+SRCS += $(call rwildcard, $(SRCDIR)/, *c)
+SRCS += $(call rwildcard, $(SRCDIR)/, *S)
+
+# Generate object and dependency filenames.
+OBJS := $(filter %.o,$(SRCS:%.cpp=$(OBJDIR)/%.o))
+OBJS += $(filter %.o,$(SRCS:%.c=$(OBJDIR)/%.o))
+OBJS += $(filter %.o,$(SRCS:%.S=$(OBJDIR)/%.o))
+DEPS := $(filter %.d,$(SRCS:%.cpp=$(DEPDIR)/%.d))
+DEPS += $(filter %.d,$(SRCS:%.c=$(DEPDIR)/%.d))
 
 #
 # Shared C and C++ compilation flags.
@@ -74,6 +91,9 @@ else
 	CFLAGS += -DRMT_ENABLED=1
 	CFLAGS += -DRMT_USE_OPENGL=1
 
+	# Disable default C assertions.
+	CFLAGS += -DNDEBUG
+
 	# Highest optimization flag in release builds.
 	CFLAGS += -O3
 
@@ -113,11 +133,18 @@ CCFLAGS += -std=c11 -D_DEFAULT_SOURCE
 #
 # C++ compilation flags.
 #
-CXXFLAGS := -std=c++17
+CXXFLAGS := $(CFLAGS)
+CXXFLAGS += -std=c++17
 
 # Disable some unneeded features.
 CXXFLAGS += -fno-exceptions
 CXXFLAGS += -fno-rtti
+
+#
+# Dependency flags.
+#
+DEPFLAGS := -MMD
+DEPFLAGS += -MP
 
 #
 # Linker flags.
@@ -147,6 +174,7 @@ ifeq ($(UBSAN),1)
 	LDFLAGS += -fsanitize=undefined
 endif
 
+# Strip the binary when not a debug build.
 ifneq (,$(findstring RX_DEBUG,$(CFLAGS)))
 	STRIP := true
 else
@@ -157,19 +185,33 @@ BIN := rex
 
 all: $(BIN)
 
-%.o: %.cpp
-	$(CXX) -xc++ $(CFLAGS) $(CXXFLAGS) -c -o $@ $<
+# Build artifact directories..
+$(DEPDIR):
+	@mkdir -p $(addprefix $(DEPDIR)/,$(call uniq,$(dir $(SRCS))))
 
-%.o: %.c
-	$(CC) $(CFLAGS) $(CCFLAGS) -c -o $@ $<
+$(OBJDIR):
+	@mkdir -p $(addprefix $(OBJDIR)/,$(call uniq,$(dir $(SRCS))))
+
+$(OBJDIR)/%.o: %.cpp $(DEPDIR)/%.d | $(OBJDIR) $(DEPDIR)
+	$(CXX) -xc++ -MT $@ $(DEPFLAGS) -MF $(DEPDIR)/$*.Td $(CXXFLAGS) -c -o $@ $<
+	@mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
+
+$(OBJDIR)/%.o: %.c $(DEPDIR)/%.d | $(OBJDIR) $(DEPDIR)
+	$(CC) -MT $@ $(DEPFLAGS) -MF $(DEPDIR)/$*.Td $(CCFLAGS) -c -o $@ $<
+	@mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
+
+$(OBJDIR)/%.o: %.S | $(OBJDIR)
+	$(CC) -c -o $@ $<
+	@mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 $(BIN): $(OBJS)
 	$(CXX) $(OBJS) $(LDFLAGS) -o $@
 	$(STRIP) $@
 
 clean:
-	rm -rf $(OBJS) $(DEPS) $(BIN)
+	rm -rf $(DEPDIR) $(OBJDIR) $(BIN)
 
-.PHONY: clean
+.PHONY: clean $(DEPDIR) $(OBJDIR)
 
--include $(DEPS)
+$(DEPS):
+include $(wildcard $(DEPS))
