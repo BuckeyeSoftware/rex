@@ -54,7 +54,7 @@ struct test_game
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
     m_skybox.load("base/skyboxes/yokohama/yokohama.json5");
     m_model0.load("base/models/chest/chest.json5");
-    m_model1.load("base/models/fellord/fellord.json5");
+    m_model1.load("base/models/fire_hydrant/fire_hydrant.json5");
     m_model2.load("base/models/mrfixit/mrfixit.json5");
     m_ibl.render(m_skybox.cubemap(), 256);
 

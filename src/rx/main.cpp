@@ -8,6 +8,7 @@
 #include "rx/render/backend/gl4.h"
 #include "rx/render/backend/gl3.h"
 #include "rx/render/backend/es3.h"
+#include "rx/render/backend/null.h"
 
 #include "rx/core/profiler.h"
 #include "rx/core/global.h"
@@ -344,6 +345,11 @@ int main(int _argc, char** _argv) {
       } else if (driver_name == "es3") {
         backend = memory::g_system_allocator->create<render::backend::es3>(
           &memory::g_system_allocator, reinterpret_cast<void*>(window));
+      } else if (driver_name == "null") {
+        backend = memory::g_system_allocator->create<render::backend::null>(
+          &memory::g_system_allocator, reinterpret_cast<void*>(window));
+      } else {
+        abort("invalid driver");
       }
 
       if (!backend->init()) {

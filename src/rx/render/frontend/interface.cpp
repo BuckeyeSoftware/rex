@@ -63,6 +63,8 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   , m_deferred_process{[this]() { process(); }}
   , m_device_info{m_allocator}
 {
+  RX_ASSERT(_backend, "expected valid backend");
+
   memset(m_resource_usage, 0, sizeof m_resource_usage);
 
   // Cache the device information from the backend.
@@ -674,9 +676,8 @@ bool interface::process() {
   concurrency::scope_lock lock{m_mutex};
 
   // consume all commands
-  if (m_backend) {
-    m_backend->process(m_commands);
-  }
+  m_backend->process(m_commands);
+
   m_commands.clear();
   m_command_buffer.reset();
 
@@ -718,9 +719,7 @@ bool interface::process() {
   m_destroy_texturesCM.clear();
 
   // consume all commands
-  if (m_backend) {
-    m_backend->process(m_commands);
-  }
+  m_backend->process(m_commands);
   m_commands.clear();
   m_command_buffer.reset();
 
