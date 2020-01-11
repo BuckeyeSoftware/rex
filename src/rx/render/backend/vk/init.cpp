@@ -181,7 +181,7 @@ void create_device(detail_vk::context& ctx_) {
   
   rx::vector<const char*> required_extensions(ctx_.allocator, 1, {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
   VkPhysicalDeviceFeatures required_features {};
-  int anisotropy = console::interface::get_from_name("gl4.anisotropy")->cast<int>()->get();
+  int anisotropy = console::interface::find_variable_by_name("gl4.anisotropy")->cast<int>()->get();
   if(anisotropy != 0) required_features.samplerAnisotropy = VK_TRUE;
   
   { // select physical device
@@ -298,7 +298,7 @@ void create_device(detail_vk::context& ctx_) {
     vkGetPhysicalDeviceFeatures(ctx_.physical, &features);
     if(anisotropy != 0) {
       if(features.samplerAnisotropy != VK_TRUE) {
-        console::interface::get_from_name("gl4.anisotropy")->cast<int>()->set(0);
+        console::interface::find_variable_by_name("gl4.anisotropy")->cast<int>()->set(0);
         required_features.samplerAnisotropy = VK_FALSE;
       }
     }
@@ -414,7 +414,7 @@ void create_swapchain(detail_vk::context& ctx_) {
       
       VkPresentModeKHR target_mode = VK_PRESENT_MODE_FIFO_KHR;
       
-      int interval = console::interface::get_from_name("display.swap_interval")->cast<int>()->get();
+      int interval = console::interface::find_variable_by_name("display.swap_interval")->cast<int>()->get();
       switch (interval) {
         case 0:
           target_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;

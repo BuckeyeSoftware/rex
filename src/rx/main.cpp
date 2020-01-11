@@ -264,26 +264,12 @@ int main(int _argc, char** _argv) {
       const bool is_gl{driver_name.begins_with("gl")};
       const bool is_es{driver_name.begins_with("es")};
 
-<<<<<<< HEAD
-    int flags{0};
-    if (is_gl || is_es) {
-      flags |= SDL_WINDOW_OPENGL;
-    }
-    if(renderer_driver->get() == "vk") {
-      flags |= SDL_WINDOW_VULKAN;
-    }
-    if (*display_resizable) {
-      flags |= SDL_WINDOW_RESIZABLE;
-    }
-    if (*display_fullscreen == 1) {
-      flags |= SDL_WINDOW_FULLSCREEN;
-    } else if (*display_fullscreen == 2) {
-      flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-    }
-=======
       int flags{0};
       if (is_gl || is_es) {
         flags |= SDL_WINDOW_OPENGL;
+      }
+      if(driver_name == "vk") {
+          flags |= SDL_WINDOW_VULKAN;
       }
       if (*display_resizable) {
         flags |= SDL_WINDOW_RESIZABLE;
@@ -293,7 +279,6 @@ int main(int _argc, char** _argv) {
       } else if (*display_fullscreen == 2) {
         flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
       }
->>>>>>> master
 
       if (is_gl || is_es) {
         if (is_gl) {
@@ -363,30 +348,15 @@ int main(int _argc, char** _argv) {
       } else if (driver_name == "es3") {
         backend = memory::g_system_allocator->create<render::backend::es3>(
           &memory::g_system_allocator, reinterpret_cast<void*>(window));
+      } else if(driver_name == "vk") {
+        backend = memory::g_system_allocator->create<render::backend::vk>(
+          &memory::g_system_allocator, reinterpret_cast<void*>(window));
       }
 
       if (!backend->init()) {
         abort("failed to initialize rendering backend");
       }
 
-<<<<<<< HEAD
-    //SDL_GL_SetSwapInterval(*display_swap_interval);
-
-    render::backend::interface* backend{nullptr};
-    if (driver_name == "gl4") {
-      backend = memory::g_system_allocator->create<render::backend::gl4>(
-        &memory::g_system_allocator, reinterpret_cast<void*>(window));
-    } else if (driver_name == "gl3") {
-      backend = memory::g_system_allocator->create<render::backend::gl3>(
-        &memory::g_system_allocator, reinterpret_cast<void*>(window));
-    } else if(renderer_driver->get() == "vk") {
-      backend = memory::g_system_allocator->create<render::backend::vk>(
-        &memory::g_system_allocator, reinterpret_cast<void*>(window));
-    } else if (driver_name == "es3") {
-      backend = memory::g_system_allocator->create<render::backend::es3>(
-        &memory::g_system_allocator, reinterpret_cast<void*>(window));
-    }
-=======
       SDL_GL_SetSwapInterval(*display_swap_interval);
 
       {
@@ -429,7 +399,6 @@ int main(int _argc, char** _argv) {
               }
             });
           }
->>>>>>> master
 
           if (*profile_gpu) {
             if (is_gl || is_es) {
