@@ -273,6 +273,9 @@ void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
     m_buffers[m_wr_index]->write_vertices(m_vertices.data(), m_vertices.size() * sizeof(vertex));
     m_buffers[m_wr_index]->write_elements(m_elements.data(), m_elements.size() * sizeof(rx_u32));
 
+    // Record the edit.
+    m_buffers[m_wr_index]->record_vertices_edit(0, m_vertices.size() * sizeof(vertex));
+    m_buffers[m_wr_index]->record_elements_edit(0, m_elements.size() * sizeof(rx_u32));
     m_frontend->update_buffer(RX_RENDER_TAG("immediate3D"), m_buffers[m_wr_index]);
 
     // clear staging buffers

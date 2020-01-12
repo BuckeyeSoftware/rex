@@ -31,6 +31,12 @@ struct buffer : resource {
     k_dynamic
   };
 
+  struct edit {
+    rx_size sink;
+    rx_size offset;
+    rx_size size;
+  };
+
   buffer(interface* _frontend);
   ~buffer();
 
@@ -51,14 +57,18 @@ struct buffer : resource {
   // record attribute of |_count| elements of |_type| starting at |_offset|
   void record_attribute(attribute::type _type, rx_size _count, rx_size _offset);
 
+  // record buffer type |_type|
+  void record_type(type _type);
+
   // record vertex stride |_stride|
   void record_stride(rx_size _stride);
 
   // record element format |_type|
   void record_element_type(element_type _type);
 
-  // record buffer type |_type|
-  void record_type(type _type);
+  // Records an edit to the buffer at byte |_offset| of size |_size|.
+  void record_vertices_edit(rx_size _offset, rx_size _size);
+  void record_elements_edit(rx_size _offset, rx_size _size);
 
   const vector<rx_byte>& vertices() const &;
   const vector<rx_byte>& elements() const &;
@@ -67,6 +77,7 @@ struct buffer : resource {
   element_type element_kind() const;
   type kind() const;
   rx_size size() const;
+  vector<edit>&& edits();
 
   void validate() const;
 
@@ -84,6 +95,7 @@ private:
   vector<rx_byte> m_vertices_store;
   vector<rx_byte> m_elements_store;
   vector<attribute> m_attributes;
+  vector<edit> m_edits;
   element_type m_element_type;
   type m_type;
   rx_size m_stride;
@@ -134,6 +146,16 @@ inline void buffer::record_element_type(element_type _type) {
   RX_ASSERT(!(m_recorded & k_element_type), "already recorded element type");
   m_recorded |= k_element_type;
   m_element_type = _type;
+}
+
+inline void buffer::record_vertices_edit(rx_size _offset, rx_size _size) {
+  m_edits.emplace_back(0_z, _offset, _size);
+}
+
+inline void buffer::record_elements_edit(rx_size _offset, rx_size _size) {
+  RX_ASSERT(m_element_type != element_type::k_none,
+    "cannot record edit to elements");
+  m_edits.emplace_back(1_z, _offset, _size);
 }
 
 inline const vector<rx_byte>& buffer::vertices() const & {

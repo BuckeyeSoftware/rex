@@ -195,6 +195,62 @@ struct resource_command {
   };
 };
 
+struct update_command {
+  enum class type : rx_u8 {
+    k_buffer,
+    k_texture1D,
+    k_texture2D,
+    k_texture3D
+  };
+
+  type kind;
+
+  union {
+    buffer* as_buffer;
+    texture1D* as_texture1D;
+    texture2D* as_texture2D;
+    texture3D* as_texture3D;
+  };
+
+  // The number of edits to the resource in this update.
+  rx_size edits;
+
+  // The edit stream is an additional, variably-sized stream of data included as
+  // a footer on this structure. It's contents encode a variable amount of edits
+  // to the given resource.
+  //
+  // The encoding of the edit stream is a list of rx_size integers. The number
+  // of integers per edit is determined by the resource type |kind|.
+  //
+  // Buffer edits are represented by a three-tuple of integers of the format
+  // {
+  //   sink:   sink to edit: 0 = vertex, 1 = element
+  //   offset: byte offset
+  //   size:   size in bytes
+  // }
+  //
+  // Texture edits are represented by a variable-tuple of integers of the format
+  // {
+  //   level:  miplevel to edit
+  //   offset: offset in pixels (1, 2, or 3 integers for 1D, 2D and 3D textures, respectively)
+  //   size:   size in pixels (1, 2, or 3 integers for 1D, 2D and 3D textures, respectively)
+  // }
+  const rx_size* edit() const;
+  rx_size* edit();
+};
+
+inline const rx_size* update_command::edit() const {
+  // NOTE: standard permits aliasing with char (rx_byte)
+  const rx_byte *opaque{reinterpret_cast<const rx_byte*>(this) + sizeof *this};
+  return reinterpret_cast<const rx_size*>(opaque);
+}
+
+inline rx_size* update_command::edit() {
+  // NOTE: standard permits aliasing with char (rx_byte)
+  rx_byte* opaque{reinterpret_cast<rx_byte*>(this) + sizeof *this};
+  return reinterpret_cast<rx_size*>(opaque);
+}
+
 } // namespace rx::render::frontend
 
 #endif // RX_RENDER_FRONTEND_COMMAND_H

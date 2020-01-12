@@ -25,12 +25,14 @@ CC := gcc
 CC ?= clang
 
 # C++ compiler
-# We use the C frontend with -xcpp to avoid linking in C++ runtime library.
-CXX := $(CC)
+# We use the C frontend with -xc++ to avoid linking in C++ runtime library.
+CXX := $(CC) -xc++
 
 # Build artifact directories
 OBJDIR := .build/objs
 DEPDIR := .build/deps
+
+
 
 # Collect all .cpp, .c and .S files for build in the source directory.
 SRCS := $(call rwildcard, $(SRCDIR)/, *cpp)
@@ -205,7 +207,7 @@ $(OBJDIR)/%.o: %.S | $(OBJDIR)
 	@mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 $(BIN): $(OBJS)
-	$(CXX) $(OBJS) $(LDFLAGS) -o $@
+	$(CC) $(OBJS) $(LDFLAGS) -o $@
 	$(STRIP) $@
 
 clean:

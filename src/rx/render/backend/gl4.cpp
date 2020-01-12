@@ -1549,9 +1549,9 @@ void gl4::process(rx_byte* _command) {
     {
       profiler::cpu_sample sample{"update"};
 
-      const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
+      const auto resource{reinterpret_cast<const frontend::update_command*>(header + 1)};
       switch (resource->kind) {
-      case frontend::resource_command::type::k_buffer:
+      case frontend::update_command::type::k_buffer:
         {
           profiler::cpu_sample sampler{"buffer"};
 
@@ -1562,13 +1562,14 @@ void gl4::process(rx_byte* _command) {
           const auto type{render_buffer->kind() == frontend::buffer::type::k_dynamic
             ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW};
 
+          bool use_vertices_edits{false};
+          bool use_elements_edits{false};
           if (vertices.size() > buffer->vertices_size) {
-            // respecify buffer storage if we exceed what is available to use
+            // Respecify buffer storage if we exceed what is available to use.
             buffer->vertices_size = vertices.size();
             pglNamedBufferData(buffer->bo[0], vertices.size(), vertices.data(), type);
           } else {
-            pglNamedBufferData(buffer->bo[0], buffer->vertices_size, nullptr, type);
-            pglNamedBufferSubData(buffer->bo[0], 0, vertices.size(), vertices.data());
+            use_vertices_edits = true;
           }
 
           if (elements.size() > buffer->elements_size) {
@@ -1576,9 +1577,43 @@ void gl4::process(rx_byte* _command) {
             buffer->elements_size = elements.size();
             pglNamedBufferData(buffer->bo[1], elements.size(), elements.data(), type);
           } else {
-            pglNamedBufferData(buffer->bo[1], buffer->elements_size, nullptr, type);
-            pglNamedBufferSubData(buffer->bo[1], 0, elements.size(), elements.data());
+            use_elements_edits = true;
           }
+
+          // Enumerate and apply all buffer edits.
+          if (use_vertices_edits || use_elements_edits) {
+            const rx_size* edit{resource->edit()};
+            for (rx_size i{0}; i < resource->edits; i++) {
+              switch (edit[0]) {
+              case 0: // vertices
+                if (use_vertices_edits) {
+                  pglNamedBufferSubData(buffer->bo[0], edit[1], edit[2], vertices.data() + edit[1]);
+                }
+                break;
+              case 1: // elements
+                if (use_elements_edits) {
+                  pglNamedBufferSubData(buffer->bo[1], edit[1], edit[2], vertices.data() + edit[1]);
+                }
+                break;
+              }
+              edit += 3;
+            }
+          }
+        }
+        break;
+            case frontend::update_command::type::k_texture1D:
+        {
+          // TODO(dweiler): implement
+        }
+        break;
+      case frontend::update_command::type::k_texture2D:
+        {
+          // TODO(dweiler): implement
+        }
+        break;
+      case frontend::update_command::type::k_texture3D:
+        {
+          // TODO(dweiler): implement
         }
         break;
       default:

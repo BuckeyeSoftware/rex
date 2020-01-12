@@ -22,7 +22,7 @@ bool null::init() {
   return true;
 }
 
-void null::process(const vector<rx_byte*>& _commands) {
+void null::process(const vector<rx_byte*>&) {
   // {empty}
 }
 

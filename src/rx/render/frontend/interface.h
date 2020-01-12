@@ -50,8 +50,9 @@ struct interface {
   void initialize_texture(const command_header::info& _info, textureCM* _texture);
 
   void update_buffer(const command_header::info& _info, buffer* _buffer);
-  // TODO: update_texture functions, no program/target updates though, they're
-  // fully immutable.
+  void update_texture(const command_header::info& _info, texture1D* _texture);
+  void update_texture(const command_header::info& _info, texture2D* _texture);
+  void update_texture(const command_header::info& _info, texture3D* _texture);
 
   void destroy_buffer(const command_header::info& _info, buffer* _buffer);
   void destroy_target(const command_header::info& _info, target* _target);

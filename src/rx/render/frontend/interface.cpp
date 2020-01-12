@@ -312,12 +312,85 @@ void interface::initialize_texture(const command_header::info& _info, textureCM*
 // update_*
 void interface::update_buffer(const command_header::info& _info, buffer* _buffer) {
   if (_buffer) {
-    concurrency::scope_lock lock(m_mutex);
-    auto command_base{allocate_command(resource_command, command_type::k_resource_update)};
-    auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-    command->kind = resource_command::type::k_buffer;
-    command->as_buffer = _buffer;
-    m_commands.push_back(command_base);
+    auto edits{utility::move(_buffer->edits())};
+    const rx_size edit_count{edits.size()};
+    if (edit_count) {
+      concurrency::scope_lock lock{m_mutex};
+
+      const rx_size edit_bytes{edit_count * sizeof(rx_size) * 3};
+
+      auto command_base{m_command_buffer.allocate(sizeof(update_command) + edit_bytes, command_type::k_resource_update, _info)};
+      auto command{reinterpret_cast<update_command*>(command_base + sizeof(command_header))};
+
+      command->edits = edit_count;
+      command->kind = update_command::type::k_buffer;
+      command->as_buffer = _buffer;
+      memcpy(command->edit(), edits.data(), edit_bytes);
+      m_commands.push_back(command_base);
+    }
+  }
+}
+
+void interface::update_texture(const command_header::info& _info, texture1D* _texture) {
+  if (_texture) {
+    auto edits{utility::move(_texture->edits())};
+    const rx_size edit_count{edits.size()};
+    if (edit_count) {
+      concurrency::scope_lock lock{m_mutex};
+
+      const rx_size edit_bytes{edit_count * sizeof(rx_size) * 3};
+
+      auto command_base{m_command_buffer.allocate(sizeof(update_command) + edit_bytes, command_type::k_resource_update, _info)};
+      auto command{reinterpret_cast<update_command*>(command_base + sizeof(command_header))};
+
+      command->edits = edit_count;
+      command->kind = update_command::type::k_texture1D;
+      command->as_texture1D = _texture;
+      memcpy(command->edit(), edits.data(), edit_bytes);
+      m_commands.push_back(command_base);
+    }
+  }
+}
+
+void interface::update_texture(const command_header::info& _info, texture2D* _texture) {
+  if (_texture) {
+    auto edits{utility::move(_texture->edits())};
+    const rx_size edit_count{edits.size()};
+    if (edit_count) {
+      concurrency::scope_lock lock{m_mutex};
+
+      const rx_size edit_bytes{edit_count * sizeof(rx_size) * 5};
+
+      auto command_base{m_command_buffer.allocate(sizeof(update_command) + edit_bytes, command_type::k_resource_update, _info)};
+      auto command{reinterpret_cast<update_command*>(command_base + sizeof(command_header))};
+
+      command->edits = edit_count;
+      command->kind = update_command::type::k_texture2D;
+      command->as_texture2D = _texture;
+      memcpy(command->edit(), edits.data(), edit_bytes);
+      m_commands.push_back(command_base);
+    }
+  }
+}
+
+void interface::update_texture(const command_header::info& _info, texture3D* _texture) {
+  if (_texture) {
+    auto edits{utility::move(_texture->edits())};
+    const rx_size edit_count{edits.size()};
+    if (edit_count) {
+      concurrency::scope_lock lock{m_mutex};
+
+      const rx_size edit_bytes{edit_count * sizeof(rx_size) * 7};
+
+      auto command_base{m_command_buffer.allocate(sizeof(update_command) + edit_bytes, command_type::k_resource_update, _info)};
+      auto command{reinterpret_cast<update_command*>(command_base + sizeof(command_header))};
+
+      command->edits = edit_count;
+      command->kind = update_command::type::k_texture3D;
+      command->as_texture3D = _texture;
+      memcpy(command->edit(), edits.data(), edit_bytes);
+      m_commands.push_back(command_base);
+    }
   }
 }
 

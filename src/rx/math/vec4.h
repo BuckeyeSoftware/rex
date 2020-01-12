@@ -156,6 +156,16 @@ inline constexpr vec4<T> operator*(const vec4<T>& _v, T _scalar) {
   return _scalar * _v;
 }
 
+template<typename T>
+inline constexpr vec4<T> operator<(const vec4<T>& _a, const vec4<T>& _b) {
+  return _a.x < _b.x && _a.y < _b.y && _a.z < _b.z && _a.w < _b.w;
+}
+
+template<typename T>
+inline constexpr vec4<T> operator>(const vec4<T>& _a, const vec4<T>& _b) {
+  return _a.x > _b.x && _a.y > _b.y && _a.z > _b.z && _a.w > _b.w;
+}
+
 // TODO: check
 // template<typename T>
 // inline constexpr T operator*(const vec4<T>& _lhs, const vec4<T>& _rhs) {

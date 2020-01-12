@@ -10,7 +10,7 @@
 #include "rx/core/math/abs.h"
 
 #include "rx/core/algorithm/min.h"
-#include "rx/core/algorithm/max.h" 
+#include "rx/core/algorithm/max.h"
 
 namespace rx::math {
 
@@ -240,6 +240,16 @@ inline constexpr vec3<T> operator/(const vec3<T>& _lhs, const vec3<T>& _rhs) {
 template<typename T>
 inline constexpr vec3<T> operator*(const vec3<T>& _lhs, const vec3<T>& _rhs) {
   return {_lhs.x * _rhs.x, _lhs.y * _rhs.y, _lhs.z * _rhs.z};
+}
+
+template<typename T>
+inline constexpr bool operator<(const vec3<T>& _a, const vec3<T>& _b) {
+  return _a.x < _b.x && _a.y < _b.y && _a.z < _b.z;
+}
+
+template<typename T>
+inline constexpr bool operator>(const vec3<T>& _a, const vec3<T>& _b) {
+  return _a.x > _b.x && _a.y > _b.y && _a.z > _b.z;
 }
 
 // Functions.

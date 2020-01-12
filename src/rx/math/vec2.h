@@ -225,6 +225,16 @@ inline constexpr vec2<T> operator*(const vec2<T>& _a, const vec2<T>& _b) {
 }
 
 template<typename T>
+inline constexpr bool operator<(const vec2<T>& _a, const vec2<T>& _b) {
+  return _a.x < _b.x && _a.y < _b.y;
+}
+
+template<typename T>
+inline constexpr bool operator>(const vec2<T>& _a, const vec2<T>& _b) {
+  return _a.x > _b.x && _a.y > _b.y;
+}
+
+template<typename T>
 inline constexpr T dot(const vec2<T>& _lhs, const vec2<T>& _rhs) {
   return _lhs.x * _rhs.x + _lhs.y * _rhs.y;
 }
