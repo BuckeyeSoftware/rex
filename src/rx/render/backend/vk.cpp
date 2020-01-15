@@ -100,6 +100,8 @@ vk::~vk() {
 
 void vk::process(const vector<rx_byte*>& _commands) {
   
+  return;
+  
   detail_vk::context& ctx{*reinterpret_cast<detail_vk::context*> (m_impl)};
   
   detail_vk::buffer_builder b_builder(ctx);
