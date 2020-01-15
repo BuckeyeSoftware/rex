@@ -1521,9 +1521,9 @@ void gl3::process(rx_byte* _command) {
     break;
   case frontend::command_type::k_resource_update:
     {
-      const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
+      const auto resource{reinterpret_cast<const frontend::update_command*>(header + 1)};
       switch (resource->kind) {
-      case frontend::resource_command::type::k_buffer:
+      case frontend::update_command::type::k_buffer:
         {
           const auto render_buffer{resource->as_buffer};
           auto buffer{reinterpret_cast<detail_gl3::buffer*>(render_buffer + 1)};
@@ -1537,21 +1537,58 @@ void gl3::process(rx_byte* _command) {
           state->use_vbo(buffer->bo[0]);
           state->use_ebo(buffer->bo[1]);
 
+          bool use_vertices_edits{false};
+          bool use_elements_edits{false};
           if (vertices.size() > buffer->vertices_size) {
-            // respecify buffer storage if we exceed what is available to use
+            // Respecify buffer storage if we exceed what is available to use.
             buffer->vertices_size = vertices.size();
             pglBufferData(GL_ARRAY_BUFFER, vertices.size(), vertices.data(), type);
           } else {
-            pglBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size(), vertices.data());
+            use_vertices_edits = true;
           }
 
           if (elements.size() > buffer->elements_size) {
-            // respecify buffer storage if we exceed what is available to use
+            // Respecify buffer storage if we exceed what is available to use.
             buffer->elements_size = elements.size();
             pglBufferData(GL_ELEMENT_ARRAY_BUFFER, elements.size(), elements.data(), type);
           } else {
-            pglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, elements.size(), elements.data());
+            use_elements_edits = true;
           }
+
+          // Enumerate and apply all buffer edits.
+          if (use_vertices_edits || use_elements_edits) {
+            const rx_size* edit{resource->edit()};
+            for (rx_size i{0}; i < resource->edits; i++) {
+              switch (edit[0]) {
+              case 0:
+                if (use_vertices_edits) {
+                  pglBufferSubData(GL_ARRAY_BUFFER, edit[1], edit[2], vertices.data() + edit[1]);
+                }
+                break;
+              case 1:
+                if (use_elements_edits) {
+                  pglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, edit[1], edit[2], elements.data() + edit[1]);
+                }
+                break;
+              }
+              edit += 3;
+            }
+          }
+        }
+        break;
+            case frontend::update_command::type::k_texture1D:
+        {
+          // TODO(dweiler): implement
+        }
+        break;
+      case frontend::update_command::type::k_texture2D:
+        {
+          // TODO(dweiler): implement
+        }
+        break;
+      case frontend::update_command::type::k_texture3D:
+        {
+          // TODO(dweiler): implement
         }
         break;
       default:

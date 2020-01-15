@@ -107,6 +107,13 @@ struct texture
   bool is_swapchain() const;
   bool is_level_in_range(rx_size _level) const;
 
+  template<typename T>
+  struct edit {
+    rx_size level;
+    T offset;
+    T size;
+  };
+
 protected:
   enum : rx_u8 {
     k_format     = 1 << 0,
@@ -149,11 +156,18 @@ struct texture1D : texture {
   const dimension_type& dimensions() const &;
   const wrap_options& wrap() const &;
   const level_info<dimension_type>& info_for_level(rx_size _index) const &;
+  vector<edit<dimension_type>>&& edits();
+
+  // Record an edit to level |_level| of this texture at offset |_offset| of
+  // dimensions |_dimensions|.
+  void record_edit(rx_size _level, const dimension_type& _offset,
+    const dimension_type& _dimensions);
 
 private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
   vector<level_info<dimension_type>> m_level_info;
+  vector<edit<dimension_type>> m_edits;
 };
 
 struct texture2D : texture {
@@ -175,6 +189,12 @@ struct texture2D : texture {
   const dimension_type& dimensions() const &;
   const wrap_options& wrap() const &;
   const level_info<dimension_type>& info_for_level(rx_size _index) const &;
+  vector<edit<dimension_type>>&& edits();
+
+  // Record an edit to level |_level| of this texture at offset |_offset| of
+  // dimensions |_dimensions|.
+  void record_edit(rx_size _level, const dimension_type& _offset,
+    const dimension_type& _dimensions);
 
 private:
   friend struct interface;
@@ -182,6 +202,7 @@ private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
   vector<level_info<dimension_type>> m_level_info;
+  vector<edit<dimension_type>> m_edits;
 };
 
 struct texture3D : texture {
@@ -203,11 +224,18 @@ struct texture3D : texture {
   const dimension_type& dimensions() const &;
   const wrap_options& wrap() const &;
   const level_info<dimension_type>& info_for_level(rx_size _index) const &;
+  vector<edit<dimension_type>>&& edits();
+
+  // Record an edit to level |_level| of this texture at offset |_offset| with
+  // dimensions |_dimensions|.
+  void record_edit(rx_size _level, const dimension_type& _offset,
+    const dimension_type& _dimensions);
 
 private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
   vector<level_info<dimension_type>> m_level_info;
+  vector<edit<dimension_type>> m_edits;
 };
 
 struct textureCM : texture {
@@ -230,7 +258,7 @@ struct textureCM : texture {
   void write(const rx_byte* _data, face _face, rx_size _level);
 
   // map data for face |_face| for miplevel |_level|
-  rx_byte* map(rx_size _level, face _facer);
+  rx_byte* map(rx_size _level, face _face);
 
   void record_dimensions(const dimension_type& _dimensions);
   void record_wrap(const wrap_options& _wrap);

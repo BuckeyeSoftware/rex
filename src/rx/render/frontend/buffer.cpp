@@ -24,6 +24,7 @@ buffer::buffer(interface* _frontend)
   , m_vertices_store{m_frontend->allocator()}
   , m_elements_store{m_frontend->allocator()}
   , m_attributes{m_frontend->allocator()}
+  , m_edits{m_frontend->allocator()}
   , m_recorded{0}
 {
 }
@@ -69,6 +70,40 @@ void buffer::validate() const {
   RX_ASSERT(m_recorded & k_element_type, "no element type specified");
   RX_ASSERT(m_recorded & k_stride, "no stride specified");
   RX_ASSERT(m_recorded & k_type, "no type specified");
+}
+
+vector<buffer::edit>&& buffer::edits() {
+  // Determines if |_lhs| is fully inside |_rhs|.
+  auto inside = [](const edit& _lhs, const edit& _rhs) {
+    return !(_lhs.offset < _rhs.offset || _lhs.offset + _lhs.size > _rhs.offset + _rhs.size);
+  };
+
+  // When an edit is inside a larger edit, that larger edit will include the
+  // nested edit. Remove such edits (duplicate and fully overlapping) to
+  // produce a minimal and coalesced edit list for the backend.
+
+  // WARN(dweiler): This behaves O(n^2), except n should be small.
+  for (rx_size i{0}; i < m_edits.size(); i++) {
+    for (rx_size j{0}; j < m_edits.size(); j++) {
+      if (i == j) {
+        continue;
+      }
+
+      // The edits need to be to the same sink.
+      const auto& e1{m_edits[i]};
+      const auto& e2{m_edits[j]};
+      if (e1.sink != e2.sink) {
+        continue;
+      }
+
+      // Edit exists fully inside another, remove it.
+      if (inside(e1, e2)) {
+        m_edits.erase(i, i + 1);
+      }
+    }
+  }
+
+  return utility::move(m_edits);
 }
 
 } // namespace rx::render::frontend

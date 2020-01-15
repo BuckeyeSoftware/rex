@@ -1,12 +1,55 @@
 #include <string.h> // memcpy
 
 #include "rx/render/frontend/texture.h"
+#include "rx/render/frontend/interface.h"
+
+#include "rx/core/algorithm/quick_sort.h"
+
 #include "rx/core/math/log2.h"
 
 namespace rx::render::frontend {
 
+// When an edit is inside a larger edit, that larger edit will include the
+// nested edit. Remove such edits (duplicate and fully overlapping) to produce a
+// minimal and coalesced edit list for the backend.
+template<typename T>
+static void optimize_edits(vector<T>& edits_) {
+  // Determines if |_lhs| is fully inside |_rhs|.
+  auto inside = [](const T& _lhs, const T& _rhs) {
+    return !(_lhs.offset < _rhs.offset || _lhs.offset + _lhs.size > _rhs.offset + _rhs.size);
+  };
+
+  // WARN(dweiler): This behaves O(n^2), except n should be small.
+  for (rx_size i = 0; i < edits_.size(); i++) {
+    for (rx_size j = 0; j < edits_.size(); j++) {
+      if (i == j) {
+        continue;
+      }
+
+      // Only when the edits are to the same level of the texture.
+      const auto& e1{edits_[i]};
+      const auto& e2{edits_[j]};
+      if (e1.level != e2.level) {
+        continue;
+      }
+
+      // Edit exists fully inside another, remove it.
+      if (inside(e1, e2)) {
+        edits_.erase(i, i + 1);
+      }
+    }
+  }
+
+  // Sort the edits by texture level so largest levels come first.
+  algorithm::quick_sort(&edits_.first(), &edits_.last(),
+    [](const T& _lhs, const T& _rhs) {
+      return _lhs.level > _rhs.level;
+    });
+}
+
 texture::texture(interface* _frontend, resource::type _type)
   : resource{_frontend, _type}
+  , m_data{_frontend->allocator()}
   , m_flags{0}
 {
 }
@@ -68,6 +111,8 @@ void texture::validate() const {
 // texture1D
 texture1D::texture1D(interface* _frontend)
   : texture{_frontend, resource::type::k_texture1D}
+  , m_level_info{_frontend->allocator()}
+  , m_edits{_frontend->allocator()}
 {
 }
 
@@ -125,9 +170,23 @@ void texture1D::record_wrap(const wrap_options& _wrap) {
   m_flags |= k_wrap;
 }
 
+void texture1D::record_edit(rx_size _level, const dimension_type& _offset,
+    const dimension_type& _dimensions)
+{
+  RX_ASSERT(is_level_in_range(_level), "mipmap level out of bounds");
+  m_edits.emplace_back(_level, _offset, _dimensions);
+}
+
+vector<texture::edit<texture1D::dimension_type>>&& texture1D::edits() {
+  optimize_edits(m_edits);
+  return utility::move(m_edits);
+}
+
 // texture2D
 texture2D::texture2D(interface* _frontend)
   : texture{_frontend, resource::type::k_texture2D}
+  , m_level_info{_frontend->allocator()}
+  , m_edits{_frontend->allocator()}
 {
 }
 
@@ -191,9 +250,23 @@ void texture2D::record_wrap(const wrap_options& _wrap) {
   m_flags |= k_wrap;
 }
 
+void texture2D::record_edit(rx_size _level, const dimension_type& _offset,
+    const dimension_type& _dimensions)
+{
+  RX_ASSERT(is_level_in_range(_level), "mipmap level out of bounds");
+  m_edits.emplace_back(_level, _offset, _dimensions);
+}
+
+vector<texture::edit<texture2D::dimension_type>>&& texture2D::edits() {
+  optimize_edits(m_edits);
+  return utility::move(m_edits);
+}
+
 // texture3D
 texture3D::texture3D(interface* _frontend)
   : texture{_frontend, resource::type::k_texture3D}
+  , m_level_info{_frontend->allocator()}
+  , m_edits{_frontend->allocator()}
 {
 }
 
@@ -254,9 +327,22 @@ void texture3D::record_wrap(const wrap_options& _wrap) {
   m_flags |= k_wrap;
 }
 
+void texture3D::record_edit(rx_size _level, const dimension_type& _offset,
+    const dimension_type& _dimensions)
+{
+  RX_ASSERT(is_level_in_range(_level), "mipmap level out of bounds");
+  m_edits.emplace_back(_level, _offset, _dimensions);
+}
+
+vector<texture::edit<texture3D::dimension_type>>&& texture3D::edits() {
+  optimize_edits(m_edits);
+  return utility::move(m_edits);
+}
+
 // textureCM
 textureCM::textureCM(interface* _frontend)
   : texture{_frontend, resource::type::k_textureCM}
+  , m_level_info{_frontend->allocator()}
 {
 }
 
