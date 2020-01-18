@@ -21,12 +21,58 @@ namespace detail_vk {
   
   struct context;
   
+  struct use_queue {
+      
+    /**
+      * Describes the use of a texture in a frame, the layout it needs, the stages during which it will be used, its access flags, it's family queue, and if it contains a write operation.
+      * sync_after tells if this operation will synchronize after, instead of only before, by default, for example renderpasses synchronize after and before.
+      */
+    
+    struct use_info {
+      
+      use_info(VkImageLayout layout, VkPipelineStageFlags stage, VkAccessFlags access, uint32_t queue, bool write, bool sync_after)
+      : layout(layout), stage(stage), access(access), queue(queue), write(write), sync_after(sync_after) {};
+      VkImageLayout layout;
+      VkPipelineStageFlags stage;
+      VkAccessFlags access;
+      uint32_t queue;
+      bool write;
+      bool sync_after;
+      rx_u32 counter = 1;
+      
+      use_info* after = nullptr;
+      
+    };
+    
+    void push(context& ctx_, VkImageLayout layout, VkPipelineStageFlags stage, VkAccessFlags access, uint32_t queue, bool write, bool sync_after);
+    
+    void pop(context& ctx_);
+    
+    use_info* current = nullptr;
+    use_info* head = nullptr;
+    
+  };
+  
+  
+  
   struct buffer {
     
     void destroy(context& ctx_, frontend::buffer* buffer);
     
+    inline void add_use(context& ctx_, VkPipelineStageFlags stage, VkAccessFlags access, uint32_t queue, bool write, bool sync_after = false) {
+      frame_uses.push(ctx_, VK_IMAGE_LAYOUT_UNDEFINED, stage, access, queue, write, sync_after);
+    }
+    void sync(context& ctx_, frontend::buffer* buffer, VkCommandBuffer command);
+    
     VkBuffer handle = VK_NULL_HANDLE;
     uint32_t offset;
+    
+#if defined(RX_DEBUG)
+    const char* name = nullptr;
+#endif
+    
+  private:
+    use_queue frame_uses;
     
   };
   
@@ -34,68 +80,16 @@ namespace detail_vk {
   
   struct texture {
     
-    struct texture_use_queue {
-      
-      struct texture_use_info {
-        texture_use_info(VkImageLayout required_layout, VkPipelineStageFlags use_stage, VkAccessFlags use_access, bool sync_before, bool sync_after)
-        : required_layout(required_layout), use_stage(use_stage), use_access(use_access), sync_before(sync_before), sync_after(sync_after) {};
-        VkImageLayout required_layout;
-        VkPipelineStageFlags use_stage;
-        VkAccessFlags use_access;
-        bool sync_before;
-        bool sync_after;
-      };
-      
-      void push(VkImageLayout required_layout, bool sync_before = false, bool sync_after = false, VkPipelineStageFlags use_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VkAccessFlags use_access = 0) {
-        RX_ASSERT(frame_use_index == 0, "adding texture use to a texture use queue that hasn't been cleared");
-        frame_uses.emplace_back(required_layout, use_stage, use_access, sync_before, sync_after);
-      }
-      
-      texture_use_info pop() {
-        texture_use_info current = next();
-        frame_use_index++;
-        if(is_empty()) {
-          frame_uses.clear();
-          frame_use_index = 0;
-        }
-        return current;
-      }
-      
-      texture_use_info& last() {
-        RX_ASSERT(has_last(), "impossible to read last element of a texture use queue, doesn't exist");
-        return frame_uses[frame_use_index-1];
-      }
-      
-      texture_use_info& next() {
-        RX_ASSERT(has_next(), "impossible to read next element of a texture use queue, doesn't exist");
-        return frame_uses[frame_use_index];
-      }
-      
-      bool has_last() {
-        return frame_use_index>=1;
-      }
-      
-      bool has_next() {
-        return !is_empty();
-      }
-      
-      bool is_empty() {
-        return frame_use_index >= frame_uses.size();
-      }
-      
-      rx::vector<texture_use_info> frame_uses;
-      rx_size frame_use_index {0};
-      
-    };
-    
-    
     void construct_base(context& ctx_, frontend::texture* texture, VkImageCreateInfo& info);
     void update_base(context& ctx_, frontend::texture* texture);
     void get_size(context& ctx_, frontend::texture* texture);
     VkImageView make_attachment(context& ctx_, frontend::texture* texture, uint32_t layer, uint32_t level);
     void destroy(context& ctx_, frontend::texture* texture);
     
-    void transfer_layout(context& ctx_, frontend::texture* texture, VkCommandBuffer command, texture_use_queue::texture_use_info use_info);
+    inline void add_use(context& ctx_, VkImageLayout layout, VkPipelineStageFlags stage, VkAccessFlags access, uint32_t queue, bool write, bool sync_after = false) {
+      frame_uses.push(ctx_, layout, stage, access, queue, write, sync_after);
+    }
+    void sync(context& ctx_, frontend::texture* texture, VkCommandBuffer command);
     
     VkImage handle {VK_NULL_HANDLE};
     VkFormat format;
@@ -104,10 +98,15 @@ namespace detail_vk {
     uint32_t layers;
     VkImageLayout current_layout;
     
+#if defined(RX_DEBUG)
+    const char* name = nullptr;
+#endif
     
-    texture_use_queue frame_uses;
+  private:
+    use_queue frame_uses;
     
   };
+  
   
   
   class buffer_builder {
@@ -127,6 +126,8 @@ namespace detail_vk {
     VkBuffer staging_buffer = VK_NULL_HANDLE;
     rx_byte* buffer_staging_pointer = nullptr;
   };
+  
+  
   
   class texture_builder {
   public:

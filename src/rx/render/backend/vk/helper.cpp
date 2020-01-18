@@ -92,7 +92,48 @@ void detail_vk::set_name(context& ctx_, VkObjectType type, uint64_t handle, cons
 #endif
 
 
-
+const char* layout_to_string (VkImageLayout layout) {
+  switch(layout) {
+    case 0:
+      return "undefined";
+    case 1:
+      return "general";
+    case 2:
+      return "color attachment optimal";
+    case 3:
+      return "depth stencil attachment optimal";
+    case 4:
+      return "depth stencil read only optimal";
+    case 5:
+      return "shader read only optimal";
+    case 6:
+      return "transfer src optimal";
+    case 7:
+      return "transfer dst optimal";
+    case 8:
+      return "preinitialized";
+    case 1000117000:
+      return "depth read only stencil attachment optimal";
+    case 1000117001:
+      return "depth attachment stencil read only optimal";
+    case 1000241000:
+      return "depth attachment optimal";
+    case 1000241001:
+      return "depth read only optimal";
+    case 1000241002:
+      return "stencil attachment optimal";
+    case 1000241003:
+      return "stencil read only optimal";
+    case 1000001002:
+      return "present src";
+    case 1000111000:
+      return "shared present";
+    default:
+      return "not found";
+      
+  }
+  
+}
 
 
 

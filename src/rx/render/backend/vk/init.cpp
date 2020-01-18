@@ -365,7 +365,6 @@ void create_swapchain(detail_vk::context& ctx_) {
       
       
       info.imageExtent = surface_capabilities.currentExtent;
-      ctx_.swap.extent = info.imageExtent;
       
       vk_log(log::level::k_verbose, "swapchain extent : (%i, %i)", info.imageExtent.width, info.imageExtent.height);
       
@@ -400,7 +399,6 @@ void create_swapchain(detail_vk::context& ctx_) {
         vk_log(log::level::k_error, "could not find a surface format with format : %d", target_format);
       }
       
-      ctx_.swap.image->format = info.imageFormat;
       vk_log(log::level::k_verbose, "surface format : %d with color space : %d", info.imageFormat, info.imageColorSpace);
       
     }
@@ -452,10 +450,11 @@ void create_swapchain(detail_vk::context& ctx_) {
     info.oldSwapchain = old_swapchain;
     
     check_result(vkCreateSwapchainKHR(ctx_.device, &info, nullptr, &ctx_.swap.swapchain));
-    
+       
     vk_log(log::level::k_info, "vulkan swapchain created");
     
     set_name(ctx_, VK_OBJECT_TYPE_SWAPCHAIN_KHR, (uint64_t) ctx_.swap.swapchain, ctx_.current_command->tag.description);
+    
     
     if(old_swapchain != VK_NULL_HANDLE) {
       vkDestroySwapchainKHR(ctx_.device, old_swapchain, nullptr);
@@ -467,16 +466,35 @@ void create_swapchain(detail_vk::context& ctx_) {
     
     vkGetSwapchainImagesKHR(ctx_.device, ctx_.swap.swapchain, &count, ctx_.swap.images.data());
     
-    ctx_.swap.image->current_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    ctx_.swap.extent = info.imageExtent;
+    ctx_.swap.format = info.imageFormat;
     
-    ctx_.swap.image->extent.width = ctx_.swap.extent.width;
-    ctx_.swap.image->extent.height = ctx_.swap.extent.height;
-    ctx_.swap.image->extent.depth = 1;
+    for(rx_size i {0}; i<ctx_.swap.num_frames; i++) {
+      
+      ctx_.swap.image_info[i] = ctx_.allocator->create<detail_vk::texture>();
+      auto image = ctx_.swap.image_info[i];
+      
+      image->format = ctx_.swap.format;
+      
+#if defined(RX_DEBUG)
+      image->name = "swapchain";
+#endif
+      
+      image->extent.width = ctx_.swap.extent.width;
+      image->extent.height = ctx_.swap.extent.height;
+      image->extent.depth = 1;
+      
+      image->layers = info.imageArrayLayers;
+      image->offset = 0;
+      
+      image->handle = ctx_.swap.images[i];
+      
+      image->add_use(ctx_, VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, ctx_.graphics_index, false);
+      image->current_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+      
+    }
     
-    ctx_.swap.image->layers = info.imageArrayLayers;
-    ctx_.swap.image->offset = 0;
     
-    ctx_.swap.image->handle = VK_NULL_HANDLE;
     
   }
   
@@ -490,7 +508,7 @@ void create_swapchain(detail_vk::context& ctx_) {
     info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
     info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
     info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    info.format = ctx_.swap.image->format;
+    info.format = ctx_.swap.format;
     info.image = ctx_.swap.images[i];
     info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     info.subresourceRange.baseArrayLayer = 0;
@@ -515,15 +533,20 @@ void create_swapchain(detail_vk::context& ctx_) {
     
   }
   
+  ctx_.swap.alive = true;
+  
 }
 
 void destroy_swapchain(detail_vk::context& ctx_) {
+  
+  ctx_.swap.alive = false;
   
   vkDestroySemaphore(ctx_.device, ctx_.start_semaphore, nullptr);
   vkDestroySemaphore(ctx_.device, ctx_.end_semaphore, nullptr);
   
   for(rx_size i {0}; i<ctx_.swap.num_frames; i++) {
     vkDestroyImageView(ctx_.device, ctx_.swap.image_views[i], nullptr);
+    ctx_.allocator->destroy<detail_vk::texture>(ctx_.swap.image_info[i]);
   }
   
   vkDestroySwapchainKHR(ctx_.device, ctx_.swap.swapchain, nullptr);

@@ -44,6 +44,8 @@ set_name(CTX, TYPE, (uint64_t) HANDLE, NAME)
 #define SET_NAME(CTX, TYPE, HANDLE, NAME)
 #endif
 
+// printer functions
+const char* layout_to_string(VkImageLayout layout);
 
 namespace detail_vk {
   

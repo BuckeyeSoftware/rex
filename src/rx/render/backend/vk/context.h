@@ -63,15 +63,18 @@ namespace detail_vk {
     
     struct {
     
-      texture* image = nullptr;
-      
+      VkFormat format;
       VkExtent2D extent;
       rx_size num_frames = k_max_frames;
       VkSwapchainKHR swapchain = VK_NULL_HANDLE;
       rx::array<VkImage[k_max_frames]> images;
       rx::array<VkImageView[k_max_frames]> image_views;
+      frontend::texture2D* texture_info = nullptr;
+      rx::array<texture*[k_max_frames]> image_info;
       uint32_t frame_index;
       bool acquired = false;
+      
+      bool alive = false;
       
     } swap;
     

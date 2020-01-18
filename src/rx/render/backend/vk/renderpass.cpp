@@ -45,7 +45,7 @@ void detail_vk::target::make_renderpass(detail_vk::context& ctx_, frontend::targ
     } else {
       auto t = target->attachments()[i].as_texture2D.texture;
       if(t->is_swapchain()) {
-        attachments[i].format = ctx_.swap.image->format;
+        attachments[i].format = ctx_.swap.format;
         
       } else {
         auto tex = reinterpret_cast<detail_vk::texture*>(t + 1);

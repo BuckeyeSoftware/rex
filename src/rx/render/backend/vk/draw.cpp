@@ -8,13 +8,31 @@ namespace rx::render::backend {
   
 void detail_vk::frame_render::pre_clear(detail_vk::context& ctx_, const frontend::clear_command* clear) {
   
-  
+  clear->render_target->attachments().each_fwd([&](frontend::target::attachment& attachment) {
+    texture* image =
+      (attachment.kind == frontend::target::attachment::type::k_texture2D
+      ? reinterpret_cast<texture*> (attachment.as_texture2D.texture + 1)
+      : reinterpret_cast<texture*> (attachment.as_textureCM.texture + 1));
+    image->add_use(ctx_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, ctx_.graphics_index, true);
+  });
   
 }
 
 void detail_vk::frame_render::clear(detail_vk::context& ctx_, const frontend::clear_command* clear) {
   
+  clear->render_target->attachments().each_fwd([&](frontend::target::attachment& attachment) {
+    if(attachment.kind == frontend::target::attachment::type::k_texture2D) {
+      reinterpret_cast<texture*> (attachment.as_texture2D.texture + 1)->sync(ctx_, attachment.as_texture2D.texture, ctx_.graphics.get());
+    } else {
+      reinterpret_cast<texture*> (attachment.as_textureCM.texture + 1)->sync(ctx_, attachment.as_textureCM.texture, ctx_.graphics.get());
+    }
+  });
   
+#if defined(RX_DEBUG)
+  vk_log(log::level::k_verbose, "clear %s", ctx_.current_command->tag.description);
+#endif
+  
+  // TODO : add a draw list and calculate renderpasses
   
 }
 
@@ -25,8 +43,8 @@ void detail_vk::frame_render::pre_blit(detail_vk::context& ctx_, const frontend:
   auto& dst_texture = blit->dst_target->attachments()[blit->dst_attachment];
   auto dst_tex = (dst_texture.kind == frontend::target::attachment::type::k_textureCM ? reinterpret_cast<detail_vk::texture*>(dst_texture.as_textureCM.texture + 1) : reinterpret_cast<detail_vk::texture*>(dst_texture.as_texture2D.texture + 1));
   
-  src_tex->frame_uses.push(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, true, true, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT);
-  dst_tex->frame_uses.push(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true, true, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+  src_tex->add_use(ctx_, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT, ctx_.graphics_index, false);
+  dst_tex->add_use(ctx_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, ctx_.graphics_index, true);
   
 }
 
@@ -42,28 +60,17 @@ void detail_vk::frame_render::blit(detail_vk::context& ctx_, const frontend::bli
   
   VkCommandBuffer command = ctx_.graphics.get();
   
+  src_tex->sync(ctx_,
+                (src_texture.kind == frontend::target::attachment::type::k_textureCM ?
+                reinterpret_cast<frontend::texture*>(src_texture.as_textureCM.texture) :
+                reinterpret_cast<frontend::texture*>(src_texture.as_texture2D.texture)),
+                command);
   
-  {
-    auto& use = src_tex->frame_uses.next();
-    if(src_tex->current_layout != use.required_layout || (use.sync_before && src_tex->frame_uses.has_last() && src_tex->frame_uses.last().sync_after) ) {
-      src_tex->transfer_layout(ctx_,
-                              (src_texture.kind == frontend::target::attachment::type::k_textureCM ? reinterpret_cast<frontend::texture*>(src_texture.as_textureCM.texture) : reinterpret_cast<frontend::texture*>(src_texture.as_texture2D.texture)),
-                              command, use);
-    }
-    src_tex->frame_uses.pop();
-  }
-  
-  {
-    auto& use = dst_tex->frame_uses.next();
-    if(dst_tex->current_layout != use.required_layout || (use.sync_before && dst_tex->frame_uses.has_last() && dst_tex->frame_uses.last().sync_after) ) {
-      dst_tex->transfer_layout(ctx_,
-                              (dst_texture.kind == frontend::target::attachment::type::k_textureCM ? reinterpret_cast<frontend::texture*>(dst_texture.as_textureCM.texture) : reinterpret_cast<frontend::texture*>(dst_texture.as_texture2D.texture)),
-                              command, use);
-    }
-    dst_tex->frame_uses.pop();
-  }
-  
-  
+  dst_tex->sync(ctx_,
+                (dst_texture.kind == frontend::target::attachment::type::k_textureCM ?
+                reinterpret_cast<frontend::texture*>(dst_texture.as_textureCM.texture) :
+                reinterpret_cast<frontend::texture*>(dst_texture.as_texture2D.texture)),
+                command);
   
   VkImageBlit info {};
   info.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -92,18 +99,39 @@ void detail_vk::frame_render::blit(detail_vk::context& ctx_, const frontend::bli
   
   vkCmdBlitImage(command, src_tex->handle, src_tex->current_layout, dst_tex->handle, dst_tex->current_layout, 1, &info, VK_FILTER_NEAREST);
   
+#if defined(RX_DEBUG)
+  vk_log(log::level::k_verbose, "blit %s", ctx_.current_command->tag.description);
+#endif
+  
 }
 
 
 
 void detail_vk::frame_render::pre_draw(detail_vk::context& ctx_, const frontend::draw_command* draw) {
   
-  
-  
+  draw->render_target->attachments().each_fwd([&](frontend::target::attachment& attachment) {
+    texture* image =
+      (attachment.kind == frontend::target::attachment::type::k_texture2D
+      ? reinterpret_cast<texture*> (attachment.as_texture2D.texture + 1)
+      : reinterpret_cast<texture*> (attachment.as_textureCM.texture + 1));
+    image->add_use(ctx_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, ctx_.graphics_index, true);
+  });
   
 }
 
 void detail_vk::frame_render::draw(detail_vk::context& ctx_, const frontend::draw_command* draw) {
+  
+  draw->render_target->attachments().each_fwd([&](frontend::target::attachment& attachment) {
+    if(attachment.kind == frontend::target::attachment::type::k_texture2D) {
+      reinterpret_cast<texture*> (attachment.as_texture2D.texture + 1)->sync(ctx_, attachment.as_texture2D.texture, ctx_.graphics.get());
+    } else {
+      reinterpret_cast<texture*> (attachment.as_textureCM.texture + 1)->sync(ctx_, attachment.as_textureCM.texture, ctx_.graphics.get());
+    }
+  });
+  
+#if defined(RX_DEBUG)
+  vk_log(log::level::k_verbose, "draw %s", ctx_.current_command->tag.description);
+#endif
   
 }
 

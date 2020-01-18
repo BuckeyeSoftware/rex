@@ -40,7 +40,10 @@ void detail_vk::buffer_builder::construct(detail_vk::context& ctx_, frontend::bu
   
   check_result(vkCreateBuffer(ctx_.device, &info, nullptr, &buf->handle));
   
-  SET_NAME(ctx_, VK_OBJECT_TYPE_BUFFER, buf->handle, ctx_.current_command->tag.description);
+#if defined(RX_DEBUG)
+  buf->name = ctx_.current_command->tag.description;
+#endif
+  SET_NAME(ctx_, VK_OBJECT_TYPE_BUFFER, buf->handle, buf->name);
   
   VkMemoryRequirements req;
   vkGetBufferMemoryRequirements(ctx_.device, buf->handle, &req);
@@ -281,27 +284,6 @@ VkImageView detail_vk::texture::make_attachment(detail_vk::context& ctx_, fronte
 }
 
 
-void detail_vk::texture::transfer_layout(context& ctx_, frontend::texture* texture, VkCommandBuffer command, texture_use_queue::texture_use_info use_info) {
-  
-  VkImageMemoryBarrier barrier {};
-  barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  barrier.image = handle;
-  barrier.oldLayout = current_layout;
-  barrier.newLayout = use_info.required_layout;
-  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  barrier.subresourceRange.baseArrayLayer = 0;
-  barrier.subresourceRange.layerCount = layers;
-  barrier.subresourceRange.baseMipLevel = 0;
-  barrier.subresourceRange.levelCount = texture->levels();
-  barrier.srcAccessMask = 0;
-  barrier.dstAccessMask = use_info.use_access;
-  barrier.srcQueueFamilyIndex = ctx_.graphics_index;
-  barrier.dstQueueFamilyIndex = ctx_.graphics_index;
-  
-  vkCmdPipelineBarrier(command, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, use_info.use_stage, VK_DEPENDENCY_BY_REGION_BIT,
-                          0, nullptr, 0, nullptr, 1, &barrier);
-  
-}
 
 
 void detail_vk::texture::destroy(detail_vk::context& ctx_, frontend::texture* texture) {
@@ -348,8 +330,6 @@ void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const front
     default:
       break;
   }
-  
-  tex->current_layout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   VkImageCreateInfo info {};
   tex->construct_base(ctx_, texture, info);
@@ -402,7 +382,13 @@ void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const front
 
   check_result(vkCreateImage(ctx_.device, &info, nullptr, &tex->handle));
   
-  SET_NAME(ctx_, VK_OBJECT_TYPE_IMAGE, tex->handle, ctx_.current_command->tag.description);
+  tex->add_use(ctx_, VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, ctx_.graphics_index, false);
+  tex->current_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+  
+#if defined(RX_DEBUG)
+  tex->name = ctx_.current_command->tag.description;
+#endif
+  SET_NAME(ctx_, VK_OBJECT_TYPE_IMAGE, tex->handle, tex->name);
 
   VkMemoryRequirements req;
   vkGetImageMemoryRequirements(ctx_.device, tex->handle, &req);
@@ -413,7 +399,9 @@ void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const front
   current_image_staging_size = math::ceil((rx_f32) (current_image_staging_size + texture->data().size() * sizeof(rx_byte))/alignment)*alignment;
   image_type_bits &= req.memoryTypeBits;
   
-  tex->frame_uses.push(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, false, true, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+  if(texture->data().size() > 0) {
+    tex->add_use(ctx_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, ctx_.graphics_index, true);
+  }
   
 }
 
@@ -521,7 +509,7 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
       break;
     default:
       break;
-  } 
+  }
   
   VkMemoryRequirements req;
   vkGetImageMemoryRequirements(ctx_.device, tex->handle, &req);
@@ -536,9 +524,7 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
     
     VkCommandBuffer command = ctx_.transfer.get();
     
-    tex->transfer_layout(ctx_, texture, command, tex->frame_uses.pop());
-    
-    tex->current_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    tex->sync(ctx_, texture, command);
     
     
     VkBufferImageCopy copies [texture->levels()];
@@ -612,6 +598,107 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
     
   }
   
+  
+}
+
+
+
+
+
+
+
+
+
+
+void detail_vk::buffer::sync(context& ctx_, frontend::buffer* buffer, VkCommandBuffer command) {
+  
+  auto last_use = frame_uses.current;
+  auto current_use = last_use->after;
+  
+  if(!last_use->sync_after && (!last_use->write || last_use->queue != current_use->queue)) {
+    
+    //vkCmdPipelineBarrier(command, last_use->stage, current_use->stage, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
+    
+  }
+  
+}
+
+
+void detail_vk::texture::sync(context& ctx_, frontend::texture* texture, VkCommandBuffer command) {
+  
+  auto last_use = frame_uses.current;
+  
+  if(last_use->counter == 1) {
+    
+    auto current_use = last_use->after;
+    
+    VkImageMemoryBarrier barrier {};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.image = handle;
+    barrier.oldLayout = last_use->layout;
+    barrier.newLayout = current_use->layout;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = layers;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = texture->levels();
+    barrier.srcAccessMask = last_use->access;
+    barrier.dstAccessMask = current_use->access;
+    barrier.srcQueueFamilyIndex = last_use->queue;
+    barrier.dstQueueFamilyIndex = current_use->queue;
+    
+    vkCmdPipelineBarrier(command, current_use->stage, current_use->stage, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, &barrier);
+    
+    current_layout = current_use->layout;
+    
+    frame_uses.pop(ctx_);
+    
+#if defined(RX_DEBUG)
+    vk_log(log::level::k_verbose, "transferring image from %s to %s : %s", layout_to_string(last_use->layout), layout_to_string(current_use->layout), name);
+#endif
+    
+  } else {
+    
+    last_use->counter--;
+    
+  }
+  
+}
+
+
+void detail_vk::use_queue::push(context& ctx_, VkImageLayout layout, VkPipelineStageFlags stage, VkAccessFlags access, uint32_t queue, bool write, bool sync_after) {
+  
+  if(head == nullptr) {
+    use_info* use = ctx_.allocator->create<use_info>(layout, stage, access, queue, write, sync_after);
+    current = use;
+    head = use;
+    return;
+  }
+  
+  auto last_use = current;
+  
+  if(!last_use->sync_after && (last_use->layout != layout || last_use->write || last_use->queue != queue)) {
+    
+    use_info* use = ctx_.allocator->create<use_info>(layout, stage, access, queue, write, sync_after);
+    
+    head->after = use;
+    head = use;
+    
+  } else {
+    
+    current->counter++;
+    
+  }
+  
+}
+
+void detail_vk::use_queue::pop(context& ctx_) {
+  
+  auto last = current;
+  
+  current = current->after;
+  
+  ctx_.allocator->destroy<use_info>(last);
   
 }
 
