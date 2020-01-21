@@ -31,6 +31,7 @@ struct loader
   string&& name();
   bool alpha_test() const;
   bool has_alpha() const;
+  bool no_compress() const;
   rx_f32 roughness() const;
   rx_f32 metalness() const;
   const optional<math::transform>& transform() const &;
@@ -46,11 +47,16 @@ private:
 
   bool parse_textures(const json& _textures);
 
+  enum {
+    k_alpha_test  = 1 << 0,
+    k_has_alpha   = 1 << 1,
+    k_no_compress = 1 << 2
+  };
+
   memory::allocator* m_allocator;
   vector<texture> m_textures;
   string m_name;
-  bool m_alpha_test;
-  bool m_has_alpha;
+  rx_u32 m_flags;
   rx_f32 m_roughness;
   rx_f32 m_metalness;
   optional<math::transform> m_transform;
@@ -69,11 +75,15 @@ inline string&& loader::name() {
 }
 
 inline bool loader::alpha_test() const {
-  return m_alpha_test;
+  return m_flags & k_alpha_test;
 }
 
 inline bool loader::has_alpha() const {
-  return m_has_alpha;
+  return m_flags & k_has_alpha;
+}
+
+inline bool loader::no_compress() const {
+  return m_flags & k_no_compress;
 }
 
 inline rx_f32 loader::roughness() const {
