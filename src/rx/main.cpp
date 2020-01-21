@@ -18,6 +18,7 @@
 #include "rx/core/math/sin.h"
 
 #include "rx/game.h"
+#include "rx/display.h"
 
 #include "lib/remotery.h"
 
@@ -98,6 +99,8 @@ RX_CONSOLE_IVAR(
   0x4597);
 
 static concurrency::atomic<game::status> g_status{game::status::k_restart};
+
+RX_LOG("main", logger);
 
 int main(int _argc, char** _argv) {
   (void)_argc;
@@ -245,6 +248,22 @@ int main(int _argc, char** _argv) {
       if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         abort("failed to initialize video");
       }
+
+      // Fetch all the displays
+      display::displays(&memory::g_system_allocator).each_fwd([](const display& _display) {
+        logger(log::level::k_info, "Display \"%s\"", _display.name());
+        logger(log::level::k_info, "  DPI (%.2f, %.2f, %.2f)",
+          _display.diagonal_dpi(),
+          _display.horizontal_dpi(),
+          _display.vertical_dpi());
+        logger(log::level::k_info, "  Modes (%zu)", _display.modes().size());
+        _display.modes().each_fwd([](const display::mode& _mode) {
+          logger(log::level::k_info, "    % 4zu x % 4zu @ % 3.2f Hz",
+            _mode.resolution.w,
+            _mode.resolution.h,
+            _mode.refresh_rate);
+        });
+      });
 
       const string &want_name{display_name->get()};
       int display_index{0};
