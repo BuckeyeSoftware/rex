@@ -1592,7 +1592,7 @@ void gl4::process(rx_byte* _command) {
                 break;
               case 1: // elements
                 if (use_elements_edits) {
-                  pglNamedBufferSubData(buffer->bo[1], edit[1], edit[2], vertices.data() + edit[1]);
+                  pglNamedBufferSubData(buffer->bo[1], edit[1], edit[2], elements.data() + edit[1]);
                 }
                 break;
               }
