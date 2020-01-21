@@ -177,7 +177,7 @@ void detail_vk::Command::start(detail_vk::context& ctx_) {
   
   VkCommandBufferBeginInfo info {};
   info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  //info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+  info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   check_result(vkBeginCommandBuffer(commands[index], &info));
   
 }
