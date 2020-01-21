@@ -29,6 +29,14 @@ RX_CONSOLE_IVAR(max_texture3D, "render.max_texture3D", "maximum 3D textures", 16
 RX_CONSOLE_IVAR(max_textureCM, "render.max_textureCM", "maximum CM textures", 16, 128, 16);
 RX_CONSOLE_IVAR(command_memory, "render.command_memory", "memory for command buffer in MiB", 1, 4, 2);
 
+RX_CONSOLE_V2IVAR(
+  max_texture_dimensions,
+  "render.max_texture_dimensions",
+  "hard limit on the maximum texture dimension for all textures",
+  rx::math::vec2i(128, 128),
+  rx::math::vec2i(4096, 4096),
+  rx::math::vec2i(1024, 1024));
+
 RX_LOG("render", logger);
 
 static constexpr const char* k_technique_path{"base/renderer/techniques"};

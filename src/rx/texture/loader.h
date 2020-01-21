@@ -23,6 +23,8 @@ struct loader {
   ~loader() = default;
 
   bool load(const string& _file_name, pixel_format _want_format);
+  bool load(const string& _file_name, pixel_format _want_format,
+    const math::vec2z& _max_dimensions);
 
   rx_size bpp() const;
   rx_size channels() const;
