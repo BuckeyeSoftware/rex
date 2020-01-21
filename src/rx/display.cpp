@@ -51,6 +51,12 @@ vector<display> display::displays(memory::allocator* _allocator) {
       result.m_vertical_dpi = dpi[2];
     }
 
+    SDL_Rect bounds;
+    if (SDL_GetDisplayBounds(i, &bounds) == 0) {
+      result.m_bounds.offset = {bounds.x, bounds.y};
+      result.m_bounds.dimensions = {bounds.w, bounds.h};
+    }
+
     const int n_modes{SDL_GetNumDisplayModes(i)};
     for (int j{0}; j < n_modes; j++) {
       SDL_DisplayMode mode;
