@@ -207,7 +207,7 @@ bool parser::parse(const string& _contents) {
       string contents{m_allocator};
       while (*m_ch && *m_ch != '\"') {
         if (*m_ch == '\\' && (m_ch[1] == '\"' || m_ch[1] == '\'')) {
-          contents += '\\';
+          // NOTE(dweiler): This should not be escaped.
           contents += m_ch[1];
           m_ch += 2;
         } else {

@@ -19,6 +19,7 @@
 #include "rx/core/math/sin.h"
 
 #include "rx/game.h"
+#include "rx/display.h"
 
 #include "lib/remotery.h"
 
@@ -99,6 +100,8 @@ RX_CONSOLE_IVAR(
   0x4597);
 
 static concurrency::atomic<game::status> g_status{game::status::k_restart};
+
+RX_LOG("main", logger);
 
 int main(int _argc, char** _argv) {
   (void)_argc;
@@ -247,19 +250,29 @@ int main(int _argc, char** _argv) {
         abort("failed to initialize video");
       }
 
-      const string &want_name{display_name->get()};
-      int display_index{0};
-      int displays{SDL_GetNumVideoDisplays()};
-      for (int i{0}; i < displays; i++) {
-        const char *name{SDL_GetDisplayName(i)};
-        if (name && want_name == name) {
-          display_index = i;
-          break;
+
+      // Fetch all the displays
+      const auto& displays{display::displays(&memory::g_system_allocator)};
+
+      // Search for the given display in the display list.
+      const display* found_display{nullptr};
+      displays.each_fwd([&](const display& _display) {
+        if (_display.name() == *display_name) {
+          found_display = &_display;
+          return false;
         }
+        return true;
+      });
+
+      if (!found_display) {
+        // Use the first display if we could not match a display.
+        found_display = &displays.first();
+        // Save that selection.
+        display_name->set(found_display->name());
       }
 
-      const char *name{SDL_GetDisplayName(display_index)};
-      display_name->set(name ? name : "");
+      // Fetch the index of display inside the display list.
+      const rx_size display_index = found_display - &displays.first();
 
       const auto& driver_name{render_driver->get()};
       const bool is_gl{driver_name.begins_with("gl")};
@@ -506,6 +519,27 @@ int main(int _argc, char** _argv) {
               case SDL_WINDOWEVENT_SIZE_CHANGED:
                 display_resolution->set({event.window.data1, event.window.data2});
                 g->on_resize(display_resolution->get().cast<rx_size>());
+                break;
+              case SDL_WINDOWEVENT_MOVED:
+                {
+                  // When the display moves, attempt to determine if it moved to a different display.
+                  math::rectangle<rx_s32> extents;
+                  extents.dimensions = display_resolution->get();
+                  const math::vec2i offset{event.window.data1, event.window.data2};
+                  extents.offset = offset;
+                  logger(log::level::k_info, "Window %s moved to %s",
+                    extents.dimensions, extents.offset);
+
+                  displays.each_fwd([&](const display& _display) {
+                    if (_display.contains(extents)) {
+                      // The window has moved to another display, update the name
+                      display_name->set(_display.name());
+                      logger(log::level::k_info, "Display changed to \"%s\"", display_name->get());
+                      return false;
+                    }
+                    return true;
+                  });
+                }
                 break;
               }
               break;

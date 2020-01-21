@@ -1,17 +1,30 @@
 #include <string.h> // memcpy
 
 #include "rx/texture/loader.h"
+#include "rx/texture/scale.h"
 
 #include "rx/core/filesystem/file.h"
 #include "rx/core/log.h"
 
 #include "lib/stb_image.h"
 
+#include "rx/console/interface.h"
+
 RX_LOG("texture/loader", logger);
 
 namespace rx::texture {
 
 bool loader::load(const string& _file_name, pixel_format _want_format) {
+  static auto* max_dimensions_reference =
+    console::interface::find_variable_by_name("render.max_texture_dimensions");
+  static auto& max_dimensions_variable =
+    max_dimensions_reference->cast<math::vec2i>()->get();
+  return load(_file_name, _want_format, max_dimensions_variable.cast<rx_size>());
+}
+
+bool loader::load(const string& _file_name, pixel_format _want_format,
+  const math::vec2z& _max_dimensions)
+{
   auto read_data{filesystem::read_binary_file(m_allocator, _file_name)};
   if (!read_data) {
     return false;
@@ -52,21 +65,31 @@ bool loader::load(const string& _file_name, pixel_format _want_format) {
     return false;
   }
 
-  m_dimensions = dimensions.cast<rx_size>();
   m_channels = want_channels;
   m_bpp = want_channels;
+  m_dimensions = dimensions.cast<rx_size>();
 
-  m_data.resize(m_dimensions.area() * m_bpp);
-  memcpy(m_data.data(), decoded_image, m_data.size());
+  // Scale the texture down if it exceeds the max dimensions.
+  if (m_dimensions > _max_dimensions) {
+    m_dimensions = _max_dimensions;
+    m_data.resize(m_dimensions.area() * m_bpp);
+    scale(decoded_image, dimensions.w, dimensions.h, want_channels,
+      dimensions.w * want_channels, m_data.data(), _max_dimensions.w,
+      _max_dimensions.h);
+  } else {
+    // Otherwise just copy the decoded image data directly.
+    m_data.resize(m_dimensions.area() * m_bpp);
+    memcpy(m_data.data(), decoded_image, m_data.size());
+  }
 
   stbi_image_free(decoded_image);
 
   // When there's an alpha channel but it encodes fully opaque, remove it.
   if (want_channels == 4) {
     bool can_remove_alpha{true};
-    for (int y{0}; y < dimensions.h; y++) {
-      int scan_line_offset{dimensions.w * y};
-      for (int x{0}; x < dimensions.w; x++) {
+    for (rx_size y{0}; y < m_dimensions.h; y++) {
+      const rx_size scan_line_offset{m_dimensions.w * y};
+      for (rx_size x{0}; x < m_dimensions.w; x++) {
         // When an alpha pixel has a value other than 255, we can't optimize.
         if (m_data[(scan_line_offset + x) * channels + 3] != 255) {
           can_remove_alpha = false;
@@ -77,14 +100,14 @@ bool loader::load(const string& _file_name, pixel_format _want_format) {
 
     if (can_remove_alpha) {
       // Copy all pixels from m_data to data removing the alpha channel.
-      vector<rx_byte> data{m_allocator, dimensions.area() * 3_z};
-      for (int y{0}; y < dimensions.h; y++) {
-        const int scan_line_offset{dimensions.w * y};
-        for (int x{0}; x < dimensions.w; x++) {
-          const int pixel_offset{scan_line_offset + x};
+      vector<rx_byte> data{m_allocator, m_dimensions.area() * 3_z};
+      for (rx_size y{0}; y < m_dimensions.h; y++) {
+        const rx_size scan_line_offset{dimensions.w * y};
+        for (rx_size x{0}; x < m_dimensions.w; x++) {
+          const rx_size pixel_offset{scan_line_offset + x};
 
-          const int src_pixel_offset{pixel_offset * 4};
-          const int dst_pixel_offset{pixel_offset * 3};
+          const rx_size src_pixel_offset{pixel_offset * 4};
+          const rx_size dst_pixel_offset{pixel_offset * 3};
 
           data[dst_pixel_offset + 0] = m_data[src_pixel_offset + 0];
           data[dst_pixel_offset + 1] = m_data[src_pixel_offset + 1];
@@ -104,7 +127,7 @@ bool loader::load(const string& _file_name, pixel_format _want_format) {
   if (_want_format == pixel_format::k_bgr_u8
     || _want_format == pixel_format::k_bgra_u8)
   {
-    const rx_size samples{dimensions.area() * static_cast<rx_size>(channels)};
+    const rx_size samples{m_dimensions.area() * static_cast<rx_size>(channels)};
     for (rx_size i{0}; i < samples; i += channels) {
       const auto r{m_data[0]};
       const auto b{m_data[2]};

@@ -32,8 +32,6 @@ CXX := $(CC) -xc++
 OBJDIR := .build/objs
 DEPDIR := .build/deps
 
-
-
 # Collect all .cpp, .c and .S files for build in the source directory.
 SRCS := $(call rwildcard, $(SRCDIR)/, *cpp)
 SRCS += $(call rwildcard, $(SRCDIR)/, *c)
