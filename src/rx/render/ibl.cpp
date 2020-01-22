@@ -63,7 +63,7 @@ ibl::~ibl() {
 
 void ibl::render(frontend::textureCM* _environment, rx_size _irradiance_map_size) {
   // NOTE(dweiler): Artifically limit the maximum size of IRM to avoid TDR.
-  _irradiance_map_size = algorithm::max(_irradiance_map_size, 32_z);
+  _irradiance_map_size = algorithm::min(_irradiance_map_size, 32_z);
 
   frontend::technique* irradiance_technique{m_frontend->find_technique_by_name("irradiance_map")};
   frontend::technique* prefilter_technique{m_frontend->find_technique_by_name("prefilter_environment_map")};
