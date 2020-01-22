@@ -13,8 +13,7 @@ loader::loader(memory::allocator* _allocator)
   : m_allocator{_allocator}
   , m_textures{_allocator}
   , m_name{_allocator}
-  , m_alpha_test{false}
-  , m_has_alpha{false}
+  , m_flags{0}
   , m_roughness{1.0f}
   , m_metalness{0.0f}
 {
@@ -24,14 +23,12 @@ loader::loader(loader&& loader_)
   : m_allocator{loader_.m_allocator}
   , m_textures{utility::move(loader_.m_textures)}
   , m_name{utility::move(loader_.m_name)}
-  , m_alpha_test{loader_.m_alpha_test}
-  , m_has_alpha{loader_.m_has_alpha}
+  , m_flags{loader_.m_flags}
   , m_roughness{loader_.m_roughness}
   , m_metalness{loader_.m_metalness}
 {
   loader_.m_allocator = nullptr;
-  loader_.m_alpha_test = false;
-  loader_.m_has_alpha = false;
+  loader_.m_flags = 0;
   loader_.m_roughness = 1.0f;
   loader_.m_metalness = 0.0f;
 }
@@ -42,14 +39,12 @@ void loader::operator=(loader&& loader_) {
   m_allocator = loader_.m_allocator;
   m_textures = utility::move(loader_.m_textures);
   m_name = utility::move(loader_.m_name);
-  m_alpha_test = loader_.m_alpha_test;
-  m_has_alpha = loader_.m_has_alpha;
+  m_flags = loader_.m_flags;
   m_roughness = loader_.m_roughness;
   m_metalness = loader_.m_metalness;
 
   loader_.m_allocator = nullptr;
-  loader_.m_alpha_test = false;
-  loader_.m_has_alpha = false;
+  loader_.m_flags = 0;
   loader_.m_roughness = 1.0f;
   loader_.m_metalness = 0.0f;
 }
@@ -88,7 +83,18 @@ bool loader::parse(const json& _definition) {
     return error("expected Boolean for 'alpha_test'");
   }
 
-  m_alpha_test = alpha_test ? alpha_test.as_boolean() : false;
+  if (alpha_test && alpha_test.as_boolean()) {
+    m_flags |= k_alpha_test;
+  }
+
+  const auto& no_compress{_definition["no_compress"]};
+  if (no_compress && !no_compress.is_boolean()) {
+    return error("expected Boolean for 'no_compress'");
+  }
+
+  if (no_compress && no_compress.as_boolean()) {
+    m_flags |= k_no_compress;
+  }
 
   if (const auto& transform{_definition["transform"]}) {
     const auto& scale{transform["scale"]};
@@ -143,10 +149,10 @@ bool loader::parse(const json& _definition) {
     }
 
     if (_texture.chain().bpp() == 4) {
-      m_has_alpha = true;
-    } else if (m_alpha_test) {
+      m_flags |= k_has_alpha;
+    } else if (m_flags & k_alpha_test) {
       logger(log::level::k_warning, "'alpha_test' disabled (\"diffuse\" has no alpha channel)");
-      m_alpha_test = false;
+      m_flags &= ~k_alpha_test;
     }
     return false;
   });
