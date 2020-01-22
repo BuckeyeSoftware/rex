@@ -206,8 +206,6 @@ void vk::process(const vector<rx_byte*>& _commands) {
         break;
       }
       case frontend::command_type::k_profile: {
-        const auto profile {reinterpret_cast<const frontend::profile_command*>(header + 1)};
-        
         break;
       }
     }
@@ -220,8 +218,9 @@ void vk::process(const vector<rx_byte*>& _commands) {
   
   
   // allocate memory
-  //b_builder.interpass(ctx);
-  //t_builder.interpass(ctx);
+  b_builder.interpass(ctx);
+  t_builder.interpass(ctx);
+  
   
   
   ctx.graphics.start(ctx);
@@ -232,6 +231,7 @@ void vk::process(const vector<rx_byte*>& _commands) {
   _commands.each_fwd([&](rx_byte* _command) {
     
     auto header {reinterpret_cast<frontend::command_header*>(_command)};
+    ctx.current_command = header;
     switch(header->type) {
       
       case frontend::command_type::k_resource_allocate: {
@@ -282,7 +282,7 @@ void vk::process(const vector<rx_byte*>& _commands) {
         
         switch (resource->kind) {
           case frontend::resource_command::type::k_buffer: {
-            //b_builder.construct2(ctx, resource->as_buffer);
+            b_builder.construct2(ctx, resource->as_buffer);
             break;
           }
           case frontend::resource_command::type::k_target:
@@ -297,7 +297,7 @@ void vk::process(const vector<rx_byte*>& _commands) {
             }
             [[fallthrough]];
           default: {
-            //t_builder.construct2(ctx, resource);
+            t_builder.construct2(ctx, resource);
             break;
           }
         }
@@ -319,8 +319,6 @@ void vk::process(const vector<rx_byte*>& _commands) {
         break;
       }
       case frontend::command_type::k_profile: {
-        const auto profile {reinterpret_cast<const frontend::profile_command*>(header + 1)};
-        
         break;
       }
     }
@@ -344,7 +342,9 @@ void vk::swap() {
   
   detail_vk::context& ctx{*reinterpret_cast<detail_vk::context*> (m_impl)};
   
-  if (ctx.swap.swapchain == VK_NULL_HANDLE) return;
+  vk_log(log::level::k_verbose, "swap");
+  
+  if (!ctx.swap.alive) return;
   
   if (ctx.swap.acquired) {
   

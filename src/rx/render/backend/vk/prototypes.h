@@ -2,6 +2,8 @@ INST_FUN(vkGetPhysicalDeviceSurfaceCapabilitiesKHR)
 INST_FUN(vkGetPhysicalDeviceSurfacePresentModesKHR)
 INST_FUN(vkGetPhysicalDeviceSurfaceFormatsKHR)
 
+INST_FUN(vkGetPhysicalDeviceFormatProperties)
+
 DEV_FUN(vkCreateSwapchainKHR)
 DEV_FUN(vkDestroySwapchainKHR)
 DEV_FUN(vkGetSwapchainImagesKHR)

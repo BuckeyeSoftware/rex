@@ -93,6 +93,7 @@ namespace detail_vk {
     
     VkImage handle {VK_NULL_HANDLE};
     VkFormat format;
+    rx_size format_size;
     VkExtent3D extent;
     uint32_t offset;
     uint32_t layers;
@@ -147,8 +148,6 @@ namespace detail_vk {
     VkBuffer staging_buffer = VK_NULL_HANDLE;
     rx_byte* image_staging_pointer = nullptr;
   };
-  
-  
   
 }
 

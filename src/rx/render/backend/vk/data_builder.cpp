@@ -194,15 +194,7 @@ void detail_vk::texture::construct_base(detail_vk::context& ctx_, frontend::text
   }
   
   switch(texture->format()) {
-    case frontend::texture::data_format::k_bgr_u8:
-      info.format = VK_FORMAT_B8G8R8_UNORM;
-      break;
-    case frontend::texture::data_format::k_bgra_f16:
-      info.format = VK_FORMAT_B16G16R16G16_422_UNORM;
-      break;
-    case frontend::texture::data_format::k_bgra_u8:
-      info.format = VK_FORMAT_B8G8R8A8_UNORM;
-      break;
+    
     case frontend::texture::data_format::k_d16:
       info.format = VK_FORMAT_D16_UNORM;
       break;
@@ -221,36 +213,119 @@ void detail_vk::texture::construct_base(detail_vk::context& ctx_, frontend::text
     case frontend::texture::data_format::k_d32f_s8:
       info.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
       break;
-    case frontend::texture::data_format::k_dxt1:
-      info.format = VK_FORMAT_UNDEFINED;
-      break;
-    case frontend::texture::data_format::k_dxt5:
-      info.format = VK_FORMAT_UNDEFINED;
-      break;
-    case frontend::texture::data_format::k_r_u8:
-      info.format = VK_FORMAT_R8_UINT;
-      break;
-    case frontend::texture::data_format::k_rgb_u8:
-      info.format = VK_FORMAT_R8G8B8_UNORM;
-      break;
-    case frontend::texture::data_format::k_rgba_f16:
-      info.format = VK_FORMAT_R16G16B16A16_SFLOAT;
-      break;
-    case frontend::texture::data_format::k_rgba_u8:
-      info.format = VK_FORMAT_R8G8B8A8_UNORM;
-      break;
     case frontend::texture::data_format::k_s8:
       info.format = VK_FORMAT_S8_UINT;
       break;
+      
+      
+      
+    case frontend::texture::data_format::k_r_u8:
+      info.format = VK_FORMAT_R8_UNORM;
+      format_size = 1;
+      break;
+    case frontend::texture::data_format::k_rgb_u8:
+      info.format = VK_FORMAT_R8G8B8_UNORM;
+      format_size = 3;
+      break;
+    case frontend::texture::data_format::k_rgba_u8:
+      info.format = VK_FORMAT_R8G8B8A8_UNORM;
+      format_size = 4;
+      break;
     case frontend::texture::data_format::k_srgb_u8:
-      info.format = VK_FORMAT_S8_UINT;
+      info.format = VK_FORMAT_R8G8B8_SRGB;
+      format_size = 3;
       break;
     case frontend::texture::data_format::k_srgba_u8:
-      info.format = VK_FORMAT_S8_UINT;
+      info.format = VK_FORMAT_R8G8B8A8_SRGB;
+      format_size = 4;
+      break;
+    case frontend::texture::data_format::k_rgba_f16:
+      info.format = VK_FORMAT_R16G16B16A16_SFLOAT;
+      format_size = 8;
+      break;
+      
+    case frontend::texture::data_format::k_bgr_u8:
+      info.format = VK_FORMAT_B8G8R8_UNORM;
+      format_size = 3;
+      break;
+    case frontend::texture::data_format::k_bgra_u8:
+      info.format = VK_FORMAT_B8G8R8A8_UNORM;
+      format_size = 4;
+      break;
+      
+    case frontend::texture::data_format::k_dxt5:
+    case frontend::texture::data_format::k_dxt1:
+    case frontend::texture::data_format::k_bgra_f16:
+      info.format = VK_FORMAT_UNDEFINED;
+      vk_log(log::level::k_error, "Format not supported");
       break;
   }
   
   format = info.format;
+  
+  VkFormatProperties props;
+  vkGetPhysicalDeviceFormatProperties(ctx_.physical, format, &props);
+  
+  if(props.optimalTilingFeatures == 0) {
+    
+    switch(texture->format()) {
+      case frontend::texture::data_format::k_d16:
+      case frontend::texture::data_format::k_d24:
+      case frontend::texture::data_format::k_d24_s8:
+        format = VK_FORMAT_D32_SFLOAT_S8_UINT;
+        break;
+      case frontend::texture::data_format::k_d32:
+      case frontend::texture::data_format::k_d32f:
+        format = VK_FORMAT_X8_D24_UNORM_PACK32;
+        break;
+      case frontend::texture::data_format::k_d32f_s8:
+        format = VK_FORMAT_D24_UNORM_S8_UINT;
+        break;
+      case frontend::texture::data_format::k_s8:
+        format = VK_FORMAT_S8_UINT;
+        break;
+        
+      case frontend::texture::data_format::k_r_u8:
+        format = VK_FORMAT_R8_UNORM;
+        format_size = 1;
+        break;
+      case frontend::texture::data_format::k_rgba_f16:
+        format = VK_FORMAT_R16G16B16A16_SFLOAT;
+        format_size = 8;
+        break;
+        
+      case frontend::texture::data_format::k_rgb_u8:
+      case frontend::texture::data_format::k_rgba_u8:
+        format = VK_FORMAT_R8G8B8A8_UNORM;
+        format_size = 4;
+        break;
+        
+      case frontend::texture::data_format::k_srgb_u8:
+      case frontend::texture::data_format::k_srgba_u8:
+        format = VK_FORMAT_R8G8B8A8_SRGB;
+        format_size = 4;
+        break;
+        
+      case frontend::texture::data_format::k_bgr_u8:
+      case frontend::texture::data_format::k_bgra_u8:
+        format = VK_FORMAT_B8G8R8A8_UNORM;
+        format_size = 4;
+        break;
+        
+      case frontend::texture::data_format::k_dxt5:
+      case frontend::texture::data_format::k_dxt1:
+      case frontend::texture::data_format::k_bgra_f16:
+        format = VK_FORMAT_UNDEFINED;
+    }
+    
+    vk_log(log::level::k_info, "format not natively supported : %d, changed to %d", info.format, format);
+    info.format = format;
+    
+    vkGetPhysicalDeviceFormatProperties(ctx_.physical, format, &props);
+    
+    if(props.optimalTilingFeatures == 0) vk_log(log::level::k_error, "format still not supported : %d !", format);
+    
+  }
   
 }
 
@@ -387,20 +462,25 @@ void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const front
   
 #if defined(RX_DEBUG)
   tex->name = ctx_.current_command->tag.description;
-#endif
   SET_NAME(ctx_, VK_OBJECT_TYPE_IMAGE, tex->handle, tex->name);
+#endif
+  
 
   VkMemoryRequirements req;
   vkGetImageMemoryRequirements(ctx_.device, tex->handle, &req);
 
-  current_image_size = math::ceil((rx_f32) (current_image_size + req.size)/req.alignment)*req.alignment;
-  rx_size alignment = texture->byte_size_of_format(texture->format());
-  if(alignment < 4) alignment *= 4;
-  current_image_staging_size = math::ceil((rx_f32) (current_image_staging_size + texture->data().size() * sizeof(rx_byte))/alignment)*alignment;
-  image_type_bits &= req.memoryTypeBits;
+  current_image_size = math::ceil((rx_f32) (current_image_size)/req.alignment)*req.alignment;
+  current_image_size += req.size;
   
   if(texture->data().size() > 0) {
+    
+    rx_size texture_size = texture->data().size() * sizeof(rx_byte) * tex->format_size / texture->byte_size_of_format(texture->format());
+    rx_size alignment = 4;
+    current_image_staging_size = math::ceil((rx_f32) (current_image_staging_size + texture_size)/alignment)*alignment;
+    image_type_bits &= req.memoryTypeBits;
+    
     tex->add_use(ctx_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, ctx_.graphics_index, true);
+    
   }
   
 }
@@ -514,13 +594,23 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
   VkMemoryRequirements req;
   vkGetImageMemoryRequirements(ctx_.device, tex->handle, &req);
   
+  current_image_size = math::ceil((rx_f32) (current_image_size)/req.alignment)*req.alignment;
+  
   vkBindImageMemory(ctx_.device, tex->handle, image_memory, current_image_size);
   
-  current_image_size = math::ceil((rx_f32) (current_image_size + req.size)/req.alignment)*req.alignment;
+  current_image_size += req.size;
   
   if(texture->data().size() > 0) {
     
-    memcpy(image_staging_pointer + current_image_staging_size, texture->data().data(), texture->data().size() * sizeof(rx_byte));
+    if(texture->byte_size_of_format(texture->format()) < tex->format_size) {
+      rx_size byte_size = texture->byte_size_of_format(texture->format());
+      rx_size count = {texture->data().size() * sizeof(rx_byte) / byte_size};
+      for(rx_size i {0}; i<count; i++) {
+        memcpy(image_staging_pointer + current_image_staging_size + i * tex->format_size, texture->data().data() + i * byte_size, byte_size);
+      }
+    } else {
+      memcpy(image_staging_pointer + current_image_staging_size, texture->data().data(), texture->data().size() * sizeof(rx_byte));
+    }
     
     VkCommandBuffer command = ctx_.transfer.get();
     
@@ -592,9 +682,9 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
     
     vkCmdCopyBufferToImage(command, staging_buffer, tex->handle, tex->current_layout, texture->levels(), &copies[0]);
     
-    rx_size alignment = texture->byte_size_of_format(texture->format());
-    if(alignment < 4) alignment *= 4;
-    current_image_staging_size = math::ceil( (rx_f32) (current_image_staging_size + texture->data().size() * sizeof(rx_byte)) / alignment) * alignment;
+    rx_size texture_size = texture->data().size() * sizeof(rx_byte) * tex->format_size / texture->byte_size_of_format(texture->format());
+    rx_size alignment = 4;
+    current_image_staging_size = math::ceil((rx_f32) (current_image_staging_size + texture_size)/alignment)*alignment;
     
   }
   
@@ -612,14 +702,9 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
 
 void detail_vk::buffer::sync(context& ctx_, frontend::buffer* buffer, VkCommandBuffer command) {
   
-  auto last_use = frame_uses.current;
-  auto current_use = last_use->after;
-  
-  if(!last_use->sync_after && (!last_use->write || last_use->queue != current_use->queue)) {
-    
-    //vkCmdPipelineBarrier(command, last_use->stage, current_use->stage, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 0, nullptr);
-    
-  }
+  (void) ctx_;
+  (void) buffer;
+  (void) command;
   
 }
 
@@ -631,6 +716,10 @@ void detail_vk::texture::sync(context& ctx_, frontend::texture* texture, VkComma
   if(last_use->counter == 1) {
     
     auto current_use = last_use->after;
+    
+#if defined(RX_DEBUG)
+    vk_log(log::level::k_verbose, "transferring image from %s to %s : %s", layout_to_string(last_use->layout), layout_to_string(current_use->layout), name);
+#endif
     
     VkImageMemoryBarrier barrier {};
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -647,15 +736,11 @@ void detail_vk::texture::sync(context& ctx_, frontend::texture* texture, VkComma
     barrier.srcQueueFamilyIndex = last_use->queue;
     barrier.dstQueueFamilyIndex = current_use->queue;
     
-    vkCmdPipelineBarrier(command, current_use->stage, current_use->stage, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, &barrier);
+    vkCmdPipelineBarrier(command, last_use->stage, current_use->stage, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, &barrier);
     
     current_layout = current_use->layout;
     
     frame_uses.pop(ctx_);
-    
-#if defined(RX_DEBUG)
-    vk_log(log::level::k_verbose, "transferring image from %s to %s : %s", layout_to_string(last_use->layout), layout_to_string(current_use->layout), name);
-#endif
     
   } else {
     
@@ -675,7 +760,7 @@ void detail_vk::use_queue::push(context& ctx_, VkImageLayout layout, VkPipelineS
     return;
   }
   
-  auto last_use = current;
+  auto last_use = head;
   
   if(!last_use->sync_after && (last_use->layout != layout || last_use->write || last_use->queue != queue)) {
     
@@ -686,7 +771,7 @@ void detail_vk::use_queue::push(context& ctx_, VkImageLayout layout, VkPipelineS
     
   } else {
     
-    current->counter++;
+    last_use->counter++;
     
   }
   

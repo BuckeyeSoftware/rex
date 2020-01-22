@@ -162,6 +162,9 @@ bool create_instance(detail_vk::context& ctx_) {
 
 void destroy_instance(detail_vk::context& ctx_) {
   
+  LOCAL_INST_LOAD(vkDestroySurfaceKHR);
+  vkDestroySurfaceKHR(ctx_.instance, ctx_.surface, nullptr);
+  
   LOCAL_INST_LOAD(vkDestroyDebugUtilsMessengerEXT);
   vkDestroyDebugUtilsMessengerEXT(ctx_.instance, ctx_.callback, nullptr);
   
