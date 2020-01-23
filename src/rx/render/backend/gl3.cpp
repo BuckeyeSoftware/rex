@@ -1,5 +1,3 @@
-#include <SDL_video.h> // SDL_GL_GetProcAddress
-
 #include "rx/render/backend/gl.h"
 #include "rx/render/backend/gl3.h"
 

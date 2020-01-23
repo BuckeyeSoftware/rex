@@ -1,5 +1,6 @@
-#include <SDL.h>
 #include <signal.h>
+
+#include <SDL.h>
 
 #include "rx/console/interface.h"
 #include "rx/console/variable.h"
