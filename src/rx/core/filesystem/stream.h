@@ -12,7 +12,7 @@ struct stream
   // Read |_size| bytes from stream into |_data|.
   virtual rx_u64 read(rx_byte* _data, rx_u64 _size) = 0;
 
-  // Rrite |_size| bytes from |_data| into stream.
+  // Write |_size| bytes from |_data| into stream.
   virtual rx_u64 write(const rx_byte* _data, rx_u64 _size) = 0;
 
   // Seek to |where| in stream.
