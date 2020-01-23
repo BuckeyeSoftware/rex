@@ -70,6 +70,27 @@
     <Filter Include="rx\core\math">
       <UniqueIdentifier>{395e9e26-9152-48b7-bf32-969f1660e73c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="rx\hud">
+      <UniqueIdentifier>{9d339c92-91a2-4786-a937-55d7b9cb9100}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rx\core\time">
+      <UniqueIdentifier>{7d09f4b8-e1c5-4f8f-9fc8-b16201af7ee0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rx\core\hints">
+      <UniqueIdentifier>{536b51af-be13-42e4-b76a-35f33efa41ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rx\material">
+      <UniqueIdentifier>{cff2c28a-6ee8-4b6c-aee4-cc38efb1a524}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="game">
+      <UniqueIdentifier>{ea0eddc7-f1ef-4904-a4e1-30b65acd1137}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rx\core\prng">
+      <UniqueIdentifier>{cd733303-fa20-4898-878b-47676ccc0a7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rx\math\noise">
+      <UniqueIdentifier>{f5bf5d32-b512-4bef-bd4f-2f636762aaa2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\lib\json.c">
@@ -108,9 +129,6 @@
     <ClCompile Include="src\rx\core\memory\bump_point_allocator.cpp">
       <Filter>rx\core\memory</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\core\memory\pool_allocator.cpp">
-      <Filter>rx\core\memory</Filter>
-    </ClCompile>
     <ClCompile Include="src\rx\core\memory\stats_allocator.cpp">
       <Filter>rx\core\memory</Filter>
     </ClCompile>
@@ -147,9 +165,6 @@
     <ClCompile Include="src\rx\model\animation.cpp">
       <Filter>rx\model</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\model\interface.cpp">
-      <Filter>rx\model</Filter>
-    </ClCompile>
     <ClCompile Include="src\rx\model\iqm.cpp">
       <Filter>rx\model</Filter>
     </ClCompile>
@@ -168,16 +183,10 @@
     <ClCompile Include="src\rx\core\cpprt.cpp">
       <Filter>rx\core</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\core\debug.cpp">
-      <Filter>rx\core</Filter>
-    </ClCompile>
     <ClCompile Include="src\rx\core\json.cpp">
       <Filter>rx\core</Filter>
     </ClCompile>
     <ClCompile Include="src\rx\core\log.cpp">
-      <Filter>rx\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rx\core\statics.cpp">
       <Filter>rx\core</Filter>
     </ClCompile>
     <ClCompile Include="src\rx\core\string.cpp">
@@ -220,9 +229,6 @@
       <Filter>rx\render\frontend</Filter>
     </ClCompile>
     <ClCompile Include="src\rx\render\gbuffer.cpp">
-      <Filter>rx\render</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rx\render\immediate.cpp">
       <Filter>rx\render</Filter>
     </ClCompile>
     <ClCompile Include="src\rx\texture\chain.cpp">
@@ -275,6 +281,126 @@
     </ClCompile>
     <ClCompile Include="src\lib\stb_truetype.cpp">
       <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\math\aabb.cpp">
+      <Filter>rx\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\console\command.cpp">
+      <Filter>rx\console</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\hud\console.cpp">
+      <Filter>rx\hud</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\texture\convert.cpp">
+      <Filter>rx\texture</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\time\delay.cpp">
+      <Filter>rx\core\time</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\texture\dxt.cpp">
+      <Filter>rx\texture</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\backend\es3.cpp">
+      <Filter>rx\render\backend</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\hud\frame_graph.cpp">
+      <Filter>rx\hud</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\math\frustum.cpp">
+      <Filter>rx\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\backend\gl.cpp">
+      <Filter>rx\render\backend</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\backend\gl3.cpp">
+      <Filter>rx\render\backend</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\global.cpp">
+      <Filter>rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\memory\heap_allocator.cpp">
+      <Filter>rx\core\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\ibl.cpp">
+      <Filter>rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\immediate2D.cpp">
+      <Filter>rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\immediate3D.cpp">
+      <Filter>rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\model\importer.cpp">
+      <Filter>rx\model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\indirect_lighting_pass.cpp">
+      <Filter>rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\material\loader.cpp">
+      <Filter>rx\material</Filter>
+    </ClCompile>
+    <ClCompile Include="src\game\main.cpp">
+      <Filter>game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\hud\memory_stats.cpp">
+      <Filter>rx\hud</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\filesystem\mmap.cpp">
+      <Filter>rx\core\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\model.cpp">
+      <Filter>rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\frontend\module.cpp">
+      <Filter>rx\render\frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\prng\mt19937.cpp">
+      <Filter>rx\core\prng</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\backend\null.cpp">
+      <Filter>rx\render\backend</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\console\parser.cpp">
+      <Filter>rx\console</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\math\noise\perlin.cpp">
+      <Filter>rx\math\noise</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\pool.cpp">
+      <Filter>rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\profiler.cpp">
+      <Filter>rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\time\qpc.cpp">
+      <Filter>rx\core\time</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\remotery.c">
+      <Filter>lib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\hud\render_stats.cpp">
+      <Filter>rx\hud</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\round.cpp">
+      <Filter>rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\memory\single_shot_allocator.cpp">
+      <Filter>rx\core\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\skybox.cpp">
+      <Filter>rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\input\text.cpp">
+      <Filter>rx\input</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\material\texture.cpp">
+      <Filter>rx\material</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\concurrency\wait_group.cpp">
+      <Filter>rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\display.cpp">
+      <Filter>rx</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -335,9 +461,6 @@
     <ClInclude Include="src\rx\core\concurrency\mutex.h">
       <Filter>rx\core\concurrency</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\core\concurrency\promise.h">
-      <Filter>rx\core\concurrency</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\core\concurrency\scope_lock.h">
       <Filter>rx\core\concurrency</Filter>
     </ClInclude>
@@ -363,9 +486,6 @@
       <Filter>rx\core\memory</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\memory\bump_point_allocator.h">
-      <Filter>rx\core\memory</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\memory\pool_allocator.h">
       <Filter>rx\core\memory</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\memory\stats_allocator.h">
@@ -494,18 +614,6 @@
     <ClInclude Include="src\rx\core\utility\forward.h">
       <Filter>rx\core\utility</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\core\utility\index_sequence.h">
-      <Filter>rx\core\utility</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\utility\integer_sequence.h">
-      <Filter>rx\core\utility</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\utility\make_index_sequence.h">
-      <Filter>rx\core\utility</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\utility\make_integer_sequence.h">
-      <Filter>rx\core\utility</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\core\utility\move.h">
       <Filter>rx\core\utility</Filter>
     </ClInclude>
@@ -513,9 +621,6 @@
       <Filter>rx\core\utility</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\utility\swap.h">
-      <Filter>rx\core\utility</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\utility\tuple.h">
       <Filter>rx\core\utility</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\input\event.h">
@@ -534,9 +639,6 @@
       <Filter>rx\math</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\math\constants.h">
-      <Filter>rx\math</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\math\log2.h">
       <Filter>rx\math</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\math\mat3x3.h">
@@ -569,16 +671,10 @@
     <ClInclude Include="src\rx\model\animation.h">
       <Filter>rx\model</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\model\interface.h">
-      <Filter>rx\model</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\model\iqm.h">
       <Filter>rx\model</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\model\loader.h">
-      <Filter>rx\model</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\model\mesh.h">
       <Filter>rx\model</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\abort.h">
@@ -594,9 +690,6 @@
       <Filter>rx\core</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\config.h">
-      <Filter>rx\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\debug.h">
       <Filter>rx\core</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\deferred_function.h">
@@ -626,19 +719,10 @@
     <ClInclude Include="src\rx\core\optional.h">
       <Filter>rx\core</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\core\pp.h">
-      <Filter>rx\core</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\core\queue.h">
       <Filter>rx\core</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\core\statics.h">
-      <Filter>rx\core</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\core\string.h">
-      <Filter>rx\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\type_eraser.h">
       <Filter>rx\core</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\types.h">
@@ -684,9 +768,6 @@
       <Filter>rx\render\frontend</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\render\gbuffer.h">
-      <Filter>rx\render</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\render\immediate.h">
       <Filter>rx\render</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\texture\chain.h">
@@ -741,6 +822,177 @@
       <Filter>rx\core\math</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\concurrency\yield.h">
+      <Filter>rx\core\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\math\aabb.h">
+      <Filter>rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\console\command.h">
+      <Filter>rx\console</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\math\compare.h">
+      <Filter>rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\hud\console.h">
+      <Filter>rx\hud</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\texture\convert.h">
+      <Filter>rx\texture</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\time\delay.h">
+      <Filter>rx\core\time</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\texture\dxt.h">
+      <Filter>rx\texture</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\backend\es3.h">
+      <Filter>rx\render\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\force_eval.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hints\force_inline.h">
+      <Filter>rx\core\hints</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\hud\frame_graph.h">
+      <Filter>rx\hud</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\math\frustum.h">
+      <Filter>rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\concurrency\future.h">
+      <Filter>rx\core\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\game.h">
+      <Filter>rx</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\backend\gl.h">
+      <Filter>rx\render\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\backend\gl3.h">
+      <Filter>rx\render\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\global.h">
+      <Filter>rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\memory\heap_allocator.h">
+      <Filter>rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\ibl.h">
+      <Filter>rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\immediate3D.h">
+      <Filter>rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\immediate2D.h">
+      <Filter>rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\model\importer.h">
+      <Filter>rx\model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\indirect_lighting_pass.h">
+      <Filter>rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hints\likely.h">
+      <Filter>rx\core\hints</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\material\loader.h">
+      <Filter>rx\material</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\hud\memory_stats.h">
+      <Filter>rx\hud</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\filesystem\mmap.h">
+      <Filter>rx\core\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\model.h">
+      <Filter>rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\frontend\module.h">
+      <Filter>rx\render\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\prng\mt19937.h">
+      <Filter>rx\core\prng</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hints\no_inline.h">
+      <Filter>rx\core\hints</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\backend\null.h">
+      <Filter>rx\render\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\console\parser.h">
+      <Filter>rx\console</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\math\plane.h">
+      <Filter>rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\math\noise\perlin.h">
+      <Filter>rx\math\noise</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\pool.h">
+      <Filter>rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\profiler.h">
+      <Filter>rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\time\qpc.h">
+      <Filter>rx\core\time</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\math\rectangle.h">
+      <Filter>rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\remotery.h">
+      <Filter>lib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\hud\render_stats.h">
+      <Filter>rx\hud</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hints\restrict.h">
+      <Filter>rx\core\hints</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\round.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\sign.h">
+      <Filter>rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\set.h">
+      <Filter>rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\memory\single_shot_allocator.h">
+      <Filter>rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\skybox.h">
+      <Filter>rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\filesystem\stream.h">
+      <Filter>rx\core\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game\terrain.h">
+      <Filter>game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\input\text.h">
+      <Filter>rx\input</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\material\texture.h">
+      <Filter>rx\material</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\algorithm\topological_sort.h">
+      <Filter>rx\core\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hints\unlikely.h">
+      <Filter>rx\core\hints</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hints\unreachable.h">
+      <Filter>rx\core\hints</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\display.h">
+      <Filter>rx</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\vector.h">
+      <Filter>rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\concurrency\wait_group.h">
       <Filter>rx\core\concurrency</Filter>
     </ClInclude>
   </ItemGroup>
