@@ -23,17 +23,18 @@ struct find_context {
 };
 #endif
 
-directory::directory(memory::allocator* _allocator, const char* _path)
+directory::directory(memory::allocator* _allocator, string&& path_)
   : m_allocator{_allocator}
+  , m_path{utility::move(path_)}
 {
 #if defined(RX_PLATFORM_POSIX)
-  m_impl = reinterpret_cast<void*>(opendir(_path));
+  m_impl = reinterpret_cast<void*>(opendir(m_path.data()));
 #elif defined(RX_PLATFORM_WINDOWS)
   // WIN32 FindData does not support "rewinding" a directory so |each| must open it each time,
   // the only thing we can cache between reuses of a directory object is the path conversion
   vector<rx_u16>* path_data{m_allocator->create<vector<rx_u16>>(m_allocator)};
 
-  const wide_string path_utf16{string(_path).to_utf16()};
+  const wide_string path_utf16{m_path.to_utf16()};
   static constexpr const wchar_t k_path_extra[] = L"\\*";
 
   path_data->resize(path_utf16.size() + sizeof k_path_extra);
