@@ -462,6 +462,11 @@ int main(int _argc, char** _argv) {
           }
         })};
 
+        auto on_display_resolution_changed{display_resolution->on_change([&](const math::vec2i& _resolution) {
+          g->on_resize(_resolution.cast<rx_size>());
+          SDL_SetWindowSize(window, _resolution.w, _resolution.h);
+        })};
+
         if (!g->on_init()) {
           memory::g_system_allocator->destroy<game>(g);
           abort("game initialization failed");
@@ -510,7 +515,6 @@ int main(int _argc, char** _argv) {
               switch (event.window.event) {
               case SDL_WINDOWEVENT_SIZE_CHANGED:
                 display_resolution->set({event.window.data1, event.window.data2});
-                g->on_resize(display_resolution->get().cast<rx_size>());
                 break;
               case SDL_WINDOWEVENT_MOVED:
                 {

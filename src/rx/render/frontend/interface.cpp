@@ -33,9 +33,9 @@ RX_CONSOLE_V2IVAR(
   max_texture_dimensions,
   "render.max_texture_dimensions",
   "hard limit on the maximum texture dimension for all textures",
-  rx::math::vec2i(128, 128),
+  rx::math::vec2i(4, 4),
   rx::math::vec2i(4096, 4096),
-  rx::math::vec2i(1024, 1024));
+  rx::math::vec2i(2048, 2048));
 
 RX_LOG("render", logger);
 
