@@ -1,7 +1,7 @@
 #ifndef RX_CORE_FILESYSTEM_STREAM_H
 #define RX_CORE_FILESYSTEM_STREAM_H
 
-#include "rx/core/types.h"
+#include "rx/core/optional.h"
 #include "rx/core/concepts/interface.h"
 
 namespace rx::filesystem {
@@ -20,6 +20,11 @@ struct stream
 
   // Flush any buffered contents in the stream out.
   virtual bool flush() = 0;
+
+  // Query the size of the stream. This must return the size regardless what
+  // state the stream is. Streams which do not support querying the size should
+  // return nullopt.
+  virtual optional<rx_u64> size() = 0;
 };
 
 } // namespace rx::filesystem

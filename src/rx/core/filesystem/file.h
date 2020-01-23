@@ -30,8 +30,12 @@ struct file
   // Flush to disk.
   virtual bool flush();
 
-  file& operator=(file&& file_);
+  // Query the size of the file. This works regardless of where in the file
+  // the current file pointer is. If the file does not support querying it's
+  // size, this returns a nullopt.
+  virtual optional<rx_u64> size();
 
+  file& operator=(file&& file_);
 
   bool read_line(string& line_);
   bool close();
@@ -49,11 +53,6 @@ struct file
   // Print a string into the file. This is only valid for text files.
   // NOTE: asserts if the file isn't a text file.
   bool print(string&& contents_);
-
-  // Query the size of the file. This works regardless of where in the file
-  // the current file pointer is. If the file does not support querying it's
-  // size, this returns a nullopt.
-  optional<rx_u64> size();
 
   // Query if the file handle is valid, will be false if the file has been
   // closed with |close| or if the file failed to open.
