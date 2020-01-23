@@ -39,11 +39,13 @@ file::~file() {
   close();
 }
 
-void file::close() {
+bool file::close() {
   if (m_impl) {
     fclose(static_cast<FILE*>(m_impl));
     m_impl = nullptr;
+    return true;
   }
+  return false;
 }
 
 file& file::operator=(file&& file_) {
