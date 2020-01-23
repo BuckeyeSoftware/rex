@@ -4,8 +4,11 @@
 #if defined(RX_PLATFORM_POSIX)
 #include <dirent.h> // DIR, struct dirent, opendir, readdir, rewinddir, closedir
 #elif defined(RX_PLATFORM_WINDOWS)
-#define _WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#define VC_EXTRALEAN
 #include <windows.h> // WIN32_FIND_DATAW, HANDLE, LPCWSTR, INVALID_HANDLE_VALUE, FILE_ATTRIBUTE_DIRECTORY, FindFirstFileW, FindNextFileW, FindClose
+#undef interface
 #else
 #error "missing directory implementation"
 #endif
