@@ -5,7 +5,8 @@
 #include <time.h> // timespec, nanosleep
 #include <errno.h> // errno, EINTR
 #elif defined(RX_PLATFORM_WINDOWS)
-  // TODO(dweiler): implement
+#define _WIN32_LEAN_AND_MEAN
+#include <windows.h> // Sleep
 #else
 #error "missing delay implementation"
 #endif
@@ -26,7 +27,7 @@ void delay(rx_u64 _milliseconds) {
     was_error = nanosleep(&tv, &elapsed);
   } while (was_error && (errno == EINTR));
 #elif defined(RX_PLATFORM_WINDOWS)
-  // TODO(dweiler): implement delay for Windows
+  Sleep(_milliseconds);
 #endif
 }
 

@@ -2,8 +2,10 @@
 #include "rx/core/config.h"
 
 #if defined(RX_PLATFORM_POSIX)
-#include <time.h>
+#include <time.h> // CLOCK_MONOTONIC, struct timespec, clock_gettime
 #elif defined(RX_PLATFORM_WINDOWS)
+#define _WIN32_LEAN_AND_MEAN
+#include <windows.h> // LARGE_INTEGER, QueryPerformance{Counter, Frequency}
 #else
 #error "missing qpc implementation"
 #endif
@@ -22,7 +24,9 @@ rx_u64 qpc_ticks() {
 
   return ticks;
 #elif defined(RX_PLATFORM_WINDOWS)
-  // TODO(dweiler): implement for Windows.
+  LARGE_INTEGER counter;
+  QueryPerformanceCounter(&counter);
+  return counter.QuadPart;
 #endif
   return 0;
 }
@@ -31,7 +35,9 @@ rx_u64 qpc_frequency() {
 #if defined(RX_PLATFORM_POSIX)
   return 1000000000;
 #elif defined(RX_PLATFORM_WINDOWS)
-  // TODO(dweiler): implement for Windows.
+  LARGE_INTEGER frequency;
+  QueryPerformanceFrequency(&frequency);
+  return frequency.QuadPart;
 #endif
 }
 
