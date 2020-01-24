@@ -58,6 +58,8 @@ struct vector {
   bool emplace_back(Ts&&... _args);
 
   rx_size size() const;
+  rx_size capacity() const;
+
   bool is_empty() const;
 
   // enumerate collection either forward or reverse
@@ -380,6 +382,11 @@ inline rx_size vector<T>::size() const {
 }
 
 template<typename T>
+inline rx_size vector<T>::capacity() const {
+  return m_capacity;
+}
+
+template<typename T>
 inline bool vector<T>::is_empty() const {
   return m_size == 0;
 }
@@ -502,7 +509,7 @@ inline memory::allocator* vector<T>::allocator() const {
 
 template<typename T>
 inline memory::view vector<T>::disown() {
-  memory::view view{allocator(), reinterpret_cast<rx_byte*>(data()), size()*sizeof(T)};
+  memory::view view{allocator(), reinterpret_cast<rx_byte*>(data()), capacity()*sizeof(T)};
   m_data = nullptr;
   m_size = 0;
   m_capacity = 0;
