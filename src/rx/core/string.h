@@ -48,6 +48,11 @@ struct string {
   void reserve(rx_size _size);
   void resize(rx_size _size);
 
+  rx_size find(int _ch) const;
+
+  template<typename F>
+  rx_size find_if(F&& _compare) const;
+
   rx_size size() const;
   rx_size capacity() const;
   bool is_empty() const;
@@ -206,6 +211,25 @@ inline string::string(const char* _contents, rx_size _size)
 inline string::string(const char* _first, const char* _last)
   : string{&memory::g_system_allocator, _first, _last}
 {
+}
+
+inline rx_size string::find(int _ch) const {
+  for (rx_size i{0}; i < size(); i++) {
+    if (m_data[i] == _ch) {
+      return i;
+    }
+  }
+  return k_npos;
+}
+
+template<typename F>
+inline rx_size string::find_if(F&& _compare) const {
+  for (rx_size i{0}; i < size(); i++) {
+    if (_compare(m_data[i])) {
+      return i;
+    }
+  }
+  return k_npos;
 }
 
 inline rx_size string::size() const {
