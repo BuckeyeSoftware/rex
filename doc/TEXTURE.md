@@ -92,7 +92,7 @@ The top level schema of a `#NormalGenerate` looks like:
 
 `#NormalKernel` is a `String` that is one of:
   * `"sobel"` Sobel edge detection, calculates the gradient of the image intensity. At each point in the image, the result is either a corresponding gradient vector or the norm of this vector. Produces relatively crude results for high-frequency variations in the image.
-  * `"prewitt"` Prewitt operator, calculates the gradient of the image intensity at each point, giving the direction of the largest possible increase from light to dark and the rat of change in that direction. Faster than `"sobel"` but even more crude for high-frequency variations in the image.
+  * `"prewitt"` Prewitt operator, calculates the gradient of the image intensity at each point, giving the direction of the largest possible increase from light to dark and the rate of change in that direction. Faster than `"sobel"` but even more crude for high-frequency variations in the image.
 
 `#NormalGenerate.strength` is a scalar which describes how strong the normal displacement should behave as, `2.0` is a safe value for most textures. Negative values will invert the result.
 
