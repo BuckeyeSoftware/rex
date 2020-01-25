@@ -20,6 +20,8 @@ namespace rx {
 // 64-bit: 32 bytes
 template<typename T>
 struct vector {
+  static constexpr const rx_size k_npos{-1_z};
+
   constexpr vector(memory::allocator* _allocator);
   vector(memory::allocator* _allocator, rx_size _size, const T& _value = {});
   vector(memory::allocator* _allocator, const vector& _other);
@@ -47,6 +49,11 @@ struct vector {
   bool reserve(rx_size _size);
 
   void clear();
+
+  rx_size find(const T& _value) const;
+
+  template<typename F>
+  rx_size find_if(F&& _compare) const;
 
   // append |data| by copy
   bool push_back(const T& _data);
@@ -334,6 +341,27 @@ inline void vector<T>::clear() {
     }
   }
   m_size = 0;
+}
+
+template<typename T>
+inline rx_size vector<T>::find(const T& _value) const {
+  for (rx_size i{0}; i < m_size; i++) {
+    if (m_data[i] == _value) {
+      return i;
+    }
+  }
+  return k_npos;
+}
+
+template<typename T>
+template<typename F>
+inline rx_size vector<T>::find_if(F&& _compare) const {
+  for (rx_size i{0}; i < m_size; i++) {
+    if (_compare(m_data[i])) {
+      return i;
+    }
+  }
+  return k_npos;
 }
 
 template<typename T>

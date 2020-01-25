@@ -98,8 +98,8 @@ bool texture::parse(const json& _definition) {
     return false;
   }
 
-  if (m_type == "normal") {
-    const auto& generate{_definition["generate"]};
+  const auto& generate{_definition["generate"]};
+  if (generate && m_type == "normal") {
     if (!generate.is_object()) {
       return error("expected Object for 'generate'");
     }

@@ -671,8 +671,8 @@ bool technique::parse_uniform(const json& _uniform) {
   const auto type_string{type.as_string()};
 
   // ensure we don't have multiple definitions of the same uniform
-  if (!m_uniform_definitions.each_fwd([name_string](const uniform_definition& _uniform_definition)
-    { return _uniform_definition.name != name_string; }))
+  if (m_uniform_definitions.find_if([name_string](const uniform_definition& _uniform_definition)
+    { return _uniform_definition.name == name_string; }) != -1_z)
   {
     return error("duplicate uniform '%s'", name_string);
   }
