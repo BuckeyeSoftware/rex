@@ -19,7 +19,7 @@ namespace rx::material {
 RX_LOG("material/texture", logger);
 
 bool texture::load(const string& _file_name) {
-  auto contents{filesystem::read_binary_file(m_allocator, _file_name)};
+  auto contents{filesystem::read_text_file(m_allocator, _file_name)};
   if (!contents) {
     return false;
   }

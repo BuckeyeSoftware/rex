@@ -151,9 +151,9 @@ inline vector<T>::vector(memory::allocator* _allocator, const vector& _other)
 template<typename T>
 inline vector<T>::vector(memory::view _view)
   : m_allocator{_view.owner}
+  , m_data{reinterpret_cast<T*>(_view.data)}
   , m_size{_view.size}
   , m_capacity{m_size}
-  , m_data{reinterpret_cast<T*>(_view.data)}
 {
   RX_ASSERT(m_allocator, "null allocator");
 }

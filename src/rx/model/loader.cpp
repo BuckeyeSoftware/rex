@@ -17,7 +17,7 @@ namespace rx::model {
 RX_LOG("model/loader", logger);
 
 bool loader::load(const string& _file_name) {
-  auto contents{filesystem::read_binary_file(m_allocator, _file_name)};
+  auto contents{filesystem::read_text_file(m_allocator, _file_name)};
   if (!contents) {
     return false;
   }

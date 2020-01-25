@@ -530,7 +530,7 @@ program* technique::variant(rx_size _index) const {
 }
 
 bool technique::load(const string& _file_name) {
-  auto data{filesystem::read_binary_file(_file_name)};
+  auto data{filesystem::read_text_file(_file_name)};
   if (!data) {
     return false;
   }
