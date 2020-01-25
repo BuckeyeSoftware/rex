@@ -57,6 +57,7 @@ struct file
   // Query if the file handle is valid, will be false if the file has been
   // closed with |close| or if the file failed to open.
   bool is_valid() const;
+
   operator bool() const;
 
 private:
