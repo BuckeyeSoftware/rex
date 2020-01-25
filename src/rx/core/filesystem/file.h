@@ -96,6 +96,19 @@ inline bool file::print(const char* _format, Ts&&... _arguments) {
 }
 
 optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const char* _file_name);
+
+// This function is like |read_binary_file| except it handles all the annoying
+// encoding issues that plauge typical text files, in particular it offers
+// the following features:
+//
+// * Adds an additional zero-byte to the result so it can be used anywhere a
+//   null-terminated string is needed.
+// * Converts Unicode text files (UTF16 LE or UTF16 BE) to UTF-8 for you.
+// * Strips Unicode byte order marks.
+// * Converts all line endings to LF.
+//
+// The result is always a normalized, ready to be used UTF-8 byte stream which
+// can be given anywhere UTF-8 is required.
 optional<vector<rx_byte>> read_text_file(memory::allocator* _allocator, const char* _file_name);
 
 inline optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const string& _file_name) {
