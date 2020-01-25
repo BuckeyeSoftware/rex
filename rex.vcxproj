@@ -77,12 +77,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -97,7 +97,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>Full</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ConformanceMode>true</ConformanceMode>
@@ -105,7 +105,7 @@
       <DebugInformationFormat>None</DebugInformationFormat>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
-      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <ExceptionHandling>false</ExceptionHandling>
@@ -126,7 +126,6 @@
       <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <AdditionalOptions>/MP32 %(AdditionalOptions)</AdditionalOptions>
       <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
@@ -146,7 +145,7 @@
       <OpenMPSupport>false</OpenMPSupport>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
-      <Optimization>MinSpace</Optimization>
+      <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;RX_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
       <CompileAsManaged>false</CompileAsManaged>
@@ -173,10 +172,14 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\game\main.cpp" />
     <ClCompile Include="src\lib\json.c" />
+    <ClCompile Include="src\lib\remotery.c" />
     <ClCompile Include="src\lib\stb_image.c" />
     <ClCompile Include="src\lib\stb_truetype.cpp" />
+    <ClCompile Include="src\rx\console\command.cpp" />
     <ClCompile Include="src\rx\console\interface.cpp" />
+    <ClCompile Include="src\rx\console\parser.cpp" />
     <ClCompile Include="src\rx\console\variable.cpp" />
     <ClCompile Include="src\rx\core\abort.cpp" />
     <ClCompile Include="src\rx\core\assert.cpp" />
@@ -186,11 +189,13 @@
     <ClCompile Include="src\rx\core\concurrency\spin_lock.cpp" />
     <ClCompile Include="src\rx\core\concurrency\thread.cpp" />
     <ClCompile Include="src\rx\core\concurrency\thread_pool.cpp" />
+    <ClCompile Include="src\rx\core\concurrency\wait_group.cpp" />
     <ClCompile Include="src\rx\core\concurrency\yield.cpp" />
     <ClCompile Include="src\rx\core\cpprt.cpp" />
-    <ClCompile Include="src\rx\core\debug.cpp" />
     <ClCompile Include="src\rx\core\filesystem\directory.cpp" />
     <ClCompile Include="src\rx\core\filesystem\file.cpp" />
+    <ClCompile Include="src\rx\core\filesystem\mmap.cpp" />
+    <ClCompile Include="src\rx\core\global.cpp" />
     <ClCompile Include="src\rx\core\json.cpp" />
     <ClCompile Include="src\rx\core\log.cpp" />
     <ClCompile Include="src\rx\core\math\abs.cpp" />
@@ -200,35 +205,57 @@
     <ClCompile Include="src\rx\core\math\half.cpp" />
     <ClCompile Include="src\rx\core\math\mod.cpp" />
     <ClCompile Include="src\rx\core\math\pow.cpp" />
+    <ClCompile Include="src\rx\core\math\round.cpp" />
     <ClCompile Include="src\rx\core\math\sin.cpp" />
     <ClCompile Include="src\rx\core\math\sqrt.cpp" />
     <ClCompile Include="src\rx\core\math\tan.cpp" />
     <ClCompile Include="src\rx\core\memory\bump_point_allocator.cpp" />
-    <ClCompile Include="src\rx\core\memory\pool_allocator.cpp" />
+    <ClCompile Include="src\rx\core\memory\heap_allocator.cpp" />
+    <ClCompile Include="src\rx\core\memory\single_shot_allocator.cpp" />
     <ClCompile Include="src\rx\core\memory\stats_allocator.cpp" />
     <ClCompile Include="src\rx\core\memory\system_allocator.cpp" />
-    <ClCompile Include="src\rx\core\statics.cpp" />
+    <ClCompile Include="src\rx\core\pool.cpp" />
+    <ClCompile Include="src\rx\core\prng\mt19937.cpp" />
+    <ClCompile Include="src\rx\core\profiler.cpp" />
     <ClCompile Include="src\rx\core\string.cpp" />
+    <ClCompile Include="src\rx\core\time\delay.cpp" />
+    <ClCompile Include="src\rx\core\time\qpc.cpp" />
+    <ClCompile Include="src\rx\display.cpp" />
+    <ClCompile Include="src\rx\hud\console.cpp" />
+    <ClCompile Include="src\rx\hud\frame_graph.cpp" />
+    <ClCompile Include="src\rx\hud\memory_stats.cpp" />
+    <ClCompile Include="src\rx\hud\render_stats.cpp" />
     <ClCompile Include="src\rx\input\controller.cpp" />
     <ClCompile Include="src\rx\input\input.cpp" />
     <ClCompile Include="src\rx\input\keyboard.cpp" />
     <ClCompile Include="src\rx\input\mouse.cpp" />
+    <ClCompile Include="src\rx\input\text.cpp" />
     <ClCompile Include="src\rx\main.cpp" />
+    <ClCompile Include="src\rx\material\loader.cpp" />
+    <ClCompile Include="src\rx\material\texture.cpp" />
+    <ClCompile Include="src\rx\math\aabb.cpp" />
+    <ClCompile Include="src\rx\math\frustum.cpp" />
     <ClCompile Include="src\rx\math\mat3x3.cpp" />
     <ClCompile Include="src\rx\math\mat3x4.cpp" />
+    <ClCompile Include="src\rx\math\noise\perlin.cpp" />
     <ClCompile Include="src\rx\math\quat.cpp" />
     <ClCompile Include="src\rx\math\vec2.cpp" />
     <ClCompile Include="src\rx\math\vec3.cpp" />
     <ClCompile Include="src\rx\math\vec4.cpp" />
     <ClCompile Include="src\rx\model\animation.cpp" />
-    <ClCompile Include="src\rx\model\interface.cpp" />
+    <ClCompile Include="src\rx\model\importer.cpp" />
     <ClCompile Include="src\rx\model\iqm.cpp" />
     <ClCompile Include="src\rx\model\loader.cpp" />
+    <ClCompile Include="src\rx\render\backend\es3.cpp" />
+    <ClCompile Include="src\rx\render\backend\gl.cpp" />
+    <ClCompile Include="src\rx\render\backend\gl3.cpp" />
     <ClCompile Include="src\rx\render\backend\gl4.cpp" />
+    <ClCompile Include="src\rx\render\backend\null.cpp" />
     <ClCompile Include="src\rx\render\frontend\buffer.cpp" />
     <ClCompile Include="src\rx\render\frontend\command.cpp" />
     <ClCompile Include="src\rx\render\frontend\interface.cpp" />
     <ClCompile Include="src\rx\render\frontend\material.cpp" />
+    <ClCompile Include="src\rx\render\frontend\module.cpp" />
     <ClCompile Include="src\rx\render\frontend\program.cpp" />
     <ClCompile Include="src\rx\render\frontend\resource.cpp" />
     <ClCompile Include="src\rx\render\frontend\state.cpp" />
@@ -237,16 +264,27 @@
     <ClCompile Include="src\rx\render\frontend\texture.cpp" />
     <ClCompile Include="src\rx\render\frontend\timer.cpp" />
     <ClCompile Include="src\rx\render\gbuffer.cpp" />
-    <ClCompile Include="src\rx\render\immediate.cpp" />
+    <ClCompile Include="src\rx\render\ibl.cpp" />
+    <ClCompile Include="src\rx\render\immediate2D.cpp" />
+    <ClCompile Include="src\rx\render\immediate3D.cpp" />
+    <ClCompile Include="src\rx\render\indirect_lighting_pass.cpp" />
+    <ClCompile Include="src\rx\render\model.cpp" />
+    <ClCompile Include="src\rx\render\skybox.cpp" />
     <ClCompile Include="src\rx\texture\chain.cpp" />
+    <ClCompile Include="src\rx\texture\convert.cpp" />
+    <ClCompile Include="src\rx\texture\dxt.cpp" />
     <ClCompile Include="src\rx\texture\loader.cpp" />
     <ClCompile Include="src\rx\texture\scale.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\game\terrain.h" />
     <ClInclude Include="src\lib\json.h" />
+    <ClInclude Include="src\lib\remotery.h" />
     <ClInclude Include="src\lib\stb_image.h" />
     <ClInclude Include="src\lib\stb_truetype.h" />
+    <ClInclude Include="src\rx\console\command.h" />
     <ClInclude Include="src\rx\console\interface.h" />
+    <ClInclude Include="src\rx\console\parser.h" />
     <ClInclude Include="src\rx\console\variable.h" />
     <ClInclude Include="src\rx\core\abort.h" />
     <ClInclude Include="src\rx\core\algorithm\clamp.h" />
@@ -254,6 +292,7 @@
     <ClInclude Include="src\rx\core\algorithm\max.h" />
     <ClInclude Include="src\rx\core\algorithm\min.h" />
     <ClInclude Include="src\rx\core\algorithm\quick_sort.h" />
+    <ClInclude Include="src\rx\core\algorithm\topological_sort.h" />
     <ClInclude Include="src\rx\core\array.h" />
     <ClInclude Include="src\rx\core\assert.h" />
     <ClInclude Include="src\rx\core\bitset.h" />
@@ -263,25 +302,34 @@
     <ClInclude Include="src\rx\core\concurrency\atomic.h" />
     <ClInclude Include="src\rx\core\concurrency\clang\atomic.h" />
     <ClInclude Include="src\rx\core\concurrency\condition_variable.h" />
+    <ClInclude Include="src\rx\core\concurrency\future.h" />
     <ClInclude Include="src\rx\core\concurrency\gcc\atomic.h" />
     <ClInclude Include="src\rx\core\concurrency\msvc\atomic.h" />
     <ClInclude Include="src\rx\core\concurrency\mutex.h" />
-    <ClInclude Include="src\rx\core\concurrency\promise.h" />
     <ClInclude Include="src\rx\core\concurrency\scope_lock.h" />
     <ClInclude Include="src\rx\core\concurrency\scope_unlock.h" />
     <ClInclude Include="src\rx\core\concurrency\spin_lock.h" />
     <ClInclude Include="src\rx\core\concurrency\thread.h" />
     <ClInclude Include="src\rx\core\concurrency\thread_pool.h" />
+    <ClInclude Include="src\rx\core\concurrency\wait_group.h" />
     <ClInclude Include="src\rx\core\concurrency\yield.h" />
     <ClInclude Include="src\rx\core\config.h" />
-    <ClInclude Include="src\rx\core\debug.h" />
     <ClInclude Include="src\rx\core\deferred_function.h" />
     <ClInclude Include="src\rx\core\event.h" />
     <ClInclude Include="src\rx\core\filesystem\directory.h" />
     <ClInclude Include="src\rx\core\filesystem\file.h" />
+    <ClInclude Include="src\rx\core\filesystem\mmap.h" />
+    <ClInclude Include="src\rx\core\filesystem\stream.h" />
     <ClInclude Include="src\rx\core\format.h" />
     <ClInclude Include="src\rx\core\function.h" />
+    <ClInclude Include="src\rx\core\global.h" />
     <ClInclude Include="src\rx\core\hash.h" />
+    <ClInclude Include="src\rx\core\hints\force_inline.h" />
+    <ClInclude Include="src\rx\core\hints\likely.h" />
+    <ClInclude Include="src\rx\core\hints\no_inline.h" />
+    <ClInclude Include="src\rx\core\hints\restrict.h" />
+    <ClInclude Include="src\rx\core\hints\unlikely.h" />
+    <ClInclude Include="src\rx\core\hints\unreachable.h" />
     <ClInclude Include="src\rx\core\json.h" />
     <ClInclude Include="src\rx\core\log.h" />
     <ClInclude Include="src\rx\core\map.h" />
@@ -289,26 +337,34 @@
     <ClInclude Include="src\rx\core\math\ceil.h" />
     <ClInclude Include="src\rx\core\math\cos.h" />
     <ClInclude Include="src\rx\core\math\floor.h" />
+    <ClInclude Include="src\rx\core\math\force_eval.h" />
     <ClInclude Include="src\rx\core\math\half.h" />
     <ClInclude Include="src\rx\core\math\isnan.h" />
     <ClInclude Include="src\rx\core\math\log2.h" />
     <ClInclude Include="src\rx\core\math\mod.h" />
     <ClInclude Include="src\rx\core\math\pow.h" />
+    <ClInclude Include="src\rx\core\math\round.h" />
     <ClInclude Include="src\rx\core\math\shape.h" />
+    <ClInclude Include="src\rx\core\math\sign.h" />
     <ClInclude Include="src\rx\core\math\sin.h" />
     <ClInclude Include="src\rx\core\math\sqrt.h" />
     <ClInclude Include="src\rx\core\math\tan.h" />
     <ClInclude Include="src\rx\core\memory\allocator.h" />
     <ClInclude Include="src\rx\core\memory\bump_point_allocator.h" />
-    <ClInclude Include="src\rx\core\memory\pool_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\heap_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\single_shot_allocator.h" />
     <ClInclude Include="src\rx\core\memory\stats_allocator.h" />
     <ClInclude Include="src\rx\core\memory\system_allocator.h" />
     <ClInclude Include="src\rx\core\memory\uninitialized_storage.h" />
     <ClInclude Include="src\rx\core\optional.h" />
-    <ClInclude Include="src\rx\core\pp.h" />
+    <ClInclude Include="src\rx\core\pool.h" />
+    <ClInclude Include="src\rx\core\prng\mt19937.h" />
+    <ClInclude Include="src\rx\core\profiler.h" />
     <ClInclude Include="src\rx\core\queue.h" />
-    <ClInclude Include="src\rx\core\statics.h" />
+    <ClInclude Include="src\rx\core\set.h" />
     <ClInclude Include="src\rx\core\string.h" />
+    <ClInclude Include="src\rx\core\time\delay.h" />
+    <ClInclude Include="src\rx\core\time\qpc.h" />
     <ClInclude Include="src\rx\core\traits\add_const.h" />
     <ClInclude Include="src\rx\core\traits\add_cv.h" />
     <ClInclude Include="src\rx\core\traits\add_lvalue_reference.h" />
@@ -344,48 +400,61 @@
     <ClInclude Include="src\rx\core\traits\return_type.h" />
     <ClInclude Include="src\rx\core\traits\type_identity.h" />
     <ClInclude Include="src\rx\core\types.h" />
-    <ClInclude Include="src\rx\core\type_eraser.h" />
     <ClInclude Include="src\rx\core\utility\bit.h" />
     <ClInclude Include="src\rx\core\utility\construct.h" />
     <ClInclude Include="src\rx\core\utility\declval.h" />
     <ClInclude Include="src\rx\core\utility\destruct.h" />
     <ClInclude Include="src\rx\core\utility\forward.h" />
-    <ClInclude Include="src\rx\core\utility\index_sequence.h" />
-    <ClInclude Include="src\rx\core\utility\integer_sequence.h" />
-    <ClInclude Include="src\rx\core\utility\make_index_sequence.h" />
-    <ClInclude Include="src\rx\core\utility\make_integer_sequence.h" />
     <ClInclude Include="src\rx\core\utility\move.h" />
     <ClInclude Include="src\rx\core\utility\nat.h" />
     <ClInclude Include="src\rx\core\utility\swap.h" />
-    <ClInclude Include="src\rx\core\utility\tuple.h" />
+    <ClInclude Include="src\rx\core\vector.h" />
+    <ClInclude Include="src\rx\display.h" />
+    <ClInclude Include="src\rx\game.h" />
+    <ClInclude Include="src\rx\hud\console.h" />
+    <ClInclude Include="src\rx\hud\frame_graph.h" />
+    <ClInclude Include="src\rx\hud\memory_stats.h" />
+    <ClInclude Include="src\rx\hud\render_stats.h" />
     <ClInclude Include="src\rx\input\controller.h" />
     <ClInclude Include="src\rx\input\event.h" />
     <ClInclude Include="src\rx\input\input.h" />
     <ClInclude Include="src\rx\input\keyboard.h" />
     <ClInclude Include="src\rx\input\mouse.h" />
+    <ClInclude Include="src\rx\input\text.h" />
+    <ClInclude Include="src\rx\material\loader.h" />
+    <ClInclude Include="src\rx\material\texture.h" />
+    <ClInclude Include="src\rx\math\aabb.h" />
     <ClInclude Include="src\rx\math\camera.h" />
+    <ClInclude Include="src\rx\math\compare.h" />
     <ClInclude Include="src\rx\math\constants.h" />
-    <ClInclude Include="src\rx\math\log2.h" />
+    <ClInclude Include="src\rx\math\frustum.h" />
     <ClInclude Include="src\rx\math\mat3x3.h" />
     <ClInclude Include="src\rx\math\mat3x4.h" />
     <ClInclude Include="src\rx\math\mat4x4.h" />
+    <ClInclude Include="src\rx\math\noise\perlin.h" />
+    <ClInclude Include="src\rx\math\plane.h" />
     <ClInclude Include="src\rx\math\quat.h" />
+    <ClInclude Include="src\rx\math\rectangle.h" />
     <ClInclude Include="src\rx\math\transform.h" />
     <ClInclude Include="src\rx\math\trig.h" />
     <ClInclude Include="src\rx\math\vec2.h" />
     <ClInclude Include="src\rx\math\vec3.h" />
     <ClInclude Include="src\rx\math\vec4.h" />
     <ClInclude Include="src\rx\model\animation.h" />
-    <ClInclude Include="src\rx\model\interface.h" />
+    <ClInclude Include="src\rx\model\importer.h" />
     <ClInclude Include="src\rx\model\iqm.h" />
     <ClInclude Include="src\rx\model\loader.h" />
-    <ClInclude Include="src\rx\model\mesh.h" />
+    <ClInclude Include="src\rx\render\backend\es3.h" />
+    <ClInclude Include="src\rx\render\backend\gl.h" />
+    <ClInclude Include="src\rx\render\backend\gl3.h" />
     <ClInclude Include="src\rx\render\backend\gl4.h" />
     <ClInclude Include="src\rx\render\backend\interface.h" />
+    <ClInclude Include="src\rx\render\backend\null.h" />
     <ClInclude Include="src\rx\render\frontend\buffer.h" />
     <ClInclude Include="src\rx\render\frontend\command.h" />
     <ClInclude Include="src\rx\render\frontend\interface.h" />
     <ClInclude Include="src\rx\render\frontend\material.h" />
+    <ClInclude Include="src\rx\render\frontend\module.h" />
     <ClInclude Include="src\rx\render\frontend\program.h" />
     <ClInclude Include="src\rx\render\frontend\resource.h" />
     <ClInclude Include="src\rx\render\frontend\state.h" />
@@ -394,21 +463,30 @@
     <ClInclude Include="src\rx\render\frontend\texture.h" />
     <ClInclude Include="src\rx\render\frontend\timer.h" />
     <ClInclude Include="src\rx\render\gbuffer.h" />
-    <ClInclude Include="src\rx\render\immediate.h" />
+    <ClInclude Include="src\rx\render\ibl.h" />
+    <ClInclude Include="src\rx\render\immediate2D.h" />
+    <ClInclude Include="src\rx\render\immediate3D.h" />
+    <ClInclude Include="src\rx\render\indirect_lighting_pass.h" />
+    <ClInclude Include="src\rx\render\model.h" />
+    <ClInclude Include="src\rx\render\skybox.h" />
     <ClInclude Include="src\rx\texture\chain.h" />
+    <ClInclude Include="src\rx\texture\convert.h" />
+    <ClInclude Include="src\rx\texture\dxt.h" />
     <ClInclude Include="src\rx\texture\loader.h" />
     <ClInclude Include="src\rx\texture\scale.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="packages\sdl2.nuget.2.0.9\build\native\sdl2.nuget.targets" Condition="Exists('packages\sdl2.nuget.2.0.9\build\native\sdl2.nuget.targets')" />
     <Import Project="packages\sdl2.redist.2.0.5\build\native\sdl2.redist.targets" Condition="Exists('packages\sdl2.redist.2.0.5\build\native\sdl2.redist.targets')" />
+    <Import Project="packages\sdl2.nuget.redist.2.0.10\build\native\sdl2.nuget.redist.targets" Condition="Exists('packages\sdl2.nuget.redist.2.0.10\build\native\sdl2.nuget.redist.targets')" />
+    <Import Project="packages\sdl2.nuget.2.0.10\build\native\sdl2.nuget.targets" Condition="Exists('packages\sdl2.nuget.2.0.10\build\native\sdl2.nuget.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('packages\sdl2.nuget.2.0.9\build\native\sdl2.nuget.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\sdl2.nuget.2.0.9\build\native\sdl2.nuget.targets'))" />
     <Error Condition="!Exists('packages\sdl2.redist.2.0.5\build\native\sdl2.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\sdl2.redist.2.0.5\build\native\sdl2.redist.targets'))" />
+    <Error Condition="!Exists('packages\sdl2.nuget.redist.2.0.10\build\native\sdl2.nuget.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\sdl2.nuget.redist.2.0.10\build\native\sdl2.nuget.redist.targets'))" />
+    <Error Condition="!Exists('packages\sdl2.nuget.2.0.10\build\native\sdl2.nuget.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\sdl2.nuget.2.0.10\build\native\sdl2.nuget.targets'))" />
   </Target>
 </Project>
