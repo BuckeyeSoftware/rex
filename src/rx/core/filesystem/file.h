@@ -104,7 +104,7 @@ optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const 
 // * Adds an additional zero-byte to the result so it can be used anywhere a
 //   null-terminated string is needed.
 // * Converts Unicode text files (UTF16 LE or UTF16 BE) to UTF-8 for you.
-// * Strips Unicode byte order marks.
+// * Strips Unicode byte order marks, including UTF-8 BOM.
 // * Converts all line endings to LF.
 //
 // The result is always a normalized, ready to be used UTF-8 byte stream which
