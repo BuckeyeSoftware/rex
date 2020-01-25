@@ -7,10 +7,16 @@ namespace rx::image {
 
 struct matrix
 {
+  matrix(memory::allocator* _allocator);
+  matrix();
+
   matrix(memory::allocator* _allocator, const math::vec2z& _dimensions, rx_size _channels);
   matrix(const math::vec2z& _dimensions, rx_size _channels);
+
   matrix(matrix&& matrix_);
   matrix(const matrix& _matrix);
+
+  bool resize(const math::vec2z& _dimensions, rx_size _channels);
 
   matrix& operator=(matrix&& matrix_);
   matrix& operator=(const matrix& _matrix);
@@ -37,13 +43,23 @@ private:
   rx_size m_channels;
 };
 
+inline matrix::matrix(memory::allocator* _allocator)
+  : m_allocator{_allocator}
+  , m_data{m_allocator}
+  , m_channels{0}
+{
+}
+
+inline matrix::matrix()
+  : matrix{&memory::g_system_allocator}
+{
+}
+
 inline matrix::matrix(memory::allocator* _allocator, const math::vec2z& _dimensions, rx_size _channels)
   : m_allocator{_allocator}
   , m_data{m_allocator}
-  , m_dimensions{_dimensions}
-  , m_channels{_channels}
 {
-  m_data.resize(m_dimensions.area() * m_channels);
+  resize(_dimensions, _channels);
 }
 
 inline matrix::matrix(const math::vec2z& _dimensions, rx_size _channels)
@@ -68,6 +84,12 @@ inline matrix::matrix(const matrix& _matrix)
   , m_dimensions{_matrix.m_dimensions}
   , m_channels{_matrix.m_channels}
 {
+}
+
+inline bool matrix::resize(const math::vec2z& _dimensions, rx_size _channels) {
+  m_dimensions = _dimensions;
+  m_channels = _channels;
+  return m_data.resize(m_dimensions.area() * m_channels);
 }
 
 inline matrix& matrix::operator=(matrix&& matrix_) {

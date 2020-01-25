@@ -15,6 +15,7 @@ The top level schema of a texture looks like:
   wrap:       required Array[#TextureWrap]
   mipmaps:    optional Boolean
   border:     optional Array[@Float, 4]
+  generate:   optional #NormalGenerate
 }
 ```
 
@@ -71,3 +72,31 @@ There is no filter combination that produces a minification of `nearest_mipmap_l
 * `"mirror_clamp_to_edge"` causes the coordinate to be repeated for `"mirrored_repeat"` for one repretition of the texture, at which point the coordinate to be clamped as in `"clamp_to_edge"`.
 
 Use of `#Texture.border` is invalid unless one of the axis specified by `#Texture.wrap` is `"clamp_to_border"`.
+
+Use of `#Texture.generate` is invalid unless `#Texture.type` is `"normal"`. When using generate, you may specify the automatic generation of normal maps.
+
+The top level schema of a `#NormalGenerate` looks like:
+```
+{
+  mode:       required #NormalMode
+  kernel:     required #NormalKernel
+  multiplier: required Array[Number, 3]
+  strength:   required Number
+  flags:      required Array[#NormalFlag]
+}
+```
+
+`#NormalMode` is a `String` that is one of:
+  * `"max"` Take the maximum component of the pixel.
+  * `"average"` Take the average component of the pixel, this is more accurate for luminance but fails when a given image contains too much baked lighting.
+
+`#NormalKernel` is a `String` that is one of:
+  * `"sobel"` Sobel edge detection, calculates the gradient of the image intensity. At each point in the image, the result is either a corresponding gradient vector or the norm of this vector. Produces relatively crude results for high-frequency variations in the image.
+  * `"prewitt"` Prewitt operator, calculates the gradient of the image intensity at each point, giving the direction of the largest possible increase from light to dark and the rat of change in that direction. Faster than `"sobel"` but even more crude for high-frequency variations in the image.
+
+`#NormalGenerate.strength` is a scalar which describes how strong the normal displacement should behave as, `2.0` is a safe value for most textures. Negative values will invert the result.
+
+`#NormalGenerate.flags` is an array of `#NormalFlag`.
+  * `"invert"` Inverts the given direction of displacement.
+  * `"tile"` If the normal map must be tiled, this should be given.
+  * `"detail"` Try to preserve large detail in the normal map.
