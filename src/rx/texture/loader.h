@@ -32,6 +32,8 @@ struct loader {
   vector<rx_byte>&& data();
   pixel_format format() const;
 
+  memory::allocator* allocator() const;
+
 private:
   memory::allocator* m_allocator;
   vector<rx_byte> m_data;
@@ -80,6 +82,10 @@ inline pixel_format loader::format() const {
     return pixel_format::k_r_u8;
   }
   RX_HINT_UNREACHABLE();
+}
+
+inline memory::allocator* loader::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx::texture
