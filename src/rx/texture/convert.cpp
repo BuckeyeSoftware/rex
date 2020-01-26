@@ -4,6 +4,7 @@
 #include "rx/core/hints/no_inline.h"
 #include "rx/core/hints/force_inline.h"
 #include "rx/core/hints/restrict.h"
+#include "rx/core/hints/assume_aligned.h"
 
 namespace rx::texture {
 
@@ -14,7 +15,10 @@ namespace rx::texture {
 static RX_HINT_NO_INLINE void r_to_rgba(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
-  for (rx_size i{0}; i < _samples; i++, dst_ += 4, _src += 1) {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
+  for (rx_size i{0}; i < _samples; i++, _src += 1, dst_ += 4) {
     const rx_byte r{_src[0]};
     dst_[0] = r;
     dst_[1] = r;
@@ -26,6 +30,9 @@ static RX_HINT_NO_INLINE void r_to_rgba(rx_byte *RX_HINT_RESTRICT dst_,
 static RX_HINT_NO_INLINE void r_to_rgb(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
   for (rx_size i{0}; i < _samples; i++, dst_ += 3, _src += 1) {
     dst_[0] = _src[0];
     dst_[1] = _src[0];
@@ -43,6 +50,9 @@ static const constexpr auto r_to_bgr{r_to_rgb};
 static RX_HINT_NO_INLINE void rgb_to_r(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
   for (rx_size i{0}; i < _samples; i++, dst_ += 1, _src += 3) {
     dst_[0] = _src[0];
   }
@@ -51,6 +61,9 @@ static RX_HINT_NO_INLINE void rgb_to_r(rx_byte *RX_HINT_RESTRICT dst_,
 static RX_HINT_NO_INLINE void rgb_to_bgr(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
   for (rx_size i{0}; i < _samples; i++, dst_ += 3, _src += 3) {
     dst_[0] = _src[2];
     dst_[1] = _src[1];
@@ -61,6 +74,9 @@ static RX_HINT_NO_INLINE void rgb_to_bgr(rx_byte *RX_HINT_RESTRICT dst_,
 static RX_HINT_NO_INLINE void rgb_to_bgra(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
   for (rx_size i{0}; i < _samples; i++, dst_ += 4, _src += 3) {
     dst_[0] = _src[2];
     dst_[1] = _src[1];
@@ -72,6 +88,9 @@ static RX_HINT_NO_INLINE void rgb_to_bgra(rx_byte *RX_HINT_RESTRICT dst_,
 static RX_HINT_NO_INLINE void rgb_to_rgba(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
   for (rx_size i{0}; i < _samples; i++, dst_ += 4, _src += 3) {
     dst_[0] = _src[0];
     dst_[1] = _src[1];
@@ -87,6 +106,9 @@ static RX_HINT_NO_INLINE void rgb_to_rgba(rx_byte *RX_HINT_RESTRICT dst_,
 static RX_HINT_NO_INLINE void bgr_to_r(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
   for (rx_size i{0}; i < _samples; i++, dst_ += 1, _src += 3) {
     dst_[0] = _src[2];
   }
@@ -103,6 +125,9 @@ static const constexpr auto bgr_to_bgra{rgb_to_rgba};
 static RX_HINT_NO_INLINE void rgba_to_r(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
   for (rx_size i{0}; i < _samples; i++, dst_ += 1, _src += 4) {
     dst_[0] = _src[0];
   }
@@ -111,6 +136,9 @@ static RX_HINT_NO_INLINE void rgba_to_r(rx_byte *RX_HINT_RESTRICT dst_,
 static RX_HINT_NO_INLINE void rgba_to_rgb(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
   for (rx_size i{0}; i < _samples; i++, dst_ += 3, _src += 4) {
     dst_[0] = _src[0];
     dst_[1] = _src[1];
@@ -121,6 +149,9 @@ static RX_HINT_NO_INLINE void rgba_to_rgb(rx_byte *RX_HINT_RESTRICT dst_,
 static RX_HINT_NO_INLINE void rgba_to_bgr(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
   for (rx_size i{0}; i < _samples; i++, dst_ += 3, _src += 4) {
     dst_[0] = _src[2];
     dst_[1] = _src[1];
@@ -131,6 +162,9 @@ static RX_HINT_NO_INLINE void rgba_to_bgr(rx_byte *RX_HINT_RESTRICT dst_,
 static RX_HINT_NO_INLINE void rgba_to_bgra(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
   for (rx_size i{0}; i < _samples; i++, dst_ += 4, _src += 4) {
     dst_[0] = _src[2];
     dst_[1] = _src[1];
@@ -146,6 +180,9 @@ static RX_HINT_NO_INLINE void rgba_to_bgra(rx_byte *RX_HINT_RESTRICT dst_,
 static RX_HINT_NO_INLINE void bgra_to_r(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
   for (rx_size i{0}; i < _samples; i++, dst_ += 1, _src += 4) {
     dst_[0] = _src[2];
   }
@@ -154,6 +191,9 @@ static RX_HINT_NO_INLINE void bgra_to_r(rx_byte *RX_HINT_RESTRICT dst_,
 static RX_HINT_NO_INLINE void bgra_to_rgb(rx_byte *RX_HINT_RESTRICT dst_,
   const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
 {
+  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+
   for (rx_size i{0}; i < _samples; i++, dst_ += 3, _src += 4) {
     dst_[0] = _src[2];
     dst_[1] = _src[1];
@@ -183,6 +223,8 @@ static RX_HINT_FORCE_INLINE rx_size bpp_for_pixel_format(pixel_format _format) {
 vector<rx_byte> convert(memory::allocator* _allocator, const rx_byte* _data,
   rx_size _samples, pixel_format _in_format, pixel_format _out_format)
 {
+  RX_HINT_ASSUME_ALIGNED(_data, memory::allocator::k_alignment);
+
   vector<rx_byte> result{_allocator, _samples * bpp_for_pixel_format(_out_format)};
   const rx_byte *RX_HINT_RESTRICT src{_data};
   rx_byte *RX_HINT_RESTRICT dst{result.data()};
