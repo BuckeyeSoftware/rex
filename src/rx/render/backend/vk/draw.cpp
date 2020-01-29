@@ -2,6 +2,7 @@
 
 #include "context.h"
 
+#include "sync.h"
 #include "data_builder.h"
 
 namespace rx::render::backend {
@@ -20,40 +21,47 @@ detail_vk::texture* get_tex (detail_vk::context& ctx_, const frontend::target::a
 }
 
 
+detail_vk::frame_render::frame_render(context& ctx_) : renderpasses(ctx_.allocator) {
+  
+}
+
+
 void detail_vk::frame_render::pre_clear(detail_vk::context& ctx_, const frontend::clear_command* clear) {
   
+  /*
   clear->render_target->attachments().each_fwd([&](frontend::target::attachment& attachment) {
     auto tex = get_tex(ctx_, attachment);
     tex->add_use(ctx_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, ctx_.graphics_index, true);
   });
-  
-}
-
-void detail_vk::frame_render::clear(detail_vk::context& ctx_, const frontend::clear_command* clear) {
-  
-#if defined(RX_DEBUG)
-  vk_log(log::level::k_verbose, "clear %s", ctx_.current_command->tag.description);
-#endif
-  
-  clear->render_target->attachments().each_fwd([&](frontend::target::attachment& attachment) {
-    auto tex = get_tex(ctx_, attachment);
-    tex->sync(ctx_, attachment.as_texture2D.texture, ctx_.graphics.get());
-  });
-  
-  // TODO : add a draw list and calculate renderpasses
+  */
   
 }
 
 void detail_vk::frame_render::pre_blit(detail_vk::context& ctx_, const frontend::blit_command* blit) {
   
+  /*
   auto src_tex = get_tex(ctx_, blit->src_target->attachments()[blit->src_attachment]);
   auto dst_tex = get_tex(ctx_, blit->dst_target->attachments()[blit->dst_attachment]);
   
   src_tex->add_use(ctx_, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_READ_BIT, ctx_.graphics_index, false);
   dst_tex->add_use(ctx_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, ctx_.graphics_index, true);
+  */
   
 }
 
+void detail_vk::frame_render::pre_draw(context& ctx_, const frontend::draw_command* draw) {
+  
+  /*
+  draw->render_target->attachments().each_fwd([&](const frontend::target::attachment& attachment) {
+    auto tex = get_tex(ctx_, attachment);
+    tex->add_use(ctx_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, ctx_.graphics_index, true);
+  });
+  */
+  
+}
+
+
+/*
 void detail_vk::frame_render::blit(detail_vk::context& ctx_, const frontend::blit_command* blit) {
   
   #if defined(RX_DEBUG)
@@ -105,30 +113,27 @@ void detail_vk::frame_render::blit(detail_vk::context& ctx_, const frontend::bli
   vkCmdBlitImage(command, src_tex->handle, src_tex->current_layout, dst_tex->handle, dst_tex->current_layout, 1, &info, VK_FILTER_NEAREST);
   
 }
+*/
 
 
 
-void detail_vk::frame_render::pre_draw(detail_vk::context& ctx_, const frontend::draw_command* draw) {
+void detail_vk::frame_render::render(context& ctx_) {
   
-  draw->render_target->attachments().each_fwd([&](const frontend::target::attachment& attachment) {
-    auto tex = get_tex(ctx_, attachment);
-    tex->add_use(ctx_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, ctx_.graphics_index, true);
-  });
+  
+  
   
 }
 
-void detail_vk::frame_render::draw(detail_vk::context& ctx_, const frontend::draw_command* draw) {
-  
-#if defined(RX_DEBUG)
-  vk_log(log::level::k_verbose, "draw %s", ctx_.current_command->tag.description);
-#endif
-  
-  draw->render_target->attachments().each_fwd([&](frontend::target::attachment& attachment) {
-    auto tex = get_tex(ctx_, attachment);
-    tex->sync(ctx_, attachment.as_texture2D.texture, ctx_.graphics.get());
-  });
+
+detail_vk::frame_render::renderpass_info::renderpass_info(context& ctx_, frontend::target* target) : target(target),
+  attachment_uses(ctx_.allocator, target->attachments().size()),
+  draws(ctx_.allocator),
+  blits(ctx_.allocator)
+{
   
 }
+
+
 
 }
 

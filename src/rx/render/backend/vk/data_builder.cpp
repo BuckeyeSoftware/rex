@@ -13,6 +13,8 @@ namespace rx::render::backend {
   
 // buffer
 
+detail_vk::buffer::buffer() {}
+
 void detail_vk::buffer::destroy(detail_vk::context& ctx_, frontend::buffer* buffer) {
   
   if(handle != VK_NULL_HANDLE) vkDestroyBuffer(ctx_.device, handle, nullptr);
@@ -22,7 +24,7 @@ void detail_vk::buffer::destroy(detail_vk::context& ctx_, frontend::buffer* buff
 
 // buffer builder
 
-detail_vk::buffer_builder::buffer_builder(detail_vk::context& ctx_) {}
+detail_vk::buffer_builder::buffer_builder(detail_vk::context& ctx_) : buffer_infos(ctx_.allocator) {}
 
 void detail_vk::buffer_builder::construct(detail_vk::context& ctx_, frontend::buffer* buffer) {
   
@@ -45,6 +47,8 @@ void detail_vk::buffer_builder::construct(detail_vk::context& ctx_, frontend::bu
 #endif
   SET_NAME(ctx_, VK_OBJECT_TYPE_BUFFER, buf->handle, buf->name);
   
+  buf->last_use = use_queue::use_info(VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, ctx_.graphics_index, false, false);
+  
   VkMemoryRequirements req;
   vkGetBufferMemoryRequirements(ctx_.device, buf->handle, &req);
   
@@ -59,7 +63,7 @@ void detail_vk::buffer_builder::construct(detail_vk::context& ctx_, frontend::bu
 
 
 
-void detail_vk::buffer_builder::interpass(detail_vk::context& ctx_) {
+void detail_vk::buffer_builder::build(detail_vk::context& ctx_) {
   
   if(current_buffer_size == 0) return;
   
@@ -120,6 +124,10 @@ void detail_vk::buffer_builder::interpass(detail_vk::context& ctx_) {
   
   current_buffer_size = 0;
   
+  buffer_infos.each_fwd([&](buffer_info& info) {
+    construct2(ctx_, info);
+  });
+  
 }
 
 
@@ -128,9 +136,11 @@ void detail_vk::buffer_builder::interpass(detail_vk::context& ctx_) {
 
 
 
-void detail_vk::buffer_builder::construct2(detail_vk::context& ctx_, frontend::buffer* buffer) {
+void detail_vk::buffer_builder::construct2(detail_vk::context& ctx_, buffer_info& info) {
   
-  auto buf = reinterpret_cast<detail_vk::buffer*>(buffer + 1);
+  auto buffer = info.resource;
+  
+  auto buf = reinterpret_cast<const detail_vk::buffer*>(buffer + 1);
   
   if(buffer->size() == 0) return;
   
@@ -146,7 +156,7 @@ void detail_vk::buffer_builder::construct2(detail_vk::context& ctx_, frontend::b
   
   if (ctx_.is_dedicated) {
     
-    VkCommandBuffer command = ctx_.transfer.get();
+    VkCommandBuffer command = ctx_.transfer.get(ctx_);
     
     VkBufferCopy copy {};
     copy.srcOffset = current_buffer_size;
@@ -172,6 +182,8 @@ void detail_vk::buffer_builder::construct2(detail_vk::context& ctx_, frontend::b
 
 // --------------------------------
 // textures
+
+detail_vk::texture::texture() : last_use(VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, VK_QUEUE_FAMILY_IGNORED, false, false) {}
 
 void detail_vk::texture::construct_base(detail_vk::context& ctx_, frontend::texture* texture, VkImageCreateInfo& info) {
   
@@ -377,9 +389,7 @@ void detail_vk::texture::destroy(detail_vk::context& ctx_, frontend::texture* te
 // ------------------------------------
 // texture builder
 
-detail_vk::texture_builder::texture_builder(detail_vk::context& ctx_) {
-  
-}
+detail_vk::texture_builder::texture_builder(detail_vk::context& ctx_) : texture_infos(ctx_.allocator) {}
 
 void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const frontend::resource_command* resource) {
   
@@ -457,20 +467,20 @@ void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const front
 
   check_result(vkCreateImage(ctx_.device, &info, nullptr, &tex->handle));
   
-  tex->add_use(ctx_, VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, ctx_.graphics_index, false);
-  tex->current_layout = VK_IMAGE_LAYOUT_UNDEFINED;
-  
 #if defined(RX_DEBUG)
   tex->name = ctx_.current_command->tag.description;
   SET_NAME(ctx_, VK_OBJECT_TYPE_IMAGE, tex->handle, tex->name);
 #endif
   
+  tex->last_use = use_queue::use_info(VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, ctx_.graphics_index, false, false);
 
   VkMemoryRequirements req;
   vkGetImageMemoryRequirements(ctx_.device, tex->handle, &req);
 
   current_image_size = math::ceil((rx_f32) (current_image_size)/req.alignment)*req.alignment;
   current_image_size += req.size;
+  
+  use_queue::use_info* use_info = nullptr;
   
   if(texture->data().size() > 0) {
     
@@ -479,9 +489,11 @@ void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const front
     current_image_staging_size = math::ceil((rx_f32) (current_image_staging_size + texture_size)/alignment)*alignment;
     image_type_bits &= req.memoryTypeBits;
     
-    tex->add_use(ctx_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, ctx_.graphics_index, true);
+    use_info = tex->add_use(ctx_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, ctx_.graphics_index, true);
     
   }
+  
+  texture_infos.push_back({resource, use_info});
   
 }
 
@@ -493,7 +505,7 @@ void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const front
 
 
 
-void detail_vk::texture_builder::interpass(detail_vk::context& ctx_) {
+void detail_vk::texture_builder::build(detail_vk::context& ctx_) {
   
   if(current_image_size == 0) return;
   
@@ -554,6 +566,10 @@ void detail_vk::texture_builder::interpass(detail_vk::context& ctx_) {
   current_image_size = 0;
   current_image_staging_size = 0;
   
+  texture_infos.each_fwd([&](texture_info& info) {
+    construct2(ctx_, info);
+  });
+  
 }
 
 
@@ -565,7 +581,9 @@ void detail_vk::texture_builder::interpass(detail_vk::context& ctx_) {
 
 
 
-void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const frontend::resource_command* resource) {
+void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, texture_info& info) {
+  
+  auto resource = info.resource;
   
   frontend::texture* texture = nullptr;
   detail_vk::texture* tex = nullptr;
@@ -588,7 +606,7 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
       tex = reinterpret_cast<detail_vk::texture*>(resource->as_textureCM + 1);
       break;
     default:
-      break;
+      return;
   }
   
   VkMemoryRequirements req;
@@ -612,9 +630,9 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
       memcpy(image_staging_pointer + current_image_staging_size, texture->data().data(), texture->data().size() * sizeof(rx_byte));
     }
     
-    VkCommandBuffer command = ctx_.transfer.get();
+    VkCommandBuffer command = ctx_.transfer.get(ctx_);
     
-    tex->sync(ctx_, texture, command);
+    tex->sync(ctx_, texture, info.use_info, command);
     
     
     VkBufferImageCopy copies [texture->levels()];
@@ -688,102 +706,6 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, const fron
     
   }
   
-  
-}
-
-
-
-
-
-
-
-
-
-
-void detail_vk::buffer::sync(context& ctx_, frontend::buffer* buffer, VkCommandBuffer command) {
-  
-  (void) ctx_;
-  (void) buffer;
-  (void) command;
-  
-}
-
-
-void detail_vk::texture::sync(context& ctx_, frontend::texture* texture, VkCommandBuffer command) {
-  
-  auto last_use = frame_uses.current;
-  
-  if(last_use->counter == 1) {
-    
-    auto current_use = last_use->after;
-    
-#if defined(RX_DEBUG)
-    vk_log(log::level::k_verbose, "transferring image from %s to %s : %s", layout_to_string(last_use->layout), layout_to_string(current_use->layout), name);
-#endif
-    
-    VkImageMemoryBarrier barrier {};
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.image = handle;
-    barrier.oldLayout = last_use->layout;
-    barrier.newLayout = current_use->layout;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = layers;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = texture->levels();
-    barrier.srcAccessMask = last_use->access;
-    barrier.dstAccessMask = current_use->access;
-    barrier.srcQueueFamilyIndex = last_use->queue;
-    barrier.dstQueueFamilyIndex = current_use->queue;
-    
-    vkCmdPipelineBarrier(command, last_use->stage, current_use->stage, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, &barrier);
-    
-    current_layout = current_use->layout;
-    
-    frame_uses.pop(ctx_);
-    
-  } else {
-    
-    last_use->counter--;
-    
-  }
-  
-}
-
-
-void detail_vk::use_queue::push(context& ctx_, VkImageLayout layout, VkPipelineStageFlags stage, VkAccessFlags access, uint32_t queue, bool write, bool sync_after) {
-  
-  if(head == nullptr) {
-    use_info* use = ctx_.allocator->create<use_info>(layout, stage, access, queue, write, sync_after);
-    current = use;
-    head = use;
-    return;
-  }
-  
-  auto last_use = head;
-  
-  if(!last_use->sync_after && (last_use->layout != layout || last_use->write || last_use->queue != queue)) {
-    
-    use_info* use = ctx_.allocator->create<use_info>(layout, stage, access, queue, write, sync_after);
-    
-    head->after = use;
-    head = use;
-    
-  } else {
-    
-    last_use->counter++;
-    
-  }
-  
-}
-
-void detail_vk::use_queue::pop(context& ctx_) {
-  
-  auto last = current;
-  
-  current = current->after;
-  
-  ctx_.allocator->destroy<use_info>(last);
   
 }
 

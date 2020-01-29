@@ -30,6 +30,8 @@ namespace detail_vk {
   
   struct texture;
   
+  struct resource_sync;
+  
   struct context {
     
     memory::allocator* allocator;
@@ -78,12 +80,18 @@ namespace detail_vk {
       
     } swap;
     
-    VkSemaphore start_semaphore, end_semaphore;
+    rx::array<VkSemaphore[k_buffered]> start_semaphore, end_semaphore, transfer_semaphore;
     
     Command graphics;
     Command transfer;
     
+    rx_size index = 0; // index in [0, k_buffered-1] for buffering per frame
+    rx_size frame_count = 0;
+    rx_size swap_count = 0; // used for synchronizing between double calls to swap or process
+    
     const frontend::command_header* current_command;
+    
+    resource_sync* sync = nullptr;
     
   };
   

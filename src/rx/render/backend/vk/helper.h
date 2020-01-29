@@ -53,18 +53,16 @@ namespace detail_vk {
   public:
     void init(context& ctx_, uint32_t queue_family);
     void start(context& ctx_);
-    void end(context& ctx_, VkQueue queue);
+    void end(context& ctx_, VkQueue queue, rx::vector<VkSemaphore> wait, rx::vector<VkPipelineStageFlags> stage, rx::vector<VkSemaphore> signal);
     void destroy(context& ctx_);
     
-    VkCommandBuffer get();
+    VkCommandBuffer get(context& ctx_);
     
   private:
     
     VkCommandPool pool;
     rx::array<VkCommandBuffer[k_buffered]> commands;
     rx::array<VkFence[k_buffered]> fences;
-    uint32_t index = 0;
-    bool written = true;
   };
   
   #if defined(RX_DEBUG)

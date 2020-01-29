@@ -161,7 +161,7 @@ void detail_vk::Command::init(detail_vk::context& ctx_, uint32_t queue_family) {
   {
     VkFenceCreateInfo info {};
     info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    //info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
     
     for (rx_size i {0}; i<fences.size(); i++) {
       vkCreateFence(ctx_.device, &info, nullptr, &fences[i]);
@@ -172,32 +172,34 @@ void detail_vk::Command::init(detail_vk::context& ctx_, uint32_t queue_family) {
 
 void detail_vk::Command::start(detail_vk::context& ctx_) {
   
-  if(!written) return;
-  written = false;
+  check_result(vkWaitForFences(ctx_.device, 1, &fences[ctx_.index], VK_TRUE, 10000000000000L));
+  
+  check_result(vkResetFences(ctx_.device, 1, &fences[ctx_.index]));
   
   VkCommandBufferBeginInfo info {};
   info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-  check_result(vkBeginCommandBuffer(commands[index], &info));
+  check_result(vkBeginCommandBuffer(commands[ctx_.index], &info));
   
 }
 
-void detail_vk::Command::end(detail_vk::context& ctx_, VkQueue queue) {
+void detail_vk::Command::end(detail_vk::context& ctx_, VkQueue queue, rx::vector<VkSemaphore> wait, rx::vector<VkPipelineStageFlags> stage, rx::vector<VkSemaphore> signal) {
   
-  if (!written) return;
-  
-  VkCommandBuffer command = commands[index];
+  VkCommandBuffer command = commands[ctx_.index];
   check_result(vkEndCommandBuffer(command));
   
   VkSubmitInfo info {};
   info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   info.commandBufferCount = 1;
   info.pCommandBuffers = &command;
-  check_result(vkQueueSubmit(queue, 1, &info, fences[index]));
+  info.waitSemaphoreCount = wait.size();
+  info.pWaitSemaphores = wait.data();
+  info.pWaitDstStageMask = stage.data();
+  info.signalSemaphoreCount = signal.size();
+  info.pSignalSemaphores = signal.data();
+  check_result(vkQueueSubmit(queue, 1, &info, fences[ctx_.index]));
   
-  check_result(vkWaitForFences(ctx_.device, 1, &fences[index], VK_TRUE, 10000000000000L));
-  
-  check_result(vkResetFences(ctx_.device, 1, &fences[index]));
+  //check_result(vkWaitForFences(ctx_.device, 1, &fences[ctx_.index], VK_TRUE, 10000000000000L));
   
 }
 
@@ -211,10 +213,9 @@ void detail_vk::Command::destroy(detail_vk::context& ctx_) {
   
 }
 
-VkCommandBuffer detail_vk::Command::get() {
+VkCommandBuffer detail_vk::Command::get(context& ctx_) {
   
-  written = true;
-  return commands[index];
+  return commands[ctx_.index];
   
 }
 

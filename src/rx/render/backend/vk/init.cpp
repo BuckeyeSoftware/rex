@@ -5,6 +5,7 @@
 #include "context.h"
 
 #include "data_builder.h"
+#include "sync.h"
 
 #include <SDL.h>
 #include <SDL_vulkan.h>
@@ -14,6 +15,7 @@
 #include "rx/console/variable.h"
 #include "rx/console/interface.h"
 #include "rx/core/algorithm/clamp.h"
+#include "rx/core/string.h"
 
 namespace rx::render::backend {
   
@@ -323,14 +325,20 @@ void create_device(detail_vk::context& ctx_) {
   }
   
   {
+    
     LOCAL_INST_LOAD(vkGetDeviceProcAddr)
     ctx_.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+    
+    load_function_pointers(ctx_);
+    
   }
   
   {
     
     LOCAL_DEV_LOAD(vkGetDeviceQueue)
     vkGetDeviceQueue(ctx_.device, ctx_.graphics_index, 0, &ctx_.graphics_queue);
+    
+    SET_NAME(ctx_, VK_OBJECT_TYPE_QUEUE, ctx_.graphics_queue, "graphics");
     
   }
   
@@ -492,18 +500,16 @@ void create_swapchain(detail_vk::context& ctx_) {
       
       image->handle = ctx_.swap.images[i];
       
-      image->add_use(ctx_, VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, ctx_.graphics_index, false);
       image->current_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+      image->last_use = detail_vk::use_queue::use_info(VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, ctx_.graphics_index, false, false);
       
     }
-    
-    
     
   }
   
   for(rx_size i {0}; i<ctx_.swap.num_frames; i++) {
     
-    SET_NAME(ctx_, VK_OBJECT_TYPE_IMAGE, ctx_.swap.images[i], ctx_.current_command->tag.description);
+    SET_NAME(ctx_, VK_OBJECT_TYPE_IMAGE, ctx_.swap.images[i], ctx_.swap.image_info[i]->name);
     
     VkImageViewCreateInfo info {};
     info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -522,17 +528,7 @@ void create_swapchain(detail_vk::context& ctx_) {
     
     check_result(vkCreateImageView(ctx_.device, &info, nullptr, &ctx_.swap.image_views[i]));
     
-    SET_NAME(ctx_, VK_OBJECT_TYPE_IMAGE_VIEW, ctx_.swap.image_views[i], ctx_.current_command->tag.description);
-    
-  }
-  
-  {
-    
-    VkSemaphoreCreateInfo info {};
-    info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    
-    vkCreateSemaphore(ctx_.device, &info, nullptr, &ctx_.start_semaphore);
-    vkCreateSemaphore(ctx_.device, &info, nullptr, &ctx_.end_semaphore);
+    SET_NAME(ctx_, VK_OBJECT_TYPE_IMAGE_VIEW, ctx_.swap.image_views[i], ctx_.swap.image_info[i]->name);
     
   }
   
@@ -543,9 +539,6 @@ void create_swapchain(detail_vk::context& ctx_) {
 void destroy_swapchain(detail_vk::context& ctx_) {
   
   ctx_.swap.alive = false;
-  
-  vkDestroySemaphore(ctx_.device, ctx_.start_semaphore, nullptr);
-  vkDestroySemaphore(ctx_.device, ctx_.end_semaphore, nullptr);
   
   for(rx_size i {0}; i<ctx_.swap.num_frames; i++) {
     vkDestroyImageView(ctx_.device, ctx_.swap.image_views[i], nullptr);
