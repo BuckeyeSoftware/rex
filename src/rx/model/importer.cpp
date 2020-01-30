@@ -123,7 +123,9 @@ bool importer::load(const string& _file_name) {
     if (auto* find{batches.find(_mesh.material)}) {
       find->push_back({_mesh.offset, _mesh.count, bounds});
     } else {
-      batches.insert(_mesh.material, {m_allocator, 1, batch{_mesh.offset, _mesh.count, bounds}});
+      vector<batch> result{m_allocator};
+      result.emplace_back(_mesh.offset, _mesh.count, bounds);
+      batches.insert(_mesh.material, utility::move(result));
     }
   });
 

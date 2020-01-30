@@ -3,11 +3,12 @@
 #include "rx/core/string.h" // string
 #include "rx/core/optional.h" // optional
 #include "rx/core/concepts/no_copy.h" // no_copy
+#include "rx/core/filesystem/stream.h"
 
 namespace rx::filesystem {
 
 struct file
-  : concepts::no_copy
+  : stream
 {
   constexpr file();
 
@@ -17,41 +18,47 @@ struct file
   file(file&& other_);
   ~file();
 
+  // Read |_size| bytes from file into |_data|.
+  virtual rx_u64 read(rx_byte* _data, rx_u64 _size);
+
+  // Write |_size| bytes from |_data| into file.
+  virtual rx_u64 write(const rx_byte* _data, rx_u64 _size);
+
+  // Seek to |where| in file.
+  virtual bool seek(rx_u64 _where);
+
+  // Flush to disk.
+  virtual bool flush();
+
+  // Query the size of the file. This works regardless of where in the file
+  // the current file pointer is. If the file does not support querying it's
+  // size, this returns a nullopt.
+  virtual optional<rx_u64> size();
+
   file& operator=(file&& file_);
 
-  // close file
-  void close();
+  bool read_line(string& line_);
+  bool close();
 
-  // read |_size| bytes from file into |_data|
-  rx_u64 read(rx_byte* _data, rx_u64 _size);
-
-  // write |_size| bytes from |_data| into file
-  rx_u64 write(const rx_byte* _data, rx_u64 _size);
-
-  // print |fmt| with |args| to file using |alloc| for formatting
+  // Print |_fmt| with |_args| to file using |_allocator| for formatting.
+  // NOTE: asserts if the file isn't a text file.
   template<typename... Ts>
   bool print(memory::allocator* _alloc, const char* _fmt, Ts&&... _args);
 
-  // print |fmt| with |args| to file
+  // Print |_fmt| with |_args| to file using system allocator for formatting.
+  // NOTE: asserts if the file isn't a text file.
   template<typename... Ts>
   bool print(const char* _fmt, Ts&&... _args);
 
-  // seek to |where| in file
-  bool seek(rx_u64 _where);
+  // Print a string into the file. This is only valid for text files.
+  // NOTE: asserts if the file isn't a text file.
+  bool print(string&& contents_);
 
-  // get size of file, returns nullopt if operation not supported
-  optional<rx_u64> size();
-
-  // flush to disk
-  bool flush();
-
-  bool read_line(string& line_);
-
+  // Query if the file handle is valid, will be false if the file has been
+  // closed with |close| or if the file failed to open.
   bool is_valid() const;
 
   operator bool() const;
-
-  bool print(string&& contents_);
 
 private:
   friend struct process;
@@ -90,6 +97,20 @@ inline bool file::print(const char* _format, Ts&&... _arguments) {
 
 optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const char* _file_name);
 
+// This function is like |read_binary_file| except it handles all the annoying
+// encoding issues that plauge typical text files, in particular it offers
+// the following features:
+//
+// * Adds an additional zero-byte to the result so it can be used anywhere a
+//   null-terminated string is needed.
+// * Converts Unicode text files (UTF16 LE or UTF16 BE) to UTF-8 for you.
+// * Strips Unicode byte order marks, including UTF-8 BOM.
+// * Converts all line endings to LF.
+//
+// The result is always a normalized, ready to be used UTF-8 byte stream which
+// can be given anywhere UTF-8 is required.
+optional<vector<rx_byte>> read_text_file(memory::allocator* _allocator, const char* _file_name);
+
 inline optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const string& _file_name) {
   return read_binary_file(_allocator, _file_name.data());
 }
@@ -100,6 +121,18 @@ inline optional<vector<rx_byte>> read_binary_file(const string& _file_name) {
 
 inline optional<vector<rx_byte>> read_binary_file(const char* _file_name) {
   return read_binary_file(&memory::g_system_allocator, _file_name);
+}
+
+inline optional<vector<rx_byte>> read_text_file(memory::allocator* _allocator, const string& _file_name) {
+  return read_text_file(_allocator, _file_name.data());
+}
+
+inline optional<vector<rx_byte>> read_text_file(const string& _file_name) {
+  return read_text_file(&memory::g_system_allocator, _file_name);
+}
+
+inline optional<vector<rx_byte>> read_text_file(const char* _file_name) {
+  return read_text_file(&memory::g_system_allocator, _file_name);
 }
 
 } // namespace rx::filesystem

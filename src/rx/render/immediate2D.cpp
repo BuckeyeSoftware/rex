@@ -240,6 +240,14 @@ void immediate2D::queue::record_text(const char* _font, rx_size _font_length,
   m_commands.push_back(utility::move(next_command));
 }
 
+void immediate2D::queue::record_text(const char* _font,
+  const math::vec2f& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
+  const char* _contents, const math::vec4f& _color)
+{
+  record_text(_font, strlen(_font), _position, _size, _scale, _align, _contents,
+    strlen(_contents), _color);
+}
+
 bool immediate2D::queue::operator!=(const queue& _queue) const {
   if (_queue.m_commands.size() != m_commands.size()) {
     return true;

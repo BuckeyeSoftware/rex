@@ -223,8 +223,11 @@ void vk::process(const vector<rx_byte*>& _commands) {
   b_builder.build(ctx);
   t_builder.build(ctx);
   
-  ctx.transfer.end(ctx, ctx.graphics_queue, {}, {}, {ctx.allocator, 1, ctx.transfer_semaphore[ctx.index]});
-  
+  {
+    rx::vector<VkSemaphore> signals(ctx.allocator);
+    signals.push_back(ctx.transfer_semaphore[ctx.index]);
+    ctx.transfer.end(ctx, ctx.graphics_queue, {}, {}, signals);
+  }
   
   // main render process
   
@@ -239,13 +242,19 @@ void vk::process(const vector<rx_byte*>& _commands) {
   ctx.allocator->destroy<detail_vk::resource_sync>(ctx.sync);
   
   
-  
-  auto waits = rx::vector<VkSemaphore> (ctx.allocator, 1, ctx.start_semaphore[ctx.index]);
-  auto stages = rx::vector<VkPipelineStageFlags> (ctx.allocator, 1, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
-  waits.push_back(ctx.transfer_semaphore[ctx.index]);
-  stages.push_back(VK_PIPELINE_STAGE_TRANSFER_BIT);
-  
-  ctx.graphics.end(ctx, ctx.graphics_queue, waits, stages, {ctx.allocator, 1, ctx.end_semaphore[ctx.index]});
+  {
+    auto waits = rx::vector<VkSemaphore> (ctx.allocator);
+    auto stages = rx::vector<VkPipelineStageFlags> (ctx.allocator);
+    waits.push_back(ctx.start_semaphore[ctx.index]);
+    stages.push_back(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+    waits.push_back(ctx.transfer_semaphore[ctx.index]);
+    stages.push_back(VK_PIPELINE_STAGE_TRANSFER_BIT);
+    
+    rx::vector<VkSemaphore> signals(ctx.allocator);
+    signals.push_back(ctx.end_semaphore[ctx.index]);
+    
+    ctx.graphics.end(ctx, ctx.graphics_queue, waits, stages, signals);
+  }
   
   if(ctx.swap.alive) {
     VkPresentInfoKHR info {};

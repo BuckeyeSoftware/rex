@@ -108,6 +108,8 @@ namespace detail_vk {
     struct texture_info {
       const frontend::resource_command* resource;
       const use_queue::use_info* use_info;
+      VkDeviceSize staging_offset;
+      VkDeviceSize bind_offset;
     };
     
     texture_builder(context& ctx_);
@@ -118,8 +120,8 @@ namespace detail_vk {
   private:
     rx::vector<texture_info> texture_infos;
     
-    uint32_t current_image_size = 0;
-    uint32_t current_image_staging_size = 0;
+    VkDeviceSize current_image_size = 0;
+    VkDeviceSize current_image_staging_size = 0;
     uint32_t image_type_bits = 0xffffffff;
     VkDeviceMemory image_memory = VK_NULL_HANDLE;
     VkDeviceMemory staging_memory = VK_NULL_HANDLE;

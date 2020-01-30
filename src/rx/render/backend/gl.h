@@ -4,6 +4,7 @@
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/command.h"
 
+#include <SDL_video.h> // SDL_GL_GetProcAddress
 #include <SDL_opengl.h>
 
 namespace rx::render {

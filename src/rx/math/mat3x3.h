@@ -40,7 +40,15 @@ struct mat3x3 {
   constexpr mat3x3& operator*=(T _scalar);
   constexpr mat3x3& operator+=(T _scalar);
 
-  vec x, y, z;
+  const vec3f& operator[](rx_size _index) const;
+  vec3f& operator[](rx_size _index);
+
+  union {
+    struct {
+      vec x, y, z;
+    };
+    vec a[3];
+  };
 
 private:
   static constexpr vec3<T> reduce_rotation_angles(const vec3<T>& _rotate);
@@ -144,6 +152,18 @@ inline constexpr mat3x3<T>& mat3x3<T>::operator*=(T _scalar) {
 template<typename T>
 inline constexpr mat3x3<T>& mat3x3<T>::operator+=(T _scalar) {
   return *this = *this + _scalar;
+}
+
+template<typename T>
+inline const vec3f& mat3x3<T>::operator[](rx_size _index) const {
+  RX_ASSERT(_index < 3, "out of bounds");
+  return a[_index];
+}
+
+template<typename T>
+inline vec3f& mat3x3<T>::operator[](rx_size _index) {
+  RX_ASSERT(_index < 3, "out of bounds");
+  return a[_index];
 }
 
 template<typename T>

@@ -1,11 +1,8 @@
 #ifndef RX_RENDER_IMMEDIATE2D_H
 #define RX_RENDER_IMMEDIATE2D_H
-#include <string.h> // strlen
-
 #include "rx/math/vec2.h"
 #include "rx/math/vec4.h"
 
-#include "rx/core/utility/nat.h"
 #include "rx/core/string.h"
 #include "rx/core/optional.h"
 #include "rx/core/map.h"
@@ -291,14 +288,6 @@ inline constexpr immediate2D::queue::command::command()
   , color{}
   , as_nat{}
 {
-}
-
-inline void immediate2D::queue::record_text(const char* _font,
-  const math::vec2f& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
-  const char* _contents, const math::vec4f& _color)
-{
-  record_text(_font, strlen(_font), _position, _size, _scale, _align, _contents,
-    strlen(_contents), _color);
 }
 
 inline void immediate2D::queue::record_text(const string& _font,

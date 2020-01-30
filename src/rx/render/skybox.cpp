@@ -97,7 +97,7 @@ void skybox::render(frontend::target* _target, const math::mat4x4f& _view,
 }
 
 bool skybox::load(const string& _file_name) {
-  auto data{filesystem::read_binary_file(_file_name)};
+  auto data{filesystem::read_text_file(_file_name)};
   if (!data) {
     return false;
   }

@@ -184,7 +184,10 @@ void create_device(detail_vk::context& ctx_) {
   LOCAL_INST_LOAD(vkGetPhysicalDeviceFeatures)
   LOCAL_INST_LOAD(vkEnumerateDeviceExtensionProperties)
   
-  rx::vector<const char*> required_extensions(ctx_.allocator, 1, {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
+  
+  rx::vector<const char*> required_extensions(ctx_.allocator, 1);
+  required_extensions[0] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+  
   VkPhysicalDeviceFeatures required_features {};
   int anisotropy = console::interface::find_variable_by_name("gl4.anisotropy")->cast<int>()->get();
   if(anisotropy != 0) required_features.samplerAnisotropy = VK_TRUE;
@@ -288,16 +291,15 @@ void create_device(detail_vk::context& ctx_) {
   {
     
     float priority = 1.0f;
-    rx::vector<VkDeviceQueueCreateInfo> queue_info (ctx_.allocator, 1, {
-      VkDeviceQueueCreateInfo{
+    rx::vector<VkDeviceQueueCreateInfo> queue_info (ctx_.allocator, 1);
+    queue_info[0] = VkDeviceQueueCreateInfo{
         .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
         .pNext = nullptr,
         .flags = 0,
         .queueFamilyIndex = ctx_.graphics_index,
         .queueCount = 1,
         .pQueuePriorities = &priority
-      }
-    });
+      };
     
     VkPhysicalDeviceFeatures features;
     vkGetPhysicalDeviceFeatures(ctx_.physical, &features);

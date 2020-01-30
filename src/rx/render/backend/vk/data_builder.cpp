@@ -476,24 +476,37 @@ void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const front
 
   VkMemoryRequirements req;
   vkGetImageMemoryRequirements(ctx_.device, tex->handle, &req);
+  
+  
+  image_type_bits &= req.memoryTypeBits;
 
-  current_image_size = math::ceil((rx_f32) (current_image_size)/req.alignment)*req.alignment;
+  
+  if(current_image_size % req.alignment != 0) {
+    current_image_size = (current_image_size / req.alignment + 1) * req.alignment;
+  }
+  VkDeviceSize bind_offset = current_image_size;
   current_image_size += req.size;
   
   use_queue::use_info* use_info = nullptr;
+  VkDeviceSize staging_offset = 0;
   
   if(texture->data().size() > 0) {
     
+    staging_offset = current_image_staging_size;
+    
     rx_size texture_size = texture->data().size() * sizeof(rx_byte) * tex->format_size / texture->byte_size_of_format(texture->format());
     rx_size alignment = 4;
-    current_image_staging_size = math::ceil((rx_f32) (current_image_staging_size + texture_size)/alignment)*alignment;
-    image_type_bits &= req.memoryTypeBits;
+    if(current_image_staging_size % alignment != 0) {
+      current_image_staging_size = (current_image_staging_size / alignment + 1) * alignment;
+    }
     
     use_info = tex->add_use(ctx_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, ctx_.graphics_index, true);
     
+    current_image_staging_size += texture_size;
+    
   }
   
-  texture_infos.push_back({resource, use_info});
+  texture_infos.push_back({resource, use_info, staging_offset, bind_offset});
   
 }
 
@@ -570,6 +583,8 @@ void detail_vk::texture_builder::build(detail_vk::context& ctx_) {
     construct2(ctx_, info);
   });
   
+  vkUnmapMemory(ctx_.device, staging_memory);
+  
 }
 
 
@@ -612,7 +627,12 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, texture_in
   VkMemoryRequirements req;
   vkGetImageMemoryRequirements(ctx_.device, tex->handle, &req);
   
-  current_image_size = math::ceil((rx_f32) (current_image_size)/req.alignment)*req.alignment;
+  // align current offset
+  if(current_image_size % req.alignment != 0) {
+    current_image_size = (current_image_size / req.alignment + 1) * req.alignment;
+  }
+  
+  vk_log(log::level::k_verbose, "current_size %li : %li", current_image_size, info.bind_offset);
   
   vkBindImageMemory(ctx_.device, tex->handle, image_memory, current_image_size);
   
@@ -620,8 +640,16 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, texture_in
   
   if(texture->data().size() > 0) {
     
+    rx_size alignment = 4;
+    
+    if(current_image_staging_size % alignment != 0) {
+      current_image_staging_size = (current_image_staging_size / alignment + 1) * alignment;
+    }
+    
+    rx_size byte_size = texture->byte_size_of_format(texture->format());
+    rx_size texture_size = texture->data().size() * sizeof(rx_byte) / byte_size * tex->format_size;
+    
     if(texture->byte_size_of_format(texture->format()) < tex->format_size) {
-      rx_size byte_size = texture->byte_size_of_format(texture->format());
       rx_size count = {texture->data().size() * sizeof(rx_byte) / byte_size};
       for(rx_size i {0}; i<count; i++) {
         memcpy(image_staging_pointer + current_image_staging_size + i * tex->format_size, texture->data().data() + i * byte_size, byte_size);
@@ -629,6 +657,7 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, texture_in
     } else {
       memcpy(image_staging_pointer + current_image_staging_size, texture->data().data(), texture->data().size() * sizeof(rx_byte));
     }
+    
     
     VkCommandBuffer command = ctx_.transfer.get(ctx_);
     
@@ -655,18 +684,20 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, texture_in
       
       copy.imageSubresource.mipLevel = level;
       
+      rx_size offset = 0;
+      
       switch(resource->kind) {
         case frontend::resource_command::type::k_texture1D: {
           auto texture = resource->as_texture1D;
           auto level_info = texture->info_for_level(level);
-          copy.bufferOffset = current_image_staging_size + level_info.offset;
+          offset = level_info.offset;
           copy.imageExtent.width = level_info.dimensions;
           break;
         }
         case frontend::resource_command::type::k_texture2D: {
           auto texture = resource->as_texture2D;
           auto level_info = texture->info_for_level(level);
-          copy.bufferOffset = current_image_staging_size + level_info.offset;
+          offset = level_info.offset;
           auto dim  = level_info.dimensions;
           copy.imageExtent.width = dim.x;
           copy.imageExtent.height = dim.y;
@@ -675,7 +706,7 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, texture_in
         case frontend::resource_command::type::k_texture3D: {
           auto texture = resource->as_texture3D;
           auto level_info = texture->info_for_level(level);
-          copy.bufferOffset = current_image_staging_size + level_info.offset;
+          offset = level_info.offset;
           auto dim  = level_info.dimensions;
           copy.imageExtent.width = dim.x;
           copy.imageExtent.height = dim.y;
@@ -685,7 +716,7 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, texture_in
         case frontend::resource_command::type::k_textureCM: {
           auto texture = resource->as_textureCM;
           auto level_info = texture->info_for_level(level);
-          copy.bufferOffset = current_image_staging_size + level_info.offset;
+          offset = level_info.offset;
           auto dim  = level_info.dimensions;
           copy.imageExtent.width = dim.x;
           copy.imageExtent.height = dim.y;
@@ -696,13 +727,13 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, texture_in
           break;
       }
       
+      copy.bufferOffset = current_image_staging_size + offset  * sizeof(rx_byte) / byte_size * tex->format_size;
+      
     }
     
     vkCmdCopyBufferToImage(command, staging_buffer, tex->handle, tex->current_layout, texture->levels(), &copies[0]);
     
-    rx_size texture_size = texture->data().size() * sizeof(rx_byte) * tex->format_size / texture->byte_size_of_format(texture->format());
-    rx_size alignment = 4;
-    current_image_staging_size = math::ceil((rx_f32) (current_image_staging_size + texture_size)/alignment)*alignment;
+    current_image_staging_size = current_image_staging_size + texture_size;
     
   }
   

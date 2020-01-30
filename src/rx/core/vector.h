@@ -20,14 +20,20 @@ namespace rx {
 // 64-bit: 32 bytes
 template<typename T>
 struct vector {
-  constexpr vector(memory::allocator* _allocator);
-  vector(memory::allocator* _allocator, rx_size _size, const T& _value = {});
-  vector(memory::allocator* _allocator, const vector& _other);
+  static constexpr const rx_size k_npos{-1_z};
 
   constexpr vector();
-  vector(rx_size _size, const T& value = {});
+  constexpr vector(memory::allocator* _allocator);
+
+  vector(memory::allocator* _allocator, rx_size _size);
+  vector(memory::allocator* _allocator, const vector& _other);
+
+  vector(rx_size _size);
+  vector(memory::view _view);
+
   vector(const vector& _other);
   vector(vector&& other_);
+
   ~vector();
 
   vector& operator=(const vector& _other);
@@ -47,6 +53,11 @@ struct vector {
 
   void clear();
 
+  rx_size find(const T& _value) const;
+
+  template<typename F>
+  rx_size find_if(F&& _compare) const;
+
   // append |data| by copy
   bool push_back(const T& _data);
   // append |data| by move
@@ -57,6 +68,8 @@ struct vector {
   bool emplace_back(Ts&&... _args);
 
   rx_size size() const;
+  rx_size capacity() const;
+
   bool is_empty() const;
 
   // enumerate collection either forward or reverse
@@ -105,7 +118,7 @@ inline constexpr vector<T>::vector(memory::allocator* _allocator)
 }
 
 template<typename T>
-inline vector<T>::vector(memory::allocator* _allocator, rx_size _size, const T& _value)
+inline vector<T>::vector(memory::allocator* _allocator, rx_size _size)
   : m_allocator{_allocator}
   , m_data{nullptr}
   , m_size{_size}
@@ -118,7 +131,7 @@ inline vector<T>::vector(memory::allocator* _allocator, rx_size _size, const T& 
   RX_ASSERT(m_data, "out of memory");
 
   for (rx_size i{0}; i < m_size; i++) {
-    utility::construct<T>(data() + i, _value);
+    utility::construct<T>(data() + i);
   }
 }
 
@@ -139,14 +152,24 @@ inline vector<T>::vector(memory::allocator* _allocator, const vector& _other)
 }
 
 template<typename T>
+inline vector<T>::vector(memory::view _view)
+  : m_allocator{_view.owner}
+  , m_data{reinterpret_cast<T*>(_view.data)}
+  , m_size{_view.size}
+  , m_capacity{m_size}
+{
+  RX_ASSERT(m_allocator, "null allocator");
+}
+
+template<typename T>
 inline constexpr vector<T>::vector()
   : vector{&memory::g_system_allocator}
 {
 }
 
 template<typename T>
-inline vector<T>::vector(rx_size _size, const T& value)
-  : vector{&memory::g_system_allocator, _size, value}
+inline vector<T>::vector(rx_size _size)
+  : vector{&memory::g_system_allocator, _size}
 {
 }
 
@@ -324,6 +347,27 @@ inline void vector<T>::clear() {
 }
 
 template<typename T>
+inline rx_size vector<T>::find(const T& _value) const {
+  for (rx_size i{0}; i < m_size; i++) {
+    if (m_data[i] == _value) {
+      return i;
+    }
+  }
+  return k_npos;
+}
+
+template<typename T>
+template<typename F>
+inline rx_size vector<T>::find_if(F&& _compare) const {
+  for (rx_size i{0}; i < m_size; i++) {
+    if (_compare(m_data[i])) {
+      return i;
+    }
+  }
+  return k_npos;
+}
+
+template<typename T>
 inline bool vector<T>::push_back(const T& _value) {
   if (!grow_or_shrink_to(m_size + 1)) {
     return false;
@@ -366,6 +410,11 @@ inline bool vector<T>::emplace_back(Ts&&... _args) {
 template<typename T>
 inline rx_size vector<T>::size() const {
   return m_size;
+}
+
+template<typename T>
+inline rx_size vector<T>::capacity() const {
+  return m_capacity;
 }
 
 template<typename T>
@@ -491,7 +540,7 @@ inline memory::allocator* vector<T>::allocator() const {
 
 template<typename T>
 inline memory::view vector<T>::disown() {
-  memory::view view{allocator(), reinterpret_cast<rx_byte*>(data()), size()*sizeof(T)};
+  memory::view view{allocator(), reinterpret_cast<rx_byte*>(data()), capacity()*sizeof(T)};
   m_data = nullptr;
   m_size = 0;
   m_capacity = 0;

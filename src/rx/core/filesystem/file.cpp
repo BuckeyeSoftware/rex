@@ -4,6 +4,7 @@
 
 #include "rx/core/log.h"
 #include "rx/core/assert.h"
+#include "rx/core/config.h"
 #include "rx/core/hints/unlikely.h"
 #include "rx/core/filesystem/file.h"
 
@@ -39,22 +40,6 @@ file::~file() {
   close();
 }
 
-void file::close() {
-  if (m_impl) {
-    fclose(static_cast<FILE*>(m_impl));
-    m_impl = nullptr;
-  }
-}
-
-file& file::operator=(file&& file_) {
-  RX_ASSERT(&file_ != this, "self assignment");
-
-  close();
-  m_impl = file_.m_impl;
-  file_.m_impl = nullptr;
-  return *this;
-}
-
 rx_u64 file::read(rx_byte* data, rx_u64 size) {
   RX_ASSERT(m_impl, "invalid");
   RX_ASSERT(strcmp(m_mode, "rb") == 0 || strcmp(m_mode, "r") == 0,
@@ -72,6 +57,13 @@ bool file::seek(rx_u64 where) {
   RX_ASSERT(m_impl, "invalid");
   RX_ASSERT(strcmp(m_mode, "rb") == 0, "cannot seek with mode '%s'", m_mode);
   return fseek(static_cast<FILE*>(m_impl), static_cast<long>(where), SEEK_SET) == 0;
+}
+
+bool file::flush() {
+  RX_ASSERT(m_impl, "invalid");
+  RX_ASSERT(strcmp(m_mode, "w") == 0 || strcmp(m_mode, "wb") == 0,
+    "cannot flush with mode '%s'", m_mode);
+  return fflush(static_cast<FILE*>(m_impl)) == 0;
 }
 
 optional<rx_u64> file::size() {
@@ -93,17 +85,28 @@ optional<rx_u64> file::size() {
   return result;
 }
 
+bool file::close() {
+  if (m_impl) {
+    fclose(static_cast<FILE*>(m_impl));
+    m_impl = nullptr;
+    return true;
+  }
+  return false;
+}
+
+file& file::operator=(file&& file_) {
+  RX_ASSERT(&file_ != this, "self assignment");
+
+  close();
+  m_impl = file_.m_impl;
+  file_.m_impl = nullptr;
+  return *this;
+}
+
 bool file::print(string&& contents_) {
   RX_ASSERT(m_impl, "invalid");
   RX_ASSERT(strcmp(m_mode, "w") == 0, "cannot print with mode '%s'", m_mode);
   return fprintf(static_cast<FILE*>(m_impl), "%s", contents_.data()) > 0;
-}
-
-bool file::flush() {
-  RX_ASSERT(m_impl, "invalid");
-  RX_ASSERT(strcmp(m_mode, "w") == 0 || strcmp(m_mode, "wb") == 0,
-    "cannot flush with mode '%s'", m_mode);
-  return fflush(static_cast<FILE*>(m_impl)) == 0;
 }
 
 bool file::read_line(string& line_) {
@@ -170,6 +173,69 @@ optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const 
     return data;
   }
 
+  return nullopt;
+}
+
+static vector<rx_byte> convert_text_encoding(vector<rx_byte>&& data_) {
+  // Ensure the data contains a null-terminator.
+  if (data_.last() != 0) {
+    data_.push_back(0);
+  }
+
+  const bool utf16_le{data_.size() >= 2 && data_[0] == 0xFF && data_[1] == 0xFE};
+  const bool utf16_be{data_.size() >= 2 && data_[0] == 0xFE && data_[1] == 0xFF};
+  // UTF-16.
+  if (utf16_le || utf16_be) {
+    // Remove the BOM.
+    data_.erase(0, 2);
+
+    rx_u16* contents{reinterpret_cast<rx_u16*>(data_.data())};
+    const rx_size chars{data_.size() / 2};
+    if (utf16_be) {
+      // Swap the bytes around in the contents to convert BE to LE.
+      for (rx_size i{0}; i < chars; i++) {
+        contents[i] = (contents[i] >> 8) | (contents[i] << 8);
+      }
+    }
+
+    // Determine how many bytes are needed to convert the encoding.
+    const rx_size length{utf16_to_utf8(contents, chars, nullptr)};
+
+    // Convert UTF-16 to UTF-8.
+    vector<rx_byte> result{data_.allocator(), length};
+    utf16_to_utf8(contents, chars, reinterpret_cast<char*>(result.data()));
+    return result;
+  } else if (data_.size() >= 3 && data_[0] == 0xEF && data_[1] == 0xBB && data_[2] == 0xBF) {
+    // Remove the BOM.
+    data_.erase(0, 3);
+  }
+
+  return data_;
+}
+
+optional<vector<rx_byte>> read_text_file(memory::allocator* _allocator, const char* _file_name) {
+ if (auto result{read_binary_file(_allocator, _file_name)}) {
+    // Convert the given byte stream into a compatible UTF-8 encoding. This will
+    // introduce a null-terminator, strip Unicode BOMs and convert UTF-16
+    // encodings to UTF-8.
+    auto data{convert_text_encoding(utility::move(*result))};
+
+#if defined(RX_PLATFORM_WINDOWS)
+    // Only Windows has the odd choice of using CRLF for text files.
+
+    // Remove all instances of CR from the byte stream.
+    auto next{reinterpret_cast<rx_byte*>(memchr(data.data(), '\r', data.size()))};
+
+    // Leverage the use of optimized memchr to skip through large swaths of
+    // binary data quickly, rather than the more obvious per-byte approach here.
+    while (next) {
+      const rx_ptrdiff index{next - data.data()};
+      data.erase(index, index + 1);
+      next = reinterpret_cast<rx_byte*>(memchr(next + 1, '\r', data.size() - index));
+    }
+#endif
+    return data;
+  }
   return nullopt;
 }
 
