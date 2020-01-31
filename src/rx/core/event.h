@@ -2,6 +2,9 @@
 #define RX_CORE_EVENT_H
 #include "rx/core/function.h"
 
+#include "rx/core/concurrency/spin_lock.h"
+#include "rx/core/concurrency/scope_lock.h"
+
 namespace rx {
 
 template<typename T>
@@ -28,12 +31,15 @@ struct event<R(Ts...)> {
   void signal(Ts... _arguments);
   handle connect(delegate&& function_);
 
+  rx_size size() const;
+  bool is_empty() const;
+
   memory::allocator* allocator() const;
 
 private:
   friend struct handle;
-
-  vector<delegate> m_delegates;
+  concurrency::spin_lock m_lock;
+  vector<delegate> m_delegates; // protected by |m_lock|
 };
 
 template<typename R, typename... Ts>
@@ -55,6 +61,7 @@ inline constexpr event<R(Ts...)>::handle::handle(handle&& handle_)
 template<typename R, typename... Ts>
 inline event<R(Ts...)>::handle::~handle() {
   if (m_event) {
+    concurrency::scope_lock lock{m_event->m_lock};
     m_event->m_delegates[m_index] = nullptr;
   }
 }
@@ -73,6 +80,7 @@ inline constexpr event<R(Ts...)>::event()
 
 template<typename R, typename... Ts>
 inline void event<R(Ts...)>::signal(Ts... _arguments) {
+  concurrency::scope_lock lock{m_lock};
   m_delegates.each_fwd([&](delegate& _delegate) {
     if (_delegate) {
       _delegate(_arguments...);
@@ -82,6 +90,7 @@ inline void event<R(Ts...)>::signal(Ts... _arguments) {
 
 template<typename R, typename... Ts>
 inline typename event<R(Ts...)>::handle event<R(Ts...)>::connect(delegate&& delegate_) {
+  concurrency::scope_lock lock{m_lock};
   const rx_size delegates{m_delegates.size()};
   for (rx_size i{0}; i < delegates; i++) {
     if (!m_delegates[i]) {
@@ -90,6 +99,24 @@ inline typename event<R(Ts...)>::handle event<R(Ts...)>::connect(delegate&& dele
   }
   m_delegates.emplace_back(utility::move(delegate_));
   return {this, delegates};
+}
+
+template<typename R, typename... Ts>
+inline bool event<R(Ts...)>::is_empty() const {
+  return size() == 0;
+}
+
+template<typename R, typename... Ts>
+inline rx_size event<R(Ts...)>::size() const {
+  concurrency::scope_lock lock{m_lock};
+  // This is slightly annoying because |m_delegates| may have empty slots.
+  rx_size result = 0;
+  m_delegates.each_fwd([&](const delegate& delegate) {
+    if (delegate) {
+      result++;
+    }
+  });
+  return result;
 }
 
 template<typename R, typename... Ts>
