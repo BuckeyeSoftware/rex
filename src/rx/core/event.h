@@ -111,8 +111,8 @@ inline rx_size event<R(Ts...)>::size() const {
   concurrency::scope_lock lock{m_lock};
   // This is slightly annoying because |m_delegates| may have empty slots.
   rx_size result = 0;
-  m_delegates.each_fwd([&](const delegate& delegate) {
-    if (delegate) {
+  m_delegates.each_fwd([&](const delegate& _delegate) {
+    if (_delegate) {
       result++;
     }
   });
