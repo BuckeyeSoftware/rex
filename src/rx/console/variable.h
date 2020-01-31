@@ -144,7 +144,7 @@ inline variable_type variable_reference::type() const {
 
 template<typename T>
 struct variable {
-  using on_change_event = event<variable<T>&>;
+  using on_change_event = event<void(variable<T>&)>;
 
   variable(const char* _name, const char* _description, const T& _min,
     const T& _max, const T& _initial);
@@ -175,7 +175,7 @@ private:
 // specialization for boolean
 template<>
 struct variable<bool> {
-  using on_change_event = event<variable<bool>&>;
+  using on_change_event = event<void(variable<bool>&)>;
 
   variable(const char* _name, const char* _description, bool _initial);
 
@@ -203,7 +203,7 @@ private:
 // specialization for string
 template<>
 struct variable<string> {
-  using on_change_event = event<variable<string>&>;
+  using on_change_event = event<void(variable<string>&)>;
 
   variable(const char* _name, const char* _description, const char* _initial);
 
@@ -230,7 +230,7 @@ private:
 // specialization for vector types
 template<typename T>
 struct variable<vec2<T>> {
-  using on_change_event = event<variable<vec2<T>>&>;
+  using on_change_event = event<void(variable<vec2<T>>&)>;
 
   variable(const char* _name, const char* _description, const vec2<T>& _min,
     const vec2<T>& _max, const vec2<T>& _initial);
@@ -260,7 +260,7 @@ private:
 
 template<typename T>
 struct variable<vec3<T>> {
-  using on_change_event = event<variable<vec3<T>>&>;
+  using on_change_event = event<void(variable<vec3<T>>&)>;
 
   variable(const char* _name, const char* _description, const vec3<T>& _min,
     const vec3<T>& _max, const vec3<T>& _initial);
@@ -290,7 +290,7 @@ private:
 
 template<typename T>
 struct variable<vec4<T>> {
-  using on_change_event = event<variable<vec4<T>>&>;
+  using on_change_event = event<void(variable<vec4<T>>&)>;
 
   variable(const char* _name, const char* _description, const vec4<T>& _min,
     const vec4<T>& _max, const vec4<T>& _initial);

@@ -4,9 +4,12 @@
 
 namespace rx {
 
-template<typename... Ts>
-struct event {
-  using delegate = function<void(Ts...)>;
+template<typename T>
+struct event;
+
+template<typename R, typename... Ts>
+struct event<R(Ts...)> {
+  using delegate = function<R(Ts...)>;
 
   struct handle
     : concepts::no_copy
@@ -33,15 +36,15 @@ private:
   vector<delegate> m_delegates;
 };
 
-template<typename... Ts>
-inline constexpr event<Ts...>::handle::handle(event<Ts...>* _event, rx_size _index)
+template<typename R, typename... Ts>
+inline constexpr event<R(Ts...)>::handle::handle(event<R(Ts...)>* _event, rx_size _index)
   : m_event{_event}
   , m_index{_index}
 {
 }
 
-template<typename... Ts>
-inline constexpr event<Ts...>::handle::handle(handle&& handle_)
+template<typename R, typename... Ts>
+inline constexpr event<R(Ts...)>::handle::handle(handle&& handle_)
   : m_event{handle_.m_event}
   , m_index{handle_.m_index}
 {
@@ -49,27 +52,27 @@ inline constexpr event<Ts...>::handle::handle(handle&& handle_)
   handle_.m_index = 0;
 }
 
-template<typename... Ts>
-inline event<Ts...>::handle::~handle() {
+template<typename R, typename... Ts>
+inline event<R(Ts...)>::handle::~handle() {
   if (m_event) {
     m_event->m_delegates[m_index] = nullptr;
   }
 }
 
-template<typename... Ts>
-inline constexpr event<Ts...>::event(memory::allocator* _allocator)
+template<typename R, typename... Ts>
+inline constexpr event<R(Ts...)>::event(memory::allocator* _allocator)
   : m_delegates{_allocator}
 {
 }
 
-template<typename... Ts>
-inline constexpr event<Ts...>::event()
+template<typename R, typename... Ts>
+inline constexpr event<R(Ts...)>::event()
   : event{&memory::g_system_allocator}
 {
 }
 
-template<typename... Ts>
-inline void event<Ts...>::signal(Ts... _arguments) {
+template<typename R, typename... Ts>
+inline void event<R(Ts...)>::signal(Ts... _arguments) {
   m_delegates.each_fwd([&](delegate& _delegate) {
     if (_delegate) {
       _delegate(_arguments...);
@@ -77,8 +80,8 @@ inline void event<Ts...>::signal(Ts... _arguments) {
   });
 }
 
-template<typename... Ts>
-inline typename event<Ts...>::handle event<Ts...>::connect(delegate&& delegate_) {
+template<typename R, typename... Ts>
+inline typename event<R(Ts...)>::handle event<R(Ts...)>::connect(delegate&& delegate_) {
   const rx_size delegates{m_delegates.size()};
   for (rx_size i{0}; i < delegates; i++) {
     if (!m_delegates[i]) {
@@ -89,8 +92,8 @@ inline typename event<Ts...>::handle event<Ts...>::connect(delegate&& delegate_)
   return {this, delegates};
 }
 
-template<typename... Ts>
-inline memory::allocator* event<Ts...>::allocator() const {
+template<typename R, typename... Ts>
+inline memory::allocator* event<R(Ts...)>::allocator() const {
   return m_delegates.allocator();
 }
 
