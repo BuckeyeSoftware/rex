@@ -61,6 +61,9 @@ struct json {
   string as_string() const;
   string as_string_with_allocator(memory::allocator* _allocator) const;
 
+  template<typename T>
+  T decode(const T& _default) const;
+
   // # of elements for objects and arrays only
   rx_size size() const;
   bool is_empty() const;
@@ -71,6 +74,15 @@ struct json {
   memory::allocator* allocator() const;
 
 private:
+  template<typename C>
+  struct detect_from_json {
+    template<typename T> static rx_u8 test(decltype(&T::from_json));
+    template<typename T> static rx_u16 test(...);
+  };
+
+  template<typename T>
+  static inline bool has_from_json = sizeof(detect_from_json<T>::test(0)) == 1;
+
   struct shared {
     shared(memory::allocator* _allocator, const char* _contents, rx_size _length);
     ~shared();
@@ -217,6 +229,27 @@ inline bool json::is_empty() const {
 
 inline string json::as_string() const {
   return as_string_with_allocator(&memory::g_system_allocator);
+}
+
+template<typename T>
+inline T json::decode(const T& _default) const {
+  if constexpr(traits::is_same<T, rx_f32> || traits::is_same<T, rx_f64>) {
+    if (is_number()) {
+      return as_number();
+    }
+  } else if constexpr(traits::is_same<T, rx_s32>) {
+    if (is_integer()) {
+      return as_integer();
+    }
+  } else if constexpr(traits::is_same<T, string>) {
+    if (is_string()) {
+      return as_string();
+    }
+  } else if constexpr(has_from_json<T>) {
+    return T::from_json(*this);
+  }
+
+  return _default;
 }
 
 template<typename F>
