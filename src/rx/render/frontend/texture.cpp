@@ -149,9 +149,9 @@ void texture1D::record_dimensions(const dimension_type& _dimensions) {
 
   dimension_type dimensions{m_dimensions};
   rx_size offset{0};
-  const auto bpp{byte_size_of_format(m_format)};
+  const auto bpp{bits_per_pixel(m_format)};
   for (rx_size i{0}; i < m_levels; i++) {
-    const auto size{static_cast<rx_size>(dimensions * bpp)};
+    const auto size{static_cast<rx_size>(dimensions * bpp / 8)};
     m_level_info.push_back({offset, size, dimensions});
     offset += size;
     dimensions = algorithm::max(dimensions / 2, 1_z);
@@ -227,9 +227,9 @@ void texture2D::record_dimensions(const math::vec2z& _dimensions) {
 
   dimension_type dimensions{m_dimensions};
   rx_size offset{0};
-  const auto bpp{byte_size_of_format(m_format)};
+  const auto bpp{bits_per_pixel(m_format)};
   for (rx_size i{0}; i < m_levels; i++) {
-    const auto size{static_cast<rx_size>(dimensions.area() * bpp)};
+    const auto size{static_cast<rx_size>(dimensions.area() * bpp / 8)};
     m_level_info.push_back({offset, size, dimensions});
     offset += size;
     dimensions = dimensions.map([](rx_size _dim) {
@@ -304,9 +304,9 @@ void texture3D::record_dimensions(const math::vec3z& _dimensions) {
 
   dimension_type dimensions{m_dimensions};
   rx_size offset{0};
-  const auto bpp{byte_size_of_format(m_format)};
+  const auto bpp{bits_per_pixel(m_format)};
   for (rx_size i{0}; i < m_levels; i++) {
-    const auto size{static_cast<rx_size>(dimensions.area() * bpp)};
+    const auto size{static_cast<rx_size>(dimensions.area() * bpp / 8)};
     m_level_info.push_back({offset, size, dimensions});
     offset += size;
     dimensions = dimensions.map([](rx_size _dim) {
@@ -385,9 +385,9 @@ void textureCM::record_dimensions(const math::vec2z& _dimensions) {
 
   dimension_type dimensions{m_dimensions};
   rx_size offset{0};
-  const auto bpp{byte_size_of_format(m_format)};
+  const auto bpp{bits_per_pixel(m_format)};
   for (rx_size i{0}; i < m_levels; i++) {
-    const auto size{static_cast<rx_size>(dimensions.area() * bpp * 6)};
+    const auto size{static_cast<rx_size>(dimensions.area() * bpp / 8 * 6)};
     m_level_info.push_back({offset, size, dimensions});
     offset += size;
     dimensions = dimensions.map([](rx_size _dim) {

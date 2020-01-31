@@ -69,7 +69,7 @@ struct texture
 
   // get byte size for one pixel of |_format|
   // NOTE: can be fractional for compressed block formats
-  static rx_f32 byte_size_of_format(data_format _format);
+  static rx_size bits_per_pixel(data_format _format);
 
   // get channel count of |_format|
   static rx_size channel_count_of_format(data_format _format);
@@ -375,44 +375,44 @@ inline bool texture::is_level_in_range(rx_size _level) const {
   return _level < m_levels;
 }
 
-inline rx_f32 texture::byte_size_of_format(data_format _format) {
+inline rx_size texture::bits_per_pixel(data_format _format) {
   switch (_format) {
   case data_format::k_rgba_u8:
-    return 4.0f;
+    return 4 * 8;
   case data_format::k_rgb_u8:
-    return 3.0f;
+    return 3 * 8;
   case data_format::k_bgra_u8:
-    return 4.0f;
+    return 4 * 8;
   case data_format::k_bgr_u8:
-    return 3.0f;
+    return 3 * 8;
   case data_format::k_rgba_f16:
-    return 8.0f;
+    return 4 * 16;
   case data_format::k_bgra_f16:
-    return 8.0f;
+    return 4 * 16;
   case data_format::k_d16:
-    return 2.0f;
+    return 16;
   case data_format::k_d24:
-    return 3.0f;
+    return 24;
   case data_format::k_d32:
-    return 4.0f;
+    return 32;
   case data_format::k_d32f:
-    return 4.0f;
+    return 32;
   case data_format::k_d24_s8:
-    return 4.0f;
+    return 32;
   case data_format::k_d32f_s8:
-    return 5.0f;
+    return 40;
   case data_format::k_s8:
-    return 1.0f;
+    return 8;
   case data_format::k_r_u8:
-    return 1.0f;
+    return 8;
   case data_format::k_dxt1:
-    return 0.5f;
+    return 4;
   case data_format::k_dxt5:
-    return 1.0f;
+    return 8;
   case data_format::k_srgb_u8:
-    return 3.0f;
+    return 24;
   case data_format::k_srgba_u8:
-    return 4.0f;
+    return 32;
   }
   return 0;
 }
