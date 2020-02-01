@@ -35,47 +35,44 @@ void indirect_lighting_pass::render(const math::camera& _camera) {
   program->uniforms()[6].record_mat4x4f(math::mat4x4f::invert(_camera.view() * _camera.projection));
   program->uniforms()[7].record_vec3f(_camera.translate);
 
+
+  frontend::buffers draw_buffers;
+  draw_buffers.add(0);
+
   m_frontend->clear(
     RX_RENDER_TAG("indirect lighting pass"),
     state,
     m_target,
-    "0",
+    draw_buffers,
     RX_RENDER_CLEAR_COLOR(0),
     math::vec4f{0.0f, 0.0f, 0.0f, 1.0f}.data());
 
-  // Only apply indirect lighting to areas in the stencil filled with 1s
-  // glEnable(GL_STENCIL_TEST)
-  // state.stencil.record_enable(false);
+  state.stencil.record_enable(true);
 
-  // glStencilFunc(GL_EQUAL, 1, 0xFF)
-  // state.stencil.record_function(render::frontend::stencil_state::function_type::k_equal);
-  // state.stencil.record_reference(1);
-  // state.stencil.record_mask(0xff);
+  // StencilFunc(GL_EQUAL, 1, 0xFF)
+  state.stencil.record_function(render::frontend::stencil_state::function_type::k_equal);
+  state.stencil.record_reference(1);
+  state.stencil.record_mask(0xFF);
 
-  // glStencilMask(0x00)
-  // state.stencil.record_write_mask(0x00);
-
-  // state.stencil.record_fail_action(render::frontend::stencil_state::operation_type::k_keep);
-  // state.stencil.record_depth_fail_action(render::frontend::stencil_state::operation_type::k_keep);
-  // state.stencil.record_depth_pass_action(render::frontend::stencil_state::operation_type::k_replace);
+  frontend::textures draw_textures;
+  draw_textures.add(m_gbuffer->albedo());
+  draw_textures.add(m_gbuffer->normal());
+  draw_textures.add(m_gbuffer->depth_stencil());
+  draw_textures.add(m_ibl->irradiance());
+  draw_textures.add(m_ibl->prefilter());
+  draw_textures.add(m_ibl->scale_bias());
 
   m_frontend->draw(
     RX_RENDER_TAG("indirect lighting pass"),
     state,
     m_target,
-    "0",
+    draw_buffers,
     nullptr,
     program,
     3,
     0,
     render::frontend::primitive_type::k_triangles,
-    "222cc2",
-    m_gbuffer->albedo(),
-    m_gbuffer->normal(),
-    m_gbuffer->depth_stencil(),
-    m_ibl->irradiance(),
-    m_ibl->prefilter(),
-    m_ibl->scale_bias());
+    draw_textures);
 }
 
 void indirect_lighting_pass::resize(const math::vec2z& _dimensions) {

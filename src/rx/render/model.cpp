@@ -115,15 +115,42 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
   profiler::gpu_sample gpu_sample{"model::render"};
 
   frontend::state state;
+
+  // Enable(DEPTH_TEST)
   state.depth.record_test(true);
-  state.depth.record_write(true);
 
+  // Enable(STENCIL_TEST)
+  state.stencil.record_enable(true);
+
+  // Enable(CULL_FACE)
   state.cull.record_enable(true);
-  state.cull.record_front_face(frontend::cull_state::front_face_type::k_clock_wise);
-  state.cull.record_cull_face(frontend::cull_state::cull_face_type::k_back);
 
+  // Disable(BLEND)
   state.blend.record_enable(false);
 
+  // FrontFace(CW)
+  state.cull.record_front_face(frontend::cull_state::front_face_type::k_clock_wise);
+
+  // CullFace(BACK)
+  state.cull.record_cull_face(frontend::cull_state::cull_face_type::k_back);
+
+  // DepthMask(TRUE)
+  state.depth.record_write(true);
+
+  // StencilFunc(ALWAYS, 1, 0xFF)
+  state.stencil.record_function(frontend::stencil_state::function_type::k_always);
+  state.stencil.record_reference(1);
+  state.stencil.record_mask(0xFF);
+
+  // StencilMask(0xFF)
+  state.stencil.record_write_mask(0xFF);
+
+  // StencilOp(KEEP, REPLACE, REPLACE)
+  state.stencil.record_fail_action(frontend::stencil_state::operation_type::k_keep);
+  state.stencil.record_depth_fail_action(frontend::stencil_state::operation_type::k_replace);
+  state.stencil.record_depth_pass_action(frontend::stencil_state::operation_type::k_replace);
+
+  // Viewport(0, 0, w, h)
   state.viewport.record_dimensions(_target->dimensions());
 
   m_opaque_meshes.each_fwd([&](const mesh& _mesh) {
@@ -163,39 +190,35 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
     uniforms[5].record_vec2f({material.roughness_value(), material.metalness_value()});
 
     // Record all the textures.
-    frontend::draw_textures textures;
-    if (material.albedo())    uniforms[ 6].record_sampler(textures.add(material.albedo()));
-    if (material.normal())    uniforms[ 7].record_sampler(textures.add(material.normal()));
-    if (material.metalness()) uniforms[ 8].record_sampler(textures.add(material.metalness()));
-    if (material.roughness()) uniforms[ 9].record_sampler(textures.add(material.roughness()));
-    if (material.ambient())   uniforms[10].record_sampler(textures.add(material.ambient()));
-    if (material.emissive())  uniforms[11].record_sampler(textures.add(material.emissive()));
+    frontend::textures draw_textures;
+    if (material.albedo())    uniforms[ 6].record_sampler(draw_textures.add(material.albedo()));
+    if (material.normal())    uniforms[ 7].record_sampler(draw_textures.add(material.normal()));
+    if (material.metalness()) uniforms[ 8].record_sampler(draw_textures.add(material.metalness()));
+    if (material.roughness()) uniforms[ 9].record_sampler(draw_textures.add(material.roughness()));
+    if (material.ambient())   uniforms[10].record_sampler(draw_textures.add(material.ambient()));
+    if (material.emissive())  uniforms[11].record_sampler(draw_textures.add(material.emissive()));
+
+    // Record all the draw buffers.
+    frontend::buffers draw_buffers;
+    draw_buffers.add(0);
+    draw_buffers.add(1);
+    draw_buffers.add(2);
+    draw_buffers.add(3);
 
     // Disable backface culling for alpha-tested geometry.
     state.cull.record_enable(!material.alpha_test());
-
-    void* const* handles{textures.handles()};
 
     m_frontend->draw(
       RX_RENDER_TAG("model mesh"),
       state,
       _target,
-      "0123",
+      draw_buffers,
       m_buffer,
       program,
       _mesh.count,
       _mesh.offset,
       render::frontend::primitive_type::k_triangles,
-      textures.specification(),
-      handles[0],
-      handles[1],
-      handles[2],
-      handles[3],
-      handles[4],
-      handles[5],
-      handles[6],
-      handles[7],
-      handles[8]);
+      draw_textures);
 
     return true;
   });

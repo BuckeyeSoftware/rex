@@ -502,21 +502,19 @@ void interface::draw(
   const command_header::info& _info,
   const state& _state,
   target* _target,
-  const char* _draw_buffers,
+  const buffers& _draw_buffers,
   buffer* _buffer,
   program* _program,
   rx_size _count,
   rx_size _offset,
   primitive_type _primitive_type,
-  const char* _textures,
-  ...)
+  const textures& _draw_textures)
 {
   RX_ASSERT(_state.viewport.dimensions().area() > 0, "empty viewport");
 
-  RX_ASSERT(_draw_buffers, "misisng draw buffers");
+  RX_ASSERT(!_draw_buffers.is_empty(), "missing draw buffers");
   RX_ASSERT(_program, "expected program");
   RX_ASSERT(_count != 0, "empty draw call");
-  RX_ASSERT(_textures, "expected textures");
 
   if (!_buffer) {
     RX_ASSERT(_offset == 0, "bufferless draws cannot have an offset");
@@ -545,43 +543,25 @@ void interface::draw(
 
     auto command_base{m_command_buffer.allocate(sizeof(draw_command) + dirty_uniforms_size, command_type::k_draw, _info)};
     auto command{reinterpret_cast<draw_command*>(command_base + sizeof(command_header))};
-    *reinterpret_cast<state*>(command) = _state;
-    reinterpret_cast<state*>(command)->flush();
+
+    command->draw_buffers = _draw_buffers;
+    command->draw_textures = _draw_textures;
+
+    command->render_state = _state;
     command->render_target = _target;
     command->render_buffer = _buffer;
     command->render_program = _program;
+
     command->count = _count;
     command->offset = _offset;
     command->type = _primitive_type;
     command->dirty_uniforms_bitset = _program->dirty_uniforms_bitset();
 
+    command->render_state.flush();
+
     // Copy the uniforms directly into the command.
     if (dirty_uniforms_size) {
       _program->flush_dirty_uniforms(command->uniforms());
-    }
-
-    // Decode the draw buffers into the command.
-    command->draw_buffers.index = 0;
-    for (const char* draw_buffer{_draw_buffers}; *draw_buffer; draw_buffer++) {
-      command->draw_buffers.add(*draw_buffer - '0');
-    }
-
-    // Copy and decode textures into the command.
-    if (*_textures) {
-      va_list va;
-      va_start(va, _textures);
-      for (rx_size i{0}; i < draw_command::k_max_textures; i++) {
-        if (const int ch{_textures[i]}; ch != '\0') {
-          command->texture_types[i] = ch;
-          command->texture_binds[i] = va_arg(va, void*);
-        } else {
-          command->texture_types[i] = '\0';
-          break;
-        }
-      }
-      va_end(va);
-    } else {
-      command->texture_types[0] = '\0';
     }
 
     m_commands.push_back(command_base);
@@ -594,14 +574,14 @@ void interface::clear(
   const command_header::info& _info,
   const state& _state,
   target* _target,
-  const char* _draw_buffers,
+  const buffers& _draw_buffers,
   rx_u32 _clear_mask,
   ...)
 {
   RX_ASSERT(_state.viewport.dimensions().area() > 0, "empty viewport");
 
   RX_ASSERT(_target, "expected target");
-  RX_ASSERT(_draw_buffers, "expected draw buffers");
+  RX_ASSERT(!_draw_buffers.is_empty(), "expected draw buffers");
   RX_ASSERT(_clear_mask != 0, "empty clear");
 
   const bool clear_depth{!!(_clear_mask & RX_RENDER_CLEAR_DEPTH)};
@@ -614,19 +594,15 @@ void interface::clear(
 
     auto command_base{allocate_command(draw_command, command_type::k_clear)};
     auto command{reinterpret_cast<clear_command*>(command_base + sizeof(command_header))};
-    *reinterpret_cast<state*>(command) = _state;
-    reinterpret_cast<state*>(command)->flush();
 
+    command->render_state = _state;
     command->render_target = _target;
     command->clear_depth = clear_depth;
     command->clear_stencil = clear_stencil;
     command->clear_colors = _clear_mask;
+    command->draw_buffers = _draw_buffers;
 
-    // Decode the draw buffers into the command.
-    memset(&command->draw_buffers, 0, sizeof command->draw_buffers);
-    for (const char* draw_buffer{_draw_buffers}; *draw_buffer; draw_buffer++) {
-      command->draw_buffers.add(*draw_buffer - '0');
-    }
+    command->render_state.flush();
 
     // Decode and copy the clear values into the command.
     va_list va;
@@ -716,13 +692,14 @@ void interface::blit(
 
     auto command_base{allocate_command(blit_command, command_type::k_blit)};
     auto command{reinterpret_cast<blit_command*>(command_base + sizeof(command_header))};
-    *reinterpret_cast<state*>(command) = _state;
-    reinterpret_cast<state*>(command)->flush();
 
+    command->render_state = _state;
     command->src_target = _src_target;
     command->src_attachment = _src_attachment;
     command->dst_target = _dst_target;
     command->dst_attachment = _dst_attachment;
+
+    command->render_state.flush();
 
     m_commands.push_back(command_base);
   }

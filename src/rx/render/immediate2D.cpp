@@ -565,47 +565,54 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
 
       _batch.render_state.viewport.record_dimensions(_target->dimensions());
 
+      frontend::buffers draw_buffers;
+      draw_buffers.add(0);
+
+      frontend::textures draw_textures;
+
       switch (_batch.kind) {
       case batch::type::k_triangles:
         m_frontend->draw(
           RX_RENDER_TAG("immediate2D triangles"),
           _batch.render_state,
           _target,
-          "0",
+          draw_buffers,
           m_buffers[m_rd_index],
           m_technique->variant(0),
           _batch.count,
           _batch.offset,
           frontend::primitive_type::k_triangles,
-          "");
+          {});
           break;
       case batch::type::k_lines:
         m_frontend->draw(
           RX_RENDER_TAG("immediate2D lines"),
           _batch.render_state,
           _target,
-          "0",
+          draw_buffers,
           m_buffers[m_rd_index],
           m_technique->variant(0),
           _batch.count,
           _batch.offset,
           frontend::primitive_type::k_lines,
-          "");
+          {});
           break;
       case batch::type::k_text:
+        draw_textures.clear();
+        draw_textures.add(_batch.texture);
+
         m_frontend->draw(
           RX_RENDER_TAG("immediate2D text"),
           _batch.render_state,
           _target,
-          "0",
+          draw_buffers,
           m_buffers[m_rd_index],
           m_technique->variant(1),
           _batch.count,
           _batch.offset,
           frontend::primitive_type::k_triangles,
-          "2",
-          _batch.texture);
-          break;
+          draw_textures);
+        break;
       default:
         break;
       }

@@ -305,6 +305,9 @@ void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
     m_render_batches[m_rd_index].each_fwd([&](batch& _batch) {
       _batch.render_state.viewport.record_dimensions(_target->dimensions());
 
+      frontend::buffers draw_buffers;
+      draw_buffers.add(0);
+
       switch (_batch.kind) {
       case queue::command::type::k_uninitialized:
         RX_HINT_UNREACHABLE();
@@ -314,26 +317,26 @@ void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
           RX_RENDER_TAG("immediate3D points"),
           _batch.render_state,
           _target,
-          "0",
+          draw_buffers,
           m_buffers[m_rd_index],
           m_technique->variant(1),
           _batch.count,
           _batch.offset,
           frontend::primitive_type::k_points,
-          "");
+          {});
         break;
       case queue::command::type::k_line:
         m_frontend->draw(
           RX_RENDER_TAG("immediate3D lines"),
           _batch.render_state,
           _target,
-          "0",
+          draw_buffers,
           m_buffers[m_rd_index],
           m_technique->variant(0),
           _batch.count,
           _batch.offset,
           frontend::primitive_type::k_lines,
-          "");
+          {});
         break;
       case queue::command::type::k_solid_sphere:
         [[fallthrough]];
@@ -342,13 +345,13 @@ void immediate3D::render(frontend::target* _target, const math::mat4x4f& _view,
           RX_RENDER_TAG("immediate3D triangles"),
           _batch.render_state,
           _target,
-          "0",
+          draw_buffers,
           m_buffers[m_rd_index],
           m_technique->variant(0),
           _batch.count,
           _batch.offset,
           frontend::primitive_type::k_triangles,
-          "");
+          {});
         break;
       }
     });

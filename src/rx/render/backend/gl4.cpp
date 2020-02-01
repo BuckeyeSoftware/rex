@@ -189,8 +189,6 @@ namespace detail_gl4 {
     target()
       : owned{true}
     {
-      memset(&draw_buffers, 0, sizeof draw_buffers);
-      memset(&read_buffers, 0, sizeof read_buffers);
       pglCreateFramebuffers(1, &fbo);
     }
 
@@ -572,12 +570,12 @@ namespace detail_gl4 {
         auto this_target{reinterpret_cast<target*>(_render_target + 1)};
         // The draw buffers changed.
         if (this_target->draw_buffers != *_draw_buffers) {
-          if (_draw_buffers->index == 0) {
+          if (_draw_buffers->is_empty()) {
             pglNamedFramebufferDrawBuffer(this_target->fbo, GL_NONE);
           } else {
             vector<GLenum> draw_buffers;
-            for (rx_u8 i{0}; i < _draw_buffers->index; i++) {
-              draw_buffers.push_back(GL_COLOR_ATTACHMENT0 + _draw_buffers->elements[i]);
+            for (rx_size i{0}; i < _draw_buffers->size(); i++) {
+              draw_buffers.push_back(GL_COLOR_ATTACHMENT0 + (*_draw_buffers)[i]);
             }
             pglNamedFramebufferDrawBuffers(
               this_target->fbo,
@@ -683,7 +681,7 @@ namespace detail_gl4 {
     GLuint m_bound_program;
 
     GLuint m_swap_chain_fbo;
-    texture_unit m_texture_units[frontend::draw_command::k_max_textures];
+    texture_unit m_texture_units[frontend::textures::k_max_textures];
 
     SDL_GLContext m_context;
   };
@@ -1624,7 +1622,7 @@ void gl4::process(rx_byte* _command) {
       profile_sample sample{"clear"};
 
       const auto command{reinterpret_cast<frontend::clear_command*>(header + 1)};
-      const auto render_state{reinterpret_cast<frontend::state*>(command)};
+      const auto render_state{&command->render_state};
       const auto render_target{command->render_target};
       const auto this_target{reinterpret_cast<detail_gl4::target*>(render_target + 1)};
       const bool clear_depth{command->clear_depth};
@@ -1667,7 +1665,7 @@ void gl4::process(rx_byte* _command) {
       profile_sample sample{"draw"};
 
       const auto command{reinterpret_cast<frontend::draw_command*>(header + 1)};
-      const auto render_state{reinterpret_cast<frontend::state*>(command)};
+      const auto render_state{&command->render_state};
       const auto render_target{command->render_target};
       const auto render_buffer{command->render_buffer};
       const auto render_program{command->render_program};
@@ -1760,26 +1758,23 @@ void gl4::process(rx_byte* _command) {
       }
 
       // apply any textures
-      for (rx_size i{0}; i < frontend::draw_command::k_max_textures; i++) {
-        const int ch{command->texture_types[i]};
-        if (ch == '\0') {
-          break;
-        }
-        switch (ch) {
-        case '1':
-          state->use_texture(reinterpret_cast<frontend::texture1D*>(command->texture_binds[i]), i);
-          break;
-        case '2':
-          state->use_texture(reinterpret_cast<frontend::texture2D*>(command->texture_binds[i]), i);
-          break;
-        case '3':
-          state->use_texture(reinterpret_cast<frontend::texture3D*>(command->texture_binds[i]), i);
-          break;
-        case 'c':
-          state->use_texture(reinterpret_cast<frontend::textureCM*>(command->texture_binds[i]), i);
-          break;
-        default:
-          break;
+      for (rx_size i{0}; i < command->draw_textures.size(); i++) {
+        frontend::texture* texture{command->draw_textures[i]};
+        switch (texture->resource_type()) {
+          case frontend::resource::type::k_texture1D:
+            state->use_texture(static_cast<frontend::texture1D*>(texture), i);
+            break;
+          case frontend::resource::type::k_texture2D:
+            state->use_texture(static_cast<frontend::texture2D*>(texture), i);
+            break;
+          case frontend::resource::type::k_texture3D:
+            state->use_texture(static_cast<frontend::texture3D*>(texture), i);
+            break;
+          case frontend::resource::type::k_textureCM:
+            state->use_texture(static_cast<frontend::textureCM*>(texture), i);
+            break;
+          default:
+            RX_HINT_UNREACHABLE();
         }
       }
 
@@ -1826,7 +1821,7 @@ void gl4::process(rx_byte* _command) {
       profile_sample sample{"blit"};
 
       const auto command{reinterpret_cast<frontend::blit_command*>(header + 1)};
-      const auto render_state{reinterpret_cast<frontend::state*>(command)};
+      const auto render_state{&command->render_state};
 
       // TODO(dweiler): optimize use_state to only consider the things that matter
       // during a blit operation:

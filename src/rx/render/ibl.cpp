@@ -40,17 +40,20 @@ ibl::ibl(frontend::interface* _frontend)
   state.viewport.record_dimensions(target->dimensions());
   state.cull.record_enable(false);
 
+  frontend::buffers draw_buffers;
+  draw_buffers.add(0);
+
   m_frontend->draw(
     RX_RENDER_TAG("ibl: scale bias"),
     state,
     target,
-    "0",
+    draw_buffers,
     nullptr,
     *scale_bias_technique,
     3,
     0,
     frontend::primitive_type::k_triangles,
-    "");
+    {});
 
   m_frontend->destroy_target(RX_RENDER_TAG("ibl: scale bias"), target);
 }
@@ -110,18 +113,28 @@ void ibl::render(frontend::textureCM* _environment, rx_size _irradiance_map_size
     state.viewport.record_dimensions(target->dimensions());
     state.cull.record_enable(false);
 
+    frontend::buffers draw_buffers;
+    draw_buffers.add(0);
+    draw_buffers.add(1);
+    draw_buffers.add(2);
+    draw_buffers.add(3);
+    draw_buffers.add(4);
+    draw_buffers.add(5);
+
+    frontend::textures draw_textures;
+    draw_textures.add(_environment);
+
     m_frontend->draw(
       RX_RENDER_TAG("irradiance map"),
       state,
       target,
-      "012345",
+      draw_buffers,
       nullptr,
       program,
       3,
       0,
       frontend::primitive_type::k_triangles,
-      "c",
-      _environment);
+      draw_textures);
 
     m_frontend->destroy_target(RX_RENDER_TAG("ibl: irradiance"), target);
   }
@@ -141,18 +154,28 @@ void ibl::render(frontend::textureCM* _environment, rx_size _irradiance_map_size
       state.viewport.record_dimensions(target->dimensions());
       state.cull.record_enable(false);
 
+      frontend::buffers draw_buffers;
+      draw_buffers.add(0);
+      draw_buffers.add(1);
+      draw_buffers.add(2);
+      draw_buffers.add(3);
+      draw_buffers.add(4);
+      draw_buffers.add(5);
+
+      frontend::textures draw_textures;
+      draw_textures.add(_environment);
+
       m_frontend->draw(
         RX_RENDER_TAG("ibl: prefilter"),
         state,
         target,
-        "012345",
+        draw_buffers,
         nullptr,
         program,
         3,
         0,
         frontend::primitive_type::k_triangles,
-        "c",
-        _environment);
+        draw_textures);
 
       m_frontend->destroy_target(RX_RENDER_TAG("ibl: prefilter"), target);
     }

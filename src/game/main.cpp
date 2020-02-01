@@ -189,11 +189,17 @@ struct test_game
     render::frontend::state state;
     state.viewport.record_dimensions(display_resolution->get().cast<rx_size>());
 
+    render::frontend::buffers draw_buffers;
+    draw_buffers.add(0);
+    draw_buffers.add(1);
+    draw_buffers.add(2);
+    draw_buffers.add(3);
+
     m_frontend.clear(
       RX_RENDER_TAG("gbuffer"),
       state,
       m_gbuffer.target(),
-      "0123",
+      draw_buffers,
       RX_RENDER_CLEAR_DEPTH |
       RX_RENDER_CLEAR_STENCIL |
       RX_RENDER_CLEAR_COLOR(0) |

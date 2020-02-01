@@ -82,18 +82,31 @@ void skybox::render(frontend::target* _target, const math::mat4x4f& _view,
 
   state.viewport.record_dimensions(_target->dimensions());
 
+  // glStencilFunc(GL_EQUAL, 0, 0xFF);
+  state.stencil.record_enable(true);
+  state.stencil.record_function(frontend::stencil_state::function_type::k_equal);
+  state.stencil.record_reference(0);
+  state.stencil.record_mask(0xFF);
+
+  // Record all textures.
+  frontend::textures draw_textures;
+  draw_textures.add(m_texture);
+
+  // Record all draw buffers.
+  frontend::buffers draw_buffers;
+  draw_buffers.add(0);
+
   m_frontend->draw(
       RX_RENDER_TAG("skybox"),
       state,
       _target,
-      "0",
+      draw_buffers,
       m_buffer,
       program,
       36,
       0,
       frontend::primitive_type::k_triangles,
-      "c",
-      m_texture);
+      draw_textures);
 }
 
 bool skybox::load(const string& _file_name) {

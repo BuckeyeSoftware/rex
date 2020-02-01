@@ -3,6 +3,7 @@
 #include "rx/render/frontend/state.h"
 
 #include "rx/core/memory/bump_point_allocator.h"
+#include "rx/core/utility/nat.h"
 
 #include "rx/math/vec4.h"
 
@@ -11,6 +12,7 @@ namespace rx::render::frontend {
 struct target;
 struct buffer;
 struct program;
+struct texture;
 struct texture1D;
 struct texture2D;
 struct texture3D;
@@ -75,34 +77,62 @@ private:
   memory::bump_point_allocator m_allocator;
 };
 
-inline rx_size command_buffer::used() const {
-  return m_allocator.used();
-}
-
-inline rx_size command_buffer::size() const {
-  return m_allocator.size();
-}
-
 struct buffers {
+  constexpr buffers();
+
   static constexpr rx_size k_max_buffers{8};
-  rx_u8 elements[k_max_buffers];
-  rx_u8 index;
-  void add(rx_u8 _buffer);
+
+  void add(int _buffer);
+
   bool operator==(const buffers& _buffers) const;
   bool operator!=(const buffers& _buffers) const;
+
+  rx_size size() const;
+  bool is_empty() const;
+
+  int operator[](rx_size _index) const;
+  int last() const;
+
+private:
+  union {
+    utility::nat m_nat;
+    int m_elements[k_max_buffers];
+  };
+  rx_size m_index;
 };
 
-struct draw_command : state {
+struct textures {
   static constexpr const rx_size k_max_textures{8};
 
+  constexpr textures();
+
+  template<typename T>
+  int add(T* _texture);
+
+  bool is_empty() const;
+  rx_size size() const;
+
+  void clear();
+
+  texture* operator[](rx_size _index) const;
+
+private:
+  union {
+    utility::nat m_nat;
+    void* m_handles[k_max_textures];
+  };
+  rx_size m_index;
+};
+
+struct draw_command {
+  buffers draw_buffers;
+  textures draw_textures;
+  state render_state;
   target* render_target;
   buffer* render_buffer;
   program* render_program;
   rx_size count;
   rx_size offset;
-  buffers draw_buffers;
-  char texture_types[k_max_textures + 1];
-  void* texture_binds[k_max_textures + 1];
   primitive_type type;
   rx_u64 dirty_uniforms_bitset;
 
@@ -110,48 +140,10 @@ struct draw_command : state {
   rx_byte* uniforms();
 };
 
-inline void buffers::add(rx_u8 _buffer) {
-  RX_ASSERT(index < sizeof elements / sizeof *elements,
-    "too many draw buffers (%d >= %d)", static_cast<int>(index),
-    static_cast<int>(sizeof elements / sizeof *elements));
-
-  elements[index++] = _buffer;
-}
-
-inline bool buffers::operator==(const buffers& _buffers) const {
-  // Comparing buffers is approximate and not exact. When we share
-  // a common initial sequence of elements we compare equal provided
-  // the sequence length isn't larger than ours.
-  if (_buffers.index > index) {
-    return false;
-  }
-
-  for (rx_u8 i{0}; i < index; i++) {
-    if (_buffers.elements[i] != elements[i]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-inline bool buffers::operator!=(const buffers& _buffers) const {
-  return !operator==(_buffers);
-}
-
-inline const rx_byte* draw_command::uniforms() const {
-  // NOTE: standard permits aliasing with char (rx_byte)
-  return reinterpret_cast<const rx_byte*>(this) + sizeof *this;
-}
-
-inline rx_byte* draw_command::uniforms() {
-  // NOTE: standard permits aliasing with char (rx_byte)
-  return reinterpret_cast<rx_byte*>(this) + sizeof *this;
-}
-
-struct clear_command : state {
-  target* render_target;
+struct clear_command {
   buffers draw_buffers;
+  state render_state;
+  target* render_target;
   bool clear_depth;
   bool clear_stencil;
   rx_u32 clear_colors;
@@ -160,7 +152,8 @@ struct clear_command : state {
   math::vec4f color_values[buffers::k_max_buffers];
 };
 
-struct blit_command : state {
+struct blit_command {
+  state render_state;
   target* src_target;
   rx_size src_attachment;
   target* dst_target;
@@ -239,6 +232,115 @@ struct update_command {
   rx_size* edit();
 };
 
+// command_buffer
+inline rx_size command_buffer::used() const {
+  return m_allocator.used();
+}
+
+inline rx_size command_buffer::size() const {
+  return m_allocator.size();
+}
+
+// textures
+inline constexpr textures::textures()
+  : m_nat{}
+  , m_index{0}
+{
+}
+
+template<typename T>
+inline int textures::add(T* _texture) {
+  static_assert(
+    traits::is_same<T, texture1D> ||
+    traits::is_same<T, texture2D> ||
+    traits::is_same<T, texture3D> ||
+    traits::is_same<T, textureCM>,
+    "|_texture| isn't a texture pointer");
+
+  RX_ASSERT(m_index < k_max_textures, "too many draw textures");
+  m_handles[m_index] = static_cast<void*>(_texture);
+  return static_cast<int>(m_index++);
+}
+
+inline bool textures::is_empty() const {
+  return m_index == 0;
+}
+
+inline rx_size textures::size() const {
+  return m_index;
+}
+
+inline void textures::clear() {
+  m_index = 0;
+}
+
+inline texture* textures::operator[](rx_size _index) const {
+  RX_ASSERT(_index < k_max_textures, "out of bounds");
+  return reinterpret_cast<texture*>(m_handles[_index]);
+}
+
+// buffers
+inline constexpr buffers::buffers()
+  : m_nat{}
+  , m_index{0}
+{
+}
+
+inline void buffers::add(int _buffer) {
+  RX_ASSERT(m_index < k_max_buffers, "too many draw buffers");
+  m_elements[m_index++] = _buffer;
+}
+
+inline bool buffers::operator==(const buffers& _buffers) const {
+  // Comparing buffers is approximate and not exact. When we share
+  // a common initial sequence of elements we compare equal provided
+  // the sequence length isn't larger than ours.
+  if (_buffers.m_index > m_index) {
+    return false;
+  }
+
+  for (rx_size i{0}; i < m_index; i++) {
+    if (_buffers.m_elements[i] != m_elements[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+inline bool buffers::operator!=(const buffers& _buffers) const {
+  return !operator==(_buffers);
+}
+
+inline rx_size buffers::size() const {
+  return m_index;
+}
+
+inline bool buffers::is_empty() const {
+  return m_index == 0;
+}
+
+inline int buffers::operator[](rx_size _index) const {
+  RX_ASSERT(_index < k_max_buffers, "out of bounds");
+  return m_elements[_index];
+}
+
+inline int buffers::last() const {
+  return m_elements[m_index - 1];
+}
+
+// draw_command
+inline const rx_byte* draw_command::uniforms() const {
+  // NOTE: standard permits aliasing with char (rx_byte)
+  return reinterpret_cast<const rx_byte*>(this) + sizeof *this;
+}
+
+inline rx_byte* draw_command::uniforms() {
+  // NOTE: standard permits aliasing with char (rx_byte)
+  return reinterpret_cast<rx_byte*>(this) + sizeof *this;
+}
+
+// update_command
 inline const rx_size* update_command::edit() const {
   // NOTE: standard permits aliasing with char (rx_byte)
   const rx_byte *opaque{reinterpret_cast<const rx_byte*>(this) + sizeof *this};

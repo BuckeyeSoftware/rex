@@ -30,6 +30,8 @@ struct resource
   bool release_reference();
   void acquire_reference();
 
+  type resource_type() const;
+
 protected:
   interface* m_frontend;
 
@@ -49,6 +51,10 @@ inline bool resource::release_reference() {
 
 inline void resource::acquire_reference() {
   m_reference_count++;
+}
+
+inline resource::type resource::resource_type() const {
+  return m_resource_type;
 }
 
 } // namespace rx::render::frontend

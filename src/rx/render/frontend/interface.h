@@ -66,14 +66,13 @@ struct interface {
     const command_header::info& _info,
     const state& _state,
     target* _target,
-    const char* _draw_buffers,
+    const buffers& _draw_buffers,
     buffer* _buffer,
     program* _program,
     rx_size _count,
     rx_size _offset,
     primitive_type _primitive_type,
-    const char* _textures,
-    ...);
+    const textures& _draw_textures);
 
   // Performs a clear operation on |_target| with specified draw buffer layout
   // |_draw_buffers| and state |_state|. The clear mask specified by |_clear_mask|
@@ -123,7 +122,7 @@ struct interface {
     const command_header::info& _info,
     const state& _state,
     target* _target,
-    const char* _draw_buffers,
+    const buffers& _draw_buffers,
     rx_u32 _clear_mask,
     ...
   );
@@ -272,56 +271,6 @@ private:
   device_info m_device_info;
   frame_timer m_timer;
 };
-
-struct draw_textures {
-  draw_textures();
-
-  template<typename T>
-  int add(T* _texture);
-
-  void* const* handles() const;
-  const char* specification() const;
-
-private:
-  void* m_handles[draw_command::k_max_textures];
-  char m_specification[draw_command::k_max_textures + 1];
-  int m_index;
-};
-
-inline draw_textures::draw_textures()
-  : m_specification{'\0'}
-  , m_index{0}
-{
-}
-
-template<typename T>
-inline int draw_textures::add(T* _texture) {
-  const int index{m_index++};
-
-  m_handles[index] = static_cast<void*>(_texture);
-
-  if constexpr (traits::is_same<T, texture1D>) {
-    m_specification[index] = '1';
-  } else if constexpr (traits::is_same<T, texture2D>) {
-    m_specification[index] = '2';
-  } else if constexpr (traits::is_same<T, texture3D>) {
-    m_specification[index] = '3';
-  } else if constexpr (traits::is_same<T, textureCM>) {
-    m_specification[index] = 'c';
-  }
-
-  m_specification[index + 1] = '\0';
-
-  return index;
-}
-
-inline void* const* draw_textures::handles() const {
-  return m_handles;
-}
-
-inline const char* draw_textures::specification() const {
-  return m_specification;
-}
 
 inline interface::device_info::device_info(memory::allocator* _allocator)
   : vendor{_allocator}
