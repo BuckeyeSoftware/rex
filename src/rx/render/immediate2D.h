@@ -4,6 +4,7 @@
 #include "rx/math/vec4.h"
 
 #include "rx/core/string.h"
+#include "rx/core/string_table.h"
 #include "rx/core/optional.h"
 #include "rx/core/map.h"
 
@@ -125,7 +126,7 @@ struct immediate2D {
 
     memory::allocator* m_allocator;
     vector<command> m_commands;
-    vector<char> m_string_table;
+    string_table m_string_table;
     optional<box> m_scissor;
   };
 

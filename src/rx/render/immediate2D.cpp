@@ -216,15 +216,14 @@ void immediate2D::queue::record_text(const char* _font, rx_size _font_length,
   next_command.as_text.text_length = _text_length;
 
   // insert strings into string table
-  const auto font_index{m_string_table.size()};
-  next_command.as_text.font_index = font_index;
-  m_string_table.resize(font_index + _font_length + 1);
-  memcpy(m_string_table.data() + font_index, _font, _font_length + 1);
+  const auto font_index = m_string_table.insert(_font, _font_length);
+  const auto text_index = m_string_table.insert(_text, _text_length);
 
-  const auto text_index{m_string_table.size()};
-  next_command.as_text.text_index = text_index;
-  m_string_table.resize(text_index + _text_length + 1);
-  memcpy(m_string_table.data() + text_index, _text, _text_length + 1);
+  RX_ASSERT(font_index, "failed to add font");
+  RX_ASSERT(text_index, "failed to add text");
+
+  next_command.as_text.font_index = *font_index;
+  next_command.as_text.text_index = *text_index;
 
   next_command.hash = hash<rx_u32>{}(static_cast<rx_u32>(next_command.kind));
   next_command.hash = hash_combine(next_command.hash, hash<rx_u32>{}(next_command.flags));
@@ -473,7 +472,7 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
         break;
       case queue::command::type::k_text:
         size_text(
-          m_queue.m_string_table.data() + _command.as_text.text_index,
+          m_queue.m_string_table[_command.as_text.text_index],
           _command.as_text.text_length,
           n_vertices,
           n_elements);
@@ -514,9 +513,9 @@ void immediate2D::immediate2D::render(frontend::target* _target) {
       case queue::command::type::k_text:
         generate_text(
           _command.as_text.size,
-          m_queue.m_string_table.data() + _command.as_text.font_index,
+          m_queue.m_string_table[_command.as_text.font_index],
           _command.as_text.font_length,
-          m_queue.m_string_table.data() + _command.as_text.text_index,
+          m_queue.m_string_table[_command.as_text.text_index],
           _command.as_text.text_length,
           _command.as_text.scale,
           _command.as_text.position.cast<rx_f32>(),
