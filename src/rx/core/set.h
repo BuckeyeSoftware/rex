@@ -132,12 +132,15 @@ inline void set<K>::clear() {
   }
 
   for (rx_size i{0}; i < m_capacity; i++) {
-    if (element_hash(i) != 0) {
+    const rx_size hash = element_hash(i);
+    if (hash != 0 && !is_deleted(hash)) {
       if constexpr (!traits::is_trivially_destructible<K>) {
         utility::destruct<K>(m_keys + i);
       }
+      element_hash(i) = 0;
     }
   }
+
   m_size = 0;
 }
 
@@ -215,8 +218,7 @@ inline void set<K>::insert(const K& _key) {
 template<typename K>
 bool set<K>::find(const K& _key) const {
   if (rx_size index; lookup_index(_key, index)) {
-    return !is_deleted(index);
-    // return true;
+    return true;
   }
   return false;
 }

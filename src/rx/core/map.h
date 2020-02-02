@@ -147,15 +147,18 @@ inline void map<K, V>::clear() {
   }
 
   for (rx_size i{0}; i < m_capacity; i++) {
-    if (element_hash(i) != 0) {
+    const auto hash = element_hash(i);
+    if (hash != 0 && !is_deleted(hash)) {
       if constexpr (!traits::is_trivially_destructible<K>) {
         utility::destruct<K>(m_keys + i);
       }
       if constexpr (!traits::is_trivially_destructible<V>) {
         utility::destruct<V>(m_values + i);
       }
+      element_hash(i) = 0;
     }
   }
+
   m_size = 0;
 }
 
