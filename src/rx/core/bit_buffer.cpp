@@ -25,10 +25,19 @@ bit_buffer::bit_buffer(stream* _stream, mode _mode)
 }
 
 bit_buffer::~bit_buffer() {
-  if (m_mode == mode::k_wr) {
-    flush();
-    RX_ASSERT(m_buffer.wr == 0, "failed to completely flush");
+  if (m_mode != mode::k_wr) {
+    return;
   }
+
+  // Zero pad until we have a full a byte.
+  const rx_size remainder = m_buffer.wr % 8;
+  if (remainder) {
+    [[maybe_unused]] bool result = write(0_u64, remainder);
+    RX_ASSERT(result, "zero pad failed");
+  }
+
+  [[maybe_unused]] bool result = flush();
+  RX_ASSERT(result, "flush failed");
 }
 
 bool bit_buffer::fetch() {
