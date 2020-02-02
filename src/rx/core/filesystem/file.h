@@ -25,7 +25,7 @@ struct file
   virtual rx_u64 write(const rx_byte* _data, rx_u64 _size);
 
   // Seek to |where| in file.
-  virtual bool seek(rx_u64 _where);
+  virtual bool seek(rx_u64 _where, whence _whence);
 
   // Flush to disk.
   virtual bool flush();

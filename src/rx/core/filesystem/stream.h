@@ -9,6 +9,12 @@ namespace rx::filesystem {
 struct stream
   : concepts::interface
 {
+  enum class whence {
+    k_set,     // Beginning of stream.
+    k_current, // Current position
+    k_end      // End of stream.
+  };
+
   // Read |_size| bytes from stream into |_data|.
   virtual rx_u64 read(rx_byte* _data, rx_u64 _size) = 0;
 
@@ -16,7 +22,7 @@ struct stream
   virtual rx_u64 write(const rx_byte* _data, rx_u64 _size) = 0;
 
   // Seek to |where| in stream.
-  virtual bool seek(rx_u64 _where) = 0;
+  virtual bool seek(rx_u64 _where, whence _whence) = 0;
 
   // Flush any buffered contents in the stream out.
   virtual bool flush() = 0;
