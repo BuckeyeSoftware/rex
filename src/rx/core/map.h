@@ -129,7 +129,8 @@ inline map<K, V>::map(const map& _map)
   : map{_map.m_allocator}
 {
   for (rx_size i{0}; i < _map.m_capacity; i++) {
-    if (_map.element_hash(i) != 0) {
+    const auto hash = _map.element_hash(i);
+    if (hash != 0 && !_map.is_deleted(hash)) {
       insert(_map.m_keys[i], _map.m_values[i]);
     }
   }
@@ -200,7 +201,8 @@ inline map<K, V>& map<K, V>::operator=(const map<K, V>& _map) {
   allocate();
 
   for (rx_size i{0}; i < _map.m_capacity; i++) {
-    if (_map.element_hash(i) != 0) {
+    const auto hash = _map.element_hash(i);
+    if (hash != 0 && !_map.is_deleted(hash)) {
       insert(_map.m_keys[i], _map.m_values[i]);
     }
   }

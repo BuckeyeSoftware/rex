@@ -114,7 +114,8 @@ inline set<K>::set(const set& _set)
   : set{_set.m_allocator}
 {
   for (rx_size i{0}; i < _set.m_capacity; i++) {
-    if (_set.element_hash(i) != 0) {
+    const auto hash = _set.element_hash(i);
+    if (hash != 0 && _set.is_deleted(hash)) {
       insert(_set.m_keys[i]);
     }
   }
@@ -180,7 +181,8 @@ inline set<K>& set<K>::operator=(const set<K>& _set) {
   allocate();
 
   for (rx_size i{0}; i < _set.m_capacity; i++) {
-    if (_set.element_hash(i) != 0) {
+    const auto hash = _set.element_hash(i);
+    if (hash != 0 && !_set.is_deleted(hash)) {
       insert(_set.m_keys[i]);
     }
   }
