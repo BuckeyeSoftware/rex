@@ -21,8 +21,8 @@ struct stream
   // Write |_size| bytes from |_data| into stream.
   virtual rx_u64 write(const rx_byte* _data, rx_u64 _size) = 0;
 
-  // Seek to |where| in stream.
-  virtual bool seek(rx_u64 _where, whence _whence) = 0;
+  // Seek to |_where| in stream relative to |_whence|.
+  virtual bool seek(rx_s64 _where, whence _whence) = 0;
 
   // Flush any buffered contents in the stream out.
   virtual bool flush() = 0;

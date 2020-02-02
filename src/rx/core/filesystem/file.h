@@ -24,8 +24,8 @@ struct file
   // Write |_size| bytes from |_data| into file.
   virtual rx_u64 write(const rx_byte* _data, rx_u64 _size);
 
-  // Seek to |where| in file.
-  virtual bool seek(rx_u64 _where, whence _whence);
+  // Seek to |_where| in file relative to |_whence|.
+  virtual bool seek(rx_s64 _where, whence _whence);
 
   // Flush to disk.
   virtual bool flush();
