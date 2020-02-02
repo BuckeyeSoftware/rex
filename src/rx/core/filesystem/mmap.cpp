@@ -5,22 +5,6 @@
 
 namespace rx::filesystem {
 
-mmap::mmap(rx_byte* _data, rx_size _size)
-  : m_data{_data}
-  , m_size{_size}
-  , m_rd{nullptr}
-  , m_wr{_data}
-{
-}
-
-mmap::mmap(const rx_byte* _data, rx_size _size)
-  : m_data{const_cast<rx_byte*>(_data)}
-  , m_size{_size}
-  , m_rd{_data}
-  , m_wr{nullptr}
-{
-}
-
 rx_u64 mmap::read(rx_byte* _data, rx_u64 _size) {
   const rx_u64 bytes{algorithm::min(_size, readable_bytes())};
   memcpy(_data, m_rd, bytes);

@@ -62,7 +62,7 @@ struct map {
 
 private:
   void clear_and_deallocate();
-  void initialize(memory::allocator* _allocator, rx_size _capacity);
+  constexpr void initialize(memory::allocator* _allocator, rx_size _capacity);
 
   static rx_size hash_key(const K& _key);
   static bool is_deleted(rx_size _hash);
@@ -202,7 +202,7 @@ inline map<K, V>& map<K, V>::operator=(const map<K, V>& _map) {
 }
 
 template<typename K, typename V>
-inline void map<K, V>::initialize(memory::allocator* _allocator, rx_size _capacity) {
+inline constexpr void map<K, V>::initialize(memory::allocator* _allocator, rx_size _capacity) {
   m_allocator = _allocator;
   m_keys = nullptr;
   m_values = nullptr;

@@ -50,7 +50,7 @@ struct set {
 
 private:
   void clear_and_deallocate();
-  void initialize(memory::allocator* _allocator, rx_size _capacity);
+  constexpr void initialize(memory::allocator* _allocator, rx_size _capacity);
 
   static rx_size hash_key(const K& _key);
   static bool is_deleted(rx_size _hash);
@@ -182,7 +182,7 @@ inline set<K>& set<K>::operator=(const set<K>& _set) {
 }
 
 template<typename K>
-inline void set<K>::initialize(memory::allocator* _allocator, rx_size _capacity) {
+inline constexpr void set<K>::initialize(memory::allocator* _allocator, rx_size _capacity) {
   m_allocator = _allocator;
   m_keys = nullptr;
   m_hashes = nullptr;
