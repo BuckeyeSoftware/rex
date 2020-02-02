@@ -6,14 +6,14 @@
 namespace rx::filesystem {
 
 rx_u64 mmap::read(rx_byte* _data, rx_u64 _size) {
-  const rx_u64 bytes{algorithm::min(_size, readable_bytes())};
+  const rx_u64 bytes = algorithm::min(_size, readable_bytes());
   memcpy(_data, m_rd, bytes);
   m_rd += bytes;
   return bytes;
 }
 
 rx_u64 mmap::write(const rx_byte* _data, rx_u64 _size) {
-  const rx_u64 bytes{algorithm::min(_size, writable_bytes())};
+  const rx_u64 bytes = algorithm::min(_size, writable_bytes());
   memcpy(m_wr, _data, bytes);
   m_wr += bytes;
   return bytes;
