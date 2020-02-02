@@ -12,7 +12,7 @@ struct mmap
 
   virtual rx_u64 read(rx_byte* _data, rx_u64 _size);
   virtual rx_u64 write(const rx_byte* _data, rx_u64 _size);
-  virtual bool seek(rx_u64 _where);
+  virtual bool seek(rx_s64 _where, whence _whence);
   virtual bool flush();
   virtual optional<rx_u64> size();
 
