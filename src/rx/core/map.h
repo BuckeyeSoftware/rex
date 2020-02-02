@@ -142,6 +142,10 @@ inline map<K, V>::~map() {
 
 template<typename K, typename V>
 inline void map<K, V>::clear() {
+  if (m_size == 0) {
+    return;
+  }
+
   for (rx_size i{0}; i < m_capacity; i++) {
     if (element_hash(i) != 0) {
       if constexpr (!traits::is_trivially_destructible<K>) {

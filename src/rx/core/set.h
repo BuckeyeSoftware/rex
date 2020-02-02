@@ -127,6 +127,10 @@ inline set<K>::~set() {
 
 template<typename K>
 inline void set<K>::clear() {
+  if (m_size == 0) {
+    return;
+  }
+
   for (rx_size i{0}; i < m_capacity; i++) {
     if (element_hash(i) != 0) {
       if constexpr (!traits::is_trivially_destructible<K>) {
