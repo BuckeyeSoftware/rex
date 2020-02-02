@@ -115,7 +115,7 @@ inline set<K>::set(const set& _set)
 {
   for (rx_size i{0}; i < _set.m_capacity; i++) {
     const auto hash = _set.element_hash(i);
-    if (hash != 0 && _set.is_deleted(hash)) {
+    if (hash != 0 && !_set.is_deleted(hash)) {
       insert(_set.m_keys[i]);
     }
   }
