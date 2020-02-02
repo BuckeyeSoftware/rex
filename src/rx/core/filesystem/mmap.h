@@ -1,6 +1,6 @@
 #ifndef RX_CORE_FILESYSTEM_MMAP_H
 #define RX_CORE_FILESYSTEM_MMAP_H
-#include "rx/core/filesystem/stream.h"
+#include "rx/core/stream.h"
 
 namespace rx::filesystem {
 

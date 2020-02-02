@@ -1,10 +1,10 @@
-#ifndef RX_CORE_FILESYSTEM_STREAM_H
-#define RX_CORE_FILESYSTEM_STREAM_H
+#ifndef RX_CORE_STREAM_H
+#define RX_CORE_STREAM_H
 
 #include "rx/core/optional.h"
 #include "rx/core/concepts/interface.h"
 
-namespace rx::filesystem {
+namespace rx {
 
 struct stream
   : concepts::interface
@@ -33,6 +33,6 @@ struct stream
   virtual optional<rx_u64> size() = 0;
 };
 
-} // namespace rx::filesystem
+} // namespace rx
 
-#endif // RX_CORE_FILESYSTEM_STREAM_H
+#endif // RX_CORE_STREAM_H

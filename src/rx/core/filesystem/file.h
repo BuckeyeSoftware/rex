@@ -1,9 +1,8 @@
 #ifndef RX_CORE_FILESYSTEM_FILE_H
 #define RX_CORE_FILESYSTEM_FILE_H
-#include "rx/core/string.h" // string
-#include "rx/core/optional.h" // optional
-#include "rx/core/concepts/no_copy.h" // no_copy
-#include "rx/core/filesystem/stream.h"
+#include "rx/core/string.h"
+#include "rx/core/optional.h"
+#include "rx/core/stream.h"
 
 namespace rx::filesystem {
 
