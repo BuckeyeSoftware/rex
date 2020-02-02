@@ -228,7 +228,7 @@ static vector<rx_byte> convert_text_encoding(vector<rx_byte>&& data_) {
     data_.erase(0, 3);
   }
 
-  return data_;
+  return utility::move(data_);
 }
 
 optional<vector<rx_byte>> read_text_file(memory::allocator* _allocator, const char* _file_name) {
