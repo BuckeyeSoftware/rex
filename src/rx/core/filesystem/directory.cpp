@@ -33,8 +33,8 @@ directory::directory(memory::allocator* _allocator, string&& path_)
   m_impl = reinterpret_cast<void*>(opendir(m_path.data()));
 #elif defined(RX_PLATFORM_WINDOWS)
   // The only thing we can cache between reuses of a directory object is the
-  // path conversion on windows and the initial find handle. Subsequent reuses
-  // will need to reopen the handle.
+  // path conversion and the initial find handle on Windows. Subsequent reuses
+  // will need to reopen the directory.
   find_context* context = m_allocator->create<find_context>();
 
   // Convert |m_path| to UTF-16 for Windows.
@@ -51,7 +51,7 @@ directory::directory(memory::allocator* _allocator, string&& path_)
   const HANDLE handle = FindFirstFileW(path, &context->find_data));
   if (handle != INVALID_HANDLE_VALUE) {
     // The directory exists and has been opened. Cache the handle and the path
-    // data for |each|.
+    // conversion for |each|.
     context->handle = handle;
     context->path_data = utility::move(path_data);
     m_impl = reinterpret_cast<void*>(context);
@@ -124,8 +124,7 @@ void directory::each(function<void(item&&)>&& _function) {
     if (handle != INVALID_HANDLE_VALUE) {
       context->handle = handle;
     } else {
-      // Destroy the context and clear |m_impl| out so operator bool reflects
-      // the correct state of the directory.
+      // Destroy the context and clear |m_impl| out so operator bool reflects this.
       m_allocator->destroy<find_context>(context);
       m_impl = nullptr;
       return;
