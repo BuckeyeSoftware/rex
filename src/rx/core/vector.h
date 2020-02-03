@@ -453,17 +453,17 @@ inline bool vector<T>::emplace_back(Ts&&... _args) {
 }
 
 template<typename T>
-inline rx_size vector<T>::size() const {
+RX_HINT_FORCE_INLINE rx_size vector<T>::size() const {
   return m_size;
 }
 
 template<typename T>
-inline rx_size vector<T>::capacity() const {
+RX_HINT_FORCE_INLINE rx_size vector<T>::capacity() const {
   return m_capacity;
 }
 
 template<typename T>
-inline bool vector<T>::is_empty() const {
+RX_HINT_FORCE_INLINE bool vector<T>::is_empty() const {
   return m_size == 0;
 }
 
@@ -549,37 +549,37 @@ inline bool vector<T>::each_rev(F&& _func) const {
 }
 
 template<typename T>
-inline const T& vector<T>::first() const {
+RX_HINT_FORCE_INLINE const T& vector<T>::first() const {
   return m_data[0];
 }
 
 template<typename T>
-inline T& vector<T>::first() {
+RX_HINT_FORCE_INLINE T& vector<T>::first() {
   return m_data[0];
 }
 
 template<typename T>
-inline const T& vector<T>::last() const {
+RX_HINT_FORCE_INLINE const T& vector<T>::last() const {
   return m_data[m_size - 1];
 }
 
 template<typename T>
-inline T& vector<T>::last() {
+RX_HINT_FORCE_INLINE T& vector<T>::last() {
   return m_data[m_size - 1];
 }
 
 template<typename T>
-const T* vector<T>::data() const {
+RX_HINT_FORCE_INLINE const T* vector<T>::data() const {
   return m_data;
 }
 
 template<typename T>
-inline T* vector<T>::data() {
+RX_HINT_FORCE_INLINE T* vector<T>::data() {
   return m_data;
 }
 
 template<typename T>
-inline memory::allocator* vector<T>::allocator() const {
+RX_HINT_FORCE_INLINE memory::allocator* vector<T>::allocator() const {
   return m_allocator;
 }
 
