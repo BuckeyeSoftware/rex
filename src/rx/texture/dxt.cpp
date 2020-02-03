@@ -200,7 +200,7 @@ static inline void lse_master_colors_clamp(rx_u16 (&colors_)[2],
   rx_f32 dot_max{sumx2[0] * _uncompressed[0] +
                  sumx2[1] * _uncompressed[1] +
                  sumx2[2] * _uncompressed[2]};
-                  
+
   rx_f32 dot_min{dot_max};
   for (rx_size i{1}; i < 16; ++i) {
     const rx_f32 dot{sumx2[0] * _uncompressed[i*C+0] +
@@ -324,7 +324,7 @@ static inline void compress_alpha_block(const rx_byte *const _uncompressed,
   for (rx_size i{3}; i < 16*4; i += 4) {
     const auto value{"\x1\x7\x6\x5\x4\x3\x2\x0"[rx_size((_uncompressed[i] - a1) * scale) & 7]};
     compressed_[next_bit >> 3] |= value << (next_bit & 7);
-  
+
     // spans two bytes
     if ((next_bit & 7) > 5) {
       compressed_[1 + (next_bit >> 3)] |= value >> (8 - (next_bit & 7));
@@ -345,7 +345,7 @@ vector<rx_byte> dxt_compress(memory::allocator* _allocator,
 
   out_size_ = ((_width + 3) >> 2) * ((_height + 3) >> 2) * (T == dxt_type::k_dxt1 ? 8 : 16);
 
-  vector<rx_byte> compressed{_allocator, out_size_};
+  vector<rx_byte> compressed{_allocator, out_size_, utility::uninitialized{}};
 
   rx_byte ublock[16 * (T == dxt_type::k_dxt1 ? 3 : 4)];
   rx_byte cblock[8];

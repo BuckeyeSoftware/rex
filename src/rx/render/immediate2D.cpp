@@ -290,7 +290,8 @@ immediate2D::font::font(const key& _key, frontend::interface* _frontend)
     // figure out the atlas size needed
     for (;;) {
       vector<stbtt_bakedchar> baked_glyphs(m_frontend->allocator(), k_glyphs);
-      vector<rx_byte> baked_atlas(m_frontend->allocator(), m_resolution*m_resolution);
+      vector<rx_byte> baked_atlas{m_frontend->allocator(),
+        m_resolution*m_resolution, utility::uninitialized{}};
 
       const int result{stbtt_BakeFontBitmap(data->data(), 0,
         static_cast<rx_f32>(m_size), baked_atlas.data(),

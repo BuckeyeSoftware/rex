@@ -145,7 +145,8 @@ void chain::resize(const math::vec2z& _dimensions) {
       generate_mipchain(true, true);
     } else {
       // resize mipchain image |best_index| to |_dimensions|
-      vector<rx_byte> data{m_data.allocator(), _dimensions.area() * bpp()};
+      vector<rx_byte> data{m_data.allocator(),
+        _dimensions.area() * bpp(), utility::uninitialized{}};
 
       scale(m_data.data() + level.offset, level.dimensions.w,
         level.dimensions.h, bpp(), level.dimensions.w * bpp(), data.data(),
@@ -160,8 +161,10 @@ void chain::resize(const math::vec2z& _dimensions) {
   } else {
     // no mipchain
 
-    // resize and move data
-    vector<rx_byte> data{m_data.allocator(), _dimensions.area() * bpp()};
+    // Resize and move data.
+    vector<rx_byte> data{m_data.allocator(),
+      _dimensions.area() * bpp(), utility::uninitialized{}};
+
     scale(m_data.data(), m_dimensions.w, m_dimensions.h, bpp(),
       m_dimensions.w * bpp(), data.data(), _dimensions.w, _dimensions.h);
 

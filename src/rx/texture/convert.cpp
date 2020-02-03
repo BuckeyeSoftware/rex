@@ -225,7 +225,9 @@ vector<rx_byte> convert(memory::allocator* _allocator, const rx_byte* _data,
 {
   RX_HINT_ASSUME_ALIGNED(_data, memory::allocator::k_alignment);
 
-  vector<rx_byte> result{_allocator, _samples * bpp_for_pixel_format(_out_format)};
+  vector<rx_byte> result{_allocator,
+    _samples * bpp_for_pixel_format(_out_format), utility::uninitialized{}};
+
   const rx_byte *RX_HINT_RESTRICT src{_data};
   rx_byte *RX_HINT_RESTRICT dst{result.data()};
 

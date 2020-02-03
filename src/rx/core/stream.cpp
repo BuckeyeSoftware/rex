@@ -30,7 +30,7 @@ static vector<rx_byte> convert_text_encoding(vector<rx_byte>&& data_) {
     const rx_size length = utf16_to_utf8(contents, chars, nullptr);
 
     // Convert UTF-16 to UTF-8.
-    vector<rx_byte> result{data_.allocator(), length};
+    vector<rx_byte> result{data_.allocator(), length, utility::uninitialized{}};
     utf16_to_utf8(contents, chars, reinterpret_cast<char*>(result.data()));
     return result;
   } else if (data_.size() >= 3 && data_[0] == 0xEF && data_[1] == 0xBB && data_[2] == 0xBF) {

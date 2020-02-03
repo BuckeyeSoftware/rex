@@ -100,7 +100,9 @@ bool loader::load(const string& _file_name, pixel_format _want_format,
 
     if (can_remove_alpha) {
       // Copy all pixels from m_data to data removing the alpha channel.
-      vector<rx_byte> data{m_allocator, m_dimensions.area() * 3_z};
+      vector<rx_byte> data{m_allocator, m_dimensions.area() * 3_z,
+        utility::uninitialized{}};
+
       for (rx_size y{0}; y < m_dimensions.h; y++) {
         const rx_size scan_line_offset{m_dimensions.w * y};
         for (rx_size x{0}; x < m_dimensions.w; x++) {
