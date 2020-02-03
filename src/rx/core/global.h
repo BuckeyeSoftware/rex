@@ -10,6 +10,7 @@ namespace rx {
 // to static instance data of this, allowing them to avoid storing this data
 // themselves.
 //
+// This saves 8 bytes in global_node for 32-bit.
 // This saves 12 bytes in global_node for 64-bit.
 struct global_shared {
   rx_u16 size;
@@ -138,7 +139,9 @@ private:
   rx_u16 m_global_store;
   rx_u16 m_flags;
 
-  rx_byte m_argument_store[64];
+  // This needs to be aligned by 16-byte otherwise `arguments` will invoke
+  // undefined behavior.
+  alignas(16) rx_byte m_argument_store[64];
 };
 
 template<typename T>
@@ -245,6 +248,7 @@ inline global_node::global_node(const char* _group, const char* _name,
   // storage for the node. We do this to save space, since we only need two
   // bytes to store this.
   //
+  // This saves 2-bytes in global_node for 32-bit.
   // This saves 6-bytes in global_node for 64-bit.
   const rx_uintptr this_address = reinterpret_cast<rx_uintptr>(this);
   const rx_uintptr store_address = reinterpret_cast<rx_uintptr>(_global_store.data());
