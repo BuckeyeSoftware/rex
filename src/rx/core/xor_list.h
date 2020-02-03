@@ -128,7 +128,7 @@ template<typename T>
 inline xor_list::enumerate<T>::enumerate(node* _root, node T::*link)
   : iterator{_root}
 {
-  // NOTE(dweiler): This invokes undefined behhavior according to the C++
+  // NOTE(dweiler): This invokes undefined behavior according to the C++
   // standard. It's technically possible to store the `node T::*link` and do
   // a subtraction from |m_this| to get the relative address which would avoid
   // undefined behavior, however I don't see a simple way of doing that
