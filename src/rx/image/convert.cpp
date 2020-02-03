@@ -7,7 +7,7 @@ bool convert(const matrix& _matrix, vector<rx_byte>& data_) {
   const math::vec2z& dimensions{_matrix.dimensions()};
   const rx_size channels{_matrix.channels()};
 
-  if (!data_.resize(dimensions.area() * _matrix.channels())) {
+  if (!data_.resize(dimensions.area() * _matrix.channels(), utility::uninitialized{})) {
     return false;
   }
 

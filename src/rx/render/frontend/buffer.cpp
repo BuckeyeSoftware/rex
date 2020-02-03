@@ -47,7 +47,7 @@ rx_byte* buffer::map_vertices(rx_size _size) {
   RX_ASSERT(_size != 0, "_size is zero");
   RX_ASSERT(_size % m_stride == 0, "_size not a multiple of vertex stride");
 
-  m_vertices_store.resize(_size);
+  m_vertices_store.resize(_size, utility::uninitialized{});
   update_resource_usage(size());
 
   return m_vertices_store.data();
@@ -59,7 +59,7 @@ rx_byte* buffer::map_elements(rx_size _size) {
   RX_ASSERT(_size != 0, "_size is zero");
   RX_ASSERT(_size % size_for_element_type(m_element_type) == 0, "_size is not a multiple of element size");
 
-  m_elements_store.resize(_size);
+  m_elements_store.resize(_size, utility::uninitialized{});
   update_resource_usage(size());
 
   return m_elements_store.data();

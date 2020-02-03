@@ -1,6 +1,6 @@
 #include <string.h> // memmove, memset
 
-#include "rx/core/bit_buffer.h"
+#include "rx/core/bit_stream.h"
 #include "rx/core/stream.h"
 #include "rx/core/assert.h"
 
@@ -8,24 +8,26 @@
 
 namespace rx {
 
-bit_buffer::bit_buffer(stream* _stream, mode _mode)
+bit_stream::bit_stream(stream* _stream)
   : m_stream{_stream}
-  , m_mode{_mode}
 {
-  switch (_mode) {
-  case mode::k_rd:
+  const bool can_read = m_stream->can_read();
+  const bool can_write = m_stream->can_write();
+
+  RX_ASSERT(can_read != can_write,
+    "stream can be read or write only, not both");
+
+  if (can_read) {
     m_buffer.size = 0;
     m_buffer.rd = 0;
-    break;
-  case mode::k_wr:
+  } else {
     m_buffer.size = sizeof m_buffer.data;
     m_buffer.wr = 0;
-    break;
   }
 }
 
-bit_buffer::~bit_buffer() {
-  if (m_mode != mode::k_wr) {
+bit_stream::~bit_stream() {
+  if (!m_stream->can_write()) {
     return;
   }
 
@@ -40,7 +42,7 @@ bit_buffer::~bit_buffer() {
   RX_ASSERT(result, "flush failed");
 }
 
-bool bit_buffer::fetch() {
+bool bit_stream::fetch() {
   // The amount of bytes read from the buffer so far.
   const rx_size bytes = m_buffer.rd >> 3;
 
@@ -72,7 +74,7 @@ bool bit_buffer::fetch() {
   return true;
 }
 
-bool bit_buffer::flush() {
+bool bit_stream::flush() {
   // The amount of bytes written to the buffer so far.
   const rx_size bytes = m_buffer.wr >> 3;
 
@@ -94,8 +96,8 @@ bool bit_buffer::flush() {
   return true;
 }
 
-bool bit_buffer::read(rx_u64& data_, rx_size _bits) {
-  RX_ASSERT(m_mode == mode::k_rd, "bitbuffer isn't readable");
+bool bit_stream::read(rx_u64& data_, rx_size _bits) {
+  RX_ASSERT(m_stream->can_read(), "bit_stream isn't readable");
   RX_ASSERT(_bits <= sizeof data_ * 8, "too many bits");
 
   const rx_size available_bits = m_buffer.size * 8 - m_buffer.rd;
@@ -127,8 +129,8 @@ bool bit_buffer::read(rx_u64& data_, rx_size _bits) {
   return true;
 }
 
-bool bit_buffer::write(rx_u64 _data, rx_size _bits) {
-  RX_ASSERT(m_mode == mode::k_wr, "bitbuffer isn't writable");
+bool bit_stream::write(rx_u64 _data, rx_size _bits) {
+  RX_ASSERT(m_stream->can_write(), "bit_stream isn't writable");
   RX_ASSERT(_bits <= sizeof _data * 8, "too many bits");
 
   const rx_size available_bits = m_buffer.size * 8 - m_buffer.wr;

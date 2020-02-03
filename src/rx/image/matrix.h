@@ -89,7 +89,7 @@ inline matrix::matrix(const matrix& _matrix)
 inline bool matrix::resize(const math::vec2z& _dimensions, rx_size _channels) {
   m_dimensions = _dimensions;
   m_channels = _channels;
-  return m_data.resize(m_dimensions.area() * m_channels);
+  return m_data.resize(m_dimensions.area() * m_channels, utility::uninitialized{});
 }
 
 inline matrix& matrix::operator=(matrix&& matrix_) {

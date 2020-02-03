@@ -1,29 +1,24 @@
-#ifndef RX_CORE_BIT_BUFFER_H
-#define RX_CORE_BIT_BUFFER_H
+#ifndef RX_CORE_BIT_STREAM_H
+#define RX_CORE_BIT_STREAM_H
 #include "rx/core/types.h"
 
 namespace rx {
 
 struct stream;
 
-// # Bit Buffer
+// # Bit Stream
 //
-// The idea of a bit buffer is to read and write values of arbitrary bit sizes
+// The idea of a bit stream is to read and write values of arbitrary bit sizes
 // into a single stream.
 //
 // To use just give the bit buffer a stream for reading or writing and begin
 // reading or writing integers of arbitrary bit sizes by specifying how many
 // bits.
-struct bit_buffer {
+struct bit_stream {
   static constexpr rx_size k_buffer_size = 4096;
 
-  enum class mode {
-    k_rd,
-    k_wr
-  };
-
-  bit_buffer(stream* _stream, mode _mode);
-  ~bit_buffer();
+  bit_stream(stream* _stream);
+  ~bit_stream();
 
   // Read |_bits| from stream into |data_|. Returns false if the end of the
   // stream is reached before all bits could be read into |data_|.
@@ -41,7 +36,6 @@ private:
   bool fetch();
 
   stream* m_stream;
-  mode m_mode;
 
   struct {
     rx_byte data[k_buffer_size];
@@ -57,4 +51,4 @@ private:
 
 } // namespace rx
 
-#endif // RX_CORE_BIT_BUFFER_H
+#endif // RX_CORE_BIT_STREAM_H

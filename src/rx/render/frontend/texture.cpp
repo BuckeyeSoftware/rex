@@ -158,7 +158,7 @@ void texture1D::record_dimensions(const dimension_type& _dimensions) {
   }
 
   if (m_type != type::k_attachment) {
-    m_data.resize(offset);
+    m_data.resize(offset, utility::uninitialized{});
     update_resource_usage(m_data.size());
   }
 }
@@ -238,7 +238,7 @@ void texture2D::record_dimensions(const math::vec2z& _dimensions) {
   }
 
   if (m_type != type::k_attachment) {
-    m_data.resize(offset);
+    m_data.resize(offset, utility::uninitialized{});
     update_resource_usage(m_data.size());
   }
 }
@@ -315,7 +315,7 @@ void texture3D::record_dimensions(const math::vec3z& _dimensions) {
   }
 
   if (m_type != type::k_attachment) {
-    m_data.resize(offset);
+    m_data.resize(offset, utility::uninitialized{});
     update_resource_usage(m_data.size());
   }
 }
@@ -396,7 +396,7 @@ void textureCM::record_dimensions(const math::vec2z& _dimensions) {
   }
 
   if (m_type != type::k_attachment) {
-    m_data.resize(offset);
+    m_data.resize(offset, utility::uninitialized{});
     update_resource_usage(m_data.size());
   }
 }

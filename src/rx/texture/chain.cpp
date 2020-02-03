@@ -31,7 +31,7 @@ void chain::generate(const rx_byte* _data, pixel_format _has_format,
 {
   m_pixel_format = _want_format;
   m_dimensions = _dimensions;
-  m_data.resize(_dimensions.area() * bpp());
+  m_data.resize(_dimensions.area() * bpp(), utility::uninitialized{});
   if (_has_format == _want_format) {
     memcpy(m_data.data(), _data, m_data.size());
   } else {
@@ -76,7 +76,7 @@ void chain::generate_mipchain(bool _has_mipchain, bool _want_mipchain) {
   // we have a mipchain but we don't want it
   if (_has_mipchain && !_want_mipchain) {
     // resize data for only base level
-    m_data.resize(m_dimensions.area() * bpp());
+    m_data.resize(m_dimensions.area() * bpp(), utility::uninitialized{});
   }
 
   // we don't have a mipchain but we want one
@@ -87,7 +87,7 @@ void chain::generate_mipchain(bool _has_mipchain, bool _want_mipchain) {
       bytes_needed += _level.size;
     });
 
-    m_data.resize(bytes_needed);
+    m_data.resize(bytes_needed, utility::uninitialized{});
 
     // use the previous miplevel in the mipchain to downsample for the current
     // level, that is, NxN is always generated from N*2xN*x
@@ -136,7 +136,7 @@ void chain::resize(const math::vec2z& _dimensions) {
       }
 
       // shrink to remove unnecessary data
-      m_data.resize(new_size);
+      m_data.resize(new_size, utility::uninitialized{});
 
       // copy the mipchain from |best_index| forward to the beginning, this
       // is inplace and may overlap so memmove must be used

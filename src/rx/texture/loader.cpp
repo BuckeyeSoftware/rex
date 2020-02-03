@@ -72,13 +72,13 @@ bool loader::load(const string& _file_name, pixel_format _want_format,
   // Scale the texture down if it exceeds the max dimensions.
   if (m_dimensions > _max_dimensions) {
     m_dimensions = _max_dimensions;
-    m_data.resize(m_dimensions.area() * m_bpp);
+    m_data.resize(m_dimensions.area() * m_bpp, utility::uninitialized{});
     scale(decoded_image, dimensions.w, dimensions.h, want_channels,
       dimensions.w * want_channels, m_data.data(), _max_dimensions.w,
       _max_dimensions.h);
   } else {
     // Otherwise just copy the decoded image data directly.
-    m_data.resize(m_dimensions.area() * m_bpp);
+    m_data.resize(m_dimensions.area() * m_bpp, utility::uninitialized{});
     memcpy(m_data.data(), decoded_image, m_data.size());
   }
 

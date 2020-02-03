@@ -38,11 +38,11 @@ directory::directory(memory::allocator* _allocator, string&& path_)
   find_context* context = m_allocator->create<find_context>();
 
   // Convert |m_path| to UTF-16 for Windows.
-  vector<rx_u16> path_data{m_allocator};
   const wide_string path_utf16 = m_path.to_utf16();
   static constexpr const wchar_t k_path_extra[] = L"\\*";
+  vector<rx_u16> path_data{m_allocator, path_utf16.size() + sizeof k_path_extra,
+    utility::uninitialized{}};
 
-  path_data.resize(path_utf16.size() + sizeof k_path_extra);
   memcpy(path_data.data(), path_utf16.data(), path_utf16.size() * 2);
   memcpy(path_data.data() + path_utf16.size(), k_path_extra, sizeof k_path_extra);
 
