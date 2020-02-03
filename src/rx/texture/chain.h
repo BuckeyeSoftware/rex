@@ -18,8 +18,8 @@ struct chain
     math::vec2z dimensions;
   };
 
-  chain();
-  chain(memory::allocator* _allocator);
+  constexpr chain();
+  constexpr chain(memory::allocator* _allocator);
   chain(chain&& chain_);
 
   chain& operator=(chain&& chain_);
@@ -51,12 +51,22 @@ private:
   vector<rx_byte> m_data;
   vector<level> m_levels;
   math::vec2z m_dimensions;
-  pixel_format m_pixel_format;
+  union {
+    utility::nat m_nat;
+    pixel_format m_pixel_format;
+  };
 };
 
-inline chain::chain(memory::allocator* _allocator)
-  : m_data{_allocator}
-  , m_levels{_allocator}
+inline constexpr chain::chain()
+  : chain{&memory::g_system_allocator}
+{
+}
+
+inline constexpr chain::chain(memory::allocator* _allocator)
+  : m_allocator{_allocator}
+  , m_data{m_allocator}
+  , m_levels{m_allocator}
+  , m_nat{}
 {
 }
 
