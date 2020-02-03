@@ -69,7 +69,7 @@ directory::~directory() {
   }
 #elif defined(RX_PLATFORM_WINDOWS)
   if (m_impl) {
-    m_allocator->destroy<vector<rx_u16>>(m_impl);
+    m_allocator->destroy<find_context>(m_impl);
   }
 #endif
 }
