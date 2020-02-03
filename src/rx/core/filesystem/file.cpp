@@ -22,13 +22,6 @@ file::file(void* _impl, const char* _file_name, const char* _mode)
 {
 }
 
-file::file(const char* _file_name, const char* _mode)
-  : m_impl{static_cast<void*>(fopen(_file_name, _mode))}
-  , m_file_name{_file_name}
-  , m_mode{_mode}
-{
-}
-
 file::file(file&& other_)
   : m_impl{other_.m_impl}
   , m_file_name{other_.m_file_name}
@@ -42,6 +35,37 @@ file::file(file&& other_)
 file::~file() {
   close();
 }
+
+#if defined(RX_PLATFORM_WINDOWS)
+file::file(const char* _file_name, const char* _mode)
+  : m_impl{nullptr}
+  , m_file_name{_file_name}
+  , m_mode{_mode}
+{
+  // Convert |_file_name| to UTF-16.
+  const wide_string file_name = string(_file_name).to_utf16();
+
+  // Convert the mode string to a wide char version. The mode string is in ascii
+  // so there's no conversion necessary other than extending the type size.
+  wchar_t mode_buffer[8];
+  wchar_t *mode = mode_buffer;
+  for (const char* ch = _mode; *ch; ch++) {
+    *mode++ = static_cast<wchar_t>(*ch);
+  }
+  // Null-terminate mode.
+  *mode++ = L'\0';
+
+  // Utilize _wfopen on Windows so we can open files with UNICODE names.
+  m_impl = static_cast<void*>(_wfopen(file_name_utf16, mode_buffer));
+}
+#else
+file::file(const char* _file_name, const char* _mode)
+  : m_impl{static_cast<void*>(fopen(_file_name, _mode))}
+  , m_file_name{_file_name}
+  , m_mode{_mode}
+{
+}
+#endif
 
 rx_u64 file::read(rx_byte* _data, rx_u64 _size) {
   RX_ASSERT(m_impl, "invalid");
