@@ -512,9 +512,12 @@ bool string::contains(const string& _needle) const {
 }
 
 rx_size string::hash() const {
-  // The following is an implementation of FNV-1a. The difference here matters
+  // The following is an implementation of FNV1a. The difference here matters
   // because rx_size is the hash type which may be 4-byte or 8-byte depending
   // on architecture.
+  //
+  // The previous hash function was just DJB2 X=33 which left most of the
+  // rx_size empty on 64-bit for short keys.
   if constexpr (sizeof(rx_size) == 8) {
     static constexpr const rx_u64 k_prime = 0x100000001b3_u64;
     rx_u64 hash = 0xcbf29ce484222325_u64;
