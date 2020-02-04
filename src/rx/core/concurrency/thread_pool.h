@@ -1,6 +1,9 @@
 #ifndef RX_CORE_CONCURRENCY_THREAD_POOL_H
 #define RX_CORE_CONCURRENCY_THREAD_POOL_H
-#include "rx/core/queue.h"
+#include "rx/core/list.h"
+#include "rx/core/vector.h"
+#include "rx/core/pool.h"
+#include "rx/core/bitset.h"
 #include "rx/core/function.h"
 
 #include "rx/core/concurrency/thread.h"
@@ -31,9 +34,10 @@ private:
   mutex m_mutex;
   condition_variable m_task_cond;
   condition_variable m_ready_cond;
-  queue<function<void(int)>> m_queue; // protected by |m_mutex|
-  vector<thread> m_threads;           // protected by |m_mutex|
-  bool m_stop;                        // protected by |m_mutex|
+
+  list m_queue;             // protected by |m_mutex|
+  vector<thread> m_threads; // protected by |m_mutex|
+  bool m_stop;              // protected by |m_mutex|
 
   static RX_GLOBAL<thread_pool> s_thread_pool;
 };

@@ -320,7 +320,7 @@ inline constexpr const char* global_group::name() const {
 
 template<typename F>
 inline void global_group::each(F&& _function) {
-  for (xor_list::enumerate node = {m_list.head(), &global_node::m_grouped}; node; node.next()) {
+  for (auto node = m_list.enumerate_head(&global_node::m_grouped); node; node.next()) {
     _function(node.data());
   }
 }
