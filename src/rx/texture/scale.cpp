@@ -9,8 +9,8 @@ static inline bool is_pot(T _value)  {
 }
 
 template<rx_size C>
-void halve(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
-  rx_byte* dst_)
+void halve(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw, rx_size _sh,
+  rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_)
 {
   using T = rx_size;
   for (const rx_byte* y_end{_src + _sh * _stride}; _src < y_end; ) {
@@ -27,8 +27,8 @@ void halve(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
 }
 
 template<rx_size C>
-void shift(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
-  rx_byte* dst_, rx_size _dw, rx_size _dh)
+void shift(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw, rx_size _sh,
+  rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw, rx_size _dh)
 {
   const rx_size w_frac{_sw / _dw};
   const rx_size h_frac{_sh / _dh};
@@ -70,8 +70,8 @@ void shift(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
 }
 
 template<rx_size C>
-void scale(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
-  rx_byte* dst_, rx_size _dw, rx_size _dh)
+void scale(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw, rx_size _sh,
+  rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw, rx_size _dh)
 {
   const rx_size w_frac{(_sw << 12_z) / _dw};
   const rx_size h_frac{(_sh << 12_z) / _dh};
@@ -124,10 +124,10 @@ void scale(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
       if (h) {
         x_src += _stride;
         x_end += _stride;
-      
+
         for (rx_size h_cur{h}; --h_cur; x_src += _stride, x_end += _stride) {
           rx_size p[C]{0};
-        
+
           for (const rx_byte* x_cur{x_src + C}; x_cur < x_end; x_cur += C) {
             for (rx_size i{0}; i < C; i++) {
               p[i] += x_cur[i];
@@ -159,35 +159,44 @@ void scale(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
 }
 
 // explicitly instantiate for 1, 2, 3 and 4 channel varaitons
-template void halve<1>(const rx_byte* _src, rx_size _sw, rx_size _sh,
-  rx_size _stride, rx_byte* dst_);
-template void halve<2>(const rx_byte* _src, rx_size _sw, rx_size _sh,
-  rx_size _stride, rx_byte* dst_);
-template void halve<3>(const rx_byte* _src, rx_size _sw, rx_size _sh,
-  rx_size _stride, rx_byte* dst_);
-template void halve<4>(const rx_byte* _src, rx_size _sw, rx_size _sh,
-  rx_size _stride, rx_byte* dst_);
+template void halve<1>(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw,
+  rx_size _sh, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_);
+template void halve<2>(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw,
+  rx_size _sh, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_);
+template void halve<3>(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw,
+  rx_size _sh, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_);
+template void halve<4>(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw,
+  rx_size _sh, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_);
 
-template void shift<1>(const rx_byte* _src, rx_size _sw, rx_size _sh,
-  rx_size _stride, rx_byte* dst_, rx_size _dw, rx_size _dh);
-template void shift<2>(const rx_byte* _src, rx_size _sw, rx_size _sh,
-  rx_size _stride, rx_byte* dst_, rx_size _dw, rx_size _dh);
-template void shift<3>(const rx_byte* _src, rx_size _sw, rx_size _sh,
-  rx_size _stride, rx_byte* dst_, rx_size _dw, rx_size _dh);
-template void shift<4>(const rx_byte* _src, rx_size _sw, rx_size _sh,
-  rx_size _stride, rx_byte* dst_, rx_size _dw, rx_size _dh);
+template void shift<1>(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw,
+  rx_size _sh, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw,
+  rx_size _dh);
+template void shift<2>(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw,
+  rx_size _sh, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw,
+  rx_size _dh);
+template void shift<3>(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw,
+  rx_size _sh, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw,
+  rx_size _dh);
+template void shift<4>(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw,
+  rx_size _sh, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw,
+  rx_size _dh);
 
-template void scale<1>(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
-  rx_byte* dst_, rx_size _dw, rx_size _dh);
-template void scale<2>(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
-  rx_byte* dst_, rx_size _dw, rx_size _dh);
-template void scale<3>(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
-  rx_byte* dst_, rx_size _dw, rx_size _dh);
-template void scale<4>(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _stride,
-  rx_byte* dst_, rx_size _dw, rx_size _dh);
+template void scale<1>(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw,
+  rx_size _sh, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw,
+  rx_size _dh);
+template void scale<2>(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw,
+  rx_size _sh, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw,
+  rx_size _dh);
+template void scale<3>(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw,
+  rx_size _sh, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw,
+  rx_size _dh);
+template void scale<4>(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw,
+  rx_size _sh, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw,
+  rx_size _dh);
 
-void scale(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _bpp,
-  rx_size _stride, rx_byte* dst_, rx_size _dw, rx_size _dh)
+void scale(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw, rx_size _sh,
+  rx_size _bpp, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw,
+  rx_size _dh)
 {
   if (_sw == _dw*2 && _sh == _dh*2) {
     switch (_bpp) {
@@ -224,6 +233,5 @@ void scale(const rx_byte* _src, rx_size _sw, rx_size _sh, rx_size _bpp,
     }
   }
 }
-
 
 } // namespace rx::texture
