@@ -3,7 +3,7 @@
 #include "rx/core/deferred_function.h"
 #include "rx/core/vector.h"
 #include "rx/core/string.h"
-#include "rx/core/pool.h"
+#include "rx/core/static_pool.h"
 #include "rx/core/map.h"
 
 #include "rx/core/concurrency/mutex.h"
@@ -221,13 +221,13 @@ private:
   // size of resources as reported by the backend
   backend::allocation_info m_allocation_info;
 
-  pool m_buffer_pool;                          // protected by |m_mutex|
-  pool m_target_pool;                          // protected by |m_mutex|
-  pool m_program_pool;                         // protected by |m_mutex|
-  pool m_texture1D_pool;                       // protected by |m_mutex|
-  pool m_texture2D_pool;                       // protected by |m_mutex|
-  pool m_texture3D_pool;                       // protected by |m_mutex|
-  pool m_textureCM_pool;                       // protected by |m_mutex|
+  static_pool m_buffer_pool;                   // protected by |m_mutex|
+  static_pool m_target_pool;                   // protected by |m_mutex|
+  static_pool m_program_pool;                  // protected by |m_mutex|
+  static_pool m_texture1D_pool;                // protected by |m_mutex|
+  static_pool m_texture2D_pool;                // protected by |m_mutex|
+  static_pool m_texture3D_pool;                // protected by |m_mutex|
+  static_pool m_textureCM_pool;                // protected by |m_mutex|
 
   vector<buffer*> m_destroy_buffers;           // protected by |m_mutex|
   vector<target*> m_destroy_targets;           // protected by |m_mutex|

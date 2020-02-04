@@ -1,9 +1,9 @@
-#include "rx/core/pool.h"
+#include "rx/core/static_pool.h"
 #include "rx/core/utility/move.h"
 
 namespace rx {
 
-pool::pool(memory::allocator* _allocator, rx_size _object_size, rx_size _capacity)
+static_pool::static_pool(memory::allocator* _allocator, rx_size _object_size, rx_size _capacity)
   : m_allocator{_allocator}
   , m_object_size{memory::allocator::round_to_alignment(_object_size)}
   , m_capacity{_capacity}
@@ -12,7 +12,7 @@ pool::pool(memory::allocator* _allocator, rx_size _object_size, rx_size _capacit
 {
 }
 
-pool::pool(pool&& pool_)
+static_pool::static_pool(static_pool&& pool_)
   : m_allocator{pool_.m_allocator}
   , m_object_size{pool_.m_object_size}
   , m_capacity{pool_.m_capacity}
@@ -24,7 +24,7 @@ pool::pool(pool&& pool_)
   pool_.m_data = nullptr;
 }
 
-pool& pool::operator=(pool&& pool_) {
+static_pool& static_pool::operator=(static_pool&& pool_) {
   RX_ASSERT(&pool_ != this, "self assignment");
 
   m_allocator = pool_.m_allocator;
@@ -40,7 +40,7 @@ pool& pool::operator=(pool&& pool_) {
   return *this;
 }
 
-rx_size pool::allocate() {
+rx_size static_pool::allocate() {
   const rx_size index{m_bitset.find_first_unset()};
   if (RX_HINT_UNLIKELY(index == -1_z)) {
     return -1_z;
@@ -50,7 +50,7 @@ rx_size pool::allocate() {
   return index;
 }
 
-void pool::deallocate(rx_size _index) {
+void static_pool::deallocate(rx_size _index) {
   RX_ASSERT(m_bitset.test(_index), "unallocated");
   m_bitset.clear(_index);
 }

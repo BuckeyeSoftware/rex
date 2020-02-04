@@ -99,6 +99,22 @@ RX_CONSOLE_IVAR(
   65536,
   0x4597);
 
+RX_CONSOLE_IVAR(
+  thread_pool_threads,
+  "thread_pool.threads",
+  "maximum number of threads for thread pool (0 uses the # of CPUs detected)",
+  0,
+  256,
+  0);
+
+RX_CONSOLE_IVAR(
+  thread_pool_static_pool_size,
+  "thread_pool.static_pool_size",
+  "size of static pool for jobs before another static pool is allocated",
+  32,
+  4096,
+  1024);
+
 static concurrency::atomic<game::status> g_status{game::status::k_restart};
 
 RX_LOG("main", logger);
@@ -134,17 +150,28 @@ int main(int _argc, char** _argv) {
   // Link all globals into their respective groups.
   globals::link();
 
-  global_group* system_group{globals::find("system")};
-  global_group* console_group{globals::find("console")};
+  global_group* system_group = globals::find("system");
+  global_group* console_group = globals::find("console");
+  global_group* cvars_group = globals::find("cvars");
 
   // Explicitly initialize globals that need to be initialized in a specific
   // order for things to work.
   system_group->find("allocator")->init();
   system_group->find("logger")->init();
   system_group->find("profiler")->init();
-  system_group->find("thread_pool")->init(SDL_GetCPUCount());
 
+  // Initialize console variables. Then load the configuration to set those
+  // console variables.
+  cvars_group->init();
   console_group->init();
+
+  if (!console::interface::load("config.cfg")) {
+    console::interface::save("config.cfg");
+  }
+
+  const rx_size static_pool_size = *thread_pool_static_pool_size;
+  const rx_size threads = *thread_pool_threads ? *thread_pool_threads : SDL_GetCPUCount();
+  system_group->find("thread_pool")->init(threads, static_pool_size);
 
   // The following scope exists because anything inside here needs to go out
   // of scope before the engine can safely return from main. This is because main
@@ -168,6 +195,7 @@ int main(int _argc, char** _argv) {
             break;
           case log::level::k_verbose:
             // Don't write verbose messages to the console.
+            // console::interface::print("^yverbose: ^w%s", _message);
             break;
           case log::level::k_warning:
             console::interface::print("^mwarning: ^w%s", _message);
@@ -616,6 +644,7 @@ int main(int _argc, char** _argv) {
   globals::fini();
 
   console_group->fini();
+  cvars_group->fini();
 
   system_group->find("thread_pool")->fini();
   system_group->find("profiler")->fini();
