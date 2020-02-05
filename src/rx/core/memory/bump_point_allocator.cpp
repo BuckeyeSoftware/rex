@@ -43,11 +43,9 @@ rx_byte* bump_point_allocator::allocate(rx_size _size) {
 }
 
 rx_byte* bump_point_allocator::reallocate(rx_byte* _data, rx_size _size) {
-  if(_data == nullptr) {
-    return allocate(_size);
-  } else {
+  if (RX_HINT_LIKELY(_data)) {
     concurrency::scope_lock locked{m_lock};
-    
+
     // Round |_size| to a multiple of k_alignment to keep all pointers
     // aligned by k_alignment.
     _size = allocator::round_to_alignment(_size);
@@ -68,6 +66,8 @@ rx_byte* bump_point_allocator::reallocate(rx_byte* _data, rx_size _size) {
 
     return nullptr;
   }
+
+  return allocate(_size);
 }
 
 void bump_point_allocator::deallocate(rx_byte* _data) {
