@@ -426,6 +426,12 @@ void interface::destroy_target(const command_header::info& _info, target* _targe
     command->as_target = _target;
     m_commands.push_back(command_base);
     m_destroy_targets.push_back(_target);
+
+    // Anything owned by the target will also be queued for destruction at this
+    // point. Note that |target::destroy| uses unlocked variants of the destroy
+    // functions since |lock| here is held and recursive locking of |m_mutex| is
+    // not allowed.
+    _target->destroy();
   }
 }
 
@@ -733,13 +739,10 @@ bool interface::process() {
 
   concurrency::scope_lock lock{m_mutex};
 
-  // consume all commands
+  // Consume all recorded commands on the backend.
   m_backend->process(m_commands);
 
-  m_commands.clear();
-  m_command_buffer.reset();
-
-  // cleanup unreferenced resources
+  // Cleanup unreferenced frontend resources.
   m_destroy_buffers.each_fwd([this](buffer* _buffer) {
     m_buffer_pool.destroy<buffer>(_buffer);
   });
@@ -768,6 +771,10 @@ bool interface::process() {
     m_textureCM_pool.destroy<textureCM>(_texture);
   });
 
+  // Reset the command buffer and unreferenced resource lists.
+  m_commands.clear();
+  m_command_buffer.reset();
+
   m_destroy_buffers.clear();
   m_destroy_targets.clear();
   m_destroy_programs.clear();
@@ -776,11 +783,7 @@ bool interface::process() {
   m_destroy_textures3D.clear();
   m_destroy_texturesCM.clear();
 
-  // consume all commands
-  m_backend->process(m_commands);
-  m_commands.clear();
-  m_command_buffer.reset();
-
+  // Update all rendering stats for the last frame.
   auto swap{[](concurrency::atomic<rx_size> (&_value)[2]) {
     _value[1] = _value[0].load();
     _value[0] = 0;

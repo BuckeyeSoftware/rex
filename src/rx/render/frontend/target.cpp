@@ -16,7 +16,7 @@ target::target(interface* _frontend)
 {
 }
 
-target::~target() {
+void target::destroy() {
   const bool owns_depth{!!(m_flags & k_owns_depth)};
   const bool owns_stencil{!!(m_flags & k_owns_stencil)};
   if (owns_depth && owns_stencil) {

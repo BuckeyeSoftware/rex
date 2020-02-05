@@ -11,7 +11,6 @@ struct interface;
 
 struct target : resource {
   target(interface* _frontend);
-  ~target();
 
   struct attachment {
     enum class type {
@@ -80,6 +79,8 @@ struct target : resource {
   void validate() const;
 
 private:
+  void destroy();
+
   friend struct interface;
 
   void update_resource_usage();
