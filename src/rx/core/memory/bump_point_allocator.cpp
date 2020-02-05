@@ -49,6 +49,10 @@ rx_byte* bump_point_allocator::reallocate(rx_byte* _data, rx_size _size) {
   // aligned by k_alignment.
   _size = allocator::round_to_alignment(_size);
 
+  if(_data == nullptr) {
+    return allocate(_size);
+  }
+
   // Can only reallocate in-place provided |_data| is the address of |m_last_point|,
   // i.e it's the most recently allocated.
   if (RX_HINT_LIKELY(_data == m_last_point)) {
