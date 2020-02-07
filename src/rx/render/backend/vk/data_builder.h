@@ -66,7 +66,6 @@ namespace detail_vk {
     VkExtent3D extent;
     uint32_t offset;
     uint32_t layers;
-    VkImageLayout current_layout;
     
 #if defined(RX_DEBUG)
     const char* name = nullptr;
@@ -108,8 +107,6 @@ namespace detail_vk {
     struct texture_info {
       const frontend::resource_command* resource;
       const use_queue::use_info* use_info;
-      VkDeviceSize staging_offset;
-      VkDeviceSize bind_offset;
     };
     
     texture_builder(context& ctx_);

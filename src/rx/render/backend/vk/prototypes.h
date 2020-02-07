@@ -60,6 +60,9 @@ DEV_FUN(vkDestroyRenderPass)
 DEV_FUN(vkCmdBlitImage)
 DEV_FUN(vkCmdDraw)
 
+DEV_FUN(vkCmdBeginRenderPass)
+DEV_FUN(vkCmdEndRenderPass)
+
 #if defined(RX_DEBUG)
 DEV_FUN(vkSetDebugUtilsObjectNameEXT)
 #endif

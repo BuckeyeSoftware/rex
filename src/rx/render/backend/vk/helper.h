@@ -71,7 +71,6 @@ namespace detail_vk {
   inline void set_name(context&, VkObjectType, uint64_t, const char*) {}
   #endif
   
-  
 }
 
 }

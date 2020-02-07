@@ -484,17 +484,13 @@ void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const front
   if(current_image_size % req.alignment != 0) {
     current_image_size = (current_image_size / req.alignment + 1) * req.alignment;
   }
-  VkDeviceSize bind_offset = current_image_size;
   current_image_size += req.size;
   
   use_queue::use_info* use_info = nullptr;
-  VkDeviceSize staging_offset = 0;
   
   if(texture->data().size() > 0) {
     
-    staging_offset = current_image_staging_size;
-    
-    rx_size texture_size = texture->data().size() * sizeof(rx_byte) * tex->format_size / texture->byte_size_of_format(texture->format());
+    rx_size texture_size = texture->data().size() * sizeof(rx_byte) * tex->format_size / (rx_size) texture->byte_size_of_format(texture->format());
     rx_size alignment = 4;
     if(current_image_staging_size % alignment != 0) {
       current_image_staging_size = (current_image_staging_size / alignment + 1) * alignment;
@@ -506,7 +502,7 @@ void detail_vk::texture_builder::construct(detail_vk::context& ctx_, const front
     
   }
   
-  texture_infos.push_back({resource, use_info, staging_offset, bind_offset});
+  texture_infos.push_back({resource, use_info});
   
 }
 
@@ -632,8 +628,6 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, texture_in
     current_image_size = (current_image_size / req.alignment + 1) * req.alignment;
   }
   
-  vk_log(log::level::k_verbose, "current_size %li : %li", current_image_size, info.bind_offset);
-  
   vkBindImageMemory(ctx_.device, tex->handle, image_memory, current_image_size);
   
   current_image_size += req.size;
@@ -731,7 +725,7 @@ void detail_vk::texture_builder::construct2(detail_vk::context& ctx_, texture_in
       
     }
     
-    vkCmdCopyBufferToImage(command, staging_buffer, tex->handle, tex->current_layout, texture->levels(), &copies[0]);
+    vkCmdCopyBufferToImage(command, staging_buffer, tex->handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture->levels(), &copies[0]);
     
     current_image_staging_size = current_image_staging_size + texture_size;
     

@@ -74,13 +74,14 @@ namespace detail_vk {
       frontend::texture2D* texture_info = nullptr;
       rx::array<texture*[k_max_frames]> image_info;
       uint32_t frame_index;
-      bool acquired = false;
       
       bool alive = false;
       
     } swap;
     
-    rx::array<VkSemaphore[k_buffered]> start_semaphore, end_semaphore, transfer_semaphore;
+    rx::array<VkSemaphore[k_buffered]> transfer_semaphore;
+    rx::array<VkSemaphore[k_buffered * 3]> swapchain_semaphore;
+    int swapchain_sync_index = -1;
     
     Command graphics;
     Command transfer;

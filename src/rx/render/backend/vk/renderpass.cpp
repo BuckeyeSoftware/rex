@@ -7,60 +7,82 @@ namespace rx::render::backend {
 
 void detail_vk::target::construct(detail_vk::context& ctx_, frontend::target* target) {
   
-  num_attachments = target->attachments().size() + (target->has_depth() || target->has_stencil());
-  views = {ctx_.allocator, num_attachments};
-  clears = {ctx_.allocator, num_attachments};
-  
-  for(rx_size i {0}; i<k_max_frames; i++) {
-    framebuffers[i] = VK_NULL_HANDLE;
-  }
+  (void) ctx_;
+  (void) target;
   
 }
 
 
-void detail_vk::target::make_renderpass(detail_vk::context& ctx_, frontend::target* target) {
+VkRenderPass detail_vk::target::make_renderpass(detail_vk::context& ctx_, frame_render::renderpass_info& rpinfo) {
   
-  bool swapchain = target->is_swapchain();
+  auto target = rpinfo.target;
+  
+  rx_size num_attachments = target->attachments().size() + (target->has_depth() || target->has_stencil());
   
   VkRenderPassCreateInfo info {};
   info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  info.attachmentCount = target->attachments().size() + (target->has_depth() || target->has_stencil());
+  info.attachmentCount = num_attachments;
   
-  rx::vector<VkAttachmentDescription> attachments (ctx_.allocator, info.attachmentCount);
+  rx::vector<VkSubpassDependency> dependencies (ctx_.allocator);
+  
+  
+  rx::vector<VkAttachmentDescription> attachments (ctx_.allocator, num_attachments);
   for (rx_size i {0}; i < target->attachments().size(); i++) {
+    
+    frontend::texture* texture = get_texture(target->attachments()[i]);
+    detail_vk::texture* tex = get_tex(ctx_, target->attachments()[i]);
+    
     attachments[i] = {};
-    attachments[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    attachments[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    attachments[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    attachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    
+    //TODO: change this with sync_after
+    
+    auto last_use = rpinfo.attachment_uses[i];
+    auto current_use = last_use->after;
+    
+    
+    attachments[i].initialLayout = last_use->layout;
+    
+    
+    if(last_use->queue != current_use->queue) {
+      
+      tex->sync(ctx_, texture, last_use, ctx_.graphics.get(ctx_));
+      
+    } else if(!last_use->sync_after && last_use->write) {
+      
+      // TODO: add dependency
+      
+    }
+    
+    if(current_use->after != nullptr) {
+      attachments[i].finalLayout = current_use->after->layout;
+      attachments[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    } else {
+      attachments[i].finalLayout = current_use->layout;
+      attachments[i].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    }
+    
+    attachments[i].loadOp = (last_use->layout == VK_IMAGE_LAYOUT_UNDEFINED) ? VK_ATTACHMENT_LOAD_OP_DONT_CARE : VK_ATTACHMENT_LOAD_OP_LOAD;
+    
+    attachments[i].format = tex->format;
     attachments[i].samples = VK_SAMPLE_COUNT_1_BIT;
     
-    frontend::texture* texture;
-    if(target->attachments()[i].kind == frontend::target::attachment::type::k_textureCM) {
-      auto CM = target->attachments()[i].as_textureCM.texture;
-      texture = CM;
-      attachments[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      attachments[i].format = reinterpret_cast<detail_vk::texture*>(CM + 1)->format;
-    } else {
-      auto t = target->attachments()[i].as_texture2D.texture;
-      if(t->is_swapchain()) {
-        attachments[i].format = ctx_.swap.format;
-        
-      } else {
-        auto tex = reinterpret_cast<detail_vk::texture*>(t + 1);
-        attachments[i].format = tex->format;
-      }
-      texture = t;
-    }
-    
-    if(texture->is_swapchain()) {
-      attachments[i].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-    } else {
-      attachments[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    }
+    attachments[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     
   }
+  
+  if (rpinfo.clear && rpinfo.clear->clear_colors) {
+    for (rx_u32 i{0}; i < sizeof rpinfo.clear->color_values / sizeof *rpinfo.clear->color_values; i++) {
+      if (rpinfo.clear->clear_colors & (1 << i)) {
+        rx_size index = rpinfo.clear->draw_buffers.elements[i];
+        
+        attachments[index].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        attachments[index].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        
+      }
+    }
+  }
+  
   
   frontend::texture2D* ds = nullptr;
   if(target->has_depth_stencil()) {
@@ -70,24 +92,59 @@ void detail_vk::target::make_renderpass(detail_vk::context& ctx_, frontend::targ
   } else if(target->has_stencil()) {
     ds = target->stencil();
   }
+  
   if(ds != nullptr) {
+    
+    auto tex = reinterpret_cast<detail_vk::texture*>(ds + 1);
     
     auto& att = attachments[attachments.size()-1];
     att = {};
-    att.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    att.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    att.format = reinterpret_cast<detail_vk::texture*>(ds + 1)->format;
+    att.format = tex->format;
     att.samples = VK_SAMPLE_COUNT_1_BIT;
-    att.loadOp = target->has_depth() ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    att.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    att.stencilLoadOp = target->has_stencil() ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    att.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    
+    
+    auto last_use = rpinfo.depth_stencil_use;
+    auto current_use = last_use->after;
+    
+    att.initialLayout = last_use->layout;
+    
+    
+    if(last_use->queue != current_use->queue) {
+      
+      tex->sync(ctx_, ds, last_use, ctx_.graphics.get(ctx_));
+      
+    } else if(!last_use->sync_after && last_use->write) {
+      
+      // TODO: add dependency
+      
+    }
+    
+    att.loadOp = (last_use->layout == VK_IMAGE_LAYOUT_UNDEFINED || !target->has_depth()) ? VK_ATTACHMENT_LOAD_OP_DONT_CARE : VK_ATTACHMENT_LOAD_OP_LOAD;
+    att.stencilLoadOp = (last_use->layout == VK_IMAGE_LAYOUT_UNDEFINED || !target->has_stencil()) ? VK_ATTACHMENT_LOAD_OP_DONT_CARE : VK_ATTACHMENT_LOAD_OP_LOAD;
+    
+    if(rpinfo.clear && rpinfo.clear->clear_depth) att.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    if(rpinfo.clear && rpinfo.clear->clear_stencil) att.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    
+    
+    if(current_use->after != nullptr) {
+      att.finalLayout = current_use->after->layout;
+      att.storeOp = target->has_depth() ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
+      att.stencilStoreOp = target->has_stencil() ? VK_ATTACHMENT_STORE_OP_STORE : VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    } else {
+      att.finalLayout = current_use->layout;
+      att.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+      att.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    }
     
   }
   
   info.pAttachments = attachments.data();
   
+  
+  
+  
   info.subpassCount = 1;
+  
   VkSubpassDescription subpass {};
   subpass.colorAttachmentCount = target->attachments().size();
   
@@ -101,7 +158,13 @@ void detail_vk::target::make_renderpass(detail_vk::context& ctx_, frontend::targ
   VkAttachmentReference depth_ref {};
   if(ds != nullptr) {
     depth_ref.attachment = attachments.size()-1;
-    depth_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    if(target->has_depth_stencil()) {
+      depth_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    } else if(target->has_depth()) {
+      depth_ref.layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+    } else if(target->has_stencil()) {
+      depth_ref.layout = VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL;
+    }
     subpass.pDepthStencilAttachment = &depth_ref;
   }
   
@@ -109,15 +172,21 @@ void detail_vk::target::make_renderpass(detail_vk::context& ctx_, frontend::targ
   subpass.preserveAttachmentCount = 0;
   
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  
+  
   info.pSubpasses = &subpass;
   
-  vkCreateRenderPass(ctx_.device, &info, nullptr, &renderpass);
+  info.dependencyCount = dependencies.size();
+  info.pDependencies = dependencies.data();
+  
+  VkRenderPass ret;
+  check_result(vkCreateRenderPass(ctx_.device, &info, nullptr, &ret));
+  
+  return ret;
   
 }
 
-void detail_vk::target::make_framebuffer(detail_vk::context& ctx_, frontend::target* target) {
-  
-  bool swapchain = target->is_swapchain();
+VkFramebuffer detail_vk::target::make_framebuffer(detail_vk::context& ctx_, frontend::target* target, VkRenderPass renderpass) {
   
   int swapchain_image_index = -1;
   
@@ -128,6 +197,8 @@ void detail_vk::target::make_framebuffer(detail_vk::context& ctx_, frontend::tar
   info.layers = 1;
   info.renderPass = renderpass;
   info.attachmentCount = target->attachments().size() + (target->has_depth() || target->has_stencil());
+  
+  rx::vector<VkImageView> views(ctx_.allocator, info.attachmentCount);
   
   for (rx_size i {0}; i < target->attachments().size(); i++) {
     if(target->attachments()[i].kind == frontend::target::attachment::type::k_textureCM) {
@@ -156,73 +227,19 @@ void detail_vk::target::make_framebuffer(detail_vk::context& ctx_, frontend::tar
   
   info.pAttachments = views.data();
   
-  if(swapchain) {
-    for(rx_size i {0}; i<ctx_.swap.num_frames; i++) {
-      views[swapchain_image_index] = ctx_.swap.image_views[i];
-      vkCreateFramebuffer(ctx_.device, &info, nullptr, &framebuffers[i]);
-    }
-    views[swapchain_image_index] = VK_NULL_HANDLE;
-  } else {
-    vkCreateFramebuffer(ctx_.device, &info, nullptr, &framebuffers[0]);
+  
+  if(swapchain_image_index != -1) {
+    views[swapchain_image_index] = ctx_.swap.image_views[ctx_.swap.frame_index];
   }
   
-}
-
-
-void detail_vk::target::make(detail_vk::context& ctx_, frontend::target* target) {
+  VkFramebuffer ret;
+  check_result(vkCreateFramebuffer(ctx_.device, &info, nullptr, &ret));
   
-  make_renderpass(ctx_, target);
-  
-  if(framebuffers[0] == VK_NULL_HANDLE) {
-    make_framebuffer(ctx_, target);
-  }
-  
-}
-
-VkFramebuffer detail_vk::target::get_framebuffer(detail_vk::context& ctx_, frontend::target* target) {
-  
-  if(target->is_swapchain()) {
-    return framebuffers[ctx_.swap.frame_index];
-  }
-  return framebuffers[0];
-  
-}
-
-VkRenderPass detail_vk::target::get_renderpass(detail_vk::context& ctx_, frontend::target* target) {
-  
-  return renderpass;
-  
-}
-
-void detail_vk::target::start_renderpass(detail_vk::context& ctx_, frontend::target* target, VkCommandBuffer command) {
-  
-  
-  
-}
-
-void detail_vk::target::end_renderpass(detail_vk::context& ctx_, frontend::target* target, VkCommandBuffer command) {
-  
-  
+  return ret;
 }
 
 
 void detail_vk::target::destroy(detail_vk::context& ctx_, frontend::target* target) {
-  
-  if(renderpass != VK_NULL_HANDLE) {
-    vkDestroyRenderPass(ctx_.device, renderpass, nullptr);
-  }
-  
-  for(rx_size i {0}; i<framebuffers.size(); i++) {
-    if(framebuffers[i] != VK_NULL_HANDLE) {
-      vkDestroyFramebuffer(ctx_.device, framebuffers[i], nullptr);
-    }
-  }
-  
-  for(rx_size i {0}; i<views.size(); i++) {
-    if(views[i] != VK_NULL_HANDLE) {
-      vkDestroyImageView(ctx_.device, views[i], nullptr);
-    }
-  }
   
 }
 

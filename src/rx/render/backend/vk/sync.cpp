@@ -42,7 +42,11 @@ void detail_vk::texture::sync(context& ctx_, frontend::texture* texture, const u
     
     vkCmdPipelineBarrier(command, last_use->stage, current_use->stage, VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 0, nullptr, 1, &barrier);
     
-    current_layout = current_use->layout;
+  } else {
+    
+#if defined(RX_DEBUG)
+    vk_log(log::level::k_verbose, "NOT transferring image from %s to %s : %s", layout_to_string(last_use->layout), layout_to_string(current_use->layout), name);
+#endif
     
   }
   

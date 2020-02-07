@@ -45,9 +45,9 @@ bool vk::init() {
   
   detail_vk::context& ctx{*reinterpret_cast<detail_vk::context*> (m_impl)};
   
-  if (!create_instance(ctx)) return false;
+  if (!detail_vk::create_instance(ctx)) return false;
   
-  create_device(ctx);
+  detail_vk::create_device(ctx);
   
   SET_NAME(ctx, VK_OBJECT_TYPE_INSTANCE, ctx.instance, "instance");
   
@@ -59,13 +59,14 @@ bool vk::init() {
   VkSemaphoreCreateInfo info {};
   info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
   
-  for(rx_size i {0}; i<k_buffered; i++) {
-    vkCreateSemaphore(ctx.device, &info, nullptr, &ctx.start_semaphore[i]);
+  for(rx_size i {0}; i<ctx.transfer_semaphore.size(); i++) {
     vkCreateSemaphore(ctx.device, &info, nullptr, &ctx.transfer_semaphore[i]);
-    vkCreateSemaphore(ctx.device, &info, nullptr, &ctx.end_semaphore[i]);
-    SET_NAME(ctx, VK_OBJECT_TYPE_SEMAPHORE, ctx.start_semaphore[i], rx::string::format (ctx.allocator, "start %i", i).data());
     SET_NAME(ctx, VK_OBJECT_TYPE_SEMAPHORE, ctx.transfer_semaphore[i], rx::string::format (ctx.allocator, "transfer %i", i).data());
-    SET_NAME(ctx, VK_OBJECT_TYPE_SEMAPHORE, ctx.end_semaphore[i], rx::string::format (ctx.allocator, "end %i", i).data());
+  }
+  
+  for(rx_size i {0}; i<ctx.swapchain_semaphore.size(); i++) {
+    vkCreateSemaphore(ctx.device, &info, nullptr, &ctx.swapchain_semaphore[i]);
+    SET_NAME(ctx, VK_OBJECT_TYPE_SEMAPHORE, ctx.swapchain_semaphore[i], rx::string::format (ctx.allocator, "swapchain %i", i).data());
   }
   
   return true;
@@ -95,10 +96,12 @@ vk::~vk() {
     vkFreeMemory(ctx_.device, alloc.memory, nullptr);
   });
   
-  for(rx_size i {0}; i<k_buffered; i++) {
-    vkDestroySemaphore(ctx_.device, ctx_.start_semaphore[i], nullptr);
+  for(rx_size i {0}; i<ctx_.transfer_semaphore.size(); i++) {
     vkDestroySemaphore(ctx_.device, ctx_.transfer_semaphore[i], nullptr);
-    vkDestroySemaphore(ctx_.device, ctx_.end_semaphore[i], nullptr);
+  }
+  
+  for(rx_size i {0}; i<ctx_.swapchain_semaphore.size(); i++) {
+    vkDestroySemaphore(ctx_.device, ctx_.swapchain_semaphore[i], nullptr);
   }
   
   ctx_.graphics.destroy(ctx_);
@@ -106,9 +109,9 @@ vk::~vk() {
   
   //destroy_swapchain(ctx_);
   
-  destroy_device(ctx_);
+  detail_vk::destroy_device(ctx_);
   
-  destroy_instance(ctx_);
+  detail_vk::destroy_instance(ctx_);
   
   ctx_.allocator->destroy<detail_vk::context>(m_impl);
   
@@ -116,12 +119,15 @@ vk::~vk() {
 
 void vk::process(const vector<rx_byte*>& _commands) {
   
+  vk_log(log::level::k_verbose, "process");
+  
   detail_vk::context& ctx{*reinterpret_cast<detail_vk::context*> (m_impl)};
   
   ctx.sync = ctx.allocator->create<detail_vk::resource_sync>(ctx);
   
   
   ctx.index = (ctx.index + 1) % k_buffered;
+  
   
   
   detail_vk::buffer_builder b_builder(ctx);
@@ -181,7 +187,7 @@ void vk::process(const vector<rx_byte*>& _commands) {
           case frontend::resource_command::type::k_texture2D:
             if(resource->as_texture2D->is_swapchain()) {
               ctx.swap.texture_info = resource->as_texture2D;
-              create_swapchain(ctx);
+              detail_vk::create_swapchain(ctx);
               break;
             }
             [[fallthrough]];
@@ -207,8 +213,6 @@ void vk::process(const vector<rx_byte*>& _commands) {
     }
     
   });
-  
-  if(ctx.swap.alive) check_result(vkAcquireNextImageKHR(ctx.device, ctx.swap.swapchain, 1000000000000L, ctx.start_semaphore[ctx.index], VK_NULL_HANDLE, &ctx.swap.frame_index));
   
   detail_vk::use_queue::use_info* swap_present_use = ctx.swap.alive ? ctx.swap.image_info[ctx.swap.frame_index]->add_use(ctx, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, ctx.graphics_index, false) : nullptr;
   
@@ -245,27 +249,23 @@ void vk::process(const vector<rx_byte*>& _commands) {
   {
     auto waits = rx::vector<VkSemaphore> (ctx.allocator);
     auto stages = rx::vector<VkPipelineStageFlags> (ctx.allocator);
-    waits.push_back(ctx.start_semaphore[ctx.index]);
-    stages.push_back(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
     waits.push_back(ctx.transfer_semaphore[ctx.index]);
     stages.push_back(VK_PIPELINE_STAGE_TRANSFER_BIT);
     
+    if(ctx.swapchain_sync_index != -1) {
+      waits.push_back(ctx.swapchain_semaphore[ctx.swapchain_sync_index]);
+      stages.push_back(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+    }
+    
+    
+    vk_log(log::level::k_verbose, "render");
+    
+    ctx.swapchain_sync_index = (ctx.swapchain_sync_index + 1)%ctx.swapchain_semaphore.size();
+    
     rx::vector<VkSemaphore> signals(ctx.allocator);
-    signals.push_back(ctx.end_semaphore[ctx.index]);
+    signals.push_back(ctx.swapchain_semaphore[ctx.swapchain_sync_index]);
     
     ctx.graphics.end(ctx, ctx.graphics_queue, waits, stages, signals);
-  }
-  
-  if(ctx.swap.alive) {
-    VkPresentInfoKHR info {};
-    info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    info.swapchainCount = 1;
-    info.pSwapchains = &ctx.swap.swapchain;
-    info.pImageIndices = &ctx.swap.frame_index;
-    info.waitSemaphoreCount = 1;
-    info.pWaitSemaphores = &ctx.end_semaphore[ctx.index];
-
-    check_result(vkQueuePresentKHR(ctx.graphics_queue, &info));
   }
   
   
@@ -298,7 +298,7 @@ void vk::process(const vector<rx_byte*>& _commands) {
             break;
           case frontend::resource_command::type::k_texture2D:
             if(resource->as_texture2D->is_swapchain()) {
-              destroy_swapchain(ctx);
+              detail_vk::destroy_swapchain(ctx);
             } else {
               reinterpret_cast<detail_vk::texture*>(resource->as_texture2D + 1)->destroy(ctx, resource->as_texture2D);
             }
@@ -322,6 +322,8 @@ void vk::process(const vector<rx_byte*>& _commands) {
   });
   
   
+  ctx.index = (ctx.index + 1) % k_buffered;
+  
   
 }
 
@@ -331,24 +333,12 @@ void vk::process(rx_byte* _command) {
 
 void vk::swap() {
   
-  /*
-  
   detail_vk::context& ctx{*reinterpret_cast<detail_vk::context*> (m_impl)};
-  
-  vk_log(log::level::k_verbose, "swap");
   
   if (!ctx.swap.alive) return;
   
-  bool has_drawn = ctx.frame_count > ctx.swap_count;
-  
-  ctx.swap_count++;
-  if(!has_drawn) { // if swap was called twice
-    ctx.frame_count = ctx.swap_count;
-  }
-  
-  if (ctx.swap.acquired) {
-  
-    vk_log(log::level::k_verbose, "present %i", ctx.index);
+  {
+    vk_log(log::level::k_verbose, "present %i", ctx.swapchain_sync_index);
     
     VkPresentInfoKHR info {};
     info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -356,22 +346,17 @@ void vk::swap() {
     info.pSwapchains = &ctx.swap.swapchain;
     info.pImageIndices = &ctx.swap.frame_index;
     info.waitSemaphoreCount = 1;
-    info.pWaitSemaphores = has_drawn ? &ctx.end_semaphore[ctx.index] : &ctx.start_semaphore[ctx.index];
+    info.pWaitSemaphores = &ctx.swapchain_semaphore[ctx.swapchain_sync_index];
     
     check_result(vkQueuePresentKHR(ctx.graphics_queue, &info));
-  
   }
   
-  ctx.index = (ctx.index + 1) % k_buffered;
+  ctx.swapchain_sync_index = (ctx.swapchain_sync_index + 1)%ctx.swapchain_semaphore.size();
   
   {
-    vk_log(log::level::k_verbose, "acquire %i", ctx.index);
-    check_result(vkAcquireNextImageKHR(ctx.device, ctx.swap.swapchain, 1000000000000L, ctx.start_semaphore[ctx.index], VK_NULL_HANDLE, &ctx.swap.frame_index));
-    ctx.swap.acquired = true;
-    
+    vk_log(log::level::k_verbose, "acquire %i", ctx.swapchain_sync_index);
+    check_result(vkAcquireNextImageKHR(ctx.device, ctx.swap.swapchain, 1000000000000L, ctx.swapchain_semaphore[ctx.swapchain_sync_index], VK_NULL_HANDLE, &ctx.swap.frame_index));
   }
-  
-  */
   
 }
 

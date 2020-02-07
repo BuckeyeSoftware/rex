@@ -39,6 +39,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback (
   const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
   void* pUserData) {
   
+  (void) pUserData;
+  
   log::level level;
   
   if(messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
@@ -70,7 +72,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback (
   
 }
 
-bool create_instance(detail_vk::context& ctx_) {
+bool detail_vk::create_instance(detail_vk::context& ctx_) {
   
   // load the only entry point function from loader
   *reinterpret_cast<void**> (&ctx_.vkGetInstanceProcAddr) = SDL_Vulkan_GetVkGetInstanceProcAddr();
@@ -162,7 +164,7 @@ bool create_instance(detail_vk::context& ctx_) {
   
 }
 
-void destroy_instance(detail_vk::context& ctx_) {
+void detail_vk::destroy_instance(detail_vk::context& ctx_) {
   
   LOCAL_INST_LOAD(vkDestroySurfaceKHR);
   vkDestroySurfaceKHR(ctx_.instance, ctx_.surface, nullptr);
@@ -177,7 +179,7 @@ void destroy_instance(detail_vk::context& ctx_) {
   
 }
 
-void create_device(detail_vk::context& ctx_) {
+void detail_vk::create_device(detail_vk::context& ctx_) {
   
   LOCAL_INST_LOAD(vkEnumeratePhysicalDevices)
   LOCAL_INST_LOAD(vkGetPhysicalDeviceProperties)
@@ -346,7 +348,7 @@ void create_device(detail_vk::context& ctx_) {
   
 }
 
-void destroy_device(detail_vk::context& ctx_) {
+void detail_vk::destroy_device(detail_vk::context& ctx_) {
   
   LOCAL_DEV_LOAD(vkDestroyDevice)
   vkDestroyDevice(ctx_.device, nullptr);
@@ -355,7 +357,7 @@ void destroy_device(detail_vk::context& ctx_) {
   
 }
 
-void create_swapchain(detail_vk::context& ctx_) {
+void detail_vk::create_swapchain(detail_vk::context& ctx_) {
   
   {
     
@@ -502,7 +504,6 @@ void create_swapchain(detail_vk::context& ctx_) {
       
       image->handle = ctx_.swap.images[i];
       
-      image->current_layout = VK_IMAGE_LAYOUT_UNDEFINED;
       image->last_use = detail_vk::use_queue::use_info(VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, ctx_.graphics_index, false, false);
       
     }
@@ -534,11 +535,17 @@ void create_swapchain(detail_vk::context& ctx_) {
     
   }
   
+  {
+    if(ctx_.swapchain_sync_index == -1) ctx_.swapchain_sync_index = 0;
+    
+    check_result(vkAcquireNextImageKHR(ctx_.device, ctx_.swap.swapchain, 1000000000000L, ctx_.swapchain_semaphore[ctx_.swapchain_sync_index], VK_NULL_HANDLE, &ctx_.swap.frame_index));
+  }
+  
   ctx_.swap.alive = true;
   
 }
 
-void destroy_swapchain(detail_vk::context& ctx_) {
+void detail_vk::destroy_swapchain(detail_vk::context& ctx_) {
   
   ctx_.swap.alive = false;
   
@@ -553,7 +560,7 @@ void destroy_swapchain(detail_vk::context& ctx_) {
   
 }
 
-void load_function_pointers(detail_vk::context& ctx_) {
+void detail_vk::load_function_pointers(detail_vk::context& ctx_) {
 
 #define DEV_FUN(_name) \
 _name = reinterpret_cast<PFN_##_name> (ctx_.vkGetDeviceProcAddr(ctx_.device, #_name)); \

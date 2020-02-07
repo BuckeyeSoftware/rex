@@ -136,7 +136,6 @@ const char* layout_to_string (VkImageLayout layout) {
 }
 
 
-
 void detail_vk::Command::init(detail_vk::context& ctx_, uint32_t queue_family) {
   
   {
