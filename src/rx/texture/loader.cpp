@@ -5,6 +5,7 @@
 
 #include "rx/core/filesystem/file.h"
 #include "rx/core/log.h"
+#include "rx/core/stream.h"
 
 #include "lib/stb_image.h"
 
@@ -14,23 +15,13 @@ RX_LOG("texture/loader", logger);
 
 namespace rx::texture {
 
-bool loader::load(const string& _file_name, pixel_format _want_format) {
-  static auto* max_dimensions_reference =
-    console::interface::find_variable_by_name("render.max_texture_dimensions");
-  static auto& max_dimensions_variable =
-    max_dimensions_reference->cast<math::vec2i>()->get();
-  return load(_file_name, _want_format, max_dimensions_variable.cast<rx_size>());
-}
-
-bool loader::load(const string& _file_name, pixel_format _want_format,
+bool loader::load(stream* _stream, pixel_format _want_format,
   const math::vec2z& _max_dimensions)
 {
-  auto read_data{filesystem::read_binary_file(m_allocator, _file_name)};
-  if (!read_data) {
+  auto data = read_binary_stream(m_allocator, _stream);
+  if (!data) {
     return false;
   }
-
-  const auto& data{*read_data};
 
   math::vec2<int> dimensions;
 
@@ -53,15 +44,15 @@ bool loader::load(const string& _file_name, pixel_format _want_format,
 
   int channels;
   rx_byte* decoded_image{stbi_load_from_memory(
-    data.data(),
-    static_cast<int>(data.size()),
+    data->data(),
+    static_cast<int>(data->size()),
     &dimensions.w,
     &dimensions.h,
     &channels,
     want_channels)};
 
   if (!decoded_image) {
-    logger(log::level::k_error, "%s failed %s", _file_name, stbi_failure_reason());
+    logger(log::level::k_error, "%s failed %s", _stream->name(), stbi_failure_reason());
     return false;
   }
 
@@ -119,7 +110,8 @@ bool loader::load(const string& _file_name, pixel_format _want_format,
       m_channels = 3;
       m_bpp = 3;
       m_data = utility::move(data);
-      logger(log::level::k_info, "%s removed alpha channel (not used)", _file_name);
+      logger(log::level::k_info, "%s removed alpha channel (not used)",
+        _stream->name());
     }
   }
 
@@ -138,10 +130,34 @@ bool loader::load(const string& _file_name, pixel_format _want_format,
     }
   }
 
-  logger(log::level::k_verbose, "%s loaded %zux%zu @ %zu bpp", _file_name,
+  logger(log::level::k_verbose, "%s loaded %zux%zu @ %zu bpp", _stream->name(),
     m_dimensions.w, m_dimensions.h, m_bpp);
 
   return true;
+}
+
+bool loader::load(stream* _stream, pixel_format _want_format) {
+  static auto* max_dimensions_reference =
+    console::interface::find_variable_by_name("render.max_texture_dimensions");
+  static auto& max_dimensions_variable =
+    max_dimensions_reference->cast<math::vec2i>()->get();
+  return load(_stream, _want_format, max_dimensions_variable.cast<rx_size>());
+}
+
+bool loader::load(const string& _file_name, pixel_format _want_format) {
+  if (filesystem::file file{_file_name, "rb"}) {
+    return load(&file, _want_format);
+  }
+  return false;
+}
+
+bool loader::load(const string& _file_name, pixel_format _want_format,
+  const math::vec2z& _max_dimensions)
+{
+  if (filesystem::file file{_file_name, "rb"}) {
+    return load(&file, _want_format, _max_dimensions);
+  }
+  return false;
 }
 
 } // namespace rx::texture

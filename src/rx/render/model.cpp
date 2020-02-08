@@ -28,12 +28,7 @@ model::~model() {
   m_frontend->destroy_buffer(RX_RENDER_TAG("model"), m_buffer);
 }
 
-bool model::load(const string& _file_name) {
-  // rx::model::loader model{m_frontend->allocator()};
-  if (!m_model.load(_file_name)) {
-    return false;
-  }
-
+bool model::upload() {
   m_frontend->destroy_buffer(RX_RENDER_TAG("model"), m_buffer);
   m_buffer = m_frontend->create_buffer(RX_RENDER_TAG("model"));
   m_buffer->record_type(frontend::buffer::type::k_static);
@@ -70,14 +65,21 @@ bool model::load(const string& _file_name) {
   // Map all the loaded material::loader's to render::frontend::material's while
   // using indices to refer to them rather than strings.
   map<string, rx_size> material_indices{m_frontend->allocator()};
-  m_model.materials().each_pair([this, &material_indices](const string& _name, material::loader& material_) {
-    frontend::material material{m_frontend};
-    if (material.load(utility::move(material_))) {
-      const rx_size material_index{m_materials.size()};
-      material_indices.insert(_name, material_index);
-      m_materials.push_back(utility::move(material));
-    }
-  });
+  const bool material_load_result =
+    m_model.materials().each_pair([this, &material_indices](const string& _name, material::loader& material_) {
+      frontend::material material{m_frontend};
+      if (material.load(utility::move(material_))) {
+        const rx_size material_index{m_materials.size()};
+        material_indices.insert(_name, material_index);
+        m_materials.push_back(utility::move(material));
+        return true;
+      }
+      return false;
+    });
+
+  if (!material_load_result) {
+    return false;
+  }
 
   // Resolve all the meshes of the loaded model.
   m_model.meshes().each_fwd([this, &material_indices](const rx::model::mesh& _mesh) {

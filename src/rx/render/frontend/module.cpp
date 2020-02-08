@@ -7,17 +7,18 @@ namespace rx::render::frontend {
 
 RX_LOG("render/module", logger);
 
+bool module::load(stream* _stream) {
+  if (auto data = read_text_stream(m_allocator, _stream)) {
+    return parse({data->disown()});
+  }
+  return false;
+}
+
 bool module::load(const string& _file_name) {
-  auto data{filesystem::read_text_file(_file_name)};
-  if (!data) {
-    return false;
+  if (filesystem::file file{_file_name, "rb"}) {
+    return load(&file);
   }
-
-  if (!parse({data->disown()})) {
-    return false;
-  }
-
-  return true;
+  return false;
 }
 
 bool module::parse(const json& _description) {

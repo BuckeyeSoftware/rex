@@ -9,6 +9,7 @@
 
 namespace rx {
   struct json;
+  struct stream;
 }
 
 namespace rx::render::frontend {
@@ -43,7 +44,9 @@ struct technique
   program* permute(rx_u64 _flags) const;
   program* variant(rx_size _index) const;
 
+  bool load(stream* _stream);
   bool load(const string& _file_name);
+
   bool parse(const json& _description);
   bool compile(const map<string, module>& _modules);
 

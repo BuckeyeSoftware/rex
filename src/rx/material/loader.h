@@ -11,6 +11,7 @@
 
 namespace rx {
   struct json;
+  struct stream;
 }
 
 namespace rx::material {
@@ -23,7 +24,9 @@ struct loader
 
   void operator=(loader&& loader_);
 
+  bool load(stream* _stream);
   bool load(const string& _file_name);
+
   bool parse(const json& _definition);
 
   memory::allocator* allocator() const;

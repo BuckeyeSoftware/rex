@@ -8,6 +8,7 @@
 
 namespace rx {
   struct json;
+  struct stream;
 }
 
 namespace rx::render::frontend {
@@ -15,12 +16,16 @@ namespace rx::render::frontend {
 struct module {
   module(memory::allocator* _allocator);
 
+  bool load(stream* _stream);
   bool load(const string& _file_name);
+
   bool parse(const json& _description);
 
   const string& source() const &;
   const string& name() const &;
   const vector<string>& dependencies() const &;
+
+  memory::allocator* allocator() const;
 
 private:
   template<typename... Ts>
@@ -31,6 +36,7 @@ private:
 
   void write_log(log::level _level, string&& message_) const;
 
+  memory::allocator* m_allocator;
   string m_name;
   string m_source;
   vector<string> m_dependencies;
@@ -43,9 +49,10 @@ bool resolve_module_dependencies(
   algorithm::topological_sort<string>& sorter_);
 
 inline module::module(memory::allocator* _allocator)
-  : m_name{_allocator}
-  , m_source{_allocator}
-  , m_dependencies{_allocator}
+  : m_allocator{_allocator}
+  , m_name{m_allocator}
+  , m_source{m_allocator}
+  , m_dependencies{m_allocator}
 {
 }
 
@@ -59,6 +66,10 @@ inline const string& module::name() const & {
 
 inline const vector<string>& module::dependencies() const & {
   return m_dependencies;
+}
+
+inline memory::allocator* module::allocator() const {
+  return m_allocator;
 }
 
 template<typename... Ts>

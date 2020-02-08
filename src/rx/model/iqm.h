@@ -12,7 +12,7 @@ struct iqm
 
   struct header;
 
-  virtual bool read(const vector<rx_byte>& _data);
+  virtual bool read(stream* _stream);
 
 private:
   bool read_meshes(const header& _header, const vector<rx_byte>& _data);

@@ -7,6 +7,10 @@
 
 #include "rx/math/vec2.h"
 
+namespace rx {
+  struct stream;
+}
+
 namespace rx::texture {
 
 enum class pixel_format {
@@ -22,6 +26,9 @@ struct loader {
   constexpr loader(memory::allocator* _allocator);
   ~loader() = default;
 
+  bool load(stream* _stream, pixel_format _want_format,
+    const math::vec2z& _max_dimensions);
+  bool load(stream* _stream, pixel_format _want_format);
   bool load(const string& _file_name, pixel_format _want_format);
   bool load(const string& _file_name, pixel_format _want_format,
     const math::vec2z& _max_dimensions);

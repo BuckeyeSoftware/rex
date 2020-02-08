@@ -8,6 +8,7 @@
 
 namespace rx {
   struct json;
+  struct stream;
 }
 
 namespace rx::material {
@@ -36,7 +37,9 @@ struct texture
 
   texture& operator=(texture&& texture_);
 
+  bool load(stream* _stream);
   bool load(const string& _file_name);
+
   bool parse(const json& _definition);
 
   const filter_options& filter() const &;

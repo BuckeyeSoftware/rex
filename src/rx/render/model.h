@@ -41,12 +41,15 @@ struct model {
   void render_normals(const math::mat4x4f& _world, render::immediate3D* _immediate);
   void render_skeleton(const math::mat4x4f& _world, render::immediate3D* _immediate);
 
+  bool load(stream* _stream);
   bool load(const string& _file_name);
 
   const vector<mesh>& opaque_meshes() const &;
   const vector<mesh>& transparent_meshes() const &;
 
 private:
+  bool upload();
+
   frontend::interface* m_frontend;
   frontend::technique* m_technique;
   frontend::buffer* m_buffer;
@@ -57,6 +60,14 @@ private:
   optional<rx::model::animation> m_animation;
   math::aabb m_aabb;
 };
+
+inline bool model::load(stream* _stream) {
+  return m_model.load(_stream) && upload();
+}
+
+inline bool model::load(const string& _file_name) {
+  return m_model.load(_file_name) && upload();
+}
 
 inline const vector<model::mesh>& model::opaque_meshes() const & {
   return m_opaque_meshes;

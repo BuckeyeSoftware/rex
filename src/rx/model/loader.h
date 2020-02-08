@@ -18,7 +18,9 @@ struct loader
   loader(memory::allocator* _allocator);
   ~loader();
 
+  bool load(stream* _stream);
   bool load(const string& _file_name);
+
   bool parse(const json& _json);
 
   struct vertex {

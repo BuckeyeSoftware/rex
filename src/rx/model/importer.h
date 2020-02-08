@@ -9,6 +9,10 @@
 #include "rx/math/aabb.h"
 #include "rx/math/mat3x4.h"
 
+namespace rx {
+struct stream;
+} // namespace rx
+
 namespace rx::model {
 
 struct mesh {
@@ -23,10 +27,11 @@ struct importer
 {
   importer(memory::allocator* _allocator);
 
+  bool load(stream* _stream);
   bool load(const string& _file_name);
 
   // implemented by each model loader
-  virtual bool read(const vector<rx_byte>& _data) = 0;
+  virtual bool read(stream* _stream) = 0;
 
   struct animation {
     rx_f32 frame_rate;
@@ -80,7 +85,7 @@ protected:
   vector<math::mat3x4f> m_frames;
   vector<animation> m_animations;
   vector<joint> m_joints;
-  string m_file_name;
+  string m_name;
 };
 
 template<typename... Ts>

@@ -529,17 +529,19 @@ program* technique::variant(rx_size _index) const {
   return m_programs[_index];
 }
 
+bool technique::load(stream* _stream) {
+  auto allocator = m_frontend->allocator();
+  if (auto data = read_text_stream(allocator, _stream)) {
+    return parse({data->disown()});
+  }
+  return false;
+}
+
 bool technique::load(const string& _file_name) {
-  auto data{filesystem::read_text_file(_file_name)};
-  if (!data) {
-    return false;
+  if (filesystem::file file{_file_name, "rb"}) {
+    return load(&file);
   }
-
-  if (!parse({data->disown()})) {
-    return false;
-  }
-
-  return true;
+  return false;
 }
 
 void technique::fini() {

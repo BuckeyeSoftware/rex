@@ -4,6 +4,8 @@
 
 #include "rx/model/iqm.h"
 
+#include "rx/core/stream.h"
+
 namespace rx::model {
 
 struct iqm_mesh {
@@ -111,25 +113,43 @@ struct iqm::header {
   rx_u32 extensions_offset;
 };
 
-bool iqm::read(const vector<rx_byte>& _data) {
-  const auto read_header{reinterpret_cast<const header*>(_data.data())};
-  if (memcmp(read_header->magic, "INTERQUAKEMODEL\0", sizeof read_header->magic) != 0) {
-    return error("malformed magic: %s", read_header->magic);
+bool iqm::read(stream* _stream) {
+  const auto size = _stream->size();
+  RX_ASSERT(size, "cannot query size");
+
+  // Don't read the contents entierly into memory until we know it looks like a
+  // valid IQM.
+  header read_header;
+  if (_stream->read(reinterpret_cast<rx_byte*>(&read_header), sizeof read_header) != sizeof read_header) {
+    return error("could not read header");
   }
 
-  if (read_header->version != 2) {
-    return error("unsupported version %d", read_header->version);
+  // Don't load files which report the wrong size.
+  if (*size != read_header.file_size ||
+    memcmp(read_header.magic, "INTERQUAKEMODEL\0", sizeof read_header.magic) != 0)
+  {
+    return error("malformed header");
   }
 
-  if (read_header->file_size != _data.size()) {
+  // Don't load files which have the wrong version.
+  if (read_header.version != 2) {
+    return error("unsupported iqm version %d", read_header.version);
+  }
+
+  // Offsets in the header are relative to the beginning of the file, make a hole
+  // in the memory we'lll be reading the rest of the file into so |read_meshes|
+  // and |read_animations| can use the |read_header|'s values directly.
+  vector<rx_byte> data{m_allocator, *size, utility::uninitialized{}};
+  const auto size_no_header = data.size() - sizeof read_header;
+  if (_stream->read(data.data() + sizeof read_header, size_no_header) != size_no_header) {
     return error("unexpected end of file");
   }
 
-  if (read_header->meshes && !read_meshes(*read_header, _data)) {
+  if (read_header.meshes && !read_meshes(read_header, data)) {
     return false;
   }
 
-  if (read_header->animations && !read_animations(*read_header, _data)) {
+  if (read_header.animations && !read_animations(read_header, data)) {
     return false;
   }
 

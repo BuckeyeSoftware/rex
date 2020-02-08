@@ -16,12 +16,18 @@ namespace rx::model {
 
 RX_LOG("model/loader", logger);
 
-bool loader::load(const string& _file_name) {
-  auto contents{filesystem::read_text_file(m_allocator, _file_name)};
-  if (!contents) {
-    return false;
+bool loader::load(stream* _stream) {
+  if (auto contents = read_text_stream(m_allocator, _stream)) {
+    return parse({contents->disown()});
   }
-  return parse({contents->disown()});
+  return false;
+}
+
+bool loader::load(const string& _file_name) {
+  if (filesystem::file file{_file_name, "rb"}) {
+    return load(&file);
+  }
+  return false;
 }
 
 bool loader::parse(const json& _definition) {

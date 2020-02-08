@@ -3,6 +3,10 @@
 #include "rx/math/mat4x4.h"
 #include "rx/core/string.h"
 
+namespace rx {
+  struct stream;
+}
+
 namespace rx::render {
 
 namespace frontend {
@@ -20,6 +24,7 @@ struct skybox {
   void render(frontend::target* _target, const math::mat4x4f& _view,
     const math::mat4x4f& _projection);
 
+  bool load(stream* _stream);
   bool load(const string& _file_name);
 
   frontend::textureCM* cubemap() const;

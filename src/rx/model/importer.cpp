@@ -29,24 +29,19 @@ importer::importer(memory::allocator* _allocator)
   , m_frames{m_allocator}
   , m_animations{m_allocator}
   , m_joints{m_allocator}
-  , m_file_name{m_allocator}
+  , m_name{m_allocator}
 {
 }
 
-bool importer::load(const string& _file_name) {
-  const auto data = filesystem::read_binary_file(_file_name);
-  if (!data) {
-    return false;
-  }
+bool importer::load(stream* _stream) {
+  m_name = _stream->name();
 
-  m_file_name = _file_name;
-
-  if (!read(*data)) {
+  if (!read(_stream)) {
     return false;
   }
 
   if (m_elements.is_empty() || m_positions.is_empty()) {
-    return error("'%s' lacks vertices", _file_name);
+    return error("missing vertices");
   }
 
   // Ensure none of the elements go out of bounds.
@@ -69,7 +64,7 @@ bool importer::load(const string& _file_name) {
 
   // Check for normals.
   if (m_normals.is_empty()) {
-    logger(log::level::k_warning, "'%s' lacks normals", _file_name);
+    logger(log::level::k_warning, "missing normals");
     generate_normals();
   }
 
@@ -78,11 +73,11 @@ bool importer::load(const string& _file_name) {
     // Generating tangent vectors cannot be done unless the model contains
     // appropriate texture coordinates.
     if (m_coordinates.is_empty()) {
-      return error("'%s' lacks tangents and texture coordinates bailing", _file_name);
+      return error("missing tangents and texture coordinates, bailing");
     } else {
-      logger(log::level::k_warning, "'%s' lacks tangents", _file_name);
+      logger(log::level::k_warning, "missing tangents, generating them");
       if (!generate_tangents()) {
-        return error("'%s' could not generate tangents", _file_name);
+        return error("'could not generate tangents, degenerate tangents formed");
       }
     }
   }
@@ -154,6 +149,13 @@ bool importer::load(const string& _file_name) {
   m_elements = utility::move(optimized_elements);
 
   return true;
+}
+
+bool importer::load(const string& _file_name) {
+  if (filesystem::file file{_file_name, "rb"}) {
+    return load(&file);
+  }
+  return false;
 }
 
 void importer::generate_normals() {
@@ -246,10 +248,10 @@ bool importer::generate_tangents() {
 }
 
 void importer::write_log(log::level _level, string&& message_) const {
-  if (m_file_name.is_empty()) {
+  if (m_name.is_empty()) {
     logger(_level, "%s", utility::move(message_));
   } else {
-    logger(_level, "%s: %s", m_file_name, utility::move(message_));
+    logger(_level, "%s: %s", m_name, utility::move(message_));
   }
 }
 
