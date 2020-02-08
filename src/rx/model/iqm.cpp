@@ -136,9 +136,9 @@ bool iqm::read(stream* _stream) {
     return error("unsupported iqm version %d", read_header.version);
   }
 
-  // Offsets in the header are relative to the beginning of the file, make a hole
-  // in the memory we'lll be reading the rest of the file into so |read_meshes|
-  // and |read_animations| can use the |read_header|'s values directly.
+  // Offsets in the header are relative to the beginning of the file, make a
+  // hole in the memory and skip it, such that |read_meshes| and
+  // |read_animations| can use the |read_header|'s values directly.
   vector<rx_byte> data{m_allocator, *size, utility::uninitialized{}};
   const auto size_no_header = data.size() - sizeof read_header;
   if (_stream->read(data.data() + sizeof read_header, size_no_header) != size_no_header) {
