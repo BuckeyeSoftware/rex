@@ -6,6 +6,7 @@
 # * DEBUG     - Debug build
 # * PROFILE   - Profile build
 # * SRCDIR    - Out of tree builds
+# * UNUSED    - Removed unused references
 LTO ?= 0
 ASAN ?= 0
 TSAN ?= 0
@@ -13,6 +14,7 @@ UBSAN ?= 0
 DEBUG ?= 0
 PROFILE ?= 0
 SRCDIR ?= src
+UNUSED ?= 1
 
 #
 # Some recursive make functions to avoid shelling out
@@ -51,6 +53,13 @@ CFLAGS := -Isrc
 CFLAGS += -Wall
 CFLAGS += -Wextra
 CFLAGS += `sdl2-config --cflags`
+
+# Give each function and data it's own section so the linker can remove unused
+# references to each, producing smaller, tighter binaries.
+ifeq ($(UNUSED), 1)
+	CFLAGS += -ffunction-sections
+	CFLAGS += -fdata-sections
+endif
 
 # Disable some unneeded features.
 CFLAGS += -fno-asynchronous-unwind-tables
@@ -151,6 +160,10 @@ DEPFLAGS += -MP
 #
 LDFLAGS := -lpthread
 LDFLAGS += `sdl2-config --libs`
+
+ifeq ($(UNUSED), 1)
+	LDFLAGS += -Wl,--gc-sections
+endif
 
 # Enable profiling if requested.
 ifeq ($(PROFILE),1)
