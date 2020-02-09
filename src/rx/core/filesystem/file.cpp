@@ -42,7 +42,7 @@ rx_u32 file::flags_from_mode(const char* _mode) {
 #if defined(RX_PLATFORM_WINDOWS)
 file::file(memory::allocator* _allocator, const char* _file_name, const char* _mode)
   : stream{flags_from_mode(_mode)}
-  , m_allocator{_alllocator}
+  , m_allocator{_allocator}
   , m_impl{nullptr}
   , m_name{m_allocator, _file_name}
   , m_mode{_mode}
