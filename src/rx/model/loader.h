@@ -7,11 +7,13 @@
 #include "rx/core/log.h"
 #include "rx/core/json.h"
 
+#include "rx/core/hints/empty_bases.h"
+
 #include "rx/math/transform.h"
 
 namespace rx::model {
 
-struct loader
+struct RX_HINT_EMPTY_BASES loader
   : concepts::no_copy
   , concepts::no_move
 {
