@@ -90,26 +90,21 @@ bool loader::load(stream* _stream, pixel_format _want_format,
     }
 
     if (can_remove_alpha) {
-      // Copy all pixels from m_data to data removing the alpha channel.
-      vector<rx_byte> data{m_allocator, m_dimensions.area() * 3_z,
-        utility::uninitialized{}};
-
-      for (rx_size y{0}; y < m_dimensions.h; y++) {
-        const rx_size scan_line_offset{m_dimensions.w * y};
-        for (rx_size x{0}; x < m_dimensions.w; x++) {
-          const rx_size pixel_offset{scan_line_offset + x};
-
-          const rx_size src_pixel_offset{pixel_offset * 4};
-          const rx_size dst_pixel_offset{pixel_offset * 3};
-
-          data[dst_pixel_offset + 0] = m_data[src_pixel_offset + 0];
-          data[dst_pixel_offset + 1] = m_data[src_pixel_offset + 1];
-          data[dst_pixel_offset + 2] = m_data[src_pixel_offset + 2];
-        }
+      // Remove alpha channel from |m_data|.
+      const rx_byte* src = m_data.data();
+      rx_byte* dst = m_data.data();
+      for (rx_size i = 0; i < m_dimensions.area(); i++) {
+        dst[0] = src[0];
+        dst[1] = src[1];
+        dst[2] = src[2];
+        dst += 3;
+        src += 4;
       }
+
       m_channels = 3;
       m_bpp = 3;
-      m_data = utility::move(data);
+      m_data.resize(m_dimensions.area() * m_bpp);
+
       logger(log::level::k_info, "%s removed alpha channel (not used)",
         _stream->name());
     }
