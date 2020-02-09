@@ -16,6 +16,12 @@ rex
 .*
 !/.gitignore
 
+# ignore visual studio output
+x64/
+
+# ignore nuget
+packages/
+
 # ignore some test models
 base/models/san-miguel
 base/models/elemental

@@ -366,9 +366,6 @@
     <ClCompile Include="src\rx\math\noise\perlin.cpp">
       <Filter>rx\math\noise</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\core\pool.cpp">
-      <Filter>rx\core</Filter>
-    </ClCompile>
     <ClCompile Include="src\rx\core\profiler.cpp">
       <Filter>rx\core</Filter>
     </ClCompile>
@@ -402,6 +399,17 @@
     <ClCompile Include="src\rx\display.cpp">
       <Filter>rx</Filter>
     </ClCompile>
+    <ClCompile Include="src\rx\core\dynamic_pool.cpp" />
+    <ClCompile Include="src\rx\core\list.cpp" />
+    <ClCompile Include="src\rx\core\static_pool.cpp" />
+    <ClCompile Include="src\rx\core\stream.cpp" />
+    <ClCompile Include="src\rx\core\string_table.cpp" />
+    <ClCompile Include="src\rx\core\xor_list.cpp" />
+    <ClCompile Include="src\rx\core\bit_stream.cpp" />
+    <ClCompile Include="src\rx\image\convert.cpp" />
+    <ClCompile Include="src\rx\image\intensity_map.cpp" />
+    <ClCompile Include="src\rx\image\matrix.cpp" />
+    <ClCompile Include="src\rx\image\normal_map.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\lib\json.h">
@@ -929,9 +937,6 @@
     <ClInclude Include="src\rx\math\noise\perlin.h">
       <Filter>rx\math\noise</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\core\pool.h">
-      <Filter>rx\core</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\core\profiler.h">
       <Filter>rx\core</Filter>
     </ClInclude>
@@ -995,5 +1000,25 @@
     <ClInclude Include="src\rx\core\concurrency\wait_group.h">
       <Filter>rx\core\concurrency</Filter>
     </ClInclude>
+    <ClInclude Include="src\rx\core\dynamic_pool.h" />
+    <ClInclude Include="src\rx\core\list.h" />
+    <ClInclude Include="src\rx\core\static_pool.h" />
+    <ClInclude Include="src\rx\core\stream.h" />
+    <ClInclude Include="src\rx\core\string_table.h" />
+    <ClInclude Include="src\rx\core\xor_list.h" />
+    <ClInclude Include="src\rx\core\bit_stream.h" />
+    <ClInclude Include="src\rx\core\traits\detect.h" />
+    <ClInclude Include="src\rx\core\traits\is_enum.h" />
+    <ClInclude Include="src\rx\core\traits\is_restrict.h" />
+    <ClInclude Include="src\rx\core\traits\underlying_type.h" />
+    <ClInclude Include="src\rx\core\utility\uninitialized.h" />
+    <ClInclude Include="src\rx\image\convert.h" />
+    <ClInclude Include="src\rx\image\intensity_map.h" />
+    <ClInclude Include="src\rx\image\matrix.h" />
+    <ClInclude Include="src\rx\image\normal_map.h" />
+    <ClInclude Include="src\rx\core\hints\assume_aligned.h">
+      <Filter>rx\core\hints</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hints\empty_bases.h" />
   </ItemGroup>
 </Project>

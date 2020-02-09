@@ -1,11 +1,14 @@
 #ifndef RX_CONSOLE_PARSER_H
 #define RX_CONSOLE_PARSER_H
+
 #include "rx/math/vec2.h"
 #include "rx/math/vec3.h"
 #include "rx/math/vec4.h"
 
 #include "rx/core/assert.h"
 #include "rx/core/string.h"
+
+#include "rx/core/hints/empty_bases.h"
 
 #include "rx/core/utility/construct.h"
 #include "rx/core/utility/destruct.h"
@@ -194,7 +197,7 @@ inline const math::vec2i& token::as_vec2i() const & {
   return m_as_vec2i;
 }
 
-struct parser
+struct RX_HINT_EMPTY_BASES parser
   : concepts::no_copy
   , concepts::no_move
 {
