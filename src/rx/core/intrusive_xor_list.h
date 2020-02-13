@@ -110,29 +110,11 @@ public:
   enumerate<T> enumerate_head(node T::*_link) const;
   template<typename T>
   enumerate<T> enumerate_tail(node T::*_link) const;
+
+  bool is_empty() const;
 };
 
-inline constexpr intrusive_xor_list::node::node()
-  : m_link{nullptr}
-{
-}
-
-template<typename T>
-inline const T* intrusive_xor_list::node::data(node T::*_link) const {
-  const auto this_address = reinterpret_cast<rx_uintptr>(this);
-  const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
-  const auto link_address = reinterpret_cast<rx_uintptr>(link_offset);
-  return reinterpret_cast<const T*>(this_address - link_address);
-}
-
-template<typename T>
-inline T* intrusive_xor_list::node::data(node T::*_link) {
-  const auto this_address = reinterpret_cast<rx_uintptr>(this);
-  const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
-  const auto link_address = reinterpret_cast<rx_uintptr>(link_offset);
-  return reinterpret_cast<T*>(this_address - link_address);
-}
-
+// intrusive_xor_list
 inline constexpr intrusive_xor_list::intrusive_xor_list()
   : m_head{nullptr}
   , m_tail{nullptr}
@@ -155,6 +137,43 @@ inline intrusive_xor_list& intrusive_xor_list::operator=(intrusive_xor_list&& xo
   return *this;
 }
 
+template<typename T>
+inline intrusive_xor_list::enumerate<T> intrusive_xor_list::enumerate_head(node T::*_link) const {
+  return {m_head, _link};
+}
+
+template<typename T>
+inline intrusive_xor_list::enumerate<T> intrusive_xor_list::enumerate_tail(node T::*_link) const {
+  return {m_tail, _link};
+}
+
+inline bool intrusive_xor_list::is_empty() const {
+  return m_head == nullptr;
+}
+
+// intrusive_xor_list::node
+inline constexpr intrusive_xor_list::node::node()
+  : m_link{nullptr}
+{
+}
+
+template<typename T>
+inline const T* intrusive_xor_list::node::data(node T::*_link) const {
+  const auto this_address = reinterpret_cast<rx_uintptr>(this);
+  const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
+  const auto link_address = reinterpret_cast<rx_uintptr>(link_offset);
+  return reinterpret_cast<const T*>(this_address - link_address);
+}
+
+template<typename T>
+inline T* intrusive_xor_list::node::data(node T::*_link) {
+  const auto this_address = reinterpret_cast<rx_uintptr>(this);
+  const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
+  const auto link_address = reinterpret_cast<rx_uintptr>(link_offset);
+  return reinterpret_cast<T*>(this_address - link_address);
+}
+
+// intrusive_xor_list::iterator
 inline constexpr intrusive_xor_list::iterator::iterator(node* _node)
   : m_this{_node}
   , m_prev{nullptr}
@@ -184,6 +203,7 @@ inline intrusive_xor_list::iterator& intrusive_xor_list::iterator::operator=(ite
   return *this;
 }
 
+// intrusive_xor_list::enumerate
 template<typename T>
 inline intrusive_xor_list::enumerate<T>::enumerate(enumerate&& enumerate_)
   : iterator{utility::move(enumerate_)}
@@ -240,16 +260,6 @@ inline T* intrusive_xor_list::enumerate<T>::data() {
 template<typename T>
 inline const T* intrusive_xor_list::enumerate<T>::data() const {
   return m_this->data<T>(m_link);
-}
-
-template<typename T>
-inline intrusive_xor_list::enumerate<T> intrusive_xor_list::enumerate_head(node T::*_link) const {
-  return {m_head, _link};
-}
-
-template<typename T>
-inline intrusive_xor_list::enumerate<T> intrusive_xor_list::enumerate_tail(node T::*_link) const {
-  return {m_tail, _link};
 }
 
 } // namespace rx

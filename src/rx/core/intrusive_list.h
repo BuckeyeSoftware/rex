@@ -1,5 +1,5 @@
-#ifndef RX_CORE_LIST_H
-#define RX_CORE_LIST_H
+#ifndef RX_CORE_INTRUSIVE_LIST_H
+#define RX_CORE_INTRUSIVE_LIST_H
 #include "rx/core/types.h"
 #include "rx/core/concepts/no_copy.h"
 
@@ -18,15 +18,15 @@ namespace rx {
 //
 // 32-bit: 8 bytes
 // 64-bit: 16 bytes
-struct list
+struct intrusive_list
   : concepts::no_copy
 {
   struct node;
 
-  constexpr list();
-  list(list&& _list);
+  constexpr intrusive_list();
+  intrusive_list(intrusive_list&& _list);
 
-  list& operator=(list&& list_);
+  intrusive_list& operator=(intrusive_list&& list_);
 
   void push_front(node* _node);
   void push_back(node* _node);
@@ -50,7 +50,7 @@ struct list
     T* data(node T::*_link);
 
   private:
-    friend struct list;
+    friend struct intrusive_list;
 
     node* m_next;
     node* m_prev;
@@ -97,14 +97,14 @@ private:
   node* m_tail;
 };
 
-// list
-inline constexpr list::list()
+// intrusive_list
+inline constexpr intrusive_list::intrusive_list()
   : m_head{nullptr}
   , m_tail{nullptr}
 {
 }
 
-inline list::list(list&& list_)
+inline intrusive_list::intrusive_list(intrusive_list&& list_)
   : m_head{list_.m_head}
   , m_tail{list_.m_tail}
 {
@@ -112,7 +112,7 @@ inline list::list(list&& list_)
   list_.m_tail = nullptr;
 }
 
-inline list& list::operator=(list&& list_) {
+inline intrusive_list& intrusive_list::operator=(intrusive_list&& list_) {
   m_head = list_.m_head;
   m_tail = list_.m_tail;
   list_.m_head = nullptr;
@@ -121,27 +121,27 @@ inline list& list::operator=(list&& list_) {
 }
 
 template<typename T>
-inline list::enumerate<T> list::enumerate_head(node T::*_link) const {
+inline intrusive_list::enumerate<T> intrusive_list::enumerate_head(node T::*_link) const {
   return {m_head, _link};
 }
 
 template<typename T>
-inline list::enumerate<T> list::enumerate_tail(node T::*_link) const {
+inline intrusive_list::enumerate<T> intrusive_list::enumerate_tail(node T::*_link) const {
   return {m_tail, _link};
 }
 
-inline bool list::is_empty() const {
+inline bool intrusive_list::is_empty() const {
   return m_head == nullptr;
 }
 
-// list::node
-inline constexpr list::node::node()
+// intrusive_list::node
+inline constexpr intrusive_list::node::node()
   : m_next{nullptr}
   , m_prev{nullptr}
 {
 }
 
-inline list::node::node(node&& node_)
+inline intrusive_list::node::node(node&& node_)
   : m_next{node_.m_next}
   , m_prev{node_.m_prev}
 {
@@ -149,7 +149,7 @@ inline list::node::node(node&& node_)
   node_.m_prev = nullptr;
 }
 
-inline list::node& list::node::operator=(node&& node_) {
+inline intrusive_list::node& intrusive_list::node::operator=(node&& node_) {
   m_next = node_.m_next;
   m_prev = node_.m_prev;
   node_.m_next = nullptr;
@@ -158,7 +158,7 @@ inline list::node& list::node::operator=(node&& node_) {
 }
 
 template<typename T>
-inline const T* list::node::data(node T::*_link) const {
+inline const T* intrusive_list::node::data(node T::*_link) const {
   const auto this_address = reinterpret_cast<rx_uintptr>(this);
   const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
   const auto link_address = reinterpret_cast<rx_uintptr>(link_offset);
@@ -166,23 +166,23 @@ inline const T* list::node::data(node T::*_link) const {
 }
 
 template<typename T>
-inline T* list::node::data(node T::*_link) {
+inline T* intrusive_list::node::data(node T::*_link) {
   const auto this_address = reinterpret_cast<rx_uintptr>(this);
   const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
   const auto link_address = reinterpret_cast<rx_uintptr>(link_offset);
   return reinterpret_cast<T*>(this_address - link_address);
 }
 
-// list::enumerate
+// intrusive_list::enumerate
 template<typename T>
-inline constexpr list::enumerate<T>::enumerate(node* _root, node T::*_link)
+inline constexpr intrusive_list::enumerate<T>::enumerate(node* _root, node T::*_link)
   : m_this{_root}
   , m_link{_link}
 {
 }
 
 template<typename T>
-inline list::enumerate<T>::enumerate(enumerate&& enumerate_)
+inline intrusive_list::enumerate<T>::enumerate(enumerate&& enumerate_)
   : m_this{enumerate_.m_this}
   , m_link{enumerate_.m_link}
 {
@@ -191,7 +191,7 @@ inline list::enumerate<T>::enumerate(enumerate&& enumerate_)
 }
 
 template<typename T>
-inline list::enumerate<T>& list::enumerate<T>::operator=(enumerate&& enumerate_) {
+inline intrusive_list::enumerate<T>& intrusive_list::enumerate<T>::operator=(enumerate&& enumerate_) {
   m_this = enumerate_.m_this;
   m_link = enumerate_.m_link;
   enumerate_.m_this = nullptr;
@@ -200,50 +200,50 @@ inline list::enumerate<T>& list::enumerate<T>::operator=(enumerate&& enumerate_)
 }
 
 template<typename T>
-inline list::enumerate<T>::operator bool() const {
+inline intrusive_list::enumerate<T>::operator bool() const {
   return m_this;
 }
 
 template<typename T>
-inline void list::enumerate<T>::next() {
+inline void intrusive_list::enumerate<T>::next() {
   m_this = m_this->m_next;
 }
 
 template<typename T>
-inline void list::enumerate<T>::prev() {
+inline void intrusive_list::enumerate<T>::prev() {
   m_this = m_this->m_prev;
 }
 
 template<typename T>
-inline T& list::enumerate<T>::operator*() {
+inline T& intrusive_list::enumerate<T>::operator*() {
   return *data();
 }
 
 template<typename T>
-inline const T& list::enumerate<T>::operator*() const {
+inline const T& intrusive_list::enumerate<T>::operator*() const {
   return *data();
 }
 
 template<typename T>
-inline T* list::enumerate<T>::operator->() {
+inline T* intrusive_list::enumerate<T>::operator->() {
   return data();
 }
 
 template<typename T>
-inline const T* list::enumerate<T>::operator->() const {
+inline const T* intrusive_list::enumerate<T>::operator->() const {
   return data();
 }
 
 template<typename T>
-inline T* list::enumerate<T>::data() {
+inline T* intrusive_list::enumerate<T>::data() {
   return m_this->data<T>(m_link);
 }
 
 template<typename T>
-inline const T* list::enumerate<T>::data() const {
+inline const T* intrusive_list::enumerate<T>::data() const {
   return m_this->data<T>(m_link);
 }
 
 } // namespace rx
 
-#endif // RX_CORE_LIST_H
+#endif // RX_CORE_INTRUSIVE_LIST_H

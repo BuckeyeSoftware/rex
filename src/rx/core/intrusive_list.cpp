@@ -1,8 +1,8 @@
-#include "rx/core/list.h"
+#include "rx/core/intrusive_list.h"
 
 namespace rx {
 
-void list::push_front(node* node_) {
+void intrusive_list::push_front(node* node_) {
   if (m_head) {
     m_head->m_prev = node_;
     node_->m_prev = nullptr;
@@ -16,7 +16,7 @@ void list::push_front(node* node_) {
   }
 }
 
-void list::push_back(node* node_) {
+void intrusive_list::push_back(node* node_) {
   if (m_tail) {
     m_tail->m_next = node_;
     node_->m_prev = m_tail;
@@ -30,7 +30,7 @@ void list::push_back(node* node_) {
   }
 }
 
-list::node* list::pop_front() {
+intrusive_list::node* intrusive_list::pop_front() {
   if (node* link = m_head) {
     if (link->m_next) {
       link->m_next->m_prev = link->m_prev;
@@ -49,7 +49,7 @@ list::node* list::pop_front() {
   return nullptr;
 }
 
-list::node* list::pop_back() {
+intrusive_list::node* intrusive_list::pop_back() {
   if (node* link = m_tail) {
     if (link->m_next) {
       link->m_next->m_prev = link->m_prev;
