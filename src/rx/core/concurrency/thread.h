@@ -17,6 +17,8 @@ struct thread
 
   void join();
 
+  memory::allocator* allocator() const;
+
 private:
   struct state {
     static void* wrap(void* data);
@@ -55,6 +57,10 @@ inline thread::thread(thread&& thread_)
 {
   thread_.m_allocator = nullptr;
   thread_.m_state = nullptr;
+}
+
+inline memory::allocator* thread::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx::concurrency
