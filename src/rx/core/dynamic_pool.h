@@ -8,8 +8,8 @@ namespace rx {
 struct dynamic_pool
   : concepts::no_copy
 {
-  dynamic_pool(memory::allocator* _allocator, rx_size _object_size, rx_size _objects_per_pool);
-  dynamic_pool(rx_size _object_size, rx_size _per_pool);
+  constexpr dynamic_pool(memory::allocator* _allocator, rx_size _object_size, rx_size _objects_per_pool);
+  constexpr dynamic_pool(rx_size _object_size, rx_size _per_pool);
   dynamic_pool(dynamic_pool&& pool_);
   ~dynamic_pool();
 
@@ -43,8 +43,15 @@ private:
   vector<static_pool*> m_pools;
 };
 
+inline constexpr dynamic_pool::dynamic_pool(memory::allocator* _allocator, rx_size _object_size, rx_size _objects_per_pool)
+  : m_allocator{_allocator}
+  , m_object_size{_object_size}
+  , m_objects_per_pool{_objects_per_pool}
+  , m_pools{m_allocator}
+{
+}
 
-inline dynamic_pool::dynamic_pool(rx_size _object_size, rx_size _per_pool)
+inline constexpr dynamic_pool::dynamic_pool(rx_size _object_size, rx_size _per_pool)
   : dynamic_pool{&memory::g_system_allocator, _object_size, _per_pool}
 {
 }
