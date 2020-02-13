@@ -1,5 +1,5 @@
-#ifndef RX_CORE_XOR_LIST_H
-#define RX_CORE_XOR_LIST_H
+#ifndef RX_CORE_INTRUSIVE_XOR_LIST_H
+#define RX_CORE_INTRUSIVE_XOR_LIST_H
 #include "rx/core/types.h"
 #include "rx/core/utility/move.h"
 #include "rx/core/concepts/no_copy.h"
@@ -24,14 +24,14 @@ namespace rx {
 //
 // 32-bit: 8 bytes
 // 64-bit: 16 bytes
-struct xor_list
+struct intrusive_xor_list
   : concepts::no_copy
 {
   struct node;
 
-  constexpr xor_list();
-  xor_list(xor_list&& xor_list_);
-  xor_list& operator=(xor_list&& xor_list_);
+  constexpr intrusive_xor_list();
+  intrusive_xor_list(intrusive_xor_list&& xor_list_);
+  intrusive_xor_list& operator=(intrusive_xor_list&& xor_list_);
 
   void push(node* _node);
 
@@ -51,7 +51,7 @@ struct xor_list
     T* data(node T::*_link);
 
   private:
-    friend struct xor_list;
+    friend struct intrusive_xor_list;
 
     node* m_link;
   };
@@ -100,7 +100,7 @@ public:
     const T* data() const;
 
   private:
-    friend struct xor_list;
+    friend struct intrusive_xor_list;
     constexpr enumerate(node* _root, node T::*_link);
 
     node T::*m_link;
@@ -112,13 +112,13 @@ public:
   enumerate<T> enumerate_tail(node T::*_link) const;
 };
 
-inline constexpr xor_list::node::node()
+inline constexpr intrusive_xor_list::node::node()
   : m_link{nullptr}
 {
 }
 
 template<typename T>
-inline const T* xor_list::node::data(node T::*_link) const {
+inline const T* intrusive_xor_list::node::data(node T::*_link) const {
   const auto this_address = reinterpret_cast<rx_uintptr>(this);
   const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
   const auto link_address = reinterpret_cast<rx_uintptr>(link_offset);
@@ -126,20 +126,20 @@ inline const T* xor_list::node::data(node T::*_link) const {
 }
 
 template<typename T>
-inline T* xor_list::node::data(node T::*_link) {
+inline T* intrusive_xor_list::node::data(node T::*_link) {
   const auto this_address = reinterpret_cast<rx_uintptr>(this);
   const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
   const auto link_address = reinterpret_cast<rx_uintptr>(link_offset);
   return reinterpret_cast<T*>(this_address - link_address);
 }
 
-inline constexpr xor_list::xor_list()
+inline constexpr intrusive_xor_list::intrusive_xor_list()
   : m_head{nullptr}
   , m_tail{nullptr}
 {
 }
 
-inline xor_list::xor_list(xor_list&& xor_list_)
+inline intrusive_xor_list::intrusive_xor_list(intrusive_xor_list&& xor_list_)
   : m_head{xor_list_.m_head}
   , m_tail{xor_list_.m_tail}
 {
@@ -147,7 +147,7 @@ inline xor_list::xor_list(xor_list&& xor_list_)
   xor_list_.m_tail = nullptr;
 }
 
-inline xor_list& xor_list::operator=(xor_list&& xor_list_) {
+inline intrusive_xor_list& intrusive_xor_list::operator=(intrusive_xor_list&& xor_list_) {
   m_head = xor_list_.m_head;
   m_tail = xor_list_.m_tail;
   xor_list_.m_head = nullptr;
@@ -155,14 +155,14 @@ inline xor_list& xor_list::operator=(xor_list&& xor_list_) {
   return *this;
 }
 
-inline constexpr xor_list::iterator::iterator(node* _node)
+inline constexpr intrusive_xor_list::iterator::iterator(node* _node)
   : m_this{_node}
   , m_prev{nullptr}
   , m_next{nullptr}
 {
 }
 
-inline xor_list::iterator::iterator(iterator&& iterator_)
+inline intrusive_xor_list::iterator::iterator(iterator&& iterator_)
   : m_this{iterator_.m_this}
   , m_prev{iterator_.m_prev}
   , m_next{iterator_.m_next}
@@ -172,7 +172,7 @@ inline xor_list::iterator::iterator(iterator&& iterator_)
   iterator_.m_next = nullptr;
 }
 
-inline xor_list::iterator& xor_list::iterator::operator=(iterator&& iterator_) {
+inline intrusive_xor_list::iterator& intrusive_xor_list::iterator::operator=(iterator&& iterator_) {
   m_this = iterator_.m_this;
   m_prev = iterator_.m_prev;
   m_next = iterator_.m_next;
@@ -185,7 +185,7 @@ inline xor_list::iterator& xor_list::iterator::operator=(iterator&& iterator_) {
 }
 
 template<typename T>
-inline xor_list::enumerate<T>::enumerate(enumerate&& enumerate_)
+inline intrusive_xor_list::enumerate<T>::enumerate(enumerate&& enumerate_)
   : iterator{utility::move(enumerate_)}
   , m_link{enumerate_.m_link}
 {
@@ -193,7 +193,7 @@ inline xor_list::enumerate<T>::enumerate(enumerate&& enumerate_)
 }
 
 template<typename T>
-inline xor_list::enumerate<T>& xor_list::enumerate<T>::operator=(enumerate&& enumerate_) {
+inline intrusive_xor_list::enumerate<T>& intrusive_xor_list::enumerate<T>::operator=(enumerate&& enumerate_) {
   iterator::operator=(utility::move(enumerate_));
   m_link = enumerate_.m_link;
   enumerate_.m_link = nullptr;
@@ -201,54 +201,54 @@ inline xor_list::enumerate<T>& xor_list::enumerate<T>::operator=(enumerate&& enu
 }
 
 template<typename T>
-inline constexpr xor_list::enumerate<T>::enumerate(node* _root, node T::*_link)
+inline constexpr intrusive_xor_list::enumerate<T>::enumerate(node* _root, node T::*_link)
   : iterator{_root}
   , m_link{_link}
 {
 }
 
 template<typename T>
-inline xor_list::enumerate<T>::operator bool() const {
+inline intrusive_xor_list::enumerate<T>::operator bool() const {
   return m_this != nullptr;
 }
 
 template<typename T>
-inline T& xor_list::enumerate<T>::operator*() {
+inline T& intrusive_xor_list::enumerate<T>::operator*() {
   return *data();
 }
 
 template<typename T>
-inline const T& xor_list::enumerate<T>::operator*() const {
+inline const T& intrusive_xor_list::enumerate<T>::operator*() const {
   return *data();
 }
 
 template<typename T>
-inline T* xor_list::enumerate<T>::operator->() {
+inline T* intrusive_xor_list::enumerate<T>::operator->() {
   return data();
 }
 
 template<typename T>
-inline const T* xor_list::enumerate<T>::operator->() const {
+inline const T* intrusive_xor_list::enumerate<T>::operator->() const {
   return data();
 }
 
 template<typename T>
-inline T* xor_list::enumerate<T>::data() {
+inline T* intrusive_xor_list::enumerate<T>::data() {
   return m_this->data<T>(m_link);
 }
 
 template<typename T>
-inline const T* xor_list::enumerate<T>::data() const {
+inline const T* intrusive_xor_list::enumerate<T>::data() const {
   return m_this->data<T>(m_link);
 }
 
 template<typename T>
-inline xor_list::enumerate<T> xor_list::enumerate_head(node T::*_link) const {
+inline intrusive_xor_list::enumerate<T> intrusive_xor_list::enumerate_head(node T::*_link) const {
   return {m_head, _link};
 }
 
 template<typename T>
-inline xor_list::enumerate<T> xor_list::enumerate_tail(node T::*_link) const {
+inline intrusive_xor_list::enumerate<T> intrusive_xor_list::enumerate_tail(node T::*_link) const {
   return {m_tail, _link};
 }
 
