@@ -128,16 +128,6 @@ string string::formatter(memory::allocator* _allocator,
   return contents;
 }
 
-string::string(memory::allocator* _allocator)
-  : m_allocator{_allocator}
-  , m_data{m_buffer}
-  , m_last{m_buffer}
-  , m_capacity{m_buffer + k_small_string}
-{
-  RX_ASSERT(m_allocator, "null allocator");
-  resize(0);
-}
-
 string::string(memory::allocator* _allocator, const char* _contents)
   : string{_allocator, _contents, strlen(_contents)}
 {
