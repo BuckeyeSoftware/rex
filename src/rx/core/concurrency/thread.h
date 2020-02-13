@@ -15,6 +15,8 @@ struct thread
   thread(thread&& thread_);
   ~thread();
 
+  thread& operator=(thread&& thread_) = delete;
+
   void join();
 
   memory::allocator* allocator() const;
