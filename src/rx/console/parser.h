@@ -15,7 +15,7 @@
 
 namespace rx::console {
 
-struct token
+struct RX_HINT_EMPTY_BASES token
   : concepts::no_copy
 {
   enum class type {

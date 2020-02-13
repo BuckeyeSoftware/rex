@@ -2,14 +2,16 @@
 #define RX_TEXTURE_CHAIN_H
 #include "rx/texture/loader.h"
 
-#include "rx/core/hints/unreachable.h"
 #include "rx/core/concepts/no_copy.h"
+
+#include "rx/core/hints/unreachable.h"
+#include "rx/core/hints/empty_bases.h"
 
 namespace rx::texture {
 
 struct loader;
 
-struct chain
+struct RX_HINT_EMPTY_BASES chain
   : concepts::no_copy
 {
   struct level {

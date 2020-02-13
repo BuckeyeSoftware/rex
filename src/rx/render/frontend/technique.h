@@ -5,6 +5,8 @@
 #include "rx/core/map.h"
 #include "rx/core/log.h"
 
+#include "rx/core/hints/empty_bases.h"
+
 #include "rx/render/frontend/program.h"
 
 namespace rx {
@@ -19,7 +21,7 @@ struct technique;
 struct interface;
 struct module;
 
-struct technique
+struct RX_HINT_EMPTY_BASES technique
   : concepts::no_copy
 {
   technique() = default;

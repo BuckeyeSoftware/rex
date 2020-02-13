@@ -3,9 +3,11 @@
 #include "rx/core/static_pool.h"
 #include "rx/core/vector.h"
 
+#include "rx/core/hints/empty_bases.h"
+
 namespace rx {
 
-struct dynamic_pool
+struct RX_HINT_EMPTY_BASES dynamic_pool
   : concepts::no_copy
 {
   constexpr dynamic_pool(memory::allocator* _allocator, rx_size _object_size, rx_size _objects_per_pool);

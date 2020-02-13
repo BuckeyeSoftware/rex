@@ -2,10 +2,12 @@
 #define RX_CORE_CONCURRENCY_THREAD_H
 #include "rx/core/function.h"
 
+#include "rx/core/hints/empty_bases.h"
+
 namespace rx::concurrency {
 
 // Thread names must have static-storage which lives as long as the thread.
-struct thread
+struct RX_HINT_EMPTY_BASES thread
   : concepts::no_copy
 {
   constexpr thread();

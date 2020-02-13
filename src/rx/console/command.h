@@ -3,6 +3,8 @@
 #include "rx/console/variable.h"
 #include "rx/console/parser.h"
 
+#include "rx/core/hints/empty_bases.h"
+
 namespace rx::console {
 
 // The signature specification works like this
@@ -11,10 +13,10 @@ namespace rx::console {
 //  i -> int
 //  f -> float
 //  v -> vector, followed by 2, 3, 4 for # of components, followed by i or f.
-struct command
+struct RX_HINT_EMPTY_BASES command
   : concepts::no_copy
 {
-  struct argument
+  struct RX_HINT_EMPTY_BASES argument
     : concepts::no_copy
   {
     explicit argument(){}

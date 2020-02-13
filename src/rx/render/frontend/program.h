@@ -4,12 +4,14 @@
 #include "rx/core/vector.h"
 #include "rx/core/map.h"
 
+#include "rx/core/concepts/no_copy.h"
+
+#include "rx/core/hints/empty_bases.h"
+
 #include "rx/math/vec2.h"
 #include "rx/math/mat3x3.h"
 #include "rx/math/mat3x4.h"
 #include "rx/math/mat4x4.h"
-
-#include "rx/core/concepts/no_copy.h"
 
 #include "rx/render/frontend/resource.h"
 
@@ -18,7 +20,7 @@ namespace rx::render::frontend {
 struct interface;
 struct program;
 
-struct uniform
+struct RX_HINT_EMPTY_BASES uniform
   : concepts::no_copy
 {
   enum class type {

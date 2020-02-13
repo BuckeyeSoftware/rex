@@ -3,6 +3,7 @@
 #include "rx/core/types.h"
 #include "rx/core/utility/move.h"
 #include "rx/core/concepts/no_copy.h"
+#include "rx/core/hints/empty_bases.h"
 
 namespace rx {
 
@@ -24,7 +25,7 @@ namespace rx {
 //
 // 32-bit: 8 bytes
 // 64-bit: 16 bytes
-struct intrusive_xor_list
+struct RX_HINT_EMPTY_BASES intrusive_xor_list
   : concepts::no_copy
 {
   struct node;
@@ -37,7 +38,7 @@ struct intrusive_xor_list
 
   // 32-bit: 4 bytes
   // 64-bit: 8 bytes
-  struct node
+  struct RX_HINT_EMPTY_BASES node
     : concepts::no_copy
   {
     constexpr node();
@@ -62,7 +63,7 @@ private:
 
   // 32-bit: 12 bytes
   // 64-bit: 24 bytes
-  struct iterator
+  struct RX_HINT_EMPTY_BASES iterator
     : concepts::no_copy
   {
     constexpr iterator(node* _node);

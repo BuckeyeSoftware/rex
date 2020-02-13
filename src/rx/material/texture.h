@@ -3,7 +3,10 @@
 #include "rx/core/log.h"
 #include "rx/core/optional.h"
 
+#include "rx/core/hints/empty_bases.h"
+
 #include "rx/math/transform.h"
+
 #include "rx/texture/chain.h"
 
 namespace rx {
@@ -13,7 +16,7 @@ namespace rx {
 
 namespace rx::material {
 
-struct texture
+struct RX_HINT_EMPTY_BASES texture
   : concepts::no_copy
 {
   struct filter_options {

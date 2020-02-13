@@ -1,11 +1,13 @@
 #ifndef RX_RENDER_IMMEDIATE3D_H
 #define RX_RENDER_IMMEDIATE3D_H
-#include "rx/render/frontend/state.h"
-
 #include "rx/core/vector.h"
+
+#include "rx/core/hints/empty_bases.h"
 
 #include "rx/math/vec3.h"
 #include "rx/math/mat4x4.h"
+
+#include "rx/render/frontend/state.h"
 
 namespace rx::memory {
   struct allocator;
@@ -26,7 +28,7 @@ struct immediate3D {
     k_depth_write = 1 << 1
   };
 
-  struct queue
+  struct RX_HINT_EMPTY_BASES queue
     : concepts::no_copy
   {
     queue() = default;

@@ -2,6 +2,7 @@
 #define RX_CORE_INTRUSIVE_LIST_H
 #include "rx/core/types.h"
 #include "rx/core/concepts/no_copy.h"
+#include "rx/core/hints/empty_bases.h"
 
 namespace rx {
 
@@ -18,7 +19,7 @@ namespace rx {
 //
 // 32-bit: 8 bytes
 // 64-bit: 16 bytes
-struct intrusive_list
+struct RX_HINT_EMPTY_BASES intrusive_list
   : concepts::no_copy
 {
   struct node;
@@ -36,7 +37,7 @@ struct intrusive_list
 
   // 32-bit: 8 bytes
   // 64-bit: 16 bytes
-  struct node
+  struct RX_HINT_EMPTY_BASES node
     : concepts::no_copy
   {
     constexpr node();
@@ -59,7 +60,7 @@ struct intrusive_list
   // 32-bit: 8 bytes
   // 64-bit: 16 bytes
   template<typename T>
-  struct enumerate
+  struct RX_HINT_EMPTY_BASES enumerate
     : concepts::no_copy
   {
     constexpr enumerate(node* _root, node T::*_link);

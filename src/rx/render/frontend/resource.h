@@ -1,13 +1,16 @@
 #ifndef RX_RENDER_FRONTEND_RESOURCE_H
 #define RX_RENDER_FRONTEND_RESOURCE_H
 #include "rx/core/concepts/no_copy.h"
+
+#include "rx/core/hints/empty_bases.h"
+
 #include "rx/core/concurrency/atomic.h"
 
 namespace rx::render::frontend {
 
 struct interface;
 
-struct resource
+struct RX_HINT_EMPTY_BASES resource
   : concepts::no_copy
 {
   enum class type {

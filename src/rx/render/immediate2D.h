@@ -1,12 +1,14 @@
 #ifndef RX_RENDER_IMMEDIATE2D_H
 #define RX_RENDER_IMMEDIATE2D_H
-#include "rx/math/vec2.h"
-#include "rx/math/vec4.h"
-
 #include "rx/core/string.h"
 #include "rx/core/string_table.h"
 #include "rx/core/optional.h"
 #include "rx/core/map.h"
+
+#include "rx/core/hints/empty_bases.h"
+
+#include "rx/math/vec2.h"
+#include "rx/math/vec4.h"
 
 #include "rx/render/frontend/state.h"
 
@@ -27,7 +29,7 @@ struct immediate2D {
     k_right
   };
 
-  struct queue
+  struct RX_HINT_EMPTY_BASES queue
     : concepts::no_copy
   {
     queue() = default;

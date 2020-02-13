@@ -5,6 +5,8 @@
 #include "rx/core/map.h"
 #include "rx/core/log.h"
 
+#include "rx/core/hints/empty_bases.h"
+
 #include "rx/math/transform.h"
 
 #include "rx/material/texture.h"
@@ -16,7 +18,7 @@ namespace rx {
 
 namespace rx::material {
 
-struct loader
+struct RX_HINT_EMPTY_BASES loader
   : concepts::no_copy
 {
   loader(memory::allocator* _allocator);
