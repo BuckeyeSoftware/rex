@@ -56,11 +56,6 @@ void* thread::state::wrap(void* _data) {
   return nullptr;
 }
 
-thread::state::state()
-  : m_joined{false}
-{
-}
-
 thread::state::state(const char* _name, function<void(int)>&& function_)
   : m_function{utility::move(function_)}
   , m_joined{false}

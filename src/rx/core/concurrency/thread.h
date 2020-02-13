@@ -23,13 +23,16 @@ private:
   struct state {
     static void* wrap(void* data);
 
-    state();
+    constexpr state();
     state(const char* _name, function<void(int)>&& function_);
 
     void join();
 
     // Fixed-capacity storage for any OS thread type, adjust if necessary.
-    alignas(16) rx_byte m_thread[16];
+    union {
+      utility::nat m_nat;
+      alignas(16) rx_byte m_thread[16];
+    };
 
     function<void(int)> m_function;
     bool m_joined;
@@ -39,6 +42,13 @@ private:
   memory::allocator* m_allocator;
   state* m_state;
 };
+
+inline constexpr thread::state::state()
+  : m_nat{}
+  , m_joined{false}
+  , m_name{nullptr}
+{
+}
 
 inline constexpr thread::thread()
   : m_allocator{nullptr}
