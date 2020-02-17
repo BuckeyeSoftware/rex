@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include <SDL_video.h>
 
 #include "display.h"

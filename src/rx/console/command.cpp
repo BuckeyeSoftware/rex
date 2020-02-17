@@ -1,4 +1,4 @@
-#include <string.h>
+#include <string.h> // strchr
 
 #include "rx/console/command.h"
 #include "rx/core/log.h"

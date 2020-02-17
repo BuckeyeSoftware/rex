@@ -1,4 +1,4 @@
-#include <stddef.h>
+#include <stddef.h> // offsetof
 
 #include "rx/render/frontend/interface.h"
 #include "rx/render/frontend/technique.h"

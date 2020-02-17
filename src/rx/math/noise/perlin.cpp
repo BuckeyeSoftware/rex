@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include "rx/math/noise/perlin.h"
 #include "rx/core/math/floor.h"
 #include "rx/core/prng/mt19937.h"

@@ -1,4 +1,4 @@
-#include <signal.h>
+#include <signal.h> // signal, SIG{INT,TERM,HUP,QUIT,KILL,PIPE,ALRM,STOP}
 
 #include <SDL.h>
 

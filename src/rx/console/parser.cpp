@@ -1,6 +1,6 @@
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
+#include <string.h> // strncmp
+#include <stdlib.h> // strtoll, strtof
+#include <errno.h> // errnop, ERANGE
 
 #include "rx/console/parser.h"
 #include "rx/console/variable.h"
