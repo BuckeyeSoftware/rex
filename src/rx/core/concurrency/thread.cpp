@@ -88,14 +88,16 @@ thread::state::state(const char* _name, function<void(int)>&& function_)
 
   RX_ASSERT(thread, "thread construction failed");
 
+  auto thread_handle = reinterpret_cast<HANDLE>(thread);
+
   // Convert thread name to UTF-16 and set the thread's name with the new
   // |SetThreadDescription| API.
   const wide_string converted_name = string(_name).to_utf16();
-  SetThreadDescription(thread, reinterpret_cast<PCWSTR>(converted_name.data()));
+  SetThreadDescription(thread_handle, reinterpret_cast<PCWSTR>(converted_name.data()));
 
   // Store the result of |_beginthreadex| into the HANDLE storage given by
   // |m_thread|.
-  *reinterpret_cast<HANDLE*>(m_thread) = reinterpret_cast<HANDLE>(thread);
+  *reinterpret_cast<HANDLE*>(m_thread) = thread_handle;
 #endif
 }
 

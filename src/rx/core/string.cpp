@@ -1,4 +1,4 @@
-#include <string.h> // strcmp, memcpy
+#include <string.h> // strcmp, memcpy, memmove
 #include <stdarg.h> // va_{list, start, end, copy}
 #include <stdio.h> // vsnprintf
 
