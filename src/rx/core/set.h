@@ -229,11 +229,11 @@ inline constexpr void set<K>::initialize(memory::allocator* _allocator, rx_size 
 }
 
 template<typename K>
-inline void set<K>::insert(K&& _key) {
+inline void set<K>::insert(K&& key_) {
   if (++m_size >= m_resize_threshold) {
     grow();
   }
-  inserter(hash_key(_key), utility::move(_key));
+  inserter(hash_key(key_), utility::forward<K>(key_));
 }
 
 template<typename K>
@@ -363,7 +363,7 @@ inline void set<K>::grow() {
 
 template<typename K>
 inline void set<K>::construct(rx_size _index, rx_size _hash, K&& key_) {
-  utility::construct<K>(m_keys + _index, utility::move(key_));
+  utility::construct<K>(m_keys + _index, utility::forward<K>(key_));
   element_hash(_index) = _hash;
 }
 
@@ -373,14 +373,14 @@ inline void set<K>::inserter(rx_size _hash, K&& key_) {
   rx_size distance{0};
   for (;;) {
     if (element_hash(position) == 0) {
-      construct(position, _hash, utility::move(key_));
+      construct(position, _hash, utility::forward<K>(key_));
       return;
     }
 
     const rx_size existing_element_probe_distance{probe_distance(element_hash(position), position)};
     if (existing_element_probe_distance < distance) {
       if (is_deleted(element_hash(position))) {
-        construct(position, _hash, utility::move(key_));
+        construct(position, _hash, utility::forward<K>(key_));
         return;
       }
 

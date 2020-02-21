@@ -256,7 +256,7 @@ inline V* map<K, V>::insert(const K& _key, V&& value_) {
   if (++m_size >= m_resize_threshold) {
     grow();
   }
-  return inserter(hash_key(_key), _key, utility::move(value_));
+  return inserter(hash_key(_key), _key, utility::forward<V>(value_));
 }
 
 template<typename K, typename V>
@@ -403,8 +403,8 @@ inline void map<K, V>::grow() {
 
 template<typename K, typename V>
 inline V* map<K, V>::construct(rx_size _index, rx_size _hash, K&& key_, V&& value_) {
-  utility::construct<K>(m_keys + _index, utility::move(key_));
-  utility::construct<V>(m_values + _index, utility::move(value_));
+  utility::construct<K>(m_keys + _index, utility::forward<K>(key_));
+  utility::construct<V>(m_values + _index, utility::forward<V>(value_));
   element_hash(_index) = _hash;
   return m_values + _index;
 }
@@ -415,13 +415,13 @@ inline V* map<K, V>::inserter(rx_size _hash, K&& key_, V&& value_) {
   rx_size distance{0};
   for (;;) {
     if (element_hash(position) == 0) {
-      return construct(position, _hash, utility::move(key_), utility::move(value_));
+      return construct(position, _hash, utility::forward<K>(key_), utility::forward<V>(value_));
     }
 
     const rx_size existing_element_probe_distance{probe_distance(element_hash(position), position)};
     if (existing_element_probe_distance < distance) {
       if (is_deleted(element_hash(position))) {
-        return construct(position, _hash, utility::move(key_), utility::move(value_));
+        return construct(position, _hash, utility::forward<K>(key_), utility::forward<V>(value_));
       }
 
       utility::swap(_hash, element_hash(position));
@@ -441,7 +441,7 @@ inline V* map<K, V>::inserter(rx_size _hash, K&& key_, V&& value_) {
 template<typename K, typename V>
 inline V* map<K, V>::inserter(rx_size _hash, const K& _key, V&& value_) {
   K key{_key};
-  return inserter(_hash, utility::move(key), utility::move(value_));
+  return inserter(_hash, utility::move(key), utility::forward<V>(value_));
 }
 
 template<typename K, typename V>
