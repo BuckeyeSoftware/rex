@@ -1,7 +1,7 @@
 #ifndef RX_CORE_MAP_H
 #define RX_CORE_MAP_H
-#include "rx/core/utility/move.h"
 #include "rx/core/utility/swap.h"
+#include "rx/core/utility/pair.h"
 
 #include "rx/core/traits/return_type.h"
 #include "rx/core/traits/is_trivially_destructible.h"
@@ -12,6 +12,7 @@
 #include "rx/core/memory/system_allocator.h" // allocator, g_system_allocator
 
 #include "rx/core/hash.h"
+#include "rx/core/array.h"
 
 namespace rx {
 
@@ -19,6 +20,9 @@ namespace rx {
 // 64-bit: 56 bytes
 template<typename K, typename V>
 struct map {
+  template<rx_size E>
+  using initializers = array<pair<K, V>[E]>;
+
   static constexpr rx_size k_initial_size{256};
   static constexpr rx_size k_load_factor{90};
 
@@ -26,6 +30,13 @@ struct map {
   map(memory::allocator* _allocator);
   map(map&& map_);
   map(const map& _map);
+
+  template<rx_size E>
+  map(memory::allocator* _allocator, initializers<E>&& initializers_);
+
+  template<rx_size E>
+  map(initializers<E>&& initializers_);
+
   ~map();
 
   map& operator=(map&& map_);
@@ -134,6 +145,24 @@ inline map<K, V>::map(const map& _map)
       insert(_map.m_keys[i], _map.m_values[i]);
     }
   }
+}
+
+template<typename K, typename V>
+template<rx_size E>
+inline map<K, V>::map(memory::allocator* _allocator, initializers<E>&& initializers_)
+  : map{_allocator}
+{
+  for (rx_size i = 0; i < E; i++) {
+    auto& item = initializers_[i];
+    insert(utility::move(item.first), utility::move(item.second));
+  }
+}
+
+template<typename K, typename V>
+template<rx_size E>
+inline map<K, V>::map(initializers<E>&& initializers_)
+  : map{&memory::g_system_allocator, utility::move(initializers_)}
+{
 }
 
 template<typename K, typename V>
