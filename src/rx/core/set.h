@@ -18,8 +18,8 @@ namespace rx {
 // 64-bit: 56 bytes
 template<typename K>
 struct set {
-  template<rx_size E>
-  using initializers = array<K[E]>;
+  template<typename Kt, rx_size E>
+  using initializers = array<Kt[E]>;
 
   static constexpr rx_size k_initial_size{256};
   static constexpr rx_size k_load_factor{90};
@@ -29,11 +29,11 @@ struct set {
   set(set&& set_);
   set(const set& _set);
 
-  template<rx_size E>
-  set(memory::allocator* _allocator, initializers<E>&& initializers_);
+  template<typename Kt, rx_size E>
+  set(memory::allocator* _allocator, initializers<Kt, E>&& initializers_);
 
-  template<rx_size E>
-  set(initializers<E>&& initializers_);
+  template<typename Kt, rx_size E>
+  set(initializers<Kt, E>&& initializers_);
 
   ~set();
 
@@ -132,8 +132,8 @@ inline set<K>::set(const set& _set)
 }
 
 template<typename K>
-template<rx_size E>
-inline set<K>::set(memory::allocator* _allocator, initializers<E>&& initializers_)
+template<typename Kt, rx_size E>
+inline set<K>::set(memory::allocator* _allocator, initializers<Kt, E>&& initializers_)
   : set{_allocator}
 {
   for (rx_size i = 0; i < E; i++) {
@@ -142,8 +142,8 @@ inline set<K>::set(memory::allocator* _allocator, initializers<E>&& initializers
 }
 
 template<typename K>
-template<rx_size E>
-inline set<K>::set(initializers<E>&& initializers_)
+template<typename Kt, rx_size E>
+inline set<K>::set(initializers<Kt, E>&& initializers_)
   : set{&memory::g_system_allocator, utility::move(initializers_)}
 {
 }
