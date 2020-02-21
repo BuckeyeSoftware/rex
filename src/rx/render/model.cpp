@@ -96,7 +96,7 @@ bool model::upload() {
   return true;
 }
 
-void model::animate(rx_size _index, bool _loop) {
+void model::animate(rx_size _index, [[maybe_unused]] bool _loop) {
   if (m_model.is_animated()) {
     m_animation = {&m_model, _index};
   }
