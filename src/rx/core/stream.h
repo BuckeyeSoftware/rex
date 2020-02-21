@@ -31,10 +31,11 @@ struct RX_HINT_EMPTY_BASES stream
     k_end      // End of stream.
   };
 
-  rx_u64 read(rx_byte* _data, rx_u64 _size);
-  rx_u64 write(const rx_byte* _data, rx_u64 _size);
-  bool seek(rx_s64 _where, whence _whence);
-  bool flush();
+  [[nodiscard]] rx_u64 read(rx_byte* _data, rx_u64 _size);
+  [[nodiscard]] rx_u64 write(const rx_byte* _data, rx_u64 _size);
+  [[nodiscard]] bool seek(rx_s64 _where, whence _whence);
+  [[nodiscard]] bool flush();
+
   rx_u64 tell();
   rx_u64 size();
 
