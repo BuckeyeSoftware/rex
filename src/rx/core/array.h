@@ -29,7 +29,7 @@ private:
 
 // Deduction guide for array{Ts...} to become array<T[E]>.
 template<typename T, typename... Ts>
-array(T&&, Ts&&...) -> array<T[1 + sizeof...(Ts)]>;
+array(T, Ts...) -> array<T[1 + sizeof...(Ts)]>;
 
 template<typename T, rx_size E>
 template<typename... Ts>
