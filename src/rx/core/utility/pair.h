@@ -1,6 +1,6 @@
 #ifndef RX_CORE_UTILITY_PAIR_H
 #define RX_CORE_UTILITY_PAIR_H
-#include "rx/core/utility/move.h"
+#include "rx/core/utility/forward.h"
 
 namespace rx {
 
@@ -17,9 +17,6 @@ struct pair {
 
   template<typename U1, typename U2>
   constexpr pair(pair<U1, U2>&& pair_);
-
-  pair(const pair& _pair);
-  pair(pair&& _pair);
 
   T1 first;
   T2 second;
@@ -42,8 +39,8 @@ inline constexpr pair<T1, T2>::pair(const T1& _first, const T2& _second)
 template<typename T1, typename T2>
 template<typename U1, typename U2>
 inline constexpr pair<T1, T2>::pair(U1&& first_, U2&& second_)
-  : first{utility::move(first_)}
-  , second{utility::move(second_)}
+  : first{utility::forward<U1>(first_)}
+  , second{utility::forward<U2>(second_)}
 {
 }
 
@@ -58,16 +55,10 @@ inline constexpr pair<T1, T2>::pair(const pair<U1, U2>& _pair)
 template<typename T1, typename T2>
 template<typename U1, typename U2>
 inline constexpr pair<T1, T2>::pair(pair<U1, U2>&& pair_)
-  : first{utility::move(pair_.first)}
-  , second{utility::move(pair_.second)}
+  : first{utility::forward<U1>(pair_.first)}
+  , second{utility::forward<U2>(pair_.second)}
 {
 }
-
-template<typename T1, typename T2>
-inline pair<T1, T2>::pair(const pair&) = default;
-
-template<typename T1, typename T2>
-inline pair<T1, T2>::pair(pair&&) = default;
 
 } // namespace rx
 
