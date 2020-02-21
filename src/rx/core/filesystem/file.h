@@ -1,6 +1,5 @@
 #ifndef RX_CORE_FILESYSTEM_FILE_H
 #define RX_CORE_FILESYSTEM_FILE_H
-#include "rx/core/optional.h"
 #include "rx/core/stream.h"
 #include "rx/core/string.h"
 
