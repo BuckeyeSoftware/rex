@@ -1,5 +1,4 @@
 #include <string.h> // memcpy
-#include <stdio.h> // printf
 
 #include "rx/core/serialize/buffer.h"
 #include "rx/core/stream.h"
