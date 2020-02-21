@@ -20,8 +20,8 @@ namespace rx {
 // 64-bit: 56 bytes
 template<typename K, typename V>
 struct map {
-  template<rx_size E>
-  using initializers = array<pair<K, V>[E]>;
+  template<typename Kt, typename Vt, rx_size E>
+  using initializers = array<pair<Kt, Vt>[E]>;
 
   static constexpr rx_size k_initial_size{256};
   static constexpr rx_size k_load_factor{90};
@@ -31,11 +31,11 @@ struct map {
   map(map&& map_);
   map(const map& _map);
 
-  template<rx_size E>
-  map(memory::allocator* _allocator, initializers<E>&& initializers_);
+  template<typename Kt, typename Vt, rx_size E>
+  map(memory::allocator* _allocator, initializers<Kt, Vt, E>&& initializers_);
 
-  template<rx_size E>
-  map(initializers<E>&& initializers_);
+  template<typename Kt, typename Vt, rx_size E>
+  map(initializers<Kt, Vt, E>&& initializers_);
 
   ~map();
 
@@ -148,8 +148,8 @@ inline map<K, V>::map(const map& _map)
 }
 
 template<typename K, typename V>
-template<rx_size E>
-inline map<K, V>::map(memory::allocator* _allocator, initializers<E>&& initializers_)
+template<typename Kt, typename Vt, rx_size E>
+inline map<K, V>::map(memory::allocator* _allocator, initializers<Kt, Vt, E>&& initializers_)
   : map{_allocator}
 {
   for (rx_size i = 0; i < E; i++) {
@@ -159,8 +159,8 @@ inline map<K, V>::map(memory::allocator* _allocator, initializers<E>&& initializ
 }
 
 template<typename K, typename V>
-template<rx_size E>
-inline map<K, V>::map(initializers<E>&& initializers_)
+template<typename Kt, typename Vt, rx_size E>
+inline map<K, V>::map(initializers<Kt, Vt, E>&& initializers_)
   : map{&memory::g_system_allocator, utility::move(initializers_)}
 {
 }
