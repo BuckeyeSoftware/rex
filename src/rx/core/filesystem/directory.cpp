@@ -3,6 +3,7 @@
 
 #if defined(RX_PLATFORM_POSIX)
 #include <dirent.h> // DIR, struct dirent, opendir, readdir, rewinddir, closedir
+#include <sys/stat.h> // mkdir, mode_t
 #elif defined(RX_PLATFORM_WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -160,6 +161,23 @@ void directory::each(function<void(item&&)>&& _function) {
   // instead.
   FindClose(context->handle);
   context->handle = INVALID_HANDLE_VALUE;
+#endif
+}
+
+bool create_directory(const string& _path) {
+#if defined(RX_PLATFORM_POSIX)
+  auto perms = 0;
+  perms |= S_IRUSR; // Read bit for owner.
+  perms |= S_IWUSR; // Write bit for owner.
+  perms |= S_IXUSR; // Repurposed in POSIX for directories to mean "searchable".
+  return mkdir(_path.data(), perms) == 0;
+#elif defined(RX_PLATFORM_WINDOWS)
+  // Use CreateDirectoryW so that Unicode |_path| names are allowed. Windows
+  // also requires that "\\?\" be prepended to the |_path| to remove the 248
+  // character limit. Windows 10 doesn't require this, but it doesn't hurt
+  // to add it either.
+  const auto path = ("\\\\?\\" + _path).to_utf16();
+  return CreateDirectoryW(reinterpret_cast<LPCWSTR>(path.data()), nullptr);
 #endif
 }
 

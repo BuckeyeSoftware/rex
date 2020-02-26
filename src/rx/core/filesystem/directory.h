@@ -115,6 +115,8 @@ inline directory::item::item(string&& name_, type _type)
 {
 }
 
+bool create_directory(const string& _path);
+
 } // namespace rx::filesystem
 
 #endif // RX_CORE_FILESYSTEM_DIRECTORY_H
