@@ -1,9 +1,9 @@
 # Core
 
-Rex does not make use of the C++ standard library. Instead it implements a core library in `src/rx/core` which implements some similar interfaces but there's some significant differences made for the sake of simplicity and performance.
+Rex does not make use of the C++ standard library. Instead it implements it's own core library in `src/rx/core`. with an emphasis on simplicity and performance.
 
 ## Differences
-There's many differences between our core library and the standard. They're outlines here.
+There's many differences between our core library and the standard. They're outlined here.
 
 ### No exceptions
 We don't make use of exceptions. Nothing can throw, this leads to a far simpler and more managable set of interfaces that don't need to think of what happens when something throws. It also leads to much faster code since everything is implicitly `noexcept`.
@@ -11,7 +11,7 @@ We don't make use of exceptions. Nothing can throw, this leads to a far simpler 
 ### No iterators
 It was discovered that the exception to the rule of iterating through all elements in a container is quite rare in most code and the amount of code to implement iterators is quite significant for something that is quite rare. Making it a poor fit to implement at all. Instead, all containers implement an `each` method that can take a callback. Care was taken to make it safe to mutate while inside the callback too. The callback itself is implemented as a template argument so it's _always_ inlined.
 
-When you do need to manage an index into a container like a `vector` or `string` you can just use `rx_size`. Since `map` and `set` are unordered, an iterator for the purposes of inserting or removing an element before or after another makes little since. The `find` interface of the unordered containers also gives you a pointer to the node
+When you do need to manage an index into a container like a `vector` or `string` you can just use `rx_size`. Since `map` and `set` are unordered, an iterator for the purposes of inserting or removing an element before or after another makes little sense as there's no order. The `find` interface of the unordered containers also gives you a pointer to the node
 which can be used to store and refer to elements later, like an iterator. One other nice benefit is that, provided the containers do not resize, these pointers are safe from invalidation caused by mutation to `map` and `set`.
 
 One downside to this is that most generic algorithms cannot be implemented for our types.
@@ -24,13 +24,57 @@ One downside to this is most types end up consuming more memory than most standa
 ## No new or delete
 Since everything should go through the polymorphic allocators, all forms of `new` and `delete` are disabled, including array variants. You cannot call them, they just forward to `abort`.
 
+The `array` container exists specifically to do "array constructions" through an allocator.
+
 ## No runtime support
-The C++ runtime support library for things like `new` and `delete`, exceptions and RTTI is simply disabled from the builds. Instead a very minimal, stublet implementation exists to call `abort` if it encounters such things being used.
+The C++ runtime support library is not used. This means features such as: `new`, `delete`, exceptions, and RTTI does not exist. Instead a very minimal, stublet implementation exists to call `abort` if it encounters such things being used.
+
+Similarly, Rex does not support concurrent initialization of static globals, instead `rx::global` should be used. This interface provides a much stronger set of features for controlling global initialization too.
+
+Pure virtual function calls just forward to `abort`.
 
 ## Performance
-Performance of runtime and debug builds as well as build performance were all major considerations for the core library. The C++ standard library often has poor runtime performance for debug builds and is known for it's slow build times. We don't have those problems as very careful design choices were made early on.
+The core library was designed with performance in mind for all three places that performance matters:
 
-Cache efficient is also a major design choice which led to our `map` and `set` implementations to use Robinhood hashing. This isn't possible with the standard interface in `std::unordered_{map,set}` since the standard requires the key and value be stored together leading to poor cache utilization.
+  * Debug
+  * Release
+  * Build
+
+The C++ standard library only focuses on release performance, leading to terrible debug and build performance.
+
+Careful design choices were made to avoid excessive build times, such as avoiding large headers (this is why each trait is in it's own individual file in `core/traits`.) in addition to other things.
+
+We make several large optimizations in the name of better runtime performance, too many to list here. However, some of the major ones include:
+
+### Polymorphic allocators
+Every container can be given a custom allocator. Small, on-stack containers with short life-times can be constructed by instantiating an allocator over some stack memory and giving it to the container in place of the system allocator.
+
+### Robin-hood hash containers
+One unfortunute consequence of C++'s hash containers, `unordered_{mapm,set}` is their interface must talk in `pair` which means they're often stored together. This has awful cache characteristics for when you only need the keys or values. Similarly, all implementations use a bucketing strategy that leads to cache-inefficieny. We use a fully flat implementation of these containers with Robin-hood hashing.
+
+### Uninitialized vectors
+There's no way with C++'s `vector` to initialize with size or resize the contents such that they stay uninitialized. This means something like `vector<char> data(1024)` will force all 1024 bytes to be zero initialized, only for you to replace them later.
+
+We support both forms for trivially-constructible types through the use of the `uninitialized{}` tag value.
+
+### Disowning memory
+Any container that manages a single, contiguous allocation can have it's memory stolen from it through a `disown` method, returning an untyped, owning view. This view can be given to anything that can reasonably make sense of the contents. This allows copy-free transmuations like the following:
+
+  * `vector<char>` => `string`
+  * `vector<rx_byte>` => `string`
+  * `string` => `vector<char>`
+  * `string` => `vector<rx_byte>`
+
+This is used extensively in file loading code.
+
+### Small string optimization
+Most standard libraries implement this, we do as well.
+
+### Hints
+We implement and utilize a wide variety of compiler hints to get proper code generation where the compiler cannopt deduce things about branches, memory aliasing, alignment, etc.
+
+### Exception free code
+Avoiding the use of exceptions and outright disabling it means everything is `noexcept`.
 
 ## Algorithm
 
@@ -71,12 +115,16 @@ The following concurrency primitives are implemented:
 The following filesystem primitives are implemented:
   * `directory` Open and manipulate a directory.
   * `file` Open and manipulate files.
+  * `mmap` Map and treat memory as a file.
 
 ## Hints
 
 Many hints for the compiler:
+  * `assume_aligned` Hint that a given pointer is aligned.
+  * `empty_bases` Hint that base classes are empty to get EBO.
   * `force_inline` Used to force a function to inline.
   * `likely` To mark a branch as likely happening for better scheduling.
+  * `may_alias` Disable alias-analysis to aovid strict-aliasing optimizations from breaking code that requires undefined behavior.
   * `no_inline` Used to force a function to __not__ inline.
   * `restrict` Indicate that local variables to a function do not overlap in memory to avoid spills and loads.
   * `unlikely` To mark a branch as being unlikely for better scheduling.
@@ -122,6 +170,22 @@ There exists some implementations of random-number generators:
 
   * `mt19937` Mersenne Twister
 
+## Serialize
+
+A generic binary searializer for any `stream`.
+
+  * `encoder`
+  * `decoder`
+
+## Time
+
+Time library
+
+  * `delay` Delay calling thread
+  * `qpc` Query performance counter
+  * `span` Represents a time span
+  * `stopwatch` Simple stop watch using QPC.
+
 ## Traits
 
 Unlike the standard library, the core library in Rex tries to keep each type trait in it's own header file to accelerate build times. Not every trait is implemented, just the ones the core library uses and the `_t` and `_v` variants do not exist. Only the `_t` versions exist and they're implicit. So `remove_reference<T>` is the `_t` version, likewise, `is_array<T>` is the `_v` version.
@@ -148,6 +212,7 @@ The following traits exist:
   * `is_pointer`
   * `is_reference`
   * `is_referenceable`
+  * `is_restrict`
   * `is_rvalue_reference`
   * `is_same`
   * `is_trivially_copyable`
@@ -162,6 +227,7 @@ The following traits exist:
   * `remove_reference`
   * `return_type`
   * `type_identity`
+  * `underlying_type`
 
 ## Utility
 
@@ -175,28 +241,35 @@ A very small subset of the functionality found by `<utility>` exists here.
   * `move` Exact implementation of `std::move`.
   * `nat` Not-a-type, used to enable `constexpr` initialization of unions.
   * `swap` Exact implementation of `std::swap`.
+  * `uninitialized` Key-hole type to use on containers you'd prefer stay uninitialized, like `vector`.
 
 ## Containers
-  * `array` Similar to `std::array`.
+  * `array` Similar to `std::array`. 1D only.
   * `bitset` A fixed-capacity bitset.
+  * `dynamic_pool` A dynamic-capacity pool.
+  * `static_pool` A fixed-capacity pool.
+  * `intrusive_list` An intrusive doubly-linked list.
+  * `intrusive_xor_list` A space-optimized intrusive doubly-linked list.
   * `function` A fast delegate that is similar to `std::function`.
   * `deferred_function` A fast delegate that gets called when the function goes out of scope.
   * `global` Global variables are wrapped with this type.
-  * `map` An unordered map using Robin-hood hashing.
+  * `map` An unordered flat map using Robin-hood hashing.
+  * `set` An unordered flat set using Robin-hood hashing.
   * `optional` Optional type implementation.
-  * `pool` A fixed-capacity object pool.
-  * `queue` Queue implementation.
-  * `set` An unordered set using Robin-hood hashing.
-  * `string` A UTF8-safe string and a UTF16 conversion interface for Windows.
+  * `string` A UTF-8-safe string and a UTF16 conversion interface for Windows.
+  * `string_table` A UTF-8-safe string table.
   * `vector` A dynamic resizing array.
 
 ## Misc
   * `abort` Take down the runtime safely while logging an abortion message.
   * `assert` Runtime assertions for `RX_DEBUG` builds. With optional messages.
+  * `bit_stream` Bit stream, for writing values smaller than a byte to a `stream`.
+  * `config` Feature test macros.
   * `event` An event system with signal and slots. Slot adds a delegate, signal calls all delegates.
   * `format` Type safe formatting of types for printing.
   * `hash` Hash functions for various types and generalized hash combiner.
   * `json` A JSON5 reader and parser into a tree-like structure.
   * `log` Generalized, thread-safe, concurrent logging framework.
   * `profiler` A CPU and GPU profiler framework.
+  * `stream` Stream interface including stream conversion functions.
   * `types` Sized types like `rx_{u,s}{8,16,32,64}`.
