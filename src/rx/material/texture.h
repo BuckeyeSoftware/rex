@@ -98,6 +98,7 @@ inline texture::texture(texture&& texture_)
   , m_filter{texture_.m_filter}
   , m_wrap{texture_.m_wrap}
   , m_type{utility::move(texture_.m_type)}
+  , m_border{utility::move(texture_.m_border)}
 {
 }
 
@@ -109,6 +110,7 @@ inline texture& texture::operator=(texture&& texture_) {
   m_filter = texture_.m_filter;
   m_wrap = texture_.m_wrap;
   m_type = utility::move(texture_.m_type);
+  m_border = utility::move(texture_.m_border);
 
   return *this;
 }
