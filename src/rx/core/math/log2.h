@@ -1,10 +1,11 @@
 #ifndef RX_CORE_MATH_LOG2_H
 #define RX_CORE_MATH_LOG2_H
 #include "rx/core/types.h"
+#include "rx/core/traits/is_same.h"
 
 namespace rx::math {
 
-// use compiler intrinsics if available
+// Use compiler intrinsics if available.
 #if defined(RX_COMPILER_CLANG) || defined(RX_COMPILER_GCC)
 inline rx_u32 log2(rx_u32 _value) {
   static_assert(traits::is_same<rx_u32, unsigned int>, "rx_u32 not unsigned int");
