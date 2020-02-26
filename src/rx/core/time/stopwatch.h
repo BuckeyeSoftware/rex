@@ -17,16 +17,28 @@ struct stopwatch {
   span elapsed() const;
 
 private:
-  rx_u64 m_range[2];
+  rx_u64 m_start_ticks;
+  rx_u64 m_stop_ticks;
 };
 
 constexpr stopwatch::stopwatch()
-  : m_range{0, 0}
+  : m_start_ticks{0}
+  , m_stop_ticks{0}
 {
 }
 
+inline void stopwatch::reset() {
+  m_start_ticks = 0;
+  m_stop_ticks = 0;
+}
+
+inline void stopwatch::restart() {
+  reset();
+  start();
+}
+
 inline bool stopwatch::is_running() const {
-  return m_range[0] != 0;
+  return m_start_ticks != 0;
 }
 
 } // namespace rx::time
