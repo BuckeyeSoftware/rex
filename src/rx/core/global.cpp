@@ -108,11 +108,22 @@ void globals::link() {
   // by |global_node::m_grouped| when the given global shares the same group
   // name as the group.
   concurrency::scope_lock lock{g_lock};
-  for (auto group = s_group_list.enumerate_head(&global_group::m_link); group; group.next()) {
-    for (auto node = s_node_list.enumerate_head(&global_node::m_ungrouped); node; node.next()) {
+  for (auto node = s_node_list.enumerate_head(&global_node::m_ungrouped); node; node.next()) {
+    bool unlinked = true;
+    for (auto group = s_group_list.enumerate_head(&global_group::m_link); group; group.next()) {
       if (!strcmp(node->m_group, group->name())) {
         group->m_list.push(&node->m_grouped);
+        unlinked = false;
       }
+    }
+
+    if (unlinked) {
+      // NOTE(dweiler): If you've hit this code-enforced crash it means there
+      // exists an rx::global<T> that is associated with a group by name which
+      // doesn't exist. This can be caused by misnaming the group in the
+      // global's constructor, or because the rx::global_group with that name
+      // doesn't exist in any translation unit.
+      *reinterpret_cast<volatile int*>(0) = 0;
     }
   }
 }
