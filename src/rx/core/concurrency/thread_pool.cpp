@@ -1,7 +1,8 @@
 #include "rx/core/concurrency/thread_pool.h"
 #include "rx/core/concurrency/wait_group.h"
 
-#include "rx/core/time/qpc.h"
+#include "rx/core/time/stopwatch.h"
+#include "rx/core/time/delay.h"
 #include "rx/core/log.h"
 
 namespace rx::concurrency {
@@ -25,8 +26,10 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads, rx_siz
   , m_job_memory{m_allocator, sizeof(work), _static_pool_size}
   , m_stop{false}
 {
+  time::stopwatch timer;
+  timer.start();
+
   logger(log::level::k_info, "starting pool with %zu threads", _threads);
-  const auto beg{time::qpc_ticks()};
   m_threads.reserve(_threads);
 
   wait_group group{_threads};
@@ -55,11 +58,14 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads, rx_siz
         }
 
         logger(log::level::k_verbose, "starting task on thread %d", _thread_id);
-        const auto beg{time::qpc_ticks()};
+
+        time::stopwatch timer;
+        timer.start();
         task(_thread_id);
-        const auto end{time::qpc_ticks()};
-        const auto time{static_cast<rx_f64>(((end - beg) * 1000.0) / static_cast<rx_f64>(time::qpc_frequency()))};
-        logger(log::level::k_verbose, "finished task on thread %d (took %.2f ms)", _thread_id, time);
+        timer.stop();
+
+        logger(log::level::k_verbose, "finished task on thread %d (took %s)",
+          _thread_id, timer.elapsed());
       }
     });
   }
@@ -67,13 +73,14 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads, rx_siz
   // wait for all threads to start
   group.wait();
 
-  const auto end{time::qpc_ticks()};
-  const auto time{static_cast<rx_f64>(((end - beg) * 1000.0) / static_cast<rx_f64>(time::qpc_frequency()))};
-  logger(log::level::k_info, "started pool with %zu threads (took %.2f ms)", _threads, time);
+  timer.stop();
+  logger(log::level::k_info, "started pool with %zu threads (took %s)", _threads,
+    timer.elapsed());
 }
 
 thread_pool::~thread_pool() {
-  const auto beg{time::qpc_ticks()};
+  time::stopwatch timer;
+  timer.start();
   {
     scope_lock lock{m_mutex};
     m_stop = true;
@@ -84,9 +91,9 @@ thread_pool::~thread_pool() {
     _thread.join();
   });
 
-  const auto end{time::qpc_ticks()};
-  const auto time{static_cast<rx_f64>(((end - beg) * 1000.0) / static_cast<rx_f64>(time::qpc_frequency()))};
-  logger(log::level::k_verbose, "stopped pool with %zu threads (took %.2f ms)", m_threads.size(), time);
+  timer.stop();
+  logger(log::level::k_verbose, "stopped pool with %zu threads (took %s)",
+    m_threads.size(), timer.elapsed());
 }
 
 void thread_pool::add(function<void(int)>&& task_) {
