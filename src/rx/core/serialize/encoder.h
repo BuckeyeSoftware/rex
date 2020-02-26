@@ -23,6 +23,12 @@ struct encoder {
   // Write signed integer value |_value|.
   [[nodiscard]] bool write_sint(rx_s64 _value);
 
+  // Write boolean value |_value|.
+  [[nodiscard]] bool write_boolean(bool _value);
+
+  // Write float value |_value|.
+  [[nodiscard]] bool write_float(rx_f32 _value);
+
   // Multiple overloads for writing strings.
   [[nodiscard]] bool write_string(const char* _string, rx_size _size);
   [[nodiscard]] bool write_string(const string& _string);

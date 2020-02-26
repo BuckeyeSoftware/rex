@@ -118,4 +118,12 @@ bool encoder::write_sint(rx_s64 _value) {
   return true;
 }
 
+bool encoder::write_boolean(bool _value) {
+  return m_buffer.write_byte(static_cast<rx_byte>(_value));
+}
+
+bool encoder::write_float(rx_f32 _value) {
+  return m_buffer.write_bytes(reinterpret_cast<const rx_byte*>(&_value), sizeof _value);
+}
+
 } // namespace rx::serialize
