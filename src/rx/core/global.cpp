@@ -114,6 +114,7 @@ void globals::link() {
       if (!strcmp(node->m_group, group->name())) {
         group->m_list.push(&node->m_grouped);
         unlinked = false;
+        break;
       }
     }
 
