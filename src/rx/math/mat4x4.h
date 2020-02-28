@@ -18,6 +18,7 @@ struct mat4x4 {
   constexpr mat4x4();
   constexpr mat4x4(const vec& _x, const vec& _y, const vec& _z, const vec& _w);
 
+  T* data();
   const T* data() const;
 
   static constexpr mat4x4 scale(const vec3<T>& _scale);
@@ -74,6 +75,11 @@ constexpr mat4x4<T>::mat4x4(const vec& x, const vec& y, const vec& z, const vec&
   , z{z}
   , w{w}
 {
+}
+
+template<typename T>
+inline T* mat4x4<T>::data() {
+  return x.data();
 }
 
 template<typename T>

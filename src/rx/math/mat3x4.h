@@ -26,6 +26,7 @@ struct mat3x4 {
 
   static mat3x4 invert(const mat3x4& _mat);
 
+  T* data();
   const T* data() const;
 
   constexpr mat3x4 operator*(const mat3x4& _mat) const;
@@ -51,6 +52,11 @@ inline constexpr mat3x4<T>::mat3x4(const vec& _x, const vec& _y, const vec& _z)
   , y{_y}
   , z{_z}
 {
+}
+
+template<typename T>
+inline T* mat3x4<T>::data() {
+  return x.data();
 }
 
 template<typename T>

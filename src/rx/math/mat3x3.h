@@ -21,6 +21,7 @@ struct mat3x3 {
   explicit mat3x3(const quat<T>& _rotation);
   explicit mat3x3(const vec3<T>& _scale, const quat<T>& _rotation);
 
+  T* data();
   const T* data() const;
 
   static constexpr mat3x3 scale(const vec3<T>& _scale);
@@ -70,6 +71,11 @@ constexpr mat3x3<T>::mat3x3(const vec& _x, const vec& _y, const vec& _z)
   , y{_y}
   , z{_z}
 {
+}
+
+template<typename T>
+inline T* mat3x3<T>::data() {
+  return x.data();
 }
 
 template<typename T>

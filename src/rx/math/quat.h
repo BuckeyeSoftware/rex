@@ -36,8 +36,6 @@ struct quat {
   constexpr quat& operator-=(T _scalar);
 
   T x, y, z, w;
-
-private:
 };
 
 using quatf = quat<rx_f32>;

@@ -34,6 +34,7 @@ struct vec3 {
   template<typename F>
   vec3<T> map(F&& _fn) const;
 
+  T* data();
   const T* data() const;
 
   template<typename T2>
@@ -122,6 +123,11 @@ template<typename T>
 template<typename F>
 inline vec3<T> vec3<T>::map(F&& _fn) const {
   return { _fn(x), _fn(y), _fn(z) };
+}
+
+template<typename T>
+inline T* vec3<T>::data() {
+  return array;
 }
 
 template<typename T>
