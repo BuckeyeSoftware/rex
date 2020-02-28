@@ -304,10 +304,12 @@ RX_HINT_FORCE_INLINE const char& string::first() const {
 }
 
 RX_HINT_FORCE_INLINE char& string::last() {
+  RX_ASSERT(!is_empty(), "empty string");
   return m_data[size() - 1];
 }
 
 RX_HINT_FORCE_INLINE const char& string::last() const {
+  RX_ASSERT(!is_empty(), "empty string");
   return m_data[size() - 1];
 }
 
