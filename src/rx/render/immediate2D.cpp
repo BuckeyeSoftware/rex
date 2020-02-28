@@ -842,6 +842,7 @@ rx_f32 immediate2D::measure_text_length(const char* _font,
     font_map = *find;
   } else {
     font_map = m_frontend->allocator()->create<font>(key, m_frontend);
+    RX_ASSERT(font_map, "out of memory");
     m_fonts.insert(key, font_map);
   }
 
@@ -864,6 +865,7 @@ void immediate2D::generate_text(rx_s32 _size, const char* _font,
     font_map = *find;
   } else {
     font_map = m_frontend->allocator()->create<font>(key, m_frontend);
+    RX_ASSERT(font_map, "out of memory");
     m_fonts.insert(key, font_map);
   }
 
