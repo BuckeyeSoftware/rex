@@ -90,7 +90,12 @@ bool texture::parse(const json& _definition) {
     return error("missing 'border' for \"clamp_to_border\"");
   }
 
-  rx::texture::loader loader{m_allocator};
+  m_file = file.as_string();
+
+  return load_texture_file();
+}
+
+bool texture::load_texture_file() {
   rx::texture::pixel_format want_format;
   if (m_type == "albedo") {
     want_format = rx::texture::pixel_format::k_rgba_u8;
@@ -100,12 +105,14 @@ bool texture::parse(const json& _definition) {
     want_format = rx::texture::pixel_format::k_rgb_u8;
   }
 
-  m_file = file.as_string();
-
+  rx::texture::loader loader{m_allocator};
   if (!loader.load(m_file, want_format)) {
     return false;
   }
 
+  // TODO(dweiler): Reintroduce this in a smarter way that the contents of the
+  // bake can be serialized.
+#if 0
   const auto& generate{_definition["generate"]};
   if (generate && m_type == "normal") {
     if (!generate.is_object()) {
@@ -212,9 +219,10 @@ bool texture::parse(const json& _definition) {
     const rx::texture::pixel_format format{loader.format()};
     m_chain.generate(utility::move(data), format, format,
       loader.dimensions(), false, has_mipmaps);
-  } else {
-    m_chain.generate(utility::move(loader), false, has_mipmaps);
   }
+#endif
+
+  m_chain.generate(utility::move(loader), false, m_filter.mipmaps);
 
   return true;
 }

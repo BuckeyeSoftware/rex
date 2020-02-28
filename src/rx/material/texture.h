@@ -55,6 +55,8 @@ struct RX_HINT_EMPTY_BASES texture
   rx::texture::chain&& chain();
 
 private:
+  bool load_texture_file();
+
   bool parse_type(const json& _type);
   bool parse_filter(const json& _filter, bool& _mipmaps);
   bool parse_wrap(const json& _wrap);
