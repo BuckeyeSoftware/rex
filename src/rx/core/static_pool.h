@@ -34,6 +34,7 @@ struct RX_HINT_EMPTY_BASES static_pool
   rx_size capacity() const;
   rx_size size() const;
   bool is_empty() const;
+  bool can_allocate() const;
 
   rx_byte* data_of(rx_size _index) const;
   rx_size index_of(const rx_byte* _data) const;
@@ -103,6 +104,10 @@ inline rx_size static_pool::size() const {
 
 inline bool static_pool::is_empty() const {
   return size() == 0;
+}
+
+inline bool static_pool::can_allocate() const {
+  return m_bitset.count_unset_bits() != 0;
 }
 
 inline rx_byte* static_pool::data_of(rx_size _index) const {

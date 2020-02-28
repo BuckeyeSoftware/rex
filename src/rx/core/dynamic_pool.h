@@ -67,8 +67,8 @@ inline T* dynamic_pool::create(Ts&&... _arguments) {
   const rx_size pools = m_pools.size();
   for (rx_size i = 0; i < pools; i++) {
     static_pool* pool = m_pools[i];
-    if (T* result = pool->create<T>(utility::forward<Ts>(_arguments)...)) {
-      return result;
+    if (pool->can_allocate()) {
+      return pool->create<T>(utility::forward<Ts>(_arguments)...);
     }
   }
 
