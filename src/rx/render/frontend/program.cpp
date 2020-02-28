@@ -37,6 +37,8 @@ uniform::uniform(program* _program, rx_u64 _bit, const string& _name, type _type
   , m_name{_name}
 {
   as_opaque = m_program->m_allocator->allocate(size());
+  RX_ASSERT(as_opaque, "out of memory");
+
   memset(as_opaque, 0, size());
 }
 
