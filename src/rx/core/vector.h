@@ -84,6 +84,8 @@ struct vector {
   // append |data| by move
   bool push_back(T&& data_);
 
+  void pop_back();
+
   // append new |T| construct with |args|
   template<typename... Ts>
   bool emplace_back(Ts&&... _args);
@@ -477,6 +479,12 @@ inline bool vector<T>::push_back(T&& value_) {
 
   m_size++;
   return true;
+}
+
+template<typename T>
+inline void vector<T>::pop_back() {
+  RX_ASSERT(m_size, "empty vector");
+  grow_or_shrink_to(m_size--);
 }
 
 template<typename T>
