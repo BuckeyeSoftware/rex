@@ -131,10 +131,12 @@ inline rx_f32& matrix::operator[](rx_size _index) {
 }
 
 inline const rx_f32* matrix::operator()(rx_size _x, rx_size _y) const {
+  RX_ASSERT(!m_data.is_empty(), "empty matrix");
   return m_data.data() + (m_dimensions.w * _y + _x) * m_channels;
 }
 
 inline rx_f32* matrix::operator()(rx_size _x, rx_size _y) {
+  RX_ASSERT(!m_data.is_empty(), "empty matrix");
   return m_data.data() + (m_dimensions.w * _y + _x) * m_channels;
 }
 
