@@ -44,8 +44,8 @@ struct string {
   string& operator=(const char* _contents);
   string& operator=(string&& contents_);
 
-  void reserve(rx_size _size);
-  void resize(rx_size _size);
+  bool reserve(rx_size _size);
+  bool resize(rx_size _size);
 
   rx_size find_first_of(int _ch) const;
   rx_size find_first_of(const char* _contents) const;
@@ -68,9 +68,9 @@ struct string {
   string& append(const string& _contents);
   string& append(char _ch);
 
-  void insert_at(rx_size _position, const char* _contents, rx_size _size);
-  void insert_at(rx_size _position, const char* _contents);
-  void insert_at(rx_size _position, const string& _contents);
+  bool insert_at(rx_size _position, const char* _contents, rx_size _size);
+  bool insert_at(rx_size _position, const char* _contents);
+  bool insert_at(rx_size _position, const string& _contents);
 
   // returns copy of string with leading characters in set removed
   string lstrip(const char* _set) const;
@@ -260,7 +260,7 @@ RX_HINT_FORCE_INLINE bool string::is_empty() const {
 }
 
 inline void string::clear() {
-  resize(0);
+  (void)!!resize(0);
 }
 
 inline string& string::append(const char* contents, rx_size size) {
@@ -275,8 +275,8 @@ inline string& string::append(char ch) {
   return append(&ch, 1);
 }
 
-inline void string::insert_at(rx_size _position, const string& _contents) {
-  insert_at(_position, _contents.data(), _contents.size());
+inline bool string::insert_at(rx_size _position, const string& _contents) {
+  return insert_at(_position, _contents.data(), _contents.size());
 }
 
 inline vector<string> string::split(int _ch, rx_size _count) const {

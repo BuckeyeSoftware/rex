@@ -7,10 +7,11 @@
 #include "rx/core/utility/swap.h"
 
 #include "rx/core/hints/unreachable.h"
+#include "rx/core/hints/unlikely.h"
 
 namespace rx {
 
-static void format_va(string& contents_, const char* _format, va_list _va) {
+static bool format_va(string& contents_, const char* _format, va_list _va) {
   // calculate length to format
   va_list ap;
   va_copy(ap, _va);
@@ -18,8 +19,12 @@ static void format_va(string& contents_, const char* _format, va_list _va) {
   va_end(ap);
 
   // format into string
-  contents_.resize(length);
-  vsnprintf(contents_.data(), contents_.size() + 1, _format, _va);
+  if (contents_.resize(length)) {
+    vsnprintf(contents_.data(), contents_.size() + 1, _format, _va);
+    return true;
+  }
+
+  return false;
 }
 
 rx_size utf8_to_utf16(const char* _utf8_contents, rx_size _length,
@@ -226,31 +231,40 @@ string& string::operator=(string&& contents_) {
   return *this;
 }
 
-void string::reserve(rx_size _capacity) {
+bool string::reserve(rx_size _capacity) {
   if (m_data + _capacity + 1 <= m_capacity) {
-    return;
+    return true;
   }
 
-  char* data{nullptr};
-  const auto size{static_cast<rx_size>(m_last - m_data)};
+  char* data = nullptr;
+  const auto size = static_cast<rx_size>(m_last - m_data);
   if (m_data == m_buffer) {
     data = reinterpret_cast<char*>(m_allocator->allocate(_capacity + 1));
-    if (size) {
-      memcpy(data, m_data, size + 1);
+    if (RX_HINT_UNLIKELY(!data)) {
+      return false;
     }
+    // Copy data out of |m_buffer| to |data|.
+    memcpy(data, m_buffer, size + 1);
   } else {
     data = reinterpret_cast<char*>(m_allocator->reallocate(reinterpret_cast<rx_byte*>(m_data), _capacity + 1));
+    if (RX_HINT_UNLIKELY(!data)) {
+      return false;
+    }
   }
 
   m_data = data;
   m_last = m_data + size;
   m_capacity = m_data + _capacity;
+
+  return true;
 }
 
-void string::resize(rx_size _size) {
-  const auto previous_size{static_cast<rx_size>(m_last - m_data)};
+bool string::resize(rx_size _size) {
+  const auto previous_size = static_cast<rx_size>(m_last - m_data);
 
-  reserve(_size);
+  if (RX_HINT_UNLIKELY(!reserve(_size))) {
+    return false;
+  }
 
   if (_size > previous_size) {
     char* element{m_last};
@@ -263,6 +277,8 @@ void string::resize(rx_size _size) {
   }
 
   m_last = m_data + _size;
+
+  return true;
 }
 
 rx_size string::find_first_of(int _ch) const {
@@ -323,17 +339,23 @@ string& string::append(const char* _contents) {
   return append(_contents, strlen(_contents));
 }
 
-void string::insert_at(rx_size _position, const char* _contents, rx_size _size) {
+bool string::insert_at(rx_size _position, const char* _contents, rx_size _size) {
   const rx_size old_this_size{size()};
   const rx_size old_that_size{_size};
-  resize(old_this_size + old_that_size);
+
+  if (RX_HINT_UNLIKELY(!resize(old_this_size + old_that_size))) {
+    return false;
+  }
+
   char* cursor{m_data + _position};
   memmove(cursor + old_that_size, cursor, old_this_size - _position);
   memmove(cursor, _contents, old_that_size);
+
+  return true;
 }
 
-void string::insert_at(rx_size _position, const char* _contents) {
-  insert_at(_position, _contents, strlen(_contents));
+bool string::insert_at(rx_size _position, const char* _contents) {
+  return insert_at(_position, _contents, strlen(_contents));
 }
 
 string string::lstrip(const char* _set) const {
