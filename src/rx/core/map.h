@@ -371,8 +371,6 @@ inline void map<K, V>::allocate() {
   m_hashes = reinterpret_cast<rx_size*>(m_allocator->allocate(sizeof(rx_size) * m_capacity));
   RX_ASSERT(m_hashes, "out of memory");
 
-  RX_ASSERT(m_keys && m_values && m_hashes, "out of memory");
-
   for (rx_size i{0}; i < m_capacity; i++) {
     element_hash(i) = 0;
   }
