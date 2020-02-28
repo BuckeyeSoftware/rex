@@ -100,7 +100,9 @@ bool texture::parse(const json& _definition) {
     want_format = rx::texture::pixel_format::k_rgb_u8;
   }
 
-  if (!loader.load(file.as_string(), want_format)) {
+  m_file = file.as_string();
+
+  if (!loader.load(m_file, want_format)) {
     return false;
   }
 

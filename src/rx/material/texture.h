@@ -12,7 +12,7 @@
 namespace rx {
   struct json;
   struct stream;
-}
+} // namespace rx
 
 namespace rx::material {
 
@@ -25,7 +25,7 @@ struct RX_HINT_EMPTY_BASES texture
     bool mipmaps;
   };
 
-  enum class wrap_type {
+  enum class wrap_type : rx_byte {
     k_clamp_to_edge,
     k_clamp_to_border,
     k_mirrored_repeat,
@@ -48,6 +48,7 @@ struct RX_HINT_EMPTY_BASES texture
   const filter_options& filter() const &;
   const wrap_options& wrap() const &;
   const string& type() const &;
+  const string& file() const &;
   const optional<math::vec4f>& border() const &;
 
   const rx::texture::chain& chain() const;
@@ -72,6 +73,7 @@ private:
   filter_options m_filter;
   wrap_options m_wrap;
   string m_type;
+  string m_file;
   optional<math::vec4f> m_border;
 };
 
@@ -88,7 +90,9 @@ inline void texture::log(log::level _level, const char* _format, Ts&&... _argume
 
 inline texture::texture(memory::allocator* _allocator)
   : m_allocator{_allocator}
-  , m_chain{_allocator}
+  , m_chain{m_allocator}
+  , m_type{m_allocator}
+  , m_file{m_allocator}
 {
 }
 
@@ -98,6 +102,7 @@ inline texture::texture(texture&& texture_)
   , m_filter{texture_.m_filter}
   , m_wrap{texture_.m_wrap}
   , m_type{utility::move(texture_.m_type)}
+  , m_file{utility::move(texture_.m_file)}
   , m_border{utility::move(texture_.m_border)}
 {
 }
@@ -110,6 +115,7 @@ inline texture& texture::operator=(texture&& texture_) {
   m_filter = texture_.m_filter;
   m_wrap = texture_.m_wrap;
   m_type = utility::move(texture_.m_type);
+  m_file = utility::move(texture_.m_file);
   m_border = utility::move(texture_.m_border);
 
   return *this;
@@ -125,6 +131,10 @@ inline const texture::wrap_options& texture::wrap() const & {
 
 inline const string& texture::type() const & {
   return m_type;
+}
+
+inline const string& texture::file() const & {
+  return m_file;
 }
 
 inline const optional<math::vec4f>& texture::border() const & {
