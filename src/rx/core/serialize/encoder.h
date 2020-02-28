@@ -3,6 +3,9 @@
 #include "rx/core/serialize/header.h"
 #include "rx/core/serialize/buffer.h"
 
+#include "rx/core/traits/is_signed.h"
+#include "rx/core/traits/is_unsigned.h"
+
 #include "rx/core/string.h"
 #include "rx/core/string_table.h"
 
@@ -17,26 +20,22 @@ struct encoder {
   encoder(memory::allocator* _allocator, stream* _stream);
   ~encoder();
 
-  // Write unsigned integer value |_value|.
   [[nodiscard]] bool write_uint(rx_u64 _value);
-
-  // Write signed integer value |_value|.
   [[nodiscard]] bool write_sint(rx_s64 _value);
-
-  // Write boolean value |_value|.
-  [[nodiscard]] bool write_boolean(bool _value);
-
-  // Write float value |_value|.
   [[nodiscard]] bool write_float(rx_f32 _value);
-
-  // Multiple overloads for writing strings.
+  [[nodiscard]] bool write_bool(bool _value);
+  [[nodiscard]] bool write_byte(rx_byte _value);
   [[nodiscard]] bool write_string(const char* _string, rx_size _size);
   [[nodiscard]] bool write_string(const string& _string);
-  template<rx_size E>
-  [[nodiscard]] bool write_string(const char (&_string)[E]);
 
-  // Write |_size| bytes from |_data|.
-  [[nodiscard]] bool write_bytes(const rx_byte* _data, rx_size _size);
+  [[nodiscard]] bool write_float_array(const rx_f32* _value, rx_size _count);
+  [[nodiscard]] bool write_byte_array(const rx_byte* _data, rx_size _size);
+
+  template<typename T>
+  [[nodiscard]] bool write_uint_array(const T* _data, rx_size _count);
+
+  template<typename T>
+  [[nodiscard]] bool write_sint_array(const T* _data, rx_size _count);
 
   const string& message() const &;
   memory::allocator* allocator() const;
@@ -62,21 +61,50 @@ inline encoder::encoder(stream* _stream)
 {
 }
 
-template<rx_size E>
-inline bool encoder::write_string(const char (&_string)[E]) {
-  return write_string(_string, E - 1);
-}
-
 inline bool encoder::write_string(const string& _string) {
   return write_string(_string.data(), _string.size());
 }
 
-inline memory::allocator* encoder::allocator() const {
-  return m_allocator;
+template<typename T>
+inline bool encoder::write_uint_array(const T* _data, rx_size _count) {
+  static_assert(traits::is_unsigned<T>, "T isn't unsigned integer type");
+
+  if (!write_uint(_count)) {
+    return false;
+  }
+
+  for (rx_size i = 0; i < _count; i++) {
+    if (!write_uint(_data[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+template<typename T>
+inline bool encoder::write_sint_array(const T* _data, rx_size _count) {
+  static_assert(traits::is_signed<T>, "T isn't signed integer type");
+
+  if (!write_uint(_count)) {
+    return false;
+  }
+
+  for (rx_size i = 0; i < _count; i++) {
+    if (!write_uint(_data[i])) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 inline const string& encoder::message() const & {
   return m_message;
+}
+
+inline memory::allocator* encoder::allocator() const {
+  return m_allocator;
 }
 
 template<typename... Ts>

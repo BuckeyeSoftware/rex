@@ -23,65 +23,6 @@ encoder::~encoder() {
   RX_ASSERT(finalize(), "finalization failed");
 }
 
-bool encoder::finalize() {
-  // Flush anything remaining data in |m_buffer| out to |m_stream|.
-  if (!m_buffer.flush()) {
-    return error("flush failed");
-  }
-
-  // Update header fields.
-  m_header.data_size = m_stream->tell() - sizeof m_header;
-  m_header.string_size = m_strings.size();
-
-  // Write out string table as the final thing in the stream.
-  const auto string_table_data = reinterpret_cast<const rx_byte*>(m_strings.data());
-  const auto string_table_size = m_strings.size();
-  if (m_stream->write(string_table_data, string_table_size) != string_table_size) {
-    return error("write failed");
-  }
-
-  // Seek to the beginning of the stream to update the header.
-  if (!m_stream->seek(0, stream::whence::k_set)) {
-    return error("seek failed");
-  }
-
-  return write_header();
-}
-
-bool encoder::write_header() {
-  const auto header_data = reinterpret_cast<const rx_byte*>(&m_header);
-  const auto output_size = m_stream->write(header_data, sizeof m_header);
-  if (output_size != sizeof m_header) {
-    return error("write failed");
-  }
-  return true;
-}
-
-bool encoder::write_string(const char* _string, rx_size _size) {
-  if (_string[_size] != '\0') {
-    return error("string isn't null-terminated");
-  }
-
-  if (auto insert = m_strings.insert(_string, _size)) {
-    return write_uint(*insert);
-  }
-
-  return false;
-}
-
-bool encoder::write_bytes(const rx_byte* _data, rx_size _size) {
-  // Raw byte arrays are prefixed with a ULEB128 encoded size prefix.
-  if (!write_uint(_size)) {
-    return false;
-  }
-
-  if (!m_buffer.write_bytes(_data, _size)) {
-    return error("write failed");
-  }
-
-  return true;
-}
-
 bool encoder::write_uint(rx_u64 _value) {
   // Encode |_value| using ULEB128 encoding.
   do {
@@ -118,12 +59,85 @@ bool encoder::write_sint(rx_s64 _value) {
   return true;
 }
 
-bool encoder::write_boolean(bool _value) {
+bool encoder::write_float(rx_f32 _value) {
+  return m_buffer.write_bytes(reinterpret_cast<const rx_byte*>(&_value), sizeof _value);
+}
+
+bool encoder::write_bool(bool _value) {
   return m_buffer.write_byte(static_cast<rx_byte>(_value));
 }
 
-bool encoder::write_float(rx_f32 _value) {
-  return m_buffer.write_bytes(reinterpret_cast<const rx_byte*>(&_value), sizeof _value);
+
+bool encoder::write_byte(rx_byte _value) {
+  return m_buffer.write_byte(_value);
+}
+
+bool encoder::write_string(const char* _string, rx_size _size) {
+  if (_string[_size] != '\0') {
+    return error("string isn't null-terminated");
+  }
+
+  if (auto insert = m_strings.insert(_string, _size)) {
+    return write_uint(*insert);
+  }
+
+  return false;
+}
+
+bool encoder::write_float_array(const rx_f32* _data, rx_size _count) {
+  if (!write_uint(_count)) {
+    return false;
+  }
+
+  for (rx_size i = 0; i < _count; i++) {
+    if (!write_float(_data[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool encoder::write_byte_array(const rx_byte* _data, rx_size _count) {
+  if (!write_uint(_count)) {
+    return false;
+  }
+
+  return m_buffer.write_bytes(_data, _count);
+}
+
+bool encoder::write_header() {
+  const auto header_data = reinterpret_cast<const rx_byte*>(&m_header);
+  const auto output_size = m_stream->write(header_data, sizeof m_header);
+  if (output_size != sizeof m_header) {
+    return error("write failed");
+  }
+  return true;
+}
+
+bool encoder::finalize() {
+  // Flush anything remaining data in |m_buffer| out to |m_stream|.
+  if (!m_buffer.flush()) {
+    return error("flush failed");
+  }
+
+  // Update header fields.
+  m_header.data_size = m_stream->tell() - sizeof m_header;
+  m_header.string_size = m_strings.size();
+
+  // Write out string table as the final thing in the stream.
+  const auto string_table_data = reinterpret_cast<const rx_byte*>(m_strings.data());
+  const auto string_table_size = m_strings.size();
+  if (m_stream->write(string_table_data, string_table_size) != string_table_size) {
+    return error("write failed");
+  }
+
+  // Seek to the beginning of the stream to update the header.
+  if (!m_stream->seek(0, stream::whence::k_set)) {
+    return error("seek failed");
+  }
+
+  return write_header();
 }
 
 } // namespace rx::serialize

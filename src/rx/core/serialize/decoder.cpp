@@ -27,6 +27,116 @@ decoder::~decoder() {
   RX_ASSERT(finalize(), "finalization failed");
 }
 
+bool decoder::read_uint(rx_u64& value_) {
+  rx_byte byte;
+
+  auto shift = 0_u64;
+  auto value = 0_u64;
+
+  do if (!m_buffer.read_byte(&byte)) {
+    return error("unexpected end of stream");
+  } else {
+    const rx_u64 slice = byte & 0x7f;
+    if (shift >= 64 || slice << shift >> shift != slice) {
+      return error("ULEB128 value too large");
+    }
+    value += static_cast<rx_u64>(slice) << shift;
+    shift += 7;
+  } while (byte >= 0x80);
+
+  value_ = value;
+
+  return true;
+}
+
+bool decoder::read_sint(rx_s64& value_) {
+  rx_byte byte;
+
+  auto shift = 0_u64;
+  auto value = 0_u64;
+
+  do if (!m_buffer.read_byte(&byte)) {
+    return error("unexpected end of stream");
+  } else {
+    value |= (static_cast<rx_u64>(byte & 0x7f) << shift);
+    shift += 7;
+  } while (byte >= 0x80);
+
+  // Sign extend negative numbers.
+  if (shift < 64 && (byte & 0x40)) {
+    value |= -1_u64 << shift;
+  }
+
+  value_ = static_cast<rx_s64>(value);
+
+  return true;
+}
+
+bool decoder::read_float(rx_f32& value_) {
+  return m_buffer.read_bytes(reinterpret_cast<rx_byte*>(&value_), sizeof value_);
+}
+
+bool decoder::read_bool(bool& value_) {
+  rx_byte byte;
+  if (!m_buffer.read_byte(&byte)) {
+    return false;
+  }
+
+  if (byte != 0 && byte != 1) {
+    return error("encoding error");
+  }
+
+  value_ = byte ? true : false;
+
+  return true;
+}
+
+bool decoder::read_byte(rx_byte& byte_) {
+  return m_buffer.read_byte(&byte_);
+}
+
+bool decoder::read_string(string& result_) {
+  rx_u64 index = 0;
+  if (!read_uint(index)) {
+    return false;
+  }
+
+  result_ = (*m_strings.data())[index];
+  return true;
+}
+
+bool decoder::read_float_array(rx_f32* result_, rx_size _count) {
+  rx_u64 count = 0;
+  if (!read_uint(count)) {
+    return false;
+  }
+
+  if (count != _count) {
+    return error("array count mismatch");
+  }
+
+  for (rx_size i = 0; i < _count; i++) {
+    if (!read_float(result_[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool decoder::read_byte_array(rx_byte* result_, rx_size _count) {
+  rx_u64 count = 0;
+  if (!read_uint(count)) {
+    return false;
+  }
+
+  if (count != _count) {
+    return error("array count mismatch");
+  }
+
+  return m_buffer.read_bytes(result_, _count);
+}
+
 bool decoder::finalize() {
   if (m_header.string_size) {
     m_strings.fini();
@@ -37,7 +147,7 @@ bool decoder::finalize() {
 bool decoder::read_header() {
   auto header = reinterpret_cast<rx_byte*>(&m_header);
   if (m_stream->read(header, sizeof m_header) != sizeof m_header) {
-    return error("could not read header");
+    return error("read failed");
   }
 
   // Check fields of the header to see if they're correct.
@@ -92,78 +202,6 @@ bool decoder::read_strings() {
     return error("seek failed");
   }
 
-  return true;
-}
-
-bool decoder::read_uint(rx_u64& value_) {
-  rx_byte byte;
-
-  auto shift = 0_u64;
-  auto value = 0_u64;
-
-  do if (!m_buffer.read_byte(&byte)) {
-    return error("unexpected end of stream");
-  } else {
-    const rx_u64 slice = byte & 0x7f;
-    if (shift >= 64 || slice << shift >> shift != slice) {
-      return error("ULEB128 value too large");
-    }
-    value += static_cast<rx_u64>(slice) << shift;
-    shift += 7;
-  } while (byte >= 0x80);
-
-  value_ = value;
-
-  return true;
-}
-
-bool decoder::read_sint(rx_s64& value_) {
-  rx_byte byte;
-
-  auto shift = 0_u64;
-  auto value = 0_u64;
-
-  do if (!m_buffer.read_byte(&byte)) {
-    return error("unexpected end of stream");
-  } else {
-    value |= (static_cast<rx_u64>(byte & 0x7f) << shift);
-    shift += 7;
-  } while (byte >= 0x80);
-
-  // Sign extend negative numbers.
-  if (shift < 64 && (byte & 0x40)) {
-    value |= -1_u64 << shift;
-  }
-
-  value_ = static_cast<rx_s64>(value);
-
-  return true;
-}
-
-bool decoder::read_bytes(rx_byte* data_, rx_size _size) {
-  rx_u64 size = 0;
-  if (!read_uint(size)) {
-    return false;
-  }
-
-  if (static_cast<rx_size>(size) != _size) {
-    return error("invalid size");
-  }
-
-  if (!m_buffer.read_bytes(data_, _size)) {
-    return error("unexpected end of stream");
-  }
-
-  return true;
-}
-
-bool decoder::read_string(string& result_) {
-  rx_u64 index = 0;
-  if (!read_uint(index)) {
-    return false;
-  }
-
-  result_ = (*m_strings.data())[index];
   return true;
 }
 
