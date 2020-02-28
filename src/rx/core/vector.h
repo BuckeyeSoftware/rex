@@ -12,6 +12,8 @@
 #include "rx/core/utility/uninitialized.h"
 
 #include "rx/core/hints/restrict.h"
+#include "rx/core/hints/unlikely.h"
+#include "rx/core/hints/unreachable.h"
 
 #include "rx/core/memory/system_allocator.h" // memory::{system_allocator, allocator}
 
@@ -266,6 +268,7 @@ inline vector<T>& vector<T>::operator=(const vector& _other) {
   m_allocator = _other.m_allocator;
   m_size = _other.m_size;
   m_capacity = _other.m_capacity;
+
   m_data = reinterpret_cast<T*>(m_allocator->allocate(_other.m_capacity * sizeof *m_data));
   RX_ASSERT(m_data, "out of memory");
 
@@ -389,28 +392,31 @@ bool vector<T>::reserve(rx_size _size) {
   }
 
   if constexpr (traits::is_trivially_copyable<T>) {
-    T* resize{reinterpret_cast<T*>(m_allocator->reallocate(reinterpret_cast<rx_byte*>(m_data), m_capacity * sizeof *m_data))};
-    if (resize) {
-      m_data = resize;
-      return true;
+    T* resize = reinterpret_cast<T*>(m_allocator->reallocate(reinterpret_cast<rx_byte*>(m_data), m_capacity * sizeof *m_data));
+    if (RX_HINT_UNLIKELY(!resize)) {
+      return false;
     }
+    m_data = resize;
+    return true;
   } else {
-    T* resize{reinterpret_cast<T*>(m_allocator->allocate(m_capacity * sizeof *m_data))};
-    if (resize) {
-      // Avoid the heavy indirect call through |m_allocator| for freeing nullptr.
-      if (m_data) {
-        for (rx_size i{0}; i < m_size; i++) {
-          utility::construct<T>(resize + i, utility::move(*(m_data + i)));
-          utility::destruct<T>(m_data + i);
-        }
-        m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
-      }
-      m_data = resize;
-      return true;
+    T* resize = reinterpret_cast<T*>(m_allocator->allocate(m_capacity * sizeof *m_data));
+    if (RX_HINT_UNLIKELY(!resize)) {
+      return false;
     }
+
+    // Avoid the heavy indirect call through |m_allocator| for freeing nullptr.
+    if (m_data) {
+      for (rx_size i{0}; i < m_size; i++) {
+        utility::construct<T>(resize + i, utility::move(*(m_data + i)));
+        utility::destruct<T>(m_data + i);
+      }
+      m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
+    }
+    m_data = resize;
+    return true;
   }
 
-  return false;
+  RX_HINT_UNREACHABLE();
 }
 
 template<typename T>
