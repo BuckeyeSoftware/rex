@@ -10,8 +10,11 @@ namespace rx {
 bitset::bitset(memory::allocator* _allocator, rx_size _size)
   : m_allocator{_allocator}
   , m_size{_size}
-  , m_data{reinterpret_cast<bit_type*>(m_allocator->allocate(bytes_for_size(m_size)))}
+  , m_data{nullptr}
 {
+  RX_ASSERT(m_allocator, "null allocator");
+
+  m_data = reinterpret_cast<bit_type*>(m_allocator->allocate(bytes_for_size(m_size)));
   RX_ASSERT(m_data, "out of memory");
 
   clear_all();
@@ -23,7 +26,6 @@ bitset::bitset(const bitset& _bitset)
   , m_data{reinterpret_cast<bit_type*>(m_allocator->allocate(bytes_for_size(m_size)))}
 {
   RX_ASSERT(m_data, "out of memory");
-
   memcpy(m_data, _bitset.m_data, bytes_for_size(m_size));
 }
 
