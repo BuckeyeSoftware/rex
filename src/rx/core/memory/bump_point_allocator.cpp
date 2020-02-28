@@ -14,6 +14,8 @@ bump_point_allocator::bump_point_allocator(rx_byte* _data, rx_size _size)
   , m_this_point{m_data}
   , m_last_point{m_data}
 {
+  RX_ASSERT(_data, "no memory supplied");
+
   // Ensure the memory given is suitably aligned and size is suitably rounded.
   RX_ASSERT(reinterpret_cast<rx_uintptr>(m_data) % k_alignment == 0,
     "_data not aligned on k_alignment boundary");
