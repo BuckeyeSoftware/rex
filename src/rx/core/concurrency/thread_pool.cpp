@@ -3,6 +3,7 @@
 
 #include "rx/core/time/stopwatch.h"
 #include "rx/core/time/delay.h"
+
 #include "rx/core/log.h"
 
 namespace rx::concurrency {
@@ -10,9 +11,12 @@ namespace rx::concurrency {
 RX_LOG("thread_pool", logger);
 RX_GLOBAL<thread_pool> thread_pool::s_thread_pool{"system", "thread_pool", 4_z, 4096_z};
 
-struct work {
-  work(function<void(int)>&& _callback)
-    : callback{utility::move(_callback)}
+struct RX_HINT_EMPTY_BASES work
+  : concepts::no_copy
+  , concepts::no_move
+{
+  work(function<void(int)>&& callback_)
+    : callback{utility::move(callback_)}
   {
   }
 
