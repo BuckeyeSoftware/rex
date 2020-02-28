@@ -670,10 +670,16 @@ bool operator>(const string& _lhs, const string& _rhs) {
   return &_lhs == &_rhs ? false : strcmp(_lhs.data(), _rhs.data()) > 0;
 }
 
-void wide_string::resize(rx_size _size) {
-  m_data = reinterpret_cast<rx_u16*>(m_allocator->reallocate(reinterpret_cast<rx_byte*>(m_data), (_size + 1) * sizeof *m_data));
+bool wide_string::resize(rx_size _size) {
+  rx_u16* resize = reinterpret_cast<rx_u16*>(m_allocator->reallocate(reinterpret_cast<rx_byte*>(m_data), (_size + 1) * sizeof *m_data));
+  if (!RX_HINT_UNLIKELY(resize)) {
+    return false;
+  }
+
+  m_data = resize;
   m_data[_size] = 0;
   m_size = _size;
+  return true;
 }
 
 string wide_string::to_utf8() const {

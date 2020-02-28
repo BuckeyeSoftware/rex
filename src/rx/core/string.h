@@ -167,7 +167,7 @@ struct wide_string {
   rx_u16* data();
   const rx_u16* data() const;
 
-  void resize(rx_size _size);
+  bool resize(rx_size _size);
 
   string to_utf8() const;
 
