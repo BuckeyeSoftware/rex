@@ -484,7 +484,7 @@ inline bool vector<T>::push_back(T&& value_) {
 template<typename T>
 inline void vector<T>::pop_back() {
   RX_ASSERT(m_size, "empty vector");
-  grow_or_shrink_to(m_size--);
+  grow_or_shrink_to(--m_size);
 }
 
 template<typename T>
