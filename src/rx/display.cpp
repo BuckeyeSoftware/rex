@@ -15,6 +15,7 @@ vector<display> display::displays(memory::allocator* _allocator) {
       // Copy the contents of the name for manipulation.
       const rx_size name_size{strlen(name) + 1};
       rx_byte* name_data{_allocator->allocate(name_size)};
+      RX_ASSERT(name_data, "out of memory");
       memcpy(name_data, name, name_size);
 
       // SDL2 introduces the physical size of the display in inches as a suffix
