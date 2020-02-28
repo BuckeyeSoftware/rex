@@ -423,6 +423,7 @@ template<typename T>
 inline void vector<T>::clear() {
   if (m_size) {
     if constexpr (!traits::is_trivially_destructible<T>) {
+      RX_ASSERT(m_data, "m_data == nullptr when m_size != 0");
       for (rx_size i = m_size-1; i < m_size; i--) {
         utility::destruct<T>(m_data + i);
       }
