@@ -41,9 +41,9 @@ rx_size dynamic_pool::index_of(const rx_byte* _data) const {
   return -1_z;
 }
 
-void dynamic_pool::add_pool() {
+bool dynamic_pool::add_pool() {
   auto pool = m_allocator->create<static_pool>(m_allocator, m_object_size, m_objects_per_pool);
-  m_pools.push_back(pool);
+  return pool ? m_pools.push_back(pool) : false;
 }
 
 } // namespace rx

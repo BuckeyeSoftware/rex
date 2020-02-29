@@ -36,7 +36,7 @@ struct RX_HINT_EMPTY_BASES dynamic_pool
   rx_size index_of(const rx_byte* _data) const;
 
 private:
-  void add_pool();
+  [[nodiscard]] bool add_pool();
   rx_size pool_index_of(const rx_byte* _data) const;
 
   memory::allocator* m_allocator;
@@ -72,9 +72,11 @@ inline T* dynamic_pool::create(Ts&&... _arguments) {
     }
   }
 
-  add_pool();
+  if (add_pool()) {
+    return create<T>(utility::forward<Ts>(_arguments)...);
+  }
 
-  return create<T>(utility::forward<Ts>(_arguments)...);
+  return nullptr;
 }
 
 template<typename T>
