@@ -128,7 +128,7 @@ private:
       construct_global<T, Ts...>(pack{}, _global_store, _argument_store);
       break;
     case storage_mode::k_fini_arguments:
-      if constexpr(sizeof...(Ts)) {
+      if constexpr(sizeof...(Ts) != 0) {
         utility::destruct<arguments<Ts...>>(_argument_store);
       }
       break;
