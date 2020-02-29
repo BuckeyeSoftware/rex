@@ -83,6 +83,7 @@ json::json(memory::allocator* _allocator, const char* _contents, rx_size _length
 
   // Construct the shared state.
   m_shared = _allocator->create<shared>(_allocator, _contents, _length);
+  RX_ASSERT(m_shared, "out of memory");
 
   // We hold a reference to the shared state already. Just take the root JSON
   // value as the base to begin.

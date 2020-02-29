@@ -37,6 +37,7 @@ directory::directory(memory::allocator* _allocator, string&& path_)
   // path conversion and the initial find handle on Windows. Subsequent reuses
   // will need to reopen the directory.
   find_context* context = m_allocator->create<find_context>();
+  RX_ASSERT(context, "out of memory");
 
   // Convert |m_path| to UTF-16 for Windows.
   const wide_string path_utf16 = m_path.to_utf16();

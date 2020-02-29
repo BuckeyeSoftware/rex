@@ -1023,7 +1023,7 @@ bool es3::init() {
 
   m_impl = m_allocator->create<detail_es3::state>(context);
 
-  return true;
+  return m_impl != nullptr;
 }
 
 void es3::process(const vector<rx_byte*>& _commands) {

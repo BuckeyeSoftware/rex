@@ -111,7 +111,9 @@ bool loader::import(const string& _file_name) {
 
   // determine the model format based on the extension
   if (_file_name.ends_with(".iqm")) {
-    new_loader = m_allocator->create<iqm>(m_allocator);
+    if (!(new_loader = m_allocator->create<iqm>(m_allocator))) {
+      return error("out of memory");
+    }
   } else {
     return error("unsupported model format");
   }

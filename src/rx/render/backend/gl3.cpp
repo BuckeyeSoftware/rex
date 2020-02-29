@@ -1022,7 +1022,7 @@ bool gl3::init() {
 
   m_impl = m_allocator->create<detail_gl3::state>(context);
 
-  return true;
+  return m_impl != nullptr;
 }
 
 void gl3::process(const vector<rx_byte*>& _commands) {
