@@ -2,6 +2,7 @@
 #define RX_CORE_PTR_H
 #include "rx/core/memory/allocator.h"
 #include "rx/core/hints/empty_bases.h"
+#include "rx/core/hash.h"
 
 namespace rx {
 
@@ -180,6 +181,15 @@ inline ptr<T> make_ptr(memory::allocator* _allocator, Ts&&... _arguments) {
   RX_ASSERT(_allocator, "null allocator");
   return {_allocator, _allocator->create<T>(utility::forward<Ts>(_arguments)...)};
 }
+
+// Specialization of hash<Ht> for ptr<Pt>.
+template<typename T>
+struct hash<ptr<T>> {
+  constexpr rx_size operator()(const ptr<T>& _ptr) const {
+    return hash_combine(hash<T*>{}(_ptr.get()),
+      hash<memory::allocator*>(_ptr.allocator()));
+  }
+};
 
 } // namespace rx
 
