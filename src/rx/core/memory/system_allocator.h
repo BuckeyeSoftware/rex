@@ -33,7 +33,7 @@ inline stats_allocator::statistics system_allocator::stats() {
   return m_stats_allocator.stats();
 }
 
-extern RX_GLOBAL<system_allocator> g_system_allocator;
+extern global<system_allocator> g_system_allocator;
 
 } // namespace rx::memory
 

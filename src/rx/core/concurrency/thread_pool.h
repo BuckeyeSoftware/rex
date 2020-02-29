@@ -40,7 +40,7 @@ private:
   dynamic_pool m_job_memory; // protected by |m_mutex|
   bool m_stop;               // protected by |m_mutex|
 
-  static RX_GLOBAL<thread_pool> s_thread_pool;
+  static global<thread_pool> s_thread_pool;
 };
 
 inline thread_pool::thread_pool(rx_size _threads, rx_size _static_pool_size)

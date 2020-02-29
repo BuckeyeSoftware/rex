@@ -22,12 +22,12 @@ static variable_reference* g_head; // protected by |g_lock|
 
 RX_LOG("console", logger);
 
-static RX_GLOBAL_GROUP("cvars", g_group_cvars);
-static RX_GLOBAL_GROUP("console", g_group_console);
+static global_group g_group_cvars{"cvars"};
+static global_group g_group_console{"console"};
 
 // TODO(dweiler): limited line count queue for messages on the console.
-static RX_GLOBAL<vector<string>> g_lines{"console", "lines", &memory::g_system_allocator};
-static RX_GLOBAL<map<string, command>> g_commands{"console", "commands", &memory::g_system_allocator};
+static global<vector<string>> g_lines{"console", "lines", &memory::g_system_allocator};
+static global<map<string, command>> g_commands{"console", "commands", &memory::g_system_allocator};
 
 void interface::write(const string& message_) {
   g_lines->push_back(message_);

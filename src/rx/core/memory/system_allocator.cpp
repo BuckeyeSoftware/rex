@@ -19,6 +19,6 @@ void system_allocator::deallocate(rx_byte* _data) {
   return m_stats_allocator.deallocate(_data);
 }
 
-RX_GLOBAL<system_allocator> g_system_allocator{"system", "allocator"};
+global<system_allocator> g_system_allocator{"system", "allocator"};
 
 } // namespace rx::memory

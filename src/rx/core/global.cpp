@@ -165,6 +165,6 @@ void globals::link(global_group* _group) {
   s_group_list.push(&_group->m_link);
 }
 
-static RX_GLOBAL_GROUP("system", g_group_system);
+static global_group g_group_system{"system"};
 
 } // namespace rx

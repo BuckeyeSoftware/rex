@@ -46,7 +46,7 @@ struct half_lut {
   rx_u8 shift[512];
 };
 
-static const RX_GLOBAL<half_lut> g_table{"system", "half"};
+static const global<half_lut> g_table{"system", "half"};
 
 half half::to_half(rx_f32 _f) {
   const shape u{_f};

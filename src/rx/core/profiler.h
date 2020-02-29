@@ -59,7 +59,7 @@ private:
   optional<gpu> m_gpu;
   optional<cpu> m_cpu;
 
-  static RX_GLOBAL<profiler> s_profiler;
+  static global<profiler> s_profiler;
 };
 
 inline profiler::cpu_sample::cpu_sample(const char* _tag) {

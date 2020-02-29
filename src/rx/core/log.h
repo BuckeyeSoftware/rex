@@ -71,7 +71,7 @@ inline log::event_type::handle log::on_write(function<void(level, string)>&& cal
 }
 
 #define RX_LOG(_name, _identifier) \
-  static RX_GLOBAL<::rx::log> _identifier{"loggers", (_name), (_name), __FILE__, __LINE__}
+  static ::rx::global<::rx::log> _identifier{"loggers", (_name), (_name), __FILE__, __LINE__}
 
 } // namespace rx
 

@@ -2,6 +2,6 @@
 
 namespace rx {
 
-RX_GLOBAL<profiler> profiler::s_profiler{"system", "profiler"};
+global<profiler> profiler::s_profiler{"system", "profiler"};
 
 }

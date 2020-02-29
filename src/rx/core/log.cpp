@@ -19,7 +19,7 @@
 
 namespace rx {
 
-RX_GLOBAL_GROUP("loggers", g_group_loggers);
+static global_group g_group_loggers{"loggers"};
 
 static constexpr const rx_size k_flush_threshold{1000}; // 1000 messages
 
@@ -91,10 +91,10 @@ struct logger {
   concurrency::condition_variable m_flush_condition;
   concurrency::thread m_thread;
 
-  static RX_GLOBAL<logger> s_logger;
+  static global<logger> s_logger;
 };
 
-RX_GLOBAL<logger> logger::s_logger{"system", "logger"};
+global<logger> logger::s_logger{"system", "logger"};
 
 logger::logger()
   : m_file{"log.log", "w"}

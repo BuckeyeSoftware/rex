@@ -393,12 +393,6 @@ inline constexpr const T* global<T>::data() const {
   return m_global_store.data();
 }
 
-#define RX_GLOBAL \
-  ::rx::global
-
-#define RX_GLOBAL_GROUP(_name, _ident) \
-  ::rx::global_group _ident {(_name)}
-
 } // namespace rx
 
 #endif // RX_CORE_GLOBAL_H
