@@ -4,6 +4,7 @@
 #include "rx/core/string_table.h"
 #include "rx/core/optional.h"
 #include "rx/core/map.h"
+#include "rx/core/ptr.h"
 
 #include "rx/core/hints/empty_bases.h"
 
@@ -235,11 +236,13 @@ private:
   void add_element(rx_u32 _element);
   void add_vertex(vertex&& vertex_);
 
+  ptr<font>& access_font(const font::key& _key);
+
   frontend::interface* m_frontend;
   frontend::technique* m_technique;
 
   // loaded fonts
-  map<font::key, font*> m_fonts;
+  map<font::key, ptr<font>> m_fonts;
 
   // current scissor rectangle
   math::vec2i m_scissor_position;

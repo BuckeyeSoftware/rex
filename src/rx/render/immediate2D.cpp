@@ -436,10 +436,6 @@ immediate2D::~immediate2D() {
   for (rx_size i{0}; i < k_buffers; i++) {
     m_frontend->destroy_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[i]);
   }
-
-  m_fonts.each_value([this](font* _font) {
-    m_frontend->allocator()->destroy<font>(_font);
-  });
 }
 
 void immediate2D::immediate2D::render(frontend::target* _target) {
@@ -807,7 +803,7 @@ static rx_size calculate_text_color(const char* _contents, math::vec4f& color_) 
   return 0;
 }
 
-static rx_f32 calculate_text_length(immediate2D::font* _font, rx_f32 _scale,
+static rx_f32 calculate_text_length(ptr<immediate2D::font>& _font, rx_f32 _scale,
   const char* _text, rx_size _text_length)
 {
   rx_f32 position{0.0f};
@@ -835,17 +831,7 @@ rx_f32 immediate2D::measure_text_length(const char* _font,
 {
   profiler::cpu_sample sample{"immediate2D::measure_text_length"};
 
-  const font::key key{_size, _font};
-  const auto find{m_fonts.find(key)};
-  font* font_map{nullptr};
-  if (find) {
-    font_map = *find;
-  } else {
-    font_map = m_frontend->allocator()->create<font>(key, m_frontend);
-    RX_ASSERT(font_map, "out of memory");
-    m_fonts.insert(key, font_map);
-  }
-
+  auto& font_map = access_font({_size, _font});
   return calculate_text_length(font_map, _scale, _text, _text_length);
 }
 
@@ -858,16 +844,7 @@ void immediate2D::generate_text(rx_s32 _size, const char* _font,
 
   (void)_font_length;
 
-  const font::key key{_size, _font};
-  const auto find{m_fonts.find(key)};
-  font* font_map{nullptr};
-  if (find) {
-    font_map = *find;
-  } else {
-    font_map = m_frontend->allocator()->create<font>(key, m_frontend);
-    RX_ASSERT(font_map, "out of memory");
-    m_fonts.insert(key, font_map);
-  }
+  auto& font_map = access_font({_size, _font});
 
   math::vec2f position{_position};
   math::vec4f color{_color};
@@ -1026,5 +1003,17 @@ void immediate2D::add_vertex(vertex&& vertex_) {
   m_vertices[m_vertex_index++] = utility::move(vertex_);
 }
 
+ptr<immediate2D::font>& immediate2D::access_font(const font::key& _key) {
+  const auto find = m_fonts.find(_key);
+  if (find) {
+    return *find;
+  }
+
+  auto allocator = m_frontend->allocator();
+  auto new_font = make_ptr<font>(allocator, _key, m_frontend);
+  RX_ASSERT(new_font, "out of memory");
+
+  return *m_fonts.insert(_key, utility::move(new_font));
+}
 
 } // namespace rx::render::frontend
