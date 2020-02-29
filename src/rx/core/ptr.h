@@ -111,6 +111,7 @@ inline ptr<T>& ptr<T>::operator=(ptr<U>&& ptr_) {
   // The casts are necessary here since T and U may not be the same.
   RX_ASSERT(reinterpret_cast<rx_uintptr>(&ptr_)
     != reinterpret_cast<rx_uintptr>(this), "self assignment");
+  destroy();
   m_allocator = ptr_.m_allocator;
   m_data = ptr_.m_data;
   ptr_.m_data = nullptr;
