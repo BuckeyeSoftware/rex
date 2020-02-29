@@ -32,13 +32,12 @@ thread::thread(memory::allocator* _allocator, const char* _name, function<void(i
 {
   RX_ASSERT(m_allocator, "null allocator");
 
-  m_state = m_allocator->create<state>(_name, utility::move(function_));
+  m_state = make_ptr<state>(m_allocator, _name, utility::move(function_));
 }
 
 thread::~thread() {
   if (m_state) {
     join();
-    m_allocator->destroy<state>(m_state);
   }
 }
 

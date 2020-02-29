@@ -9,12 +9,6 @@ dynamic_pool::dynamic_pool(dynamic_pool&& pool_)
   pool_.m_allocator = nullptr;
 }
 
-dynamic_pool::~dynamic_pool() {
-  m_pools.each_fwd([this](static_pool* _pool) {
-    m_allocator->destroy<static_pool>(_pool);
-  });
-}
-
 dynamic_pool& dynamic_pool::operator=(dynamic_pool&& pool_) {
   m_allocator = pool_.m_allocator;
   m_pools = utility::move(pool_.m_pools);
@@ -23,7 +17,7 @@ dynamic_pool& dynamic_pool::operator=(dynamic_pool&& pool_) {
 }
 
 rx_size dynamic_pool::pool_index_of(const rx_byte* _data) const {
-  return m_pools.find_if([_data](const static_pool* _pool) {
+  return m_pools.find_if([_data](const ptr<static_pool>& _pool) {
     return _pool->owns(_data);
   });
 }
@@ -42,8 +36,8 @@ rx_size dynamic_pool::index_of(const rx_byte* _data) const {
 }
 
 bool dynamic_pool::add_pool() {
-  auto pool = m_allocator->create<static_pool>(m_allocator, m_object_size, m_objects_per_pool);
-  return pool ? m_pools.push_back(pool) : false;
+  auto pool = make_ptr<static_pool>(m_allocator, m_allocator, m_object_size, m_objects_per_pool);
+  return pool ? m_pools.push_back(utility::move(pool)) : false;
 }
 
 } // namespace rx

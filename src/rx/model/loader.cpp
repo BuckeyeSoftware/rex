@@ -2,6 +2,7 @@
 #include "rx/model/iqm.h"
 
 #include "rx/core/map.h"
+#include "rx/core/ptr.h"
 #include "rx/core/filesystem/file.h"
 #include "rx/core/algorithm/clamp.h"
 
@@ -107,11 +108,11 @@ bool loader::parse(const json& _definition) {
 bool loader::import(const string& _file_name) {
   RX_ASSERT(!(m_flags & k_constructed), "already imported");
 
-  importer* new_loader{nullptr};
+  ptr<importer> new_loader;
 
   // determine the model format based on the extension
   if (_file_name.ends_with(".iqm")) {
-    if (!(new_loader = m_allocator->create<iqm>(m_allocator))) {
+    if (!(new_loader = make_ptr<iqm>(m_allocator, m_allocator))) {
       return error("out of memory");
     }
   } else {
@@ -220,7 +221,6 @@ bool loader::import(const string& _file_name) {
     }
   }
 
-  m_allocator->destroy<importer>(new_loader);
   return result;
 }
 

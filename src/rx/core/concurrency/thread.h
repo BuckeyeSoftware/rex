@@ -1,6 +1,7 @@
 #ifndef RX_CORE_CONCURRENCY_THREAD_H
 #define RX_CORE_CONCURRENCY_THREAD_H
 #include "rx/core/function.h"
+#include "rx/core/ptr.h"
 
 #include "rx/core/hints/empty_bases.h"
 
@@ -44,7 +45,7 @@ private:
   };
 
   memory::allocator* m_allocator;
-  state* m_state;
+  ptr<state> m_state;
 };
 
 inline constexpr thread::state::state()
@@ -56,7 +57,6 @@ inline constexpr thread::state::state()
 
 inline constexpr thread::thread()
   : m_allocator{nullptr}
-  , m_state{nullptr}
 {
 }
 
@@ -67,7 +67,7 @@ inline thread::thread(const char* _name, function<void(int)>&& function_)
 
 inline thread::thread(thread&& thread_)
   : m_allocator{thread_.m_allocator}
-  , m_state{thread_.m_state}
+  , m_state{utility::move(thread_.m_state)}
 {
   thread_.m_allocator = nullptr;
   thread_.m_state = nullptr;
