@@ -84,8 +84,8 @@ private:
   rx_size& element_hash(rx_size index);
   rx_size element_hash(rx_size index) const;
 
-  void allocate();
-  void grow();
+  [[nodiscard]] bool allocate();
+  [[nodiscard]] bool grow();
 
   // move and non-move construction functions
   V* construct(rx_size _index, rx_size _hash, K&& key_, V&& value_);
@@ -117,10 +117,8 @@ inline map<K, V>::map()
 template<typename K, typename V>
 inline map<K, V>::map(memory::allocator* _allocator)
 {
-  RX_ASSERT(_allocator, "null allocator");
-
   initialize(_allocator, k_initial_size);
-  allocate();
+  RX_ASSERT(allocate(), "out of memory");
 }
 
 template<typename K, typename V>
@@ -229,7 +227,7 @@ inline map<K, V>& map<K, V>::operator=(const map<K, V>& _map) {
 
   clear_and_deallocate();
   initialize(_map.m_allocator, _map.m_capacity);
-  allocate();
+  RX_ASSERT(allocate(), "out of memory");
 
   for (rx_size i{0}; i < _map.m_capacity; i++) {
     const auto hash = _map.element_hash(i);
@@ -243,6 +241,8 @@ inline map<K, V>& map<K, V>::operator=(const map<K, V>& _map) {
 
 template<typename K, typename V>
 inline constexpr void map<K, V>::initialize(memory::allocator* _allocator, rx_size _capacity) {
+  RX_ASSERT(_allocator, "null allocator");
+
   m_allocator = _allocator;
   m_keys = nullptr;
   m_values = nullptr;
@@ -256,7 +256,7 @@ inline constexpr void map<K, V>::initialize(memory::allocator* _allocator, rx_si
 template<typename K, typename V>
 inline V* map<K, V>::insert(const K& _key, V&& value_) {
   if (++m_size >= m_resize_threshold) {
-    grow();
+    RX_ASSERT(grow(), "out of memory");
   }
   return inserter(hash_key(_key), _key, utility::forward<V>(value_));
 }
@@ -264,7 +264,7 @@ inline V* map<K, V>::insert(const K& _key, V&& value_) {
 template<typename K, typename V>
 inline V* map<K, V>::insert(const K& _key, const V& _value) {
   if (++m_size >= m_resize_threshold) {
-    grow();
+    RX_ASSERT(grow(), "out of memory");
   }
   return inserter(hash_key(_key), _key, _value);
 }
@@ -361,15 +361,14 @@ inline rx_size map<K, V>::element_hash(rx_size _index) const {
 }
 
 template<typename K, typename V>
-inline void map<K, V>::allocate() {
+inline bool map<K, V>::allocate() {
   m_keys = reinterpret_cast<K*>(m_allocator->allocate(sizeof(K) * m_capacity));
-  RX_ASSERT(m_keys, "out of memory");
-
   m_values = reinterpret_cast<V*>(m_allocator->allocate(sizeof(V) * m_capacity));
-  RX_ASSERT(m_values, "out of memory");
-
   m_hashes = reinterpret_cast<rx_size*>(m_allocator->allocate(sizeof(rx_size) * m_capacity));
-  RX_ASSERT(m_hashes, "out of memory");
+
+  if (!m_keys || !m_values || !m_hashes) {
+    return false;
+  }
 
   for (rx_size i{0}; i < m_capacity; i++) {
     element_hash(i) = 0;
@@ -377,10 +376,12 @@ inline void map<K, V>::allocate() {
 
   m_resize_threshold = (m_capacity * k_load_factor) / 100;
   m_mask = m_capacity - 1;
+
+  return true;
 }
 
 template<typename K, typename V>
-inline void map<K, V>::grow() {
+inline bool map<K, V>::grow() {
   const auto old_capacity{m_capacity};
 
   auto keys_data{m_keys};
@@ -388,7 +389,9 @@ inline void map<K, V>::grow() {
   auto hashes_data{m_hashes};
 
   m_capacity *= 2;
-  allocate();
+  if (!allocate()) {
+    return false;
+  }
 
   for (rx_size i{0}; i < old_capacity; i++) {
     const auto hash{hashes_data[i]};
@@ -406,6 +409,8 @@ inline void map<K, V>::grow() {
   m_allocator->deallocate(reinterpret_cast<rx_byte*>(keys_data));
   m_allocator->deallocate(reinterpret_cast<rx_byte*>(values_data));
   m_allocator->deallocate(reinterpret_cast<rx_byte*>(hashes_data));
+
+  return true;
 }
 
 template<typename K, typename V>
