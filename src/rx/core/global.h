@@ -1,23 +1,22 @@
 #ifndef RX_CORE_GLOBAL_H
 #define RX_CORE_GLOBAL_H
-#include "rx/core/memory/uninitialized_storage.h"
 #include "rx/core/assert.h"
 #include "rx/core/intrusive_xor_list.h"
+#include "rx/core/memory/uninitialized_storage.h"
 
 namespace rx {
 
-// Constant, sharable properties for a given global<T>. Nodes get a pointer
-// to static instance data of this, allowing them to avoid storing this data
-// themselves.
+// Constant, sharable properties for a given global<T>.
 //
-// This saves 8 bytes in global_node for 32-bit.
-// This saves 12 bytes in global_node for 64-bit.
+// This saves 4 bytes in global_node.
 struct global_shared {
   rx_u16 size;
   rx_u16 alignment;
   void (*finalizer)(void* _data);
 };
 
+// 32-bit: 32 bytes
+// 64-bit: 64 bytes
 struct global_node {
   template<typename T, typename... Ts>
   global_node(const char* _group, const char* _name,
@@ -96,20 +95,9 @@ private:
   };
 
   template<typename... Ts>
-  static void construct_arguments(rx_byte* _argument_store, Ts&&... _arguments) {
+  static void construct_arguments(rx_byte* _argument_store, Ts... _arguments) {
     utility::construct<arguments<Ts...>>(_argument_store,
       utility::forward<Ts>(_arguments)...);
-  }
-
-  template<typename... Ts>
-  static void destruct_arguments(rx_byte* _argument_store) {
-    utility::destruct<arguments<Ts...>>(_argument_store);
-  }
-
-  template<typename T, typename... Ts>
-  static void construct_global(rx_byte* _storage, rx_byte* _argument_store) {
-    construct_global<T, Ts...>(typename unpack_arguments<sizeof...(Ts)>::type{},
-      _storage, _argument_store);
   }
 
   template<typename T, typename... Ts, rx_size... Ns>
@@ -120,10 +108,37 @@ private:
       argument<Ns>(reinterpret_cast<arguments<Ts...>*>(_argument_store))...);
   }
 
-  const global_shared* m_shared;
+  // Combine both operations into a single function so we only have to store
+  // a single function pointer rather than multiple.
+  //
+  // This saves 4 bytes on 32-bit.
+  // This saved 8 bytes on 64-bit.
+  enum class storage_mode {
+    k_init_global,
+    k_fini_arguments
+  };
 
-  void (*m_init_global)(rx_byte* _storage, rx_byte* _argument_store);
-  void (*m_fini_arguments)(rx_byte* _argument_store);
+  template<typename T, typename... Ts>
+  static void storage_dispatch(storage_mode _mode, rx_byte* _global_store,
+    rx_byte* _argument_store)
+  {
+    switch (_mode) {
+    case storage_mode::k_init_global:
+      using pack = typename unpack_arguments<sizeof...(Ts)>::type;
+      construct_global<T, Ts...>(pack{}, _global_store, _argument_store);
+      break;
+    case storage_mode::k_fini_arguments:
+      if constexpr(sizeof...(Ts)) {
+        utility::destruct<arguments<Ts...>>(_argument_store);
+      }
+      break;
+    }
+  }
+
+  static rx_byte* allocate_arguments(rx_size _size);
+  static void deallocate_arguments(rx_byte* _arguments);
+
+  const global_shared* m_shared;
 
   intrusive_xor_list::node m_grouped;
   intrusive_xor_list::node m_ungrouped;
@@ -131,18 +146,22 @@ private:
   const char* m_group;
   const char* m_name;
 
+  rx_byte* m_argument_store;
+
+  void (*m_storage_dispatch)(storage_mode _mode, rx_byte* _global_store,
+    rx_byte* _argument_store);
+
   enum : rx_u16 {
     k_enabled     = 1 << 0,
-    k_initialized = 1 << 1
+    k_initialized = 1 << 1,
+    k_arguments   = 1 << 2
   };
 
-  rx_u16 m_global_store;
   rx_u16 m_flags;
-
-  // This needs to be aligned otherwise `arguments` will invoke undefined behavior.
-  alignas(16) rx_byte m_argument_store[64];
 };
 
+// 32-bit: 32 + sizeof(T) bytes
+// 64-bit: 64 + sizeof(T) bytes
 template<typename T>
 struct global {
   static inline const global_shared s_shared = {
@@ -172,10 +191,12 @@ struct global {
   constexpr const T* data() const;
 
 private:
-  memory::uninitialized_storage<T> m_global_store;
   global_node m_node;
+  memory::uninitialized_storage<T> m_global_store;
 };
 
+// 32-bit: 20 bytes
+// 64-bit: 40 bytes
 struct global_group {
   global_group(const char* _name);
 
@@ -235,31 +256,19 @@ inline global_node::global_node(const char* _group, const char* _name,
   memory::uninitialized_storage<T>& _global_store, const global_shared* _shared,
   Ts&&... _arguments)
   : m_shared{_shared}
-  , m_init_global{construct_global<T, Ts...>}
-  , m_fini_arguments{nullptr}
   , m_group{_group ? _group : "system"}
   , m_name{_name}
+  , m_storage_dispatch{storage_dispatch<T, Ts...>}
   , m_flags{k_enabled}
 {
-  // |global<T>| embeds uninitialized_storage<T> with |global_node| proceeding
-  // it, by taking the difference of |this - _global_storage.data()| we can
-  // determine how many bytes in memory from this object, backwards is the
-  // storage for the node. We do this to save space, since we only need two
-  // bytes to store this.
-  //
-  // This saves 2-bytes in global_node for 32-bit.
-  // This saves 6-bytes in global_node for 64-bit.
-  const rx_uintptr this_address = reinterpret_cast<rx_uintptr>(this);
-  const rx_uintptr store_address = reinterpret_cast<rx_uintptr>(_global_store.data());
-  const rx_uintptr difference = this_address - store_address;
-  RX_ASSERT(difference <= 0xffff, "global is too large");
-  m_global_store = static_cast<rx_u32>(difference);
+  // The |_global_store| should be immediately after |this|.
+  RX_ASSERT(reinterpret_cast<rx_uintptr>(&_global_store)
+    == reinterpret_cast<rx_uintptr>(this + 1), "misalignment");
 
   if constexpr (sizeof...(Ts) != 0) {
-    static_assert(sizeof(arguments<Ts...>) <= sizeof m_argument_store,
-      "too much constructor data to store for global");
-    construct_arguments<Ts...>(m_argument_store, utility::forward<Ts>(_arguments)...);
-    m_fini_arguments = destruct_arguments<Ts...>;
+    m_argument_store = allocate_arguments(sizeof(arguments<Ts...>));
+    construct_arguments(m_argument_store, utility::forward<Ts>(_arguments)...);
+    m_flags |= k_arguments;
   }
 
   globals::link(this);
@@ -270,12 +279,12 @@ inline void global_node::init(Ts&&... _arguments) {
   static_assert(sizeof...(Ts) != 0,
     "use void init() for default construction");
 
-  if (m_fini_arguments) {
-    m_fini_arguments(m_argument_store);
+  if (m_flags & k_arguments) {
+    m_storage_dispatch(storage_mode::k_fini_arguments, data(), m_argument_store);
   }
 
-  construct_arguments<traits::remove_reference<Ts>...>
-    (m_argument_store, utility::forward<traits::remove_reference<Ts>>(_arguments)...);
+  construct_arguments(m_argument_store, utility::forward<Ts>(_arguments)...);
+
   init();
 }
 
@@ -284,13 +293,13 @@ inline const char* global_node::name() const {
 }
 
 inline rx_byte* global_node::data() {
-  // Reconstruct the storage pointer from |m_global_store|.
-  return reinterpret_cast<rx_byte*>(reinterpret_cast<rx_uintptr>(this) - m_global_store);
+  // The layout of a global<T> is such that the storage for it is right after
+  // the node. That node is |this|, this puts the storage one-past |this|.
+  return reinterpret_cast<rx_byte*>(this + 1);
 }
 
 inline const rx_byte* global_node::data() const {
-  // Reconstruct the storage pointer from |m_global_store|.
-  return reinterpret_cast<const rx_byte*>(reinterpret_cast<rx_uintptr>(this) - m_global_store);
+  return reinterpret_cast<const rx_byte*>(this + 1);
 }
 
 template<typename T>

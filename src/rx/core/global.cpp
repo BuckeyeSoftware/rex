@@ -1,4 +1,5 @@
 #include <string.h> // strcmp
+#include <stdlib.h> // malloc, free
 
 #include "rx/core/global.h"
 #include "rx/core/log.h"
@@ -20,7 +21,9 @@ void global_node::init_global() {
 
   RX_ASSERT(!(m_flags & k_initialized), "already initialized");
   logger(log::level::k_verbose, "%p init: %s/%s", this, m_group, m_name);
-  m_init_global(data(), m_argument_store);
+
+  m_storage_dispatch(storage_mode::k_init_global, data(), m_argument_store);
+
   m_flags |= k_initialized;
 }
 
@@ -33,8 +36,9 @@ void global_node::fini_global() {
   logger(log::level::k_verbose, "%p fini: %s/%s", this, m_group, m_name);
 
   m_shared->finalizer(data());
-  if (m_fini_arguments) {
-    m_fini_arguments(m_argument_store);
+  if (m_flags & k_arguments) {
+    m_storage_dispatch(storage_mode::k_fini_arguments, data(), m_argument_store);
+    deallocate_arguments(m_argument_store);
   }
   m_flags &= ~k_initialized;
 }
@@ -42,7 +46,8 @@ void global_node::fini_global() {
 void global_node::init() {
   RX_ASSERT(!(m_flags & k_initialized), "already initialized");
 
-  m_init_global(data(), m_argument_store);
+  m_storage_dispatch(storage_mode::k_init_global, data(), m_argument_store);
+
   m_flags &= ~k_enabled;
   m_flags |= k_initialized;
 }
@@ -51,11 +56,20 @@ void global_node::fini() {
   RX_ASSERT(m_flags & k_initialized, "not initialized");
 
   m_shared->finalizer(data());
-  if (m_fini_arguments) {
-    m_fini_arguments(m_argument_store);
+  if (m_flags & k_arguments) {
+    m_storage_dispatch(storage_mode::k_fini_arguments, data(), m_argument_store);
+    deallocate_arguments(m_argument_store);
   }
   m_flags &= ~k_enabled;
   m_flags |= k_initialized;
+}
+
+rx_byte* global_node::allocate_arguments(rx_size _size) {
+  return reinterpret_cast<rx_byte*>(malloc(_size));
+}
+
+void global_node::deallocate_arguments(rx_byte* _arguments) {
+  free(_arguments);
 }
 
 // global_group
