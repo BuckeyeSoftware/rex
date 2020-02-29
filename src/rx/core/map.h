@@ -384,9 +384,11 @@ template<typename K, typename V>
 inline bool map<K, V>::grow() {
   const auto old_capacity{m_capacity};
 
-  auto keys_data{m_keys};
-  auto values_data{m_values};
-  auto hashes_data{m_hashes};
+  auto keys_data = m_keys;
+  auto values_data = m_values;
+  auto hashes_data = m_hashes;
+
+  RX_ASSERT(keys_data && values_data && hashes_data, "unallocated");
 
   m_capacity *= 2;
   if (!allocate()) {

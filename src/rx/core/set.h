@@ -349,8 +349,10 @@ template<typename K>
 inline bool set<K>::grow() {
   const auto old_capacity{m_capacity};
 
-  auto keys_data{m_keys};
-  auto hashes_data{m_hashes};
+  auto keys_data = m_keys;
+  auto hashes_data = m_hashes;
+
+  RX_ASSERT(keys_data && hashes_data, "unallocated");
 
   m_capacity *= 2;
   if (!allocate()) {
