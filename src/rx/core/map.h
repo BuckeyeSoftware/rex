@@ -132,7 +132,7 @@ inline map<K, V>::map(map&& map_)
   , m_resize_threshold{map_.m_resize_threshold}
   , m_mask{map_.m_mask}
 {
-  map_.initialize(&memory::g_system_allocator, 0);
+  map_.initialize(m_allocator, 0);
 }
 
 template<typename K, typename V>
@@ -216,7 +216,7 @@ inline map<K, V>& map<K, V>::operator=(map<K, V>&& map_) {
   m_resize_threshold = map_.m_resize_threshold;
   m_mask = map_.m_mask;
 
-  map_.initialize(&memory::g_system_allocator, 0);
+  map_.initialize(m_allocator, 0);
 
   return *this;
 }
