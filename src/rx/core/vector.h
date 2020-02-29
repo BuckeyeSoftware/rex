@@ -341,7 +341,8 @@ bool vector<T>::grow_or_shrink_to(rx_size _size) {
 
   if (_size < m_size) {
     if constexpr (!traits::is_trivially_destructible<T>) {
-      for (rx_size i = m_size-1; i >= _size; i--) {
+      const auto difference = m_size - _size;
+      for (rx_size i = m_size - difference; i < difference; i--) {
         utility::destruct<T>(m_data + i);
       }
     }
@@ -484,7 +485,8 @@ inline bool vector<T>::push_back(T&& value_) {
 template<typename T>
 inline void vector<T>::pop_back() {
   RX_ASSERT(m_size, "empty vector");
-  grow_or_shrink_to(--m_size);
+  grow_or_shrink_to(m_size - 1);
+  m_size--;
 }
 
 template<typename T>
