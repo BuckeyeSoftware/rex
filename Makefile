@@ -118,7 +118,7 @@ else
 	ifeq ($(ASAN),1)
 		CFLAGS += -fno-omit-frame-pointer
 	else
-		DFLAGS += -fomit-frame-pointer
+		CFLAGS += -fomit-frame-pointer
 	endif
 endif
 
