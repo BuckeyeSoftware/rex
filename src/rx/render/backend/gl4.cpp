@@ -685,7 +685,7 @@ namespace detail_gl4 {
 
     SDL_GLContext m_context;
   };
-};
+}
 
 template<typename F>
 static void fetch(const char* _name, F& function_) {

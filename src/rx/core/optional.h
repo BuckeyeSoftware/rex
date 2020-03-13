@@ -9,7 +9,7 @@ namespace rx {
 
 namespace detail {
   struct nullopt {};
-};
+}
 
 constexpr detail::nullopt nullopt;
 

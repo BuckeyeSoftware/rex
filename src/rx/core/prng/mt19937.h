@@ -48,6 +48,6 @@ inline rx_f64 mt19937::f64() {
   return static_cast<rx_f64>(u32()) / k_max;
 }
 
-};
+}
 
 #endif // RX_CORE_PRNG_MT19937_H

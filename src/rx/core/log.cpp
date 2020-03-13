@@ -39,7 +39,7 @@ get_level_string(log::level lvl) {
 }
 
 static inline string
-time_stamp(time_t time, const char* fmt) {
+time_stamp(time_t time) {
   struct tm tm;
 #if defined(RX_PLATFORM_WINDOWS)
   localtime_s(&tm, &time);
@@ -47,7 +47,7 @@ time_stamp(time_t time, const char* fmt) {
   localtime_r(&time, &tm);
 #endif
   char date[256];
-  strftime(date, sizeof date, fmt, &tm);
+  strftime(date, sizeof date, "%Y-%m-%d %H:%M:%S", &tm);
   date[sizeof date - 1] = '\0';
   return date;
 }
@@ -162,7 +162,7 @@ bool logger::flush(rx_size max_padding) {
     const auto level_string{get_level_string(_message.m_level)};
     const auto padding{strlen(name_string) + strlen(level_string) + 1}; // +1 for '/'
     m_file.print("[%s] [%s/%s]%*s | %s\n",
-      time_stamp(_message.m_time, "%Y-%m-%d %H:%M:%S"),
+      time_stamp(_message.m_time),
       name_string,
       level_string,
       static_cast<int>(max_padding - padding),
