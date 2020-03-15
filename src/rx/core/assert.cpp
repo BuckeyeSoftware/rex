@@ -2,6 +2,14 @@
 #include <stdarg.h> // va_{list,start,end,copy}
 #include <stdio.h> // vsnprintf
 
+#if defined(RX_BREAK_ON_ASSERT)
+#if defined(RX_PLATFORM_WINDOWS)
+#include <Windows.h>   // DebugBreak
+#elif defined(RX_PLATFORM_LINUX)
+#include <signal.h> // raise, SIGINT
+#endif
+#endif
+
 #include "rx/core/log.h" // RX_LOG, rx::log
 #include "rx/core/abort.h" // rx::abort
 
@@ -33,7 +41,15 @@ void assert_fail(const char* _expression,
     _expression, _source_location.file(), _source_location.line(),
     _source_location.function(), contents);
 
+#if defined(RX_BREAK_ON_ASSERT)
+#if defined(RX_PLATFORM_WINDOWS)
+  DebugBreak();
+#elif defined(RX_PLATFORM_LINUX)
+  raise(SIGINT);
+#endif
+#else
   abort(contents.data());
+#endif
 }
 
 } // namespace rx
