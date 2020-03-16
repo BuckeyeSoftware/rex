@@ -88,12 +88,10 @@ struct log {
   // Query the source information of where this log is defined.
   const source_location& source_info() const &;
 
-private:
-  friend struct logger;
-
   void signal_write(level _level, string&& contents_);
   void signal_flush();
 
+private:
   const char* m_name;
   source_location m_source_location;
 

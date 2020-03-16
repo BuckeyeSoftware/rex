@@ -14,6 +14,8 @@
 
 namespace rx {
 
+namespace {
+
 struct logger {
   logger();
   ~logger();
@@ -288,6 +290,8 @@ void logger::write(ptr<message>& message_) {
     this_queue->owner->signal_flush();
   }
 }
+
+} // anon-namespace
 
 void log::signal_write(level _level, string&& contents_) {
   // NOTE(dweiler): This is called by the logging thread.
