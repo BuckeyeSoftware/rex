@@ -8,6 +8,8 @@
 
 namespace rx {
 
+RX_LOG("abort", logger);
+
 [[noreturn, maybe_unused]]
 static void abort_debug() {
 #if defined(RX_PLATFORM_POSIX) && (defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG))
@@ -38,6 +40,8 @@ static void abort_release() {
 
 [[noreturn]]
 void abort(const char* _message) {
+  logger->error("%s", _message);
+
   // Forcefully flush the current log contents before we abort, so that any
   // messages that may include the reason for the abortion end up in the log.
   log::flush();
