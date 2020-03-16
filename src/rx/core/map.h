@@ -255,16 +255,16 @@ inline constexpr void map<K, V>::initialize(memory::allocator* _allocator, rx_si
 
 template<typename K, typename V>
 inline V* map<K, V>::insert(const K& _key, V&& value_) {
-  if (++m_size >= m_resize_threshold) {
-    RX_ASSERT(grow(), "out of memory");
+  if (++m_size >= m_resize_threshold && !grow()) {
+    return nullptr;
   }
   return inserter(hash_key(_key), _key, utility::forward<V>(value_));
 }
 
 template<typename K, typename V>
 inline V* map<K, V>::insert(const K& _key, const V& _value) {
-  if (++m_size >= m_resize_threshold) {
-    RX_ASSERT(grow(), "out of memory");
+  if (++m_size >= m_resize_threshold && !grow()) {
+    return nullptr;
   }
   return inserter(hash_key(_key), _key, _value);
 }
