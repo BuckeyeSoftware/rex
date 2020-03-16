@@ -68,20 +68,17 @@ rx_byte* bump_point_allocator::reallocate(rx_byte* _data, rx_size _size) {
 
       return _data;
     } else if (rx_byte* data = allocate(_size)) {
-      // This path can only be hit when making the allocation larger, this
-      // implies that |_data| contains less than |_size| bytes. The original
-      // allocation cannot be the same size either and has to be a multiple of
-      // k_alignment. So the upper bound on the previous allocation is
-      // |_size - k_alignment|.
+      // This path is hit when resizing an allocation which isn't the last thing
+      // allocated.
       //
-      // We cannot tell how many bytes it contains exactly as there's no
-      // metadata describing it. Regardless, it's safe to copy past the
-      // allocation, potentially into another one, or ourselves, as such copy
-      // represents uninitialized memory to the caller anyways.
+      // We cannot tell how many bytes the original allocation was exactly as
+      // there's no metadata describing it. Regardless, it's safe to copy past
+      // the original allocation, potentially into another one, or ourselves,
+      // as such copy represents uninitialized memory to the caller anyways.
       //
       // However, since it's possible for the copy to land into ourselves, we
       // cannot use memcpy here, use memmove instead.
-      memmove(data, _data, _size - k_alignment);
+      memmove(data, _data, _size);
       return data;
     } else {
       // Out of memory.
