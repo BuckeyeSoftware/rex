@@ -154,8 +154,8 @@ inline log::flush_event::handle log::on_flush(flush_event::delegate&& callback_)
 }
 
 #define RX_LOG(_name, _identifier) \
-  static ::rx::global<::rx::log> _identifier{ "loggers", (_name), (_name), \
-    ::rx::source_location{__FILE__, nullptr, __LINE__}}
+  static ::rx::global<::rx::log> _identifier{"loggers", (_name), (_name), \
+    ::rx::source_location{__FILE__, "(global constructor)", __LINE__}}
 
 } // namespace rx
 

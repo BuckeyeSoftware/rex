@@ -10,6 +10,9 @@ namespace rx {
 #define RX_FUNCTION __func__
 #endif // defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG)
 
+#define RX_SOURCE_LOCATION \
+  ::rx::source_location{__FILE__, RX_FUNCTION, __LINE__}
+
 struct source_location {
   constexpr source_location(const char* _file,
     const char* _function, int _line);
