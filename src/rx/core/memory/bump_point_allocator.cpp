@@ -75,8 +75,8 @@ rx_byte* bump_point_allocator::reallocate(rx_byte* _data, rx_size _size) {
       // |_size - k_alignment|.
       //
       // We cannot tell how many bytes it contains exactly as there's no
-      // metadata descripting it. Regardless, it's safe to copy past the
-      // allocation, potentially into another one, or ourselves as such copy
+      // metadata describing it. Regardless, it's safe to copy past the
+      // allocation, potentially into another one, or ourselves, as such copy
       // represents uninitialized memory to the caller anyways.
       //
       // However, since it's possible for the copy to land into ourselves, we
