@@ -1,11 +1,12 @@
 #ifndef RX_RENDER_FRONTEND_COMMAND_H
 #define RX_RENDER_FRONTEND_COMMAND_H
-#include "rx/render/frontend/state.h"
-
+#include "rx/core/source_location.h"
 #include "rx/core/memory/bump_point_allocator.h"
 #include "rx/core/utility/nat.h"
 
 #include "rx/math/vec4.h"
+
+#include "rx/render/frontend/state.h"
 
 namespace rx::render::frontend {
 
@@ -42,23 +43,22 @@ enum class command_type : rx_u8 {
 
 struct alignas(16) command_header {
   struct info {
-    constexpr info(const char* _file, const char* _description, int _line)
-      : file{_file}
-      , description{_description}
-      , line{_line}
+    constexpr info(const char* _description, const source_location& _source_location)
+      : description{_description}
+      , source_info{_source_location}
     {
     }
-    const char* file;
     const char* description;
-    int line;
+    source_location source_info;
   };
 
   command_type type;
   info tag;
 };
 
-#define RX_RENDER_TAG(description) \
-  ::rx::render::frontend::command_header::info{__FILE__, (description), __LINE__}
+#define RX_RENDER_TAG(_description) \
+  ::rx::render::frontend::command_header::info{(_description), \
+    ::rx::source_location{__FILE__, __func__, __LINE__}}
 
 struct command_buffer {
   command_buffer(memory::allocator* _allocator, rx_size _size);
