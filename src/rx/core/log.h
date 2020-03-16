@@ -30,19 +30,17 @@ struct log {
 
   // Write a formatted message given by |_format| and |_arguments| of associated
   // severity level |_level|. This will queue the given message on the logger
-  // with |logger::enqueue|. The delegates given by |on_queue| will be called
-  // immediately by the same thread which calls this.
+  // thread.
   //
-  // This function can fail if the logger instance |logger::enqueue| fails.
+  // All delegates given by |on_queue| will be called immediately by this
+  // function (and thus on the same thread).
   //
   // This function is thread-safe.
   template<typename... Ts>
   bool write(level _level, const char* _format, Ts&&... _arguments);
 
-  // Convenience functions that call |write| with the associated levels:
-  // warning, info, verbose, error.
-  //
-  // These functions can fail if the logger instance |logger::enqueue| fails.
+  // Convenience functions that call |write| with the appropriate severity
+  // level, given by their name.
   //
   // All of these functions are thread-safe.
   template<typename... Ts>
@@ -54,39 +52,41 @@ struct log {
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments);
 
-  const char* name() const;
-  const source_location& source_info() const &;
-
-  // When a message is queued, any delegates associated by this function are
+  // When a message is queued, all delegates associated by this function are
   // called. This is different from |on_write| in that |callback_| is called
   // by the same thread which calls |write|, |warning|, |info|, |verbose|, or
   // |error| immediately.
   //
   // This function returns the event handle, keep the handle alive for as
-  // long as you want the delegate |callback_| to be called.
+  // long as you want the delegate |callback_| to be called for such event.
   //
   // This function is thread-safe.
   queue_event::handle on_queue(queue_event::delegate&& callback_);
 
-  // When a message is written, any delegates associated by this function are
+  // When a message is written, all delegates associated by this function are
   // called. This is different from |on_queue| in that |callback_| is called
   // by the logging thread when the actual message is written.
   //
   // This function returns the event handle, keep the handle alive for as
-  // long as you want the delegate |callback_| to be called.
+  // long as you want the delegate |callback_| to be called for such event.
   //
   // This function is thread-safe.
   write_event::handle on_write(write_event::delegate&& callback_);
 
-  // Multiple messages associated with this log can be queued up before they're
-  // written by the loggger, when all the queued messages are written out, any
-  // delegate associated by this function are callled.
+  // When all messages queued for this log are actually written, all delegates
+  // associated by this function are called.
   //
-  // This function returns the event handle, keep the handle alive for as
-  // long as you want the delegate |callback_| to be called.
+  // This function returns an event handle, keep the handle alive for as long
+  // as you want the delegate |callback_| to be called for such event.
   //
   // This function is thread-safe.
   flush_event::handle on_flush(flush_event::delegate&& callback_);
+
+  // Query the name of the logger, which is the name given to the |RX_LOG| macro.
+  const char* name() const;
+
+  // Query the source information of where this log is defined.
+  const source_location& source_info() const &;
 
 private:
   friend struct logger;
