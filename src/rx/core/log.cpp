@@ -1,21 +1,8 @@
-#include <time.h> // time_t, tm, strftime
 #include <string.h> // strlen
 
-#include "rx/core/log.h" // log
-#include "rx/core/string.h" // string
-#include "rx/core/vector.h" // vector
-#include "rx/core/profiler.h" // g_profiler
+#include "rx/core/log.h"
+#include "rx/core/stream.h"
 #include "rx/core/algorithm/max.h"
-
-#include "rx/core/filesystem/file.h" // file
-
-#include "rx/core/concurrency/mutex.h" // mutex
-#include "rx/core/concurrency/condition_variable.h" // condition_variable
-#include "rx/core/concurrency/scope_lock.h" // scope_lock
-#include "rx/core/concurrency/scope_unlock.h" // scope_unlock
-#include "rx/core/concurrency/thread.h" // thread
-
-#include "rx/core/global.h"
 
 namespace rx {
 
@@ -103,6 +90,10 @@ Logger::~Logger() {
 }
 
 bool Logger::subscribe(stream* _stream) {
+  if (!_stream->can_write()) {
+    return false;
+  }
+
   concurrency::scope_lock lock{m_mutex};
   if (const auto find = m_streams.find(_stream); find != -1_z) {
     return false;
