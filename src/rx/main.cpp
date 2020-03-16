@@ -164,7 +164,8 @@ int main(int _argc, char** _argv) {
 
   // Give the logger a stream to write to.
   filesystem::file log{"log.log", "wb"};
-  (void)!!Logger::instance().subscribe(&log);
+  (void)log::subscribe(&log);
+
   // system_group->find("logger")->cast<Logger>();
 
   // Initialize console variables. Then load the configuration to set those
