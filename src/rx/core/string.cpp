@@ -6,6 +6,8 @@
 
 #include "rx/core/utility/swap.h"
 
+#include "rx/core/hash/fnv1a.h"
+
 #include "rx/core/hints/unreachable.h"
 #include "rx/core/hints/unlikely.h"
 
@@ -524,30 +526,11 @@ bool string::contains(const string& _needle) const {
 }
 
 rx_size string::hash() const {
-  // The following is an implementation of FNV1a. The difference here matters
-  // because rx_size is the hash type which may be 4-byte or 8-byte depending
-  // on architecture.
-  //
-  // The previous hash function was just DJB2 X=33 which left most of the
-  // rx_size empty on 64-bit for short keys.
+  const rx_byte* data = reinterpret_cast<const rx_byte*>(m_data);
   if constexpr (sizeof(rx_size) == 8) {
-    static constexpr const rx_u64 k_prime = 0x100000001b3_u64;
-    rx_u64 hash = 0xcbf29ce484222325_u64;
-    for (const char *ch = m_data; *ch; ch++) {
-      const rx_byte value = *ch;
-      hash = hash ^ value;
-      hash *= k_prime;
-    }
-    return static_cast<rx_size>(hash);
+    return hash::fnv1a<rx_u64>(data, size());
   } else {
-    static constexpr const rx_u32 k_prime = 0x1000193_u32;
-    rx_u32 hash = 0x811c9dc5_u32;
-    for (const char *ch = m_data; *ch; ch++) {
-      const rx_byte value = *ch;
-      hash = hash ^ value;
-      hash &= k_prime;
-    }
-    return static_cast<rx_size>(hash);
+    return hash::fnv1a<rx_u32>(data, size());
   }
   RX_HINT_UNREACHABLE();
 }

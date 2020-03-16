@@ -129,6 +129,7 @@ private:
   char* m_data;
   char* m_last;
   char* m_capacity;
+
   char m_buffer[k_small_string];
 };
 
