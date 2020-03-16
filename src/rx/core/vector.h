@@ -339,12 +339,9 @@ bool vector<T>::grow_or_shrink_to(rx_size _size) {
     return false;
   }
 
-  if (_size < m_size) {
-    if constexpr (!traits::is_trivially_destructible<T>) {
-      const auto difference = m_size - _size;
-      for (rx_size i = m_size - difference; i < difference; i--) {
-        utility::destruct<T>(m_data + i);
-      }
+  if constexpr (!traits::is_trivially_destructible<T>) {
+    for (rx_size i = m_size; i > _size; --i) {
+      utility::destruct<T>(m_data + (i - 1));
     }
   }
 
