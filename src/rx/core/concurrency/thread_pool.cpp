@@ -34,13 +34,13 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads, rx_siz
   time::stopwatch timer;
   timer.start();
 
-  logger(log::level::k_info, "starting pool with %zu threads", _threads);
+  logger->info("starting pool with %zu threads", _threads);
   m_threads.reserve(_threads);
 
   wait_group group{_threads};
   for (rx_size i{0}; i < _threads; i++) {
     m_threads.emplace_back("thread pool", [this, &group](int _thread_id) {
-      logger(log::level::k_info, "starting thread %d", _thread_id);
+      logger->info("starting thread %d", _thread_id);
 
       group.signal();
 
@@ -50,7 +50,7 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads, rx_siz
           scope_lock lock{m_mutex};
           m_task_cond.wait(lock, [this] { return m_stop || !m_queue.is_empty(); });
           if (m_stop && m_queue.is_empty()) {
-            logger(log::level::k_info, "stopping thread %d", _thread_id);
+            logger->info("stopping thread %d", _thread_id);
             return;
           }
 
@@ -62,14 +62,14 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads, rx_siz
           m_job_memory.destroy(item);
         }
 
-        logger(log::level::k_verbose, "starting task on thread %d", _thread_id);
+        logger->verbose("starting task on thread %d", _thread_id);
 
         time::stopwatch timer;
         timer.start();
         task(_thread_id);
         timer.stop();
 
-        logger(log::level::k_verbose, "finished task on thread %d (took %s)",
+        logger->verbose("finished task on thread %d (took %s)",
           _thread_id, timer.elapsed());
       }
     });
@@ -79,7 +79,7 @@ thread_pool::thread_pool(memory::allocator* _allocator, rx_size _threads, rx_siz
   group.wait();
 
   timer.stop();
-  logger(log::level::k_info, "started pool with %zu threads (took %s)", _threads,
+  logger->info("started pool with %zu threads (took %s)", _threads,
     timer.elapsed());
 }
 
@@ -97,7 +97,7 @@ thread_pool::~thread_pool() {
   });
 
   timer.stop();
-  logger(log::level::k_verbose, "stopped pool with %zu threads (took %s)",
+  logger->verbose("stopped pool with %zu threads (took %s)",
     m_threads.size(), timer.elapsed());
 }
 
