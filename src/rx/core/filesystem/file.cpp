@@ -189,7 +189,7 @@ optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const 
     return read_binary_stream(_allocator, &open_file);
   }
 
-  logger(log::level::k_error, "failed to open file '%s' [%s]", _file_name,
+  logger->error("failed to open file '%s' [%s]", _file_name,
     strerror(errno));
 
   return nullopt;
@@ -200,7 +200,7 @@ optional<vector<rx_byte>> read_text_file(memory::allocator* _allocator, const ch
     return read_text_stream(_allocator, &open_file);
   }
 
-  logger(log::level::k_error, "failed to open file '%s' [%s]", _file_name,
+  logger->error("failed to open file '%s' [%s]", _file_name,
     strerror(errno));
 
   return nullopt;
