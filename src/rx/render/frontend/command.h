@@ -58,7 +58,7 @@ struct alignas(16) command_header {
 
 #define RX_RENDER_TAG(_description) \
   ::rx::render::frontend::command_header::info{(_description), \
-    ::rx::source_location{__FILE__, __func__, __LINE__}}
+    ::rx::source_location{__FILE__, RX_FUNCTION, __LINE__}}
 
 struct command_buffer {
   command_buffer(memory::allocator* _allocator, rx_size _size);
