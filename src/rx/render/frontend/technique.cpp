@@ -613,9 +613,9 @@ bool technique::parse(const json& _description) {
 
 void technique::write_log(log::level _level, string&& message_) const {
   if (m_name.is_empty()) {
-    logger(_level, "%s", utility::move(message_));
+    logger->write(_level, "%s", utility::move(message_));
   } else {
-    logger(_level, "technique '%s': %s", m_name, utility::move(message_));
+    logger->write(_level, "technique '%s': %s", m_name, utility::move(message_));
   }
 }
 
@@ -1059,14 +1059,14 @@ bool technique::resolve_dependencies(const map<string, module>& _modules) {
         break;
       }
 
-      logger(log::level::k_verbose, "'%s': %s shader has %zu dependencies",
+      logger->verbose("'%s': %s shader has %zu dependencies",
         m_name, shader_type, dependencies.sorted.size());
 
       dependencies.sorted.each_fwd([&](const string& _module) {
         const auto find{_modules.find(_module)};
         RX_ASSERT(find, "module '%s' not found", _module.data());
 
-        logger(log::level::k_verbose, "'%s': %s shader requires module '%s'",
+        logger->verbose("'%s': %s shader requires module '%s'",
           m_name, shader_type, _module);
 
         source.append(string::format("// Module %s\n", _module));

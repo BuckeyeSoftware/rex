@@ -139,7 +139,7 @@ invalid_signature:
 bool command::execute() {
   // Check the signature of the arguments
   if (m_arguments.size() != m_argument_count) {
-    logger(log::level::k_error,
+    logger->error(
       "arity violation in call, expected %zu parameters, got %zu",
       m_argument_count,
       m_arguments.size());
@@ -221,8 +221,7 @@ bool command::execute() {
   return m_delegate(m_arguments);
 
 error:
-  logger(
-    log::level::k_error,
+  logger->error(
     "%s: expected '%s' for argument %zu, got '%s' instead",
     m_declaration,
     expected,

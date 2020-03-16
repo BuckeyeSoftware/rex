@@ -59,12 +59,12 @@ bool importer::load(stream* _stream) {
     return error("unfinished triangles");
   }
 
-  logger(log::level::k_verbose, "%zu triangles, %zu vertices, %zu meshes",
+  logger->verbose("%zu triangles, %zu vertices, %zu meshes",
     m_elements.size() / 3, m_positions.size(), m_meshes.size());
 
   // Check for normals.
   if (m_normals.is_empty()) {
-    logger(log::level::k_warning, "missing normals");
+    logger->warning("missing normals");
     generate_normals();
   }
 
@@ -75,7 +75,7 @@ bool importer::load(stream* _stream) {
     if (m_coordinates.is_empty()) {
       return error("missing tangents and texture coordinates, bailing");
     } else {
-      logger(log::level::k_warning, "missing tangents, generating them");
+      logger->warning("missing tangents, generating them");
       if (!generate_tangents()) {
         return error("'could not generate tangents, degenerate tangents formed");
       }
@@ -85,19 +85,19 @@ bool importer::load(stream* _stream) {
   // Ensure none of the normals, tangents or coordinates go out of bounds of
   // the loaded model.
   if (m_normals.size() != vertices) {
-    logger(log::level::k_warning, "too %s normals",
+    logger->warning("too %s normals",
       m_normals.size() > vertices ? "many" : "few");
     m_normals.resize(vertices);
   }
 
   if (m_tangents.size() != vertices) {
-    logger(log::level::k_warning, "too %s tangents",
+    logger->warning("too %s tangents",
       m_tangents.size() > vertices ? "many" : "few");
     m_tangents.resize(vertices);
   }
 
   if (!m_coordinates.is_empty() && m_coordinates.size() != vertices) {
-    logger(log::level::k_warning, "too %s coordinates",
+    logger->warning("too %s coordinates",
       m_coordinates.size() > vertices ? "many" : "few");
     m_coordinates.resize(vertices);
   }
@@ -141,7 +141,7 @@ bool importer::load(stream* _stream) {
   });
 
   if (optimized_meshes.size() < m_meshes.size()) {
-    logger(log::level::k_info, "reduced %zu meshes to %zu", m_meshes.size(),
+    logger->info("reduced %zu meshes to %zu", m_meshes.size(),
       optimized_meshes.size());
   }
 
@@ -249,9 +249,9 @@ bool importer::generate_tangents() {
 
 void importer::write_log(log::level _level, string&& message_) const {
   if (m_name.is_empty()) {
-    logger(_level, "%s", utility::move(message_));
+    logger->write(_level, "%s", utility::move(message_));
   } else {
-    logger(_level, "%s: %s", m_name, utility::move(message_));
+    logger->write(_level, "%s: %s", m_name, utility::move(message_));
   }
 }
 

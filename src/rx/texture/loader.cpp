@@ -52,7 +52,7 @@ bool loader::load(stream* _stream, pixel_format _want_format,
     want_channels)};
 
   if (!decoded_image) {
-    logger(log::level::k_error, "%s failed %s", _stream->name(), stbi_failure_reason());
+    logger->error("%s failed %s", _stream->name(), stbi_failure_reason());
     return false;
   }
 
@@ -105,8 +105,7 @@ bool loader::load(stream* _stream, pixel_format _want_format,
       m_bpp = 3;
       m_data.resize(m_dimensions.area() * m_bpp);
 
-      logger(log::level::k_info, "%s removed alpha channel (not used)",
-        _stream->name());
+      logger->info("%s removed alpha channel (not used)", _stream->name());
     }
   }
 
@@ -125,7 +124,7 @@ bool loader::load(stream* _stream, pixel_format _want_format,
     }
   }
 
-  logger(log::level::k_verbose, "%s loaded %zux%zu @ %zu bpp", _stream->name(),
+  logger->verbose("%s loaded %zux%zu @ %zu bpp", _stream->name(),
     m_dimensions.w, m_dimensions.h, m_bpp);
 
   return true;

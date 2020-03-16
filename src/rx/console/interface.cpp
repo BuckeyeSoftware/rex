@@ -172,7 +172,7 @@ bool interface::load(const char* file_name) {
     return false;
   }
 
-  logger(log::level::k_info, "loading '%s'", file_name);
+  logger->info("loading '%s'", file_name);
 
   parser parse{&memory::g_system_allocator};
   for (string line_contents; file.read_line(line_contents); ) {
@@ -183,7 +183,7 @@ bool interface::load(const char* file_name) {
     }
 
     if (!parse.parse(line_contents)) {
-      logger(log::level::k_error, "%s", parse.error().message);
+      logger->error("%s", parse.error().message);
     } else {
       auto tokens{utility::move(parse.tokens())};
 
@@ -199,7 +199,7 @@ bool interface::load(const char* file_name) {
       if (auto* variable{find_variable_by_name(atom)}) {
         set_from_reference_and_token(variable, tokens[1]);
       } else {
-        logger(log::level::k_error, "'%s' not found", atom);
+        logger->error("'%s' not found", atom);
       }
     }
   }
@@ -213,7 +213,7 @@ bool interface::save(const char* file_name) {
     return false;
   }
 
-  logger(log::level::k_info, "saving '%s'", file_name);
+  logger->info("saving '%s'", file_name);
   for (const variable_reference *head{g_head}; head; head = head->m_next) {
     if (variable_type_is_ranged(head->type())) {
       file.print("## %s (in range %s, defaults to %s)\n",
@@ -292,7 +292,7 @@ variable_reference* interface::find_variable_by_name(const char* _name) {
 }
 
 variable_reference* interface::add_variable(variable_reference* reference) {
-  logger(log::level::k_info, "registered '%s'", reference->m_name);
+  logger->info("registered '%s'", reference->m_name);
   concurrency::scope_lock locked(g_lock);
   variable_reference* next = g_head;
   g_head = reference;

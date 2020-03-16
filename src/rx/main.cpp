@@ -11,6 +11,8 @@
 #include "rx/render/backend/es3.h"
 #include "rx/render/backend/null.h"
 
+#include "rx/core/filesystem/file.h"
+
 #include "rx/core/profiler.h"
 #include "rx/core/global.h"
 #include "rx/core/abort.h"
@@ -160,6 +162,11 @@ int main(int _argc, char** _argv) {
   system_group->find("logger")->init();
   system_group->find("profiler")->init();
 
+  // Give the logger a stream to write to.
+  filesystem::file log{"log.log", "wb"};
+  (void)!!Logger::instance().subscribe(&log);
+  // system_group->find("logger")->cast<Logger>();
+
   // Initialize console variables. Then load the configuration to set those
   // console variables.
   cvars_group->init();
@@ -178,13 +185,13 @@ int main(int _argc, char** _argv) {
   // explicitly destroys globals that may be relied upon by objects in the scope
   // below, such as the logging event handles.
   {
-    // Register an event handler for every log's "on_write" method which will
+    // Register an event handler for every log's "on_queue" method which will
     // recieve messages from the log and replicate it on the engine console. When
     // the handles go out of scope, the console will no longer recieve those
     // messages.
-    vector<log::event_type::handle> logging_event_handles;
+    vector<log::write_event::handle> logging_event_handles;
     globals::find("loggers")->each([&](global_node* _logger) {
-      logging_event_handles.push_back(_logger->cast<rx::log>()->on_write(
+      logging_event_handles.push_back(_logger->cast<rx::log>()->on_queue(
         [](log::level _level, const string& _message) {
           switch (_level) {
           case log::level::k_error:
@@ -403,59 +410,59 @@ int main(int _argc, char** _argv) {
       {
         render::frontend::interface frontend{&memory::g_system_allocator, backend};
 
-        rmtSettings* settings{rmt_Settings()};
+        Remotery* remotery = nullptr;
+        if (rmtSettings* settings = rmt_Settings()) {
+          settings->reuse_open_port = RMT_TRUE;
+          settings->maxNbMessagesPerUpdate = 128;
+          settings->port = *profile_port;
+          settings->limit_connections_to_localhost = *profile_local;
 
-        settings->reuse_open_port = RMT_TRUE;
-        settings->maxNbMessagesPerUpdate = 128;
-        settings->port = *profile_port;
-        settings->limit_connections_to_localhost = *profile_local;
+          settings->malloc = [](void*, rx_u32 _bytes) -> void* {
+            return memory::g_system_allocator->allocate(_bytes);
+          };
 
-        settings->malloc = [](void*, rx_u32 _bytes) -> void* {
-          return memory::g_system_allocator->allocate(_bytes);
-        };
+          settings->realloc = [](void*, void* _data, rx_u32 _bytes) ->void* {
+            return memory::g_system_allocator->reallocate(reinterpret_cast<rx_byte*>(_data), _bytes);
+          };
 
-        settings->realloc = [](void*, void* _data, rx_u32 _bytes) ->void* {
-          return memory::g_system_allocator->reallocate(reinterpret_cast<rx_byte*>(_data), _bytes);
-        };
+          settings->free = [](void*, void* _data) {
+            memory::g_system_allocator->deallocate(reinterpret_cast<rx_byte*>(_data));
+          };
 
-        settings->free = [](void*, void* _data) {
-          memory::g_system_allocator->deallocate(reinterpret_cast<rx_byte*>(_data));
-        };
+          if (rmt_CreateGlobalInstance(&remotery) == RMT_ERROR_NONE) {
+            auto set_thread_name = [](void*, [[maybe_unused]] const char* _name) {
+              rmt_SetCurrentThreadName(_name);
+            };
 
-        Remotery* remotery{nullptr};
-        if (rmt_CreateGlobalInstance(&remotery) == RMT_ERROR_NONE) {
-          auto set_thread_name{[](void*, const char* _name) {
-            rmt_SetCurrentThreadName(_name);
-          }};
-
-          if (*profile_cpu) {
-            profiler::instance().bind_cpu({
-              reinterpret_cast<void*>(remotery),
-              set_thread_name,
-              [](void*, const char* _tag) {
-                rmt_BeginCPUSampleDynamic(_tag, RMTSF_Aggregate);
-              },
-              [](void*) {
-                rmt_EndCPUSample();
-              }
-            });
-          }
-
-          if (*profile_gpu) {
-            if (is_gl || is_es) {
-              rmt_BindOpenGL();
+            if (*profile_cpu) {
+              profiler::instance().bind_cpu({
+                reinterpret_cast<void*>(remotery),
+                set_thread_name,
+                [](void*, [[maybe_unused]] const char* _tag) {
+                  rmt_BeginCPUSampleDynamic(_tag, RMTSF_Aggregate);
+                },
+                [](void*) {
+                  rmt_EndCPUSample();
+                }
+              });
             }
 
-            profiler::instance().bind_gpu({
-              reinterpret_cast<void*>(&frontend),
-              set_thread_name,
-              [](void* _context, const char* _tag) {
-                reinterpret_cast<render::frontend::interface*>(_context)->profile(_tag);
-              },
-              [](void* _context) {
-                reinterpret_cast<render::frontend::interface*>(_context)->profile(nullptr);
+            if (*profile_gpu) {
+              if (is_gl || is_es) {
+                rmt_BindOpenGL();
               }
-            });
+
+              profiler::instance().bind_gpu({
+                reinterpret_cast<void*>(&frontend),
+                set_thread_name,
+                [](void* _context, const char* _tag) {
+                  reinterpret_cast<render::frontend::interface*>(_context)->profile(_tag);
+                },
+                [](void* _context) {
+                  reinterpret_cast<render::frontend::interface*>(_context)->profile(nullptr);
+                }
+              });
+            }
           }
         }
 
@@ -552,14 +559,14 @@ int main(int _argc, char** _argv) {
                   extents.dimensions = display_resolution->get();
                   const math::vec2i offset{event.window.data1, event.window.data2};
                   extents.offset = offset;
-                  logger(log::level::k_info, "Window %s moved to %s",
-                    extents.dimensions, extents.offset);
+                  logger->info("Window %s moved to %s", extents.dimensions,
+                    extents.offset);
 
                   displays.each_fwd([&](const display& _display) {
                     if (_display.contains(extents)) {
                       // The window has moved to another display, update the name
                       display_name->set(_display.name());
-                      logger(log::level::k_info, "Display changed to \"%s\"", display_name->get());
+                      logger->info("Display changed to \"%s\"", display_name->get());
                       return false;
                     }
                     return true;

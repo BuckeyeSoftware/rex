@@ -34,14 +34,14 @@ resource::resource(interface* _frontend, type _type)
   , m_resource_usage{0}
   , m_reference_count{1}
 {
-  logger(log::level::k_verbose, "%p init %s", this, resource_type_to_string(m_resource_type));
+  logger->verbose("%p init %s", this, resource_type_to_string(m_resource_type));
 }
 
 resource::~resource() {
   const auto index{static_cast<rx_size>(m_resource_type)};
   m_frontend->m_resource_usage[index] -= m_resource_usage;
 
-  logger(log::level::k_verbose, "%p fini %s", this, resource_type_to_string(m_resource_type));
+  logger->verbose("%p fini %s", this, resource_type_to_string(m_resource_type));
 }
 
 void resource::update_resource_usage(rx_size _bytes) {

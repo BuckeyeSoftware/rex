@@ -157,7 +157,7 @@ bool loader::parse(const json& _definition) {
     if (_texture.chain().bpp() == 4) {
       m_flags |= k_has_alpha;
     } else if (m_flags & k_alpha_test) {
-      logger(log::level::k_warning, "'alpha_test' disabled (\"diffuse\" has no alpha channel)");
+      logger->warning("'alpha_test' disabled (\"diffuse\" has no alpha channel)");
       m_flags &= ~k_alpha_test;
     }
     return false;
@@ -208,9 +208,9 @@ bool loader::parse_textures(const json& _textures) {
 
 void loader::write_log(log::level _level, string&& message_) const {
   if (m_name.is_empty()) {
-    logger(_level, "%s", utility::move(message_));
+    logger->write(_level, "%s", utility::move(message_));
   } else {
-    logger(_level, "%s: %s", m_name, utility::move(message_));
+    logger->write(_level, "%s: %s", m_name, utility::move(message_));
   }
 }
 
