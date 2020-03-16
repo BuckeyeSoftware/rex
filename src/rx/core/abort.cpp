@@ -10,7 +10,7 @@ namespace rx {
 
 [[noreturn]]
 void abort(const char* _message) {
-  logger(log::level::k_error, "%s", _message);
+  logger->error("%s", _message);
 #if defined(RX_PLATFORM_WINDOWS)
   ::exit(3);
 #else

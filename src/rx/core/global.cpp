@@ -20,7 +20,7 @@ void global_node::init_global() {
   }
 
   RX_ASSERT(!(m_flags & k_initialized), "already initialized");
-  logger(log::level::k_verbose, "%p init: %s/%s", this, m_group, m_name);
+  logger->verbose("%p init: %s/%s", this, m_group, m_name);
 
   m_storage_dispatch(storage_mode::k_init_global, data(), m_argument_store);
 
@@ -33,7 +33,7 @@ void global_node::fini_global() {
   }
 
   RX_ASSERT(m_flags & k_initialized, "not initialized");
-  logger(log::level::k_verbose, "%p fini: %s/%s", this, m_group, m_name);
+  logger->verbose("%p fini: %s/%s", this, m_group, m_name);
 
   m_shared->finalizer(data());
   if (m_flags & k_arguments) {
