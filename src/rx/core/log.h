@@ -2,6 +2,7 @@
 #define RX_CORE_LOG_H
 #include "rx/core/event.h"
 #include "rx/core/string.h"
+#include "rx/core/source_location.h"
 
 namespace rx {
 
@@ -19,7 +20,7 @@ struct log {
   using write_event = event<void(level, string)>;
   using flush_event = event<void()>;
 
-  log(const char* _name, const char* _file_name, int _line);
+  constexpr log(const char* _name, const source_location& location);
 
   [[nodiscard]] static bool subscribe(stream* _stream);
   [[nodiscard]] static bool unsubscribe(stream* _stream);
@@ -52,8 +53,7 @@ struct log {
   bool error(const char* _format, Ts&&... _arguments);
 
   const char* name() const;
-  const char* file_name() const;
-  int line() const;
+  const source_location& source_info() const &;
 
   // When a message is queued, any delegates associated by this function are
   // called. This is different from |on_write| in that |callback_| is called
@@ -85,6 +85,7 @@ struct log {
   //
   // This function is thread-safe.
   flush_event::handle on_flush(flush_event::delegate&& callback_);
+
 private:
   friend struct logger;
 
@@ -92,18 +93,16 @@ private:
   void signal_flush();
 
   const char* m_name;
-  const char* m_file_name;
-  int m_line;
+  source_location m_source_location;
 
   queue_event m_queue_event;
   write_event m_write_event;
   flush_event m_flush_event;
 };
 
-inline log::log(const char* _name, const char* _file_name, int _line)
+inline constexpr log::log(const char* _name, const source_location& _source_location)
   : m_name{_name}
-  , m_file_name{_file_name}
-  , m_line{_line}
+  , m_source_location{_source_location}
 {
 }
 
@@ -138,12 +137,8 @@ inline const char* log::name() const {
   return m_name;
 }
 
-inline const char* log::file_name() const {
-  return m_file_name;
-}
-
-inline int log::line() const {
-  return m_line;
+inline const source_location& log::source_info() const & {
+  return m_source_location;
 }
 
 inline log::queue_event::handle log::on_queue(queue_event::delegate&& callback_) {
@@ -159,7 +154,8 @@ inline log::flush_event::handle log::on_flush(flush_event::delegate&& callback_)
 }
 
 #define RX_LOG(_name, _identifier) \
-  static ::rx::global<::rx::log> _identifier{"loggers", (_name), (_name), __FILE__, __LINE__}
+  static ::rx::global<::rx::log> _identifier{ "loggers", (_name), (_name), \
+    ::rx::source_location{__FILE__, nullptr, __LINE__}}
 
 } // namespace rx
 
