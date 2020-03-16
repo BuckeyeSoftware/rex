@@ -1,14 +1,72 @@
+#include <time.h> // time_t, time
 #include <string.h> // strlen
 
 #include "rx/core/log.h"
+#include "rx/core/ptr.h"
 #include "rx/core/stream.h"
+#include "rx/core/intrusive_list.h"
+
 #include "rx/core/algorithm/max.h"
+
+#include "rx/core/concurrency/mutex.h"
+#include "rx/core/concurrency/condition_variable.h"
+#include "rx/core/concurrency/thread.h"
 
 namespace rx {
 
+struct logger {
+  logger();
+  ~logger();
+
+  static logger& instance();
+
+  bool subscribe(stream* _stream);
+  bool unsubscribe(stream* _stream);
+  bool enqueue(log* _log, log::level _level, string&& _message);
+
+private:
+  enum {
+    k_running = 1 << 0,
+    k_ready   = 1 << 1
+  };
+
+  struct queue {
+    log* owner;
+    intrusive_list messages;
+  };
+
+  struct message {
+    queue* owner;
+    log::level level;
+    time_t time;
+    string contents;
+    intrusive_list::node link;
+  };
+
+  void process(int _thread_id);
+
+  void flush();
+  void write(ptr<message>& message_);
+
+  concurrency::mutex m_mutex;
+  concurrency::condition_variable m_ready_cond;
+  concurrency::condition_variable m_wakeup_cond;
+
+  vector<stream*> m_streams;       // protected by |m_mutex|
+  vector<queue> m_queues;          // protected by |m_mutex|
+  vector<ptr<message>> m_messages; // protected by |m_mutex|
+  int m_status;                    // protected by |m_mutex|
+  int m_padding;                   // protected by |m_mutex|
+
+  // NOTE(dweiler): This should come last.
+  concurrency::thread m_thread;
+
+  static global<logger> s_logger;
+};
+
 static global_group g_group_loggers{"loggers"};
 
-global<Logger> Logger::s_logger{"system", "logger"};
+global<logger> logger::s_logger{"system", "logger"};
 
 static inline const char* string_for_level(log::level _level) {
   switch (_level) {
@@ -37,7 +95,7 @@ static inline string string_for_time(time_t _time) {
   return date;
 }
 
-Logger::Logger()
+logger::logger()
   : m_status{k_running}
   , m_padding{0}
   , m_thread{"logger", [this](int _thread_id) { process(_thread_id); }}
@@ -74,7 +132,7 @@ Logger::Logger()
   }
 }
 
-Logger::~Logger() {
+logger::~logger() {
   // Signal the |process| thread to terminate.
   {
     concurrency::scope_lock lock{m_mutex};
@@ -89,7 +147,11 @@ Logger::~Logger() {
   g_group_loggers.fini();
 }
 
-bool Logger::subscribe(stream* _stream) {
+logger& logger::instance() {
+  return *s_logger;
+}
+
+bool logger::subscribe(stream* _stream) {
   if (!_stream->can_write()) {
     return false;
   }
@@ -102,7 +164,7 @@ bool Logger::subscribe(stream* _stream) {
   return m_streams.push_back(_stream);
 }
 
-bool Logger::unsubscribe(stream* _stream) {
+bool logger::unsubscribe(stream* _stream) {
   concurrency::scope_lock lock{m_mutex};
   if (const auto find = m_streams.find(_stream); find != -1_z) {
     m_streams.erase(find, find + 1);
@@ -111,7 +173,7 @@ bool Logger::unsubscribe(stream* _stream) {
   return false;
 }
 
-bool Logger::enqueue(log* _owner, log::level _level, string&& message_) {
+bool logger::enqueue(log* _owner, log::level _level, string&& message_) {
   concurrency::scope_lock lock{m_mutex};
 
   const auto index = m_queues.find_if([_owner](const queue& _queue) {
@@ -144,7 +206,7 @@ bool Logger::enqueue(log* _owner, log::level _level, string&& message_) {
   return false;
 }
 
-void Logger::process([[maybe_unused]] int _thread_id) {
+void logger::process([[maybe_unused]] int _thread_id) {
   concurrency::scope_lock locked{m_mutex};
 
   // Block the logging thread until |this| is ready.
@@ -159,7 +221,7 @@ void Logger::process([[maybe_unused]] int _thread_id) {
   }
 }
 
-void Logger::flush() {
+void logger::flush() {
   // Flush all message entries and clear them.
   m_messages.each_fwd([this](ptr<message>& message_) {
     write(message_);
@@ -167,7 +229,7 @@ void Logger::flush() {
   m_messages.clear();
 }
 
-void Logger::write(ptr<message>& message_) {
+void logger::write(ptr<message>& message_) {
   auto this_queue = message_->owner;
 
   const auto name = this_queue->owner->name();
@@ -221,6 +283,18 @@ void log::signal_write(level _level, string&& contents_) {
 void log::signal_flush() {
   // NOTE(dweiler): This is called by the logging thread.
   m_flush_event.signal();
+}
+
+bool log::enqueue(log* _owner, level _level, string&& contents_) {
+  return logger::instance().enqueue(_owner, _level, utility::move(contents_));
+}
+
+bool log::subscribe(stream* _stream) {
+  return logger::instance().subscribe(_stream);
+}
+
+bool log::unsubscribe(stream* _stream) {
+  return logger::instance().unsubscribe(_stream);
 }
 
 } // namespace rx

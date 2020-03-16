@@ -1,17 +1,7 @@
 #ifndef RX_CORE_LOG_H
 #define RX_CORE_LOG_H
-#include <time.h> // time_t
-
-#include "rx/core/global.h"
-#include "rx/core/string.h"
 #include "rx/core/event.h"
-#include "rx/core/ptr.h"
-#include "rx/core/intrusive_list.h"
-
-#include "rx/core/concurrency/mutex.h"
-#include "rx/core/concurrency/thread.h"
-#include "rx/core/concurrency/condition_variable.h"
-#include "rx/core/concurrency/scope_lock.h"
+#include "rx/core/string.h"
 
 namespace rx {
 
@@ -30,6 +20,10 @@ struct log {
   using flush_event = event<void()>;
 
   log(const char* _name, const char* _file_name, int _line);
+
+  [[nodiscard]] static bool subscribe(stream* _stream);
+  [[nodiscard]] static bool unsubscribe(stream* _stream);
+  [[nodiscard]] static bool enqueue(log* _owner, level _level, string&& _contents);
 
   // Write a formatted message given by |_format| and |_arguments| of associated
   // severity level |_level|. This will queue the given message on the logger
@@ -91,9 +85,8 @@ struct log {
   //
   // This function is thread-safe.
   flush_event::handle on_flush(flush_event::delegate&& callback_);
-
 private:
-  friend struct Logger;
+  friend struct logger;
 
   void signal_write(level _level, string&& contents_);
   void signal_flush();
@@ -107,84 +100,6 @@ private:
   flush_event m_flush_event;
 };
 
-struct Logger {
-  Logger();
-  ~Logger();
-
-  // The single global logger instance.
-  static Logger& instance();
-
-  // Subscribe and unsubscribe a given stream on the logger.
-  //
-  // Every stream acts as a destination for formatted log messages to go to,
-  // this can be anything which implements the stream interface, including files,
-  // mmaped data, network, etc.
-  //
-  // The stream must support writing, |stream::can_write|. This function returns
-  // false if the stream does not support writing or the stream |_stream| is
-  // allready associated with the logger, true otherwise.
-  //
-  // This function is thread-safe.
-  [[nodiscard]] bool subscribe(stream* _stream);
-
-  // Unsubscribe a stream |_stream| from the logger. No more log messages will
-  // go to the stream when ubsubscribed. This function returns false if the
-  // stream |_stream| isn't subscribed, true otherwise.
-  //
-  // This function is thread-safe.
-  [[nodiscard]] bool unsubscribe(stream* _stream);
-
-  // Enqueue a log message on |m_queue|, will be processed by |process| eventually.
-  //
-  // This can be used to log a message directly on the logger without having
-  // an rx::log instance.
-  //
-  // This function returns false if the message could not be queued on the
-  // logger, which indicates an OOM, true otherwise.
-  //
-  // This function is thread-safe.
-  [[nodiscard]] bool enqueue(log* _log, log::level _level, string&& _message);
-
-private:
-  enum {
-    k_running = 1 << 0,
-    k_ready   = 1 << 1
-  };
-
-  struct queue {
-    log* owner;
-    intrusive_list messages;
-  };
-
-  struct message {
-    queue* owner;
-    log::level level;
-    time_t time;
-    string contents;
-    intrusive_list::node link;
-  };
-
-  void process(int _thread_id);
-
-  void flush();
-  void write(ptr<message>& message_);
-
-  concurrency::mutex m_mutex;
-  concurrency::condition_variable m_ready_cond;
-  concurrency::condition_variable m_wakeup_cond;
-
-  vector<stream*> m_streams;       // protected by |m_mutex|
-  vector<queue> m_queues;          // protected by |m_mutex|
-  vector<ptr<message>> m_messages; // protected by |m_mutex|
-  int m_status;                    // protected by |m_mutex|
-  int m_padding;                   // protected by |m_mutex|
-
-  // NOTE(dweiler): This should come last.
-  concurrency::thread m_thread;
-
-  static global<Logger> s_logger;
-};
-
 inline log::log(const char* _name, const char* _file_name, int _line)
   : m_name{_name}
   , m_file_name{_file_name}
@@ -196,7 +111,7 @@ template<typename... Ts>
 inline bool log::write(level _level, const char* _format, Ts&&... _arguments) {
   auto format = string::format(_format, utility::forward<Ts>(_arguments)...);
   m_queue_event.signal(_level, format);
-  return Logger::instance().enqueue(this, _level, utility::move(format));
+  return enqueue(this, _level, utility::move(format));
 }
 
 template<typename... Ts>
@@ -242,10 +157,6 @@ inline log::write_event::handle log::on_write(write_event::delegate&& callback_)
 inline log::flush_event::handle log::on_flush(flush_event::delegate&& callback_) {
   return m_flush_event.connect(utility::move(callback_));
 }
-
-inline Logger& Logger::instance() {
-  return *s_logger;
-};
 
 #define RX_LOG(_name, _identifier) \
   static ::rx::global<::rx::log> _identifier{"loggers", (_name), (_name), __FILE__, __LINE__}
