@@ -26,6 +26,8 @@ struct log {
   [[nodiscard]] static bool unsubscribe(stream* _stream);
   [[nodiscard]] static bool enqueue(log* _owner, level _level, string&& _contents);
 
+  static void flush();
+
   // Write a formatted message given by |_format| and |_arguments| of associated
   // severity level |_level|. This will queue the given message on the logger
   // with |logger::enqueue|. The delegates given by |on_queue| will be called

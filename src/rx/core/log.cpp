@@ -23,6 +23,7 @@ struct logger {
   bool subscribe(stream* _stream);
   bool unsubscribe(stream* _stream);
   bool enqueue(log* _log, log::level _level, string&& _message);
+  void flush();
 
 private:
   enum {
@@ -45,7 +46,7 @@ private:
 
   void process(int _thread_id);
 
-  void flush();
+  void flush_unlocked();
   void write(ptr<message>& message_);
 
   concurrency::mutex m_mutex;
@@ -152,7 +153,8 @@ logger& logger::instance() {
 }
 
 bool logger::subscribe(stream* _stream) {
-  if (!_stream->can_write()) {
+  // The stream needs to be writable and flushable.
+  if (!_stream->can_write() || !_stream->can_flush()) {
     return false;
   }
 
@@ -206,6 +208,11 @@ bool logger::enqueue(log* _owner, log::level _level, string&& message_) {
   return false;
 }
 
+void logger::flush() {
+  concurrency::scope_lock lock{m_mutex};
+  flush_unlocked();
+}
+
 void logger::process([[maybe_unused]] int _thread_id) {
   concurrency::scope_lock locked{m_mutex};
 
@@ -216,16 +223,15 @@ void logger::process([[maybe_unused]] int _thread_id) {
     // Block until another we're woken up again to flush something.
     m_wakeup_cond.wait(locked);
 
-    // Flush the queued contents.
-    flush();
+    // Flush the queued contents. Use the unlocked variant since |m_mutex| is
+    // held by |m_wakeup_cond|.
+    flush_unlocked();
   }
 }
 
-void logger::flush() {
-  // Flush all message entries and clear them.
-  m_messages.each_fwd([this](ptr<message>& message_) {
-    write(message_);
-  });
+void logger::flush_unlocked() {
+  // Flush all message entries.
+  m_messages.each_fwd([this](ptr<message>& message_) { write(message_); });
   m_messages.clear();
 }
 
@@ -261,6 +267,11 @@ void logger::write(ptr<message>& message_) {
     RX_ASSERT(_stream->write(data, size) != 0, "failed to write to stream");
   });
 
+  // Forcefully flush all the streams so their contents are comitted.
+  m_streams.each_fwd([](stream* _stream) {
+    _stream->flush();
+  });
+
   // Signal the write event for the log associated with this message.
   this_queue->owner->signal_write(message_->level,
     utility::move(message_->contents));
@@ -287,6 +298,10 @@ void log::signal_flush() {
 
 bool log::enqueue(log* _owner, level _level, string&& contents_) {
   return logger::instance().enqueue(_owner, _level, utility::move(contents_));
+}
+
+void log::flush() {
+  logger::instance().flush();
 }
 
 bool log::subscribe(stream* _stream) {
