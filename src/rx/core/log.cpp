@@ -268,20 +268,23 @@ void logger::write(ptr<message>& message_) {
   });
 
   // Forcefully flush all the streams so their contents are comitted.
-  m_streams.each_fwd([](stream* _stream) {
-    _stream->flush();
+  const bool result = m_streams.each_fwd([](stream* _stream) {
+    return _stream->flush();
   });
+
+  RX_ASSERT(result, "failed to flush all streams");
 
   // Signal the write event for the log associated with this message.
   this_queue->owner->signal_write(message_->level,
     utility::move(message_->contents));
 
-  // Remove the message from the queue for the log associated with this message.
+  // Remove the message from the log's queue associated with this message.
   this_queue->messages.erase(&message_->link);
 
   // The queue for the log associated with this message is now empty.
   if (this_queue->messages.is_empty()) {
-    // Signal the flush operation on that log.
+    // Signal the flush operation on that log, to indicate any messages
+    // queued up on it are now all written out.
     this_queue->owner->signal_flush();
   }
 }
