@@ -1,4 +1,3 @@
-#include "rx/core/config.h"
 #include "rx/core/log.h"
 
 #if defined(RX_PLATFORM_POSIX)
