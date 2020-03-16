@@ -5,7 +5,7 @@
 #if defined(RX_PLATFORM_POSIX)
 #include <pthread.h> // pthread_mutex_t, pthread_mutex_{init,destroy,lock,unlock}
 #elif defined(RX_PLATFORM_WINDOWS)
-#define _WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h> // CRITICAL_SECTION, {Initialize,Delete,Enter,Leave}CriticalSection
 #else
 #error "missing mutex implementation"

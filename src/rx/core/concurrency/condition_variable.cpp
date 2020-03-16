@@ -6,7 +6,7 @@
 #if defined(RX_PLATFORM_POSIX)
 #include <pthread.h> // pthread_cond_t, pthread_cond_{init,destroy,wait,signal,broadcast}
 #elif defined(RX_PLATFORM_WINDOWS)
-#define _WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h> // CONDITION_VARIABLE, {Sleep,Wake,WakeAll}ConditionVariable
 #else
 #error "missing condition variable implementation"
