@@ -1,3 +1,5 @@
+#include <string.h> // memmove
+
 #include "rx/core/memory/bump_point_allocator.h"
 #include "rx/core/concurrency/scope_lock.h"
 
@@ -57,6 +59,7 @@ rx_byte* bump_point_allocator::reallocate(rx_byte* _data, rx_size _size) {
     if (RX_HINT_LIKELY(_data == m_last_point)) {
       // Check for available space for the allocation.
       if (RX_HINT_UNLIKELY(m_last_point + _size >= m_data + m_size)) {
+        // Out of memory.
         return nullptr;
       }
 
@@ -64,9 +67,26 @@ rx_byte* bump_point_allocator::reallocate(rx_byte* _data, rx_size _size) {
       m_this_point = m_last_point + _size;
 
       return _data;
+    } else if (rx_byte* data = allocate(_size)) {
+      // This path can only be hit when making the allocation larger, this
+      // implies that |_data| contains less than |_size| bytes. The original
+      // allocation cannot be the same size either and has to be a multiple of
+      // k_alignment. So the upper bound on the previous allocation is
+      // |_size - k_alignment|.
+      //
+      // We cannot tell how many bytes it contains exactly as there's no
+      // metadata descripting it. Regardless, it's safe to copy past the
+      // allocation, potentially into another one, or ourselves as such copy
+      // represents uninitialized memory to the caller anyways.
+      //
+      // However, since it's possible for the copy to land into ourselves, we
+      // cannot use memcpy here, use memmove instead.
+      memmove(data, _data, _size - k_alignment);
+      return data;
+    } else {
+      // Out of memory.
+      return nullptr;
     }
-
-    return nullptr;
   }
 
   return allocate(_size);
