@@ -39,7 +39,7 @@ static void abort_release() {
 
 [[noreturn]]
 void abort(const char* _message) {
-  // Forcefully flush the current log contents before we abort. So that any
+  // Forcefully flush the current log contents before we abort, so that any
   // messages that may include the reason for the abortion end up in the log.
   log::flush();
 
