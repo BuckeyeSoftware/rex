@@ -11,7 +11,7 @@ namespace rx {
 
 [[noreturn, maybe_unused]]
 static void abort_debug() {
-#if defined(RX_PLATFORM_POSIX) && defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG)
+#if defined(RX_PLATFORM_POSIX) && (defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG))
   __builtin_trap();
 #elif defined(RX_PLATFORM_WINDOWS)
   __debugbreak();
