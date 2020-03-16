@@ -25,7 +25,7 @@ static void abort_release() {
 #if defined(RX_PLATFORM_POSIX)
   raise(SIGABRT);
 #elif defined(RX_PLATFORM_WINDOWS)
-  // Window's doesn't support SIGABRT. If we use standard abort when built with
+  // Windows doesn't support SIGABRT. If we use standard abort when built with
   // VS's debug runtime library, we'll get the annoying:
   //
   // "This application has requested the Runtime to terminate in an unusual way."
@@ -43,8 +43,6 @@ void abort(const char* _message) {
   // messages that may include the reason for the abortion end up in the log.
   log::flush();
 
-  // Don't terminate the process for debug builds. Use the platform's suggestive
-  // means for debug trap.
 #if defined(RX_DEBUG)
   abort_debug();
 #else
