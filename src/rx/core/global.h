@@ -184,9 +184,6 @@ struct global {
   constexpr T* operator->();
   constexpr const T* operator->() const;
 
-  template<typename... Ts>
-  auto operator()(Ts&&... _arguments);
-
   constexpr T* data();
   constexpr const T* data() const;
 
@@ -375,12 +372,6 @@ constexpr T* global<T>::operator->() {
 template<typename T>
 constexpr const T* global<T>::operator->() const {
   return m_global_store.data();
-}
-
-template<typename T>
-template<typename... Ts>
-inline auto global<T>::operator()(Ts&&... _arguments) {
-  return operator*()(utility::forward<Ts>(_arguments)...);
 }
 
 template<typename T>
