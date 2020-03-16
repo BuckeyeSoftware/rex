@@ -40,8 +40,8 @@ struct set {
   set& operator=(set&& set_);
   set& operator=(const set& _set);
 
-  void insert(K&& _key);
-  void insert(const K& _key);
+  bool insert(K&& _key);
+  bool insert(const K& _key);
 
   bool find(const K& _key) const;
 
@@ -77,8 +77,8 @@ private:
   // move and non-move construction functions
   void construct(rx_size _index, rx_size _hash, K&& key_);
 
-  void inserter(rx_size _hash, K&& key_);
-  void inserter(rx_size _hash, const K& _key);
+  bool inserter(rx_size _hash, K&& key_);
+  bool inserter(rx_size _hash, const K& _key);
 
   bool lookup_index(const K& _key, rx_size& _index) const;
 
@@ -231,19 +231,19 @@ inline constexpr void set<K>::initialize(memory::allocator* _allocator, rx_size 
 }
 
 template<typename K>
-inline void set<K>::insert(K&& key_) {
-  if (++m_size >= m_resize_threshold) {
-    RX_ASSERT(grow(), "out of memory");
+inline bool set<K>::insert(K&& key_) {
+  if (++m_size >= m_resize_threshold && !grow()) {
+    return false;
   }
-  inserter(hash_key(key_), utility::forward<K>(key_));
+  return inserter(hash_key(key_), utility::forward<K>(key_));
 }
 
 template<typename K>
-inline void set<K>::insert(const K& _key) {
-  if (++m_size >= m_resize_threshold) {
-    RX_ASSERT(grow(), "out of memory");
+inline bool set<K>::insert(const K& _key) {
+  if (++m_size >= m_resize_threshold && !grow()) {
+    return false;
   }
-  inserter(hash_key(_key), _key);
+  return inserter(hash_key(_key), _key);
 }
 
 template<typename K>
@@ -362,7 +362,7 @@ inline bool set<K>::grow() {
   for (rx_size i{0}; i < old_capacity; i++) {
     const auto hash{hashes_data[i]};
     if (hash != 0 && !is_deleted(hash)) {
-      inserter(hash, utility::move(keys_data[i]));
+      RX_ASSERT(inserter(hash, utility::move(keys_data[i])), "insertion failed");
       if constexpr (!traits::is_trivially_destructible<K>) {
         utility::destruct<K>(keys_data + i);
       }
@@ -382,20 +382,20 @@ inline void set<K>::construct(rx_size _index, rx_size _hash, K&& key_) {
 }
 
 template<typename K>
-inline void set<K>::inserter(rx_size _hash, K&& key_) {
+inline bool set<K>::inserter(rx_size _hash, K&& key_) {
   rx_size position{desired_position(_hash)};
   rx_size distance{0};
   for (;;) {
     if (element_hash(position) == 0) {
       construct(position, _hash, utility::forward<K>(key_));
-      return;
+      return true;
     }
 
     const rx_size existing_element_probe_distance{probe_distance(element_hash(position), position)};
     if (existing_element_probe_distance < distance) {
       if (is_deleted(element_hash(position))) {
         construct(position, _hash, utility::forward<K>(key_));
-        return;
+        return true;
       }
 
       utility::swap(_hash, element_hash(position));
@@ -412,9 +412,9 @@ inline void set<K>::inserter(rx_size _hash, K&& key_) {
 }
 
 template<typename K>
-inline void set<K>::inserter(rx_size _hash, const K& _key) {
+inline bool set<K>::inserter(rx_size _hash, const K& _key) {
   K key{_key};
-  inserter(_hash, utility::move(key));
+  return inserter(_hash, utility::move(key));
 }
 
 template<typename K>
