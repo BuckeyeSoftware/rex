@@ -30,6 +30,23 @@ void intrusive_list::push_back(node* node_) {
   }
 }
 
+void intrusive_list::erase(node* node_) {
+  if (node_) {
+    if (node_->m_next) {
+      node_->m_next->m_prev = node_->m_prev;
+    }
+    if (node_->m_prev) {
+      node_->m_prev->m_next = node_->m_next;
+    }
+    if (m_head == node_) {
+      m_head = node_->m_next;
+    }
+    if (m_tail == node_) {
+      m_tail = node_->m_prev;
+    }
+  }
+}
+
 intrusive_list::node* intrusive_list::pop_front() {
   if (node* link = m_head) {
     if (link->m_next) {

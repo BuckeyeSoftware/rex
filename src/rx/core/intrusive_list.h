@@ -32,6 +32,8 @@ struct RX_HINT_EMPTY_BASES intrusive_list
   void push_front(node* _node);
   void push_back(node* _node);
 
+  void erase(node* node_);
+
   node* pop_front();
   node* pop_back();
 
