@@ -1,8 +1,14 @@
 #ifndef RX_CORE_SOURCE_LOCATION_H
 #define RX_CORE_SOURCE_LOCATION_H
-#include "rx/core/config.h"
+#include "rx/core/config.h" // RX_COMPILER_{GCC,CLANG}
 
 namespace rx {
+
+#if defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG)
+#define RX_FUNCTION __PRETTY_FUNCTION__
+#else // defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG)
+#define RX_FUNCTION __func__
+#endif // defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG)
 
 struct source_location {
   constexpr source_location(const char* _file,
