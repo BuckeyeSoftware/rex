@@ -347,18 +347,18 @@ inline global<T>::global(const char* _group, const char* _name, Ts&&... _argumen
 
 template<typename T>
 inline void global<T>::init() {
-  m_global_store.init();
+  m_node.init();
 }
 
 template<typename T>
 inline void global<T>::fini() {
-  m_global_store.fini();
+  m_node.fini();
 }
 
 template<typename T>
 template<typename... Ts>
 inline void global<T>::init(Ts&&... _arguments) {
-  m_global_store.init(utility::forward<Ts>(_arguments)...);
+  m_node.init(utility::forward<Ts>(_arguments)...);
 }
 
 template<typename T>
