@@ -23,7 +23,7 @@ struct RX_HINT_EMPTY_BASES stream
 
   constexpr stream(rx_u32 _flags);
   stream(stream&& stream_);
-  ~stream();
+  virtual ~stream();
 
   enum class whence {
     k_set,     // Beginning of stream.
@@ -83,9 +83,7 @@ inline stream::stream(stream&& stream_)
   stream_.m_flags = 0;
 }
 
-inline stream::~stream() {
-  // Must be declared because virtual.
-}
+inline stream::~stream() = default;
 
 bool inline constexpr stream::can_read() const {
   return m_flags & k_read;
