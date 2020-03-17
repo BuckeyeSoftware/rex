@@ -3,6 +3,7 @@
 
 #include "rx/core/stream.h"
 #include "rx/core/string.h" // utf16_to_utf8
+#include "rx/core/abort.h"
 
 #include "rx/core/hints/may_alias.h"
 
@@ -44,6 +45,26 @@ static vector<rx_byte> convert_text_encoding(vector<rx_byte>&& data_) {
   }
 
   return utility::move(data_);
+}
+
+rx_u64 stream::on_read(rx_byte*, rx_u64) {
+  abort("stream does not implement on_read");
+}
+
+rx_u64 stream::on_write(const rx_byte*, rx_u64) {
+  abort("stream does not implement on_write");
+}
+
+bool stream::on_seek(rx_s64, whence) {
+  abort("stream does not implement on_seek");
+}
+
+bool stream::on_flush() {
+  abort("stream does not implement on_flush");
+}
+
+rx_u64 stream::on_tell() {
+  abort("stream does not implement on_tell");
 }
 
 rx_u64 stream::read(rx_byte* _data, rx_u64 _size) {

@@ -46,27 +46,27 @@ struct RX_HINT_EMPTY_BASES stream
   constexpr bool can_seek() const;
   constexpr bool can_flush() const;
 
-  // The following functions below are what streams must implement. When a
-  // stream cannot support a given feature, it should just provide a stub
-  // function and ignore the flag when constructing this base class.
+  // The following functions below are what streams can implement. When a
+  // stream cannot support a given feature, it should avoid providing a
+  // function for it and ignore the flag when constructing this base class.
+
+  // The name of the stream. This must always be implemented.
+  virtual const string& name() const & = 0;
 
   // Read |_size| bytes from stream into |_data|.
-  virtual rx_u64 on_read(rx_byte* _data, rx_u64 _size) = 0;
+  virtual rx_u64 on_read(rx_byte* _data, rx_u64 _size);
 
   // Write |_size| bytes from |_data| into stream.
-  virtual rx_u64 on_write(const rx_byte* _data, rx_u64 _size) = 0;
+  virtual rx_u64 on_write(const rx_byte* _data, rx_u64 _size);
 
   // Seek to |_where| in stream relative to |_whence|.
-  virtual bool on_seek(rx_s64 _where, whence _whence) = 0;
+  virtual bool on_seek(rx_s64 _where, whence _whence);
 
   // Flush any buffered contents in the stream out.
-  virtual bool on_flush() = 0;
+  virtual bool on_flush();
 
   // Where we are in the stream.
-  virtual rx_u64 on_tell() = 0;
-
-  // The name of the stream.
-  virtual const string& name() const & = 0;
+  virtual rx_u64 on_tell();
 
 private:
   rx_u32 m_flags;
