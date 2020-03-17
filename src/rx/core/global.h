@@ -173,6 +173,12 @@ struct global {
   template<typename... Ts>
   global(const char* _group, const char* _name, Ts&&... _arguments);
 
+  void init();
+  void fini();
+
+  template<typename... Ts>
+  void init(Ts&&... _arguments);
+
   constexpr const char* name() const;
 
   constexpr T* operator&();
@@ -337,6 +343,22 @@ template<typename... Ts>
 inline global<T>::global(const char* _group, const char* _name, Ts&&... _arguments)
   : m_node{_group, _name, m_global_store, &s_shared, utility::forward<Ts>(_arguments)...}
 {
+}
+
+template<typename T>
+inline void global<T>::init() {
+  m_global_store.init();
+}
+
+template<typename T>
+inline void global<T>::fini() {
+  m_global_store.fini();
+}
+
+template<typename T>
+template<typename... Ts>
+inline void global<T>::init(Ts&&... _arguments) {
+  m_global_store.init(utility::forward<Ts>(_arguments)...);
 }
 
 template<typename T>
