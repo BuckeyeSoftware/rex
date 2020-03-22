@@ -33,20 +33,18 @@ immediate2D::queue::queue(memory::allocator* _allocator)
 }
 
 immediate2D::queue::queue(queue&& queue_)
-  : m_allocator{queue_.m_allocator}
+  : m_allocator{utility::exchange(queue_.m_allocator, nullptr)}
   , m_commands{utility::move(queue_.m_commands)}
   , m_string_table{utility::move(queue_.m_string_table)}
 {
-  queue_.m_allocator = nullptr;
 }
 
 immediate2D::queue& immediate2D::queue::operator=(queue&& queue_) {
   RX_ASSERT(&queue_ != this, "self assignment");
 
-  m_allocator = queue_.m_allocator;
+  m_allocator = utility::exchange(queue_.m_allocator, nullptr);
   m_commands = utility::move(queue_.m_commands);
   m_string_table = utility::move(queue_.m_string_table);
-  queue_.m_allocator = nullptr;
 
   return *this;
 }
@@ -351,14 +349,11 @@ immediate2D::font::font(const key& _key, frontend::interface* _frontend)
 
 immediate2D::font::font(font&& font_)
   : m_frontend{font_.m_frontend}
-  , m_size{font_.m_size}
-  , m_resolution{font_.m_resolution}
-  , m_texture{font_.m_texture}
+  , m_size{utility::exchange(font_.m_size, 0)}
+  , m_resolution{utility::exchange(font_.m_resolution, k_default_resolution)}
+  , m_texture{utility::exchange(font_.m_texture, nullptr)}
   , m_glyphs{utility::move(font_.m_glyphs)}
 {
-  font_.m_size = 0;
-  font_.m_resolution = k_default_resolution;
-  font_.m_texture = nullptr;
 }
 
 immediate2D::font::~font() {

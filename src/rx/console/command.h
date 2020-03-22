@@ -5,6 +5,8 @@
 
 #include "rx/core/hints/empty_bases.h"
 
+#include "rx/core/utility/exchange.h"
+
 namespace rx::console {
 
 // The signature specification works like this
@@ -149,11 +151,9 @@ inline command::command(command&& command_)
   , m_arguments{utility::move(command_.m_arguments)}
   , m_declaration{utility::move(command_.m_declaration)}
   , m_name{utility::move(command_.m_name)}
-  , m_signature{command_.m_signature}
-  , m_argument_count{command_.m_argument_count}
+  , m_signature{utility::exchange(command_.m_signature, nullptr)}
+  , m_argument_count{utility::exchange(command_.m_argument_count, 0)}
 {
-  command_.m_signature = nullptr;
-  command_.m_argument_count = 0;
 }
 
 inline command& command::operator=(command&& command_) {
@@ -164,11 +164,8 @@ inline command& command::operator=(command&& command_) {
   m_arguments = utility::move(command_.m_arguments);
   m_declaration = utility::move(command_.m_declaration);
   m_name = utility::move(command_.m_name);
-  m_signature = command_.m_signature;
-  m_argument_count = command_.m_argument_count;
-
-  command_.m_signature = nullptr;
-  command_.m_argument_count = 0;
+  m_signature = utility::exchange(command_.m_signature, nullptr);
+  m_argument_count = utility::exchange(command_.m_argument_count, 0);
 
   return *this;
 }

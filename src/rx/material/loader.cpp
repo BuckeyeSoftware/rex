@@ -20,33 +20,24 @@ loader::loader(memory::allocator* _allocator)
 }
 
 loader::loader(loader&& loader_)
-  : m_allocator{loader_.m_allocator}
+  : m_allocator{utility::exchange(loader_.m_allocator, nullptr)}
   , m_textures{utility::move(loader_.m_textures)}
   , m_name{utility::move(loader_.m_name)}
-  , m_flags{loader_.m_flags}
-  , m_roughness{loader_.m_roughness}
-  , m_metalness{loader_.m_metalness}
+  , m_flags{utility::exchange(loader_.m_flags, 0)}
+  , m_roughness{utility::exchange(loader_.m_roughness, 1.0f)}
+  , m_metalness{utility::exchange(loader_.m_metalness, 0.0f)}
 {
-  loader_.m_allocator = nullptr;
-  loader_.m_flags = 0;
-  loader_.m_roughness = 1.0f;
-  loader_.m_metalness = 0.0f;
 }
 
 void loader::operator=(loader&& loader_) {
   RX_ASSERT(&loader_ != this, "self assignment");
 
-  m_allocator = loader_.m_allocator;
+  m_allocator = utility::exchange(loader_.m_allocator, nullptr);
   m_textures = utility::move(loader_.m_textures);
   m_name = utility::move(loader_.m_name);
-  m_flags = loader_.m_flags;
-  m_roughness = loader_.m_roughness;
-  m_metalness = loader_.m_metalness;
-
-  loader_.m_allocator = nullptr;
-  loader_.m_flags = 0;
-  loader_.m_roughness = 1.0f;
-  loader_.m_metalness = 0.0f;
+  m_flags = utility::exchange(loader_.m_flags, 0);
+  m_roughness = utility::exchange(loader_.m_roughness, 1.0f);
+  m_metalness = utility::exchange(loader_.m_metalness, 0.0f);
 }
 
 bool loader::load(stream* _stream) {

@@ -48,8 +48,7 @@ uniform::uniform(uniform&& uniform_)
   , m_type{uniform_.m_type}
   , m_name{utility::move(uniform_.m_name)}
 {
-  as_opaque = uniform_.as_opaque;
-  uniform_.as_opaque = nullptr;
+  as_opaque = utility::exchange(uniform_.as_opaque, nullptr);
 }
 
 uniform::~uniform() {

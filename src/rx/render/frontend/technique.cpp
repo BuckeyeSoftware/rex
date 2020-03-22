@@ -225,7 +225,7 @@ technique::~technique() {
 }
 
 technique::technique(technique&& technique_)
-  : m_frontend{technique_.m_frontend}
+  : m_frontend{utility::exchange(technique_.m_frontend, nullptr)}
   , m_type{technique_.m_type}
   , m_programs{utility::move(technique_.m_programs)}
   , m_permute_flags{utility::move(technique_.m_permute_flags)}
@@ -234,7 +234,6 @@ technique::technique(technique&& technique_)
   , m_uniform_definitions{utility::move(technique_.m_uniform_definitions)}
   , m_specializations{utility::move(technique_.m_specializations)}
 {
-  technique_.m_frontend = nullptr;
 }
 
 technique& technique::operator=(technique&& technique_) {
@@ -242,15 +241,13 @@ technique& technique::operator=(technique&& technique_) {
 
   fini();
 
-  m_frontend = technique_.m_frontend;
+  m_frontend = utility::exchange(technique_.m_frontend, nullptr);
   m_type = technique_.m_type;
   m_programs = utility::move(technique_.m_programs);
   m_name = utility::move(technique_.m_name);
   m_shader_definitions = utility::move(technique_.m_shader_definitions);
   m_uniform_definitions = utility::move(technique_.m_uniform_definitions);
   m_specializations = utility::move(technique_.m_specializations);
-
-  technique_.m_frontend = nullptr;
 
   return *this;
 }

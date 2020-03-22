@@ -59,29 +59,19 @@ private:
 
 inline material::material(material&& material_)
   : m_frontend{material_.m_frontend}
-  , m_albedo{material_.m_albedo}
-  , m_normal{material_.m_normal}
-  , m_roughness{material_.m_roughness}
-  , m_metalness{material_.m_metalness}
-  , m_ambient{material_.m_ambient}
-  , m_emissive{material_.m_emissive}
-  , m_alpha_test{material_.m_alpha_test}
-  , m_has_alpha{material_.m_has_alpha}
-  , m_roughness_value{material_.m_roughness_value}
-  , m_metalness_value{material_.m_metalness_value}
+  , m_albedo{utility::exchange(material_.m_albedo, nullptr)}
+  , m_normal{utility::exchange(material_.m_normal, nullptr)}
+  , m_roughness{utility::exchange(material_.m_roughness, nullptr)}
+  , m_metalness{utility::exchange(material_.m_metalness, nullptr)}
+  , m_ambient{utility::exchange(material_.m_ambient, nullptr)}
+  , m_emissive{utility::exchange(material_.m_emissive, nullptr)}
+  , m_alpha_test{utility::exchange(material_.m_alpha_test, false)}
+  , m_has_alpha{utility::exchange(material_.m_has_alpha, false)}
+  , m_roughness_value{utility::exchange(material_.m_roughness_value, 1.0f)}
+  , m_metalness_value{utility::exchange(material_.m_metalness_value, 0.0f)}
   , m_name{utility::move(material_.m_name)}
   , m_transform{utility::move(material_.m_transform)}
 {
-  material_.m_albedo = nullptr;
-  material_.m_normal = nullptr;
-  material_.m_metalness = nullptr;
-  material_.m_roughness = nullptr;
-  material_.m_ambient = nullptr;
-  material_.m_emissive = nullptr;
-  material_.m_alpha_test = false;
-  material_.m_has_alpha = false;
-  material_.m_roughness_value = 1.0f;
-  material_.m_metalness_value = 0.0f;
 }
 
 inline material& material::operator=(material&& material_) {
@@ -90,29 +80,18 @@ inline material& material::operator=(material&& material_) {
   this->~material();
 
   m_frontend = material_.m_frontend;
-  m_albedo = material_.m_albedo;
-  m_normal = material_.m_normal;
-  m_metalness = material_.m_metalness;
-  m_roughness = material_.m_roughness;
-  m_ambient = material_.m_ambient;
-  m_emissive = material_.m_emissive;
-  m_alpha_test = material_.m_alpha_test;
-  m_has_alpha = material_.m_has_alpha;
-  m_roughness_value = material_.m_roughness_value;
-  m_metalness_value = material_.m_metalness_value;
+  m_albedo = utility::exchange(material_.m_albedo, nullptr);
+  m_normal = utility::exchange(material_.m_normal, nullptr);
+  m_roughness = utility::exchange(material_.m_roughness, nullptr);
+  m_metalness = utility::exchange(material_.m_metalness, nullptr);
+  m_ambient = utility::exchange(material_.m_ambient, nullptr);
+  m_emissive = utility::exchange(material_.m_emissive, nullptr);
+  m_alpha_test = utility::exchange(material_.m_alpha_test, false);
+  m_has_alpha = utility::exchange(material_.m_has_alpha, false);
+  m_roughness_value = utility::exchange(material_.m_roughness_value, 1.0f);
+  m_metalness_value = utility::exchange(material_.m_metalness_value, 0.0f);
   m_name = utility::move(material_.m_name);
   m_transform = utility::move(material_.m_transform);
-
-  material_.m_albedo = nullptr;
-  material_.m_normal = nullptr;
-  material_.m_metalness = nullptr;
-  material_.m_roughness = nullptr;
-  material_.m_ambient = nullptr;
-  material_.m_emissive = nullptr;
-  material_.m_alpha_test = false;
-  material_.m_has_alpha = false;
-  material_.m_roughness_value = 1.0f;
-  material_.m_metalness_value = 0.0f;
 
   return *this;
 }

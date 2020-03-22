@@ -68,14 +68,11 @@ inline matrix::matrix(const math::vec2z& _dimensions, rx_size _channels)
 }
 
 inline matrix::matrix(matrix&& matrix_)
-  : m_allocator{matrix_.m_allocator}
+  : m_allocator{utility::exchange(matrix_.m_allocator, nullptr)}
   , m_data{utility::move(matrix_.m_data)}
-  , m_dimensions{matrix_.m_dimensions}
-  , m_channels{matrix_.m_channels}
+  , m_dimensions{utility::exchange(matrix_.m_dimensions, math::vec2z{})}
+  , m_channels{utility::exchange(matrix_.m_channels, 0)}
 {
-  matrix_.m_allocator = nullptr;
-  matrix_.m_dimensions = {};
-  matrix_.m_channels = 0;
 }
 
 inline matrix::matrix(const matrix& _matrix)
@@ -95,14 +92,10 @@ inline bool matrix::resize(const math::vec2z& _dimensions, rx_size _channels) {
 inline matrix& matrix::operator=(matrix&& matrix_) {
   RX_ASSERT(this != &matrix_, "self move");
 
-  m_allocator = matrix_.m_allocator;
+  m_allocator = utility::exchange(matrix_.m_allocator, nullptr);
   m_data = utility::move(matrix_.m_data);
-  m_dimensions = matrix_.m_dimensions;
-  m_channels = matrix_.m_channels;
-
-  matrix_.m_allocator = nullptr;
-  matrix_.m_dimensions = {};
-  matrix_.m_channels = 0;
+  m_dimensions = utility::exchange(matrix_.m_dimensions, math::vec2z{});
+  m_channels = utility::exchange(matrix_.m_channels, 0);
 
   return *this;
 }

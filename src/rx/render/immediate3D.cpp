@@ -18,17 +18,15 @@ immediate3D::queue::queue(memory::allocator* _allocator)
 }
 
 immediate3D::queue::queue(queue&& queue_)
-  : m_allocator{queue_.m_allocator}
+  : m_allocator{utility::exchange(queue_.m_allocator, nullptr)}
   , m_commands{utility::move(queue_.m_commands)}
 {
-  queue_.m_allocator = nullptr;
 }
 
 immediate3D::queue& immediate3D::queue::operator=(queue&& queue_) {
   RX_ASSERT(&queue_ != this, "self assignment");
-  m_allocator = queue_.m_allocator;
+  m_allocator = utility::exchange(queue_.m_allocator, nullptr);
   m_commands = utility::move(queue_.m_commands);
-  queue_.m_allocator = nullptr;
   return *this;
 }
 

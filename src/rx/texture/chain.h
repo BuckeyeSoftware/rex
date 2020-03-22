@@ -73,27 +73,22 @@ inline constexpr chain::chain(memory::allocator* _allocator)
 }
 
 inline chain::chain(chain&& chain_)
-  : m_allocator{chain_.m_allocator}
+  : m_allocator{utility::exchange(chain_.m_allocator, nullptr)}
   , m_data{utility::move(chain_.m_data)}
   , m_levels{utility::move(chain_.m_levels)}
-  , m_dimensions{chain_.m_dimensions}
+  , m_dimensions{utility::exchange(chain_.m_dimensions, math::vec2z{})}
   , m_pixel_format{chain_.m_pixel_format}
 {
-  chain_.m_allocator = nullptr;
-  chain_.m_dimensions = {};
 }
 
 inline chain& chain::operator=(chain&& chain_) {
   RX_ASSERT(&chain_ != this, "self assignment");
 
-  m_allocator = chain_.m_allocator;
+  m_allocator = utility::exchange(chain_.m_allocator, nullptr);
   m_data = utility::move(chain_.m_data);
   m_levels = utility::move(chain_.m_levels);
-  m_dimensions = chain_.m_dimensions;
+  m_dimensions = utility::exchange(chain_.m_dimensions, math::vec2z{});
   m_pixel_format = chain_.m_pixel_format;
-
-  chain_.m_allocator = nullptr;
-  chain_.m_dimensions = {};
 
   return *this;
 }
