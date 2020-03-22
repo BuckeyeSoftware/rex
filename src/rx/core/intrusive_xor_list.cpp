@@ -23,8 +23,7 @@ void intrusive_xor_list::push(node* node_) {
 void intrusive_xor_list::iterator::next() {
   if (m_this) {
     m_next = xor_nodes(m_prev, m_this->m_link);
-    m_prev = m_this;
-    m_this = m_next;
+    m_prev = utility::exchange(m_this, m_next);
   }
 }
 
