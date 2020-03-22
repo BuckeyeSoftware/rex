@@ -1,11 +1,8 @@
 #ifndef RX_CORE_INTRUSIVE_LIST_H
 #define RX_CORE_INTRUSIVE_LIST_H
 #include "rx/core/types.h"
-
 #include "rx/core/concepts/no_copy.h"
-
 #include "rx/core/hints/empty_bases.h"
-
 #include "rx/core/utility/exchange.h"
 
 namespace rx {
