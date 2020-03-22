@@ -1,9 +1,9 @@
 #ifndef RX_CORE_INTRUSIVE_XOR_LIST_H
 #define RX_CORE_INTRUSIVE_XOR_LIST_H
 #include "rx/core/types.h"
-#include "rx/core/utility/move.h"
 #include "rx/core/concepts/no_copy.h"
 #include "rx/core/hints/empty_bases.h"
+#include "rx/core/utility/exchange.h"
 
 namespace rx {
 
@@ -123,18 +123,14 @@ inline constexpr intrusive_xor_list::intrusive_xor_list()
 }
 
 inline intrusive_xor_list::intrusive_xor_list(intrusive_xor_list&& xor_list_)
-  : m_head{xor_list_.m_head}
-  , m_tail{xor_list_.m_tail}
+  : m_head{utility::exchange(xor_list_.m_head, nullptr)}
+  , m_tail{utility::exchange(xor_list_.m_tail, nullptr)}
 {
-  xor_list_.m_head = nullptr;
-  xor_list_.m_tail = nullptr;
 }
 
 inline intrusive_xor_list& intrusive_xor_list::operator=(intrusive_xor_list&& xor_list_) {
-  m_head = xor_list_.m_head;
-  m_tail = xor_list_.m_tail;
-  xor_list_.m_head = nullptr;
-  xor_list_.m_tail = nullptr;
+  m_head = utility::exchange(xor_list_.m_head, nullptr);
+  m_tail = utility::exchange(xor_list_.m_tail, nullptr);
   return *this;
 }
 
@@ -183,24 +179,16 @@ inline constexpr intrusive_xor_list::iterator::iterator(node* _node)
 }
 
 inline intrusive_xor_list::iterator::iterator(iterator&& iterator_)
-  : m_this{iterator_.m_this}
-  , m_prev{iterator_.m_prev}
-  , m_next{iterator_.m_next}
+  : m_this{utility::exchange(iterator_.m_this, nullptr)}
+  , m_prev{utility::exchange(iterator_.m_prev, nullptr)}
+  , m_next{utility::exchange(iterator_.m_next, nullptr)}
 {
-  iterator_.m_this = nullptr;
-  iterator_.m_prev = nullptr;
-  iterator_.m_next = nullptr;
 }
 
 inline intrusive_xor_list::iterator& intrusive_xor_list::iterator::operator=(iterator&& iterator_) {
-  m_this = iterator_.m_this;
-  m_prev = iterator_.m_prev;
-  m_next = iterator_.m_next;
-
-  iterator_.m_this = nullptr;
-  iterator_.m_prev = nullptr;
-  iterator_.m_next = nullptr;
-
+  m_this = utility::exchange(iterator_.m_this, nullptr);
+  m_prev = utility::exchange(iterator_.m_prev, nullptr);
+  m_next = utility::exchange(iterator_.m_next, nullptr);
   return *this;
 }
 
@@ -208,16 +196,14 @@ inline intrusive_xor_list::iterator& intrusive_xor_list::iterator::operator=(ite
 template<typename T>
 inline intrusive_xor_list::enumerate<T>::enumerate(enumerate&& enumerate_)
   : iterator{utility::move(enumerate_)}
-  , m_link{enumerate_.m_link}
+  , m_link{utility::exchange(enumerate_.m_link, nullptr)}
 {
-  enumerate_.m_link = nullptr;
 }
 
 template<typename T>
 inline intrusive_xor_list::enumerate<T>& intrusive_xor_list::enumerate<T>::operator=(enumerate&& enumerate_) {
   iterator::operator=(utility::move(enumerate_));
-  m_link = enumerate_.m_link;
-  enumerate_.m_link = nullptr;
+  m_link = utility::exchange(enumerate_.m_link, nullptr);
   return *this;
 }
 

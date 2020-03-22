@@ -7,8 +7,7 @@
 #include "rx/core/traits/is_trivially_destructible.h"
 #include "rx/core/traits/return_type.h"
 
-#include "rx/core/utility/forward.h"
-#include "rx/core/utility/move.h"
+#include "rx/core/utility/exchange.h"
 #include "rx/core/utility/uninitialized.h"
 
 #include "rx/core/hints/restrict.h"
@@ -244,14 +243,10 @@ inline vector<T>::vector(const vector& _other)
 template<typename T>
 inline vector<T>::vector(vector&& other_)
   : m_allocator{other_.m_allocator}
-  , m_data{other_.m_data}
-  , m_size{other_.m_size}
-  , m_capacity{other_.m_capacity}
+  , m_data{utility::exchange(other_.m_data, nullptr)}
+  , m_size{utility::exchange(other_.m_size, 0)}
+  , m_capacity{utility::exchange(other_.m_capacity, 0)}
 {
-  other_.m_allocator = &memory::g_system_allocator;
-  other_.m_data = nullptr;
-  other_.m_size = 0;
-  other_.m_capacity = 0;
 }
 
 template<typename T>
@@ -291,13 +286,9 @@ inline vector<T>& vector<T>::operator=(vector&& other_) {
   m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
 
   m_allocator = other_.m_allocator;
-  m_data = other_.m_data;
-  m_size = other_.m_size;
-  m_capacity = other_.m_capacity;
-
-  other_.m_data = nullptr;
-  other_.m_size = 0;
-  other_.m_capacity = 0;
+  m_data = utility::exchange(other_.m_data, nullptr);
+  m_size = utility::exchange(other_.m_size, 0);
+  m_capacity = utility::exchange(other_.m_capacity, 0);
 
   return *this;
 }

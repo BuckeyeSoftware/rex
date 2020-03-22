@@ -7,6 +7,8 @@
 
 #include "rx/core/assert.h"
 
+#include "rx/core/utility/exchange.h"
+
 namespace rx {
 
 // 32-bit: 12 bytes
@@ -82,10 +84,9 @@ inline bitset::bitset(rx_size _size)
 
 inline bitset::bitset(bitset&& bitset_)
   : m_allocator{bitset_.m_allocator}
-  , m_data{bitset_.m_data}
+  , m_size{utility::exchange(bitset_.m_size, 0)}
+  , m_data{utility::exchange(bitset_.m_data, nullptr)}
 {
-  bitset_.m_size = 0;
-  bitset_.m_data = nullptr;
 }
 
 inline bitset::~bitset() {

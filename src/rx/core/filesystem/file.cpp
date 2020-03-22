@@ -127,8 +127,7 @@ file& file::operator=(file&& file_) {
   RX_ASSERT(&file_ != this, "self assignment");
 
   close();
-  m_impl = file_.m_impl;
-  file_.m_impl = nullptr;
+  m_impl = utility::exchange(file_.m_impl, nullptr);
   return *this;
 }
 

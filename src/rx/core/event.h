@@ -7,6 +7,8 @@
 
 #include "rx/core/hints/empty_bases.h"
 
+#include "rx/core/utility/exchange.h"
+
 namespace rx {
 
 template<typename T>
@@ -53,11 +55,9 @@ inline constexpr event<R(Ts...)>::handle::handle(event<R(Ts...)>* _event, rx_siz
 
 template<typename R, typename... Ts>
 inline constexpr event<R(Ts...)>::handle::handle(handle&& handle_)
-  : m_event{handle_.m_event}
-  , m_index{handle_.m_index}
+  : m_event{utility::exchange(handle_.m_event, nullptr)}
+  , m_index{utility::exchange(handle_.m_index, 0)}
 {
-  handle_.m_event = nullptr;
-  handle_.m_index = 0;
 }
 
 template<typename R, typename... Ts>

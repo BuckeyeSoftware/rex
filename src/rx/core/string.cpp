@@ -714,11 +714,9 @@ wide_string::wide_string(memory::allocator* _allocator, const rx_u16* _contents,
 
 wide_string::wide_string(wide_string&& other_)
   : m_allocator{other_.m_allocator}
-  , m_data{other_.m_data}
-  , m_size{other_.m_size}
+  , m_data{utility::exchange(other_.m_data, nullptr)}
+  , m_size{utility::exchange(other_.m_size, 0)}
 {
-  other_.m_data = nullptr;
-  other_.m_size = 0;
 }
 
 wide_string::~wide_string() {

@@ -6,10 +6,11 @@
 #include "rx/core/traits/is_same.h"
 #include "rx/core/traits/detect.h"
 
+#include "rx/core/utility/declval.h"
+#include "rx/core/utility/exchange.h"
+
 #include "rx/core/string.h"
 #include "rx/core/optional.h"
-
-#include "rx/core/utility/declval.h"
 
 #include "lib/json.h"
 
@@ -128,11 +129,9 @@ inline json::json(const json& _json)
 }
 
 inline json::json(json&& json_)
-  : m_shared{json_.m_shared}
-  , m_value{json_.m_value}
+  : m_shared{utility::exchange(json_.m_shared, nullptr)}
+  , m_value{utility::exchange(json_.m_value, nullptr)}
 {
-  json_.m_shared = nullptr;
-  json_.m_value = nullptr;
 }
 
 inline json::~json() {
@@ -157,10 +156,8 @@ inline json& json::operator=(const json& _json) {
 inline json& json::operator=(json&& json_) {
   RX_ASSERT(&json_ != this, "self assignment");
 
-  m_shared = json_.m_shared;
-  m_value = json_.m_value;
-  json_.m_shared = nullptr;
-  json_.m_value = nullptr;
+  m_shared = utility::exchange(json_.m_shared, nullptr);
+  m_value = utility::exchange(json_.m_value, nullptr);
 
   return *this;
 }

@@ -3,6 +3,8 @@
 #include "rx/core/stream.h"
 #include "rx/core/string.h"
 
+#include "rx/core/utility/exchange.h"
+
 namespace rx::filesystem {
 
 struct file
@@ -105,14 +107,11 @@ inline file::file(const string& _file_name, const char* _mode)
 
 inline file::file(file&& other_)
   : stream{utility::move(other_)}
-  , m_allocator{other_.m_allocator}
-  , m_impl{other_.m_impl}
+  , m_allocator{utility::exchange(other_.m_allocator, nullptr)}
+  , m_impl{utility::exchange(other_.m_impl, nullptr)}
   , m_name{utility::move(other_.m_name)}
-  , m_mode{other_.m_mode}
+  , m_mode{utility::exchange(other_.m_mode, nullptr)}
 {
-  other_.m_allocator = nullptr;
-  other_.m_impl = nullptr;
-  other_.m_mode = nullptr;
 }
 
 inline file::~file() {

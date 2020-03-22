@@ -3,16 +3,14 @@
 namespace rx {
 
 dynamic_pool::dynamic_pool(dynamic_pool&& pool_)
-  : m_allocator{pool_.m_allocator}
+  : m_allocator{utility::exchange(pool_.m_allocator, nullptr)}
   , m_pools{utility::move(pool_.m_pools)}
 {
-  pool_.m_allocator = nullptr;
 }
 
 dynamic_pool& dynamic_pool::operator=(dynamic_pool&& pool_) {
-  m_allocator = pool_.m_allocator;
+  m_allocator = utility::exchange(pool_.m_allocator, nullptr);
   m_pools = utility::move(pool_.m_pools);
-  pool_.m_allocator = nullptr;
   return *this;
 }
 

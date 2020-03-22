@@ -1,8 +1,12 @@
 #ifndef RX_CORE_INTRUSIVE_LIST_H
 #define RX_CORE_INTRUSIVE_LIST_H
 #include "rx/core/types.h"
+
 #include "rx/core/concepts/no_copy.h"
+
 #include "rx/core/hints/empty_bases.h"
+
+#include "rx/core/utility/exchange.h"
 
 namespace rx {
 
@@ -108,18 +112,14 @@ inline constexpr intrusive_list::intrusive_list()
 }
 
 inline intrusive_list::intrusive_list(intrusive_list&& list_)
-  : m_head{list_.m_head}
-  , m_tail{list_.m_tail}
+  : m_head{utility::exchange(list_.m_head, nullptr)}
+  , m_tail{utility::exchange(list_.m_tail, nullptr)}
 {
-  list_.m_head = nullptr;
-  list_.m_tail = nullptr;
 }
 
 inline intrusive_list& intrusive_list::operator=(intrusive_list&& list_) {
-  m_head = list_.m_head;
-  m_tail = list_.m_tail;
-  list_.m_head = nullptr;
-  list_.m_tail = nullptr;
+  m_head = utility::exchange(list_.m_head, nullptr);
+  m_tail = utility::exchange(list_.m_tail, nullptr);
   return *this;
 }
 
@@ -145,18 +145,14 @@ inline constexpr intrusive_list::node::node()
 }
 
 inline intrusive_list::node::node(node&& node_)
-  : m_next{node_.m_next}
-  , m_prev{node_.m_prev}
+  : m_next{utility::exchange(node_.m_next, nullptr)}
+  , m_prev{utility::exchange(node_.m_prev, nullptr)}
 {
-  node_.m_next = nullptr;
-  node_.m_prev = nullptr;
 }
 
 inline intrusive_list::node& intrusive_list::node::operator=(node&& node_) {
-  m_next = node_.m_next;
-  m_prev = node_.m_prev;
-  node_.m_next = nullptr;
-  node_.m_prev = nullptr;
+  m_next = utility::exchange(node_.m_next, nullptr);
+  m_prev = utility::exchange(node_.m_prev, nullptr);
   return *this;
 }
 
@@ -186,19 +182,15 @@ inline constexpr intrusive_list::enumerate<T>::enumerate(node* _root, node T::*_
 
 template<typename T>
 inline intrusive_list::enumerate<T>::enumerate(enumerate&& enumerate_)
-  : m_this{enumerate_.m_this}
-  , m_link{enumerate_.m_link}
+  : m_this{utility::exchange(enumerate_.m_this, nullptr)}
+  , m_link{utility::exchange(enumerate_.m_link, nullptr)}
 {
-  enumerate_.m_this = nullptr;
-  enumerate_.m_link = nullptr;
 }
 
 template<typename T>
 inline intrusive_list::enumerate<T>& intrusive_list::enumerate<T>::operator=(enumerate&& enumerate_) {
-  m_this = enumerate_.m_this;
-  m_link = enumerate_.m_link;
-  enumerate_.m_this = nullptr;
-  enumerate_.m_link = nullptr;
+  m_this = utility::exchange(enumerate_.m_this, nullptr);
+  m_link = utility::exchange(enumerate_.m_link, nullptr);
   return *this;
 }
 

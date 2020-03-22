@@ -66,11 +66,9 @@ inline thread::thread(const char* _name, function<void(int)>&& function_)
 }
 
 inline thread::thread(thread&& thread_)
-  : m_allocator{thread_.m_allocator}
+  : m_allocator{utility::exchange(thread_.m_allocator, nullptr)}
   , m_state{utility::move(thread_.m_state)}
 {
-  thread_.m_allocator = nullptr;
-  thread_.m_state = nullptr;
 }
 
 inline memory::allocator* thread::allocator() const {

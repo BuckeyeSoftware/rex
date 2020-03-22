@@ -32,12 +32,9 @@ bitset::bitset(const bitset& _bitset)
 bitset& bitset::operator=(bitset&& bitset_) {
   RX_ASSERT(&bitset_ != this, "self assignment");
 
-  m_allocator = bitset_.m_allocator;
-  m_size = bitset_.m_size;
-  m_data = bitset_.m_data;
-
-  bitset_.m_size = 0;
-  bitset_.m_data = nullptr;
+  m_allocator = utility::exchange(bitset_.m_allocator, nullptr);
+  m_size = utility::exchange(bitset_.m_size, 0);
+  m_data = utility::exchange(bitset_.m_data, nullptr);
 
   return *this;
 }

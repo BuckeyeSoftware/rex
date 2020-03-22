@@ -1,5 +1,6 @@
 #include "rx/core/static_pool.h"
-#include "rx/core/utility/move.h"
+
+#include "rx/core/utility/exchange.h"
 
 namespace rx {
 
@@ -13,29 +14,22 @@ static_pool::static_pool(memory::allocator* _allocator, rx_size _object_size, rx
 }
 
 static_pool::static_pool(static_pool&& pool_)
-  : m_allocator{pool_.m_allocator}
-  , m_object_size{pool_.m_object_size}
-  , m_capacity{pool_.m_capacity}
-  , m_data{pool_.m_data}
+  : m_allocator{utility::exchange(pool_.m_allocator, nullptr)}
+  , m_object_size{utility::exchange(pool_.m_object_size, 0)}
+  , m_capacity{utility::exchange(pool_.m_capacity, 0)}
+  , m_data{utility::exchange(pool_.m_data, nullptr)}
   , m_bitset{utility::move(pool_.m_bitset)}
 {
-  pool_.m_object_size = 0;
-  pool_.m_capacity = 0;
-  pool_.m_data = nullptr;
 }
 
 static_pool& static_pool::operator=(static_pool&& pool_) {
   RX_ASSERT(&pool_ != this, "self assignment");
 
-  m_allocator = pool_.m_allocator;
-  m_object_size = pool_.m_object_size;
-  m_capacity = pool_.m_capacity;
-  m_data = pool_.m_data;
+  m_allocator = utility::exchange(pool_.m_allocator, nullptr);
+  m_object_size = utility::exchange(pool_.m_object_size, 0);
+  m_capacity = utility::exchange(pool_.m_capacity, 0);
+  m_data = utility::exchange(pool_.m_data, nullptr);
   m_bitset = utility::move(pool_.m_bitset);
-
-  pool_.m_object_size = 0;
-  pool_.m_capacity = 0;
-  pool_.m_data = nullptr;
 
   return *this;
 }

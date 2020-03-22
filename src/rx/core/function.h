@@ -5,6 +5,8 @@
 #include "rx/core/traits/is_callable.h"
 #include "rx/core/traits/enable_if.h"
 
+#include "rx/core/utility/exchange.h"
+
 namespace rx {
 
 template<typename T>
@@ -114,14 +116,11 @@ inline function<R(Ts...)>::function(const function& _function)
 
 template<typename R, typename... Ts>
 inline function<R(Ts...)>::function(function&& function_)
-  : m_invoke{function_.m_invoke}
-  , m_construct{function_.m_construct}
-  , m_destruct{function_.m_destruct}
+  : m_invoke{utility::exchange(function_.m_invoke, nullptr)}
+  , m_construct{utility::exchange(function_.m_construct, nullptr)}
+  , m_destruct{utility::exchange(function_.m_destruct, nullptr)}
   , m_data{utility::move(function_.m_data)}
 {
-  function_.m_invoke = nullptr;
-  function_.m_construct = nullptr;
-  function_.m_destruct = nullptr;
 }
 
 template<typename R, typename... Ts>
@@ -152,14 +151,10 @@ inline function<R(Ts...)>& function<R(Ts...)>::operator=(function&& function_) {
     m_destruct(m_data.data());
   }
 
-  m_invoke = function_.m_invoke;
-  m_construct = function_.m_construct;
-  m_destruct = function_.m_destruct;
+  m_invoke = utility::exchange(function_.m_invoke, nullptr);
+  m_construct = utility::exchange(function_.m_construct, nullptr);
+  m_destruct = utility::exchange(function_.m_destruct, nullptr);
   m_data = utility::move(function_.m_data);
-
-  function_.m_invoke = nullptr;
-  function_.m_construct = nullptr;
-  function_.m_destruct = nullptr;
 
   return *this;
 }

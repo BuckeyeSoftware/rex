@@ -2,6 +2,7 @@
 #define RX_CORE_PTR_H
 #include "rx/core/memory/allocator.h"
 #include "rx/core/hints/empty_bases.h"
+#include "rx/core/utility/exchange.h"
 #include "rx/core/hash.h"
 
 namespace rx {
@@ -66,8 +67,7 @@ private:
 
 template<typename T>
 inline constexpr ptr<T>::ptr()
-  : m_allocator{nullptr}
-  , m_data{nullptr}
+  : ptr{nullptr}
 {
 }
 
@@ -95,10 +95,9 @@ inline constexpr ptr<T>::ptr(memory::allocator* _allocator, U* _data)
 template<typename T>
 template<typename U>
 inline ptr<T>::ptr(ptr<U>&& other_)
-  : m_allocator{other_.m_allocator}
-  , m_data{other_.m_data}
+  : m_allocator{utility::exchange(other_.m_allocator, nullptr)}
+  , m_data{utility::exchange(other_.m_data, nullptr)}
 {
-  other_.m_data = nullptr;
 }
 
 template<typename T>
@@ -113,9 +112,8 @@ inline ptr<T>& ptr<T>::operator=(ptr<U>&& ptr_) {
   RX_ASSERT(reinterpret_cast<rx_uintptr>(&ptr_)
     != reinterpret_cast<rx_uintptr>(this), "self assignment");
   destroy();
-  m_allocator = ptr_.m_allocator;
-  m_data = ptr_.m_data;
-  ptr_.m_data = nullptr;
+  m_allocator = utility::exchange(ptr_.m_allocator, nullptr);
+  m_data = utility::exchange(ptr_.m_data, nullptr);
   return *this;
 }
 
@@ -137,9 +135,7 @@ inline void ptr<T>::reset(memory::allocator* _allocator, U* _data) {
 
 template<typename T>
 inline T* ptr<T>::release() {
-  T* result = m_data;
-  m_data = nullptr;
-  return result;
+  return utility::exchange(m_data, nullptr);
 }
 
 template<typename T>
@@ -186,8 +182,7 @@ inline ptr<T> make_ptr(memory::allocator* _allocator, Ts&&... _arguments) {
 template<typename T>
 struct hash<ptr<T>> {
   constexpr rx_size operator()(const ptr<T>& _ptr) const {
-    return hash_combine(hash<T*>{}(_ptr.get()),
-      hash<memory::allocator*>(_ptr.allocator()));
+    return hash<T*>{}(_ptr.get());
   }
 };
 
