@@ -6,7 +6,7 @@ namespace rx::utility {
 
 template<typename T>
 inline void swap(T& lhs_, T& rhs_) {
-  T tmp{utility::move(lhs_)};
+  T tmp = utility::move(lhs_);
   lhs_ = utility::move(rhs_);
   rhs_ = utility::move(tmp);
 }
