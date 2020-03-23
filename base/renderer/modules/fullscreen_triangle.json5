@@ -2,9 +2,8 @@
   name: "fullscreen_triangle",
   source: "
     vec4f fullscreen_triangle() {
-      float x = -1.0 + float((rx_vertex_id & 1) << 2);
-      float y = -1.0 + float((rx_vertex_id & 2) << 1);
-      return vec4f(x, y, (x+1.0)*0.5, (y+1.0)*0.5);
+      vec2f xy = -1.0 + vec2f((rx_vertex_id & 1) << 2, (rx_vertex_id & 2) << 1);
+      return vec4f(xy, (xy + 1.0) * 0.5);
     }
   "
 }
