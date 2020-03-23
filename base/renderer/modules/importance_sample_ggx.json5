@@ -1,10 +1,13 @@
 {
   name: "importance_sample_ggx",
+  imports: [
+    "math_constants"
+  ],
   source: "
     vec3f importance_sample_ggx(vec2f Xi, float roughness, vec3f n) {
       float a = roughness * roughness;
 
-      float phi = 2.0 * 3.14 * Xi.x;
+      float phi = 2.0 * M_PI * Xi.x;
       float cos_theta = clamp(sqrt((1.0 - Xi.y) / (1.0 + (a * a - 1.0) * Xi.y)), 0.0, 1.0);
       float sin_theta = sqrt(1.0 - cos_theta * cos_theta);
 
