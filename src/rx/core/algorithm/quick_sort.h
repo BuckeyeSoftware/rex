@@ -10,9 +10,9 @@ namespace rx::algorithm {
 template<typename T, typename F>
 void quick_sort(T* start_, T* end_, F&& _compare) {
   while (end_ - start_ > 10) {
-    T* middle{start_ + (end_ - start_) / 2};
-    T* item1{start_+1};
-    T* item2{end_-2};
+    T* middle = start_ + (end_ - start_) / 2;
+    T* item1 = start_ + 1;
+    T* item2 = end_ - 2;
     T pivot;
 
     if (_compare(*start_, *middle)) {

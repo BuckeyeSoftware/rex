@@ -73,11 +73,11 @@ inline bool topological_sort<K>::add(const K& _key, const K& _dependency) {
 
   // Dependents of the dependency.
   {
-    auto find{m_map.find(_dependency)};
+    auto find = m_map.find(_dependency);
     if (!find) {
       find = m_map.insert(_dependency, {m_allocator});
     }
-    auto& dependents{find->dependents};
+    auto& dependents = find->dependents;
 
     // Already a dependency.
     if (dependents.find(_key)) {
@@ -89,11 +89,12 @@ inline bool topological_sort<K>::add(const K& _key, const K& _dependency) {
 
   // Dependents of the key.
   {
-    auto find{m_map.find(_key)};
+    auto find = m_map.find(_key);
     if (!find) {
       find = m_map.insert(_key, {m_allocator});
     }
-    auto& dependencies{find->dependencies};
+
+    auto& dependencies = find->dependencies;
 
     // Another reference for this dependency.
     dependencies++;
@@ -105,7 +106,7 @@ inline bool topological_sort<K>::add(const K& _key, const K& _dependency) {
 template<typename K>
 inline typename topological_sort<K>::result topological_sort<K>::sort() {
   // Make a copy of the map because the sorting is destructive.
-  auto map{m_map};
+  auto map = m_map;
 
   vector<K> sorted{m_allocator};
   vector<K> cycled{m_allocator};
