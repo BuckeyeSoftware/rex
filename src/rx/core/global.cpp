@@ -15,61 +15,68 @@ static concurrency::spin_lock g_lock;
 
 // global_node
 void global_node::init_global() {
-  if (!(m_flags & k_enabled)) {
+  const auto flags = m_argument_store.tag();
+  if (!(flags & k_enabled)) {
     return;
   }
 
-  RX_ASSERT(!(m_flags & k_initialized), "already initialized");
+  RX_ASSERT(!(flags & k_initialized), "already initialized");
   logger->verbose("%p init: %s/%s", this, m_group, m_name);
 
-  m_storage_dispatch(storage_mode::k_init_global, data(), m_argument_store);
+  m_storage_dispatch(storage_mode::k_init_global, data(), m_argument_store.ptr());
 
-  m_flags |= k_initialized;
+  m_argument_store.retag(flags | k_initialized);
 }
 
 void global_node::fini_global() {
-  if (!(m_flags & k_enabled)) {
+  const auto flags = m_argument_store.tag();
+
+  if (!(flags & k_enabled)) {
     return;
   }
 
-  RX_ASSERT(m_flags & k_initialized, "not initialized");
+  RX_ASSERT(flags & k_initialized, "not initialized");
   logger->verbose("%p fini: %s/%s", this, m_group, m_name);
 
-  m_shared->finalizer(data());
-  if (m_flags & k_arguments) {
-    m_storage_dispatch(storage_mode::k_fini_arguments, data(), m_argument_store);
-    deallocate_arguments(m_argument_store);
+  m_storage_dispatch(storage_mode::k_fini_global, data(), nullptr);
+  if (flags & k_arguments) {
+    auto argument_store = m_argument_store.ptr();
+    m_storage_dispatch(storage_mode::k_fini_arguments, nullptr, argument_store);
+    reallocate_arguments(argument_store, 0);
   }
-  m_flags &= ~k_initialized;
+
+  m_argument_store.retag(flags & ~k_initialized);
 }
 
 void global_node::init() {
-  RX_ASSERT(!(m_flags & k_initialized), "already initialized");
+  const auto flags = m_argument_store.tag();
+  RX_ASSERT(!(flags & k_initialized), "already initialized");
 
-  m_storage_dispatch(storage_mode::k_init_global, data(), m_argument_store);
+  m_storage_dispatch(storage_mode::k_init_global, data(), m_argument_store.ptr());
 
-  m_flags &= ~k_enabled;
-  m_flags |= k_initialized;
+  m_argument_store.retag((flags & ~k_enabled) | k_initialized);
 }
 
 void global_node::fini() {
-  RX_ASSERT(m_flags & k_initialized, "not initialized");
+  const auto flags = m_argument_store.tag();
+  RX_ASSERT(flags & k_initialized, "not initialized");
 
-  m_shared->finalizer(data());
-  if (m_flags & k_arguments) {
-    m_storage_dispatch(storage_mode::k_fini_arguments, data(), m_argument_store);
-    deallocate_arguments(m_argument_store);
+  m_storage_dispatch(storage_mode::k_fini_global, data(), nullptr);
+  if (flags & k_arguments) {
+    auto argument_store = m_argument_store.ptr();
+    m_storage_dispatch(storage_mode::k_fini_arguments, nullptr, argument_store);
+    reallocate_arguments(argument_store, 0);
   }
-  m_flags &= ~k_enabled;
-  m_flags |= k_initialized;
+
+  m_argument_store.retag((flags & ~k_enabled) | k_initialized);
 }
 
-rx_byte* global_node::allocate_arguments(rx_size _size) {
-  return reinterpret_cast<rx_byte*>(malloc(_size));
-}
-
-void global_node::deallocate_arguments(rx_byte* _arguments) {
-  free(_arguments);
+rx_byte* global_node::reallocate_arguments(rx_byte* _existing, rx_size _size) {
+  if (_existing && _size == 0) {
+    free(_existing);
+    return nullptr;
+  }
+  return reinterpret_cast<rx_byte*>(realloc(nullptr, _size));
 }
 
 // global_group
