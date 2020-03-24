@@ -9,8 +9,8 @@
 
 namespace rx {
 
-// 32-bit: 16 bytes
-// 64-bit: 32 bytes
+// 32-bit: 12 bytes
+// 64-bit: 24 bytes
 template<typename T>
 struct function;
 
