@@ -1,8 +1,7 @@
 #ifndef RX_CORE_GLOBAL_H
 #define RX_CORE_GLOBAL_H
-#include "rx/core/assert.h"
-#include "rx/core/intrusive_xor_list.h"
 #include "rx/core/tagged_ptr.h"
+#include "rx/core/intrusive_xor_list.h"
 #include "rx/core/memory/uninitialized_storage.h"
 
 namespace rx {
