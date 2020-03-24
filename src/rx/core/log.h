@@ -108,9 +108,13 @@ inline constexpr log::log(const char* _name, const source_location& _source_loca
 
 template<typename... Ts>
 inline bool log::write(level _level, const char* _format, Ts&&... _arguments) {
-  auto format = string::format(_format, utility::forward<Ts>(_arguments)...);
-  m_queue_event.signal(_level, format);
-  return enqueue(this, _level, utility::move(format));
+  if (sizeof...(Ts) != 0) {
+    auto format = string::format(_format, utility::forward<Ts>(_arguments)...);
+    m_queue_event.signal(_level, format);
+    return enqueue(this, _level, utility::move(format));
+  } else {
+    return enqueue(this, _level, {_format});
+  }
 }
 
 template<typename... Ts>
