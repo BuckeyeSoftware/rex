@@ -258,7 +258,7 @@ inline V* map<K, V>::insert(const K& _key, V&& value_) {
   if (++m_size >= m_resize_threshold && !grow()) {
     return nullptr;
   }
-  return inserter(hash_key(_key), _key, utility::forward<V>(value_));
+  return inserter(hash_key(_key), _key, utility::move(value_));
 }
 
 template<typename K, typename V>
@@ -455,7 +455,7 @@ inline V* map<K, V>::inserter(rx_size _hash, K&& key_, V&& value_) {
 template<typename K, typename V>
 inline V* map<K, V>::inserter(rx_size _hash, const K& _key, V&& value_) {
   K key{_key};
-  return inserter(_hash, utility::move(key), utility::forward<V>(value_));
+  return inserter(_hash, utility::move(key), utility::move(value_));
 }
 
 template<typename K, typename V>
