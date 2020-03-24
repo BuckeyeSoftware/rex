@@ -16,6 +16,8 @@
 
 namespace rx {
 
+// 32-bit: 8 bytes
+// 64-bit: 16 bytes
 struct json {
   constexpr json();
   json(memory::allocator* _allocator, const char* _contents, rx_size _length);

@@ -90,7 +90,9 @@ inline bitset::bitset(bitset&& bitset_)
 }
 
 inline bitset::~bitset() {
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
+  if (m_allocator) {
+    m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
+  }
 }
 
 inline void bitset::set(rx_size _bit) {
