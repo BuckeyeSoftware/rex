@@ -113,6 +113,7 @@ inline bool log::write(level _level, const char* _format, Ts&&... _arguments) {
     m_queue_event.signal(_level, format);
     return enqueue(this, _level, utility::move(format));
   } else {
+    m_queue_event.signal(_level, _format);
     return enqueue(this, _level, {_format});
   }
 }
