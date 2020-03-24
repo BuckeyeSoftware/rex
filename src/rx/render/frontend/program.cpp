@@ -1,7 +1,7 @@
 #include <string.h> // memcpy
 
 #include "rx/render/frontend/program.h"
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 
 #include "rx/core/utility/bit.h"
 #include "rx/core/algorithm/min.h"
@@ -211,7 +211,7 @@ void uniform::record_raw(const rx_byte* _data, rx_size _size) {
   m_program->mark_uniform_dirty(m_bit);
 }
 
-program::program(interface* _frontend)
+program::program(context* _frontend)
   : resource{_frontend, resource::type::k_program}
   , m_allocator{_frontend->allocator()}
   , m_uniforms{m_allocator}

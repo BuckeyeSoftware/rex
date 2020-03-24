@@ -1,5 +1,5 @@
 #include "rx/render/skybox.h"
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/technique.h"
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/target.h"
@@ -36,8 +36,8 @@ static constexpr const rx_u8 k_skybox_elements[]{
   5, 0, 3, 3, 6, 5  // back
 };
 
-skybox::skybox(frontend::interface* _interface)
-  : m_frontend{_interface}
+skybox::skybox(frontend::context* _frontend)
+  : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("skybox")}
   , m_texture{nullptr}
   , m_buffer{nullptr}

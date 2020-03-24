@@ -5,7 +5,7 @@
 #include "rx/console/interface.h"
 #include "rx/console/variable.h"
 
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/backend/gl4.h"
 #include "rx/render/backend/gl3.h"
 #include "rx/render/backend/es3.h"
@@ -385,7 +385,7 @@ int main(int _argc, char** _argv) {
       SDL_RaiseWindow(window);
       SDL_StartTextInput();
 
-      render::backend::interface* backend{nullptr};
+      render::backend::context* backend{nullptr};
       if (driver_name == "gl4") {
         backend = memory::g_system_allocator->create<render::backend::gl4>(
           &memory::g_system_allocator, reinterpret_cast<void*>(window));
@@ -409,7 +409,7 @@ int main(int _argc, char** _argv) {
       SDL_GL_SetSwapInterval(*display_swap_interval);
 
       {
-        render::frontend::interface frontend{&memory::g_system_allocator, backend};
+        render::frontend::context frontend{&memory::g_system_allocator, backend};
 
         Remotery* remotery = nullptr;
         if (rmtSettings* settings = rmt_Settings()) {
@@ -457,10 +457,10 @@ int main(int _argc, char** _argv) {
                 reinterpret_cast<void*>(&frontend),
                 set_thread_name,
                 [](void* _context, const char* _tag) {
-                  reinterpret_cast<render::frontend::interface*>(_context)->profile(_tag);
+                  reinterpret_cast<render::frontend::context*>(_context)->profile(_tag);
                 },
                 [](void* _context) {
-                  reinterpret_cast<render::frontend::interface*>(_context)->profile(nullptr);
+                  reinterpret_cast<render::frontend::context*>(_context)->profile(nullptr);
                 }
               });
             }
@@ -474,7 +474,7 @@ int main(int _argc, char** _argv) {
         SDL_SetRelativeMouseMode(SDL_TRUE);
 
         // Create the game.
-        extern game* create(render::frontend::interface&);
+        extern game* create(render::frontend::context&);
         game* g = create(frontend);
 
         auto on_fullscreen_change{display_fullscreen->on_change([&](rx_s32 _value) {
@@ -638,7 +638,7 @@ int main(int _argc, char** _argv) {
         }
       }
 
-      memory::g_system_allocator->destroy<render::backend::interface>(backend);
+      memory::g_system_allocator->destroy<render::backend::context>(backend);
 
       console::interface::save("config.cfg");
 

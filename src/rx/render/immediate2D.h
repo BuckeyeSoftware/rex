@@ -20,7 +20,7 @@ namespace frontend {
   struct target;
   struct technique;
   struct texture2D;
-  struct interface;
+  struct context;
 }
 
 struct immediate2D {
@@ -133,12 +133,12 @@ struct immediate2D {
     optional<box> m_scissor;
   };
 
-  immediate2D(frontend::interface* _frontend);
+  immediate2D(frontend::context* _frontend);
   ~immediate2D();
 
   void render(frontend::target* _target);
   queue& frame_queue();
-  frontend::interface* frontend() const;
+  frontend::context* frontend() const;
 
   rx_f32 measure_text_length(const string& _font, const char* _text,
     rx_size _text_length, rx_s32 _size, rx_f32 _scale);
@@ -166,7 +166,7 @@ struct immediate2D {
       bool operator==(const key& _key) const;
     };
 
-    font(const key& _key, frontend::interface* _frontend);
+    font(const key& _key, frontend::context* _frontend);
     font(font&& font_);
     ~font();
 
@@ -175,10 +175,10 @@ struct immediate2D {
 
     rx_s32 size() const;
     frontend::texture2D* texture() const;
-    frontend::interface* frontend() const;
+    frontend::context* frontend() const;
 
   private:
-    frontend::interface* m_frontend;
+    frontend::context* m_frontend;
     rx_s32 m_size;
     rx_size m_resolution;
     frontend::texture2D* m_texture;
@@ -238,7 +238,7 @@ private:
 
   ptr<font>& access_font(const font::key& _key);
 
-  frontend::interface* m_frontend;
+  frontend::context* m_frontend;
   frontend::technique* m_technique;
 
   // loaded fonts
@@ -316,7 +316,7 @@ inline immediate2D::queue& immediate2D::frame_queue() {
   return m_queue;
 }
 
-inline frontend::interface* immediate2D::frontend() const {
+inline frontend::context* immediate2D::frontend() const {
   return m_frontend;
 }
 
@@ -342,7 +342,7 @@ inline frontend::texture2D* immediate2D::font::texture() const {
   return m_texture;
 }
 
-inline frontend::interface* immediate2D::font::frontend() const {
+inline frontend::context* immediate2D::font::frontend() const {
   return m_frontend;
 }
 

@@ -16,7 +16,7 @@ namespace rx::memory {
 namespace rx::render {
 
 namespace frontend {
-  struct interface;
+  struct context;
   struct technique;
   struct target;
   struct buffer;
@@ -111,7 +111,7 @@ struct immediate3D {
     vector<command> m_commands;
   };
 
-  immediate3D(frontend::interface* _frontend);
+  immediate3D(frontend::context* _frontend);
   ~immediate3D();
 
   void render(frontend::target* _target, const math::mat4x4f& _view,
@@ -159,7 +159,7 @@ private:
 
   static constexpr const rx_size k_buffers{2};
 
-  frontend::interface* m_frontend;
+  frontend::context* m_frontend;
   frontend::technique* m_technique;
 
   queue m_queue;

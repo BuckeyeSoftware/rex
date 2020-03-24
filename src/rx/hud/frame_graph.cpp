@@ -1,6 +1,6 @@
 #include "rx/hud/frame_graph.h"
 
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/timer.h"
 #include "rx/render/frontend/target.h"
 
@@ -14,7 +14,7 @@ frame_graph::frame_graph(render::immediate2D* _immediate)
 }
 
 void frame_graph::render() {
-  const render::frontend::interface& frontend{*m_immediate->frontend()};
+  const render::frontend::context& frontend{*m_immediate->frontend()};
   const render::frontend::frame_timer& _timer{frontend.timer()};
   const math::vec2f &screen_size{frontend.swapchain()->dimensions().cast<rx_f32>()};
   const math::vec2f box_size{600.0f, 200.0f};

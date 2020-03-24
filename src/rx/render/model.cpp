@@ -2,7 +2,7 @@
 #include "rx/render/ibl.h"
 #include "rx/render/immediate3D.h"
 
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/technique.h"
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/buffer.h"
@@ -13,7 +13,7 @@
 
 namespace rx::render {
 
-model::model(frontend::interface* _frontend)
+model::model(frontend::context* _frontend)
   : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("geometry")}
   , m_buffer{nullptr}

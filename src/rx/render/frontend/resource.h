@@ -8,7 +8,7 @@
 
 namespace rx::render::frontend {
 
-struct interface;
+struct context;
 
 struct RX_HINT_EMPTY_BASES resource
   : concepts::no_copy
@@ -25,7 +25,7 @@ struct RX_HINT_EMPTY_BASES resource
 
   static constexpr rx_size count();
 
-  resource(interface* _frontend, type _type);
+  resource(context* _frontend, type _type);
   ~resource();
 
   void update_resource_usage(rx_size _bytes);
@@ -36,7 +36,7 @@ struct RX_HINT_EMPTY_BASES resource
   type resource_type() const;
 
 protected:
-  interface* m_frontend;
+  context* m_frontend;
 
 private:
   type m_resource_type;

@@ -17,7 +17,7 @@
 
 namespace rx::render::frontend {
 
-struct interface;
+struct context;
 struct program;
 
 struct RX_HINT_EMPTY_BASES uniform
@@ -117,7 +117,7 @@ struct shader {
 };
 
 struct program : resource {
-  program(interface* _frontend);
+  program(context* _frontend);
 
   void validate() const;
 

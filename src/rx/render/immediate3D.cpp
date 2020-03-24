@@ -1,6 +1,6 @@
 #include <stddef.h> // offsetof
 
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/technique.h"
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/buffer.h"
@@ -155,7 +155,7 @@ void immediate3D::queue::clear() {
   m_commands.clear();
 }
 
-immediate3D::immediate3D(frontend::interface* _frontend)
+immediate3D::immediate3D(frontend::context* _frontend)
   : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("immediate3D")}
   , m_queue{m_frontend->allocator()}

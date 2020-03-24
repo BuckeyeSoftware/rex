@@ -1,6 +1,6 @@
 #include "rx/render/indirect_lighting_pass.h"
 
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/technique.h"
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/target.h"
@@ -10,7 +10,7 @@
 
 namespace rx::render {
 
-indirect_lighting_pass::indirect_lighting_pass(frontend::interface* _frontend,
+indirect_lighting_pass::indirect_lighting_pass(frontend::context* _frontend,
   const gbuffer* _gbuffer, const ibl* _ibl)
   : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("deferred_indirect")}

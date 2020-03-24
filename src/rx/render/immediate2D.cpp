@@ -4,7 +4,7 @@
 
 #include "rx/render/immediate2D.h"
 
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/technique.h"
 #include "rx/render/frontend/buffer.h"
 #include "rx/render/frontend/texture.h"
@@ -274,7 +274,7 @@ void immediate2D::queue::clear() {
   m_string_table.clear();
 }
 
-immediate2D::font::font(const key& _key, frontend::interface* _frontend)
+immediate2D::font::font(const key& _key, frontend::context* _frontend)
   : m_frontend{_frontend}
   , m_size{_key.size}
   , m_resolution{k_default_resolution}
@@ -392,7 +392,7 @@ immediate2D::font::quad immediate2D::font::quad_for_glyph(rx_size _glyph,
   return result;
 }
 
-immediate2D::immediate2D(frontend::interface* _frontend)
+immediate2D::immediate2D(frontend::context* _frontend)
   : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("immediate2D")}
   , m_queue{m_frontend->allocator()}

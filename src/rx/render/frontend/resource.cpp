@@ -1,5 +1,5 @@
 #include "rx/render/frontend/resource.h"
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 
 #include "rx/core/log.h"
 #include "rx/core/concurrency/scope_lock.h"
@@ -28,7 +28,7 @@ static constexpr const char* resource_type_to_string(resource::type _type) {
   return "";
 }
 
-resource::resource(interface* _frontend, type _type)
+resource::resource(context* _frontend, type _type)
   : m_frontend{_frontend}
   , m_resource_type{_type}
   , m_resource_usage{0}

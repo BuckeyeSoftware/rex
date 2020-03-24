@@ -25,7 +25,7 @@
 Rex employs a renderer abstraction interface to isolate graphics API code from the actual engine rendering. This is done by `src/rx/render/frontend`. The documentation of how this frontend interface works is provided here to get you up to speed on how to render things.
 
 ### Frontend Interface
-All rendering resources and commands happen through `frontend::interface`. Every command on the frontend is associated with a tag that tracks the file and line information of the command in the engine as well as a static string describing it, this is provided to the interface with the `RX_RENDER_TAG("string")` macro.
+All rendering resources and commands happen through `frontend::context`. Every command on the frontend is associated with a tag that tracks the file and line information of the command in the engine as well as a static string describing it, this is provided to the interface with the `RX_RENDER_TAG("string")` macro.
 
 The entire rendering interface is _thread safe_, any and all commands can be called from any thread at any time.
 
@@ -602,7 +602,7 @@ All command structures, aside from `resource_command`, include a `frontend::stat
 
 The `resource_command` structure is used by all the resource commands and merely represents a tagged union of which resource to `allocate`, `construct`, `update`, or `destroy`.
 
-The `draw_command` is special in that it's size is actually variable. The `frontend::interface::draw` function over allocates `draw_command` from the command buffer to make room to store the raw data of any changed uniforms of `render_program`. The member function `uniforms()` actually returns a pointer to `this + 1` to reach into that memory. The `dirty_uniform_bitset` has a set bit for each uniform in `render_program` that has changed. The index of these set bits are the uniform indices in `render_program`. The sizes of each uniform can be read from there as well as their type.
+The `draw_command` is special in that it's size is actually variable. The `frontend::context::draw` function over allocates `draw_command` from the command buffer to make room to store the raw data of any changed uniforms of `render_program`. The member function `uniforms()` actually returns a pointer to `this + 1` to reach into that memory. The `dirty_uniform_bitset` has a set bit for each uniform in `render_program` that has changed. The index of these set bits are the uniform indices in `render_program`. The sizes of each uniform can be read from there as well as their type.
 The uniform data in `draw_command` is tightly packed. An example of unpacking this data is provided:
 
 ```cpp
@@ -644,7 +644,7 @@ struct device_info {
   const char* version;
 };
 
-struct interface
+struct context
   : concepts::interface
 {
   virtual allocation_info query_allocation_info() const = 0;

@@ -11,7 +11,7 @@
 namespace rx::render {
 
 namespace frontend {
-  struct interface;
+  struct context;
   struct technique;
   struct buffer;
   struct target;
@@ -21,7 +21,7 @@ struct immediate3D;
 struct ibl;
 
 struct model {
-  model(frontend::interface* _frontend);
+  model(frontend::context* _frontend);
   ~model();
 
   struct mesh {
@@ -50,7 +50,7 @@ struct model {
 private:
   bool upload();
 
-  frontend::interface* m_frontend;
+  frontend::context* m_frontend;
   frontend::technique* m_technique;
   frontend::buffer* m_buffer;
   vector<frontend::material> m_materials;

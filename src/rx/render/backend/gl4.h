@@ -1,7 +1,6 @@
 #ifndef RX_RENDER_BACKEND_GL4_H
 #define RX_RENDER_BACKEND_GL4_H
-
-#include "rx/render/backend/interface.h"
+#include "rx/render/backend/context.h"
 
 namespace rx::memory {
   struct allocator;
@@ -10,7 +9,7 @@ namespace rx::memory {
 namespace rx::render::backend {
 
 struct gl4
-  : interface
+  : context
 {
   allocation_info query_allocation_info() const;
   device_info query_device_info() const;

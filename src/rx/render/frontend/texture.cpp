@@ -1,7 +1,7 @@
 #include <string.h> // memcpy
 
 #include "rx/render/frontend/texture.h"
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 
 #include "rx/core/algorithm/quick_sort.h"
 
@@ -47,7 +47,7 @@ static void optimize_edits(vector<T>& edits_) {
     });
 }
 
-texture::texture(interface* _frontend, resource::type _type)
+texture::texture(context* _frontend, resource::type _type)
   : resource{_frontend, _type}
   , m_data{_frontend->allocator()}
   , m_flags{0}
@@ -109,7 +109,7 @@ void texture::validate() const {
 }
 
 // texture1D
-texture1D::texture1D(interface* _frontend)
+texture1D::texture1D(context* _frontend)
   : texture{_frontend, resource::type::k_texture1D}
   , m_level_info{_frontend->allocator()}
   , m_edits{_frontend->allocator()}
@@ -183,7 +183,7 @@ vector<texture::edit<texture1D::dimension_type>>&& texture1D::edits() {
 }
 
 // texture2D
-texture2D::texture2D(interface* _frontend)
+texture2D::texture2D(context* _frontend)
   : texture{_frontend, resource::type::k_texture2D}
   , m_level_info{_frontend->allocator()}
   , m_edits{_frontend->allocator()}
@@ -263,7 +263,7 @@ vector<texture::edit<texture2D::dimension_type>>&& texture2D::edits() {
 }
 
 // texture3D
-texture3D::texture3D(interface* _frontend)
+texture3D::texture3D(context* _frontend)
   : texture{_frontend, resource::type::k_texture3D}
   , m_level_info{_frontend->allocator()}
   , m_edits{_frontend->allocator()}
@@ -340,7 +340,7 @@ vector<texture::edit<texture3D::dimension_type>>&& texture3D::edits() {
 }
 
 // textureCM
-textureCM::textureCM(interface* _frontend)
+textureCM::textureCM(context* _frontend)
   : texture{_frontend, resource::type::k_textureCM}
   , m_level_info{_frontend->allocator()}
 {

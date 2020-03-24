@@ -18,14 +18,14 @@ namespace rx::render::frontend {
 
 struct program;
 struct technique;
-struct interface;
+struct context;
 struct module;
 
 struct RX_HINT_EMPTY_BASES technique
   : concepts::no_copy
 {
   technique() = default;
-  technique(interface* _frontend);
+  technique(context* _frontend);
   ~technique();
 
   technique(technique&& technique_);
@@ -128,7 +128,7 @@ private:
 
   void write_log(log::level _level, string&& message_) const;
 
-  interface* m_frontend;
+  context* m_frontend;
   type m_type;
   vector<program*> m_programs;
   vector<rx_u64> m_permute_flags;

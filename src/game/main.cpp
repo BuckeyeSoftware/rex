@@ -1,6 +1,6 @@
 #include "rx/game.h"
 
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/target.h"
 
 #include "rx/render/indirect_lighting_pass.h"
@@ -25,7 +25,7 @@ using namespace rx;
 struct test_game
   : game
 {
-  test_game(render::frontend::interface& _frontend)
+  test_game(render::frontend::context& _frontend)
     : m_frontend{_frontend}
     , m_immediate2D{&m_frontend}
     , m_immediate3D{&m_frontend}
@@ -257,7 +257,7 @@ struct test_game
     m_frontend.resize(_dimensions);
   }
 
-  render::frontend::interface& m_frontend;
+  render::frontend::context& m_frontend;
 
   render::immediate2D m_immediate2D;
   render::immediate3D m_immediate3D;
@@ -281,6 +281,6 @@ struct test_game
   math::camera m_camera;
 };
 
-game* create(render::frontend::interface& _frontend) {
+game* create(render::frontend::context& _frontend) {
   return memory::g_system_allocator->create<test_game>(_frontend);
 }

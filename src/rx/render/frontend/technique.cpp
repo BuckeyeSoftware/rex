@@ -1,7 +1,7 @@
 #include <string.h> // strncmp
 
 #include "rx/render/frontend/technique.h"
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/module.h"
 
 #include "rx/core/json.h"
@@ -209,7 +209,7 @@ static optional<shader::inout_type> inout_type_from_string(const string& _type) 
   return nullopt;
 }
 
-technique::technique(interface* _frontend)
+technique::technique(context* _frontend)
   : m_frontend{_frontend}
   , m_programs{m_frontend->allocator()}
   , m_permute_flags{m_frontend->allocator()}

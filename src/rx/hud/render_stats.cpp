@@ -1,6 +1,6 @@
 #include "rx/hud/render_stats.h"
 
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/target.h"
 
 #include "rx/render/immediate2D.h"
@@ -29,7 +29,7 @@ render_stats::render_stats(render::immediate2D* _immediate)
 }
 
 void render_stats::render() {
-  const render::frontend::interface& frontend{*m_immediate->frontend()};
+  const render::frontend::context& frontend{*m_immediate->frontend()};
   const auto &buffer_stats{frontend.stats(render::frontend::resource::type::k_buffer)};
   const auto &program_stats{frontend.stats(render::frontend::resource::type::k_program)};
   const auto &target_stats{frontend.stats(render::frontend::resource::type::k_target)};

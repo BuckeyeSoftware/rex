@@ -9,14 +9,14 @@ namespace frontend {
   struct target;
   struct texture2D;
   struct technique;
-  struct interface;
+  struct context;
 } // namespace frontend
 
 struct gbuffer;
 struct ibl;
 
 struct indirect_lighting_pass {
-  indirect_lighting_pass(frontend::interface* _frontend, const gbuffer* _gbuffer, const ibl* _ibl);
+  indirect_lighting_pass(frontend::context* _frontend, const gbuffer* _gbuffer, const ibl* _ibl);
   ~indirect_lighting_pass();
 
   void render(const math::camera& _camera);
@@ -31,7 +31,7 @@ private:
   void create();
   void destroy();
 
-  frontend::interface* m_frontend;
+  frontend::context* m_frontend;
   frontend::technique* m_technique;
   frontend::texture2D* m_texture;
   frontend::target* m_target;

@@ -5,13 +5,13 @@
 namespace rx::render {
 
 namespace frontend {
-  struct interface;
+  struct context;
   struct target;
   struct texture2D;
 }
 
 struct gbuffer {
-  gbuffer(frontend::interface* _frontend);
+  gbuffer(frontend::context* _frontend);
   ~gbuffer();
 
   void create(const math::vec2z& _resolution);
@@ -27,7 +27,7 @@ struct gbuffer {
 private:
   void destroy();
 
-  frontend::interface* m_frontend;
+  frontend::context* m_frontend;
   frontend::target* m_target;
   frontend::texture2D* m_albedo_texture;
   frontend::texture2D* m_normal_texture;

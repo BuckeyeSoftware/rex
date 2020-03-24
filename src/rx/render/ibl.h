@@ -9,11 +9,11 @@ namespace frontend {
   struct textureCM;
 
   struct technique;
-  struct interface;
+  struct context;
 } // namespace frontend
 
 struct ibl {
-  ibl(frontend::interface* _interface);
+  ibl(frontend::context* _interface);
   ~ibl();
 
   void render(frontend::textureCM* _environment, rx_size _irradiance_map_size);
@@ -23,7 +23,7 @@ struct ibl {
   frontend::texture2D* scale_bias() const;
 
 private:
-  frontend::interface* m_frontend;
+  frontend::context* m_frontend;
   frontend::textureCM* m_irradiance_texture;
   frontend::textureCM* m_prefilter_texture;
   frontend::texture2D* m_scale_bias_texture;

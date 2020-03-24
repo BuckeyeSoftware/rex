@@ -1,7 +1,7 @@
 #ifndef RX_RENDER_BACKEND_NULL_H
 #define RX_RENDER_BACKEND_NULL_H
 
-#include "rx/render/backend/interface.h"
+#include "rx/render/backend/context.h"
 
 namespace rx::memory {
   struct allocator;
@@ -10,7 +10,7 @@ namespace rx::memory {
 namespace rx::render::backend {
 
 struct null
-  : interface
+  : context
 {
   allocation_info query_allocation_info() const;
   device_info query_device_info() const;

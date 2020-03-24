@@ -6,7 +6,7 @@
 
 namespace rx::render::frontend {
 
-struct interface;
+struct context;
 
 struct buffer : resource {
   struct attribute {
@@ -37,7 +37,7 @@ struct buffer : resource {
     rx_size size;
   };
 
-  buffer(interface* _frontend);
+  buffer(context* _frontend);
   ~buffer();
 
   // write |_size| bytes from |_data| into vertex store

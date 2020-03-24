@@ -13,12 +13,12 @@
 namespace rx::render::frontend {
 
 struct texture2D;
-struct interface;
+struct context;
 
 struct RX_HINT_EMPTY_BASES material
   : concepts::no_copy
 {
-  material(interface* _frontend);
+  material(context* _frontend);
   ~material();
 
   material(material&& material_);
@@ -42,7 +42,7 @@ struct RX_HINT_EMPTY_BASES material
   rx_f32 metalness_value() const;
 
 private:
-  interface* m_frontend;
+  context* m_frontend;
   texture2D* m_albedo;
   texture2D* m_normal;
   texture2D* m_roughness;

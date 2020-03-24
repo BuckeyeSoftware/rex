@@ -1,13 +1,13 @@
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/command.h"
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 
 #include "rx/console/interface.h"
 #include "rx/console/variable.h"
 
 namespace rx::render::frontend {
 
-target::target(interface* _frontend)
+target::target(context* _frontend)
   : resource{_frontend, resource::type::k_target}
   , m_depth_texture{nullptr}
   , m_stencil_texture{nullptr}

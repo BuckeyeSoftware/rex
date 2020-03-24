@@ -1,6 +1,6 @@
 #include "rx/hud/console.h"
 
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/target.h"
 
 #include "rx/render/immediate2D.h"
@@ -108,7 +108,7 @@ void console::render() {
     return;
   }
 
-  const render::frontend::interface& frontend{*m_immediate->frontend()};
+  const render::frontend::context& frontend{*m_immediate->frontend()};
   const math::vec2f& resolution{frontend.swapchain()->dimensions().cast<rx_f32>()};
 
   rx_f32 padding{10.0f};

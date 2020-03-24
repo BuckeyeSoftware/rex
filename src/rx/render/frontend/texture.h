@@ -12,12 +12,12 @@
 
 namespace rx::render::frontend {
 
-struct interface;
+struct context;
 
 struct texture
   : resource
 {
-  texture(interface* _frontend, resource::type _type);
+  texture(context* _frontend, resource::type _type);
 
   template<typename T>
   struct level_info {
@@ -126,7 +126,7 @@ protected:
     k_border     = 1 << 7
   };
 
-  friend struct interface;
+  friend struct context;
 
   vector<rx_byte> m_data;
   data_format m_format;
@@ -141,7 +141,7 @@ struct texture1D : texture {
   using dimension_type = rx_size;
   using wrap_options = wrap_type;
 
-  texture1D(interface* _frontend);
+  texture1D(context* _frontend);
   ~texture1D();
 
   // write data |_data| to store for miplevel |_level|
@@ -174,7 +174,7 @@ struct texture2D : texture {
   using dimension_type = math::vec2z;
   using wrap_options = math::vec2<wrap_type>;
 
-  texture2D(interface* _frontend);
+  texture2D(context* _frontend);
   ~texture2D();
 
   // write data |_data| to store for miplevel |_level|
@@ -197,7 +197,7 @@ struct texture2D : texture {
     const dimension_type& _dimensions);
 
 private:
-  friend struct interface;
+  friend struct context;
 
   dimension_type m_dimensions;
   wrap_options m_wrap;
@@ -209,7 +209,7 @@ struct texture3D : texture {
   using dimension_type = math::vec3z;
   using wrap_options = math::vec3<wrap_type>;
 
-  texture3D(interface* _frontend);
+  texture3D(context* _frontend);
   ~texture3D();
 
   // write 3D data |_data| to store for miplevel |_level|
@@ -251,7 +251,7 @@ struct textureCM : texture {
     k_back    // -z
   };
 
-  textureCM(interface* _frontend);
+  textureCM(context* _frontend);
   ~textureCM();
 
   // write data |_data| for face |_face| to store for miplevel |_level|

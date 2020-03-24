@@ -10,7 +10,7 @@ namespace rx {
 namespace rx::render {
 
 namespace frontend {
-  struct interface;
+  struct context;
   struct technique;
   struct textureCM;
   struct target;
@@ -18,7 +18,7 @@ namespace frontend {
 }
 
 struct skybox {
-  skybox(frontend::interface* _interface);
+  skybox(frontend::context* _frontend);
   ~skybox();
 
   void render(frontend::target* _target, const math::mat4x4f& _view,
@@ -32,7 +32,7 @@ struct skybox {
   const string& name() const &;
 
 private:
-  frontend::interface* m_frontend;
+  frontend::context* m_frontend;
   frontend::technique* m_technique;
   frontend::textureCM* m_texture;
   frontend::buffer* m_buffer;

@@ -2,11 +2,11 @@
 
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/texture.h"
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 
 namespace rx::render {
 
-gbuffer::gbuffer(frontend::interface* _frontend)
+gbuffer::gbuffer(frontend::context* _frontend)
   : m_frontend{_frontend}
   , m_target{nullptr}
   , m_albedo_texture{nullptr}

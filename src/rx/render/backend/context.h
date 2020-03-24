@@ -1,6 +1,5 @@
-#ifndef RX_RENDER_BACKEND_INTERFACE_H
-#define RX_RENDER_BACKEND_INTERFACE_H
-
+#ifndef RX_RENDER_BACKEND_CONTEXT_H
+#define RX_RENDER_BACKEND_CONTEXT_H
 #include "rx/core/vector.h"
 #include "rx/core/concepts/interface.h" // concepts::interface
 
@@ -23,7 +22,7 @@ struct device_info {
   const char* version;
 };
 
-struct interface
+struct context
   : concepts::interface
 {
   virtual allocation_info query_allocation_info() const = 0;
@@ -35,4 +34,4 @@ struct interface
 
 } // namespace rx::render::backend
 
-#endif // RX_RENDER_BACKEND_INTERFACE_H
+#endif // RX_RENDER_BACKEND_CONTEXT_H

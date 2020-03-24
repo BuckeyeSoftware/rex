@@ -1,7 +1,7 @@
 #include <string.h> // memcpy
 
 #include "rx/render/frontend/buffer.h"
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 
 namespace rx::render::frontend {
 
@@ -19,7 +19,7 @@ static rx_size size_for_element_type(buffer::element_type _type) {
   return 0;
 }
 
-buffer::buffer(interface* _frontend)
+buffer::buffer(context* _frontend)
   : resource{_frontend, resource::type::k_buffer}
   , m_vertices_store{m_frontend->allocator()}
   , m_elements_store{m_frontend->allocator()}

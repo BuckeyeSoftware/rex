@@ -1,5 +1,5 @@
 #include "rx/render/frontend/material.h"
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/texture.h"
 
 #include "rx/texture/loader.h"
@@ -27,7 +27,7 @@ convert_material_wrap(const rx::material::texture::wrap_options& _wrap) {
   return {convert(_wrap.s), convert(_wrap.t)};
 }
 
-material::material(interface* _frontend)
+material::material(context* _frontend)
   : m_frontend{_frontend}
   , m_albedo{nullptr}
   , m_normal{nullptr}

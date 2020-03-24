@@ -7,10 +7,10 @@
 
 namespace rx::render::frontend {
 
-struct interface;
+struct context;
 
 struct target : resource {
-  target(interface* _frontend);
+  target(context* _frontend);
 
   struct attachment {
     enum class type {
@@ -81,7 +81,7 @@ struct target : resource {
 private:
   void destroy();
 
-  friend struct interface;
+  friend struct context;
 
   void update_resource_usage();
 

@@ -8,12 +8,12 @@
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/buffer.h"
 #include "rx/render/frontend/texture.h"
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/technique.h"
 
 namespace rx::render {
 
-ibl::ibl(frontend::interface* _frontend)
+ibl::ibl(frontend::context* _frontend)
   : m_frontend{_frontend}
   , m_irradiance_texture{nullptr}
   , m_prefilter_texture{nullptr}

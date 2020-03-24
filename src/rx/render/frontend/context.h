@@ -1,5 +1,5 @@
-#ifndef RX_RENDER_FRONTEND_INTERFACE_H
-#define RX_RENDER_FRONTEND_INTERFACE_H
+#ifndef RX_RENDER_FRONTEND_CONTEXT_H
+#define RX_RENDER_FRONTEND_CONTEXT_H
 #include "rx/core/deferred_function.h"
 #include "rx/core/vector.h"
 #include "rx/core/string.h"
@@ -13,7 +13,7 @@
 #include "rx/render/frontend/resource.h"
 #include "rx/render/frontend/timer.h"
 
-#include "rx/render/backend/interface.h"
+#include "rx/render/backend/context.h"
 
 namespace rx::render::frontend {
 
@@ -28,9 +28,9 @@ struct technique;
 struct module;
 struct material;
 
-struct interface {
-  interface(memory::allocator* _allocator, backend::interface* _backend);
-  ~interface();
+struct context {
+  context(memory::allocator* _allocator, backend::context* _backend);
+  ~context();
 
   buffer* create_buffer(const command_header::info& _info);
   target* create_target(const command_header::info& _info);
@@ -215,8 +215,8 @@ private:
 
   mutable concurrency::mutex m_mutex;
 
-  memory::allocator* m_allocator;          // protected by |m_mutex|
-  backend::interface* m_backend;           // protected by |m_mutex|
+  memory::allocator* m_allocator;              // protected by |m_mutex|
+  backend::context* m_backend;                 // protected by |m_mutex|
 
   // size of resources as reported by the backend
   backend::allocation_info m_allocation_info;
@@ -272,7 +272,7 @@ private:
   frame_timer m_timer;
 };
 
-inline interface::device_info::device_info(memory::allocator* _allocator)
+inline context::device_info::device_info(memory::allocator* _allocator)
   : vendor{_allocator}
   , renderer{_allocator}
   , version{_allocator}
@@ -280,7 +280,7 @@ inline interface::device_info::device_info(memory::allocator* _allocator)
 }
 
 template<typename T>
-inline void interface::remove_from_cache(map<string, T*>& cache_, T* _object) {
+inline void context::remove_from_cache(map<string, T*>& cache_, T* _object) {
   cache_.each_pair([&](const string& _key, T* _value) {
     if (_value != _object) {
       return true;
@@ -290,54 +290,54 @@ inline void interface::remove_from_cache(map<string, T*>& cache_, T* _object) {
   });
 }
 
-inline memory::allocator* interface::allocator() const {
+inline memory::allocator* context::allocator() const {
   return m_allocator;
 }
 
-inline rx_size interface::draw_calls() const {
+inline rx_size context::draw_calls() const {
   return m_draw_calls[1].load();
 }
 
-inline rx_size interface::clear_calls() const {
+inline rx_size context::clear_calls() const {
   return m_clear_calls[1].load();
 }
 
-inline rx_size interface::blit_calls() const {
+inline rx_size context::blit_calls() const {
   return m_blit_calls[1].load();
 }
 
-inline rx_size interface::vertices() const {
+inline rx_size context::vertices() const {
   return m_vertices[1].load();
 }
 
-inline rx_size interface::triangles() const {
+inline rx_size context::triangles() const {
   return m_triangles[1].load();
 }
 
-inline rx_size interface::lines() const {
+inline rx_size context::lines() const {
   return m_lines[1].load();
 }
 
-inline rx_size interface::points() const {
+inline rx_size context::points() const {
   return m_points[1].load();
 }
 
-inline target* interface::swapchain() const {
+inline target* context::swapchain() const {
   return m_swapchain_target;
 }
 
-inline const frame_timer& interface::timer() const & {
+inline const frame_timer& context::timer() const & {
   return m_timer;
 }
 
-inline const command_buffer& interface::get_command_buffer() const & {
+inline const command_buffer& context::get_command_buffer() const & {
   return m_command_buffer;
 }
 
-inline const interface::device_info& interface::get_device_info() const & {
+inline const context::device_info& context::get_device_info() const & {
   return m_device_info;
 }
 
 } // namespace rx::render::frontend
 
-#endif // RX_RENDER_FRONTEND_INTERFACE_H
+#endif // RX_RENDER_FRONTEND_CONTEXT_H

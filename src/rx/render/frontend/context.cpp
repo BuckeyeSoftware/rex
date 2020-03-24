@@ -2,7 +2,7 @@
 #include <stddef.h> // offsetof
 #include <string.h> // strlen
 
-#include "rx/render/frontend/interface.h"
+#include "rx/render/frontend/context.h"
 #include "rx/render/frontend/buffer.h"
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/program.h"
@@ -47,7 +47,7 @@ namespace rx::render::frontend {
 #define allocate_command(data_type, type) \
   m_command_buffer.allocate(sizeof(data_type), (type), _info)
 
-interface::interface(memory::allocator* _allocator, backend::interface* _backend)
+context::context(memory::allocator* _allocator, backend::context* _backend)
   : m_allocator{_allocator}
   , m_backend{_backend}
   , m_allocation_info{m_backend->query_allocation_info()}
@@ -132,7 +132,7 @@ interface::interface(memory::allocator* _allocator, backend::interface* _backend
   initialize_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
 }
 
-interface::~interface() {
+context::~context() {
   destroy_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
   destroy_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 
@@ -162,7 +162,7 @@ interface::~interface() {
 }
 
 // create_*
-buffer* interface::create_buffer(const command_header::info& _info) {
+buffer* context::create_buffer(const command_header::info& _info) {
   concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -172,7 +172,7 @@ buffer* interface::create_buffer(const command_header::info& _info) {
   return command->as_buffer;
 }
 
-target* interface::create_target(const command_header::info& _info) {
+target* context::create_target(const command_header::info& _info) {
   concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -182,7 +182,7 @@ target* interface::create_target(const command_header::info& _info) {
   return command->as_target;
 }
 
-program* interface::create_program(const command_header::info& _info) {
+program* context::create_program(const command_header::info& _info) {
   concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -192,7 +192,7 @@ program* interface::create_program(const command_header::info& _info) {
   return command->as_program;
 }
 
-texture1D* interface::create_texture1D(const command_header::info& _info) {
+texture1D* context::create_texture1D(const command_header::info& _info) {
   concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -202,7 +202,7 @@ texture1D* interface::create_texture1D(const command_header::info& _info) {
   return command->as_texture1D;
 }
 
-texture2D* interface::create_texture2D(const command_header::info& _info) {
+texture2D* context::create_texture2D(const command_header::info& _info) {
   concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -212,7 +212,7 @@ texture2D* interface::create_texture2D(const command_header::info& _info) {
   return command->as_texture2D;
 }
 
-texture3D* interface::create_texture3D(const command_header::info& _info) {
+texture3D* context::create_texture3D(const command_header::info& _info) {
   concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -222,7 +222,7 @@ texture3D* interface::create_texture3D(const command_header::info& _info) {
   return command->as_texture3D;
 }
 
-textureCM* interface::create_textureCM(const command_header::info& _info) {
+textureCM* context::create_textureCM(const command_header::info& _info) {
   concurrency::scope_lock lock{m_mutex};
   auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
   auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
@@ -233,7 +233,7 @@ textureCM* interface::create_textureCM(const command_header::info& _info) {
 }
 
 // initialize_*
-void interface::initialize_buffer(const command_header::info& _info, buffer* _buffer) {
+void context::initialize_buffer(const command_header::info& _info, buffer* _buffer) {
   RX_ASSERT(_buffer, "_buffer is null");
   _buffer->validate();
 
@@ -245,7 +245,7 @@ void interface::initialize_buffer(const command_header::info& _info, buffer* _bu
   m_commands.push_back(command_base);
 }
 
-void interface::initialize_target(const command_header::info& _info, target* _target) {
+void context::initialize_target(const command_header::info& _info, target* _target) {
   RX_ASSERT(_target, "_target is null");
   _target->validate();
 
@@ -257,7 +257,7 @@ void interface::initialize_target(const command_header::info& _info, target* _ta
   m_commands.push_back(command_base);
 }
 
-void interface::initialize_program(const command_header::info& _info, program* _program) {
+void context::initialize_program(const command_header::info& _info, program* _program) {
   RX_ASSERT(_program, "_program is null");
   _program->validate();
 
@@ -269,7 +269,7 @@ void interface::initialize_program(const command_header::info& _info, program* _
   m_commands.push_back(command_base);
 }
 
-void interface::initialize_texture(const command_header::info& _info, texture1D* _texture) {
+void context::initialize_texture(const command_header::info& _info, texture1D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
 
@@ -281,7 +281,7 @@ void interface::initialize_texture(const command_header::info& _info, texture1D*
   m_commands.push_back(command_base);
 }
 
-void interface::initialize_texture(const command_header::info& _info, texture2D* _texture) {
+void context::initialize_texture(const command_header::info& _info, texture2D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
 
@@ -293,7 +293,7 @@ void interface::initialize_texture(const command_header::info& _info, texture2D*
   m_commands.push_back(command_base);
 }
 
-void interface::initialize_texture(const command_header::info& _info, texture3D* _texture) {
+void context::initialize_texture(const command_header::info& _info, texture3D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
 
@@ -305,7 +305,7 @@ void interface::initialize_texture(const command_header::info& _info, texture3D*
   m_commands.push_back(command_base);
 }
 
-void interface::initialize_texture(const command_header::info& _info, textureCM* _texture) {
+void context::initialize_texture(const command_header::info& _info, textureCM* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
 
@@ -318,7 +318,7 @@ void interface::initialize_texture(const command_header::info& _info, textureCM*
 }
 
 // update_*
-void interface::update_buffer(const command_header::info& _info, buffer* _buffer) {
+void context::update_buffer(const command_header::info& _info, buffer* _buffer) {
   if (_buffer) {
     auto edits{utility::move(_buffer->edits())};
     const rx_size edit_count{edits.size()};
@@ -339,7 +339,7 @@ void interface::update_buffer(const command_header::info& _info, buffer* _buffer
   }
 }
 
-void interface::update_texture(const command_header::info& _info, texture1D* _texture) {
+void context::update_texture(const command_header::info& _info, texture1D* _texture) {
   if (_texture) {
     auto edits{utility::move(_texture->edits())};
     const rx_size edit_count{edits.size()};
@@ -360,7 +360,7 @@ void interface::update_texture(const command_header::info& _info, texture1D* _te
   }
 }
 
-void interface::update_texture(const command_header::info& _info, texture2D* _texture) {
+void context::update_texture(const command_header::info& _info, texture2D* _texture) {
   if (_texture) {
     auto edits{utility::move(_texture->edits())};
     const rx_size edit_count{edits.size()};
@@ -381,7 +381,7 @@ void interface::update_texture(const command_header::info& _info, texture2D* _te
   }
 }
 
-void interface::update_texture(const command_header::info& _info, texture3D* _texture) {
+void context::update_texture(const command_header::info& _info, texture3D* _texture) {
   if (_texture) {
     auto edits{utility::move(_texture->edits())};
     const rx_size edit_count{edits.size()};
@@ -403,7 +403,7 @@ void interface::update_texture(const command_header::info& _info, texture3D* _te
 }
 
 // destroy_*
-void interface::destroy_buffer(const command_header::info& _info, buffer* _buffer) {
+void context::destroy_buffer(const command_header::info& _info, buffer* _buffer) {
   if (_buffer && _buffer->release_reference()) {
     concurrency::scope_lock lock{m_mutex};
     remove_from_cache(m_cached_buffers, _buffer);
@@ -416,7 +416,7 @@ void interface::destroy_buffer(const command_header::info& _info, buffer* _buffe
   }
 }
 
-void interface::destroy_target(const command_header::info& _info, target* _target) {
+void context::destroy_target(const command_header::info& _info, target* _target) {
   if (_target && _target->release_reference()) {
     concurrency::scope_lock lock{m_mutex};
     remove_from_cache(m_cached_targets, _target);
@@ -435,7 +435,7 @@ void interface::destroy_target(const command_header::info& _info, target* _targe
   }
 }
 
-void interface::destroy_program(const command_header::info& _info, program* _program) {
+void context::destroy_program(const command_header::info& _info, program* _program) {
   if (_program && _program->release_reference()) {
     concurrency::scope_lock lock{m_mutex};
     // remove_from_cache(m_cached_programs, _program);
@@ -448,7 +448,7 @@ void interface::destroy_program(const command_header::info& _info, program* _pro
   }
 }
 
-void interface::destroy_texture(const command_header::info& _info, texture1D* _texture) {
+void context::destroy_texture(const command_header::info& _info, texture1D* _texture) {
   if (_texture && _texture->release_reference()) {
     concurrency::scope_lock lock{m_mutex};
     remove_from_cache(m_cached_textures1D, _texture);
@@ -461,12 +461,12 @@ void interface::destroy_texture(const command_header::info& _info, texture1D* _t
   }
 }
 
-void interface::destroy_texture(const command_header::info& _info, texture2D* _texture) {
+void context::destroy_texture(const command_header::info& _info, texture2D* _texture) {
   concurrency::scope_lock lock{m_mutex};
   destroy_texture_unlocked(_info, _texture);
 }
 
-void interface::destroy_texture(const command_header::info& _info, texture3D* _texture) {
+void context::destroy_texture(const command_header::info& _info, texture3D* _texture) {
   if (_texture && _texture->release_reference()) {
     concurrency::scope_lock lock{m_mutex};
     remove_from_cache(m_cached_textures3D, _texture);
@@ -479,7 +479,7 @@ void interface::destroy_texture(const command_header::info& _info, texture3D* _t
   }
 }
 
-void interface::destroy_texture(const command_header::info& _info, textureCM* _texture) {
+void context::destroy_texture(const command_header::info& _info, textureCM* _texture) {
   if (_texture && _texture->release_reference()) {
     concurrency::scope_lock lock{m_mutex};
     remove_from_cache(m_cached_texturesCM, _texture);
@@ -492,7 +492,7 @@ void interface::destroy_texture(const command_header::info& _info, textureCM* _t
   }
 }
 
-void interface::destroy_texture_unlocked(const command_header::info& _info, texture2D* _texture) {
+void context::destroy_texture_unlocked(const command_header::info& _info, texture2D* _texture) {
   if (_texture && _texture->release_reference()) {
     remove_from_cache(m_cached_textures2D, _texture);
     auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
@@ -504,7 +504,7 @@ void interface::destroy_texture_unlocked(const command_header::info& _info, text
   }
 }
 
-void interface::draw(
+void context::draw(
   const command_header::info& _info,
   const state& _state,
   target* _target,
@@ -576,7 +576,7 @@ void interface::draw(
   m_draw_calls[0]++;
 }
 
-void interface::clear(
+void context::clear(
   const command_header::info& _info,
   const state& _state,
   target* _target,
@@ -638,7 +638,7 @@ void interface::clear(
   m_clear_calls[0]++;
 }
 
-void interface::blit(
+void context::blit(
   const command_header::info& _info,
   const state& _state,
   target* _src_target,
@@ -713,7 +713,7 @@ void interface::blit(
   m_blit_calls[0]++;
 }
 
-void interface::profile(const char* _tag) {
+void context::profile(const char* _tag) {
   concurrency::scope_lock lock{m_mutex};
 
   auto command_base{m_command_buffer.allocate(sizeof(profile_command),
@@ -724,13 +724,13 @@ void interface::profile(const char* _tag) {
   m_commands.push_back(command_base);
 }
 
-void interface::resize(const math::vec2z& _resolution) {
+void context::resize(const math::vec2z& _resolution) {
   // Resizing the swapchain is just a matter of updating these fields.
   m_swapchain_texture->m_dimensions = _resolution;
   m_swapchain_target->m_dimensions = _resolution;
 }
 
-bool interface::process() {
+bool context::process() {
   profiler::cpu_sample sample{"frontend::process"};
 
   if (m_commands.is_empty()) {
@@ -800,7 +800,7 @@ bool interface::process() {
   return true;
 }
 
-interface::statistics interface::stats(resource::type _type) const {
+context::statistics context::stats(resource::type _type) const {
   concurrency::scope_lock lock(m_mutex);
 
   const auto index{static_cast<rx_size>(_type)};
@@ -824,7 +824,7 @@ interface::statistics interface::stats(resource::type _type) const {
   RX_HINT_UNREACHABLE();
 }
 
-bool interface::swap() {
+bool context::swap() {
   profiler::cpu_sample sample{"frontend::swap"};
 
   m_backend->swap();
@@ -832,7 +832,7 @@ bool interface::swap() {
   return m_timer.update();
 }
 
-buffer* interface::cached_buffer(const string& _key) {
+buffer* context::cached_buffer(const string& _key) {
   concurrency::scope_lock lock{m_mutex};
   if (auto find{m_cached_buffers.find(_key)}) {
     auto result{*find};
@@ -842,7 +842,7 @@ buffer* interface::cached_buffer(const string& _key) {
   return nullptr;
 }
 
-target* interface::cached_target(const string& _key) {
+target* context::cached_target(const string& _key) {
   concurrency::scope_lock lock{m_mutex};
   if (auto find{m_cached_targets.find(_key)}) {
     auto result{*find};
@@ -852,7 +852,7 @@ target* interface::cached_target(const string& _key) {
   return nullptr;
 }
 
-texture1D* interface::cached_texture1D(const string& _key) {
+texture1D* context::cached_texture1D(const string& _key) {
   concurrency::scope_lock lock{m_mutex};
   if (auto find{m_cached_textures1D.find(_key)}) {
     auto result{*find};
@@ -862,7 +862,7 @@ texture1D* interface::cached_texture1D(const string& _key) {
   return nullptr;
 }
 
-texture2D* interface::cached_texture2D(const string& _key) {
+texture2D* context::cached_texture2D(const string& _key) {
   concurrency::scope_lock lock{m_mutex};
   if (auto find{m_cached_textures2D.find(_key)}) {
     auto result{*find};
@@ -872,7 +872,7 @@ texture2D* interface::cached_texture2D(const string& _key) {
   return nullptr;
 }
 
-texture3D* interface::cached_texture3D(const string& _key) {
+texture3D* context::cached_texture3D(const string& _key) {
   concurrency::scope_lock lock{m_mutex};
   if (auto find{m_cached_textures3D.find(_key)}) {
     auto result{*find};
@@ -882,7 +882,7 @@ texture3D* interface::cached_texture3D(const string& _key) {
   return nullptr;
 }
 
-textureCM* interface::cached_textureCM(const string& _key) {
+textureCM* context::cached_textureCM(const string& _key) {
   concurrency::scope_lock lock{m_mutex};
   if (auto find{m_cached_texturesCM.find(_key)}) {
     auto result{*find};
@@ -892,37 +892,37 @@ textureCM* interface::cached_textureCM(const string& _key) {
   return nullptr;
 }
 
-void interface::cache_buffer(buffer* _buffer, const string& _key) {
+void context::cache_buffer(buffer* _buffer, const string& _key) {
   concurrency::scope_lock lock{m_mutex};
   m_cached_buffers.insert(_key, _buffer);
 }
 
-void interface::cache_target(target* _target, const string& _key) {
+void context::cache_target(target* _target, const string& _key) {
   concurrency::scope_lock lock{m_mutex};
   m_cached_targets.insert(_key, _target);
 }
 
-void interface::cache_texture(texture1D* _texture, const string& _key) {
+void context::cache_texture(texture1D* _texture, const string& _key) {
   concurrency::scope_lock lock{m_mutex};
   m_cached_textures1D.insert(_key, _texture);
 }
 
-void interface::cache_texture(texture2D* _texture, const string& _key) {
+void context::cache_texture(texture2D* _texture, const string& _key) {
   concurrency::scope_lock lock{m_mutex};
   m_cached_textures2D.insert(_key, _texture);
 }
 
-void interface::cache_texture(texture3D* _texture, const string& _key) {
+void context::cache_texture(texture3D* _texture, const string& _key) {
   concurrency::scope_lock lock{m_mutex};
   m_cached_textures3D.insert(_key, _texture);
 }
 
-void interface::cache_texture(textureCM* _texture, const string& _key) {
+void context::cache_texture(textureCM* _texture, const string& _key) {
   concurrency::scope_lock lock{m_mutex};
   m_cached_texturesCM.insert(_key, _texture);
 }
 
-technique* interface::find_technique_by_name(const char* _name) {
+technique* context::find_technique_by_name(const char* _name) {
   return m_techniques.find(_name);
 }
 
