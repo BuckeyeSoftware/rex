@@ -257,7 +257,7 @@ inline global_node::global_node(const char* _group, const char* _name,
   if constexpr (sizeof...(Ts) != 0) {
     rx_byte* argument_store = reallocate_arguments(nullptr, sizeof(arguments<Ts...>));
     m_argument_store = {argument_store, k_enabled | k_arguments};
-    construct_arguments(m_argument_store.ptr(), utility::forward<Ts>(_arguments)...);
+    construct_arguments(m_argument_store.as_ptr(), utility::forward<Ts>(_arguments)...);
   } else {
     m_argument_store = {nullptr, k_enabled};
   }
@@ -270,8 +270,8 @@ inline void global_node::init(Ts&&... _arguments) {
   static_assert(sizeof...(Ts) != 0,
     "use void init() for default construction");
 
-  auto argument_store = m_argument_store.ptr();
-  if (m_argument_store.tag() & k_arguments) {
+  auto argument_store = m_argument_store.as_ptr();
+  if (m_argument_store.as_tag() & k_arguments) {
     m_storage_dispatch(storage_mode::k_fini_arguments, data(), argument_store);
   }
 

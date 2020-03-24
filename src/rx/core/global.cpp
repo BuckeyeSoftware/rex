@@ -15,7 +15,7 @@ static concurrency::spin_lock g_lock;
 
 // global_node
 void global_node::init_global() {
-  const auto flags = m_argument_store.tag();
+  const auto flags = m_argument_store.as_tag();
   if (!(flags & k_enabled)) {
     return;
   }
@@ -23,13 +23,13 @@ void global_node::init_global() {
   RX_ASSERT(!(flags & k_initialized), "already initialized");
   logger->verbose("%p init: %s/%s", this, m_group, m_name);
 
-  m_storage_dispatch(storage_mode::k_init_global, data(), m_argument_store.ptr());
+  m_storage_dispatch(storage_mode::k_init_global, data(), m_argument_store.as_ptr());
 
   m_argument_store.retag(flags | k_initialized);
 }
 
 void global_node::fini_global() {
-  const auto flags = m_argument_store.tag();
+  const auto flags = m_argument_store.as_tag();
 
   if (!(flags & k_enabled)) {
     return;
@@ -40,7 +40,7 @@ void global_node::fini_global() {
 
   m_storage_dispatch(storage_mode::k_fini_global, data(), nullptr);
   if (flags & k_arguments) {
-    auto argument_store = m_argument_store.ptr();
+    auto argument_store = m_argument_store.as_ptr();
     m_storage_dispatch(storage_mode::k_fini_arguments, nullptr, argument_store);
     reallocate_arguments(argument_store, 0);
   }
@@ -49,21 +49,21 @@ void global_node::fini_global() {
 }
 
 void global_node::init() {
-  const auto flags = m_argument_store.tag();
+  const auto flags = m_argument_store.as_tag();
   RX_ASSERT(!(flags & k_initialized), "already initialized");
 
-  m_storage_dispatch(storage_mode::k_init_global, data(), m_argument_store.ptr());
+  m_storage_dispatch(storage_mode::k_init_global, data(), m_argument_store.as_ptr());
 
   m_argument_store.retag((flags & ~k_enabled) | k_initialized);
 }
 
 void global_node::fini() {
-  const auto flags = m_argument_store.tag();
+  const auto flags = m_argument_store.as_tag();
   RX_ASSERT(flags & k_initialized, "not initialized");
 
   m_storage_dispatch(storage_mode::k_fini_global, data(), nullptr);
   if (flags & k_arguments) {
-    auto argument_store = m_argument_store.ptr();
+    auto argument_store = m_argument_store.as_ptr();
     m_storage_dispatch(storage_mode::k_fini_arguments, nullptr, argument_store);
     reallocate_arguments(argument_store, 0);
   }
