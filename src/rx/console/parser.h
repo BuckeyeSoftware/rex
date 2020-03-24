@@ -255,7 +255,8 @@ inline bool parser::error(bool _caret, const char* _format, Ts&&... _arguments) 
   record_span();
   m_diagnostic.caret = _caret;
   if constexpr(sizeof...(Ts) != 0) {
-    m_diagnostic.message = string::format(m_allocator, _format, utility::forward<Ts>(_arguments)...);
+    m_diagnostic.message = string::format(m_allocator, _format,
+      utility::forward<Ts>(_arguments)...);
   } else {
     m_diagnostic.message = _format;
   }
