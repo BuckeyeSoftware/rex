@@ -1,6 +1,7 @@
 #ifndef RX_CORE_EVENT_H
 #define RX_CORE_EVENT_H
 #include "rx/core/function.h"
+#include "rx/core/vector.h"
 
 #include "rx/core/concurrency/spin_lock.h"
 #include "rx/core/concurrency/scope_lock.h"
