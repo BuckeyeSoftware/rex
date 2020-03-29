@@ -13,6 +13,7 @@
 
 #if defined(RX_PLATFORM_POSIX)
 #include <pthread.h> // pthread_t
+#include <signal.h> // sigset_t, setfillset
 #elif defined(RX_PLATFORM_WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -48,10 +49,21 @@ void thread::join() {
 
 // state
 void* thread::state::wrap(void* _data) {
-  const int thread_id = g_thread_id++;
+#if defined(RX_PLATFORM_POSIX)
+  // Don't permit any signal delivery to threads.
+  sigset_t mask;
+  sigfillset(&mask);
+  RX_ASSERT(pthread_sigmask(SIG_BLOCK, &mask, nullptr) == 0,
+    "failed to block signals");
+#endif
+
+  // Record the thread name into the global profiler.
   auto self = reinterpret_cast<state*>(_data);
   profiler::instance().set_thread_name(self->m_name);
-  self->m_function(utility::move(thread_id));
+
+  // Dispatch the actual thread function.
+  self->m_function(g_thread_id++);
+
   return nullptr;
 }
 
