@@ -1,3 +1,5 @@
+#include <stdlib.h> // exit
+
 #include "rx/core/log.h"
 
 #if defined(RX_PLATFORM_POSIX)
@@ -21,7 +23,7 @@ static void abort_debug() {
 #endif
 }
 
-[[noreturn, maybe_unused]]
+[[maybe_unused]]
 static void abort_release() {
 #if defined(RX_PLATFORM_POSIX)
   raise(SIGABRT);
