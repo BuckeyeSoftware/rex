@@ -5,6 +5,9 @@
 
 namespace rx::math {
 
+template<typename T>
+inline constexpr const T k_epsilon = T(0.0001);
+
 inline bool epsilon_compare(rx_f32 _x, rx_f32 _y) {
   return abs(_x - _y) <= k_epsilon<rx_f32> * algorithm::max(1.0f, _x, _y);
 }

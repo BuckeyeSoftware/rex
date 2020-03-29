@@ -4,6 +4,7 @@
 #include "rx/core/hints/empty_bases.h"
 #include "rx/core/utility/exchange.h"
 #include "rx/core/hash.h"
+#include "rx/core/assert.h"
 
 namespace rx {
 

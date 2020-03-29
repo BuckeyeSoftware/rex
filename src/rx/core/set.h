@@ -1,16 +1,17 @@
 #ifndef RX_CORE_SET_H
 #define RX_CORE_SET_H
-#include "rx/core/utility/move.h"
-#include "rx/core/utility/swap.h"
+#include "rx/core/hash.h"
+#include "rx/core/array.h"
 
+#include "rx/core/traits/is_trivially_destructible.h"
 #include "rx/core/traits/return_type.h"
 #include "rx/core/traits/is_same.h"
+
+#include "rx/core/utility/swap.h"
 
 #include "rx/core/hints/unreachable.h"
 
 #include "rx/core/memory/system_allocator.h" // allocator, g_system_allocator
-
-#include "rx/core/hash.h"
 
 namespace rx {
 

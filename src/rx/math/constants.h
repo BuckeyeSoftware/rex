@@ -10,9 +10,6 @@ template<typename T>
 inline constexpr const T k_tau{k_pi<T>*2.0};
 
 template<typename T>
-inline constexpr const T k_epsilon{0.0001};
-
-template<typename T>
 struct range {
   constexpr range(const T& _min, const T& _max);
   T min;
