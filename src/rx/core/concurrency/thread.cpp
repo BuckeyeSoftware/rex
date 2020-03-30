@@ -91,7 +91,7 @@ void thread::state::spawn() {
 
   // Convert thread name to UTF-16 and set the thread's name with the new
   // |SetThreadDescription| API.
-  const wide_string converted_name = string(_name).to_utf16();
+  const wide_string converted_name = string(m_name).to_utf16();
   SetThreadDescription(thread_handle, reinterpret_cast<PCWSTR>(converted_name.data()));
 
   // Store the result of |_beginthreadex| into the HANDLE storage given by
