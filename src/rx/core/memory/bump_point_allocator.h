@@ -19,7 +19,7 @@ namespace rx::memory {
 // reallocation and deallocation provided the pointer passed to either is the
 // same as the last pointer returned by a call to allocate.
 //
-// The purpose of this allocator is to provide a very quick, linear burn 
+// The purpose of this allocator is to provide a very quick, linear burn
 // scratch space to allocate shortly-lived objects and to reset.
 struct bump_point_allocator
   final : allocator
@@ -41,6 +41,8 @@ struct bump_point_allocator
   rx_size available() const;
 
 private:
+  rx_byte* allocate_unlocked(rx_size _size);
+
   rx_size m_size;
   rx_byte* m_data;
 

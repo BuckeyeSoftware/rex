@@ -27,7 +27,10 @@ bump_point_allocator::bump_point_allocator(rx_byte* _data, rx_size _size)
 
 rx_byte* bump_point_allocator::allocate(rx_size _size) {
   concurrency::scope_lock locked{m_lock};
+  return allocate_unlocked(_size);
+}
 
+rx_byte* bump_point_allocator::allocate_unlocked(rx_size _size) {
   // Round |_size| to a multiple of k_alignment to keep all pointers
   // aligned by k_alignment.
   _size = allocator::round_to_alignment(_size);
@@ -67,7 +70,7 @@ rx_byte* bump_point_allocator::reallocate(rx_byte* _data, rx_size _size) {
       m_this_point = m_last_point + _size;
 
       return _data;
-    } else if (rx_byte* data = allocate(_size)) {
+    } else if (rx_byte* data = allocate_unlocked(_size)) {
       // This path is hit when resizing an allocation which isn't the last thing
       // allocated.
       //
