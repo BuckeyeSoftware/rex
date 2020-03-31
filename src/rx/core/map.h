@@ -202,9 +202,9 @@ template<typename K, typename V>
 inline void map<K, V>::clear_and_deallocate() {
   clear();
 
-  allocator().deallocate(reinterpret_cast<rx_byte*>(m_keys));
-  allocator().deallocate(reinterpret_cast<rx_byte*>(m_values));
-  allocator().deallocate(reinterpret_cast<rx_byte*>(m_hashes));
+  allocator().deallocate(m_keys);
+  allocator().deallocate(m_values);
+  allocator().deallocate(m_hashes);
 }
 
 template<typename K, typename V>
@@ -399,9 +399,9 @@ inline bool map<K, V>::grow() {
     }
   }
 
-  allocator().deallocate(reinterpret_cast<rx_byte*>(keys_data));
-  allocator().deallocate(reinterpret_cast<rx_byte*>(values_data));
-  allocator().deallocate(reinterpret_cast<rx_byte*>(hashes_data));
+  allocator().deallocate(keys_data);
+  allocator().deallocate(values_data);
+  allocator().deallocate(hashes_data);
 
   return true;
 }

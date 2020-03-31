@@ -182,8 +182,8 @@ template<typename K>
 inline void set<K>::clear_and_deallocate() {
   clear();
 
-  allocator().deallocate(reinterpret_cast<rx_byte*>(m_keys));
-  allocator().deallocate(reinterpret_cast<rx_byte*>(m_hashes));
+  allocator().deallocate(m_keys);
+  allocator().deallocate(m_hashes);
 }
 
 template<typename K>
@@ -361,8 +361,8 @@ inline bool set<K>::grow() {
     }
   }
 
-  allocator().deallocate(reinterpret_cast<rx_byte*>(keys_data));
-  allocator().deallocate(reinterpret_cast<rx_byte*>(hashes_data));
+  allocator().deallocate(keys_data);
+  allocator().deallocate(hashes_data);
 
   return true;
 }

@@ -38,7 +38,7 @@ rx_byte* stats_allocator::allocate(rx_size _size) {
   return aligned;
 }
 
-rx_byte* stats_allocator::reallocate(rx_byte* _data, rx_size _size) {
+rx_byte* stats_allocator::reallocate(void* _data, rx_size _size) {
   if (RX_HINT_UNLIKELY(!_data)) {
     return allocate(_size);
   }
@@ -81,7 +81,7 @@ rx_byte* stats_allocator::reallocate(rx_byte* _data, rx_size _size) {
   return aligned;
 }
 
-void stats_allocator::deallocate(rx_byte* _data) {
+void stats_allocator::deallocate(void* _data) {
   if (RX_HINT_UNLIKELY(!_data)) {
     return;
   }
@@ -98,7 +98,7 @@ void stats_allocator::deallocate(rx_byte* _data) {
     m_statistics.used_actual_bytes -= actual_size;
   }
 
-  m_allocator.deallocate(reinterpret_cast<rx_byte*>(node));
+  m_allocator.deallocate(node);
 }
 
 stats_allocator::statistics stats_allocator::stats() const {

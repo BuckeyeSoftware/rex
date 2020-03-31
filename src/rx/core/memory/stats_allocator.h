@@ -20,8 +20,8 @@ struct stats_allocator
   constexpr stats_allocator(allocator& _allocator);
 
   virtual rx_byte* allocate(rx_size _size);
-  virtual rx_byte* reallocate(rx_byte* _data, rx_size _size);
-  virtual void deallocate(rx_byte* _data);
+  virtual rx_byte* reallocate(void* _data, rx_size _size);
+  virtual void deallocate(void* _data);
 
   struct statistics {
     rx_size allocations;           // Number of calls to allocate

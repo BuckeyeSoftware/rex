@@ -8,11 +8,11 @@ rx_byte* heap_allocator::allocate(rx_size _size) {
   return reinterpret_cast<rx_byte*>(malloc(_size));
 }
 
-rx_byte* heap_allocator::reallocate(rx_byte* _data, rx_size _size) {
+rx_byte* heap_allocator::reallocate(void* _data, rx_size _size) {
   return reinterpret_cast<rx_byte*>(realloc(_data, _size));
 }
 
-void heap_allocator::deallocate(rx_byte* _data) {
+void heap_allocator::deallocate(void* _data) {
   free(_data);
 }
 

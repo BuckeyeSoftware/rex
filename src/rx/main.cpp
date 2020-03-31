@@ -265,10 +265,10 @@ int main(int _argc, char** _argv) {
         return nullptr;
       },
       [](void* _data, rx_size _size) -> void* {
-        return memory::system_allocator::instance().reallocate(reinterpret_cast<rx_byte*>(_data), _size);
+        return memory::system_allocator::instance().reallocate(_data, _size);
       },
       [](void* _data){
-        memory::system_allocator::instance().deallocate(reinterpret_cast<rx_byte*>(_data));
+        memory::system_allocator::instance().deallocate(_data);
       }
     );
     SDL_SetMainReady();

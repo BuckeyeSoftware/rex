@@ -246,7 +246,7 @@ inline vector<T>::vector(vector&& other_)
 template<typename T>
 inline vector<T>::~vector() {
   clear();
-  allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
+  allocator().deallocate(m_data);
 }
 
 template<typename T>
@@ -254,7 +254,7 @@ inline vector<T>& vector<T>::operator=(const vector& _other) {
   RX_ASSERT(&_other != this, "self assignment");
 
   clear();
-  allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
+  allocator().deallocate(m_data);
 
   m_size = _other.m_size;
   m_capacity = _other.m_capacity;
@@ -276,7 +276,7 @@ inline vector<T>& vector<T>::operator=(vector&& other_) {
   RX_ASSERT(&other_ != this, "self assignment");
 
   clear();
-  allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
+  allocator().deallocate(m_data);
 
   m_allocator = other_.m_allocator;
   m_data = utility::exchange(other_.m_data, nullptr);
@@ -376,7 +376,7 @@ bool vector<T>::reserve(rx_size _size) {
   }
 
   if constexpr (traits::is_trivially_copyable<T>) {
-    T* resize = reinterpret_cast<T*>(allocator().reallocate(reinterpret_cast<rx_byte*>(m_data), m_capacity * sizeof *m_data));
+    T* resize = reinterpret_cast<T*>(allocator().reallocate(m_data, m_capacity * sizeof *m_data));
     if (RX_HINT_UNLIKELY(!resize)) {
       return false;
     }
@@ -394,7 +394,7 @@ bool vector<T>::reserve(rx_size _size) {
         utility::construct<T>(resize + i, utility::move(*(m_data + i)));
         utility::destruct<T>(m_data + i);
       }
-      allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
+      allocator().deallocate(m_data);
     }
     m_data = resize;
     return true;

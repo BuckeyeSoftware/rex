@@ -209,7 +209,7 @@ string::string(memory::view _view)
 
 string::~string() {
   if (m_data != m_buffer) {
-    allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
+    allocator().deallocate(m_data);
   }
 }
 
@@ -246,7 +246,7 @@ bool string::reserve(rx_size _capacity) {
     // Copy data out of |m_buffer| to |data|.
     memcpy(data, m_buffer, size + 1);
   } else {
-    data = reinterpret_cast<char*>(allocator().reallocate(reinterpret_cast<rx_byte*>(m_data), _capacity + 1));
+    data = reinterpret_cast<char*>(allocator().reallocate(m_data, _capacity + 1));
     if (RX_HINT_UNLIKELY(!data)) {
       return false;
     }
@@ -652,7 +652,7 @@ bool operator>(const string& _lhs, const string& _rhs) {
 }
 
 bool wide_string::resize(rx_size _size) {
-  rx_u16* resize = reinterpret_cast<rx_u16*>(allocator().reallocate(reinterpret_cast<rx_byte*>(m_data), (_size + 1) * sizeof *m_data));
+  rx_u16* resize = reinterpret_cast<rx_u16*>(allocator().reallocate(m_data, (_size + 1) * sizeof *m_data));
   if (!RX_HINT_UNLIKELY(resize)) {
     return false;
   }
@@ -716,7 +716,7 @@ wide_string::wide_string(wide_string&& other_)
 }
 
 wide_string::~wide_string() {
-  allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
+  allocator().deallocate(m_data);
 }
 
 } // namespace rx

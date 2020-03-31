@@ -38,7 +38,7 @@ rx_byte* single_shot_allocator::allocate(rx_size _size) {
   return m_data;
 }
 
-rx_byte* single_shot_allocator::reallocate(rx_byte* _data, rx_size _size) {
+rx_byte* single_shot_allocator::reallocate(void* _data, rx_size _size) {
   RX_ASSERT(m_allocated, "reallocate called before allocate");
   RX_ASSERT(_data == m_data, "invalid pointer");
 
@@ -50,7 +50,7 @@ rx_byte* single_shot_allocator::reallocate(rx_byte* _data, rx_size _size) {
   return m_data;
 }
 
-void single_shot_allocator::deallocate(rx_byte* _data) {
+void single_shot_allocator::deallocate(void* _data) {
   RX_ASSERT(m_allocated, "deallocate called before allocate");
   if (RX_HINT_LIKELY(_data)) {
     RX_ASSERT(_data == m_data, "invalid pointer");

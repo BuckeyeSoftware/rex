@@ -31,8 +31,8 @@ struct bump_point_allocator
   bump_point_allocator(rx_byte* _memory, rx_size _size);
 
   virtual rx_byte* allocate(rx_size _size);
-  virtual rx_byte* reallocate(rx_byte* _data, rx_size _size);
-  virtual void deallocate(rx_byte* data);
+  virtual rx_byte* reallocate(void* _data, rx_size _size);
+  virtual void deallocate(void* data);
 
   void reset();
 

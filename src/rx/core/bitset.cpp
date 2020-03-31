@@ -40,7 +40,7 @@ bitset& bitset::operator=(bitset&& bitset_) {
 bitset& bitset::operator=(const bitset& _bitset) {
   RX_ASSERT(&_bitset != this, "self assignment");
 
-  allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
+  allocator().deallocate(m_data);
 
   m_size = _bitset.m_size;
   m_data = reinterpret_cast<rx_u64*>(allocator().allocate(bytes_for_size(m_size)));

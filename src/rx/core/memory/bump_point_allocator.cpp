@@ -49,7 +49,7 @@ rx_byte* bump_point_allocator::allocate_unlocked(rx_size _size) {
   return m_last_point;
 }
 
-rx_byte* bump_point_allocator::reallocate(rx_byte* _data, rx_size _size) {
+rx_byte* bump_point_allocator::reallocate(void* _data, rx_size _size) {
   if (RX_HINT_LIKELY(_data)) {
     concurrency::scope_lock locked{m_lock};
 
@@ -69,7 +69,7 @@ rx_byte* bump_point_allocator::reallocate(rx_byte* _data, rx_size _size) {
       // Bump the pointer along by the last point and new size.
       m_this_point = m_last_point + _size;
 
-      return _data;
+      return static_cast<rx_byte*>(_data);
     } else if (rx_byte* data = allocate_unlocked(_size)) {
       // This path is hit when resizing an allocation which isn't the last thing
       // allocated.
@@ -92,7 +92,7 @@ rx_byte* bump_point_allocator::reallocate(rx_byte* _data, rx_size _size) {
   return allocate(_size);
 }
 
-void bump_point_allocator::deallocate(rx_byte* _data) {
+void bump_point_allocator::deallocate(void* _data) {
   concurrency::scope_lock locked{m_lock};
 
   // Can only deallocate provided |_data| is the address of |m_last_point|,
