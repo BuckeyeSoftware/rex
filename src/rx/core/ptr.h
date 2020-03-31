@@ -58,6 +58,8 @@ struct RX_HINT_EMPTY_BASES ptr
 
   constexpr memory::allocator& allocator() const;
 
+  constexpr rx_size hash() const;
+
 private:
   void destroy();
 
@@ -167,10 +169,13 @@ RX_HINT_FORCE_INLINE constexpr memory::allocator& ptr<T>::allocator() const {
 }
 
 template<typename T>
+inline constexpr rx_size ptr<T>::hash() const {
+  return rx::hash<T*>{}(m_data);
+}
+
+template<typename T>
 inline void ptr<T>::destroy() {
-  if (m_data) {
-    allocator().template destroy<T>(m_data);
-  }
+  allocator().template destroy<T>(m_data);
 }
 
 // Helper function to make a unique ptr.
@@ -178,14 +183,6 @@ template<typename T, typename... Ts>
 inline ptr<T> make_ptr(memory::allocator& _allocator, Ts&&... _arguments) {
   return {_allocator, _allocator.create<T>(utility::forward<Ts>(_arguments)...)};
 }
-
-// Specialization of hash<Ht> for ptr<Pt>.
-template<typename T>
-struct hash<ptr<T>> {
-  constexpr rx_size operator()(const ptr<T>& _ptr) const {
-    return hash<T*>{}(_ptr.get());
-  }
-};
 
 } // namespace rx
 
