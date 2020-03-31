@@ -369,7 +369,7 @@ struct atomic_flag {
     detail::atomic_store(&m_value, false, _order);
   }
 
-// private:
+private:
   detail::atomic_base<bool> m_value;
 };
 
