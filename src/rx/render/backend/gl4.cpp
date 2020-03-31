@@ -16,8 +16,6 @@
 #include "rx/console/variable.h"
 #include "rx/console/interface.h"
 
-#include "lib/remotery.h"
-
 namespace rx::render::backend {
 
 RX_LOG("render/gl4", logger);
@@ -145,27 +143,6 @@ static void (GLAPIENTRYP pglFinish)(void);
 #ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY          0x84FF
 #endif
-
-struct profile_sample {
-  profile_sample(const char* _tag)
-    : m_cpu_sample{_tag}
-  {
-    static auto profile_gpu{console::interface::find_variable_by_name("profile.gpu")->cast<bool>()};
-    if (*profile_gpu) {
-      rmt_BeginOpenGLSampleDynamic(_tag);
-    }
-  }
-
-  ~profile_sample() {
-    static auto profile_gpu{console::interface::find_variable_by_name("profile.gpu")->cast<bool>()};
-    if (*profile_gpu) {
-      rmt_EndOpenGLSample();
-    }
-  }
-
-private:
-  profiler::cpu_sample m_cpu_sample;
-};
 
 namespace detail_gl4 {
   struct buffer {
@@ -341,7 +318,7 @@ namespace detail_gl4 {
     }
 
     void use_state(const frontend::state* _render_state) {
-      profile_sample sample{"use_state"};
+      profiler::cpu_sample sample{"use_state"};
 
       const auto& scissor{_render_state->scissor};
       const auto& blend{_render_state->blend};
@@ -557,7 +534,7 @@ namespace detail_gl4 {
     }
 
     void use_draw_target(frontend::target* _render_target, const frontend::buffers* _draw_buffers) {
-      profile_sample sample{"use_draw_target"};
+      profiler::cpu_sample sample{"use_draw_target"};
 
       const auto this_target{reinterpret_cast<const target*>(_render_target + 1)};
       if (this_target->fbo != m_bound_fbo) {
@@ -589,7 +566,7 @@ namespace detail_gl4 {
     }
 
     void use_program(const frontend::program* _render_program) {
-      profile_sample sample{"use_program"};
+      profiler::cpu_sample sample{"use_program"};
       const auto this_program{reinterpret_cast<const program*>(_render_program + 1)};
       if (this_program->handle != m_bound_program) {
         pglUseProgram(this_program->handle);
@@ -598,7 +575,7 @@ namespace detail_gl4 {
     }
 
     void use_buffer(const frontend::buffer* _render_buffer) {
-      profile_sample sample{"use_buffer"};
+      profiler::cpu_sample sample{"use_buffer"};
       if (_render_buffer) {
         const auto this_buffer{reinterpret_cast<const buffer*>(_render_buffer + 1)};
         if (this_buffer->va != m_bound_vao) {
@@ -620,7 +597,7 @@ namespace detail_gl4 {
 
     template<typename Ft, typename Bt, GLuint texture_unit::*name>
     void use_texture_template(const Ft* _render_texture, GLuint unit) {
-      profile_sample sample{"use_texture"};
+      profiler::cpu_sample sample{"use_texture"};
 
       const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
       auto& texture_unit{m_texture_units[unit]};
@@ -1619,7 +1596,7 @@ void gl4::process(rx_byte* _command) {
     break;
   case frontend::command_type::k_clear:
     {
-      profile_sample sample{"clear"};
+      profiler::cpu_sample sample{"clear"};
 
       const auto command{reinterpret_cast<frontend::clear_command*>(header + 1)};
       const auto render_state{&command->render_state};
@@ -1662,7 +1639,7 @@ void gl4::process(rx_byte* _command) {
     break;
   case frontend::command_type::k_draw:
     {
-      profile_sample sample{"draw"};
+      profiler::cpu_sample sample{"draw"};
 
       const auto command{reinterpret_cast<frontend::draw_command*>(header + 1)};
       const auto render_state{&command->render_state};
@@ -1818,7 +1795,7 @@ void gl4::process(rx_byte* _command) {
     break;
   case frontend::command_type::k_blit:
     {
-      profile_sample sample{"blit"};
+      profiler::cpu_sample sample{"blit"};
 
       const auto command{reinterpret_cast<frontend::blit_command*>(header + 1)};
       const auto render_state{&command->render_state};
@@ -1870,15 +1847,7 @@ void gl4::process(rx_byte* _command) {
       break;
     }
   case frontend::command_type::k_profile:
-    {
-      const auto command{reinterpret_cast<frontend::profile_command*>(header + 1)};
-      if (command->tag) {
-        rmt_BeginOpenGLSampleDynamic(command->tag);
-      } else {
-        rmt_EndOpenGLSample();
-      }
-      break;
-    }
+    break;
   }
 }
 

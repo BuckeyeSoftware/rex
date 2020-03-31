@@ -11,8 +11,6 @@
 #include "rx/core/profiler.h"
 #include "rx/core/log.h"
 
-#include "lib/remotery.h"
-
 namespace rx::render::backend {
 
 RX_LOG("render/es3", logger);
@@ -1828,15 +1826,7 @@ void es3::process(rx_byte* _command) {
       break;
     }
   case frontend::command_type::k_profile:
-    {
-      const auto command{reinterpret_cast<frontend::profile_command*>(header + 1)};
-      if (command->tag) {
-        rmt_BeginOpenGLSampleDynamic(command->tag);
-      } else {
-        rmt_EndOpenGLSample();
-      }
-      break;
-    }
+    break;
   }
 }
 

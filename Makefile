@@ -72,7 +72,6 @@ endif
 ifeq ($(DEBUG),1)
 	CFLAGS += -g
 	CFLAGS += -DRX_DEBUG
-	CFLAGS += -DRMT_ENABLED=0
 
 	# Disable all optimizations in debug builds.
 	CFLAGS += -O0
@@ -87,7 +86,6 @@ else ifeq ($(PROFILE),1)
 	# Enable debug symbols and assertions in profile builds.
 	CFLAGS += -g
 	CFLAGS += -DRX_DEBUG
-	CFLAGS += -DRMT_ENABLED=0
 
 	# Use slightly less aggressive optimizations in profile builds.
 	CFLAGS += -O2
@@ -97,10 +95,6 @@ else ifeq ($(PROFILE),1)
 else
 	# Enable assertions in release temporarily.
 	CFLAGS += -DRX_DEBUG
-
-	# Remotery
-	CFLAGS += -DRMT_ENABLED=1
-	CFLAGS += -DRMT_USE_OPENGL=1
 
 	# Disable default C assertions.
 	CFLAGS += -DNDEBUG

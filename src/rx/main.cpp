@@ -24,8 +24,6 @@
 #include "rx/game.h"
 #include "rx/display.h"
 
-#include "lib/remotery.h"
-
 using namespace rx;
 
 RX_CONSOLE_V2IVAR(
@@ -389,8 +387,9 @@ int main(int _argc, char** _argv) {
       SDL_StartTextInput();
 
       {
+        ptr<render::backend::context> backend;
+
         auto& allocator = memory::system_allocator::instance();
-        ptr<render::backend::context> backend{allocator};
         if (driver_name == "gl4") {
           backend = make_ptr<render::backend::gl4>(allocator, allocator, reinterpret_cast<void*>(window));
         } else if (driver_name == "gl3") {
@@ -410,62 +409,6 @@ int main(int _argc, char** _argv) {
         SDL_GL_SetSwapInterval(*display_swap_interval);
 
         render::frontend::context frontend{allocator, backend.get()};
-
-        Remotery* remotery = nullptr;
-        if (rmtSettings* settings = rmt_Settings()) {
-          settings->reuse_open_port = RMT_TRUE;
-          settings->maxNbMessagesPerUpdate = 128;
-          settings->port = *profile_port;
-          settings->limit_connections_to_localhost = *profile_local;
-
-          settings->malloc = [](void*, rx_u32 _bytes) -> void* {
-            return memory::system_allocator::instance().allocate(_bytes);
-          };
-
-          settings->realloc = [](void*, void* _data, rx_u32 _bytes) ->void* {
-            return memory::system_allocator::instance().reallocate(reinterpret_cast<rx_byte*>(_data), _bytes);
-          };
-
-          settings->free = [](void*, void* _data) {
-            memory::system_allocator::instance().deallocate(reinterpret_cast<rx_byte*>(_data));
-          };
-
-          if (rmt_CreateGlobalInstance(&remotery) == RMT_ERROR_NONE) {
-            auto set_thread_name = [](void*, [[maybe_unused]] const char* _name) {
-              rmt_SetCurrentThreadName(_name);
-            };
-
-            if (*profile_cpu) {
-              profiler::instance().bind_cpu({
-                reinterpret_cast<void*>(remotery),
-                set_thread_name,
-                [](void*, [[maybe_unused]] const char* _tag) {
-                  rmt_BeginCPUSampleDynamic(_tag, RMTSF_Aggregate);
-                },
-                [](void*) {
-                  rmt_EndCPUSample();
-                }
-              });
-            }
-
-            if (*profile_gpu) {
-              if (is_gl || is_es) {
-                rmt_BindOpenGL();
-              }
-
-              profiler::instance().bind_gpu({
-                reinterpret_cast<void*>(&frontend),
-                set_thread_name,
-                [](void* _context, const char* _tag) {
-                  reinterpret_cast<render::frontend::context*>(_context)->profile(_tag);
-                },
-                [](void* _context) {
-                  reinterpret_cast<render::frontend::context*>(_context)->profile(nullptr);
-                }
-              });
-            }
-          }
-        }
 
         // Quickly get a black screen.
         frontend.process();
@@ -622,14 +565,6 @@ int main(int _argc, char** _argv) {
               // ?
             }
           }
-        }
-
-        if (remotery) {
-          profiler::instance().unbind_cpu();
-          profiler::instance().unbind_gpu();
-
-          rmt_UnbindOpenGL();
-          rmt_DestroyGlobalInstance(remotery);
         }
       }
 
