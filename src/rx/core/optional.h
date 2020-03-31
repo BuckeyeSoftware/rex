@@ -62,7 +62,7 @@ inline constexpr optional<T>::optional(T&& data_)
   : m_data{}
   , m_init{true}
 {
-  m_data.init(utility::move(data_));
+  m_data.init(utility::forward<T>(data_));
 }
 
 template<typename T>
@@ -103,7 +103,7 @@ inline optional<T>& optional<T>::operator=(T&& data_) {
     m_data.fini();
   }
   m_init = true;
-  m_data.init(utility::move(data_));
+  m_data.init(utility::forward<T>(data_));
   return *this;
 }
 
