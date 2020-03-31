@@ -41,7 +41,7 @@ inline deferred_function<T>::~deferred_function() {
 }
 
 template<typename T>
-inline constexpr memory::allocator& deferred_function<T>::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& deferred_function<T>::allocator() const {
   return m_function.allocator();
 }
 

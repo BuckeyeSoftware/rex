@@ -79,7 +79,7 @@ inline thread::thread(thread&& thread_)
 {
 }
 
-inline constexpr memory::allocator& thread::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& thread::allocator() const {
   return m_state.allocator();
 }
 

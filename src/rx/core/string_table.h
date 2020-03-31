@@ -92,7 +92,7 @@ inline void string_table::clear() {
   m_data.clear();
 }
 
-inline constexpr memory::allocator& string_table::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& string_table::allocator() const {
   return m_data.allocator();
 }
 

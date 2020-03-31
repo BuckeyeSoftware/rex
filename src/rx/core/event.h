@@ -123,7 +123,7 @@ inline rx_size event<R(Ts...)>::size() const {
 }
 
 template<typename R, typename... Ts>
-inline constexpr memory::allocator& event<R(Ts...)>::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& event<R(Ts...)>::allocator() const {
   return m_delegates.allocator();
 }
 
