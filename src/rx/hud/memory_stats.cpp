@@ -29,9 +29,11 @@ memory_stats::memory_stats(render::immediate2D* _immediate)
 }
 
 void memory_stats::render() {
-  const auto stats{memory::g_system_allocator->stats()};
-  const render::frontend::context& frontend{*m_immediate->frontend()};
-  const math::vec2f &screen_size{frontend.swapchain()->dimensions().cast<rx_f32>()};
+  const auto allocator = memory::system_allocator::instance();
+  const auto stats = static_cast<const memory::system_allocator*>(allocator)->stats();
+
+  const render::frontend::context& frontend = *m_immediate->frontend();
+  const math::vec2f &screen_size = frontend.swapchain()->dimensions().cast<rx_f32>();
 
   rx_f32 y = 25.0f;
   auto line{[&](const string &_line) {

@@ -54,7 +54,7 @@ inline constexpr dynamic_pool::dynamic_pool(memory::allocator* _allocator, rx_si
 }
 
 inline constexpr dynamic_pool::dynamic_pool(rx_size _object_size, rx_size _per_pool)
-  : dynamic_pool{&memory::g_system_allocator, _object_size, _per_pool}
+  : dynamic_pool{memory::system_allocator::instance(), _object_size, _per_pool}
 {
 }
 

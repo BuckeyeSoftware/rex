@@ -131,7 +131,7 @@ private:
 
 template<typename T>
 inline constexpr vector<T>::vector()
-  : vector{&memory::g_system_allocator}
+  : vector{memory::system_allocator::instance()}
 {
 }
 
@@ -172,7 +172,7 @@ inline vector<T>::vector(memory::allocator* _allocator, initializers<U, E>&& _in
 template<typename T>
 template<typename U, rx_size E>
 inline vector<T>::vector(initializers<U, E>&& _initializers)
-  : vector{&memory::g_system_allocator, utility::move(_initializers)}
+  : vector{memory::system_allocator::instance(), utility::move(_initializers)}
 {
 }
 
@@ -230,7 +230,7 @@ inline vector<T>::vector(memory::allocator* _allocator, const vector& _other)
 
 template<typename T>
 inline vector<T>::vector(rx_size _size)
-  : vector{&memory::g_system_allocator, _size}
+  : vector{memory::system_allocator::instance(), _size}
 {
 }
 

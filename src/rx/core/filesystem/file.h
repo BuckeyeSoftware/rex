@@ -77,7 +77,7 @@ private:
 };
 
 inline constexpr file::file()
-  : file{&memory::g_system_allocator}
+  : file{memory::system_allocator::instance()}
 {
 }
 
@@ -96,12 +96,12 @@ inline file::file(memory::allocator* _allocator, const string& _file_name, const
 }
 
 inline file::file(const char* _file_name, const char* _mode)
-  : file{&memory::g_system_allocator, _file_name, _mode}
+  : file{memory::system_allocator::instance(), _file_name, _mode}
 {
 }
 
 inline file::file(const string& _file_name, const char* _mode)
-  : file{&memory::g_system_allocator, _file_name, _mode}
+  : file{memory::system_allocator::instance(), _file_name, _mode}
 {
 }
 
@@ -129,7 +129,7 @@ inline bool file::print(memory::allocator* _allocator, const char* _format, Ts&&
 
 template<typename... Ts>
 inline bool file::print(const char* _format, Ts&&... _arguments) {
-  return print(&memory::g_system_allocator, _format, utility::forward<Ts>(_arguments)...);
+  return print(memory::system_allocator::instance(), _format, utility::forward<Ts>(_arguments)...);
 }
 
 optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const char* _file_name);
@@ -140,11 +140,11 @@ inline optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator,
 }
 
 inline optional<vector<rx_byte>> read_binary_file(const string& _file_name) {
-  return read_binary_file(&memory::g_system_allocator, _file_name);
+  return read_binary_file(memory::system_allocator::instance(), _file_name);
 }
 
 inline optional<vector<rx_byte>> read_binary_file(const char* _file_name) {
-  return read_binary_file(&memory::g_system_allocator, _file_name);
+  return read_binary_file(memory::system_allocator::instance(), _file_name);
 }
 
 inline optional<vector<rx_byte>> read_text_file(memory::allocator* _allocator, const string& _file_name) {
@@ -152,11 +152,11 @@ inline optional<vector<rx_byte>> read_text_file(memory::allocator* _allocator, c
 }
 
 inline optional<vector<rx_byte>> read_text_file(const string& _file_name) {
-  return read_text_file(&memory::g_system_allocator, _file_name);
+  return read_text_file(memory::system_allocator::instance(), _file_name);
 }
 
 inline optional<vector<rx_byte>> read_text_file(const char* _file_name) {
-  return read_text_file(&memory::g_system_allocator, _file_name);
+  return read_text_file(memory::system_allocator::instance(), _file_name);
 }
 
 } // namespace rx::filesystem

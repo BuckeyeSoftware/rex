@@ -51,7 +51,7 @@ inline matrix::matrix(memory::allocator* _allocator)
 }
 
 inline matrix::matrix()
-  : matrix{&memory::g_system_allocator}
+  : matrix{memory::system_allocator::instance()}
 {
 }
 
@@ -63,7 +63,7 @@ inline matrix::matrix(memory::allocator* _allocator, const math::vec2z& _dimensi
 }
 
 inline matrix::matrix(const math::vec2z& _dimensions, rx_size _channels)
-  : matrix{&memory::g_system_allocator, _dimensions, _channels}
+  : matrix{memory::system_allocator::instance(), _dimensions, _channels}
 {
 }
 

@@ -110,7 +110,7 @@ private:
 
 template<typename K, typename V>
 inline map<K, V>::map()
-  : map{&memory::g_system_allocator}
+  : map{memory::system_allocator::instance()}
 {
 }
 
@@ -161,7 +161,7 @@ inline map<K, V>::map(memory::allocator* _allocator, initializers<Kt, Vt, E>&& i
 template<typename K, typename V>
 template<typename Kt, typename Vt, rx_size E>
 inline map<K, V>::map(initializers<Kt, Vt, E>&& initializers_)
-  : map{&memory::g_system_allocator, utility::move(initializers_)}
+  : map{memory::system_allocator::instance(), utility::move(initializers_)}
 {
 }
 

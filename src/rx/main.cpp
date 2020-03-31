@@ -17,6 +17,7 @@
 #include "rx/core/global.h"
 #include "rx/core/abort.h"
 #include "rx/core/log.h"
+#include "rx/core/ptr.h"
 
 #include "rx/core/math/sin.h"
 
@@ -122,12 +123,14 @@ static concurrency::atomic<game::status> g_status{game::status::k_restart};
 RX_LOG("main", logger);
 
 int main(int _argc, char** _argv) {
+  extern ptr<game> create(render::frontend::context&);
+
   (void)_argc;
   (void)_argv;
 
-  auto catch_signal{[](int) {
+  auto catch_signal = [](int) {
     g_status.store(game::status::k_shutdown);
-  }};
+  };
 
   signal(SIGINT, catch_signal);
   signal(SIGTERM, catch_signal);
@@ -253,10 +256,10 @@ int main(int _argc, char** _argv) {
     // memory usage.
     SDL_SetMemoryFunctions(
       [](rx_size _size) -> void* {
-        return memory::g_system_allocator->allocate(_size);
+        return memory::system_allocator::instance()->allocate(_size);
       },
       [](rx_size _size, rx_size _elements) -> void* {
-        rx_byte* data{memory::g_system_allocator->allocate(_size * _elements)};
+        rx_byte* data = memory::system_allocator::instance()->allocate(_size * _elements);
         if (data) {
           memset(data, 0, _size * _elements);
           return data;
@@ -264,10 +267,10 @@ int main(int _argc, char** _argv) {
         return nullptr;
       },
       [](void* _data, rx_size _size) -> void* {
-        return memory::g_system_allocator->reallocate(reinterpret_cast<rx_byte*>(_data), _size);
+        return memory::system_allocator::instance()->reallocate(reinterpret_cast<rx_byte*>(_data), _size);
       },
       [](void* _data){
-        memory::g_system_allocator->deallocate(reinterpret_cast<rx_byte*>(_data));
+        memory::system_allocator::instance()->deallocate(reinterpret_cast<rx_byte*>(_data));
       }
     );
     SDL_SetMainReady();
@@ -288,7 +291,7 @@ int main(int _argc, char** _argv) {
 
 
       // Fetch all the displays
-      const auto& displays{display::displays(&memory::g_system_allocator)};
+      const auto& displays{display::displays(memory::system_allocator::instance())};
 
       // Search for the given display in the display list.
       const display* found_display{nullptr};
@@ -385,31 +388,29 @@ int main(int _argc, char** _argv) {
       SDL_RaiseWindow(window);
       SDL_StartTextInput();
 
-      render::backend::context* backend{nullptr};
-      if (driver_name == "gl4") {
-        backend = memory::g_system_allocator->create<render::backend::gl4>(
-          &memory::g_system_allocator, reinterpret_cast<void*>(window));
-      } else if (driver_name == "gl3") {
-        backend = memory::g_system_allocator->create<render::backend::gl3>(
-          &memory::g_system_allocator, reinterpret_cast<void*>(window));
-      } else if (driver_name == "es3") {
-        backend = memory::g_system_allocator->create<render::backend::es3>(
-          &memory::g_system_allocator, reinterpret_cast<void*>(window));
-      } else if (driver_name == "null") {
-        backend = memory::g_system_allocator->create<render::backend::null>(
-          &memory::g_system_allocator, reinterpret_cast<void*>(window));
-      } else {
-        abort("invalid driver");
-      }
-
-      if (!backend->init()) {
-        abort("failed to initialize rendering backend");
-      }
-
-      SDL_GL_SetSwapInterval(*display_swap_interval);
-
       {
-        render::frontend::context frontend{&memory::g_system_allocator, backend};
+        ptr<render::backend::context> backend;
+
+        auto allocator = memory::system_allocator::instance();
+        if (driver_name == "gl4") {
+          backend = make_ptr<render::backend::gl4>(allocator, allocator, reinterpret_cast<void*>(window));
+        } else if (driver_name == "gl3") {
+          backend = make_ptr<render::backend::gl3>(allocator, allocator, reinterpret_cast<void*>(window));
+        } else if (driver_name == "es3") {
+          backend = make_ptr<render::backend::es3>(allocator, allocator, reinterpret_cast<void*>(window));
+        } else if (driver_name == "null") {
+          backend = make_ptr<render::backend::null>(allocator, allocator, reinterpret_cast<void*>(window));
+        } else {
+          abort("invalid driver");
+        }
+
+        if (!backend->init()) {
+          abort("failed to initialize rendering backend");
+        }
+
+        SDL_GL_SetSwapInterval(*display_swap_interval);
+
+        render::frontend::context frontend{allocator, backend.get()};
 
         Remotery* remotery = nullptr;
         if (rmtSettings* settings = rmt_Settings()) {
@@ -419,15 +420,15 @@ int main(int _argc, char** _argv) {
           settings->limit_connections_to_localhost = *profile_local;
 
           settings->malloc = [](void*, rx_u32 _bytes) -> void* {
-            return memory::g_system_allocator->allocate(_bytes);
+            return memory::system_allocator::instance()->allocate(_bytes);
           };
 
           settings->realloc = [](void*, void* _data, rx_u32 _bytes) ->void* {
-            return memory::g_system_allocator->reallocate(reinterpret_cast<rx_byte*>(_data), _bytes);
+            return memory::system_allocator::instance()->reallocate(reinterpret_cast<rx_byte*>(_data), _bytes);
           };
 
           settings->free = [](void*, void* _data) {
-            memory::g_system_allocator->deallocate(reinterpret_cast<rx_byte*>(_data));
+            memory::system_allocator::instance()->deallocate(reinterpret_cast<rx_byte*>(_data));
           };
 
           if (rmt_CreateGlobalInstance(&remotery) == RMT_ERROR_NONE) {
@@ -473,9 +474,7 @@ int main(int _argc, char** _argv) {
 
         SDL_SetRelativeMouseMode(SDL_TRUE);
 
-        // Create the game.
-        extern game* create(render::frontend::context&);
-        game* g = create(frontend);
+        ptr<game> g = create(frontend);
 
         auto on_fullscreen_change{display_fullscreen->on_change([&](rx_s32 _value) {
           if (_value == 0) {
@@ -505,7 +504,6 @@ int main(int _argc, char** _argv) {
         })};
 
         if (!g->on_init()) {
-          memory::g_system_allocator->destroy<game>(g);
           abort("game initialization failed");
         }
 
@@ -627,8 +625,6 @@ int main(int _argc, char** _argv) {
           }
         }
 
-        memory::g_system_allocator->destroy<game>(g);
-
         if (remotery) {
           profiler::instance().unbind_cpu();
           profiler::instance().unbind_gpu();
@@ -637,8 +633,6 @@ int main(int _argc, char** _argv) {
           rmt_DestroyGlobalInstance(remotery);
         }
       }
-
-      memory::g_system_allocator->destroy<render::backend::context>(backend);
 
       console::interface::save("config.cfg");
 

@@ -78,7 +78,7 @@ private:
 };
 
 inline bitset::bitset(rx_size _size)
-  : bitset{&memory::g_system_allocator, _size}
+  : bitset{memory::system_allocator::instance(), _size}
 {
 }
 

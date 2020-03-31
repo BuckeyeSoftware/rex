@@ -12,12 +12,6 @@ struct header {
   rx_byte* base;
 };
 
-stats_allocator::stats_allocator(allocator* _allocator)
-  : m_allocator{_allocator}
-{
-  RX_ASSERT(m_allocator, "null allocator");
-}
-
 rx_byte* stats_allocator::allocate(rx_size _size) {
   const rx_uintptr size_as_multiple{round_to_alignment(_size)};
   const rx_uintptr actual_size{size_as_multiple + sizeof(header) + k_alignment};
@@ -102,7 +96,7 @@ void stats_allocator::deallocate(rx_byte* _data) {
   m_allocator->deallocate(reinterpret_cast<rx_byte*>(node));
 }
 
-stats_allocator::statistics stats_allocator::stats() {
+stats_allocator::statistics stats_allocator::stats() const {
   // Hold a lock and make an entire copy of the structure atomically
   concurrency::scope_lock locked{m_lock};
   return m_statistics;

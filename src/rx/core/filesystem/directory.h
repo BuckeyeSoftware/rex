@@ -67,17 +67,17 @@ inline directory::directory(memory::allocator* _allocator, const string& _path)
 }
 
 inline directory::directory(const char* _path)
-  : directory{&memory::g_system_allocator, _path}
+  : directory{memory::system_allocator::instance(), _path}
 {
 }
 
 inline directory::directory(const string& _path)
-  : directory{&memory::g_system_allocator, _path}
+  : directory{memory::system_allocator::instance(), _path}
 {
 }
 
 inline directory::directory(string&& path_)
-  : directory{&memory::g_system_allocator, utility::move(path_)}
+  : directory{memory::system_allocator::instance(), utility::move(path_)}
 {
 }
 

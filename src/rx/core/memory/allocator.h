@@ -20,6 +20,7 @@ struct allocator
   static constexpr const rx_size k_alignment = 16;
 
   constexpr allocator() = default;
+
   ~allocator() = default;
 
   // allocate memory of size |_size|

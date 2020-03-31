@@ -96,7 +96,7 @@ json::json(memory::allocator* _allocator, const char* _contents)
 }
 
 json::json(const char* _contents)
-  : json{&memory::g_system_allocator, _contents, strlen(_contents)}
+  : json{memory::system_allocator::instance(), _contents, strlen(_contents)}
 {
 }
 

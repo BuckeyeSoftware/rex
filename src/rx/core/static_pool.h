@@ -50,7 +50,7 @@ private:
 };
 
 inline static_pool::static_pool(rx_size _object_size, rx_size _object_count)
-  : static_pool{&memory::g_system_allocator, _object_size, _object_count}
+  : static_pool{memory::system_allocator::instance(), _object_size, _object_count}
 {
 }
 

@@ -16,24 +16,35 @@ namespace rx::memory {
 struct system_allocator
   final : allocator
 {
-  system_allocator();
+  constexpr system_allocator();
 
   virtual rx_byte* allocate(rx_size _size);
   virtual rx_byte* reallocate(rx_byte* _data, rx_size _size);
   virtual void deallocate(rx_byte* _data);
 
-  stats_allocator::statistics stats();
+  stats_allocator::statistics stats() const;
+
+  static constexpr allocator* instance();
 
 private:
   heap_allocator m_heap_allocator;
   stats_allocator m_stats_allocator;
+
+  static global<system_allocator> s_instance;
 };
 
-inline stats_allocator::statistics system_allocator::stats() {
+inline constexpr system_allocator::system_allocator()
+  : m_stats_allocator{&m_heap_allocator}
+{
+}
+
+inline stats_allocator::statistics system_allocator::stats() const {
   return m_stats_allocator.stats();
 }
 
-extern global<system_allocator> g_system_allocator;
+inline constexpr allocator* system_allocator::instance() {
+  return &s_instance;
+}
 
 } // namespace rx::memory
 

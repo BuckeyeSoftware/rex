@@ -20,7 +20,7 @@ struct logger {
   logger();
   ~logger();
 
-  static logger& instance();
+  static constexpr logger& instance();
 
   bool subscribe(stream* _stream);
   bool unsubscribe(stream* _stream);
@@ -64,12 +64,12 @@ private:
   // NOTE(dweiler): This should come last.
   concurrency::thread m_thread;
 
-  static global<logger> s_logger;
+  static global<logger> s_instance;
 };
 
 static global_group g_group_loggers{"loggers"};
 
-global<logger> logger::s_logger{"system", "logger"};
+global<logger> logger::s_instance{"system", "logger"};
 
 static inline const char* string_for_level(log::level _level) {
   switch (_level) {
@@ -150,8 +150,8 @@ logger::~logger() {
   g_group_loggers.fini();
 }
 
-logger& logger::instance() {
-  return *s_logger;
+inline constexpr logger& logger::instance() {
+  return *s_instance;
 }
 
 bool logger::subscribe(stream* _stream) {
@@ -188,7 +188,7 @@ bool logger::enqueue(log* _owner, log::level _level, string&& message_) {
     auto& this_queue = m_queues[index];
 
     // Record the message.
-    auto this_message = make_ptr<message>(&memory::g_system_allocator,
+    auto this_message = make_ptr<message>(memory::system_allocator::instance(),
       &this_queue, _level, time(nullptr), utility::move(message_),
       intrusive_list::node{});
 

@@ -10,7 +10,7 @@ namespace rx::concurrency {
 
 RX_LOG("thread_pool", logger);
 
-global<thread_pool> thread_pool::s_thread_pool{"system", "thread_pool", 4_z, 4096_z};
+global<thread_pool> thread_pool::s_instance{"system", "thread_pool", 4_z, 4096_z};
 
 struct RX_HINT_EMPTY_BASES work
   : concepts::no_copy

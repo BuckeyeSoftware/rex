@@ -50,7 +50,7 @@ private:
 };
 
 inline constexpr loader::loader()
-  : loader{&memory::g_system_allocator}
+  : loader{memory::system_allocator::instance()}
 {
 }
 

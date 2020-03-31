@@ -141,7 +141,7 @@ inline command::argument::argument(const math::vec2i& _value)
 }
 
 inline command::command(const string& _name, const char* _signature, delegate&& _function)
-  : command{&memory::g_system_allocator, _name, _signature, utility::move(_function)}
+  : command{memory::system_allocator::instance(), _name, _signature, utility::move(_function)}
 {
 }
 

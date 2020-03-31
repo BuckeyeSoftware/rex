@@ -106,14 +106,14 @@ inline constexpr function<R(Ts...)>::function(memory::allocator* _allocator)
 
 template<typename R, typename... Ts>
 inline constexpr function<R(Ts...)>::function()
-  : function{&memory::g_system_allocator}
+  : function{memory::system_allocator::instance()}
 {
 }
 
 template<typename R, typename... Ts>
 template<typename F, typename>
 inline function<R(Ts...)>::function(F&& _function)
-  : function{&memory::g_system_allocator, utility::forward<F>(_function)}
+  : function{memory::system_allocator::instance(), utility::forward<F>(_function)}
 {
 }
 

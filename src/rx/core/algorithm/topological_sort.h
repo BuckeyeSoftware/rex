@@ -45,7 +45,7 @@ protected:
 
 template<typename K>
 inline topological_sort<K>::topological_sort()
-  : topological_sort{&memory::g_system_allocator}
+  : topological_sort{memory::system_allocator::instance()}
 {
 }
 

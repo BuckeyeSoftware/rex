@@ -60,7 +60,7 @@ private:
 };
 
 inline constexpr chain::chain()
-  : chain{&memory::g_system_allocator}
+  : chain{memory::system_allocator::instance()}
 {
 }
 

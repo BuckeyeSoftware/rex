@@ -42,7 +42,7 @@ private:
 };
 
 inline constexpr string_table::string_table()
-  : string_table{&memory::g_system_allocator}
+  : string_table{memory::system_allocator::instance()}
 {
 }
 

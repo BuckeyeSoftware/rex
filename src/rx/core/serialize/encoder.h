@@ -57,7 +57,7 @@ private:
 };
 
 inline encoder::encoder(stream* _stream)
-  : encoder{&memory::g_system_allocator, _stream}
+  : encoder{memory::system_allocator::instance(), _stream}
 {
 }
 

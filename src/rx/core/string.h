@@ -196,7 +196,7 @@ inline string string::format(memory::allocator* _allocator, const char* _format,
 
 template<typename... Ts>
 inline string string::format(const char* _format, Ts&&... _arguments) {
-  return format(&memory::g_system_allocator, _format, utility::forward<Ts>(_arguments)...);
+  return format(memory::system_allocator::instance(), _format, utility::forward<Ts>(_arguments)...);
 }
 
 inline string::string(memory::allocator* _allocator, const string& _contents)
@@ -216,7 +216,7 @@ inline constexpr string::string(memory::allocator* _allocator)
 }
 
 inline constexpr string::string()
-  : string{&memory::g_system_allocator}
+  : string{memory::system_allocator::instance()}
 {
 }
 
@@ -226,17 +226,17 @@ inline string::string(const string& _contents)
 }
 
 inline string::string(const char* _contents)
-  : string{&memory::g_system_allocator, _contents}
+  : string{memory::system_allocator::instance(), _contents}
 {
 }
 
 inline string::string(const char* _contents, rx_size _size)
-  : string{&memory::g_system_allocator, _contents, _size}
+  : string{memory::system_allocator::instance(), _contents, _size}
 {
 }
 
 inline string::string(const char* _first, const char* _last)
-  : string{&memory::g_system_allocator, _first, _last}
+  : string{memory::system_allocator::instance(), _first, _last}
 {
 }
 
@@ -361,17 +361,17 @@ RX_HINT_FORCE_INLINE memory::allocator* string::allocator() const {
 
 // wide_string
 inline wide_string::wide_string()
-  : wide_string{&memory::g_system_allocator}
+  : wide_string{memory::system_allocator::instance()}
 {
 }
 
 inline wide_string::wide_string(const rx_u16* _contents)
-  : wide_string{&memory::g_system_allocator, _contents}
+  : wide_string{memory::system_allocator::instance(), _contents}
 {
 }
 
 inline wide_string::wide_string(const rx_u16* _contents, rx_size _size)
-  : wide_string{&memory::g_system_allocator, _contents, _size}
+  : wide_string{memory::system_allocator::instance(), _contents, _size}
 {
 }
 

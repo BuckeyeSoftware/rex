@@ -70,7 +70,7 @@ inline thread::thread(memory::allocator* _allocator, const char* _name, F&& _fun
 
 template<typename F>
 inline thread::thread(const char* _name, F&& _function)
-  : thread{&memory::g_system_allocator, _name, utility::forward<F>(_function)}
+  : thread{memory::system_allocator::instance(), _name, utility::forward<F>(_function)}
 {
 }
 

@@ -2,6 +2,6 @@
 
 namespace rx {
 
-global<profiler> profiler::s_profiler{"system", "profiler"};
+global<profiler> profiler::s_instance{"system", "profiler"};
 
-}
+} // namespace rx

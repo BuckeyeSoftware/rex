@@ -26,7 +26,7 @@ struct RX_HINT_EMPTY_BASES thread_pool
 
   memory::allocator* allocator() const;
 
-  static thread_pool& instance();
+  static constexpr thread_pool& instance();
 
 private:
   memory::allocator* m_allocator;
@@ -40,11 +40,11 @@ private:
   dynamic_pool m_job_memory; // protected by |m_mutex|
   bool m_stop;               // protected by |m_mutex|
 
-  static global<thread_pool> s_thread_pool;
+  static global<thread_pool> s_instance;
 };
 
 inline thread_pool::thread_pool(rx_size _threads, rx_size _static_pool_size)
-  : thread_pool{&memory::g_system_allocator, _threads, _static_pool_size}
+  : thread_pool{memory::system_allocator::instance(), _threads, _static_pool_size}
 {
 }
 
@@ -52,8 +52,8 @@ inline memory::allocator* thread_pool::allocator() const {
   return m_allocator;
 }
 
-inline thread_pool& thread_pool::instance() {
-  return *s_thread_pool;
+inline constexpr thread_pool& thread_pool::instance() {
+  return *s_instance;
 }
 
 } // namespace rx::concurrency

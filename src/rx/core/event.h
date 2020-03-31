@@ -77,7 +77,7 @@ inline constexpr event<R(Ts...)>::event(memory::allocator* _allocator)
 
 template<typename R, typename... Ts>
 inline constexpr event<R(Ts...)>::event()
-  : event{&memory::g_system_allocator}
+  : event{memory::system_allocator::instance()}
 {
 }
 

@@ -44,7 +44,7 @@ struct profiler {
   void unbind_gpu();
   void unbind_cpu();
 
-  static profiler& instance();
+  static constexpr profiler& instance();
 
 private:
   friend struct cpu_sample;
@@ -59,7 +59,7 @@ private:
   optional<gpu> m_gpu;
   optional<cpu> m_cpu;
 
-  static global<profiler> s_profiler;
+  static global<profiler> s_instance;
 };
 
 inline profiler::cpu_sample::cpu_sample(const char* _tag) {
@@ -117,8 +117,8 @@ inline void profiler::unbind_cpu() {
   m_cpu = nullopt;
 }
 
-inline profiler& profiler::instance() {
-  return *s_profiler;
+inline constexpr profiler& profiler::instance() {
+  return *s_instance;
 }
 
 inline void profiler::begin_cpu_sample(const char* _tag) {

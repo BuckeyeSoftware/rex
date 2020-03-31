@@ -96,7 +96,7 @@ private:
 
 template<typename K>
 inline set<K>::set()
-  : set{&memory::g_system_allocator}
+  : set{memory::system_allocator::instance()}
 {
 }
 
@@ -145,7 +145,7 @@ inline set<K>::set(memory::allocator* _allocator, initializers<Kt, E>&& initiali
 template<typename K>
 template<typename Kt, rx_size E>
 inline set<K>::set(initializers<Kt, E>&& initializers_)
-  : set{&memory::g_system_allocator, utility::move(initializers_)}
+  : set{memory::system_allocator::instance(), utility::move(initializers_)}
 {
 }
 

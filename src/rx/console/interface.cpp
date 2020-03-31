@@ -26,8 +26,8 @@ static global_group g_group_cvars{"cvars"};
 static global_group g_group_console{"console"};
 
 // TODO(dweiler): limited line count queue for messages on the console.
-static global<vector<string>> g_lines{"console", "lines", &memory::g_system_allocator};
-static global<map<string, command>> g_commands{"console", "commands", &memory::g_system_allocator};
+static global<vector<string>> g_lines{"console", "lines", memory::system_allocator::instance()};
+static global<map<string, command>> g_commands{"console", "commands", memory::system_allocator::instance()};
 
 void interface::write(const string& message_) {
   g_lines->push_back(message_);
@@ -74,7 +74,7 @@ static bool type_check(variable_type _variable_type, token::type _token_type) {
 }
 
 bool interface::execute(const string& _contents) {
-  parser parse{&memory::g_system_allocator};
+  parser parse{memory::system_allocator::instance()};
 
   if (!parse.parse(_contents)) {
     const auto& diagnostic{parse.error()};
@@ -174,7 +174,7 @@ bool interface::load(const char* file_name) {
 
   logger->info("loading '%s'", file_name);
 
-  parser parse{&memory::g_system_allocator};
+  parser parse{memory::system_allocator::instance()};
   for (string line_contents; file.read_line(line_contents); ) {
     string line{line_contents.lstrip(" \t")};
     if (line.is_empty() || strchr("#;[", line[0])) {

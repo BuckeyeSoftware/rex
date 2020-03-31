@@ -115,12 +115,12 @@ inline json::json(memory::allocator* _allocator, const string& _contents)
 }
 
 inline json::json(const char* _contents, rx_size _length)
-  : json{&memory::g_system_allocator, _contents, _length}
+  : json{memory::system_allocator::instance(), _contents, _length}
 {
 }
 
 inline json::json(const string& _contents)
-  : json{&memory::g_system_allocator, _contents.data(), _contents.size()}
+  : json{memory::system_allocator::instance(), _contents.data(), _contents.size()}
 {
 }
 
@@ -225,7 +225,7 @@ inline bool json::is_empty() const {
 }
 
 inline string json::as_string() const {
-  return as_string_with_allocator(&memory::g_system_allocator);
+  return as_string_with_allocator(memory::system_allocator::instance());
 }
 
 template<typename T>

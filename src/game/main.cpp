@@ -281,6 +281,6 @@ struct test_game
   math::camera m_camera;
 };
 
-game* create(render::frontend::context& _frontend) {
-  return memory::g_system_allocator->create<test_game>(_frontend);
+ptr<game> create(render::frontend::context& _frontend) {
+  return make_ptr<test_game>(memory::system_allocator::instance(), _frontend);
 }

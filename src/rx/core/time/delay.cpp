@@ -7,9 +7,7 @@
 #elif defined(RX_PLATFORM_WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
-#define VC_EXTRALEAN
 #include <windows.h> // Sleep
-#undef interface
 #else
 #error "missing delay implementation"
 #endif

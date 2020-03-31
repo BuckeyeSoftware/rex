@@ -65,7 +65,7 @@ inline constexpr path_resolver::stack::stack()
 }
 
 inline constexpr path_resolver::path_resolver()
-  : path_resolver{&memory::g_system_allocator}
+  : path_resolver{memory::system_allocator::instance()}
 {
 }
 

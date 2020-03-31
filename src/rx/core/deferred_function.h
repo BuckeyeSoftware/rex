@@ -31,7 +31,7 @@ inline constexpr deferred_function<T>::deferred_function(memory::allocator* _all
 template<typename T>
 template<typename F>
 inline constexpr deferred_function<T>::deferred_function(F&& _function)
-  : deferred_function{&memory::g_system_allocator, utility::forward<F>(_function)}
+  : deferred_function{memory::system_allocator::instance(), utility::forward<F>(_function)}
 {
 }
 

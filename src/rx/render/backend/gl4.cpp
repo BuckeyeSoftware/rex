@@ -850,7 +850,7 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     logger->error("failed compiling shader");
 
     if (log_size) {
-      vector<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
+      vector<char> error_log{memory::system_allocator::instance(), static_cast<rx_size>(log_size)};
       pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
       logger->error("\n%s\n%s", error_log.data(), contents);
     }
@@ -1240,7 +1240,7 @@ void gl4::process(rx_byte* _command) {
             logger->error("failed linking program");
 
             if (log_size) {
-              vector<char> error_log{&memory::g_system_allocator, static_cast<rx_size>(log_size)};
+              vector<char> error_log{memory::system_allocator::instance(), static_cast<rx_size>(log_size)};
               pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
               logger->error("\n%s", error_log.data());
             }

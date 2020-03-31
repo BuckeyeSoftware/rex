@@ -47,7 +47,7 @@ private:
 };
 
 inline input::input()
-  : input{&memory::g_system_allocator}
+  : input{memory::system_allocator::instance()}
 {
 }
 
