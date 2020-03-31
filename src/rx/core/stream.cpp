@@ -107,7 +107,7 @@ rx_u64 stream::size() {
   return result;
 }
 
-optional<vector<rx_byte>> read_binary_stream(memory::allocator* _allocator, stream* _stream) {
+optional<vector<rx_byte>> read_binary_stream(memory::allocator& _allocator, stream* _stream) {
   if (_stream->can_seek() && _stream->can_tell()) {
     const auto size = _stream->size();
     vector<rx_byte> result = {_allocator, size, utility::uninitialized{}};
@@ -118,7 +118,7 @@ optional<vector<rx_byte>> read_binary_stream(memory::allocator* _allocator, stre
   return nullopt;
 }
 
-optional<vector<rx_byte>> read_text_stream(memory::allocator* _allocator, stream* _stream) {
+optional<vector<rx_byte>> read_text_stream(memory::allocator& _allocator, stream* _stream) {
   if (auto result = read_binary_stream(_allocator, _stream)) {
     // Convert the given byte stream into a compatible UTF-8 encoding. This will
     // introduce a null-terminator, strip Unicode BOMs and convert UTF-16

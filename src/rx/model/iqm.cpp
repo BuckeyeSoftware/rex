@@ -138,7 +138,7 @@ bool iqm::read(stream* _stream) {
   // Offsets in the header are relative to the beginning of the file, make a
   // hole in the memory and skip it, such that |read_meshes| and
   // |read_animations| can use the |read_header|'s values directly.
-  vector<rx_byte> data{m_allocator, size, utility::uninitialized{}};
+  vector<rx_byte> data{allocator(), size, utility::uninitialized{}};
   const auto size_no_header = data.size() - sizeof read_header;
   if (_stream->read(data.data() + sizeof read_header, size_no_header) != size_no_header) {
     return error("unexpected end of file");
@@ -319,8 +319,8 @@ bool iqm::read_meshes(const header& _header, const vector<rx_byte>& _data) {
 bool iqm::read_animations(const header& _header, const vector<rx_byte>& _data) {
   const auto n_joints{static_cast<rx_size>(_header.joints)};
 
-  vector<math::mat3x4f> generic_base_frame{m_allocator, n_joints};
-  vector<math::mat3x4f> inverse_base_frame{m_allocator, n_joints};
+  vector<math::mat3x4f> generic_base_frame{allocator(), n_joints};
+  vector<math::mat3x4f> inverse_base_frame{allocator(), n_joints};
 
   m_joints.resize(n_joints);
 

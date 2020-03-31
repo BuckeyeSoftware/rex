@@ -13,7 +13,7 @@ namespace rx {
 struct RX_HINT_EMPTY_BASES display
   : concepts::no_copy
 {
-  display(memory::allocator* _allocator);
+  display(memory::allocator& _allocator);
   display(display&& display_);
 
   struct mode {
@@ -23,7 +23,7 @@ struct RX_HINT_EMPTY_BASES display
 
   using extents = math::rectangle<rx_s32>;
 
-  static vector<display> displays(memory::allocator* _allocator);
+  static vector<display> displays(memory::allocator& _allocator);
 
   // The display modes are sorted by the given priority:
   //  mode::resolution.w => largest to smallest
@@ -40,7 +40,10 @@ struct RX_HINT_EMPTY_BASES display
   // Check if the given extents are inside the display.
   bool contains(const extents& _extents) const;
 
+  constexpr memory::allocator& allocator() const;
+
 private:
+  ref<memory::allocator> m_allocator;
   vector<mode> m_modes;
   string m_name;
   extents m_bounds;
@@ -49,9 +52,10 @@ private:
   rx_f32 m_vertical_dpi;
 };
 
-inline display::display(memory::allocator* _allocator)
-  : m_modes{_allocator}
-  , m_name{_allocator}
+inline display::display(memory::allocator& _allocator)
+  : m_allocator{_allocator}
+  , m_modes{allocator()}
+  , m_name{allocator()}
   , m_diagonal_dpi{0.0f}
   , m_horizontal_dpi{0.0f}
   , m_vertical_dpi{0.0f}
@@ -59,7 +63,8 @@ inline display::display(memory::allocator* _allocator)
 }
 
 inline display::display(display&& display_)
-  : m_modes{utility::move(display_.m_modes)}
+  : m_allocator{display_.m_allocator}
+  , m_modes{utility::move(display_.m_modes)}
   , m_name{utility::move(display_.m_name)}
   , m_bounds{display_.m_bounds}
   , m_diagonal_dpi{display_.m_diagonal_dpi}
@@ -98,6 +103,10 @@ inline rx_f32 display::vertical_dpi() const {
 
 inline bool display::contains(const extents& _extents) const {
   return m_bounds.contains(_extents);
+}
+
+RX_HINT_FORCE_INLINE constexpr memory::allocator& display::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx

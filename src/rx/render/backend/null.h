@@ -14,7 +14,7 @@ struct null
 {
   allocation_info query_allocation_info() const;
   device_info query_device_info() const;
-  null(memory::allocator* _allocator, void* _data);
+  null(memory::allocator& _allocator, void* _data);
   ~null();
 
   bool init();

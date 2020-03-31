@@ -16,7 +16,7 @@ struct RX_HINT_EMPTY_BASES thread_pool
   : concepts::no_copy
   , concepts::no_move
 {
-  thread_pool(memory::allocator* _allocator, rx_size _threads, rx_size _static_pool_size);
+  thread_pool(memory::allocator& _allocator, rx_size _threads, rx_size _static_pool_size);
   thread_pool(rx_size _threads, rx_size _job_pool_size);
   ~thread_pool();
 
@@ -24,12 +24,12 @@ struct RX_HINT_EMPTY_BASES thread_pool
   // to |_task| is the thread id of the calling thread in the pool
   void add(function<void(int)>&& task_);
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
   static constexpr thread_pool& instance();
 
 private:
-  memory::allocator* m_allocator;
+  memory::allocator& m_allocator;
 
   mutex m_mutex;
   condition_variable m_task_cond;
@@ -48,11 +48,11 @@ inline thread_pool::thread_pool(rx_size _threads, rx_size _static_pool_size)
 {
 }
 
-inline memory::allocator* thread_pool::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& thread_pool::allocator() const {
   return m_allocator;
 }
 
-inline constexpr thread_pool& thread_pool::instance() {
+RX_HINT_FORCE_INLINE constexpr thread_pool& thread_pool::instance() {
   return *s_instance;
 }
 

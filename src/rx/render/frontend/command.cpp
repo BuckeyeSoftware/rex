@@ -4,15 +4,15 @@
 
 namespace rx::render::frontend {
 
-command_buffer::command_buffer(memory::allocator* _allocator, rx_size _size)
+command_buffer::command_buffer(memory::allocator& _allocator, rx_size _size)
   : m_base_allocator{_allocator}
-  , m_base_memory{m_base_allocator->allocate(_size)}
+  , m_base_memory{m_base_allocator.allocate(_size)}
   , m_allocator{m_base_memory, _size}
 {
 }
 
 command_buffer::~command_buffer() {
-  m_base_allocator->deallocate(m_base_memory);
+  m_base_allocator.deallocate(m_base_memory);
 }
 
 rx_byte* command_buffer::allocate(rx_size _size, command_type _command, const command_header::info& _info) {

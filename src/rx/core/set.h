@@ -2,6 +2,7 @@
 #define RX_CORE_SET_H
 #include "rx/core/hash.h"
 #include "rx/core/array.h"
+#include "rx/core/ref.h"
 
 #include "rx/core/traits/is_trivially_destructible.h"
 #include "rx/core/traits/return_type.h"
@@ -26,12 +27,12 @@ struct set {
   static constexpr rx_size k_load_factor{90};
 
   set();
-  set(memory::allocator* _allocator);
+  set(memory::allocator& _allocator);
   set(set&& set_);
   set(const set& _set);
 
   template<typename Kt, rx_size E>
-  set(memory::allocator* _allocator, initializers<Kt, E>&& initializers_);
+  set(memory::allocator& _allocator, initializers<Kt, E>&& initializers_);
 
   template<typename Kt, rx_size E>
   set(initializers<Kt, E>&& initializers_);
@@ -57,11 +58,10 @@ struct set {
   template<typename F>
   bool each(F&& _function) const;
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
   void clear_and_deallocate();
-  constexpr void initialize(memory::allocator* _allocator, rx_size _capacity);
 
   static rx_size hash_key(const K& _key);
   static bool is_deleted(rx_size _hash);
@@ -83,7 +83,7 @@ private:
 
   bool lookup_index(const K& _key, rx_size& _index) const;
 
-  memory::allocator* m_allocator;
+  ref<memory::allocator> m_allocator;
 
   K* m_keys;
   rx_size* m_hashes;
@@ -101,28 +101,33 @@ inline set<K>::set()
 }
 
 template<typename K>
-inline set<K>::set(memory::allocator* _allocator)
+inline set<K>::set(memory::allocator& _allocator)
+  : m_allocator{_allocator}
+  , m_keys{nullptr}
+  , m_hashes{nullptr}
+  , m_size{0}
+  , m_capacity{k_initial_size}
+  , m_resize_threshold{0}
+  , m_mask{0}
 {
-  initialize(_allocator, k_initial_size);
   RX_ASSERT(allocate(), "out of memory");
 }
 
 template<typename K>
 inline set<K>::set(set&& set_)
   : m_allocator{set_.m_allocator}
-  , m_keys{set_.m_keys}
-  , m_hashes{set_.m_hashes}
-  , m_size{set_.m_size}
-  , m_capacity{set_.m_capacity}
-  , m_resize_threshold{set_.m_resize_threshold}
-  , m_mask{set_.m_mask}
+  , m_keys{utility::exchange(set_.m_keys, nullptr)}
+  , m_hashes{utility::exchange(set_.m_hashes, nullptr)}
+  , m_size{utility::exchange(set_.m_size, 0)}
+  , m_capacity{utility::exchange(set_.m_capacity, k_initial_size)}
+  , m_resize_threshold{utility::exchange(set_.m_resize_threshold, 0)}
+  , m_mask{utility::exchange(set_.m_mask, 0)}
 {
-  set_.initialize(m_allocator, 0);
 }
 
 template<typename K>
 inline set<K>::set(const set& _set)
-  : set{_set.m_allocator}
+  : set{_set.allocator()}
 {
   for (rx_size i{0}; i < _set.m_capacity; i++) {
     const auto hash = _set.element_hash(i);
@@ -134,7 +139,7 @@ inline set<K>::set(const set& _set)
 
 template<typename K>
 template<typename Kt, rx_size E>
-inline set<K>::set(memory::allocator* _allocator, initializers<Kt, E>&& initializers_)
+inline set<K>::set(memory::allocator& _allocator, initializers<Kt, E>&& initializers_)
   : set{_allocator}
 {
   for (rx_size i = 0; i < E; i++) {
@@ -177,8 +182,8 @@ template<typename K>
 inline void set<K>::clear_and_deallocate() {
   clear();
 
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_keys));
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_hashes));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(m_keys));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(m_hashes));
 }
 
 template<typename K>
@@ -188,14 +193,12 @@ inline set<K>& set<K>::operator=(set<K>&& set_) {
   clear_and_deallocate();
 
   m_allocator = set_.m_allocator;
-  m_keys = set_.m_keys;
-  m_hashes = set_.m_hashes;
-  m_size = set_.m_size;
-  m_capacity = set_.m_capacity;
-  m_resize_threshold = set_.m_resize_threshold;
-  m_mask = set_.m_mask;
-
-  set_.initialize(m_allocator, 0);
+  m_keys = utility::exchange(set_.m_keys, nullptr);
+  m_hashes = utility::exchange(set_.m_hashes, nullptr);
+  m_size = utility::exchange(set_.m_size, 0);
+  m_capacity = utility::exchange(set_.m_capacity, 0);
+  m_resize_threshold = utility::exchange(set_.m_resize_threshold, 0);
+  m_mask = utility::exchange(set_.m_mask, 0);
 
   return *this;
 }
@@ -205,7 +208,8 @@ inline set<K>& set<K>::operator=(const set<K>& _set) {
   RX_ASSERT(&_set != this, "self assignment");
 
   clear_and_deallocate();
-  initialize(_set.m_allocator, _set.m_capacity);
+
+  m_capacity = _set.m_capacity;
   RX_ASSERT(allocate(), "out of memory");
 
   for (rx_size i{0}; i < _set.m_capacity; i++) {
@@ -216,19 +220,6 @@ inline set<K>& set<K>::operator=(const set<K>& _set) {
   }
 
   return *this;
-}
-
-template<typename K>
-inline constexpr void set<K>::initialize(memory::allocator* _allocator, rx_size _capacity) {
-  RX_ASSERT(_allocator, "null allocator");
-
-  m_allocator = _allocator;
-  m_keys = nullptr;
-  m_hashes = nullptr;
-  m_size = 0;
-  m_capacity = _capacity;
-  m_resize_threshold = 0;
-  m_mask = 0;
 }
 
 template<typename K>
@@ -329,8 +320,8 @@ inline rx_size set<K>::element_hash(rx_size _index) const {
 
 template<typename K>
 inline bool set<K>::allocate() {
-  m_keys = reinterpret_cast<K*>(m_allocator->allocate(sizeof(K) * m_capacity));
-  m_hashes = reinterpret_cast<rx_size*>(m_allocator->allocate(sizeof(rx_size) * m_capacity));
+  m_keys = reinterpret_cast<K*>(allocator().allocate(sizeof(K) * m_capacity));
+  m_hashes = reinterpret_cast<rx_size*>(allocator().allocate(sizeof(rx_size) * m_capacity));
 
   if (!m_keys || !m_hashes) {
     return false;
@@ -370,8 +361,8 @@ inline bool set<K>::grow() {
     }
   }
 
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(keys_data));
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(hashes_data));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(keys_data));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(hashes_data));
 
   return true;
 }
@@ -477,7 +468,7 @@ inline bool set<K>::each(F&& _function) const {
 }
 
 template<typename K>
-inline memory::allocator* set<K>::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& set<K>::allocator() const {
   return m_allocator;
 }
 

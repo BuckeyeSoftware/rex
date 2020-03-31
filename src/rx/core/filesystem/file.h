@@ -11,9 +11,9 @@ struct file
   final : stream
 {
   constexpr file();
-  constexpr file(memory::allocator* _allocator);
-  file(memory::allocator* _allocator, const char* _file_name, const char* _mode);
-  file(memory::allocator* _allocator, const string& _file_name, const char* _mode);
+  constexpr file(memory::allocator& _allocator);
+  file(memory::allocator& _allocator, const char* _file_name, const char* _mode);
+  file(memory::allocator& _allocator, const string& _file_name, const char* _mode);
   file(const char* _file_name, const char* _mode);
   file(const string& _file_name, const char* _mode);
   file(file&& other_);
@@ -42,7 +42,7 @@ struct file
   // Print |_fmt| with |_args| to file using |_allocator| for formatting.
   // NOTE: asserts if the file isn't a text file.
   template<typename... Ts>
-  bool print(memory::allocator* _alloc, const char* _fmt, Ts&&... _args);
+  bool print(memory::allocator& _allocator, const char* _fmt, Ts&&... _args);
 
   // Print |_fmt| with |_args| to file using system allocator for formatting.
   // NOTE: asserts if the file isn't a text file.
@@ -61,7 +61,7 @@ struct file
 
   virtual const string& name() const &;
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
   file(void* _impl, const char* _file_name, const char* _mode);
@@ -70,7 +70,7 @@ private:
 
   friend struct process;
 
-  memory::allocator* m_allocator;
+  memory::allocator& m_allocator;
   void* m_impl;
   string m_name;
   const char* m_mode;
@@ -81,16 +81,16 @@ inline constexpr file::file()
 {
 }
 
-inline constexpr file::file(memory::allocator* _allocator)
+inline constexpr file::file(memory::allocator& _allocator)
   : stream{0}
   , m_allocator{_allocator}
   , m_impl{nullptr}
-  , m_name{m_allocator}
+  , m_name{allocator()}
   , m_mode{nullptr}
 {
 }
 
-inline file::file(memory::allocator* _allocator, const string& _file_name, const char* _mode)
+inline file::file(memory::allocator& _allocator, const string& _file_name, const char* _mode)
   : file{_allocator, _file_name.data(), _mode}
 {
 }
@@ -107,7 +107,7 @@ inline file::file(const string& _file_name, const char* _mode)
 
 inline file::file(file&& other_)
   : stream{utility::move(other_)}
-  , m_allocator{utility::exchange(other_.m_allocator, nullptr)}
+  , m_allocator{other_.m_allocator}
   , m_impl{utility::exchange(other_.m_impl, nullptr)}
   , m_name{utility::move(other_.m_name)}
   , m_mode{utility::exchange(other_.m_mode, nullptr)}
@@ -118,12 +118,24 @@ inline file::~file() {
   close();
 }
 
+inline bool file::is_valid() const {
+  return m_impl != nullptr;
+}
+
 inline file::operator bool() const {
   return is_valid();
 }
 
+inline const string& file::name() const & {
+  return m_name;
+}
+
+RX_HINT_FORCE_INLINE constexpr memory::allocator& file::allocator() const {
+  return m_allocator;
+}
+
 template<typename... Ts>
-inline bool file::print(memory::allocator* _allocator, const char* _format, Ts&&... _arguments) {
+inline bool file::print(memory::allocator& _allocator, const char* _format, Ts&&... _arguments) {
   return print(string::format(_allocator, _format, utility::forward<Ts>(_arguments)...));
 }
 
@@ -132,10 +144,10 @@ inline bool file::print(const char* _format, Ts&&... _arguments) {
   return print(memory::system_allocator::instance(), _format, utility::forward<Ts>(_arguments)...);
 }
 
-optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const char* _file_name);
-optional<vector<rx_byte>> read_text_file(memory::allocator* _allocator, const char* _file_name);
+optional<vector<rx_byte>> read_binary_file(memory::allocator& _allocator, const char* _file_name);
+optional<vector<rx_byte>> read_text_file(memory::allocator& _allocator, const char* _file_name);
 
-inline optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const string& _file_name) {
+inline optional<vector<rx_byte>> read_binary_file(memory::allocator& _allocator, const string& _file_name) {
   return read_binary_file(_allocator, _file_name.data());
 }
 
@@ -147,7 +159,7 @@ inline optional<vector<rx_byte>> read_binary_file(const char* _file_name) {
   return read_binary_file(memory::system_allocator::instance(), _file_name);
 }
 
-inline optional<vector<rx_byte>> read_text_file(memory::allocator* _allocator, const string& _file_name) {
+inline optional<vector<rx_byte>> read_text_file(memory::allocator& _allocator, const string& _file_name) {
   return read_text_file(_allocator, _file_name.data());
 }
 

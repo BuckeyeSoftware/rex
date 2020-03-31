@@ -40,11 +40,11 @@ rx_u32 file::flags_from_mode(const char* _mode) {
 }
 
 #if defined(RX_PLATFORM_WINDOWS)
-file::file(memory::allocator* _allocator, const char* _file_name, const char* _mode)
+file::file(memory::allocator& _allocator, const char* _file_name, const char* _mode)
   : stream{flags_from_mode(_mode)}
   , m_allocator{_allocator}
   , m_impl{nullptr}
-  , m_name{m_allocator, _file_name}
+  , m_name{allocator(), _file_name}
   , m_mode{_mode}
 {
   // Convert |_file_name| to UTF-16.
@@ -65,11 +65,11 @@ file::file(memory::allocator* _allocator, const char* _file_name, const char* _m
     _wfopen(reinterpret_cast<const wchar_t*>(file_name.data()), mode_buffer));
 }
 #else
-file::file(memory::allocator* _allocator, const char* _file_name, const char* _mode)
+file::file(memory::allocator& _allocator, const char* _file_name, const char* _mode)
   : stream{flags_from_mode(_mode)}
   , m_allocator{_allocator}
   , m_impl{static_cast<void*>(fopen(_file_name, _mode))}
-  , m_name{m_allocator, _file_name}
+  , m_name{allocator(), _file_name}
   , m_mode{_mode}
 {
 }
@@ -171,19 +171,7 @@ bool file::read_line(string& line_) {
   return false;
 }
 
-bool file::is_valid() const {
-  return m_impl != nullptr;
-}
-
-inline const string& file::name() const & {
-  return m_name;
-}
-
-inline memory::allocator* file::allocator() const {
-  return m_allocator;
-}
-
-optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const char* _file_name) {
+optional<vector<rx_byte>> read_binary_file(memory::allocator& _allocator, const char* _file_name) {
   if (file open_file{_file_name, "rb"}) {
     return read_binary_stream(_allocator, &open_file);
   }
@@ -194,7 +182,7 @@ optional<vector<rx_byte>> read_binary_file(memory::allocator* _allocator, const 
   return nullopt;
 }
 
-optional<vector<rx_byte>> read_text_file(memory::allocator* _allocator, const char* _file_name) {
+optional<vector<rx_byte>> read_text_file(memory::allocator& _allocator, const char* _file_name) {
   if (file open_file{_file_name, "rb"}) {
     return read_text_stream(_allocator, &open_file);
   }

@@ -21,7 +21,7 @@ struct RX_HINT_EMPTY_BASES chain
   };
 
   constexpr chain();
-  constexpr chain(memory::allocator* _allocator);
+  constexpr chain(memory::allocator& _allocator);
   chain(chain&& chain_);
 
   chain& operator=(chain&& chain_);
@@ -46,10 +46,12 @@ struct RX_HINT_EMPTY_BASES chain
   pixel_format format() const;
   rx_size bpp() const;
 
+  constexpr memory::allocator& allocator() const;
+
 private:
   void generate_mipchain(bool _has_mipchain, bool _want_mipchain);
 
-  memory::allocator* m_allocator;
+  ref<memory::allocator> m_allocator;
   vector<rx_byte> m_data;
   vector<level> m_levels;
   math::vec2z m_dimensions;
@@ -64,16 +66,16 @@ inline constexpr chain::chain()
 {
 }
 
-inline constexpr chain::chain(memory::allocator* _allocator)
+inline constexpr chain::chain(memory::allocator& _allocator)
   : m_allocator{_allocator}
-  , m_data{m_allocator}
-  , m_levels{m_allocator}
+  , m_data{allocator()}
+  , m_levels{allocator()}
   , m_nat{}
 {
 }
 
 inline chain::chain(chain&& chain_)
-  : m_allocator{utility::exchange(chain_.m_allocator, nullptr)}
+  : m_allocator{chain_.m_allocator}
   , m_data{utility::move(chain_.m_data)}
   , m_levels{utility::move(chain_.m_levels)}
   , m_dimensions{utility::exchange(chain_.m_dimensions, math::vec2z{})}
@@ -84,7 +86,7 @@ inline chain::chain(chain&& chain_)
 inline chain& chain::operator=(chain&& chain_) {
   RX_ASSERT(&chain_ != this, "self assignment");
 
-  m_allocator = utility::exchange(chain_.m_allocator, nullptr);
+  m_allocator = chain_.m_allocator;
   m_data = utility::move(chain_.m_data);
   m_levels = utility::move(chain_.m_levels);
   m_dimensions = utility::exchange(chain_.m_dimensions, math::vec2z{});
@@ -147,6 +149,10 @@ inline rx_size chain::bpp() const {
   }
 
   return 0;
+}
+
+RX_HINT_FORCE_INLINE constexpr memory::allocator& chain::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx::texture

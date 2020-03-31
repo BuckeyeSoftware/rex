@@ -20,9 +20,9 @@ namespace rx {
 // 64-bit: 16 bytes
 struct json {
   constexpr json();
-  json(memory::allocator* _allocator, const char* _contents, rx_size _length);
-  json(memory::allocator* _allocator, const char* _contents);
-  json(memory::allocator* _allocator, const string& _contents);
+  json(memory::allocator& _allocator, const char* _contents, rx_size _length);
+  json(memory::allocator& _allocator, const char* _contents);
+  json(memory::allocator& _allocator, const string& _contents);
   json(const char* _contents, rx_size _length);
   json(const char* _contents);
   json(const string& _contents);
@@ -65,7 +65,7 @@ struct json {
   rx_s32 as_integer() const;
   json operator[](const char* _name) const;
   string as_string() const;
-  string as_string_with_allocator(memory::allocator* _allocator) const;
+  string as_string_with_allocator(memory::allocator& _allocator) const;
 
   template<typename T>
   T decode(const T& _default) const;
@@ -77,7 +77,7 @@ struct json {
   template<typename F>
   bool each(F&& _function) const;
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
   template<typename T>
@@ -85,13 +85,13 @@ private:
     decltype(utility::declval<T>().from_json(utility::declval<json>()));
 
   struct shared {
-    shared(memory::allocator* _allocator, const char* _contents, rx_size _length);
+    shared(memory::allocator& _allocator, const char* _contents, rx_size _length);
     ~shared();
 
     shared* acquire();
     void release();
 
-    memory::allocator* m_allocator;
+    memory::allocator& m_allocator;
     struct json_parse_result_s m_error;
     struct json_value_s* m_root;
     concurrency::atomic<rx_size> m_count;
@@ -109,7 +109,7 @@ inline constexpr json::json()
 {
 }
 
-inline json::json(memory::allocator* _allocator, const string& _contents)
+inline json::json(memory::allocator& _allocator, const string& _contents)
   : json{_allocator, _contents.data(), _contents.size()}
 {
 }
@@ -283,8 +283,9 @@ inline bool json::each(F&& _function) const {
   return true;
 }
 
-inline memory::allocator* json::allocator() const {
-  return m_shared ? m_shared->m_allocator : nullptr;
+inline constexpr memory::allocator& json::allocator() const {
+  RX_ASSERT(m_shared, "reference count reached zero");
+  return m_shared->m_allocator;
 }
 
 } // namespace rx

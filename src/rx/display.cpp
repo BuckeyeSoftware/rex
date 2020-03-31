@@ -6,7 +6,7 @@
 
 namespace rx {
 
-vector<display> display::displays(memory::allocator* _allocator) {
+vector<display> display::displays(memory::allocator& _allocator) {
   vector<display> displays{_allocator};
 
   for (int i{0}, n{SDL_GetNumVideoDisplays()}; i < n; i++) {
@@ -14,7 +14,7 @@ vector<display> display::displays(memory::allocator* _allocator) {
     if (const char* name{SDL_GetDisplayName(i)}) {
       // Copy the contents of the name for manipulation.
       const rx_size name_size{strlen(name) + 1};
-      rx_byte* name_data{_allocator->allocate(name_size)};
+      rx_byte* name_data{_allocator.allocate(name_size)};
       RX_ASSERT(name_data, "out of memory");
       memcpy(name_data, name, name_size);
 
@@ -40,7 +40,7 @@ vector<display> display::displays(memory::allocator* _allocator) {
       }
 
       // The string now owns the memory, avoids a copy.
-      result.m_name = memory::view{_allocator, name_data, name_size};
+      result.m_name = memory::view{&_allocator, name_data, name_size};
     } else {
       result.m_name = string::format("Unknown (%d)", i);
     }

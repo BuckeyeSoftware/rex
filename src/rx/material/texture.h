@@ -35,7 +35,7 @@ struct RX_HINT_EMPTY_BASES texture
 
   using wrap_options = math::vec2<wrap_type>;
 
-  texture(memory::allocator* _allocator);
+  texture(memory::allocator& _allocator);
   texture(texture&& texture_);
 
   texture& operator=(texture&& texture_);
@@ -54,6 +54,8 @@ struct RX_HINT_EMPTY_BASES texture
   const rx::texture::chain& chain() const;
   rx::texture::chain&& chain();
 
+  constexpr memory::allocator& allocator() const;
+
 private:
   bool load_texture_file();
 
@@ -70,7 +72,7 @@ private:
 
   void write_log(log::level _level, string&& message_) const;
 
-  memory::allocator* m_allocator;
+  ref<memory::allocator> m_allocator;
   rx::texture::chain m_chain;
   filter_options m_filter;
   wrap_options m_wrap;
@@ -90,11 +92,11 @@ inline void texture::log(log::level _level, const char* _format, Ts&&... _argume
   write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
 }
 
-inline texture::texture(memory::allocator* _allocator)
+inline texture::texture(memory::allocator& _allocator)
   : m_allocator{_allocator}
-  , m_chain{m_allocator}
-  , m_type{m_allocator}
-  , m_file{m_allocator}
+  , m_chain{allocator()}
+  , m_type{allocator()}
+  , m_file{allocator()}
 {
 }
 
@@ -149,6 +151,10 @@ inline const rx::texture::chain& texture::chain() const {
 
 inline rx::texture::chain&& texture::chain() {
   return utility::move(m_chain);
+}
+
+RX_HINT_FORCE_INLINE constexpr memory::allocator& texture::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx::material

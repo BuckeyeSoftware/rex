@@ -335,7 +335,7 @@ static inline void compress_alpha_block(const rx_byte *const _uncompressed,
 }
 
 template<dxt_type T>
-vector<rx_byte> dxt_compress(memory::allocator* _allocator,
+vector<rx_byte> dxt_compress(memory::allocator& _allocator,
   const rx_byte *const _uncompressed, rx_size _width, rx_size _height,
   rx_size _channels, rx_size& out_size_, rx_size& optimized_blocks_)
 {
@@ -402,12 +402,12 @@ vector<rx_byte> dxt_compress(memory::allocator* _allocator,
 }
 
 template vector<rx_byte> dxt_compress<dxt_type::k_dxt1>(
-  memory::allocator* _allocator, const rx_byte *const _uncompressed,
+  memory::allocator& _allocator, const rx_byte *const _uncompressed,
   rx_size _width, rx_size _height, rx_size _channels, rx_size& out_size_,
   rx_size& optimized_blocks_);
 
 template vector<rx_byte> dxt_compress<dxt_type::k_dxt5>(
-  memory::allocator* _allocator, const rx_byte *const _uncompressed,
+  memory::allocator& _allocator, const rx_byte *const _uncompressed,
   rx_size _width, rx_size _height, rx_size _channels, rx_size& out_size_,
   rx_size& optimized_blocks_);
 

@@ -202,7 +202,7 @@ struct RX_HINT_EMPTY_BASES parser
   , concepts::no_move
 {
   struct diagnostic {
-    diagnostic(memory::allocator* _allocator);
+    diagnostic(memory::allocator& _allocator);
     string message;
     rx_size offset;
     rx_size length;
@@ -210,12 +210,14 @@ struct RX_HINT_EMPTY_BASES parser
     bool caret;
   };
 
-  parser(memory::allocator* _allocator);
+  parser(memory::allocator& _allocator);
 
   bool parse(const string& _contents);
 
   const diagnostic& error() const &;
   vector<token>&& tokens();
+
+  constexpr memory::allocator& allocator() const;
 
 private:
   bool parse_int(const char*& contents_, rx_s32& value_);
@@ -226,7 +228,7 @@ private:
   template<typename... Ts>
   bool error(bool _caret, const char* _format, Ts&&... _arguments);
 
-  memory::allocator* m_allocator;
+  memory::allocator& m_allocator;
   vector<token> m_tokens;
   diagnostic m_diagnostic;
 
@@ -234,7 +236,7 @@ private:
   const char* m_first;
 };
 
-inline parser::diagnostic::diagnostic(memory::allocator* _allocator)
+inline parser::diagnostic::diagnostic(memory::allocator& _allocator)
   : message{_allocator}
   , offset{0}
   , length{0}
@@ -250,13 +252,17 @@ inline vector<token>&& parser::tokens() {
   return utility::move(m_tokens);
 }
 
+RX_HINT_FORCE_INLINE constexpr memory::allocator& parser::allocator() const {
+  return m_allocator;
+}
+
 template<typename... Ts>
 inline bool parser::error(bool _caret, const char* _format, Ts&&... _arguments) {
   record_span();
   m_diagnostic.caret = _caret;
   if constexpr(sizeof...(Ts) != 0) {
-    m_diagnostic.message = string::format(m_allocator, _format,
-      utility::forward<Ts>(_arguments)...);
+    m_diagnostic.message =
+      string::format(allocator(), _format, utility::forward<Ts>(_arguments)...);
   } else {
     m_diagnostic.message = _format;
   }

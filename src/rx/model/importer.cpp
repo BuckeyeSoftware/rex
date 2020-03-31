@@ -16,20 +16,20 @@ RX_LOG("model/importer", logger);
 
 namespace rx::model {
 
-importer::importer(memory::allocator* _allocator)
+importer::importer(memory::allocator& _allocator)
   : m_allocator{_allocator}
-  , m_meshes{m_allocator}
-  , m_elements{m_allocator}
-  , m_positions{m_allocator}
-  , m_coordinates{m_allocator}
-  , m_normals{m_allocator}
-  , m_tangents{m_allocator}
-  , m_blend_indices{m_allocator}
-  , m_blend_weights{m_allocator}
-  , m_frames{m_allocator}
-  , m_animations{m_allocator}
-  , m_joints{m_allocator}
-  , m_name{m_allocator}
+  , m_meshes{allocator()}
+  , m_elements{allocator()}
+  , m_positions{allocator()}
+  , m_coordinates{allocator()}
+  , m_normals{allocator()}
+  , m_tangents{allocator()}
+  , m_blend_indices{allocator()}
+  , m_blend_weights{allocator()}
+  , m_frames{allocator()}
+  , m_animations{allocator()}
+  , m_joints{allocator()}
+  , m_name{allocator()}
 {
 }
 
@@ -109,7 +109,7 @@ bool importer::load(stream* _stream) {
     math::aabb bounds;
   };
 
-  map<string, vector<batch>> batches{m_allocator};
+  map<string, vector<batch>> batches{allocator()};
   m_meshes.each_fwd([&](const mesh& _mesh) {
     math::aabb bounds;
     for (rx_size i{0}; i < _mesh.count; i++) {
@@ -118,14 +118,14 @@ bool importer::load(stream* _stream) {
     if (auto* find{batches.find(_mesh.material)}) {
       find->push_back({_mesh.offset, _mesh.count, bounds});
     } else {
-      vector<batch> result{m_allocator};
+      vector<batch> result{allocator()};
       result.emplace_back(_mesh.offset, _mesh.count, bounds);
       batches.insert(_mesh.material, utility::move(result));
     }
   });
 
-  vector<mesh> optimized_meshes{m_allocator};
-  vector<rx_u32> optimized_elements{m_allocator};
+  vector<mesh> optimized_meshes{allocator()};
+  vector<rx_u32> optimized_elements{allocator()};
   batches.each_pair([&](const string& _material_name, const vector<batch>& _batches) {
     math::aabb bounds;
     const rx_size elements{optimized_elements.size()};
@@ -187,8 +187,8 @@ void importer::generate_normals() {
 bool importer::generate_tangents() {
   const rx_size vertex_count{m_positions.size()};
 
-  vector<math::vec3f> tangents{m_allocator, vertex_count};
-  vector<math::vec3f> bitangents{m_allocator, vertex_count};
+  vector<math::vec3f> tangents{allocator(), vertex_count};
+  vector<math::vec3f> bitangents{allocator(), vertex_count};
 
   for (rx_size i{0}; i < m_elements.size(); i += 3) {
     const rx_u32 index0{m_elements[i+0]};

@@ -7,10 +7,10 @@ namespace rx::image {
 
 struct matrix
 {
-  matrix(memory::allocator* _allocator);
-  matrix();
+  constexpr matrix(memory::allocator& _allocator);
+  constexpr matrix();
 
-  matrix(memory::allocator* _allocator, const math::vec2z& _dimensions, rx_size _channels);
+  matrix(memory::allocator& _allocator, const math::vec2z& _dimensions, rx_size _channels);
   matrix(const math::vec2z& _dimensions, rx_size _channels);
 
   matrix(matrix&& matrix_);
@@ -34,32 +34,32 @@ struct matrix
   const math::vec2z& dimensions() const &;
   rx_size channels() const;
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
-  memory::allocator* m_allocator;
+  ref<memory::allocator> m_allocator;
   vector<rx_f32> m_data;
   math::vec2z m_dimensions;
   rx_size m_channels;
 };
 
-inline matrix::matrix(memory::allocator* _allocator)
+inline constexpr matrix::matrix(memory::allocator& _allocator)
   : m_allocator{_allocator}
-  , m_data{m_allocator}
+  , m_data{allocator()}
   , m_channels{0}
 {
 }
 
-inline matrix::matrix()
+inline constexpr matrix::matrix()
   : matrix{memory::system_allocator::instance()}
 {
 }
 
-inline matrix::matrix(memory::allocator* _allocator, const math::vec2z& _dimensions, rx_size _channels)
+inline matrix::matrix(memory::allocator& _allocator, const math::vec2z& _dimensions, rx_size _channels)
   : m_allocator{_allocator}
-  , m_data{m_allocator}
+  , m_data{allocator()}
 {
-  resize(_dimensions, _channels);
+  RX_ASSERT(resize(_dimensions, _channels), "out of memory");
 }
 
 inline matrix::matrix(const math::vec2z& _dimensions, rx_size _channels)
@@ -68,7 +68,7 @@ inline matrix::matrix(const math::vec2z& _dimensions, rx_size _channels)
 }
 
 inline matrix::matrix(matrix&& matrix_)
-  : m_allocator{utility::exchange(matrix_.m_allocator, nullptr)}
+  : m_allocator{matrix_.m_allocator}
   , m_data{utility::move(matrix_.m_data)}
   , m_dimensions{utility::exchange(matrix_.m_dimensions, math::vec2z{})}
   , m_channels{utility::exchange(matrix_.m_channels, 0)}
@@ -92,7 +92,7 @@ inline bool matrix::resize(const math::vec2z& _dimensions, rx_size _channels) {
 inline matrix& matrix::operator=(matrix&& matrix_) {
   RX_ASSERT(this != &matrix_, "self move");
 
-  m_allocator = utility::exchange(matrix_.m_allocator, nullptr);
+  m_allocator = matrix_.m_allocator;
   m_data = utility::move(matrix_.m_data);
   m_dimensions = utility::exchange(matrix_.m_dimensions, math::vec2z{});
   m_channels = utility::exchange(matrix_.m_channels, 0);
@@ -141,7 +141,7 @@ inline rx_size matrix::channels() const {
   return m_channels;
 }
 
-inline memory::allocator* matrix::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& matrix::allocator() const {
   return m_allocator;
 }
 

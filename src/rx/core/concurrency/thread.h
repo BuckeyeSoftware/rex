@@ -13,7 +13,7 @@ struct RX_HINT_EMPTY_BASES thread
   : concepts::no_copy
 {
   template<typename F>
-  thread(memory::allocator* _allocator, const char* _name, F&& _function);
+  thread(memory::allocator& _allocator, const char* _name, F&& _function);
 
   template<typename F>
   thread(const char* _name, F&& _function);
@@ -25,12 +25,12 @@ struct RX_HINT_EMPTY_BASES thread
 
   void join();
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
   struct state {
     template<typename F>
-    state(memory::allocator* _allocator, const char* _name, F&& _function);
+    state(memory::allocator& _allocator, const char* _name, F&& _function);
 
     void spawn();
     void join();
@@ -53,7 +53,7 @@ private:
 };
 
 template<typename F>
-inline thread::state::state(memory::allocator* _allocator, const char* _name, F&& _function)
+inline thread::state::state(memory::allocator& _allocator, const char* _name, F&& _function)
   : m_nat{}
   , m_function{_allocator, utility::forward<F>(_function)}
   , m_name{_name}
@@ -63,7 +63,7 @@ inline thread::state::state(memory::allocator* _allocator, const char* _name, F&
 }
 
 template<typename F>
-inline thread::thread(memory::allocator* _allocator, const char* _name, F&& _function)
+inline thread::thread(memory::allocator& _allocator, const char* _name, F&& _function)
   : m_state{make_ptr<state>(_allocator, _allocator, _name, utility::forward<F>(_function))}
 {
 }
@@ -79,7 +79,7 @@ inline thread::thread(thread&& thread_)
 {
 }
 
-inline memory::allocator* thread::allocator() const {
+inline constexpr memory::allocator& thread::allocator() const {
   return m_state.allocator();
 }
 

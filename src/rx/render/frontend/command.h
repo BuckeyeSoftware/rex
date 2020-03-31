@@ -60,7 +60,7 @@ struct alignas(16) command_header {
   ::rx::render::frontend::command_header::info{(_description), RX_SOURCE_LOCATION}
 
 struct command_buffer {
-  command_buffer(memory::allocator* _allocator, rx_size _size);
+  command_buffer(memory::allocator& _allocator, rx_size _size);
   ~command_buffer();
 
   rx_byte* allocate(rx_size _size, command_type _command,
@@ -71,7 +71,7 @@ struct command_buffer {
   rx_size size() const;
 
 private:
-  memory::allocator* m_base_allocator;
+  memory::allocator& m_base_allocator;
   rx_byte* m_base_memory;
   memory::bump_point_allocator m_allocator;
 };

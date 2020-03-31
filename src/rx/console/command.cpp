@@ -77,13 +77,13 @@ command::argument::argument(argument&& _argument)
   }
 }
 
-command::command(memory::allocator* _allocator, const string& _name,
+command::command(memory::allocator& _allocator, const string& _name,
   const char* _signature, delegate&& _function)
   : m_allocator{_allocator}
   , m_delegate{utility::move(_function)}
-  , m_arguments{_allocator}
-  , m_declaration{_allocator}
-  , m_name{_allocator, _name}
+  , m_arguments{allocator()}
+  , m_declaration{allocator()}
+  , m_name{allocator(), _name}
   , m_signature{_signature}
   , m_argument_count{0}
 {

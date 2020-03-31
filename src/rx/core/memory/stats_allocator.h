@@ -17,7 +17,7 @@ struct stats_allocator
   final : allocator
 {
   constexpr stats_allocator() = delete;
-  constexpr stats_allocator(allocator* _allocator);
+  constexpr stats_allocator(allocator& _allocator);
 
   virtual rx_byte* allocate(rx_size _size);
   virtual rx_byte* reallocate(rx_byte* _data, rx_size _size);
@@ -43,12 +43,12 @@ struct stats_allocator
   statistics stats() const;
 
 private:
-  allocator* m_allocator;
+  allocator& m_allocator;
   mutable concurrency::spin_lock m_lock;
   statistics m_statistics; // protected by |m_lock|
 };
 
-inline constexpr stats_allocator::stats_allocator(allocator* _allocator)
+inline constexpr stats_allocator::stats_allocator(allocator& _allocator)
   : m_allocator{_allocator}
   , m_statistics{}
 {

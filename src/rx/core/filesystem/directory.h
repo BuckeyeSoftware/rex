@@ -12,9 +12,9 @@ namespace rx::filesystem {
 struct RX_HINT_EMPTY_BASES directory
   : concepts::no_copy
 {
-  directory(memory::allocator* _allocator, const char* _path);
-  directory(memory::allocator* _allocator, const string& _path);
-  directory(memory::allocator* _allocator, string&& path_);
+  directory(memory::allocator& _allocator, const char* _path);
+  directory(memory::allocator& _allocator, const string& _path);
+  directory(memory::allocator& _allocator, string&& path_);
   directory(const char* _path);
   directory(const string& _path);
   directory(string&& path_);
@@ -48,20 +48,20 @@ struct RX_HINT_EMPTY_BASES directory
 
   const string& path() const &;
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
-  memory::allocator* m_allocator;
+  memory::allocator& m_allocator;
   string m_path;
   void* m_impl;
 };
 
-inline directory::directory(memory::allocator* _allocator, const char* _path)
+inline directory::directory(memory::allocator& _allocator, const char* _path)
   : directory{_allocator, string{_allocator, _path}}
 {
 }
 
-inline directory::directory(memory::allocator* _allocator, const string& _path)
+inline directory::directory(memory::allocator& _allocator, const string& _path)
   : directory{_allocator, string{_allocator, _path}}
 {
 }
@@ -81,35 +81,35 @@ inline directory::directory(string&& path_)
 {
 }
 
-inline directory::operator bool() const {
+RX_HINT_FORCE_INLINE directory::operator bool() const {
   return m_impl;
 }
 
-inline const string& directory::path() const & {
+RX_HINT_FORCE_INLINE const string& directory::path() const & {
   return m_path;
 }
 
-inline memory::allocator* directory::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& directory::allocator() const {
   return m_allocator;
 }
 
-inline bool directory::item::is_file() const {
+RX_HINT_FORCE_INLINE bool directory::item::is_file() const {
   return m_type == type::k_file;
 }
 
-inline bool directory::item::is_directory() const {
+RX_HINT_FORCE_INLINE bool directory::item::is_directory() const {
   return m_type == type::k_directory;
 }
 
-inline const string& directory::item::name() const {
+RX_HINT_FORCE_INLINE const string& directory::item::name() const {
   return m_name;
 }
 
-inline string&& directory::item::name() {
+RX_HINT_FORCE_INLINE string&& directory::item::name() {
   return utility::move(m_name);
 }
 
-inline directory::item::item(string&& name_, type _type)
+RX_HINT_FORCE_INLINE directory::item::item(string&& name_, type _type)
   : m_name{utility::move(name_)}
   , m_type{_type}
 {

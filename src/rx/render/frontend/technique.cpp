@@ -527,7 +527,7 @@ program* technique::variant(rx_size _index) const {
 }
 
 bool technique::load(stream* _stream) {
-  auto allocator = m_frontend->allocator();
+  auto& allocator = m_frontend->allocator();
   if (auto data = read_text_stream(allocator, _stream)) {
     return parse({data->disown()});
   }

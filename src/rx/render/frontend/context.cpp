@@ -47,29 +47,29 @@ namespace rx::render::frontend {
 #define allocate_command(data_type, type) \
   m_command_buffer.allocate(sizeof(data_type), (type), _info)
 
-context::context(memory::allocator* _allocator, backend::context* _backend)
+context::context(memory::allocator& _allocator, backend::context* _backend)
   : m_allocator{_allocator}
   , m_backend{_backend}
   , m_allocation_info{m_backend->query_allocation_info()}
-  , m_buffer_pool{m_allocator, m_allocation_info.buffer_size + sizeof(buffer), static_cast<rx_size>(*max_buffers)}
-  , m_target_pool{m_allocator, m_allocation_info.target_size + sizeof(target), static_cast<rx_size>(*max_targets)}
-  , m_program_pool{m_allocator, m_allocation_info.program_size + sizeof(program), static_cast<rx_size>(*max_programs)}
-  , m_texture1D_pool{m_allocator, m_allocation_info.texture1D_size + sizeof(texture1D), static_cast<rx_size>(*max_texture1D)}
-  , m_texture2D_pool{m_allocator, m_allocation_info.texture2D_size + sizeof(texture2D), static_cast<rx_size>(*max_texture2D)}
-  , m_texture3D_pool{m_allocator, m_allocation_info.texture3D_size + sizeof(texture3D), static_cast<rx_size>(*max_texture3D)}
-  , m_textureCM_pool{m_allocator, m_allocation_info.textureCM_size + sizeof(textureCM), static_cast<rx_size>(*max_textureCM)}
-  , m_destroy_buffers{m_allocator}
-  , m_destroy_targets{m_allocator}
-  , m_destroy_textures1D{m_allocator}
-  , m_destroy_textures2D{m_allocator}
-  , m_destroy_textures3D{m_allocator}
-  , m_destroy_texturesCM{m_allocator}
+  , m_buffer_pool{allocator(), m_allocation_info.buffer_size + sizeof(buffer), static_cast<rx_size>(*max_buffers)}
+  , m_target_pool{allocator(), m_allocation_info.target_size + sizeof(target), static_cast<rx_size>(*max_targets)}
+  , m_program_pool{allocator(), m_allocation_info.program_size + sizeof(program), static_cast<rx_size>(*max_programs)}
+  , m_texture1D_pool{allocator(), m_allocation_info.texture1D_size + sizeof(texture1D), static_cast<rx_size>(*max_texture1D)}
+  , m_texture2D_pool{allocator(), m_allocation_info.texture2D_size + sizeof(texture2D), static_cast<rx_size>(*max_texture2D)}
+  , m_texture3D_pool{allocator(), m_allocation_info.texture3D_size + sizeof(texture3D), static_cast<rx_size>(*max_texture3D)}
+  , m_textureCM_pool{allocator(), m_allocation_info.textureCM_size + sizeof(textureCM), static_cast<rx_size>(*max_textureCM)}
+  , m_destroy_buffers{allocator()}
+  , m_destroy_targets{allocator()}
+  , m_destroy_textures1D{allocator()}
+  , m_destroy_textures2D{allocator()}
+  , m_destroy_textures3D{allocator()}
+  , m_destroy_texturesCM{allocator()}
   , m_swapchain_target{nullptr}
   , m_swapchain_texture{nullptr}
-  , m_commands{m_allocator}
-  , m_command_buffer{m_allocator, static_cast<rx_size>(*command_memory) * 1024 * 1024}
+  , m_commands{allocator()}
+  , m_command_buffer{allocator(), static_cast<rx_size>(*command_memory) * 1024 * 1024}
   , m_deferred_process{[this]() { process(); }}
-  , m_device_info{m_allocator}
+  , m_device_info{allocator()}
 {
   RX_ASSERT(_backend, "expected valid backend");
 
@@ -85,7 +85,7 @@ context::context(memory::allocator* _allocator, backend::context* _backend)
   if (filesystem::directory directory{k_module_path}) {
     directory.each([this](filesystem::directory::item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
-        module new_module{m_allocator};
+        module new_module{allocator()};
         const auto path{string::format("%s/%s", k_module_path,
           utility::move(item_.name()))};
         if (new_module.load(path)) {

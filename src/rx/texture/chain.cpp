@@ -17,7 +17,7 @@ void chain::generate(vector<rx_byte>&& data_, pixel_format _has_format,
   if (_has_format == _want_format) {
     m_data = utility::move(data_);
   } else {
-    m_data = convert(m_allocator, data_.data(), _dimensions.area(),
+    m_data = convert(allocator(), data_.data(), _dimensions.area(),
       _has_format, _want_format);
   }
   m_dimensions = _dimensions;
@@ -35,13 +35,13 @@ void chain::generate(const rx_byte* _data, pixel_format _has_format,
   if (_has_format == _want_format) {
     memcpy(m_data.data(), _data, m_data.size());
   } else {
-    m_data = convert(m_allocator, _data, _dimensions.area(),
+    m_data = convert(allocator(), _data, _dimensions.area(),
       _has_format, _want_format);
   }
   generate_mipchain(_has_mipchain, _want_mipchain);
 }
 
-static vector<chain::level> generate_levels(memory::allocator* _allocator,
+static vector<chain::level> generate_levels(memory::allocator& _allocator,
   bool _want_mipchain, const math::vec2z& _dimensions, rx_size _bpp)
 {
   vector<chain::level> result{_allocator};

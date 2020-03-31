@@ -151,10 +151,10 @@ string token::print() const {
   return "";
 }
 
-parser::parser(memory::allocator* _allocator)
+parser::parser(memory::allocator& _allocator)
   : m_allocator{_allocator}
-  , m_tokens{m_allocator}
-  , m_diagnostic{m_allocator}
+  , m_tokens{allocator()}
+  , m_diagnostic{allocator()}
   , m_ch{nullptr}
   , m_first{nullptr}
 {
@@ -198,13 +198,13 @@ bool parser::parse(const string& _contents) {
   m_first = _contents.data();
   m_ch = m_first;
 
-  m_diagnostic = {m_allocator};
+  m_diagnostic = {allocator()};
 
   while (*m_ch) {
     if (*m_ch == '\"') {
       m_ch++; // Skip '\"'
       record_span();
-      string contents{m_allocator};
+      string contents{allocator()};
       while (*m_ch && *m_ch != '\"') {
         if (*m_ch == '\\' && (m_ch[1] == '\"' || m_ch[1] == '\'')) {
           // NOTE(dweiler): This should not be escaped.
@@ -322,7 +322,7 @@ bool parser::parse(const string& _contents) {
       m_ch += 5;
     } else if (is_identifier(*m_ch)) {
       record_span();
-      string contents{m_allocator};
+      string contents{allocator()};
       while (is_identifier(*m_ch) || is_digit(*m_ch) || *m_ch == '.') {
         contents += *m_ch++;
       }

@@ -17,7 +17,7 @@ namespace rx::serialize {
 
 struct decoder {
   decoder(stream* _stream);
-  decoder(memory::allocator* _allocator, stream* _stream);
+  decoder(memory::allocator& _allocator, stream* _stream);
   ~decoder();
 
   [[nodiscard]] bool read_uint(rx_u64& result_);
@@ -37,7 +37,7 @@ struct decoder {
   [[nodiscard]] bool read_sint_array(T* result_, rx_size _count);
 
   const string& message() const &;
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
   template<typename... Ts>
@@ -47,7 +47,7 @@ private:
   [[nodiscard]] bool read_strings();
   [[nodiscard]] bool finalize();
 
-  memory::allocator* m_allocator;
+  memory::allocator& m_allocator;
   stream* m_stream;
 
   header m_header;
@@ -109,7 +109,7 @@ inline const string& decoder::message() const & {
   return m_message;
 }
 
-inline memory::allocator* decoder::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& decoder::allocator() const {
   return m_allocator;
 }
 

@@ -21,7 +21,7 @@ namespace rx::material {
 struct RX_HINT_EMPTY_BASES loader
   : concepts::no_copy
 {
-  loader(memory::allocator* _allocator);
+  loader(memory::allocator& _allocator);
   loader(loader&& loader_);
 
   void operator=(loader&& loader_);
@@ -31,7 +31,7 @@ struct RX_HINT_EMPTY_BASES loader
 
   bool parse(const json& _definition);
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
   vector<texture>&& textures();
   string&& name();
   bool alpha_test() const;
@@ -58,7 +58,7 @@ private:
     k_no_compress = 1 << 2
   };
 
-  memory::allocator* m_allocator;
+  ref<memory::allocator> m_allocator;
   vector<texture> m_textures;
   string m_name;
   rx_u32 m_flags;
@@ -67,7 +67,7 @@ private:
   optional<math::transform> m_transform;
 };
 
-inline memory::allocator* loader::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& loader::allocator() const {
   return m_allocator;
 }
 

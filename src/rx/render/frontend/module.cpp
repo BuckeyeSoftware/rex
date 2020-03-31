@@ -7,8 +7,33 @@ namespace rx::render::frontend {
 
 RX_LOG("render/module", logger);
 
+module::module(memory::allocator& _allocator)
+  : m_allocator{_allocator}
+  , m_name{allocator()}
+  , m_source{allocator()}
+  , m_dependencies{allocator()}
+{
+}
+
+module::module(module&& module_)
+  : m_allocator{module_.m_allocator}
+  , m_name{utility::move(module_.m_name)}
+  , m_source{utility::move(module_.m_source)}
+  , m_dependencies{utility::move(module_.m_dependencies)}
+{
+}
+
+module& module::operator=(module&& module_) {
+  m_allocator = module_.m_allocator;
+  m_name = utility::move(module_.m_name);
+  m_source = utility::move(module_.m_source);
+  m_dependencies = utility::move(module_.m_dependencies);
+
+  return *this;
+}
+
 bool module::load(stream* _stream) {
-  if (auto data = read_text_stream(m_allocator, _stream)) {
+  if (auto data = read_text_stream(allocator(), _stream)) {
     return parse({data->disown()});
   }
   return false;

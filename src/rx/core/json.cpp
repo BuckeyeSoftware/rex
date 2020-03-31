@@ -42,20 +42,18 @@ static void* json_allocator(void* _user, rx_size _size) {
   return allocator->allocate(_size);
 }
 
-json::shared::shared(memory::allocator* _allocator, const char* _contents, rx_size _length)
+json::shared::shared(memory::allocator& _allocator, const char* _contents, rx_size _length)
   : m_allocator{_allocator}
   , m_root{nullptr}
   , m_count{1}
 {
-  RX_ASSERT(m_allocator, "null allocator");
-
   m_root = json_parse_ex(_contents, _length,
     (json_parse_flags_allow_c_style_comments |
      json_parse_flags_allow_location_information |
      json_parse_flags_allow_unquoted_keys |
      json_parse_flags_allow_multi_line_strings),
     json_allocator,
-    m_allocator,
+    &m_allocator,
     &m_error);
 }
 
@@ -67,22 +65,20 @@ json::shared* json::shared::acquire() {
 
 void json::shared::release() {
   if (--m_count == 0) {
-    m_allocator->destroy<shared>(this);
+    m_allocator.destroy<shared>(this);
   }
 }
 
 json::shared::~shared() {
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_root));
+  m_allocator.deallocate(reinterpret_cast<rx_byte*>(m_root));
 }
 
-json::json(memory::allocator* _allocator, const char* _contents, rx_size _length)
+json::json(memory::allocator& _allocator, const char* _contents, rx_size _length)
   : m_shared{nullptr}
   , m_value{nullptr}
 {
-  RX_ASSERT(_allocator, "null allocator");
-
   // Construct the shared state.
-  m_shared = _allocator->create<shared>(_allocator, _contents, _length);
+  m_shared = _allocator.create<shared>(_allocator, _contents, _length);
   RX_ASSERT(m_shared, "out of memory");
 
   // We hold a reference to the shared state already. Just take the root JSON
@@ -90,7 +86,7 @@ json::json(memory::allocator* _allocator, const char* _contents, rx_size _length
   m_value = m_shared->m_root;
 }
 
-json::json(memory::allocator* _allocator, const char* _contents)
+json::json(memory::allocator& _allocator, const char* _contents)
   : json{_allocator, _contents, strlen(_contents)}
 {
 }
@@ -191,9 +187,8 @@ json json::operator[](const char* _name) const {
   return {};
 }
 
-string json::as_string_with_allocator(memory::allocator* _allocator) const {
+string json::as_string_with_allocator(memory::allocator& _allocator) const {
   RX_ASSERT(is_string(), "not a string");
-  RX_ASSERT(_allocator, "null allocator");
   auto string{reinterpret_cast<struct json_string_s*>(m_value->payload)};
   return {_allocator, string->string, string->string_size};
 }

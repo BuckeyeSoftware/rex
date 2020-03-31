@@ -11,21 +11,18 @@
 
 namespace rx::render {
 
-immediate3D::queue::queue(memory::allocator* _allocator)
-  : m_allocator{_allocator}
-  , m_commands{m_allocator}
+immediate3D::queue::queue(memory::allocator& _allocator)
+  : m_commands{_allocator}
 {
 }
 
 immediate3D::queue::queue(queue&& queue_)
-  : m_allocator{utility::exchange(queue_.m_allocator, nullptr)}
-  , m_commands{utility::move(queue_.m_commands)}
+  : m_commands{utility::move(queue_.m_commands)}
 {
 }
 
 immediate3D::queue& immediate3D::queue::operator=(queue&& queue_) {
   RX_ASSERT(&queue_ != this, "self assignment");
-  m_allocator = utility::exchange(queue_.m_allocator, nullptr);
   m_commands = utility::move(queue_.m_commands);
   return *this;
 }

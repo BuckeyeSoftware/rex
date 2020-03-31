@@ -903,14 +903,14 @@ device_info es3::query_device_info() const {
   };
 }
 
-es3::es3(memory::allocator* _allocator, void* _data)
+es3::es3(memory::allocator& _allocator, void* _data)
   : m_allocator{_allocator}
   , m_data{_data}
 {
 }
 
 es3::~es3() {
-  m_allocator->destroy<detail_es3::state>(m_impl);
+  m_allocator.destroy<detail_es3::state>(m_impl);
 }
 
 bool es3::init() {
@@ -1021,7 +1021,7 @@ bool es3::init() {
 
   fetch("glFinish", pglFinish);
 
-  m_impl = m_allocator->create<detail_es3::state>(context);
+  m_impl = m_allocator.create<detail_es3::state>(context);
 
   return m_impl != nullptr;
 }

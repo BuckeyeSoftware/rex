@@ -24,7 +24,7 @@ struct system_allocator
 
   stats_allocator::statistics stats() const;
 
-  static constexpr allocator* instance();
+  static constexpr allocator& instance();
 
 private:
   heap_allocator m_heap_allocator;
@@ -34,7 +34,7 @@ private:
 };
 
 inline constexpr system_allocator::system_allocator()
-  : m_stats_allocator{&m_heap_allocator}
+  : m_stats_allocator{m_heap_allocator}
 {
 }
 
@@ -42,8 +42,8 @@ inline stats_allocator::statistics system_allocator::stats() const {
   return m_stats_allocator.stats();
 }
 
-inline constexpr allocator* system_allocator::instance() {
-  return &s_instance;
+inline constexpr allocator& system_allocator::instance() {
+  return *s_instance;
 }
 
 } // namespace rx::memory

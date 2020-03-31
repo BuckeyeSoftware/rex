@@ -6,11 +6,11 @@
 
 namespace rx::serialize {
 
-decoder::decoder(memory::allocator* _allocator, stream* _stream)
+decoder::decoder(memory::allocator& _allocator, stream* _stream)
   : m_allocator{_allocator}
   , m_stream{_stream}
   , m_buffer{m_stream, buffer::mode::k_read}
-  , m_message{m_allocator}
+  , m_message{allocator()}
 {
   RX_ASSERT(_stream->can_seek(), "decoder requires seekable stream");
   RX_ASSERT(_stream->can_tell(), "decoder requires tellable stream");
@@ -181,7 +181,7 @@ bool decoder::read_strings() {
     return error("seek failed");
   }
 
-  vector<char> strings{m_allocator};
+  vector<char> strings{allocator()};
   if (!strings.resize(m_header.string_size, utility::uninitialized{})) {
     return error("out of memory");
   }

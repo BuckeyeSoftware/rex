@@ -4,17 +4,17 @@
 
 namespace rx {
 
-static_pool::static_pool(memory::allocator* _allocator, rx_size _object_size, rx_size _capacity)
+static_pool::static_pool(memory::allocator& _allocator, rx_size _object_size, rx_size _capacity)
   : m_allocator{_allocator}
   , m_object_size{memory::allocator::round_to_alignment(_object_size)}
   , m_capacity{_capacity}
-  , m_data{_allocator->allocate(m_object_size * m_capacity)}
-  , m_bitset{m_allocator, m_capacity}
+  , m_data{allocator().allocate(m_object_size * m_capacity)}
+  , m_bitset{allocator(), m_capacity}
 {
 }
 
 static_pool::static_pool(static_pool&& pool_)
-  : m_allocator{utility::exchange(pool_.m_allocator, nullptr)}
+  : m_allocator{pool_.m_allocator}
   , m_object_size{utility::exchange(pool_.m_object_size, 0)}
   , m_capacity{utility::exchange(pool_.m_capacity, 0)}
   , m_data{utility::exchange(pool_.m_data, nullptr)}
@@ -25,7 +25,7 @@ static_pool::static_pool(static_pool&& pool_)
 static_pool& static_pool::operator=(static_pool&& pool_) {
   RX_ASSERT(&pool_ != this, "self assignment");
 
-  m_allocator = utility::exchange(pool_.m_allocator, nullptr);
+  m_allocator = pool_.m_allocator;
   m_object_size = utility::exchange(pool_.m_object_size, 0);
   m_capacity = utility::exchange(pool_.m_capacity, 0);
   m_data = utility::exchange(pool_.m_data, nullptr);

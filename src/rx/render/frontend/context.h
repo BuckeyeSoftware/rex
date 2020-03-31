@@ -29,7 +29,7 @@ struct module;
 struct material;
 
 struct context {
-  context(memory::allocator* _allocator, backend::context* _backend);
+  context(memory::allocator& _allocator, backend::context* _backend);
   ~context();
 
   buffer* create_buffer(const command_header::info& _info);
@@ -168,7 +168,7 @@ struct context {
   void cache_texture(texture3D* _texture, const string& _key);
   void cache_texture(textureCM* _texture, const string& _key);
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
   struct statistics {
     rx_size total;
@@ -178,8 +178,7 @@ struct context {
   };
 
   struct device_info {
-    device_info(memory::allocator* _allocator);
-
+    device_info(memory::allocator& _allocator);
     string vendor;
     string renderer;
     string version;
@@ -215,7 +214,7 @@ private:
 
   mutable concurrency::mutex m_mutex;
 
-  memory::allocator* m_allocator;              // protected by |m_mutex|
+  memory::allocator& m_allocator;              // protected by |m_mutex|
   backend::context* m_backend;                 // protected by |m_mutex|
 
   // size of resources as reported by the backend
@@ -272,7 +271,7 @@ private:
   frame_timer m_timer;
 };
 
-inline context::device_info::device_info(memory::allocator* _allocator)
+inline context::device_info::device_info(memory::allocator& _allocator)
   : vendor{_allocator}
   , renderer{_allocator}
   , version{_allocator}
@@ -290,7 +289,7 @@ inline void context::remove_from_cache(map<string, T*>& cache_, T* _object) {
   });
 }
 
-inline memory::allocator* context::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& context::allocator() const {
   return m_allocator;
 }
 

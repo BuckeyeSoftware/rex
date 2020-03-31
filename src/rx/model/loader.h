@@ -17,7 +17,7 @@ struct RX_HINT_EMPTY_BASES loader
   : concepts::no_copy
   , concepts::no_move
 {
-  loader(memory::allocator* _allocator);
+  loader(memory::allocator& _allocator);
   ~loader();
 
   bool load(stream* _stream);
@@ -53,6 +53,8 @@ struct RX_HINT_EMPTY_BASES loader
   vector<importer::joint>&& joints();
   const vector<importer::animation>& animations() const &;
 
+  constexpr memory::allocator& allocator() const;
+
 private:
   friend struct animation;
 
@@ -72,7 +74,7 @@ private:
     k_animated    = 1 << 1
   };
 
-  memory::allocator* m_allocator;
+  memory::allocator& m_allocator;
 
   union {
     utility::nat as_nat;
@@ -103,31 +105,6 @@ inline void loader::log(log::level _level, const char* _format,
   Ts&&... _arguments) const
 {
   write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
-}
-
-inline loader::loader(memory::allocator* _allocator)
-  : m_allocator{_allocator}
-  , as_nat{}
-  , m_elements{m_allocator}
-  , m_meshes{m_allocator}
-  , m_animations{m_allocator}
-  , m_joints{m_allocator}
-  , m_positions{m_allocator}
-  , m_frames{m_allocator}
-  , m_materials{m_allocator}
-  , m_name{m_allocator}
-  , m_flags{0}
-{
-}
-
-inline loader::~loader() {
-  if (m_flags & k_constructed) {
-    if (m_flags & k_animated) {
-      utility::destruct<vector<animated_vertex>>(&as_animated_vertices);
-    } else {
-      utility::destruct<vector<vertex>>(&as_vertices);
-    }
-  }
 }
 
 inline bool loader::is_animated() const {
@@ -163,6 +140,10 @@ inline vector<importer::joint>&& loader::joints() {
 
 inline const vector<importer::animation>& loader::animations() const & {
   return m_animations;
+}
+
+RX_HINT_FORCE_INLINE constexpr memory::allocator& loader::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx::model

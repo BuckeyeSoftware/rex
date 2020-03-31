@@ -30,7 +30,7 @@ struct event<R(Ts...)> {
     rx_size m_index;
   };
 
-  constexpr event(memory::allocator* _allocator);
+  constexpr event(memory::allocator& _allocator);
   constexpr event();
 
   void signal(Ts... _arguments);
@@ -39,7 +39,7 @@ struct event<R(Ts...)> {
   rx_size size() const;
   bool is_empty() const;
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
   friend struct handle;
@@ -70,7 +70,7 @@ inline event<R(Ts...)>::handle::~handle() {
 }
 
 template<typename R, typename... Ts>
-inline constexpr event<R(Ts...)>::event(memory::allocator* _allocator)
+inline constexpr event<R(Ts...)>::event(memory::allocator& _allocator)
   : m_delegates{_allocator}
 {
 }
@@ -123,7 +123,7 @@ inline rx_size event<R(Ts...)>::size() const {
 }
 
 template<typename R, typename... Ts>
-inline memory::allocator* event<R(Ts...)>::allocator() const {
+inline constexpr memory::allocator& event<R(Ts...)>::allocator() const {
   return m_delegates.allocator();
 }
 

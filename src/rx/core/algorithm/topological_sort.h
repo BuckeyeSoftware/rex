@@ -18,7 +18,7 @@ namespace rx::algorithm {
 template<typename K>
 struct topological_sort {
   topological_sort();
-  topological_sort(memory::allocator* _allocator);
+  topological_sort(memory::allocator& _allocator);
 
   struct result {
     vector<K> sorted; // sorted order of nodes
@@ -32,14 +32,16 @@ struct topological_sort {
 
   void clear();
 
+  constexpr memory::allocator& allocator() const;
+
 protected:
   struct relations {
-    relations(memory::allocator* _allocator);
+    relations(memory::allocator& _allocator);
     rx_size dependencies;
     set<K> dependents;
   };
 
-  memory::allocator* m_allocator;
+  ref<memory::allocator> m_allocator;
   map<K, relations> m_map;
 };
 
@@ -50,9 +52,9 @@ inline topological_sort<K>::topological_sort()
 }
 
 template<typename K>
-inline topological_sort<K>::topological_sort(memory::allocator* _allocator)
+inline topological_sort<K>::topological_sort(memory::allocator& _allocator)
   : m_allocator{_allocator}
-  , m_map{_allocator}
+  , m_map{allocator()}
 {
 }
 
@@ -61,7 +63,7 @@ inline bool topological_sort<K>::add(const K& _key) {
   if (m_map.find(_key)) {
     return false;
   }
-  return m_map.insert(_key, {m_allocator}) != nullptr;
+  return m_map.insert(_key, {allocator()}) != nullptr;
 }
 
 template<typename K>
@@ -75,7 +77,7 @@ inline bool topological_sort<K>::add(const K& _key, const K& _dependency) {
   {
     auto find = m_map.find(_dependency);
     if (!find) {
-      find = m_map.insert(_dependency, {m_allocator});
+      find = m_map.insert(_dependency, {allocator()});
     }
     auto& dependents = find->dependents;
 
@@ -91,7 +93,7 @@ inline bool topological_sort<K>::add(const K& _key, const K& _dependency) {
   {
     auto find = m_map.find(_key);
     if (!find) {
-      find = m_map.insert(_key, {m_allocator});
+      find = m_map.insert(_key, {allocator()});
     }
 
     auto& dependencies = find->dependencies;
@@ -108,8 +110,8 @@ inline typename topological_sort<K>::result topological_sort<K>::sort() {
   // Make a copy of the map because the sorting is destructive.
   auto map = m_map;
 
-  vector<K> sorted{m_allocator};
-  vector<K> cycled{m_allocator};
+  vector<K> sorted{allocator()};
+  vector<K> cycled{allocator()};
 
   // Each key that has no dependencies can be put in right away.
   map.each_pair([&](const K& _key, const relations& _relations) {
@@ -139,12 +141,17 @@ inline typename topological_sort<K>::result topological_sort<K>::sort() {
 }
 
 template<typename T>
-inline void topological_sort<T>::clear() {
+RX_HINT_FORCE_INLINE void topological_sort<T>::clear() {
   m_map.clear();
 }
 
 template<typename T>
-inline topological_sort<T>::relations::relations(memory::allocator* _allocator)
+RX_HINT_FORCE_INLINE constexpr memory::allocator& topological_sort<T>::allocator() const {
+  return m_allocator;
+}
+
+template<typename T>
+RX_HINT_FORCE_INLINE topological_sort<T>::relations::relations(memory::allocator& _allocator)
   : dependencies{0}
   , dependents{_allocator}
 {

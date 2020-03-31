@@ -17,8 +17,33 @@ namespace rx::model {
 
 RX_LOG("model/loader", logger);
 
+loader::loader(memory::allocator& _allocator)
+  : m_allocator{_allocator}
+  , as_nat{}
+  , m_elements{allocator()}
+  , m_meshes{allocator()}
+  , m_animations{allocator()}
+  , m_joints{allocator()}
+  , m_positions{allocator()}
+  , m_frames{allocator()}
+  , m_materials{allocator()}
+  , m_name{allocator()}
+  , m_flags{0}
+{
+}
+
+loader::~loader() {
+  if (m_flags & k_constructed) {
+    if (m_flags & k_animated) {
+      utility::destruct<vector<animated_vertex>>(&as_animated_vertices);
+    } else {
+      utility::destruct<vector<vertex>>(&as_vertices);
+    }
+  }
+}
+
 bool loader::load(stream* _stream) {
-  if (auto contents = read_text_stream(m_allocator, _stream)) {
+  if (auto contents = read_text_stream(allocator(), _stream)) {
     return parse({contents->disown()});
   }
   return false;
@@ -90,7 +115,7 @@ bool loader::parse(const json& _definition) {
   concurrency::wait_group group{materials.size()};
   materials.each([&](const json& _material) {
     concurrency::thread_pool::instance().add([&, _material](int) {
-      material::loader loader{m_allocator};
+      material::loader loader{allocator()};
       if (_material.is_string() && loader.load(_material.as_string())) {
         concurrency::scope_lock lock{mutex};
         m_materials.insert(loader.name(), utility::move(loader));
@@ -112,7 +137,8 @@ bool loader::import(const string& _file_name) {
 
   // determine the model format based on the extension
   if (_file_name.ends_with(".iqm")) {
-    if (!(new_loader = make_ptr<iqm>(m_allocator, m_allocator))) {
+    auto& this_allocator = allocator();
+    if (!(new_loader = make_ptr<iqm>(this_allocator, this_allocator))) {
       return error("out of memory");
     }
   } else {
@@ -135,10 +161,10 @@ bool loader::import(const string& _file_name) {
     const rx_size n_vertices{m_positions.size()};
 
     if (m_animations.is_empty()) {
-      utility::construct<vector<vertex>>(&as_vertices, m_allocator, n_vertices);
+      utility::construct<vector<vertex>>(&as_vertices, allocator(), n_vertices);
       m_flags |= k_constructed;
     } else {
-      utility::construct<vector<animated_vertex>>(&as_animated_vertices, m_allocator, n_vertices);
+      utility::construct<vector<animated_vertex>>(&as_animated_vertices, allocator(), n_vertices);
       m_flags |= k_constructed;
       m_flags |= k_animated;
     }

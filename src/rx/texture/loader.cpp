@@ -18,7 +18,7 @@ namespace rx::texture {
 bool loader::load(stream* _stream, pixel_format _want_format,
   const math::vec2z& _max_dimensions)
 {
-  auto data = read_binary_stream(m_allocator, _stream);
+  auto data = read_binary_stream(allocator(), _stream);
   if (!data) {
     return false;
   }

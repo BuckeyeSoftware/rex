@@ -21,9 +21,12 @@ enum class pixel_format {
   k_r_u8
 };
 
-struct loader {
+struct loader
+  : concepts::no_copy
+  , concepts::no_move
+{
   constexpr loader();
-  constexpr loader(memory::allocator* _allocator);
+  constexpr loader(memory::allocator& _allocator);
   ~loader() = default;
 
   bool load(stream* _stream, pixel_format _want_format,
@@ -39,10 +42,10 @@ struct loader {
   vector<rx_byte>&& data();
   pixel_format format() const;
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
-  memory::allocator* m_allocator;
+  memory::allocator& m_allocator;
   vector<rx_byte> m_data;
   rx_size m_bpp;
   rx_size m_channels;
@@ -54,9 +57,9 @@ inline constexpr loader::loader()
 {
 }
 
-inline constexpr loader::loader(memory::allocator* _allocator)
+inline constexpr loader::loader(memory::allocator& _allocator)
   : m_allocator{_allocator}
-  , m_data{m_allocator}
+  , m_data{allocator()}
   , m_bpp{0}
   , m_channels{0}
   , m_dimensions{}
@@ -91,7 +94,7 @@ inline pixel_format loader::format() const {
   RX_HINT_UNREACHABLE();
 }
 
-inline memory::allocator* loader::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& loader::allocator() const {
   return m_allocator;
 }
 

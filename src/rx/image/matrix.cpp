@@ -8,7 +8,7 @@ matrix matrix::scaled(const math::vec2z& _dimensions) const {
   const rx_size channels{m_channels};
 
   // Really slow Bilinear scaler.
-  matrix result{m_allocator, _dimensions, channels};
+  matrix result{allocator(), _dimensions, channels};
 
   const rx_f32 x_ratio = rx_f32(m_dimensions.w - 1) / _dimensions.w;
   const rx_f32 y_ratio = rx_f32(m_dimensions.h - 1) / _dimensions.h;

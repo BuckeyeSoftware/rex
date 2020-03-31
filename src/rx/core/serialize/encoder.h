@@ -17,7 +17,7 @@ namespace rx::serialize {
 
 struct encoder {
   encoder(stream* _stream);
-  encoder(memory::allocator* _allocator, stream* _stream);
+  encoder(memory::allocator& _allocator, stream* _stream);
   ~encoder();
 
   [[nodiscard]] bool write_uint(rx_u64 _value);
@@ -38,7 +38,7 @@ struct encoder {
   [[nodiscard]] bool write_sint_array(const T* _data, rx_size _count);
 
   const string& message() const &;
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
   template<typename... Ts>
@@ -47,7 +47,7 @@ private:
   [[nodiscard]] bool write_header();
   [[nodiscard]] bool finalize();
 
-  memory::allocator* m_allocator;
+  memory::allocator& m_allocator;
   stream* m_stream;
 
   header m_header;
@@ -103,13 +103,13 @@ inline const string& encoder::message() const & {
   return m_message;
 }
 
-inline memory::allocator* encoder::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& encoder::allocator() const {
   return m_allocator;
 }
 
 template<typename... Ts>
 inline bool encoder::error(const char* _format, Ts&&... _arguments) {
-  m_message = string::format(_format, utility::forward<Ts>(_arguments)...);
+  m_message = string::format(allocator(), _format, utility::forward<Ts>(_arguments)...);
   return false;
 }
 

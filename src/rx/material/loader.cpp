@@ -9,10 +9,10 @@ namespace rx::material {
 
 RX_LOG("material/loader", logger);
 
-loader::loader(memory::allocator* _allocator)
+loader::loader(memory::allocator& _allocator)
   : m_allocator{_allocator}
-  , m_textures{_allocator}
-  , m_name{_allocator}
+  , m_textures{allocator()}
+  , m_name{allocator()}
   , m_flags{0}
   , m_roughness{1.0f}
   , m_metalness{0.0f}
@@ -20,7 +20,7 @@ loader::loader(memory::allocator* _allocator)
 }
 
 loader::loader(loader&& loader_)
-  : m_allocator{utility::exchange(loader_.m_allocator, nullptr)}
+  : m_allocator{loader_.allocator()}
   , m_textures{utility::move(loader_.m_textures)}
   , m_name{utility::move(loader_.m_name)}
   , m_flags{utility::exchange(loader_.m_flags, 0)}
@@ -32,7 +32,7 @@ loader::loader(loader&& loader_)
 void loader::operator=(loader&& loader_) {
   RX_ASSERT(&loader_ != this, "self assignment");
 
-  m_allocator = utility::exchange(loader_.m_allocator, nullptr);
+  m_allocator = loader_.allocator();
   m_textures = utility::move(loader_.m_textures);
   m_name = utility::move(loader_.m_name);
   m_flags = utility::exchange(loader_.m_flags, 0);
@@ -41,7 +41,7 @@ void loader::operator=(loader&& loader_) {
 }
 
 bool loader::load(stream* _stream) {
-  if (auto contents = read_text_stream(m_allocator, _stream)) {
+  if (auto contents = read_text_stream(allocator(), _stream)) {
     return parse({contents->disown()});
   }
   return false;
@@ -160,7 +160,7 @@ bool loader::parse(const json& _definition) {
 bool loader::parse_textures(const json& _textures) {
   bool success{true};
   _textures.each([&](const json& _texture) {
-    texture new_texture{m_allocator};
+    texture new_texture{allocator()};
     if (_texture.is_string() && new_texture.load(_texture.as_string())) {
       m_textures.push_back(utility::move(new_texture));
     } else if (_texture.is_object() && new_texture.parse(_texture)) {
@@ -180,7 +180,7 @@ bool loader::parse_textures(const json& _textures) {
   concurrency::atomic<bool> success{true};
   _textures.each([&](const json& _texture) {
     concurrency::thread_pool::instance().add([&, _texture](int) {
-      texture new_texture{m_allocator};
+      texture new_texture{allocator()};
       if (_texture.is_string() && new_texture.load(_texture.as_string())) {
         m_textures.push_back(utility::move(new_texture));
       } else if (_texture.is_object() && new_texture.parse(_texture)) {

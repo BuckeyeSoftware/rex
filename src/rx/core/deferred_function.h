@@ -8,14 +8,14 @@ namespace rx {
 template<typename T>
 struct deferred_function {
   template<typename F>
-  constexpr deferred_function(memory::allocator* _allocator, F&& _function);
+  constexpr deferred_function(memory::allocator& _allocator, F&& _function);
 
   template<typename F>
   constexpr deferred_function(F&& _function);
 
   ~deferred_function();
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
   function<T> m_function;
@@ -23,7 +23,7 @@ private:
 
 template<typename T>
 template<typename F>
-inline constexpr deferred_function<T>::deferred_function(memory::allocator* _allocator, F&& _function)
+inline constexpr deferred_function<T>::deferred_function(memory::allocator& _allocator, F&& _function)
   : m_function{_allocator, utility::forward<F>(_function)}
 {
 }
@@ -41,7 +41,7 @@ inline deferred_function<T>::~deferred_function() {
 }
 
 template<typename T>
-inline memory::allocator* deferred_function<T>::allocator() const {
+inline constexpr memory::allocator& deferred_function<T>::allocator() const {
   return m_function.allocator();
 }
 

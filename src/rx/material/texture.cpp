@@ -19,7 +19,7 @@ namespace rx::material {
 RX_LOG("material/texture", logger);
 
 bool texture::load(stream* _stream) {
-  if (auto contents = read_text_stream(m_allocator, _stream)) {
+  if (auto contents = read_text_stream(allocator(), _stream)) {
     return parse({contents->disown()});
   }
   return false;
@@ -105,7 +105,7 @@ bool texture::load_texture_file() {
     want_format = rx::texture::pixel_format::k_rgb_u8;
   }
 
-  rx::texture::loader loader{m_allocator};
+  rx::texture::loader loader{allocator()};
   if (!loader.load(m_file, want_format)) {
     return false;
   }
@@ -196,7 +196,7 @@ bool texture::load_texture_file() {
       0.0f};
 
     // Convert loader data to image matrix.
-    image::matrix matrix{m_allocator};
+    image::matrix matrix{allocator()};
     if (!image::convert(loader.data(), loader.dimensions(), loader.channels(), matrix)) {
       return false;
     }
@@ -211,7 +211,7 @@ bool texture::load_texture_file() {
       flags_bitset);
 
     // Convert normal map to data.
-    vector<rx_byte> data{m_allocator};
+    vector<rx_byte> data{allocator()};
     if (!image::convert(matrix, data)) {
       return false;
     }

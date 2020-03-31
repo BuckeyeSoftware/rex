@@ -1,11 +1,12 @@
 #ifndef RX_CORE_BITSET_H
 #define RX_CORE_BITSET_H
+#include "rx/core/assert.h"
+#include "rx/core/ref.h"
+
 #include "rx/core/traits/is_same.h"
 #include "rx/core/traits/return_type.h"
 
 #include "rx/core/memory/system_allocator.h"
-
-#include "rx/core/assert.h"
 
 #include "rx/core/utility/exchange.h"
 
@@ -19,7 +20,7 @@ struct bitset {
   static constexpr const bit_type k_bit_one{1};
   static constexpr const rx_size k_word_bits{8 * sizeof(bit_type)};
 
-  bitset(memory::allocator* _allocator, rx_size _size);
+  bitset(memory::allocator& _allocator, rx_size _size);
   bitset(rx_size _size);
   bitset(bitset&& bitset_);
   bitset(const bitset& _bitset);
@@ -63,7 +64,7 @@ struct bitset {
   template<typename F>
   void each_unset(F&& _function) const;
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
   static rx_size bytes_for_size(rx_size _size);
@@ -71,8 +72,7 @@ private:
   static rx_size index(rx_size bit);
   static rx_size offset(rx_size bit);
 
-  memory::allocator* m_allocator;
-
+  ref<memory::allocator> m_allocator;
   rx_size m_size;
   bit_type* m_data;
 };
@@ -90,9 +90,8 @@ inline bitset::bitset(bitset&& bitset_)
 }
 
 inline bitset::~bitset() {
-  if (m_allocator) {
-    m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
-  }
+  memory::allocator& allocator = m_allocator;
+  allocator.deallocate(reinterpret_cast<rx_byte*>(m_data));
 }
 
 inline void bitset::set(rx_size _bit) {
@@ -156,7 +155,7 @@ inline void bitset::each_unset(F&& _function) const {
   }
 }
 
-inline memory::allocator* bitset::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& bitset::allocator() const {
   return m_allocator;
 }
 

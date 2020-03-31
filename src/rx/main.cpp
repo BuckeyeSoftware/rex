@@ -256,10 +256,10 @@ int main(int _argc, char** _argv) {
     // memory usage.
     SDL_SetMemoryFunctions(
       [](rx_size _size) -> void* {
-        return memory::system_allocator::instance()->allocate(_size);
+        return memory::system_allocator::instance().allocate(_size);
       },
       [](rx_size _size, rx_size _elements) -> void* {
-        rx_byte* data = memory::system_allocator::instance()->allocate(_size * _elements);
+        rx_byte* data = memory::system_allocator::instance().allocate(_size * _elements);
         if (data) {
           memset(data, 0, _size * _elements);
           return data;
@@ -267,10 +267,10 @@ int main(int _argc, char** _argv) {
         return nullptr;
       },
       [](void* _data, rx_size _size) -> void* {
-        return memory::system_allocator::instance()->reallocate(reinterpret_cast<rx_byte*>(_data), _size);
+        return memory::system_allocator::instance().reallocate(reinterpret_cast<rx_byte*>(_data), _size);
       },
       [](void* _data){
-        memory::system_allocator::instance()->deallocate(reinterpret_cast<rx_byte*>(_data));
+        memory::system_allocator::instance().deallocate(reinterpret_cast<rx_byte*>(_data));
       }
     );
     SDL_SetMainReady();
@@ -389,9 +389,8 @@ int main(int _argc, char** _argv) {
       SDL_StartTextInput();
 
       {
-        ptr<render::backend::context> backend;
-
-        auto allocator = memory::system_allocator::instance();
+        auto& allocator = memory::system_allocator::instance();
+        ptr<render::backend::context> backend{allocator};
         if (driver_name == "gl4") {
           backend = make_ptr<render::backend::gl4>(allocator, allocator, reinterpret_cast<void*>(window));
         } else if (driver_name == "gl3") {
@@ -420,15 +419,15 @@ int main(int _argc, char** _argv) {
           settings->limit_connections_to_localhost = *profile_local;
 
           settings->malloc = [](void*, rx_u32 _bytes) -> void* {
-            return memory::system_allocator::instance()->allocate(_bytes);
+            return memory::system_allocator::instance().allocate(_bytes);
           };
 
           settings->realloc = [](void*, void* _data, rx_u32 _bytes) ->void* {
-            return memory::system_allocator::instance()->reallocate(reinterpret_cast<rx_byte*>(_data), _bytes);
+            return memory::system_allocator::instance().reallocate(reinterpret_cast<rx_byte*>(_data), _bytes);
           };
 
           settings->free = [](void*, void* _data) {
-            memory::system_allocator::instance()->deallocate(reinterpret_cast<rx_byte*>(_data));
+            memory::system_allocator::instance().deallocate(reinterpret_cast<rx_byte*>(_data));
           };
 
           if (rmt_CreateGlobalInstance(&remotery) == RMT_ERROR_NONE) {

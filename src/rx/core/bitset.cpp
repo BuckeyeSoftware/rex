@@ -7,14 +7,12 @@
 
 namespace rx {
 
-bitset::bitset(memory::allocator* _allocator, rx_size _size)
+bitset::bitset(memory::allocator& _allocator, rx_size _size)
   : m_allocator{_allocator}
   , m_size{_size}
   , m_data{nullptr}
 {
-  RX_ASSERT(m_allocator, "null allocator");
-
-  m_data = reinterpret_cast<bit_type*>(m_allocator->allocate(bytes_for_size(m_size)));
+  m_data = reinterpret_cast<bit_type*>(allocator().allocate(bytes_for_size(m_size)));
   RX_ASSERT(m_data, "out of memory");
 
   clear_all();
@@ -23,7 +21,7 @@ bitset::bitset(memory::allocator* _allocator, rx_size _size)
 bitset::bitset(const bitset& _bitset)
   : m_allocator{_bitset.m_allocator}
   , m_size{_bitset.m_size}
-  , m_data{reinterpret_cast<bit_type*>(m_allocator->allocate(bytes_for_size(m_size)))}
+  , m_data{reinterpret_cast<bit_type*>(allocator().allocate(bytes_for_size(m_size)))}
 {
   RX_ASSERT(m_data, "out of memory");
   memcpy(m_data, _bitset.m_data, bytes_for_size(m_size));
@@ -32,7 +30,7 @@ bitset::bitset(const bitset& _bitset)
 bitset& bitset::operator=(bitset&& bitset_) {
   RX_ASSERT(&bitset_ != this, "self assignment");
 
-  m_allocator = utility::exchange(bitset_.m_allocator, nullptr);
+  m_allocator = bitset_.m_allocator;
   m_size = utility::exchange(bitset_.m_size, 0);
   m_data = utility::exchange(bitset_.m_data, nullptr);
 
@@ -42,11 +40,11 @@ bitset& bitset::operator=(bitset&& bitset_) {
 bitset& bitset::operator=(const bitset& _bitset) {
   RX_ASSERT(&_bitset != this, "self assignment");
 
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_data));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
 
   m_allocator = _bitset.m_allocator;
   m_size = _bitset.m_size;
-  m_data = reinterpret_cast<rx_u64*>(m_allocator->allocate(bytes_for_size(m_size)));
+  m_data = reinterpret_cast<rx_u64*>(allocator().allocate(bytes_for_size(m_size)));
   RX_ASSERT(m_data, "out of memory");
 
   memcpy(m_data, _bitset.m_data, bytes_for_size(m_size));

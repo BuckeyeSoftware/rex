@@ -25,16 +25,14 @@
 
 namespace rx::render {
 
-immediate2D::queue::queue(memory::allocator* _allocator)
-  : m_allocator{_allocator}
-  , m_commands{m_allocator}
-  , m_string_table{m_allocator}
+immediate2D::queue::queue(memory::allocator& _allocator)
+  : m_commands{_allocator}
+  , m_string_table{_allocator}
 {
 }
 
 immediate2D::queue::queue(queue&& queue_)
-  : m_allocator{utility::exchange(queue_.m_allocator, nullptr)}
-  , m_commands{utility::move(queue_.m_commands)}
+  : m_commands{utility::move(queue_.m_commands)}
   , m_string_table{utility::move(queue_.m_string_table)}
 {
 }
@@ -42,7 +40,6 @@ immediate2D::queue::queue(queue&& queue_)
 immediate2D::queue& immediate2D::queue::operator=(queue&& queue_) {
   RX_ASSERT(&queue_ != this, "self assignment");
 
-  m_allocator = utility::exchange(queue_.m_allocator, nullptr);
   m_commands = utility::move(queue_.m_commands);
   m_string_table = utility::move(queue_.m_string_table);
 
@@ -1004,7 +1001,7 @@ ptr<immediate2D::font>& immediate2D::access_font(const font::key& _key) {
     return *find;
   }
 
-  auto allocator = m_frontend->allocator();
+  auto& allocator = m_frontend->allocator();
   auto new_font = make_ptr<font>(allocator, _key, m_frontend);
   RX_ASSERT(new_font, "out of memory");
 

@@ -8,7 +8,7 @@ struct iqm
   : importer
 {
   iqm();
-  iqm(memory::allocator* _allocator);
+  iqm(memory::allocator& _allocator);
 
   struct header;
 
@@ -19,7 +19,7 @@ private:
   bool read_animations(const header& _header, const vector<rx_byte>& _data);
 };
 
-inline iqm::iqm(memory::allocator* _allocator)
+inline iqm::iqm(memory::allocator& _allocator)
   : importer{_allocator}
 {
 }

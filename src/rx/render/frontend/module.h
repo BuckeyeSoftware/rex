@@ -13,8 +13,13 @@ namespace rx {
 
 namespace rx::render::frontend {
 
-struct module {
-  module(memory::allocator* _allocator);
+struct module
+  : concepts::no_copy
+{
+  module(memory::allocator& _allocator);
+  module(module&& module_);
+
+  module& operator=(module&& module_);
 
   bool load(stream* _stream);
   bool load(const string& _file_name);
@@ -25,7 +30,7 @@ struct module {
   const string& name() const &;
   const vector<string>& dependencies() const &;
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
   template<typename... Ts>
@@ -36,25 +41,11 @@ private:
 
   void write_log(log::level _level, string&& message_) const;
 
-  memory::allocator* m_allocator;
+  ref<memory::allocator> m_allocator;
   string m_name;
   string m_source;
   vector<string> m_dependencies;
 };
-
-bool resolve_module_dependencies(
-  const map<string, module>& _modules,
-  const module& _current_module,
-  set<string>& visited_,
-  algorithm::topological_sort<string>& sorter_);
-
-inline module::module(memory::allocator* _allocator)
-  : m_allocator{_allocator}
-  , m_name{m_allocator}
-  , m_source{m_allocator}
-  , m_dependencies{m_allocator}
-{
-}
 
 inline const string& module::source() const & {
   return m_source;
@@ -68,13 +59,14 @@ inline const vector<string>& module::dependencies() const & {
   return m_dependencies;
 }
 
-inline memory::allocator* module::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& module::allocator() const {
   return m_allocator;
 }
 
 template<typename... Ts>
 inline bool module::error(const char* _format, Ts&&... _arguments) const {
-  log(log::level::k_error, "%s", string::format(_format, utility::forward<Ts>(_arguments)...));
+  log(log::level::k_error, "%s",
+    string::format(allocator(), _format, utility::forward<Ts>(_arguments)...));
   return false;
 }
 
@@ -85,6 +77,11 @@ inline void module::log(log::level _level, const char* _format,
   write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
 }
 
+bool resolve_module_dependencies(
+  const map<string, module>& _modules,
+  const module& _current_module,
+  set<string>& visited_,
+  algorithm::topological_sort<string>& sorter_);
 
 } // namespace rx::render::frontend
 

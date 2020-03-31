@@ -11,7 +11,7 @@ namespace rx {
 struct RX_HINT_EMPTY_BASES static_pool
   : concepts::no_copy
 {
-  static_pool(memory::allocator* _allocator, rx_size _object_size, rx_size _object_count);
+  static_pool(memory::allocator& _allocator, rx_size _object_size, rx_size _object_count);
   static_pool(rx_size _object_size, rx_size _object_count);
   static_pool(static_pool&& pool_);
   ~static_pool();
@@ -28,7 +28,7 @@ struct RX_HINT_EMPTY_BASES static_pool
   template<typename T>
   void destroy(T* _data);
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
   rx_size object_size() const;
   rx_size capacity() const;
@@ -42,7 +42,7 @@ struct RX_HINT_EMPTY_BASES static_pool
   bool owns(const rx_byte* _data) const;
 
 private:
-  memory::allocator* m_allocator;
+  ref<memory::allocator> m_allocator;
   rx_size m_object_size;
   rx_size m_capacity;
   rx_byte* m_data;
@@ -56,7 +56,7 @@ inline static_pool::static_pool(rx_size _object_size, rx_size _object_count)
 
 inline static_pool::~static_pool() {
   RX_ASSERT(m_bitset.count_set_bits() == 0, "leaked objects");
-  m_allocator->deallocate(m_data);
+  allocator().deallocate(m_data);
 }
 
 inline rx_byte* static_pool::operator[](rx_size _index) const {
@@ -86,23 +86,23 @@ void static_pool::destroy(T* _data) {
   deallocate(index_of(reinterpret_cast<rx_byte*>(_data)));
 }
 
-inline memory::allocator* static_pool::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& static_pool::allocator() const {
   return m_allocator;
 }
 
-inline rx_size static_pool::object_size() const {
+RX_HINT_FORCE_INLINE rx_size static_pool::object_size() const {
   return m_object_size;
 }
 
-inline rx_size static_pool::capacity() const {
+RX_HINT_FORCE_INLINE rx_size static_pool::capacity() const {
   return m_capacity;
 }
 
-inline rx_size static_pool::size() const {
+RX_HINT_FORCE_INLINE rx_size static_pool::size() const {
   return m_bitset.count_set_bits();
 }
 
-inline bool static_pool::is_empty() const {
+RX_HINT_FORCE_INLINE bool static_pool::is_empty() const {
   return size() == 0;
 }
 

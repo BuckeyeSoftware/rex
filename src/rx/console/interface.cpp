@@ -26,8 +26,8 @@ static global_group g_group_cvars{"cvars"};
 static global_group g_group_console{"console"};
 
 // TODO(dweiler): limited line count queue for messages on the console.
-static global<vector<string>> g_lines{"console", "lines", memory::system_allocator::instance()};
-static global<map<string, command>> g_commands{"console", "commands", memory::system_allocator::instance()};
+static global<vector<string>> g_lines{"console", "lines"};
+static global<map<string, command>> g_commands{"console", "commands"};
 
 void interface::write(const string& message_) {
   g_lines->push_back(message_);

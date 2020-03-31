@@ -29,7 +29,7 @@ memory_stats::memory_stats(render::immediate2D* _immediate)
 }
 
 void memory_stats::render() {
-  const auto allocator = memory::system_allocator::instance();
+  const auto allocator = &memory::system_allocator::instance();
   const auto stats = static_cast<const memory::system_allocator*>(allocator)->stats();
 
   const render::frontend::context& frontend = *m_immediate->frontend();

@@ -220,7 +220,7 @@ static RX_HINT_FORCE_INLINE rx_size bpp_for_pixel_format(pixel_format _format) {
   RX_HINT_UNREACHABLE();
 }
 
-vector<rx_byte> convert(memory::allocator* _allocator, const rx_byte* _data,
+vector<rx_byte> convert(memory::allocator& _allocator, const rx_byte* _data,
   rx_size _samples, pixel_format _in_format, pixel_format _out_format)
 {
   RX_HINT_ASSUME_ALIGNED(_data, memory::allocator::k_alignment);

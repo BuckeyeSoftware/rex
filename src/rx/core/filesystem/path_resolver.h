@@ -17,7 +17,7 @@ namespace rx::filesystem {
 // When you're ready to use the qualified path, call finalize().
 struct path_resolver {
   constexpr path_resolver();
-  constexpr path_resolver(memory::allocator* _allocator);
+  constexpr path_resolver(memory::allocator& _allocator);
 
   [[nodiscard]] bool append(const string& _path);
   [[nodiscard]] bool append(const char* _path);
@@ -69,7 +69,7 @@ inline constexpr path_resolver::path_resolver()
 {
 }
 
-inline constexpr path_resolver::path_resolver(memory::allocator* _allocator)
+inline constexpr path_resolver::path_resolver(memory::allocator& _allocator)
   : m_data{_allocator}
   , m_dots{0}
 {

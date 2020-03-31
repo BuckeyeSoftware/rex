@@ -902,14 +902,14 @@ device_info gl3::query_device_info() const {
   };
 }
 
-gl3::gl3(memory::allocator* _allocator, void* _data)
+gl3::gl3(memory::allocator& _allocator, void* _data)
   : m_allocator{_allocator}
   , m_data{_data}
 {
 }
 
 gl3::~gl3() {
-  m_allocator->destroy<detail_gl3::state>(m_impl);
+  m_allocator.destroy<detail_gl3::state>(m_impl);
 }
 
 bool gl3::init() {
@@ -1020,7 +1020,7 @@ bool gl3::init() {
 
   fetch("glFinish", pglFinish);
 
-  m_impl = m_allocator->create<detail_gl3::state>(context);
+  m_impl = m_allocator.create<detail_gl3::state>(context);
 
   return m_impl != nullptr;
 }

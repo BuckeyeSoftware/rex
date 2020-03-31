@@ -32,7 +32,7 @@ struct immediate3D {
     : concepts::no_copy
   {
     queue() = default;
-    queue(memory::allocator* _allocator);
+    queue(memory::allocator& _allocator);
     queue(queue&& queue_);
 
     queue& operator=(queue&& queue_);
@@ -106,8 +106,6 @@ struct immediate3D {
 
   private:
     friend struct immediate3D;
-
-    memory::allocator* m_allocator;
     vector<command> m_commands;
   };
 

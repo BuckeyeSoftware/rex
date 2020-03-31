@@ -105,8 +105,8 @@ bool inline constexpr stream::can_flush() const {
   return m_flags & k_flush;
 }
 
-optional<vector<rx_byte>> read_binary_stream(memory::allocator* _allocator, stream* _stream);
-optional<vector<rx_byte>> read_text_stream(memory::allocator* _allocator, stream* _stream);
+optional<vector<rx_byte>> read_binary_stream(memory::allocator& _allocator, stream* _stream);
+optional<vector<rx_byte>> read_text_stream(memory::allocator& _allocator, stream* _stream);
 
 } // namespace rx
 

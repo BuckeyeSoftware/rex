@@ -3,13 +3,13 @@
 namespace rx {
 
 dynamic_pool::dynamic_pool(dynamic_pool&& pool_)
-  : m_allocator{utility::exchange(pool_.m_allocator, nullptr)}
+  : m_allocator{pool_.m_allocator}
   , m_pools{utility::move(pool_.m_pools)}
 {
 }
 
 dynamic_pool& dynamic_pool::operator=(dynamic_pool&& pool_) {
-  m_allocator = utility::exchange(pool_.m_allocator, nullptr);
+  m_allocator = pool_.m_allocator;
   m_pools = utility::move(pool_.m_pools);
   return *this;
 }
@@ -34,7 +34,7 @@ rx_size dynamic_pool::index_of(const rx_byte* _data) const {
 }
 
 bool dynamic_pool::add_pool() {
-  auto pool = make_ptr<static_pool>(m_allocator, m_allocator, m_object_size, m_objects_per_pool);
+  auto pool = make_ptr<static_pool>(allocator(), allocator(), m_object_size, m_objects_per_pool);
   return pool ? m_pools.push_back(utility::move(pool)) : false;
 }
 

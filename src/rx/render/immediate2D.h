@@ -34,7 +34,7 @@ struct immediate2D {
     : concepts::no_copy
   {
     queue() = default;
-    queue(memory::allocator* _allocator);
+    queue(memory::allocator& _allocator);
     queue(queue&& queue_);
 
     queue& operator=(queue&& queue_);
@@ -127,7 +127,6 @@ struct immediate2D {
   private:
     friend struct immediate2D;
 
-    memory::allocator* m_allocator;
     vector<command> m_commands;
     string_table m_string_table;
     optional<box> m_scissor;

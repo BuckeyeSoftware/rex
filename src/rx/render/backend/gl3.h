@@ -13,7 +13,7 @@ struct gl3
 {
   allocation_info query_allocation_info() const;
   device_info query_device_info() const;
-  gl3(memory::allocator* _allocator, void* _data);
+  gl3(memory::allocator& _allocator, void* _data);
   ~gl3();
 
   bool init();
@@ -22,7 +22,7 @@ struct gl3
   void swap();
 
 private:
-  memory::allocator* m_allocator;
+  memory::allocator& m_allocator;
   void* m_data;
   void* m_impl;
 };

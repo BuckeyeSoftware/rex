@@ -3,8 +3,9 @@
 #include "rx/core/memory/allocator.h"
 #include "rx/core/hints/empty_bases.h"
 #include "rx/core/utility/exchange.h"
-#include "rx/core/hash.h"
 #include "rx/core/assert.h"
+#include "rx/core/hash.h"
+#include "rx/core/ref.h"
 
 namespace rx {
 
@@ -28,11 +29,11 @@ struct RX_HINT_EMPTY_BASES ptr
   : concepts::no_copy
 {
   constexpr ptr();
-  constexpr ptr(memory::allocator* _allocator);
-  constexpr ptr(memory::allocator* _allocator, rx_nullptr);
+  constexpr ptr(memory::allocator& _allocator);
+  constexpr ptr(memory::allocator& _allocator, rx_nullptr);
 
   template<typename U>
-  constexpr ptr(memory::allocator* _allocator, U* _data);
+  constexpr ptr(memory::allocator& _allocator, U* _data);
 
   template<typename U>
   ptr(ptr<U>&& other_);
@@ -45,7 +46,7 @@ struct RX_HINT_EMPTY_BASES ptr
   ptr& operator=(rx_nullptr);
 
   template<typename U>
-  void reset(memory::allocator* _allocator, U* _data);
+  void reset(memory::allocator& _allocator, U* _data);
 
   T* release();
 
@@ -54,7 +55,8 @@ struct RX_HINT_EMPTY_BASES ptr
 
   operator bool() const;
   T* get() const;
-  memory::allocator* allocator() const;
+
+  constexpr memory::allocator& allocator() const;
 
 private:
   void destroy();
@@ -62,32 +64,32 @@ private:
   template<typename U>
   friend struct ptr;
 
-  memory::allocator* m_allocator;
+  ref<memory::allocator> m_allocator;
   T* m_data;
 };
 
 template<typename T>
 inline constexpr ptr<T>::ptr()
-  : ptr{nullptr}
+  : ptr{memory::system_allocator::instance()}
 {
 }
 
 template<typename T>
-inline constexpr ptr<T>::ptr(memory::allocator* _allocator)
+inline constexpr ptr<T>::ptr(memory::allocator& _allocator)
   : m_allocator{_allocator}
   , m_data{nullptr}
 {
 }
 
 template<typename T>
-inline constexpr ptr<T>::ptr(memory::allocator* _allocator, rx_nullptr)
+inline constexpr ptr<T>::ptr(memory::allocator& _allocator, rx_nullptr)
   : ptr{_allocator}
 {
 }
 
 template<typename T>
 template<typename U>
-inline constexpr ptr<T>::ptr(memory::allocator* _allocator, U* _data)
+inline constexpr ptr<T>::ptr(memory::allocator& _allocator, U* _data)
   : m_allocator{_allocator}
   , m_data{_data}
 {
@@ -96,7 +98,7 @@ inline constexpr ptr<T>::ptr(memory::allocator* _allocator, U* _data)
 template<typename T>
 template<typename U>
 inline ptr<T>::ptr(ptr<U>&& other_)
-  : m_allocator{utility::exchange(other_.m_allocator, nullptr)}
+  : m_allocator{other_.m_allocator}
   , m_data{utility::exchange(other_.m_data, nullptr)}
 {
 }
@@ -113,7 +115,7 @@ inline ptr<T>& ptr<T>::operator=(ptr<U>&& ptr_) {
   RX_ASSERT(reinterpret_cast<rx_uintptr>(&ptr_)
     != reinterpret_cast<rx_uintptr>(this), "self assignment");
   destroy();
-  m_allocator = utility::exchange(ptr_.m_allocator, nullptr);
+  m_allocator = ptr_.m_allocator;
   m_data = utility::exchange(ptr_.m_data, nullptr);
   return *this;
 }
@@ -127,8 +129,7 @@ inline ptr<T>& ptr<T>::operator=(rx_nullptr) {
 
 template<typename T>
 template<typename U>
-inline void ptr<T>::reset(memory::allocator* _allocator, U* _data) {
-  RX_ASSERT(_allocator, "null allocator");
+inline void ptr<T>::reset(memory::allocator& _allocator, U* _data) {
   destroy();
   m_allocator = _allocator;
   m_data = _data;
@@ -146,37 +147,36 @@ inline T& ptr<T>::operator*() const {
 }
 
 template<typename T>
-inline T* ptr<T>::operator->() const {
+RX_HINT_FORCE_INLINE T* ptr<T>::operator->() const {
   return m_data;
 }
 
 template<typename T>
-inline ptr<T>::operator bool() const {
+RX_HINT_FORCE_INLINE ptr<T>::operator bool() const {
   return m_data != nullptr;
 }
 
 template<typename T>
-inline T* ptr<T>::get() const {
+RX_HINT_FORCE_INLINE T* ptr<T>::get() const {
   return m_data;
 }
 
 template<typename T>
-inline memory::allocator* ptr<T>::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& ptr<T>::allocator() const {
   return m_allocator;
 }
 
 template<typename T>
 inline void ptr<T>::destroy() {
   if (m_data) {
-    m_allocator->destroy<T>(m_data);
+    allocator().template destroy<T>(m_data);
   }
 }
 
 // Helper function to make a unique ptr.
 template<typename T, typename... Ts>
-inline ptr<T> make_ptr(memory::allocator* _allocator, Ts&&... _arguments) {
-  RX_ASSERT(_allocator, "null allocator");
-  return {_allocator, _allocator->create<T>(utility::forward<Ts>(_arguments)...)};
+inline ptr<T> make_ptr(memory::allocator& _allocator, Ts&&... _arguments) {
+  return {_allocator, _allocator.create<T>(utility::forward<Ts>(_arguments)...)};
 }
 
 // Specialization of hash<Ht> for ptr<Pt>.

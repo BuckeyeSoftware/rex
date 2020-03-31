@@ -7,7 +7,7 @@
 
 namespace rx {
 
-string_table::string_table(memory::allocator* _allocator, const char* _data, rx_size _size)
+string_table::string_table(memory::allocator& _allocator, const char* _data, rx_size _size)
   : m_data{_allocator, _size}
 {
   RX_ASSERT(_data[_size] == '\0', "missing null-terminator");

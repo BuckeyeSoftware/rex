@@ -10,7 +10,7 @@ device_info null::query_device_info() const {
   return { "", "", "" };
 }
 
-null::null(memory::allocator*, void*) {
+null::null(memory::allocator&, void*) {
   // {empty}
 }
 

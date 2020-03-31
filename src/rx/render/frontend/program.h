@@ -139,7 +139,6 @@ private:
 
   void mark_uniform_dirty(rx_size _uniform_index);
 
-  memory::allocator* m_allocator;
   vector<uniform> m_uniforms;
   vector<shader> m_shaders;
   rx_u64 m_dirty_uniforms;

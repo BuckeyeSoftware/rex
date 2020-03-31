@@ -1,7 +1,8 @@
 #ifndef RX_CORE_MAP_H
 #define RX_CORE_MAP_H
-#include "rx/core/hash.h"
 #include "rx/core/array.h"
+#include "rx/core/hash.h"
+#include "rx/core/ref.h"
 
 #include "rx/core/traits/is_trivially_destructible.h"
 #include "rx/core/traits/return_type.h"
@@ -27,12 +28,12 @@ struct map {
   static constexpr rx_size k_load_factor{90};
 
   map();
-  map(memory::allocator* _allocator);
+  map(memory::allocator& _allocator);
   map(map&& map_);
   map(const map& _map);
 
   template<typename Kt, typename Vt, rx_size E>
-  map(memory::allocator* _allocator, initializers<Kt, Vt, E>&& initializers_);
+  map(memory::allocator& _allocator, initializers<Kt, Vt, E>&& initializers_);
 
   template<typename Kt, typename Vt, rx_size E>
   map(initializers<Kt, Vt, E>&& initializers_);
@@ -69,11 +70,10 @@ struct map {
   template<typename F>
   bool each_pair(F&& _function) const;
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
   void clear_and_deallocate();
-  constexpr void initialize(memory::allocator* _allocator, rx_size _capacity);
 
   static rx_size hash_key(const K& _key);
   static bool is_deleted(rx_size _hash);
@@ -96,7 +96,7 @@ private:
 
   bool lookup_index(const K& _key, rx_size& _index) const;
 
-  memory::allocator* m_allocator;
+  ref<memory::allocator> m_allocator;
 
   K* m_keys;
   V* m_values;
@@ -115,29 +115,35 @@ inline map<K, V>::map()
 }
 
 template<typename K, typename V>
-inline map<K, V>::map(memory::allocator* _allocator)
+inline map<K, V>::map(memory::allocator& _allocator)
+  : m_allocator{_allocator}
+  , m_keys{nullptr}
+  , m_values{nullptr}
+  , m_hashes{nullptr}
+  , m_size{0}
+  , m_capacity{k_initial_size}
+  , m_resize_threshold{0}
+  , m_mask{0}
 {
-  initialize(_allocator, k_initial_size);
   RX_ASSERT(allocate(), "out of memory");
 }
 
 template<typename K, typename V>
 inline map<K, V>::map(map&& map_)
-  : m_allocator{map_.m_allocator}
-  , m_keys{map_.m_keys}
-  , m_values{map_.m_values}
-  , m_hashes{map_.m_hashes}
-  , m_size{map_.m_size}
-  , m_capacity{map_.m_capacity}
-  , m_resize_threshold{map_.m_resize_threshold}
-  , m_mask{map_.m_mask}
+  : m_allocator{map_.allocator()}
+  , m_keys{utility::exchange(map_.m_keys, nullptr)}
+  , m_values{utility::exchange(map_.m_values, nullptr)}
+  , m_hashes{utility::exchange(map_.m_hashes, nullptr)}
+  , m_size{utility::exchange(map_.m_size, 0)}
+  , m_capacity{utility::exchange(map_.m_capacity, 0)}
+  , m_resize_threshold{utility::exchange(map_.m_resize_threshold, 0)}
+  , m_mask{utility::exchange(map_.m_mask, 0)}
 {
-  map_.initialize(m_allocator, 0);
 }
 
 template<typename K, typename V>
 inline map<K, V>::map(const map& _map)
-  : map{_map.m_allocator}
+  : map{_map.allocator()}
 {
   for (rx_size i{0}; i < _map.m_capacity; i++) {
     const auto hash = _map.element_hash(i);
@@ -149,7 +155,7 @@ inline map<K, V>::map(const map& _map)
 
 template<typename K, typename V>
 template<typename Kt, typename Vt, rx_size E>
-inline map<K, V>::map(memory::allocator* _allocator, initializers<Kt, Vt, E>&& initializers_)
+inline map<K, V>::map(memory::allocator& _allocator, initializers<Kt, Vt, E>&& initializers_)
   : map{_allocator}
 {
   for (rx_size i = 0; i < E; i++) {
@@ -196,9 +202,9 @@ template<typename K, typename V>
 inline void map<K, V>::clear_and_deallocate() {
   clear();
 
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_keys));
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_values));
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(m_hashes));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(m_keys));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(m_values));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(m_hashes));
 }
 
 template<typename K, typename V>
@@ -207,16 +213,14 @@ inline map<K, V>& map<K, V>::operator=(map<K, V>&& map_) {
 
   clear_and_deallocate();
 
-  m_allocator = map_.m_allocator;
-  m_keys = map_.m_keys;
-  m_values = map_.m_values;
-  m_hashes = map_.m_hashes;
-  m_size = map_.m_size;
-  m_capacity = map_.m_capacity;
-  m_resize_threshold = map_.m_resize_threshold;
-  m_mask = map_.m_mask;
-
-  map_.initialize(m_allocator, 0);
+  m_allocator = map_.allocator();
+  m_keys = utility::exchange(map_.m_keys, nullptr);
+  m_values = utility::exchange(map_.m_values, nullptr);
+  m_hashes = utility::exchange(map_.m_hashes, nullptr);
+  m_size = utility::exchange(map_.m_size, 0);
+  m_capacity = utility::exchange(map_.m_capacity, 0);
+  m_resize_threshold = utility::exchange(map_.m_resize_threshold, 0);
+  m_mask = utility::exchange(map_.m_mask, 0);
 
   return *this;
 }
@@ -226,7 +230,8 @@ inline map<K, V>& map<K, V>::operator=(const map<K, V>& _map) {
   RX_ASSERT(&_map != this, "self assignment");
 
   clear_and_deallocate();
-  initialize(_map.m_allocator, _map.m_capacity);
+
+  m_capacity = _map.m_capacity;
   RX_ASSERT(allocate(), "out of memory");
 
   for (rx_size i{0}; i < _map.m_capacity; i++) {
@@ -240,25 +245,11 @@ inline map<K, V>& map<K, V>::operator=(const map<K, V>& _map) {
 }
 
 template<typename K, typename V>
-inline constexpr void map<K, V>::initialize(memory::allocator* _allocator, rx_size _capacity) {
-  RX_ASSERT(_allocator, "null allocator");
-
-  m_allocator = _allocator;
-  m_keys = nullptr;
-  m_values = nullptr;
-  m_hashes = nullptr;
-  m_size = 0;
-  m_capacity = _capacity;
-  m_resize_threshold = 0;
-  m_mask = 0;
-}
-
-template<typename K, typename V>
 inline V* map<K, V>::insert(const K& _key, V&& value_) {
   if (++m_size >= m_resize_threshold && !grow()) {
     return nullptr;
   }
-  return inserter(hash_key(_key), _key, utility::move(value_));
+  return inserter(hash_key(_key), _key, utility::forward<V>(value_));
 }
 
 template<typename K, typename V>
@@ -362,9 +353,9 @@ inline rx_size map<K, V>::element_hash(rx_size _index) const {
 
 template<typename K, typename V>
 inline bool map<K, V>::allocate() {
-  m_keys = reinterpret_cast<K*>(m_allocator->allocate(sizeof(K) * m_capacity));
-  m_values = reinterpret_cast<V*>(m_allocator->allocate(sizeof(V) * m_capacity));
-  m_hashes = reinterpret_cast<rx_size*>(m_allocator->allocate(sizeof(rx_size) * m_capacity));
+  m_keys = reinterpret_cast<K*>(allocator().allocate(sizeof(K) * m_capacity));
+  m_values = reinterpret_cast<V*>(allocator().allocate(sizeof(V) * m_capacity));
+  m_hashes = reinterpret_cast<rx_size*>(allocator().allocate(sizeof(rx_size) * m_capacity));
 
   if (!m_keys || !m_values || !m_hashes) {
     return false;
@@ -408,9 +399,9 @@ inline bool map<K, V>::grow() {
     }
   }
 
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(keys_data));
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(values_data));
-  m_allocator->deallocate(reinterpret_cast<rx_byte*>(hashes_data));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(keys_data));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(values_data));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(hashes_data));
 
   return true;
 }
@@ -455,7 +446,7 @@ inline V* map<K, V>::inserter(rx_size _hash, K&& key_, V&& value_) {
 template<typename K, typename V>
 inline V* map<K, V>::inserter(rx_size _hash, const K& _key, V&& value_) {
   K key{_key};
-  return inserter(_hash, utility::move(key), utility::move(value_));
+  return inserter(_hash, utility::move(key), utility::forward<V>(value_));
 }
 
 template<typename K, typename V>
@@ -596,7 +587,7 @@ inline bool map<K, V>::each_pair(F&& _function) const {
 }
 
 template<typename K, typename V>
-inline memory::allocator* map<K, V>::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& map<K, V>::allocator() const {
   return m_allocator;
 }
 

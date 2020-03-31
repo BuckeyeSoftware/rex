@@ -25,7 +25,7 @@ struct mesh {
 struct importer
   : concepts::interface
 {
-  importer(memory::allocator* _allocator);
+  importer(memory::allocator& _allocator);
 
   bool load(stream* _stream);
   bool load(const string& _file_name);
@@ -60,6 +60,8 @@ struct importer
   const vector<math::vec4b>& blend_indices() const &;
   const vector<math::vec4b>& blend_weights() const &;
 
+  constexpr memory::allocator& allocator() const;
+
 protected:
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments) const;
@@ -72,7 +74,7 @@ protected:
   void generate_normals();
   bool generate_tangents();
 
-  memory::allocator* m_allocator;
+  memory::allocator& m_allocator;
 
   vector<mesh> m_meshes;
   vector<rx_u32> m_elements;
@@ -143,6 +145,10 @@ inline const vector<math::vec4b>& importer::blend_indices() const & {
 
 inline const vector<math::vec4b>& importer::blend_weights() const & {
   return utility::move(m_blend_weights);
+}
+
+RX_HINT_FORCE_INLINE constexpr memory::allocator& importer::allocator() const {
+  return m_allocator;
 }
 
 } // namespace rx::model

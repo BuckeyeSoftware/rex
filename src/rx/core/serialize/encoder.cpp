@@ -5,12 +5,12 @@
 
 namespace rx::serialize {
 
-encoder::encoder(memory::allocator* _allocator, stream* _stream)
+encoder::encoder(memory::allocator& _allocator, stream* _stream)
   : m_allocator{_allocator}
   , m_stream{_stream}
   , m_buffer{m_stream, buffer::mode::k_write}
-  , m_message{m_allocator}
-  , m_strings{m_allocator}
+  , m_message{allocator()}
+  , m_strings{allocator()}
 {
   RX_ASSERT(m_stream->can_seek(), "encoder requires seekable stream");
   RX_ASSERT(m_stream->can_tell(), "encoder requires tellable stream");

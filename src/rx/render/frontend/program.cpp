@@ -36,7 +36,7 @@ uniform::uniform(program* _program, rx_u64 _bit, const string& _name, type _type
   , m_type{_type}
   , m_name{_name}
 {
-  as_opaque = m_program->m_allocator->allocate(size());
+  as_opaque = m_program->m_frontend->allocator().allocate(size());
   RX_ASSERT(as_opaque, "out of memory");
 
   memset(as_opaque, 0, size());
@@ -52,7 +52,7 @@ uniform::uniform(uniform&& uniform_)
 }
 
 uniform::~uniform() {
-  m_program->m_allocator->deallocate(as_opaque);
+  m_program->m_frontend->allocator().deallocate(as_opaque);
 }
 
 void uniform::flush(rx_byte* _flush) {
@@ -213,8 +213,7 @@ void uniform::record_raw(const rx_byte* _data, rx_size _size) {
 
 program::program(context* _frontend)
   : resource{_frontend, resource::type::k_program}
-  , m_allocator{_frontend->allocator()}
-  , m_uniforms{m_allocator}
+  , m_uniforms{m_frontend->allocator()}
   , m_dirty_uniforms{0}
   , m_padding_uniforms{0}
 {

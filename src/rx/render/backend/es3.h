@@ -13,7 +13,7 @@ struct es3
 {
   allocation_info query_allocation_info() const;
   device_info query_device_info() const;
-  es3(memory::allocator* _allocator, void* _data);
+  es3(memory::allocator& _allocator, void* _data);
   ~es3();
 
   bool init();
@@ -22,7 +22,7 @@ struct es3
   void swap();
 
 private:
-  memory::allocator* m_allocator;
+  memory::allocator& m_allocator;
   void* m_data;
   void* m_impl;
 };

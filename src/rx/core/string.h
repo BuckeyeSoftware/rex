@@ -18,11 +18,11 @@ struct string {
   static constexpr const rx_size k_npos{-1_z};
   static constexpr const rx_size k_small_string{16};
 
-  constexpr string(memory::allocator* _allocator);
-  string(memory::allocator* _allocator, const string& _contents);
-  string(memory::allocator* _allocator, const char* _contents);
-  string(memory::allocator* _allocator, const char* _contents, rx_size _size);
-  string(memory::allocator* _allocator, const char* _first, const char* _last);
+  constexpr string(memory::allocator& _allocator);
+  string(memory::allocator& _allocator, const string& _contents);
+  string(memory::allocator& _allocator, const char* _contents);
+  string(memory::allocator& _allocator, const char* _contents, rx_size _size);
+  string(memory::allocator& _allocator, const char* _first, const char* _last);
 
   constexpr string();
   string(const string& _contents);
@@ -34,7 +34,7 @@ struct string {
   ~string();
 
   template<typename... Ts>
-  static string format(memory::allocator* _allocator,
+  static string format(memory::allocator& _allocator,
     const char* _format, Ts&&... _arguments);
 
   template<typename... Ts>
@@ -79,7 +79,7 @@ struct string {
   string rstrip(const char* _set) const;
 
   // split string by |token| up to |count| times, use |count| of zero for no limit
-  vector<string> split(memory::allocator* _allocator, int _ch, rx_size _count = 0) const;
+  vector<string> split(memory::allocator& _allocator, int _ch, rx_size _count = 0) const;
   vector<string> split(int _ch, rx_size _count = 0) const;
 
   // take substring from |offset| of |length|, use |length| of zero for whole string
@@ -117,15 +117,15 @@ struct string {
 
   wide_string to_utf16() const;
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
   memory::view disown();
 
 private:
-  static string formatter(memory::allocator* _allocator, const char* _format, ...);
+  static string formatter(memory::allocator& _allocator, const char* _format, ...);
 
   void swap(string& other);
 
-  memory::allocator* m_allocator;
+  ref<memory::allocator> m_allocator;
   char* m_data;
   char* m_last;
   char* m_capacity;
@@ -136,10 +136,10 @@ private:
 // utf-16, Windows compatible "wide-string"
 struct wide_string {
   // custom allocator versions
-  wide_string(memory::allocator* _allocator);
-  wide_string(memory::allocator* _allocator, const wide_string& _other);
-  wide_string(memory::allocator* _allocator, const rx_u16* _contents);
-  wide_string(memory::allocator* _allocator, const rx_u16* _contents, rx_size _size);
+  wide_string(memory::allocator& _allocator);
+  wide_string(memory::allocator& _allocator, const wide_string& _other);
+  wide_string(memory::allocator& _allocator, const rx_u16* _contents);
+  wide_string(memory::allocator& _allocator, const rx_u16* _contents, rx_size _size);
 
   // constructors that use system allocator
   wide_string();
@@ -172,10 +172,10 @@ struct wide_string {
 
   string to_utf8() const;
 
-  memory::allocator* allocator() const;
+  constexpr memory::allocator& allocator() const;
 
 private:
-  memory::allocator* m_allocator;
+  ref<memory::allocator> m_allocator;
 
   rx_u16* m_data;
   rx_size m_size;
@@ -190,7 +190,7 @@ struct format_type<string> {
 };
 
 template<typename... Ts>
-inline string string::format(memory::allocator* _allocator, const char* _format, Ts&&... _arguments) {
+inline string string::format(memory::allocator& _allocator, const char* _format, Ts&&... _arguments) {
   return formatter(_allocator, _format, format_type<traits::remove_cvref<Ts>>{}(utility::forward<Ts>(_arguments))...);
 }
 
@@ -199,19 +199,18 @@ inline string string::format(const char* _format, Ts&&... _arguments) {
   return format(memory::system_allocator::instance(), _format, utility::forward<Ts>(_arguments)...);
 }
 
-inline string::string(memory::allocator* _allocator, const string& _contents)
+inline string::string(memory::allocator& _allocator, const string& _contents)
   : string{_allocator, _contents.data(), _contents.size()}
 {
 }
 
-inline constexpr string::string(memory::allocator* _allocator)
+inline constexpr string::string(memory::allocator& _allocator)
   : m_allocator{_allocator}
   , m_data{m_buffer}
   , m_last{m_buffer}
   , m_capacity{m_buffer + k_small_string}
   , m_buffer{}
 {
-  RX_ASSERT(m_allocator, "null allocator");
   m_buffer[0] = '\0';
 }
 
@@ -221,7 +220,7 @@ inline constexpr string::string()
 }
 
 inline string::string(const string& _contents)
-  : string{_contents.m_allocator, _contents}
+  : string{_contents.allocator(), _contents}
 {
 }
 
@@ -281,7 +280,7 @@ inline bool string::insert_at(rx_size _position, const string& _contents) {
 }
 
 inline vector<string> string::split(int _ch, rx_size _count) const {
-  return split(m_allocator, _ch, _count);
+  return split(allocator(), _ch, _count);
 }
 
 inline char& string::operator[](rx_size index) {
@@ -355,7 +354,7 @@ bool operator!=(const string& lhs, const string& rhs);
 bool operator<(const string& lhs, const string& rhs);
 bool operator>(const string& lhs, const string& rhs);
 
-RX_HINT_FORCE_INLINE memory::allocator* string::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& string::allocator() const {
   return m_allocator;
 }
 
@@ -376,7 +375,7 @@ inline wide_string::wide_string(const rx_u16* _contents, rx_size _size)
 }
 
 inline wide_string::wide_string(const wide_string& _other)
-  : wide_string{_other.m_allocator, _other}
+  : wide_string{_other.allocator(), _other}
 {
 }
 
@@ -406,7 +405,7 @@ RX_HINT_FORCE_INLINE const rx_u16* wide_string::data() const {
   return m_data;
 }
 
-RX_HINT_FORCE_INLINE memory::allocator* wide_string::allocator() const {
+RX_HINT_FORCE_INLINE constexpr memory::allocator& wide_string::allocator() const {
   return m_allocator;
 }
 

@@ -17,7 +17,7 @@ struct input {
   };
 
   input();
-  input(memory::allocator* _allocator);
+  input(memory::allocator& _allocator);
 
   void handle_event(const event& _event);
   int update(rx_f32 _delta_time);
@@ -51,7 +51,7 @@ inline input::input()
 {
 }
 
-inline input::input(memory::allocator* _allocator)
+inline input::input(memory::allocator& _allocator)
   : m_controllers{_allocator}
   , m_active_text{nullptr}
   , m_clipboard{_allocator}
