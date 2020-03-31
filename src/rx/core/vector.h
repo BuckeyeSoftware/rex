@@ -182,12 +182,10 @@ inline vector<T>::vector(memory::allocator& _allocator, rx_size _size, utility::
   , m_size{_size}
   , m_capacity{_size}
 {
-  memory::allocator& allocator = m_allocator;
-
   static_assert(traits::is_trivially_copyable<T>,
     "T isn't trivial, cannot leave uninitialized");
 
-  m_data = reinterpret_cast<T*>(allocator.allocate(m_size * sizeof *m_data));
+  m_data = reinterpret_cast<T*>(allocator().allocate(m_size * sizeof *m_data));
   RX_ASSERT(m_data, "out of memory");
 }
 
@@ -198,9 +196,7 @@ inline vector<T>::vector(memory::allocator& _allocator, rx_size _size)
   , m_size{_size}
   , m_capacity{_size}
 {
-  memory::allocator& allocator = m_allocator;
-
-  m_data = reinterpret_cast<T*>(allocator.allocate(m_size * sizeof *m_data));
+  m_data = reinterpret_cast<T*>(allocator().allocate(m_size * sizeof *m_data));
   RX_ASSERT(m_data, "out of memory");
 
   // TODO(dweiler): is_trivial trait so we can memset this.
@@ -212,12 +208,11 @@ inline vector<T>::vector(memory::allocator& _allocator, rx_size _size)
 template<typename T>
 inline vector<T>::vector(memory::allocator& _allocator, const vector& _other)
   : m_allocator{_allocator}
+  , m_data{nullptr}
   , m_size{_other.m_size}
   , m_capacity{_other.m_capacity}
 {
-  memory::allocator& allocator = m_allocator;
-
-  m_data = reinterpret_cast<T*>(allocator.allocate(_other.m_capacity * sizeof *m_data));
+  m_data = reinterpret_cast<T*>(allocator().allocate(_other.m_capacity * sizeof *m_data));
   RX_ASSERT(m_data, "out of memory");
 
   if constexpr(traits::is_trivially_copyable<T>) {
@@ -250,28 +245,21 @@ inline vector<T>::vector(vector&& other_)
 
 template<typename T>
 inline vector<T>::~vector() {
-  memory::allocator& allocator = m_allocator;
-
   clear();
-  allocator.deallocate(reinterpret_cast<rx_byte*>(m_data));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
 }
 
 template<typename T>
 inline vector<T>& vector<T>::operator=(const vector& _other) {
   RX_ASSERT(&_other != this, "self assignment");
 
-  {
-    memory::allocator& allocator = m_allocator;
-    clear();
-    allocator.deallocate(reinterpret_cast<rx_byte*>(m_data));
-  }
+  clear();
+  allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
 
-  m_allocator = _other.m_allocator;
   m_size = _other.m_size;
   m_capacity = _other.m_capacity;
 
-  memory::allocator& allocator = m_allocator;
-  m_data = reinterpret_cast<T*>(allocator.allocate(_other.m_capacity * sizeof *m_data));
+  m_data = reinterpret_cast<T*>(allocator().allocate(_other.m_capacity * sizeof *m_data));
   RX_ASSERT(m_data, "out of memory");
 
   if constexpr(traits::is_trivially_copyable<T>) {
@@ -287,9 +275,8 @@ template<typename T>
 inline vector<T>& vector<T>::operator=(vector&& other_) {
   RX_ASSERT(&other_ != this, "self assignment");
 
-  memory::allocator& allocator = m_allocator;
   clear();
-  allocator.deallocate(reinterpret_cast<rx_byte*>(m_data));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
 
   m_allocator = other_.m_allocator;
   m_data = utility::exchange(other_.m_data, nullptr);
@@ -389,16 +376,14 @@ bool vector<T>::reserve(rx_size _size) {
   }
 
   if constexpr (traits::is_trivially_copyable<T>) {
-    memory::allocator& allocator = m_allocator;
-    T* resize = reinterpret_cast<T*>(allocator.reallocate(reinterpret_cast<rx_byte*>(m_data), m_capacity * sizeof *m_data));
+    T* resize = reinterpret_cast<T*>(allocator().reallocate(reinterpret_cast<rx_byte*>(m_data), m_capacity * sizeof *m_data));
     if (RX_HINT_UNLIKELY(!resize)) {
       return false;
     }
     m_data = resize;
     return true;
   } else {
-    memory::allocator& allocator = m_allocator;
-    T* resize = reinterpret_cast<T*>(allocator.allocate(m_capacity * sizeof *m_data));
+    T* resize = reinterpret_cast<T*>(allocator().allocate(m_capacity * sizeof *m_data));
     if (RX_HINT_UNLIKELY(!resize)) {
       return false;
     }
@@ -409,7 +394,7 @@ bool vector<T>::reserve(rx_size _size) {
         utility::construct<T>(resize + i, utility::move(*(m_data + i)));
         utility::destruct<T>(m_data + i);
       }
-      allocator.deallocate(reinterpret_cast<rx_byte*>(m_data));
+      allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
     }
     m_data = resize;
     return true;

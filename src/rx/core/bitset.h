@@ -83,15 +83,14 @@ inline bitset::bitset(rx_size _size)
 }
 
 inline bitset::bitset(bitset&& bitset_)
-  : m_allocator{bitset_.m_allocator}
+  : m_allocator{bitset_.allocator()}
   , m_size{utility::exchange(bitset_.m_size, 0)}
   , m_data{utility::exchange(bitset_.m_data, nullptr)}
 {
 }
 
 inline bitset::~bitset() {
-  memory::allocator& allocator = m_allocator;
-  allocator.deallocate(reinterpret_cast<rx_byte*>(m_data));
+  allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
 }
 
 inline void bitset::set(rx_size _bit) {

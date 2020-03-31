@@ -19,7 +19,7 @@ bitset::bitset(memory::allocator& _allocator, rx_size _size)
 }
 
 bitset::bitset(const bitset& _bitset)
-  : m_allocator{_bitset.m_allocator}
+  : m_allocator{_bitset.allocator()}
   , m_size{_bitset.m_size}
   , m_data{reinterpret_cast<bit_type*>(allocator().allocate(bytes_for_size(m_size)))}
 {
@@ -30,7 +30,7 @@ bitset::bitset(const bitset& _bitset)
 bitset& bitset::operator=(bitset&& bitset_) {
   RX_ASSERT(&bitset_ != this, "self assignment");
 
-  m_allocator = bitset_.m_allocator;
+  m_allocator = bitset_.allocator();
   m_size = utility::exchange(bitset_.m_size, 0);
   m_data = utility::exchange(bitset_.m_data, nullptr);
 
@@ -42,7 +42,6 @@ bitset& bitset::operator=(const bitset& _bitset) {
 
   allocator().deallocate(reinterpret_cast<rx_byte*>(m_data));
 
-  m_allocator = _bitset.m_allocator;
   m_size = _bitset.m_size;
   m_data = reinterpret_cast<rx_u64*>(allocator().allocate(bytes_for_size(m_size)));
   RX_ASSERT(m_data, "out of memory");

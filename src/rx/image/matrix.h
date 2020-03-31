@@ -103,7 +103,6 @@ inline matrix& matrix::operator=(matrix&& matrix_) {
 inline matrix& matrix::operator=(const matrix& _matrix) {
   RX_ASSERT(this != &_matrix, "self assignment");
 
-  m_allocator = _matrix.m_allocator;
   m_data = _matrix.m_data;
   m_dimensions = _matrix.m_dimensions;
   m_channels = _matrix.m_channels;
