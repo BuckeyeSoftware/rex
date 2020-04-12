@@ -137,7 +137,7 @@ private:
 
   friend struct uniform;
 
-  void mark_uniform_dirty(rx_size _uniform_index);
+  void mark_uniform_dirty(rx_u64 _uniform_index);
 
   vector<uniform> m_uniforms;
   vector<shader> m_shaders;

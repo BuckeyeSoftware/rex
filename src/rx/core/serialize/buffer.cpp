@@ -84,7 +84,7 @@ bool buffer::flush() {
 }
 
 bool buffer::read(rx_u64 _max_bytes) {
-  _max_bytes = algorithm::min(k_size, _max_bytes);
+  _max_bytes = algorithm::min(k_size, static_cast<rx_size>(_max_bytes));
   const auto bytes = m_stream->read(m_buffer, _max_bytes);
   m_cursor = 0;
   m_length = bytes;

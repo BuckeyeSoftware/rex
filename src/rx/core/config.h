@@ -26,7 +26,9 @@
 #define __has_include(...) 0
 #endif
 
+#if !defined(__has_keyword)
 #define __has_keyword(_x) !(__is_identifier(_x))
+#endif
 
 // determine compiler
 #if defined(__clang__)
@@ -45,6 +47,9 @@
 # define RX_BYTE_ORDER_LITTLE_ENDIAN
 #elif defined(__linux__)
 # define RX_PLATFORM_LINUX
+# define RX_PLATFORM_POSIX
+#elif defined(__EMSCRIPTEN__)
+# define RX_PLATFORM_EMSCRIPTEN
 # define RX_PLATFORM_POSIX
 #else
 # error "unsupported platform"

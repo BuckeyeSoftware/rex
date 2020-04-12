@@ -7,6 +7,8 @@
 
 #include "rx/core/utility/declval.h"
 
+#include "rx/core/hints/unreachable.h"
+
 namespace rx {
 
 template<typename T>
@@ -26,6 +28,7 @@ struct hash {
     } else {
       static_assert("implement size_t T::hash()");
     }
+    RX_HINT_UNREACHABLE();
   }
 };
 

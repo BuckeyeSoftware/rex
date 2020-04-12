@@ -87,8 +87,8 @@ void scale(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw, rx_size _sh,
   const auto c_scale{static_cast<rx_size>(algorithm::clamp(area_uflow, area_oflow - 12, 12))};
   const auto a_scale{static_cast<rx_size>(algorithm::clamp(12 + area_uflow - area_oflow, 0, 24))};
 
-  const rx_size d_scale{a_scale + 12 - c_scale};
-  const rx_size area{(static_cast<rx_u64>(d_area) << a_scale) / s_area};
+  const auto d_scale{a_scale + 12 - c_scale};
+  const auto area{(static_cast<rx_u64>(d_area) << a_scale) / s_area};
 
   _dw *= w_frac;
   _dh *= h_frac;

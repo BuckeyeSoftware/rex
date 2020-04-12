@@ -110,7 +110,7 @@ rx_u64 stream::size() {
 optional<vector<rx_byte>> read_binary_stream(memory::allocator& _allocator, stream* _stream) {
   if (_stream->can_seek() && _stream->can_tell()) {
     const auto size = _stream->size();
-    vector<rx_byte> result = {_allocator, size, utility::uninitialized{}};
+    vector<rx_byte> result = {_allocator, static_cast<rx_size>(size), utility::uninitialized{}};
     if (_stream->read(result.data(), size) == size) {
       return result;
     }

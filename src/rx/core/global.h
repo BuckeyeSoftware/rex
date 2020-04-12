@@ -8,7 +8,7 @@ namespace rx {
 
 // 32-bit: 24 bytes
 // 64-bit: 48 bytes
-struct global_node {
+struct alignas(memory::allocator::k_alignment) global_node {
   template<typename T, typename... Ts>
   global_node(const char* _group, const char* _name,
     memory::uninitialized_storage<T>& _storage, Ts&&... _arguments);
@@ -249,9 +249,8 @@ inline global_node::global_node(const char* _group, const char* _name,
   , m_name{_name}
   , m_storage_dispatch{storage_dispatch<T, Ts...>}
 {
-  // The |_global_store| should be immediately after |this|.
   RX_ASSERT(reinterpret_cast<rx_uintptr>(&_global_store)
-    == reinterpret_cast<rx_uintptr>(this + 1), "misalignment");
+    == reinterpret_cast<rx_uintptr>(data()), "misalignment");
 
   if constexpr (sizeof...(Ts) != 0) {
     rx_byte* argument_store = reallocate_arguments(nullptr, sizeof(arguments<Ts...>));

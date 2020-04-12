@@ -48,7 +48,7 @@ static vector<chain::level> generate_levels(memory::allocator& _allocator,
 
   if (_want_mipchain) {
     // levels = log2(max(w, h)+1)
-    const rx_size levels{math::log2(_dimensions.max_element()) + 1};
+    const auto levels{math::log2(rx_u64(_dimensions.max_element())) + 1};
     result.reserve(levels);
 
     // calculate each miplevel in the chain
