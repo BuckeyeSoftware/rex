@@ -2,7 +2,7 @@
 #define RX_CORE_MEMORY_SYSTEM_ALLOCATOR_H
 #include "rx/core/memory/heap_allocator.h"
 #include "rx/core/memory/stats_allocator.h"
-#include "rx/core/memory/debug_allocator.h"
+#include "rx/core/memory/electric_fence_allocator.h"
 
 #include "rx/core/global.h"
 
@@ -28,20 +28,18 @@ struct system_allocator
   static constexpr allocator& instance();
 
 private:
-  heap_allocator m_heap_allocator;
-  stats_allocator m_stats_allocator;
 #if defined(RX_DEBUG)
-  debug_allocator m_debug_allocator;
+  electric_fence_allocator m_heap_allocator;
+#else
+  heap_allocator m_heap_allocator;
 #endif
+  stats_allocator m_stats_allocator;
 
   static global<system_allocator> s_instance;
 };
 
 inline constexpr system_allocator::system_allocator()
   : m_stats_allocator{m_heap_allocator}
-#if defined(RX_DEBUG)
-  , m_debug_allocator{m_stats_allocator}
-#endif
 {
 }
 
