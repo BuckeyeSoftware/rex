@@ -155,6 +155,7 @@ DEPFLAGS += -MP
 # Linker flags.
 #
 LDFLAGS := -lpthread
+LDFLAGS += -ldl
 LDFLAGS += `sdl2-config --libs`
 
 ifeq ($(UNUSED), 1)

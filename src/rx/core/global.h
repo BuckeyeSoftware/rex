@@ -111,7 +111,7 @@ private:
   };
 
   template<typename T, typename... Ts>
-  static rx_u32 storage_dispatch(storage_mode _mode,
+  static rx_u64 storage_dispatch(storage_mode _mode,
     [[maybe_unused]] rx_byte* _global_store, [[maybe_unused]] rx_byte* _argument_store)
   {
     switch (_mode) {
@@ -128,7 +128,7 @@ private:
       }
       break;
     case storage_mode::k_traits_global:
-      return (sizeof(T) << 16_u32) | alignof(T);
+      return (sizeof(T) << 32_u64) | alignof(T);
     }
     return 0;
   }
@@ -150,7 +150,7 @@ private:
   const char* m_group;
   const char* m_name;
 
-  rx_u32 (*m_storage_dispatch)(storage_mode _mode, rx_byte* _global_store,
+  rx_u64 (*m_storage_dispatch)(storage_mode _mode, rx_byte* _global_store,
     rx_byte* _argument_store);
 };
 
@@ -307,8 +307,8 @@ inline const T* global_node::cast() const {
 template<typename T>
 void global_node::validate_cast_for() const {
   const auto traits = m_storage_dispatch(storage_mode::k_traits_global, nullptr, nullptr);
-  RX_ASSERT(sizeof(T) == ((traits >> 16) & 0xFFFF), "invalid size");
-  RX_ASSERT(alignof(T) == (traits & 0xFFFF), "invalid allignment");
+  RX_ASSERT(sizeof(T) == ((traits >> 32) & 0xFFFFFFFF_u32), "invalid size");
+  RX_ASSERT(alignof(T) == (traits & 0xFFFFFFFF_u32), "invalid allignment");
 }
 
 // global_group
