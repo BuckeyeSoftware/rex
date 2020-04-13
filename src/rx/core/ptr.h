@@ -1,6 +1,6 @@
 #ifndef RX_CORE_PTR_H
 #define RX_CORE_PTR_H
-#include "rx/core/memory/allocator.h"
+#include "rx/core/memory/system_allocator.h"
 #include "rx/core/hints/empty_bases.h"
 #include "rx/core/utility/exchange.h"
 #include "rx/core/assert.h"
