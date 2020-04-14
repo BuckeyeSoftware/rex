@@ -42,10 +42,10 @@ struct set {
   set& operator=(set&& set_);
   set& operator=(const set& _set);
 
-  bool insert(K&& _key);
-  bool insert(const K& _key);
+  K* insert(K&& _key);
+  K* insert(const K& _key);
 
-  bool find(const K& _key) const;
+  K* find(const K& _key) const;
 
   bool erase(const K& _key);
   rx_size size() const;
@@ -76,10 +76,10 @@ private:
   [[nodiscard]] bool grow();
 
   // move and non-move construction functions
-  void construct(rx_size _index, rx_size _hash, K&& key_);
+  K* construct(rx_size _index, rx_size _hash, K&& key_);
 
-  bool inserter(rx_size _hash, K&& key_);
-  bool inserter(rx_size _hash, const K& _key);
+  K* inserter(rx_size _hash, K&& key_);
+  K* inserter(rx_size _hash, const K& _key);
 
   bool lookup_index(const K& _key, rx_size& _index) const;
 
@@ -223,27 +223,27 @@ inline set<K>& set<K>::operator=(const set<K>& _set) {
 }
 
 template<typename K>
-inline bool set<K>::insert(K&& key_) {
+inline K* set<K>::insert(K&& key_) {
   if (++m_size >= m_resize_threshold && !grow()) {
-    return false;
+    return nullptr;
   }
   return inserter(hash_key(key_), utility::forward<K>(key_));
 }
 
 template<typename K>
-inline bool set<K>::insert(const K& _key) {
+inline K* set<K>::insert(const K& _key) {
   if (++m_size >= m_resize_threshold && !grow()) {
-    return false;
+    return nullptr;
   }
   return inserter(hash_key(_key), _key);
 }
 
 template<typename K>
-bool set<K>::find(const K& _key) const {
+K* set<K>::find(const K& _key) const {
   if (rx_size index; lookup_index(_key, index)) {
-    return true;
+    return m_keys + index;
   }
-  return false;
+  return nullptr;
 }
 
 template<typename K>
@@ -368,26 +368,25 @@ inline bool set<K>::grow() {
 }
 
 template<typename K>
-inline void set<K>::construct(rx_size _index, rx_size _hash, K&& key_) {
+inline K* set<K>::construct(rx_size _index, rx_size _hash, K&& key_) {
   utility::construct<K>(m_keys + _index, utility::forward<K>(key_));
   element_hash(_index) = _hash;
+  return m_keys + _index;
 }
 
 template<typename K>
-inline bool set<K>::inserter(rx_size _hash, K&& key_) {
+inline K* set<K>::inserter(rx_size _hash, K&& key_) {
   rx_size position{desired_position(_hash)};
   rx_size distance{0};
   for (;;) {
     if (element_hash(position) == 0) {
-      construct(position, _hash, utility::forward<K>(key_));
-      return true;
+      return construct(position, _hash, utility::forward<K>(key_));
     }
 
     const rx_size existing_element_probe_distance{probe_distance(element_hash(position), position)};
     if (existing_element_probe_distance < distance) {
       if (is_deleted(element_hash(position))) {
-        construct(position, _hash, utility::forward<K>(key_));
-        return true;
+        return construct(position, _hash, utility::forward<K>(key_));
       }
 
       utility::swap(_hash, element_hash(position));
@@ -404,7 +403,7 @@ inline bool set<K>::inserter(rx_size _hash, K&& key_) {
 }
 
 template<typename K>
-inline bool set<K>::inserter(rx_size _hash, const K& _key) {
+inline K* set<K>::inserter(rx_size _hash, const K& _key) {
   K key{_key};
   return inserter(_hash, utility::move(key));
 }
