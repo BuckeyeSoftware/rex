@@ -376,17 +376,25 @@ inline K* set<K>::construct(rx_size _index, rx_size _hash, K&& key_) {
 
 template<typename K>
 inline K* set<K>::inserter(rx_size _hash, K&& key_) {
-  rx_size position{desired_position(_hash)};
-  rx_size distance{0};
+  rx_size position = desired_position(_hash);
+  rx_size distance = 0;
+
+  K* result = nullptr;
   for (;;) {
     if (element_hash(position) == 0) {
-      return construct(position, _hash, utility::forward<K>(key_));
+      K* insert = construct(position, _hash, utility::forward<K>(key_));
+      return result ? result : insert;
     }
 
     const rx_size existing_element_probe_distance{probe_distance(element_hash(position), position)};
     if (existing_element_probe_distance < distance) {
       if (is_deleted(element_hash(position))) {
-        return construct(position, _hash, utility::forward<K>(key_));
+        K* insert = construct(position, _hash, utility::forward<K>(key_));
+        return result ? result : insert;
+      }
+
+      if (!result) {
+        result = m_keys + position;
       }
 
       utility::swap(_hash, element_hash(position));
@@ -399,7 +407,7 @@ inline K* set<K>::inserter(rx_size _hash, K&& key_) {
     distance++;
   }
 
-  RX_HINT_UNREACHABLE();
+  return result;
 }
 
 template<typename K>
