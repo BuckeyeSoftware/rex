@@ -22,7 +22,7 @@ void vma::deallocate() {
 #if defined(RX_PLATFORM_POSIX)
   RX_ASSERT(munmap(m_base, size) == 0, "munmap failed");
 #elif defined(RX_PLATFORM_WINDOWS)
-  RX_ASSERT(VirtualFree(m_base, size, MEM_RELEASE), "VirtualFree failed");
+  RX_ASSERT(VirtualFree(m_base, 0, MEM_RELEASE), "VirtualFree failed");
 #endif
 }
 
