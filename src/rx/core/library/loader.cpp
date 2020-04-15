@@ -43,7 +43,7 @@ loader::loader(memory::allocator& _allocator, const string& _file_name)
   }
 #elif defined(RX_PLATFORM_WINDOWS)
   const auto path_utf8 = string::format(_allocator, "%s.dll", _file_name);
-  const auto path_utf16 = path.to_utf16();
+  const auto path_utf16 = path_utf8.to_utf16();
   const auto name = reinterpret_cast<LPCWSTR>(path_utf16.data());
 
   m_handle = static_cast<void*>(LoadLibraryW(name));
@@ -81,7 +81,7 @@ void* loader::address_of(const char* _symbol_name) const {
       }
     }
 #elif defined(RX_PLATFORM_WINDOWS)
-    auto handle = static_cast<HANDLE>(m_handle);
+    auto handle = static_cast<HMODULE>(m_handle);
     if (auto function = GetProcAddress(handle, _symbol_name)) {
       return reinterpret_cast<void*>(function);
     }
@@ -95,7 +95,7 @@ void loader::close_unlocked() {
 #if defined(RX_PLATFORM_POSIX)
     dlclose(m_handle);
 #elif defined(RX_PLATFORM_WINDOWS)
-    FreeLibrary(static_cast<HANDLE>(m_handle));
+    FreeLibrary(static_cast<HMODULE>(m_handle));
 #endif
   }
 }

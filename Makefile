@@ -3,6 +3,7 @@
 # * ASAN      - Address sanitizer
 # * TSAN      - Thread sanitizer
 # * UBSAN     - Undefined behavior sanitizer
+# * ESAN      - Engine sanitizer
 # * DEBUG     - Debug build
 # * PROFILE   - Profile build
 # * SRCDIR    - Out of tree builds
@@ -11,6 +12,7 @@ LTO ?= 0
 ASAN ?= 0
 TSAN ?= 0
 UBSAN ?= 0
+ESAN ?= 0
 DEBUG ?= 0
 PROFILE ?= 0
 SRCDIR ?= src
@@ -67,6 +69,11 @@ CFLAGS += -fno-asynchronous-unwind-tables
 # Enable link-time optimizations if requested.
 ifeq ($(LTO),1)
 	CFLAGS += -flto
+endif
+
+# Enable engine sanitizer if requested.
+ifeq ($(ESAN),1)
+	CFLAGS += -DRX_ESAN
 endif
 
 ifeq ($(DEBUG),1)

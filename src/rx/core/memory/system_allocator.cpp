@@ -5,7 +5,7 @@
 namespace rx::memory {
 
 system_allocator::system_allocator()
-#if defined(RX_DEBUG)
+#if defined(RX_ESAN)
   : m_stats_allocator{electric_fence_allocator::instance()}
 #else
   : m_stats_allocator{heap_allocator::instance()}

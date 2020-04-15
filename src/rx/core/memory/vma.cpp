@@ -67,7 +67,7 @@ bool vma::allocate(rx_size _page_size, rx_size _page_count) {
   _page_size = 4096;
 
   const auto size = _page_size * _page_count;
-  const auto map = VirtualAlloc(nullptr, size, MEM_RESERVE, MEM_NOACCESS);
+  const auto map = VirtualAlloc(nullptr, size, MEM_RESERVE, PAGE_NOACCESS);
   if (map) {
     m_page_size = _page_size;
     m_page_count = _page_count;
@@ -103,7 +103,7 @@ bool vma::commit(range _range, bool _read, bool _write) {
 #elif defined(RX_PLATFORM_WINDOWS)
   const DWORD protect = _write ? PAGE_READWRITE : PAGE_READONLY;
   // Commit the memory.
-  return virtualAlloc(addr, size, MEM_COMMIT, protect);
+  return VirtualAlloc(addr, size, MEM_COMMIT, protect);
 #endif
   return false;
 }
