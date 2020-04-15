@@ -1,8 +1,6 @@
 #ifndef RX_CORE_MEMORY_SYSTEM_ALLOCATOR_H
 #define RX_CORE_MEMORY_SYSTEM_ALLOCATOR_H
-#include "rx/core/memory/heap_allocator.h"
 #include "rx/core/memory/stats_allocator.h"
-#include "rx/core/memory/electric_fence_allocator.h"
 
 #include "rx/core/global.h"
 
@@ -17,7 +15,7 @@ namespace rx::memory {
 struct system_allocator
   final : allocator
 {
-  constexpr system_allocator();
+  system_allocator();
 
   virtual rx_byte* allocate(rx_size _size);
   virtual rx_byte* reallocate(void* _data, rx_size _size);
@@ -28,20 +26,10 @@ struct system_allocator
   static constexpr allocator& instance();
 
 private:
-#if defined(RX_DEBUG)
-  electric_fence_allocator m_heap_allocator;
-#else
-  heap_allocator m_heap_allocator;
-#endif
   stats_allocator m_stats_allocator;
 
   static global<system_allocator> s_instance;
 };
-
-inline constexpr system_allocator::system_allocator()
-  : m_stats_allocator{m_heap_allocator}
-{
-}
 
 inline stats_allocator::statistics system_allocator::stats() const {
   return m_stats_allocator.stats();

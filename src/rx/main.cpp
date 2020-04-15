@@ -159,6 +159,8 @@ int main(int _argc, char** _argv) {
 
   // Explicitly initialize globals that need to be initialized in a specific
   // order for things to work.
+  system_group->find("heap_allocator")->init();
+  system_group->find("electric_fence_allocator")->init();
   system_group->find("allocator")->init();
   system_group->find("logger")->init();
   system_group->find("profiler")->init();
@@ -166,8 +168,6 @@ int main(int _argc, char** _argv) {
   // Give the logger a stream to write to.
   filesystem::file log{"log.log", "wb"};
   (void)log::subscribe(&log);
-
-  // system_group->find("logger")->cast<Logger>();
 
   // Initialize console variables. Then load the configuration to set those
   // console variables.
@@ -586,6 +586,8 @@ int main(int _argc, char** _argv) {
   system_group->find("profiler")->fini();
   system_group->find("logger")->fini();
   system_group->find("allocator")->fini();
+  system_group->find("electric_fence_allocator")->fini();
+  system_group->find("heap_allocator")->fini();
 
   return 0;
 }

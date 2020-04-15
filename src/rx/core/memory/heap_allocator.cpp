@@ -4,6 +4,8 @@
 
 namespace rx::memory {
 
+global<heap_allocator> heap_allocator::s_instance{"system", "heap_allocator"};
+
 rx_byte* heap_allocator::allocate(rx_size _size) {
   return reinterpret_cast<rx_byte*>(malloc(_size));
 }

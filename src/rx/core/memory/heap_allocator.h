@@ -2,6 +2,8 @@
 #define RX_CORE_MEMORY_HEAP_ALLOCATOR_H
 #include "rx/core/memory/allocator.h"
 
+#include "rx/core/global.h"
+
 namespace rx::memory {
 
 // # Heap Allocator
@@ -15,10 +17,21 @@ namespace rx::memory {
 struct heap_allocator
   final : allocator
 {
+  constexpr heap_allocator() = default;
+
   virtual rx_byte* allocate(rx_size _size);
   virtual rx_byte* reallocate(void* _data, rx_size _size);
   virtual void deallocate(void* _data);
+
+  static constexpr allocator& instance();
+
+private:
+  static global<heap_allocator> s_instance;
 };
+
+inline constexpr allocator& heap_allocator::instance() {
+  return *s_instance;
+}
 
 } // namespace rx::memory
 
