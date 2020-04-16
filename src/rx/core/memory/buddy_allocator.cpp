@@ -17,7 +17,7 @@ struct alignas(allocator::k_alignment) block {
   bool free;
 };
 
-// Returns the next block in the intrusive, flat linked list structure.
+// Returns the next block in the intrusive, flat linked-list structure.
 static inline block* next(block* _block) {
   return reinterpret_cast<block*>(reinterpret_cast<rx_byte*>(_block) + _block->size);
 }
@@ -38,10 +38,10 @@ static inline rx_size needed(rx_size _size) {
 }
 
 // Continually divides the block |block_| until it's the optimal size for
-// the allocation given by |_size|.
+// an allocation of size |_size|.
 static block* divide(block* block_, rx_size _size) {
   while (block_->size > _size) {
-    // Split block into two halves, half the size each.
+    // Split block into two halves, half-size each.
     const auto size = block_->size >> 1;
     block_->size = size;
 
@@ -53,14 +53,15 @@ static block* divide(block* block_, rx_size _size) {
   return block_->size >= _size ? block_ : nullptr;
 }
 
-// Searches for a free block that matches the given size |_sized| in the list
-// defined by |_head| and |_tail|. When a block cannot be found which satsifies
+// Searches for a free block that matches the given size |_size| in the list
+// defined by |_head| and |_tail|. When a block cannot be found which satisifies
 // the size |_size| but there is a larger free block, this divides the free
-// block into two halves of the same size until |_size| optimally fits in it.
-// If there is no larger free block this returns nullptr.
+// block into two halves of the same size until the block optimally fits the
+// size |_size| in it. If there is no larger free block available, this returns
+// nullptr.
 //
-// This function also merges adjacent free blocks as it searches to make the
-// larger free blocks.
+// This function also merges adjacent free blocks as it searches to make larger,
+// free blocks available during the search.
 static block* find_available(block* _head, block* _tail, rx_size _size) {
   block* region = _head;
   block* buddy = next(region);
@@ -134,9 +135,7 @@ static block* find_available(block* _head, block* _tail, rx_size _size) {
     return divide(closest, _size);
   }
 
-  // Potentially out of memory, more than likely there's too much internal
-  // fragmentation of adjacent free blocks which will need to be picked up
-  // later.
+  // Potentially out of memory.
   return nullptr;
 }
 
