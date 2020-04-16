@@ -149,7 +149,7 @@ template<typename T>
 inline constexpr vector<T>::vector(memory::view _view)
   : m_allocator{*_view.owner}
   , m_data{reinterpret_cast<T*>(_view.data)}
-  , m_size{_view.size}
+  , m_size{_view.size / sizeof(T)}
   , m_capacity{m_size}
 {
 }
