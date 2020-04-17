@@ -60,7 +60,7 @@
               mat3x3f rotation = rotations[i];
               for (int x = 0; x < u_texture_size; x++) {
                 for (int y = 0; y < u_texture_size; y++) {
-                  vec2f coordinate = vec2f(float(x) / u_texture_size, float(y) / u_texture_size);
+                  vec2f coordinate = vec2f(float(x) / float(u_texture_size), float(y) / float(u_texture_size));
                   vec3f direction = rotation * normalize(vec3f(coordinate * 2.0 - 1.0, -1.0));
                   float mul = max(dot(normal, direction), 0.0);
                   color += vec4f(rx_textureCM(u_sampler, direction).rgb * mul, mul);

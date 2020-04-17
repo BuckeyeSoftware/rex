@@ -56,7 +56,7 @@
             }
           }
 
-          return vec2f(a, b) / samples;
+          return vec2f(a, b) / float(samples);
         }
 
         void main() {

@@ -784,6 +784,7 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     "#version 310 es\n"
     "#extension GL_OES_standard_derivatives : enable\n"
     "precision highp float;\n"
+    "precision highp int;\n"
     "#define vec2f vec2\n"
     "#define vec3f vec3\n"
     "#define vec4f vec4\n"
