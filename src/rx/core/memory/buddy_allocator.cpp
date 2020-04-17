@@ -242,7 +242,7 @@ rx_byte* buddy_allocator::reallocate_unlocked(void* _data, rx_size _size) {
     RX_ASSERT(region <= tail - 1, "out of heap");
 
     // No need to resize.
-    if (region->size >= _size) {
+    if (region->size >= needed(_size)) {
       return reinterpret_cast<rx_byte*>(_data);
     }
 
