@@ -781,7 +781,7 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
 {
   // emit prelude to every shader
   static constexpr const char* k_prelude{
-    "#version 330 core\n"
+    "#version 310 es\n"
     "#extension GL_OES_standard_derivatives : enable\n"
     "#define vec2f vec2\n"
     "#define vec3f vec3\n"
