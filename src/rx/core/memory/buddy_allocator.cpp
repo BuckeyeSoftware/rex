@@ -169,18 +169,19 @@ static bool merge_free(block* _head, block* _tail) {
 }
 
 buddy_allocator::buddy_allocator(rx_byte* _data, rx_size _size) {
-  // Ensure we start off aligned, that way everything maintains alignment.
-  const auto heap = reinterpret_cast<rx_uintptr>(_data);
-  const auto aligned = round_to_alignment(heap);
-  const auto slop = aligned - heap;
+  // Ensure |_data| and |_size| are multiples of |k_alignment|.
+  RX_ASSERT(reinterpret_cast<rx_uintptr>(_data) % k_alignment == 0,
+    "_data not a multiple of k_alignment");
+  RX_ASSERT(_size % k_alignment == 0,
+    "_size not a multiple of k_alignment");
 
-  // Calculate how much effective memory after alignment.
-  const auto size = _size - slop;
+  // Ensure |_size| is a power of two.
+  RX_ASSERT((_size & (_size - 1)) == 0, "_size not a power of two");
 
   // Create the root block structure.
-  block* head = reinterpret_cast<block*>(aligned);
+  block* head = reinterpret_cast<block*>(_data);
 
-  head->size = size;
+  head->size = _size;
   head->free = true;
 
   m_head = reinterpret_cast<void*>(head);
@@ -189,7 +190,20 @@ buddy_allocator::buddy_allocator(rx_byte* _data, rx_size _size) {
 
 rx_byte* buddy_allocator::allocate(rx_size _size) {
   concurrency::scope_lock lock{m_lock};
+  return allocate_unlocked(_size);
+}
 
+rx_byte* buddy_allocator::reallocate(void* _data, rx_size _size) {
+  concurrency::scope_lock lock{m_lock};
+  return reallocate_unlocked(_data, _size);
+}
+
+void buddy_allocator::deallocate(void* _data) {
+  concurrency::scope_lock lock{m_lock};
+  deallocate_unlocked(_data);
+}
+
+rx_byte* buddy_allocator::allocate_unlocked(rx_size _size) {
   const auto size = needed(_size);
 
   const auto head = reinterpret_cast<block*>(m_head);
@@ -217,10 +231,8 @@ rx_byte* buddy_allocator::allocate(rx_size _size) {
   return nullptr;
 }
 
-rx_byte* buddy_allocator::reallocate(void* _data, rx_size _size) {
+rx_byte* buddy_allocator::reallocate_unlocked(void* _data, rx_size _size) {
   if (RX_HINT_LIKELY(_data)) {
-    concurrency::scope_lock lock{m_lock};
-
     const auto region = reinterpret_cast<block*>(_data) - 1;
 
     const auto head = reinterpret_cast<block*>(m_head);
@@ -235,10 +247,10 @@ rx_byte* buddy_allocator::reallocate(void* _data, rx_size _size) {
     }
 
     // Create a new allocation.
-    auto resize = allocate(_size);
+    auto resize = allocate_unlocked(_size);
     if (RX_HINT_LIKELY(resize)) {
-      memcpy(resize, _data, region->size);
-      deallocate(_data);
+      memcpy(resize, _data, region->size - sizeof *region);
+      deallocate_unlocked(_data);
       return resize;
     }
 
@@ -246,13 +258,11 @@ rx_byte* buddy_allocator::reallocate(void* _data, rx_size _size) {
     return nullptr;
   }
 
-  return allocate(_size);
+  return allocate_unlocked(_size);
 }
 
-void buddy_allocator::deallocate(void* _data) {
+void buddy_allocator::deallocate_unlocked(void* _data) {
   if (RX_HINT_LIKELY(_data)) {
-    concurrency::scope_lock lock{m_lock};
-
     const auto region = reinterpret_cast<block*>(_data) - 1;
 
     const auto head = reinterpret_cast<block*>(m_head);
