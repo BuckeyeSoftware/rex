@@ -220,6 +220,8 @@ program::program(context* _frontend)
 }
 
 void program::add_shader(shader&& shader_) {
+  // Run the formatter on the |_shader_.source|.
+  shader_.source = format_shader(shader_.source);
   m_shaders.push_back(utility::move(shader_));
 }
 
@@ -271,6 +273,103 @@ void program::mark_uniform_dirty(rx_u64 _uniform_bit) {
   if (!(m_padding_uniforms & _uniform_bit)) {
     m_dirty_uniforms |= _uniform_bit;
   }
+}
+
+// Reformats the given Rex shading |_source| into clean shader text.
+string program::format_shader(const string& _source) {
+  auto pass = [&](const char* _ch, char* result_) -> rx_size {
+    rx_size length = 0;
+
+    // Put a character into |result_| and track the size.
+    auto put = [&](int _ch) {
+      if (result_) {
+        *result_++ = _ch;
+      }
+      length++;
+    };
+
+    int i = 0;
+    while (*_ch) switch (*_ch++) {
+    case '\r':
+      continue;
+    case '\n':
+      put('\n');
+      // Skip whitespace.
+      while (*_ch && (*_ch == ' ' || *_ch == '\t' || *_ch == '\r')) {
+        _ch++;
+      }
+      // Emit the indentation level except for preprocessor directives and scope termination.
+      if (*_ch && (*_ch != '}' && *_ch != '#')) {
+        for (int j = 0; j < i; j++) {
+          put(' ');
+        }
+      }
+      break;
+    case '/':
+      put('/');
+      switch (*_ch++) {
+      // Line comment.
+      case '/':
+        put('/');
+        // Consume until end-of-line.
+        while (*_ch && *_ch != '\n') {
+          // Don't emit carrige-return.
+          if (*_ch != '\r') {
+            put(*_ch);
+          }
+          _ch++;
+        }
+        break;
+      // Block comment.
+      case '*':
+        put('*');
+        // Consume until end-of-block.
+        while (*_ch && strncmp(_ch, "*/", 2) != 0) {
+          // Don't emit carrige-return.
+          if (*_ch != '\r') {
+            put(*_ch);
+          }
+          _ch++;
+        }
+        put('*');
+        put('/');
+        break;
+      default:
+        _ch--;
+        break;
+      }
+      break;
+    case '(':
+      [[fallthrough]];
+    case '{':
+      i++;
+      put(_ch[-1]);
+      break;
+    case ')':
+      [[fallthrough]];
+    case '}':
+      i--;
+      [[fallthrough]];
+    default:
+      put(_ch[-1]);
+      break;
+    }
+
+    // Don't forget the null-terminator.
+    put('\0');
+
+    return length;
+  };
+
+  auto data = _source.data();
+  auto& allocator = _source.allocator();
+
+  const auto length = pass(data, nullptr);
+
+  vector<char> result{allocator, length, utility::uninitialized{}};
+  pass(data, result.data());
+
+  return result.disown();
 }
 
 } // namespace rx::render::frontend

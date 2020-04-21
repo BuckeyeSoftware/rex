@@ -77,7 +77,8 @@ bool module::parse(const json& _description) {
     return error("expected String for 'source'");
   }
 
-  m_source = source.as_string();
+  // Trim any leading and trailing whitespace characters from the contents too.
+  m_source = source.as_string().strip("\t\r\n ");
 
   if (const json& imports{_description["imports"]}) {
     if (!imports.is_array_of(json::type::k_string)) {

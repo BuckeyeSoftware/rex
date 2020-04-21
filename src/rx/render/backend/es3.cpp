@@ -780,7 +780,7 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
   const frontend::shader& _shader)
 {
   // emit prelude to every shader
-  static constexpr const char* k_prelude{
+  static constexpr const char* k_prelude =
     "#version 310 es\n"
     "#extension GL_OES_standard_derivatives : enable\n"
     "precision highp float;\n"
@@ -810,12 +810,11 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     "#define rx_textureCMLod textureLod\n"
     "#define rx_position gl_Position\n"
     "#define rx_vertex_id gl_VertexID\n"
-    "#define rx_point_size gl_PointSize\n"
-  };
+    "#define rx_point_size gl_PointSize\n";
 
-  string contents{k_prelude};
+  string contents = k_prelude;
 
-  GLenum type{0};
+  GLenum type = 0;
   switch (_shader.kind) {
   case frontend::shader::type::k_vertex:
     type = GL_VERTEX_SHADER;
@@ -849,11 +848,10 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     }
   });
 
-  // to get good diagnostics
-  contents.append("#line 0\n");
-
   // append the user shader source now
   contents.append(_shader.source);
+
+  // logger->verbose("%s", contents);
 
   const GLchar* data{static_cast<const GLchar*>(contents.data())};
   const GLint size{static_cast<GLint>(contents.size())};

@@ -78,6 +78,9 @@ struct string {
   // returns copy of string with trailing characters in set removed
   string rstrip(const char* _set) const;
 
+  // returns copy of string with leading and trailing characters in set removed
+  string strip(const char* _set) const;
+
   // split string by |token| up to |count| times, use |count| of zero for no limit
   vector<string> split(memory::allocator& _allocator, int _ch, rx_size _count = 0) const;
   vector<string> split(int _ch, rx_size _count = 0) const;

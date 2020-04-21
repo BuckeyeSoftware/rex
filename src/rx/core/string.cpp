@@ -182,12 +182,7 @@ string::string(memory::view _view)
   , m_capacity{nullptr}
 {
   // Search for the null-terminator in the view to find the end of the string.
-  for (rx_size i{0}; i < _view.size; i++) {
-    if (_view.data[i] == 0) {
-      m_last = reinterpret_cast<char*>(_view.data + i);
-      break;
-    }
-  }
+  m_last = reinterpret_cast<char*>(memchr(_view.data, 0, _view.size));
 
   if (m_last) {
     m_data = reinterpret_cast<char*>(_view.data);
@@ -367,7 +362,15 @@ string string::lstrip(const char* _set) const {
 string string::rstrip(const char* _set) const {
   const char* ch{m_data + size()};
   for (; strchr(_set, *ch); ch--);
-  return {allocator(), m_data, ch};
+  return {allocator(), m_data, ch + 1};
+}
+
+string string::strip(const char* _set) const {
+  const char* beg = m_data;
+  const char* end = m_data + size();
+  for (; strchr(_set, *beg); beg++);
+  for (; strchr(_set, *end); end--);
+  return {allocator(), beg, end + 1};
 }
 
 vector<string> string::split(memory::allocator& _allocator, int _token, rx_size _count) const {

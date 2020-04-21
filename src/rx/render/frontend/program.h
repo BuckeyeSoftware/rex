@@ -133,6 +133,8 @@ struct program : resource {
   vector<uniform>& uniforms() &;
 
 private:
+  string format_shader(const string& _source);
+
   void update_resource_usage();
 
   friend struct uniform;
