@@ -481,14 +481,13 @@ string string::human_size_format(rx_size _size) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
-  const int result{snprintf(buffer, sizeof buffer, "%.*f",
-    static_cast<int>(sizeof buffer), bytes)};
+  const int result = snprintf(buffer, sizeof buffer, "%.*f",
+    static_cast<int>(sizeof buffer), bytes);
 #if defined(RX_COMPILER_GCC)
 #pragma GCC diagnostic pop
 #endif
 
-  RX_ASSERT(result > 0, "failed to format");
-  char* period{strchr(buffer, '.')};
+  char* period = strchr(buffer, '.');
   RX_ASSERT(period, "failed to format");
   period[3] = '\0';
   return format("%s %s", buffer, k_suffixes[i]);

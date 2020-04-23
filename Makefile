@@ -32,6 +32,13 @@ CC ?= clang
 # We use the C frontend with -xc++ to avoid linking in C++ runtime library.
 CXX := $(CC) -xc++
 
+# Determine if the C or C++ compiler should be used as the linker frontend.
+ifneq (,$(findstring -xc++,$(CXX)))
+	LD := $(CC)
+else
+	LD := $(CXX)
+endif
+
 # Build artifact directories
 OBJDIR := .build/objs
 DEPDIR := .build/deps
@@ -54,7 +61,15 @@ DEPS += $(filter %.d,$(SRCS:%.c=$(DEPDIR)/%.d))
 CFLAGS := -Isrc
 CFLAGS += -Wall
 CFLAGS += -Wextra
-CFLAGS += `sdl2-config --cflags`
+
+# When building with mingw ensure we use a platform toolset that requires
+# Windows Vista as a minimum target.
+ifneq (,$(findstring mingw,$(CC)))
+	CFLAGS += -D_WIN32_WINNT=0x0600
+	CFLAGS += -I/usr/x86_64-w64-mingw32/include/SDL2
+else
+	CFLAGS += `sdl2-config --cflags`
+endif
 
 # Give each function and data it's own section so the linker can remove unused
 # references to each, producing smaller, tighter binaries.
@@ -163,7 +178,7 @@ DEPFLAGS += -MP
 #
 LDFLAGS := -lpthread
 LDFLAGS += -ldl
-LDFLAGS += `sdl2-config --libs`
+LDFLAGS += -lSDL2
 
 ifeq ($(UNUSED), 1)
 	LDFLAGS += -Wl,--gc-sections
@@ -198,7 +213,12 @@ else
 	STRIP := strip
 endif
 
-BIN := rex
+# Ensure we have the exe extension.
+ifneq (,$(findstring mingw,$(CC)))
+	BIN := rex.exe
+else
+	BIN := rex
+endif
 
 all: $(BIN)
 
@@ -222,7 +242,7 @@ $(OBJDIR)/%.o: %.S | $(OBJDIR)
 	@mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 $(BIN): $(OBJS)
-	$(CC) $(OBJS) $(LDFLAGS) -o $@
+	$(LD) $(OBJS) $(LDFLAGS) -o $@
 	$(STRIP) $@
 
 clean:

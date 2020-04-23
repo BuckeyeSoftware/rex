@@ -1,5 +1,6 @@
 #include <signal.h> // signal, SIG{INT,TERM,HUP,QUIT,KILL,PIPE,ALRM,STOP}
 
+#define SDL_MAIN_HANDLED
 #include <SDL.h>
 
 #include "rx/console/interface.h"
@@ -406,7 +407,9 @@ int main(int _argc, char** _argv) {
           abort("failed to initialize rendering backend");
         }
 
-        SDL_GL_SetSwapInterval(*display_swap_interval);
+        if (is_gl) {
+          SDL_GL_SetSwapInterval(*display_swap_interval);
+        }
 
         render::frontend::context frontend{allocator, backend.get()};
 
