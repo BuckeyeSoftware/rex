@@ -93,6 +93,7 @@ struct vector {
   rx_size size() const;
   rx_size capacity() const;
 
+  bool in_range(rx_size _index) const;
   bool is_empty() const;
 
   // enumerate collection either forward or reverse
@@ -307,13 +308,13 @@ inline vector<T>& vector<T>::operator+=(vector&& other_) {
 
 template<typename T>
 inline T& vector<T>::operator[](rx_size _index) {
-  RX_ASSERT(m_data && _index < m_size, "out of bounds (%zu >= %zu)", _index, m_size);
+  RX_ASSERT(m_data && in_range(_index), "out of bounds (%zu >= %zu)", _index, m_size);
   return m_data[_index];
 }
 
 template<typename T>
 inline const T& vector<T>::operator[](rx_size _index) const {
-  RX_ASSERT(m_data && _index < m_size, "out of bounds (%zu >= %zu)", _index, m_size);
+  RX_ASSERT(m_data && in_range(_index), "out of bounds (%zu >= %zu)", _index, m_size);
   return m_data[_index];
 }
 
@@ -497,6 +498,11 @@ RX_HINT_FORCE_INLINE rx_size vector<T>::capacity() const {
 template<typename T>
 RX_HINT_FORCE_INLINE bool vector<T>::is_empty() const {
   return m_size == 0;
+}
+
+template<typename T>
+RX_HINT_FORCE_INLINE bool vector<T>::in_range(rx_size _index) const {
+  return _index < m_size;
 }
 
 template<typename T>

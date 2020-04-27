@@ -330,7 +330,7 @@ inline bool immediate2D::font::key::operator==(const key& _key) const {
 }
 
 inline immediate2D::font::glyph immediate2D::font::glyph_for_code(rx_u32 _code) const {
-  return m_glyphs[static_cast<rx_size>(_code)];
+  return m_glyphs.in_range(_code) ? m_glyphs[static_cast<rx_size>(_code)] : m_glyphs[0];
 }
 
 inline rx_s32 immediate2D::font::size() const {
