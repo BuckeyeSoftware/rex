@@ -32,15 +32,16 @@ struct context {
   context(memory::allocator& _allocator, backend::context* _backend);
   ~context();
 
+  // Create rendering resources.
   buffer* create_buffer(const command_header::info& _info);
   target* create_target(const command_header::info& _info);
   program* create_program(const command_header::info& _info);
-
   texture1D* create_texture1D(const command_header::info& _info);
   texture2D* create_texture2D(const command_header::info& _info);
   texture3D* create_texture3D(const command_header::info& _info);
   textureCM* create_textureCM(const command_header::info& _info);
 
+  // Initialize rendering resources.
   void initialize_buffer(const command_header::info& _info, buffer* _buffer);
   void initialize_target(const command_header::info& _info, target* _target);
   void initialize_program(const command_header::info& _info, program* _program);
@@ -49,11 +50,13 @@ struct context {
   void initialize_texture(const command_header::info& _info, texture3D* _texture);
   void initialize_texture(const command_header::info& _info, textureCM* _texture);
 
+  // Update rendering resources.
   void update_buffer(const command_header::info& _info, buffer* _buffer);
   void update_texture(const command_header::info& _info, texture1D* _texture);
   void update_texture(const command_header::info& _info, texture2D* _texture);
   void update_texture(const command_header::info& _info, texture3D* _texture);
 
+  // Destroy rendering resources.
   void destroy_buffer(const command_header::info& _info, buffer* _buffer);
   void destroy_target(const command_header::info& _info, target* _target);
   void destroy_program(const command_header::info& _info, program* _program);
@@ -62,6 +65,10 @@ struct context {
   void destroy_texture(const command_header::info& _info, texture3D* _texture);
   void destroy_texture(const command_header::info& _info, textureCM* _texture);
 
+  // Renders |_count| geometric primitives on |_target| with specified draw
+  // buffer layout |_draw_buffers| and state |_state| from array data at
+  // |_offset| in |_buffer| of type |_primitive_type| with textures described
+  // by |_draw_textures|.
   void draw(
     const command_header::info& _info,
     const state& _state,
@@ -75,8 +82,8 @@ struct context {
     const textures& _draw_textures);
 
   // Performs a clear operation on |_target| with specified draw buffer layout
-  // |_draw_buffers| and state |_state|. The clear mask specified by |_clear_mask|
-  // describes the packet layout of |...|.
+  // |_draw_buffers| and state |_state|. The clear mask specified by
+  // |_clear_mask| describes the packet layout of |...|.
   //
   // The packet data described in |...| is passed, parsed and interpreted in
   // the following order.
@@ -103,11 +110,16 @@ struct context {
 
   //
   // Example:
+  //  buffers draw_buffers;
+  //  draw_buffers.add(3);
+  //  draw_buffers.add(1);
+  //  draw_buffers.add(0);
+  //
   //  clear(
   //    RX_RENDER_TAG("annotation"),
   //    {},
   //    target,
-  //    "310",
+  //    draw_buffers,
   //    RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL | RX_RENDER_CLEAR_COLOR(0) | RX_RENDER_CLEAR_COLOR(2),
   //    1.0f,
   //    0,
@@ -161,6 +173,8 @@ struct context {
   texture3D* cached_texture3D(const string& _key);
   textureCM* cached_textureCM(const string& _key);
 
+  // Pin a given resource to the render cache with the given |_key| allowing
+  // it to be reused by checking the cache with the above functions.
   void cache_buffer(buffer* _buffer, const string& _key);
   void cache_target(target* _target, const string& _key);
   void cache_texture(texture1D* _texture, const string& _key);
@@ -178,13 +192,14 @@ struct context {
   };
 
   struct device_info {
-    device_info(memory::allocator& _allocator);
+    constexpr device_info(memory::allocator& _allocator);
     string vendor;
     string renderer;
     string version;
   };
 
   statistics stats(resource::type _type) const;
+
   rx_size draw_calls() const;
   rx_size clear_calls() const;
   rx_size blit_calls() const;
@@ -205,10 +220,12 @@ private:
   friend struct target;
   friend struct resource;
 
-  // needed by target to release depth/stencil textures without holding m_mutex
+  // Needed by target to release depth/stencil textures without holding
+  // the non-recursive mutex |m_mutex|.
   void destroy_texture_unlocked(const command_header::info& _info,
     texture2D* _texture);
 
+  // Remove a given object |_object| from the cache |_cache|.
   template<typename T>
   void remove_from_cache(map<string, T*>& cache_, T* _object);
 
@@ -271,7 +288,7 @@ private:
   frame_timer m_timer;
 };
 
-inline context::device_info::device_info(memory::allocator& _allocator)
+inline constexpr context::device_info::device_info(memory::allocator& _allocator)
   : vendor{_allocator}
   , renderer{_allocator}
   , version{_allocator}
