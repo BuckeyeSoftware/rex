@@ -481,7 +481,7 @@ string string::human_size_format(rx_size _size) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
-  const int result = snprintf(buffer, sizeof buffer, "%.*f",
+  snprintf(buffer, sizeof buffer, "%.*f",
     static_cast<int>(sizeof buffer), bytes);
 #if defined(RX_COMPILER_GCC)
 #pragma GCC diagnostic pop
