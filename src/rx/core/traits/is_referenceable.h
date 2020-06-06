@@ -2,7 +2,7 @@
 #define RX_CORE_TRAITS_IS_REFERENCEABLE_H
 #include "rx/core/traits/is_same.h"
 
-namespace rx::traits {
+namespace Rx::traits {
 
 namespace detail {
   struct is_referenceable {

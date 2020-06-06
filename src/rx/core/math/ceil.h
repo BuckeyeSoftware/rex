@@ -2,10 +2,10 @@
 #define RX_CORE_MATH_CEIL_H
 #include "rx/core/types.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
-rx_f64 ceil(rx_f64 _x);
-rx_f32 ceil(rx_f32 _x);
+Float64 ceil(Float64 _x);
+Float32 ceil(Float32 _x);
 
 } // namespace rx::math
 

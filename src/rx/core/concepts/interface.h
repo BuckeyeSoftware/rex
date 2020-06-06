@@ -3,19 +3,16 @@
 #include "rx/core/concepts/no_copy.h" // no_copy
 #include "rx/core/concepts/no_move.h" // no_move
 
-namespace rx::concepts {
+namespace Rx::Concepts {
 
-// interfaces are non-copyable, non-movable and virtual
-#undef interface
-
-struct interface
-  : no_copy
-  , no_move
+struct Interface
+  : NoCopy
+  , NoMove
 {
-  virtual ~interface() = 0;
+  virtual ~Interface() = 0;
 };
 
-inline interface::~interface() {
+inline Interface::~Interface() {
   // { empty }
 }
 

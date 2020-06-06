@@ -1,7 +1,7 @@
 #ifndef RX_CORE_TRAITS_TYPE_IDENTITY_H
 #define RX_CORE_TRAITS_TYPE_IDENTITY_H
 
-namespace rx::traits {
+namespace Rx::traits {
 
 template<typename T>
 struct type_identity {

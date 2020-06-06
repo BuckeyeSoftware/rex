@@ -5,24 +5,24 @@
 #include "rx/core/math/force_eval.h"
 
 #if FLT_EVAL_METHOD == 0 || FLT_EVAL_METHOD == 1
-static constexpr const rx_f64_eval k_to_int{1 / DBL_EPSILON};
+static constexpr const Float64Eval k_to_int{1 / DBL_EPSILON};
 #else
 static constexpr const rx_f64_eval k_to_int{1 / LDBL_EPSILON};
 #endif
 
-namespace rx::math {
+namespace Rx::Math {
 
-rx_f64 ceil(rx_f64 _x) {
-  shape u{_x};
+Float64 ceil(Float64 _x) {
+  Shape u{_x};
 
-  const auto e{static_cast<rx_s32>(u.as_u64 >> 52 & 0x7ff)};
+  const auto e{static_cast<Sint32>(u.as_u64 >> 52 & 0x7ff)};
 
   if (e >= 0x3ff+52 || _x == 0) {
     return _x;
   }
 
   // y = int(_x) - _x, where int(_x) is an integer neighbor of _x
-  rx_f64_eval y;
+  Float64Eval y;
   if (u.as_u64 >> 63) {
     y = _x - k_to_int + k_to_int - _x;
   } else {
@@ -42,17 +42,17 @@ rx_f64 ceil(rx_f64 _x) {
   return _x + y;
 }
 
-rx_f32 ceil(rx_f32 _x) {
-  shape u{_x};
+Float32 ceil(Float32 _x) {
+  Shape u{_x};
 
-  const auto e{static_cast<rx_s32>(u.as_u32 >> 23 & 0xff) - 0x7f};
+  const auto e{static_cast<Sint32>(u.as_u32 >> 23 & 0xff) - 0x7f};
 
   if (e >= 23) {
     return _x;
   }
 
   if (e >= 0) {
-    const auto m{static_cast<rx_u32>(0x007fffff >> e)};
+    const auto m{static_cast<Uint32>(0x007fffff >> e)};
     if ((u.as_u32 & m) == 0) {
       return _x;
     }

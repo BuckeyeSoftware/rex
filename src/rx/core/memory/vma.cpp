@@ -11,9 +11,9 @@
 #error "missing VMA implementation"
 #endif
 
-namespace rx::memory {
+namespace Rx::Memory {
 
-void vma::deallocate() {
+void VMA::deallocate() {
   if (!is_valid()) {
     return;
   }
@@ -26,14 +26,14 @@ void vma::deallocate() {
 #endif
 }
 
-bool vma::allocate(rx_size _page_size, rx_size _page_count) {
+bool VMA::allocate(Size _page_size, Size _page_count) {
   RX_ASSERT(!is_valid(), "already allocated");
 
 #if defined(RX_PLATFORM_POSIX)
   int flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
   // Determine the page size that closely matches |_page_size|.
-  rx_size page_size = 4096;
+  Size page_size = 4096;
   if (_page_size > 4096) {
     flags |= MAP_HUGETLB;
     if (_page_size > 2 * 1024 * 1024) {
@@ -58,7 +58,7 @@ bool vma::allocate(rx_size _page_size, rx_size _page_count) {
 
     m_page_size = page_size;
     m_page_count = _page_count;
-    m_base = reinterpret_cast<rx_byte*>(map);
+    m_base = reinterpret_cast<Byte*>(map);
     return true;
   }
 #elif defined(RX_PLATFORM_WINDOWS)
@@ -78,7 +78,7 @@ bool vma::allocate(rx_size _page_size, rx_size _page_count) {
   return false;
 }
 
-bool vma::commit(range _range, bool _read, bool _write) {
+bool VMA::commit(Range _range, bool _read, bool _write) {
   // Cannot commit memory unless one of |_read| or |_write| is true.
   if (!_read && !_write) {
     return false;
@@ -108,7 +108,7 @@ bool vma::commit(range _range, bool _read, bool _write) {
   return false;
 }
 
-bool vma::uncommit(range _range) {
+bool VMA::uncommit(Range _range) {
   // Cannot commit memory unless in range of the VMA.
   if (!in_range(_range)) {
     return false;

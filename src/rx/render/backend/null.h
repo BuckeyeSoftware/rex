@@ -1,24 +1,20 @@
 #ifndef RX_RENDER_BACKEND_NULL_H
 #define RX_RENDER_BACKEND_NULL_H
-
 #include "rx/render/backend/context.h"
 
-namespace rx::memory {
-  struct allocator;
-}
+namespace Rx::Render::Backend {
 
-namespace rx::render::backend {
-
-struct null
-  : context
+struct Null
+  : Context
 {
-  allocation_info query_allocation_info() const;
-  device_info query_device_info() const;
-  null(memory::allocator& _allocator, void* _data);
-  ~null();
+  Null(Memory::Allocator& _allocator, void* _data);
+  ~Null();
+
+  AllocationInfo query_allocation_info() const;
+  DeviceInfo query_device_info() const;
 
   bool init();
-  void process(const vector<rx_byte*>& _commands);
+  void process(const Vector<Byte*>& _commands);
   void swap();
 };
 

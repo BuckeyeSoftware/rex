@@ -11,14 +11,14 @@
 #error "missing qpc implementation"
 #endif
 
-namespace rx::time {
+namespace Rx::Time {
 
-rx_u64 qpc_ticks() {
+Uint64 qpc_ticks() {
 #if defined(RX_PLATFORM_POSIX)
   struct timespec now;
   clock_gettime(CLOCK_MONOTONIC, &now);
 
-  rx_u64 ticks{0};
+  Uint64 ticks{0};
   ticks += now.tv_sec;
   ticks *= 1000000000;
   ticks += now.tv_nsec;
@@ -32,7 +32,7 @@ rx_u64 qpc_ticks() {
   return 0;
 }
 
-rx_u64 qpc_frequency() {
+Uint64 qpc_frequency() {
 #if defined(RX_PLATFORM_POSIX)
   return 1000000000;
 #elif defined(RX_PLATFORM_WINDOWS)

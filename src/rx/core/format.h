@@ -4,41 +4,41 @@
 
 #include "rx/core/types.h" // rx_size
 
-namespace rx {
+namespace Rx {
 
-// format_size holds maximum size needed to format a value of that type
+// format_size holds maximum size needed to format a value of that Type
 template<typename T>
-struct format_size;
+struct FormatSize;
 
 template<>
-struct format_size<rx_f32> {
-  static constexpr const rx_size size{3+FLT_MANT_DIG-FLT_MIN_EXP};
+struct FormatSize<Float32> {
+  static constexpr const Size size{3 + FLT_MANT_DIG - FLT_MIN_EXP};
 };
 
 template<>
-struct format_size<rx_f64> {
-  static constexpr const rx_size size{3+DBL_MANT_DIG-DBL_MIN_EXP};
+struct FormatSize<Float64> {
+  static constexpr const Size size{3 + DBL_MANT_DIG - DBL_MIN_EXP};
 };
 
 template<>
-struct format_size<rx_s32> {
-  static constexpr const rx_size size{3+(8*sizeof(rx_s32)/3)};
+struct FormatSize<Sint32> {
+  static constexpr const Size size{3 + (8 * sizeof(Sint32) / 3)};
 };
 
 template<>
-struct format_size<rx_s64> {
-  static constexpr const rx_size size{3+(8*sizeof(rx_s64)/3)};
+struct FormatSize<Sint64> {
+  static constexpr const Size size{3 + (8 * sizeof(Sint64) / 3)};
 };
 
 template<typename T>
-struct format_type {
+struct FormatNormalize {
   constexpr T operator()(const T& _value) const {
     return _value;
   }
 };
 
-template<rx_size E>
-struct format_type<char[E]> {
+template<Size E>
+struct FormatNormalize<char[E]> {
   constexpr const char* operator()(const char (&_data)[E]) const {
     return _data;
   }

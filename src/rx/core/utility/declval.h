@@ -2,7 +2,7 @@
 #define RX_CORE_UTILITY_DECLVAL_H
 #include "rx/core/traits/add_rvalue_reference.h" // traits::add_rvalue_reference
 
-namespace rx::utility {
+namespace Rx::Utility {
   
 template<typename T>
 traits::add_rvalue_reference<T> declval();

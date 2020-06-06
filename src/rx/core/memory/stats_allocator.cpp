@@ -4,71 +4,71 @@
 #include "rx/core/hints/unlikely.h"
 #include "rx/core/assert.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
-struct header {
+struct Header {
   // requested allocation size, the actual size is round_to_alignment(size) + sizeof(header) + k_alignment
-  rx_size size;
-  rx_byte* base;
+  Size size;
+  Byte* base;
 };
 
-rx_byte* stats_allocator::allocate(rx_size _size) {
-  const rx_uintptr size_as_multiple{round_to_alignment(_size)};
-  const rx_uintptr actual_size{size_as_multiple + sizeof(header) + k_alignment};
+Byte* StatsAllocator::allocate(Size _size) {
+  const UintPtr size_as_multiple{round_to_alignment(_size)};
+  const UintPtr actual_size{size_as_multiple + sizeof(Header) + k_alignment};
 
-  rx_byte* base = m_allocator.allocate(actual_size);
+  Byte* base = m_allocator.allocate(actual_size);
 
   if (RX_HINT_UNLIKELY(!base)) {
     return nullptr;
   }
 
-  rx_byte* aligned = reinterpret_cast<rx_byte*>(round_to_alignment(reinterpret_cast<rx_uintptr>(base) + sizeof(header)));
-  header* node = reinterpret_cast<header*>(aligned) - 1;
+  Byte* aligned = reinterpret_cast<Byte*>(round_to_alignment(reinterpret_cast<UintPtr>(base) + sizeof(Header)));
+  Header* node = reinterpret_cast<Header*>(aligned) - 1;
   node->size = _size;
   node->base = base;
 
   {
-    concurrency::scope_lock locked{m_lock};
+    Concurrency::ScopeLock locked{m_lock};
     m_statistics.allocations++;
     m_statistics.used_request_bytes += _size;
     m_statistics.used_actual_bytes += actual_size;
-    m_statistics.peak_request_bytes = algorithm::max(m_statistics.peak_request_bytes, m_statistics.used_request_bytes);
-    m_statistics.peak_actual_bytes = algorithm::max(m_statistics.peak_actual_bytes, m_statistics.used_actual_bytes);
+    m_statistics.peak_request_bytes = Algorithm::max(m_statistics.peak_request_bytes, m_statistics.used_request_bytes);
+    m_statistics.peak_actual_bytes = Algorithm::max(m_statistics.peak_actual_bytes, m_statistics.used_actual_bytes);
   }
   return aligned;
 }
 
-rx_byte* stats_allocator::reallocate(void* _data, rx_size _size) {
+Byte* StatsAllocator::reallocate(void* _data, Size _size) {
   if (RX_HINT_UNLIKELY(!_data)) {
     return allocate(_size);
   }
 
-  const rx_uintptr size_as_multiple = round_to_alignment(_size);
-  const rx_uintptr actual_size
-    = size_as_multiple + sizeof(header) + k_alignment;
+  const UintPtr size_as_multiple = round_to_alignment(_size);
+  const UintPtr actual_size
+    = size_as_multiple + sizeof(Header) + k_alignment;
 
-  header* node = reinterpret_cast<header*>(_data) - 1;
-  rx_byte* original = node->base;
+  Header* node = reinterpret_cast<Header*>(_data) - 1;
+  Byte* original = node->base;
 
-  const rx_size original_request_size = node->size;
-  const rx_size original_actual_size
-    = round_to_alignment(node->size) + sizeof(header) + k_alignment;
+  const Size original_request_size = node->size;
+  const Size original_actual_size
+    = round_to_alignment(node->size) + sizeof(Header) + k_alignment;
 
-  rx_byte* resize = m_allocator.reallocate(original, actual_size);
+  Byte* resize = m_allocator.reallocate(original, actual_size);
 
   if (RX_HINT_UNLIKELY(!resize)) {
     return nullptr;
   }
 
-  rx_byte* aligned =
-    reinterpret_cast<rx_byte*>(round_to_alignment(reinterpret_cast<rx_uintptr>(resize) + sizeof(header)));
+  Byte* aligned =
+    reinterpret_cast<Byte*>(round_to_alignment(reinterpret_cast<UintPtr>(resize) + sizeof(Header)));
 
-  node = reinterpret_cast<header*>(aligned) - 1;
+  node = reinterpret_cast<Header*>(aligned) - 1;
   node->size = _size;
   node->base = resize;
 
   {
-    concurrency::scope_lock locked{m_lock};
+    Concurrency::ScopeLock locked{m_lock};
     m_statistics.request_reallocations++;
     if (resize == original) {
       m_statistics.actual_reallocations++;
@@ -81,18 +81,18 @@ rx_byte* stats_allocator::reallocate(void* _data, rx_size _size) {
   return aligned;
 }
 
-void stats_allocator::deallocate(void* _data) {
+void StatsAllocator::deallocate(void* _data) {
   if (RX_HINT_UNLIKELY(!_data)) {
     return;
   }
 
-  header* node = reinterpret_cast<header*>(_data) - 1;
-  const rx_size request_size = node->size;
-  const rx_size actual_size
-    = round_to_alignment(node->size) + sizeof(header) + k_alignment;
+  Header* node = reinterpret_cast<Header*>(_data) - 1;
+  const Size request_size = node->size;
+  const Size actual_size
+    = round_to_alignment(node->size) + sizeof(Header) + k_alignment;
 
   {
-    concurrency::scope_lock locked{m_lock};
+    Concurrency::ScopeLock locked{m_lock};
     m_statistics.deallocations++;
     m_statistics.used_request_bytes -= request_size;
     m_statistics.used_actual_bytes -= actual_size;
@@ -101,9 +101,9 @@ void stats_allocator::deallocate(void* _data) {
   m_allocator.deallocate(node);
 }
 
-stats_allocator::statistics stats_allocator::stats() const {
+StatsAllocator::Statistics StatsAllocator::stats() const {
   // Hold a lock and make an entire copy of the structure atomically
-  concurrency::scope_lock locked{m_lock};
+  Concurrency::ScopeLock locked{m_lock};
   return m_statistics;
 }
 

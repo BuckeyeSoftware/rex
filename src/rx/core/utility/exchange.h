@@ -3,7 +3,7 @@
 #include "rx/core/utility/move.h"
 #include "rx/core/utility/forward.h"
 
-namespace rx::utility {
+namespace Rx::Utility {
 
 template<typename T, typename U = T>
 T exchange(T& object_, U&& _new_value) {

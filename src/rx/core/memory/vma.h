@@ -7,109 +7,109 @@
 
 #include "rx/core/concepts/no_copy.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
-struct vma
-  : concepts::no_copy
+struct VMA
+  : Concepts::NoCopy
 {
-  constexpr vma();
-  constexpr vma(rx_byte* _base, rx_size _page_size, rx_size _page_count);
-  vma(vma&& vma_);
+  constexpr VMA();
+  constexpr VMA(Byte* _base, Size _page_size, Size _page_count);
+  VMA(VMA&& vma_);
 
-  ~vma();
-  vma& operator=(vma&& vma_);
+  ~VMA();
+  VMA& operator=(VMA&& vma_);
 
-  struct range {
-    rx_size offset;
-    rx_size count;
+  struct Range {
+    Size offset;
+    Size count;
   };
 
-  [[nodiscard]] bool allocate(rx_size _page_size, rx_size _page_count);
-  [[nodiscard]] bool commit(range _range, bool _read, bool _write);
-  [[nodiscard]] bool uncommit(range _range);
+  [[nodiscard]] bool allocate(Size _page_size, Size _page_count);
+  [[nodiscard]] bool commit(Range _range, bool _read, bool _write);
+  [[nodiscard]] bool uncommit(Range _range);
 
-  rx_byte* base() const;
-  rx_byte* page(rx_size _index) const;
+  Byte* base() const;
+  Byte* page(Size _index) const;
 
-  rx_size page_count() const;
-  rx_size page_size() const;
+  Size page_count() const;
+  Size page_size() const;
 
   bool is_valid() const;
-  bool in_range(range _range) const;
+  bool in_range(Range _range) const;
 
-  rx_byte* release();
+  Byte* release();
 
 private:
   void deallocate();
 
-  rx_byte* m_base;
+  Byte* m_base;
 
-  rx_size m_page_size;
-  rx_size m_page_count;
+  Size m_page_size;
+  Size m_page_count;
 };
 
-inline constexpr vma::vma()
-  : vma{nullptr, 0, 0}
+inline constexpr VMA::VMA()
+  : VMA{nullptr, 0, 0}
 {
 }
 
-inline constexpr vma::vma(rx_byte* _base, rx_size _page_size, rx_size _page_count)
+inline constexpr VMA::VMA(Byte* _base, Size _page_size, Size _page_count)
   : m_base{_base}
   , m_page_size{_page_size}
   , m_page_count{_page_count}
 {
 }
 
-inline vma::vma(vma&& vma_)
-  : m_base{utility::exchange(vma_.m_base, nullptr)}
-  , m_page_size{utility::exchange(vma_.m_page_size, 0)}
-  , m_page_count{utility::exchange(vma_.m_page_count, 0)}
+inline VMA::VMA(VMA&& vma_)
+  : m_base{Utility::exchange(vma_.m_base, nullptr)}
+  , m_page_size{Utility::exchange(vma_.m_page_size, 0)}
+  , m_page_count{Utility::exchange(vma_.m_page_count, 0)}
 {
 }
 
-inline vma::~vma() {
+inline VMA::~VMA() {
   deallocate();
 }
 
-inline vma& vma::operator=(vma&& vma_) {
+inline VMA& VMA::operator=(VMA&& vma_) {
   deallocate();
 
-  m_base = utility::exchange(vma_.m_base, nullptr);
-  m_page_size = utility::exchange(vma_.m_page_size, 0);
-  m_page_count = utility::exchange(vma_.m_page_count, 0);
+  m_base = Utility::exchange(vma_.m_base, nullptr);
+  m_page_size = Utility::exchange(vma_.m_page_size, 0);
+  m_page_count = Utility::exchange(vma_.m_page_count, 0);
 
   return *this;
 }
 
-inline rx_byte* vma::base() const {
+inline Byte* VMA::base() const {
   RX_ASSERT(is_valid(), "unallocated");
   return m_base;
 }
 
-inline rx_byte* vma::page(rx_size _page) const {
+inline Byte* VMA::page(Size _page) const {
   return base() + m_page_size * _page;
 }
 
-inline rx_size vma::page_count() const {
+inline Size VMA::page_count() const {
   return m_page_count;
 }
 
-inline rx_size vma::page_size() const {
+inline Size VMA::page_size() const {
   return m_page_size;
 }
 
-inline bool vma::is_valid() const {
+inline bool VMA::is_valid() const {
   return m_base != nullptr;
 }
 
-inline bool vma::in_range(range _range) const {
+inline bool VMA::in_range(Range _range) const {
   return _range.offset + _range.count <= m_page_count;
 }
 
-inline rx_byte* vma::release() {
+inline Byte* VMA::release() {
   m_page_size = 0;
   m_page_count = 0;
-  return utility::exchange(m_base, nullptr);
+  return Utility::exchange(m_base, nullptr);
 }
 
 } // namespace rx::memory

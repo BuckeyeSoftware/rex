@@ -4,30 +4,30 @@
 
 #include "rx/texture/loader.h"
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
-static inline texture2D::wrap_options
-convert_material_wrap(const rx::material::texture::wrap_options& _wrap) {
-  auto convert{[](auto _value) {
+static inline Texture2D::wrap_options
+convert_material_wrap(const Rx::Material::Texture::Wrap& _wrap) {
+  auto convert = [](auto _value) {
     switch (_value) {
-    case rx::material::texture::wrap_type::k_clamp_to_edge:
-      return texture::wrap_type::k_clamp_to_edge;
-    case rx::material::texture::wrap_type::k_clamp_to_border:
-      return texture::wrap_type::k_clamp_to_border;
-    case rx::material::texture::wrap_type::k_mirrored_repeat:
-      return texture::wrap_type::k_mirrored_repeat;
-    case rx::material::texture::wrap_type::k_mirror_clamp_to_edge:
-      return texture::wrap_type::k_mirror_clamp_to_edge;
-    case rx::material::texture::wrap_type::k_repeat:
-      return texture::wrap_type::k_repeat;
+    case Rx::Material::Texture::WrapType::k_clamp_to_edge:
+      return Texture::WrapType::k_clamp_to_edge;
+    case Rx::Material::Texture::WrapType::k_clamp_to_border:
+      return Texture::WrapType::k_clamp_to_border;
+    case Rx::Material::Texture::WrapType::k_mirrored_repeat:
+      return Texture::WrapType::k_mirrored_repeat;
+    case Rx::Material::Texture::WrapType::k_mirror_clamp_to_edge:
+      return Texture::WrapType::k_mirror_clamp_to_edge;
+    case Rx::Material::Texture::WrapType::k_repeat:
+      return Texture::WrapType::k_repeat;
     }
     RX_HINT_UNREACHABLE();
-  }};
+  };
 
   return {convert(_wrap.s), convert(_wrap.t)};
 }
 
-material::material(context* _frontend)
+Material::Material(Context* _frontend)
   : m_frontend{_frontend}
   , m_albedo{nullptr}
   , m_normal{nullptr}
@@ -43,8 +43,8 @@ material::material(context* _frontend)
 {
 }
 
-material::~material() {
-  const auto& tag{RX_RENDER_TAG("finalizer")};
+Material::~Material() {
+  const auto& tag = RX_RENDER_TAG("finalizer");
 
   m_frontend->destroy_texture(tag, m_albedo);
   m_frontend->destroy_texture(tag, m_normal);
@@ -54,17 +54,17 @@ material::~material() {
   m_frontend->destroy_texture(tag, m_emissive);
 }
 
-bool material::load(rx::material::loader&& loader_) {
-  m_name = utility::move(loader_.name());
+bool Material::load(Rx::Material::Loader&& loader_) {
+  m_name = Utility::move(loader_.name());
   m_alpha_test = loader_.alpha_test();
   m_has_alpha = loader_.has_alpha();
   m_roughness_value = loader_.roughness();
   m_metalness_value = loader_.metalness();
   m_transform = loader_.transform();
 
-  // Simple table to map type strings to texture2D destinations in this object.
-  struct entry {
-    texture2D** texture;
+  // Simple table to map Type strings to texture2D destinations in this object.
+  struct Entry {
+    Texture2D** texture;
     const char* match;
     bool        srgb;
   } table[] {
@@ -76,11 +76,11 @@ bool material::load(rx::material::loader&& loader_) {
     { &m_emissive,   "emissive",  false }
   };
 
-  return loader_.textures().each_fwd([this, &table](rx::material::texture& texture_) {
-    const auto& type{texture_.type()};
+  return loader_.textures().each_fwd([this, &table](Rx::Material::Texture& texture_) {
+    const auto& type = texture_.type();
 
     // Search for the texture in the table.
-    const entry* find{nullptr};
+    const Entry* find = nullptr;
     for (const auto& item : table) {
       if (item.match == type) {
         find = &item;
@@ -93,41 +93,43 @@ bool material::load(rx::material::loader&& loader_) {
       return false;
     }
 
-    rx::texture::chain&& chain{utility::move(texture_.chain())};
-    const auto& filter{texture_.filter()};
-    const auto& wrap{texture_.wrap()};
+    Rx::Texture::Chain chain = Utility::move(texture_.chain());
+    const auto& filter = texture_.filter();
+    const auto& wrap = texture_.wrap();
 
-    texture2D* texture{m_frontend->create_texture2D(RX_RENDER_TAG("material"))};
+    Texture2D* texture =
+      m_frontend->create_texture2D(RX_RENDER_TAG("material"));
+
     switch (chain.format()) {
-    case rx::texture::pixel_format::k_rgba_u8:
-      texture->record_format(texture::data_format::k_rgba_u8);
+    case Rx::Texture::PixelFormat::k_rgba_u8:
+      texture->record_format(Texture::DataFormat::k_rgba_u8);
       break;
-    case rx::texture::pixel_format::k_bgra_u8:
-      texture->record_format(texture::data_format::k_bgra_u8);
+    case Rx::Texture::PixelFormat::k_bgra_u8:
+      texture->record_format(Texture::DataFormat::k_bgra_u8);
       break;
-    case rx::texture::pixel_format::k_rgb_u8:
-      texture->record_format(texture::data_format::k_rgb_u8);
+    case Rx::Texture::PixelFormat::k_rgb_u8:
+      texture->record_format(Texture::DataFormat::k_rgb_u8);
       break;
-    case rx::texture::pixel_format::k_bgr_u8:
-      texture->record_format(texture::data_format::k_bgr_u8);
+    case Rx::Texture::PixelFormat::k_bgr_u8:
+      texture->record_format(Texture::DataFormat::k_bgr_u8);
       break;
-    case rx::texture::pixel_format::k_r_u8:
-      texture->record_format(texture::data_format::k_r_u8);
+    case Rx::Texture::PixelFormat::k_r_u8:
+      texture->record_format(Texture::DataFormat::k_r_u8);
       break;
     }
 
-    texture->record_type(texture::type::k_static);
+    texture->record_type(Texture::Type::k_static);
     texture->record_levels(chain.levels().size());
     texture->record_dimensions(chain.dimensions());
     texture->record_filter({filter.bilinear, filter.trilinear, filter.mipmaps});
     texture->record_wrap(convert_material_wrap(wrap));
-    if (const auto border{texture_.border()}) {
+    if (const auto border = texture_.border()) {
       texture->record_border(*border);
     }
 
-    const auto& levels{chain.levels()};
-    for (rx_size i{0}; i < levels.size(); i++) {
-      const auto& level{levels[i]};
+    const auto& levels = chain.levels();
+    for (Size i{0}; i < levels.size(); i++) {
+      const auto& level = levels[i];
       texture->write(chain.data().data() + level.offset, i);
     }
 

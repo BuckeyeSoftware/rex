@@ -4,27 +4,27 @@
 #include "rx/core/string.h"
 #include "rx/core/source_location.h"
 
-namespace rx {
+namespace Rx {
 
-struct stream;
+struct Stream;
 
-struct log {
-  enum class level {
+struct Log {
+  enum class Level {
     k_warning,
     k_info,
     k_verbose,
     k_error
   };
 
-  using queue_event = event<void(level, string)>;
-  using write_event = event<void(level, string)>;
-  using flush_event = event<void()>;
+  using QueueEvent = Event<void(Level, String)>;
+  using WriteEvent = Event<void(Level, String)>;
+  using FlushEvent = Event<void()>;
 
-  constexpr log(const char* _name, const source_location& location);
+  constexpr Log(const char* _name, const SourceLocation& _source_location);
 
-  [[nodiscard]] static bool subscribe(stream* _stream);
-  [[nodiscard]] static bool unsubscribe(stream* _stream);
-  [[nodiscard]] static bool enqueue(log* _owner, level _level, string&& _contents);
+  [[nodiscard]] static bool subscribe(Stream* _stream);
+  [[nodiscard]] static bool unsubscribe(Stream* _stream);
+  [[nodiscard]] static bool enqueue(Log* _owner, Level _level, String&& _contents);
 
   static void flush();
 
@@ -37,7 +37,7 @@ struct log {
   //
   // This function is thread-safe.
   template<typename... Ts>
-  bool write(level _level, const char* _format, Ts&&... _arguments);
+  bool write(Level _level, const char* _format, Ts&&... _arguments);
 
   // Convenience functions that call |write| with the appropriate severity
   // level, given by their name.
@@ -61,7 +61,7 @@ struct log {
   // long as you want the delegate |callback_| to be called for such event.
   //
   // This function is thread-safe.
-  queue_event::handle on_queue(queue_event::delegate&& callback_);
+  QueueEvent::Handle on_queue(QueueEvent::Delegate&& callback_);
 
   // When a message is written, all delegates associated by this function are
   // called. This is different from |on_queue| in that |callback_| is called
@@ -71,7 +71,7 @@ struct log {
   // long as you want the delegate |callback_| to be called for such event.
   //
   // This function is thread-safe.
-  write_event::handle on_write(write_event::delegate&& callback_);
+  WriteEvent::Handle on_write(WriteEvent::Delegate&& callback_);
 
   // When all messages queued for this log are actually written, all delegates
   // associated by this function are called.
@@ -80,38 +80,38 @@ struct log {
   // as you want the delegate |callback_| to be called for such event.
   //
   // This function is thread-safe.
-  flush_event::handle on_flush(flush_event::delegate&& callback_);
+  FlushEvent::Handle on_flush(FlushEvent::Delegate&& callback_);
 
   // Query the name of the logger, which is the name given to the |RX_LOG| macro.
   const char* name() const;
 
   // Query the source information of where this log is defined.
-  const source_location& source_info() const &;
+  const SourceLocation& source_info() const &;
 
-  void signal_write(level _level, string&& contents_);
+  void signal_write(Level _level, String&& contents_);
   void signal_flush();
 
 private:
   const char* m_name;
-  source_location m_source_location;
+  SourceLocation m_source_location;
 
-  queue_event m_queue_event;
-  write_event m_write_event;
-  flush_event m_flush_event;
+  QueueEvent m_queue_event;
+  WriteEvent m_write_event;
+  FlushEvent m_flush_event;
 };
 
-inline constexpr log::log(const char* _name, const source_location& _source_location)
+inline constexpr Log::Log(const char* _name, const SourceLocation& _source_location)
   : m_name{_name}
   , m_source_location{_source_location}
 {
 }
 
 template<typename... Ts>
-inline bool log::write(level _level, const char* _format, Ts&&... _arguments) {
+inline bool Log::write(Level _level, const char* _format, Ts&&... _arguments) {
   if (sizeof...(Ts) != 0) {
-    auto format = string::format(_format, utility::forward<Ts>(_arguments)...);
+    auto format = String::format(_format, Utility::forward<Ts>(_arguments)...);
     m_queue_event.signal(_level, format);
-    return enqueue(this, _level, utility::move(format));
+    return enqueue(this, _level, Utility::move(format));
   } else {
     m_queue_event.signal(_level, _format);
     return enqueue(this, _level, {_format});
@@ -119,48 +119,48 @@ inline bool log::write(level _level, const char* _format, Ts&&... _arguments) {
 }
 
 template<typename... Ts>
-inline bool log::warning(const char* _format, Ts&&... _arguments) {
-  return write(level::k_warning, _format, utility::forward<Ts>(_arguments)...);
+inline bool Log::warning(const char* _format, Ts&&... _arguments) {
+  return write(Level::k_warning, _format, Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename... Ts>
-inline bool log::info(const char* _format, Ts&&... _arguments) {
-  return write(level::k_info, _format, utility::forward<Ts>(_arguments)...);
+inline bool Log::info(const char* _format, Ts&&... _arguments) {
+  return write(Level::k_info, _format, Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename... Ts>
-inline bool log::verbose(const char* _format, Ts&&... _arguments) {
-  return write(level::k_verbose, _format, utility::forward<Ts>(_arguments)...);
+inline bool Log::verbose(const char* _format, Ts&&... _arguments) {
+  return write(Level::k_verbose, _format, Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename... Ts>
-inline bool log::error(const char* _format, Ts&&... _arguments) {
-  return write(level::k_error, _format, utility::forward<Ts>(_arguments)...);
+inline bool Log::error(const char* _format, Ts&&... _arguments) {
+  return write(Level::k_error, _format, Utility::forward<Ts>(_arguments)...);
 }
 
-inline const char* log::name() const {
+inline const char* Log::name() const {
   return m_name;
 }
 
-inline const source_location& log::source_info() const & {
+inline const SourceLocation& Log::source_info() const & {
   return m_source_location;
 }
 
-inline log::queue_event::handle log::on_queue(queue_event::delegate&& callback_) {
-  return m_queue_event.connect(utility::move(callback_));
+inline Log::QueueEvent::Handle Log::on_queue(QueueEvent::Delegate&& callback_) {
+  return m_queue_event.connect(Utility::move(callback_));
 }
 
-inline log::write_event::handle log::on_write(write_event::delegate&& callback_) {
-  return m_write_event.connect(utility::move(callback_));
+inline Log::WriteEvent::Handle Log::on_write(WriteEvent::Delegate&& callback_) {
+  return m_write_event.connect(Utility::move(callback_));
 }
 
-inline log::flush_event::handle log::on_flush(flush_event::delegate&& callback_) {
-  return m_flush_event.connect(utility::move(callback_));
+inline Log::FlushEvent::Handle Log::on_flush(FlushEvent::Delegate&& callback_) {
+  return m_flush_event.connect(Utility::move(callback_));
 }
 
 #define RX_LOG(_name, _identifier) \
-  static ::rx::global<::rx::log> _identifier{"loggers", (_name), (_name), \
-    ::rx::source_location{__FILE__, "(global constructor)", __LINE__}}
+  static ::Rx::Global<::Rx::Log> _identifier{"loggers", (_name), (_name), \
+    ::Rx::SourceLocation{__FILE__, "(global constructor)", __LINE__}}
 
 } // namespace rx
 

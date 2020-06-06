@@ -7,7 +7,7 @@
 
 #include "rx/console/variable.h"
 
-namespace rx::hud {
+namespace Rx::hud {
 
 RX_CONSOLE_SVAR(
   font_name,
@@ -23,72 +23,72 @@ RX_CONSOLE_IVAR(
   64,
   25);
 
-render_stats::render_stats(render::immediate2D* _immediate)
+RenderStats::RenderStats(Render::Immediate2D* _immediate)
   : m_immediate{_immediate}
 {
 }
 
-void render_stats::render() {
-  const render::frontend::context& frontend{*m_immediate->frontend()};
-  const auto &buffer_stats{frontend.stats(render::frontend::resource::type::k_buffer)};
-  const auto &program_stats{frontend.stats(render::frontend::resource::type::k_program)};
-  const auto &target_stats{frontend.stats(render::frontend::resource::type::k_target)};
-  const auto &texture1D_stats{frontend.stats(render::frontend::resource::type::k_texture1D)};
-  const auto &texture2D_stats{frontend.stats(render::frontend::resource::type::k_texture2D)};
-  const auto &texture3D_stats{frontend.stats(render::frontend::resource::type::k_texture3D)};
-  const auto &textureCM_stats{frontend.stats(render::frontend::resource::type::k_textureCM)};
+void RenderStats::render() {
+  const Render::Frontend::Context& frontend{*m_immediate->frontend()};
+  const auto &buffer_stats{frontend.stats(Render::Frontend::Resource::Type::k_buffer)};
+  const auto &program_stats{frontend.stats(Render::Frontend::Resource::Type::k_program)};
+  const auto &target_stats{frontend.stats(Render::Frontend::Resource::Type::k_target)};
+  const auto &texture1D_stats{frontend.stats(Render::Frontend::Resource::Type::k_texture1D)};
+  const auto &texture2D_stats{frontend.stats(Render::Frontend::Resource::Type::k_texture2D)};
+  const auto &texture3D_stats{frontend.stats(Render::Frontend::Resource::Type::k_texture3D)};
+  const auto &textureCM_stats{frontend.stats(Render::Frontend::Resource::Type::k_textureCM)};
 
-  math::vec2f offset{25.0f, 25.0f};
+  Math::Vec2f offset{25.0f, 25.0f};
 
-  auto color_ratio{[](rx_size _used, rx_size _total) -> rx_u32 {
-    const math::vec3f bad{1.0f, 0.0f, 0.0f};
-    const math::vec3f good{0.0f, 1.0f, 0.0f};
-    const rx_f32 scaled{static_cast<rx_f32>(_used) / static_cast<rx_f32>(_total)};
-    const math::vec3f color{bad * scaled + good * (1.0f - scaled)};
-    return (rx_u32(color.r * 255.0f) << 24) |
-           (rx_u32(color.g * 255.0f) << 16) |
-           (rx_u32(color.b * 255.0f) << 8) |
+  auto color_ratio{[](Size _used, Size _total) -> Uint32 {
+    const Math::Vec3f bad{1.0f, 0.0f, 0.0f};
+    const Math::Vec3f good{0.0f, 1.0f, 0.0f};
+    const Float32 scaled{static_cast<Float32>(_used) / static_cast<Float32>(_total)};
+    const Math::Vec3f color{bad * scaled + good * (1.0f - scaled)};
+    return (Uint32(color.r * 255.0f) << 24) |
+           (Uint32(color.g * 255.0f) << 16) |
+           (Uint32(color.b * 255.0f) << 8) |
            0xFF;
   }};
 
   auto render_stat{[&](const char *_label, const auto &_stats) {
     const auto format{
-      string::format(
+      String::format(
         "^w%s: ^[%x]%zu ^wof ^m%zu ^g%s ^w(%zu cached)",
         _label,
         color_ratio(_stats.used, _stats.total),
         _stats.used,
         _stats.total,
-        string::human_size_format(_stats.memory),
+        String::human_size_format(_stats.memory),
         _stats.cached)};
 
     m_immediate->frame_queue().record_text(
-      *font_name,
-      offset,
-      *font_size,
-      1.0f,
-      render::immediate2D::text_align::k_left,
-      format,
-      {1.0f, 1.0f, 1.0f, 1.0f});
+            *font_name,
+            offset,
+            *font_size,
+            1.0f,
+            Render::Immediate2D::TextAlign::k_left,
+            format,
+            {1.0f, 1.0f, 1.0f, 1.0f});
 
     offset.y += *font_size;
   }};
 
   const auto &command_buffer{frontend.get_command_buffer()};
-  const rx_size commands_used{command_buffer.used()};
-  const rx_size commands_total{command_buffer.size()};
+  const Size commands_used{command_buffer.used()};
+  const Size commands_total{command_buffer.size()};
   m_immediate->frame_queue().record_text(
-    *font_name,
-    offset,
-    *font_size,
-    1.0f,
-    render::immediate2D::text_align::k_left,
-    string::format(
+          *font_name,
+          offset,
+          *font_size,
+          1.0f,
+          Render::Immediate2D::TextAlign::k_left,
+          String::format(
       "commands: ^[%x]%s ^wof ^g%s",
       color_ratio(commands_used, commands_total),
-      string::human_size_format(commands_used),
-      string::human_size_format(commands_total)),
-    {1.0f, 1.0f, 1.0f, 1.0f});
+      String::human_size_format(commands_used),
+      String::human_size_format(commands_total)),
+          {1.0f, 1.0f, 1.0f, 1.0f});
 
   offset.y += *font_size;
 
@@ -100,15 +100,15 @@ void render_stats::render() {
   render_stat("buffers", buffer_stats);
   render_stat("targets", target_stats);
 
-  auto render_number{[&](const char* _name, rx_size _number) {
+  auto render_number{[&](const char* _name, Size _number) {
     m_immediate->frame_queue().record_text(
-      *font_name,
-      offset,
-      *font_size,
-      1.0f,
-      render::immediate2D::text_align::k_left,
-      string::format("%s: %zu", _name, _number),
-      {1.0f, 1.0f, 1.0f, 1.0f});
+            *font_name,
+            offset,
+            *font_size,
+            1.0f,
+            Render::Immediate2D::TextAlign::k_left,
+            String::format("%s: %zu", _name, _number),
+            {1.0f, 1.0f, 1.0f, 1.0f});
     offset.y += *font_size;
   }};
 
@@ -120,21 +120,21 @@ void render_stats::render() {
   render_number("clears", frontend.clear_calls());
   render_number("draws", frontend.draw_calls());
 
-  const math::vec2f &screen_size{frontend.swapchain()->dimensions().cast<rx_f32>()};
+  const Math::Vec2f &screen_size{frontend.swapchain()->dimensions().cast<Float32>()};
 
   // mspf and fps
   const auto& _timer{frontend.timer()};
   m_immediate->frame_queue().record_text(
-    *font_name,
-    screen_size - math::vec2f{25, 25},
-    *font_size,
-    1.0f,
-    render::immediate2D::text_align::k_right,
-    string::format(
+          *font_name,
+          screen_size - Math::Vec2f{25, 25},
+          *font_size,
+          1.0f,
+          Render::Immediate2D::TextAlign::k_right,
+          String::format(
       "MSPF: %.2f | FPS: %d",
       _timer.mspf(),
       _timer.fps()),
-    {1.0f, 1.0f, 1.0f, 1.0f});
+          {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
 } // namespace rx::hud

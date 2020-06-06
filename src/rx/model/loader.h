@@ -11,138 +11,138 @@
 
 #include "rx/math/transform.h"
 
-namespace rx::model {
+namespace Rx::Model {
 
-struct RX_HINT_EMPTY_BASES loader
-  : concepts::no_copy
-  , concepts::no_move
+struct RX_HINT_EMPTY_BASES Loader
+  : Concepts::NoCopy
+  , Concepts::NoMove
 {
-  loader(memory::allocator& _allocator);
-  ~loader();
+  Loader(Memory::Allocator& _allocator);
+  ~Loader();
 
-  bool load(stream* _stream);
-  bool load(const string& _file_name);
+  bool load(Stream* _stream);
+  bool load(const String& _file_name);
 
-  bool parse(const json& _json);
+  bool parse(const JSON& _json);
 
-  struct vertex {
-    math::vec3f position;
-    math::vec3f normal;
-    math::vec4f tangent;
-    math::vec2f coordinate;
+  struct Vertex {
+    Math::Vec3f position;
+    Math::Vec3f normal;
+    Math::Vec4f tangent;
+    Math::Vec2f coordinate;
   };
 
-  struct animated_vertex {
-    math::vec3f position;
-    math::vec3f normal;
-    math::vec4f tangent;
-    math::vec2f coordinate;
-    math::vec4b blend_weights;
-    math::vec4b blend_indices;
+  struct AnimatedVertex {
+    Math::Vec3f position;
+    Math::Vec3f normal;
+    Math::Vec4f tangent;
+    Math::Vec2f coordinate;
+    Math::Vec4b blend_weights;
+    Math::Vec4b blend_indices;
   };
 
   bool is_animated() const;
 
-  vector<vertex>&& vertices();
-  vector<mesh>&& meshes();
-  vector<rx_u32>&& elements();
-  map<string, material::loader>&& materials();
+  Vector<Vertex>&& vertices();
+  Vector<Mesh>&& meshes();
+  Vector<Uint32>&& elements();
+  Map<String, Material::Loader>&& materials();
 
   // Only valid for animated models.
-  vector<animated_vertex>&& animated_vertices();
-  vector<importer::joint>&& joints();
-  const vector<importer::animation>& animations() const &;
+  Vector<AnimatedVertex>&& animated_vertices();
+  Vector<Importer::Joint>&& joints();
+  const Vector<Importer::Animation>& animations() const &;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
-  friend struct animation;
+  friend struct Animation;
 
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments) const;
 
   template<typename... Ts>
-  void log(log::level _level, const char* _format, Ts&&... _arguments) const;
+  void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
 
-  void write_log(log::level _level, string&& message_) const;
+  void write_log(Log::Level _level, String&& message_) const;
 
-  bool import(const string& _file_name);
-  bool parse_transform(const json& _transform);
+  bool import(const String& _file_name);
+  bool parse_transform(const JSON& _transform);
 
   enum {
     k_constructed = 1 << 0,
     k_animated    = 1 << 1
   };
 
-  memory::allocator& m_allocator;
+  Memory::Allocator& m_allocator;
 
   union {
-    utility::nat as_nat;
-    vector<vertex> as_vertices;
-    vector<animated_vertex> as_animated_vertices;
+    Utility::Nat as_nat;
+    Vector<Vertex> as_vertices;
+    Vector<AnimatedVertex> as_animated_vertices;
   };
 
-  vector<rx_u32> m_elements;
-  vector<mesh> m_meshes;
-  vector<importer::animation> m_animations;
-  vector<importer::joint> m_joints;
-  vector<math::vec3f> m_positions;
-  vector<math::mat3x4f> m_frames;
-  optional<math::transform> m_transform;
-  map<string, material::loader> m_materials;
-  string m_name;
+  Vector<Uint32> m_elements;
+  Vector<Mesh> m_meshes;
+  Vector<Importer::Animation> m_animations;
+  Vector<Importer::Joint> m_joints;
+  Vector<Math::Vec3f> m_positions;
+  Vector<Math::Mat3x4f> m_frames;
+  Optional<Math::Transform> m_transform;
+  Map<String, Material::Loader> m_materials;
+  String m_name;
   int m_flags;
 };
 
 template<typename... Ts>
-inline bool loader::error(const char* _format, Ts&&... _arguments) const {
-  log(log::level::k_error, _format, utility::forward<Ts>(_arguments)...);
+inline bool Loader::error(const char* _format, Ts&&... _arguments) const {
+  log(Log::Level::k_error, _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 
 template<typename... Ts>
-inline void loader::log(log::level _level, const char* _format,
+inline void Loader::log(Log::Level _level, const char* _format,
   Ts&&... _arguments) const
 {
-  write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
+  write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));
 }
 
-inline bool loader::is_animated() const {
+inline bool Loader::is_animated() const {
   return m_flags & k_animated;
 }
 
-inline vector<loader::vertex>&& loader::vertices() {
+inline Vector<Loader::Vertex>&& Loader::vertices() {
   RX_ASSERT(!is_animated(), "not a static model");
-  return utility::move(as_vertices);
+  return Utility::move(as_vertices);
 }
 
-inline vector<mesh>&& loader::meshes() {
-  return utility::move(m_meshes);
+inline Vector<Mesh>&& Loader::meshes() {
+  return Utility::move(m_meshes);
 }
 
-inline vector<rx_u32>&& loader::elements() {
-  return utility::move(m_elements);
+inline Vector<Uint32>&& Loader::elements() {
+  return Utility::move(m_elements);
 }
 
-inline map<string, material::loader>&& loader::materials() {
-  return utility::move(m_materials);
+inline Map<String, Material::Loader>&& Loader::materials() {
+  return Utility::move(m_materials);
 }
 
-inline vector<loader::animated_vertex>&& loader::animated_vertices() {
+inline Vector<Loader::AnimatedVertex>&& Loader::animated_vertices() {
   RX_ASSERT(is_animated(), "not a animated model");
-  return utility::move(as_animated_vertices);
+  return Utility::move(as_animated_vertices);
 }
 
-inline vector<importer::joint>&& loader::joints() {
+inline Vector<Importer::Joint>&& Loader::joints() {
   RX_ASSERT(is_animated(), "not a animated model");
-  return utility::move(m_joints);
+  return Utility::move(m_joints);
 }
 
-inline const vector<importer::animation>& loader::animations() const & {
+inline const Vector<Importer::Animation>& Loader::animations() const & {
   return m_animations;
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& loader::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Loader::allocator() const {
   return m_allocator;
 }
 

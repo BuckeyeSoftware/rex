@@ -1,4 +1,4 @@
-#include "rx/core/concurrency/spin_lock.h" // spin_lock
+#include "rx/core/concurrency/spin_lock.h" // SpinLock
 #include "rx/core/concurrency/yield.h" // yield
 
 // ThreadSanitizer annotations
@@ -15,32 +15,32 @@ extern "C"
 # define tsan_release(x)
 #endif
 
-namespace rx::concurrency {
+namespace Rx::Concurrency {
 
-void spin_lock::lock() {
+void SpinLock::lock() {
   tsan_acquire(&m_lock);
 
   // fast path, always succeeds within a single thread
-  if (!m_lock.test_and_set(memory_order::k_acquire)) {
+  if (!m_lock.test_and_set(MemoryOrder::k_acquire)) {
     return;
   }
 
   // fixed busy loop
   int count{100};
   while (count--) {
-    if (!m_lock.test_and_set(memory_order::k_acquire)) {
+    if (!m_lock.test_and_set(MemoryOrder::k_acquire)) {
       return;
     }
   }
 
   // blocking loop
-  while (m_lock.test_and_set(memory_order::k_acquire)) {
+  while (m_lock.test_and_set(MemoryOrder::k_acquire)) {
     yield();
   }
 }
 
-void spin_lock::unlock() {
-  m_lock.clear(memory_order::k_release);
+void SpinLock::unlock() {
+  m_lock.clear(MemoryOrder::k_release);
   tsan_release(&m_lock);
 }
 

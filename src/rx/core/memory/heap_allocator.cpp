@@ -2,19 +2,19 @@
 
 #include "rx/core/memory/heap_allocator.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
-global<heap_allocator> heap_allocator::s_instance{"system", "heap_allocator"};
+Global<HeapAllocator> HeapAllocator::s_instance{"system", "heap_allocator"};
 
-rx_byte* heap_allocator::allocate(rx_size _size) {
-  return reinterpret_cast<rx_byte*>(malloc(_size));
+Byte* HeapAllocator::allocate(Size _size) {
+  return reinterpret_cast<Byte*>(malloc(_size));
 }
 
-rx_byte* heap_allocator::reallocate(void* _data, rx_size _size) {
-  return reinterpret_cast<rx_byte*>(realloc(_data, _size));
+Byte* HeapAllocator::reallocate(void* _data, Size _size) {
+  return reinterpret_cast<Byte*>(realloc(_data, _size));
 }
 
-void heap_allocator::deallocate(void* _data) {
+void HeapAllocator::deallocate(void* _data) {
   free(_data);
 }
 

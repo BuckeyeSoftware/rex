@@ -10,16 +10,16 @@
 #include <windows.h> // LoadLibraryW, FreeLibrary, GetProcAddress
 #endif
 
-namespace rx::library {
+namespace Rx::library {
 
 // The dynamic-linker is not thread-safe on most systems. To avoid potential
 // issues we maintain a single global lock on the dynamic-linker interfaces
 // here so that only one thread can use it at a time.
 //
 // This will of course only work if every one agrees to use this interface.
-static concurrency::spin_lock g_lock;
+static Concurrency::SpinLock g_lock;
 
-loader::loader(memory::allocator& _allocator, const string& _file_name)
+Loader::Loader(Memory::Allocator& _allocator, const String& _file_name)
   : m_allocator{_allocator}
   , m_handle{nullptr}
 {
@@ -27,9 +27,9 @@ loader::loader(memory::allocator& _allocator, const string& _file_name)
   RX_ASSERT(!_file_name.ends_with(".dll") && !_file_name.ends_with(".so"),
     "library filename should not contain file extension");
 
-  concurrency::scope_lock lock{g_lock};
+  Concurrency::ScopeLock lock{g_lock};
 #if defined(RX_PLATFORM_POSIX)
-  const auto path = string::format(m_allocator, "%s.so", _file_name);
+  const auto path = String::format(m_allocator, "%s.so", _file_name);
   const auto name = path.data();
   if (auto handle = dlopen(name, RTLD_NOW | RTLD_LOCAL)) {
     m_handle = handle;
@@ -37,12 +37,12 @@ loader::loader(memory::allocator& _allocator, const string& _file_name)
     // There's a non-enforced convention of using a "lib" prefix for naming
     // libraries, attempt this when the above fails and the library name
     // doesn't begin with such a prefix.
-    const auto path = string::format(m_allocator, "lib%s.so", _file_name);
+    const auto path = String::format(m_allocator, "lib%s.so", _file_name);
     const auto name = path.data();
     m_handle = dlopen(name, RTLD_NOW | RTLD_LOCAL);
   }
 #elif defined(RX_PLATFORM_WINDOWS)
-  const auto path_utf8 = string::format(_allocator, "%s.dll", _file_name);
+  const auto path_utf8 = String::format(_allocator, "%s.dll", _file_name);
   const auto path_utf16 = path_utf8.to_utf16();
   const auto name = reinterpret_cast<LPCWSTR>(path_utf16.data());
 
@@ -50,21 +50,21 @@ loader::loader(memory::allocator& _allocator, const string& _file_name)
 #endif
 }
 
-loader::~loader() {
-  concurrency::scope_lock lock{g_lock};
+Loader::~Loader() {
+  Concurrency::ScopeLock lock{g_lock};
   close_unlocked();
 }
 
-loader& loader::operator=(loader&& loader_) {
-  concurrency::scope_lock lock{g_lock};
+Loader& Loader::operator=(Loader&& loader_) {
+  Concurrency::ScopeLock lock{g_lock};
   close_unlocked();
   m_allocator = loader_.m_allocator;
-  m_handle = utility::exchange(loader_.m_handle, nullptr);
+  m_handle = Utility::exchange(loader_.m_handle, nullptr);
   return *this;
 }
 
-void* loader::address_of(const char* _symbol_name) const {
-  concurrency::scope_lock lock{g_lock};
+void* Loader::address_of(const char* _symbol_name) const {
+  Concurrency::ScopeLock lock{g_lock};
   if (RX_HINT_LIKELY(m_handle)) {
 #if defined(RX_PLATFORM_POSIX)
     if (auto function = dlsym(m_handle, _symbol_name)) {
@@ -75,7 +75,7 @@ void* loader::address_of(const char* _symbol_name) const {
       // macro, however some define it as a single underscore.
       //
       // Search again with the underscore.
-      const auto symbol = string::format(m_allocator, "_%s", _symbol_name);
+      const auto symbol = String::format(m_allocator, "_%s", _symbol_name);
       if (auto function = dlsym(m_handle, symbol.data())) {
         return reinterpret_cast<void*>(function);
       }
@@ -90,7 +90,7 @@ void* loader::address_of(const char* _symbol_name) const {
   return nullptr;
 }
 
-void loader::close_unlocked() {
+void Loader::close_unlocked() {
   if (RX_HINT_LIKELY(m_handle)) {
 #if defined(RX_PLATFORM_POSIX)
     dlclose(m_handle);

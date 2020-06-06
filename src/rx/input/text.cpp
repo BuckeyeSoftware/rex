@@ -2,9 +2,9 @@
 #include "rx/core/hints/unreachable.h"
 #include "rx/core/utility/swap.h"
 
-namespace rx::input {
+namespace Rx::Input {
 
-text::text()
+Text::Text()
   : m_cursor{0}
   , m_cursor_visible_time{k_cursor_visible_time}
   , m_flags{0}
@@ -13,7 +13,7 @@ text::text()
   m_selection[1] = 0;
 }
 
-void text::update(rx_f32 _delta_time) {
+void Text::update(Float32 _delta_time) {
   m_cursor_visible_time -= _delta_time;
   if (m_cursor_visible_time <= 0.0f) {
     m_cursor_visible_time = k_cursor_visible_time;
@@ -21,14 +21,14 @@ void text::update(rx_f32 _delta_time) {
   }
 }
 
-string text::copy() const {
+String Text::copy() const {
   return m_flags & k_selected
     ? m_contents.substring(m_selection[0], m_selection[1] - m_selection[0])
     : m_contents;
 }
 
-string text::cut() {
-  string contents;
+String Text::cut() {
+  String contents;
 
   if (m_flags & k_selected) {
     // Take the substring defined by the selection region and remove that
@@ -41,7 +41,7 @@ string text::cut() {
     m_cursor = m_selection[0];
   } else {
     // Cut with no selection behaves as if the entire text is selected.
-    contents = utility::move(m_contents);
+    contents = Utility::move(m_contents);
     m_cursor = 0;
   }
 
@@ -53,7 +53,7 @@ string text::cut() {
   return contents;
 }
 
-void text::paste(const string& _contents) {
+void Text::paste(const String& _contents) {
   // Pasting when you have selected text replaces the selected text.
   if ((m_flags & k_selected) && !m_contents.is_empty()) {
     // Remove the selected text and move the cursor to the beginning of
@@ -73,7 +73,7 @@ void text::paste(const string& _contents) {
   reset_cursor();
 }
 
-void text::erase() {
+void Text::erase() {
   if (m_flags & k_selected) {
     // Remove the text defined by the selection and move the cursor to the
     // beginning of the selection.
@@ -91,7 +91,7 @@ void text::erase() {
   reset_cursor();
 }
 
-void text::select(bool _select) {
+void Text::select(bool _select) {
   if (_select && !(m_flags & k_selecting)) {
     // Start a new selection starting from the cursor only when a selection
     // hasn't already been started.
@@ -104,7 +104,7 @@ void text::select(bool _select) {
   }
 }
 
-void text::select_all() {
+void Text::select_all() {
   // Select all the text and indicate that we're selected. When you select
   // all text it doesn't mean you're in a selecting state however. So any
   // events that would modify a selection should start a new selection.
@@ -121,7 +121,7 @@ void text::select_all() {
   reset_cursor();
 }
 
-void text::move_cursor(position _position) {
+void Text::move_cursor(Position _position) {
   if (m_contents.is_empty()) {
     return;
   }
@@ -136,24 +136,24 @@ void text::move_cursor(position _position) {
 
   switch (_position)
   {
-  case position::k_home:
+  case Position::k_home:
     if (m_flags & k_selecting) {
       m_selection[0] = 0;
     }
     m_cursor = 0;
     break;
-  case position::k_end:
+  case Position::k_end:
     if (m_flags & k_selecting) {
       m_selection[1] = m_contents.size();
     }
     m_cursor = m_contents.size();
     break;
-  case position::k_left:
+  case Position::k_left:
     if (m_cursor) {
       m_cursor--;
     }
     break;
-  case position::k_right:
+  case Position::k_right:
     if (m_cursor < m_contents.size()) {
       m_cursor++;
     }
@@ -167,10 +167,10 @@ void text::move_cursor(position _position) {
       // or when going right and the end of the selection can go right further,
       // record the direction of the selection and move the selection left or
       // right respectively.
-      if (_position == position::k_left && m_selection[0]) {
+      if (_position == Position::k_left && m_selection[0]) {
         m_flags |= k_select_left;
         m_selection[0]--;
-      } else if (_position == position::k_right && m_selection[1] < m_contents.size()) {
+      } else if (_position == Position::k_right && m_selection[1] < m_contents.size()) {
         m_flags |= k_select_right;
         m_selection[1]++;
       }
@@ -182,15 +182,15 @@ void text::move_cursor(position _position) {
       //
       // This maintains the invariant |m_selection[0] <= m_selection[1]|.
       if (m_flags & k_select_left) {
-        if (_position == position::k_left && m_selection[0]) {
+        if (_position == Position::k_left && m_selection[0]) {
           m_selection[0]--;
-        } else if (_position == position::k_right && m_selection[0] < m_contents.size()) {
+        } else if (_position == Position::k_right && m_selection[0] < m_contents.size()) {
           m_selection[0]++;
         }
       } else if (m_flags & k_select_right) {
-        if (_position == position::k_left && m_selection[1]) {
+        if (_position == Position::k_left && m_selection[1]) {
           m_selection[1]--;
-        } else if (_position == position::k_right && m_selection[1] < m_contents.size()) {
+        } else if (_position == Position::k_right && m_selection[1] < m_contents.size()) {
           m_selection[1]++;
         }
       }
@@ -206,7 +206,7 @@ void text::move_cursor(position _position) {
   reset_cursor();
 }
 
-void text::assign(const string& _contents) {
+void Text::assign(const String& _contents) {
   m_contents = _contents;
   m_cursor = m_contents.size();
 
@@ -214,7 +214,7 @@ void text::assign(const string& _contents) {
   reset_cursor();
 }
 
-void text::clear() {
+void Text::clear() {
   m_contents.clear();
   m_cursor = 0;
 
@@ -222,13 +222,13 @@ void text::clear() {
   reset_cursor();
 }
 
-void text::reset_selection() {
+void Text::reset_selection() {
   m_flags &= ~(k_selecting | k_selected | k_select_left | k_select_right);
   m_selection[0] = m_cursor;
   m_selection[1] = m_cursor;
 }
 
-void text::reset_cursor() {
+void Text::reset_cursor() {
   m_flags |= k_cursor_visible;
   m_cursor_visible_time = k_cursor_visible_time;
 }

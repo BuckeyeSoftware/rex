@@ -3,47 +3,47 @@
 #include "rx/math/mat4x4.h"
 #include "rx/core/string.h"
 
-namespace rx {
-  struct stream;
+namespace Rx {
+  struct Stream;
 }
 
-namespace rx::render {
+namespace Rx::Render {
 
-namespace frontend {
-  struct context;
-  struct technique;
-  struct textureCM;
-  struct target;
-  struct buffer;
+namespace Frontend {
+  struct Context;
+  struct Technique;
+  struct TextureCM;
+  struct Target;
+  struct Buffer;
 }
 
-struct skybox {
-  skybox(frontend::context* _frontend);
-  ~skybox();
+struct Skybox {
+  Skybox(Frontend::Context* _frontend);
+  ~Skybox();
 
-  void render(frontend::target* _target, const math::mat4x4f& _view,
-    const math::mat4x4f& _projection);
+  void render(Frontend::Target* _target, const Math::Mat4x4f& _view,
+              const Math::Mat4x4f& _projection);
 
-  bool load(stream* _stream);
-  bool load(const string& _file_name);
+  bool load(Stream* _stream);
+  bool load(const String& _file_name);
 
-  frontend::textureCM* cubemap() const;
+  Frontend::TextureCM* cubemap() const;
 
-  const string& name() const &;
+  const String& name() const &;
 
 private:
-  frontend::context* m_frontend;
-  frontend::technique* m_technique;
-  frontend::textureCM* m_texture;
-  frontend::buffer* m_buffer;
-  string m_name;
+  Frontend::Context* m_frontend;
+  Frontend::Technique* m_technique;
+  Frontend::TextureCM* m_texture;
+  Frontend::Buffer* m_buffer;
+  String m_name;
 };
 
-inline frontend::textureCM* skybox::cubemap() const {
+inline Frontend::TextureCM* Skybox::cubemap() const {
   return m_texture;
 }
 
-inline const string& skybox::name() const & {
+inline const String& Skybox::name() const & {
   return m_name;
 }
 

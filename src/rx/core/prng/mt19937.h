@@ -3,49 +3,50 @@
 #include "rx/core/types.h"
 #include "rx/core/utility/nat.h"
 
-namespace rx::prng {
+namespace Rx::PRNG {
 
-struct mt19937 {
-  constexpr mt19937();
+struct MT19937 {
+  constexpr MT19937();
 
-  void seed(rx_u32 _seed);
+  void seed(Uint32 _seed);
 
-  rx_u32 u32();
-  rx_u64 u64();
+  Uint32 u32();
+  Uint64 u64();
 
-  rx_f32 f32();
-  rx_f64 f64();
+  Float32 f32();
+  Float64 f64();
 
 private:
-  static constexpr const rx_size k_size{624};
-  static constexpr const rx_size k_period{397};
-  static constexpr const rx_size k_difference{k_size - k_period};
-  static constexpr const rx_u32 k_max{0xffffffff_u32};
+  static constexpr const auto k_size = 624_z;
+  static constexpr const auto k_period = 397_z;
+  static constexpr const auto k_difference = k_size - k_period;
+  static constexpr const auto k_max = 0xffffffff_u32;
+
   void generate();
 
   union {
-    utility::nat m_nat;
-    rx_u32 m_state[k_size];
+    Utility::Nat m_nat;
+    Uint32 m_state[k_size];
   };
-  rx_size m_index;
+  Size m_index;
 };
 
-inline constexpr mt19937::mt19937()
+inline constexpr MT19937::MT19937()
   : m_nat{}
   , m_index{0}
 {
 }
 
-inline rx_u64 mt19937::u64() {
-  return static_cast<rx_u64>(u32()) << 32_u64 | u32();
+inline Uint64 MT19937::u64() {
+  return static_cast<Uint64>(u32()) << 32_u64 | u32();
 }
 
-inline rx_f32 mt19937::f32() {
-  return static_cast<rx_f32>(u32()) / k_max;
+inline Float32 MT19937::f32() {
+  return static_cast<Float32>(u32()) / k_max;
 }
 
-inline rx_f64 mt19937::f64() {
-  return static_cast<rx_f64>(u32()) / k_max;
+inline Float64 MT19937::f64() {
+  return static_cast<Float64>(u32()) / k_max;
 }
 
 }

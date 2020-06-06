@@ -9,145 +9,145 @@
 #include "rx/math/aabb.h"
 #include "rx/math/mat3x4.h"
 
-namespace rx {
-struct stream;
+namespace Rx {
+struct Stream;
 } // namespace rx
 
-namespace rx::model {
+namespace Rx::Model {
 
-struct mesh {
-  rx_size offset;
-  rx_size count;
-  string material;
-  math::aabb bounds;
+struct Mesh {
+  Size offset;
+  Size count;
+  String material;
+  Math::AABB bounds;
 };
 
-struct importer
-  : concepts::interface
+struct Importer
+  : Concepts::Interface
 {
-  importer(memory::allocator& _allocator);
+  Importer(Memory::Allocator& _allocator);
 
-  bool load(stream* _stream);
-  bool load(const string& _file_name);
+  bool load(Stream* _stream);
+  bool load(const String& _file_name);
 
   // implemented by each model loader
-  virtual bool read(stream* _stream) = 0;
+  virtual bool read(Stream* _stream) = 0;
 
-  struct animation {
-    rx_f32 frame_rate;
-    rx_size frame_offset;
-    rx_size frame_count;
-    string name;
+  struct Animation {
+    Float32 frame_rate;
+    Size frame_offset;
+    Size frame_count;
+    String name;
   };
 
-  struct joint {
-    math::mat3x4f frame;
-    rx_s32 parent;
+  struct Joint {
+    Math::Mat3x4f frame;
+    Sint32 parent;
   };
 
-  vector<mesh>&& meshes();
-  vector<rx_u32>&& elements();
-  vector<math::vec3f>&& positions();
-  vector<joint>&& joints();
+  Vector<Mesh>&& meshes();
+  Vector<Uint32>&& elements();
+  Vector<Math::Vec3f>&& positions();
+  Vector<Joint>&& joints();
 
-  const vector<math::vec2f>& coordinates() const &;
-  const vector<math::vec3f>& normals() const &;
-  const vector<math::vec4f>& tangents() const &;
+  const Vector<Math::Vec2f>& coordinates() const &;
+  const Vector<Math::Vec3f>& normals() const &;
+  const Vector<Math::Vec4f>& tangents() const &;
 
   // for skeletally animated models
-  vector<math::mat3x4f>&& frames();
-  vector<animation>&& animations();
-  const vector<math::vec4b>& blend_indices() const &;
-  const vector<math::vec4b>& blend_weights() const &;
+  Vector<Math::Mat3x4f>&& frames();
+  Vector<Animation>&& animations();
+  const Vector<Math::Vec4b>& blend_indices() const &;
+  const Vector<Math::Vec4b>& blend_weights() const &;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 protected:
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments) const;
 
   template<typename... Ts>
-  void log(log::level _level, const char* _format, Ts&&... _arguments) const;
+  void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
 
-  void write_log(log::level _level, string&& message_) const;
+  void write_log(Log::Level _level, String&& message_) const;
 
   void generate_normals();
   bool generate_tangents();
 
-  memory::allocator& m_allocator;
+  Memory::Allocator& m_allocator;
 
-  vector<mesh> m_meshes;
-  vector<rx_u32> m_elements;
-  vector<math::vec3f> m_positions;
-  vector<math::vec2f> m_coordinates;
-  vector<math::vec3f> m_normals;
-  vector<math::vec4f> m_tangents; // w = bitangent sign
-  vector<math::vec4b> m_blend_indices;
-  vector<math::vec4b> m_blend_weights;
-  vector<math::mat3x4f> m_frames;
-  vector<animation> m_animations;
-  vector<joint> m_joints;
-  string m_name;
+  Vector<Mesh> m_meshes;
+  Vector<Uint32> m_elements;
+  Vector<Math::Vec3f> m_positions;
+  Vector<Math::Vec2f> m_coordinates;
+  Vector<Math::Vec3f> m_normals;
+  Vector<Math::Vec4f> m_tangents; // w = bitangent sign
+  Vector<Math::Vec4b> m_blend_indices;
+  Vector<Math::Vec4b> m_blend_weights;
+  Vector<Math::Mat3x4f> m_frames;
+  Vector<Animation> m_animations;
+  Vector<Joint> m_joints;
+  String m_name;
 };
 
 template<typename... Ts>
-inline bool importer::error(const char* _format, Ts&&... _arguments) const {
-  log(log::level::k_error, _format, utility::forward<Ts>(_arguments)...);
+inline bool Importer::error(const char* _format, Ts&&... _arguments) const {
+  log(Log::Level::k_error, _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 
 template<typename... Ts>
-inline void importer::log(log::level _level, const char* _format,
+inline void Importer::log(Log::Level _level, const char* _format,
   Ts&&... _arguments) const
 {
-  write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
+  write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));
 }
 
-inline vector<mesh>&& importer::meshes() {
-  return utility::move(m_meshes);
+inline Vector<Mesh>&& Importer::meshes() {
+  return Utility::move(m_meshes);
 }
 
-inline vector<rx_u32>&& importer::elements() {
-  return utility::move(m_elements);
+inline Vector<Uint32>&& Importer::elements() {
+  return Utility::move(m_elements);
 }
 
-inline vector<math::vec3f>&& importer::positions() {
-  return utility::move(m_positions);
+inline Vector<Math::Vec3f>&& Importer::positions() {
+  return Utility::move(m_positions);
 }
 
-inline vector<importer::joint>&& importer::joints() {
-  return utility::move(m_joints);
+inline Vector<Importer::Joint>&& Importer::joints() {
+  return Utility::move(m_joints);
 }
 
-inline const vector<math::vec2f>& importer::coordinates() const & {
+inline const Vector<Math::Vec2f>& Importer::coordinates() const & {
   return m_coordinates;
 }
 
-inline const vector<math::vec3f>& importer::normals() const & {
+inline const Vector<Math::Vec3f>& Importer::normals() const & {
   return m_normals;
 }
 
-inline const vector<math::vec4f>& importer::tangents() const & {
+inline const Vector<Math::Vec4f>& Importer::tangents() const & {
   return m_tangents;
 }
 
-inline vector<math::mat3x4f>&& importer::frames() {
-  return utility::move(m_frames);
+inline Vector<Math::Mat3x4f>&& Importer::frames() {
+  return Utility::move(m_frames);
 }
 
-inline vector<importer::animation>&& importer::animations() {
-  return utility::move(m_animations);
+inline Vector<Importer::Animation>&& Importer::animations() {
+  return Utility::move(m_animations);
 }
 
-inline const vector<math::vec4b>& importer::blend_indices() const & {
-  return utility::move(m_blend_indices);
+inline const Vector<Math::Vec4b>& Importer::blend_indices() const & {
+  return Utility::move(m_blend_indices);
 }
 
-inline const vector<math::vec4b>& importer::blend_weights() const & {
-  return utility::move(m_blend_weights);
+inline const Vector<Math::Vec4b>& Importer::blend_weights() const & {
+  return Utility::move(m_blend_weights);
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& importer::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Importer::allocator() const {
   return m_allocator;
 }
 

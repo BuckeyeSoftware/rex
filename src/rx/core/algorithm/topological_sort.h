@@ -4,7 +4,7 @@
 #include "rx/core/set.h"
 #include "rx/core/vector.h"
 
-namespace rx::algorithm {
+namespace Rx::Algorithm {
 
 // # Topological Sort
 //
@@ -16,50 +16,50 @@ namespace rx::algorithm {
 // Add nodes with |add(_key)|
 // Add dependencies with |add(_key, _dependency)|
 template<typename K>
-struct topological_sort {
-  topological_sort();
-  topological_sort(memory::allocator& _allocator);
+struct TopologicalSort {
+  TopologicalSort();
+  TopologicalSort(Memory::Allocator& _allocator);
 
-  struct result {
-    vector<K> sorted; // sorted order of nodes
-    vector<K> cycled; // problem nodes that form cycles
+  struct Result {
+    Vector<K> sorted; // sorted order of nodes
+    Vector<K> cycled; // problem nodes that form cycles
   };
 
   bool add(const K& _key);
   bool add(const K& _key, const K& _dependency);
 
-  result sort();
+  Result sort();
 
   void clear();
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 protected:
-  struct relations {
-    relations(memory::allocator& _allocator);
-    rx_size dependencies;
-    set<K> dependents;
+  struct Relations {
+    Relations(Memory::Allocator& _allocator);
+    Size dependencies;
+    Set<K> dependents;
   };
 
-  ref<memory::allocator> m_allocator;
-  map<K, relations> m_map;
+  Ref<Memory::Allocator> m_allocator;
+  Map<K, Relations> m_map;
 };
 
 template<typename K>
-inline topological_sort<K>::topological_sort()
-  : topological_sort{memory::system_allocator::instance()}
+inline TopologicalSort<K>::TopologicalSort()
+  : TopologicalSort{Memory::SystemAllocator::instance()}
 {
 }
 
 template<typename K>
-inline topological_sort<K>::topological_sort(memory::allocator& _allocator)
+inline TopologicalSort<K>::TopologicalSort(Memory::Allocator& _allocator)
   : m_allocator{_allocator}
   , m_map{allocator()}
 {
 }
 
 template<typename K>
-inline bool topological_sort<K>::add(const K& _key) {
+inline bool TopologicalSort<K>::add(const K& _key) {
   if (m_map.find(_key)) {
     return false;
   }
@@ -67,7 +67,7 @@ inline bool topological_sort<K>::add(const K& _key) {
 }
 
 template<typename K>
-inline bool topological_sort<K>::add(const K& _key, const K& _dependency) {
+inline bool TopologicalSort<K>::add(const K& _key, const K& _dependency) {
   // Cannot be a dependency of one-self.
   if (_key == _dependency) {
     return false;
@@ -106,15 +106,15 @@ inline bool topological_sort<K>::add(const K& _key, const K& _dependency) {
 }
 
 template<typename K>
-inline typename topological_sort<K>::result topological_sort<K>::sort() {
+inline typename TopologicalSort<K>::Result TopologicalSort<K>::sort() {
   // Make a copy of the map because the sorting is destructive.
   auto map = m_map;
 
-  vector<K> sorted{allocator()};
-  vector<K> cycled{allocator()};
+  Vector<K> sorted{allocator()};
+  Vector<K> cycled{allocator()};
 
   // Each key that has no dependencies can be put in right away.
-  map.each_pair([&](const K& _key, const relations& _relations) {
+  map.each_pair([&](const K& _key, const Relations& _relations) {
     if (!_relations.dependencies) {
       sorted.push_back(_key);
     }
@@ -131,27 +131,27 @@ inline typename topological_sort<K>::result topological_sort<K>::sort() {
   });
 
   // When there's remaining dependencies of a relation then we've formed a cycle.
-  map.each_pair([&](const K& _key, const relations& _relations) {
+  map.each_pair([&](const K& _key, const Relations& _relations) {
     if (_relations.dependencies) {
       cycled.push_back(_key);
     }
   });
 
-  return {utility::move(sorted), utility::move(cycled)};
+  return {Utility::move(sorted), Utility::move(cycled)};
 }
 
 template<typename T>
-RX_HINT_FORCE_INLINE void topological_sort<T>::clear() {
+RX_HINT_FORCE_INLINE void TopologicalSort<T>::clear() {
   m_map.clear();
 }
 
 template<typename T>
-RX_HINT_FORCE_INLINE constexpr memory::allocator& topological_sort<T>::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& TopologicalSort<T>::allocator() const {
   return m_allocator;
 }
 
 template<typename T>
-RX_HINT_FORCE_INLINE topological_sort<T>::relations::relations(memory::allocator& _allocator)
+RX_HINT_FORCE_INLINE TopologicalSort<T>::Relations::Relations(Memory::Allocator& _allocator)
   : dependencies{0}
   , dependents{_allocator}
 {

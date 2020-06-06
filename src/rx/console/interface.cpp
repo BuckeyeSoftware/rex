@@ -15,66 +15,66 @@
 
 #include "rx/core/log.h" // RX_LOG
 
-namespace rx::console {
+namespace Rx::Console {
 
-static concurrency::spin_lock g_lock;
-static variable_reference* g_head; // protected by |g_lock|
+static Concurrency::SpinLock g_lock;
+static VariableReference* g_head; // protected by |g_lock|
 
 RX_LOG("console", logger);
 
-static global_group g_group_cvars{"cvars"};
-static global_group g_group_console{"console"};
+static GlobalGroup g_group_cvars{"cvars"};
+static GlobalGroup g_group_console{"console"};
 
 // TODO(dweiler): limited line count queue for messages on the console.
-static global<vector<string>> g_lines{"console", "lines"};
-static global<map<string, command>> g_commands{"console", "commands"};
+static Global<Vector<String>> g_lines{"console", "lines"};
+static Global<Map<String, Command>> g_commands{"console", "commands"};
 
-void interface::write(const string& message_) {
+void Interface::write(const String& message_) {
   g_lines->push_back(message_);
 }
 
-void interface::clear() {
+void Interface::clear() {
   g_lines->clear();
 }
 
-const vector<string>& interface::lines() {
+const Vector<String>& Interface::lines() {
   return *g_lines;
 }
 
-void interface::add_command(const string& _name, const char* _signature,
-  function<bool(const vector<command::argument>&)>&& _function)
+void Interface::add_command(const String& _name, const char* _signature,
+  Function<bool(const Vector<Command::Argument>&)>&& _function)
 {
-  g_commands->insert(_name, {_name, _signature, utility::move(_function)});
+  g_commands->insert(_name, {_name, _signature, Utility::move(_function)});
 }
 
-static bool type_check(variable_type _variable_type, token::type _token_type) {
-  switch (_variable_type) {
-  case variable_type::k_boolean:
-    return _token_type == token::type::k_boolean;
-  case variable_type::k_string:
-    return _token_type == token::type::k_string;
-  case variable_type::k_int:
-    return _token_type == token::type::k_int;
-  case variable_type::k_float:
-    return _token_type == token::type::k_float;
-  case variable_type::k_vec4f:
-    return _token_type == token::type::k_vec4f;
-  case variable_type::k_vec4i:
-    return _token_type == token::type::k_vec4i;
-  case variable_type::k_vec3f:
-    return _token_type == token::type::k_vec3f;
-  case variable_type::k_vec3i:
-    return _token_type == token::type::k_vec3i;
-  case variable_type::k_vec2f:
-    return _token_type == token::type::k_vec2f;
-  case variable_type::k_vec2i:
-    return _token_type == token::type::k_vec2i;
+static bool type_check(VariableType _VariableType, Token::Type _token_type) {
+  switch (_VariableType) {
+  case VariableType::k_boolean:
+    return _token_type == Token::Type::k_boolean;
+  case VariableType::k_string:
+    return _token_type == Token::Type::k_string;
+  case VariableType::k_int:
+    return _token_type == Token::Type::k_int;
+  case VariableType::k_float:
+    return _token_type == Token::Type::k_float;
+  case VariableType::k_vec4f:
+    return _token_type == Token::Type::k_vec4f;
+  case VariableType::k_vec4i:
+    return _token_type == Token::Type::k_vec4i;
+  case VariableType::k_vec3f:
+    return _token_type == Token::Type::k_vec3f;
+  case VariableType::k_vec3i:
+    return _token_type == Token::Type::k_vec3i;
+  case VariableType::k_vec2f:
+    return _token_type == Token::Type::k_vec2f;
+  case VariableType::k_vec2i:
+    return _token_type == Token::Type::k_vec2i;
   }
   return false;
 }
 
-bool interface::execute(const string& _contents) {
-  parser parse{memory::system_allocator::instance()};
+bool Interface::execute(const String& _contents) {
+  Parser parse{Memory::SystemAllocator::instance()};
 
   if (!parse.parse(_contents)) {
     const auto& diagnostic{parse.error()};
@@ -82,10 +82,10 @@ bool interface::execute(const string& _contents) {
     print("^rerror: ^w%s", diagnostic.message);
     print("%s", _contents);
 
-    string format;
-    format += string::format("%*s^r", static_cast<int>(diagnostic.offset), "");
+    String format;
+    format += String::format("%*s^r", static_cast<int>(diagnostic.offset), "");
     if (!diagnostic.inside) {
-      for (rx_size i{0}; i < diagnostic.length; i++) {
+      for (Size i = 0; i < diagnostic.length; i++) {
         format += '~';
       }
     }
@@ -99,38 +99,38 @@ bool interface::execute(const string& _contents) {
     return false;
   }
 
-  auto tokens{utility::move(parse.tokens())};
+  auto tokens{Utility::move(parse.tokens())};
 
   if (tokens.is_empty()) {
     return false;
   }
 
-  if (tokens[0].kind() != token::type::k_atom) {
+  if (tokens[0].kind() != Token::Type::k_atom) {
     print("^rerror: ^wexpected atom");
     return false;
   }
 
-  const auto& atom{tokens[0].as_atom()};
-  if (auto* variable{find_variable_by_name(atom)}) {
+  const auto& atom = tokens[0].as_atom();
+  if (auto* variable = find_variable_by_name(atom)) {
     if (tokens.size() > 1) {
       switch (set_from_reference_and_token(variable, tokens[1])) {
-      case variable_status::k_success:
+      case VariableStatus::k_success:
         print("^gsuccess: ^wChanged: \"%s\" to %s", atom, tokens[1].print());
         break;
-      case variable_status::k_out_of_range:
+      case VariableStatus::k_out_of_range:
         print("^rerror: ^wOut of range: \"%s\" has range %s", atom,
           variable->print_range());
         break;
-      case variable_status::k_type_mismatch:
+      case VariableStatus::k_type_mismatch:
         print("^rerror: ^wType mismatch: \"%s\" expected %s, got %s", atom,
-          variable_type_as_string(variable->type()),
+          VariableType_as_string(variable->type()),
           token_type_as_string(tokens[1].kind()));
         break;
       }
     } else {
       print("^cinfo: ^w%s = %s", atom, variable->print_current());
     }
-  } else if (auto* command{g_commands->find(atom)}) {
+  } else if (auto* command = g_commands->find(atom)) {
     tokens.erase(0, 1);
     command->execute_tokens(tokens);
   } else {
@@ -140,9 +140,9 @@ bool interface::execute(const string& _contents) {
   return true;
 }
 
-vector<string> interface::auto_complete_variables(const string& _prefix) {
-  vector<string> results;
-  for (variable_reference* node{g_head}; node; node = node->m_next) {
+Vector<String> Interface::auto_complete_variables(const String& _prefix) {
+  Vector<String> results;
+  for (VariableReference* node{g_head}; node; node = node->m_next) {
     if (!strncmp(node->m_name, _prefix.data(), _prefix.size())) {
       results.push_back(node->m_name);
     }
@@ -150,9 +150,9 @@ vector<string> interface::auto_complete_variables(const string& _prefix) {
   return results;
 }
 
-vector<string> interface::auto_complete_commands(const string& _prefix) {
-  vector<string> results;
-  g_commands->each_key([&](const string& _key) {
+Vector<String> Interface::auto_complete_commands(const String& _prefix) {
+  Vector<String> results;
+  g_commands->each_key([&](const String& _key) {
     if (!strncmp(_key.data(), _prefix.data(), _prefix.size())) {
       results.push_back(_key);
     }
@@ -160,23 +160,23 @@ vector<string> interface::auto_complete_commands(const string& _prefix) {
   return results;
 }
 
-bool interface::load(const char* file_name) {
+bool Interface::load(const char* file_name) {
   // sort references
   {
-    concurrency::scope_lock locked(g_lock);
+    Concurrency::ScopeLock locked{g_lock};
     g_head = sort(g_head);
   }
 
-  filesystem::file file(file_name, "r");
+  Filesystem::File file(file_name, "r");
   if (!file) {
     return false;
   }
 
   logger->info("loading '%s'", file_name);
 
-  parser parse{memory::system_allocator::instance()};
-  for (string line_contents; file.read_line(line_contents); ) {
-    string line{line_contents.lstrip(" \t")};
+  Parser parse{Memory::SystemAllocator::instance()};
+  for (String line_contents; file.read_line(line_contents); ) {
+    String line{line_contents.lstrip(" \t")};
     if (line.is_empty() || strchr("#;[", line[0])) {
       // ignore empty and comment lines
       continue;
@@ -185,13 +185,13 @@ bool interface::load(const char* file_name) {
     if (!parse.parse(line_contents)) {
       logger->error("%s", parse.error().message);
     } else {
-      auto tokens{utility::move(parse.tokens())};
+      auto tokens{Utility::move(parse.tokens())};
 
       if (tokens.size() < 2) {
         continue;
       }
 
-      if (tokens[0].kind() != token::type::k_atom) {
+      if (tokens[0].kind() != Token::Type::k_atom) {
         continue;
       }
 
@@ -207,15 +207,15 @@ bool interface::load(const char* file_name) {
   return true;
 }
 
-bool interface::save(const char* file_name) {
-  filesystem::file file(file_name, "w");
+bool Interface::save(const char* file_name) {
+  Filesystem::File file(file_name, "w");
   if (!file) {
     return false;
   }
 
   logger->info("saving '%s'", file_name);
-  for (const variable_reference *head{g_head}; head; head = head->m_next) {
-    if (variable_type_is_ranged(head->type())) {
+  for (const VariableReference *head = g_head; head; head = head->m_next) {
+    if (VariableType_is_ranged(head->type())) {
       file.print("## %s (in range %s, defaults to %s)\n",
         head->description(), head->print_range(), head->print_initial());
       file.print(head->is_initial() ? ";%s %s\n" : "%s %s\n",
@@ -232,58 +232,58 @@ bool interface::save(const char* file_name) {
 }
 
 template<typename T>
-variable_status interface::set_from_reference_and_value(variable_reference* _reference, const T& _value) {
+VariableStatus Interface::set_from_reference_and_value(VariableReference* _reference, const T& _value) {
   if (auto* cast{_reference->try_cast<T>()}) {
     return cast->set(_value);
   } else {
-    return variable_status::k_type_mismatch;
+    return VariableStatus::k_type_mismatch;
   }
 }
 
-template variable_status interface::set_from_reference_and_value<bool>(variable_reference* _reference, const bool& _value);
-template variable_status interface::set_from_reference_and_value<string>(variable_reference* _reference, const string& _value);
-template variable_status interface::set_from_reference_and_value<rx_s32>(variable_reference* _reference, const rx_s32& _value);
-template variable_status interface::set_from_reference_and_value<rx_f32>(variable_reference* _reference, const rx_f32& _value);
-template variable_status interface::set_from_reference_and_value<math::vec4f>(variable_reference* _reference, const math::vec4f& _value);
-template variable_status interface::set_from_reference_and_value<math::vec4i>(variable_reference* _reference, const math::vec4i& _value);
-template variable_status interface::set_from_reference_and_value<math::vec3f>(variable_reference* _reference, const math::vec3f& _value);
-template variable_status interface::set_from_reference_and_value<math::vec3i>(variable_reference* _reference, const math::vec3i& _value);
-template variable_status interface::set_from_reference_and_value<math::vec2f>(variable_reference* _reference, const math::vec2f& _value);
-template variable_status interface::set_from_reference_and_value<math::vec2i>(variable_reference* _reference, const math::vec2i& _value);
+template VariableStatus Interface::set_from_reference_and_value<bool>(VariableReference* _reference, const bool& _value);
+template VariableStatus Interface::set_from_reference_and_value<String>(VariableReference* _reference, const String& _value);
+template VariableStatus Interface::set_from_reference_and_value<Sint32>(VariableReference* _reference, const Sint32& _value);
+template VariableStatus Interface::set_from_reference_and_value<Float32>(VariableReference* _reference, const Float32& _value);
+template VariableStatus Interface::set_from_reference_and_value<Math::Vec4f>(VariableReference* _reference, const Math::Vec4f& _value);
+template VariableStatus Interface::set_from_reference_and_value<Math::Vec4i>(VariableReference* _reference, const Math::Vec4i& _value);
+template VariableStatus Interface::set_from_reference_and_value<Math::Vec3f>(VariableReference* _reference, const Math::Vec3f& _value);
+template VariableStatus Interface::set_from_reference_and_value<Math::Vec3i>(VariableReference* _reference, const Math::Vec3i& _value);
+template VariableStatus Interface::set_from_reference_and_value<Math::Vec2f>(VariableReference* _reference, const Math::Vec2f& _value);
+template VariableStatus Interface::set_from_reference_and_value<Math::Vec2i>(VariableReference* _reference, const Math::Vec2i& _value);
 
-variable_status interface::set_from_reference_and_token(variable_reference* reference_, const token& _token) {
+VariableStatus Interface::set_from_reference_and_token(VariableReference* reference_, const Token& _token) {
   if (!type_check(reference_->type(), _token.kind())) {
-    return variable_status::k_type_mismatch;
+    return VariableStatus::k_type_mismatch;
   }
 
   switch (reference_->type()) {
-  case variable_type::k_boolean:
+  case VariableType::k_boolean:
     return reference_->cast<bool>()->set(_token.as_boolean());
-  case variable_type::k_string:
-    return reference_->cast<string>()->set(_token.as_string());
-  case variable_type::k_int:
-    return reference_->cast<rx_s32>()->set(_token.as_int());
-  case variable_type::k_float:
-    return reference_->cast<rx_f32>()->set(_token.as_float());
-  case variable_type::k_vec4f:
-    return reference_->cast<math::vec4f>()->set(_token.as_vec4f());
-  case variable_type::k_vec4i:
-    return reference_->cast<math::vec4i>()->set(_token.as_vec4i());
-  case variable_type::k_vec3f:
-    return reference_->cast<math::vec3f>()->set(_token.as_vec3f());
-  case variable_type::k_vec3i:
-    return reference_->cast<math::vec3i>()->set(_token.as_vec3i());
-  case variable_type::k_vec2f:
-    return reference_->cast<math::vec2f>()->set(_token.as_vec2f());
-  case variable_type::k_vec2i:
-    return reference_->cast<math::vec2i>()->set(_token.as_vec2i());
+  case VariableType::k_string:
+    return reference_->cast<String>()->set(_token.as_string());
+  case VariableType::k_int:
+    return reference_->cast<Sint32>()->set(_token.as_int());
+  case VariableType::k_float:
+    return reference_->cast<Float32>()->set(_token.as_float());
+  case VariableType::k_vec4f:
+    return reference_->cast<Math::Vec4f>()->set(_token.as_vec4f());
+  case VariableType::k_vec4i:
+    return reference_->cast<Math::Vec4i>()->set(_token.as_vec4i());
+  case VariableType::k_vec3f:
+    return reference_->cast<Math::Vec3f>()->set(_token.as_vec3f());
+  case VariableType::k_vec3i:
+    return reference_->cast<Math::Vec3i>()->set(_token.as_vec3i());
+  case VariableType::k_vec2f:
+    return reference_->cast<Math::Vec2f>()->set(_token.as_vec2f());
+  case VariableType::k_vec2i:
+    return reference_->cast<Math::Vec2i>()->set(_token.as_vec2i());
   }
 
   RX_HINT_UNREACHABLE();
 }
 
-variable_reference* interface::find_variable_by_name(const char* _name) {
-  for (variable_reference* head{g_head}; head; head = head->m_next) {
+VariableReference* Interface::find_variable_by_name(const char* _name) {
+  for (VariableReference* head{g_head}; head; head = head->m_next) {
     if (!strcmp(head->name(), _name)) {
       return head;
     }
@@ -291,25 +291,25 @@ variable_reference* interface::find_variable_by_name(const char* _name) {
   return nullptr;
 }
 
-variable_reference* interface::add_variable(variable_reference* reference) {
+VariableReference* Interface::add_variable(VariableReference* reference) {
   logger->info("registered '%s'", reference->m_name);
-  concurrency::scope_lock locked(g_lock);
-  variable_reference* next = g_head;
+  Concurrency::ScopeLock locked(g_lock);
+  VariableReference* next = g_head;
   g_head = reference;
   return next;
 }
 
-variable_reference* interface::split(variable_reference* reference) {
+VariableReference* Interface::split(VariableReference* reference) {
   if (!reference || !reference->m_next) {
     return nullptr;
   }
-  variable_reference* splitted = reference->m_next;
+  VariableReference* splitted = reference->m_next;
   reference->m_next = splitted->m_next;
   splitted->m_next = split(splitted->m_next);
   return splitted;
 }
 
-variable_reference* interface::merge(variable_reference* lhs, variable_reference* rhs) {
+VariableReference* Interface::merge(VariableReference* lhs, VariableReference* rhs) {
   if (!lhs) {
     return rhs;
   }
@@ -327,7 +327,7 @@ variable_reference* interface::merge(variable_reference* lhs, variable_reference
   return lhs;
 }
 
-variable_reference* interface::sort(variable_reference* reference) {
+VariableReference* Interface::sort(VariableReference* reference) {
   if (!reference) {
     return nullptr;
   }
@@ -336,7 +336,7 @@ variable_reference* interface::sort(variable_reference* reference) {
     return reference;
   }
 
-  variable_reference* splitted = split(reference);
+  VariableReference* splitted = split(reference);
 
   return merge(sort(reference), sort(splitted));
 }

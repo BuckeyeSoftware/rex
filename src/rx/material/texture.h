@@ -9,23 +9,23 @@
 
 #include "rx/texture/chain.h"
 
-namespace rx {
-  struct json;
-  struct stream;
+namespace Rx {
+  struct JSON;
+  struct Stream;
 } // namespace rx
 
-namespace rx::material {
+namespace Rx::Material {
 
-struct RX_HINT_EMPTY_BASES texture
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES Texture
+  : Concepts::NoCopy
 {
-  struct filter_options {
+  struct Filter {
     bool bilinear;
     bool trilinear;
     bool mipmaps;
   };
 
-  enum class wrap_type : rx_byte {
+  enum class WrapType : Byte {
     k_clamp_to_edge,
     k_clamp_to_border,
     k_mirrored_repeat,
@@ -33,66 +33,66 @@ struct RX_HINT_EMPTY_BASES texture
     k_mirror_clamp_to_edge
   };
 
-  using wrap_options = math::vec2<wrap_type>;
+  using Wrap = Math::Vec2<WrapType>;
 
-  texture(memory::allocator& _allocator);
-  texture(texture&& texture_);
+  Texture(Memory::Allocator& _allocator);
+  Texture(Texture&& texture_);
 
-  texture& operator=(texture&& texture_);
+  Texture& operator=(Texture&& texture_);
 
-  bool load(stream* _stream);
-  bool load(const string& _file_name);
+  bool load(Stream* _stream);
+  bool load(const String& _file_name);
 
-  bool parse(const json& _definition);
+  bool parse(const JSON& _definition);
 
-  const filter_options& filter() const &;
-  const wrap_options& wrap() const &;
-  const string& type() const &;
-  const string& file() const &;
-  const optional<math::vec4f>& border() const &;
+  const Filter& filter() const &;
+  const Wrap& wrap() const &;
+  const String& type() const &;
+  const String& file() const &;
+  const Optional<Math::Vec4f>& border() const &;
 
-  const rx::texture::chain& chain() const;
-  rx::texture::chain&& chain();
+  const Rx::Texture::Chain& chain() const;
+  Rx::Texture::Chain&& chain();
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
   bool load_texture_file();
 
-  bool parse_type(const json& _type);
-  bool parse_filter(const json& _filter, bool& _mipmaps);
-  bool parse_wrap(const json& _wrap);
-  bool parse_border(const json& _border);
+  bool parse_type(const JSON& _type);
+  bool parse_filter(const JSON& _filter, bool& _mipmaps);
+  bool parse_wrap(const JSON& _wrap);
+  bool parse_border(const JSON& _border);
 
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments) const;
 
   template<typename... Ts>
-  void log(log::level _level, const char* _format, Ts&&... _arguments) const;
+  void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
 
-  void write_log(log::level _level, string&& message_) const;
+  void write_log(Log::Level _level, String&& message_) const;
 
-  ref<memory::allocator> m_allocator;
-  rx::texture::chain m_chain;
-  filter_options m_filter;
-  wrap_options m_wrap;
-  string m_type;
-  string m_file;
-  optional<math::vec4f> m_border;
+  Ref<Memory::Allocator> m_allocator;
+  Rx::Texture::Chain m_chain;
+  Filter m_filter;
+  Wrap m_wrap;
+  String m_type;
+  String m_file;
+  Optional<Math::Vec4f> m_border;
 };
 
 template<typename... Ts>
-inline bool texture::error(const char* _format, Ts&&... _arguments) const {
-  log(log::level::k_error, _format, utility::forward<Ts>(_arguments)...);
+inline bool Texture::error(const char* _format, Ts&&... _arguments) const {
+  log(Log::Level::k_error, _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 
 template<typename... Ts>
-inline void texture::log(log::level _level, const char* _format, Ts&&... _arguments) const {
-  write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
+inline void Texture::log(Log::Level _level, const char* _format, Ts&&... _arguments) const {
+  write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));
 }
 
-inline texture::texture(memory::allocator& _allocator)
+inline Texture::Texture(Memory::Allocator& _allocator)
   : m_allocator{_allocator}
   , m_chain{allocator()}
   , m_type{allocator()}
@@ -100,60 +100,60 @@ inline texture::texture(memory::allocator& _allocator)
 {
 }
 
-inline texture::texture(texture&& texture_)
+inline Texture::Texture(Texture&& texture_)
   : m_allocator{texture_.m_allocator}
-  , m_chain{utility::move(texture_.m_chain)}
+  , m_chain{Utility::move(texture_.m_chain)}
   , m_filter{texture_.m_filter}
   , m_wrap{texture_.m_wrap}
-  , m_type{utility::move(texture_.m_type)}
-  , m_file{utility::move(texture_.m_file)}
-  , m_border{utility::move(texture_.m_border)}
+  , m_type{Utility::move(texture_.m_type)}
+  , m_file{Utility::move(texture_.m_file)}
+  , m_border{Utility::move(texture_.m_border)}
 {
 }
 
-inline texture& texture::operator=(texture&& texture_) {
+inline Texture& Texture::operator=(Texture&& texture_) {
   RX_ASSERT(&texture_ != this, "self assignment");
 
   m_allocator = texture_.m_allocator;
-  m_chain = utility::move(texture_.m_chain);
+  m_chain = Utility::move(texture_.m_chain);
   m_filter = texture_.m_filter;
   m_wrap = texture_.m_wrap;
-  m_type = utility::move(texture_.m_type);
-  m_file = utility::move(texture_.m_file);
-  m_border = utility::move(texture_.m_border);
+  m_type = Utility::move(texture_.m_type);
+  m_file = Utility::move(texture_.m_file);
+  m_border = Utility::move(texture_.m_border);
 
   return *this;
 }
 
-inline const texture::filter_options& texture::filter() const & {
+inline const Texture::Filter& Texture::filter() const & {
   return m_filter;
 }
 
-inline const texture::wrap_options& texture::wrap() const & {
+inline const Texture::Wrap& Texture::wrap() const & {
   return m_wrap;
 }
 
-inline const string& texture::type() const & {
+inline const String& Texture::type() const & {
   return m_type;
 }
 
-inline const string& texture::file() const & {
+inline const String& Texture::file() const & {
   return m_file;
 }
 
-inline const optional<math::vec4f>& texture::border() const & {
+inline const Optional<Math::Vec4f>& Texture::border() const & {
   return m_border;
 }
 
-inline const rx::texture::chain& texture::chain() const {
+inline const Rx::Texture::Chain& Texture::chain() const {
   return m_chain;
 }
 
-inline rx::texture::chain&& texture::chain() {
-  return utility::move(m_chain);
+inline Rx::Texture::Chain&& Texture::chain() {
+  return Utility::move(m_chain);
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& texture::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Texture::allocator() const {
   return m_allocator;
 }
 

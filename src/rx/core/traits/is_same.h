@@ -1,7 +1,7 @@
 #ifndef RX_CORE_TRAITS_IS_SAME_H
 #define RX_CORE_TRAITS_IS_SAME_H
 
-namespace rx::traits {
+namespace Rx::traits {
 
 template<typename T1, typename T2>
 inline constexpr const bool is_same{false};

@@ -3,7 +3,7 @@
 #include "rx/core/utility/forward.h"
 #include "rx/core/hints/force_inline.h"
 
-namespace rx::algorithm {
+namespace Rx::Algorithm {
 
 template<typename T>
 RX_HINT_FORCE_INLINE constexpr T max(T _a) {
@@ -12,7 +12,7 @@ RX_HINT_FORCE_INLINE constexpr T max(T _a) {
 
 template<typename T, typename... Ts>
 RX_HINT_FORCE_INLINE constexpr T max(T _a, T _b, Ts&&... _args) {
-  return max(_a > _b ? _a : _b, utility::forward<Ts>(_args)...);
+  return max(_a > _b ? _a : _b, Utility::forward<Ts>(_args)...);
 }
 
 } // namespace rx::algorithm

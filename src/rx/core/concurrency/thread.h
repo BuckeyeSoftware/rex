@@ -5,32 +5,32 @@
 
 #include "rx/core/hints/empty_bases.h"
 
-namespace rx::concurrency {
+namespace Rx::Concurrency {
 
 // NOTE: Thread names must have static-storage which lives as long as the thread.
 // NOTR: Cannot deliver signals to threads.
-struct RX_HINT_EMPTY_BASES thread
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES Thread
+  : Concepts::NoCopy
 {
   template<typename F>
-  thread(memory::allocator& _allocator, const char* _name, F&& _function);
+  Thread(Memory::Allocator& _allocator, const char* _name, F&& _function);
 
   template<typename F>
-  thread(const char* _name, F&& _function);
+  Thread(const char* _name, F&& _function);
 
-  thread(thread&& thread_);
-  ~thread();
+  Thread(Thread&& thread_);
+  ~Thread();
 
-  thread& operator=(thread&& thread_) = delete;
+  Thread& operator=(Thread&& thread_) = delete;
 
   void join();
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
-  struct state {
+  struct State {
     template<typename F>
-    state(memory::allocator& _allocator, const char* _name, F&& _function);
+    State(Memory::Allocator& _allocator, const char* _name, F&& _function);
 
     void spawn();
     void join();
@@ -39,23 +39,23 @@ private:
     static void* wrap(void* _data);
 
     union {
-      utility::nat m_nat;
-      // Fixed-capacity storage for any OS thread type, adjust if necessary.
-      alignas(16) rx_byte m_thread[16];
+      Utility::Nat m_nat;
+      // Fixed-capacity storage for any OS thread Type, adjust if necessary.
+      alignas(16) Byte m_thread[16];
     };
 
-    function<void(int)> m_function;
+    Function<void(int)> m_function;
     const char* m_name;
     bool m_joined;
   };
 
-  ptr<state> m_state;
+  Ptr<State> m_state;
 };
 
 template<typename F>
-inline thread::state::state(memory::allocator& _allocator, const char* _name, F&& _function)
+inline Thread::State::State(Memory::Allocator& _allocator, const char* _name, F&& _function)
   : m_nat{}
-  , m_function{_allocator, utility::forward<F>(_function)}
+  , m_function{_allocator, Utility::forward<F>(_function)}
   , m_name{_name}
   , m_joined{false}
 {
@@ -63,23 +63,23 @@ inline thread::state::state(memory::allocator& _allocator, const char* _name, F&
 }
 
 template<typename F>
-inline thread::thread(memory::allocator& _allocator, const char* _name, F&& _function)
-  : m_state{make_ptr<state>(_allocator, _allocator, _name, utility::forward<F>(_function))}
+inline Thread::Thread(Memory::Allocator& _allocator, const char* _name, F&& _function)
+  : m_state{make_ptr<State>(_allocator, _allocator, _name, Utility::forward<F>(_function))}
 {
 }
 
 template<typename F>
-inline thread::thread(const char* _name, F&& _function)
-  : thread{memory::system_allocator::instance(), _name, utility::forward<F>(_function)}
+inline Thread::Thread(const char* _name, F&& _function)
+  : Thread{Memory::SystemAllocator::instance(), _name, Utility::forward<F>(_function)}
 {
 }
 
-inline thread::thread(thread&& thread_)
-  : m_state{utility::move(thread_.m_state)}
+inline Thread::Thread(Thread&& thread_)
+  : m_state{Utility::move(thread_.m_state)}
 {
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& thread::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Thread::allocator() const {
   return m_state.allocator();
 }
 

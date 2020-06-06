@@ -7,11 +7,11 @@
 
 RX_LOG("assert", logger);
 
-namespace rx {
+namespace Rx {
 
 [[noreturn]]
 void assert_fail(const char* _expression,
-  const source_location& _source_location, const char* _message, ...)
+  const SourceLocation& _source_location, const char* _message, ...)
 {
   va_list va;
   va_start(va, _message);
@@ -23,7 +23,7 @@ void assert_fail(const char* _expression,
   va_end(ap);
 
   // Construct assertion message.
-  string contents;
+  String contents;
   contents.resize(length);
   vsnprintf(contents.data(), contents.size() + 1, _message, va);
   va_end(va);

@@ -6,15 +6,15 @@
 #include "rx/core/math/cos.h"
 #include "rx/core/math/abs.h"
 
-#define STBTT_ifloor(_x) static_cast<int>(rx::math::floor(_x))
-#define STBTT_iceil(_x)  static_cast<int>(rx::math::ceil(_x))
+#define STBTT_ifloor(_x) static_cast<int>(Rx::Math::floor(_x))
+#define STBTT_iceil(_x)  static_cast<int>(Rx::Math::ceil(_x))
 
-#define STBTT_sqrt(_x) rx::math::sqrt(_x)
-#define STBTT_pow(_x, _y) rx::math::pow(_x, _y)
-#define STBTT_fmod(_x, _y) rx::math::mod(_x, _y)
-#define STBTT_cos(_x) rx::math::cos(_x)
-#define STBTT_acos(_x) rx::math::acos(_x)
-#define STBTT_fabs(_x) rx::math::abs(_x)
+#define STBTT_sqrt(_x) Rx::Math::sqrt(_x)
+#define STBTT_pow(_x, _y) Rx::Math::pow(_x, _y)
+#define STBTT_fmod(_x, _y) Rx::Math::mod(_x, _y)
+#define STBTT_cos(_x) Rx::Math::cos(_x)
+#define STBTT_acos(_x) Rx::Math::acos(_x)
+#define STBTT_fabs(_x) Rx::Math::abs(_x)
 
 #define STBTT_assert(x) ((void)(x))
 

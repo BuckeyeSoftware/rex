@@ -3,23 +3,23 @@
 #include "rx/core/memory/allocator.h"
 #include "rx/core/concurrency/spin_lock.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
-struct buddy_allocator
-  final : allocator
+struct BuddyAllocator
+  final : Allocator
 {
-  buddy_allocator(rx_byte* _data, rx_size _size);
+  BuddyAllocator(Byte* _data, Size _size);
 
-  virtual rx_byte* allocate(rx_size _size);
-  virtual rx_byte* reallocate(void* _data, rx_size _size);
+  virtual Byte* allocate(Size _size);
+  virtual Byte* reallocate(void* _data, Size _size);
   virtual void deallocate(void* _data);
 
 private:
-  rx_byte* allocate_unlocked(rx_size _size);
-  rx_byte* reallocate_unlocked(void* _data, rx_size _size);
+  Byte* allocate_unlocked(Size _size);
+  Byte* reallocate_unlocked(void* _data, Size _size);
   void deallocate_unlocked(void* _data);
 
-  concurrency::spin_lock m_lock;
+  Concurrency::SpinLock m_lock;
 
   void* m_head; // protected by |m_lock|
   void* m_tail; // protected by |m_lock|

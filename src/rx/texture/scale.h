@@ -3,28 +3,28 @@
 #include "rx/core/types.h"
 #include "rx/core/hints/restrict.h"
 
-namespace rx::texture {
+namespace Rx::Texture {
 
 // can be called with C=[1..4]
-template<rx_size C>
-void halve(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw, rx_size _sh,
-  rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_);
+template<Size C>
+void halve(const Byte *RX_HINT_RESTRICT _src, Size _sw, Size _sh,
+  Size _stride, Byte *RX_HINT_RESTRICT dst_);
 
 // can be called with C=[1..4]
-template<rx_size C>
-void shift(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw, rx_size _sh,
-  rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw, rx_size _dh);
+template<Size C>
+void shift(const Byte *RX_HINT_RESTRICT _src, Size _sw, Size _sh,
+  Size _stride, Byte *RX_HINT_RESTRICT dst_, Size _dw, Size _dh);
 
 // can be called with C=[1..4]
-template<rx_size C>
-void scale(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw, rx_size _sh,
-  rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw, rx_size _dh);
+template<Size C>
+void scale(const Byte *RX_HINT_RESTRICT _src, Size _sw, Size _sh,
+  Size _stride, Byte *RX_HINT_RESTRICT dst_, Size _dw, Size _dh);
 
 // "safe" routing scaling function, calls the appropriate functions as defined
 // above based on _bpp and _stride
-void scale(const rx_byte *RX_HINT_RESTRICT _src, rx_size _sw, rx_size _sh,
-  rx_size _bpp, rx_size _stride, rx_byte *RX_HINT_RESTRICT dst_, rx_size _dw,
-  rx_size _dh);
+void scale(const Byte *RX_HINT_RESTRICT _src, Size _sw, Size _sh,
+  Size _bpp, Size _stride, Byte *RX_HINT_RESTRICT dst_, Size _dw,
+  Size _dh);
 
 } // namespace rx::texture
 

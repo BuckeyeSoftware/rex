@@ -1,23 +1,23 @@
 #ifndef RX_HUD_CONSOLE_H
 #define RX_HUD_CONSOLE_H
-#include "rx/input/text.h"
+#include "rx/input/context.h"
 
-namespace rx::render {
-  struct immediate2D;
+namespace Rx::Render {
+  struct Immediate2D;
 } // namespace rx::render
 
 
-namespace rx::hud {
+namespace Rx::hud {
 
-struct console {
-  console(render::immediate2D* _immediate);
+struct Console {
+  Console(Render::Immediate2D* _immediate);
   void render();
-  void update(input::input& input_);
+  void update(Input::Context& input_);
 private:
-  render::immediate2D* m_immediate;
-  input::text m_text;
-  rx_size m_selection;
-  vector<string> m_suggestions;
+  Render::Immediate2D* m_immediate;
+  Input::Text m_text;
+  Size m_selection;
+  Vector<String> m_suggestions;
 };
 
 } // namespace rx::hud

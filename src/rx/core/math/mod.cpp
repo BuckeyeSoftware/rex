@@ -1,17 +1,17 @@
 #include "rx/core/math/mod.h"
 #include "rx/core/math/isnan.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
-rx_f32 mod(rx_f32 _x, rx_f32 _y) {
-  shape ux{_x};
-  shape uy{_y};
+Float32 mod(Float32 _x, Float32 _y) {
+  Shape ux{_x};
+  Shape uy{_y};
 
   auto ex{static_cast<int>(ux.as_u32 >> 23 & 0xff)};
   auto ey{static_cast<int>(uy.as_u32 >> 23 & 0xff)};
 
-  rx_u32 sx = ux.as_u32 & 0x80000000;
-  rx_u32 uxi = ux.as_u32;
+  Uint32 sx = ux.as_u32 & 0x80000000;
+  Uint32 uxi = ux.as_u32;
 
   if (uy.as_u32 << 1 == 0 || isnan(_y) || ex == 0xff) {
     return (_x * _y) / (_x * _y);
@@ -27,7 +27,7 @@ rx_f32 mod(rx_f32 _x, rx_f32 _y) {
 
   // normalize x and y
   if (!ex) {
-    for (rx_u32 i{uxi << 9}; i >> 31 == 0; ex--, i <<= 1);
+    for (Uint32 i{uxi << 9}; i >> 31 == 0; ex--, i <<= 1);
     uxi <<= -ex + 1;
   } else {
     uxi &= -1u >> 9;
@@ -35,7 +35,7 @@ rx_f32 mod(rx_f32 _x, rx_f32 _y) {
   }
 
   if (!ey) {
-    for (rx_u32 i{uy.as_u32 << 9}; i >> 31 == 0; ey--, i <<= 1);
+    for (Uint32 i{uy.as_u32 << 9}; i >> 31 == 0; ey--, i <<= 1);
     uy.as_u32 <<= -ey + 1;
   } else {
     uy.as_u32 &= -1u >> 9;
@@ -44,7 +44,7 @@ rx_f32 mod(rx_f32 _x, rx_f32 _y) {
 
   // x mod y
   for (; ex > ey; ex--) {
-    const rx_u32 i{uxi - uy.as_u32};
+    const Uint32 i{uxi - uy.as_u32};
     if (i >> 31 == 0) {
       if (i == 0) {
         return 0 * _x;
@@ -54,7 +54,7 @@ rx_f32 mod(rx_f32 _x, rx_f32 _y) {
     uxi <<= 1;
   }
 
-  const rx_u32 i{uxi - uy.as_u32};
+  const Uint32 i{uxi - uy.as_u32};
   if (i >> 31 == 0) {
     if (i == 0) {
       return 0 * _x;
@@ -66,7 +66,7 @@ rx_f32 mod(rx_f32 _x, rx_f32 _y) {
   // scale result up
   if (ex > 0) {
     uxi -= 1u << 23;
-    uxi |= static_cast<rx_u32>(ex) << 23;
+    uxi |= static_cast<Uint32>(ex) << 23;
   } else {
     uxi >>= -ex + 1;
   }

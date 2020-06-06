@@ -5,29 +5,25 @@
 
 #include "rx/core/memory/uninitialized_storage.h" // uninitialized_storage
 
-namespace rx {
+namespace Rx {
 
-namespace detail {
-  struct nullopt {};
-}
-
-constexpr detail::nullopt nullopt;
+constexpr const struct {} nullopt;
 
 template<typename T>
-struct optional {
-  constexpr optional(detail::nullopt);
-  constexpr optional();
-  constexpr optional(T&& data_);
-  constexpr optional(const T& _data);
-  constexpr optional(optional&& other_);
-  constexpr optional(const optional& _other);
+struct Optional {
+  constexpr Optional(decltype(nullopt));
+  constexpr Optional();
+  constexpr Optional(T&& data_);
+  constexpr Optional(const T& _data);
+  constexpr Optional(Optional&& other_);
+  constexpr Optional(const Optional& _other);
 
-  ~optional();
+  ~Optional();
 
-  optional& operator=(T&& data_);
-  optional& operator=(const T& _data);
-  optional& operator=(optional&& other_);
-  optional& operator=(const optional& _other);
+  Optional& operator=(T&& data_);
+  Optional& operator=(const T& _data);
+  Optional& operator=(Optional&& other_);
+  Optional& operator=(const Optional& _other);
 
   operator bool() const;
 
@@ -39,34 +35,34 @@ struct optional {
   const T* operator->() const;
 
 private:
-  memory::uninitialized_storage<T> m_data;
+  Memory::UninitializedStorage<T> m_data;
   bool m_init;
 };
 
 template<typename T>
-inline constexpr optional<T>::optional(decltype(nullopt))
+inline constexpr Optional<T>::Optional(decltype(nullopt))
   : m_data{}
   , m_init{false}
 {
 }
 
 template<typename T>
-inline constexpr optional<T>::optional()
+inline constexpr Optional<T>::Optional()
   : m_data{}
   , m_init{false}
 {
 }
 
 template<typename T>
-inline constexpr optional<T>::optional(T&& data_)
+inline constexpr Optional<T>::Optional(T&& data_)
   : m_data{}
   , m_init{true}
 {
-  m_data.init(utility::forward<T>(data_));
+  m_data.init(Utility::forward<T>(data_));
 }
 
 template<typename T>
-inline constexpr optional<T>::optional(const T& _data)
+inline constexpr Optional<T>::Optional(const T& _data)
   : m_data{}
   , m_init{true}
 {
@@ -74,20 +70,20 @@ inline constexpr optional<T>::optional(const T& _data)
 }
 
 template<typename T>
-inline constexpr optional<T>::optional(optional&& other_)
+inline constexpr Optional<T>::Optional(Optional&& other_)
   : m_data{}
   , m_init{other_.m_init}
 {
   if (m_init) {
     auto& data{other_.m_data};
-    m_data.init(utility::move(*data.data()));
+    m_data.init(Utility::move(*data.data()));
     data.fini();
   }
   other_.m_init = false;
 }
 
 template<typename T>
-inline constexpr optional<T>::optional(const optional& _other)
+inline constexpr Optional<T>::Optional(const Optional& _other)
   : m_data{}
   , m_init{_other.m_init}
 {
@@ -98,17 +94,17 @@ inline constexpr optional<T>::optional(const optional& _other)
 }
 
 template<typename T>
-inline optional<T>& optional<T>::operator=(T&& data_) {
+inline Optional<T>& Optional<T>::operator=(T&& data_) {
   if (m_init) {
     m_data.fini();
   }
   m_init = true;
-  m_data.init(utility::forward<T>(data_));
+  m_data.init(Utility::forward<T>(data_));
   return *this;
 }
 
 template<typename T>
-inline optional<T>& optional<T>::operator=(const T& _data) {
+inline Optional<T>& Optional<T>::operator=(const T& _data) {
   if (m_init) {
     m_data.fini();
   }
@@ -118,7 +114,7 @@ inline optional<T>& optional<T>::operator=(const T& _data) {
 }
 
 template<typename T>
-inline optional<T>& optional<T>::operator=(optional&& other_) {
+inline Optional<T>& Optional<T>::operator=(Optional&& other_) {
   RX_ASSERT(&other_ != this, "self assignment");
 
   if (m_init) {
@@ -129,7 +125,7 @@ inline optional<T>& optional<T>::operator=(optional&& other_) {
 
   if (m_init) {
     auto& data{other_.m_data};
-    m_data.init(utility::move(*data.data()));
+    m_data.init(Utility::move(*data.data()));
     data.fini();
   }
 
@@ -139,7 +135,7 @@ inline optional<T>& optional<T>::operator=(optional&& other_) {
 }
 
 template<typename T>
-inline optional<T>& optional<T>::operator=(const optional& _other) {
+inline Optional<T>& Optional<T>::operator=(const Optional& _other) {
   RX_ASSERT(&_other != this, "self assignment");
 
   if (m_init) {
@@ -157,42 +153,42 @@ inline optional<T>& optional<T>::operator=(const optional& _other) {
 }
 
 template<typename T>
-inline optional<T>::~optional() {
+inline Optional<T>::~Optional() {
   if (m_init) {
     m_data.fini();
   }
 }
 
 template<typename T>
-inline optional<T>::operator bool() const {
+inline Optional<T>::operator bool() const {
   return m_init;
 }
 
 template<typename T>
-inline bool optional<T>::has_value() const {
+inline bool Optional<T>::has_value() const {
   return m_init;
 }
 
 template<typename T>
-inline T& optional<T>::operator*() {
+inline T& Optional<T>::operator*() {
   RX_ASSERT(m_init, "not valid");
   return *m_data.data();
 }
 
 template<typename T>
-inline const T& optional<T>::operator*() const {
+inline const T& Optional<T>::operator*() const {
   RX_ASSERT(m_init, "not valid");
   return *m_data.data();
 }
 
 template<typename T>
-inline T* optional<T>::operator->() {
+inline T* Optional<T>::operator->() {
   RX_ASSERT(m_init, "not valid");
   return m_data.data();
 }
 
 template<typename T>
-inline const T* optional<T>::operator->() const {
+inline const T* Optional<T>::operator->() const {
   RX_ASSERT(m_init, "not valid");
   return m_data.data();
 }

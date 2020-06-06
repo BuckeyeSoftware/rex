@@ -1,7 +1,7 @@
 #ifndef RX_CORE_TRAITS_IS_LVALUE_REFERENCE_H
 #define RX_CORE_TRAITS_IS_LVALUE_REFERENCE_H
 
-namespace rx::traits {
+namespace Rx::traits {
 
 template<typename T>
 inline constexpr const bool is_lvalue_reference{false};

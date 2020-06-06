@@ -9,12 +9,12 @@
 #define NOMINMAX
 #include <windows.h> // CRITICAL_SECTION, {Initialize,Delete,Enter,Leave}CriticalSection
 #else
-#error "missing mutex implementation"
+#error "missing Mutex implementation"
 #endif
 
-namespace rx::concurrency {
+namespace Rx::Concurrency {
 
-mutex::mutex() {
+Mutex::Mutex() {
 #if defined(RX_PLATFORM_POSIX)
   auto handle = reinterpret_cast<pthread_mutex_t*>(m_mutex);
   if (pthread_mutex_init(handle, nullptr) != 0) {
@@ -26,7 +26,7 @@ mutex::mutex() {
 #endif
 }
 
-mutex::~mutex() {
+Mutex::~Mutex() {
 #if defined(RX_PLATFORM_POSIX)
   auto handle = reinterpret_cast<pthread_mutex_t*>(m_mutex);
   if (pthread_mutex_destroy(handle) != 0) {
@@ -38,7 +38,7 @@ mutex::~mutex() {
 #endif
 }
 
-void mutex::lock() {
+void Mutex::lock() {
 #if defined(RX_PLATFORM_POSIX)
   auto handle = reinterpret_cast<pthread_mutex_t*>(m_mutex);
   if (pthread_mutex_lock(handle) != 0) {
@@ -50,7 +50,7 @@ void mutex::lock() {
 #endif
 }
 
-void mutex::unlock() {
+void Mutex::unlock() {
 #if defined(RX_PLATFORM_POSIX)
   auto handle = reinterpret_cast<pthread_mutex_t*>(m_mutex);
   if (pthread_mutex_unlock(handle) != 0) {

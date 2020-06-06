@@ -3,7 +3,7 @@
 #include "rx/core/traits/remove_const.h"
 #include "rx/core/traits/remove_volatile.h"
 
-namespace rx::traits {
+namespace Rx::traits {
 
 template<typename T>
 using remove_cv = remove_volatile<remove_const<T>>;

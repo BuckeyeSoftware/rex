@@ -11,27 +11,27 @@
 #include "rx/core/abort.h"
 #include "rx/core/vector.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
-global<electric_fence_allocator> electric_fence_allocator::s_instance{"system", "electric_fence_allocator"};
+Global<ElectricFenceAllocator> ElectricFenceAllocator::s_instance{"system", "electric_fence_allocator"};
 
-static constexpr const rx_size k_page_size = 4096;
+static constexpr const Size k_page_size = 4096;
 
-static inline rx_size pages_needed(rx_size _size) {
+static inline Size pages_needed(Size _size) {
   const auto rounded_size = (_size + (k_page_size - 1)) & ~(k_page_size - 1);
   return 2 + rounded_size / k_page_size;
 }
 
-electric_fence_allocator::electric_fence_allocator()
-  : m_mappings{heap_allocator::instance()}
+ElectricFenceAllocator::ElectricFenceAllocator()
+  : m_mappings{HeapAllocator::instance()}
 {
 }
 
-vma* electric_fence_allocator::allocate_vma(rx_size _size) {
+VMA* ElectricFenceAllocator::allocate_vma(Size _size) {
   const auto pages = pages_needed(_size);
 
   // Create a new mapping with no permissions.
-  vma mapping;
+  VMA mapping;
   if (RX_HINT_UNLIKELY(!mapping.allocate(k_page_size, pages))) {
     return nullptr;
   }
@@ -41,21 +41,21 @@ vma* electric_fence_allocator::allocate_vma(rx_size _size) {
     return nullptr;
   }
 
-  return m_mappings.insert(mapping.base(), utility::move(mapping));
+  return m_mappings.insert(mapping.base(), Utility::move(mapping));
 }
 
-rx_byte* electric_fence_allocator::allocate(rx_size _size) {
-  concurrency::scope_lock lock{m_lock};
+Byte* ElectricFenceAllocator::allocate(Size _size) {
+  Concurrency::ScopeLock lock{m_lock};
   if (auto mapping = allocate_vma(_size)) {
     return mapping->page(1);
   }
   return nullptr;
 }
 
-rx_byte* electric_fence_allocator::reallocate(void* _data, rx_size _size) {
+Byte* ElectricFenceAllocator::reallocate(void* _data, Size _size) {
   if (RX_HINT_LIKELY(_data)) {
-    concurrency::scope_lock lock{m_lock};
-    const auto base = reinterpret_cast<rx_byte*>(_data) - k_page_size;
+    Concurrency::ScopeLock lock{m_lock};
+    const auto base = reinterpret_cast<Byte*>(_data) - k_page_size;
     if (auto mapping = m_mappings.find(base)) {
       // No need to reallocate, allocation still fits inside.
       if (mapping->page_count() >= pages_needed(_size)) {
@@ -82,10 +82,10 @@ rx_byte* electric_fence_allocator::reallocate(void* _data, rx_size _size) {
   return allocate(_size);
 }
 
-void electric_fence_allocator::deallocate(void* _data) {
+void ElectricFenceAllocator::deallocate(void* _data) {
   if (RX_HINT_LIKELY(_data)) {
-    concurrency::scope_lock lock{m_lock};
-    const auto base = reinterpret_cast<rx_byte*>(_data) - k_page_size;
+    Concurrency::ScopeLock lock{m_lock};
+    const auto base = reinterpret_cast<Byte*>(_data) - k_page_size;
     if (!m_mappings.erase(base)) {
       abort("invalid deallocate");
     }

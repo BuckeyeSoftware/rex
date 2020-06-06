@@ -10,81 +10,81 @@
 
 #include "rx/core/utility/exchange.h"
 
-namespace rx {
+namespace Rx {
 
 template<typename T>
-struct event;
+struct Event;
 
 template<typename R, typename... Ts>
-struct event<R(Ts...)> {
-  using delegate = function<R(Ts...)>;
+struct Event<R(Ts...)> {
+  using Delegate = Function<R(Ts...)>;
 
-  struct RX_HINT_EMPTY_BASES handle
-    : concepts::no_copy
+  struct RX_HINT_EMPTY_BASES Handle
+    : Concepts::NoCopy
   {
-    constexpr handle(event* _event, rx_size _index);
-    constexpr handle(handle&& _existing);
-    ~handle();
+    constexpr Handle(Event* _event, Size _index);
+    constexpr Handle(Handle&& _existing);
+    ~Handle();
   private:
-    event* m_event;
-    rx_size m_index;
+    Event* m_event;
+    Size m_index;
   };
 
-  constexpr event(memory::allocator& _allocator);
-  constexpr event();
+  constexpr Event(Memory::Allocator& _allocator);
+  constexpr Event();
 
   void signal(Ts... _arguments);
-  handle connect(delegate&& function_);
+  Handle connect(Delegate&& function_);
 
-  rx_size size() const;
+  Size size() const;
   bool is_empty() const;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
-  friend struct handle;
-  mutable concurrency::spin_lock m_lock;
-  vector<delegate> m_delegates; // protected by |m_lock|
+  friend struct Handle;
+  mutable Concurrency::SpinLock m_lock;
+  Vector<Delegate> m_delegates; // protected by |m_lock|
 };
 
 template<typename R, typename... Ts>
-inline constexpr event<R(Ts...)>::handle::handle(event<R(Ts...)>* _event, rx_size _index)
+inline constexpr Event<R(Ts...)>::Handle::Handle(Event<R(Ts...)>* _event, Size _index)
   : m_event{_event}
   , m_index{_index}
 {
 }
 
 template<typename R, typename... Ts>
-inline constexpr event<R(Ts...)>::handle::handle(handle&& handle_)
-  : m_event{utility::exchange(handle_.m_event, nullptr)}
-  , m_index{utility::exchange(handle_.m_index, 0)}
+inline constexpr Event<R(Ts...)>::Handle::Handle(Handle&& handle_)
+  : m_event{Utility::exchange(handle_.m_event, nullptr)}
+  , m_index{Utility::exchange(handle_.m_index, 0)}
 {
 }
 
 template<typename R, typename... Ts>
-inline event<R(Ts...)>::handle::~handle() {
+inline Event<R(Ts...)>::Handle::~Handle() {
   if (m_event) {
-    concurrency::scope_lock lock{m_event->m_lock};
+    Concurrency::ScopeLock lock{m_event->m_lock};
     m_event->m_delegates[m_index] = nullptr;
   }
 }
 
 template<typename R, typename... Ts>
-inline constexpr event<R(Ts...)>::event(memory::allocator& _allocator)
+inline constexpr Event<R(Ts...)>::Event(Memory::Allocator& _allocator)
   : m_delegates{_allocator}
 {
 }
 
 template<typename R, typename... Ts>
-inline constexpr event<R(Ts...)>::event()
-  : event{memory::system_allocator::instance()}
+inline constexpr Event<R(Ts...)>::Event()
+  : Event{Memory::SystemAllocator::instance()}
 {
 }
 
 template<typename R, typename... Ts>
-inline void event<R(Ts...)>::signal(Ts... _arguments) {
-  concurrency::scope_lock lock{m_lock};
-  m_delegates.each_fwd([&](delegate& _delegate) {
+inline void Event<R(Ts...)>::signal(Ts... _arguments) {
+  Concurrency::ScopeLock lock{m_lock};
+  m_delegates.each_fwd([&](Delegate& _delegate) {
     if (_delegate) {
       _delegate(_arguments...);
     }
@@ -92,29 +92,29 @@ inline void event<R(Ts...)>::signal(Ts... _arguments) {
 }
 
 template<typename R, typename... Ts>
-inline typename event<R(Ts...)>::handle event<R(Ts...)>::connect(delegate&& delegate_) {
-  concurrency::scope_lock lock{m_lock};
-  const rx_size delegates{m_delegates.size()};
-  for (rx_size i{0}; i < delegates; i++) {
+inline typename Event<R(Ts...)>::Handle Event<R(Ts...)>::connect(Delegate&& delegate_) {
+  Concurrency::ScopeLock lock{m_lock};
+  const Size delegates = m_delegates.size();
+  for (Size i{0}; i < delegates; i++) {
     if (!m_delegates[i]) {
       return {this, i};
     }
   }
-  m_delegates.emplace_back(utility::move(delegate_));
+  m_delegates.emplace_back(Utility::move(delegate_));
   return {this, delegates};
 }
 
 template<typename R, typename... Ts>
-inline bool event<R(Ts...)>::is_empty() const {
+inline bool Event<R(Ts...)>::is_empty() const {
   return size() == 0;
 }
 
 template<typename R, typename... Ts>
-inline rx_size event<R(Ts...)>::size() const {
-  concurrency::scope_lock lock{m_lock};
+inline Size Event<R(Ts...)>::size() const {
+  Concurrency::ScopeLock lock{m_lock};
   // This is slightly annoying because |m_delegates| may have empty slots.
-  rx_size result = 0;
-  m_delegates.each_fwd([&](const delegate& _delegate) {
+  Size result = 0;
+  m_delegates.each_fwd([&](const Delegate& _delegate) {
     if (_delegate) {
       result++;
     }
@@ -123,7 +123,7 @@ inline rx_size event<R(Ts...)>::size() const {
 }
 
 template<typename R, typename... Ts>
-RX_HINT_FORCE_INLINE constexpr memory::allocator& event<R(Ts...)>::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Event<R(Ts...)>::allocator() const {
   return m_delegates.allocator();
 }
 

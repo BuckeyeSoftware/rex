@@ -11,24 +11,24 @@
 #include "rx/math/vec3.h" // vec3{f,i}
 #include "rx/math/vec4.h" // vec4{f,i}
 
-namespace rx::console {
+namespace Rx::Console {
 
-using ::rx::math::vec2;
-using ::rx::math::vec2f;
-using ::rx::math::vec2i;
+using ::Rx::Math::Vec2;
+using ::Rx::Math::Vec2f;
+using ::Rx::Math::Vec2i;
 
-using ::rx::math::vec3;
-using ::rx::math::vec3f;
-using ::rx::math::vec3i;
+using ::Rx::Math::Vec3;
+using ::Rx::Math::Vec3f;
+using ::Rx::Math::Vec3i;
 
-using ::rx::math::vec4;
-using ::rx::math::vec4f;
-using ::rx::math::vec4i;
+using ::Rx::Math::Vec4;
+using ::Rx::Math::Vec4f;
+using ::Rx::Math::Vec4i;
 
 template<typename T>
-struct variable;
+struct Variable;
 
-enum class variable_type {
+enum class VariableType {
   k_boolean,
   k_string,
   k_int,
@@ -41,112 +41,112 @@ enum class variable_type {
   k_vec2i,
 };
 
-enum class variable_status {
+enum class VariableStatus {
   k_success,
   k_out_of_range,
   k_type_mismatch
 };
 
-// type traits
-template<variable_type T>
-struct variable_type_trait {
-  static constexpr const variable_type type{T};
+// Type traits
+template<VariableType T>
+struct VariableTypeTrait {
+  static constexpr const VariableType type = T;
 };
 
 template<typename T>
-struct variable_trait;
+struct VariableTrait;
 
-template<> struct variable_trait<bool>   : variable_type_trait<variable_type::k_boolean> {};
-template<> struct variable_trait<string> : variable_type_trait<variable_type::k_string> {};
-template<> struct variable_trait<rx_s32> : variable_type_trait<variable_type::k_int> {};
-template<> struct variable_trait<rx_f32> : variable_type_trait<variable_type::k_float> {};
-template<> struct variable_trait<vec2f>  : variable_type_trait<variable_type::k_vec2f> {};
-template<> struct variable_trait<vec2i>  : variable_type_trait<variable_type::k_vec2i> {};
-template<> struct variable_trait<vec3f>  : variable_type_trait<variable_type::k_vec3f> {};
-template<> struct variable_trait<vec3i>  : variable_type_trait<variable_type::k_vec3i> {};
-template<> struct variable_trait<vec4f>  : variable_type_trait<variable_type::k_vec4f> {};
-template<> struct variable_trait<vec4i>  : variable_type_trait<variable_type::k_vec4i> {};
+template<> struct VariableTrait<bool>   : VariableTypeTrait<VariableType::k_boolean> {};
+template<> struct VariableTrait<String> : VariableTypeTrait<VariableType::k_string> {};
+template<> struct VariableTrait<Sint32> : VariableTypeTrait<VariableType::k_int> {};
+template<> struct VariableTrait<Float32> : VariableTypeTrait<VariableType::k_float> {};
+template<> struct VariableTrait<Vec2f>  : VariableTypeTrait<VariableType::k_vec2f> {};
+template<> struct VariableTrait<Vec2i>  : VariableTypeTrait<VariableType::k_vec2i> {};
+template<> struct VariableTrait<Vec3f>  : VariableTypeTrait<VariableType::k_vec3f> {};
+template<> struct VariableTrait<Vec3i>  : VariableTypeTrait<VariableType::k_vec3i> {};
+template<> struct VariableTrait<Vec4f>  : VariableTypeTrait<VariableType::k_vec4f> {};
+template<> struct VariableTrait<Vec4i>  : VariableTypeTrait<VariableType::k_vec4i> {};
 
-static constexpr const rx_s32 k_int_min{-INT_MAX - 1};
-static constexpr const rx_s32 k_int_max{INT_MAX};
-static constexpr const rx_f32 k_float_min{-FLT_MAX};
-static constexpr const rx_f32 k_float_max{FLT_MAX};
+static constexpr const Sint32 k_int_min = -INT_MAX - 1;
+static constexpr const Sint32 k_int_max = INT_MAX;
+static constexpr const Float32 k_float_min = -FLT_MAX;
+static constexpr const Float32 k_float_max = FLT_MAX;
 
-struct variable_reference {
-  variable_reference() = default;
-  variable_reference(const char* _name, const char* _description, void* _handle, variable_type _type);
-
-  template<typename T>
-  const variable<T>* try_cast() const;
-  template<typename T>
-  variable<T>* try_cast();
+struct VariableReference {
+  VariableReference() = default;
+  VariableReference(const char* _name, const char* _description, void* _handle, VariableType _type);
 
   template<typename T>
-  const variable<T>* cast() const;
+  const Variable<T>* try_cast() const;
   template<typename T>
-  variable<T>* cast();
+  Variable<T>* try_cast();
+
+  template<typename T>
+  const Variable<T>* cast() const;
+  template<typename T>
+  Variable<T>* cast();
 
   const char* description() const;
   const char* name() const;
-  variable_type type() const;
+  VariableType type() const;
 
   void reset();
-  string print_current() const;
-  string print_range() const;
-  string print_initial() const;
+  String print_current() const;
+  String print_range() const;
+  String print_initial() const;
 
   bool is_initial() const;
 
 private:
-  friend struct interface;
+  friend struct Interface;
 
   const char* m_name;
   const char* m_description;
   void* m_handle;
-  variable_type m_type;
-  variable_reference* m_next;
+  VariableType m_type;
+  VariableReference* m_next;
 };
 
 // variable_referece
 template<typename T>
-inline const variable<T>* variable_reference::try_cast() const {
-  return m_type == variable_trait<T>::type ? cast<T>() : nullptr;
+inline const Variable<T>* VariableReference::try_cast() const {
+  return m_type == VariableTrait<T>::type ? cast<T>() : nullptr;
 }
 
 template<typename T>
-inline variable<T>* variable_reference::try_cast() {
-  return m_type == variable_trait<T>::type ? cast<T>() : nullptr;
+inline Variable<T>* VariableReference::try_cast() {
+  return m_type == VariableTrait<T>::type ? cast<T>() : nullptr;
 }
 
 template<typename T>
-inline const variable<T>* variable_reference::cast() const {
-  RX_ASSERT(m_type == variable_trait<T>::type, "invalid cast");
-  return reinterpret_cast<const variable<T>*>(m_handle);
+inline const Variable<T>* VariableReference::cast() const {
+  RX_ASSERT(m_type == VariableTrait<T>::type, "invalid cast");
+  return reinterpret_cast<const Variable<T>*>(m_handle);
 }
 
 template<typename T>
-inline variable<T>* variable_reference::cast() {
-  RX_ASSERT(m_type == variable_trait<T>::type, "invalid cast");
-  return reinterpret_cast<variable<T>*>(m_handle);
+inline Variable<T>* VariableReference::cast() {
+  RX_ASSERT(m_type == VariableTrait<T>::type, "invalid cast");
+  return reinterpret_cast<Variable<T>*>(m_handle);
 }
 
-inline const char* variable_reference::description() const {
+inline const char* VariableReference::description() const {
   return m_description;
 }
 
-inline const char* variable_reference::name() const {
+inline const char* VariableReference::name() const {
   return m_name;
 }
 
-inline variable_type variable_reference::type() const {
+inline VariableType VariableReference::type() const {
   return m_type;
 }
 
 template<typename T>
-struct variable {
-  using on_change_event = event<void(variable<T>&)>;
+struct Variable {
+  using OnChangeEvent = Event<void(Variable<T>&)>;
 
-  variable(const char* _name, const char* _description, const T& _min,
+  Variable(const char* _name, const char* _description, const T& _min,
     const T& _max, const T& _initial);
 
   operator const T&() const;
@@ -155,174 +155,174 @@ struct variable {
   const T& max() const;
   const T& initial() const;
 
-  variable_reference* reference();
-  const variable_reference* reference() const;
+  VariableReference* reference();
+  const VariableReference* reference() const;
 
   void reset();
-  variable_status set(const T& value);
+  VariableStatus set(const T& value);
 
-  typename on_change_event::handle on_change(typename on_change_event::delegate&& _on_change);
+  typename OnChangeEvent::Handle on_change(typename OnChangeEvent::Delegate&& _on_change);
 
 private:
-  variable_reference m_reference;
+  VariableReference m_reference;
   T m_min;
   T m_max;
   T m_initial;
   T m_current;
-  on_change_event m_on_change;
+  OnChangeEvent m_on_change;
 };
 
 // specialization for boolean
 template<>
-struct variable<bool> {
-  using on_change_event = event<void(variable<bool>&)>;
+struct Variable<bool> {
+  using OnChangeEvent = Event<void(Variable<bool>&)>;
 
-  variable(const char* _name, const char* _description, bool _initial);
+  Variable(const char* _name, const char* _description, bool _initial);
 
   operator const bool&() const;
   const bool& get() const;
   const bool& initial() const;
 
-  variable_reference* reference();
-  const variable_reference* reference() const;
+  VariableReference* reference();
+  const VariableReference* reference() const;
 
   void reset();
-  variable_status set(bool value);
+  VariableStatus set(bool value);
 
   void toggle();
 
-  typename on_change_event::handle on_change(typename on_change_event::delegate&& _on_change);
+  typename OnChangeEvent::Handle on_change(typename OnChangeEvent::Delegate&& _on_change);
 
 private:
-  variable_reference m_reference;
+  VariableReference m_reference;
   bool m_initial;
   bool m_current;
-  on_change_event m_on_change;
+  OnChangeEvent m_on_change;
 };
 
 // specialization for string
 template<>
-struct variable<string> {
-  using on_change_event = event<void(variable<string>&)>;
+struct Variable<String> {
+  using OnChangeEvent = Event<void(Variable<String>&)>;
 
-  variable(const char* _name, const char* _description, const char* _initial);
+  Variable(const char* _name, const char* _description, const char* _initial);
 
-  operator const string&() const;
-  const string& get() const;
+  operator const String&() const;
+  const String& get() const;
   const char* initial() const;
 
-  variable_reference* reference();
-  const variable_reference* reference() const;
+  VariableReference* reference();
+  const VariableReference* reference() const;
 
   void reset();
-  variable_status set(const char* _value);
-  variable_status set(const string& _value);
+  VariableStatus set(const char* _value);
+  VariableStatus set(const String& _value);
 
-  typename on_change_event::handle on_change(typename on_change_event::delegate&& _on_change);
+  typename OnChangeEvent::Handle on_change(typename OnChangeEvent::Delegate&& _on_change);
 
 private:
-  variable_reference m_reference;
+  VariableReference m_reference;
   const char* m_initial;
-  string m_current;
-  on_change_event m_on_change;
+  String m_current;
+  OnChangeEvent m_on_change;
 };
 
 // specialization for vector types
 template<typename T>
-struct variable<vec2<T>> {
-  using on_change_event = event<void(variable<vec2<T>>&)>;
+struct Variable<Vec2<T>> {
+  using OnChangeEvent = Event<void(Variable<Vec2<T>>&)>;
 
-  variable(const char* _name, const char* _description, const vec2<T>& _min,
-    const vec2<T>& _max, const vec2<T>& _initial);
+  Variable(const char* _name, const char* _description, const Vec2<T>& _min,
+           const Vec2<T>& _max, const Vec2<T>& _initial);
 
-  operator const vec2<T>&() const;
-  const vec2<T>& get() const;
-  const vec2<T>& min() const;
-  const vec2<T>& max() const;
-  const vec2<T>& initial() const;
+  operator const Vec2<T>&() const;
+  const Vec2<T>& get() const;
+  const Vec2<T>& min() const;
+  const Vec2<T>& max() const;
+  const Vec2<T>& initial() const;
 
-  variable_reference* reference();
-  const variable_reference* reference() const;
+  VariableReference* reference();
+  const VariableReference* reference() const;
 
   void reset();
-  variable_status set(const vec2<T>& _value);
+  VariableStatus set(const Vec2<T>& _value);
 
-  typename on_change_event::handle on_change(typename on_change_event::delegate&& _on_change);
+  typename OnChangeEvent::Handle on_change(typename OnChangeEvent::Delegate&& _on_change);
 
 private:
-  variable_reference m_reference;
-  vec2<T> m_min;
-  vec2<T> m_max;
-  vec2<T> m_initial;
-  vec2<T> m_current;
-  on_change_event m_on_change;
+  VariableReference m_reference;
+  Vec2<T> m_min;
+  Vec2<T> m_max;
+  Vec2<T> m_initial;
+  Vec2<T> m_current;
+  OnChangeEvent m_on_change;
 };
 
 template<typename T>
-struct variable<vec3<T>> {
-  using on_change_event = event<void(variable<vec3<T>>&)>;
+struct Variable<Vec3<T>> {
+  using OnChangeEvent = Event<void(Variable<Vec3<T>>&)>;
 
-  variable(const char* _name, const char* _description, const vec3<T>& _min,
-    const vec3<T>& _max, const vec3<T>& _initial);
+  Variable(const char* _name, const char* _description, const Vec3<T>& _min,
+           const Vec3<T>& _max, const Vec3<T>& _initial);
 
-  operator const vec3<T>&() const;
-  const vec3<T>& get() const;
-  const vec3<T>& min() const;
-  const vec3<T>& max() const;
-  const vec3<T>& initial() const;
+  operator const Vec3<T>&() const;
+  const Vec3<T>& get() const;
+  const Vec3<T>& min() const;
+  const Vec3<T>& max() const;
+  const Vec3<T>& initial() const;
 
-  variable_reference* reference();
-  const variable_reference* reference() const;
+  VariableReference* reference();
+  const VariableReference* reference() const;
 
   void reset();
-  variable_status set(const vec3<T>& value);
+  VariableStatus set(const Vec3<T>& value);
 
-  typename on_change_event::handle on_change(typename on_change_event::delegate&& _on_change);
+  typename OnChangeEvent::Handle on_change(typename OnChangeEvent::Delegate&& _on_change);
 
 private:
-  variable_reference m_reference;
-  vec3<T> m_min;
-  vec3<T> m_max;
-  vec3<T> m_initial;
-  vec3<T> m_current;
-  on_change_event m_on_change;
+  VariableReference m_reference;
+  Vec3<T> m_min;
+  Vec3<T> m_max;
+  Vec3<T> m_initial;
+  Vec3<T> m_current;
+  OnChangeEvent m_on_change;
 };
 
 template<typename T>
-struct variable<vec4<T>> {
-  using on_change_event = event<void(variable<vec4<T>>&)>;
+struct Variable<Vec4<T>> {
+  using OnChangeEvent = Event<void(Variable<Vec4<T>>&)>;
 
-  variable(const char* _name, const char* _description, const vec4<T>& _min,
-    const vec4<T>& _max, const vec4<T>& _initial);
+  Variable(const char* _name, const char* _description, const Vec4<T>& _min,
+           const Vec4<T>& _max, const Vec4<T>& _initial);
 
-  operator const vec4<T>&() const;
-  const vec4<T>& get() const;
-  const vec4<T>& min() const;
-  const vec4<T>& max() const;
-  const vec4<T>& initial() const;
+  operator const Vec4<T>&() const;
+  const Vec4<T>& get() const;
+  const Vec4<T>& min() const;
+  const Vec4<T>& max() const;
+  const Vec4<T>& initial() const;
 
-  variable_reference* reference();
-  const variable_reference* reference() const;
+  VariableReference* reference();
+  const VariableReference* reference() const;
 
   void reset();
-  variable_status set(const vec4<T>& value);
+  VariableStatus set(const Vec4<T>& value);
 
-  typename on_change_event::handle on_change(typename on_change_event::delegate&& _on_change);
+  typename OnChangeEvent::Handle on_change(typename OnChangeEvent::Delegate&& _on_change);
 
 private:
-  variable_reference m_reference;
-  vec4<T> m_min;
-  vec4<T> m_max;
-  vec4<T> m_initial;
-  vec4<T> m_current;
-  on_change_event m_on_change;
+  VariableReference m_reference;
+  Vec4<T> m_min;
+  Vec4<T> m_max;
+  Vec4<T> m_initial;
+  Vec4<T> m_current;
+  OnChangeEvent m_on_change;
 };
 
-// variable<T>
+// Variable<T>
 template<typename T>
-inline variable<T>::variable(const char* _name, const char* _description,
+inline Variable<T>::Variable(const char* _name, const char* _description,
   const T& _min, const T& _max, const T& _initial)
-  : m_reference{_name, _description, static_cast<void*>(this), variable_trait<T>::type}
+  : m_reference{_name, _description, static_cast<void*>(this), VariableTrait<T>::type}
   , m_min{_min}
   , m_max{_max}
   , m_initial{_initial}
@@ -331,49 +331,49 @@ inline variable<T>::variable(const char* _name, const char* _description,
 }
 
 template<typename T>
-inline variable<T>::operator const T&() const {
+inline Variable<T>::operator const T&() const {
   return m_current;
 }
 
 template<typename T>
-inline const T& variable<T>::get() const {
+inline const T& Variable<T>::get() const {
   return m_current;
 }
 
 template<typename T>
-inline const T& variable<T>::min() const {
+inline const T& Variable<T>::min() const {
   return m_min;
 }
 
 template<typename T>
-inline const T& variable<T>::max() const {
+inline const T& Variable<T>::max() const {
   return m_max;
 }
 
 template<typename T>
-inline const T& variable<T>::initial() const {
+inline const T& Variable<T>::initial() const {
   return m_initial;
 }
 
 template<typename T>
-inline const variable_reference* variable<T>::reference() const {
+inline const VariableReference* Variable<T>::reference() const {
   return &m_reference;
 }
 
 template<typename T>
-inline variable_reference* variable<T>::reference() {
+inline VariableReference* Variable<T>::reference() {
   return &m_reference;
 }
 
 template<typename T>
-inline void variable<T>::reset() {
+inline void Variable<T>::reset() {
   m_current = m_initial;
 }
 
 template<typename T>
-inline variable_status variable<T>::set(const T& _value) {
+inline VariableStatus Variable<T>::set(const T& _value) {
   if (_value < m_min || _value > m_max) {
-    return variable_status::k_out_of_range;
+    return VariableStatus::k_out_of_range;
   }
 
   if (m_current != _value) {
@@ -381,121 +381,121 @@ inline variable_status variable<T>::set(const T& _value) {
     m_on_change.signal(*this);
   }
 
-  return variable_status::k_success;
+  return VariableStatus::k_success;
 }
 
 template<typename T>
-inline typename variable<T>::on_change_event::handle variable<T>::on_change(typename on_change_event::delegate&& on_change_) {
-  return m_on_change.connect(utility::move(on_change_));
+inline typename Variable<T>::OnChangeEvent::Handle Variable<T>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
+  return m_on_change.connect(Utility::move(on_change_));
 }
 
-// variable<bool>
-inline variable<bool>::variable(const char* _name, const char* _description, bool _initial)
-  : m_reference{_name, _description, static_cast<void*>(this), variable_trait<bool>::type}
+// Variable<bool>
+inline Variable<bool>::Variable(const char* _name, const char* _description, bool _initial)
+  : m_reference{_name, _description, static_cast<void*>(this), VariableTrait<bool>::type}
   , m_initial{_initial}
   , m_current{_initial}
 {
 }
 
-inline variable<bool>::operator const bool&() const {
+inline Variable<bool>::operator const bool&() const {
   return m_current;
 }
 
-inline const bool& variable<bool>::get() const {
+inline const bool& Variable<bool>::get() const {
   return m_current;
 }
 
-inline const bool& variable<bool>::initial() const {
+inline const bool& Variable<bool>::initial() const {
   return m_initial;
 }
 
-inline variable_reference* variable<bool>::reference() {
+inline VariableReference* Variable<bool>::reference() {
   return &m_reference;
 }
 
-inline const variable_reference* variable<bool>::reference() const {
+inline const VariableReference* Variable<bool>::reference() const {
   return &m_reference;
 }
 
-inline void variable<bool>::reset() {
+inline void Variable<bool>::reset() {
   m_current = m_initial;
 }
 
-inline variable_status variable<bool>::set(bool value) {
+inline VariableStatus Variable<bool>::set(bool value) {
   if (m_current != value) {
     m_current = value;
     m_on_change.signal(*this);
   }
-  return variable_status::k_success;
+  return VariableStatus::k_success;
 }
 
-inline void variable<bool>::toggle() {
+inline void Variable<bool>::toggle() {
   m_current = !m_current;
   m_on_change.signal(*this);
 }
 
-inline typename variable<bool>::on_change_event::handle variable<bool>::on_change(typename on_change_event::delegate&& on_change_) {
-  return m_on_change.connect(utility::move(on_change_));
+inline typename Variable<bool>::OnChangeEvent::Handle Variable<bool>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
+  return m_on_change.connect(Utility::move(on_change_));
 }
 
-// variable<string>
-inline variable<string>::variable(const char* _name, const char* _description, const char* _initial)
-  : m_reference{_name, _description, static_cast<void*>(this), variable_trait<string>::type}
+// Variable<String>
+inline Variable<String>::Variable(const char* _name, const char* _description, const char* _initial)
+  : m_reference{_name, _description, static_cast<void*>(this), VariableTrait<String>::type}
   , m_initial{_initial}
   , m_current{_initial}
 {
 }
 
-inline variable<string>::operator const string&() const {
+inline Variable<String>::operator const String&() const {
   return m_current;
 }
 
-inline const string& variable<string>::get() const {
+inline const String& Variable<String>::get() const {
   return m_current;
 }
 
-inline const char* variable<string>::initial() const {
+inline const char* Variable<String>::initial() const {
   return m_initial;
 }
 
-inline variable_reference* variable<string>::reference() {
+inline VariableReference* Variable<String>::reference() {
   return &m_reference;
 }
 
-inline const variable_reference* variable<string>::reference() const {
+inline const VariableReference* Variable<String>::reference() const {
   return &m_reference;
 }
 
-inline void variable<string>::reset() {
+inline void Variable<String>::reset() {
   m_current = m_initial;
 }
 
-inline variable_status variable<string>::set(const char* _value) {
+inline VariableStatus Variable<String>::set(const char* _value) {
   if (m_current != _value) {
     m_current = _value;
     m_on_change.signal(*this);
   }
-  return variable_status::k_success;
+  return VariableStatus::k_success;
 }
 
-inline variable_status variable<string>::set(const string& _value) {
+inline VariableStatus Variable<String>::set(const String& _value) {
   if (m_current != _value) {
     m_current = _value;
     m_on_change.signal(*this);
   }
 
-  return variable_status::k_success;
+  return VariableStatus::k_success;
 }
 
-inline typename variable<string>::on_change_event::handle variable<string>::on_change(typename on_change_event::delegate&& on_change_) {
-  return m_on_change.connect(utility::move(on_change_));
+inline typename Variable<String>::OnChangeEvent::Handle Variable<String>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
+  return m_on_change.connect(Utility::move(on_change_));
 }
 
-// variable<vec2<T>>
+// Variable<vec2<T>>
 template<typename T>
-inline variable<vec2<T>>::variable(const char* _name, const char* _description,
-  const vec2<T>& _min, const vec2<T>& _max, const vec2<T>& _initial)
-  : m_reference{_name, _description, static_cast<void*>(this), variable_trait<vec2<T>>::type}
+inline Variable<Vec2<T>>::Variable(const char* _name, const char* _description,
+                                   const Vec2<T>& _min, const Vec2<T>& _max, const Vec2<T>& _initial)
+  : m_reference{_name, _description, static_cast<void*>(this), VariableTrait<Vec2<T>>::type}
   , m_min{_min}
   , m_max{_max}
   , m_initial{_initial}
@@ -504,51 +504,51 @@ inline variable<vec2<T>>::variable(const char* _name, const char* _description,
 }
 
 template<typename T>
-inline variable<vec2<T>>::operator const vec2<T>&() const {
+inline Variable<Vec2<T>>::operator const Vec2<T>&() const {
   return m_current;
 }
 
 template<typename T>
-inline const vec2<T>& variable<vec2<T>>::get() const {
+inline const Vec2<T>& Variable<Vec2<T>>::get() const {
   return m_current;
 }
 
 template<typename T>
-inline const vec2<T>& variable<vec2<T>>::min() const {
+inline const Vec2<T>& Variable<Vec2<T>>::min() const {
   return m_min;
 }
 
 template<typename T>
-inline const vec2<T>& variable<vec2<T>>::max() const {
+inline const Vec2<T>& Variable<Vec2<T>>::max() const {
   return m_max;
 }
 
 template<typename T>
-inline const vec2<T>& variable<vec2<T>>::initial() const {
+inline const Vec2<T>& Variable<Vec2<T>>::initial() const {
   return m_initial;
 }
 
 template<typename T>
-inline variable_reference* variable<vec2<T>>::reference() {
+inline VariableReference* Variable<Vec2<T>>::reference() {
   return &m_reference;
 }
 
 template<typename T>
-inline const variable_reference* variable<vec2<T>>::reference() const {
+inline const VariableReference* Variable<Vec2<T>>::reference() const {
   return &m_reference;
 }
 
 template<typename T>
-inline void variable<vec2<T>>::reset() {
+inline void Variable<Vec2<T>>::reset() {
   m_current = m_initial;
 }
 
 template<typename T>
-inline variable_status variable<vec2<T>>::set(const vec2<T>& _value) {
+inline VariableStatus Variable<Vec2<T>>::set(const Vec2<T>& _value) {
   if (_value.x < m_min.x || _value.y < m_min.y ||
       _value.x > m_max.x || _value.y > m_max.y)
   {
-    return variable_status::k_out_of_range;
+    return VariableStatus::k_out_of_range;
   }
 
   if (m_current != _value) {
@@ -556,19 +556,19 @@ inline variable_status variable<vec2<T>>::set(const vec2<T>& _value) {
     m_on_change.signal(*this);
   }
 
-  return variable_status::k_success;
+  return VariableStatus::k_success;
 }
 
 template<typename T>
-inline typename variable<vec2<T>>::on_change_event::handle variable<vec2<T>>::on_change(typename on_change_event::delegate&& on_change_) {
-  return m_on_change.connect(utility::move(on_change_));
+inline typename Variable<Vec2<T>>::OnChangeEvent::Handle Variable<Vec2<T>>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
+  return m_on_change.connect(Utility::move(on_change_));
 }
 
-// variable<vec3<T>>
+// Variable<vec3<T>>
 template<typename T>
-inline variable<vec3<T>>::variable(const char* _name, const char* _description,
-  const vec3<T>& _min, const vec3<T>& _max, const vec3<T>& _initial)
-  : m_reference{_name, _description, static_cast<void*>(this), variable_trait<vec3<T>>::type}
+inline Variable<Vec3<T>>::Variable(const char* _name, const char* _description,
+                                   const Vec3<T>& _min, const Vec3<T>& _max, const Vec3<T>& _initial)
+  : m_reference{_name, _description, static_cast<void*>(this), VariableTrait<Vec3<T>>::type}
   , m_min{_min}
   , m_max{_max}
   , m_initial{_initial}
@@ -577,69 +577,69 @@ inline variable<vec3<T>>::variable(const char* _name, const char* _description,
 }
 
 template<typename T>
-inline variable<vec3<T>>::operator const vec3<T>&() const {
+inline Variable<Vec3<T>>::operator const Vec3<T>&() const {
   return m_current;
 }
 
 template<typename T>
-inline const vec3<T>& variable<vec3<T>>::get() const {
+inline const Vec3<T>& Variable<Vec3<T>>::get() const {
   return m_current;
 }
 
 template<typename T>
-inline const vec3<T>& variable<vec3<T>>::min() const {
+inline const Vec3<T>& Variable<Vec3<T>>::min() const {
   return m_min;
 }
 
 template<typename T>
-inline const vec3<T>& variable<vec3<T>>::max() const {
+inline const Vec3<T>& Variable<Vec3<T>>::max() const {
   return m_max;
 }
 
 template<typename T>
-inline const vec3<T>& variable<vec3<T>>::initial() const {
+inline const Vec3<T>& Variable<Vec3<T>>::initial() const {
   return m_initial;
 }
 
 template<typename T>
-inline variable_reference* variable<vec3<T>>::reference() {
+inline VariableReference* Variable<Vec3<T>>::reference() {
   return &m_reference;
 }
 
 template<typename T>
-inline const variable_reference* variable<vec3<T>>::reference() const {
+inline const VariableReference* Variable<Vec3<T>>::reference() const {
   return &m_reference;
 }
 
 template<typename T>
-inline void variable<vec3<T>>::reset() {
+inline void Variable<Vec3<T>>::reset() {
   m_current = m_initial;
 }
 
 template<typename T>
-inline variable_status variable<vec3<T>>::set(const vec3<T>& _value) {
+inline VariableStatus Variable<Vec3<T>>::set(const Vec3<T>& _value) {
   if (_value.x < m_min.x || _value.y < m_min.y || _value.z < m_min.z ||
       _value.x > m_max.x || _value.y > m_max.y || _value.z > m_max.z)
   {
-    return variable_status::k_out_of_range;
+    return VariableStatus::k_out_of_range;
   }
   if (m_current != _value) {
     m_current = _value;
     m_on_change.signal(*this);
   }
-  return variable_status::k_success;
+  return VariableStatus::k_success;
 }
 
 template<typename T>
-inline typename variable<vec3<T>>::on_change_event::handle variable<vec3<T>>::on_change(typename on_change_event::delegate&& on_change_) {
-  return m_on_change.connect(utility::move(on_change_));
+inline typename Variable<Vec3<T>>::OnChangeEvent::Handle Variable<Vec3<T>>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
+  return m_on_change.connect(Utility::move(on_change_));
 }
 
-// variable<vec4<T>>
+// Variable<vec4<T>>
 template<typename T>
-inline variable<vec4<T>>::variable(const char* _name, const char* _description,
-  const vec4<T>& _min, const vec4<T>& _max, const vec4<T>& _initial)
-  : m_reference{_name, _description, static_cast<void*>(this), variable_trait<vec4<T>>::type}
+inline Variable<Vec4<T>>::Variable(const char* _name, const char* _description,
+                                   const Vec4<T>& _min, const Vec4<T>& _max, const Vec4<T>& _initial)
+  : m_reference{_name, _description, static_cast<void*>(this), VariableTrait<Vec4<T>>::type}
   , m_min{_min}
   , m_max{_max}
   , m_initial{_initial}
@@ -648,78 +648,78 @@ inline variable<vec4<T>>::variable(const char* _name, const char* _description,
 }
 
 template<typename T>
-inline variable<vec4<T>>::operator const vec4<T>&() const {
+inline Variable<Vec4<T>>::operator const Vec4<T>&() const {
   return m_current;
 }
 
 template<typename T>
-inline const vec4<T>& variable<vec4<T>>::get() const {
+inline const Vec4<T>& Variable<Vec4<T>>::get() const {
   return m_current;
 }
 
 template<typename T>
-inline const vec4<T>& variable<vec4<T>>::min() const {
+inline const Vec4<T>& Variable<Vec4<T>>::min() const {
   return m_min;
 }
 
 template<typename T>
-inline const vec4<T>& variable<vec4<T>>::max() const {
+inline const Vec4<T>& Variable<Vec4<T>>::max() const {
   return m_max;
 }
 
 template<typename T>
-inline const vec4<T>& variable<vec4<T>>::initial() const {
+inline const Vec4<T>& Variable<Vec4<T>>::initial() const {
   return m_initial;
 }
 
 template<typename T>
-inline variable_reference* variable<vec4<T>>::reference() {
+inline VariableReference* Variable<Vec4<T>>::reference() {
   return &m_reference;
 }
 
 template<typename T>
-inline const variable_reference* variable<vec4<T>>::reference() const {
+inline const VariableReference* Variable<Vec4<T>>::reference() const {
   return &m_reference;
 }
 
 template<typename T>
-inline void variable<vec4<T>>::reset() {
+inline void Variable<Vec4<T>>::reset() {
   m_current = m_initial;
 }
 
 template<typename T>
-inline variable_status variable<vec4<T>>::set(const vec4<T>& _value) {
+inline VariableStatus Variable<Vec4<T>>::set(const Vec4<T>& _value) {
   if (_value.x < m_min.x || _value.y < m_min.y || _value.z < m_min.z || _value.w < m_min.w ||
       _value.x > m_max.x || _value.y > m_max.y || _value.z > m_max.z || _value.w > m_max.w)
   {
-    return variable_status::k_out_of_range;
+    return VariableStatus::k_out_of_range;
   }
   if (m_current != _value) {
     m_current = _value;
     m_on_change.signal(*this);
   }
-  return variable_status::k_success;
+  return VariableStatus::k_success;
 }
 
 template<typename T>
-inline typename variable<vec4<T>>::on_change_event::handle variable<vec4<T>>::on_change(typename on_change_event::delegate&& on_change_) {
-  return m_on_change.connect(utility::move(on_change_));
+inline typename Variable<Vec4<T>>::OnChangeEvent::Handle Variable<Vec4<T>>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
+  return m_on_change.connect(Utility::move(on_change_));
 }
 
-const char* variable_type_as_string(variable_type _type);
+const char* VariableType_as_string(VariableType _type);
 
-inline bool variable_type_is_ranged(variable_type _type) {
-  return _type != variable_type::k_boolean && _type != variable_type::k_string;
+inline bool VariableType_is_ranged(VariableType _type) {
+  return _type != VariableType::k_boolean && _type != VariableType::k_string;
 }
 
 } // namespace rx::console
 
 #define RX_CONSOLE_TRVAR(_type, _label, _name, _description, _min, _max, _initial) \
-  static ::rx::global<::rx::console::variable<_type>> _label \
+  static ::Rx::Global<::Rx::Console::Variable<_type>> _label \
     {"cvars", (_name), (_name), (_description), (_min), (_max), (_initial)}
 
 #define RX_CONSOLE_TUVAR(_type, _label, _name, _description, _initial) \
-  static ::rx::global<::rx::console::variable<_type>> _label \
+  static ::Rx::Global<::Rx::Console::Variable<_type>> _label \
     {"cvars", (_name), (_name), (_description), (_initial)}
 
 // helper macros to define console variables
@@ -727,30 +727,30 @@ inline bool variable_type_is_ranged(variable_type _type) {
   RX_CONSOLE_TUVAR(bool, _label, _name, (_description), (_initial))
 
 #define RX_CONSOLE_SVAR(_label, _name, _description, _initial) \
-  RX_CONSOLE_TUVAR(::rx::string, _label, _name, (_description), (_initial))
+  RX_CONSOLE_TUVAR(::Rx::String, _label, _name, (_description), (_initial))
 
 #define RX_CONSOLE_IVAR(_label, _name, _description, _min, _max, _initial) \
-  RX_CONSOLE_TRVAR(rx_s32, _label, _name, (_description), (_min), (_max), (_initial))
+  RX_CONSOLE_TRVAR(Sint32, _label, _name, (_description), (_min), (_max), (_initial))
 
 #define RX_CONSOLE_FVAR(_label, _name, _description, _min, _max, _initial) \
-  RX_CONSOLE_TRVAR(rx_f32, _label, _name, (_description), (_min), (_max), (_initial))
+  RX_CONSOLE_TRVAR(Float32, _label, _name, (_description), (_min), (_max), (_initial))
 
 #define RX_CONSOLE_V2IVAR(_label, _name, _description, _min, _max, _initial) \
-  RX_CONSOLE_TRVAR(::rx::math::vec2i, _label, _name, (_description), (_min), (_max), (_initial))
+  RX_CONSOLE_TRVAR(::Rx::Math::Vec2i, _label, _name, (_description), (_min), (_max), (_initial))
 
 #define RX_CONSOLE_V2FVAR(_label, _name, _description, _min, _max, _initial) \
-  RX_CONSOLE_TRVAR(::rx::math::vec2f, _label, _name, (_description), (_min), (_max), (_initial))
+  RX_CONSOLE_TRVAR(::Rx::Math::Vec2f, _label, _name, (_description), (_min), (_max), (_initial))
 
 #define RX_CONSOLE_V3IVAR(_label, _name, _description, _min, _max, _initial) \
-  RX_CONSOLE_TRVAR(::rx::math::vec3i, _label, _name, (_description), (_min), (_max), (_initial))
+  RX_CONSOLE_TRVAR(::Rx::Math::Vec3i, _label, _name, (_description), (_min), (_max), (_initial))
 
 #define RX_CONSOLE_V3FVAR(_label, _name, _description, _min, _max, _initial) \
-  RX_CONSOLE_TRVAR(::rx::math::vec3f, _label, _name, (_description), (_min), (_max), (_initial))
+  RX_CONSOLE_TRVAR(::Rx::Math::Vec3f, _label, _name, (_description), (_min), (_max), (_initial))
 
 #define RX_CONSOLE_V4IVAR(_label, _name, _description, _min, _max, _initial) \
-  RX_CONSOLE_TRVAR(::rx::math::vec4i, _label, _name, (_description), (_min), (_max), (_initial))
+  RX_CONSOLE_TRVAR(::Rx::Math::Vec4i, _label, _name, (_description), (_min), (_max), (_initial))
 
 #define RX_CONSOLE_V4FVAR(_label, _name, _description, _min, _max, _initial) \
-  RX_CONSOLE_TRVAR(::rx::math::vec4f, _label, _name, (_description), (_min), (_max), (_initial))
+  RX_CONSOLE_TRVAR(::Rx::Math::Vec4f, _label, _name, (_description), (_min), (_max), (_initial))
 
 #endif // RX_CONSOLE_VARIABLE_H

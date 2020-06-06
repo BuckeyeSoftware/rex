@@ -11,46 +11,46 @@
 
 #include "rx/material/texture.h"
 
-namespace rx {
-  struct json;
-  struct stream;
+namespace Rx {
+  struct JSON;
+  struct Stream;
 }
 
-namespace rx::material {
+namespace Rx::Material {
 
-struct RX_HINT_EMPTY_BASES loader
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES Loader
+  : Concepts::NoCopy
 {
-  loader(memory::allocator& _allocator);
-  loader(loader&& loader_);
+  Loader(Memory::Allocator& _allocator);
+  Loader(Loader&& loader_);
 
-  void operator=(loader&& loader_);
+  void operator=(Loader&& loader_);
 
-  bool load(stream* _stream);
-  bool load(const string& _file_name);
+  bool load(Stream* _stream);
+  bool load(const String& _file_name);
 
-  bool parse(const json& _definition);
+  bool parse(const JSON& _definition);
 
-  constexpr memory::allocator& allocator() const;
-  vector<texture>&& textures();
-  string&& name();
+  constexpr Memory::Allocator& allocator() const;
+  Vector<Texture>&& textures();
+  String&& name();
   bool alpha_test() const;
   bool has_alpha() const;
   bool no_compress() const;
-  rx_f32 roughness() const;
-  rx_f32 metalness() const;
-  const optional<math::transform>& transform() const &;
+  Float32 roughness() const;
+  Float32 metalness() const;
+  const Optional<Math::Transform>& transform() const &;
 
 private:
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments) const;
 
   template<typename... Ts>
-  void log(log::level _level, const char* _format, Ts&&... _arguments) const;
+  void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
 
-  void write_log(log::level _level, string&& message_) const;
+  void write_log(Log::Level _level, String&& message_) const;
 
-  bool parse_textures(const json& _textures);
+  bool parse_textures(const JSON& _textures);
 
   enum {
     k_alpha_test  = 1 << 0,
@@ -58,62 +58,62 @@ private:
     k_no_compress = 1 << 2
   };
 
-  ref<memory::allocator> m_allocator;
-  vector<texture> m_textures;
-  string m_name;
-  rx_u32 m_flags;
-  rx_f32 m_roughness;
-  rx_f32 m_metalness;
-  optional<math::transform> m_transform;
+  Ref<Memory::Allocator> m_allocator;
+  Vector<Texture> m_textures;
+  String m_name;
+  Uint32 m_flags;
+  Float32 m_roughness;
+  Float32 m_metalness;
+  Optional<Math::Transform> m_transform;
 };
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& loader::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Loader::allocator() const {
   return m_allocator;
 }
 
-inline vector<texture>&& loader::textures() {
-  return utility::move(m_textures);
+inline Vector<Texture>&& Loader::textures() {
+  return Utility::move(m_textures);
 }
 
-inline string&& loader::name() {
-  return utility::move(m_name);
+inline String&& Loader::name() {
+  return Utility::move(m_name);
 }
 
-inline bool loader::alpha_test() const {
+inline bool Loader::alpha_test() const {
   return m_flags & k_alpha_test;
 }
 
-inline bool loader::has_alpha() const {
+inline bool Loader::has_alpha() const {
   return m_flags & k_has_alpha;
 }
 
-inline bool loader::no_compress() const {
+inline bool Loader::no_compress() const {
   return m_flags & k_no_compress;
 }
 
-inline rx_f32 loader::roughness() const {
+inline Float32 Loader::roughness() const {
   return m_roughness;
 }
 
-inline rx_f32 loader::metalness() const {
+inline Float32 Loader::metalness() const {
   return m_metalness;
 }
 
-inline const optional<math::transform>& loader::transform() const & {
+inline const Optional<Math::Transform>& Loader::transform() const & {
   return m_transform;
 }
 
 template<typename... Ts>
-inline bool loader::error(const char* _format, Ts&&... _arguments) const {
-  log(log::level::k_error, _format, utility::forward<Ts>(_arguments)...);
+inline bool Loader::error(const char* _format, Ts&&... _arguments) const {
+  log(Log::Level::k_error, _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 
 template<typename... Ts>
-inline void loader::log(log::level _level, const char* _format,
+inline void Loader::log(Log::Level _level, const char* _format,
   Ts&&... _arguments) const
 {
-  write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
+  write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));
 }
 
 } // namespace rx::material

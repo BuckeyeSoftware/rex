@@ -9,64 +9,60 @@
 
 #include "rx/render/frontend/state.h"
 
-namespace rx::memory {
-  struct allocator;
+namespace Rx::Render {
+
+namespace Frontend {
+  struct Context;
+  struct Technique;
+  struct Target;
+  struct Buffer;
 }
 
-namespace rx::render {
-
-namespace frontend {
-  struct context;
-  struct technique;
-  struct target;
-  struct buffer;
-}
-
-struct immediate3D {
-  enum : rx_u32 {
+struct Immediate3D {
+  enum : Uint32 {
     k_depth_test  = 1 << 0,
     k_depth_write = 1 << 1
   };
 
-  struct RX_HINT_EMPTY_BASES queue
-    : concepts::no_copy
+  struct RX_HINT_EMPTY_BASES Queue
+    : Concepts::NoCopy
   {
-    queue() = default;
-    queue(memory::allocator& _allocator);
-    queue(queue&& queue_);
+    Queue() = default;
+    Queue(Memory::Allocator& _allocator);
+    Queue(Queue&& queue_);
 
-    queue& operator=(queue&& queue_);
-    bool operator!=(const queue& _queue) const;
+    Queue& operator=(Queue&& queue_);
+    bool operator!=(const Queue& _queue) const;
 
     void clear();
 
-    struct point {
-      math::vec3f position;
-      rx_f32 size;
-      bool operator!=(const point& _point) const;
+    struct Point {
+      Math::Vec3f position;
+      Float32 size;
+      bool operator!=(const Point& _point) const;
     };
 
-    struct line {
-      math::vec3f point_a;
-      math::vec3f point_b;
-      bool operator!=(const line& _line) const;
+    struct Line {
+      Math::Vec3f point_a;
+      Math::Vec3f point_b;
+      bool operator!=(const Line& _line) const;
     };
 
-    struct solid_sphere {
-      math::vec2f slices_and_stacks;
-      math::mat4x4f transform;
-      bool operator!=(const solid_sphere& _solid_sphere) const;
+    struct SolidSphere {
+      Math::Vec2f slices_and_stacks;
+      Math::Mat4x4f transform;
+      bool operator!=(const SolidSphere& _solid_sphere) const;
     };
 
-    struct solid_cube {
-      math::mat4x4f transform;
-      bool operator!=(const solid_cube& _solid_cube) const;
+    struct SolidCube {
+      Math::Mat4x4f transform;
+      bool operator!=(const SolidCube& _solid_cube) const;
     };
 
-    struct command {
-      constexpr command();
+    struct Command {
+      constexpr Command();
 
-      enum class type {
+      enum class Type {
         k_uninitialized,
         k_point,
         k_line,
@@ -74,125 +70,125 @@ struct immediate3D {
         k_solid_cube
       };
 
-      bool operator!=(const command& _command) const;
+      bool operator!=(const Command& _command) const;
 
-      type kind;
-      rx_u32 flags;
-      rx_size hash;
-      math::vec4f color;
+      Type kind;
+      Uint32 flags;
+      Size hash;
+      Math::Vec4f color;
 
       union {
-        utility::nat as_nat;
-        point as_point;
-        line as_line;
-        solid_sphere as_solid_sphere;
-        solid_cube as_solid_cube;
+        Utility::Nat as_nat;
+        Point as_point;
+        Line as_line;
+        SolidSphere as_solid_sphere;
+        SolidCube as_solid_cube;
       };
     };
 
-    void record_point(const math::vec3f& _point, const math::vec4f& _color,
-      rx_f32 _size, rx_u8 _flags);
+    void record_point(const Math::Vec3f& _point, const Math::Vec4f& _color,
+                      Float32 _size, Uint8 _flags);
 
-    void record_line(const math::vec3f& _point_a, const math::vec3f& _point_b,
-      const math::vec4f& _color, rx_u8 _flags);
+    void record_line(const Math::Vec3f& _point_a, const Math::Vec3f& _point_b,
+                     const Math::Vec4f& _color, Uint8 _flags);
 
-    void record_solid_sphere(const math::vec2f& _slices_and_stacks,
-      const math::vec4f& _color, const math::mat4x4f& _transform, rx_u8 _flags);
+    void record_solid_sphere(const Math::Vec2f& _slices_and_stacks,
+                             const Math::Vec4f& _color, const Math::Mat4x4f& _transform, Uint8 _flags);
 
-    void record_solid_cube(const math::vec4f& _color,
-      const math::mat4x4f& _transform, rx_u8 _flags);
+    void record_solid_cube(const Math::Vec4f& _color,
+                           const Math::Mat4x4f& _transform, Uint8 _flags);
 
     bool is_empty() const;
 
   private:
-    friend struct immediate3D;
-    vector<command> m_commands;
+    friend struct Immediate3D;
+    Vector<Command> m_commands;
   };
 
-  immediate3D(frontend::context* _frontend);
-  ~immediate3D();
+  Immediate3D(Frontend::Context* _frontend);
+  ~Immediate3D();
 
-  void render(frontend::target* _target, const math::mat4x4f& _view,
-    const math::mat4x4f& _projection);
+  void render(Frontend::Target* _target, const Math::Mat4x4f& _view,
+              const Math::Mat4x4f& _projection);
 
-  queue& frame_queue();
+  Queue& frame_queue();
 
 private:
-  struct vertex {
-    math::vec3f position;
-    rx_f32 size;
-    math::vec4f color;
+  struct Vertex {
+    Math::Vec3f position;
+    Float32 size;
+    Math::Vec4f color;
   };
 
-  struct batch {
-    rx_size offset;
-    rx_size count;
-    queue::command::type kind;
-    frontend::state render_state;
+  struct Batch {
+    Size offset;
+    Size count;
+    Queue::Command::Type type;
+    Frontend::State render_state;
   };
 
-  void generate_point(const math::vec3f& _position, rx_f32 _size,
-    const math::vec4f& _color, rx_u32 _flags);
+  void generate_point(const Math::Vec3f& _position, Float32 _size,
+                      const Math::Vec4f& _color, Uint32 _flags);
 
-  void generate_line(const math::vec3f& _point_a, const math::vec3f& _point_b,
-    const math::vec4f& _color, rx_u32 _flags);
+  void generate_line(const Math::Vec3f& _point_a, const Math::Vec3f& _point_b,
+                     const Math::Vec4f& _color, Uint32 _flags);
 
-  void generate_solid_sphere(const math::vec2f& _slices_and_stacks,
-    const math::mat4x4f& _transform, const math::vec4f& _color, rx_u32 _flags);
+  void generate_solid_sphere(const Math::Vec2f& _slices_and_stacks,
+                             const Math::Mat4x4f& _transform, const Math::Vec4f& _color, Uint32 _flags);
 
-  void generate_solid_cube(const math::mat4x4f& _transform,
-    const math::vec4f& _color, rx_u32 _flags);
+  void generate_solid_cube(const Math::Mat4x4f& _transform,
+                           const Math::Vec4f& _color, Uint32 _flags);
 
-  void size_point(rx_size& n_vertices_, rx_size& n_elements_);
-  void size_line(rx_size& n_vertices_, rx_size& n_elements_);
-  void size_solid_sphere(const math::vec2f& _slices_and_stacks,
-    rx_size& n_vertices_, rx_size& n_elements_);
-  void size_solid_cube(rx_size& n_vertices_, rx_size& n_elements_);
+  void size_point(Size& n_vertices_, Size& n_elements_);
+  void size_line(Size& n_vertices_, Size& n_elements_);
+  void size_solid_sphere(const Math::Vec2f& _slices_and_stacks,
+    Size& n_vertices_, Size& n_elements_);
+  void size_solid_cube(Size& n_vertices_, Size& n_elements_);
 
-  void add_batch(rx_size _offset, queue::command::type _type, rx_u32 _flags,
-    bool _blend);
+  void add_batch(Size _offset, Queue::Command::Type _type, Uint32 _flags,
+                 bool _blend);
 
-  void add_element(rx_u32 _element);
-  void add_vertex(vertex&& vertex_);
+  void add_element(Uint32 _element);
+  void add_vertex(Vertex&& vertex_);
 
-  static constexpr const rx_size k_buffers{2};
+  static constexpr const Size k_buffers{2};
 
-  frontend::context* m_frontend;
-  frontend::technique* m_technique;
+  Frontend::Context* m_frontend;
+  Frontend::Technique* m_technique;
 
-  queue m_queue;
-  vector<vertex> m_vertices;
-  vector<rx_u32> m_elements;
-  vector<batch> m_batches;
+  Queue m_queue;
+  Vector<Vertex> m_vertices;
+  Vector<Uint32> m_elements;
+  Vector<Batch> m_batches;
 
-  rx_size m_vertex_index;
-  rx_size m_element_index;
+  Size m_vertex_index;
+  Size m_element_index;
 
-  rx_size m_rd_index;
-  rx_size m_wr_index;
-  vector<batch> m_render_batches[k_buffers];
-  frontend::buffer* m_buffers[k_buffers];
-  queue m_render_queue[k_buffers];
+  Size m_rd_index;
+  Size m_wr_index;
+  Vector<Batch> m_render_batches[k_buffers];
+  Frontend::Buffer* m_buffers[k_buffers];
+  Queue m_render_queue[k_buffers];
 };
 
-inline bool immediate3D::queue::point::operator!=(const point& _point) const {
+inline bool Immediate3D::Queue::Point::operator!=(const Point& _point) const {
   return _point.position != position || _point.size != size;
 }
 
-inline bool immediate3D::queue::line::operator!=(const line& _line) const {
+inline bool Immediate3D::Queue::Line::operator!=(const Line& _line) const {
   return _line.point_a != point_a || _line.point_b != point_b;
 }
 
-inline bool immediate3D::queue::solid_sphere::operator!=(const solid_sphere& _solid_sphere) const {
+inline bool Immediate3D::Queue::SolidSphere::operator!=(const SolidSphere& _solid_sphere) const {
   return _solid_sphere.slices_and_stacks != slices_and_stacks || _solid_sphere.transform != transform;
 }
 
-inline bool immediate3D::queue::solid_cube::operator!=(const solid_cube& _solid_cube) const {
+inline bool Immediate3D::Queue::SolidCube::operator!=(const SolidCube& _solid_cube) const {
   return _solid_cube.transform != transform;
 }
 
-inline constexpr immediate3D::queue::command::command()
-  : kind{queue::command::type::k_uninitialized}
+inline constexpr Immediate3D::Queue::Command::Command()
+  : kind{Queue::Command::Type::k_uninitialized}
   , flags{0}
   , hash{0}
   , color{}
@@ -200,11 +196,11 @@ inline constexpr immediate3D::queue::command::command()
 {
 }
 
-inline bool immediate3D::queue::is_empty() const {
+inline bool Immediate3D::Queue::is_empty() const {
   return m_commands.is_empty();
 }
 
-inline immediate3D::queue& immediate3D::frame_queue() {
+inline Immediate3D::Queue& Immediate3D::frame_queue() {
   return m_queue;
 }
 

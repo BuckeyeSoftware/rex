@@ -3,7 +3,7 @@
 #include "rx/core/memory/allocator.h"
 #include "rx/core/concurrency/spin_lock.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
 // # Statistics Allocator
 //
@@ -13,42 +13,42 @@ namespace rx::memory {
 //
 // The purpose of this allocator is to provide a means to debug and track
 // information about any allocator.
-struct stats_allocator
-  final : allocator
+struct StatsAllocator
+  final : Allocator
 {
-  constexpr stats_allocator() = delete;
-  constexpr stats_allocator(allocator& _allocator);
+  constexpr StatsAllocator() = delete;
+  constexpr StatsAllocator(Allocator& _allocator);
 
-  virtual rx_byte* allocate(rx_size _size);
-  virtual rx_byte* reallocate(void* _data, rx_size _size);
+  virtual Byte* allocate(Size _size);
+  virtual Byte* reallocate(void* _data, Size _size);
   virtual void deallocate(void* _data);
 
-  struct statistics {
-    rx_size allocations;           // Number of calls to allocate
-    rx_size request_reallocations; // Number of calls to reallocate in total
-    rx_size actual_reallocations;  // Number of calls to reallocate that actually in-place reallocated
-    rx_size deallocations;         // Number of calls to deallocate
+  struct Statistics {
+    Size allocations;           // Number of calls to allocate
+    Size request_reallocations; // Number of calls to reallocate in total
+    Size actual_reallocations;  // Number of calls to reallocate that actually in-place reallocated
+    Size deallocations;         // Number of calls to deallocate
 
     // Measures peak and in-use requested bytes.
     // Requested bytes are the sizes passed to allocate and reallocate.
-    rx_u64 peak_request_bytes;
-    rx_u64 used_request_bytes;
+    Uint64 peak_request_bytes;
+    Uint64 used_request_bytes;
 
     // Measures peak and in-use actual bytes.
     // Actual bytes are the sizes once rounded and adjusted to make room for metadata.
-    rx_u64 peak_actual_bytes;
-    rx_u64 used_actual_bytes;
+    Uint64 peak_actual_bytes;
+    Uint64 used_actual_bytes;
   };
 
-  statistics stats() const;
+  Statistics stats() const;
 
 private:
-  allocator& m_allocator;
-  mutable concurrency::spin_lock m_lock;
-  statistics m_statistics; // protected by |m_lock|
+  Allocator& m_allocator;
+  mutable Concurrency::SpinLock m_lock;
+  Statistics m_statistics; // protected by |m_lock|
 };
 
-inline constexpr stats_allocator::stats_allocator(allocator& _allocator)
+inline constexpr StatsAllocator::StatsAllocator(Allocator& _allocator)
   : m_allocator{_allocator}
   , m_statistics{}
 {

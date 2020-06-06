@@ -3,7 +3,7 @@
 #include "rx/core/memory/allocator.h"
 #include "rx/core/concurrency/spin_lock.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
 // # Bump Point Allocator
 //
@@ -21,45 +21,45 @@ namespace rx::memory {
 //
 // The purpose of this allocator is to provide a very quick, linear burn
 // scratch space to allocate shortly-lived objects and to reset.
-struct bump_point_allocator
-  final : allocator
+struct BumpPointAllocator
+  final : Allocator
 {
-  bump_point_allocator() = delete;
+  BumpPointAllocator() = delete;
 
   // |_memory| must be aligned by allocator::k_alignment and |_size| must be
   // a multiple of allocator::k_alignment.
-  bump_point_allocator(rx_byte* _memory, rx_size _size);
+  BumpPointAllocator(Byte* _memory, Size _size);
 
-  virtual rx_byte* allocate(rx_size _size);
-  virtual rx_byte* reallocate(void* _data, rx_size _size);
+  virtual Byte* allocate(Size _size);
+  virtual Byte* reallocate(void* _data, Size _size);
   virtual void deallocate(void* data);
 
   void reset();
 
-  rx_size used() const;
-  rx_size size() const;
-  rx_size available() const;
+  Size used() const;
+  Size size() const;
+  Size available() const;
 
 private:
-  rx_byte* allocate_unlocked(rx_size _size);
+  Byte* allocate_unlocked(Size _size);
 
-  rx_size m_size;
-  rx_byte* m_data;
+  Size m_size;
+  Byte* m_data;
 
-  concurrency::spin_lock m_lock;
-  rx_byte* m_this_point; // protected by |m_lock|
-  rx_byte* m_last_point; // protected by |m_lock|
+  Concurrency::SpinLock m_lock;
+  Byte* m_this_point; // protected by |m_lock|
+  Byte* m_last_point; // protected by |m_lock|
 };
 
-inline rx_size bump_point_allocator::used() const {
+inline Size BumpPointAllocator::used() const {
   return m_this_point - m_data;
 }
 
-inline rx_size bump_point_allocator::size() const {
+inline Size BumpPointAllocator::size() const {
   return m_size;
 }
 
-inline rx_size bump_point_allocator::available() const {
+inline Size BumpPointAllocator::available() const {
   return size() - used();
 }
 

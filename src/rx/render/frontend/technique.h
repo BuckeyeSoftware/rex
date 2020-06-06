@@ -9,151 +9,151 @@
 
 #include "rx/render/frontend/program.h"
 
-namespace rx {
-  struct json;
-  struct stream;
+namespace Rx {
+  struct JSON;
+  struct Stream;
 }
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
-struct program;
-struct technique;
-struct context;
-struct module;
+struct Program;
+struct Technique;
+struct Context;
+struct Module;
 
-struct RX_HINT_EMPTY_BASES technique
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES Technique
+  : Concepts::NoCopy
 {
-  technique() = default;
-  technique(context* _frontend);
-  ~technique();
+  Technique() = default;
+  Technique(Context* _frontend);
+  ~Technique();
 
-  technique(technique&& technique_);
-  technique& operator=(technique&& technique_);
+  Technique(Technique&& technique_);
+  Technique& operator=(Technique&& technique_);
 
-  enum class type {
+  enum class Type {
     k_basic,
     k_variant,
     k_permute
   };
 
-  type kind() const;
+  Type type() const;
   bool has_variants() const;
   bool has_permutes() const;
 
-  operator program*() const;
+  operator Program*() const;
 
-  program* permute(rx_u64 _flags) const;
-  program* variant(rx_size _index) const;
+  Program* permute(Uint64 _flags) const;
+  Program* variant(Size _index) const;
 
-  bool load(stream* _stream);
-  bool load(const string& _file_name);
+  bool load(Stream* _stream);
+  bool load(const String& _file_name);
 
-  bool parse(const json& _description);
-  bool compile(const map<string, module>& _modules);
+  bool parse(const JSON& _description);
+  bool compile(const Map<String, Module>& _modules);
 
-  const string& name() const;
+  const String& name() const;
 
 private:
   void fini();
 
-  struct uniform_definition {
-    union variant {
-      constexpr variant()
+  struct UniformDefinition {
+    union Variant {
+      constexpr Variant()
         : as_nat{}
       {
       }
 
-      utility::nat as_nat;
-      rx_s32 as_int;
-      rx_f32 as_float;
+      Utility::Nat as_nat;
+      Sint32 as_int;
+      Float32 as_float;
       bool as_bool;
-      math::vec2i as_vec2i;
-      math::vec3i as_vec3i;
-      math::vec4i as_vec4i;
-      math::vec2f as_vec2f;
-      math::vec3f as_vec3f;
-      math::vec4f as_vec4f;
-      math::mat3x3f as_mat3x3f;
-      math::mat4x4f as_mat4x4f;
+      Math::Vec2i as_vec2i;
+      Math::Vec3i as_vec3i;
+      Math::Vec4i as_vec4i;
+      Math::Vec2f as_vec2f;
+      Math::Vec3f as_vec3f;
+      Math::Vec4f as_vec4f;
+      Math::Mat3x3f as_mat3x3f;
+      Math::Mat4x4f as_mat4x4f;
     };
 
-    uniform::type kind;
-    string name;
-    string when;
-    variant value;
+    Uniform::Type kind;
+    String name;
+    String when;
+    Variant value;
     bool has_value;
   };
 
-  struct shader_definition {
-    struct inout {
-      shader::inout_type kind;
-      rx_size index;
-      string when;
+  struct ShaderDefinition {
+    struct InOut {
+      Shader::InOutType kind;
+      Size index;
+      String when;
     };
 
-    shader::type kind;
-    string source;
-    vector<string> dependencies;
-    map<string, inout> inputs;
-    map<string, inout> outputs;
-    string when;
+    Shader::Type kind;
+    String source;
+    Vector<String> dependencies;
+    Map<String, InOut> inputs;
+    Map<String, InOut> outputs;
+    String when;
   };
 
-  bool evaluate_when_for_permute(const string& _when, rx_u64 _flags) const;
-  bool evaluate_when_for_variant(const string& _when, rx_size _index) const;
-  bool evaluate_when_for_basic(const string& _when) const;
+  bool evaluate_when_for_permute(const String& _when, Uint64 _flags) const;
+  bool evaluate_when_for_variant(const String& _when, Size _index) const;
+  bool evaluate_when_for_basic(const String& _when) const;
 
-  bool parse_uniforms(const json& _uniforms);
-  bool parse_shaders(const json& _shaders);
+  bool parse_uniforms(const JSON& _uniforms);
+  bool parse_shaders(const JSON& _shaders);
 
-  bool parse_uniform(const json& _uniform);
-  bool parse_shader(const json& _shader);
+  bool parse_uniform(const JSON& _uniform);
+  bool parse_shader(const JSON& _shader);
 
-  bool parse_inouts(const json& _inouts, const char* _type,
-    map<string, shader_definition::inout>& inouts_);
-  bool parse_inout(const json& _inout, const char* _type,
-    map<string, shader_definition::inout>& inouts_);
+  bool parse_inouts(const JSON& _inouts, const char* _type,
+                    Map<String, ShaderDefinition::InOut>& inouts_);
+  bool parse_inout(const JSON& _inout, const char* _type,
+                   Map<String, ShaderDefinition::InOut>& inouts_);
 
-  bool parse_specializations(const json& _specializations, const char* _type);
-  bool parse_specialization(const json& _specialization, const char* _type);
+  bool parse_specializations(const JSON& _specializations, const char* _type);
+  bool parse_specialization(const JSON& _specialization, const char* _type);
 
-  bool resolve_dependencies(const map<string, module>& _modules);
+  bool resolve_dependencies(const Map<String, Module>& _modules);
 
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments) const;
 
   template<typename... Ts>
-  void log(log::level _level, const char* _format, Ts&&... _arguments) const;
+  void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
 
-  void write_log(log::level _level, string&& message_) const;
+  void write_log(Log::Level _level, String&& message_) const;
 
-  context* m_frontend;
-  type m_type;
-  vector<program*> m_programs;
-  vector<rx_u64> m_permute_flags;
-  string m_name;
+  Context* m_frontend;
+  Type m_type;
+  Vector<Program*> m_programs;
+  Vector<Uint64> m_permute_flags;
+  String m_name;
 
-  vector<shader_definition> m_shader_definitions;
-  vector<uniform_definition> m_uniform_definitions;
-  vector<string> m_specializations;
+  Vector<ShaderDefinition> m_shader_definitions;
+  Vector<UniformDefinition> m_uniform_definitions;
+  Vector<String> m_specializations;
 };
 
-inline const string& technique::name() const {
+inline const String& Technique::name() const {
   return m_name;
 }
 
 template<typename... Ts>
-inline bool technique::error(const char* _format, Ts&&... _arguments) const {
-  log(log::level::k_error, "%s", string::format(_format, utility::forward<Ts>(_arguments)...));
+inline bool Technique::error(const char* _format, Ts&&... _arguments) const {
+  log(Log::Level::k_error, "%s", String::format(_format, Utility::forward<Ts>(_arguments)...));
   return false;
 }
 
 template<typename... Ts>
-inline void technique::log(log::level _level, const char* _format,
-  Ts&&... _arguments) const
+inline void Technique::log(Log::Level _level, const char* _format,
+                           Ts&&... _arguments) const
 {
-  write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
+  write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));
 }
 
 } // namespace rx::render::frontend

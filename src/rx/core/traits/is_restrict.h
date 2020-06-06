@@ -3,7 +3,7 @@
 #include "rx/core/traits/remove_cv.h"
 #include "rx/core/hints/restrict.h"
 
-namespace rx::traits {
+namespace Rx::traits {
 
 namespace detail {
   template<typename T>

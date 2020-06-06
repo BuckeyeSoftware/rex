@@ -2,10 +2,10 @@
 #define RX_CORE_TIME_QPC_H
 #include "rx/core/types.h"
 
-namespace rx::time {
+namespace Rx::Time {
 
-rx_u64 qpc_ticks();
-rx_u64 qpc_frequency();
+Uint64 qpc_ticks();
+Uint64 qpc_frequency();
 
 } // namespace rx::time
 

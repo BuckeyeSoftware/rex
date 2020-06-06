@@ -1,6 +1,6 @@
 
 #if 0
-static void write_noise_map(const vector<rx_f32>& _noise_map, const math::vec2i& _dimensions) {
+static void write_noise_map(const Vector<rx_f32>& _noise_map, const math::vec2i& _dimensions) {
   filesystem::file out{"test.ppm", "w"};
   out.print("P3\n");
   out.print("%zu %zu\n", _dimensions.w, _dimensions.h);
@@ -17,7 +17,7 @@ static void write_noise_map(const vector<rx_f32>& _noise_map, const math::vec2i&
   }
 }
 
-static void write_color_map(const vector<math::vec3f>& _color_map, const math::vec2i& _dimensions) {
+static void write_color_map(const Vector<math::vec3f>& _color_map, const math::vec2i& _dimensions) {
   filesystem::file out{"test.ppm", "w"};
   out.print("P3\n");
   out.print("%d %d\n", _dimensions.w, _dimensions.h);
@@ -51,13 +51,13 @@ struct terrain_type {
   rx_f32 height;
 };
 
-static vector<rx_f32> generate_noise_map(const math::vec2i& _dimensions, rx_f32 _scale, int _octaves, rx_f32 _persistance, rx_f32 _lacunarity) {
+static Vector<rx_f32> generate_noise_map(const math::vec2i& _dimensions, rx_f32 _scale, int _octaves, rx_f32 _persistance, rx_f32 _lacunarity) {
   if (_scale <= 0.0f) {
     _scale = 0.0001f;
   }
 
-  vector<rx_f32> noise_map{static_cast<rx_size>(_dimensions.area())};
-  vector<math::vec2f> octave_offsets{static_cast<rx_size>(_octaves)};
+  Vector<rx_f32> noise_map{static_cast<rx_size>(_dimensions.area())};
+  Vector<math::vec2f> octave_offsets{static_cast<rx_size>(_octaves)};
   for (rx_s32 i{0}; i < _octaves; i++) {
     const rx_f32 x{0.0f};
     const rx_f32 y{0.0f};
@@ -105,9 +105,9 @@ static vector<rx_f32> generate_noise_map(const math::vec2i& _dimensions, rx_f32 
   return noise_map;
 }
 
-static vector<math::vec3f> generate_map(const vector<terrain_type>& _terrain_types, const math::vec2i& _dimensions, rx_f32 _scale, int _octaves, rx_f32 _persistence, rx_f32 _lacunarity) {
+static Vector<math::vec3f> generate_map(const Vector<terrain_type>& _terrain_types, const math::vec2i& _dimensions, rx_f32 _scale, int _octaves, rx_f32 _persistence, rx_f32 _lacunarity) {
   const auto& noise_map{generate_noise_map(_dimensions, _scale, _octaves, _persistence, _lacunarity)};
-  vector<math::vec3f> color_map{static_cast<rx_size>(_dimensions.area())};
+  Vector<math::vec3f> color_map{static_cast<rx_size>(_dimensions.area())};
   for (rx_s32 y{0}; y < _dimensions.h; y++) {
     for (rx_s32 x{0}; x < _dimensions.w; x++) {
       const rx_f32 current_height{noise_map[_dimensions.w * y + x]};
@@ -129,8 +129,8 @@ struct terrain_mesh {
     math::vec2f coordinate;
   };
 
-  vector<vertex> vertices;
-  vector<rx_u32> triangles;
+  Vector<vertex> vertices;
+  Vector<rx_u32> triangles;
   rx_size triangle_index;
 
   terrain_mesh(const math::vec2i& _dimensions) {
@@ -146,7 +146,7 @@ struct terrain_mesh {
   }
 };
 
-static terrain_mesh generate_terrain_mesh(const vector<rx_f32>& _height_map, const math::vec2i& _dimensions) {
+static terrain_mesh generate_terrain_mesh(const Vector<rx_f32>& _height_map, const math::vec2i& _dimensions) {
   terrain_mesh mesh{_dimensions};
   rx_size vertex_index{0};
   const rx_f32 top_left_x{(_dimensions.w - 1) / -2.0f};

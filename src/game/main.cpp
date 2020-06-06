@@ -20,12 +20,12 @@
 
 #include "rx/math/camera.h"
 
-using namespace rx;
+using namespace Rx;
 
-struct test_game
-  : game
+struct TestGame
+  : Game
 {
-  test_game(render::frontend::context& _frontend)
+  TestGame(Render::Frontend::Context& _frontend)
     : m_frontend{_frontend}
     , m_immediate2D{&m_frontend}
     , m_immediate3D{&m_frontend}
@@ -47,7 +47,7 @@ struct test_game
     model_transform[2].translate = { 5.0f, 0.0f, 0.0f};
   }
 
-  ~test_game() {
+  ~TestGame() {
   }
 
   virtual bool on_init() {
@@ -67,7 +67,7 @@ struct test_game
     return true;
   }
 
-  virtual status on_slice(input::input& _input) {
+  virtual status on_slice(Input::Context& _input) {
 #if 0
     const math::vec2i& noise_dimensions{100, 100};
     const rx_f32 noise_scale{100.0f};
@@ -81,7 +81,7 @@ struct test_game
 
     //const auto& noise_map{generate_noise_map(noise_dimensions, noise_scale, octaves, persistence, lacunarity)};
     //write_noise_map(noise_map, noise_dimensions);
-    vector<terrain_type> terrain{8};
+    Vector<terrain_type> terrain{8};
     terrain[0].height = 0.1f;
     terrain[0].color = rgb(51, 99, 193);
 
@@ -113,48 +113,48 @@ struct test_game
     abort();
 #endif
 
-    static auto display_resolution{console::interface::find_variable_by_name("display.resolution")->cast<math::vec2i>()};
-    static auto display_swap_interval{console::interface::find_variable_by_name("display.swap_interval")->cast<rx_s32>()};
-    static auto display_fullscreen{console::interface::find_variable_by_name("display.fullscreen")->cast<rx_s32>()};
+    static auto display_resolution{Console::Interface::find_variable_by_name("display.resolution")->cast<Math::Vec2i>()};
+    static auto display_swap_interval{Console::Interface::find_variable_by_name("display.swap_interval")->cast<Sint32>()};
+    static auto display_fullscreen{Console::Interface::find_variable_by_name("display.fullscreen")->cast<Sint32>()};
 
-    const auto& dimensions{display_resolution->get().cast<rx_f32>()};
-    m_camera.projection = math::mat4x4f::perspective(90.0f, {0.01f, 2048.0f},
+    const auto& dimensions{display_resolution->get().cast<Float32>()};
+    m_camera.projection = Math::Mat4x4f::perspective(90.0f, {0.01f, 2048.0f},
       dimensions.w / dimensions.h);
 
     if (!_input.active_text()) {
-      rx_f32 move_speed{0.0f};
-      const rx_f32 sens{0.2f};
+      Float32 move_speed{0.0f};
+      const Float32 sens{0.2f};
       const auto &delta{_input.mouse().movement()};
 
 
-      math::vec3f move{static_cast<rx_f32>(delta.y) * sens, static_cast<rx_f32>(delta.x) * sens, 0.0f};
+      Math::Vec3f move{static_cast<Float32>(delta.y) * sens, static_cast<Float32>(delta.x) * sens, 0.0f};
       m_camera.rotate = m_camera.rotate + move;
 
-      if (_input.keyboard().is_held(input::scan_code::k_left_control)) {
+      if (_input.keyboard().is_held(Input::scan_code::k_left_control)) {
         move_speed = 10.0f;
       } else {
         move_speed = 5.0f;
       }
 
-      if (_input.keyboard().is_held(input::scan_code::k_w)) {
+      if (_input.keyboard().is_held(Input::scan_code::k_w)) {
         const auto f{m_camera.to_mat4().z};
-        m_camera.translate += math::vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
+        m_camera.translate += Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (_input.keyboard().is_held(input::scan_code::k_s)) {
+      if (_input.keyboard().is_held(Input::scan_code::k_s)) {
         const auto f{m_camera.to_mat4().z};
-        m_camera.translate -= math::vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
+        m_camera.translate -= Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (_input.keyboard().is_held(input::scan_code::k_d)) {
+      if (_input.keyboard().is_held(Input::scan_code::k_d)) {
         const auto l{m_camera.to_mat4().x};
-        m_camera.translate += math::vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
+        m_camera.translate += Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (_input.keyboard().is_held(input::scan_code::k_a)) {
+      if (_input.keyboard().is_held(Input::scan_code::k_a)) {
         const auto l{m_camera.to_mat4().x};
-        m_camera.translate -= math::vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
+        m_camera.translate -= Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
       }
     }
 
-    if (_input.keyboard().is_released(input::scan_code::k_f1)) {
+    if (_input.keyboard().is_released(Input::scan_code::k_f1)) {
       switch (display_swap_interval->get()) {
       case -1:
         display_swap_interval->set(0);
@@ -168,15 +168,15 @@ struct test_game
       }
     }
 
-    if (_input.keyboard().is_released(input::scan_code::k_escape)) {
+    if (_input.keyboard().is_released(Input::scan_code::k_escape)) {
       return status::k_shutdown;
     }
 
-    if (_input.keyboard().is_released(input::scan_code::k_f12)) {
+    if (_input.keyboard().is_released(Input::scan_code::k_f12)) {
       display_fullscreen->set((display_fullscreen->get() + 1) % 3);
     }
 
-    if (_input.keyboard().is_released(input::scan_code::k_f11)) {
+    if (_input.keyboard().is_released(Input::scan_code::k_f11)) {
       const auto &name{m_skybox.name()};
       const char* next{nullptr};
       /**/ if (name == "miramar")  next = "base/skyboxes/nebula/nebula.json5";
@@ -186,32 +186,32 @@ struct test_game
       m_ibl.render(m_skybox.cubemap(), 256);
     }
 
-    render::frontend::state state;
-    state.viewport.record_dimensions(display_resolution->get().cast<rx_size>());
+    Render::Frontend::State state;
+    state.viewport.record_dimensions(display_resolution->get().cast<Size>());
 
-    render::frontend::buffers draw_buffers;
+    Render::Frontend::Buffers draw_buffers;
     draw_buffers.add(0);
     draw_buffers.add(1);
     draw_buffers.add(2);
     draw_buffers.add(3);
 
     m_frontend.clear(
-      RX_RENDER_TAG("gbuffer"),
-      state,
-      m_gbuffer.target(),
-      draw_buffers,
+            RX_RENDER_TAG("gbuffer"),
+            state,
+            m_gbuffer.target(),
+            draw_buffers,
       RX_RENDER_CLEAR_DEPTH |
       RX_RENDER_CLEAR_STENCIL |
       RX_RENDER_CLEAR_COLOR(0) |
       RX_RENDER_CLEAR_COLOR(1) |
       RX_RENDER_CLEAR_COLOR(2) |
       RX_RENDER_CLEAR_COLOR(3),
-      1.0f,
-      0,
-      math::vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data(),
-      math::vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data(),
-      math::vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data(),
-      math::vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data());
+            1.0f,
+            0,
+            Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data(),
+            Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data(),
+            Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data(),
+            Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data());
 
     // model_xform.rotate += math::vec3f(0.0f, 20.0f, 0.0f) * ;
     m_model0.update(m_frontend.timer().delta_time());
@@ -251,36 +251,36 @@ struct test_game
     return status::k_running;
   }
 
-  void on_resize(const math::vec2z& _dimensions) {
+  void on_resize(const Math::Vec2z& _dimensions) {
     m_gbuffer.resize(_dimensions);
     m_indirect_lighting_pass.resize(_dimensions);
     m_frontend.resize(_dimensions);
   }
 
-  render::frontend::context& m_frontend;
+  Render::Frontend::Context& m_frontend;
 
-  render::immediate2D m_immediate2D;
-  render::immediate3D m_immediate3D;
+  Render::Immediate2D m_immediate2D;
+  Render::Immediate3D m_immediate3D;
 
-  hud::console m_console;
-  hud::frame_graph m_frame_graph;
-  hud::memory_stats m_memory_stats;
-  hud::render_stats m_render_stats;
+  hud::Console m_console;
+  hud::FrameGraph m_frame_graph;
+  hud::MemoryStats m_memory_stats;
+  hud::RenderStats m_render_stats;
 
-  render::gbuffer m_gbuffer;
-  render::skybox m_skybox;
-  render::model m_model0;
-  render::model m_model1;
-  render::model m_model2;
+  Render::gbuffer m_gbuffer;
+  Render::Skybox m_skybox;
+  Render::Model m_model0;
+  Render::Model m_model1;
+  Render::Model m_model2;
 
-  render::ibl m_ibl;
+  Render::ImageBasedLighting m_ibl;
 
-  render::indirect_lighting_pass m_indirect_lighting_pass;
+  Render::IndirectLightingPass m_indirect_lighting_pass;
 
-  math::transform model_transform[3];
-  math::camera m_camera;
+  Math::Transform model_transform[3];
+  Math::camera m_camera;
 };
 
-ptr<game> create(render::frontend::context& _frontend) {
-  return make_ptr<test_game>(memory::system_allocator::instance(), _frontend);
+Ptr<Game> create(Render::Frontend::Context& _frontend) {
+  return make_ptr<TestGame>(Memory::SystemAllocator::instance(), _frontend);
 }

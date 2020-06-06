@@ -11,9 +11,9 @@
 #include "rx/core/hints/unreachable.h"
 #include "rx/core/hints/unlikely.h"
 
-namespace rx {
+namespace Rx {
 
-static bool format_va(string& contents_, const char* _format, va_list _va) {
+static bool format_va(String& contents_, const char* _format, va_list _va) {
   // calculate length to format
   va_list ap;
   va_copy(ap, _va);
@@ -29,18 +29,18 @@ static bool format_va(string& contents_, const char* _format, va_list _va) {
   return false;
 }
 
-rx_size utf8_to_utf16(const char* _utf8_contents, rx_size _length,
-  rx_u16* utf16_contents_)
+Size utf8_to_utf16(const char* _utf8_contents, Size _length,
+  Uint16* utf16_contents_)
 {
-  rx_size elements{0};
-  rx_u32 code_point{0};
+  Size elements{0};
+  Uint32 code_point{0};
 
-  for (rx_size i{0}; i < _length; i++) {
+  for (Size i{0}; i < _length; i++) {
     const char* element{_utf8_contents + i};
-    const rx_byte element_ch{static_cast<rx_byte>(*element)};
+    const Byte element_ch{static_cast<Byte>(*element)};
 
     if (element_ch <= 0x7f) {
-      code_point = static_cast<rx_u16>(element_ch);
+      code_point = static_cast<Uint16>(element_ch);
     } else if (element_ch <= 0xbf) {
       code_point = (code_point << 6) | (element_ch & 0x3f);
     } else if (element_ch <= 0xdf) {
@@ -56,13 +56,13 @@ rx_size utf8_to_utf16(const char* _utf8_contents, rx_size _length,
       if (code_point > 0xffff) {
         elements += 2;
         if (utf16_contents_) {
-          *utf16_contents_++ = static_cast<rx_u16>(0xd800 + (code_point >> 10));
-          *utf16_contents_++ = static_cast<rx_u16>(0xdc00 + (code_point & 0x03ff));
+          *utf16_contents_++ = static_cast<Uint16>(0xd800 + (code_point >> 10));
+          *utf16_contents_++ = static_cast<Uint16>(0xdc00 + (code_point & 0x03ff));
         }
       } else if (code_point < 0xd800 || code_point >= 0xe000) {
         elements += 1;
         if (utf16_contents_) {
-          *utf16_contents_++ = static_cast<rx_u16>(code_point);
+          *utf16_contents_++ = static_cast<Uint16>(code_point);
         }
       }
     }
@@ -71,14 +71,14 @@ rx_size utf8_to_utf16(const char* _utf8_contents, rx_size _length,
   return elements;
 }
 
-rx_size utf16_to_utf8(const rx_u16* _utf16_contents, rx_size _length,
+Size utf16_to_utf8(const Uint16* _utf16_contents, Size _length,
   char* utf8_contents_)
 {
-  rx_size elements{0};
-  rx_u32 code_point{0};
+  Size elements{0};
+  Uint32 code_point{0};
 
-  for (rx_size i{0}; i < _length; i++) {
-    const rx_u16* element{_utf16_contents+i};
+  for (Size i{0}; i < _length; i++) {
+    const Uint16* element{_utf16_contents + i};
 
     if (*element >= 0xd800 && *element <= 0xdbff) {
       code_point = ((*element - 0xd800) << 10) + 0x10000;
@@ -124,37 +124,37 @@ rx_size utf16_to_utf8(const rx_u16* _utf16_contents, rx_size _length,
   return elements;
 }
 
-string string::formatter(memory::allocator& _allocator,
-  const char* _format, ...)
+String String::formatter(Memory::Allocator& _allocator,
+                         const char* _format, ...)
 {
   va_list va;
   va_start(va, _format);
-  string contents{_allocator};
+  String contents{_allocator};
   format_va(contents, _format, va);
   va_end(va);
   return contents;
 }
 
-string::string(memory::allocator& _allocator, const char* _contents)
-  : string{_allocator, _contents, strlen(_contents)}
+String::String(Memory::Allocator& _allocator, const char* _contents)
+  : String{_allocator, _contents, strlen(_contents)}
 {
 }
 
-string::string(memory::allocator& _allocator, const char* _contents,
-  rx_size _size)
-  : string{_allocator}
+String::String(Memory::Allocator& _allocator, const char* _contents,
+               Size _size)
+  : String{_allocator}
 {
   append(_contents, _size);
 }
 
-string::string(memory::allocator& _allocator, const char* _first,
-  const char* _last)
-  : string{_allocator}
+String::String(Memory::Allocator& _allocator, const char* _first,
+               const char* _last)
+  : String{_allocator}
 {
   append(_first, _last);
 }
 
-string::string(string&& contents_)
+String::String(String&& contents_)
   : m_allocator{contents_.m_allocator}
 {
   if (contents_.m_data == contents_.m_buffer) {
@@ -175,7 +175,7 @@ string::string(string&& contents_)
   contents_.resize(0);
 }
 
-string::string(memory::view _view)
+String::String(Memory::View _view)
   : m_allocator{*_view.owner}
   , m_data{nullptr}
   , m_last{nullptr}
@@ -191,7 +191,7 @@ string::string(memory::view _view)
     // Could not find a terminator. Resize the memory given by the view, which
     // can potentially be done in place, append the null-terminator and fill
     // out the string.
-    rx_byte* data = allocator().reallocate(_view.data, _view.size + 1);
+    Byte* data = allocator().reallocate(_view.data, _view.size + 1);
     RX_ASSERT(data, "out of memory");
 
     data[_view.size] = 0;
@@ -202,37 +202,37 @@ string::string(memory::view _view)
   }
 }
 
-string::~string() {
+String::~String() {
   if (m_data != m_buffer) {
     allocator().deallocate(m_data);
   }
 }
 
-string& string::operator=(const string& _contents) {
+String& String::operator=(const String& _contents) {
   RX_ASSERT(&_contents != this, "self assignment");
-  string(_contents).swap(*this);
+  String(_contents).swap(*this);
   return *this;
 }
 
-string& string::operator=(const char* _contents) {
+String& String::operator=(const char* _contents) {
   RX_ASSERT(_contents, "empty string");
-  string(_contents).swap(*this);
+  String(_contents).swap(*this);
   return *this;
 }
 
-string& string::operator=(string&& contents_) {
+String& String::operator=(String&& contents_) {
   RX_ASSERT(&contents_ != this, "self assignment");
-  string(utility::move(contents_)).swap(*this);
+  String(Utility::move(contents_)).swap(*this);
   return *this;
 }
 
-bool string::reserve(rx_size _capacity) {
+bool String::reserve(Size _capacity) {
   if (m_data + _capacity + 1 <= m_capacity) {
     return true;
   }
 
   char* data = nullptr;
-  const auto size = static_cast<rx_size>(m_last - m_data);
+  const auto size = static_cast<Size>(m_last - m_data);
   if (m_data == m_buffer) {
     data = reinterpret_cast<char*>(allocator().allocate(_capacity + 1));
     if (RX_HINT_UNLIKELY(!data)) {
@@ -254,8 +254,8 @@ bool string::reserve(rx_size _capacity) {
   return true;
 }
 
-bool string::resize(rx_size _size) {
-  const auto previous_size = static_cast<rx_size>(m_last - m_data);
+bool String::resize(Size _size) {
+  const auto previous_size = static_cast<Size>(m_last - m_data);
 
   if (RX_HINT_UNLIKELY(!reserve(_size))) {
     return false;
@@ -276,28 +276,28 @@ bool string::resize(rx_size _size) {
   return true;
 }
 
-rx_size string::find_first_of(int _ch) const {
+Size String::find_first_of(int _ch) const {
   if (char* search{strchr(m_data, _ch)}) {
     return search - m_data;
   }
   return k_npos;
 }
 
-rx_size string::find_first_of(const char* _contents) const {
+Size String::find_first_of(const char* _contents) const {
   if (const char* search{strstr(m_data, _contents)}) {
     return search - m_data;
   }
   return k_npos;
 }
 
-rx_size string::find_last_of(int _ch) const {
+Size String::find_last_of(int _ch) const {
   if (const char* search{strrchr(m_data, _ch)}) {
     return search - m_data;
   }
   return k_npos;
 }
 
-rx_size string::find_last_of(const char* _contents) const {
+Size String::find_last_of(const char* _contents) const {
   auto reverse_strstr{[](const char* _haystack, const char* _needle) {
     const char* r{nullptr};
     for (;;) {
@@ -316,13 +316,13 @@ rx_size string::find_last_of(const char* _contents) const {
   return k_npos;
 }
 
-string& string::append(const char* _first, const char *_last) {
-  const auto new_size{static_cast<rx_size>(m_last - m_data + _last - _first + 1)};
+String& String::append(const char* _first, const char *_last) {
+  const auto new_size{static_cast<Size>(m_last - m_data + _last - _first + 1)};
   if (m_data + new_size > m_capacity) {
     reserve((new_size * 3) / 2);
   }
 
-  const auto length{static_cast<rx_size>(_last - _first)};
+  const auto length{static_cast<Size>(_last - _first)};
   memcpy(m_last, _first, length);
   m_last += length;
   *m_last = '\0';
@@ -330,13 +330,13 @@ string& string::append(const char* _first, const char *_last) {
   return *this;
 }
 
-string& string::append(const char* _contents) {
+String& String::append(const char* _contents) {
   return append(_contents, strlen(_contents));
 }
 
-bool string::insert_at(rx_size _position, const char* _contents, rx_size _size) {
-  const rx_size old_this_size{size()};
-  const rx_size old_that_size{_size};
+bool String::insert_at(Size _position, const char* _contents, Size _size) {
+  const Size old_this_size{size()};
+  const Size old_that_size{_size};
 
   if (RX_HINT_UNLIKELY(!resize(old_this_size + old_that_size))) {
     return false;
@@ -349,23 +349,23 @@ bool string::insert_at(rx_size _position, const char* _contents, rx_size _size) 
   return true;
 }
 
-bool string::insert_at(rx_size _position, const char* _contents) {
+bool String::insert_at(Size _position, const char* _contents) {
   return insert_at(_position, _contents, strlen(_contents));
 }
 
-string string::lstrip(const char* _set) const {
+String String::lstrip(const char* _set) const {
   const char* ch{m_data};
   for (; strchr(_set, *ch); ch++);
   return {allocator(), ch};
 }
 
-string string::rstrip(const char* _set) const {
+String String::rstrip(const char* _set) const {
   const char* ch{m_data + size()};
   for (; strchr(_set, *ch); ch--);
   return {allocator(), m_data, ch + 1};
 }
 
-string string::strip(const char* _set) const {
+String String::strip(const char* _set) const {
   const char* beg = m_data;
   const char* end = m_data + size();
   for (; strchr(_set, *beg); beg++);
@@ -373,10 +373,10 @@ string string::strip(const char* _set) const {
   return {allocator(), beg, end + 1};
 }
 
-vector<string> string::split(memory::allocator& _allocator, int _token, rx_size _count) const {
+Vector<String> String::split(Memory::Allocator& _allocator, int _token, Size _count) const {
   bool quoted{false};
   bool limit{_count > 0};
-  vector<string> result{_allocator};
+  Vector<String> result{_allocator};
 
   // When there is a limit we can reserve the storage upfront.
   if (limit) {
@@ -418,7 +418,7 @@ vector<string> string::split(memory::allocator& _allocator, int _token, rx_size 
   return result;
 }
 
-string string::substring(rx_size _offset, rx_size _length) const {
+String String::substring(Size _offset, Size _length) const {
   const char* begin = m_data + _offset;
   RX_ASSERT(begin < m_data + size(), "out of bounds");
   if (_length == 0) {
@@ -429,15 +429,15 @@ string string::substring(rx_size _offset, rx_size _length) const {
   return {allocator(), begin, _length};
 }
 
-rx_size string::scan(const char* _scan_format, ...) const {
+Size String::scan(const char* _scan_format, ...) const {
   va_list va;
   va_start(va, _scan_format);
   const auto result{vsscanf(m_data, _scan_format, va)};
   va_end(va);
-  return static_cast<rx_size>(result);
+  return static_cast<Size>(result);
 }
 
-char string::pop_back() {
+char String::pop_back() {
   if (m_last == m_data) {
     return *data();
   }
@@ -447,7 +447,7 @@ char string::pop_back() {
   return last;
 }
 
-void string::erase(rx_size _begin, rx_size _end) {
+void String::erase(Size _begin, Size _end) {
   RX_ASSERT(_begin < _end, "invalid range");
   RX_ASSERT(_begin < size(), "out of bounds");
   RX_ASSERT(_end <= size(), "out of bounds");
@@ -462,13 +462,13 @@ void string::erase(rx_size _begin, rx_size _end) {
   *m_last = '\0';
 }
 
-string string::human_size_format(rx_size _size) {
-  static constexpr const char* k_suffixes[]{
+String String::human_size_format(Size _size) {
+  static constexpr const char* k_suffixes[] = {
     "B", "KiB", "MiB", "GiB", "TiB"
   };
 
-  rx_f64 bytes{static_cast<rx_f64>(_size)};
-  rx_size i{0};
+  Float64 bytes = static_cast<Float64>(_size);
+  Size i = 0;
   for (; bytes >= 1024.0 && i < sizeof k_suffixes / sizeof *k_suffixes; i++) {
     bytes /= 1024.0;
   }
@@ -493,15 +493,15 @@ string string::human_size_format(rx_size _size) {
   return format("%s %s", buffer, k_suffixes[i]);
 }
 
-bool string::begins_with(const char* _prefix) const {
+bool String::begins_with(const char* _prefix) const {
   return strstr(m_data, _prefix) == m_data;
 }
 
-bool string::begins_with(const string& _prefix) const {
+bool String::begins_with(const String& _prefix) const {
   return strstr(m_data, _prefix.data()) == m_data;
 }
 
-bool string::ends_with(const char* _suffix) const {
+bool String::ends_with(const char* _suffix) const {
   if (size() < strlen(_suffix)) {
     return false;
   }
@@ -509,7 +509,7 @@ bool string::ends_with(const char* _suffix) const {
   return strcmp(m_data + size() - strlen(_suffix), _suffix) == 0;
 }
 
-bool string::ends_with(const string& _suffix) const {
+bool String::ends_with(const String& _suffix) const {
   if (size() < _suffix.size()) {
     return false;
   }
@@ -517,27 +517,27 @@ bool string::ends_with(const string& _suffix) const {
   return strcmp(m_data + size() - _suffix.size(), _suffix.data()) == 0;
 }
 
-bool string::contains(const char* _needle) const {
+bool String::contains(const char* _needle) const {
   return strstr(m_data, _needle);
 }
 
-bool string::contains(const string& _needle) const {
+bool String::contains(const String& _needle) const {
   return strstr(m_data, _needle.data());
 }
 
-rx_size string::hash() const {
-  const rx_byte* data = reinterpret_cast<const rx_byte*>(m_data);
-  if constexpr (sizeof(rx_size) == 8) {
-    return hash::fnv1a<rx_u64>(data, size());
+Size String::hash() const {
+  const Byte* data = reinterpret_cast<const Byte*>(m_data);
+  if constexpr (sizeof(Size) == 8) {
+    return Hash::fnv1a<Uint64>(data, size());
   } else {
-    return hash::fnv1a<rx_u32>(data, size());
+    return Hash::fnv1a<Uint32>(data, size());
   }
   RX_HINT_UNREACHABLE();
 }
 
-memory::view string::disown() {
-  rx_byte* data = reinterpret_cast<rx_byte*>(m_data);
-  rx_size n_bytes = 0;
+Memory::View String::disown() {
+  Byte* data = reinterpret_cast<Byte*>(m_data);
+  Size n_bytes = 0;
 
   if (m_data == m_buffer) {
     // Cannot disown the memory of small string optimization. Copy it out into
@@ -560,21 +560,21 @@ memory::view string::disown() {
   return {&allocator(), data, n_bytes};
 }
 
-wide_string string::to_utf16() const {
-  rx_size length{utf8_to_utf16(m_data, size(), nullptr)};
-  wide_string contents{allocator()};
+WideString String::to_utf16() const {
+  const Size length = utf8_to_utf16(m_data, size(), nullptr);
+  WideString contents{allocator()};
   contents.resize(length);
   utf8_to_utf16(m_data, length, contents.data());
   return contents;
 }
 
 // Complicated because of small string optimization.
-void string::swap(string& other_) {
+void String::swap(String& other_) {
   RX_ASSERT(&other_ != this, "self swap");
 
-  utility::swap(m_data, other_.m_data);
-  utility::swap(m_last, other_.m_last);
-  utility::swap(m_capacity, other_.m_capacity);
+  Utility::swap(m_data, other_.m_data);
+  Utility::swap(m_last, other_.m_last);
+  Utility::swap(m_capacity, other_.m_capacity);
 
   char buffer[k_small_string];
 
@@ -621,7 +621,7 @@ void string::swap(string& other_) {
   }
 }
 
-bool operator==(const string& _lhs, const string& _rhs) {
+bool operator==(const String& _lhs, const String& _rhs) {
   if (&_lhs == &_rhs) {
     return true;
   }
@@ -633,7 +633,7 @@ bool operator==(const string& _lhs, const string& _rhs) {
   return !strcmp(_lhs.data(), _rhs.data());
 }
 
-bool operator!=(const string& _lhs, const string& _rhs) {
+bool operator!=(const String& _lhs, const String& _rhs) {
   if (&_lhs == &_rhs) {
     return false;
   }
@@ -645,16 +645,16 @@ bool operator!=(const string& _lhs, const string& _rhs) {
   return strcmp(_lhs.data(), _rhs.data());
 }
 
-bool operator<(const string& _lhs, const string& _rhs) {
+bool operator<(const String& _lhs, const String& _rhs) {
   return &_lhs == &_rhs ? false : strcmp(_lhs.data(), _rhs.data()) < 0;
 }
 
-bool operator>(const string& _lhs, const string& _rhs) {
+bool operator>(const String& _lhs, const String& _rhs) {
   return &_lhs == &_rhs ? false : strcmp(_lhs.data(), _rhs.data()) > 0;
 }
 
-bool wide_string::resize(rx_size _size) {
-  rx_u16* resize = reinterpret_cast<rx_u16*>(allocator().reallocate(m_data, (_size + 1) * sizeof *m_data));
+bool WideString::resize(Size _size) {
+  Uint16* resize = reinterpret_cast<Uint16*>(allocator().reallocate(m_data, (_size + 1) * sizeof *m_data));
   if (!RX_HINT_UNLIKELY(resize)) {
     return false;
   }
@@ -665,59 +665,59 @@ bool wide_string::resize(rx_size _size) {
   return true;
 }
 
-string wide_string::to_utf8() const {
-  rx_size size{utf16_to_utf8(m_data, m_size, nullptr)};
-  string contents{allocator()};
+String WideString::to_utf8() const {
+  Size size{utf16_to_utf8(m_data, m_size, nullptr)};
+  String contents{allocator()};
   contents.resize(size);
   utf16_to_utf8(m_data, m_size, contents.data());
   return contents;
 }
 
-static rx_size utf16_len(const rx_u16* _data) {
-  rx_size length{0};
+static Size utf16_len(const Uint16* _data) {
+  Size length = 0;
   while (_data[length]) {
     ++length;
   }
   return length;
 }
 
-// wide_string
-wide_string::wide_string(memory::allocator& _allocator)
+// WideString
+WideString::WideString(Memory::Allocator& _allocator)
   : m_allocator{_allocator}
   , m_data{nullptr}
   , m_size{0}
 {
 }
 
-wide_string::wide_string(memory::allocator& _allocator, const wide_string& _other)
-  : wide_string{_allocator, _other.data(), _other.size()}
+WideString::WideString(Memory::Allocator& _allocator, const WideString& _other)
+  : WideString{_allocator, _other.data(), _other.size()}
 {
 }
 
-wide_string::wide_string(memory::allocator& _allocator, const rx_u16* _contents)
-  : wide_string{_allocator, _contents, utf16_len(_contents)}
+WideString::WideString(Memory::Allocator& _allocator, const Uint16* _contents)
+  : WideString{_allocator, _contents, utf16_len(_contents)}
 {
 }
 
-wide_string::wide_string(memory::allocator& _allocator, const rx_u16* _contents,
-  rx_size _size)
+WideString::WideString(Memory::Allocator& _allocator, const Uint16* _contents,
+                       Size _size)
   : m_allocator{_allocator}
   , m_size{_size}
 {
-  m_data = reinterpret_cast<rx_u16*>(allocator().allocate(sizeof(rx_u16) * (_size + 1)));
+  m_data = reinterpret_cast<Uint16*>(allocator().allocate(sizeof(Uint16) * (_size + 1)));
   RX_ASSERT(m_data, "out of memory");
 
-  memcpy(m_data, _contents, sizeof(rx_u16) * (_size + 1));
+  memcpy(m_data, _contents, sizeof(Uint16) * (_size + 1));
 }
 
-wide_string::wide_string(wide_string&& other_)
+WideString::WideString(WideString&& other_)
   : m_allocator{other_.m_allocator}
-  , m_data{utility::exchange(other_.m_data, nullptr)}
-  , m_size{utility::exchange(other_.m_size, 0)}
+  , m_data{Utility::exchange(other_.m_data, nullptr)}
+  , m_size{Utility::exchange(other_.m_size, 0)}
 {
 }
 
-wide_string::~wide_string() {
+WideString::~WideString() {
   allocator().deallocate(m_data);
 }
 

@@ -1,7 +1,7 @@
 #include "rx/core/profiler.h"
 
-namespace rx {
+namespace Rx {
 
-global<profiler> profiler::s_instance{"system", "profiler"};
+Global<Profiler> Profiler::s_instance{"system", "profiler"};
 
 } // namespace rx

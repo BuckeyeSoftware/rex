@@ -3,79 +3,79 @@
 #include "rx/core/vector.h"
 #include "rx/math/vec2.h"
 
-namespace rx::image {
+namespace Rx::Image {
 
-struct matrix
+struct Matrix
 {
-  constexpr matrix(memory::allocator& _allocator);
-  constexpr matrix();
+  constexpr Matrix(Memory::Allocator& _allocator);
+  constexpr Matrix();
 
-  matrix(memory::allocator& _allocator, const math::vec2z& _dimensions, rx_size _channels);
-  matrix(const math::vec2z& _dimensions, rx_size _channels);
+  Matrix(Memory::Allocator& _allocator, const Math::Vec2z& _dimensions, Size _channels);
+  Matrix(const Math::Vec2z& _dimensions, Size _channels);
 
-  matrix(matrix&& matrix_);
-  matrix(const matrix& _matrix);
+  Matrix(Matrix&& matrix_);
+  Matrix(const Matrix& _matrix);
 
-  bool resize(const math::vec2z& _dimensions, rx_size _channels);
+  bool resize(const Math::Vec2z& _dimensions, Size _channels);
 
-  matrix& operator=(matrix&& matrix_);
-  matrix& operator=(const matrix& _matrix);
+  Matrix& operator=(Matrix&& matrix_);
+  Matrix& operator=(const Matrix& _matrix);
 
-  matrix scaled(const math::vec2z& _dimensions) const;
+  Matrix scaled(const Math::Vec2z& _dimensions) const;
 
-  const vector<rx_f32>& data() const &;
+  const Vector<Float32>& data() const &;
 
-  const rx_f32& operator[](rx_size _index) const;
-  rx_f32& operator[](rx_size _index);
+  const Float32& operator[](Size _index) const;
+  Float32& operator[](Size _index);
 
-  const rx_f32* operator()(rx_size _x, rx_size _y) const;
-  rx_f32* operator()(rx_size _x, rx_size _y);
+  const Float32* operator()(Size _x, Size _y) const;
+  Float32* operator()(Size _x, Size _y);
 
-  const math::vec2z& dimensions() const &;
-  rx_size channels() const;
+  const Math::Vec2z& dimensions() const &;
+  Size channels() const;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
-  ref<memory::allocator> m_allocator;
-  vector<rx_f32> m_data;
-  math::vec2z m_dimensions;
-  rx_size m_channels;
+  Ref<Memory::Allocator> m_allocator;
+  Vector<Float32> m_data;
+  Math::Vec2z m_dimensions;
+  Size m_channels;
 };
 
-inline constexpr matrix::matrix(memory::allocator& _allocator)
+inline constexpr Matrix::Matrix(Memory::Allocator& _allocator)
   : m_allocator{_allocator}
   , m_data{allocator()}
   , m_channels{0}
 {
 }
 
-inline constexpr matrix::matrix()
-  : matrix{memory::system_allocator::instance()}
+inline constexpr Matrix::Matrix()
+  : Matrix{Memory::SystemAllocator::instance()}
 {
 }
 
-inline matrix::matrix(memory::allocator& _allocator, const math::vec2z& _dimensions, rx_size _channels)
+inline Matrix::Matrix(Memory::Allocator& _allocator, const Math::Vec2z& _dimensions, Size _channels)
   : m_allocator{_allocator}
   , m_data{allocator()}
 {
   RX_ASSERT(resize(_dimensions, _channels), "out of memory");
 }
 
-inline matrix::matrix(const math::vec2z& _dimensions, rx_size _channels)
-  : matrix{memory::system_allocator::instance(), _dimensions, _channels}
+inline Matrix::Matrix(const Math::Vec2z& _dimensions, Size _channels)
+  : Matrix{Memory::SystemAllocator::instance(), _dimensions, _channels}
 {
 }
 
-inline matrix::matrix(matrix&& matrix_)
+inline Matrix::Matrix(Matrix&& matrix_)
   : m_allocator{matrix_.m_allocator}
-  , m_data{utility::move(matrix_.m_data)}
-  , m_dimensions{utility::exchange(matrix_.m_dimensions, math::vec2z{})}
-  , m_channels{utility::exchange(matrix_.m_channels, 0)}
+  , m_data{Utility::move(matrix_.m_data)}
+  , m_dimensions{Utility::exchange(matrix_.m_dimensions, Math::Vec2z{})}
+  , m_channels{Utility::exchange(matrix_.m_channels, 0)}
 {
 }
 
-inline matrix::matrix(const matrix& _matrix)
+inline Matrix::Matrix(const Matrix& _matrix)
   : m_allocator{_matrix.m_allocator}
   , m_data{_matrix.m_data}
   , m_dimensions{_matrix.m_dimensions}
@@ -83,24 +83,24 @@ inline matrix::matrix(const matrix& _matrix)
 {
 }
 
-inline bool matrix::resize(const math::vec2z& _dimensions, rx_size _channels) {
+inline bool Matrix::resize(const Math::Vec2z& _dimensions, Size _channels) {
   m_dimensions = _dimensions;
   m_channels = _channels;
-  return m_data.resize(m_dimensions.area() * m_channels, utility::uninitialized{});
+  return m_data.resize(m_dimensions.area() * m_channels, Utility::UninitializedTag{});
 }
 
-inline matrix& matrix::operator=(matrix&& matrix_) {
+inline Matrix& Matrix::operator=(Matrix&& matrix_) {
   RX_ASSERT(this != &matrix_, "self move");
 
   m_allocator = matrix_.m_allocator;
-  m_data = utility::move(matrix_.m_data);
-  m_dimensions = utility::exchange(matrix_.m_dimensions, math::vec2z{});
-  m_channels = utility::exchange(matrix_.m_channels, 0);
+  m_data = Utility::move(matrix_.m_data);
+  m_dimensions = Utility::exchange(matrix_.m_dimensions, Math::Vec2z{});
+  m_channels = Utility::exchange(matrix_.m_channels, 0);
 
   return *this;
 }
 
-inline matrix& matrix::operator=(const matrix& _matrix) {
+inline Matrix& Matrix::operator=(const Matrix& _matrix) {
   RX_ASSERT(this != &_matrix, "self assignment");
 
   m_data = _matrix.m_data;
@@ -110,37 +110,37 @@ inline matrix& matrix::operator=(const matrix& _matrix) {
   return *this;
 }
 
-inline const vector<rx_f32>& matrix::data() const & {
+inline const Vector<Float32>& Matrix::data() const & {
   return m_data;
 }
 
-inline const rx_f32& matrix::operator[](rx_size _index) const {
+inline const Float32& Matrix::operator[](Size _index) const {
   return m_data[_index];
 }
 
-inline rx_f32& matrix::operator[](rx_size _index) {
+inline Float32& Matrix::operator[](Size _index) {
   return m_data[_index];
 }
 
-inline const rx_f32* matrix::operator()(rx_size _x, rx_size _y) const {
+inline const Float32* Matrix::operator()(Size _x, Size _y) const {
   RX_ASSERT(!m_data.is_empty(), "empty matrix");
   return m_data.data() + (m_dimensions.w * _y + _x) * m_channels;
 }
 
-inline rx_f32* matrix::operator()(rx_size _x, rx_size _y) {
+inline Float32* Matrix::operator()(Size _x, Size _y) {
   RX_ASSERT(!m_data.is_empty(), "empty matrix");
   return m_data.data() + (m_dimensions.w * _y + _x) * m_channels;
 }
 
-inline const math::vec2z& matrix::dimensions() const & {
+inline const Math::Vec2z& Matrix::dimensions() const & {
   return m_dimensions;
 }
 
-inline rx_size matrix::channels() const {
+inline Size Matrix::channels() const {
   return m_channels;
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& matrix::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Matrix::allocator() const {
   return m_allocator;
 }
 

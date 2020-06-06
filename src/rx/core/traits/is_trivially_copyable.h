@@ -1,7 +1,7 @@
 #ifndef RX_CORE_TRAITS_IS_TRIVIALLY_COPYABLE
 #define RX_CORE_TRAITS_IS_TRIVIALLY_COPYABLE
 
-namespace rx::traits {
+namespace Rx::traits {
 
 template<typename T>
 inline constexpr const bool is_trivially_copyable{__is_trivially_copyable(T)};

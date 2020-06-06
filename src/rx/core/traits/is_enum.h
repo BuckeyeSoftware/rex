@@ -2,7 +2,7 @@
 #define RX_CORE_TRAITS_IS_ENUM_H
 #include "rx/core/config.h"
 
-namespace rx::traits {
+namespace Rx::traits {
 
 #if __has_feature(is_enum) || defined(RX_COMPILER_GCC) || defined(RX_COMPILER_MSVC)
 template<typename T>

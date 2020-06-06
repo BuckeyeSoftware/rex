@@ -3,30 +3,30 @@
 #include "rx/core/types.h"
 
 template<typename T>
-inline rx_size bit_search_lsb(T _bits);
+inline Size bit_search_lsb(T _bits);
 
 template<typename T>
-inline rx_size bit_pop_count(T _bits);
+inline Size bit_pop_count(T _bits);
 
 // use compiler intrinsics if available
 #if defined(RX_COMPILER_CLANG) || defined(RX_COMPILER_GCC)
 template<>
-inline rx_size bit_search_lsb(rx_u32 _bits) {
+inline Size bit_search_lsb(Uint32 _bits) {
   return _bits ? __builtin_ctzl(_bits) : 32;
 }
 
 template<>
-inline rx_size bit_search_lsb(rx_u64 _bits) {
+inline Size bit_search_lsb(Uint64 _bits) {
   return _bits ? __builtin_ctzll(_bits) : 64;
 }
 
 template<>
-inline rx_size bit_pop_count(rx_u32 _bits) {
+inline Size bit_pop_count(Uint32 _bits) {
   return __builtin_popcountl(_bits);
 }
 
 template<>
-inline rx_size bit_pop_count(rx_u64 _bits) {
+inline Size bit_pop_count(Uint64 _bits) {
   return __builtin_popcountll(_bits);
 }
 #else
@@ -85,7 +85,7 @@ inline rx_size bit_pop_count(rx_u64 _bits) {
 #endif
 
 template<typename T>
-inline rx_size bit_next(T _bits, rx_size _bit) {
+inline Size bit_next(T _bits, Size _bit) {
   return bit_search_lsb<T>(_bits & ~((T{1} << _bit) - 1));
 }
 

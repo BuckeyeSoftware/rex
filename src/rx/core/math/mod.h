@@ -2,9 +2,9 @@
 #define RX_CORE_MATH_MOD_H
 #include "rx/core/types.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
-rx_f32 mod(rx_f32 _x, rx_f32 _y);
+Float32 mod(Float32 _x, Float32 _y);
 
 } // namespace rx::math
 

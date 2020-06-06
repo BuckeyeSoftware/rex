@@ -11,12 +11,12 @@
 #include "rx/core/profiler.h"
 #include "rx/core/log.h"
 
-namespace rx::render::backend {
+namespace Rx::Render::Backend {
 
 RX_LOG("render/es3", logger);
 
 // 16MiB buffer slab size for unspecified buffer sizes
-static constexpr const rx_size k_buffer_slab_size{16<<20};
+static constexpr const Size k_buffer_slab_size{16 << 20};
 
 // buffers
 static void (GLAPIENTRYP pglGenBuffers)(GLsizei, GLuint*);
@@ -136,8 +136,8 @@ namespace detail_es3 {
 
     GLuint bo[2];
     GLuint va;
-    rx_size elements_size;
-    rx_size vertices_size;
+    Size elements_size;
+    Size vertices_size;
   };
 
   struct target {
@@ -161,8 +161,8 @@ namespace detail_es3 {
 
     GLuint fbo;
     bool owned;
-    frontend::buffers draw_buffers;
-    frontend::buffers read_buffers;
+    Frontend::Buffers draw_buffers;
+    Frontend::Buffers read_buffers;
   };
 
   struct program {
@@ -175,7 +175,7 @@ namespace detail_es3 {
     }
 
     GLuint handle;
-    vector<GLint> uniforms;
+    Vector<GLint> uniforms;
   };
 
   struct texture1D {
@@ -227,7 +227,7 @@ namespace detail_es3 {
   };
 
   struct state
-    : frontend::state
+    : Frontend::State
   {
     state(SDL_GLContext _context)
       : m_color_mask{0xff}
@@ -287,8 +287,8 @@ namespace detail_es3 {
       }
     }
 
-    void use_state(const frontend::state* _render_state) {
-      profiler::cpu_sample sample{"use_state"};
+    void use_state(const Frontend::State* _render_state) {
+      Profiler::CPUSample sample{"use_state"};
 
       const auto& scissor{_render_state->scissor};
       const auto& blend{_render_state->blend};
@@ -391,10 +391,10 @@ namespace detail_es3 {
         if (enabled) {
           if (this->cull.front_face() != front_face) {
             switch (front_face) {
-            case frontend::cull_state::front_face_type::k_clock_wise:
+            case Frontend::CullState::FrontFaceType::k_clock_wise:
               pglFrontFace(GL_CW);
               break;
-            case frontend::cull_state::front_face_type::k_counter_clock_wise:
+            case Frontend::CullState::FrontFaceType::k_counter_clock_wise:
               pglFrontFace(GL_CCW);
               break;
             }
@@ -403,10 +403,10 @@ namespace detail_es3 {
 
           if (this->cull.cull_face() != cull_face) {
             switch (cull_face) {
-            case frontend::cull_state::cull_face_type::k_front:
+            case Frontend::CullState::CullFaceType::k_front:
               pglCullFace(GL_FRONT);
               break;
-            case frontend::cull_state::cull_face_type::k_back:
+            case Frontend::CullState::CullFaceType::k_back:
               pglCullFace(GL_BACK);
               break;
             }
@@ -503,8 +503,8 @@ namespace detail_es3 {
       flush();
     }
 
-    void use_draw_target(frontend::target* _render_target, const frontend::buffers* _draw_buffers) {
-      profiler::cpu_sample sample{"use_draw_target"};
+    void use_draw_target(Frontend::Target* _render_target, const Frontend::Buffers* _draw_buffers) {
+      Profiler::CPUSample sample{"use_draw_target"};
 
       auto this_target{reinterpret_cast<target*>(_render_target + 1)};
       if (m_bound_draw_fbo != this_target->fbo) {
@@ -519,8 +519,8 @@ namespace detail_es3 {
           if (_draw_buffers->is_empty()) {
             pglDrawBuffer(GL_NONE);
           } else {
-            vector<GLenum> draw_buffers;
-            for (rx_size i{0}; i < _draw_buffers->size(); i++) {
+            Vector<GLenum> draw_buffers;
+            for (Size i{0}; i < _draw_buffers->size(); i++) {
               draw_buffers.push_back(GL_COLOR_ATTACHMENT0 + (*_draw_buffers)[i]);
             }
             pglDrawBuffers(static_cast<GLsizei>(draw_buffers.size()), draw_buffers.data());
@@ -530,8 +530,8 @@ namespace detail_es3 {
       }
     }
 
-    void use_read_target(frontend::target* _render_target, const frontend::buffers* _read_buffers) {
-      profiler::cpu_sample sample{"use_read_target"};
+    void use_read_target(Frontend::Target* _render_target, const Frontend::Buffers* _read_buffers) {
+      Profiler::CPUSample sample{"use_read_target"};
 
       auto this_target{reinterpret_cast<target*>(_render_target + 1)};
       if (m_bound_read_fbo != this_target->fbo) {
@@ -553,8 +553,8 @@ namespace detail_es3 {
       }
     }
 
-    void use_program(const frontend::program* _render_program) {
-      profiler::cpu_sample sample{"use_program"};
+    void use_program(const Frontend::Program* _render_program) {
+      Profiler::CPUSample sample{"use_program"};
 
       const auto this_program{reinterpret_cast<const program*>(_render_program + 1)};
       if (this_program->handle != m_bound_program) {
@@ -563,8 +563,8 @@ namespace detail_es3 {
       }
     }
 
-    void use_buffer(const frontend::buffer* _render_buffer) {
-      profiler::cpu_sample sample{"use_buffer"};
+    void use_buffer(const Frontend::Buffer* _render_buffer) {
+      Profiler::CPUSample sample{"use_buffer"};
       if (_render_buffer) {
         const auto this_buffer{reinterpret_cast<const buffer*>(_render_buffer + 1)};
         if (this_buffer->va != m_bound_vao) {
@@ -578,7 +578,7 @@ namespace detail_es3 {
     }
 
     void use_vbo(GLuint _vbo) {
-      profiler::cpu_sample sample{"use_vbo"};
+      Profiler::CPUSample sample{"use_vbo"};
 
       if (m_bound_vbo != _vbo) {
         pglBindBuffer(GL_ARRAY_BUFFER, _vbo);
@@ -587,7 +587,7 @@ namespace detail_es3 {
     }
 
     void use_ebo(GLuint _ebo) {
-      profiler::cpu_sample sample{"use_ebo"};
+      Profiler::CPUSample sample{"use_ebo"};
 
       if (m_bound_ebo != _ebo) {
         pglBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
@@ -604,7 +604,7 @@ namespace detail_es3 {
 
     template<GLuint texture_unit::*name, typename Bt, typename Ft>
     void use_texture_template(GLenum _type, const Ft* _render_texture) {
-      profiler::cpu_sample sample{"use_texture"};
+      Profiler::CPUSample sample{"use_texture"};
 
       const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
       auto& texture_unit{m_texture_units[m_active_texture]};
@@ -615,7 +615,7 @@ namespace detail_es3 {
     }
 
     template<GLuint texture_unit::*name, typename Bt, typename Ft>
-    void use_active_texture_template(GLenum _type, const Ft* _render_texture, rx_size _unit) {
+    void use_active_texture_template(GLenum _type, const Ft* _render_texture, Size _unit) {
       const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
       auto& texture_unit{m_texture_units[_unit]};
       if (texture_unit.*name != this_texture->tex) {
@@ -638,55 +638,55 @@ namespace detail_es3 {
       }
     }
 
-    void use_active_texture(const frontend::texture1D* _render_texture, rx_size _unit) {
+    void use_active_texture(const Frontend::Texture1D* _render_texture, Size _unit) {
       use_active_texture_template<&texture_unit::texture1D, detail_es3::texture1D>(GL_TEXTURE_1D, _render_texture, _unit);
     }
 
-    void use_active_texture(const frontend::texture2D* _render_texture, rx_size _unit) {
+    void use_active_texture(const Frontend::Texture2D* _render_texture, Size _unit) {
       use_active_texture_template<&texture_unit::texture2D, detail_es3::texture2D>(GL_TEXTURE_2D, _render_texture, _unit);
     }
 
-    void use_active_texture(const frontend::texture3D* _render_texture, rx_size _unit) {
+    void use_active_texture(const Frontend::Texture3D* _render_texture, Size _unit) {
       use_active_texture_template<&texture_unit::texture1D, detail_es3::texture1D>(GL_TEXTURE_1D, _render_texture, _unit);
     }
 
-    void use_active_texture(const frontend::textureCM* _render_texture, rx_size _unit) {
+    void use_active_texture(const Frontend::TextureCM* _render_texture, Size _unit) {
       use_active_texture_template<&texture_unit::textureCM, detail_es3::textureCM>(GL_TEXTURE_CUBE_MAP, _render_texture, _unit);
     }
 
-    void use_texture(const frontend::texture1D* _render_texture) {
+    void use_texture(const Frontend::Texture1D* _render_texture) {
       use_texture_template<&texture_unit::texture1D, detail_es3::texture1D>(GL_TEXTURE_1D, _render_texture);
     }
 
-    void use_texture(const frontend::texture2D* _render_texture) {
+    void use_texture(const Frontend::Texture2D* _render_texture) {
       use_texture_template<&texture_unit::texture2D, detail_es3::texture2D>(GL_TEXTURE_2D, _render_texture);
     }
 
-    void use_texture(const frontend::texture3D* _render_texture) {
+    void use_texture(const Frontend::Texture3D* _render_texture) {
       use_texture_template<&texture_unit::texture3D, detail_es3::texture3D>(GL_TEXTURE_3D, _render_texture);
     }
 
-    void use_texture(const frontend::textureCM* _render_texture) {
+    void use_texture(const Frontend::TextureCM* _render_texture) {
       use_texture_template<&texture_unit::textureCM, detail_es3::textureCM>(GL_TEXTURE_CUBE_MAP, _render_texture);
     }
 
-    void invalidate_texture(const frontend::texture1D* _render_texture) {
-      invalidate_texture_template<frontend::texture1D, texture1D, &texture_unit::texture1D>(_render_texture);
+    void invalidate_texture(const Frontend::Texture1D* _render_texture) {
+      invalidate_texture_template<Frontend::Texture1D, texture1D, &texture_unit::texture1D>(_render_texture);
     }
 
-    void invalidate_texture(const frontend::texture2D* _render_texture) {
-      invalidate_texture_template<frontend::texture2D, texture2D, &texture_unit::texture2D>(_render_texture);
+    void invalidate_texture(const Frontend::Texture2D* _render_texture) {
+      invalidate_texture_template<Frontend::Texture2D, texture2D, &texture_unit::texture2D>(_render_texture);
     }
 
-    void invalidate_texture(const frontend::texture3D* _render_texture) {
-      invalidate_texture_template<frontend::texture3D, texture3D, &texture_unit::texture3D>(_render_texture);
+    void invalidate_texture(const Frontend::Texture3D* _render_texture) {
+      invalidate_texture_template<Frontend::Texture3D, texture3D, &texture_unit::texture3D>(_render_texture);
     }
 
-    void invalidate_texture(const frontend::textureCM* _render_texture) {
-      invalidate_texture_template<frontend::textureCM, textureCM, &texture_unit::textureCM>(_render_texture);
+    void invalidate_texture(const Frontend::TextureCM* _render_texture) {
+      invalidate_texture_template<Frontend::TextureCM, textureCM, &texture_unit::textureCM>(_render_texture);
     }
 
-    rx_u8 m_color_mask;
+    Uint8 m_color_mask;
 
     GLuint m_empty_vao;
 
@@ -698,8 +698,8 @@ namespace detail_es3 {
     GLuint m_bound_program;
 
     GLuint m_swap_chain_fbo;
-    texture_unit m_texture_units[frontend::textures::k_max_textures];
-    rx_size m_active_texture;
+    texture_unit m_texture_units[Frontend::Textures::k_max_textures];
+    Size m_active_texture;
 
     SDL_GLContext m_context;
   };
@@ -712,72 +712,72 @@ static void fetch(const char* _name, F& function_) {
   *reinterpret_cast<void**>(&function_) = address;
 }
 
-static constexpr const char* inout_to_string(frontend::shader::inout_type _type) {
+static constexpr const char* inout_to_string(Frontend::Shader::InOutType _type) {
   switch (_type) {
-  case frontend::shader::inout_type::k_mat4x4f:
+  case Frontend::Shader::InOutType::k_mat4x4f:
     return "mat4";
-  case frontend::shader::inout_type::k_mat3x3f:
+  case Frontend::Shader::InOutType::k_mat3x3f:
     return "mat3";
-  case frontend::shader::inout_type::k_vec2f:
+  case Frontend::Shader::InOutType::k_vec2f:
     return "vec2f";
-  case frontend::shader::inout_type::k_vec3f:
+  case Frontend::Shader::InOutType::k_vec3f:
     return "vec3f";
-  case frontend::shader::inout_type::k_vec4f:
+  case Frontend::Shader::InOutType::k_vec4f:
     return "vec4f";
-  case frontend::shader::inout_type::k_vec2i:
+  case Frontend::Shader::InOutType::k_vec2i:
     return "vec2i";
-  case frontend::shader::inout_type::k_vec3i:
+  case Frontend::Shader::InOutType::k_vec3i:
     return "vec3i";
-  case frontend::shader::inout_type::k_vec4i:
+  case Frontend::Shader::InOutType::k_vec4i:
     return "vec4i";
-  case frontend::shader::inout_type::k_vec4b:
+  case Frontend::Shader::InOutType::k_vec4b:
     return "vec4b";
-  case frontend::shader::inout_type::k_float:
+  case Frontend::Shader::InOutType::k_float:
     return "float";
   }
   return nullptr;
 }
 
-static constexpr const char* uniform_to_string(frontend::uniform::type _type) {
+static constexpr const char* uniform_to_string(Frontend::Uniform::Type _type) {
   switch (_type) {
-  case frontend::uniform::type::k_sampler1D:
+  case Frontend::Uniform::Type::k_sampler1D:
     return "rx_sampler1D";
-  case frontend::uniform::type::k_sampler2D:
+  case Frontend::Uniform::Type::k_sampler2D:
     return "rx_sampler2D";
-  case frontend::uniform::type::k_sampler3D:
+  case Frontend::Uniform::Type::k_sampler3D:
     return "rx_sampler3D";
-  case frontend::uniform::type::k_samplerCM:
+  case Frontend::Uniform::Type::k_samplerCM:
     return "rx_samplerCM";
-  case frontend::uniform::type::k_bool:
+  case Frontend::Uniform::Type::k_bool:
     return "bool";
-  case frontend::uniform::type::k_int:
+  case Frontend::Uniform::Type::k_int:
     return "int";
-  case frontend::uniform::type::k_float:
+  case Frontend::Uniform::Type::k_float:
     return "float";
-  case frontend::uniform::type::k_vec2i:
+  case Frontend::Uniform::Type::k_vec2i:
     return "vec2i";
-  case frontend::uniform::type::k_vec3i:
+  case Frontend::Uniform::Type::k_vec3i:
     return "vec3i";
-  case frontend::uniform::type::k_vec4i:
+  case Frontend::Uniform::Type::k_vec4i:
     return "vec4i";
-  case frontend::uniform::type::k_vec2f:
+  case Frontend::Uniform::Type::k_vec2f:
     return "vec2f";
-  case frontend::uniform::type::k_vec3f:
+  case Frontend::Uniform::Type::k_vec3f:
     return "vec3f";
-  case frontend::uniform::type::k_vec4f:
+  case Frontend::Uniform::Type::k_vec4f:
     return "vec4f";
-  case frontend::uniform::type::k_mat4x4f:
+  case Frontend::Uniform::Type::k_mat4x4f:
     return "mat4x4f";
-  case frontend::uniform::type::k_mat3x3f:
+  case Frontend::Uniform::Type::k_mat3x3f:
     return "mat3x3f";
-  case frontend::uniform::type::k_bonesf:
+  case Frontend::Uniform::Type::k_bonesf:
     return "bonesf";
   }
   return nullptr;
 }
 
-static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
-  const frontend::shader& _shader)
+static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
+  const Frontend::Shader& _shader)
 {
   // emit prelude to every shader
   static constexpr const char* k_prelude =
@@ -812,39 +812,39 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     "#define rx_vertex_id gl_VertexID\n"
     "#define rx_point_size gl_PointSize\n";
 
-  string contents = k_prelude;
+  String contents = k_prelude;
 
   GLenum type = 0;
   switch (_shader.kind) {
-  case frontend::shader::type::k_vertex:
+  case Frontend::Shader::Type::k_vertex:
     type = GL_VERTEX_SHADER;
     // emit vertex attributes inputs
-    _shader.inputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
-      contents.append(string::format("layout(location = %zu) in %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
+    _shader.inputs.each_pair([&](const String& _name, const Frontend::Shader::InOut& _inout) {
+      contents.append(String::format("layout(location = %zu) in %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
     });
     // emit vertex outputs
-    _shader.outputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
-      contents.append(string::format("out %s %s;\n", inout_to_string(_inout.kind), _name));
+    _shader.outputs.each_pair([&](const String& _name, const Frontend::Shader::InOut& _inout) {
+      contents.append(String::format("out %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     break;
-  case frontend::shader::type::k_fragment:
+  case Frontend::Shader::Type::k_fragment:
     type = GL_FRAGMENT_SHADER;
     // emit fragment inputs
-    _shader.inputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
-      contents.append(string::format("in %s %s;\n", inout_to_string(_inout.kind), _name));
+    _shader.inputs.each_pair([&](const String& _name, const Frontend::Shader::InOut& _inout) {
+      contents.append(String::format("in %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     // emit fragment outputs
-    _shader.outputs.each_pair([&](const string& _name, const frontend::shader::inout& _inout) {
-      contents.append(string::format("layout(location = %d) out %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
+    _shader.outputs.each_pair([&](const String& _name, const Frontend::Shader::InOut& _inout) {
+      contents.append(String::format("layout(location = %d) out %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
     });
     break;
   }
 
   // emit uniforms
-  _uniforms.each_fwd([&](const frontend::uniform& _uniform) {
+  _uniforms.each_fwd([&](const Frontend::Uniform& _uniform) {
     // Don't emit padding uniforms.
     if (!_uniform.is_padding()) {
-      contents.append(string::format("uniform %s %s;\n", uniform_to_string(_uniform.kind()), _uniform.name()));
+      contents.append(String::format("uniform %s %s;\n", uniform_to_string(_uniform.type()), _uniform.name()));
     }
   });
 
@@ -869,7 +869,7 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
     logger->error("failed compiling shader");
 
     if (log_size) {
-      vector<char> error_log{memory::system_allocator::instance(), static_cast<rx_size>(log_size)};
+      Vector<char> error_log{Memory::SystemAllocator::instance(), static_cast<Size>(log_size)};
       pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
       logger->error("\n%s\n%s", error_log.data(), contents);
     }
@@ -881,8 +881,8 @@ static GLuint compile_shader(const vector<frontend::uniform>& _uniforms,
   return handle;
 }
 
-allocation_info es3::query_allocation_info() const {
-  allocation_info info;
+AllocationInfo ES3::query_allocation_info() const {
+  AllocationInfo info;
   info.buffer_size = sizeof(detail_es3::buffer);
   info.target_size = sizeof(detail_es3::target);
   info.program_size = sizeof(detail_es3::program);
@@ -893,7 +893,7 @@ allocation_info es3::query_allocation_info() const {
   return info;
 }
 
-device_info es3::query_device_info() const {
+DeviceInfo ES3::query_device_info() const {
   return {
     reinterpret_cast<const char*>(pglGetString(GL_VENDOR)),
     reinterpret_cast<const char*>(pglGetString(GL_RENDERER)),
@@ -901,18 +901,19 @@ device_info es3::query_device_info() const {
   };
 }
 
-es3::es3(memory::allocator& _allocator, void* _data)
+ES3::ES3(Memory::Allocator& _allocator, void* _data)
   : m_allocator{_allocator}
   , m_data{_data}
 {
 }
 
-es3::~es3() {
+ES3::~ES3() {
   m_allocator.destroy<detail_es3::state>(m_impl);
 }
 
-bool es3::init() {
-  SDL_GLContext context{SDL_GL_CreateContext(reinterpret_cast<SDL_Window*>(m_data))};
+bool ES3::init() {
+  SDL_GLContext context =
+    SDL_GL_CreateContext(reinterpret_cast<SDL_Window*>(m_data));
   if (!context) {
     return false;
   }
@@ -1024,61 +1025,61 @@ bool es3::init() {
   return m_impl != nullptr;
 }
 
-void es3::process(const vector<rx_byte*>& _commands) {
-  _commands.each_fwd([this](rx_byte* _command) {
+void ES3::process(const Vector<Byte*>& _commands) {
+  _commands.each_fwd([this](Byte* _command) {
     process(_command);
   });
 }
 
-void es3::process(rx_byte* _command) {
-  profiler::cpu_sample sample{"es3::process"};
+void ES3::process(Byte* _command) {
+  Profiler::CPUSample sample{"ES3::process"};
 
   auto state{reinterpret_cast<detail_es3::state*>(m_impl)};
-  auto header{reinterpret_cast<frontend::command_header*>(_command)};
+  auto header{reinterpret_cast<Frontend::CommandHeader*>(_command)};
   switch (header->type) {
-  case frontend::command_type::k_resource_allocate:
+  case Frontend::CommandType::k_resource_allocate:
     {
-      const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
-      switch (resource->kind) {
-      case frontend::resource_command::type::k_buffer:
-        utility::construct<detail_es3::buffer>(resource->as_buffer + 1);
+      const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
+      switch (resource->type) {
+      case Frontend::ResourceCommand::Type::k_buffer:
+        Utility::construct<detail_es3::buffer>(resource->as_buffer + 1);
         break;
-      case frontend::resource_command::type::k_target:
+      case Frontend::ResourceCommand::Type::k_target:
         {
           const auto render_target{resource->as_target};
           if (render_target->is_swapchain()) {
-            utility::construct<detail_es3::target>(resource->as_target + 1, state->m_swap_chain_fbo);
+            Utility::construct<detail_es3::target>(resource->as_target + 1, state->m_swap_chain_fbo);
           } else {
-            utility::construct<detail_es3::target>(resource->as_target + 1);
+            Utility::construct<detail_es3::target>(resource->as_target + 1);
           }
         }
         break;
-      case frontend::resource_command::type::k_program:
-        utility::construct<detail_es3::program>(resource->as_program + 1);
+      case Frontend::ResourceCommand::Type::k_program:
+        Utility::construct<detail_es3::program>(resource->as_program + 1);
         break;
-      case frontend::resource_command::type::k_texture1D:
-        utility::construct<detail_es3::texture1D>(resource->as_texture1D + 1);
+      case Frontend::ResourceCommand::Type::k_texture1D:
+        Utility::construct<detail_es3::texture1D>(resource->as_texture1D + 1);
         break;
-      case frontend::resource_command::type::k_texture2D:
+      case Frontend::ResourceCommand::Type::k_texture2D:
         if (resource->as_texture2D->is_swapchain()) {
           break;
         }
-        utility::construct<detail_es3::texture2D>(resource->as_texture2D + 1);
+        Utility::construct<detail_es3::texture2D>(resource->as_texture2D + 1);
         break;
-      case frontend::resource_command::type::k_texture3D:
-        utility::construct<detail_es3::texture3D>(resource->as_texture3D + 1);
+      case Frontend::ResourceCommand::Type::k_texture3D:
+        Utility::construct<detail_es3::texture3D>(resource->as_texture3D + 1);
         break;
-      case frontend::resource_command::type::k_textureCM:
-        utility::construct<detail_es3::textureCM>(resource->as_textureCM + 1);
+      case Frontend::ResourceCommand::Type::k_textureCM:
+        Utility::construct<detail_es3::textureCM>(resource->as_textureCM + 1);
         break;
       }
     }
     break;
-  case frontend::command_type::k_resource_destroy:
+  case Frontend::CommandType::k_resource_destroy:
     {
-      const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
-      switch (resource->kind) {
-      case frontend::resource_command::type::k_buffer:
+      const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
+      switch (resource->type) {
+      case Frontend::ResourceCommand::Type::k_buffer:
         {
           auto buffer{reinterpret_cast<detail_es3::buffer*>(resource->as_buffer + 1)};
           if (state->m_bound_vbo == buffer->bo[0]) {
@@ -1090,10 +1091,10 @@ void es3::process(rx_byte* _command) {
           if (state->m_bound_vao == buffer->va) {
             state->m_bound_vao = 0;
           }
-          utility::destruct<detail_es3::buffer>(resource->as_buffer + 1);
+          Utility::destruct<detail_es3::buffer>(resource->as_buffer + 1);
         }
         break;
-      case frontend::resource_command::type::k_target:
+      case Frontend::ResourceCommand::Type::k_target:
         {
           auto target{reinterpret_cast<detail_es3::target*>(resource->as_target + 1)};
           if (state->m_bound_draw_fbo == target->fbo) {
@@ -1102,45 +1103,45 @@ void es3::process(rx_byte* _command) {
           if (state->m_bound_read_fbo == target->fbo) {
             state->m_bound_read_fbo = 0;
           }
-          utility::destruct<detail_es3::target>(resource->as_target + 1);
+          Utility::destruct<detail_es3::target>(resource->as_target + 1);
         }
         break;
-      case frontend::resource_command::type::k_program:
-        utility::destruct<detail_es3::program>(resource->as_program + 1);
+      case Frontend::ResourceCommand::Type::k_program:
+        Utility::destruct<detail_es3::program>(resource->as_program + 1);
         break;
-      case frontend::resource_command::type::k_texture1D:
+      case Frontend::ResourceCommand::Type::k_texture1D:
         state->invalidate_texture(resource->as_texture1D);
-        utility::destruct<detail_es3::texture1D>(resource->as_texture1D + 1);
+        Utility::destruct<detail_es3::texture1D>(resource->as_texture1D + 1);
         break;
-      case frontend::resource_command::type::k_texture2D:
+      case Frontend::ResourceCommand::Type::k_texture2D:
         if (resource->as_texture2D->is_swapchain()) {
           break;
         }
         state->invalidate_texture(resource->as_texture2D);
-        utility::destruct<detail_es3::texture2D>(resource->as_texture2D + 1);
+        Utility::destruct<detail_es3::texture2D>(resource->as_texture2D + 1);
         break;
-      case frontend::resource_command::type::k_texture3D:
+      case Frontend::ResourceCommand::Type::k_texture3D:
         state->invalidate_texture(resource->as_texture3D);
-        utility::destruct<detail_es3::texture3D>(resource->as_texture3D + 1);
+        Utility::destruct<detail_es3::texture3D>(resource->as_texture3D + 1);
         break;
-      case frontend::resource_command::type::k_textureCM:
+      case Frontend::ResourceCommand::Type::k_textureCM:
         state->invalidate_texture(resource->as_textureCM);
-        utility::destruct<detail_es3::textureCM>(resource->as_textureCM + 1);
+        Utility::destruct<detail_es3::textureCM>(resource->as_textureCM + 1);
         break;
       }
     }
     break;
-  case frontend::command_type::k_resource_construct:
+  case Frontend::CommandType::k_resource_construct:
     {
-      const auto resource{reinterpret_cast<const frontend::resource_command*>(header + 1)};
-      switch (resource->kind) {
-      case frontend::resource_command::type::k_buffer:
+      const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
+      switch (resource->type) {
+      case Frontend::ResourceCommand::Type::k_buffer:
         {
           const auto render_buffer{resource->as_buffer};
           auto buffer{reinterpret_cast<detail_es3::buffer*>(render_buffer + 1)};
           const auto& vertices{render_buffer->vertices()};
           const auto& elements{render_buffer->elements()};
-          const auto type{render_buffer->kind() == frontend::buffer::type::k_dynamic
+          const auto type{render_buffer->type() == Frontend::Buffer::Type::k_dynamic
             ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW};
 
           state->use_buffer(render_buffer);
@@ -1165,13 +1166,13 @@ void es3::process(rx_byte* _command) {
           }
 
           const auto& attributes{render_buffer->attributes()};
-          for (rx_size i{0}; i < attributes.size(); i++) {
+          for (Size i{0}; i < attributes.size(); i++) {
             const auto& attribute{attributes[i]};
             const auto index{static_cast<GLuint>(i)};
             pglEnableVertexAttribArray(index);
 
-            switch (attribute.kind) {
-            case frontend::buffer::attribute::type::k_f32:
+            switch (attribute.type) {
+            case Frontend::Buffer::Attribute::Type::k_f32:
               pglVertexAttribPointer(
                 index,
                 static_cast<GLsizei>(attribute.count),
@@ -1180,7 +1181,7 @@ void es3::process(rx_byte* _command) {
                 render_buffer->stride(),
                 reinterpret_cast<const GLvoid*>(attribute.offset));
               break;
-            case frontend::buffer::attribute::type::k_u8:
+            case Frontend::Buffer::Attribute::Type::k_u8:
               pglVertexAttribPointer(
                 index,
                 static_cast<GLsizei>(attribute.count),
@@ -1193,7 +1194,7 @@ void es3::process(rx_byte* _command) {
           }
         }
         break;
-      case frontend::resource_command::type::k_target:
+      case Frontend::ResourceCommand::Type::k_target:
         {
           const auto render_target{resource->as_target};
           if (render_target->is_swapchain()) {
@@ -1222,11 +1223,11 @@ void es3::process(rx_byte* _command) {
 
           // color attachments
           const auto& attachments{render_target->attachments()};
-          for (rx_size i{0}; i < attachments.size(); i++) {
+          for (Size i{0}; i < attachments.size(); i++) {
             const auto& attachment{attachments[i]};
             const auto attachment_enum{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
             switch (attachment.kind) {
-            case frontend::target::attachment::type::k_texture2D:
+            case Frontend::Target::Attachment::Type::k_texture2D:
               pglFramebufferTexture2D(
                 GL_DRAW_FRAMEBUFFER,
                 attachment_enum,
@@ -1234,7 +1235,7 @@ void es3::process(rx_byte* _command) {
                 reinterpret_cast<detail_es3::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
                 static_cast<GLint>(attachment.level));
               break;
-            case frontend::target::attachment::type::k_textureCM:
+            case Frontend::Target::Attachment::Type::k_textureCM:
               pglFramebufferTexture2D(
                 GL_DRAW_FRAMEBUFFER,
                 attachment_enum,
@@ -1246,15 +1247,15 @@ void es3::process(rx_byte* _command) {
           }
         }
         break;
-      case frontend::resource_command::type::k_program:
+      case Frontend::ResourceCommand::Type::k_program:
         {
           const auto render_program{resource->as_program};
           const auto program{reinterpret_cast<detail_es3::program*>(render_program + 1)};
 
           const auto shaders{render_program->shaders()};
 
-          vector<GLuint> shader_handles;
-          shaders.each_fwd([&](const frontend::shader& _shader) {
+          Vector<GLuint> shader_handles;
+          shaders.each_fwd([&](const Frontend::Shader& _shader) {
             GLuint shader_handle{compile_shader(render_program->uniforms(), _shader)};
             if (shader_handle != 0) {
               pglAttachShader(program->handle, shader_handle);
@@ -1273,7 +1274,7 @@ void es3::process(rx_byte* _command) {
             logger->error("failed linking program");
 
             if (log_size) {
-              vector<char> error_log{memory::system_allocator::instance(), static_cast<rx_size>(log_size)};
+              Vector<char> error_log{Memory::SystemAllocator::instance(), static_cast<Size>(log_size)};
               pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
               logger->error("\n%s", error_log.data());
             }
@@ -1285,7 +1286,7 @@ void es3::process(rx_byte* _command) {
           });
 
           // fetch uniform locations
-          render_program->uniforms().each_fwd([program](const frontend::uniform& _uniform) {
+          render_program->uniforms().each_fwd([program](const Frontend::Uniform& _uniform) {
             if (_uniform.is_padding()) {
               // Padding uniforms have index -1.
               program->uniforms.push_back(-1);
@@ -1295,7 +1296,7 @@ void es3::process(rx_byte* _command) {
           });
         }
         break;
-      case frontend::resource_command::type::k_texture1D:
+      case Frontend::ResourceCommand::Type::k_texture1D:
         {
           const auto render_texture{resource->as_texture1D};
           const auto wrap{render_texture->wrap()};
@@ -1314,7 +1315,7 @@ void es3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, levels - 1);
           if (requires_border_color(wrap_s)) {
-            const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
+            const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
             pglTexParameteriv(GL_TEXTURE_1D, GL_TEXTURE_BORDER_COLOR, color.data());
           }
 
@@ -1343,7 +1344,7 @@ void es3::process(rx_byte* _command) {
           }
         }
         break;
-      case frontend::resource_command::type::k_texture2D:
+      case Frontend::ResourceCommand::Type::k_texture2D:
         {
           const auto render_texture{resource->as_texture2D};
           if (render_texture->is_swapchain()) {
@@ -1368,7 +1369,7 @@ void es3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levels - 1);
           if (requires_border_color(wrap_s, wrap_t)) {
-            const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
+            const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
             pglTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color.data());
           }
 
@@ -1399,7 +1400,7 @@ void es3::process(rx_byte* _command) {
           }
         }
         break;
-      case frontend::resource_command::type::k_texture3D:
+      case Frontend::ResourceCommand::Type::k_texture3D:
         {
           const auto render_texture{resource->as_texture3D};
           const auto wrap{render_texture->wrap()};
@@ -1422,7 +1423,7 @@ void es3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, levels - 1);
           if (requires_border_color(wrap_s, wrap_t, wrap_r)) {
-            const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
+            const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
             pglTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, color.data());
           }
 
@@ -1455,7 +1456,7 @@ void es3::process(rx_byte* _command) {
           }
         }
         break;
-      case frontend::resource_command::type::k_textureCM:
+      case Frontend::ResourceCommand::Type::k_textureCM:
         {
           const auto render_texture{resource->as_textureCM};
           const auto wrap{render_texture->wrap()};
@@ -1478,7 +1479,7 @@ void es3::process(rx_byte* _command) {
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
           pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, levels - 1);
           if (requires_border_color(wrap_s, wrap_t, wrap_p)) {
-            const math::vec4i color{(render_texture->border() * 255.0f).cast<rx_s32>()};
+            const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
             pglTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BORDER_COLOR, color.data());
           }
 
@@ -1514,17 +1515,17 @@ void es3::process(rx_byte* _command) {
       }
     }
     break;
-  case frontend::command_type::k_resource_update:
+  case Frontend::CommandType::k_resource_update:
     {
-      const auto resource{reinterpret_cast<const frontend::update_command*>(header + 1)};
-      switch (resource->kind) {
-      case frontend::update_command::type::k_buffer:
+      const auto resource{reinterpret_cast<const Frontend::UpdateCommand*>(header + 1)};
+      switch (resource->type) {
+      case Frontend::UpdateCommand::Type::k_buffer:
         {
           const auto render_buffer{resource->as_buffer};
           auto buffer{reinterpret_cast<detail_es3::buffer*>(render_buffer + 1)};
           const auto& vertices{render_buffer->vertices()};
           const auto& elements{render_buffer->elements()};
-          const auto type{render_buffer->kind() == frontend::buffer::type::k_dynamic
+          const auto type{render_buffer->type() == Frontend::Buffer::Type::k_dynamic
             ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW};
 
           state->use_buffer(render_buffer);
@@ -1552,8 +1553,8 @@ void es3::process(rx_byte* _command) {
 
           // Enumerate and apply all buffer edits.
           if (use_vertices_edits || use_elements_edits) {
-            const rx_size* edit{resource->edit()};
-            for (rx_size i{0}; i < resource->edits; i++) {
+            const Size* edit{resource->edit()};
+            for (Size i{0}; i < resource->edits; i++) {
               switch (edit[0]) {
               case 0:
                 if (use_vertices_edits) {
@@ -1571,17 +1572,17 @@ void es3::process(rx_byte* _command) {
           }
         }
         break;
-      case frontend::update_command::type::k_texture1D:
+      case Frontend::UpdateCommand::Type::k_texture1D:
         {
           // TODO(dweiler): implement
         }
         break;
-      case frontend::update_command::type::k_texture2D:
+      case Frontend::UpdateCommand::Type::k_texture2D:
         {
           // TODO(dweiler): implement
         }
         break;
-      case frontend::update_command::type::k_texture3D:
+      case Frontend::UpdateCommand::Type::k_texture3D:
         {
           // TODO(dweiler): implement
         }
@@ -1591,11 +1592,11 @@ void es3::process(rx_byte* _command) {
       }
     }
     break;
-  case frontend::command_type::k_clear:
+  case Frontend::CommandType::k_clear:
     {
-      profiler::cpu_sample sample{"clear"};
+      Profiler::CPUSample sample{"clear"};
 
-      const auto command{reinterpret_cast<frontend::clear_command*>(header + 1)};
+      const auto command{reinterpret_cast<Frontend::ClearCommand*>(header + 1)};
       const auto render_state{&command->render_state};
       const auto render_target{command->render_target};
       const bool clear_depth{command->clear_depth};
@@ -1605,7 +1606,7 @@ void es3::process(rx_byte* _command) {
       state->use_draw_target(render_target, &command->draw_buffers);
 
       if (command->clear_colors) {
-        for (rx_u32 i{0}; i < sizeof command->color_values / sizeof *command->color_values; i++) {
+        for (Uint32 i{0}; i < sizeof command->color_values / sizeof *command->color_values; i++) {
           if (command->clear_colors & (1 << i)) {
             pglClearBufferfv(GL_COLOR, static_cast<GLint>(i),
               command->color_values[i].data());
@@ -1624,11 +1625,11 @@ void es3::process(rx_byte* _command) {
       }
     }
     break;
-  case frontend::command_type::k_draw:
+  case Frontend::CommandType::k_draw:
     {
-      profiler::cpu_sample sample{"draw"};
+      Profiler::CPUSample sample{"draw"};
 
-      const auto command{reinterpret_cast<frontend::draw_command*>(header + 1)};
+      const auto command{reinterpret_cast<Frontend::DrawCommand*>(header + 1)};
       const auto render_state{&command->render_state};
       const auto render_target{command->render_target};
       const auto render_buffer{command->render_buffer};
@@ -1643,9 +1644,9 @@ void es3::process(rx_byte* _command) {
       // check for and apply uniform deltas
       if (command->dirty_uniforms_bitset) {
         const auto& program_uniforms{render_program->uniforms()};
-        const rx_byte* draw_uniforms{command->uniforms()};
+        const Byte* draw_uniforms{command->uniforms()};
 
-        for (rx_size i{0}; i < 64; i++) {
+        for (Size i{0}; i < 64; i++) {
           if (command->dirty_uniforms_bitset & (1_u64 << i)) {
             const auto& uniform{program_uniforms[i]};
             const auto location{this_program->uniforms[i]};
@@ -1655,65 +1656,65 @@ void es3::process(rx_byte* _command) {
               continue;
             }
 
-            switch (uniform.kind()) {
-            case frontend::uniform::type::k_sampler1D:
+            switch (uniform.type()) {
+            case Frontend::Uniform::Type::k_sampler1D:
               [[fallthrough]];
-            case frontend::uniform::type::k_sampler2D:
+            case Frontend::Uniform::Type::k_sampler2D:
               [[fallthrough]];
-            case frontend::uniform::type::k_sampler3D:
+            case Frontend::Uniform::Type::k_sampler3D:
               [[fallthrough]];
-            case frontend::uniform::type::k_samplerCM:
+            case Frontend::Uniform::Type::k_samplerCM:
               pglUniform1i(location,
-                *reinterpret_cast<const rx_s32*>(draw_uniforms));
+                *reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case frontend::uniform::type::k_bool:
+            case Frontend::Uniform::Type::k_bool:
               pglUniform1i(location,
                 *reinterpret_cast<const bool*>(draw_uniforms) ? 1 : 0);
               break;
-            case frontend::uniform::type::k_int:
+            case Frontend::Uniform::Type::k_int:
               pglUniform1i(location,
-                *reinterpret_cast<const rx_s32*>(draw_uniforms));
+                *reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case frontend::uniform::type::k_float:
+            case Frontend::Uniform::Type::k_float:
               pglUniform1fv(location, 1,
-                reinterpret_cast<const rx_f32*>(draw_uniforms));
+                reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case frontend::uniform::type::k_vec2i:
+            case Frontend::Uniform::Type::k_vec2i:
               pglUniform2iv(location, 1,
-                reinterpret_cast<const rx_s32*>(draw_uniforms));
+                reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case frontend::uniform::type::k_vec3i:
+            case Frontend::Uniform::Type::k_vec3i:
               pglUniform3iv(location, 1,
-                reinterpret_cast<const rx_s32*>(draw_uniforms));
+                reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case frontend::uniform::type::k_vec4i:
+            case Frontend::Uniform::Type::k_vec4i:
               pglUniform4iv(location, 1,
-                reinterpret_cast<const rx_s32*>(draw_uniforms));
+                reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case frontend::uniform::type::k_vec2f:
+            case Frontend::Uniform::Type::k_vec2f:
               pglUniform2fv(location, 1,
-                reinterpret_cast<const rx_f32*>(draw_uniforms));
+                reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case frontend::uniform::type::k_vec3f:
+            case Frontend::Uniform::Type::k_vec3f:
               pglUniform3fv(location, 1,
-                reinterpret_cast<const rx_f32*>(draw_uniforms));
+                reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case frontend::uniform::type::k_vec4f:
+            case Frontend::Uniform::Type::k_vec4f:
               pglUniform4fv(location, 1,
-                reinterpret_cast<const rx_f32*>(draw_uniforms));
+                reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case frontend::uniform::type::k_mat3x3f:
+            case Frontend::Uniform::Type::k_mat3x3f:
               pglUniformMatrix3fv(location, 1, GL_FALSE,
-                reinterpret_cast<const rx_f32*>(draw_uniforms));
+                reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case frontend::uniform::type::k_mat4x4f:
+            case Frontend::Uniform::Type::k_mat4x4f:
               pglUniformMatrix4fv(location, 1, GL_FALSE,
-                reinterpret_cast<const rx_f32*>(draw_uniforms));
+                reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case frontend::uniform::type::k_bonesf:
+            case Frontend::Uniform::Type::k_bonesf:
               pglUniformMatrix3x4fv(location,
-                static_cast<GLsizei>(uniform.size() / sizeof(math::mat3x4f)),
-                GL_FALSE, reinterpret_cast<const rx_f32*>(draw_uniforms));
+                static_cast<GLsizei>(uniform.size() / sizeof(Math::Mat3x4f)),
+                GL_FALSE, reinterpret_cast<const Float32*>(draw_uniforms));
             }
 
             draw_uniforms += uniform.size();
@@ -1722,20 +1723,20 @@ void es3::process(rx_byte* _command) {
       }
 
       // apply any textures
-      for (rx_size i{0}; i < command->draw_textures.size(); i++) {
-        frontend::texture* texture{command->draw_textures[i]};
+      for (Size i{0}; i < command->draw_textures.size(); i++) {
+        Frontend::Texture* texture{command->draw_textures[i]};
         switch (texture->resource_type()) {
-          case frontend::resource::type::k_texture1D:
-            state->use_active_texture(static_cast<frontend::texture1D*>(texture), i);
+          case Frontend::Resource::Type::k_texture1D:
+            state->use_active_texture(static_cast<Frontend::Texture1D*>(texture), i);
             break;
-          case frontend::resource::type::k_texture2D:
-            state->use_active_texture(static_cast<frontend::texture2D*>(texture), i);
+          case Frontend::Resource::Type::k_texture2D:
+            state->use_active_texture(static_cast<Frontend::Texture2D*>(texture), i);
             break;
-          case frontend::resource::type::k_texture3D:
-            state->use_active_texture(static_cast<frontend::texture3D*>(texture), i);
+          case Frontend::Resource::Type::k_texture3D:
+            state->use_active_texture(static_cast<Frontend::Texture3D*>(texture), i);
             break;
-          case frontend::resource::type::k_textureCM:
-            state->use_active_texture(static_cast<frontend::textureCM*>(texture), i);
+          case Frontend::Resource::Type::k_textureCM:
+            state->use_active_texture(static_cast<Frontend::TextureCM*>(texture), i);
             break;
           default:
             RX_HINT_UNREACHABLE();
@@ -1743,29 +1744,29 @@ void es3::process(rx_byte* _command) {
       }
 
       if (render_buffer) {
-        switch (render_buffer->element_kind()) {
-        case frontend::buffer::element_type::k_u8:
+        switch (render_buffer->element_type()) {
+        case Frontend::Buffer::ElementType::k_u8:
           pglDrawElements(
             convert_primitive_type(command->type),
             static_cast<GLsizei>(command->count),
             GL_UNSIGNED_BYTE,
             reinterpret_cast<void*>(sizeof(GLubyte) * command->offset));
           break;
-        case frontend::buffer::element_type::k_u16:
+        case Frontend::Buffer::ElementType::k_u16:
           pglDrawElements(
             convert_primitive_type(command->type),
             static_cast<GLsizei>(command->count),
             GL_UNSIGNED_SHORT,
             reinterpret_cast<void*>(sizeof(GLushort) * command->offset));
           break;
-        case frontend::buffer::element_type::k_u32:
+        case Frontend::Buffer::ElementType::k_u32:
           pglDrawElements(
             convert_primitive_type(command->type),
             static_cast<GLsizei>(command->count),
             GL_UNSIGNED_INT,
             reinterpret_cast<void*>(sizeof(GLuint) * command->offset));
           break;
-        case frontend::buffer::element_type::k_none:
+        case Frontend::Buffer::ElementType::k_none:
           pglDrawArrays(
             convert_primitive_type(command->type),
             static_cast<GLint>(command->offset),
@@ -1780,11 +1781,11 @@ void es3::process(rx_byte* _command) {
       }
     }
     break;
-  case frontend::command_type::k_blit:
+  case Frontend::CommandType::k_blit:
     {
-      profiler::cpu_sample sample{"blit"};
+      Profiler::CPUSample sample{"blit"};
 
-      const auto command{reinterpret_cast<frontend::blit_command*>(header + 1)};
+      const auto command{reinterpret_cast<Frontend::BlitCommand*>(header + 1)};
       const auto render_state{&command->render_state};
 
       // TODO(dweiler): optimize use_state to only consider the things that matter
@@ -1803,8 +1804,8 @@ void es3::process(rx_byte* _command) {
       const auto src_dimensions{src_render_target->attachments()[src_attachment].as_texture2D.texture->dimensions().cast<GLint>()};
       const auto dst_dimensions{dst_render_target->attachments()[dst_attachment].as_texture2D.texture->dimensions().cast<GLint>()};
 
-      frontend::buffers draw_buffers;
-      frontend::buffers read_buffers;
+      Frontend::Buffers draw_buffers;
+      Frontend::Buffers read_buffers;
       draw_buffers.add(dst_attachment);
       read_buffers.add(src_attachment);
 
@@ -1825,13 +1826,13 @@ void es3::process(rx_byte* _command) {
 
       break;
     }
-  case frontend::command_type::k_profile:
+  case Frontend::CommandType::k_profile:
     break;
   }
 }
 
-void es3::swap() {
-  profiler::cpu_sample sample{"es3::swap"};
+void ES3::swap() {
+  Profiler::CPUSample sample{"ES3::swap"};
   SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(m_data));
 }
 

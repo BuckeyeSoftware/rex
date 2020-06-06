@@ -2,12 +2,12 @@
 #define RX_MATH_RECTANGLE_H
 #include "rx/math/vec2.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
 template<typename T>
 struct rectangle {
-  vec2<T> offset;
-  vec2<T> dimensions;
+  Vec2<T> offset;
+  Vec2<T> dimensions;
 
   bool contains(const rectangle& _other) const;
 };

@@ -1,36 +1,32 @@
 #ifndef RX_RENDER_FRONTEND_COMMAND_H
 #define RX_RENDER_FRONTEND_COMMAND_H
+
 #include "rx/core/source_location.h"
 #include "rx/core/memory/bump_point_allocator.h"
 #include "rx/core/utility/nat.h"
-
 #include "rx/math/vec4.h"
-
 #include "rx/render/frontend/state.h"
 
-namespace rx::render::frontend {
-
-struct target;
-struct buffer;
-struct program;
-struct texture;
-struct texture1D;
-struct texture2D;
-struct texture3D;
-struct textureCM;
-
+namespace Rx::Render::Frontend {
+struct Target;
+struct Buffer;
+struct Program;
+struct Texture;
+struct Texture1D;
+struct Texture2D;
+struct Texture3D;
+struct TextureCM;
 #define RX_RENDER_CLEAR_DEPTH (1 << 0)
 #define RX_RENDER_CLEAR_STENCIL (1 << 1)
 #define RX_RENDER_CLEAR_COLOR(INDEX) (1 << (2 + (INDEX)))
-
-enum class primitive_type : rx_u8 {
+enum class PrimitiveType : Uint8 {
   k_triangles,
   k_triangle_strip,
   k_points,
   k_lines
 };
 
-enum class command_type : rx_u8 {
+enum class CommandType : Uint8 {
   k_resource_allocate,
   k_resource_construct,
   k_resource_update,
@@ -41,130 +37,136 @@ enum class command_type : rx_u8 {
   k_profile
 };
 
-struct alignas(16) command_header {
-  struct info {
-    constexpr info(const char* _description, const source_location& _source_location)
-      : description{_description}
-      , source_info{_source_location}
-    {
+struct alignas(16) CommandHeader {
+  struct Info {
+    constexpr Info(const char *_description, const SourceLocation &_source_location)
+      : description{_description}, source_info{_source_location} {
     }
-    const char* description;
-    source_location source_info;
+
+    const char *description;
+    SourceLocation source_info;
   };
 
-  command_type type;
-  info tag;
+  CommandType type;
+  Info tag;
 };
-
 #define RX_RENDER_TAG(_description) \
-  ::rx::render::frontend::command_header::info{(_description), RX_SOURCE_LOCATION}
+  ::Rx::Render::Frontend::CommandHeader::Info{(_description), RX_SOURCE_LOCATION}
 
-struct command_buffer {
-  command_buffer(memory::allocator& _allocator, rx_size _size);
-  ~command_buffer();
+struct CommandBuffer {
+  CommandBuffer(Memory::Allocator &_allocator, Size _size);
 
-  rx_byte* allocate(rx_size _size, command_type _command,
-    const command_header::info& _info);
+  ~CommandBuffer();
+
+  Byte *allocate(Size _size, CommandType _command,
+    const CommandHeader::Info &_info);
+
   void reset();
 
-  rx_size used() const;
-  rx_size size() const;
+  Size used() const;
+
+  Size size() const;
 
 private:
-  memory::allocator& m_base_allocator;
-  rx_byte* m_base_memory;
-  memory::bump_point_allocator m_allocator;
+  Memory::Allocator &m_base_allocator;
+  Byte *m_base_memory;
+  Memory::BumpPointAllocator m_allocator;
 };
 
-struct buffers {
-  constexpr buffers();
+struct Buffers {
+  constexpr Buffers();
 
-  static constexpr rx_size k_max_buffers{8};
+  static constexpr Size k_max_buffers{8};
 
   void add(int _buffer);
 
-  bool operator==(const buffers& _buffers) const;
-  bool operator!=(const buffers& _buffers) const;
+  bool operator==(const Buffers &_buffers) const;
 
-  rx_size size() const;
+  bool operator!=(const Buffers &_buffers) const;
+
+  Size size() const;
+
   bool is_empty() const;
 
-  int operator[](rx_size _index) const;
+  int operator[](Size _index) const;
+
   int last() const;
 
 private:
   union {
-    utility::nat m_nat;
+    Utility::Nat m_nat;
     int m_elements[k_max_buffers];
   };
-  rx_size m_index;
+  Size m_index;
 };
 
-struct textures {
-  static constexpr const rx_size k_max_textures{8};
+struct Textures {
+  static constexpr const Size k_max_textures{8};
 
-  constexpr textures();
+  constexpr Textures();
 
   template<typename T>
-  int add(T* _texture);
+  int add(T *_texture);
 
   bool is_empty() const;
-  rx_size size() const;
+
+  Size size() const;
 
   void clear();
 
-  texture* operator[](rx_size _index) const;
+  Texture *operator[](Size _index) const;
 
 private:
   union {
-    utility::nat m_nat;
-    void* m_handles[k_max_textures];
+    Utility::Nat m_nat;
+    void *m_handles[k_max_textures];
   };
-  rx_size m_index;
+  Size m_index;
 };
 
-struct draw_command {
-  buffers draw_buffers;
-  textures draw_textures;
-  state render_state;
-  target* render_target;
-  buffer* render_buffer;
-  program* render_program;
-  rx_size count;
-  rx_size offset;
-  primitive_type type;
-  rx_u64 dirty_uniforms_bitset;
+struct DrawCommand {
+  Buffers draw_buffers;
+  Textures draw_textures;
+  State render_state;
+  Target *render_target;
+  Buffer *render_buffer;
+  Program *render_program;
+  Size count;
+  Size offset;
+  PrimitiveType type;
+  Uint64 dirty_uniforms_bitset;
 
-  const rx_byte* uniforms() const;
-  rx_byte* uniforms();
+  const Byte *uniforms() const;
+
+  Byte *uniforms();
 };
 
-struct clear_command {
-  buffers draw_buffers;
-  state render_state;
-  target* render_target;
+struct ClearCommand {
+  Buffers draw_buffers;
+  State render_state;
+  Target *render_target;
   bool clear_depth;
   bool clear_stencil;
-  rx_u32 clear_colors;
-  rx_u8 stencil_value;
-  rx_f32 depth_value;
-  math::vec4f color_values[buffers::k_max_buffers];
+  Uint32 clear_colors;
+  Uint8 stencil_value;
+  Float32 depth_value;
+  Math::Vec4f color_values[Buffers::k_max_buffers];
 };
 
-struct blit_command {
-  state render_state;
-  target* src_target;
-  rx_size src_attachment;
-  target* dst_target;
-  rx_size dst_attachment;
+struct BlitCommand {
+  State render_state;
+  Target *src_target;
+  Size src_attachment;
+  Target *dst_target;
+  Size dst_attachment;
 };
 
-struct profile_command {
-  const char* tag;
+struct ProfileCommand {
+  const char *tag;
 };
 
-struct resource_command {
-  enum class type : rx_u8 {
+struct ResourceCommand {
+  enum class Type : Uint8 {
     k_buffer,
     k_target,
     k_program,
@@ -174,45 +176,45 @@ struct resource_command {
     k_textureCM
   };
 
-  type kind;
+  Type type;
 
   union {
-    target* as_target;
-    buffer* as_buffer;
-    program* as_program;
-    texture1D* as_texture1D;
-    texture2D* as_texture2D;
-    texture3D* as_texture3D;
-    textureCM* as_textureCM;
+    Target *as_target;
+    Buffer *as_buffer;
+    Program *as_program;
+    Texture1D *as_texture1D;
+    Texture2D *as_texture2D;
+    Texture3D *as_texture3D;
+    TextureCM *as_textureCM;
   };
 };
 
-struct update_command {
-  enum class type : rx_u8 {
+struct UpdateCommand {
+  enum class Type : Uint8 {
     k_buffer,
     k_texture1D,
     k_texture2D,
     k_texture3D
   };
 
-  type kind;
+  Type type;
 
   union {
-    buffer* as_buffer;
-    texture1D* as_texture1D;
-    texture2D* as_texture2D;
-    texture3D* as_texture3D;
+    Buffer *as_buffer;
+    Texture1D *as_texture1D;
+    Texture2D *as_texture2D;
+    Texture3D *as_texture3D;
   };
 
   // The number of edits to the resource in this update.
-  rx_size edits;
+  Size edits;
 
   // The edit stream is an additional, variably-sized stream of data included as
   // a footer on this structure. It's contents encode a variable amount of edits
   // to the given resource.
   //
   // The encoding of the edit stream is a list of rx_size integers. The number
-  // of integers per edit is determined by the resource type |kind|.
+  // of integers per edit is determined by the resource Type |kind|.
   //
   // Buffer edits are represented by a three-tuple of integers of the format
   // {
@@ -227,129 +229,124 @@ struct update_command {
   //   offset: offset in pixels (1, 2, or 3 integers for 1D, 2D and 3D textures, respectively)
   //   size:   size in pixels (1, 2, or 3 integers for 1D, 2D and 3D textures, respectively)
   // }
-  const rx_size* edit() const;
-  rx_size* edit();
+  const Size *edit() const;
+
+  Size *edit();
 };
 
 // command_buffer
-inline rx_size command_buffer::used() const {
+inline Size CommandBuffer::used() const {
   return m_allocator.used();
 }
 
-inline rx_size command_buffer::size() const {
+inline Size CommandBuffer::size() const {
   return m_allocator.size();
 }
 
 // textures
-inline constexpr textures::textures()
-  : m_nat{}
-  , m_index{0}
-{
+inline constexpr Textures::Textures()
+  : m_nat{}, m_index{0} {
 }
 
 template<typename T>
-inline int textures::add(T* _texture) {
+inline int Textures::add(T *_texture) {
   static_assert(
-    traits::is_same<T, texture1D> ||
-    traits::is_same<T, texture2D> ||
-    traits::is_same<T, texture3D> ||
-    traits::is_same<T, textureCM>,
+    traits::is_same<T, Texture1D> ||
+    traits::is_same<T, Texture2D> ||
+    traits::is_same<T, Texture3D> ||
+    traits::is_same<T, TextureCM>,
     "|_texture| isn't a texture pointer");
 
   RX_ASSERT(m_index < k_max_textures, "too many draw textures");
-  m_handles[m_index] = static_cast<void*>(_texture);
+  m_handles[m_index] = static_cast<void *>(_texture);
   return static_cast<int>(m_index++);
 }
 
-inline bool textures::is_empty() const {
+inline bool Textures::is_empty() const {
   return m_index == 0;
 }
 
-inline rx_size textures::size() const {
+inline Size Textures::size() const {
   return m_index;
 }
 
-inline void textures::clear() {
+inline void Textures::clear() {
   m_index = 0;
 }
 
-inline texture* textures::operator[](rx_size _index) const {
+inline Texture *Textures::operator[](Size _index) const {
   RX_ASSERT(_index < k_max_textures, "out of bounds");
-  return reinterpret_cast<texture*>(m_handles[_index]);
+  return reinterpret_cast<Texture *>(m_handles[_index]);
 }
 
 // buffers
-inline constexpr buffers::buffers()
-  : m_nat{}
-  , m_index{0}
-{
+inline constexpr Buffers::Buffers()
+  : m_nat{}, m_index{0} {
 }
 
-inline void buffers::add(int _buffer) {
+inline void Buffers::add(int _buffer) {
   RX_ASSERT(m_index < k_max_buffers, "too many draw buffers");
   m_elements[m_index++] = _buffer;
 }
 
-inline bool buffers::operator==(const buffers& _buffers) const {
+inline bool Buffers::operator==(const Buffers &_buffers) const {
   // Comparing buffers is approximate and not exact. When we share
   // a common initial sequence of elements we compare equal provided
   // the sequence length isn't larger than ours.
   if (_buffers.m_index > m_index) {
     return false;
   }
-
-  for (rx_size i{0}; i < m_index; i++) {
+  for (Size i = 0; i < m_index; i++) {
     if (_buffers.m_elements[i] != m_elements[i]) {
       return false;
     }
   }
-
   return true;
 }
 
-inline bool buffers::operator!=(const buffers& _buffers) const {
+inline bool Buffers::operator!=(const Buffers &_buffers) const {
   return !operator==(_buffers);
 }
 
-inline rx_size buffers::size() const {
+inline Size Buffers::size() const {
   return m_index;
 }
 
-inline bool buffers::is_empty() const {
+inline bool Buffers::is_empty() const {
   return m_index == 0;
 }
 
-inline int buffers::operator[](rx_size _index) const {
+inline int Buffers::operator[](Size _index) const {
   RX_ASSERT(_index < k_max_buffers, "out of bounds");
   return m_elements[_index];
 }
 
-inline int buffers::last() const {
+inline int Buffers::last() const {
   return m_elements[m_index - 1];
 }
 
 // draw_command
-inline const rx_byte* draw_command::uniforms() const {
+inline const Byte *DrawCommand::uniforms() const {
   // NOTE: standard permits aliasing with char (rx_byte)
-  return reinterpret_cast<const rx_byte*>(this) + sizeof *this;
+  return reinterpret_cast<const Byte *>(this) + sizeof *this;
 }
 
-inline rx_byte* draw_command::uniforms() {
+inline Byte *DrawCommand::uniforms() {
   // NOTE: standard permits aliasing with char (rx_byte)
-  return reinterpret_cast<rx_byte*>(this) + sizeof *this;
+  return reinterpret_cast<Byte *>(this) + sizeof *this;
 }
 
 // update_command
-inline const rx_size* update_command::edit() const {
+inline const Size *UpdateCommand::edit() const {
   // NOTE: standard permits aliasing with char (rx_byte)
-  const rx_byte *opaque{reinterpret_cast<const rx_byte*>(this) + sizeof *this};
-  return reinterpret_cast<const rx_size*>(opaque);
+  const auto *opaque = reinterpret_cast<const Byte *>(this) + sizeof *this;
+  return reinterpret_cast<const Size *>(opaque);
 }
 
-inline rx_size* update_command::edit() {
+inline Size *UpdateCommand::edit() {
   // NOTE: standard permits aliasing with char (rx_byte)
-  rx_byte* opaque{reinterpret_cast<rx_byte*>(this) + sizeof *this};
-  return reinterpret_cast<rx_size*>(opaque);
+  auto *opaque = reinterpret_cast<Byte *>(this) + sizeof *this;
+  return reinterpret_cast<Size *>(opaque);
 }
 
 } // namespace rx::render::frontend

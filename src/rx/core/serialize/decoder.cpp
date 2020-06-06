@@ -4,12 +4,12 @@
 #include "rx/core/stream.h"
 #include "rx/core/assert.h"
 
-namespace rx::serialize {
+namespace Rx::serialize {
 
-decoder::decoder(memory::allocator& _allocator, stream* _stream)
+Decoder::Decoder(Memory::Allocator& _allocator, Stream* _stream)
   : m_allocator{_allocator}
   , m_stream{_stream}
-  , m_buffer{m_stream, buffer::mode::k_read}
+  , m_buffer{m_stream, Buffer::Mode::k_read}
   , m_message{allocator()}
 {
   RX_ASSERT(_stream->can_seek(), "decoder requires seekable stream");
@@ -23,12 +23,12 @@ decoder::decoder(memory::allocator& _allocator, stream* _stream)
   RX_ASSERT(m_buffer.read(m_header.data_size), "buffer failed");
 }
 
-decoder::~decoder() {
+Decoder::~Decoder() {
   RX_ASSERT(finalize(), "finalization failed");
 }
 
-bool decoder::read_uint(rx_u64& value_) {
-  rx_byte byte;
+bool Decoder::read_uint(Uint64& value_) {
+  Byte byte;
 
   auto shift = 0_u64;
   auto value = 0_u64;
@@ -36,11 +36,11 @@ bool decoder::read_uint(rx_u64& value_) {
   do if (!m_buffer.read_byte(&byte)) {
     return error("unexpected end of stream");
   } else {
-    const rx_u64 slice = byte & 0x7f;
+    const Uint64 slice = byte & 0x7f;
     if (shift >= 64 || slice << shift >> shift != slice) {
       return error("ULEB128 value too large");
     }
-    value += static_cast<rx_u64>(slice) << shift;
+    value += static_cast<Uint64>(slice) << shift;
     shift += 7;
   } while (byte >= 0x80);
 
@@ -49,8 +49,8 @@ bool decoder::read_uint(rx_u64& value_) {
   return true;
 }
 
-bool decoder::read_sint(rx_s64& value_) {
-  rx_byte byte;
+bool Decoder::read_sint(Sint64& value_) {
+  Byte byte;
 
   auto shift = 0_u64;
   auto value = 0_u64;
@@ -58,7 +58,7 @@ bool decoder::read_sint(rx_s64& value_) {
   do if (!m_buffer.read_byte(&byte)) {
     return error("unexpected end of stream");
   } else {
-    value |= (static_cast<rx_u64>(byte & 0x7f) << shift);
+    value |= (static_cast<Uint64>(byte & 0x7f) << shift);
     shift += 7;
   } while (byte >= 0x80);
 
@@ -67,17 +67,17 @@ bool decoder::read_sint(rx_s64& value_) {
     value |= -1_u64 << shift;
   }
 
-  value_ = static_cast<rx_s64>(value);
+  value_ = static_cast<Sint64>(value);
 
   return true;
 }
 
-bool decoder::read_float(rx_f32& value_) {
-  return m_buffer.read_bytes(reinterpret_cast<rx_byte*>(&value_), sizeof value_);
+bool Decoder::read_float(Float32& value_) {
+  return m_buffer.read_bytes(reinterpret_cast<Byte*>(&value_), sizeof value_);
 }
 
-bool decoder::read_bool(bool& value_) {
-  rx_byte byte;
+bool Decoder::read_bool(bool& value_) {
+  Byte byte;
   if (!m_buffer.read_byte(&byte)) {
     return false;
   }
@@ -91,12 +91,12 @@ bool decoder::read_bool(bool& value_) {
   return true;
 }
 
-bool decoder::read_byte(rx_byte& byte_) {
+bool Decoder::read_byte(Byte& byte_) {
   return m_buffer.read_byte(&byte_);
 }
 
-bool decoder::read_string(string& result_) {
-  rx_u64 index = 0;
+bool Decoder::read_string(String& result_) {
+  Uint64 index = 0;
   if (!read_uint(index)) {
     return false;
   }
@@ -105,8 +105,8 @@ bool decoder::read_string(string& result_) {
   return true;
 }
 
-bool decoder::read_float_array(rx_f32* result_, rx_size _count) {
-  rx_u64 count = 0;
+bool Decoder::read_float_array(Float32* result_, Size _count) {
+  Uint64 count = 0;
   if (!read_uint(count)) {
     return false;
   }
@@ -115,7 +115,7 @@ bool decoder::read_float_array(rx_f32* result_, rx_size _count) {
     return error("array count mismatch");
   }
 
-  for (rx_size i = 0; i < _count; i++) {
+  for (Size i = 0; i < _count; i++) {
     if (!read_float(result_[i])) {
       return false;
     }
@@ -124,8 +124,8 @@ bool decoder::read_float_array(rx_f32* result_, rx_size _count) {
   return true;
 }
 
-bool decoder::read_byte_array(rx_byte* result_, rx_size _count) {
-  rx_u64 count = 0;
+bool Decoder::read_byte_array(Byte* result_, Size _count) {
+  Uint64 count = 0;
   if (!read_uint(count)) {
     return false;
   }
@@ -137,15 +137,15 @@ bool decoder::read_byte_array(rx_byte* result_, rx_size _count) {
   return m_buffer.read_bytes(result_, _count);
 }
 
-bool decoder::finalize() {
+bool Decoder::finalize() {
   if (m_header.string_size) {
     m_strings.fini();
   }
   return true;
 }
 
-bool decoder::read_header() {
-  auto header = reinterpret_cast<rx_byte*>(&m_header);
+bool Decoder::read_header() {
+  auto header = reinterpret_cast<Byte*>(&m_header);
   if (m_stream->read(header, sizeof m_header) != sizeof m_header) {
     return error("read failed");
   }
@@ -156,7 +156,7 @@ bool decoder::read_header() {
   }
 
   // Sum of all sections and header should be the same size as the stream.
-  rx_u64 size = 0;
+  Uint64 size = 0;
   size += sizeof m_header;
   size += m_header.data_size;
   size += m_header.string_size;
@@ -168,7 +168,7 @@ bool decoder::read_header() {
   return true;
 }
 
-bool decoder::read_strings() {
+bool Decoder::read_strings() {
   // No need to read string table if empty.
   if (m_header.string_size == 0) {
     return true;
@@ -177,16 +177,16 @@ bool decoder::read_strings() {
   const auto cursor = m_stream->tell();
 
   // Seek to the strings offset.
-  if (!m_stream->seek(m_header.data_size + sizeof m_header, stream::whence::k_set)) {
+  if (!m_stream->seek(m_header.data_size + sizeof m_header, Stream::Whence::k_set)) {
     return error("seek failed");
   }
 
-  vector<char> strings{allocator()};
-  if (!strings.resize(m_header.string_size, utility::uninitialized{})) {
+  Vector<char> strings{allocator()};
+  if (!strings.resize(m_header.string_size, Utility::UninitializedTag{})) {
     return error("out of memory");
   }
 
-  if (!m_stream->read(reinterpret_cast<rx_byte*>(strings.data()), strings.size())) {
+  if (!m_stream->read(reinterpret_cast<Byte*>(strings.data()), strings.size())) {
     return error("read failed");
   }
 
@@ -195,10 +195,10 @@ bool decoder::read_strings() {
     return error("malformed string table");
   }
 
-  m_strings.init(utility::move(strings));
+  m_strings.init(Utility::move(strings));
 
   // Restore the stream to where we were before we seeked and read in the strings
-  if (!m_stream->seek(cursor, stream::whence::k_set)) {
+  if (!m_stream->seek(cursor, Stream::Whence::k_set)) {
     return error("seek failed");
   }
 

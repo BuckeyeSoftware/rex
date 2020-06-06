@@ -8,7 +8,7 @@
 #include <intrin.h> // __debugbreak
 #endif
 
-namespace rx {
+namespace Rx {
 
 RX_LOG("abort", logger);
 
@@ -46,7 +46,7 @@ void abort(const char* _message) {
 
   // Forcefully flush the current log contents before we abort, so that any
   // messages that may include the reason for the abortion end up in the log.
-  log::flush();
+  Log::flush();
 
 #if defined(RX_DEBUG)
   abort_debug();

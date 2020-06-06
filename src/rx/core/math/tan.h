@@ -2,9 +2,9 @@
 #define RX_CORE_MATH_TAN_H
 #include "rx/core/types.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
-rx_f32 tan(rx_f32 _x);
+Float32 tan(Float32 _x);
 
 } // namespace rx::math
 

@@ -2,42 +2,42 @@
 #define RX_RENDER_IBL_H
 #include "rx/core/array.h"
 
-namespace rx::render {
+namespace Rx::Render {
 
-namespace frontend {
-  struct texture2D;
-  struct textureCM;
+namespace Frontend {
+  struct Texture2D;
+  struct TextureCM;
 
-  struct technique;
-  struct context;
+  struct Technique;
+  struct Context;
 } // namespace frontend
 
-struct ibl {
-  ibl(frontend::context* _interface);
-  ~ibl();
+struct ImageBasedLighting {
+  ImageBasedLighting(Frontend::Context* _interface);
+  ~ImageBasedLighting();
 
-  void render(frontend::textureCM* _environment, rx_size _irradiance_map_size);
+  void render(Frontend::TextureCM* _environment, Size _irradiance_map_size);
 
-  frontend::textureCM* irradiance() const;
-  frontend::textureCM* prefilter() const;
-  frontend::texture2D* scale_bias() const;
+  Frontend::TextureCM* irradiance() const;
+  Frontend::TextureCM* prefilter() const;
+  Frontend::Texture2D* scale_bias() const;
 
 private:
-  frontend::context* m_frontend;
-  frontend::textureCM* m_irradiance_texture;
-  frontend::textureCM* m_prefilter_texture;
-  frontend::texture2D* m_scale_bias_texture;
+  Frontend::Context* m_frontend;
+  Frontend::TextureCM* m_irradiance_texture;
+  Frontend::TextureCM* m_prefilter_texture;
+  Frontend::Texture2D* m_scale_bias_texture;
 };
 
-inline frontend::textureCM* ibl::irradiance() const {
+inline Frontend::TextureCM* ImageBasedLighting::irradiance() const {
   return m_irradiance_texture;
 }
 
-inline frontend::textureCM* ibl::prefilter() const {
+inline Frontend::TextureCM* ImageBasedLighting::prefilter() const {
   return m_prefilter_texture;
 }
 
-inline frontend::texture2D* ibl::scale_bias() const {
+inline Frontend::Texture2D* ImageBasedLighting::scale_bias() const {
   return m_scale_bias_texture;
 }
 

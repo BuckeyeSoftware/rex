@@ -7,115 +7,115 @@
 
 #include "rx/core/hints/empty_bases.h"
 
-namespace rx::filesystem {
+namespace Rx::Filesystem {
 
-struct RX_HINT_EMPTY_BASES directory
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES Directory
+  : Concepts::NoCopy
 {
-  directory(memory::allocator& _allocator, const char* _path);
-  directory(memory::allocator& _allocator, const string& _path);
-  directory(memory::allocator& _allocator, string&& path_);
-  directory(const char* _path);
-  directory(const string& _path);
-  directory(string&& path_);
-  ~directory();
+  Directory(Memory::Allocator& _allocator, const char* _path);
+  Directory(Memory::Allocator& _allocator, const String& _path);
+  Directory(Memory::Allocator& _allocator, String&& path_);
+  Directory(const char* _path);
+  Directory(const String& _path);
+  Directory(String&& path_);
+  ~Directory();
 
   operator bool() const;
 
-  struct item {
-    enum class type : rx_u8 {
+  struct Item {
+    enum class Type : Uint8 {
       k_file,
       k_directory
     };
 
     bool is_file() const;
     bool is_directory() const;
-    const string& name() const;
-    string&& name();
+    const String& name() const;
+    String&& name();
 
   private:
-    friend struct directory;
+    friend struct Directory;
 
-    item(string&& name_, type _type);
+    Item(String&& name_, Type _type);
 
-    string m_name;
-    type m_type;
+    String m_name;
+    Type m_type;
   };
 
   // enumerate directory with |_function| being called for each item
   // NOTE: does not consider hidden files, symbolic links, block devices, or ..
-  void each(function<void(item&&)>&& _function);
+  void each(Function<void(Item&&)>&& _function);
 
-  const string& path() const &;
+  const String& path() const &;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
-  memory::allocator& m_allocator;
-  string m_path;
+  Memory::Allocator& m_allocator;
+  String m_path;
   void* m_impl;
 };
 
-inline directory::directory(memory::allocator& _allocator, const char* _path)
-  : directory{_allocator, string{_allocator, _path}}
+inline Directory::Directory(Memory::Allocator& _allocator, const char* _path)
+  : Directory{_allocator, String{_allocator, _path}}
 {
 }
 
-inline directory::directory(memory::allocator& _allocator, const string& _path)
-  : directory{_allocator, string{_allocator, _path}}
+inline Directory::Directory(Memory::Allocator& _allocator, const String& _path)
+  : Directory{_allocator, String{_allocator, _path}}
 {
 }
 
-inline directory::directory(const char* _path)
-  : directory{memory::system_allocator::instance(), _path}
+inline Directory::Directory(const char* _path)
+  : Directory{Memory::SystemAllocator::instance(), _path}
 {
 }
 
-inline directory::directory(const string& _path)
-  : directory{memory::system_allocator::instance(), _path}
+inline Directory::Directory(const String& _path)
+  : Directory{Memory::SystemAllocator::instance(), _path}
 {
 }
 
-inline directory::directory(string&& path_)
-  : directory{memory::system_allocator::instance(), utility::move(path_)}
+inline Directory::Directory(String&& path_)
+  : Directory{Memory::SystemAllocator::instance(), Utility::move(path_)}
 {
 }
 
-RX_HINT_FORCE_INLINE directory::operator bool() const {
+RX_HINT_FORCE_INLINE Directory::operator bool() const {
   return m_impl;
 }
 
-RX_HINT_FORCE_INLINE const string& directory::path() const & {
+RX_HINT_FORCE_INLINE const String& Directory::path() const & {
   return m_path;
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& directory::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Directory::allocator() const {
   return m_allocator;
 }
 
-RX_HINT_FORCE_INLINE bool directory::item::is_file() const {
-  return m_type == type::k_file;
+RX_HINT_FORCE_INLINE bool Directory::Item::is_file() const {
+  return m_type == Type::k_file;
 }
 
-RX_HINT_FORCE_INLINE bool directory::item::is_directory() const {
-  return m_type == type::k_directory;
+RX_HINT_FORCE_INLINE bool Directory::Item::is_directory() const {
+  return m_type == Type::k_directory;
 }
 
-RX_HINT_FORCE_INLINE const string& directory::item::name() const {
+RX_HINT_FORCE_INLINE const String& Directory::Item::name() const {
   return m_name;
 }
 
-RX_HINT_FORCE_INLINE string&& directory::item::name() {
-  return utility::move(m_name);
+RX_HINT_FORCE_INLINE String&& Directory::Item::name() {
+  return Utility::move(m_name);
 }
 
-RX_HINT_FORCE_INLINE directory::item::item(string&& name_, type _type)
-  : m_name{utility::move(name_)}
+RX_HINT_FORCE_INLINE Directory::Item::Item(String&& name_, Type _type)
+  : m_name{Utility::move(name_)}
   , m_type{_type}
 {
 }
 
-bool create_directory(const string& _path);
+bool create_directory(const String& _path);
 
 } // namespace rx::filesystem
 

@@ -25,15 +25,15 @@
 #include "rx/game.h"
 #include "rx/display.h"
 
-using namespace rx;
+using namespace Rx;
 
 RX_CONSOLE_V2IVAR(
-  display_resolution,
-  "display.resolution",
-  "display resolution",
-  math::vec2i(800, 600),
-  math::vec2i(4096, 4096),
-  math::vec2i(1600, 900));
+        display_resolution,
+        "display.resolution",
+        "display resolution",
+        Math::Vec2i(800, 600),
+        Math::Vec2i(4096, 4096),
+        Math::Vec2i(1600, 900));
 
 RX_CONSOLE_IVAR(
   display_fullscreen,
@@ -117,18 +117,18 @@ RX_CONSOLE_IVAR(
   4096,
   1024);
 
-static concurrency::atomic<game::status> g_status{game::status::k_restart};
+static Concurrency::Atomic<Game::status> g_status{Game::status::k_restart};
 
 RX_LOG("main", logger);
 
 int main(int _argc, char** _argv) {
-  extern ptr<game> create(render::frontend::context&);
+  extern Ptr<Game> create(Render::Frontend::Context&);
 
   (void)_argc;
   (void)_argv;
 
   auto catch_signal = [](int) {
-    g_status.store(game::status::k_shutdown);
+    g_status.store(Game::status::k_shutdown);
   };
 
   signal(SIGINT, catch_signal);
@@ -152,11 +152,11 @@ int main(int _argc, char** _argv) {
 #endif
 
   // Link all globals into their respective groups.
-  globals::link();
+  Globals::link();
 
-  global_group* system_group = globals::find("system");
-  global_group* console_group = globals::find("console");
-  global_group* cvars_group = globals::find("cvars");
+  auto* system_group = Globals::find("system");
+  auto* console_group = Globals::find("console");
+  auto* cvars_group = Globals::find("cvars");
 
   // Explicitly initialize globals that need to be initialized in a specific
   // order for things to work.
@@ -167,20 +167,20 @@ int main(int _argc, char** _argv) {
   system_group->find("profiler")->init();
 
   // Give the logger a stream to write to.
-  filesystem::file log{"log.log", "wb"};
-  (void)log::subscribe(&log);
+  Filesystem::File log{"log.log", "wb"};
+  (void)Log::subscribe(&log);
 
   // Initialize console variables. Then load the configuration to set those
   // console variables.
   cvars_group->init();
   console_group->init();
 
-  if (!console::interface::load("config.cfg")) {
-    console::interface::save("config.cfg");
+  if (!Console::Interface::load("config.cfg")) {
+    Console::Interface::save("config.cfg");
   }
 
-  const rx_size static_pool_size = *thread_pool_static_pool_size;
-  const rx_size threads = *thread_pool_threads ? *thread_pool_threads : SDL_GetCPUCount();
+  const Size static_pool_size = *thread_pool_static_pool_size;
+  const Size threads = *thread_pool_threads ? *thread_pool_threads : SDL_GetCPUCount();
   system_group->find("thread_pool")->init(threads, static_pool_size);
 
   // The following scope exists because anything inside here needs to go out
@@ -192,84 +192,84 @@ int main(int _argc, char** _argv) {
     // recieve messages from the log and replicate it on the engine console. When
     // the handles go out of scope, the console will no longer recieve those
     // messages.
-    vector<log::write_event::handle> logging_event_handles;
-    globals::find("loggers")->each([&](global_node* _logger) {
-      logging_event_handles.push_back(_logger->cast<rx::log>()->on_queue(
-        [](log::level _level, const string& _message) {
+    Vector<Log::WriteEvent::Handle> logging_event_handles;
+    Globals::find("loggers")->each([&](GlobalNode* _logger) {
+      logging_event_handles.push_back(_logger->cast<Rx::Log>()->on_queue(
+        [](Log::Level _level, const String& _message) {
           switch (_level) {
-          case log::level::k_error:
-            console::interface::print("^rerror: ^w%s", _message);
+          case Log::Level::k_error:
+            Console::Interface::print("^rerror: ^w%s", _message);
             break;
-          case log::level::k_info:
-            console::interface::print("^cinfo: ^w%s", _message);
+          case Log::Level::k_info:
+            Console::Interface::print("^cinfo: ^w%s", _message);
             break;
-          case log::level::k_verbose:
+          case Log::Level::k_verbose:
             // Don't write verbose messages to the console.
             // console::interface::print("^yverbose: ^w%s", _message);
             break;
-          case log::level::k_warning:
-            console::interface::print("^mwarning: ^w%s", _message);
+          case Log::Level::k_warning:
+            Console::Interface::print("^mwarning: ^w%s", _message);
             break;
           }
         }));
     });
 
     // Initialize the others in any order.
-    globals::init();
+    Globals::init();
 
     // Bind some useful console commands early
-    console::interface::add_command("reset", "s",
-      [](const vector<console::command::argument>& _arguments) {
-        if (auto* variable{console::interface::find_variable_by_name(_arguments[0].as_string)}) {
+    Console::Interface::add_command("reset", "s",
+                                    [](const Vector<Console::Command::Argument>& _arguments) {
+        if (auto* variable{Console::Interface::find_variable_by_name(_arguments[0].as_string)}) {
           variable->reset();
           return true;
         }
         return false;
       });
 
-    console::interface::add_command("clear", "",
-      [](const vector<console::command::argument>&) {
-        console::interface::clear();
+    Console::Interface::add_command("clear", "",
+                                    [](const Vector<Console::Command::Argument>&) {
+        Console::Interface::clear();
         return true;
       });
 
-    console::interface::add_command("exit", "",
-      [](const vector<console::command::argument>&) {
-        g_status = game::status::k_shutdown;
+    Console::Interface::add_command("exit", "",
+                                    [](const Vector<Console::Command::Argument>&) {
+        g_status = Game::status::k_shutdown;
         return true;
       });
 
-    console::interface::add_command("quit", "",
-      [&](const vector<console::command::argument>&) {
-        g_status = game::status::k_shutdown;
+    Console::Interface::add_command("quit", "",
+                                    [&](const Vector<Console::Command::Argument>&) {
+        g_status = Game::status::k_shutdown;
         return true;
       });
 
-    console::interface::add_command("restart", "",
-      [&](const vector<console::command::argument>&) {
-        g_status = game::status::k_restart;
+    Console::Interface::add_command("restart", "",
+                                    [&](const Vector<Console::Command::Argument>&) {
+        g_status = Game::status::k_restart;
         return true;
       });
 
     // Replace SDL2s allocator with our system allocator so we can track it's
     // memory usage.
     SDL_SetMemoryFunctions(
-      [](rx_size _size) -> void* {
-        return memory::system_allocator::instance().allocate(_size);
+      [](Size _size) -> void* {
+        return Memory::SystemAllocator::instance().allocate(_size);
       },
-      [](rx_size _size, rx_size _elements) -> void* {
-        rx_byte* data = memory::system_allocator::instance().allocate(_size * _elements);
+      [](Size _size, Size _elements) -> void* {
+        Byte* data = Memory::SystemAllocator::instance().allocate(_size * _elements);
         if (data) {
           memset(data, 0, _size * _elements);
           return data;
         }
         return nullptr;
       },
-      [](void* _data, rx_size _size) -> void* {
-        return memory::system_allocator::instance().reallocate(_data, _size);
+      [](void* _data, Size _size) -> void* {
+        return Memory::SystemAllocator::instance().reallocate(_data, _size);
       },
       [](void* _data){
-        memory::system_allocator::instance().deallocate(_data);
+        Memory::SystemAllocator::instance().deallocate(_data);
       }
     );
     SDL_SetMainReady();
@@ -279,28 +279,27 @@ int main(int _argc, char** _argv) {
     // k_running, k_restart and k_shutdown.
     //
     // This is where engine restart is handled.
-    while (g_status == game::status::k_restart) {
-      if (!console::interface::load("config.cfg")) {
-        console::interface::save("config.cfg");
+    while (g_status == Game::status::k_restart) {
+      if (!Console::Interface::load("config.cfg")) {
+        Console::Interface::save("config.cfg");
       }
 
       if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         abort("failed to initialize video");
       }
 
-
       // Fetch all the displays
-      const auto& displays{display::displays(memory::system_allocator::instance())};
+      const auto& displays =
+        Display::displays(Memory::SystemAllocator::instance());
 
       // Search for the given display in the display list.
-      const display* found_display{nullptr};
-      displays.each_fwd([&](const display& _display) {
-        if (_display.name() == *display_name) {
-          found_display = &_display;
-          return false;
-        }
-        return true;
-      });
+      const auto found_display_index =
+        displays.find_if([&](const Display& _display) {
+          return _display.name() == *display_name;
+        });
+
+      const Display* found_display =
+        found_display_index != -1_z ? &displays[found_display_index] : nullptr;
 
       if (!found_display) {
         // Use the first display if we could not match a display.
@@ -310,11 +309,11 @@ int main(int _argc, char** _argv) {
       }
 
       // Fetch the index of display inside the display list.
-      const rx_size display_index = found_display - &displays.first();
+      const Size display_index = found_display - &displays.first();
 
       const auto& driver_name{render_driver->get()};
-      const bool is_gl{driver_name.begins_with("gl")};
-      const bool is_es{driver_name.begins_with("es")};
+      const bool is_gl = driver_name.begins_with("gl");
+      const bool is_es = driver_name.begins_with("es");
 
       int flags{0};
       if (is_gl || is_es) {
@@ -388,17 +387,17 @@ int main(int _argc, char** _argv) {
       SDL_StartTextInput();
 
       {
-        ptr<render::backend::context> backend;
+        Ptr<Render::Backend::Context> backend;
 
-        auto& allocator = memory::system_allocator::instance();
+        auto& allocator = Memory::SystemAllocator::instance();
         if (driver_name == "gl4") {
-          backend = make_ptr<render::backend::gl4>(allocator, allocator, reinterpret_cast<void*>(window));
+          backend = make_ptr<Render::Backend::GL4>(allocator, allocator, reinterpret_cast<void*>(window));
         } else if (driver_name == "gl3") {
-          backend = make_ptr<render::backend::gl3>(allocator, allocator, reinterpret_cast<void*>(window));
+          backend = make_ptr<Render::Backend::GL3>(allocator, allocator, reinterpret_cast<void*>(window));
         } else if (driver_name == "es3") {
-          backend = make_ptr<render::backend::es3>(allocator, allocator, reinterpret_cast<void*>(window));
+          backend = make_ptr<Render::Backend::ES3>(allocator, allocator, reinterpret_cast<void*>(window));
         } else if (driver_name == "null") {
-          backend = make_ptr<render::backend::null>(allocator, allocator, reinterpret_cast<void*>(window));
+          backend = make_ptr<Render::Backend::Null>(allocator, allocator, reinterpret_cast<void*>(window));
         } else {
           abort("invalid driver");
         }
@@ -411,7 +410,7 @@ int main(int _argc, char** _argv) {
           SDL_GL_SetSwapInterval(*display_swap_interval);
         }
 
-        render::frontend::context frontend{allocator, backend.get()};
+        Render::Frontend::Context frontend{allocator, backend.get()};
 
         // Quickly get a black screen.
         frontend.process();
@@ -419,9 +418,9 @@ int main(int _argc, char** _argv) {
 
         SDL_SetRelativeMouseMode(SDL_TRUE);
 
-        ptr<game> g = create(frontend);
+        Ptr<Game> g = create(frontend);
 
-        auto on_fullscreen_change{display_fullscreen->on_change([&](rx_s32 _value) {
+        auto on_fullscreen_change{display_fullscreen->on_change([&](Sint32 _value) {
           if (_value == 0) {
             SDL_SetWindowFullscreen(window, 0);
           } else if (_value == 1) {
@@ -430,12 +429,12 @@ int main(int _argc, char** _argv) {
             SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
           }
 
-          math::vec2i size;
+          Math::Vec2i size;
           SDL_GetWindowSize(window, &size.w, &size.h);
-          g->on_resize(size.cast<rx_size>());
+          g->on_resize(size.cast<Size>());
         })};
 
-        auto on_swap_interval_change{display_swap_interval->on_change([&](rx_s32 _value) {
+        auto on_swap_interval_change{display_swap_interval->on_change([&](Sint32 _value) {
           if (is_gl || is_es) {
             SDL_GL_SetSwapInterval(_value);
           } else {
@@ -443,8 +442,8 @@ int main(int _argc, char** _argv) {
           }
         })};
 
-        auto on_display_resolution_changed{display_resolution->on_change([&](const math::vec2i& _resolution) {
-          g->on_resize(_resolution.cast<rx_size>());
+        auto on_display_resolution_changed{display_resolution->on_change([&](const Math::Vec2i& _resolution) {
+          g->on_resize(_resolution.cast<Size>());
           SDL_SetWindowSize(window, _resolution.w, _resolution.h);
         })};
 
@@ -453,22 +452,22 @@ int main(int _argc, char** _argv) {
         }
 
         // At this point, the game is officially running.
-        g_status = game::status::k_running;
+        g_status = Game::status::k_running;
 
         frontend.process();
         frontend.swap();
 
-        input::input input;
-        while (g_status == game::status::k_running) {
+        Input::Context input;
+        while (g_status == Game::status::k_running) {
           for (SDL_Event event; SDL_PollEvent(&event);) {
-            input::event ievent;
+            Input::Event ievent;
             switch (event.type) {
             case SDL_QUIT:
-              g_status = game::status::k_shutdown;
+              g_status = Game::status::k_shutdown;
               break;
             case SDL_KEYDOWN:
             case SDL_KEYUP:
-              ievent.type = input::event_type::k_keyboard;
+              ievent.type = Input::Event::Type::k_keyboard;
               ievent.as_keyboard.down = event.type == SDL_KEYDOWN;
               ievent.as_keyboard.scan_code = event.key.keysym.scancode;
               ievent.as_keyboard.symbol = event.key.keysym.sym;
@@ -476,18 +475,18 @@ int main(int _argc, char** _argv) {
               break;
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP:
-              ievent.type = input::event_type::k_mouse_button;
+              ievent.type = Input::Event::Type::k_mouse_button;
               ievent.as_mouse_button.down = event.type == SDL_MOUSEBUTTONDOWN;
               ievent.as_mouse_button.button = event.button.button;
               input.handle_event(ievent);
               break;
             case SDL_MOUSEMOTION:
-              ievent.type = input::event_type::k_mouse_motion;
+              ievent.type = Input::Event::Type::k_mouse_motion;
               ievent.as_mouse_motion.value = {event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel};
               input.handle_event(ievent);
               break;
             case SDL_MOUSEWHEEL:
-              ievent.type = input::event_type::k_mouse_scroll;
+              ievent.type = Input::Event::Type::k_mouse_scroll;
               ievent.as_mouse_scroll.value = {event.wheel.x, event.wheel.y};
               input.handle_event(ievent);
               break;
@@ -499,14 +498,14 @@ int main(int _argc, char** _argv) {
               case SDL_WINDOWEVENT_MOVED:
                 {
                   // When the display moves, attempt to determine if it moved to a different display.
-                  math::rectangle<rx_s32> extents;
+                  Math::rectangle<Sint32> extents;
                   extents.dimensions = display_resolution->get();
-                  const math::vec2i offset{event.window.data1, event.window.data2};
+                  const Math::Vec2i offset{event.window.data1, event.window.data2};
                   extents.offset = offset;
                   logger->info("Window %s moved to %s", extents.dimensions,
                     extents.offset);
 
-                  displays.each_fwd([&](const display& _display) {
+                  displays.each_fwd([&](const Display& _display) {
                     if (_display.contains(extents)) {
                       // The window has moved to another display, update the name
                       display_name->set(_display.name());
@@ -520,45 +519,41 @@ int main(int _argc, char** _argv) {
               }
               break;
             case SDL_TEXTINPUT:
-              ievent.type = input::event_type::k_text_input;
+              ievent.type = Input::Event::Type::k_text_input;
               strcpy(ievent.as_text_input.contents, event.text.text);
               input.handle_event(ievent);
               break;
             case SDL_CLIPBOARDUPDATE:
-              // input.update_clipboard();
-              {
-                char* text{SDL_GetClipboardText()};
-                if (text) {
-                  ievent.type = input::event_type::k_clipboard;
-                  utility::construct<string>(&ievent.as_clipboard.contents, text);
-                  SDL_free(text);
-                  input.handle_event(ievent);
-                }
+              if (char* text = SDL_GetClipboardText()) {
+                ievent.type = Input::Event::Type::k_clipboard;
+                Utility::construct<String>(&ievent.as_clipboard.contents, text);
+                SDL_free(text);
+                input.handle_event(ievent);
               }
               break;
             }
           }
 
-          if (g_status != game::status::k_running) {
+          if (g_status != Game::status::k_running) {
             break;
           }
 
           // Execute one slice of the game.
-          const game::status status{g->on_slice(input)};
+          const Game::status status{g->on_slice(input)};
 
-          if (g_status != game::status::k_running) {
+          if (g_status != Game::status::k_running) {
             break;
           }
 
           g_status = status;
 
           // Update the input system.
-          const int updated{input.update(frontend.timer().delta_time())};
-          if (updated & input::input::k_clipboard) {
+          const int updated = input.update(frontend.timer().delta_time());
+          if (updated & Input::Context::k_clipboard) {
             SDL_SetClipboardText(input.clipboard().data());
           }
 
-          if (updated & input::input::k_mouse_capture) {
+          if (updated & Input::Context::k_mouse_capture) {
             SDL_SetRelativeMouseMode(input.is_mouse_captured() ? SDL_TRUE : SDL_FALSE);
           }
 
@@ -571,7 +566,7 @@ int main(int _argc, char** _argv) {
         }
       }
 
-      console::interface::save("config.cfg");
+      Console::Interface::save("config.cfg");
 
       SDL_DestroyWindow(window);
     }
@@ -580,7 +575,7 @@ int main(int _argc, char** _argv) {
 
   SDL_Quit();
 
-  globals::fini();
+  Globals::fini();
 
   console_group->fini();
   cvars_group->fini();

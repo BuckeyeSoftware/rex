@@ -4,83 +4,83 @@
 #include "rx/core/log.h"
 #include "rx/core/hints/unreachable.h"
 
-namespace rx::console {
+namespace Rx::Console {
 
 RX_LOG("console", logger);
 
-static const char* variable_type_string(variable_type _type) {
+static const char* variable_type_string(VariableType _type) {
   switch (_type) {
-  case variable_type::k_boolean:
+  case VariableType::k_boolean:
     return "boolean";
-  case variable_type::k_string:
+  case VariableType::k_string:
     return "string";
-  case variable_type::k_int:
+  case VariableType::k_int:
     return "int";
-  case variable_type::k_float:
+  case VariableType::k_float:
     return "float";
-  case variable_type::k_vec4f:
+  case VariableType::k_vec4f:
     return "vec4f";
-  case variable_type::k_vec4i:
+  case VariableType::k_vec4i:
     return "vec4i";
-  case variable_type::k_vec3f:
+  case VariableType::k_vec3f:
     return "vec3f";
-  case variable_type::k_vec3i:
+  case VariableType::k_vec3i:
     return "vec3i";
-  case variable_type::k_vec2f:
+  case VariableType::k_vec2f:
     return "vec2f";
-  case variable_type::k_vec2i:
+  case VariableType::k_vec2i:
     return "vec2i";
   }
   RX_HINT_UNREACHABLE();
 };
 
-command::argument::~argument() {
-  if (type == variable_type::k_string) {
-    utility::destruct<string>(&as_string);
+Command::Argument::~Argument() {
+  if (type == VariableType::k_string) {
+    Utility::destruct<String>(&as_string);
   }
 }
 
-command::argument::argument(argument&& _argument)
+Command::Argument::Argument(Argument&& _argument)
   : type{_argument.type}
 {
   switch (type) {
-  case variable_type::k_boolean:
+  case VariableType::k_boolean:
     as_boolean = _argument.as_boolean;
     break;
-  case variable_type::k_string:
-    utility::construct<string>(&as_string, utility::move(_argument.as_string));
+  case VariableType::k_string:
+    Utility::construct<String>(&as_string, Utility::move(_argument.as_string));
     break;
-  case variable_type::k_int:
+  case VariableType::k_int:
     as_int = _argument.as_int;
     break;
-  case variable_type::k_float:
+  case VariableType::k_float:
     as_float = _argument.as_float;
     break;
-  case variable_type::k_vec4f:
+  case VariableType::k_vec4f:
     as_vec4f = _argument.as_vec4f;
     break;
-  case variable_type::k_vec4i:
+  case VariableType::k_vec4i:
     as_vec4i = _argument.as_vec4i;
     break;
-  case variable_type::k_vec3f:
+  case VariableType::k_vec3f:
     as_vec3f = _argument.as_vec3f;
     break;
-  case variable_type::k_vec3i:
+  case VariableType::k_vec3i:
     as_vec3i = _argument.as_vec3i;
     break;
-  case variable_type::k_vec2f:
+  case VariableType::k_vec2f:
     as_vec2f = _argument.as_vec2f;
     break;
-  case variable_type::k_vec2i:
+  case VariableType::k_vec2i:
     as_vec2i = _argument.as_vec2i;
     break;
   }
 }
 
-command::command(memory::allocator& _allocator, const string& _name,
-  const char* _signature, delegate&& _function)
+Command::Command(Memory::Allocator& _allocator, const String& _name,
+                 const char* _signature, Delegate&& _function)
   : m_allocator{_allocator}
-  , m_delegate{utility::move(_function)}
+  , m_delegate{Utility::move(_function)}
   , m_arguments{allocator()}
   , m_declaration{allocator()}
   , m_name{allocator(), _name}
@@ -115,7 +115,7 @@ command::command(memory::allocator& _allocator, const string& _name,
         if (!strchr("234", dims_ch) || !strchr("if", type_ch)) {
           goto invalid_signature;
         }
-        m_declaration += string::format("vec%c%c", dims_ch, type_ch);
+        m_declaration += String::format("vec%c%c", dims_ch, type_ch);
         m_argument_count++;
       }
       break;
@@ -136,7 +136,7 @@ invalid_signature:
   RX_ASSERT(0, "invalid signature");
 }
 
-bool command::execute() {
+bool Command::execute() {
   // Check the signature of the arguments
   if (m_arguments.size() != m_argument_count) {
     logger->error(
@@ -146,30 +146,30 @@ bool command::execute() {
     return false;
   }
 
-  const argument* arg{m_arguments.data()};
-  const char* expected{""};
-  for (const char* ch{m_signature}; *ch; ch++, arg++) {
+  const Argument* arg = m_arguments.data();
+  const char* expected = "";
+  for (const char* ch = m_signature; *ch; ch++, arg++) {
     switch (*ch) {
     case 'b':
-      if (arg->type != variable_type::k_boolean) {
+      if (arg->type != VariableType::k_boolean) {
         expected = "bool";
         goto error;
       }
       break;
     case 's':
-      if (arg->type != variable_type::k_string) {
+      if (arg->type != VariableType::k_string) {
         expected = "string";
         goto error;
       }
       break;
     case 'i':
-      if (arg->type != variable_type::k_int) {
+      if (arg->type != VariableType::k_int) {
         expected = "int";
         goto error;
       }
       break;
     case 'f':
-      if (arg->type != variable_type::k_float) {
+      if (arg->type != VariableType::k_float) {
         expected = "float";
         goto error;
       }
@@ -185,28 +185,28 @@ bool command::execute() {
         ch++; // Skip '2', '3' or '4'
         switch (ch[-1]) {
         case '2':
-          if (*ch == 'f' && arg->type != variable_type::k_vec2f) {
+          if (*ch == 'f' && arg->type != VariableType::k_vec2f) {
             expected = "vec2f";
             goto error;
-          } else if (*ch == 'i' && arg->type != variable_type::k_vec2i) {
+          } else if (*ch == 'i' && arg->type != VariableType::k_vec2i) {
             expected = "vec2i";
             goto error;
           }
           break;
         case '3':
-          if (*ch == 'f' && arg->type != variable_type::k_vec3f) {
+          if (*ch == 'f' && arg->type != VariableType::k_vec3f) {
             expected = "vec3f";
             goto error;
-          } else if (*ch == 'i' && arg->type != variable_type::k_vec3i) {
+          } else if (*ch == 'i' && arg->type != VariableType::k_vec3i) {
             expected = "vec3i";
             goto error;
           }
           break;
         case '4':
-          if (*ch == 'f' && arg->type != variable_type::k_vec4f) {
+          if (*ch == 'f' && arg->type != VariableType::k_vec4f) {
             expected = "vec4f";
             goto error;
-          } else if (*ch == 'i' && arg->type != variable_type::k_vec4i) {
+          } else if (*ch == 'i' && arg->type != VariableType::k_vec4i) {
             expected = "vec4i";
             goto error;
           }
@@ -225,46 +225,46 @@ error:
     "%s: expected '%s' for argument %zu, got '%s' instead",
     m_declaration,
     expected,
-    static_cast<rx_size>((arg - &m_arguments.first()) + 1),
+    static_cast<Size>((arg - &m_arguments.first()) + 1),
     variable_type_string(arg->type));
   return false;
 }
 
-bool command::execute_tokens(const vector<token>& _tokens) {
+bool Command::execute_tokens(const Vector<Token>& _tokens) {
   m_arguments.clear();
-  _tokens.each_fwd([&](const token& _token) {
+  _tokens.each_fwd([&](const Token& _token) {
     switch (_token.kind()) {
-    case token::type::k_atom:
+    case Token::Type::k_atom:
       m_arguments.emplace_back(_token.as_atom());
       break;
-    case token::type::k_string:
+    case Token::Type::k_string:
       m_arguments.emplace_back(_token.as_string());
       break;
-    case token::type::k_boolean:
+    case Token::Type::k_boolean:
       m_arguments.emplace_back(_token.as_boolean());
       break;
-    case token::type::k_int:
+    case Token::Type::k_int:
       m_arguments.emplace_back(_token.as_int());
       break;
-    case token::type::k_float:
+    case Token::Type::k_float:
       m_arguments.emplace_back(_token.as_float());
       break;
-    case token::type::k_vec4f:
+    case Token::Type::k_vec4f:
       m_arguments.emplace_back(_token.as_vec4f());
       break;
-    case token::type::k_vec4i:
+    case Token::Type::k_vec4i:
       m_arguments.emplace_back(_token.as_vec4i());
       break;
-    case token::type::k_vec3f:
+    case Token::Type::k_vec3f:
       m_arguments.emplace_back(_token.as_vec3f());
       break;
-    case token::type::k_vec3i:
+    case Token::Type::k_vec3i:
       m_arguments.emplace_back(_token.as_vec3i());
       break;
-    case token::type::k_vec2f:
+    case Token::Type::k_vec2f:
       m_arguments.emplace_back(_token.as_vec2f());
       break;
-    case token::type::k_vec2i:
+    case Token::Type::k_vec2i:
       m_arguments.emplace_back(_token.as_vec2i());
       break;
     }

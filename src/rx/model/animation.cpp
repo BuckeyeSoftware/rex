@@ -6,9 +6,9 @@
 #include "rx/core/math/abs.h"
 #include "rx/core/math/mod.h"
 
-namespace rx::model {
+namespace Rx::Model {
 
-animation::animation(loader* _model, rx_size _index)
+Animation::Animation(Loader* _model, Size _index)
   : m_model{_model}
   , m_frames{m_model->m_frames}
   , m_animation{_index}
@@ -17,11 +17,11 @@ animation::animation(loader* _model, rx_size _index)
 {
 }
 
-rx_size animation::joints() const {
+Size Animation::joints() const {
   return m_model->joints().size();
 }
 
-void animation::update(rx_f32 _delta_time, bool _loop) {
+void Animation::update(Float32 _delta_time, bool _loop) {
   if (m_completed) {
     return;
   }
@@ -32,27 +32,28 @@ void animation::update(rx_f32 _delta_time, bool _loop) {
 
   const bool completes{m_current_frame >= animation.frame_count - 1};
   const bool finished{completes && !_loop};
-  m_current_frame = math::mod(m_current_frame,
-    static_cast<rx_f32>(animation.frame_count));
+  m_current_frame = Math::mod(m_current_frame,
+                              static_cast<Float32>(animation.frame_count));
 
-  rx_size frame1{finished ? animation.frame_count - 1 : static_cast<rx_size>(m_current_frame)};
-  rx_size frame2{finished ? animation.frame_count - 1 : frame1 + 1};
+  Size frame1{finished ? animation.frame_count - 1 : static_cast<Size>(m_current_frame)};
+  Size frame2{finished ? animation.frame_count - 1 : frame1 + 1};
 
   frame1 %= animation.frame_count;
   frame2 %= animation.frame_count;
 
-  math::vec2z frame_indices;
+  Math::Vec2z frame_indices;
   frame_indices[0] = animation.frame_offset + frame1;
   frame_indices[1] = animation.frame_offset + frame2;
 
-  const rx_f32 offset{finished ? 0.0f : math::abs(m_current_frame - frame1)};
+  const Float32 offset =
+          finished ? 0.0f : Math::abs(m_current_frame - frame1);
 
-  const rx_size joints{m_model->joints().size()};
-  const math::mat3x4f* mat1{&m_model->m_frames[frame_indices[0] * joints]};
-  const math::mat3x4f* mat2{&m_model->m_frames[frame_indices[1] * joints]};
+  const Size joints{m_model->joints().size()};
+  const Math::Mat3x4f* mat1{&m_model->m_frames[frame_indices[0] * joints]};
+  const Math::Mat3x4f* mat2{&m_model->m_frames[frame_indices[1] * joints]};
 
   // interpolate matrices between the two closest frames
-  for (rx_size i{0}; i < joints; i++) {
+  for (Size i = 0; i < joints; i++) {
     m_frames[i] = mat1[i] * (1.0f - offset) + mat2[i] * offset;
   }
 

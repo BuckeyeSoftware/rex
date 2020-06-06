@@ -33,31 +33,31 @@ RX_CONSOLE_V2IVAR(
   max_texture_dimensions,
   "render.max_texture_dimensions",
   "hard limit on the maximum texture dimension for all textures",
-  rx::math::vec2i(4, 4),
-  rx::math::vec2i(4096, 4096),
-  rx::math::vec2i(2048, 2048));
+  Rx::Math::Vec2i(4, 4),
+  Rx::Math::Vec2i(4096, 4096),
+  Rx::Math::Vec2i(2048, 2048));
 
 RX_LOG("render", logger);
 
 static constexpr const char* k_technique_path{"base/renderer/techniques"};
 static constexpr const char* k_module_path{"base/renderer/modules"};
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
 #define allocate_command(data_type, type) \
   m_command_buffer.allocate(sizeof(data_type), (type), _info)
 
-context::context(memory::allocator& _allocator, backend::context* _backend)
+Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend)
   : m_allocator{_allocator}
   , m_backend{_backend}
   , m_allocation_info{m_backend->query_allocation_info()}
-  , m_buffer_pool{allocator(), m_allocation_info.buffer_size + sizeof(buffer), static_cast<rx_size>(*max_buffers)}
-  , m_target_pool{allocator(), m_allocation_info.target_size + sizeof(target), static_cast<rx_size>(*max_targets)}
-  , m_program_pool{allocator(), m_allocation_info.program_size + sizeof(program), static_cast<rx_size>(*max_programs)}
-  , m_texture1D_pool{allocator(), m_allocation_info.texture1D_size + sizeof(texture1D), static_cast<rx_size>(*max_texture1D)}
-  , m_texture2D_pool{allocator(), m_allocation_info.texture2D_size + sizeof(texture2D), static_cast<rx_size>(*max_texture2D)}
-  , m_texture3D_pool{allocator(), m_allocation_info.texture3D_size + sizeof(texture3D), static_cast<rx_size>(*max_texture3D)}
-  , m_textureCM_pool{allocator(), m_allocation_info.textureCM_size + sizeof(textureCM), static_cast<rx_size>(*max_textureCM)}
+  , m_buffer_pool{allocator(), m_allocation_info.buffer_size + sizeof(Buffer), static_cast<Size>(*max_buffers)}
+  , m_target_pool{allocator(), m_allocation_info.target_size + sizeof(Target), static_cast<Size>(*max_targets)}
+  , m_program_pool{allocator(), m_allocation_info.program_size + sizeof(Program), static_cast<Size>(*max_programs)}
+  , m_texture1D_pool{allocator(), m_allocation_info.texture1D_size + sizeof(Texture1D), static_cast<Size>(*max_texture1D)}
+  , m_texture2D_pool{allocator(), m_allocation_info.texture2D_size + sizeof(Texture2D), static_cast<Size>(*max_texture2D)}
+  , m_texture3D_pool{allocator(), m_allocation_info.texture3D_size + sizeof(Texture3D), static_cast<Size>(*max_texture3D)}
+  , m_textureCM_pool{allocator(), m_allocation_info.textureCM_size + sizeof(TextureCM), static_cast<Size>(*max_textureCM)}
   , m_destroy_buffers{allocator()}
   , m_destroy_targets{allocator()}
   , m_destroy_textures1D{allocator()}
@@ -67,7 +67,7 @@ context::context(memory::allocator& _allocator, backend::context* _backend)
   , m_swapchain_target{nullptr}
   , m_swapchain_texture{nullptr}
   , m_commands{allocator()}
-  , m_command_buffer{allocator(), static_cast<rx_size>(*command_memory) * 1024 * 1024}
+  , m_command_buffer{allocator(), static_cast<Size>(*command_memory) * 1024 * 1024}
   , m_deferred_process{[this]() { process(); }}
   , m_device_info{allocator()}
 {
@@ -82,256 +82,256 @@ context::context(memory::allocator& _allocator, backend::context* _backend)
   m_device_info.version = info.version;
 
   // load all modules
-  if (filesystem::directory directory{k_module_path}) {
-    directory.each([this](filesystem::directory::item&& item_) {
+  if (Filesystem::Directory directory{k_module_path}) {
+    directory.each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
-        module new_module{allocator()};
-        const auto path{string::format("%s/%s", k_module_path,
-          utility::move(item_.name()))};
+        Module new_module{allocator()};
+        const auto path{String::format("%s/%s", k_module_path,
+                                       Utility::move(item_.name()))};
         if (new_module.load(path)) {
-          m_modules.insert(new_module.name(), utility::move(new_module));
+          m_modules.insert(new_module.name(), Utility::move(new_module));
         }
       }
     });
   }
 
   // Load all the techniques.
-  if (filesystem::directory directory{k_technique_path}) {
-    directory.each([this](filesystem::directory::item&& item_) {
+  if (Filesystem::Directory directory{k_technique_path}) {
+    directory.each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
-        technique new_technique{this};
-        const auto path{string::format("%s/%s", k_technique_path,
-          utility::move(item_.name()))};
+        Technique new_technique{this};
+        const auto path{String::format("%s/%s", k_technique_path,
+                                       Utility::move(item_.name()))};
         if (new_technique.load(path) && new_technique.compile(m_modules)) {
           m_techniques.insert(new_technique.name(),
-            utility::move(new_technique));
+                              Utility::move(new_technique));
         }
       }
     });
   }
 
   // Generate swapchain target.
-  static auto& dimensions{console::interface::find_variable_by_name("display.resolution")->cast<math::vec2i>()->get()};
-  static auto& hdr{console::interface::find_variable_by_name("display.hdr")->cast<bool>()->get()};
+  static auto& dimensions{Console::Interface::find_variable_by_name("display.resolution")->cast<Math::Vec2i>()->get()};
+  static auto& hdr{Console::Interface::find_variable_by_name("display.hdr")->cast<bool>()->get()};
 
   m_swapchain_texture = create_texture2D(RX_RENDER_TAG("swapchain"));
-  m_swapchain_texture->record_format(hdr ? texture::data_format::k_rgba_f16 : texture::data_format::k_rgba_u8);
-  m_swapchain_texture->record_type(texture::type::k_attachment);
+  m_swapchain_texture->record_format(hdr ? Texture::DataFormat::k_rgba_f16 : Texture::DataFormat::k_rgba_u8);
+  m_swapchain_texture->record_type(Texture::Type::k_attachment);
   m_swapchain_texture->record_levels(1);
-  m_swapchain_texture->record_dimensions(dimensions.cast<rx_size>());
+  m_swapchain_texture->record_dimensions(dimensions.cast<Size>());
   m_swapchain_texture->record_filter({false, false, false});
   m_swapchain_texture->record_wrap({
-    texture::wrap_type::k_clamp_to_edge,
-    texture::wrap_type::k_clamp_to_edge});
-  m_swapchain_texture->m_flags |= texture::k_swapchain;
+                                           Texture::WrapType::k_clamp_to_edge,
+                                           Texture::WrapType::k_clamp_to_edge});
+  m_swapchain_texture->m_flags |= Texture::k_swapchain;
   initialize_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 
   m_swapchain_target = create_target(RX_RENDER_TAG("swapchain"));
   m_swapchain_target->attach_texture(m_swapchain_texture, 0);
-  m_swapchain_target->m_flags |= target::k_swapchain;
+  m_swapchain_target->m_flags |= Target::k_swapchain;
   initialize_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
 }
 
-context::~context() {
+Context::~Context() {
   destroy_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
   destroy_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 
-  m_cached_buffers.each_value([this](buffer* _buffer) {
+  m_cached_buffers.each_value([this](Buffer* _buffer) {
     destroy_buffer(RX_RENDER_TAG("cached buffer"), _buffer);
   });
 
-  m_cached_targets.each_value([this](target* _target) {
+  m_cached_targets.each_value([this](Target* _target) {
     destroy_target(RX_RENDER_TAG("cached target"), _target);
   });
 
-  m_cached_textures1D.each_value([this](texture1D* _texture) {
+  m_cached_textures1D.each_value([this](Texture1D* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
 
-  m_cached_textures2D.each_value([this](texture2D* _texture) {
+  m_cached_textures2D.each_value([this](Texture2D* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
 
-  m_cached_textures3D.each_value([this](texture3D* _texture) {
+  m_cached_textures3D.each_value([this](Texture3D* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
 
-  m_cached_texturesCM.each_value([this](textureCM* _texture) {
+  m_cached_texturesCM.each_value([this](TextureCM* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
 }
 
 // create_*
-buffer* context::create_buffer(const command_header::info& _info) {
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_buffer;
-  command->as_buffer = m_buffer_pool.create<buffer>(this);
+Buffer* Context::create_buffer(const CommandHeader::Info& _info) {
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_allocate)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_buffer;
+  command->as_buffer = m_buffer_pool.create<Buffer>(this);
   m_commands.push_back(command_base);
   return command->as_buffer;
 }
 
-target* context::create_target(const command_header::info& _info) {
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_target;
-  command->as_target = m_target_pool.create<target>(this);
+Target* Context::create_target(const CommandHeader::Info& _info) {
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_allocate)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_target;
+  command->as_target = m_target_pool.create<Target>(this);
   m_commands.push_back(command_base);
   return command->as_target;
 }
 
-program* context::create_program(const command_header::info& _info) {
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_program;
-  command->as_program = m_program_pool.create<program>(this);
+Program* Context::create_program(const CommandHeader::Info& _info) {
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_allocate)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_program;
+  command->as_program = m_program_pool.create<Program>(this);
   m_commands.push_back(command_base);
   return command->as_program;
 }
 
-texture1D* context::create_texture1D(const command_header::info& _info) {
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_texture1D;
-  command->as_texture1D = m_texture1D_pool.create<texture1D>(this);
+Texture1D* Context::create_texture1D(const CommandHeader::Info& _info) {
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_allocate)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_texture1D;
+  command->as_texture1D = m_texture1D_pool.create<Texture1D>(this);
   m_commands.push_back(command_base);
   return command->as_texture1D;
 }
 
-texture2D* context::create_texture2D(const command_header::info& _info) {
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_texture2D;
-  command->as_texture2D = m_texture2D_pool.create<texture2D>(this);
+Texture2D* Context::create_texture2D(const CommandHeader::Info& _info) {
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_allocate)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_texture2D;
+  command->as_texture2D = m_texture2D_pool.create<Texture2D>(this);
   m_commands.push_back(command_base);
   return command->as_texture2D;
 }
 
-texture3D* context::create_texture3D(const command_header::info& _info) {
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_texture3D;
-  command->as_texture3D = m_texture3D_pool.create<texture3D>(this);
+Texture3D* Context::create_texture3D(const CommandHeader::Info& _info) {
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_allocate)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_texture3D;
+  command->as_texture3D = m_texture3D_pool.create<Texture3D>(this);
   m_commands.push_back(command_base);
   return command->as_texture3D;
 }
 
-textureCM* context::create_textureCM(const command_header::info& _info) {
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_allocate)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_textureCM;
-  command->as_textureCM = m_textureCM_pool.create<textureCM>(this);
+TextureCM* Context::create_textureCM(const CommandHeader::Info& _info) {
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_allocate)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_textureCM;
+  command->as_textureCM = m_textureCM_pool.create<TextureCM>(this);
   m_commands.push_back(command_base);
   return command->as_textureCM;
 }
 
 // initialize_*
-void context::initialize_buffer(const command_header::info& _info, buffer* _buffer) {
+void Context::initialize_buffer(const CommandHeader::Info& _info, Buffer* _buffer) {
   RX_ASSERT(_buffer, "_buffer is null");
   _buffer->validate();
 
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_buffer;
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_construct)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_buffer;
   command->as_buffer = _buffer;
   m_commands.push_back(command_base);
 }
 
-void context::initialize_target(const command_header::info& _info, target* _target) {
+void Context::initialize_target(const CommandHeader::Info& _info, Target* _target) {
   RX_ASSERT(_target, "_target is null");
   _target->validate();
 
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_target;
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_construct)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_target;
   command->as_target = _target;
   m_commands.push_back(command_base);
 }
 
-void context::initialize_program(const command_header::info& _info, program* _program) {
+void Context::initialize_program(const CommandHeader::Info& _info, Program* _program) {
   RX_ASSERT(_program, "_program is null");
   _program->validate();
 
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_program;
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_construct)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_program;
   command->as_program = _program;
   m_commands.push_back(command_base);
 }
 
-void context::initialize_texture(const command_header::info& _info, texture1D* _texture) {
+void Context::initialize_texture(const CommandHeader::Info& _info, Texture1D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
 
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_texture1D;
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_construct)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_texture1D;
   command->as_texture1D = _texture;
   m_commands.push_back(command_base);
 }
 
-void context::initialize_texture(const command_header::info& _info, texture2D* _texture) {
+void Context::initialize_texture(const CommandHeader::Info& _info, Texture2D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
 
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_texture2D;
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_construct)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_texture2D;
   command->as_texture2D = _texture;
   m_commands.push_back(command_base);
 }
 
-void context::initialize_texture(const command_header::info& _info, texture3D* _texture) {
+void Context::initialize_texture(const CommandHeader::Info& _info, Texture3D* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
 
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_texture3D;
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_construct)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_texture3D;
   command->as_texture3D = _texture;
   m_commands.push_back(command_base);
 }
 
-void context::initialize_texture(const command_header::info& _info, textureCM* _texture) {
+void Context::initialize_texture(const CommandHeader::Info& _info, TextureCM* _texture) {
   RX_ASSERT(_texture, "_texture is null");
   _texture->validate();
 
-  concurrency::scope_lock lock{m_mutex};
-  auto command_base{allocate_command(resource_command, command_type::k_resource_construct)};
-  auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-  command->kind = resource_command::type::k_textureCM;
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_construct)};
+  auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+  command->type = ResourceCommand::Type::k_textureCM;
   command->as_textureCM = _texture;
   m_commands.push_back(command_base);
 }
 
 // update_*
-void context::update_buffer(const command_header::info& _info, buffer* _buffer) {
+void Context::update_buffer(const CommandHeader::Info& _info, Buffer* _buffer) {
   if (_buffer) {
-    auto edits{utility::move(_buffer->edits())};
-    const rx_size edit_count{edits.size()};
+    auto edits{Utility::move(_buffer->edits())};
+    const Size edit_count{edits.size()};
     if (edit_count) {
-      concurrency::scope_lock lock{m_mutex};
+      Concurrency::ScopeLock lock{m_mutex};
 
-      const rx_size edit_bytes{edit_count * sizeof(rx_size) * 3};
+      const Size edit_bytes{edit_count * sizeof(Size) * 3};
 
-      auto command_base{m_command_buffer.allocate(sizeof(update_command) + edit_bytes, command_type::k_resource_update, _info)};
-      auto command{reinterpret_cast<update_command*>(command_base + sizeof(command_header))};
+      auto command_base{m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::k_resource_update, _info)};
+      auto command{reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader))};
 
       command->edits = edit_count;
-      command->kind = update_command::type::k_buffer;
+      command->type = UpdateCommand::Type::k_buffer;
       command->as_buffer = _buffer;
       memcpy(command->edit(), edits.data(), edit_bytes);
       m_commands.push_back(command_base);
@@ -339,20 +339,20 @@ void context::update_buffer(const command_header::info& _info, buffer* _buffer) 
   }
 }
 
-void context::update_texture(const command_header::info& _info, texture1D* _texture) {
+void Context::update_texture(const CommandHeader::Info& _info, Texture1D* _texture) {
   if (_texture) {
-    auto edits{utility::move(_texture->edits())};
-    const rx_size edit_count{edits.size()};
+    auto edits{Utility::move(_texture->edits())};
+    const Size edit_count{edits.size()};
     if (edit_count) {
-      concurrency::scope_lock lock{m_mutex};
+      Concurrency::ScopeLock lock{m_mutex};
 
-      const rx_size edit_bytes{edit_count * sizeof(rx_size) * 3};
+      const Size edit_bytes{edit_count * sizeof(Size) * 3};
 
-      auto command_base{m_command_buffer.allocate(sizeof(update_command) + edit_bytes, command_type::k_resource_update, _info)};
-      auto command{reinterpret_cast<update_command*>(command_base + sizeof(command_header))};
+      auto command_base{m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::k_resource_update, _info)};
+      auto command{reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader))};
 
       command->edits = edit_count;
-      command->kind = update_command::type::k_texture1D;
+      command->type = UpdateCommand::Type::k_texture1D;
       command->as_texture1D = _texture;
       memcpy(command->edit(), edits.data(), edit_bytes);
       m_commands.push_back(command_base);
@@ -360,20 +360,20 @@ void context::update_texture(const command_header::info& _info, texture1D* _text
   }
 }
 
-void context::update_texture(const command_header::info& _info, texture2D* _texture) {
+void Context::update_texture(const CommandHeader::Info& _info, Texture2D* _texture) {
   if (_texture) {
-    auto edits{utility::move(_texture->edits())};
-    const rx_size edit_count{edits.size()};
+    auto edits{Utility::move(_texture->edits())};
+    const Size edit_count{edits.size()};
     if (edit_count) {
-      concurrency::scope_lock lock{m_mutex};
+      Concurrency::ScopeLock lock{m_mutex};
 
-      const rx_size edit_bytes{edit_count * sizeof(rx_size) * 5};
+      const Size edit_bytes{edit_count * sizeof(Size) * 5};
 
-      auto command_base{m_command_buffer.allocate(sizeof(update_command) + edit_bytes, command_type::k_resource_update, _info)};
-      auto command{reinterpret_cast<update_command*>(command_base + sizeof(command_header))};
+      auto command_base{m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::k_resource_update, _info)};
+      auto command{reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader))};
 
       command->edits = edit_count;
-      command->kind = update_command::type::k_texture2D;
+      command->type = UpdateCommand::Type::k_texture2D;
       command->as_texture2D = _texture;
       memcpy(command->edit(), edits.data(), edit_bytes);
       m_commands.push_back(command_base);
@@ -381,20 +381,20 @@ void context::update_texture(const command_header::info& _info, texture2D* _text
   }
 }
 
-void context::update_texture(const command_header::info& _info, texture3D* _texture) {
+void Context::update_texture(const CommandHeader::Info& _info, Texture3D* _texture) {
   if (_texture) {
-    auto edits{utility::move(_texture->edits())};
-    const rx_size edit_count{edits.size()};
+    auto edits{Utility::move(_texture->edits())};
+    const Size edit_count{edits.size()};
     if (edit_count) {
-      concurrency::scope_lock lock{m_mutex};
+      Concurrency::ScopeLock lock{m_mutex};
 
-      const rx_size edit_bytes{edit_count * sizeof(rx_size) * 7};
+      const Size edit_bytes{edit_count * sizeof(Size) * 7};
 
-      auto command_base{m_command_buffer.allocate(sizeof(update_command) + edit_bytes, command_type::k_resource_update, _info)};
-      auto command{reinterpret_cast<update_command*>(command_base + sizeof(command_header))};
+      auto command_base{m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::k_resource_update, _info)};
+      auto command{reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader))};
 
       command->edits = edit_count;
-      command->kind = update_command::type::k_texture3D;
+      command->type = UpdateCommand::Type::k_texture3D;
       command->as_texture3D = _texture;
       memcpy(command->edit(), edits.data(), edit_bytes);
       m_commands.push_back(command_base);
@@ -403,26 +403,26 @@ void context::update_texture(const command_header::info& _info, texture3D* _text
 }
 
 // destroy_*
-void context::destroy_buffer(const command_header::info& _info, buffer* _buffer) {
+void Context::destroy_buffer(const CommandHeader::Info& _info, Buffer* _buffer) {
   if (_buffer && _buffer->release_reference()) {
-    concurrency::scope_lock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
     remove_from_cache(m_cached_buffers, _buffer);
-    auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
-    auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-    command->kind = resource_command::type::k_buffer;
+    auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_destroy)};
+    auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+    command->type = ResourceCommand::Type::k_buffer;
     command->as_buffer = _buffer;
     m_commands.push_back(command_base);
     m_destroy_buffers.push_back(_buffer);
   }
 }
 
-void context::destroy_target(const command_header::info& _info, target* _target) {
+void Context::destroy_target(const CommandHeader::Info& _info, Target* _target) {
   if (_target && _target->release_reference()) {
-    concurrency::scope_lock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
     remove_from_cache(m_cached_targets, _target);
-    auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
-    auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-    command->kind = resource_command::type::k_target;
+    auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_destroy)};
+    auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+    command->type = ResourceCommand::Type::k_target;
     command->as_target = _target;
     m_commands.push_back(command_base);
     m_destroy_targets.push_back(_target);
@@ -435,86 +435,86 @@ void context::destroy_target(const command_header::info& _info, target* _target)
   }
 }
 
-void context::destroy_program(const command_header::info& _info, program* _program) {
+void Context::destroy_program(const CommandHeader::Info& _info, Program* _program) {
   if (_program && _program->release_reference()) {
-    concurrency::scope_lock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
     // remove_from_cache(m_cached_programs, _program);
-    auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
-    auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-    command->kind = resource_command::type::k_program;
+    auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_destroy)};
+    auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+    command->type = ResourceCommand::Type::k_program;
     command->as_program = _program;
     m_commands.push_back(command_base);
     m_destroy_programs.push_back(_program);
   }
 }
 
-void context::destroy_texture(const command_header::info& _info, texture1D* _texture) {
+void Context::destroy_texture(const CommandHeader::Info& _info, Texture1D* _texture) {
   if (_texture && _texture->release_reference()) {
-    concurrency::scope_lock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
     remove_from_cache(m_cached_textures1D, _texture);
-    auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
-    auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-    command->kind = resource_command::type::k_texture1D;
+    auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_destroy)};
+    auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+    command->type = ResourceCommand::Type::k_texture1D;
     command->as_texture1D = _texture;
     m_commands.push_back(command_base);
     m_destroy_textures1D.push_back(_texture);
   }
 }
 
-void context::destroy_texture(const command_header::info& _info, texture2D* _texture) {
-  concurrency::scope_lock lock{m_mutex};
+void Context::destroy_texture(const CommandHeader::Info& _info, Texture2D* _texture) {
+  Concurrency::ScopeLock lock{m_mutex};
   destroy_texture_unlocked(_info, _texture);
 }
 
-void context::destroy_texture(const command_header::info& _info, texture3D* _texture) {
+void Context::destroy_texture(const CommandHeader::Info& _info, Texture3D* _texture) {
   if (_texture && _texture->release_reference()) {
-    concurrency::scope_lock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
     remove_from_cache(m_cached_textures3D, _texture);
-    auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
-    auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-    command->kind = resource_command::type::k_texture3D;
+    auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_destroy)};
+    auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+    command->type = ResourceCommand::Type::k_texture3D;
     command->as_texture3D = _texture;
     m_commands.push_back(command_base);
     m_destroy_textures3D.push_back(_texture);
   }
 }
 
-void context::destroy_texture(const command_header::info& _info, textureCM* _texture) {
+void Context::destroy_texture(const CommandHeader::Info& _info, TextureCM* _texture) {
   if (_texture && _texture->release_reference()) {
-    concurrency::scope_lock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
     remove_from_cache(m_cached_texturesCM, _texture);
-    auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
-    auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-    command->kind = resource_command::type::k_textureCM;
+    auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_destroy)};
+    auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+    command->type = ResourceCommand::Type::k_textureCM;
     command->as_textureCM = _texture;
     m_commands.push_back(command_base);
     m_destroy_texturesCM.push_back(_texture);
   }
 }
 
-void context::destroy_texture_unlocked(const command_header::info& _info, texture2D* _texture) {
+void Context::destroy_texture_unlocked(const CommandHeader::Info& _info, Texture2D* _texture) {
   if (_texture && _texture->release_reference()) {
     remove_from_cache(m_cached_textures2D, _texture);
-    auto command_base{allocate_command(resource_command, command_type::k_resource_destroy)};
-    auto command{reinterpret_cast<resource_command*>(command_base + sizeof(command_header))};
-    command->kind = resource_command::type::k_texture2D;
+    auto command_base{allocate_command(ResourceCommand, CommandType::k_resource_destroy)};
+    auto command{reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader))};
+    command->type = ResourceCommand::Type::k_texture2D;
     command->as_texture2D = _texture;
     m_commands.push_back(command_base);
     m_destroy_textures2D.push_back(_texture);
   }
 }
 
-void context::draw(
-  const command_header::info& _info,
-  const state& _state,
-  target* _target,
-  const buffers& _draw_buffers,
-  buffer* _buffer,
-  program* _program,
-  rx_size _count,
-  rx_size _offset,
-  primitive_type _primitive_type,
-  const textures& _draw_textures)
+void Context::draw(
+        const CommandHeader::Info& _info,
+        const State& _state,
+        Target* _target,
+        const Buffers& _draw_buffers,
+        Buffer* _buffer,
+        Program* _program,
+        Size _count,
+        Size _offset,
+        PrimitiveType _primitive_type,
+        const Textures& _draw_textures)
 {
   RX_ASSERT(_state.viewport.dimensions().area() > 0, "empty viewport");
 
@@ -529,26 +529,26 @@ void context::draw(
   m_vertices[0] += _count;
 
   switch (_primitive_type) {
-  case primitive_type::k_lines:
+  case PrimitiveType::k_lines:
     m_lines[0] += _count / 2;
     break;
-  case primitive_type::k_points:
+  case PrimitiveType::k_points:
     m_points[0] += _count;
     break;
-  case primitive_type::k_triangle_strip:
+  case PrimitiveType::k_triangle_strip:
     m_triangles[0] += _count - 2;
     break;
-  case primitive_type::k_triangles:
+  case PrimitiveType::k_triangles:
     m_triangles[0] += _count / 3;
     break;
   }
 
   {
-    concurrency::scope_lock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
     const auto dirty_uniforms_size{_program->dirty_uniforms_size()};
 
-    auto command_base{m_command_buffer.allocate(sizeof(draw_command) + dirty_uniforms_size, command_type::k_draw, _info)};
-    auto command{reinterpret_cast<draw_command*>(command_base + sizeof(command_header))};
+    auto command_base{m_command_buffer.allocate(sizeof(DrawCommand) + dirty_uniforms_size, CommandType::k_draw, _info)};
+    auto command{reinterpret_cast<DrawCommand*>(command_base + sizeof(CommandHeader))};
 
     command->draw_buffers = _draw_buffers;
     command->draw_textures = _draw_textures;
@@ -576,13 +576,13 @@ void context::draw(
   m_draw_calls[0]++;
 }
 
-void context::clear(
-  const command_header::info& _info,
-  const state& _state,
-  target* _target,
-  const buffers& _draw_buffers,
-  rx_u32 _clear_mask,
-  ...)
+void Context::clear(
+        const CommandHeader::Info& _info,
+        const State& _state,
+        Target* _target,
+        const Buffers& _draw_buffers,
+        Uint32 _clear_mask,
+        ...)
 {
   RX_ASSERT(_state.viewport.dimensions().area() > 0, "empty viewport");
 
@@ -596,10 +596,10 @@ void context::clear(
   _clear_mask >>= 2;
 
   {
-    concurrency::scope_lock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
 
-    auto command_base{allocate_command(draw_command, command_type::k_clear)};
-    auto command{reinterpret_cast<clear_command*>(command_base + sizeof(command_header))};
+    auto command_base{allocate_command(DrawCommand, CommandType::k_clear)};
+    auto command{reinterpret_cast<ClearCommand*>(command_base + sizeof(CommandHeader))};
 
     command->render_state = _state;
     command->render_target = _target;
@@ -614,16 +614,16 @@ void context::clear(
     va_list va;
     va_start(va, _clear_mask);
     if (clear_depth) {
-      command->depth_value = static_cast<rx_f32>(va_arg(va, rx_f64));
+      command->depth_value = static_cast<Float32>(va_arg(va, Float64));
     }
 
     if (clear_stencil) {
-      command->stencil_value = va_arg(va, rx_s32);
+      command->stencil_value = va_arg(va, Sint32);
     }
 
-    for (rx_u32 i{0}; i < buffers::k_max_buffers; i++) {
+    for (Uint32 i{0}; i < Buffers::k_max_buffers; i++) {
       if (_clear_mask & (1 << i)) {
-        const rx_f32* color{va_arg(va, rx_f32*)};
+        const Float32* color{va_arg(va, Float32*)};
         command->color_values[i].r = color[0];
         command->color_values[i].g = color[1];
         command->color_values[i].b = color[2];
@@ -638,13 +638,13 @@ void context::clear(
   m_clear_calls[0]++;
 }
 
-void context::blit(
-  const command_header::info& _info,
-  const state& _state,
-  target* _src_target,
-  rx_size _src_attachment,
-  target* _dst_target,
-  rx_size _dst_attachment)
+void Context::blit(
+        const CommandHeader::Info& _info,
+        const State& _state,
+        Target* _src_target,
+        Size _src_attachment,
+        Target* _dst_target,
+        Size _dst_attachment)
 {
   // Blitting from an attachment in a target to another attachment in the same
   // target is not allowed.
@@ -661,14 +661,14 @@ void context::blit(
   RX_ASSERT(_dst_attachment < dst_attachments.size(),
     "destination attachment out of bounds");
 
-  using attachment = target::attachment::type;
-  RX_ASSERT(src_attachments[_src_attachment].kind == attachment::k_texture2D,
+  using Attachment = Target::Attachment::Type;
+  RX_ASSERT(src_attachments[_src_attachment].kind == Attachment::k_texture2D,
     "source attachment not a 2D texture");
-  RX_ASSERT(dst_attachments[_dst_attachment].kind == attachment::k_texture2D,
+  RX_ASSERT(dst_attachments[_dst_attachment].kind == Attachment::k_texture2D,
     "destination attachment not a 2D texture");
 
-  texture2D* src_attachment{src_attachments[_src_attachment].as_texture2D.texture};
-  texture2D* dst_attachment{dst_attachments[_dst_attachment].as_texture2D.texture};
+  Texture2D* src_attachment{src_attachments[_src_attachment].as_texture2D.texture};
+  Texture2D* dst_attachment{dst_attachments[_dst_attachment].as_texture2D.texture};
 
   // It's possible for targets to be configured in a way where attachments are
   // shared between them. Blitting to and from the same attachment doesn't make
@@ -681,10 +681,10 @@ void context::blit(
   RX_ASSERT(dst_attachment->is_color_format(),
     "cannot blit with non-color destination attachment");
 
-  const auto is_float_color{[](texture::data_format _format) {
-    return  _format == texture::data_format::k_bgra_f16 ||
-            _format == texture::data_format::k_rgba_f16;
-  }};
+  const auto is_float_color = [](Texture::DataFormat _format) {
+    return _format == Texture::DataFormat::k_bgra_f16 ||
+           _format == Texture::DataFormat::k_rgba_f16;
+  };
 
   // A blit from one target to another is only valid if the source and
   // destination attachments contain similar data formats. That is they both
@@ -694,10 +694,10 @@ void context::blit(
     "incompatible formats between attachments");
 
   {
-    concurrency::scope_lock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
 
-    auto command_base{allocate_command(blit_command, command_type::k_blit)};
-    auto command{reinterpret_cast<blit_command*>(command_base + sizeof(command_header))};
+    auto command_base = allocate_command(BlitCommand, CommandType::k_blit);
+    auto command = reinterpret_cast<BlitCommand*>(command_base + sizeof(CommandHeader));
 
     command->render_state = _state;
     command->src_target = _src_target;
@@ -713,62 +713,62 @@ void context::blit(
   m_blit_calls[0]++;
 }
 
-void context::profile(const char* _tag) {
-  concurrency::scope_lock lock{m_mutex};
+void Context::profile(const char* _tag) {
+  Concurrency::ScopeLock lock{m_mutex};
 
-  auto command_base{m_command_buffer.allocate(sizeof(profile_command),
-    command_type::k_profile, RX_RENDER_TAG("profile"))};
-  auto command{reinterpret_cast<profile_command*>(command_base + sizeof(command_header))};
+  auto command_base{m_command_buffer.allocate(sizeof(ProfileCommand),
+                                              CommandType::k_profile, RX_RENDER_TAG("profile"))};
+  auto command{reinterpret_cast<ProfileCommand*>(command_base + sizeof(CommandHeader))};
   command->tag = _tag;
 
   m_commands.push_back(command_base);
 }
 
-void context::resize(const math::vec2z& _resolution) {
+void Context::resize(const Math::Vec2z& _resolution) {
   // Resizing the swapchain is just a matter of updating these fields.
   m_swapchain_texture->m_dimensions = _resolution;
   m_swapchain_target->m_dimensions = _resolution;
 }
 
-bool context::process() {
-  profiler::cpu_sample sample{"frontend::process"};
+bool Context::process() {
+  Profiler::CPUSample sample{"frontend::process"};
 
   if (m_commands.is_empty()) {
     return false;
   }
 
-  concurrency::scope_lock lock{m_mutex};
+  Concurrency::ScopeLock lock{m_mutex};
 
   // Consume all recorded commands on the backend.
   m_backend->process(m_commands);
 
   // Cleanup unreferenced frontend resources.
-  m_destroy_buffers.each_fwd([this](buffer* _buffer) {
-    m_buffer_pool.destroy<buffer>(_buffer);
+  m_destroy_buffers.each_fwd([this](Buffer* _buffer) {
+    m_buffer_pool.destroy<Buffer>(_buffer);
   });
 
-  m_destroy_targets.each_fwd([this](target* _target) {
-    m_target_pool.destroy<target>(_target);
+  m_destroy_targets.each_fwd([this](Target* _target) {
+    m_target_pool.destroy<Target>(_target);
   });
 
-  m_destroy_programs.each_fwd([this](program* _program) {
-    m_program_pool.destroy<program>(_program);
+  m_destroy_programs.each_fwd([this](Program* _program) {
+    m_program_pool.destroy<Program>(_program);
   });
 
-  m_destroy_textures1D.each_fwd([this](texture1D* _texture) {
-    m_texture1D_pool.destroy<texture1D>(_texture);
+  m_destroy_textures1D.each_fwd([this](Texture1D* _texture) {
+    m_texture1D_pool.destroy<Texture1D>(_texture);
   });
 
-  m_destroy_textures2D.each_fwd([this](texture2D* _texture) {
-    m_texture2D_pool.destroy<texture2D>(_texture);
+  m_destroy_textures2D.each_fwd([this](Texture2D* _texture) {
+    m_texture2D_pool.destroy<Texture2D>(_texture);
   });
 
-  m_destroy_textures3D.each_fwd([this](texture3D* _texture) {
-    m_texture3D_pool.destroy<texture3D>(_texture);
+  m_destroy_textures3D.each_fwd([this](Texture3D* _texture) {
+    m_texture3D_pool.destroy<Texture3D>(_texture);
   });
 
-  m_destroy_texturesCM.each_fwd([this](textureCM* _texture) {
-    m_textureCM_pool.destroy<textureCM>(_texture);
+  m_destroy_texturesCM.each_fwd([this](TextureCM* _texture) {
+    m_textureCM_pool.destroy<TextureCM>(_texture);
   });
 
   // Reset the command buffer and unreferenced resource lists.
@@ -784,10 +784,10 @@ bool context::process() {
   m_destroy_texturesCM.clear();
 
   // Update all rendering stats for the last frame.
-  auto swap{[](concurrency::atomic<rx_size> (&_value)[2]) {
+  auto swap = [](Concurrency::Atomic<Size> (&_value)[2]) {
     _value[1] = _value[0].load();
     _value[0] = 0;
-  }};
+  };
 
   swap(m_draw_calls);
   swap(m_clear_calls);
@@ -800,50 +800,50 @@ bool context::process() {
   return true;
 }
 
-context::statistics context::stats(resource::type _type) const {
-  concurrency::scope_lock lock(m_mutex);
+Context::Statistics Context::stats(Resource::Type _type) const {
+  Concurrency::ScopeLock lock(m_mutex);
 
-  const auto index{static_cast<rx_size>(_type)};
+  const auto index{static_cast<Size>(_type)};
   switch (_type) {
-  case resource::type::k_buffer:
+  case Resource::Type::k_buffer:
     return {m_buffer_pool.capacity(), m_buffer_pool.size(), m_cached_buffers.size(), m_resource_usage[index]};
-  case resource::type::k_program:
+  case Resource::Type::k_program:
     return {m_program_pool.capacity(), m_program_pool.size(), 0, m_resource_usage[index]};
-  case resource::type::k_target:
+  case Resource::Type::k_target:
     return {m_target_pool.capacity(), m_target_pool.size(), m_cached_targets.size(), m_resource_usage[index]};
-  case resource::type::k_texture1D:
+  case Resource::Type::k_texture1D:
     return {m_texture1D_pool.capacity(), m_texture1D_pool.size(), m_cached_textures1D.size(), m_resource_usage[index]};
-  case resource::type::k_texture2D:
+  case Resource::Type::k_texture2D:
     return {m_texture2D_pool.capacity(), m_texture2D_pool.size(), m_cached_textures2D.size(), m_resource_usage[index]};
-  case resource::type::k_texture3D:
+  case Resource::Type::k_texture3D:
     return {m_texture3D_pool.capacity(), m_texture3D_pool.size(), m_cached_textures3D.size(), m_resource_usage[index]};
-  case resource::type::k_textureCM:
+  case Resource::Type::k_textureCM:
     return {m_textureCM_pool.capacity(), m_textureCM_pool.size(), m_cached_texturesCM.size(), m_resource_usage[index]};
   }
 
   RX_HINT_UNREACHABLE();
 }
 
-bool context::swap() {
-  profiler::cpu_sample sample{"frontend::swap"};
+bool Context::swap() {
+  Profiler::CPUSample sample{"frontend::swap"};
 
   m_backend->swap();
 
   return m_timer.update();
 }
 
-buffer* context::cached_buffer(const string& _key) {
-  concurrency::scope_lock lock{m_mutex};
-  if (auto find{m_cached_buffers.find(_key)}) {
-    auto result{*find};
+Buffer* Context::cached_buffer(const String& _key) {
+  Concurrency::ScopeLock lock{m_mutex};
+  if (auto find = m_cached_buffers.find(_key)) {
+    auto result = *find;
     result->acquire_reference();
     return result;
   }
   return nullptr;
 }
 
-target* context::cached_target(const string& _key) {
-  concurrency::scope_lock lock{m_mutex};
+Target* Context::cached_target(const String& _key) {
+  Concurrency::ScopeLock lock{m_mutex};
   if (auto find{m_cached_targets.find(_key)}) {
     auto result{*find};
     result->acquire_reference();
@@ -852,8 +852,8 @@ target* context::cached_target(const string& _key) {
   return nullptr;
 }
 
-texture1D* context::cached_texture1D(const string& _key) {
-  concurrency::scope_lock lock{m_mutex};
+Texture1D* Context::cached_texture1D(const String& _key) {
+  Concurrency::ScopeLock lock{m_mutex};
   if (auto find{m_cached_textures1D.find(_key)}) {
     auto result{*find};
     result->acquire_reference();
@@ -862,8 +862,8 @@ texture1D* context::cached_texture1D(const string& _key) {
   return nullptr;
 }
 
-texture2D* context::cached_texture2D(const string& _key) {
-  concurrency::scope_lock lock{m_mutex};
+Texture2D* Context::cached_texture2D(const String& _key) {
+  Concurrency::ScopeLock lock{m_mutex};
   if (auto find{m_cached_textures2D.find(_key)}) {
     auto result{*find};
     result->acquire_reference();
@@ -872,8 +872,8 @@ texture2D* context::cached_texture2D(const string& _key) {
   return nullptr;
 }
 
-texture3D* context::cached_texture3D(const string& _key) {
-  concurrency::scope_lock lock{m_mutex};
+Texture3D* Context::cached_texture3D(const String& _key) {
+  Concurrency::ScopeLock lock{m_mutex};
   if (auto find{m_cached_textures3D.find(_key)}) {
     auto result{*find};
     result->acquire_reference();
@@ -882,8 +882,8 @@ texture3D* context::cached_texture3D(const string& _key) {
   return nullptr;
 }
 
-textureCM* context::cached_textureCM(const string& _key) {
-  concurrency::scope_lock lock{m_mutex};
+TextureCM* Context::cached_textureCM(const String& _key) {
+  Concurrency::ScopeLock lock{m_mutex};
   if (auto find{m_cached_texturesCM.find(_key)}) {
     auto result{*find};
     result->acquire_reference();
@@ -892,37 +892,37 @@ textureCM* context::cached_textureCM(const string& _key) {
   return nullptr;
 }
 
-void context::cache_buffer(buffer* _buffer, const string& _key) {
-  concurrency::scope_lock lock{m_mutex};
+void Context::cache_buffer(Buffer* _buffer, const String& _key) {
+  Concurrency::ScopeLock lock{m_mutex};
   m_cached_buffers.insert(_key, _buffer);
 }
 
-void context::cache_target(target* _target, const string& _key) {
-  concurrency::scope_lock lock{m_mutex};
+void Context::cache_target(Target* _target, const String& _key) {
+  Concurrency::ScopeLock lock{m_mutex};
   m_cached_targets.insert(_key, _target);
 }
 
-void context::cache_texture(texture1D* _texture, const string& _key) {
-  concurrency::scope_lock lock{m_mutex};
+void Context::cache_texture(Texture1D* _texture, const String& _key) {
+  Concurrency::ScopeLock lock{m_mutex};
   m_cached_textures1D.insert(_key, _texture);
 }
 
-void context::cache_texture(texture2D* _texture, const string& _key) {
-  concurrency::scope_lock lock{m_mutex};
+void Context::cache_texture(Texture2D* _texture, const String& _key) {
+  Concurrency::ScopeLock lock{m_mutex};
   m_cached_textures2D.insert(_key, _texture);
 }
 
-void context::cache_texture(texture3D* _texture, const string& _key) {
-  concurrency::scope_lock lock{m_mutex};
+void Context::cache_texture(Texture3D* _texture, const String& _key) {
+  Concurrency::ScopeLock lock{m_mutex};
   m_cached_textures3D.insert(_key, _texture);
 }
 
-void context::cache_texture(textureCM* _texture, const string& _key) {
-  concurrency::scope_lock lock{m_mutex};
+void Context::cache_texture(TextureCM* _texture, const String& _key) {
+  Concurrency::ScopeLock lock{m_mutex};
   m_cached_texturesCM.insert(_key, _texture);
 }
 
-technique* context::find_technique_by_name(const char* _name) {
+Technique* Context::find_technique_by_name(const char* _name) {
   return m_techniques.find(_name);
 }
 

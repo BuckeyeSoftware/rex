@@ -6,21 +6,21 @@
 #include "rx/core/hints/unlikely.h"
 #include "rx/core/hints/empty_bases.h"
 
-namespace rx {
+namespace Rx {
 
-struct RX_HINT_EMPTY_BASES static_pool
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES StaticPool
+  : Concepts::NoCopy
 {
-  static_pool(memory::allocator& _allocator, rx_size _object_size, rx_size _object_count);
-  static_pool(rx_size _object_size, rx_size _object_count);
-  static_pool(static_pool&& pool_);
-  ~static_pool();
+  StaticPool(Memory::Allocator& _allocator, Size _object_size, Size _object_count);
+  StaticPool(Size _object_size, Size _object_count);
+  StaticPool(StaticPool&& pool_);
+  ~StaticPool();
 
-  static_pool& operator=(static_pool&& pool_);
-  rx_byte* operator[](rx_size _index) const;
+  StaticPool& operator=(StaticPool&& pool_);
+  Byte* operator[](Size _index) const;
 
-  rx_size allocate();
-  void deallocate(rx_size _index);
+  Size allocate();
+  void deallocate(Size _index);
 
   template<typename T, typename... Ts>
   T* create(Ts&&... _arguments);
@@ -28,100 +28,100 @@ struct RX_HINT_EMPTY_BASES static_pool
   template<typename T>
   void destroy(T* _data);
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
-  rx_size object_size() const;
-  rx_size capacity() const;
-  rx_size size() const;
+  Size object_size() const;
+  Size capacity() const;
+  Size size() const;
   bool is_empty() const;
   bool can_allocate() const;
 
-  rx_byte* data_of(rx_size _index) const;
-  rx_size index_of(const rx_byte* _data) const;
+  Byte* data_of(Size _index) const;
+  Size index_of(const Byte* _data) const;
 
-  bool owns(const rx_byte* _data) const;
+  bool owns(const Byte* _data) const;
 
 private:
-  ref<memory::allocator> m_allocator;
-  rx_size m_object_size;
-  rx_size m_capacity;
-  rx_byte* m_data;
-  bitset m_bitset;
+  Ref<Memory::Allocator> m_allocator;
+  Size m_object_size;
+  Size m_capacity;
+  Byte* m_data;
+  Bitset m_bitset;
 };
 
-inline static_pool::static_pool(rx_size _object_size, rx_size _object_count)
-  : static_pool{memory::system_allocator::instance(), _object_size, _object_count}
+inline StaticPool::StaticPool(Size _object_size, Size _object_count)
+  : StaticPool{Memory::SystemAllocator::instance(), _object_size, _object_count}
 {
 }
 
-inline static_pool::~static_pool() {
+inline StaticPool::~StaticPool() {
   RX_ASSERT(m_bitset.count_set_bits() == 0, "leaked objects");
   allocator().deallocate(m_data);
 }
 
-inline rx_byte* static_pool::operator[](rx_size _index) const {
+inline Byte* StaticPool::operator[](Size _index) const {
   return data_of(_index);
 }
 
 template<typename T, typename... Ts>
-inline T* static_pool::create(Ts&&... _arguments) {
+inline T* StaticPool::create(Ts&&... _arguments) {
   RX_ASSERT(sizeof(T) <= m_object_size, "object too large (%zu > %zu)",
     sizeof(T), m_object_size);
 
-  const rx_size index{allocate()};
+  const Size index{allocate()};
   if (RX_HINT_UNLIKELY(index == -1_z)) {
     return nullptr;
   }
 
-  return utility::construct<T>(data_of(index),
-    utility::forward<Ts>(_arguments)...);
+  return Utility::construct<T>(data_of(index),
+                               Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename T>
-void static_pool::destroy(T* _data) {
+void StaticPool::destroy(T* _data) {
   RX_ASSERT(sizeof(T) <= m_object_size, "object too large (%zu > %zu)",
     sizeof(T), m_object_size);
 
-  utility::destruct<T>(_data);
-  deallocate(index_of(reinterpret_cast<rx_byte*>(_data)));
+  Utility::destruct<T>(_data);
+  deallocate(index_of(reinterpret_cast<Byte*>(_data)));
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& static_pool::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& StaticPool::allocator() const {
   return m_allocator;
 }
 
-RX_HINT_FORCE_INLINE rx_size static_pool::object_size() const {
+RX_HINT_FORCE_INLINE Size StaticPool::object_size() const {
   return m_object_size;
 }
 
-RX_HINT_FORCE_INLINE rx_size static_pool::capacity() const {
+RX_HINT_FORCE_INLINE Size StaticPool::capacity() const {
   return m_capacity;
 }
 
-RX_HINT_FORCE_INLINE rx_size static_pool::size() const {
+RX_HINT_FORCE_INLINE Size StaticPool::size() const {
   return m_bitset.count_set_bits();
 }
 
-RX_HINT_FORCE_INLINE bool static_pool::is_empty() const {
+RX_HINT_FORCE_INLINE bool StaticPool::is_empty() const {
   return size() == 0;
 }
 
-inline bool static_pool::can_allocate() const {
+inline bool StaticPool::can_allocate() const {
   return m_bitset.count_unset_bits() != 0;
 }
 
-inline rx_byte* static_pool::data_of(rx_size _index) const {
+inline Byte* StaticPool::data_of(Size _index) const {
   RX_ASSERT(_index < m_capacity, "out of bounds");
   RX_ASSERT(m_bitset.test(_index), "unallocated (%zu)", _index);
   return m_data + m_object_size * _index;
 }
 
-inline rx_size static_pool::index_of(const rx_byte* _data) const {
+inline Size StaticPool::index_of(const Byte* _data) const {
   RX_ASSERT(owns(_data), "invalid pointer");
   return (_data - m_data) / m_object_size;
 }
 
-inline bool static_pool::owns(const rx_byte* _data) const {
+inline bool StaticPool::owns(const Byte* _data) const {
   return _data >= m_data && _data <= m_data + m_object_size * (m_capacity - 1);
 }
 

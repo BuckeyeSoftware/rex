@@ -105,7 +105,7 @@
 
 // disable some compiler warnings we don't care about
 #if defined(RX_COMPILER_MSVC)
-# pragma warning(disable: 4146) // unary minus operator applied to unsigned type, result still unsigned
+# pragma warning(disable: 4146) // unary minus operator applied to unsigned Type, result still unsigned
 # pragma warning(disable: 4522) // multiple assignment operators specified
 #endif // defined(RX_COMPILER_MSVC)
 

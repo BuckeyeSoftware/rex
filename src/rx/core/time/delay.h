@@ -2,9 +2,9 @@
 #define RX_CORE_TIME_DELAY_H
 #include "rx/core/types.h"
 
-namespace rx::time {
+namespace Rx::Time {
 
-void delay(rx_u64 _milliseconds);
+void delay(Uint64 _milliseconds);
 
 } // namespace rx::time
 

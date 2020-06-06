@@ -13,11 +13,11 @@
 
 #include "rx/material/loader.h"
 
-namespace rx::model {
+namespace Rx::Model {
 
 RX_LOG("model/loader", logger);
 
-loader::loader(memory::allocator& _allocator)
+Loader::Loader(Memory::Allocator& _allocator)
   : m_allocator{_allocator}
   , as_nat{}
   , m_elements{allocator()}
@@ -32,31 +32,31 @@ loader::loader(memory::allocator& _allocator)
 {
 }
 
-loader::~loader() {
+Loader::~Loader() {
   if (m_flags & k_constructed) {
     if (m_flags & k_animated) {
-      utility::destruct<vector<animated_vertex>>(&as_animated_vertices);
+      Utility::destruct<Vector<AnimatedVertex>>(&as_animated_vertices);
     } else {
-      utility::destruct<vector<vertex>>(&as_vertices);
+      Utility::destruct<Vector<Vertex>>(&as_vertices);
     }
   }
 }
 
-bool loader::load(stream* _stream) {
+bool Loader::load(Stream* _stream) {
   if (auto contents = read_text_stream(allocator(), _stream)) {
     return parse({contents->disown()});
   }
   return false;
 }
 
-bool loader::load(const string& _file_name) {
-  if (filesystem::file file{_file_name, "rb"}) {
+bool Loader::load(const String& _file_name) {
+  if (Filesystem::File file{_file_name, "rb"}) {
     return load(&file);
   }
   return false;
 }
 
-bool loader::parse(const json& _definition) {
+bool Loader::parse(const JSON& _definition) {
   if (!_definition) {
     const auto json_error{_definition.error()};
     if (json_error) {
@@ -70,10 +70,10 @@ bool loader::parse(const json& _definition) {
     return error("expected Object");
   }
 
-  const auto& name{_definition["name"]};
-  const auto& file{_definition["file"]};
-  const auto& materials{_definition["materials"]};
-  const auto& transform{_definition["transform"]};
+  const auto& name = _definition["name"];
+  const auto& file = _definition["file"];
+  const auto& materials = _definition["materials"];
+  const auto& transform = _definition["transform"];
 
   if (!name) {
     return error("missing 'name'");
@@ -97,7 +97,7 @@ bool loader::parse(const json& _definition) {
     return error("missing 'materials'");
   }
 
-  if (!materials.is_array_of(json::type::k_object)) {
+  if (!materials.is_array_of(JSON::Type::k_object)) {
     return error("expected Array[Object] for 'materials'");
   }
 
@@ -111,17 +111,17 @@ bool loader::parse(const json& _definition) {
 
   // Load all the materials across multiple threads.
   // concurrency::thread_pool pool{m_allocator, 32};
-  concurrency::mutex mutex;
-  concurrency::wait_group group{materials.size()};
-  materials.each([&](const json& _material) {
-    concurrency::thread_pool::instance().add([&, _material](int) {
-      material::loader loader{allocator()};
+  Concurrency::Mutex mutex;
+  Concurrency::WaitGroup group{materials.size()};
+  materials.each([&](const JSON& _material) {
+    Concurrency::ThreadPool::instance().add([&, _material](int) {
+      Material::Loader loader{allocator()};
       if (_material.is_string() && loader.load(_material.as_string())) {
-        concurrency::scope_lock lock{mutex};
-        m_materials.insert(loader.name(), utility::move(loader));
+        Concurrency::ScopeLock lock{mutex};
+        m_materials.insert(loader.name(), Utility::move(loader));
       } else if (_material.is_object() && loader.parse(_material)) {
-        concurrency::scope_lock lock{mutex};
-        m_materials.insert(loader.name(), utility::move(loader));
+        Concurrency::ScopeLock lock{mutex};
+        m_materials.insert(loader.name(), Utility::move(loader));
       }
       group.signal();
     });
@@ -130,15 +130,15 @@ bool loader::parse(const json& _definition) {
   return true;
 }
 
-bool loader::import(const string& _file_name) {
+bool Loader::import(const String& _file_name) {
   RX_ASSERT(!(m_flags & k_constructed), "already imported");
 
-  ptr<importer> new_loader;
+  Ptr<Importer> new_loader;
 
   // determine the model format based on the extension
   if (_file_name.ends_with(".iqm")) {
     auto& this_allocator = allocator();
-    if (!(new_loader = make_ptr<iqm>(this_allocator, this_allocator))) {
+    if (!(new_loader = make_ptr<IQM>(this_allocator, this_allocator))) {
       return error("out of memory");
     }
   } else {
@@ -147,24 +147,24 @@ bool loader::import(const string& _file_name) {
 
   const bool result{new_loader->load(_file_name)};
   if (result) {
-    m_positions = utility::move(new_loader->positions());
-    m_meshes = utility::move(new_loader->meshes());
-    m_elements = utility::move(new_loader->elements());
-    m_animations = utility::move(new_loader->animations());
-    m_frames = utility::move(new_loader->frames());
-    m_joints = utility::move(new_loader->joints());
+    m_positions = Utility::move(new_loader->positions());
+    m_meshes = Utility::move(new_loader->meshes());
+    m_elements = Utility::move(new_loader->elements());
+    m_animations = Utility::move(new_loader->animations());
+    m_frames = Utility::move(new_loader->frames());
+    m_joints = Utility::move(new_loader->joints());
 
     const auto& normals{new_loader->normals()};
     const auto& tangents{new_loader->tangents()};
     const auto& coordinates{new_loader->coordinates()};
 
-    const rx_size n_vertices{m_positions.size()};
+    const Size n_vertices{m_positions.size()};
 
     if (m_animations.is_empty()) {
-      utility::construct<vector<vertex>>(&as_vertices, allocator(), n_vertices);
+      Utility::construct<Vector<Vertex>>(&as_vertices, allocator(), n_vertices);
       m_flags |= k_constructed;
     } else {
-      utility::construct<vector<animated_vertex>>(&as_animated_vertices, allocator(), n_vertices);
+      Utility::construct<Vector<AnimatedVertex>>(&as_animated_vertices, allocator(), n_vertices);
       m_flags |= k_constructed;
       m_flags |= k_animated;
     }
@@ -173,20 +173,20 @@ bool loader::import(const string& _file_name) {
     if (m_transform) {
       const auto transform{m_transform->to_mat4()};
       if (m_animations.is_empty()) {
-        for (rx_size i{0}; i < n_vertices; i++) {
-          const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
-          as_vertices[i].position = math::mat4x4f::transform_point(m_positions[i], transform);
-          as_vertices[i].normal = math::mat4x4f::transform_vector(normals[i], transform);
+        for (Size i{0}; i < n_vertices; i++) {
+          const Math::Vec3f tangent{Math::Mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
+          as_vertices[i].position = Math::Mat4x4f::transform_point(m_positions[i], transform);
+          as_vertices[i].normal = Math::Mat4x4f::transform_vector(normals[i], transform);
           as_vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangents[i].w};
           as_vertices[i].coordinate = coordinates[i];
         }
       } else {
         const auto& blend_weights{new_loader->blend_weights()};
         const auto& blend_indices{new_loader->blend_indices()};
-        for (rx_size i{0}; i < n_vertices; i++) {
-          const math::vec3f tangent{math::mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
-          as_animated_vertices[i].position = math::mat4x4f::transform_point(m_positions[i], transform);
-          as_animated_vertices[i].normal = math::mat4x4f::transform_vector(normals[i], transform);
+        for (Size i{0}; i < n_vertices; i++) {
+          const Math::Vec3f tangent{Math::Mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
+          as_animated_vertices[i].position = Math::Mat4x4f::transform_point(m_positions[i], transform);
+          as_animated_vertices[i].normal = Math::Mat4x4f::transform_vector(normals[i], transform);
           as_animated_vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangents[i].w};
           as_animated_vertices[i].coordinate = coordinates[i];
           as_animated_vertices[i].blend_weights = blend_weights[i];
@@ -194,33 +194,33 @@ bool loader::import(const string& _file_name) {
         }
       }
 
-      const math::mat3x4f& xform{
+      const Math::Mat3x4f& xform{
         {transform.x.x, transform.y.x, transform.z.x, transform.w.x},
         {transform.x.y, transform.y.y, transform.z.y, transform.w.y},
         {transform.x.z, transform.y.z, transform.z.z, transform.w.z}};
 
-      const math::mat3x4f& inv_xform{math::mat3x4f::invert(xform)};
+      const Math::Mat3x4f& inv_xform{Math::Mat3x4f::invert(xform)};
 
-      m_frames.each_fwd([&](math::mat3x4f& frame_) {
+      m_frames.each_fwd([&](Math::Mat3x4f& frame_) {
         frame_ = xform * frame_ * inv_xform;
       });
 
-      m_joints.each_fwd([&](importer::joint& joint_) {
+      m_joints.each_fwd([&](Importer::Joint& joint_) {
         joint_.frame = xform * joint_.frame * inv_xform;
       });
 
     } else {
       if (m_animations.is_empty()) {
-        for (rx_size i{0}; i < n_vertices; i++) {
+        for (Size i{0}; i < n_vertices; i++) {
           as_vertices[i].position = m_positions[i];
           as_vertices[i].normal = normals[i];
           as_vertices[i].tangent = tangents[i];
           as_vertices[i].coordinate = coordinates[i];
         }
       } else {
-        const auto& blend_weights{new_loader->blend_weights()};
-        const auto& blend_indices{new_loader->blend_indices()};
-        for (rx_size i{0}; i < n_vertices; i++) {
+        const auto& blend_weights = new_loader->blend_weights();
+        const auto& blend_indices = new_loader->blend_indices();
+        for (Size i{0}; i < n_vertices; i++) {
           as_animated_vertices[i].position = m_positions[i];
           as_animated_vertices[i].normal = normals[i];
           as_animated_vertices[i].tangent = tangents[i];
@@ -233,9 +233,9 @@ bool loader::import(const string& _file_name) {
 
     // Bounds need to be recalculated if there was a transform
     if (m_transform) {
-      m_meshes.each_fwd([&](mesh& _mesh) {
-        math::aabb bounds;
-        for (rx_size i{0}; i < _mesh.count; i++) {
+      m_meshes.each_fwd([&](Mesh& _mesh) {
+        Math::AABB bounds;
+        for (Size i{0}; i < _mesh.count; i++) {
           if (m_animations.is_empty()) {
             bounds.expand(as_vertices[m_elements[_mesh.offset + i]].position);
           } else {
@@ -250,22 +250,22 @@ bool loader::import(const string& _file_name) {
   return result;
 }
 
-bool loader::parse_transform(const json& _transform) {
-  const auto& scale{_transform["scale"]};
-  const auto& rotate{_transform["rotate"]};
-  const auto& translate{_transform["translate"]};
+bool Loader::parse_transform(const JSON& _transform) {
+  const auto& scale = _transform["scale"];
+  const auto& rotate = _transform["rotate"];
+  const auto& translate = _transform["translate"];
 
-  auto parse_vec3{[&](const json& _array, const char* _tag, math::vec3f& result_) {
-    if (!_array.is_array_of(json::type::k_number) || _array.size() != 3) {
+  auto parse_vec3 = [&](const JSON& _array, const char* _tag, Math::Vec3f& result_) {
+    if (!_array.is_array_of(JSON::Type::k_number) || _array.size() != 3) {
       return error("expected Array[Number, 3] for '%s'", _tag);
     }
-    result_.x = algorithm::clamp(_array[0_z].as_number(), 0.0, 360.0);
-    result_.y = algorithm::clamp(_array[1_z].as_number(), 0.0, 360.0);
-    result_.z = algorithm::clamp(_array[2_z].as_number(), 0.0, 360.0);
+    result_.x = Algorithm::clamp(_array[0_z].as_number(), 0.0, 360.0);
+    result_.y = Algorithm::clamp(_array[1_z].as_number(), 0.0, 360.0);
+    result_.z = Algorithm::clamp(_array[2_z].as_number(), 0.0, 360.0);
     return true;
-  }};
+  };
 
-  math::transform transform;
+  Math::Transform transform;
   if (scale && !parse_vec3(scale, "scale", transform.scale)) {
     return false;
   }
@@ -282,11 +282,11 @@ bool loader::parse_transform(const json& _transform) {
   return true;
 }
 
-void loader::write_log(log::level _level, string&& message_) const {
+void Loader::write_log(Log::Level _level, String&& message_) const {
   if (m_name.is_empty()) {
-    logger->write(_level, "%s", utility::move(message_));
+    logger->write(_level, "%s", Utility::move(message_));
   } else {
-    logger->write(_level, "%s: %s", m_name, utility::move(message_));
+    logger->write(_level, "%s: %s", m_name, Utility::move(message_));
   }
 }
 

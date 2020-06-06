@@ -3,7 +3,7 @@
 #include "rx/core/vector.h"
 #include "rx/core/string.h"
 
-namespace rx::filesystem {
+namespace Rx::Filesystem {
 
 // # Incremental Path Resolver
 //
@@ -15,75 +15,75 @@ namespace rx::filesystem {
 // the resolver and as it recieves them it'll translate the path accordingly.
 //
 // When you're ready to use the qualified path, call finalize().
-struct path_resolver {
-  constexpr path_resolver();
-  constexpr path_resolver(memory::allocator& _allocator);
+struct PathResolver {
+  constexpr PathResolver();
+  constexpr PathResolver(Memory::Allocator& _allocator);
 
-  [[nodiscard]] bool append(const string& _path);
+  [[nodiscard]] bool append(const String& _path);
   [[nodiscard]] bool append(const char* _path);
   [[nodiscard]] bool push(int _ch);
 
   const char* path() const;
 
-  string operator[](rx_size _index) {
+  String operator[](Size _index) {
     const auto beg = _index ? m_stack.data[_index - 1] : 0;
     const auto end = m_stack.data[_index];
     return {m_data.allocator(), m_data.data() + beg, m_data.data() + end};
   }
 
-  rx_size parts() const {
+  Size parts() const {
     return m_stack.size;
   }
 
 private:
-  struct stack {
-    constexpr stack();
+  struct Stack {
+    constexpr Stack();
 
     bool push();
-    rx_size pop();
+    Size pop();
 
     union {
-      rx_size head;
-      rx_size data[255];
+      Size head;
+      Size data[255];
     };
-    rx_size size;
-    rx_size next;
+    Size size;
+    Size next;
   };
 
-  [[nodiscard]] bool reserve_more(rx_size _size);
+  [[nodiscard]] bool reserve_more(Size _size);
 
-  vector<char> m_data;
-  stack m_stack;
-  rx_size m_dots;
+  Vector<char> m_data;
+  Stack m_stack;
+  Size m_dots;
 };
 
-inline constexpr path_resolver::stack::stack()
+inline constexpr PathResolver::Stack::Stack()
   : head{1}
   , size{1}
   , next{-1_z}
 {
 }
 
-inline constexpr path_resolver::path_resolver()
-  : path_resolver{memory::system_allocator::instance()}
+inline constexpr PathResolver::PathResolver()
+  : PathResolver{Memory::SystemAllocator::instance()}
 {
 }
 
-inline constexpr path_resolver::path_resolver(memory::allocator& _allocator)
+inline constexpr PathResolver::PathResolver(Memory::Allocator& _allocator)
   : m_data{_allocator}
   , m_dots{0}
 {
 }
 
-inline const char* path_resolver::path() const {
+inline const char* PathResolver::path() const {
   return m_data.data();
 }
 
-inline bool path_resolver::append(const string& _path) {
+inline bool PathResolver::append(const String& _path) {
   return reserve_more(_path.size()) && append(_path.data());
 }
 
-inline bool path_resolver::reserve_more(rx_size _size) {
+inline bool PathResolver::reserve_more(Size _size) {
   return m_data.reserve(m_data.capacity() + _size);
 }
 

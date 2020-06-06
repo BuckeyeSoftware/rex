@@ -5,83 +5,83 @@
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/resource.h"
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
-struct context;
+struct Context;
 
-struct target : resource {
-  target(context* _frontend);
+struct Target : Resource {
+  Target(Context* _frontend);
 
-  struct attachment {
-    enum class type {
+  struct Attachment {
+    enum class Type {
       k_texture2D,
       k_textureCM
     };
 
-    type kind;
-    rx_size level;
+    Type kind;
+    Size level;
 
     union {
       struct {
-        texture2D* texture;
+        Texture2D* texture;
       } as_texture2D;
 
       struct {
-        textureCM* texture;
-        textureCM::face face;
+        TextureCM* texture;
+        TextureCM::face face;
       } as_textureCM;
     };
   };
 
   // request target have depth attachment |_format| with size |_dimensions|
-  void request_depth(texture::data_format _format,
-    const math::vec2z& _dimensions);
+  void request_depth(Texture::DataFormat _format,
+                     const Math::Vec2z& _dimensions);
 
   // request target have stencil attachment |_format| with size |_dimensions|
-  void request_stencil(texture::data_format _format,
-    const math::vec2z& _dimensions);
+  void request_stencil(Texture::DataFormat _format,
+                       const Math::Vec2z& _dimensions);
 
   // request target have combined depth stencil attachment with size |_dimensions|
-  void request_depth_stencil(texture::data_format _format,
-    const math::vec2z& _dimensions);
+  void request_depth_stencil(Texture::DataFormat _format,
+                             const Math::Vec2z& _dimensions);
 
   // attach existing depth texture |_depth| to target
-  void attach_depth(texture2D* _depth);
+  void attach_depth(Texture2D* _depth);
 
   // attach existing stencil texture |_stencil| to target
-  void attach_stencil(texture2D* _stencil);
+  void attach_stencil(Texture2D* _stencil);
 
   // attach existing depth stencil texture |_depth_stencil| to target
-  void attach_depth_stencil(texture2D* _depth_stencil);
+  void attach_depth_stencil(Texture2D* _depth_stencil);
 
   // attach texture |_texture| level |_level| to target
-  void attach_texture(texture2D* _texture, rx_size _level);
+  void attach_texture(Texture2D* _texture, Size _level);
 
   // attach cubemap face |_face| texture |_texture| level |_level| to target
-  void attach_texture(textureCM* _texture, textureCM::face _face, rx_size _level);
+  void attach_texture(TextureCM* _texture, TextureCM::face _face, Size _level);
 
   // attach cubemap texture |_texture| level |_level| to target
   // attaches _all_ faces in -x, +x, -y, +y, -z, +z order
-  void attach_texture(textureCM* _texture, rx_size _level);
+  void attach_texture(TextureCM* _texture, Size _level);
 
-  texture2D* depth() const;
-  texture2D* stencil() const;
-  texture2D* depth_stencil() const;
-  const vector<attachment> attachments() const &;
+  Texture2D* depth() const;
+  Texture2D* stencil() const;
+  Texture2D* depth_stencil() const;
+  const Vector<Attachment> attachments() const &;
   bool is_swapchain() const;
 
   bool has_depth() const;
   bool has_stencil() const;
   bool has_depth_stencil() const;
 
-  const math::vec2z& dimensions() const;
+  const Math::Vec2z& dimensions() const;
 
   void validate() const;
 
 private:
   void destroy();
 
-  friend struct context;
+  friend struct Context;
 
   void update_resource_usage();
 
@@ -96,59 +96,59 @@ private:
 
   union {
     struct {
-      texture2D* m_depth_texture;
-      texture2D* m_stencil_texture;
+      Texture2D* m_depth_texture;
+      Texture2D* m_stencil_texture;
     };
-    texture2D* m_depth_stencil_texture;
+    Texture2D* m_depth_stencil_texture;
   };
 
-  vector<attachment> m_attachments;
-  math::vec2z m_dimensions;
+  Vector<Attachment> m_attachments;
+  Math::Vec2z m_dimensions;
   int m_flags;
 };
 
-inline void target::attach_texture(textureCM* _texture, rx_size _level) {
-  attach_texture(_texture, textureCM::face::k_right, _level);  // +x
-  attach_texture(_texture, textureCM::face::k_left, _level);   // -x
-  attach_texture(_texture, textureCM::face::k_top, _level);    // +y
-  attach_texture(_texture, textureCM::face::k_bottom, _level); // -y
-  attach_texture(_texture, textureCM::face::k_front, _level);  // +z
-  attach_texture(_texture, textureCM::face::k_back, _level);   // -z
+inline void Target::attach_texture(TextureCM* _texture, Size _level) {
+  attach_texture(_texture, TextureCM::face::k_right, _level);  // +x
+  attach_texture(_texture, TextureCM::face::k_left, _level);   // -x
+  attach_texture(_texture, TextureCM::face::k_top, _level);    // +y
+  attach_texture(_texture, TextureCM::face::k_bottom, _level); // -y
+  attach_texture(_texture, TextureCM::face::k_front, _level);  // +z
+  attach_texture(_texture, TextureCM::face::k_back, _level);   // -z
 }
 
-inline texture2D* target::depth() const {
+inline Texture2D* Target::depth() const {
   return m_depth_texture;
 }
 
-inline texture2D* target::stencil() const {
+inline Texture2D* Target::stencil() const {
   return m_stencil_texture;
 }
 
-inline texture2D* target::depth_stencil() const {
+inline Texture2D* Target::depth_stencil() const {
   return m_depth_stencil_texture;
 }
 
-inline const vector<target::attachment> target::attachments() const & {
+inline const Vector<Target::Attachment> Target::attachments() const & {
   return m_attachments;
 }
 
-inline bool target::is_swapchain() const {
+inline bool Target::is_swapchain() const {
   return m_flags & k_swapchain;
 }
 
-inline bool target::has_depth() const {
+inline bool Target::has_depth() const {
   return m_flags & k_has_depth;
 }
 
-inline bool target::has_stencil() const {
+inline bool Target::has_stencil() const {
   return m_flags & k_has_stencil;
 }
 
-inline bool target::has_depth_stencil() const {
+inline bool Target::has_depth_stencil() const {
   return has_depth() && has_stencil();
 }
 
-inline const math::vec2z& target::dimensions() const {
+inline const Math::Vec2z& Target::dimensions() const {
   return m_dimensions;
 }
 

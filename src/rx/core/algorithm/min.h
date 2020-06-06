@@ -3,7 +3,7 @@
 #include "rx/core/utility/forward.h"
 #include "rx/core/hints/force_inline.h"
 
-namespace rx::algorithm {
+namespace Rx::Algorithm {
 
 template<typename T>
 RX_HINT_FORCE_INLINE constexpr T min(T _value) {
@@ -12,7 +12,7 @@ RX_HINT_FORCE_INLINE constexpr T min(T _value) {
 
 template<typename T, typename... Ts>
 RX_HINT_FORCE_INLINE constexpr T min(T _a, T _b, Ts&&... _args) {
-  return min(_a < _b ? _a : _b, utility::forward<Ts>(_args)...);
+  return min(_a < _b ? _a : _b, Utility::forward<Ts>(_args)...);
 }
 
 } // namespace rx::algorithm

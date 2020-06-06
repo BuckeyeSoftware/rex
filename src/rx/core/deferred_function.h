@@ -2,46 +2,46 @@
 #define RX_CORE_DEFERRED_FUNCTION_H
 #include "rx/core/function.h"
 
-namespace rx {
+namespace Rx {
 
 // callable function that gets called when the object goes out of scope
 template<typename T>
-struct deferred_function {
+struct DeferredFunction {
   template<typename F>
-  constexpr deferred_function(memory::allocator& _allocator, F&& _function);
+  constexpr DeferredFunction(Memory::Allocator& _allocator, F&& _function);
 
   template<typename F>
-  constexpr deferred_function(F&& _function);
+  constexpr DeferredFunction(F&& _function);
 
-  ~deferred_function();
+  ~DeferredFunction();
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
-  function<T> m_function;
+  Function<T> m_function;
 };
 
 template<typename T>
 template<typename F>
-inline constexpr deferred_function<T>::deferred_function(memory::allocator& _allocator, F&& _function)
-  : m_function{_allocator, utility::forward<F>(_function)}
+inline constexpr DeferredFunction<T>::DeferredFunction(Memory::Allocator& _allocator, F&& _function)
+  : m_function{_allocator, Utility::forward<F>(_function)}
 {
 }
 
 template<typename T>
 template<typename F>
-inline constexpr deferred_function<T>::deferred_function(F&& _function)
-  : deferred_function{memory::system_allocator::instance(), utility::forward<F>(_function)}
+inline constexpr DeferredFunction<T>::DeferredFunction(F&& _function)
+  : DeferredFunction{Memory::SystemAllocator::instance(), Utility::forward<F>(_function)}
 {
 }
 
 template<typename T>
-inline deferred_function<T>::~deferred_function() {
+inline DeferredFunction<T>::~DeferredFunction() {
   m_function();
 }
 
 template<typename T>
-RX_HINT_FORCE_INLINE constexpr memory::allocator& deferred_function<T>::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& DeferredFunction<T>::allocator() const {
   return m_function.allocator();
 }
 

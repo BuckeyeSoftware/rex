@@ -14,25 +14,25 @@
 #include "rx/image/convert.h"
 #include "rx/image/matrix.h"
 
-namespace rx::material {
+namespace Rx::Material {
 
 RX_LOG("material/texture", logger);
 
-bool texture::load(stream* _stream) {
+bool Texture::load(Stream* _stream) {
   if (auto contents = read_text_stream(allocator(), _stream)) {
     return parse({contents->disown()});
   }
   return false;
 }
 
-bool texture::load(const string& _file_name) {
-  if (filesystem::file file{_file_name, "rb"}) {
+bool Texture::load(const String& _file_name) {
+  if (Filesystem::File file{_file_name, "rb"}) {
     return load(&file);
   }
   return false;
 }
 
-bool texture::parse(const json& _definition) {
+bool Texture::parse(const JSON& _definition) {
   if (!_definition) {
     const auto json_error{_definition.error()};
     if (json_error) {
@@ -54,7 +54,7 @@ bool texture::parse(const json& _definition) {
   }
 
   if (!type) {
-    return error("missing 'type'");
+    return error("missing 'Type'");
   }
 
   if (!filter) {
@@ -86,7 +86,7 @@ bool texture::parse(const json& _definition) {
     return false;
   }
 
-  if (m_wrap.is_any(wrap_type::k_clamp_to_border) && !m_border) {
+  if (m_wrap.is_any(WrapType::k_clamp_to_border) && !m_border) {
     return error("missing 'border' for \"clamp_to_border\"");
   }
 
@@ -95,17 +95,17 @@ bool texture::parse(const json& _definition) {
   return load_texture_file();
 }
 
-bool texture::load_texture_file() {
-  rx::texture::pixel_format want_format;
+bool Texture::load_texture_file() {
+  Rx::Texture::PixelFormat want_format;
   if (m_type == "albedo") {
-    want_format = rx::texture::pixel_format::k_rgba_u8;
+    want_format = Rx::Texture::PixelFormat::k_rgba_u8;
   } else if (m_type == "metalness" || m_type == "roughness") {
-    want_format = rx::texture::pixel_format::k_r_u8;
+    want_format = Rx::Texture::PixelFormat::k_r_u8;
   } else {
-    want_format = rx::texture::pixel_format::k_rgb_u8;
+    want_format = Rx::Texture::PixelFormat::k_rgb_u8;
   }
 
-  rx::texture::loader loader{allocator()};
+  Rx::Texture::Loader loader{allocator()};
   if (!loader.load(m_file, want_format)) {
     return false;
   }
@@ -135,7 +135,7 @@ bool texture::load_texture_file() {
       return error("expected String for 'mode'");
     }
 
-    if (!multiplier.is_array_of(json::type::k_number, 3)) {
+    if (!multiplier.is_array_of(json::Type::k_number, 3)) {
       return error("expected Array[Number, 3] for 'multiplier'");
     }
 
@@ -147,7 +147,7 @@ bool texture::load_texture_file() {
       return error("expected Number for 'strength'");
     }
 
-    if (!flags.is_array_of(json::type::k_string)) {
+    if (!flags.is_array_of(json::Type::k_string)) {
       return error("expected Array[String] for 'flags'");
     }
 
@@ -211,23 +211,23 @@ bool texture::load_texture_file() {
       flags_bitset);
 
     // Convert normal map to data.
-    vector<rx_byte> data{allocator()};
+    Vector<rx_byte> data{allocator()};
     if (!image::convert(matrix, data)) {
       return false;
     }
 
-    const rx::texture::pixel_format format{loader.format()};
+    const rx::Texture::pixel_format format{loader.format()};
     m_chain.generate(utility::move(data), format, format,
       loader.dimensions(), false, has_mipmaps);
   }
 #endif
 
-  m_chain.generate(utility::move(loader), false, m_filter.mipmaps);
+  m_chain.generate(Utility::move(loader), false, m_filter.mipmaps);
 
   return true;
 }
 
-bool texture::parse_type(const json& _type) {
+bool Texture::parse_type(const JSON& _type) {
   if (!_type.is_string()) {
     return error("expected String");
   }
@@ -248,26 +248,26 @@ bool texture::parse_type(const json& _type) {
     }
   }
 
-  return error("unknown type '%s'", _type.as_string());
+  return error("unknown Type '%s'", _type.as_string());
 }
 
-bool texture::parse_filter(const json& _filter, bool& _mipmaps) {
+bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
   if (!_filter.is_string()) {
     return error("expected String");
   }
 
-  static constexpr const char* k_matches[]{
+  static constexpr const char* k_matches[] = {
     "bilinear",
     "trilinear",
     "nearest"
   };
 
-  const auto& filter_string{_filter.as_string()};
+  const auto& filter_string = _filter.as_string();
   for (const auto& match : k_matches) {
     if (filter_string == match) {
-      const bool trilinear{*match == 't'};
-      const bool bilinear{trilinear || *match == 'b'}; // trilinear is an extension of bilinear
-      const bool mipmaps{trilinear || _mipmaps}; // trilinear needs mipmaps
+      const bool trilinear = *match == 't';
+      const bool bilinear = trilinear || *match == 'b'; // trilinear is an extension of bilinear
+      const bool mipmaps = trilinear || _mipmaps; // trilinear needs mipmaps
 
       m_filter.trilinear = trilinear;
       m_filter.bilinear = bilinear;
@@ -282,35 +282,34 @@ bool texture::parse_filter(const json& _filter, bool& _mipmaps) {
   return error("unknown filter '%s'", filter_string);
 }
 
-bool texture::parse_wrap(const json& _wrap) {
-  if (!_wrap.is_array_of(json::type::k_string) || _wrap.size() != 2) {
+bool Texture::parse_wrap(const JSON& _wrap) {
+  if (!_wrap.is_array_of(JSON::Type::k_string) || _wrap.size() != 2) {
     return error("expected Array[String, 2]");
   }
 
   static constexpr const struct {
     const char* match;
-    wrap_type type;
+    WrapType type;
   } k_matches[]{
-    { "clamp_to_edge",        wrap_type::k_clamp_to_edge        },
-    { "clamp_to_border",      wrap_type::k_clamp_to_border      },
-    { "mirrored_repeat",      wrap_type::k_mirrored_repeat      },
-    { "repeat",               wrap_type::k_repeat               },
-    { "mirror_clamp_to_edge", wrap_type::k_mirror_clamp_to_edge }
+    { "clamp_to_edge",        WrapType::k_clamp_to_edge        },
+    { "clamp_to_border",      WrapType::k_clamp_to_border      },
+    { "mirrored_repeat",      WrapType::k_mirrored_repeat      },
+    { "repeat",               WrapType::k_repeat               },
+    { "mirror_clamp_to_edge", WrapType::k_mirror_clamp_to_edge }
   };
 
-  const auto parse{[this](const string& _type) -> optional<wrap_type> {
+  const auto parse = [this](const String& _type) -> Optional<WrapType> {
     for (const auto& match : k_matches) {
       if (_type == match.match) {
         return match.type;
       }
     }
-    error("invalid wrap type '%s'", _type);
+    error("invalid wrap Type '%s'", _type);
     return nullopt;
-  }};
+  };
 
-
-  const auto& s_wrap{parse(_wrap[0_z].as_string())};
-  const auto& t_wrap{parse(_wrap[1_z].as_string())};
+  const auto& s_wrap = parse(_wrap[0_z].as_string());
+  const auto& t_wrap = parse(_wrap[1_z].as_string());
 
   if (s_wrap && t_wrap) {
     m_wrap.s = *s_wrap;
@@ -321,26 +320,26 @@ bool texture::parse_wrap(const json& _wrap) {
   return false;
 }
 
-bool texture::parse_border(const json& _border) {
-  if (!_border.is_array_of(json::type::k_number) || _border.size() != 4) {
+bool Texture::parse_border(const JSON& _border) {
+  if (!_border.is_array_of(JSON::Type::k_number) || _border.size() != 4) {
     return error("expected Array[Number, 4]");
   }
 
   m_border = {
-    algorithm::clamp(_border[0_z].as_float(), 0.0f, 1.0f),
-    algorithm::clamp(_border[1_z].as_float(), 0.0f, 1.0f),
-    algorithm::clamp(_border[2_z].as_float(), 0.0f, 1.0f),
-    algorithm::clamp(_border[3_z].as_float(), 0.0f, 1.0f)
+    Algorithm::clamp(_border[0_z].as_float(), 0.0f, 1.0f),
+    Algorithm::clamp(_border[1_z].as_float(), 0.0f, 1.0f),
+    Algorithm::clamp(_border[2_z].as_float(), 0.0f, 1.0f),
+    Algorithm::clamp(_border[3_z].as_float(), 0.0f, 1.0f)
   };
 
   return true;
 }
 
-void texture::write_log(log::level _level, string&& message_) const {
+void Texture::write_log(Log::Level _level, String&& message_) const {
   if (m_type.is_empty()) {
-    logger->write(_level, "%s", utility::move(message_));
+    logger->write(_level, "%s", Utility::move(message_));
   } else {
-    logger->write(_level, "%s: %s", m_type, utility::move(message_));
+    logger->write(_level, "%s: %s", m_type, Utility::move(message_));
   }
 }
 

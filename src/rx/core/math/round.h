@@ -2,9 +2,9 @@
 #define RX_CORE_MATH_ROUND_H
 #include "rx/core/types.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
-rx_f32 round(rx_f32 _value);
+Float32 round(Float32 _value);
 
 } // namespace rx::math
 

@@ -1,13 +1,13 @@
 #ifndef RX_CORE_CONCEPTS_NO_MOVE_H
 #define RX_CORE_CONCEPTS_NO_MOVE_H
 
-namespace rx::concepts {
+namespace Rx::Concepts {
 
-struct no_move {
-  no_move() = default;
-  ~no_move() = default;
-  no_move(no_move&&) = delete;
-  void operator=(no_move&&) = delete;
+struct NoMove {
+  NoMove() = default;
+  ~NoMove() = default;
+  NoMove(NoMove&&) = delete;
+  void operator=(NoMove&&) = delete;
 };
 
 } // namespace rx::concepts

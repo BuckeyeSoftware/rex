@@ -1,49 +1,49 @@
 #include <string.h> // memset
 
-#include "rx/core/bitset.h" // bitset
+#include "rx/core/bitset.h"
 #include "rx/core/assert.h" // RX_ASSERT
 
-#include "rx/core/memory/system_allocator.h" // g_system_allocator
+#include "rx/core/memory/system_allocator.h"
 
-namespace rx {
+namespace Rx {
 
-bitset::bitset(memory::allocator& _allocator, rx_size _size)
+Bitset::Bitset(Memory::Allocator& _allocator, Size _size)
   : m_allocator{_allocator}
   , m_size{_size}
   , m_data{nullptr}
 {
-  m_data = reinterpret_cast<bit_type*>(allocator().allocate(bytes_for_size(m_size)));
+  m_data = reinterpret_cast<BitType*>(allocator().allocate(bytes_for_size(m_size)));
   RX_ASSERT(m_data, "out of memory");
 
   clear_all();
 }
 
-bitset::bitset(const bitset& _bitset)
+Bitset::Bitset(const Bitset& _bitset)
   : m_allocator{_bitset.allocator()}
   , m_size{_bitset.m_size}
-  , m_data{reinterpret_cast<bit_type*>(allocator().allocate(bytes_for_size(m_size)))}
+  , m_data{reinterpret_cast<BitType*>(allocator().allocate(bytes_for_size(m_size)))}
 {
   RX_ASSERT(m_data, "out of memory");
   memcpy(m_data, _bitset.m_data, bytes_for_size(m_size));
 }
 
-bitset& bitset::operator=(bitset&& bitset_) {
+Bitset& Bitset::operator=(Bitset&& bitset_) {
   RX_ASSERT(&bitset_ != this, "self assignment");
 
   m_allocator = bitset_.allocator();
-  m_size = utility::exchange(bitset_.m_size, 0);
-  m_data = utility::exchange(bitset_.m_data, nullptr);
+  m_size = Utility::exchange(bitset_.m_size, 0);
+  m_data = Utility::exchange(bitset_.m_data, nullptr);
 
   return *this;
 }
 
-bitset& bitset::operator=(const bitset& _bitset) {
+Bitset& Bitset::operator=(const Bitset& _bitset) {
   RX_ASSERT(&_bitset != this, "self assignment");
 
   allocator().deallocate(m_data);
 
   m_size = _bitset.m_size;
-  m_data = reinterpret_cast<rx_u64*>(allocator().allocate(bytes_for_size(m_size)));
+  m_data = reinterpret_cast<Uint64*>(allocator().allocate(bytes_for_size(m_size)));
   RX_ASSERT(m_data, "out of memory");
 
   memcpy(m_data, _bitset.m_data, bytes_for_size(m_size));
@@ -51,14 +51,14 @@ bitset& bitset::operator=(const bitset& _bitset) {
   return *this;
 }
 
-void bitset::clear_all() {
+void Bitset::clear_all() {
   memset(m_data, 0, bytes_for_size(m_size));
 }
 
-rx_size bitset::count_set_bits() const {
-  rx_size count{0};
+Size Bitset::count_set_bits() const {
+  Size count = 0;
 
-  for (rx_size i{0}; i < m_size; i++) {
+  for (Size i = 0; i < m_size; i++) {
     if (test(i)) {
       count++;
     }
@@ -67,10 +67,10 @@ rx_size bitset::count_set_bits() const {
   return count;
 }
 
-rx_size bitset::count_unset_bits() const {
-  rx_size count{0};
+Size Bitset::count_unset_bits() const {
+  Size count = 0;
 
-  for (rx_size i{0}; i < m_size; i++) {
+  for (Size i = 0; i < m_size; i++) {
     if (!test(i)) {
       count++;
     }
@@ -79,8 +79,8 @@ rx_size bitset::count_unset_bits() const {
   return count;
 }
 
-rx_size bitset::find_first_unset() const {
-  for (rx_size i{0}; i < m_size; i++) {
+Size Bitset::find_first_unset() const {
+  for (Size i = 0; i < m_size; i++) {
     if (!test(i)) {
       return i;
     }
@@ -88,8 +88,8 @@ rx_size bitset::find_first_unset() const {
   return -1_z;
 }
 
-rx_size bitset::find_first_set() const {
-  for (rx_size i{0}; i < m_size; i++) {
+Size Bitset::find_first_set() const {
+  for (Size i = 0; i < m_size; i++) {
     if (test(i)) {
       return i;
     }

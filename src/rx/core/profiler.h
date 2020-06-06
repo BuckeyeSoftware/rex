@@ -3,52 +3,52 @@
 #include "rx/core/global.h"
 #include "rx/core/optional.h"
 
-namespace rx {
+namespace Rx {
 
-struct profiler {
-  struct cpu_sample {
-    cpu_sample(const char* _tag);
-    ~cpu_sample();
+struct Profiler {
+  struct CPUSample {
+    CPUSample(const char* _tag);
+    ~CPUSample();
   };
 
-  struct gpu_sample {
-    gpu_sample(const char* _tag);
-    ~gpu_sample();
+  struct GPUSample {
+    GPUSample(const char* _tag);
+    ~GPUSample();
   };
 
-  struct device {
-    typedef void (*set_thread_name_fn)(void* _context, const char* _name);
-    typedef void (*begin_sample_fn)(void* _context, const char* _tag);
-    typedef void (*end_sample_fn)(void* _context);
+  struct Device {
+    typedef void (*SetThreadNameFn)(void* _context, const char* _name);
+    typedef void (*BeginSampleFn)(void* _context, const char* _tag);
+    typedef void (*EndSampleFn)(void* _context);
 
-    constexpr device(void* _context, set_thread_name_fn _set_thread_name_fn,
-      begin_sample_fn _begin_sample_fn, end_sample_fn _end_sample_fn);
+    constexpr Device(void* _context, SetThreadNameFn _set_thread_name_fn,
+      BeginSampleFn _begin_sample_fn, EndSampleFn _end_sample_fn);
 
   private:
-    friend struct profiler;
+    friend struct Profiler;
 
     void* m_context;
-    set_thread_name_fn m_set_thread_name_fn;
-    begin_sample_fn m_begin_sample_fn;
-    end_sample_fn m_end_sample_fn;
+    SetThreadNameFn m_set_thread_name_fn;
+    BeginSampleFn m_begin_sample_fn;
+    EndSampleFn m_end_sample_fn;
   };
 
-  using cpu = device;
-  using gpu = device;
+  using CPU = Device;
+  using GPU = Device;
 
   void set_thread_name(const char* _name);
 
-  void bind_gpu(const gpu& _gpu);
-  void bind_cpu(const cpu& _cpu);
+  void bind_gpu(const GPU& _gpu);
+  void bind_cpu(const CPU& _cpu);
 
   void unbind_gpu();
   void unbind_cpu();
 
-  static constexpr profiler& instance();
+  static constexpr Profiler& instance();
 
 private:
-  friend struct cpu_sample;
-  friend struct gpu_sample;
+  friend struct CPUSample;
+  friend struct GPUSample;
 
   void begin_cpu_sample(const char* _tag);
   void end_cpu_sample();
@@ -56,31 +56,31 @@ private:
   void begin_gpu_sample(const char* _tag);
   void end_gpu_sample();
 
-  optional<gpu> m_gpu;
-  optional<cpu> m_cpu;
+  Optional<GPU> m_gpu;
+  Optional<CPU> m_cpu;
 
-  static global<profiler> s_instance;
+  static Global<Profiler> s_instance;
 };
 
-inline profiler::cpu_sample::cpu_sample(const char* _tag) {
+inline Profiler::CPUSample::CPUSample(const char* _tag) {
   instance().begin_cpu_sample(_tag);
 }
 
-inline profiler::cpu_sample::~cpu_sample() {
+inline Profiler::CPUSample::~CPUSample() {
   instance().end_cpu_sample();
 }
 
-inline profiler::gpu_sample::gpu_sample(const char* _tag) {
+inline Profiler::GPUSample::GPUSample(const char* _tag) {
   instance().begin_gpu_sample(_tag);
 }
 
-inline profiler::gpu_sample::~gpu_sample() {
+inline Profiler::GPUSample::~GPUSample() {
   instance().end_gpu_sample();
 }
 
-inline constexpr profiler::device::device(void* _context,
-  set_thread_name_fn _set_thread_name_fn, begin_sample_fn _begin_sample_fn,
-  end_sample_fn _end_sample_fn)
+inline constexpr Profiler::Device::Device(void* _context,
+  SetThreadNameFn _set_thread_name_fn, BeginSampleFn _begin_sample_fn,
+  EndSampleFn _end_sample_fn)
   : m_context{_context}
   , m_set_thread_name_fn{_set_thread_name_fn}
   , m_begin_sample_fn{_begin_sample_fn}
@@ -91,7 +91,7 @@ inline constexpr profiler::device::device(void* _context,
   RX_ASSERT(m_end_sample_fn, "end sample function missing");
 }
 
-inline void profiler::set_thread_name(const char* _name) {
+inline void Profiler::set_thread_name(const char* _name) {
   if (m_gpu) {
     m_gpu->m_set_thread_name_fn(m_gpu->m_context, _name);
   }
@@ -101,45 +101,45 @@ inline void profiler::set_thread_name(const char* _name) {
   }
 }
 
-inline void profiler::bind_gpu(const gpu& _gpu) {
+inline void Profiler::bind_gpu(const GPU& _gpu) {
   m_gpu = _gpu;
 }
 
-inline void profiler::bind_cpu(const cpu& _cpu) {
+inline void Profiler::bind_cpu(const CPU& _cpu) {
   m_cpu = _cpu;
 }
 
-inline void profiler::unbind_gpu() {
+inline void Profiler::unbind_gpu() {
   m_gpu = nullopt;
 }
 
-inline void profiler::unbind_cpu() {
+inline void Profiler::unbind_cpu() {
   m_cpu = nullopt;
 }
 
-inline constexpr profiler& profiler::instance() {
+inline constexpr Profiler& Profiler::instance() {
   return *s_instance;
 }
 
-inline void profiler::begin_cpu_sample(const char* _tag) {
+inline void Profiler::begin_cpu_sample(const char* _tag) {
   if (m_cpu) {
     m_cpu->m_begin_sample_fn(m_cpu->m_context, _tag);
   }
 }
 
-inline void profiler::end_cpu_sample() {
+inline void Profiler::end_cpu_sample() {
   if (m_cpu) {
     m_cpu->m_end_sample_fn(m_cpu->m_context);
   }
 }
 
-inline void profiler::begin_gpu_sample(const char* _tag) {
+inline void Profiler::begin_gpu_sample(const char* _tag) {
   if (m_gpu) {
     m_gpu->m_begin_sample_fn(m_gpu->m_context, _tag);
   }
 }
 
-inline void profiler::end_gpu_sample() {
+inline void Profiler::end_gpu_sample() {
   if (m_gpu) {
     m_gpu->m_end_sample_fn(m_gpu->m_context);
   }

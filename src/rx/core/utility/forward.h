@@ -3,7 +3,7 @@
 #include "rx/core/traits/remove_reference.h"
 #include "rx/core/traits/is_lvalue_reference.h"
 
-namespace rx::utility {
+namespace Rx::Utility {
 
 template<typename T>
 inline constexpr T&& forward(traits::remove_reference<T>& _value) {

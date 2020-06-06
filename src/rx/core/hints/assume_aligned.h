@@ -19,11 +19,11 @@
 // meta-programming is required to cast it correctly so that the restrict
 // qualifier isn't lost in the hint.
 //
-// The return type of |__builtin_assume_aligned| is always a void* so we opt
+// The return Type of |__builtin_assume_aligned| is always a void* so we opt
 // to take the address of the pointer as an lvalue and cast to void**, which
 // is then dereferenced to assign the pointer the result of the intrinsic.
 #define RX_HINT_ASSUME_ALIGNED(_pointer, _alignment) \
-    *(rx::traits::conditional<rx::traits::is_restrict<decltype(_pointer)>, \
+    *(Rx::traits::conditional<Rx::traits::is_restrict<decltype(_pointer)>, \
        void *RX_HINT_RESTRICT *, void**>)(&(_pointer)) \
       = __builtin_assume_aligned((_pointer), (_alignment))
 #elif defined(RX_COMPILER_MSVC)

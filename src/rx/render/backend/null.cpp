@@ -1,32 +1,32 @@
 #include "rx/render/backend/null.h"
 
-namespace rx::render::backend {
+namespace Rx::Render::Backend {
 
-allocation_info null::query_allocation_info() const {
+AllocationInfo Null::query_allocation_info() const {
   return { 0, 0, 0, 0, 0, 0, 0 };
 }
 
-device_info null::query_device_info() const {
+DeviceInfo Null::query_device_info() const {
   return { "", "", "" };
 }
 
-null::null(memory::allocator&, void*) {
+Null::Null(Memory::Allocator&, void*) {
   // {empty}
 }
 
-null::~null() {
+Null::~Null() {
   // {empty}
 }
 
-bool null::init() {
+bool Null::init() {
   return true;
 }
 
-void null::process(const vector<rx_byte*>&) {
+void Null::process(const Vector<Byte*>&) {
   // {empty}
 }
 
-void null::swap() {
+void Null::swap() {
   // {empty}
 }
 

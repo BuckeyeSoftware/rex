@@ -4,14 +4,14 @@
 #include "rx/core/intrusive_xor_list.h"
 #include "rx/core/memory/uninitialized_storage.h"
 
-namespace rx {
+namespace Rx {
 
 // 32-bit: 24 bytes
 // 64-bit: 48 bytes
-struct alignas(memory::allocator::k_alignment) global_node {
+struct alignas(Memory::Allocator::k_alignment) GlobalNode {
   template<typename T, typename... Ts>
-  global_node(const char* _group, const char* _name,
-    memory::uninitialized_storage<T>& _storage, Ts&&... _arguments);
+  GlobalNode(const char* _group, const char* _name,
+             Memory::UninitializedStorage<T>& _storage, Ts&&... _arguments);
 
   void init();
   void fini();
@@ -21,8 +21,8 @@ struct alignas(memory::allocator::k_alignment) global_node {
 
   const char* name() const;
 
-  rx_byte* data();
-  const rx_byte* data() const;
+  Byte* data();
+  const Byte* data() const;
 
   template<typename T>
   T* cast();
@@ -31,8 +31,8 @@ struct alignas(memory::allocator::k_alignment) global_node {
   const T* cast() const;
 
 private:
-  friend struct globals;
-  friend struct global_group;
+  friend struct Globals;
+  friend struct GlobalGroup;
 
   void init_global();
   void fini_global();
@@ -41,69 +41,69 @@ private:
   void validate_cast_for() const;
 
   template<typename F, typename... Rs>
-  struct arguments : arguments<Rs...> {
-    constexpr arguments(F&& _first, Rs&&... _rest)
-      : arguments<Rs...>(utility::forward<Rs>(_rest)...)
-      , first{utility::forward<F>(_first)}
+  struct Arguments : Arguments<Rs...> {
+    constexpr Arguments(F&& _first, Rs&&... _rest)
+      : Arguments<Rs...>(Utility::forward<Rs>(_rest)...)
+      , first{Utility::forward<F>(_first)}
     {
     }
     F first;
   };
   template<typename F>
-  struct arguments<F> {
-    constexpr arguments(F&& _first)
-      : first{utility::forward<F>(_first)}
+  struct Arguments<F> {
+    constexpr Arguments(F&& _first)
+      : first{Utility::forward<F>(_first)}
     {
     }
     F first;
   };
 
-  template<rx_size I, typename F, typename... Rs>
-  struct read_argument {
-    static auto value(const arguments<F, Rs...>* _arguments) {
-      return read_argument<I - 1, Rs...>::value(_arguments);
+  template<Size I, typename F, typename... Rs>
+  struct ReadArgument {
+    static auto value(const Arguments<F, Rs...>* _arguments) {
+      return ReadArgument<I - 1, Rs...>::value(_arguments);
     }
   };
   template<typename F, typename... Rs>
-  struct read_argument<0, F, Rs...> {
-    static F value(const arguments<F, Rs...>* _arguments) {
+  struct ReadArgument<0, F, Rs...> {
+    static F value(const Arguments<F, Rs...>* _arguments) {
       return _arguments->first;
     }
   };
-  template<rx_size I, typename F, typename... Rs>
-  static auto argument(const arguments<F, Rs...>* _arguments) {
-    return read_argument<I, F, Rs...>::value(_arguments);
+  template<Size I, typename F, typename... Rs>
+  static auto argument(const Arguments<F, Rs...>* _arguments) {
+    return ReadArgument<I, F, Rs...>::value(_arguments);
   }
 
-  template<rx_size...>
-  struct unpack_sequence {};
-  template<rx_size N, rx_size... Ns>
-  struct unpack_arguments
-    : unpack_arguments<N - 1, N - 1, Ns...>
+  template<Size...>
+  struct UnpackSequence {};
+  template<Size N, Size... Ns>
+  struct UnpackArguments
+    : UnpackArguments<N - 1, N - 1, Ns...>
   {
   };
-  template<rx_size... Ns>
-  struct unpack_arguments<0, Ns...> {
-    using type = unpack_sequence<Ns...>;
+  template<Size... Ns>
+  struct UnpackArguments<0, Ns...> {
+    using Type = UnpackSequence<Ns...>;
   };
 
   template<typename... Ts>
-  static void construct_arguments(rx_byte* _argument_store, Ts... _arguments) {
-    utility::construct<arguments<Ts...>>(_argument_store,
-      utility::forward<Ts>(_arguments)...);
+  static void construct_arguments(Byte* _argument_store, Ts... _arguments) {
+    Utility::construct<Arguments<Ts...>>(_argument_store,
+                                         Utility::forward<Ts>(_arguments)...);
   }
 
-  template<typename T, typename... Ts, rx_size... Ns>
-  static void construct_global(unpack_sequence<Ns...>, rx_byte* _storage,
-    [[maybe_unused]] rx_byte* _argument_store)
+  template<typename T, typename... Ts, Size... Ns>
+  static void construct_global(UnpackSequence<Ns...>, Byte* _storage,
+    [[maybe_unused]] Byte* _argument_store)
   {
-    utility::construct<T>(_storage,
-      argument<Ns>(reinterpret_cast<arguments<Ts...>*>(_argument_store))...);
+    Utility::construct<T>(_storage,
+                          argument<Ns>(reinterpret_cast<Arguments<Ts...>*>(_argument_store))...);
   }
 
   // Combine multiple operations into a single function so we only have to store
   // a single function pointer rather than multiple.
-  enum class storage_mode {
+  enum class StorageMode {
     k_init_global,
     k_fini_global,
     k_traits_global,
@@ -111,55 +111,55 @@ private:
   };
 
   template<typename T, typename... Ts>
-  static rx_u64 storage_dispatch(storage_mode _mode,
-    [[maybe_unused]] rx_byte* _global_store, [[maybe_unused]] rx_byte* _argument_store)
+  static Uint64 storage_dispatch(StorageMode _mode,
+    [[maybe_unused]] Byte* _global_store, [[maybe_unused]] Byte* _argument_store)
   {
     switch (_mode) {
-    case storage_mode::k_init_global:
-      using pack = typename unpack_arguments<sizeof...(Ts)>::type;
-      construct_global<T, Ts...>(pack{}, _global_store, _argument_store);
+    case StorageMode::k_init_global:
+      using Unpack = typename UnpackArguments<sizeof...(Ts)>::Type;
+      construct_global<T, Ts...>(Unpack{}, _global_store, _argument_store);
       break;
-    case storage_mode::k_fini_global:
-      utility::destruct<T>(_global_store);
+    case StorageMode::k_fini_global:
+      Utility::destruct<T>(_global_store);
       break;
-    case storage_mode::k_fini_arguments:
+    case StorageMode::k_fini_arguments:
       if constexpr(sizeof...(Ts) != 0) {
-        utility::destruct<arguments<Ts...>>(_argument_store);
+        Utility::destruct<Arguments<Ts...>>(_argument_store);
       }
       break;
-    case storage_mode::k_traits_global:
+    case StorageMode::k_traits_global:
       return (sizeof(T) << 32_u64) | alignof(T);
     }
     return 0;
   }
 
-  static rx_byte* reallocate_arguments(rx_byte* _existing, rx_size _size);
+  static Byte* reallocate_arguments(Byte* _existing, Size _size);
 
   // Stored in tag bits of |m_argument_store|.
-  enum : rx_byte {
+  enum : Byte {
     k_enabled     = 1 << 0,
     k_initialized = 1 << 1,
     k_arguments   = 1 << 2
   };
 
-  tagged_ptr<rx_byte> m_argument_store;
+  TaggedPtr<Byte> m_argument_store;
 
-  intrusive_xor_list::node m_grouped;
-  intrusive_xor_list::node m_ungrouped;
+  intrusive_xor_list::Node m_grouped;
+  intrusive_xor_list::Node m_ungrouped;
 
   const char* m_group;
   const char* m_name;
 
-  rx_u64 (*m_storage_dispatch)(storage_mode _mode, rx_byte* _global_store,
-    rx_byte* _argument_store);
+  Uint64 (*m_storage_dispatch)(StorageMode _mode, Byte* _global_store,
+    Byte* _argument_store);
 };
 
 // 32-bit: 24 + sizeof(T) bytes
 // 64-bit: 48 + sizeof(T) bytes
 template<typename T>
-struct global {
+struct Global {
   template<typename... Ts>
-  global(const char* _group, const char* _name, Ts&&... _arguments);
+  Global(const char* _group, const char* _name, Ts&&... _arguments);
 
   void init();
   void fini();
@@ -182,18 +182,18 @@ struct global {
   constexpr const T* data() const;
 
 private:
-  global_node m_node;
-  memory::uninitialized_storage<T> m_global_store;
+  GlobalNode m_node;
+  Memory::UninitializedStorage<T> m_global_store;
 };
 
 // 32-bit: 20 bytes
 // 64-bit: 40 bytes
-struct global_group {
-  global_group(const char* _name);
+struct GlobalGroup {
+  GlobalGroup(const char* _name);
 
   constexpr const char* name() const;
 
-  global_node* find(const char* _name);
+  GlobalNode* find(const char* _name);
 
   void init();
   void fini();
@@ -202,8 +202,8 @@ struct global_group {
   void each(F&& _function);
 
 private:
-  friend struct globals;
-  friend struct global_node;
+  friend struct Globals;
+  friend struct GlobalNode;
 
   void init_global();
   void fini_global();
@@ -214,25 +214,25 @@ private:
   intrusive_xor_list m_list;
 
   // Link for global linked-list of groups in |globals|.
-  intrusive_xor_list::node m_link;
+  intrusive_xor_list::Node m_link;
 };
 
-struct globals {
-  static global_group* find(const char* _name);
+struct Globals {
+  static GlobalGroup* find(const char* _name);
 
   // Goes over global linked-list of groups, adding nodes to the group
-  // if the |global_node::m_group| matches the group name.
+  // if the |GlobalNode::m_group| matches the group name.
   static void link();
 
   static void init();
   static void fini();
 
 private:
-  friend struct global_node;
-  friend struct global_group;
+  friend struct GlobalNode;
+  friend struct GlobalGroup;
 
-  static void link(global_node* _node);
-  static void link(global_group* _group);
+  static void link(GlobalNode* _node);
+  static void link(GlobalGroup* _group);
 
   // Global linked-list of groups.
   static inline intrusive_xor_list s_group_list;
@@ -241,160 +241,160 @@ private:
   static inline intrusive_xor_list s_node_list;
 };
 
-// global_node
+// GlobalNode
 template<typename T, typename... Ts>
-inline global_node::global_node(const char* _group, const char* _name,
-  memory::uninitialized_storage<T>& _global_store, Ts&&... _arguments)
+inline GlobalNode::GlobalNode(const char* _group, const char* _name,
+                              Memory::UninitializedStorage<T>& _global_store, Ts&&... _arguments)
   : m_group{_group ? _group : "system"}
   , m_name{_name}
   , m_storage_dispatch{storage_dispatch<T, Ts...>}
 {
-  RX_ASSERT(reinterpret_cast<rx_uintptr>(&_global_store)
-    == reinterpret_cast<rx_uintptr>(data()), "misalignment");
+  RX_ASSERT(reinterpret_cast<UintPtr>(&_global_store)
+    == reinterpret_cast<UintPtr>(data()), "misalignment");
 
   if constexpr (sizeof...(Ts) != 0) {
-    rx_byte* argument_store = reallocate_arguments(nullptr, sizeof(arguments<Ts...>));
+    Byte* argument_store = reallocate_arguments(nullptr, sizeof(Arguments<Ts...>));
     m_argument_store = {argument_store, k_enabled | k_arguments};
-    construct_arguments(m_argument_store.as_ptr(), utility::forward<Ts>(_arguments)...);
+    construct_arguments(m_argument_store.as_ptr(), Utility::forward<Ts>(_arguments)...);
   } else {
     m_argument_store = {nullptr, k_enabled};
   }
 
-  globals::link(this);
+  Globals::link(this);
 }
 
 template<typename... Ts>
-inline void global_node::init(Ts&&... _arguments) {
+inline void GlobalNode::init(Ts&&... _arguments) {
   static_assert(sizeof...(Ts) != 0,
     "use void init() for default construction");
 
   auto argument_store = m_argument_store.as_ptr();
   if (m_argument_store.as_tag() & k_arguments) {
-    m_storage_dispatch(storage_mode::k_fini_arguments, data(), argument_store);
+    m_storage_dispatch(StorageMode::k_fini_arguments, data(), argument_store);
   }
 
-  construct_arguments(argument_store, utility::forward<Ts>(_arguments)...);
+  construct_arguments(argument_store, Utility::forward<Ts>(_arguments)...);
 
   init();
 }
 
-inline const char* global_node::name() const {
+inline const char* GlobalNode::name() const {
   return m_name;
 }
 
-inline rx_byte* global_node::data() {
-  // The layout of a global<T> is such that the storage for it is right after
+inline Byte* GlobalNode::data() {
+  // The layout of a Global<T> is such that the storage for it is right after
   // the node. That node is |this|, this puts the storage one-past |this|.
-  return reinterpret_cast<rx_byte*>(this + 1);
+  return reinterpret_cast<Byte*>(this + 1);
 }
 
-inline const rx_byte* global_node::data() const {
-  return reinterpret_cast<const rx_byte*>(this + 1);
+inline const Byte* GlobalNode::data() const {
+  return reinterpret_cast<const Byte*>(this + 1);
 }
 
 template<typename T>
-inline T* global_node::cast() {
+inline T* GlobalNode::cast() {
   validate_cast_for<T>();
   return reinterpret_cast<T*>(data());
 }
 
 template<typename T>
-inline const T* global_node::cast() const {
+inline const T* GlobalNode::cast() const {
   validate_cast_for<T>();
   return reinterpret_cast<const T*>(data());
 }
 
 template<typename T>
-void global_node::validate_cast_for() const {
-  const auto traits = m_storage_dispatch(storage_mode::k_traits_global, nullptr, nullptr);
+void GlobalNode::validate_cast_for() const {
+  const auto traits = m_storage_dispatch(StorageMode::k_traits_global, nullptr, nullptr);
   RX_ASSERT(sizeof(T) == ((traits >> 32) & 0xFFFFFFFF_u32), "invalid size");
   RX_ASSERT(alignof(T) == (traits & 0xFFFFFFFF_u32), "invalid allignment");
 }
 
 // global_group
-inline global_group::global_group(const char* _name)
+inline GlobalGroup::GlobalGroup(const char* _name)
   : m_name{_name}
 {
-  globals::link(this);
+  Globals::link(this);
 }
 
-inline constexpr const char* global_group::name() const {
+inline constexpr const char* GlobalGroup::name() const {
   return m_name;
 }
 
 template<typename F>
-inline void global_group::each(F&& _function) {
-  for (auto node = m_list.enumerate_head(&global_node::m_grouped); node; node.next()) {
+inline void GlobalGroup::each(F&& _function) {
+  for (auto node = m_list.enumerate_head(&GlobalNode::m_grouped); node; node.next()) {
     _function(node.data());
   }
 }
 
-// global
+// Global
 template<typename T>
 template<typename... Ts>
-inline global<T>::global(const char* _group, const char* _name, Ts&&... _arguments)
-  : m_node{_group, _name, m_global_store, utility::forward<Ts>(_arguments)...}
+inline Global<T>::Global(const char* _group, const char* _name, Ts&&... _arguments)
+  : m_node{_group, _name, m_global_store, Utility::forward<Ts>(_arguments)...}
 {
 }
 
 template<typename T>
-inline void global<T>::init() {
+inline void Global<T>::init() {
   m_node.init();
 }
 
 template<typename T>
-inline void global<T>::fini() {
+inline void Global<T>::fini() {
   m_node.fini();
 }
 
 template<typename T>
 template<typename... Ts>
-inline void global<T>::init(Ts&&... _arguments) {
-  m_node.init(utility::forward<Ts>(_arguments)...);
+inline void Global<T>::init(Ts&&... _arguments) {
+  m_node.init(Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename T>
-inline constexpr const char* global<T>::name() const {
+inline constexpr const char* Global<T>::name() const {
   return m_node.name();
 }
 
 template<typename T>
-inline constexpr T* global<T>::operator&() {
+inline constexpr T* Global<T>::operator&() {
   return m_global_store.data();
 }
 
 template<typename T>
-inline constexpr const T* global<T>::operator&() const {
+inline constexpr const T* Global<T>::operator&() const {
   return m_global_store.data();
 }
 
 template<typename T>
-inline constexpr T& global<T>::operator*() {
+inline constexpr T& Global<T>::operator*() {
   return *m_global_store.data();
 }
 
 template<typename T>
-constexpr const T& global<T>::operator*() const {
+constexpr const T& Global<T>::operator*() const {
   return *m_global_store.data();
 }
 
 template<typename T>
-constexpr T* global<T>::operator->() {
+constexpr T* Global<T>::operator->() {
   return m_global_store.data();
 }
 
 template<typename T>
-constexpr const T* global<T>::operator->() const {
+constexpr const T* Global<T>::operator->() const {
   return m_global_store.data();
 }
 
 template<typename T>
-inline constexpr T* global<T>::data() {
+inline constexpr T* Global<T>::data() {
   return m_global_store.data();
 }
 
 template<typename T>
-inline constexpr const T* global<T>::data() const {
+inline constexpr const T* Global<T>::data() const {
   return m_global_store.data();
 }
 
