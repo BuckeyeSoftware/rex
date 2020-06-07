@@ -6,7 +6,7 @@
 #include "rx/render/frontend/target.h"
 
 #include "rx/render/gbuffer.h"
-#include "rx/render/ibl.h"
+#include "rx/render/image_based_lighting.h"
 
 namespace Rx::Render {
 

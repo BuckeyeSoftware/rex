@@ -1,6 +1,6 @@
 #include <stddef.h> // offsetof
 
-#include "rx/render/ibl.h"
+#include "rx/render/image_based_lighting.h"
 #include "rx/render/skybox.h"
 
 #include "rx/core/algorithm/max.h"

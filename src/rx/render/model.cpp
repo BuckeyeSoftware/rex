@@ -1,5 +1,5 @@
 #include "rx/render/model.h"
-#include "rx/render/ibl.h"
+#include "rx/render/image_based_lighting.h"
 #include "rx/render/immediate3D.h"
 
 #include "rx/render/frontend/context.h"
