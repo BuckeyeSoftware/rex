@@ -74,18 +74,18 @@ Console::Console(Render::Immediate2D* _immediate)
 
 void Console::update(Input::Context& _input) {
   bool made_selection = false;
-  if (_input.keyboard().is_pressed(Input::scan_code::k_grave)) {
+  if (_input.keyboard().is_pressed(Input::ScanCode::k_grave)) {
     _input.capture_text(_input.active_text() == &m_text ? nullptr : &m_text);
     _input.capture_mouse(_input.active_text() ? false : true);
-  } else if (_input.keyboard().is_pressed(Input::scan_code::k_down)) {
+  } else if (_input.keyboard().is_pressed(Input::ScanCode::k_down)) {
     m_selection++;
-  } else if (_input.keyboard().is_pressed(Input::scan_code::k_up)) {
+  } else if (_input.keyboard().is_pressed(Input::ScanCode::k_up)) {
     if (m_selection) {
       m_selection--;
     }
-  } else if (_input.keyboard().is_pressed(Input::scan_code::k_tab)) {
+  } else if (_input.keyboard().is_pressed(Input::ScanCode::k_tab)) {
     made_selection = true;
-  } else if (_input.keyboard().is_pressed(Input::scan_code::k_return)) {
+  } else if (_input.keyboard().is_pressed(Input::ScanCode::k_return)) {
     Rx::Console::Interface::execute(m_text.contents());
     m_text.clear();
   }

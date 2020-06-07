@@ -20,7 +20,7 @@ struct Texture
   Texture(Context* _frontend, Resource::Type _type);
 
   template<typename T>
-  struct level_info {
+  struct LevelInfo {
     Size offset;
     Size size;
     T dimensions;
@@ -86,7 +86,7 @@ struct Texture
   DataFormat format() const;
   FilterOptions filter() const;
   Size channels() const;
-  Type kind() const;
+  Type type() const;
   Size levels() const;
   const Math::Vec4f& border() const &;
 
@@ -155,7 +155,7 @@ struct Texture1D : Texture {
 
   const DimensionType& dimensions() const &;
   const WrapOptions& wrap() const &;
-  const level_info<DimensionType>& info_for_level(Size _index) const &;
+  const LevelInfo<DimensionType>& info_for_level(Size _index) const &;
   Vector<Edit < DimensionType>>&& edits();
 
   // Record an edit to level |_level| of this texture at offset |_offset| of
@@ -166,13 +166,13 @@ struct Texture1D : Texture {
 private:
   DimensionType m_dimensions;
   WrapOptions m_wrap;
-  Vector<level_info < DimensionType>> m_level_info;
+  Vector<LevelInfo < DimensionType>> m_level_info;
   Vector<Edit < DimensionType>> m_edits;
 };
 
 struct Texture2D : Texture {
-  using dimension_type = Math::Vec2z;
-  using wrap_options = Math::Vec2<WrapType>;
+  using DimensionType = Math::Vec2z;
+  using WrapOptions = Math::Vec2<WrapType>;
 
   Texture2D(Context* _frontend);
   ~Texture2D();
@@ -183,31 +183,31 @@ struct Texture2D : Texture {
   // map data for miplevel |_level|
   Byte* map(Size _level);
 
-  void record_dimensions(const dimension_type& _dimensions);
-  void record_wrap(const wrap_options& _wrap);
+  void record_dimensions(const DimensionType& _dimensions);
+  void record_wrap(const WrapOptions& _wrap);
 
-  const dimension_type& dimensions() const &;
-  const wrap_options& wrap() const &;
-  const level_info<dimension_type>& info_for_level(Size _index) const &;
-  Vector<Edit < dimension_type>>&& edits();
+  const DimensionType& dimensions() const &;
+  const WrapOptions& wrap() const &;
+  const LevelInfo<DimensionType>& info_for_level(Size _index) const &;
+  Vector<Edit < DimensionType>>&& edits();
 
   // Record an edit to level |_level| of this texture at offset |_offset| of
   // dimensions |_dimensions|.
-  void record_edit(Size _level, const dimension_type& _offset,
-    const dimension_type& _dimensions);
+  void record_edit(Size _level, const DimensionType& _offset,
+    const DimensionType& _dimensions);
 
 private:
   friend struct Context;
 
-  dimension_type m_dimensions;
-  wrap_options m_wrap;
-  Vector<level_info<dimension_type>> m_level_info;
-  Vector<Edit < dimension_type>> m_edits;
+  DimensionType m_dimensions;
+  WrapOptions m_wrap;
+  Vector<LevelInfo < DimensionType>> m_level_info;
+  Vector<Edit < DimensionType>> m_edits;
 };
 
 struct Texture3D : Texture {
-  using dimension_type = Math::Vec3z;
-  using wrap_options = Math::Vec3<WrapType>;
+  using DimensionType = Math::Vec3z;
+  using WrapOptions = Math::Vec3<WrapType>;
 
   Texture3D(Context* _frontend);
   ~Texture3D();
@@ -218,31 +218,31 @@ struct Texture3D : Texture {
   // map data for miplevel |_level|
   Byte* map(Size _level);
 
-  void record_dimensions(const dimension_type& _dimensions);
-  void record_wrap(const wrap_options& _wrap);
+  void record_dimensions(const DimensionType& _dimensions);
+  void record_wrap(const WrapOptions& _wrap);
 
-  const dimension_type& dimensions() const &;
-  const wrap_options& wrap() const &;
-  const level_info<dimension_type>& info_for_level(Size _index) const &;
-  Vector<Edit < dimension_type>>&& edits();
+  const DimensionType& dimensions() const &;
+  const WrapOptions& wrap() const &;
+  const LevelInfo<DimensionType>& info_for_level(Size _index) const &;
+  Vector<Edit < DimensionType>>&& edits();
 
   // Record an edit to level |_level| of this texture at offset |_offset| with
   // dimensions |_dimensions|.
-  void record_edit(Size _level, const dimension_type& _offset,
-    const dimension_type& _dimensions);
+  void record_edit(Size _level, const DimensionType& _offset,
+    const DimensionType& _dimensions);
 
 private:
-  dimension_type m_dimensions;
-  wrap_options m_wrap;
-  Vector<level_info<dimension_type>> m_level_info;
-  Vector<Edit < dimension_type>> m_edits;
+  DimensionType m_dimensions;
+  WrapOptions m_wrap;
+  Vector<LevelInfo < DimensionType>> m_level_info;
+  Vector<Edit < DimensionType>> m_edits;
 };
 
 struct TextureCM : Texture {
   using dimension_type = Math::Vec2z;
   using wrap_options = Math::Vec3<WrapType>;
 
-  enum class face : Uint8 {
+  enum class Face : Uint8 {
     k_right,  // +x
     k_left,   // -x
     k_top,    // +y
@@ -255,22 +255,22 @@ struct TextureCM : Texture {
   ~TextureCM();
 
   // write data |_data| for face |_face| to store for miplevel |_level|
-  void write(const Byte* _data, face _face, Size _level);
+  void write(const Byte* _data, Face _face, Size _level);
 
   // map data for face |_face| for miplevel |_level|
-  Byte* map(Size _level, face _face);
+  Byte* map(Size _level, Face _face);
 
   void record_dimensions(const dimension_type& _dimensions);
   void record_wrap(const wrap_options& _wrap);
 
   const dimension_type& dimensions() const &;
   const wrap_options& wrap() const &;
-  const level_info<dimension_type>& info_for_level(Size _index) const &;
+  const LevelInfo<dimension_type>& info_for_level(Size _index) const &;
 
 private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
-  Vector<level_info<dimension_type>> m_level_info;
+  Vector<LevelInfo < dimension_type>> m_level_info;
 };
 
 // texture
@@ -290,7 +290,7 @@ inline Size Texture::channels() const {
   return channel_count_of_format(m_format);
 }
 
-inline Texture::Type Texture::kind() const {
+inline Texture::Type Texture::type() const {
   return m_type;
 }
 
@@ -468,35 +468,35 @@ inline const Texture1D::WrapOptions& Texture1D::wrap() const & {
   return m_wrap;
 }
 
-inline const Texture::level_info<Texture1D::DimensionType>&
+inline const Texture::LevelInfo<Texture1D::DimensionType>&
 Texture1D::info_for_level(Size _index) const & {
   return m_level_info[_index];
 }
 
 // texture2D
-inline const Texture2D::dimension_type& Texture2D::dimensions() const & {
+inline const Texture2D::DimensionType& Texture2D::dimensions() const & {
   return m_dimensions;
 }
 
-inline const Texture2D::wrap_options& Texture2D::wrap() const & {
+inline const Texture2D::WrapOptions& Texture2D::wrap() const & {
   return m_wrap;
 }
 
-inline const Texture::level_info<Texture2D::dimension_type>&
+inline const Texture::LevelInfo<Texture2D::DimensionType>&
 Texture2D::info_for_level(Size _index) const & {
   return m_level_info[_index];
 }
 
 // texture3D
-inline const Texture3D::dimension_type& Texture3D::dimensions() const & {
+inline const Texture3D::DimensionType& Texture3D::dimensions() const & {
   return m_dimensions;
 }
 
-inline const Texture3D::wrap_options& Texture3D::wrap() const & {
+inline const Texture3D::WrapOptions& Texture3D::wrap() const & {
   return m_wrap;
 }
 
-inline const Texture::level_info<Texture3D::dimension_type>&
+inline const Texture::LevelInfo<Texture3D::DimensionType>&
 Texture3D::info_for_level(Size _index) const & {
   return m_level_info[_index];
 }
@@ -510,7 +510,7 @@ inline const TextureCM::wrap_options& TextureCM::wrap() const & {
   return m_wrap;
 }
 
-inline const Texture::level_info<TextureCM::dimension_type>&
+inline const Texture::LevelInfo<TextureCM::dimension_type>&
 TextureCM::info_for_level(Size _index) const & {
   return m_level_info[_index];
 }

@@ -124,7 +124,7 @@ void Target::attach_depth(Texture2D* _depth) {
   RX_ASSERT(!(m_flags & k_has_depth), "depth already attached");
   RX_ASSERT(!(m_flags & k_has_stencil), "use combined depth stencil");
   RX_ASSERT(_depth->is_depth_format(), "not a depth format texture");
-  RX_ASSERT(_depth->kind() == Texture::Type::k_attachment, "not attachable texture");
+  RX_ASSERT(_depth->type() == Texture::Type::k_attachment, "not attachable texture");
 
   if (m_flags & k_dimensions) {
     RX_ASSERT(_depth->dimensions() == m_dimensions, "invalid dimensions");
@@ -144,7 +144,7 @@ void Target::attach_stencil(Texture2D* _stencil) {
   RX_ASSERT(!(m_flags & k_has_stencil), "stencil already attached");
   RX_ASSERT(!(m_flags & k_has_depth), "use combined depth stencil");
   RX_ASSERT(_stencil->is_stencil_format(), "not a stencil format texture");
-  RX_ASSERT(_stencil->kind() == Texture::Type::k_attachment, "not attachable texture");
+  RX_ASSERT(_stencil->type() == Texture::Type::k_attachment, "not attachable texture");
 
   if (m_flags & k_dimensions) {
     RX_ASSERT(_stencil->dimensions() == m_dimensions, "invalid dimensions");
@@ -164,7 +164,7 @@ void Target::attach_depth_stencil(Texture2D* _depth_stencil) {
   RX_ASSERT(!(m_flags & k_has_depth), "depth aleady attached");
   RX_ASSERT(!(m_flags & k_has_stencil), "stencil already attached");
   RX_ASSERT(_depth_stencil->is_depth_stencil_format(), "not a depth stencil format texture");
-  RX_ASSERT(_depth_stencil->kind() == Texture::Type::k_attachment, "not attachable texture");
+  RX_ASSERT(_depth_stencil->type() == Texture::Type::k_attachment, "not attachable texture");
 
   if (m_flags & k_dimensions) {
     RX_ASSERT(_depth_stencil->dimensions() == m_dimensions, "invalid dimensions");
@@ -183,7 +183,7 @@ void Target::attach_depth_stencil(Texture2D* _depth_stencil) {
 
 void Target::attach_texture(Texture2D* _texture, Size _level) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
-  RX_ASSERT(_texture->kind() == Texture::Type::k_attachment,
+  RX_ASSERT(_texture->type() == Texture::Type::k_attachment,
     "not attachable texture");
   RX_ASSERT(_texture->is_level_in_range(_level), "level out of bounds");
 
@@ -214,9 +214,9 @@ void Target::attach_texture(Texture2D* _texture, Size _level) {
   update_resource_usage();
 }
 
-void Target::attach_texture(TextureCM* _texture, TextureCM::face _face, Size _level) {
+void Target::attach_texture(TextureCM* _texture, TextureCM::Face _face, Size _level) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
-  RX_ASSERT(_texture->kind() == Texture::Type::k_attachment,
+  RX_ASSERT(_texture->type() == Texture::Type::k_attachment,
     "not attachable texture");
   RX_ASSERT(_texture->is_level_in_range(_level), "level out of bounds");
 

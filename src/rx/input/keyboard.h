@@ -4,7 +4,7 @@
 
 namespace Rx::Input {
 
-enum class scan_code : Sint32 {
+enum class ScanCode : Sint32 {
   k_unknown        = 0,
 
   k_a              = 4,
@@ -130,9 +130,9 @@ struct Keyboard {
   void update(Float32 _delta_time);
   void update_key(bool _down, int _scan_code, int _symbol);
 
-  bool is_pressed(scan_code _scan_code) const;
-  bool is_released(scan_code _scan_code) const;
-  bool is_held(scan_code _scan_code) const;
+  bool is_pressed(ScanCode _scan_code) const;
+  bool is_released(ScanCode _scan_code) const;
+  bool is_held(ScanCode _scan_code) const;
 
 private:
   enum {
@@ -145,13 +145,13 @@ private:
   int m_scan_codes[k_keys];
 };
 
-inline bool Keyboard::is_pressed(scan_code _scan_code) const {
+inline bool Keyboard::is_pressed(ScanCode _scan_code) const {
   return m_scan_codes[static_cast<Size>(_scan_code)] & k_pressed;
 }
-inline bool Keyboard::is_released(scan_code _scan_code) const {
+inline bool Keyboard::is_released(ScanCode _scan_code) const {
   return m_scan_codes[static_cast<Size>(_scan_code)] & k_released;
 }
-inline bool Keyboard::is_held(scan_code _scan_code) const {
+inline bool Keyboard::is_held(ScanCode _scan_code) const {
   return m_scan_codes[static_cast<Size>(_scan_code)] & k_held;
 }
 

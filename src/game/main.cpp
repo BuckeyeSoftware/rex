@@ -67,7 +67,7 @@ struct TestGame
     return true;
   }
 
-  virtual status on_slice(Input::Context& _input) {
+  virtual Status on_slice(Input::Context& _input) {
 #if 0
     const math::vec2i& noise_dimensions{100, 100};
     const rx_f32 noise_scale{100.0f};
@@ -130,31 +130,31 @@ struct TestGame
       Math::Vec3f move{static_cast<Float32>(delta.y) * sens, static_cast<Float32>(delta.x) * sens, 0.0f};
       m_camera.rotate = m_camera.rotate + move;
 
-      if (_input.keyboard().is_held(Input::scan_code::k_left_control)) {
+      if (_input.keyboard().is_held(Input::ScanCode::k_left_control)) {
         move_speed = 10.0f;
       } else {
         move_speed = 5.0f;
       }
 
-      if (_input.keyboard().is_held(Input::scan_code::k_w)) {
+      if (_input.keyboard().is_held(Input::ScanCode::k_w)) {
         const auto f{m_camera.to_mat4().z};
         m_camera.translate += Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (_input.keyboard().is_held(Input::scan_code::k_s)) {
+      if (_input.keyboard().is_held(Input::ScanCode::k_s)) {
         const auto f{m_camera.to_mat4().z};
         m_camera.translate -= Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (_input.keyboard().is_held(Input::scan_code::k_d)) {
+      if (_input.keyboard().is_held(Input::ScanCode::k_d)) {
         const auto l{m_camera.to_mat4().x};
         m_camera.translate += Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (_input.keyboard().is_held(Input::scan_code::k_a)) {
+      if (_input.keyboard().is_held(Input::ScanCode::k_a)) {
         const auto l{m_camera.to_mat4().x};
         m_camera.translate -= Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
       }
     }
 
-    if (_input.keyboard().is_released(Input::scan_code::k_f1)) {
+    if (_input.keyboard().is_released(Input::ScanCode::k_f1)) {
       switch (display_swap_interval->get()) {
       case -1:
         display_swap_interval->set(0);
@@ -168,15 +168,15 @@ struct TestGame
       }
     }
 
-    if (_input.keyboard().is_released(Input::scan_code::k_escape)) {
-      return status::k_shutdown;
+    if (_input.keyboard().is_released(Input::ScanCode::k_escape)) {
+      return Status::k_shutdown;
     }
 
-    if (_input.keyboard().is_released(Input::scan_code::k_f12)) {
+    if (_input.keyboard().is_released(Input::ScanCode::k_f12)) {
       display_fullscreen->set((display_fullscreen->get() + 1) % 3);
     }
 
-    if (_input.keyboard().is_released(Input::scan_code::k_f11)) {
+    if (_input.keyboard().is_released(Input::ScanCode::k_f11)) {
       const auto &name{m_skybox.name()};
       const char* next{nullptr};
       /**/ if (name == "miramar")  next = "base/skyboxes/nebula/nebula.json5";
@@ -248,7 +248,7 @@ struct TestGame
 
     m_immediate2D.render(m_frontend.swapchain());
 
-    return status::k_running;
+    return Status::k_running;
   }
 
   void on_resize(const Math::Vec2z& _dimensions) {

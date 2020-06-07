@@ -6,7 +6,7 @@
 
 namespace Rx::Render::Frontend {
 
-static inline Texture2D::wrap_options
+static inline Texture2D::WrapOptions
 convert_material_wrap(const Rx::Material::Texture::Wrap& _wrap) {
   auto convert = [](auto _value) {
     switch (_value) {
