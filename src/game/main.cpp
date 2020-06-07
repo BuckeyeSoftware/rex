@@ -7,7 +7,7 @@
 #include "rx/render/immediate2D.h"
 #include "rx/render/immediate3D.h"
 #include "rx/render/gbuffer.h"
-#include "rx/render/ibl.h"
+#include "rx/render/image_based_lighting.h"
 #include "rx/render/skybox.h"
 #include "rx/render/model.h"
 
