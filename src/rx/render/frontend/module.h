@@ -6,82 +6,82 @@
 
 #include "rx/core/algorithm/topological_sort.h"
 
-namespace rx {
-  struct json;
-  struct stream;
+namespace Rx {
+  struct JSON;
+  struct Stream;
 }
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
-struct module
-  : concepts::no_copy
+struct Module
+  : Concepts::NoCopy
 {
-  module(memory::allocator& _allocator);
-  module(module&& module_);
+  Module(Memory::Allocator& _allocator);
+  Module(Module&& module_);
 
-  module& operator=(module&& module_);
+  Module& operator=(Module&& module_);
 
-  bool load(stream* _stream);
-  bool load(const string& _file_name);
+  bool load(Stream* _stream);
+  bool load(const String& _file_name);
 
-  bool parse(const json& _description);
+  bool parse(const JSON& _description);
 
-  const string& source() const &;
-  const string& name() const &;
-  const vector<string>& dependencies() const &;
+  const String& source() const &;
+  const String& name() const &;
+  const Vector<String>& dependencies() const &;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments) const;
 
   template<typename... Ts>
-  void log(log::level _level, const char* _format, Ts&&... _arguments) const;
+  void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
 
-  void write_log(log::level _level, string&& message_) const;
+  void write_log(Log::Level _level, String&& message_) const;
 
-  ref<memory::allocator> m_allocator;
-  string m_name;
-  string m_source;
-  vector<string> m_dependencies;
+  Ref<Memory::Allocator> m_allocator;
+  String m_name;
+  String m_source;
+  Vector<String> m_dependencies;
 };
 
-inline const string& module::source() const & {
+inline const String& Module::source() const & {
   return m_source;
 }
 
-inline const string& module::name() const & {
+inline const String& Module::name() const & {
   return m_name;
 }
 
-inline const vector<string>& module::dependencies() const & {
+inline const Vector<String>& Module::dependencies() const & {
   return m_dependencies;
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& module::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Module::allocator() const {
   return m_allocator;
 }
 
 template<typename... Ts>
-inline bool module::error(const char* _format, Ts&&... _arguments) const {
-  log(log::level::k_error, "%s",
-    string::format(allocator(), _format, utility::forward<Ts>(_arguments)...));
+inline bool Module::error(const char* _format, Ts&&... _arguments) const {
+  log(Log::Level::k_error, "%s",
+    String::format(allocator(), _format, Utility::forward<Ts>(_arguments)...));
   return false;
 }
 
 template<typename... Ts>
-inline void module::log(log::level _level, const char* _format,
-  Ts&&... _arguments) const
+inline void Module::log(Log::Level _level, const char* _format,
+                        Ts&&... _arguments) const
 {
-  write_log(_level, string::format(_format, utility::forward<Ts>(_arguments)...));
+  write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));
 }
 
 bool resolve_module_dependencies(
-  const map<string, module>& _modules,
-  const module& _current_module,
-  set<string>& visited_,
-  algorithm::topological_sort<string>& sorter_);
+  const Map<String, Module>& _modules,
+  const Module& _current_module,
+  Set<String>& visited_,
+  Algorithm::TopologicalSort<String>& sorter_);
 
 } // namespace rx::render::frontend
 

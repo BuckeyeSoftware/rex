@@ -10,137 +10,137 @@
 
 #include "rx/material/loader.h"
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
-struct texture2D;
-struct context;
+struct Texture2D;
+struct Context;
 
-struct RX_HINT_EMPTY_BASES material
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES Material
+  : Concepts::NoCopy
 {
-  material(context* _frontend);
-  ~material();
+  Material(Context* _frontend);
+  ~Material();
 
-  material(material&& material_);
-  material& operator=(material&& material_);
+  Material(Material&& material_);
+  Material& operator=(Material&& material_);
 
-  bool load(rx::material::loader&& loader_);
+  bool load(Rx::Material::Loader&& loader_);
 
   bool alpha_test() const;
   bool has_alpha() const;
-  const optional<math::transform>& transform() const &;
-  const string& name() const &;
+  const Optional<Math::Transform>& transform() const &;
+  const String& name() const &;
 
-  texture2D* albedo() const;
-  texture2D* normal() const;
-  texture2D* roughness() const;
-  texture2D* metalness() const;
-  texture2D* ambient() const;
-  texture2D* emissive() const;
+  Texture2D* albedo() const;
+  Texture2D* normal() const;
+  Texture2D* roughness() const;
+  Texture2D* metalness() const;
+  Texture2D* ambient() const;
+  Texture2D* emissive() const;
 
-  rx_f32 roughness_value() const;
-  rx_f32 metalness_value() const;
+  Float32 roughness_value() const;
+  Float32 metalness_value() const;
 
 private:
-  context* m_frontend;
-  texture2D* m_albedo;
-  texture2D* m_normal;
-  texture2D* m_roughness;
-  texture2D* m_metalness;
-  texture2D* m_ambient;
-  texture2D* m_emissive;
+  Context* m_frontend;
+  Texture2D* m_albedo;
+  Texture2D* m_normal;
+  Texture2D* m_roughness;
+  Texture2D* m_metalness;
+  Texture2D* m_ambient;
+  Texture2D* m_emissive;
   bool m_alpha_test;
   bool m_has_alpha;
-  rx_f32 m_roughness_value;
-  rx_f32 m_metalness_value;
-  string m_name;
-  optional<math::transform> m_transform;
+  Float32 m_roughness_value;
+  Float32 m_metalness_value;
+  String m_name;
+  Optional<Math::Transform> m_transform;
 };
 
-inline material::material(material&& material_)
+inline Material::Material(Material&& material_)
   : m_frontend{material_.m_frontend}
-  , m_albedo{utility::exchange(material_.m_albedo, nullptr)}
-  , m_normal{utility::exchange(material_.m_normal, nullptr)}
-  , m_roughness{utility::exchange(material_.m_roughness, nullptr)}
-  , m_metalness{utility::exchange(material_.m_metalness, nullptr)}
-  , m_ambient{utility::exchange(material_.m_ambient, nullptr)}
-  , m_emissive{utility::exchange(material_.m_emissive, nullptr)}
-  , m_alpha_test{utility::exchange(material_.m_alpha_test, false)}
-  , m_has_alpha{utility::exchange(material_.m_has_alpha, false)}
-  , m_roughness_value{utility::exchange(material_.m_roughness_value, 1.0f)}
-  , m_metalness_value{utility::exchange(material_.m_metalness_value, 0.0f)}
-  , m_name{utility::move(material_.m_name)}
-  , m_transform{utility::move(material_.m_transform)}
+  , m_albedo{Utility::exchange(material_.m_albedo, nullptr)}
+  , m_normal{Utility::exchange(material_.m_normal, nullptr)}
+  , m_roughness{Utility::exchange(material_.m_roughness, nullptr)}
+  , m_metalness{Utility::exchange(material_.m_metalness, nullptr)}
+  , m_ambient{Utility::exchange(material_.m_ambient, nullptr)}
+  , m_emissive{Utility::exchange(material_.m_emissive, nullptr)}
+  , m_alpha_test{Utility::exchange(material_.m_alpha_test, false)}
+  , m_has_alpha{Utility::exchange(material_.m_has_alpha, false)}
+  , m_roughness_value{Utility::exchange(material_.m_roughness_value, 1.0f)}
+  , m_metalness_value{Utility::exchange(material_.m_metalness_value, 0.0f)}
+  , m_name{Utility::move(material_.m_name)}
+  , m_transform{Utility::move(material_.m_transform)}
 {
 }
 
-inline material& material::operator=(material&& material_) {
+inline Material& Material::operator=(Material&& material_) {
   RX_ASSERT(&material_ != this, "self assignment");
 
-  this->~material();
+  this->~Material();
 
   m_frontend = material_.m_frontend;
-  m_albedo = utility::exchange(material_.m_albedo, nullptr);
-  m_normal = utility::exchange(material_.m_normal, nullptr);
-  m_roughness = utility::exchange(material_.m_roughness, nullptr);
-  m_metalness = utility::exchange(material_.m_metalness, nullptr);
-  m_ambient = utility::exchange(material_.m_ambient, nullptr);
-  m_emissive = utility::exchange(material_.m_emissive, nullptr);
-  m_alpha_test = utility::exchange(material_.m_alpha_test, false);
-  m_has_alpha = utility::exchange(material_.m_has_alpha, false);
-  m_roughness_value = utility::exchange(material_.m_roughness_value, 1.0f);
-  m_metalness_value = utility::exchange(material_.m_metalness_value, 0.0f);
-  m_name = utility::move(material_.m_name);
-  m_transform = utility::move(material_.m_transform);
+  m_albedo = Utility::exchange(material_.m_albedo, nullptr);
+  m_normal = Utility::exchange(material_.m_normal, nullptr);
+  m_roughness = Utility::exchange(material_.m_roughness, nullptr);
+  m_metalness = Utility::exchange(material_.m_metalness, nullptr);
+  m_ambient = Utility::exchange(material_.m_ambient, nullptr);
+  m_emissive = Utility::exchange(material_.m_emissive, nullptr);
+  m_alpha_test = Utility::exchange(material_.m_alpha_test, false);
+  m_has_alpha = Utility::exchange(material_.m_has_alpha, false);
+  m_roughness_value = Utility::exchange(material_.m_roughness_value, 1.0f);
+  m_metalness_value = Utility::exchange(material_.m_metalness_value, 0.0f);
+  m_name = Utility::move(material_.m_name);
+  m_transform = Utility::move(material_.m_transform);
 
   return *this;
 }
 
-inline const string& material::name() const & {
+inline const String& Material::name() const & {
   return m_name;
 }
 
-inline bool material::alpha_test() const {
+inline bool Material::alpha_test() const {
   return m_alpha_test;
 }
 
-inline bool material::has_alpha() const {
+inline bool Material::has_alpha() const {
   return m_has_alpha;
 }
 
-inline const optional<math::transform>& material::transform() const & {
+inline const Optional<Math::Transform>& Material::transform() const & {
   return m_transform;
 }
 
-inline texture2D* material::albedo() const {
+inline Texture2D* Material::albedo() const {
   return m_albedo;
 }
 
-inline texture2D* material::normal() const {
+inline Texture2D* Material::normal() const {
   return m_normal;
 }
 
-inline texture2D* material::roughness() const {
+inline Texture2D* Material::roughness() const {
   return m_roughness;
 }
 
-inline texture2D* material::metalness() const {
+inline Texture2D* Material::metalness() const {
   return m_metalness;
 }
 
-inline texture2D* material::ambient() const {
+inline Texture2D* Material::ambient() const {
   return m_ambient;
 }
 
-inline texture2D* material::emissive() const {
+inline Texture2D* Material::emissive() const {
   return m_emissive;
 }
 
-inline rx_f32 material::roughness_value() const {
+inline Float32 Material::roughness_value() const {
   return m_roughness_value;
 }
 
-inline rx_f32 material::metalness_value() const {
+inline Float32 Material::metalness_value() const {
   return m_metalness_value;
 }
 

@@ -5,19 +5,19 @@
 #include "rx/core/utility/nat.h"
 #include "rx/core/utility/declval.h"
 
-namespace rx::traits {
+namespace Rx::traits {
 
 namespace detail {
   template<typename T, typename... Ts>
   struct is_callable {
     template<typename U>
     static auto test(U* _data)
-      -> decltype((*_data)(utility::declval<Ts>()...), void(), int());
+      -> decltype((*_data)(Utility::declval<Ts>()...), void(), int());
     
     template<typename>
-    static utility::nat test(...);
+    static Utility::Nat test(...);
 
-    static constexpr const auto value{!traits::is_same<decltype(test<T>(nullptr)), utility::nat>};
+    static constexpr const auto value{!traits::is_same<decltype(test<T>(nullptr)), Utility::Nat>};
   };
 } // namespace detail
 

@@ -2,7 +2,7 @@
 #define RX_CORE_ALGORITHM_CLAMP_H
 #include "rx/core/hints/force_inline.h"
 
-namespace rx::algorithm {
+namespace Rx::Algorithm {
 
 //! clamp value to given range
 template<typename T>

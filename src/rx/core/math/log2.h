@@ -3,17 +3,17 @@
 #include "rx/core/types.h"
 #include "rx/core/traits/is_same.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
 // Use compiler intrinsics if available.
 #if defined(RX_COMPILER_CLANG) || defined(RX_COMPILER_GCC)
-inline rx_u32 log2(rx_u32 _value) {
-  static_assert(traits::is_same<rx_u32, unsigned int>, "rx_u32 not unsigned int");
+inline Uint32 log2(Uint32 _value) {
+  static_assert(traits::is_same<Uint32, unsigned int>, "rx_u32 not unsigned int");
   return sizeof _value * 8 - __builtin_clz(_value) - 1;
 }
 
-inline rx_u64 log2(rx_u64 _value) {
-  if constexpr (traits::is_same<rx_u64, unsigned long>) {
+inline Uint64 log2(Uint64 _value) {
+  if constexpr (traits::is_same<Uint64, unsigned long>) {
     return sizeof _value * 8 - __builtin_clzl(_value) - 1;
   } else {
     return sizeof _value * 8 - __builtin_clzll(_value) - 1;

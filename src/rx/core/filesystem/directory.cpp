@@ -14,19 +14,19 @@
 
 #include "rx/core/filesystem/directory.h"
 
-namespace rx::filesystem {
+namespace Rx::Filesystem {
 
 #if defined(RX_PLATFORM_WINDOWS)
 struct find_context {
-  vector<rx_u16> path_data;
+  Vector<rx_u16> path_data;
   WIN32_FIND_DATAW find_data;
   HANDLE handle;
 };
 #endif
 
-directory::directory(memory::allocator& _allocator, string&& path_)
+Directory::Directory(Memory::Allocator& _allocator, String&& path_)
   : m_allocator{_allocator}
-  , m_path{utility::move(path_)}
+  , m_path{Utility::move(path_)}
 {
 #if defined(RX_PLATFORM_POSIX)
   m_impl = reinterpret_cast<void*>(opendir(m_path.data()));
@@ -34,13 +34,13 @@ directory::directory(memory::allocator& _allocator, string&& path_)
   // The only thing we can cache between reuses of a directory object is the
   // path conversion and the initial find handle on Windows. Subsequent reuses
   // will need to reopen the directory.
-  find_context* context = allocator().create<find_context>();
-  RX_ASSERT(context, "out of memory");
+  find_context* Context = allocator().create<find_context>();
+  RX_ASSERT(Context, "out of memory");
 
   // Convert |m_path| to UTF-16 for Windows.
   const wide_string path_utf16 = m_path.to_utf16();
   static constexpr const wchar_t k_path_extra[] = L"\\*";
-  vector<rx_u16> path_data{allocator(), path_utf16.size() + sizeof k_path_extra,
+  Vector<rx_u16> path_data{allocator(), path_utf16.size() + sizeof k_path_extra,
     utility::uninitialized{}};
 
   memcpy(path_data.data(), path_utf16.data(), path_utf16.size() * 2);
@@ -48,21 +48,21 @@ directory::directory(memory::allocator& _allocator, string&& path_)
 
   // Execute one FindFirstFileW to check if the directory exists.
   const auto path = reinterpret_cast<const LPCWSTR>(path_data.data());
-  const HANDLE handle = FindFirstFileW(path, &context->find_data);
+  const HANDLE handle = FindFirstFileW(path, &Context->find_data);
   if (handle != INVALID_HANDLE_VALUE) {
     // The directory exists and has been opened. Cache the handle and the path
     // conversion for |each|.
-    context->handle = handle;
-    context->path_data = utility::move(path_data);
-    m_impl = reinterpret_cast<void*>(context);
+    Context->handle = handle;
+    Context->path_data = utility::move(path_data);
+    m_impl = reinterpret_cast<void*>(Context);
   } else {
-    allocator().destroy<find_context>(context);
+    allocator().destroy<find_context>(Context);
     m_impl = nullptr;
   }
 #endif
 }
 
-directory::~directory() {
+Directory::~Directory() {
 #if defined(RX_PLATFORM_POSIX)
   if (m_impl) {
     closedir(reinterpret_cast<DIR*>(m_impl));
@@ -74,7 +74,7 @@ directory::~directory() {
 #endif
 }
 
-void directory::each(function<void(item&&)>&& _function) {
+void Directory::each(Function<void(Item&&)>&& _function) {
   RX_ASSERT(m_impl, "directory not opened");
 
 #if defined(RX_PLATFORM_POSIX)
@@ -98,10 +98,10 @@ void directory::each(function<void(item&&)>&& _function) {
       // Only accept regular files and directories, symbolic links are not allowed.
       switch (next->d_type) {
       case DT_DIR:
-        _function({{allocator(), next->d_name}, item::type::k_directory});
+        _function({{allocator(), next->d_name}, Item::Type::k_directory});
         break;
       case DT_REG:
-        _function({{allocator(), next->d_name}, item::type::k_file});
+        _function({{allocator(), next->d_name}, Item::Type::k_file});
         break;
       }
 
@@ -113,19 +113,19 @@ void directory::each(function<void(item&&)>&& _function) {
 
   rewinddir(dir);
 #elif defined(RX_PLATFORM_WINDOWS)
-  auto* context = reinterpret_cast<find_context*>(m_impl);
+  auto* Context = reinterpret_cast<find_context*>(m_impl);
 
   // The handle has been closed, this can only happen when reusing the directory
   // object, i.e multiple calls to |each|.
-  if (context->handle == INVALID_HANDLE_VALUE) {
+  if (Context->handle == INVALID_HANDLE_VALUE) {
     // Attempt to reopen the directory, since Windows lacks rewinddir.
-    const auto path = reinterpret_cast<const LPCWSTR>(context->path_data.data());
-    const auto handle = FindFirstFileW(path, &context->find_data);
+    const auto path = reinterpret_cast<const LPCWSTR>(Context->path_data.data());
+    const auto handle = FindFirstFileW(path, &Context->find_data);
     if (handle != INVALID_HANDLE_VALUE) {
-      context->handle = handle;
+      Context->handle = handle;
     } else {
-      // Destroy the context and clear |m_impl| out so operator bool reflects this.
-      allocator().destroy<find_context>(context);
+      // Destroy the Context and clear |m_impl| out so operator bool reflects this.
+      allocator().destroy<find_context>(Context);
       m_impl = nullptr;
       return;
     }
@@ -134,36 +134,36 @@ void directory::each(function<void(item&&)>&& _function) {
   // Enumerate each file in the directory.
   for (;;) {
     // Skip '.' and '..'.
-    if (context->find_data.cFileName[0] == L'.'
-      && !context->find_data.cFileName[1 + !!(context->find_data.cFileName[1] == L'.')])
+    if (Context->find_data.cFileName[0] == L'.'
+      && !Context->find_data.cFileName[1 + !!(Context->find_data.cFileName[1] == L'.')])
     {
-      if (!FindNextFileW(context->handle, &context->find_data)) {
+      if (!FindNextFileW(Context->handle, &Context->find_data)) {
         break;
       }
       continue;
     }
 
-    const wide_string utf16_name = reinterpret_cast<rx_u16*>(&context->find_data.cFileName);
-    const item::type kind = context->find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
-      ? item::type::k_directory
-      : item::type::k_file;
+    const wide_string utf16_name = reinterpret_cast<rx_u16*>(&Context->find_data.cFileName);
+    const Item::Type kind = Context->find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
+      ? Item::Type::k_directory
+      : Item::Type::k_file;
 
     _function({utf16_name.to_utf8(), kind});
 
-    if (!FindNextFileW(context->handle, &context->find_data)) {
+    if (!FindNextFileW(Context->handle, &Context->find_data)) {
       break;
     }
   }
 
   // There's no way to rewinddir on Windows, so just close the the find handle
-  // and clear it out in the context so subequent calls to |each| reopen it
+  // and clear it out in the Context so subequent calls to |each| reopen it
   // instead.
-  FindClose(context->handle);
-  context->handle = INVALID_HANDLE_VALUE;
+  FindClose(Context->handle);
+  Context->handle = INVALID_HANDLE_VALUE;
 #endif
 }
 
-bool create_directory(const string& _path) {
+bool create_directory(const String& _path) {
 #if defined(RX_PLATFORM_POSIX)
   auto perms = 0;
   perms |= S_IRUSR; // Read bit for owner.

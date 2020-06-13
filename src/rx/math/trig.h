@@ -3,7 +3,7 @@
 #include "rx/core/types.h" // f32, f64
 #include "rx/math/constants.h" // k_pi
 
-namespace rx::math {
+namespace Rx::Math {
 
 template<typename T>
 inline constexpr T deg_to_rad(T deg) {

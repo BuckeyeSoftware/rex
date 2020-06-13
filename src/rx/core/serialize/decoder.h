@@ -9,35 +9,35 @@
 #include "rx/core/string.h"
 #include "rx/core/string_table.h"
 
-namespace rx {
-struct stream;
+namespace Rx {
+struct Stream;
 } // namespace rx
 
-namespace rx::serialize {
+namespace Rx::serialize {
 
-struct decoder {
-  decoder(stream* _stream);
-  decoder(memory::allocator& _allocator, stream* _stream);
-  ~decoder();
+struct Decoder {
+  Decoder(Stream* _stream);
+  Decoder(Memory::Allocator& _allocator, Stream* _stream);
+  ~Decoder();
 
-  [[nodiscard]] bool read_uint(rx_u64& result_);
-  [[nodiscard]] bool read_sint(rx_s64& result_);
-  [[nodiscard]] bool read_float(rx_f32& result_);
+  [[nodiscard]] bool read_uint(Uint64& result_);
+  [[nodiscard]] bool read_sint(Sint64& result_);
+  [[nodiscard]] bool read_float(Float32& result_);
   [[nodiscard]] bool read_bool(bool& result_);
-  [[nodiscard]] bool read_byte(rx_byte& result_);
-  [[nodiscard]] bool read_string(string& result_);
+  [[nodiscard]] bool read_byte(Byte& result_);
+  [[nodiscard]] bool read_string(String& result_);
 
-  [[nodiscard]] bool read_float_array(rx_f32* result_, rx_size _count);
-  [[nodiscard]] bool read_byte_array(rx_byte* result_, rx_size _count);
-
-  template<typename T>
-  [[nodiscard]] bool read_uint_array(T* result_, rx_size _count);
+  [[nodiscard]] bool read_float_array(Float32* result_, Size _count);
+  [[nodiscard]] bool read_byte_array(Byte* result_, Size _count);
 
   template<typename T>
-  [[nodiscard]] bool read_sint_array(T* result_, rx_size _count);
+  [[nodiscard]] bool read_uint_array(T* result_, Size _count);
 
-  const string& message() const &;
-  constexpr memory::allocator& allocator() const;
+  template<typename T>
+  [[nodiscard]] bool read_sint_array(T* result_, Size _count);
+
+  const String& message() const &;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
   template<typename... Ts>
@@ -47,25 +47,25 @@ private:
   [[nodiscard]] bool read_strings();
   [[nodiscard]] bool finalize();
 
-  memory::allocator& m_allocator;
-  stream* m_stream;
+  Memory::Allocator& m_allocator;
+  Stream* m_stream;
 
-  header m_header;
-  buffer m_buffer;
-  string m_message;
-  memory::uninitialized_storage<string_table> m_strings;
+  Header m_header;
+  Buffer m_buffer;
+  String m_message;
+  Memory::UninitializedStorage<StringTable> m_strings;
 };
 
-inline decoder::decoder(stream* _stream)
-  : decoder{memory::system_allocator::instance(), _stream}
+inline Decoder::Decoder(Stream* _stream)
+  : Decoder{Memory::SystemAllocator::instance(), _stream}
 {
 }
 
 template<typename T>
-inline bool decoder::read_uint_array(T* result_, rx_size _count) {
+inline bool Decoder::read_uint_array(T* result_, Size _count) {
   static_assert(traits::is_unsigned<T>, "T must be unsigned integer");
 
-  rx_u64 count = 0;
+  Uint64 count = 0;
   if (!read_uint(count)) {
     return false;
   }
@@ -74,7 +74,7 @@ inline bool decoder::read_uint_array(T* result_, rx_size _count) {
     return false;
   }
 
-  for (rx_size i = 0; i < _count; i++) {
+  for (Size i = 0; i < _count; i++) {
     if (!read_uint(result_[i])) {
       return error("array count mismatch");
     }
@@ -84,10 +84,10 @@ inline bool decoder::read_uint_array(T* result_, rx_size _count) {
 }
 
 template<typename T>
-inline bool decoder::read_sint_array(T* result_, rx_size _count) {
+inline bool Decoder::read_sint_array(T* result_, Size _count) {
   static_assert(traits::is_signed<T>, "T must be signed integer");
 
-  rx_u64 count = 0;
+  Uint64 count = 0;
   if (!read_uint(count)) {
     return false;
   }
@@ -96,7 +96,7 @@ inline bool decoder::read_sint_array(T* result_, rx_size _count) {
     return error("array count mismatch");
   }
 
-  for (rx_size i = 0; i < _count; i++) {
+  for (Size i = 0; i < _count; i++) {
     if (!read_uint(result_[i])) {
       return false;
     }
@@ -105,17 +105,17 @@ inline bool decoder::read_sint_array(T* result_, rx_size _count) {
   return true;
 }
 
-inline const string& decoder::message() const & {
+inline const String& Decoder::message() const & {
   return m_message;
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& decoder::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Decoder::allocator() const {
   return m_allocator;
 }
 
 template<typename... Ts>
-inline bool decoder::error(const char* _format, Ts&&... _arguments) {
-  m_message = string::format(_format, utility::forward<Ts>(_arguments)...);
+inline bool Decoder::error(const char* _format, Ts&&... _arguments) {
+  m_message = String::format(_format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 

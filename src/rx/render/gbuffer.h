@@ -2,51 +2,51 @@
 #define RX_RENDER_GBUFFER_H
 #include "rx/math/vec2.h"
 
-namespace rx::render {
+namespace Rx::Render {
 
-namespace frontend {
-  struct context;
-  struct target;
-  struct texture2D;
+namespace Frontend {
+  struct Context;
+  struct Target;
+  struct Texture2D;
 }
 
 struct gbuffer {
-  gbuffer(frontend::context* _frontend);
+  gbuffer(Frontend::Context* _frontend);
   ~gbuffer();
 
-  void create(const math::vec2z& _resolution);
-  void resize(const math::vec2z& _resolution);
+  void create(const Math::Vec2z& _resolution);
+  void resize(const Math::Vec2z& _resolution);
 
-  frontend::texture2D* albedo() const;
-  frontend::texture2D* normal() const;
-  frontend::texture2D* emission() const;
-  frontend::texture2D* depth_stencil() const;
+  Frontend::Texture2D* albedo() const;
+  Frontend::Texture2D* normal() const;
+  Frontend::Texture2D* emission() const;
+  Frontend::Texture2D* depth_stencil() const;
 
-  frontend::target* target() const;
+  Frontend::Target* target() const;
 
 private:
   void destroy();
 
-  frontend::context* m_frontend;
-  frontend::target* m_target;
-  frontend::texture2D* m_albedo_texture;
-  frontend::texture2D* m_normal_texture;
-  frontend::texture2D* m_emission_texture;
+  Frontend::Context* m_frontend;
+  Frontend::Target* m_target;
+  Frontend::Texture2D* m_albedo_texture;
+  Frontend::Texture2D* m_normal_texture;
+  Frontend::Texture2D* m_emission_texture;
 };
 
-inline frontend::texture2D* gbuffer::albedo() const {
+inline Frontend::Texture2D* gbuffer::albedo() const {
   return m_albedo_texture;
 }
 
-inline frontend::texture2D* gbuffer::normal() const {
+inline Frontend::Texture2D* gbuffer::normal() const {
   return m_normal_texture;
 }
 
-inline frontend::texture2D* gbuffer::emission() const {
+inline Frontend::Texture2D* gbuffer::emission() const {
   return m_emission_texture;
 }
 
-inline frontend::target* gbuffer::target() const {
+inline Frontend::Target* gbuffer::target() const {
   return m_target;
 }
 

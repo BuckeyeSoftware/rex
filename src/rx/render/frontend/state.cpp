@@ -1,16 +1,16 @@
 #include "rx/render/frontend/state.h"
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
 // scissor_state
-scissor_state::scissor_state()
+ScissorState::ScissorState()
   : m_hash{k_dirty_bit}
   , m_enabled{false}
 {
   flush();
 }
 
-bool scissor_state::operator==(const scissor_state& _other) const {
+bool ScissorState::operator==(const ScissorState& _other) const {
   RX_ASSERT(!(m_hash & k_dirty_bit), "not flushed");
   RX_ASSERT(!(_other.m_hash & k_dirty_bit), "not flushed");
 
@@ -33,30 +33,30 @@ bool scissor_state::operator==(const scissor_state& _other) const {
   return true;
 }
 
-rx_size scissor_state::flush() {
+Size ScissorState::flush() {
   if (m_hash & k_dirty_bit) {
-    m_hash = hash<bool>{}(m_enabled);
-    m_hash = hash_combine(m_hash, hash<math::vec2i>{}(m_offset));
-    m_hash = hash_combine(m_hash, hash<math::vec2i>{}(m_size));
+    m_hash = Hash<bool>{}(m_enabled);
+    m_hash = hash_combine(m_hash, Hash<Math::Vec2i>{}(m_offset));
+    m_hash = hash_combine(m_hash, Hash<Math::Vec2i>{}(m_size));
     m_hash &= ~k_dirty_bit;
   }
   return m_hash;
 }
 
 // blend_state
-blend_state::blend_state()
+BlendState::BlendState()
   : m_hash{k_dirty_bit}
-  , m_color_src_factor{factor_type::k_one}
-  , m_color_dst_factor{factor_type::k_zero}
-  , m_alpha_src_factor{factor_type::k_one}
-  , m_alpha_dst_factor{factor_type::k_zero}
+  , m_color_src_factor{FactorType::k_one}
+  , m_color_dst_factor{FactorType::k_zero}
+  , m_alpha_src_factor{FactorType::k_one}
+  , m_alpha_dst_factor{FactorType::k_zero}
   , m_write_mask{k_mask_all}
   , m_enabled{false}
 {
   flush();
 }
 
-bool blend_state::operator==(const blend_state& _other) const {
+bool BlendState::operator==(const BlendState& _other) const {
   RX_ASSERT(!(m_hash & k_dirty_bit), "not flushed");
   RX_ASSERT(!(_other.m_hash & k_dirty_bit), "not flushed");
 
@@ -87,28 +87,28 @@ bool blend_state::operator==(const blend_state& _other) const {
   return true;
 }
 
-rx_size blend_state::flush() {
+Size BlendState::flush() {
   if (m_hash & k_dirty_bit) {
-    m_hash = hash<bool>{}(m_enabled);
-    m_hash = hash_combine(m_hash, hash<rx_s32>{}(static_cast<rx_s32>(m_color_src_factor)));
-    m_hash = hash_combine(m_hash, hash<rx_s32>{}(static_cast<rx_s32>(m_color_dst_factor)));
-    m_hash = hash_combine(m_hash, hash<rx_s32>{}(static_cast<rx_s32>(m_alpha_src_factor)));
-    m_hash = hash_combine(m_hash, hash<rx_s32>{}(static_cast<rx_s32>(m_alpha_dst_factor)));
-    m_hash = hash_combine(m_hash, hash<rx_s32>{}(static_cast<rx_s32>(m_write_mask)));
+    m_hash = Hash<bool>{}(m_enabled);
+    m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_color_src_factor)));
+    m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_color_dst_factor)));
+    m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_alpha_src_factor)));
+    m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_alpha_dst_factor)));
+    m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_write_mask)));
     m_hash &= ~k_dirty_bit;
   }
   return m_hash;
 }
 
 // depth_state
-depth_state::depth_state()
+DepthState::DepthState()
   : m_hash{k_dirty_bit}
   , m_flags{0}
 {
   flush();
 }
 
-bool depth_state::operator==(const depth_state& _other) const {
+bool DepthState::operator==(const DepthState& _other) const {
   RX_ASSERT(!(m_hash & k_dirty_bit), "not flushed");
   RX_ASSERT(!(_other.m_hash & k_dirty_bit), "not flushed");
 
@@ -123,26 +123,26 @@ bool depth_state::operator==(const depth_state& _other) const {
   return true;
 }
 
-rx_size depth_state::flush() {
+Size DepthState::flush() {
   if (m_hash & k_dirty_bit) {
-    m_hash = hash<bool>{}(m_flags & k_test);
-    m_hash = hash_combine(m_hash, hash<bool>{}(m_flags & k_write));
+    m_hash = Hash<bool>{}(m_flags & k_test);
+    m_hash = hash_combine(m_hash, Hash<bool>{}(m_flags & k_write));
     m_hash &= ~k_dirty_bit;
   }
   return m_hash;
 }
 
 // cull_state
-cull_state::cull_state()
+CullState::CullState()
   : m_hash{k_dirty_bit}
-  , m_front_face{front_face_type::k_clock_wise}
-  , m_cull_face{cull_face_type::k_back}
+  , m_front_face{FrontFaceType::k_clock_wise}
+  , m_cull_face{CullFaceType::k_back}
   , m_enabled{true}
 {
   flush();
 }
 
-bool cull_state::operator==(const cull_state& _other) const {
+bool CullState::operator==(const CullState& _other) const {
   RX_ASSERT(!(m_hash & k_dirty_bit), "not flushed");
   RX_ASSERT(!(_other.m_hash & k_dirty_bit), "not flushed");
 
@@ -165,35 +165,35 @@ bool cull_state::operator==(const cull_state& _other) const {
   return true;
 }
 
-rx_size cull_state::flush() {
+Size CullState::flush() {
   if (m_hash & k_dirty_bit) {
-    m_hash = hash<bool>{}(m_enabled);
-    m_hash = hash_combine(m_hash, hash<rx_u32>{}(static_cast<rx_u32>(m_front_face)));
-    m_hash = hash_combine(m_hash, hash<rx_u32>{}(static_cast<rx_u32>(m_cull_face)));
+    m_hash = Hash<bool>{}(m_enabled);
+    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_front_face)));
+    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_cull_face)));
     m_hash &= ~k_dirty_bit;
   }
   return m_hash;
 }
 
 // stencil_state
-stencil_state::stencil_state()
+StencilState::StencilState()
   : m_hash{k_dirty_bit}
   , m_write_mask{0xff}
-  , m_function{function_type::k_always}
+  , m_function{FunctionType::k_always}
   , m_reference{0x00}
   , m_mask{0xff}
-  , m_front_fail_action{operation_type::k_keep}
-  , m_front_depth_fail_action{operation_type::k_keep}
-  , m_front_depth_pass_action{operation_type::k_keep}
-  , m_back_fail_action{operation_type::k_keep}
-  , m_back_depth_fail_action{operation_type::k_keep}
-  , m_back_depth_pass_action{operation_type::k_keep}
+  , m_front_fail_action{OperationType::k_keep}
+  , m_front_depth_fail_action{OperationType::k_keep}
+  , m_front_depth_pass_action{OperationType::k_keep}
+  , m_back_fail_action{OperationType::k_keep}
+  , m_back_depth_fail_action{OperationType::k_keep}
+  , m_back_depth_pass_action{OperationType::k_keep}
   , m_enabled{false}
 {
   flush();
 }
 
-bool stencil_state::operator==(const stencil_state& _other) const {
+bool StencilState::operator==(const StencilState& _other) const {
   if (m_hash != _other.m_hash) {
     return false;
   }
@@ -241,33 +241,33 @@ bool stencil_state::operator==(const stencil_state& _other) const {
   return true;
 }
 
-rx_size stencil_state::flush() {
+Size StencilState::flush() {
   if (m_hash & k_dirty_bit) {
-    m_hash = hash<bool>{}(m_enabled);
-    m_hash = hash_combine(m_hash, hash<rx_u32>{}(static_cast<rx_u32>(m_write_mask)));
-    m_hash = hash_combine(m_hash, hash<rx_u32>{}(static_cast<rx_u32>(m_function)));
-    m_hash = hash_combine(m_hash, hash<rx_u32>{}(static_cast<rx_u32>(m_reference)));
-    m_hash = hash_combine(m_hash, hash<rx_u32>{}(static_cast<rx_u32>(m_mask)));
-    m_hash = hash_combine(m_hash, hash<rx_u32>{}(static_cast<rx_u32>(m_front_fail_action)));
-    m_hash = hash_combine(m_hash, hash<rx_u32>{}(static_cast<rx_u32>(m_front_depth_fail_action)));
-    m_hash = hash_combine(m_hash, hash<rx_u32>{}(static_cast<rx_u32>(m_front_depth_pass_action)));
-    m_hash = hash_combine(m_hash, hash<rx_u32>{}(static_cast<rx_u32>(m_back_fail_action)));
-    m_hash = hash_combine(m_hash, hash<rx_u32>{}(static_cast<rx_u32>(m_back_depth_fail_action)));
-    m_hash = hash_combine(m_hash, hash<rx_u32>{}(static_cast<rx_u32>(m_back_depth_pass_action)));
+    m_hash = Hash<bool>{}(m_enabled);
+    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_write_mask)));
+    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_function)));
+    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_reference)));
+    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_mask)));
+    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_front_fail_action)));
+    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_front_depth_fail_action)));
+    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_front_depth_pass_action)));
+    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_back_fail_action)));
+    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_back_depth_fail_action)));
+    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_back_depth_pass_action)));
     m_hash &= ~k_dirty_bit;
   }
   return m_hash;
 }
 
 // polygon_state
-polygon_state::polygon_state()
+PolygonState::PolygonState()
   : m_hash{k_dirty_bit}
-  , m_mode{mode_type::k_fill}
+  , m_mode{ModeType::k_fill}
 {
   flush();
 }
 
-bool polygon_state::operator==(const polygon_state& _other) const {
+bool PolygonState::operator==(const PolygonState& _other) const {
   if (m_hash != _other.m_hash) {
     return false;
   }
@@ -279,32 +279,32 @@ bool polygon_state::operator==(const polygon_state& _other) const {
   return true;
 }
 
-rx_size polygon_state::flush() {
+Size PolygonState::flush() {
   if (m_hash & k_dirty_bit) {
-    m_hash = hash<rx_u32>{}(static_cast<rx_u32>(m_mode));
+    m_hash = Hash<Uint32>{}(static_cast<Uint32>(m_mode));
     m_hash &= ~k_dirty_bit;
   }
   return m_hash;
 }
 
 // viewport_state
-viewport_state::viewport_state()
+ViewportState::ViewportState()
   : m_hash{k_dirty_bit}
 {
   flush();
 }
 
-rx_size viewport_state::flush() {
+Size ViewportState::flush() {
   if (m_hash & k_dirty_bit) {
-    m_hash = hash_combine(m_hash, hash<math::vec2i>{}(m_offset));
-    m_hash = hash_combine(m_hash, hash<math::vec2z>{}(m_dimensions));
+    m_hash = hash_combine(m_hash, Hash<Math::Vec2i>{}(m_offset));
+    m_hash = hash_combine(m_hash, Hash<Math::Vec2z>{}(m_dimensions));
     m_hash &= ~k_dirty_bit;
   }
   return m_hash;
 }
 
 // state
-void state::flush() {
+void State::flush() {
   m_hash = scissor.flush();
   m_hash = hash_combine(m_hash, blend.flush());
   m_hash = hash_combine(m_hash, depth.flush());
@@ -314,7 +314,7 @@ void state::flush() {
   m_hash = hash_combine(m_hash, viewport.flush());
 }
 
-bool state::operator==(const state& _state) const {
+bool State::operator==(const State& _state) const {
   if (_state.m_hash != m_hash) {
     return false;
   }

@@ -15,68 +15,75 @@
 
 #include "rx/render/backend/context.h"
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
-struct buffer;
-struct target;
-struct program;
-struct texture1D;
-struct texture2D;
-struct texture3D;
-struct textureCM;
-struct technique;
-struct module;
-struct material;
+struct Buffer;
+struct Target;
+struct Program;
+struct Texture1D;
+struct Texture2D;
+struct Texture3D;
+struct TextureCM;
+struct Technique;
+struct Module;
+struct Material;
 
-struct context {
-  context(memory::allocator& _allocator, backend::context* _backend);
-  ~context();
+struct Context {
+  Context(Memory::Allocator& _allocator, Backend::Context* _backend);
+  ~Context();
 
-  buffer* create_buffer(const command_header::info& _info);
-  target* create_target(const command_header::info& _info);
-  program* create_program(const command_header::info& _info);
+  // Create rendering resources.
+  Buffer* create_buffer(const CommandHeader::Info& _info);
+  Target* create_target(const CommandHeader::Info& _info);
+  Program* create_program(const CommandHeader::Info& _info);
+  Texture1D* create_texture1D(const CommandHeader::Info& _info);
+  Texture2D* create_texture2D(const CommandHeader::Info& _info);
+  Texture3D* create_texture3D(const CommandHeader::Info& _info);
+  TextureCM* create_textureCM(const CommandHeader::Info& _info);
 
-  texture1D* create_texture1D(const command_header::info& _info);
-  texture2D* create_texture2D(const command_header::info& _info);
-  texture3D* create_texture3D(const command_header::info& _info);
-  textureCM* create_textureCM(const command_header::info& _info);
+  // Initialize rendering resources.
+  void initialize_buffer(const CommandHeader::Info& _info, Buffer* _buffer);
+  void initialize_target(const CommandHeader::Info& _info, Target* _target);
+  void initialize_program(const CommandHeader::Info& _info, Program* _program);
+  void initialize_texture(const CommandHeader::Info& _info, Texture1D* _texture);
+  void initialize_texture(const CommandHeader::Info& _info, Texture2D* _texture);
+  void initialize_texture(const CommandHeader::Info& _info, Texture3D* _texture);
+  void initialize_texture(const CommandHeader::Info& _info, TextureCM* _texture);
 
-  void initialize_buffer(const command_header::info& _info, buffer* _buffer);
-  void initialize_target(const command_header::info& _info, target* _target);
-  void initialize_program(const command_header::info& _info, program* _program);
-  void initialize_texture(const command_header::info& _info, texture1D* _texture);
-  void initialize_texture(const command_header::info& _info, texture2D* _texture);
-  void initialize_texture(const command_header::info& _info, texture3D* _texture);
-  void initialize_texture(const command_header::info& _info, textureCM* _texture);
+  // Update rendering resources.
+  void update_buffer(const CommandHeader::Info& _info, Buffer* _buffer);
+  void update_texture(const CommandHeader::Info& _info, Texture1D* _texture);
+  void update_texture(const CommandHeader::Info& _info, Texture2D* _texture);
+  void update_texture(const CommandHeader::Info& _info, Texture3D* _texture);
 
-  void update_buffer(const command_header::info& _info, buffer* _buffer);
-  void update_texture(const command_header::info& _info, texture1D* _texture);
-  void update_texture(const command_header::info& _info, texture2D* _texture);
-  void update_texture(const command_header::info& _info, texture3D* _texture);
+  // Destroy rendering resources.
+  void destroy_buffer(const CommandHeader::Info& _info, Buffer* _buffer);
+  void destroy_target(const CommandHeader::Info& _info, Target* _target);
+  void destroy_program(const CommandHeader::Info& _info, Program* _program);
+  void destroy_texture(const CommandHeader::Info& _info, Texture1D* _texture);
+  void destroy_texture(const CommandHeader::Info& _info, Texture2D* _texture);
+  void destroy_texture(const CommandHeader::Info& _info, Texture3D* _texture);
+  void destroy_texture(const CommandHeader::Info& _info, TextureCM* _texture);
 
-  void destroy_buffer(const command_header::info& _info, buffer* _buffer);
-  void destroy_target(const command_header::info& _info, target* _target);
-  void destroy_program(const command_header::info& _info, program* _program);
-  void destroy_texture(const command_header::info& _info, texture1D* _texture);
-  void destroy_texture(const command_header::info& _info, texture2D* _texture);
-  void destroy_texture(const command_header::info& _info, texture3D* _texture);
-  void destroy_texture(const command_header::info& _info, textureCM* _texture);
-
+  // Renders |_count| geometric primitives on |_target| with specified draw
+  // buffer layout |_draw_buffers| and state |_state| from array data at
+  // |_offset| in |_buffer| of Type |_primitive_type| with textures described
+  // by |_draw_textures|.
   void draw(
-    const command_header::info& _info,
-    const state& _state,
-    target* _target,
-    const buffers& _draw_buffers,
-    buffer* _buffer,
-    program* _program,
-    rx_size _count,
-    rx_size _offset,
-    primitive_type _primitive_type,
-    const textures& _draw_textures);
+          const CommandHeader::Info& _info,
+          const State& _state,
+          Target* _target,
+          const Buffers& _draw_buffers,
+          Buffer* _buffer,
+          Program* _program,
+          Size _count,
+          Size _offset,
+          PrimitiveType _primitive_type,
+          const Textures& _draw_textures);
 
   // Performs a clear operation on |_target| with specified draw buffer layout
-  // |_draw_buffers| and state |_state|. The clear mask specified by |_clear_mask|
-  // describes the packet layout of |...|.
+  // |_draw_buffers| and state |_state|. The clear mask specified by
+  // |_clear_mask| describes the packet layout of |...|.
   //
   // The packet data described in |...| is passed, parsed and interpreted in
   // the following order.
@@ -103,11 +110,16 @@ struct context {
 
   //
   // Example:
+  //  buffers draw_buffers;
+  //  draw_buffers.add(3);
+  //  draw_buffers.add(1);
+  //  draw_buffers.add(0);
+  //
   //  clear(
   //    RX_RENDER_TAG("annotation"),
   //    {},
   //    target,
-  //    "310",
+  //    draw_buffers,
   //    RX_RENDER_CLEAR_DEPTH | RX_RENDER_CLEAR_STENCIL | RX_RENDER_CLEAR_COLOR(0) | RX_RENDER_CLEAR_COLOR(2),
   //    1.0f,
   //    0,
@@ -119,12 +131,12 @@ struct context {
   //  draw buffer 0 (attachment 3) to red, and draw buffer 2 (attachment 0)
   //  to green, leaving draw buffer 1 (attachment 1) untouched.
   void clear(
-    const command_header::info& _info,
-    const state& _state,
-    target* _target,
-    const buffers& _draw_buffers,
-    rx_u32 _clear_mask,
-    ...
+          const CommandHeader::Info& _info,
+          const State& _state,
+          Target* _target,
+          const Buffers& _draw_buffers,
+          Uint32 _clear_mask,
+          ...
   );
 
   // Performs a blit from |_src| attachment |_src_attachment| to |_dst| attachment
@@ -132,12 +144,12 @@ struct context {
   //
   // The blit considers depth, stencil and scissor state specified in |_state|.
   void blit(
-    const command_header::info& _info,
-    const state& _state,
-    target* _src,
-    rx_size _src_attachment,
-    target* _dst,
-    rx_size _dst_attachment
+          const CommandHeader::Info& _info,
+          const State& _state,
+          Target* _src,
+          Size _src_attachment,
+          Target* _dst,
+          Size _dst_attachment
   );
 
   // Used by profile::gpu_sample to insert profile markers. The backend is
@@ -149,129 +161,134 @@ struct context {
   // must exist for the lifetime of the whole program.
   void profile(const char* _tag);
 
-  void resize(const math::vec2z& _resolution);
+  void resize(const Math::Vec2z& _resolution);
 
   bool process();
   bool swap();
 
-  buffer* cached_buffer(const string& _key);
-  target* cached_target(const string& _key);
-  texture1D* cached_texture1D(const string& _key);
-  texture2D* cached_texture2D(const string& _key);
-  texture3D* cached_texture3D(const string& _key);
-  textureCM* cached_textureCM(const string& _key);
+  Buffer* cached_buffer(const String& _key);
+  Target* cached_target(const String& _key);
+  Texture1D* cached_texture1D(const String& _key);
+  Texture2D* cached_texture2D(const String& _key);
+  Texture3D* cached_texture3D(const String& _key);
+  TextureCM* cached_textureCM(const String& _key);
 
-  void cache_buffer(buffer* _buffer, const string& _key);
-  void cache_target(target* _target, const string& _key);
-  void cache_texture(texture1D* _texture, const string& _key);
-  void cache_texture(texture2D* _texture, const string& _key);
-  void cache_texture(texture3D* _texture, const string& _key);
-  void cache_texture(textureCM* _texture, const string& _key);
+  // Pin a given resource to the render cache with the given |_key| allowing
+  // it to be reused by checking the cache with the above functions.
+  void cache_buffer(Buffer* _buffer, const String& _key);
+  void cache_target(Target* _target, const String& _key);
+  void cache_texture(Texture1D* _texture, const String& _key);
+  void cache_texture(Texture2D* _texture, const String& _key);
+  void cache_texture(Texture3D* _texture, const String& _key);
+  void cache_texture(TextureCM* _texture, const String& _key);
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
-  struct statistics {
-    rx_size total;
-    rx_size used;
-    rx_size cached;
-    rx_size memory;
+  struct Statistics {
+    Size total;
+    Size used;
+    Size cached;
+    Size memory;
   };
 
-  struct device_info {
-    device_info(memory::allocator& _allocator);
-    string vendor;
-    string renderer;
-    string version;
+  struct DeviceInfo {
+    constexpr DeviceInfo(Memory::Allocator& _allocator);
+    String vendor;
+    String renderer;
+    String version;
   };
 
-  statistics stats(resource::type _type) const;
-  rx_size draw_calls() const;
-  rx_size clear_calls() const;
-  rx_size blit_calls() const;
-  rx_size vertices() const;
-  rx_size triangles() const;
-  rx_size lines() const;
-  rx_size points() const;
+  Statistics stats(Resource::Type _type) const;
 
-  target* swapchain() const;
+  Size draw_calls() const;
+  Size clear_calls() const;
+  Size blit_calls() const;
+  Size vertices() const;
+  Size triangles() const;
+  Size lines() const;
+  Size points() const;
 
-  technique* find_technique_by_name(const char* _name);
+  Target* swapchain() const;
 
-  const frame_timer& timer() const &;
-  const command_buffer& get_command_buffer() const &;
-  const device_info& get_device_info() const &;
+  Technique* find_technique_by_name(const char* _name);
+
+  const FrameTimer& timer() const &;
+  const CommandBuffer& get_command_buffer() const &;
+  const DeviceInfo& get_device_info() const &;
 
 private:
-  friend struct target;
-  friend struct resource;
+  friend struct Target;
+  friend struct Resource;
 
-  // needed by target to release depth/stencil textures without holding m_mutex
-  void destroy_texture_unlocked(const command_header::info& _info,
-    texture2D* _texture);
+  // Needed by target to release depth/stencil textures without holding
+  // the non-recursive mutex |m_mutex|.
+  void destroy_texture_unlocked(const CommandHeader::Info& _info,
+                                Texture2D* _texture);
 
+  // Remove a given object |_object| from the cache |_cache|.
   template<typename T>
-  void remove_from_cache(map<string, T*>& cache_, T* _object);
+  void remove_from_cache(Map<String, T*>& cache_, T* _object);
 
-  mutable concurrency::mutex m_mutex;
+  mutable Concurrency::Mutex m_mutex;
 
-  memory::allocator& m_allocator;              // protected by |m_mutex|
-  backend::context* m_backend;                 // protected by |m_mutex|
+  Memory::Allocator& m_allocator;              // protected by |m_mutex|
+  Backend::Context* m_backend;                 // protected by |m_mutex|
 
   // size of resources as reported by the backend
-  backend::allocation_info m_allocation_info;
+  Backend::AllocationInfo m_allocation_info;
 
-  static_pool m_buffer_pool;                   // protected by |m_mutex|
-  static_pool m_target_pool;                   // protected by |m_mutex|
-  static_pool m_program_pool;                  // protected by |m_mutex|
-  static_pool m_texture1D_pool;                // protected by |m_mutex|
-  static_pool m_texture2D_pool;                // protected by |m_mutex|
-  static_pool m_texture3D_pool;                // protected by |m_mutex|
-  static_pool m_textureCM_pool;                // protected by |m_mutex|
+  StaticPool m_buffer_pool;                   // protected by |m_mutex|
+  StaticPool m_target_pool;                   // protected by |m_mutex|
+  StaticPool m_program_pool;                  // protected by |m_mutex|
+  StaticPool m_texture1D_pool;                // protected by |m_mutex|
+  StaticPool m_texture2D_pool;                // protected by |m_mutex|
+  StaticPool m_texture3D_pool;                // protected by |m_mutex|
+  StaticPool m_textureCM_pool;                // protected by |m_mutex|
 
-  vector<buffer*> m_destroy_buffers;           // protected by |m_mutex|
-  vector<target*> m_destroy_targets;           // protected by |m_mutex|
-  vector<program*> m_destroy_programs;         // protected by |m_mutex|
-  vector<texture1D*> m_destroy_textures1D;     // protected by |m_mutex|
-  vector<texture2D*> m_destroy_textures2D;     // protected by |m_mutex|
-  vector<texture3D*> m_destroy_textures3D;     // protected by |m_mutex|
-  vector<textureCM*> m_destroy_texturesCM;     // protected by |m_mutex|
+  Vector<Buffer*> m_destroy_buffers;           // protected by |m_mutex|
+  Vector<Target*> m_destroy_targets;           // protected by |m_mutex|
+  Vector<Program*> m_destroy_programs;         // protected by |m_mutex|
+  Vector<Texture1D*> m_destroy_textures1D;     // protected by |m_mutex|
+  Vector<Texture2D*> m_destroy_textures2D;     // protected by |m_mutex|
+  Vector<Texture3D*> m_destroy_textures3D;     // protected by |m_mutex|
+  Vector<TextureCM*> m_destroy_texturesCM;     // protected by |m_mutex|
 
-  target* m_swapchain_target;                  // protected by |m_mutex|
-  texture2D* m_swapchain_texture;              // protected by |m_mutex|
+  Target* m_swapchain_target;                  // protected by |m_mutex|
+  Texture2D* m_swapchain_texture;              // protected by |m_mutex|
 
-  vector<rx_byte*> m_commands;                 // protected by |m_mutex|
-  command_buffer m_command_buffer;             // protected by |m_mutex|
+  Vector<Byte*> m_commands;                 // protected by |m_mutex|
+  CommandBuffer m_command_buffer;             // protected by |m_mutex|
 
-  map<string, buffer*> m_cached_buffers;       // protected by |m_mutex|
-  map<string, target*> m_cached_targets;       // protected by |m_mutex|
-  map<string, texture1D*> m_cached_textures1D; // protected by |m_mutex|
-  map<string, texture2D*> m_cached_textures2D; // protected by |m_mutex|
-  map<string, texture3D*> m_cached_textures3D; // protected by |m_mutex|
-  map<string, textureCM*> m_cached_texturesCM; // protected by |m_mutex|
+  Map<String, Buffer*> m_cached_buffers;       // protected by |m_mutex|
+  Map<String, Target*> m_cached_targets;       // protected by |m_mutex|
+  Map<String, Texture1D*> m_cached_textures1D; // protected by |m_mutex|
+  Map<String, Texture2D*> m_cached_textures2D; // protected by |m_mutex|
+  Map<String, Texture3D*> m_cached_textures3D; // protected by |m_mutex|
+  Map<String, TextureCM*> m_cached_texturesCM; // protected by |m_mutex|
 
   // NOTE(dweiler): This has to come before techniques and modules. Everything
   // above must stay alive for the destruction of m_techniques and m_modules
   // to work.
-  deferred_function<void()> m_deferred_process;
+  DeferredFunction<void()> m_deferred_process;
 
-  map<string, technique> m_techniques;         // protected by |m_mutex|
-  map<string, module> m_modules;               // protected by |m_mutex|
+  Map<String, Technique> m_techniques;         // protected by |m_mutex|
+  Map<String, Module> m_modules;               // protected by |m_mutex|
 
-  concurrency::atomic<rx_size> m_draw_calls[2];
-  concurrency::atomic<rx_size> m_clear_calls[2];
-  concurrency::atomic<rx_size> m_blit_calls[2];
-  concurrency::atomic<rx_size> m_vertices[2];
-  concurrency::atomic<rx_size> m_triangles[2];
-  concurrency::atomic<rx_size> m_lines[2];
-  concurrency::atomic<rx_size> m_points[2];
+  Concurrency::Atomic<Size> m_draw_calls[2];
+  Concurrency::Atomic<Size> m_clear_calls[2];
+  Concurrency::Atomic<Size> m_blit_calls[2];
+  Concurrency::Atomic<Size> m_vertices[2];
+  Concurrency::Atomic<Size> m_triangles[2];
+  Concurrency::Atomic<Size> m_lines[2];
+  Concurrency::Atomic<Size> m_points[2];
 
-  rx_size m_resource_usage[resource::count()];
+  Size m_resource_usage[Resource::count()];
 
-  device_info m_device_info;
-  frame_timer m_timer;
+  DeviceInfo m_device_info;
+  FrameTimer m_timer;
 };
 
-inline context::device_info::device_info(memory::allocator& _allocator)
+inline constexpr Context::DeviceInfo::DeviceInfo(Memory::Allocator& _allocator)
   : vendor{_allocator}
   , renderer{_allocator}
   , version{_allocator}
@@ -279,8 +296,8 @@ inline context::device_info::device_info(memory::allocator& _allocator)
 }
 
 template<typename T>
-inline void context::remove_from_cache(map<string, T*>& cache_, T* _object) {
-  cache_.each_pair([&](const string& _key, T* _value) {
+inline void Context::remove_from_cache(Map<String, T*>& cache_, T* _object) {
+  cache_.each_pair([&](const String& _key, T* _value) {
     if (_value != _object) {
       return true;
     }
@@ -289,51 +306,51 @@ inline void context::remove_from_cache(map<string, T*>& cache_, T* _object) {
   });
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& context::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Context::allocator() const {
   return m_allocator;
 }
 
-inline rx_size context::draw_calls() const {
+inline Size Context::draw_calls() const {
   return m_draw_calls[1].load();
 }
 
-inline rx_size context::clear_calls() const {
+inline Size Context::clear_calls() const {
   return m_clear_calls[1].load();
 }
 
-inline rx_size context::blit_calls() const {
+inline Size Context::blit_calls() const {
   return m_blit_calls[1].load();
 }
 
-inline rx_size context::vertices() const {
+inline Size Context::vertices() const {
   return m_vertices[1].load();
 }
 
-inline rx_size context::triangles() const {
+inline Size Context::triangles() const {
   return m_triangles[1].load();
 }
 
-inline rx_size context::lines() const {
+inline Size Context::lines() const {
   return m_lines[1].load();
 }
 
-inline rx_size context::points() const {
+inline Size Context::points() const {
   return m_points[1].load();
 }
 
-inline target* context::swapchain() const {
+inline Target* Context::swapchain() const {
   return m_swapchain_target;
 }
 
-inline const frame_timer& context::timer() const & {
+inline const FrameTimer& Context::timer() const & {
   return m_timer;
 }
 
-inline const command_buffer& context::get_command_buffer() const & {
+inline const CommandBuffer& Context::get_command_buffer() const & {
   return m_command_buffer;
 }
 
-inline const context::device_info& context::get_device_info() const & {
+inline const Context::DeviceInfo& Context::get_device_info() const & {
   return m_device_info;
 }
 

@@ -14,26 +14,26 @@
 
 #include "lib/json.h"
 
-namespace rx {
+namespace Rx {
 
 // 32-bit: 8 bytes
 // 64-bit: 16 bytes
-struct json {
-  constexpr json();
-  json(memory::allocator& _allocator, const char* _contents, rx_size _length);
-  json(memory::allocator& _allocator, const char* _contents);
-  json(memory::allocator& _allocator, const string& _contents);
-  json(const char* _contents, rx_size _length);
-  json(const char* _contents);
-  json(const string& _contents);
-  json(const json& _json);
-  json(json&& json_);
-  ~json();
+struct JSON {
+  constexpr JSON();
+  JSON(Memory::Allocator& _allocator, const char* _contents, Size _length);
+  JSON(Memory::Allocator& _allocator, const char* _contents);
+  JSON(Memory::Allocator& _allocator, const String& _contents);
+  JSON(const char* _contents, Size _length);
+  JSON(const char* _contents);
+  JSON(const String& _contents);
+  JSON(const JSON& _json);
+  JSON(JSON&& json_);
+  ~JSON();
 
-  json& operator=(const json& _json);
-  json& operator=(json&& json_);
+  JSON& operator=(const JSON& _json);
+  JSON& operator=(JSON&& json_);
 
-  enum class type {
+  enum class Type {
     k_array,
     k_boolean,
     k_null,
@@ -44,13 +44,13 @@ struct json {
   };
 
   operator bool() const;
-  optional<string> error() const;
+  Optional<String> error() const;
 
-  bool is_type(type _type) const;
+  bool is_type(Type _type) const;
 
   bool is_array() const;
-  bool is_array_of(type _type) const;
-  bool is_array_of(type _type, rx_size _size) const;
+  bool is_array_of(Type _type) const;
+  bool is_array_of(Type _type, Size _size) const;
   bool is_boolean() const;
   bool is_null() const;
   bool is_number() const;
@@ -58,91 +58,91 @@ struct json {
   bool is_string() const;
   bool is_integer() const;
 
-  json operator[](rx_size _index) const;
+  JSON operator[](Size _index) const;
   bool as_boolean() const;
-  rx_f64 as_number() const;
-  rx_f32 as_float() const;
-  rx_s32 as_integer() const;
-  json operator[](const char* _name) const;
-  string as_string() const;
-  string as_string_with_allocator(memory::allocator& _allocator) const;
+  Float64 as_number() const;
+  Float32 as_float() const;
+  Sint32 as_integer() const;
+  JSON operator[](const char* _name) const;
+  String as_string() const;
+  String as_string_with_allocator(Memory::Allocator& _allocator) const;
 
   template<typename T>
   T decode(const T& _default) const;
 
   // # of elements for objects and arrays only
-  rx_size size() const;
+  Size size() const;
   bool is_empty() const;
 
   template<typename F>
   bool each(F&& _function) const;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
   template<typename T>
-  using has_from_json =
-    decltype(utility::declval<T>().from_json(utility::declval<json>()));
+  using HasFromJSON =
+    decltype(Utility::declval<T>().from_json(Utility::declval<JSON>()));
 
-  struct shared {
-    shared(memory::allocator& _allocator, const char* _contents, rx_size _length);
-    ~shared();
+  struct Shared {
+    Shared(Memory::Allocator& _allocator, const char* _contents, Size _length);
+    ~Shared();
 
-    shared* acquire();
+    Shared* acquire();
     void release();
 
-    memory::allocator& m_allocator;
+    Memory::Allocator& m_allocator;
     struct json_parse_result_s m_error;
     struct json_value_s* m_root;
-    concurrency::atomic<rx_size> m_count;
+    Concurrency::Atomic<Size> m_count;
   };
 
-  json(shared* _shared, struct json_value_s* _head);
+  JSON(Shared* _shared, struct json_value_s* _head);
 
-  shared* m_shared;
+  Shared* m_shared;
   struct json_value_s* m_value;
 };
 
-inline constexpr json::json()
+inline constexpr JSON::JSON()
   : m_shared{nullptr}
   , m_value{nullptr}
 {
 }
 
-inline json::json(memory::allocator& _allocator, const string& _contents)
-  : json{_allocator, _contents.data(), _contents.size()}
+inline JSON::JSON(Memory::Allocator& _allocator, const String& _contents)
+  : JSON{_allocator, _contents.data(), _contents.size()}
 {
 }
 
-inline json::json(const char* _contents, rx_size _length)
-  : json{memory::system_allocator::instance(), _contents, _length}
+inline JSON::JSON(const char* _contents, Size _length)
+  : JSON{Memory::SystemAllocator::instance(), _contents, _length}
 {
 }
 
-inline json::json(const string& _contents)
-  : json{memory::system_allocator::instance(), _contents.data(), _contents.size()}
+inline JSON::JSON(const String& _contents)
+  : JSON{Memory::SystemAllocator::instance(), _contents.data(), _contents.size()}
 {
 }
 
-inline json::json(const json& _json)
+inline JSON::JSON(const JSON& _json)
   : m_shared{_json.m_shared->acquire()}
   , m_value{_json.m_value}
 {
 }
 
-inline json::json(json&& json_)
-  : m_shared{utility::exchange(json_.m_shared, nullptr)}
-  , m_value{utility::exchange(json_.m_value, nullptr)}
+inline JSON::JSON(JSON&& json_)
+  : m_shared{Utility::exchange(json_.m_shared, nullptr)}
+  , m_value{Utility::exchange(json_.m_value, nullptr)}
 {
 }
 
-inline json::~json() {
+inline JSON::~JSON() {
   if (m_shared) {
     m_shared->release();
   }
 }
 
-inline json& json::operator=(const json& _json) {
+inline JSON& JSON::operator=(const JSON& _json) {
   RX_ASSERT(&_json != this, "self assignment");
 
   if (m_shared) {
@@ -155,34 +155,34 @@ inline json& json::operator=(const json& _json) {
   return *this;
 }
 
-inline json& json::operator=(json&& json_) {
+inline JSON& JSON::operator=(JSON&& json_) {
   RX_ASSERT(&json_ != this, "self assignment");
 
-  m_shared = utility::exchange(json_.m_shared, nullptr);
-  m_value = utility::exchange(json_.m_value, nullptr);
+  m_shared = Utility::exchange(json_.m_shared, nullptr);
+  m_value = Utility::exchange(json_.m_value, nullptr);
 
   return *this;
 }
 
-inline json::operator bool() const {
+inline JSON::operator bool() const {
   return m_shared && m_shared->m_root;
 }
 
-inline bool json::is_array() const {
-  return is_type(type::k_array);
+inline bool JSON::is_array() const {
+  return is_type(Type::k_array);
 }
 
-inline bool json::is_array_of(type _type) const {
+inline bool JSON::is_array_of(Type _type) const {
   if (!is_array()) {
     return false;
   }
 
-  return each([_type](const json& _value) {
+  return each([_type](const JSON& _value) {
     return _value.is_type(_type);
   });
 }
 
-inline bool json::is_array_of(type _type, rx_size _size) const {
+inline bool JSON::is_array_of(Type _type, Size _size) const {
   if (!is_array()) {
     return false;
   }
@@ -191,58 +191,58 @@ inline bool json::is_array_of(type _type, rx_size _size) const {
     return false;
   }
 
-  return each([_type](const json& _value) {
+  return each([_type](const JSON& _value) {
     return _value.is_type(_type);
   });
 }
 
-inline bool json::is_boolean() const {
-  return is_type(type::k_boolean);
+inline bool JSON::is_boolean() const {
+  return is_type(Type::k_boolean);
 }
 
-inline bool json::is_null() const {
-  return is_type(type::k_null);
+inline bool JSON::is_null() const {
+  return is_type(Type::k_null);
 }
 
-inline bool json::is_number() const {
-  return is_type(type::k_number);
+inline bool JSON::is_number() const {
+  return is_type(Type::k_number);
 }
 
-inline bool json::is_object() const {
-  return is_type(type::k_object);
+inline bool JSON::is_object() const {
+  return is_type(Type::k_object);
 }
 
-inline bool json::is_string() const {
-  return is_type(type::k_string);
+inline bool JSON::is_string() const {
+  return is_type(Type::k_string);
 }
 
-inline bool json::is_integer() const {
-  return is_type(type::k_integer);
+inline bool JSON::is_integer() const {
+  return is_type(Type::k_integer);
 }
 
-inline bool json::is_empty() const {
+inline bool JSON::is_empty() const {
   return size() == 0;
 }
 
-inline string json::as_string() const {
-  return as_string_with_allocator(memory::system_allocator::instance());
+inline String JSON::as_string() const {
+  return as_string_with_allocator(Memory::SystemAllocator::instance());
 }
 
 template<typename T>
-inline T json::decode(const T& _default) const {
-  if constexpr(traits::is_same<T, rx_f32> || traits::is_same<T, rx_f64>) {
+inline T JSON::decode(const T& _default) const {
+  if constexpr(traits::is_same<T, Float32> || traits::is_same<T, Float64>) {
     if (is_number()) {
       return as_number();
     }
-  } else if constexpr(traits::is_same<T, rx_s32>) {
+  } else if constexpr(traits::is_same<T, Sint32>) {
     if (is_integer()) {
       return as_integer();
     }
-  } else if constexpr(traits::is_same<T, string>) {
+  } else if constexpr(traits::is_same<T, String>) {
     if (is_string()) {
       return as_string();
     }
-  } else if constexpr(traits::detect<T, has_from_json>) {
+  } else if constexpr(traits::detect<T, HasFromJSON>) {
     return T::from_json(*this);
   }
 
@@ -250,7 +250,7 @@ inline T json::decode(const T& _default) const {
 }
 
 template<typename F>
-inline bool json::each(F&& _function) const {
+inline bool JSON::each(F&& _function) const {
   const bool array = is_array();
   const bool object = is_object();
 
@@ -283,7 +283,7 @@ inline bool json::each(F&& _function) const {
   return true;
 }
 
-inline constexpr memory::allocator& json::allocator() const {
+inline constexpr Memory::Allocator& JSON::allocator() const {
   RX_ASSERT(m_shared, "reference count reached zero");
   return m_shared->m_allocator;
 }

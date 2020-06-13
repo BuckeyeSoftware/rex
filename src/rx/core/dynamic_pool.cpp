@@ -1,41 +1,41 @@
 #include "rx/core/dynamic_pool.h"
 
-namespace rx {
+namespace Rx {
 
-dynamic_pool::dynamic_pool(dynamic_pool&& pool_)
+DynamicPool::DynamicPool(DynamicPool&& pool_)
   : m_allocator{pool_.m_allocator}
-  , m_pools{utility::move(pool_.m_pools)}
+  , m_pools{Utility::move(pool_.m_pools)}
 {
 }
 
-dynamic_pool& dynamic_pool::operator=(dynamic_pool&& pool_) {
+DynamicPool& DynamicPool::operator=(DynamicPool&& pool_) {
   m_allocator = pool_.m_allocator;
-  m_pools = utility::move(pool_.m_pools);
+  m_pools = Utility::move(pool_.m_pools);
   return *this;
 }
 
-rx_size dynamic_pool::pool_index_of(const rx_byte* _data) const {
-  return m_pools.find_if([_data](const ptr<static_pool>& _pool) {
+Size DynamicPool::pool_index_of(const Byte* _data) const {
+  return m_pools.find_if([_data](const Ptr<StaticPool>& _pool) {
     return _pool->owns(_data);
   });
 }
 
-rx_byte* dynamic_pool::data_of(rx_size _index) const {
-  const rx_size pool_index = _index / m_pools.size();
-  const rx_size object_index = _index % m_pools.size();
+Byte* DynamicPool::data_of(Size _index) const {
+  const Size pool_index = _index / m_pools.size();
+  const Size object_index = _index % m_pools.size();
   return m_pools[pool_index]->data_of(object_index);
 }
 
-rx_size dynamic_pool::index_of(const rx_byte* _data) const {
-  if (const rx_size index = pool_index_of(_data); index != -1_z) {
+Size DynamicPool::index_of(const Byte* _data) const {
+  if (const Size index = pool_index_of(_data); index != -1_z) {
     return index * m_pools.size();
   }
   return -1_z;
 }
 
-bool dynamic_pool::add_pool() {
-  auto pool = make_ptr<static_pool>(allocator(), allocator(), m_object_size, m_objects_per_pool);
-  return pool ? m_pools.push_back(utility::move(pool)) : false;
+bool DynamicPool::add_pool() {
+  auto pool = make_ptr<StaticPool>(allocator(), allocator(), m_object_size, m_objects_per_pool);
+  return pool ? m_pools.push_back(Utility::move(pool)) : false;
 }
 
 } // namespace rx

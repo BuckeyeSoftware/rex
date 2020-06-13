@@ -7,9 +7,9 @@
 
 #include "rx/core/hints/may_alias.h"
 
-namespace rx {
+namespace Rx {
 
-static vector<rx_byte> convert_text_encoding(vector<rx_byte>&& data_) {
+static Vector<Byte> convert_text_encoding(Vector<Byte>&& data_) {
   // Ensure the data contains a null-terminator.
   if (data_.last() != 0) {
     data_.push_back(0);
@@ -23,20 +23,20 @@ static vector<rx_byte> convert_text_encoding(vector<rx_byte>&& data_) {
     // Remove the BOM.
     data_.erase(0, 2);
 
-    auto contents = reinterpret_cast<rx_u16*>(data_.data());
-    const rx_size chars = data_.size() / 2;
+    auto contents = reinterpret_cast<Uint16*>(data_.data());
+    const Size chars = data_.size() / 2;
     if (utf16_be) {
       // Swap the bytes around in the contents to convert BE to LE.
-      for (rx_size i = 0; i < chars; i++) {
+      for (Size i = 0; i < chars; i++) {
         contents[i] = (contents[i] >> 8) | (contents[i] << 8);
       }
     }
 
     // Determine how many bytes are needed to convert the encoding.
-    const rx_size length = utf16_to_utf8(contents, chars, nullptr);
+    const Size length = utf16_to_utf8(contents, chars, nullptr);
 
     // Convert UTF-16 to UTF-8.
-    vector<rx_byte> result{data_.allocator(), length, utility::uninitialized{}};
+    Vector<Byte> result{data_.allocator(), length, Utility::UninitializedTag{}};
     utf16_to_utf8(contents, chars, reinterpret_cast<char*>(result.data()));
     return result;
   } else if (data_.size() >= 3 && data_[0] == 0xEF && data_[1] == 0xBB && data_[2] == 0xBF) {
@@ -44,73 +44,73 @@ static vector<rx_byte> convert_text_encoding(vector<rx_byte>&& data_) {
     data_.erase(0, 3);
   }
 
-  return utility::move(data_);
+  return Utility::move(data_);
 }
 
-rx_u64 stream::on_read(rx_byte*, rx_u64) {
+Uint64 Stream::on_read(Byte*, Uint64) {
   abort("stream does not implement on_read");
 }
 
-rx_u64 stream::on_write(const rx_byte*, rx_u64) {
+Uint64 Stream::on_write(const Byte*, Uint64) {
   abort("stream does not implement on_write");
 }
 
-bool stream::on_seek(rx_s64, whence) {
+bool Stream::on_seek(Sint64, Whence) {
   abort("stream does not implement on_seek");
 }
 
-bool stream::on_flush() {
+bool Stream::on_flush() {
   abort("stream does not implement on_flush");
 }
 
-rx_u64 stream::on_tell() {
+Uint64 Stream::on_tell() {
   abort("stream does not implement on_tell");
 }
 
-rx_u64 stream::read(rx_byte* _data, rx_u64 _size) {
+Uint64 Stream::read(Byte* _data, Uint64 _size) {
   RX_ASSERT(can_read(), "cannot read");
   return on_read(_data, _size);
 }
 
-rx_u64 stream::write(const rx_byte* _data, rx_u64 _size) {
+Uint64 Stream::write(const Byte* _data, Uint64 _size) {
   RX_ASSERT(can_write(), "cannot write");
   return on_write(_data, _size);
 }
 
-bool stream::seek(rx_s64 _where, whence _whence) {
+bool Stream::seek(Sint64 _where, Whence _whence) {
   RX_ASSERT(can_seek(), "cannot seek");
   return on_seek(_where, _whence);
 }
 
-bool stream::flush() {
+bool Stream::flush() {
   RX_ASSERT(can_flush(), "cannot flush");
   return on_flush();
 }
 
-rx_u64 stream::tell() {
+Uint64 Stream::tell() {
   RX_ASSERT(can_tell(), "cannot tell");
   return on_tell();
 }
 
-rx_u64 stream::size() {
+Uint64 Stream::size() {
   const auto cursor = tell();
 
-  if (!seek(0, whence::k_end)) {
+  if (!seek(0, Whence::k_end)) {
     return 0;
   }
 
   const auto result = tell();
-  if (!seek(cursor, whence::k_set)) {
+  if (!seek(cursor, Whence::k_set)) {
     return 0;
   }
 
   return result;
 }
 
-optional<vector<rx_byte>> read_binary_stream(memory::allocator& _allocator, stream* _stream) {
+Optional<Vector<Byte>> read_binary_stream(Memory::Allocator& _allocator, Stream* _stream) {
   if (_stream->can_seek() && _stream->can_tell()) {
     const auto size = _stream->size();
-    vector<rx_byte> result = {_allocator, static_cast<rx_size>(size), utility::uninitialized{}};
+    Vector<Byte> result = {_allocator, static_cast<Size>(size), Utility::UninitializedTag{}};
     if (_stream->read(result.data(), size) == size) {
       return result;
     }
@@ -118,12 +118,12 @@ optional<vector<rx_byte>> read_binary_stream(memory::allocator& _allocator, stre
   return nullopt;
 }
 
-optional<vector<rx_byte>> read_text_stream(memory::allocator& _allocator, stream* _stream) {
+Optional<Vector<Byte>> read_text_stream(Memory::Allocator& _allocator, Stream* _stream) {
   if (auto result = read_binary_stream(_allocator, _stream)) {
     // Convert the given byte stream into a compatible UTF-8 encoding. This will
     // introduce a null-terminator, strip Unicode BOMs and convert UTF-16
     // encodings to UTF-8.
-    auto data = convert_text_encoding(utility::move(*result));
+    auto data = convert_text_encoding(Utility::move(*result));
 
 #if defined(RX_PLATFORM_WINDOWS)
     // Quickly scan through word at a time |_src| for CR.
@@ -146,7 +146,7 @@ optional<vector<rx_byte>> read_text_stream(memory::allocator& _allocator, stream
 
       // Do checks for CR word at a time, stopping at word containing CR.
       if (n && *s != k_c) {
-        // Need to typedef with an alias type since we're breaking strict
+        // Need to typedef with an alias Type since we're breaking strict
         // aliasing, let the compiler know.
         typedef rx_size RX_HINT_MAY_ALIAS word_type;
 

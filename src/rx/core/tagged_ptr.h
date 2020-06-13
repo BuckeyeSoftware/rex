@@ -3,7 +3,7 @@
 #include "rx/core/memory/allocator.h" // alignment
 #include "rx/core/assert.h"
 
-namespace rx {
+namespace Rx {
 
 // # Tagged pointer
 //
@@ -14,27 +14,27 @@ namespace rx {
 // This class enables such constructions and provides helper functions to
 // decode the pointer and tag.
 template<typename T>
-struct tagged_ptr {
-  tagged_ptr(T* _ptr = nullptr, rx_byte _tag = 0);
+struct TaggedPtr {
+  TaggedPtr(T* _ptr = nullptr, Byte _tag = 0);
 
-  void retag(rx_byte _tag);
+  void retag(Byte _tag);
 
   T* as_ptr() const;
-  rx_byte as_tag() const;
+  Byte as_tag() const;
 
 private:
-  static inline constexpr auto k_tag_mask = memory::allocator::k_alignment - 1;
+  static inline constexpr auto k_tag_mask = Memory::Allocator::k_alignment - 1;
   static inline constexpr auto k_ptr_mask = ~k_tag_mask;
 
   union {
     T* m_as_ptr;
-    rx_uintptr m_as_bits;
+    UintPtr m_as_bits;
   };
 };
 
 template<typename T>
-inline tagged_ptr<T>::tagged_ptr(T* _ptr, rx_byte _tag) {
-  RX_ASSERT((reinterpret_cast<rx_uintptr>(_ptr) & k_tag_mask) == 0,
+inline TaggedPtr<T>::TaggedPtr(T* _ptr, Byte _tag) {
+  RX_ASSERT((reinterpret_cast<UintPtr>(_ptr) & k_tag_mask) == 0,
     "pointer not aligned");
   RX_ASSERT((_tag & k_ptr_mask) == 0, "tag value too large");
   m_as_ptr = _ptr;
@@ -42,19 +42,19 @@ inline tagged_ptr<T>::tagged_ptr(T* _ptr, rx_byte _tag) {
 }
 
 template<typename T>
-inline void tagged_ptr<T>::retag(rx_byte _tag) {
+inline void TaggedPtr<T>::retag(Byte _tag) {
   RX_ASSERT((_tag & k_ptr_mask) == 0, "tag value too large");
   m_as_ptr = as_ptr();
   m_as_bits |= _tag;
 }
 
 template<typename T>
-inline T* tagged_ptr<T>::as_ptr() const {
+inline T* TaggedPtr<T>::as_ptr() const {
   return reinterpret_cast<T*>(m_as_bits & k_ptr_mask);
 }
 
 template<typename T>
-inline rx_byte tagged_ptr<T>::as_tag() const {
+inline Byte TaggedPtr<T>::as_tag() const {
   return m_as_bits & k_tag_mask;
 }
 

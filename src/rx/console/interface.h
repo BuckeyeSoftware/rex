@@ -3,52 +3,52 @@
 #include "rx/console/variable.h"
 #include "rx/console/command.h"
 
-namespace rx::console {
+namespace Rx::Console {
 
-struct token;
+struct Token;
 
-struct interface {
+struct Interface {
   static bool load(const char* _file_name);
   static bool save(const char* _file_name);
 
-  static variable_reference* add_variable(variable_reference* _reference);
-  static void add_command(const string& _name, const char* _signature,
-    function<bool(const vector<command::argument>&)>&& _function);
+  static VariableReference* add_variable(VariableReference* _reference);
+  static void add_command(const String& _name, const char* _signature,
+    Function<bool(const Vector<Command::Argument>&)>&& _function);
 
-  static variable_reference* find_variable_by_name(const string& _name);
-  static variable_reference* find_variable_by_name(const char* _name);
+  static VariableReference* find_variable_by_name(const String& _name);
+  static VariableReference* find_variable_by_name(const char* _name);
 
-  static bool execute(const string& _contents);
+  static bool execute(const String& _contents);
 
   template<typename... Ts>
   static void print(const char* _format, Ts&&... _arguments);
-  static void write(const string& _message);
+  static void write(const String& _message);
   static void clear();
-  static const vector<string>& lines();
+  static const Vector<String>& lines();
 
-  static vector<string> auto_complete_variables(const string& _prefix);
-  static vector<string> auto_complete_commands(const string& _prefix);
+  static Vector<String> auto_complete_variables(const String& _prefix);
+  static Vector<String> auto_complete_commands(const String& _prefix);
 
 private:
   // set variable |_reference| with token |_token|
-  static variable_status set_from_reference_and_token(variable_reference* _reference, const token& _token);
+  static VariableStatus set_from_reference_and_token(VariableReference* _reference, const Token& _token);
 
   // set variable |_reference| with value |_value|
   template<typename T>
-  static variable_status set_from_reference_and_value(variable_reference* _reference, const T& _value);
+  static VariableStatus set_from_reference_and_value(VariableReference* _reference, const T& _value);
 
   // merge-sort variable references in alphabetical order
-  static variable_reference* split(variable_reference* _reference);
-  static variable_reference* merge(variable_reference* _lhs, variable_reference* _rhs);
-  static variable_reference* sort(variable_reference* _reference);
+  static VariableReference* split(VariableReference* _reference);
+  static VariableReference* merge(VariableReference* _lhs, VariableReference* _rhs);
+  static VariableReference* sort(VariableReference* _reference);
 };
 
 template<typename... Ts>
-inline void interface::print(const char* _format, Ts&&... _arguments) {
-  write(string::format(_format, utility::forward<Ts>(_arguments)...));
+inline void Interface::print(const char* _format, Ts&&... _arguments) {
+  write(String::format(_format, Utility::forward<Ts>(_arguments)...));
 }
 
-inline variable_reference* interface::find_variable_by_name(const string& _name) {
+inline VariableReference* Interface::find_variable_by_name(const String& _name) {
   return find_variable_by_name(_name.data());
 }
 

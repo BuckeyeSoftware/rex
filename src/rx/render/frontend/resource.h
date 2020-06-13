@@ -6,14 +6,14 @@
 
 #include "rx/core/concurrency/atomic.h"
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
-struct context;
+struct Context;
 
-struct RX_HINT_EMPTY_BASES resource
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES Resource
+  : Concepts::NoCopy
 {
-  enum class type {
+  enum class Type {
     k_buffer,
     k_target,
     k_program,
@@ -23,40 +23,40 @@ struct RX_HINT_EMPTY_BASES resource
     k_textureCM
   };
 
-  static constexpr rx_size count();
+  static constexpr Size count();
 
-  resource(context* _frontend, type _type);
-  ~resource();
+  Resource(Context* _frontend, Type _type);
+  ~Resource();
 
-  void update_resource_usage(rx_size _bytes);
+  void update_resource_usage(Size _bytes);
 
   bool release_reference();
   void acquire_reference();
 
-  type resource_type() const;
+  Type resource_type() const;
 
 protected:
-  context* m_frontend;
+  Context* m_frontend;
 
 private:
-  type m_resource_type;
-  rx_size m_resource_usage;
-  concurrency::atomic<rx_size> m_reference_count;
+  Type m_resource_type;
+  Size m_resource_usage;
+  Concurrency::Atomic<Size> m_reference_count;
 };
 
-inline constexpr rx_size resource::count() {
-  return static_cast<rx_size>(type::k_textureCM) + 1;
+inline constexpr Size Resource::count() {
+  return static_cast<Size>(Type::k_textureCM) + 1;
 }
 
-inline bool resource::release_reference() {
+inline bool Resource::release_reference() {
   return --m_reference_count == 0;
 }
 
-inline void resource::acquire_reference() {
+inline void Resource::acquire_reference() {
   m_reference_count++;
 }
 
-inline resource::type resource::resource_type() const {
+inline Resource::Type Resource::resource_type() const {
   return m_resource_type;
 }
 

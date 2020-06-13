@@ -8,36 +8,36 @@
 #include "rx/core/map.h"
 #include "rx/core/global.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
 // # Electric Fence
 //
-// Special type of allocator which uses VMAs to construct allocations that are
+// Special Type of allocator which uses VMAs to construct allocations that are
 // surrounded by inacessible pages to help detect buffer under- and over- flows.
 //
 // This uses significant amounts of memory and should only be used for debugging
 // memory corruption issues.
-struct electric_fence_allocator
-  final : allocator
+struct ElectricFenceAllocator
+  final : Allocator
 {
-  electric_fence_allocator();
+  ElectricFenceAllocator();
 
-  virtual rx_byte* allocate(rx_size _size);
-  virtual rx_byte* reallocate(void* _data, rx_size _size);
+  virtual Byte* allocate(Size _size);
+  virtual Byte* reallocate(void* _data, Size _size);
   virtual void deallocate(void* data);
 
-  static constexpr allocator& instance();
+  static constexpr Allocator& instance();
 
 private:
-  vma* allocate_vma(rx_size _size);
+  VMA* allocate_vma(Size _size);
 
-  concurrency::spin_lock m_lock;
-  map<rx_byte*, vma> m_mappings; // protected by |m_lock|.
+  Concurrency::SpinLock m_lock;
+  Map<Byte*, VMA> m_mappings; // protected by |m_lock|.
 
-  static global<electric_fence_allocator> s_instance;
+  static Global<ElectricFenceAllocator> s_instance;
 };
 
-inline constexpr allocator& electric_fence_allocator::instance() {
+inline constexpr Allocator& ElectricFenceAllocator::instance() {
   return *s_instance;
 }
 

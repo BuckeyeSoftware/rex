@@ -1,8 +1,8 @@
 #include "rx/core/intrusive_list.h"
 
-namespace rx {
+namespace Rx {
 
-void intrusive_list::push_front(node* node_) {
+void IntrusiveList::push_front(Node* node_) {
   if (m_head) {
     m_head->m_prev = node_;
     node_->m_prev = nullptr;
@@ -16,7 +16,7 @@ void intrusive_list::push_front(node* node_) {
   }
 }
 
-void intrusive_list::push_back(node* node_) {
+void IntrusiveList::push_back(Node* node_) {
   if (m_tail) {
     m_tail->m_next = node_;
     node_->m_prev = m_tail;
@@ -30,7 +30,7 @@ void intrusive_list::push_back(node* node_) {
   }
 }
 
-void intrusive_list::erase(node* node_) {
+void IntrusiveList::erase(Node* node_) {
   if (node_) {
     if (node_->m_next) {
       node_->m_next->m_prev = node_->m_prev;
@@ -47,8 +47,8 @@ void intrusive_list::erase(node* node_) {
   }
 }
 
-intrusive_list::node* intrusive_list::pop_front() {
-  if (node* link = m_head) {
+IntrusiveList::Node* IntrusiveList::pop_front() {
+  if (Node* link = m_head) {
     if (link->m_next) {
       link->m_next->m_prev = link->m_prev;
     }
@@ -66,8 +66,8 @@ intrusive_list::node* intrusive_list::pop_front() {
   return nullptr;
 }
 
-intrusive_list::node* intrusive_list::pop_back() {
-  if (node* link = m_tail) {
+IntrusiveList::Node* IntrusiveList::pop_back() {
+  if (Node* link = m_tail) {
     if (link->m_next) {
       link->m_next->m_prev = link->m_prev;
     }

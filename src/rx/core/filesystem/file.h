@@ -5,44 +5,44 @@
 
 #include "rx/core/utility/exchange.h"
 
-namespace rx::filesystem {
+namespace Rx::Filesystem {
 
-struct file
-  final : stream
+struct File
+  final : Stream
 {
-  constexpr file();
-  constexpr file(memory::allocator& _allocator);
-  file(memory::allocator& _allocator, const char* _file_name, const char* _mode);
-  file(memory::allocator& _allocator, const string& _file_name, const char* _mode);
-  file(const char* _file_name, const char* _mode);
-  file(const string& _file_name, const char* _mode);
-  file(file&& other_);
-  ~file();
+  constexpr File();
+  constexpr File(Memory::Allocator& _allocator);
+  File(Memory::Allocator& _allocator, const char* _file_name, const char* _mode);
+  File(Memory::Allocator& _allocator, const String& _file_name, const char* _mode);
+  File(const char* _file_name, const char* _mode);
+  File(const String& _file_name, const char* _mode);
+  File(File&& other_);
+  ~File();
 
-  file& operator=(file&& file_);
+  File& operator=(File&& file_);
 
   // Read |_size| bytes from file into |_data|.
-  virtual rx_u64 on_read(rx_byte* _data, rx_u64 _size);
+  virtual Uint64 on_read(Byte* _data, Uint64 _size);
 
   // Write |_size| bytes from |_data| into file.
-  virtual rx_u64 on_write(const rx_byte* _data, rx_u64 _size);
+  virtual Uint64 on_write(const Byte* _data, Uint64 _size);
 
   // Seek to |_where| in file relative to |_whence|.
-  virtual bool on_seek(rx_s64 _where, whence _whence);
+  virtual bool on_seek(Sint64 _where, Whence _whence);
 
   // Tell where we're at in the file.
-  virtual rx_u64 on_tell();
+  virtual Uint64 on_tell();
 
   // Flush to disk.
   virtual bool on_flush();
 
-  bool read_line(string& line_);
+  bool read_line(String& line_);
   bool close();
 
   // Print |_fmt| with |_args| to file using |_allocator| for formatting.
   // NOTE: asserts if the file isn't a text file.
   template<typename... Ts>
-  bool print(memory::allocator& _allocator, const char* _fmt, Ts&&... _args);
+  bool print(Memory::Allocator& _allocator, const char* _fmt, Ts&&... _args);
 
   // Print |_fmt| with |_args| to file using system allocator for formatting.
   // NOTE: asserts if the file isn't a text file.
@@ -51,7 +51,7 @@ struct file
 
   // Print a string into the file. This is only valid for text files.
   // NOTE: asserts if the file isn't a text file.
-  bool print(string&& contents_);
+  bool print(String&& contents_);
 
   // Query if the file handle is valid, will be false if the file has been
   // closed with |close| or if the file failed to open.
@@ -59,30 +59,28 @@ struct file
 
   operator bool() const;
 
-  virtual const string& name() const &;
+  virtual const String& name() const &;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
-  file(void* _impl, const char* _file_name, const char* _mode);
+  File(void* _impl, const char* _file_name, const char* _mode);
 
-  static rx_u32 flags_from_mode(const char* _mode);
+  static Uint32 flags_from_mode(const char* _mode);
 
-  friend struct process;
-
-  memory::allocator& m_allocator;
+  Memory::Allocator& m_allocator;
   void* m_impl;
-  string m_name;
+  String m_name;
   const char* m_mode;
 };
 
-inline constexpr file::file()
-  : file{memory::system_allocator::instance()}
+inline constexpr File::File()
+  : File{Memory::SystemAllocator::instance()}
 {
 }
 
-inline constexpr file::file(memory::allocator& _allocator)
-  : stream{0}
+inline constexpr File::File(Memory::Allocator& _allocator)
+  : Stream{0}
   , m_allocator{_allocator}
   , m_impl{nullptr}
   , m_name{allocator()}
@@ -90,85 +88,85 @@ inline constexpr file::file(memory::allocator& _allocator)
 {
 }
 
-inline file::file(memory::allocator& _allocator, const string& _file_name, const char* _mode)
-  : file{_allocator, _file_name.data(), _mode}
+inline File::File(Memory::Allocator& _allocator, const String& _file_name, const char* _mode)
+  : File{_allocator, _file_name.data(), _mode}
 {
 }
 
-inline file::file(const char* _file_name, const char* _mode)
-  : file{memory::system_allocator::instance(), _file_name, _mode}
+inline File::File(const char* _file_name, const char* _mode)
+  : File{Memory::SystemAllocator::instance(), _file_name, _mode}
 {
 }
 
-inline file::file(const string& _file_name, const char* _mode)
-  : file{memory::system_allocator::instance(), _file_name, _mode}
+inline File::File(const String& _file_name, const char* _mode)
+  : File{Memory::SystemAllocator::instance(), _file_name, _mode}
 {
 }
 
-inline file::file(file&& other_)
-  : stream{utility::move(other_)}
+inline File::File(File&& other_)
+  : Stream{Utility::move(other_)}
   , m_allocator{other_.m_allocator}
-  , m_impl{utility::exchange(other_.m_impl, nullptr)}
-  , m_name{utility::move(other_.m_name)}
-  , m_mode{utility::exchange(other_.m_mode, nullptr)}
+  , m_impl{Utility::exchange(other_.m_impl, nullptr)}
+  , m_name{Utility::move(other_.m_name)}
+  , m_mode{Utility::exchange(other_.m_mode, nullptr)}
 {
 }
 
-inline file::~file() {
+inline File::~File() {
   close();
 }
 
-inline bool file::is_valid() const {
+inline bool File::is_valid() const {
   return m_impl != nullptr;
 }
 
-inline file::operator bool() const {
+inline File::operator bool() const {
   return is_valid();
 }
 
-inline const string& file::name() const & {
+inline const String& File::name() const & {
   return m_name;
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& file::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& File::allocator() const {
   return m_allocator;
 }
 
 template<typename... Ts>
-inline bool file::print(memory::allocator& _allocator, const char* _format, Ts&&... _arguments) {
-  return print(string::format(_allocator, _format, utility::forward<Ts>(_arguments)...));
+inline bool File::print(Memory::Allocator& _allocator, const char* _format, Ts&&... _arguments) {
+  return print(String::format(_allocator, _format, Utility::forward<Ts>(_arguments)...));
 }
 
 template<typename... Ts>
-inline bool file::print(const char* _format, Ts&&... _arguments) {
-  return print(memory::system_allocator::instance(), _format, utility::forward<Ts>(_arguments)...);
+inline bool File::print(const char* _format, Ts&&... _arguments) {
+  return print(Memory::SystemAllocator::instance(), _format, Utility::forward<Ts>(_arguments)...);
 }
 
-optional<vector<rx_byte>> read_binary_file(memory::allocator& _allocator, const char* _file_name);
-optional<vector<rx_byte>> read_text_file(memory::allocator& _allocator, const char* _file_name);
+Optional<Vector<Byte>> read_binary_file(Memory::Allocator& _allocator, const char* _file_name);
+Optional<Vector<Byte>> read_text_file(Memory::Allocator& _allocator, const char* _file_name);
 
-inline optional<vector<rx_byte>> read_binary_file(memory::allocator& _allocator, const string& _file_name) {
+inline Optional<Vector<Byte>> read_binary_file(Memory::Allocator& _allocator, const String& _file_name) {
   return read_binary_file(_allocator, _file_name.data());
 }
 
-inline optional<vector<rx_byte>> read_binary_file(const string& _file_name) {
-  return read_binary_file(memory::system_allocator::instance(), _file_name);
+inline Optional<Vector<Byte>> read_binary_file(const String& _file_name) {
+  return read_binary_file(Memory::SystemAllocator::instance(), _file_name);
 }
 
-inline optional<vector<rx_byte>> read_binary_file(const char* _file_name) {
-  return read_binary_file(memory::system_allocator::instance(), _file_name);
+inline Optional<Vector<Byte>> read_binary_file(const char* _file_name) {
+  return read_binary_file(Memory::SystemAllocator::instance(), _file_name);
 }
 
-inline optional<vector<rx_byte>> read_text_file(memory::allocator& _allocator, const string& _file_name) {
+inline Optional<Vector<Byte>> read_text_file(Memory::Allocator& _allocator, const String& _file_name) {
   return read_text_file(_allocator, _file_name.data());
 }
 
-inline optional<vector<rx_byte>> read_text_file(const string& _file_name) {
-  return read_text_file(memory::system_allocator::instance(), _file_name);
+inline Optional<Vector<Byte>> read_text_file(const String& _file_name) {
+  return read_text_file(Memory::SystemAllocator::instance(), _file_name);
 }
 
-inline optional<vector<rx_byte>> read_text_file(const char* _file_name) {
-  return read_text_file(memory::system_allocator::instance(), _file_name);
+inline Optional<Vector<Byte>> read_text_file(const char* _file_name) {
+  return read_text_file(Memory::SystemAllocator::instance(), _file_name);
 }
 
 } // namespace rx::filesystem

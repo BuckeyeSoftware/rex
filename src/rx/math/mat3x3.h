@@ -6,59 +6,59 @@
 #include "rx/math/vec3.h" // vec3
 #include "rx/math/trig.h" // deg_to_rad
 
-namespace rx::math {
+namespace Rx::Math {
 
 template<typename T>
-struct quat;
+struct Quat;
 
 template<typename T>
-struct mat3x3 {
-  using vec = vec3<T>;
+struct Mat3x3 {
+  using Vec = Vec3<T>;
 
-  constexpr mat3x3();
-  constexpr mat3x3(const vec& _x, const vec& _y, const vec& _z);
+  constexpr Mat3x3();
+  constexpr Mat3x3(const Vec& _x, const Vec& _y, const Vec& _z);
 
-  explicit mat3x3(const quat<T>& _rotation);
-  explicit mat3x3(const vec3<T>& _scale, const quat<T>& _rotation);
+  explicit Mat3x3(const Quat<T>& _rotation);
+  explicit Mat3x3(const Vec3<T>& _scale, const Quat<T>& _rotation);
 
   T* data();
   const T* data() const;
 
-  static constexpr mat3x3 scale(const vec3<T>& _scale);
-  static constexpr mat3x3 rotate(const vec3<T>& _rotate);
-  static constexpr mat3x3 translate(const vec3<T>& _translate);
-  static constexpr mat3x3 transpose(const mat3x3& _mat);
+  static constexpr Mat3x3 scale(const Vec3<T>& _scale);
+  static constexpr Mat3x3 rotate(const Vec3<T>& _rotate);
+  static constexpr Mat3x3 translate(const Vec3<T>& _translate);
+  static constexpr Mat3x3 transpose(const Mat3x3& _mat);
 
-  constexpr mat3x3 operator*(const mat3x3& _mat) const;
-  constexpr mat3x3 operator+(const mat3x3& _mat) const;
+  constexpr Mat3x3 operator*(const Mat3x3& _mat) const;
+  constexpr Mat3x3 operator+(const Mat3x3& _mat) const;
 
-  constexpr mat3x3 operator*(T _scalar) const;
-  constexpr mat3x3 operator+(T _scalar) const;
+  constexpr Mat3x3 operator*(T _scalar) const;
+  constexpr Mat3x3 operator+(T _scalar) const;
 
-  constexpr mat3x3& operator*=(const mat3x3& _mat);
-  constexpr mat3x3& operator+=(const mat3x3& _mat);
+  constexpr Mat3x3& operator*=(const Mat3x3& _mat);
+  constexpr Mat3x3& operator+=(const Mat3x3& _mat);
 
-  constexpr mat3x3& operator*=(T _scalar);
-  constexpr mat3x3& operator+=(T _scalar);
+  constexpr Mat3x3& operator*=(T _scalar);
+  constexpr Mat3x3& operator+=(T _scalar);
 
-  const vec3f& operator[](rx_size _index) const;
-  vec3f& operator[](rx_size _index);
+  const Vec3f& operator[](Size _index) const;
+  Vec3f& operator[](Size _index);
 
   union {
     struct {
-      vec x, y, z;
+      Vec x, y, z;
     };
-    vec a[3];
+    Vec a[3];
   };
 
 private:
-  static constexpr vec3<T> reduce_rotation_angles(const vec3<T>& _rotate);
+  static constexpr Vec3<T> reduce_rotation_angles(const Vec3<T>& _rotate);
 };
 
-using mat3x3f = mat3x3<float>;
+using Mat3x3f = Mat3x3<float>;
 
 template<typename T>
-constexpr mat3x3<T>::mat3x3()
+constexpr Mat3x3<T>::Mat3x3()
   : x{1, 0, 0}
   , y{0, 1, 0}
   , z{0, 0, 1}
@@ -66,7 +66,7 @@ constexpr mat3x3<T>::mat3x3()
 }
 
 template<typename T>
-constexpr mat3x3<T>::mat3x3(const vec& _x, const vec& _y, const vec& _z)
+constexpr Mat3x3<T>::Mat3x3(const Vec& _x, const Vec& _y, const Vec& _z)
   : x{_x}
   , y{_y}
   , z{_z}
@@ -74,24 +74,24 @@ constexpr mat3x3<T>::mat3x3(const vec& _x, const vec& _y, const vec& _z)
 }
 
 template<typename T>
-inline T* mat3x3<T>::data() {
+inline T* Mat3x3<T>::data() {
   return x.data();
 }
 
 template<typename T>
-inline const T* mat3x3<T>::data() const {
+inline const T* Mat3x3<T>::data() const {
   return x.data();
 }
 
 template<typename T>
-inline constexpr mat3x3<T> mat3x3<T>::scale(const vec3<T>& _scale) {
+inline constexpr Mat3x3<T> Mat3x3<T>::scale(const Vec3<T>& _scale) {
   return {{_scale.x, 0,       0},
           {0,       _scale.y, 0},
           {0,       0,       _scale.z}};
 }
 
 template<typename T>
-inline constexpr mat3x3<T> mat3x3<T>::rotate(const vec3<T>& _rotate) {
+inline constexpr Mat3x3<T> Mat3x3<T>::rotate(const Vec3<T>& _rotate) {
   const auto reduce{reduce_rotation_angles(_rotate)};
   const auto sx{sin(deg_to_rad(-reduce.x))};
   const auto cx{cos(deg_to_rad(-reduce.x))};
@@ -105,75 +105,75 @@ inline constexpr mat3x3<T> mat3x3<T>::rotate(const vec3<T>& _rotate) {
 }
 
 template<typename T>
-inline constexpr mat3x3<T> mat3x3<T>::translate(const vec3<T>& _translate) {
+inline constexpr Mat3x3<T> Mat3x3<T>::translate(const Vec3<T>& _translate) {
   return {{1, 0, 0},
           {0, 1, 0},
           _translate};
 }
 
 template<typename T>
-inline constexpr mat3x3<T> mat3x3<T>::transpose(const mat3x3& _mat) {
+inline constexpr Mat3x3<T> Mat3x3<T>::transpose(const Mat3x3& _mat) {
   return {{_mat.x.x, _mat.y.x, _mat.z.x},
           {_mat.x.y, _mat.y.y, _mat.z.y},
           {_mat.x.z, _mat.y.z, _mat.z.z}};
 }
 
 template<typename T>
-inline constexpr mat3x3<T> mat3x3<T>::operator*(const mat3x3& _mat) const {
+inline constexpr Mat3x3<T> Mat3x3<T>::operator*(const Mat3x3& _mat) const {
   return {_mat.x*x.x + _mat.y*x.y + _mat.z*x.z,
           _mat.x*y.x + _mat.y*y.y + _mat.z*y.z,
           _mat.x*z.x + _mat.y*z.y + _mat.z*z.z};
 }
 
 template<typename T>
-inline constexpr mat3x3<T> mat3x3<T>::operator+(const mat3x3& _mat) const {
+inline constexpr Mat3x3<T> Mat3x3<T>::operator+(const Mat3x3& _mat) const {
   return {x + _mat.x, y + _mat.y, z + _mat.z};
 }
 
 template<typename T>
-inline constexpr mat3x3<T> mat3x3<T>::operator*(T _scalar) const {
+inline constexpr Mat3x3<T> Mat3x3<T>::operator*(T _scalar) const {
   return {x * _scalar, y * _scalar, z * _scalar};
 }
 
 template<typename T>
-inline constexpr mat3x3<T> mat3x3<T>::operator+(T _scalar) const {
+inline constexpr Mat3x3<T> Mat3x3<T>::operator+(T _scalar) const {
   return {x + _scalar, y + _scalar, z + _scalar};
 }
 
 template<typename T>
-inline constexpr mat3x3<T>& mat3x3<T>::operator*=(const mat3x3& _mat) {
+inline constexpr Mat3x3<T>& Mat3x3<T>::operator*=(const Mat3x3& _mat) {
   return *this = *this * _mat;
 }
 
 template<typename T>
-inline constexpr mat3x3<T>& mat3x3<T>::operator+=(const mat3x3& _mat) {
+inline constexpr Mat3x3<T>& Mat3x3<T>::operator+=(const Mat3x3& _mat) {
   return *this = *this + _mat;
 }
 
 template<typename T>
-inline constexpr mat3x3<T>& mat3x3<T>::operator*=(T _scalar) {
+inline constexpr Mat3x3<T>& Mat3x3<T>::operator*=(T _scalar) {
   return *this = *this * _scalar;
 }
 
 template<typename T>
-inline constexpr mat3x3<T>& mat3x3<T>::operator+=(T _scalar) {
+inline constexpr Mat3x3<T>& Mat3x3<T>::operator+=(T _scalar) {
   return *this = *this + _scalar;
 }
 
 template<typename T>
-inline const vec3f& mat3x3<T>::operator[](rx_size _index) const {
+inline const Vec3f& Mat3x3<T>::operator[](Size _index) const {
   RX_ASSERT(_index < 3, "out of bounds");
   return a[_index];
 }
 
 template<typename T>
-inline vec3f& mat3x3<T>::operator[](rx_size _index) {
+inline Vec3f& Mat3x3<T>::operator[](Size _index) {
   RX_ASSERT(_index < 3, "out of bounds");
   return a[_index];
 }
 
 template<typename T>
-inline constexpr vec3<T> mat3x3<T>::reduce_rotation_angles(const vec3<T>& _rotate) {
+inline constexpr Vec3<T> Mat3x3<T>::reduce_rotation_angles(const Vec3<T>& _rotate) {
   return _rotate.map([](T _angle) {
     while (_angle >  180) {
       _angle -= 360;

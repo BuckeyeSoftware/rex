@@ -2,10 +2,10 @@
 #define RX_CORE_MATH_COS_H
 #include "rx/core/types.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
-rx_f32 cos(rx_f32 _x);
-rx_f32 acos(rx_f32 _x);
+Float32 cos(Float32 _x);
+Float32 acos(Float32 _x);
 
 } // namespace rx::math
 

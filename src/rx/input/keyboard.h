@@ -2,9 +2,9 @@
 #define RX_INPUT_KEYBOARD_H
 #include "rx/core/types.h" // rx_f32
 
-namespace rx::input {
+namespace Rx::Input {
 
-enum class scan_code : rx_s32 {
+enum class scan_code : Sint32 {
   k_unknown        = 0,
 
   k_a              = 4,
@@ -122,12 +122,12 @@ enum class scan_code : rx_s32 {
   k_right_gui      = 231
 };
 
-struct keyboard_device {
-  keyboard_device();
+struct Keyboard {
+  Keyboard();
 
-  static constexpr const auto k_keys{384};
+  static constexpr const auto k_keys = 384;
 
-  void update(rx_f32 _delta_time);
+  void update(Float32 _delta_time);
   void update_key(bool _down, int _scan_code, int _symbol);
 
   bool is_pressed(scan_code _scan_code) const;
@@ -145,14 +145,14 @@ private:
   int m_scan_codes[k_keys];
 };
 
-inline bool keyboard_device::is_pressed(scan_code _scan_code) const {
-  return m_scan_codes[static_cast<rx_size>(_scan_code)] & k_pressed;
+inline bool Keyboard::is_pressed(scan_code _scan_code) const {
+  return m_scan_codes[static_cast<Size>(_scan_code)] & k_pressed;
 }
-inline bool keyboard_device::is_released(scan_code _scan_code) const {
-  return m_scan_codes[static_cast<rx_size>(_scan_code)] & k_released;
+inline bool Keyboard::is_released(scan_code _scan_code) const {
+  return m_scan_codes[static_cast<Size>(_scan_code)] & k_released;
 }
-inline bool keyboard_device::is_held(scan_code _scan_code) const {
-  return m_scan_codes[static_cast<rx_size>(_scan_code)] & k_held;
+inline bool Keyboard::is_held(scan_code _scan_code) const {
+  return m_scan_codes[static_cast<Size>(_scan_code)] & k_held;
 }
 
 } // namespace rx::input

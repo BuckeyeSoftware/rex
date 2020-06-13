@@ -3,11 +3,11 @@
 
 #include "rx/render/frontend/module.h"
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
 RX_LOG("render/module", logger);
 
-module::module(memory::allocator& _allocator)
+Module::Module(Memory::Allocator& _allocator)
   : m_allocator{_allocator}
   , m_name{allocator()}
   , m_source{allocator()}
@@ -15,38 +15,38 @@ module::module(memory::allocator& _allocator)
 {
 }
 
-module::module(module&& module_)
+Module::Module(Module&& module_)
   : m_allocator{module_.m_allocator}
-  , m_name{utility::move(module_.m_name)}
-  , m_source{utility::move(module_.m_source)}
-  , m_dependencies{utility::move(module_.m_dependencies)}
+  , m_name{Utility::move(module_.m_name)}
+  , m_source{Utility::move(module_.m_source)}
+  , m_dependencies{Utility::move(module_.m_dependencies)}
 {
 }
 
-module& module::operator=(module&& module_) {
+Module& Module::operator=(Module&& module_) {
   m_allocator = module_.m_allocator;
-  m_name = utility::move(module_.m_name);
-  m_source = utility::move(module_.m_source);
-  m_dependencies = utility::move(module_.m_dependencies);
+  m_name = Utility::move(module_.m_name);
+  m_source = Utility::move(module_.m_source);
+  m_dependencies = Utility::move(module_.m_dependencies);
 
   return *this;
 }
 
-bool module::load(stream* _stream) {
+bool Module::load(Stream* _stream) {
   if (auto data = read_text_stream(allocator(), _stream)) {
     return parse({data->disown()});
   }
   return false;
 }
 
-bool module::load(const string& _file_name) {
-  if (filesystem::file file{_file_name, "rb"}) {
+bool Module::load(const String& _file_name) {
+  if (Filesystem::File file{_file_name, "rb"}) {
     return load(&file);
   }
   return false;
 }
 
-bool module::parse(const json& _description) {
+bool Module::parse(const JSON& _description) {
   if (!_description) {
     const auto json_error{_description.error()};
     if (json_error) {
@@ -56,8 +56,8 @@ bool module::parse(const json& _description) {
     }
   }
 
-  const json& name{_description["name"]};
-  const json& source{_description["source"]};
+  const JSON& name{_description["name"]};
+  const JSON& source{_description["source"]};
 
   if (!name) {
     return error("missing 'name'");
@@ -77,14 +77,15 @@ bool module::parse(const json& _description) {
     return error("expected String for 'source'");
   }
 
-  m_source = source.as_string();
+  // Trim any leading and trailing whitespace characters from the contents too.
+  m_source = source.as_string().strip("\t\r\n ");
 
-  if (const json& imports{_description["imports"]}) {
-    if (!imports.is_array_of(json::type::k_string)) {
+  if (const JSON& imports{_description["imports"]}) {
+    if (!imports.is_array_of(JSON::Type::k_string)) {
       return error("expected Array[String] for 'imports'");
     }
 
-    imports.each([&](const json& _import) {
+    imports.each([&](const JSON& _import) {
       m_dependencies.push_back(_import.as_string());
     });
   }
@@ -93,15 +94,15 @@ bool module::parse(const json& _description) {
 }
 
 bool resolve_module_dependencies(
-  const map<string, module>& _modules,
-  const module& _current_module,
-  set<string>& visited_,
-  algorithm::topological_sort<string>& sorter_)
+  const Map<String, Module>& _modules,
+  const Module& _current_module,
+  Set<String>& visited_,
+  Algorithm::TopologicalSort<String>& sorter_)
 {
   sorter_.add(_current_module.name());
 
   // For each dependency of this module.
-  return _current_module.dependencies().each_fwd([&](const string& _dependency) {
+  return _current_module.dependencies().each_fwd([&](const String& _dependency) {
     // Add the dependency to the topological sorter.
     if (!sorter_.add(_current_module.name(), _dependency)) {
       return false;
@@ -123,11 +124,11 @@ bool resolve_module_dependencies(
   });
 }
 
-void module::write_log(log::level _level, string&& message_) const {
+void Module::write_log(Log::Level _level, String&& message_) const {
   if (m_name.is_empty()) {
-    logger->write(_level, "%s", utility::move(message_));
+    logger->write(_level, "%s", Utility::move(message_));
   } else {
-    logger->write(_level, "module '%s': %s", m_name, utility::move(message_));
+    logger->write(_level, "module '%s': %s", m_name, Utility::move(message_));
   }
 }
 

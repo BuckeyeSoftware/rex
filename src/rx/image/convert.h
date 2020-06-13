@@ -3,17 +3,17 @@
 #include "rx/core/vector.h"
 #include "rx/math/vec2.h"
 
-namespace rx::image {
+namespace Rx::Image {
 
-struct matrix;
+struct Matrix;
 
 // Utilities to convert 8-bit texture data to float image matrix and vise-versa
-bool convert(const matrix& _matrix, vector<rx_byte>& data_);
-bool convert(const rx_byte* _data, const math::vec2z& _dimensions,
-  rx_size _channels, matrix& matrix_);
+bool convert(const Matrix& _matrix, Vector<Byte>& data_);
+bool convert(const Byte* _data, const Math::Vec2z& _dimensions,
+             Size _channels, Matrix& matrix_);
 
-inline bool convert(const vector<rx_byte>& _data, const math::vec2z& _dimensions,
-  rx_size _channels, matrix& matrix_)
+inline bool convert(const Vector<Byte>& _data, const Math::Vec2z& _dimensions,
+                    Size _channels, Matrix& matrix_)
 {
   return convert(_data.data(), _dimensions, _channels, matrix_);
 }

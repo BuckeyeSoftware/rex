@@ -11,7 +11,7 @@
 #error "missing implementation of yield"
 #endif
 
-namespace rx::concurrency {
+namespace Rx::Concurrency {
 
 void yield() {
 #if defined(RX_PLATFORM_WINDOWS)

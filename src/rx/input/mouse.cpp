@@ -2,22 +2,22 @@
 
 #include "rx/input/mouse.h"
 
-namespace rx::input {
+namespace Rx::Input {
 
-mouse_device::mouse_device() {
+Mouse::Mouse() {
   memset(m_buttons, 0, sizeof m_buttons);
 }
 
-void mouse_device::update(rx_f32) {
+void Mouse::update(Float32) {
   m_movement = {};
   m_scrolled = false;
 
-  for (rx_size i{0}; i < k_buttons; i++) {
+  for (Size i = 0; i < k_buttons; i++) {
     m_buttons[i] &= ~(k_pressed | k_released);
   }
 }
 
-void mouse_device::update_button(bool _down, int _button) {
+void Mouse::update_button(bool _down, int _button) {
   if (_down) {
     m_buttons[_button] |= (k_pressed | k_held);
   } else {
@@ -26,12 +26,12 @@ void mouse_device::update_button(bool _down, int _button) {
   }
 }
 
-void mouse_device::update_motion(const math::vec4i& _movement) {
+void Mouse::update_motion(const Math::Vec4i& _movement) {
   m_movement += { _movement.z, _movement.w };
   m_position = { _movement.x, _movement.y };
 }
 
-void mouse_device::update_scroll(const math::vec2i& _scroll) {
+void Mouse::update_scroll(const Math::Vec2i& _scroll) {
   m_scroll = _scroll;
   m_scrolled = true;
 }

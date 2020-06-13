@@ -2,7 +2,7 @@
 #define RX_CORE_UTILITY_MOVE_H
 #include "rx/core/traits/remove_reference.h"
 
-namespace rx::utility {
+namespace Rx::Utility {
 
 template<typename T>
 inline constexpr traits::remove_reference<T>&& move(T&& _value) {

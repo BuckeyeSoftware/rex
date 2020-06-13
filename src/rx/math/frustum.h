@@ -3,16 +3,17 @@
 #include "rx/math/plane.h"
 #include "rx/math/mat4x4.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
-struct aabb;
-struct frustum {
-  frustum(const mat4x4f& _view_projection);
+struct AABB;
 
-  bool is_aabb_inside(const aabb& _aabb) const;
+struct Frustum {
+  Frustum(const Mat4x4f& _view_projection);
+
+  bool is_aabb_inside(const AABB& _aabb) const;
 
 private:
-  plane m_planes[6];
+  Plane m_planes[6];
 };
 
 } // namespace rx::math

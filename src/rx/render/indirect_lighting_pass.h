@@ -3,48 +3,48 @@
 #include "rx/math/vec2.h"
 #include "rx/math/camera.h"
 
-namespace rx::render {
+namespace Rx::Render {
 
-namespace frontend {
-  struct target;
-  struct texture2D;
-  struct technique;
-  struct context;
+namespace Frontend {
+  struct Target;
+  struct Texture2D;
+  struct Technique;
+  struct Context;
 } // namespace frontend
 
 struct gbuffer;
-struct ibl;
+struct ImageBasedLighting;
 
-struct indirect_lighting_pass {
-  indirect_lighting_pass(frontend::context* _frontend, const gbuffer* _gbuffer, const ibl* _ibl);
-  ~indirect_lighting_pass();
+struct IndirectLightingPass {
+  IndirectLightingPass(Frontend::Context* _frontend, const gbuffer* _gbuffer, const ImageBasedLighting* _ibl);
+  ~IndirectLightingPass();
 
-  void render(const math::camera& _camera);
+  void render(const Math::camera& _camera);
 
-  void create(const math::vec2z& _resolution);
-  void resize(const math::vec2z& _resolution);
+  void create(const Math::Vec2z& _resolution);
+  void resize(const Math::Vec2z& _resolution);
 
-  frontend::texture2D* texture() const;
-  frontend::target* target() const;
+  Frontend::Texture2D* texture() const;
+  Frontend::Target* target() const;
 
 private:
   void create();
   void destroy();
 
-  frontend::context* m_frontend;
-  frontend::technique* m_technique;
-  frontend::texture2D* m_texture;
-  frontend::target* m_target;
+  Frontend::Context* m_frontend;
+  Frontend::Technique* m_technique;
+  Frontend::Texture2D* m_texture;
+  Frontend::Target* m_target;
 
   const gbuffer* m_gbuffer;
-  const ibl* m_ibl;
+  const ImageBasedLighting* m_ibl;
 };
 
-inline frontend::texture2D* indirect_lighting_pass::texture() const {
+inline Frontend::Texture2D* IndirectLightingPass::texture() const {
   return m_texture;
 }
 
-inline frontend::target* indirect_lighting_pass::target() const {
+inline Frontend::Target* IndirectLightingPass::target() const {
   return m_target;
 }
 

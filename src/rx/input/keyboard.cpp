@@ -2,21 +2,21 @@
 
 #include "rx/input/keyboard.h"
 
-namespace rx::input {
+namespace Rx::Input {
 
-keyboard_device::keyboard_device() {
+Keyboard::Keyboard() {
   memset(m_symbols, 0, sizeof m_symbols);
   memset(m_scan_codes, 0, sizeof m_scan_codes);
 }
 
-void keyboard_device::update(rx_f32) {
-  for (rx_size i{0}; i < k_keys; i++) {
+void Keyboard::update(Float32) {
+  for (Size i{0}; i < k_keys; i++) {
     m_scan_codes[i] &= ~(k_pressed | k_released);
     m_symbols[i] &= ~(k_pressed | k_released);
   }
 }
 
-void keyboard_device::update_key(bool down, int scan_code, int symbol) {
+void Keyboard::update_key(bool down, int scan_code, int symbol) {
   if (scan_code < k_keys) {
     if (down) {
       m_scan_codes[scan_code] |= (k_pressed | k_held);

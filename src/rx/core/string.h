@@ -8,92 +8,95 @@
 
 #include "rx/core/memory/system_allocator.h" // memory::{system_allocator, allocator}
 
-namespace rx {
+namespace Rx {
 
-struct wide_string;
+struct WideString;
 
 // 32-bit: 16 + k_small_string bytes
 // 64-bit: 32 + k_small_string bytes
-struct string {
-  static constexpr const rx_size k_npos{-1_z};
-  static constexpr const rx_size k_small_string{16};
+struct String {
+  static constexpr const Size k_npos{-1_z};
+  static constexpr const Size k_small_string{16};
 
-  constexpr string(memory::allocator& _allocator);
-  string(memory::allocator& _allocator, const string& _contents);
-  string(memory::allocator& _allocator, const char* _contents);
-  string(memory::allocator& _allocator, const char* _contents, rx_size _size);
-  string(memory::allocator& _allocator, const char* _first, const char* _last);
+  constexpr String(Memory::Allocator& _allocator);
+  String(Memory::Allocator& _allocator, const String& _contents);
+  String(Memory::Allocator& _allocator, const char* _contents);
+  String(Memory::Allocator& _allocator, const char* _contents, Size _size);
+  String(Memory::Allocator& _allocator, const char* _first, const char* _last);
 
-  constexpr string();
-  string(const string& _contents);
-  string(string&& contents_);
-  string(const char* _contents);
-  string(const char* _contents, rx_size _size);
-  string(const char* _first, const char* _last);
-  string(memory::view _view);
-  ~string();
-
-  template<typename... Ts>
-  static string format(memory::allocator& _allocator,
-    const char* _format, Ts&&... _arguments);
+  constexpr String();
+  String(const String& _contents);
+  String(String&& contents_);
+  String(const char* _contents);
+  String(const char* _contents, Size _size);
+  String(const char* _first, const char* _last);
+  String(Memory::View _view);
+  ~String();
 
   template<typename... Ts>
-  static string format(const char* _format, Ts&&... _arguments);
+  static String format(Memory::Allocator& _allocator,
+                       const char* _format, Ts&&... _arguments);
 
-  string& operator=(const string& _contents);
-  string& operator=(const char* _contents);
-  string& operator=(string&& contents_);
+  template<typename... Ts>
+  static String format(const char* _format, Ts&&... _arguments);
 
-  bool reserve(rx_size _size);
-  bool resize(rx_size _size);
+  String& operator=(const String& _contents);
+  String& operator=(const char* _contents);
+  String& operator=(String&& contents_);
 
-  rx_size find_first_of(int _ch) const;
-  rx_size find_first_of(const char* _contents) const;
-  rx_size find_first_of(const string& _contents) const;
+  bool reserve(Size _size);
+  bool resize(Size _size);
 
-  rx_size find_last_of(int _ch) const;
-  rx_size find_last_of(const char* _contents) const;
-  rx_size find_last_of(const string& _contents) const;
+  Size find_first_of(int _ch) const;
+  Size find_first_of(const char* _contents) const;
+  Size find_first_of(const String& _contents) const;
 
-  rx_size size() const;
-  rx_size capacity() const;
+  Size find_last_of(int _ch) const;
+  Size find_last_of(const char* _contents) const;
+  Size find_last_of(const String& _contents) const;
+
+  Size size() const;
+  Size capacity() const;
 
   bool is_empty() const;
 
   void clear();
 
-  string& append(const char* _first, const char* _last);
-  string& append(const char* _contents, rx_size _size);
-  string& append(const char* _contents);
-  string& append(const string& _contents);
-  string& append(char _ch);
+  String& append(const char* _first, const char* _last);
+  String& append(const char* _contents, Size _size);
+  String& append(const char* _contents);
+  String& append(const String& _contents);
+  String& append(char _ch);
 
-  bool insert_at(rx_size _position, const char* _contents, rx_size _size);
-  bool insert_at(rx_size _position, const char* _contents);
-  bool insert_at(rx_size _position, const string& _contents);
+  bool insert_at(Size _position, const char* _contents, Size _size);
+  bool insert_at(Size _position, const char* _contents);
+  bool insert_at(Size _position, const String& _contents);
 
   // returns copy of string with leading characters in set removed
-  string lstrip(const char* _set) const;
+  String lstrip(const char* _set) const;
 
   // returns copy of string with trailing characters in set removed
-  string rstrip(const char* _set) const;
+  String rstrip(const char* _set) const;
+
+  // returns copy of string with leading and trailing characters in set removed
+  String strip(const char* _set) const;
 
   // split string by |token| up to |count| times, use |count| of zero for no limit
-  vector<string> split(memory::allocator& _allocator, int _ch, rx_size _count = 0) const;
-  vector<string> split(int _ch, rx_size _count = 0) const;
+  Vector<String> split(Memory::Allocator& _allocator, int _ch, Size _count = 0) const;
+  Vector<String> split(int _ch, Size _count = 0) const;
 
   // take substring from |offset| of |length|, use |length| of zero for whole string
-  string substring(rx_size _offset, rx_size _length = 0) const;
+  String substring(Size _offset, Size _length = 0) const;
 
   // scan string
-  rx_size scan(const char* _scan_format, ...) const;
+  Size scan(const char* _scan_format, ...) const;
 
   char pop_back();
 
-  void erase(rx_size _begin, rx_size _end);
+  void erase(Size _begin, Size _end);
 
-  char& operator[](rx_size _index);
-  const char& operator[](rx_size _index) const;
+  char& operator[](Size _index);
+  const char& operator[](Size _index) const;
 
   char& first();
   const char& first() const;
@@ -104,28 +107,30 @@ struct string {
   char* data();
   const char* data() const;
 
-  static string human_size_format(rx_size _size);
+  static String human_size_format(Size _size);
 
   bool begins_with(const char* _prefix) const;
-  bool begins_with(const string& _prefix) const;
+  bool begins_with(const String& _prefix) const;
+
   bool ends_with(const char* _suffix) const;
-  bool ends_with(const string& _suffix) const;
+  bool ends_with(const String& _suffix) const;
+
   bool contains(const char* _needle) const;
-  bool contains(const string& _needle) const;
+  bool contains(const String& _needle) const;
 
-  rx_size hash() const;
+  Size hash() const;
 
-  wide_string to_utf16() const;
+  WideString to_utf16() const;
 
-  constexpr memory::allocator& allocator() const;
-  memory::view disown();
+  constexpr Memory::Allocator& allocator() const;
+  Memory::View disown();
 
 private:
-  static string formatter(memory::allocator& _allocator, const char* _format, ...);
+  static String formatter(Memory::Allocator& _allocator, const char* _format, ...);
 
-  void swap(string& other);
+  void swap(String& other);
 
-  ref<memory::allocator> m_allocator;
+  Ref<Memory::Allocator> m_allocator;
   char* m_data;
   char* m_last;
   char* m_capacity;
@@ -134,77 +139,78 @@ private:
 };
 
 // utf-16, Windows compatible "wide-string"
-struct wide_string {
+struct WideString {
   // custom allocator versions
-  wide_string(memory::allocator& _allocator);
-  wide_string(memory::allocator& _allocator, const wide_string& _other);
-  wide_string(memory::allocator& _allocator, const rx_u16* _contents);
-  wide_string(memory::allocator& _allocator, const rx_u16* _contents, rx_size _size);
+  WideString(Memory::Allocator& _allocator);
+  WideString(Memory::Allocator& _allocator, const WideString& _other);
+  WideString(Memory::Allocator& _allocator, const Uint16* _contents);
+  WideString(Memory::Allocator& _allocator, const Uint16* _contents, Size _size);
 
   // constructors that use system allocator
-  wide_string();
-  wide_string(const wide_string& _other);
-  wide_string(const rx_u16* _contents);
-  wide_string(const rx_u16* _contents, rx_size _size);
+  WideString();
+  WideString(const WideString& _other);
+  WideString(const Uint16* _contents);
+  WideString(const Uint16* _contents, Size _size);
 
-  wide_string(wide_string&& other_);
+  WideString(WideString&& other_);
 
-  ~wide_string();
+  ~WideString();
 
   // disable all assignment operators because you're not supposed to use wide_string
   // for any other purpose than to convert string (which is utf8) to utf16 for
   // interfaces expecting that, such as the ones on Windows
-  wide_string& operator=(const wide_string&) = delete;
-  wide_string& operator=(const rx_u16*) = delete;
-  wide_string& operator=(const char*) = delete;
-  wide_string& operator=(const string&) = delete;
+  WideString& operator=(const WideString&) = delete;
+  WideString& operator=(const Uint16*) = delete;
+  WideString& operator=(const char*) = delete;
+  WideString& operator=(const String&) = delete;
 
-  rx_size size() const;
+  Size size() const;
   bool is_empty() const;
 
-  rx_u16& operator[](rx_size _index);
-  const rx_u16& operator[](rx_size _index) const;
+  Uint16& operator[](Size _index);
+  const Uint16& operator[](Size _index) const;
 
-  rx_u16* data();
-  const rx_u16* data() const;
+  Uint16* data();
+  const Uint16* data() const;
 
-  bool resize(rx_size _size);
+  bool resize(Size _size);
 
-  string to_utf8() const;
+  String to_utf8() const;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
-  ref<memory::allocator> m_allocator;
+  Ref<Memory::Allocator> m_allocator;
 
-  rx_u16* m_data;
-  rx_size m_size;
+  Uint16* m_data;
+  Size m_size;
 };
 
 // format function for string
 template<>
-struct format_type<string> {
-  const char* operator()(const string& _value) const {
+struct FormatNormalize<String> {
+  const char* operator()(const String& _value) const {
     return _value.data();
   }
 };
 
+// String
 template<typename... Ts>
-inline string string::format(memory::allocator& _allocator, const char* _format, Ts&&... _arguments) {
-  return formatter(_allocator, _format, format_type<traits::remove_cvref<Ts>>{}(utility::forward<Ts>(_arguments))...);
+inline String String::format(Memory::Allocator& _allocator, const char* _format, Ts&&... _arguments) {
+  return formatter(_allocator, _format, FormatNormalize<traits::remove_cvref<Ts>>{}(Utility::forward<Ts>(_arguments))...);
 }
 
 template<typename... Ts>
-inline string string::format(const char* _format, Ts&&... _arguments) {
-  return format(memory::system_allocator::instance(), _format, utility::forward<Ts>(_arguments)...);
+inline String String::format(const char* _format, Ts&&... _arguments) {
+  return format(Memory::SystemAllocator::instance(), _format, Utility::forward<Ts>(_arguments)...);
 }
 
-inline string::string(memory::allocator& _allocator, const string& _contents)
-  : string{_allocator, _contents.data(), _contents.size()}
+inline String::String(Memory::Allocator& _allocator, const String& _contents)
+  : String{_allocator, _contents.data(), _contents.size()}
 {
 }
 
-inline constexpr string::string(memory::allocator& _allocator)
+inline constexpr String::String(Memory::Allocator& _allocator)
   : m_allocator{_allocator}
   , m_data{m_buffer}
   , m_last{m_buffer}
@@ -214,208 +220,208 @@ inline constexpr string::string(memory::allocator& _allocator)
   m_buffer[0] = '\0';
 }
 
-inline constexpr string::string()
-  : string{memory::system_allocator::instance()}
+inline constexpr String::String()
+  : String{Memory::SystemAllocator::instance()}
 {
 }
 
-inline string::string(const string& _contents)
-  : string{_contents.allocator(), _contents}
+inline String::String(const String& _contents)
+  : String{_contents.allocator(), _contents}
 {
 }
 
-inline string::string(const char* _contents)
-  : string{memory::system_allocator::instance(), _contents}
+inline String::String(const char* _contents)
+  : String{Memory::SystemAllocator::instance(), _contents}
 {
 }
 
-inline string::string(const char* _contents, rx_size _size)
-  : string{memory::system_allocator::instance(), _contents, _size}
+inline String::String(const char* _contents, Size _size)
+  : String{Memory::SystemAllocator::instance(), _contents, _size}
 {
 }
 
-inline string::string(const char* _first, const char* _last)
-  : string{memory::system_allocator::instance(), _first, _last}
+inline String::String(const char* _first, const char* _last)
+  : String{Memory::SystemAllocator::instance(), _first, _last}
 {
 }
 
-inline rx_size string::find_first_of(const string& _contents) const {
+inline Size String::find_first_of(const String& _contents) const {
   return find_first_of(_contents.data());
 }
 
-inline rx_size string::find_last_of(const string& _contents) const {
+inline Size String::find_last_of(const String& _contents) const {
   return find_last_of(_contents.data());
 }
 
-RX_HINT_FORCE_INLINE rx_size string::size() const {
+RX_HINT_FORCE_INLINE Size String::size() const {
   return m_last - m_data;
 }
 
-RX_HINT_FORCE_INLINE rx_size string::capacity() const {
+RX_HINT_FORCE_INLINE Size String::capacity() const {
   return m_capacity - m_data;
 }
 
-RX_HINT_FORCE_INLINE bool string::is_empty() const {
+RX_HINT_FORCE_INLINE bool String::is_empty() const {
   return m_last - m_data == 0;
 }
 
-inline void string::clear() {
+inline void String::clear() {
   (void)!!resize(0);
 }
 
-inline string& string::append(const char* contents, rx_size size) {
+inline String& String::append(const char* contents, Size size) {
   return append(contents, contents + size);
 }
 
-inline string& string::append(const string& contents) {
+inline String& String::append(const String& contents) {
   return append(contents.data(), contents.size());
 }
 
-inline string& string::append(char ch) {
+inline String& String::append(char ch) {
   return append(&ch, 1);
 }
 
-inline bool string::insert_at(rx_size _position, const string& _contents) {
+inline bool String::insert_at(Size _position, const String& _contents) {
   return insert_at(_position, _contents.data(), _contents.size());
 }
 
-inline vector<string> string::split(int _ch, rx_size _count) const {
+inline Vector<String> String::split(int _ch, Size _count) const {
   return split(allocator(), _ch, _count);
 }
 
-inline char& string::operator[](rx_size index) {
+inline char& String::operator[](Size index) {
   // NOTE(dweiler): The <= is not a bug, indexing the null-terminator is allowed.
   RX_ASSERT(index <= size(), "out of bounds");
   return m_data[index];
 }
 
-inline const char& string::operator[](rx_size index) const {
+inline const char& String::operator[](Size index) const {
   // NOTE(dweiler): The <= is not a bug, indexing the null-terminator is allowed.
   RX_ASSERT(index <= size(), "out of bounds");
   return m_data[index];
 }
 
-RX_HINT_FORCE_INLINE char& string::first() {
+RX_HINT_FORCE_INLINE char& String::first() {
   return m_data[0];
 }
 
-RX_HINT_FORCE_INLINE const char& string::first() const {
+RX_HINT_FORCE_INLINE const char& String::first() const {
   return m_data[0];
 }
 
-RX_HINT_FORCE_INLINE char& string::last() {
+RX_HINT_FORCE_INLINE char& String::last() {
   RX_ASSERT(!is_empty(), "empty string");
   return m_data[size() - 1];
 }
 
-RX_HINT_FORCE_INLINE const char& string::last() const {
+RX_HINT_FORCE_INLINE const char& String::last() const {
   RX_ASSERT(!is_empty(), "empty string");
   return m_data[size() - 1];
 }
 
-RX_HINT_FORCE_INLINE char* string::data() {
+RX_HINT_FORCE_INLINE char* String::data() {
   return m_data;
 }
 
-RX_HINT_FORCE_INLINE const char* string::data() const {
+RX_HINT_FORCE_INLINE const char* String::data() const {
   return m_data;
 }
 
-inline string operator+(const string& _lhs, const char* _rhs) {
-  return string(_lhs).append(_rhs);
+inline String operator+(const String& _lhs, const char* _rhs) {
+  return String(_lhs).append(_rhs);
 }
 
-inline string operator+(const string& _lhs, const string& _rhs) {
-  return string(_lhs).append(_rhs);
+inline String operator+(const String& _lhs, const String& _rhs) {
+  return String(_lhs).append(_rhs);
 }
 
-inline string operator+(const string& _lhs, const char _ch) {
-  return string(_lhs).append(_ch);
+inline String operator+(const String& _lhs, const char _ch) {
+  return String(_lhs).append(_ch);
 }
 
-inline string& operator+=(string& lhs_, const char* rhs) {
+inline String& operator+=(String& lhs_, const char* rhs) {
   lhs_.append(rhs);
   return lhs_;
 }
 
-inline string& operator+=(string& lhs_, char ch) {
+inline String& operator+=(String& lhs_, char ch) {
   lhs_.append(ch);
   return lhs_;
 }
 
-inline string& operator+=(string& lhs_, const string& _contents) {
+inline String& operator+=(String& lhs_, const String& _contents) {
   lhs_.append(_contents);
   return lhs_;
 }
 
 // not inlined since it would explode code size
-bool operator==(const string& lhs, const string& rhs);
-bool operator!=(const string& lhs, const string& rhs);
-bool operator<(const string& lhs, const string& rhs);
-bool operator>(const string& lhs, const string& rhs);
+bool operator==(const String& lhs, const String& rhs);
+bool operator!=(const String& lhs, const String& rhs);
+bool operator<(const String& lhs, const String& rhs);
+bool operator>(const String& lhs, const String& rhs);
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& string::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& String::allocator() const {
   return m_allocator;
 }
 
-// wide_string
-inline wide_string::wide_string()
-  : wide_string{memory::system_allocator::instance()}
+// WideString
+inline WideString::WideString()
+  : WideString{Memory::SystemAllocator::instance()}
 {
 }
 
-inline wide_string::wide_string(const rx_u16* _contents)
-  : wide_string{memory::system_allocator::instance(), _contents}
+inline WideString::WideString(const Uint16* _contents)
+  : WideString{Memory::SystemAllocator::instance(), _contents}
 {
 }
 
-inline wide_string::wide_string(const rx_u16* _contents, rx_size _size)
-  : wide_string{memory::system_allocator::instance(), _contents, _size}
+inline WideString::WideString(const Uint16* _contents, Size _size)
+  : WideString{Memory::SystemAllocator::instance(), _contents, _size}
 {
 }
 
-inline wide_string::wide_string(const wide_string& _other)
-  : wide_string{_other.allocator(), _other}
+inline WideString::WideString(const WideString& _other)
+  : WideString{_other.allocator(), _other}
 {
 }
 
-RX_HINT_FORCE_INLINE rx_size wide_string::size() const {
+RX_HINT_FORCE_INLINE Size WideString::size() const {
   return m_size;
 }
 
-RX_HINT_FORCE_INLINE bool wide_string::is_empty() const {
+RX_HINT_FORCE_INLINE bool WideString::is_empty() const {
   return m_size == 0;
 }
 
-inline rx_u16& wide_string::operator[](rx_size _index) {
+inline Uint16& WideString::operator[](Size _index) {
   RX_ASSERT(_index <= m_size, "out of bounds");
   return m_data[_index];
 }
 
-inline const rx_u16& wide_string::operator[](rx_size _index) const {
+inline const Uint16& WideString::operator[](Size _index) const {
   RX_ASSERT(_index <= m_size, "out of bounds");
   return m_data[_index];
 }
 
-RX_HINT_FORCE_INLINE rx_u16* wide_string::data() {
+RX_HINT_FORCE_INLINE Uint16* WideString::data() {
   return m_data;
 }
 
-RX_HINT_FORCE_INLINE const rx_u16* wide_string::data() const {
+RX_HINT_FORCE_INLINE const Uint16* WideString::data() const {
   return m_data;
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& wide_string::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& WideString::allocator() const {
   return m_allocator;
 }
 
-rx_size utf16_to_utf8(const rx_u16* _utf16_contents, rx_size _length,
+Size utf16_to_utf8(const Uint16* _utf16_contents, Size _length,
   char* utf8_contents_);
 
-rx_size utf8_to_utf16(const char* _utf8_contents, rx_size _length,
-  rx_u16* utf16_contents_);
+Size utf8_to_utf16(const char* _utf8_contents, Size _length,
+  Uint16* utf16_contents_);
 
-RX_HINT_FORCE_INLINE rx::string operator""_s(const char* _contents, rx_size _length) {
+RX_HINT_FORCE_INLINE Rx::String operator""_s(const char* _contents, Size _length) {
   return {_contents, _length};
 }
 

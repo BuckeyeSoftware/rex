@@ -9,36 +9,36 @@
 #include "rx/core/string.h"
 #include "rx/core/string_table.h"
 
-namespace rx {
-struct stream;
+namespace Rx {
+struct Stream;
 } // namespace rx
 
-namespace rx::serialize {
+namespace Rx::serialize {
 
-struct encoder {
-  encoder(stream* _stream);
-  encoder(memory::allocator& _allocator, stream* _stream);
-  ~encoder();
+struct Encoder {
+  Encoder(Stream* _stream);
+  Encoder(Memory::Allocator& _allocator, Stream* _stream);
+  ~Encoder();
 
-  [[nodiscard]] bool write_uint(rx_u64 _value);
-  [[nodiscard]] bool write_sint(rx_s64 _value);
-  [[nodiscard]] bool write_float(rx_f32 _value);
+  [[nodiscard]] bool write_uint(Uint64 _value);
+  [[nodiscard]] bool write_sint(Sint64 _value);
+  [[nodiscard]] bool write_float(Float32 _value);
   [[nodiscard]] bool write_bool(bool _value);
-  [[nodiscard]] bool write_byte(rx_byte _value);
-  [[nodiscard]] bool write_string(const char* _string, rx_size _size);
-  [[nodiscard]] bool write_string(const string& _string);
+  [[nodiscard]] bool write_byte(Byte _value);
+  [[nodiscard]] bool write_string(const char* _string, Size _size);
+  [[nodiscard]] bool write_string(const String& _string);
 
-  [[nodiscard]] bool write_float_array(const rx_f32* _value, rx_size _count);
-  [[nodiscard]] bool write_byte_array(const rx_byte* _data, rx_size _size);
-
-  template<typename T>
-  [[nodiscard]] bool write_uint_array(const T* _data, rx_size _count);
+  [[nodiscard]] bool write_float_array(const Float32* _value, Size _count);
+  [[nodiscard]] bool write_byte_array(const Byte* _data, Size _size);
 
   template<typename T>
-  [[nodiscard]] bool write_sint_array(const T* _data, rx_size _count);
+  [[nodiscard]] bool write_uint_array(const T* _data, Size _count);
 
-  const string& message() const &;
-  constexpr memory::allocator& allocator() const;
+  template<typename T>
+  [[nodiscard]] bool write_sint_array(const T* _data, Size _count);
+
+  const String& message() const &;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
   template<typename... Ts>
@@ -47,33 +47,33 @@ private:
   [[nodiscard]] bool write_header();
   [[nodiscard]] bool finalize();
 
-  memory::allocator& m_allocator;
-  stream* m_stream;
+  Memory::Allocator& m_allocator;
+  Stream* m_stream;
 
-  header m_header;
-  buffer m_buffer;
-  string m_message;
-  string_table m_strings;
+  Header m_header;
+  Buffer m_buffer;
+  String m_message;
+  StringTable m_strings;
 };
 
-inline encoder::encoder(stream* _stream)
-  : encoder{memory::system_allocator::instance(), _stream}
+inline Encoder::Encoder(Stream* _stream)
+  : Encoder{Memory::SystemAllocator::instance(), _stream}
 {
 }
 
-inline bool encoder::write_string(const string& _string) {
+inline bool Encoder::write_string(const String& _string) {
   return write_string(_string.data(), _string.size());
 }
 
 template<typename T>
-inline bool encoder::write_uint_array(const T* _data, rx_size _count) {
-  static_assert(traits::is_unsigned<T>, "T isn't unsigned integer type");
+inline bool Encoder::write_uint_array(const T* _data, Size _count) {
+  static_assert(traits::is_unsigned<T>, "T isn't unsigned integer Type");
 
   if (!write_uint(_count)) {
     return false;
   }
 
-  for (rx_size i = 0; i < _count; i++) {
+  for (Size i = 0; i < _count; i++) {
     if (!write_uint(_data[i])) {
       return false;
     }
@@ -83,14 +83,14 @@ inline bool encoder::write_uint_array(const T* _data, rx_size _count) {
 }
 
 template<typename T>
-inline bool encoder::write_sint_array(const T* _data, rx_size _count) {
-  static_assert(traits::is_signed<T>, "T isn't signed integer type");
+inline bool Encoder::write_sint_array(const T* _data, Size _count) {
+  static_assert(traits::is_signed<T>, "T isn't signed integer Type");
 
   if (!write_uint(_count)) {
     return false;
   }
 
-  for (rx_size i = 0; i < _count; i++) {
+  for (Size i = 0; i < _count; i++) {
     if (!write_uint(_data[i])) {
       return false;
     }
@@ -99,17 +99,17 @@ inline bool encoder::write_sint_array(const T* _data, rx_size _count) {
   return true;
 }
 
-inline const string& encoder::message() const & {
+inline const String& Encoder::message() const & {
   return m_message;
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& encoder::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Encoder::allocator() const {
   return m_allocator;
 }
 
 template<typename... Ts>
-inline bool encoder::error(const char* _format, Ts&&... _arguments) {
-  m_message = string::format(allocator(), _format, utility::forward<Ts>(_arguments)...);
+inline bool Encoder::error(const char* _format, Ts&&... _arguments) {
+  m_message = String::format(allocator(), _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 

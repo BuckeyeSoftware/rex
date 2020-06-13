@@ -6,7 +6,7 @@
 
 #include "rx/core/math/floor.h"
 
-namespace rx {
+namespace Rx {
 
 static const char* json_parse_error_to_string(enum json_parse_error_e _error) {
   switch (_error) {
@@ -37,12 +37,12 @@ static const char* json_parse_error_to_string(enum json_parse_error_e _error) {
   }
 }
 
-static void* json_allocator(void* _user, rx_size _size) {
-  auto allocator{reinterpret_cast<memory::allocator*>(_user)};
+static void* json_allocator(void* _user, Size _size) {
+  auto allocator{reinterpret_cast<Memory::Allocator*>(_user)};
   return allocator->allocate(_size);
 }
 
-json::shared::shared(memory::allocator& _allocator, const char* _contents, rx_size _length)
+JSON::Shared::Shared(Memory::Allocator& _allocator, const char* _contents, Size _length)
   : m_allocator{_allocator}
   , m_root{nullptr}
   , m_count{1}
@@ -57,28 +57,28 @@ json::shared::shared(memory::allocator& _allocator, const char* _contents, rx_si
     &m_error);
 }
 
-json::shared* json::shared::acquire() {
+JSON::Shared* JSON::Shared::acquire() {
   RX_ASSERT(m_count, "consistency check failed");
   m_count++;
   return this;
 }
 
-void json::shared::release() {
+void JSON::Shared::release() {
   if (--m_count == 0) {
-    m_allocator.destroy<shared>(this);
+    m_allocator.destroy<Shared>(this);
   }
 }
 
-json::shared::~shared() {
+JSON::Shared::~Shared() {
   m_allocator.deallocate(m_root);
 }
 
-json::json(memory::allocator& _allocator, const char* _contents, rx_size _length)
+JSON::JSON(Memory::Allocator& _allocator, const char* _contents, Size _length)
   : m_shared{nullptr}
   , m_value{nullptr}
 {
   // Construct the shared state.
-  m_shared = _allocator.create<shared>(_allocator, _contents, _length);
+  m_shared = _allocator.create<Shared>(_allocator, _contents, _length);
   RX_ASSERT(m_shared, "out of memory");
 
   // We hold a reference to the shared state already. Just take the root JSON
@@ -86,60 +86,61 @@ json::json(memory::allocator& _allocator, const char* _contents, rx_size _length
   m_value = m_shared->m_root;
 }
 
-json::json(memory::allocator& _allocator, const char* _contents)
-  : json{_allocator, _contents, strlen(_contents)}
+JSON::JSON(Memory::Allocator& _allocator, const char* _contents)
+  : JSON{_allocator, _contents, strlen(_contents)}
 {
 }
 
-json::json(const char* _contents)
-  : json{memory::system_allocator::instance(), _contents, strlen(_contents)}
+JSON::JSON(const char* _contents)
+  : JSON{Memory::SystemAllocator::instance(), _contents, strlen(_contents)}
 {
 }
 
-json::json(shared* _shared, struct json_value_s* _value)
+JSON::JSON(Shared* _shared, struct json_value_s* _value)
   : m_shared{_shared->acquire()}
   , m_value{_value}
 {
 }
 
-optional<string> json::error() const {
+Optional<String> JSON::error() const {
   if (m_shared) {
-    const auto code{static_cast<enum json_parse_error_e>(m_shared->m_error.error)};
-    return string::format("%zu:%zu %s", m_shared->m_error.error_line_no,
+    const auto code =
+      static_cast<enum json_parse_error_e>(m_shared->m_error.error);
+    return String::format("%zu:%zu %s", m_shared->m_error.error_line_no,
       m_shared->m_error.error_row_no, json_parse_error_to_string(code));
   }
   return nullopt;
 }
 
-bool json::is_type(type _type) const {
+bool JSON::is_type(Type _type) const {
   switch (_type) {
-  case type::k_array:
+  case Type::k_array:
     return m_value->type == json_type_array;
-  case type::k_boolean:
+  case Type::k_boolean:
     return m_value->type == json_type_true || m_value->type == json_type_false;
-  case type::k_integer:
-    return m_value->type == json_type_number && math::floor(as_number()) == as_number();
-  case type::k_null:
+  case Type::k_integer:
+    return m_value->type == json_type_number && Math::floor(as_number()) == as_number();
+  case Type::k_null:
     return !m_value || m_value->type == json_type_null;
-  case type::k_number:
+  case Type::k_number:
     return m_value->type == json_type_number;
-  case type::k_object:
+  case Type::k_object:
     return m_value->type == json_type_object;
-  case type::k_string:
+  case Type::k_string:
     return m_value->type == json_type_string;
   }
 
   RX_HINT_UNREACHABLE();
 }
 
-json json::operator[](rx_size _index) const {
-  RX_ASSERT(is_array() || is_object(), "not an indexable type");
+JSON JSON::operator[](Size _index) const {
+  RX_ASSERT(is_array() || is_object(), "not an indexable Type");
 
   if (is_array()) {
     auto array{reinterpret_cast<struct json_array_s*>(m_value->payload)};
     auto element{array->start};
     RX_ASSERT(_index < array->length, "out of bounds");
-    for (rx_size i{0}; i < _index; i++) {
+    for (Size i{0}; i < _index; i++) {
       element = element->next;
     }
     return {m_shared, element->value};
@@ -147,7 +148,7 @@ json json::operator[](rx_size _index) const {
     auto object{reinterpret_cast<struct json_object_s*>(m_value->payload)};
     auto element{object->start};
     RX_ASSERT(_index < object->length, "out of bounds");
-    for (rx_size i{0}; i < _index; i++) {
+    for (Size i{0}; i < _index; i++) {
       element = element->next;
     }
     return {m_shared, element->value};
@@ -156,27 +157,27 @@ json json::operator[](rx_size _index) const {
   return {};
 }
 
-bool json::as_boolean() const {
+bool JSON::as_boolean() const {
   RX_ASSERT(is_boolean(), "not a boolean");
   return m_value->type == json_type_true;
 }
 
-rx_f64 json::as_number() const {
+Float64 JSON::as_number() const {
   RX_ASSERT(is_number(), "not a number");
   auto number{reinterpret_cast<struct json_number_s*>(m_value->payload)};
   return strtod(number->number, nullptr);
 }
 
-rx_f32 json::as_float() const {
-  return static_cast<rx_f32>(as_number());
+Float32 JSON::as_float() const {
+  return static_cast<Float32>(as_number());
 }
 
-rx_s32 json::as_integer() const {
+Sint32 JSON::as_integer() const {
   RX_ASSERT(is_integer(), "not a integer");
-  return static_cast<rx_s32>(as_number());
+  return static_cast<Sint32>(as_number());
 }
 
-json json::operator[](const char* _name) const {
+JSON JSON::operator[](const char* _name) const {
   RX_ASSERT(is_object(), "not a object");
   auto object{reinterpret_cast<struct json_object_s*>(m_value->payload)};
   for (auto element{object->start}; element; element = element->next) {
@@ -187,14 +188,14 @@ json json::operator[](const char* _name) const {
   return {};
 }
 
-string json::as_string_with_allocator(memory::allocator& _allocator) const {
+String JSON::as_string_with_allocator(Memory::Allocator& _allocator) const {
   RX_ASSERT(is_string(), "not a string");
   auto string{reinterpret_cast<struct json_string_s*>(m_value->payload)};
   return {_allocator, string->string, string->string_size};
 }
 
-rx_size json::size() const {
-  RX_ASSERT(is_array() || is_object(), "not an indexable type");
+Size JSON::size() const {
+  RX_ASSERT(is_array() || is_object(), "not an indexable Type");
   switch (m_value->type) {
   case json_type_array:
     return reinterpret_cast<struct json_array_s*>(m_value->payload)->length;

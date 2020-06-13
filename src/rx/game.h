@@ -2,12 +2,12 @@
 #define RX_GAME_H
 #include "rx/core/concepts/interface.h"
 
-#include "rx/input/input.h"
+#include "rx/input/context.h"
 
-namespace rx {
+namespace Rx {
 
-struct game
-  : concepts::interface
+struct Game
+  : Concepts::Interface
 {
   enum class status {
     k_running,
@@ -16,8 +16,8 @@ struct game
   };
 
   virtual bool on_init() = 0;
-  virtual status on_slice(input::input& _input) = 0;
-  virtual void on_resize(const math::vec2z& _resolution) = 0;
+  virtual status on_slice(Input::Context& _input) = 0;
+  virtual void on_resize(const Math::Vec2z& _resolution) = 0;
 };
 
 } // namespace rx

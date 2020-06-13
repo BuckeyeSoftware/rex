@@ -2,36 +2,36 @@
 #define RX_RENDER_FRONTEND_STATE_H
 #include "rx/math/vec2.h"
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
-struct scissor_state {
-  scissor_state();
+struct ScissorState {
+  ScissorState();
 
   void record_enable(bool _enable);
-  void record_offset(const math::vec2i& _offset);
-  void record_size(const math::vec2i& _size);
+  void record_offset(const Math::Vec2i& _offset);
+  void record_size(const Math::Vec2i& _size);
 
   bool enabled() const;
-  const math::vec2i& offset() const;
-  const math::vec2i& size() const;
+  const Math::Vec2i& offset() const;
+  const Math::Vec2i& size() const;
 
-  bool operator!=(const scissor_state& _other) const;
-  bool operator==(const scissor_state& _other) const;
+  bool operator!=(const ScissorState& _other) const;
+  bool operator==(const ScissorState& _other) const;
 
-  rx_size flush();
+  Size flush();
 
 private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
-  rx_size m_hash;
+  static constexpr Size k_dirty_bit{1_z << (sizeof(Size) * 8 - 1)};
+  Size m_hash;
 
-  math::vec2i m_offset;
-  math::vec2i m_size;
+  Math::Vec2i m_offset;
+  Math::Vec2i m_size;
 
   bool m_enabled;
 };
 
-struct blend_state {
-  enum class factor_type : rx_u8 {
+struct BlendState {
+  enum class FactorType : Uint8 {
     k_zero,
     k_one,
     k_src_color,
@@ -49,43 +49,43 @@ struct blend_state {
     k_src_alpha_saturate
   };
 
-  static constexpr const rx_u8 k_mask_all{(1 << 4)-1};
+  static constexpr const Uint8 k_mask_all{(1 << 4) - 1};
 
-  blend_state();
+  BlendState();
 
   void record_enable(bool _enable);
-  void record_blend_factors(factor_type _src, factor_type _dst);
-  void record_color_blend_factors(factor_type _src, factor_type _dst);
-  void record_alpha_blend_factors(factor_type _src, factor_type _dst);
-  void record_write_mask(rx_u8 _write_mask);
+  void record_blend_factors(FactorType _src, FactorType _dst);
+  void record_color_blend_factors(FactorType _src, FactorType _dst);
+  void record_alpha_blend_factors(FactorType _src, FactorType _dst);
+  void record_write_mask(Uint8 _write_mask);
 
   bool enabled() const;
-  factor_type color_src_factor() const;
-  factor_type color_dst_factor() const;
-  factor_type alpha_src_factor() const;
-  factor_type alpha_dst_factor() const;
-  rx_u8 write_mask() const;
+  FactorType color_src_factor() const;
+  FactorType color_dst_factor() const;
+  FactorType alpha_src_factor() const;
+  FactorType alpha_dst_factor() const;
+  Uint8 write_mask() const;
 
-  bool operator!=(const blend_state& _other) const;
-  bool operator==(const blend_state& _other) const;
+  bool operator!=(const BlendState& _other) const;
+  bool operator==(const BlendState& _other) const;
 
-  rx_size flush();
+  Size flush();
 
 private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
-  rx_size m_hash;
+  static constexpr Size k_dirty_bit{1_z << (sizeof(Size) * 8 - 1)};
+  Size m_hash;
 
-  factor_type m_color_src_factor;
-  factor_type m_color_dst_factor;
-  factor_type m_alpha_src_factor;
-  factor_type m_alpha_dst_factor;
-  rx_u8 m_write_mask;
+  FactorType m_color_src_factor;
+  FactorType m_color_dst_factor;
+  FactorType m_alpha_src_factor;
+  FactorType m_alpha_dst_factor;
+  Uint8 m_write_mask;
 
   bool m_enabled;
 };
 
-struct depth_state {
-  depth_state();
+struct DepthState {
+  DepthState();
 
   void record_test(bool _test);
   void record_write(bool _write);
@@ -93,60 +93,60 @@ struct depth_state {
   bool test() const;
   bool write() const;
 
-  bool operator!=(const depth_state& _other) const;
-  bool operator==(const depth_state& _other) const;
+  bool operator!=(const DepthState& _other) const;
+  bool operator==(const DepthState& _other) const;
 
-  rx_size flush();
+  Size flush();
 
 private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
-  rx_size m_hash;
+  static constexpr Size k_dirty_bit{1_z << (sizeof(Size) * 8 - 1)};
+  Size m_hash;
 
   enum {
     k_test = 1 << 0,
     k_write = 1 << 1
   };
 
-  rx_u8 m_flags;
+  Uint8 m_flags;
 };
 
-struct cull_state {
-  enum class front_face_type : rx_u8 {
+struct CullState {
+  enum class FrontFaceType : Uint8 {
     k_clock_wise,
     k_counter_clock_wise
   };
 
-  enum class cull_face_type : rx_u8 {
+  enum class CullFaceType : Uint8 {
     k_front,
     k_back
   };
 
-  cull_state();
+  CullState();
 
   void record_enable(bool _enable);
-  void record_front_face(front_face_type _front_face);
-  void record_cull_face(cull_face_type _cull_face);
+  void record_front_face(FrontFaceType _front_face);
+  void record_cull_face(CullFaceType _cull_face);
 
   bool enabled() const;
-  front_face_type front_face() const;
-  cull_face_type cull_face() const;
+  FrontFaceType front_face() const;
+  CullFaceType cull_face() const;
 
-  bool operator!=(const cull_state& _other) const;
-  bool operator==(const cull_state& _other) const;
+  bool operator!=(const CullState& _other) const;
+  bool operator==(const CullState& _other) const;
 
-  rx_size flush();
+  Size flush();
 
 private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
-  rx_size m_hash;
+  static constexpr Size k_dirty_bit{1_z << (sizeof(Size) * 8 - 1)};
+  Size m_hash;
 
-  front_face_type m_front_face;
-  cull_face_type m_cull_face;
+  FrontFaceType m_front_face;
+  CullFaceType m_cull_face;
   bool m_enabled;
 };
 
-struct stencil_state {
-  enum class function_type : rx_u8 {
+struct StencilState {
+  enum class FunctionType : Uint8 {
     k_never,
     k_less,
     k_less_equal,
@@ -157,7 +157,7 @@ struct stencil_state {
     k_always
   };
 
-  enum class operation_type : rx_u8 {
+  enum class OperationType : Uint8 {
     k_keep,
     k_zero,
     k_replace,
@@ -168,216 +168,216 @@ struct stencil_state {
     k_invert
   };
 
-  stencil_state();
+  StencilState();
 
   void record_enable(bool _enable);
-  void record_write_mask(rx_u8 _write_mask);
-  void record_function(function_type _function);
-  void record_reference(rx_u8 _reference);
-  void record_mask(rx_u8 _mask);
+  void record_write_mask(Uint8 _write_mask);
+  void record_function(FunctionType _function);
+  void record_reference(Uint8 _reference);
+  void record_mask(Uint8 _mask);
 
-  void record_fail_action(operation_type _action);
-  void record_depth_fail_action(operation_type _action);
-  void record_depth_pass_action(operation_type _action);
+  void record_fail_action(OperationType _action);
+  void record_depth_fail_action(OperationType _action);
+  void record_depth_pass_action(OperationType _action);
 
-  void record_front_fail_action(operation_type _action);
-  void record_front_depth_fail_action(operation_type _action);
-  void record_front_depth_pass_action(operation_type _action);
+  void record_front_fail_action(OperationType _action);
+  void record_front_depth_fail_action(OperationType _action);
+  void record_front_depth_pass_action(OperationType _action);
 
-  void record_back_fail_action(operation_type _action);
-  void record_back_depth_fail_action(operation_type _action);
-  void record_back_depth_pass_action(operation_type _action);
+  void record_back_fail_action(OperationType _action);
+  void record_back_depth_fail_action(OperationType _action);
+  void record_back_depth_pass_action(OperationType _action);
 
   bool enabled() const;
-  rx_u8 write_mask() const;
-  function_type function() const;
-  rx_u8 reference() const;
-  rx_u8 mask() const;
-  operation_type front_fail_action() const;
-  operation_type front_depth_fail_action() const;
-  operation_type front_depth_pass_action() const;
-  operation_type back_fail_action() const;
-  operation_type back_depth_fail_action() const;
-  operation_type back_depth_pass_action() const;
+  Uint8 write_mask() const;
+  FunctionType function() const;
+  Uint8 reference() const;
+  Uint8 mask() const;
+  OperationType front_fail_action() const;
+  OperationType front_depth_fail_action() const;
+  OperationType front_depth_pass_action() const;
+  OperationType back_fail_action() const;
+  OperationType back_depth_fail_action() const;
+  OperationType back_depth_pass_action() const;
 
-  bool operator!=(const stencil_state& _other) const;
-  bool operator==(const stencil_state& _other) const;
+  bool operator!=(const StencilState& _other) const;
+  bool operator==(const StencilState& _other) const;
 
-  rx_size flush();
+  Size flush();
 
 private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
-  rx_size m_hash;
+  static constexpr Size k_dirty_bit{1_z << (sizeof(Size) * 8 - 1)};
+  Size m_hash;
 
-  rx_u8 m_write_mask;
-  function_type m_function;
-  rx_u8 m_reference;
-  rx_u8 m_mask;
-  operation_type m_front_fail_action;
-  operation_type m_front_depth_fail_action;
-  operation_type m_front_depth_pass_action;
-  operation_type m_back_fail_action;
-  operation_type m_back_depth_fail_action;
-  operation_type m_back_depth_pass_action;
+  Uint8 m_write_mask;
+  FunctionType m_function;
+  Uint8 m_reference;
+  Uint8 m_mask;
+  OperationType m_front_fail_action;
+  OperationType m_front_depth_fail_action;
+  OperationType m_front_depth_pass_action;
+  OperationType m_back_fail_action;
+  OperationType m_back_depth_fail_action;
+  OperationType m_back_depth_pass_action;
   bool m_enabled;
 };
 
-struct polygon_state {
-  polygon_state();
+struct PolygonState {
+  PolygonState();
 
-  enum class mode_type : rx_u8 {
+  enum class ModeType : Uint8 {
     k_point,
     k_line,
     k_fill
   };
 
-  void record_mode(mode_type _mode);
+  void record_mode(ModeType _mode);
 
-  mode_type mode() const;
+  ModeType mode() const;
 
-  bool operator!=(const polygon_state& _other) const;
-  bool operator==(const polygon_state& _other) const;
+  bool operator!=(const PolygonState& _other) const;
+  bool operator==(const PolygonState& _other) const;
 
-  rx_size flush();
-
-private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
-  rx_size m_hash;
-
-  mode_type m_mode;
-};
-
-struct viewport_state {
-  viewport_state();
-
-  void record_offset(const math::vec2i& _offset);
-  void record_dimensions(const math::vec2z& _dimensions);
-
-  const math::vec2i& offset() const &;
-  const math::vec2z& dimensions() const &;
-
-  bool operator!=(const viewport_state& _other) const;
-  bool operator==(const viewport_state& _other) const;
-
-  rx_size flush();
+  Size flush();
 
 private:
-  static constexpr rx_size k_dirty_bit{1_z << (sizeof(rx_size)*8 - 1)};
-  rx_size m_hash;
+  static constexpr Size k_dirty_bit{1_z << (sizeof(Size) * 8 - 1)};
+  Size m_hash;
 
-  math::vec2i m_offset;
-  math::vec2z m_dimensions;
+  ModeType m_mode;
+};
+
+struct ViewportState {
+  ViewportState();
+
+  void record_offset(const Math::Vec2i& _offset);
+  void record_dimensions(const Math::Vec2z& _dimensions);
+
+  const Math::Vec2i& offset() const &;
+  const Math::Vec2z& dimensions() const &;
+
+  bool operator!=(const ViewportState& _other) const;
+  bool operator==(const ViewportState& _other) const;
+
+  Size flush();
+
+private:
+  static constexpr Size k_dirty_bit{1_z << (sizeof(Size) * 8 - 1)};
+  Size m_hash;
+
+  Math::Vec2i m_offset;
+  Math::Vec2z m_dimensions;
 };
 
 
-struct state {
-  scissor_state scissor;
-  blend_state blend;
-  depth_state depth;
-  cull_state cull;
-  stencil_state stencil;
-  polygon_state polygon;
-  viewport_state viewport;
+struct State {
+  ScissorState scissor;
+  BlendState blend;
+  DepthState depth;
+  CullState cull;
+  StencilState stencil;
+  PolygonState polygon;
+  ViewportState viewport;
 
   void flush();
 
-  bool operator==(const state& _state) const;
-  bool operator!=(const state& _state) const;
+  bool operator==(const State& _state) const;
+  bool operator!=(const State& _state) const;
 
 private:
-  rx_size m_hash;
+  Size m_hash;
 };
 
 // scissor_state
-inline void scissor_state::record_enable(bool _enable) {
+inline void ScissorState::record_enable(bool _enable) {
   m_enabled = _enable;
   m_hash |= k_dirty_bit;
 }
 
-inline void scissor_state::record_offset(const math::vec2i& _offset) {
+inline void ScissorState::record_offset(const Math::Vec2i& _offset) {
   m_offset = _offset;
   m_hash |= k_dirty_bit;
 }
 
-inline void scissor_state::record_size(const math::vec2i& _size) {
+inline void ScissorState::record_size(const Math::Vec2i& _size) {
   m_size = _size;
   m_hash = k_dirty_bit;
 }
 
-inline bool scissor_state::enabled() const {
+inline bool ScissorState::enabled() const {
   return m_enabled;
 }
 
-inline const math::vec2i& scissor_state::offset() const {
+inline const Math::Vec2i& ScissorState::offset() const {
   return m_offset;
 }
 
-inline const math::vec2i& scissor_state::size() const {
+inline const Math::Vec2i& ScissorState::size() const {
   return m_size;
 }
 
-inline bool scissor_state::operator!=(const scissor_state& _other) const {
+inline bool ScissorState::operator!=(const ScissorState& _other) const {
   return !operator==(_other);
 }
 
 // blend_state
-inline void blend_state::record_enable(bool _enable) {
+inline void BlendState::record_enable(bool _enable) {
   m_enabled = _enable;
   m_hash |= k_dirty_bit;
 }
 
-inline void blend_state::record_blend_factors(factor_type _src, factor_type _dst) {
+inline void BlendState::record_blend_factors(FactorType _src, FactorType _dst) {
   record_color_blend_factors(_src, _dst);
   record_alpha_blend_factors(_src, _dst);
 }
 
-inline void blend_state::record_color_blend_factors(factor_type _src, factor_type _dst) {
+inline void BlendState::record_color_blend_factors(FactorType _src, FactorType _dst) {
   m_color_src_factor = _src;
   m_color_dst_factor = _dst;
   m_hash |= k_dirty_bit;
 }
 
-inline void blend_state::record_alpha_blend_factors(factor_type _src, factor_type _dst) {
+inline void BlendState::record_alpha_blend_factors(FactorType _src, FactorType _dst) {
   m_alpha_src_factor = _src;
   m_alpha_dst_factor = _dst;
   m_hash |= k_dirty_bit;
 }
 
-inline void blend_state::record_write_mask(rx_u8 _write_mask) {
+inline void BlendState::record_write_mask(Uint8 _write_mask) {
   m_write_mask = _write_mask;
   m_hash |= k_dirty_bit;
 }
 
-inline bool blend_state::enabled() const {
+inline bool BlendState::enabled() const {
   return m_enabled;
 }
 
-inline blend_state::factor_type blend_state::color_src_factor() const {
+inline BlendState::FactorType BlendState::color_src_factor() const {
   return m_color_src_factor;
 }
 
-inline blend_state::factor_type blend_state::color_dst_factor() const {
+inline BlendState::FactorType BlendState::color_dst_factor() const {
   return m_color_dst_factor;
 }
 
-inline blend_state::factor_type blend_state::alpha_src_factor() const {
+inline BlendState::FactorType BlendState::alpha_src_factor() const {
   return m_alpha_src_factor;
 }
 
-inline blend_state::factor_type blend_state::alpha_dst_factor() const {
+inline BlendState::FactorType BlendState::alpha_dst_factor() const {
   return m_alpha_dst_factor;
 }
 
-inline rx_u8 blend_state::write_mask() const {
+inline Uint8 BlendState::write_mask() const {
   return m_write_mask;
 }
 
-inline bool blend_state::operator!=(const blend_state& _other) const {
+inline bool BlendState::operator!=(const BlendState& _other) const {
   return !operator==(_other);
 }
 
 // depth_state
-inline void depth_state::record_test(bool _test) {
+inline void DepthState::record_test(bool _test) {
   if (_test) {
     m_flags |= k_test;
   } else {
@@ -386,7 +386,7 @@ inline void depth_state::record_test(bool _test) {
   m_hash |= k_dirty_bit;
 }
 
-inline void depth_state::record_write(bool _write) {
+inline void DepthState::record_write(bool _write) {
   if (_write) {
     m_flags |= k_write;
   } else {
@@ -395,212 +395,212 @@ inline void depth_state::record_write(bool _write) {
   m_hash |= k_dirty_bit;
 }
 
-inline bool depth_state::test() const {
+inline bool DepthState::test() const {
   return m_flags & k_test;
 }
 
-inline bool depth_state::write() const {
+inline bool DepthState::write() const {
   return m_flags & k_write;
 }
 
-inline bool depth_state::operator!=(const depth_state& _other) const {
+inline bool DepthState::operator!=(const DepthState& _other) const {
   return !operator==(_other);
 }
 
 // cull_state
-inline void cull_state::record_enable(bool _enable) {
+inline void CullState::record_enable(bool _enable) {
   m_enabled = _enable;
   m_hash |= k_dirty_bit;
 }
 
-inline void cull_state::record_front_face(front_face_type _front_face) {
+inline void CullState::record_front_face(FrontFaceType _front_face) {
   m_front_face = _front_face;
   m_hash |= k_dirty_bit;
 }
 
-inline void cull_state::record_cull_face(cull_face_type _cull_face) {
+inline void CullState::record_cull_face(CullFaceType _cull_face) {
   m_cull_face = _cull_face;
   m_hash |= k_dirty_bit;
 }
 
-inline bool cull_state::enabled() const {
+inline bool CullState::enabled() const {
   return m_enabled;
 }
 
-inline cull_state::front_face_type cull_state::front_face() const {
+inline CullState::FrontFaceType CullState::front_face() const {
   return m_front_face;
 }
 
-inline cull_state::cull_face_type cull_state::cull_face() const {
+inline CullState::CullFaceType CullState::cull_face() const {
   return m_cull_face;
 }
 
-inline bool cull_state::operator!=(const cull_state& _other) const {
+inline bool CullState::operator!=(const CullState& _other) const {
   return !operator==(_other);
 }
 
 // stencil_state
-inline void stencil_state::record_enable(bool _enable) {
+inline void StencilState::record_enable(bool _enable) {
   m_enabled = _enable;
   m_hash |= k_dirty_bit;
 }
 
-inline void stencil_state::record_write_mask(rx_u8 _write_mask) {
+inline void StencilState::record_write_mask(Uint8 _write_mask) {
   m_write_mask = _write_mask;
   m_hash |= k_dirty_bit;
 }
 
-inline void stencil_state::record_function(function_type _function) {
+inline void StencilState::record_function(FunctionType _function) {
   m_function = _function;
   m_hash |= k_dirty_bit;
 }
 
-inline void stencil_state::record_reference(rx_u8 _reference) {
+inline void StencilState::record_reference(Uint8 _reference) {
   m_reference = _reference;
   m_hash |= k_dirty_bit;
 }
 
-inline void stencil_state::record_mask(rx_u8 _mask) {
+inline void StencilState::record_mask(Uint8 _mask) {
   m_mask = _mask;
   m_hash |= k_dirty_bit;
 }
 
-inline void stencil_state::record_fail_action(operation_type _action) {
+inline void StencilState::record_fail_action(OperationType _action) {
   record_front_fail_action(_action);
   record_back_fail_action(_action);
 }
 
-inline void stencil_state::record_depth_fail_action(operation_type _action) {
+inline void StencilState::record_depth_fail_action(OperationType _action) {
   record_front_depth_fail_action(_action);
   record_back_depth_fail_action(_action);
 }
 
-inline void stencil_state::record_depth_pass_action(operation_type _action) {
+inline void StencilState::record_depth_pass_action(OperationType _action) {
   record_front_depth_pass_action(_action);
   record_back_depth_pass_action(_action);
 }
 
-inline void stencil_state::record_front_fail_action(operation_type _action) {
+inline void StencilState::record_front_fail_action(OperationType _action) {
   m_front_fail_action = _action;
   m_hash |= k_dirty_bit;
 }
 
-inline void stencil_state::record_front_depth_fail_action(operation_type _action) {
+inline void StencilState::record_front_depth_fail_action(OperationType _action) {
   m_front_depth_fail_action = _action;
   m_hash |= k_dirty_bit;
 }
 
-inline void stencil_state::record_front_depth_pass_action(operation_type _action) {
+inline void StencilState::record_front_depth_pass_action(OperationType _action) {
   m_front_depth_pass_action = _action;
   m_hash |= k_dirty_bit;
 }
 
-inline void stencil_state::record_back_fail_action(operation_type _action) {
+inline void StencilState::record_back_fail_action(OperationType _action) {
   m_back_fail_action = _action;
   m_hash |= k_dirty_bit;
 }
 
-inline void stencil_state::record_back_depth_fail_action(operation_type _action) {
+inline void StencilState::record_back_depth_fail_action(OperationType _action) {
   m_back_depth_fail_action = _action;
   m_hash |= k_dirty_bit;
 }
 
-inline void stencil_state::record_back_depth_pass_action(operation_type _action) {
+inline void StencilState::record_back_depth_pass_action(OperationType _action) {
   m_back_depth_pass_action = _action;
   m_hash |= k_dirty_bit;
 }
 
-inline bool stencil_state::enabled() const {
+inline bool StencilState::enabled() const {
   return m_enabled;
 }
 
-inline rx_u8 stencil_state::write_mask() const {
+inline Uint8 StencilState::write_mask() const {
   return m_write_mask;
 }
 
-inline stencil_state::function_type stencil_state::function() const {
+inline StencilState::FunctionType StencilState::function() const {
   return m_function;
 }
 
-inline rx_u8 stencil_state::reference() const {
+inline Uint8 StencilState::reference() const {
   return m_reference;
 }
 
-inline rx_u8 stencil_state::mask() const {
+inline Uint8 StencilState::mask() const {
   return m_mask;
 }
 
-inline stencil_state::operation_type stencil_state::front_fail_action() const {
+inline StencilState::OperationType StencilState::front_fail_action() const {
   return m_front_fail_action;
 }
 
-inline stencil_state::operation_type stencil_state::front_depth_fail_action() const {
+inline StencilState::OperationType StencilState::front_depth_fail_action() const {
   return m_front_depth_fail_action;
 }
 
-inline stencil_state::operation_type stencil_state::front_depth_pass_action() const {
+inline StencilState::OperationType StencilState::front_depth_pass_action() const {
   return m_front_depth_pass_action;
 }
 
-inline stencil_state::operation_type stencil_state::back_fail_action() const {
+inline StencilState::OperationType StencilState::back_fail_action() const {
   return m_back_fail_action;
 }
 
-inline stencil_state::operation_type stencil_state::back_depth_fail_action() const {
+inline StencilState::OperationType StencilState::back_depth_fail_action() const {
   return m_back_depth_fail_action;
 }
 
-inline stencil_state::operation_type stencil_state::back_depth_pass_action() const {
+inline StencilState::OperationType StencilState::back_depth_pass_action() const {
   return m_back_depth_pass_action;
 }
 
-inline bool stencil_state::operator!=(const stencil_state& _other) const {
+inline bool StencilState::operator!=(const StencilState& _other) const {
   return !operator==(_other);
 }
 
 // polygon_state
-inline void polygon_state::record_mode(mode_type _mode) {
+inline void PolygonState::record_mode(ModeType _mode) {
   m_mode = _mode;
   m_hash |= k_dirty_bit;
 }
 
-inline polygon_state::mode_type polygon_state::mode() const {
+inline PolygonState::ModeType PolygonState::mode() const {
   return m_mode;
 }
 
-inline bool polygon_state::operator!=(const polygon_state& _other) const {
+inline bool PolygonState::operator!=(const PolygonState& _other) const {
   return !operator==(_other);
 }
 
 // viewport_state
-inline void viewport_state::record_offset(const math::vec2i& _offset) {
+inline void ViewportState::record_offset(const Math::Vec2i& _offset) {
   m_offset = _offset;
   m_hash |= k_dirty_bit;
 }
 
-inline void viewport_state::record_dimensions(const math::vec2z& _dimensions) {
+inline void ViewportState::record_dimensions(const Math::Vec2z& _dimensions) {
   m_dimensions = _dimensions;
   m_hash |= k_dirty_bit;
 }
 
-inline const math::vec2i& viewport_state::offset() const & {
+inline const Math::Vec2i& ViewportState::offset() const & {
   return m_offset;
 }
 
-inline const math::vec2z& viewport_state::dimensions() const & {
+inline const Math::Vec2z& ViewportState::dimensions() const & {
   return m_dimensions;
 }
 
-inline bool viewport_state::operator!=(const viewport_state& _other) const {
+inline bool ViewportState::operator!=(const ViewportState& _other) const {
   return !operator==(_other);
 }
 
-inline bool viewport_state::operator==(const viewport_state& _other) const {
+inline bool ViewportState::operator==(const ViewportState& _other) const {
   return m_dimensions == _other.m_dimensions && m_offset == _other.m_offset;
 }
 
 // state
-inline bool state::operator!=(const state& _state) const {
+inline bool State::operator!=(const State& _state) const {
   return !operator==(_state);
 }
 

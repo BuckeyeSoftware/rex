@@ -1,5 +1,5 @@
 #include "rx/render/model.h"
-#include "rx/render/ibl.h"
+#include "rx/render/image_based_lighting.h"
 #include "rx/render/immediate3D.h"
 
 #include "rx/render/frontend/context.h"
@@ -11,9 +11,9 @@
 
 #include "rx/core/profiler.h"
 
-namespace rx::render {
+namespace Rx::Render {
 
-model::model(frontend::context* _frontend)
+Model::Model(Frontend::Context* _frontend)
   : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("geometry")}
   , m_buffer{nullptr}
@@ -24,54 +24,54 @@ model::model(frontend::context* _frontend)
 {
 }
 
-model::~model() {
+Model::~Model() {
   m_frontend->destroy_buffer(RX_RENDER_TAG("model"), m_buffer);
 }
 
-bool model::upload() {
+bool Model::upload() {
   m_frontend->destroy_buffer(RX_RENDER_TAG("model"), m_buffer);
   m_buffer = m_frontend->create_buffer(RX_RENDER_TAG("model"));
-  m_buffer->record_type(frontend::buffer::type::k_static);
+  m_buffer->record_type(Frontend::Buffer::Type::k_static);
 
   if (m_model.is_animated()) {
-    using vertex = rx::model::loader::animated_vertex;
-    const auto &vertices{m_model.animated_vertices()};
-    m_buffer->record_stride(sizeof(vertex));
-    m_buffer->record_attribute(frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, position));
-    m_buffer->record_attribute(frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, normal));
-    m_buffer->record_attribute(frontend::buffer::attribute::type::k_f32, 4, offsetof(vertex, tangent));
-    m_buffer->record_attribute(frontend::buffer::attribute::type::k_f32, 2, offsetof(vertex, coordinate));
-    m_buffer->record_attribute(frontend::buffer::attribute::type::k_u8, 4, offsetof(vertex, blend_weights));
-    m_buffer->record_attribute(frontend::buffer::attribute::type::k_u8, 4, offsetof(vertex, blend_indices));
-    m_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
+    using Vertex = Rx::Model::Loader::AnimatedVertex;
+    const auto &vertices = m_model.animated_vertices();
+    m_buffer->record_stride(sizeof(Vertex));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 3, offsetof(Vertex, position));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 3, offsetof(Vertex, normal));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 4, offsetof(Vertex, tangent));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 2, offsetof(Vertex, coordinate));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_u8, 4, offsetof(Vertex, blend_weights));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_u8, 4, offsetof(Vertex, blend_indices));
+    m_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(Vertex));
   } else {
-    using vertex = rx::model::loader::vertex;
+    using Vertex = Rx::Model::Loader::Vertex;
     const auto &vertices{m_model.vertices()};
-    m_buffer->record_stride(sizeof(vertex));
-    m_buffer->record_attribute(frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, position));
-    m_buffer->record_attribute(frontend::buffer::attribute::type::k_f32, 3, offsetof(vertex, normal));
-    m_buffer->record_attribute(frontend::buffer::attribute::type::k_f32, 4, offsetof(vertex, tangent));
-    m_buffer->record_attribute(frontend::buffer::attribute::type::k_f32, 2, offsetof(vertex, coordinate));
-    m_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(vertex));
+    m_buffer->record_stride(sizeof(Vertex));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 3, offsetof(Vertex, position));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 3, offsetof(Vertex, normal));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 4, offsetof(Vertex, tangent));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 2, offsetof(Vertex, coordinate));
+    m_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(Vertex));
   }
 
   const auto &elements{m_model.elements()};
-  m_buffer->record_element_type(frontend::buffer::element_type::k_u32);
-  m_buffer->write_elements(elements.data(), elements.size() * sizeof(rx_u32));
+  m_buffer->record_element_type(Frontend::Buffer::ElementType::k_u32);
+  m_buffer->write_elements(elements.data(), elements.size() * sizeof(Uint32));
   m_frontend->initialize_buffer(RX_RENDER_TAG("model"), m_buffer);
 
   m_materials.clear();
 
   // Map all the loaded material::loader's to render::frontend::material's while
   // using indices to refer to them rather than strings.
-  map<string, rx_size> material_indices{m_frontend->allocator()};
+  Map<String, Size> material_indices{m_frontend->allocator()};
   const bool material_load_result =
-    m_model.materials().each_pair([this, &material_indices](const string& _name, material::loader& material_) {
-      frontend::material material{m_frontend};
-      if (material.load(utility::move(material_))) {
-        const rx_size material_index{m_materials.size()};
+    m_model.materials().each_pair([this, &material_indices](const String& _name, Material::Loader& material_) {
+      Frontend::Material material{m_frontend};
+      if (material.load(Utility::move(material_))) {
+        const Size material_index{m_materials.size()};
         material_indices.insert(_name, material_index);
-        m_materials.push_back(utility::move(material));
+        m_materials.push_back(Utility::move(material));
         return true;
       }
       return false;
@@ -82,7 +82,7 @@ bool model::upload() {
   }
 
   // Resolve all the meshes of the loaded model.
-  m_model.meshes().each_fwd([this, &material_indices](const rx::model::mesh& _mesh) {
+  m_model.meshes().each_fwd([this, &material_indices](const Rx::Model::Mesh& _mesh) {
     if (auto* find = material_indices.find(_mesh.material)) {
       if (m_materials[*find].has_alpha()) {
         m_transparent_meshes.push_back({_mesh.offset, _mesh.count, *find, _mesh.bounds});
@@ -96,27 +96,27 @@ bool model::upload() {
   return true;
 }
 
-void model::animate(rx_size _index, [[maybe_unused]] bool _loop) {
+void Model::animate(Size _index, [[maybe_unused]] bool _loop) {
   if (m_model.is_animated()) {
     m_animation = {&m_model, _index};
   }
 }
 
-void model::update(rx_f32 _delta_time) {
+void Model::update(Float32 _delta_time) {
   if (m_animation) {
     m_animation->update(_delta_time, true);
   }
 }
 
-void model::render(frontend::target* _target, const math::mat4x4f& _model,
-  const math::mat4x4f& _view, const math::mat4x4f& _projection)
+void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
+                   const Math::Mat4x4f& _view, const Math::Mat4x4f& _projection)
 {
-  math::frustum frustum{_view * _projection};
+  Math::Frustum frustum{_view * _projection};
 
-  profiler::cpu_sample cpu_sample{"model::render"};
-  profiler::gpu_sample gpu_sample{"model::render"};
+  Profiler::CPUSample cpu_sample{"model::render"};
+  Profiler::GPUSample gpu_sample{"model::render"};
 
-  frontend::state state;
+  Frontend::State state;
 
   // Enable(DEPTH_TEST)
   state.depth.record_test(true);
@@ -131,16 +131,16 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
   state.blend.record_enable(false);
 
   // FrontFace(CW)
-  state.cull.record_front_face(frontend::cull_state::front_face_type::k_clock_wise);
+  state.cull.record_front_face(Frontend::CullState::FrontFaceType::k_clock_wise);
 
   // CullFace(BACK)
-  state.cull.record_cull_face(frontend::cull_state::cull_face_type::k_back);
+  state.cull.record_cull_face(Frontend::CullState::CullFaceType::k_back);
 
   // DepthMask(TRUE)
   state.depth.record_write(true);
 
   // StencilFunc(ALWAYS, 1, 0xFF)
-  state.stencil.record_function(frontend::stencil_state::function_type::k_always);
+  state.stencil.record_function(Frontend::StencilState::FunctionType::k_always);
   state.stencil.record_reference(1);
   state.stencil.record_mask(0xFF);
 
@@ -148,24 +148,24 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
   state.stencil.record_write_mask(0xFF);
 
   // StencilOp(KEEP, REPLACE, REPLACE)
-  state.stencil.record_fail_action(frontend::stencil_state::operation_type::k_keep);
-  state.stencil.record_depth_fail_action(frontend::stencil_state::operation_type::k_replace);
-  state.stencil.record_depth_pass_action(frontend::stencil_state::operation_type::k_replace);
+  state.stencil.record_fail_action(Frontend::StencilState::OperationType::k_keep);
+  state.stencil.record_depth_fail_action(Frontend::StencilState::OperationType::k_replace);
+  state.stencil.record_depth_pass_action(Frontend::StencilState::OperationType::k_replace);
 
   // Viewport(0, 0, w, h)
   state.viewport.record_dimensions(_target->dimensions());
 
-  m_opaque_meshes.each_fwd([&](const mesh& _mesh) {
+  m_opaque_meshes.each_fwd([&](const Mesh& _mesh) {
     if (!frustum.is_aabb_inside(_mesh.bounds.transform(_model))) {
       return true;
     }
 
-    profiler::cpu_sample cpu_sample{"batch"};
-    profiler::gpu_sample gpu_sample{"batch"};
+    Profiler::CPUSample cpu_sample{"batch"};
+    Profiler::GPUSample gpu_sample{"batch"};
 
     const auto& material{m_materials[_mesh.material]};
 
-    rx_u64 flags{0};
+    Uint64 flags{0};
     if (m_animation)           flags |= 1 << 0;
     if (material.albedo())     flags |= 1 << 1;
     if (material.normal())     flags |= 1 << 2;
@@ -175,7 +175,7 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
     if (material.ambient())    flags |= 1 << 6;
     if (material.emissive())   flags |= 1 << 7;
 
-    frontend::program* program{m_technique->permute(flags)};
+    Frontend::Program* program{m_technique->permute(flags)};
     auto& uniforms{program->uniforms()};
 
     uniforms[0].record_mat4x4f(_model);
@@ -192,7 +192,7 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
     uniforms[5].record_vec2f({material.roughness_value(), material.metalness_value()});
 
     // Record all the textures.
-    frontend::textures draw_textures;
+    Frontend::Textures draw_textures;
     if (material.albedo())    uniforms[ 6].record_sampler(draw_textures.add(material.albedo()));
     if (material.normal())    uniforms[ 7].record_sampler(draw_textures.add(material.normal()));
     if (material.metalness()) uniforms[ 8].record_sampler(draw_textures.add(material.metalness()));
@@ -201,7 +201,7 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
     if (material.emissive())  uniforms[11].record_sampler(draw_textures.add(material.emissive()));
 
     // Record all the draw buffers.
-    frontend::buffers draw_buffers;
+    Frontend::Buffers draw_buffers;
     draw_buffers.add(0);
     draw_buffers.add(1);
     draw_buffers.add(2);
@@ -211,81 +211,81 @@ void model::render(frontend::target* _target, const math::mat4x4f& _model,
     state.cull.record_enable(!material.alpha_test());
 
     m_frontend->draw(
-      RX_RENDER_TAG("model mesh"),
-      state,
-      _target,
-      draw_buffers,
-      m_buffer,
-      program,
-      _mesh.count,
-      _mesh.offset,
-      render::frontend::primitive_type::k_triangles,
-      draw_textures);
+            RX_RENDER_TAG("model mesh"),
+            state,
+            _target,
+            draw_buffers,
+            m_buffer,
+            program,
+            _mesh.count,
+            _mesh.offset,
+            Render::Frontend::PrimitiveType::k_triangles,
+            draw_textures);
 
     return true;
   });
 }
 
-void model::render_normals(const math::mat4x4f& _world, render::immediate3D* _immediate) {
-  static constexpr rx_f32 k_size{0.1f};
+void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {
+  static constexpr Float32 k_size{0.1f};
 
   if (m_model.is_animated()) {
-    m_model.animated_vertices().each_fwd([&](const rx::model::loader::animated_vertex& _vertex) {
-      const math::vec3f point_a{_vertex.position};
-      const math::vec3f point_b{_vertex.position + _vertex.normal * k_size};
+    m_model.animated_vertices().each_fwd([&](const Rx::Model::Loader::AnimatedVertex& _vertex) {
+      const Math::Vec3f point_a{_vertex.position};
+      const Math::Vec3f point_b{_vertex.position + _vertex.normal * k_size};
 
-      const math::vec3f color{_vertex.normal * 0.5f + 0.5f};
+      const Math::Vec3f color{_vertex.normal * 0.5f + 0.5f};
 
       if (m_animation) {
         // CPU skeletal animation of the lines.
         const auto& frames{m_animation->frames()};
 
-        math::mat3x4f transform;
+        Math::Mat3x4f transform;
         transform  = frames[_vertex.blend_indices.x] * (_vertex.blend_weights.x / 255.0f);
         transform += frames[_vertex.blend_indices.y] * (_vertex.blend_weights.y / 255.0f);
         transform += frames[_vertex.blend_indices.z] * (_vertex.blend_weights.z / 255.0f);
         transform += frames[_vertex.blend_indices.w] * (_vertex.blend_weights.w / 255.0f);
 
-        const math::vec3f& x{transform.x.x, transform.y.x, transform.z.x};
-        const math::vec3f& y{transform.x.y, transform.y.y, transform.z.y};
-        const math::vec3f& z{transform.x.z, transform.y.z, transform.z.z};
-        const math::vec3f& w{transform.x.w, transform.y.w, transform.z.w};
+        const Math::Vec3f& x{transform.x.x, transform.y.x, transform.z.x};
+        const Math::Vec3f& y{transform.x.y, transform.y.y, transform.z.y};
+        const Math::Vec3f& z{transform.x.z, transform.y.z, transform.z.z};
+        const Math::Vec3f& w{transform.x.w, transform.y.w, transform.z.w};
 
-        const math::mat4x4f& mat{{x.x, x.y, x.z, 0.0f},
+        const Math::Mat4x4f& mat{{x.x, x.y, x.z, 0.0f},
                                  {y.x, y.y, y.z, 0.0f},
                                  {z.x, z.y, z.z, 0.0f},
                                  {w.x, w.y, w.z, 1.0f}};
 
         _immediate->frame_queue().record_line(
-          math::mat4x4f::transform_point(point_a, mat * _world),
-          math::mat4x4f::transform_point(point_b, mat * _world),
-          {color.r, color.g, color.b, 1.0f},
-          immediate3D::k_depth_test | immediate3D::k_depth_write);
+                Math::Mat4x4f::transform_point(point_a, mat * _world),
+                Math::Mat4x4f::transform_point(point_b, mat * _world),
+                {color.r, color.g, color.b, 1.0f},
+                Immediate3D::k_depth_test | Immediate3D::k_depth_write);
       } else {
         _immediate->frame_queue().record_line(
-          math::mat4x4f::transform_point(point_a, _world),
-          math::mat4x4f::transform_point(point_b, _world),
-          {color.r, color.g, color.b, 1.0f},
-          immediate3D::k_depth_test | immediate3D::k_depth_write);
+                Math::Mat4x4f::transform_point(point_a, _world),
+                Math::Mat4x4f::transform_point(point_b, _world),
+                {color.r, color.g, color.b, 1.0f},
+                Immediate3D::k_depth_test | Immediate3D::k_depth_write);
       }
     });
   } else {
-    m_model.vertices().each_fwd([&](const rx::model::loader::vertex& _vertex) {
-      const math::vec3f point_a{_vertex.position};
-      const math::vec3f point_b{_vertex.position + _vertex.normal * k_size};
+    m_model.vertices().each_fwd([&](const Rx::Model::Loader::Vertex& _vertex) {
+      const Math::Vec3f point_a{_vertex.position};
+      const Math::Vec3f point_b{_vertex.position + _vertex.normal * k_size};
 
-      const math::vec3f color{_vertex.normal * 0.5f + 0.5f};
+      const Math::Vec3f color{_vertex.normal * 0.5f + 0.5f};
 
       _immediate->frame_queue().record_line(
-        math::mat4x4f::transform_point(point_a, _world),
-        math::mat4x4f::transform_point(point_b, _world),
-        {color.r, color.g, color.b, 1.0f},
-        immediate3D::k_depth_test | immediate3D::k_depth_write);
+              Math::Mat4x4f::transform_point(point_a, _world),
+              Math::Mat4x4f::transform_point(point_b, _world),
+              {color.r, color.g, color.b, 1.0f},
+              Immediate3D::k_depth_test | Immediate3D::k_depth_write);
     });
   }
 }
 
-void model::render_skeleton(const math::mat4x4f& _world, render::immediate3D* _immediate) {
+void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {
   if (!m_animation) {
     return;
   }
@@ -293,42 +293,42 @@ void model::render_skeleton(const math::mat4x4f& _world, render::immediate3D* _i
   const auto& joints{m_model.joints()};
 
   // Render all the joints.
-  for (rx_size i{0}; i < joints.size(); i++) {
-    const math::mat3x4f& frame{m_animation->frames()[i] * joints[i].frame};
+  for (Size i{0}; i < joints.size(); i++) {
+    const Math::Mat3x4f& frame{m_animation->frames()[i] * joints[i].frame};
 
-    const math::vec3f& x{math::normalize({frame.x.x, frame.y.x, frame.z.x})};
-    const math::vec3f& y{math::normalize({frame.x.y, frame.y.y, frame.z.y})};
-    const math::vec3f& z{math::normalize({frame.x.z, frame.y.z, frame.z.z})};
-    const math::vec3f& w{frame.x.w, frame.y.w, frame.z.w};
+    const Math::Vec3f& x{Math::normalize({frame.x.x, frame.y.x, frame.z.x})};
+    const Math::Vec3f& y{Math::normalize({frame.x.y, frame.y.y, frame.z.y})};
+    const Math::Vec3f& z{Math::normalize({frame.x.z, frame.y.z, frame.z.z})};
+    const Math::Vec3f& w{frame.x.w, frame.y.w, frame.z.w};
 
-    const math::mat4x4f& joint{{x.x, x.y, x.z, 0.0f},
+    const Math::Mat4x4f& joint{{x.x, x.y, x.z, 0.0f},
                                {y.x, y.y, y.z, 0.0f},
                                {z.x, z.y, z.z, 0.0f},
                                {w.x, w.y, w.z, 1.0f}};
 
     _immediate->frame_queue().record_solid_sphere(
-      {16.0f, 16.0f},
-      {0.5f, 0.5f, 1.0f, 1.0f},
-      math::mat4x4f::scale(m_aabb.scale() * 0.01f) * joint * _world,
-      0);
+            {16.0f, 16.0f},
+            {0.5f, 0.5f, 1.0f, 1.0f},
+            Math::Mat4x4f::scale(m_aabb.scale() * 0.01f) * joint * _world,
+            0);
   }
 
   // Render the skeleton.
-  for (rx_size i{0}; i < joints.size(); i++) {
-    const math::mat3x4f& frame{m_animation->frames()[i] * joints[i].frame};
-    const math::vec3f& w{frame.x.w, frame.y.w, frame.z.w};
-    const rx_s32 parent{joints[i].parent};
+  for (Size i{0}; i < joints.size(); i++) {
+    const Math::Mat3x4f& frame{m_animation->frames()[i] * joints[i].frame};
+    const Math::Vec3f& w{frame.x.w, frame.y.w, frame.z.w};
+    const Sint32 parent{joints[i].parent};
 
     if (parent >= 0) {
-      const math::mat3x4f& parent_joint{joints[parent].frame};
-      const math::mat3x4f& parent_frame{m_animation->frames()[parent] * parent_joint};
-      const math::vec3f& parent_position{parent_frame.x.w, parent_frame.y.w, parent_frame.z.w};
+      const Math::Mat3x4f& parent_joint{joints[parent].frame};
+      const Math::Mat3x4f& parent_frame{m_animation->frames()[parent] * parent_joint};
+      const Math::Vec3f& parent_position{parent_frame.x.w, parent_frame.y.w, parent_frame.z.w};
 
       _immediate->frame_queue().record_line(
-        math::mat4x4f::transform_point(w, _world),
-        math::mat4x4f::transform_point(parent_position, _world),
-        {0.5f, 0.5f, 1.0f, 1.0f},
-        0);
+              Math::Mat4x4f::transform_point(w, _world),
+              Math::Mat4x4f::transform_point(parent_position, _world),
+              {0.5f, 0.5f, 1.0f, 1.0f},
+              0);
     }
   }
 }

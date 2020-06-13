@@ -3,7 +3,7 @@
 #include "rx/core/traits/is_same.h"
 #include "rx/core/traits/remove_cv.h"
 
-namespace rx::traits {
+namespace Rx::traits {
 
 namespace detail {
   template<typename T>

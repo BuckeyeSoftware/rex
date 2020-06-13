@@ -2,10 +2,10 @@
 #define RX_CORE_MATH_FLOOR_H
 #include "rx/core/types.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
-rx_f64 floor(rx_f64 _x);
-rx_f32 floor(rx_f32 _x);
+Float64 floor(Float64 _x);
+Float32 floor(Float32 _x);
 
 } // namespace rx::math
 

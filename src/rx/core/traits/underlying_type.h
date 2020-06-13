@@ -2,7 +2,7 @@
 #define RX_CORE_TRAITS_UNDERLYING_TYPE_H
 #include "rx/core/traits/is_enum.h"
 
-namespace rx::traits {
+namespace Rx::traits {
 
 namespace detail {
   template<typename T, bool = is_enum<T>>

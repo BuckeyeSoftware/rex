@@ -5,21 +5,21 @@
 
 #include "rx/core/assert.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
-single_shot_allocator::single_shot_allocator(rx_byte* _data, rx_size _size)
+SingleShotAllocator::SingleShotAllocator(Byte* _data, Size _size)
   : m_data{_data}
   , m_size{_size}
   , m_allocated{false}
 {
   // Ensure the memory given is suitably aligned and size is suitably rounded.
-  RX_ASSERT(reinterpret_cast<rx_uintptr>(m_data) % k_alignment == 0,
+  RX_ASSERT(reinterpret_cast<UintPtr>(m_data) % k_alignment == 0,
     "_data not aligned on k_alignment boundary");
   RX_ASSERT(m_size % k_alignment == 0,
     "_size not a multiple of k_alignment");
 }
 
-rx_byte* single_shot_allocator::allocate(rx_size _size) {
+Byte* SingleShotAllocator::allocate(Size _size) {
   // There's no need to round |_size| to alignment as only one allocation
   // is allowed.
 
@@ -38,7 +38,7 @@ rx_byte* single_shot_allocator::allocate(rx_size _size) {
   return m_data;
 }
 
-rx_byte* single_shot_allocator::reallocate(void* _data, rx_size _size) {
+Byte* SingleShotAllocator::reallocate(void* _data, Size _size) {
   RX_ASSERT(m_allocated, "reallocate called before allocate");
   RX_ASSERT(_data == m_data, "invalid pointer");
 
@@ -50,7 +50,7 @@ rx_byte* single_shot_allocator::reallocate(void* _data, rx_size _size) {
   return m_data;
 }
 
-void single_shot_allocator::deallocate(void* _data) {
+void SingleShotAllocator::deallocate(void* _data) {
   RX_ASSERT(m_allocated, "deallocate called before allocate");
   if (RX_HINT_LIKELY(_data)) {
     RX_ASSERT(_data == m_data, "invalid pointer");

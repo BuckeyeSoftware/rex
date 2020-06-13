@@ -2,9 +2,9 @@
 #define RX_CORE_MATH_SIN_H
 #include "rx/core/types.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
-rx_f32 sin(rx_f32 _x);
+Float32 sin(Float32 _x);
 
 } // namespace rx::math
 

@@ -5,7 +5,7 @@
 #include "rx/core/hints/empty_bases.h"
 #include "rx/core/utility/exchange.h"
 
-namespace rx {
+namespace Rx {
 
 // # Doubly-linked-list
 //
@@ -20,55 +20,55 @@ namespace rx {
 //
 // 32-bit: 8 bytes
 // 64-bit: 16 bytes
-struct RX_HINT_EMPTY_BASES intrusive_list
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES IntrusiveList
+  : Concepts::NoCopy
 {
-  struct node;
+  struct Node;
 
-  constexpr intrusive_list();
-  intrusive_list(intrusive_list&& _list);
+  constexpr IntrusiveList();
+  IntrusiveList(IntrusiveList&& _list);
 
-  intrusive_list& operator=(intrusive_list&& list_);
+  IntrusiveList& operator=(IntrusiveList&& list_);
 
-  void push_front(node* _node);
-  void push_back(node* _node);
+  void push_front(Node* _node);
+  void push_back(Node* _node);
 
-  void erase(node* node_);
+  void erase(Node* node_);
 
-  node* pop_front();
-  node* pop_back();
+  Node* pop_front();
+  Node* pop_back();
 
   // 32-bit: 8 bytes
   // 64-bit: 16 bytes
-  struct RX_HINT_EMPTY_BASES node
-    : concepts::no_copy
+  struct RX_HINT_EMPTY_BASES Node
+    : Concepts::NoCopy
   {
-    constexpr node();
-    node(node&& node_);
-    node& operator=(node&& node_);
+    constexpr Node();
+    Node(Node&& node_);
+    Node& operator=(Node&& node_);
 
     template<typename T>
-    const T* data(node T::*_link) const;
+    const T* data(Node T::*_link) const;
 
     template<typename T>
-    T* data(node T::*_link);
+    T* data(Node T::*_link);
 
   private:
-    friend struct intrusive_list;
+    friend struct IntrusiveList;
 
-    node* m_next;
-    node* m_prev;
+    Node* m_next;
+    Node* m_prev;
   };
 
   // 32-bit: 8 bytes
   // 64-bit: 16 bytes
   template<typename T>
-  struct RX_HINT_EMPTY_BASES enumerate
-    : concepts::no_copy
+  struct RX_HINT_EMPTY_BASES Enumerate
+    : Concepts::NoCopy
   {
-    constexpr enumerate(node* _root, node T::*_link);
-    enumerate(enumerate&& enumerate_);
-    enumerate& operator=(enumerate&& enumerate_);
+    constexpr Enumerate(Node* _root, Node T::*_link);
+    Enumerate(Enumerate&& enumerate_);
+    Enumerate& operator=(Enumerate&& enumerate_);
 
     operator bool() const;
 
@@ -85,154 +85,154 @@ struct RX_HINT_EMPTY_BASES intrusive_list
     void prev();
 
   private:
-    node* m_this;
-    node T::*m_link;
+    Node* m_this;
+    Node T::*m_link;
   };
 
   template<typename T>
-  enumerate<T> enumerate_head(node T::*_link) const;
+  Enumerate<T> enumerate_head(Node T::*_link) const;
   template<typename T>
-  enumerate<T> enumerate_tail(node T::*_link) const;
+  Enumerate<T> enumerate_tail(Node T::*_link) const;
 
   bool is_empty() const;
 
 private:
-  node* m_head;
-  node* m_tail;
+  Node* m_head;
+  Node* m_tail;
 };
 
-// intrusive_list
-inline constexpr intrusive_list::intrusive_list()
+// IntrusiveList
+inline constexpr IntrusiveList::IntrusiveList()
   : m_head{nullptr}
   , m_tail{nullptr}
 {
 }
 
-inline intrusive_list::intrusive_list(intrusive_list&& list_)
-  : m_head{utility::exchange(list_.m_head, nullptr)}
-  , m_tail{utility::exchange(list_.m_tail, nullptr)}
+inline IntrusiveList::IntrusiveList(IntrusiveList&& list_)
+  : m_head{Utility::exchange(list_.m_head, nullptr)}
+  , m_tail{Utility::exchange(list_.m_tail, nullptr)}
 {
 }
 
-inline intrusive_list& intrusive_list::operator=(intrusive_list&& list_) {
-  m_head = utility::exchange(list_.m_head, nullptr);
-  m_tail = utility::exchange(list_.m_tail, nullptr);
+inline IntrusiveList& IntrusiveList::operator=(IntrusiveList&& list_) {
+  m_head = Utility::exchange(list_.m_head, nullptr);
+  m_tail = Utility::exchange(list_.m_tail, nullptr);
   return *this;
 }
 
 template<typename T>
-inline intrusive_list::enumerate<T> intrusive_list::enumerate_head(node T::*_link) const {
+inline IntrusiveList::Enumerate<T> IntrusiveList::enumerate_head(Node T::*_link) const {
   return {m_head, _link};
 }
 
 template<typename T>
-inline intrusive_list::enumerate<T> intrusive_list::enumerate_tail(node T::*_link) const {
+inline IntrusiveList::Enumerate<T> IntrusiveList::enumerate_tail(Node T::*_link) const {
   return {m_tail, _link};
 }
 
-inline bool intrusive_list::is_empty() const {
+inline bool IntrusiveList::is_empty() const {
   return m_head == nullptr;
 }
 
-// intrusive_list::node
-inline constexpr intrusive_list::node::node()
+// IntrusiveList::node
+inline constexpr IntrusiveList::Node::Node()
   : m_next{nullptr}
   , m_prev{nullptr}
 {
 }
 
-inline intrusive_list::node::node(node&& node_)
-  : m_next{utility::exchange(node_.m_next, nullptr)}
-  , m_prev{utility::exchange(node_.m_prev, nullptr)}
+inline IntrusiveList::Node::Node(Node&& node_)
+  : m_next{Utility::exchange(node_.m_next, nullptr)}
+  , m_prev{Utility::exchange(node_.m_prev, nullptr)}
 {
 }
 
-inline intrusive_list::node& intrusive_list::node::operator=(node&& node_) {
-  m_next = utility::exchange(node_.m_next, nullptr);
-  m_prev = utility::exchange(node_.m_prev, nullptr);
+inline IntrusiveList::Node& IntrusiveList::Node::operator=(Node&& node_) {
+  m_next = Utility::exchange(node_.m_next, nullptr);
+  m_prev = Utility::exchange(node_.m_prev, nullptr);
   return *this;
 }
 
 template<typename T>
-inline const T* intrusive_list::node::data(node T::*_link) const {
-  const auto this_address = reinterpret_cast<rx_uintptr>(this);
+inline const T* IntrusiveList::Node::data(Node T::*_link) const {
+  const auto this_address = reinterpret_cast<UintPtr>(this);
   const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
-  const auto link_address = reinterpret_cast<rx_uintptr>(link_offset);
+  const auto link_address = reinterpret_cast<UintPtr>(link_offset);
   return reinterpret_cast<const T*>(this_address - link_address);
 }
 
 template<typename T>
-inline T* intrusive_list::node::data(node T::*_link) {
-  const auto this_address = reinterpret_cast<rx_uintptr>(this);
+inline T* IntrusiveList::Node::data(Node T::*_link) {
+  const auto this_address = reinterpret_cast<UintPtr>(this);
   const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
-  const auto link_address = reinterpret_cast<rx_uintptr>(link_offset);
+  const auto link_address = reinterpret_cast<UintPtr>(link_offset);
   return reinterpret_cast<T*>(this_address - link_address);
 }
 
-// intrusive_list::enumerate
+// IntrusiveList::enumerate
 template<typename T>
-inline constexpr intrusive_list::enumerate<T>::enumerate(node* _root, node T::*_link)
+inline constexpr IntrusiveList::Enumerate<T>::Enumerate(Node* _root, Node T::*_link)
   : m_this{_root}
   , m_link{_link}
 {
 }
 
 template<typename T>
-inline intrusive_list::enumerate<T>::enumerate(enumerate&& enumerate_)
-  : m_this{utility::exchange(enumerate_.m_this, nullptr)}
-  , m_link{utility::exchange(enumerate_.m_link, nullptr)}
+inline IntrusiveList::Enumerate<T>::Enumerate(Enumerate&& enumerate_)
+  : m_this{Utility::exchange(enumerate_.m_this, nullptr)}
+  , m_link{Utility::exchange(enumerate_.m_link, nullptr)}
 {
 }
 
 template<typename T>
-inline intrusive_list::enumerate<T>& intrusive_list::enumerate<T>::operator=(enumerate&& enumerate_) {
-  m_this = utility::exchange(enumerate_.m_this, nullptr);
-  m_link = utility::exchange(enumerate_.m_link, nullptr);
+inline IntrusiveList::Enumerate<T>& IntrusiveList::Enumerate<T>::operator=(Enumerate&& enumerate_) {
+  m_this = Utility::exchange(enumerate_.m_this, nullptr);
+  m_link = Utility::exchange(enumerate_.m_link, nullptr);
   return *this;
 }
 
 template<typename T>
-inline intrusive_list::enumerate<T>::operator bool() const {
+inline IntrusiveList::Enumerate<T>::operator bool() const {
   return m_this;
 }
 
 template<typename T>
-inline void intrusive_list::enumerate<T>::next() {
+inline void IntrusiveList::Enumerate<T>::next() {
   m_this = m_this->m_next;
 }
 
 template<typename T>
-inline void intrusive_list::enumerate<T>::prev() {
+inline void IntrusiveList::Enumerate<T>::prev() {
   m_this = m_this->m_prev;
 }
 
 template<typename T>
-inline T& intrusive_list::enumerate<T>::operator*() {
+inline T& IntrusiveList::Enumerate<T>::operator*() {
   return *data();
 }
 
 template<typename T>
-inline const T& intrusive_list::enumerate<T>::operator*() const {
+inline const T& IntrusiveList::Enumerate<T>::operator*() const {
   return *data();
 }
 
 template<typename T>
-inline T* intrusive_list::enumerate<T>::operator->() {
+inline T* IntrusiveList::Enumerate<T>::operator->() {
   return data();
 }
 
 template<typename T>
-inline const T* intrusive_list::enumerate<T>::operator->() const {
+inline const T* IntrusiveList::Enumerate<T>::operator->() const {
   return data();
 }
 
 template<typename T>
-inline T* intrusive_list::enumerate<T>::data() {
+inline T* IntrusiveList::Enumerate<T>::data() {
   return m_this->data<T>(m_link);
 }
 
 template<typename T>
-inline const T* intrusive_list::enumerate<T>::data() const {
+inline const T* IntrusiveList::Enumerate<T>::data() const {
   return m_this->data<T>(m_link);
 }
 

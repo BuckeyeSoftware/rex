@@ -7,12 +7,12 @@
 #include "rx/core/hash.h"
 #include "rx/core/ref.h"
 
-namespace rx {
+namespace Rx {
 
 // # Unique pointer
 //
-// Owning smart-pointer type that releases the data when the object goes out of
-// scope. Move-only type.
+// Owning smart-pointer Type that releases the data when the object goes out of
+// scope. Move-only Type.
 //
 // Since all allocations in Rex are associated with a given allocator, this must
 // be given the allocator that allocated the pointer to take ownership of it.
@@ -20,33 +20,31 @@ namespace rx {
 // You may use the make_ptr helper to construct a ptr.
 //
 // There is no support for a custom deleter.
-// There is no support for array types, use ptr<array<T[E]>> instead.
+// There is no support for array types, use Ptr<array<T[E]>> instead.
 //
 // 32-bit: 8 bytes
 // 64-bit: 16 bytes
 template<typename T>
-struct RX_HINT_EMPTY_BASES ptr
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES Ptr
+  : Concepts::NoCopy
 {
-  constexpr ptr();
-  constexpr ptr(memory::allocator& _allocator);
-  constexpr ptr(memory::allocator& _allocator, rx_nullptr);
+  constexpr Ptr();
+  constexpr Ptr(Memory::Allocator& _allocator);
+  constexpr Ptr(Memory::Allocator& _allocator, NullPointer);
 
   template<typename U>
-  constexpr ptr(memory::allocator& _allocator, U* _data);
+  constexpr Ptr(Memory::Allocator& _allocator, U* _data);
 
   template<typename U>
-  ptr(ptr<U>&& other_);
-
-  ~ptr();
-
-  template<typename U>
-  ptr& operator=(ptr<U>&& other_);
-
-  ptr& operator=(rx_nullptr);
+  Ptr(Ptr<U>&& other_);
+  ~Ptr();
 
   template<typename U>
-  void reset(memory::allocator& _allocator, U* _data);
+  Ptr& operator=(Ptr<U>&& other_);
+  Ptr& operator=(NullPointer);
+
+  template<typename U>
+  void reset(Memory::Allocator& _allocator, U* _data);
 
   T* release();
 
@@ -56,42 +54,42 @@ struct RX_HINT_EMPTY_BASES ptr
   operator bool() const;
   T* get() const;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
-  constexpr rx_size hash() const;
+  constexpr Size hash() const;
 
 private:
   void destroy();
 
   template<typename U>
-  friend struct ptr;
+  friend struct Ptr;
 
-  ref<memory::allocator> m_allocator;
+  Ref<Memory::Allocator> m_allocator;
   T* m_data;
 };
 
 template<typename T>
-inline constexpr ptr<T>::ptr()
-  : ptr{memory::system_allocator::instance()}
+inline constexpr Ptr<T>::Ptr()
+  : Ptr{Memory::SystemAllocator::instance()}
 {
 }
 
 template<typename T>
-inline constexpr ptr<T>::ptr(memory::allocator& _allocator)
+inline constexpr Ptr<T>::Ptr(Memory::Allocator& _allocator)
   : m_allocator{_allocator}
   , m_data{nullptr}
 {
 }
 
 template<typename T>
-inline constexpr ptr<T>::ptr(memory::allocator& _allocator, rx_nullptr)
-  : ptr{_allocator}
+inline constexpr Ptr<T>::Ptr(Memory::Allocator& _allocator, NullPointer)
+  : Ptr{_allocator}
 {
 }
 
 template<typename T>
 template<typename U>
-inline constexpr ptr<T>::ptr(memory::allocator& _allocator, U* _data)
+inline constexpr Ptr<T>::Ptr(Memory::Allocator& _allocator, U* _data)
   : m_allocator{_allocator}
   , m_data{_data}
 {
@@ -99,31 +97,31 @@ inline constexpr ptr<T>::ptr(memory::allocator& _allocator, U* _data)
 
 template<typename T>
 template<typename U>
-inline ptr<T>::ptr(ptr<U>&& other_)
+inline Ptr<T>::Ptr(Ptr<U>&& other_)
   : m_allocator{other_.m_allocator}
-  , m_data{utility::exchange(other_.m_data, nullptr)}
+  , m_data{Utility::exchange(other_.m_data, nullptr)}
 {
 }
 
 template<typename T>
-inline ptr<T>::~ptr() {
+inline Ptr<T>::~Ptr() {
   destroy();
 }
 
 template<typename T>
 template<typename U>
-inline ptr<T>& ptr<T>::operator=(ptr<U>&& ptr_) {
+inline Ptr<T>& Ptr<T>::operator=(Ptr<U>&& ptr_) {
   // The casts are necessary here since T and U may not be the same.
-  RX_ASSERT(reinterpret_cast<rx_uintptr>(&ptr_)
-    != reinterpret_cast<rx_uintptr>(this), "self assignment");
+  RX_ASSERT(reinterpret_cast<UintPtr>(&ptr_)
+    != reinterpret_cast<UintPtr>(this), "self assignment");
   destroy();
   m_allocator = ptr_.m_allocator;
-  m_data = utility::exchange(ptr_.m_data, nullptr);
+  m_data = Utility::exchange(ptr_.m_data, nullptr);
   return *this;
 }
 
 template<typename T>
-inline ptr<T>& ptr<T>::operator=(rx_nullptr) {
+inline Ptr<T>& Ptr<T>::operator=(NullPointer) {
   destroy();
   m_data = nullptr;
   return *this;
@@ -131,57 +129,57 @@ inline ptr<T>& ptr<T>::operator=(rx_nullptr) {
 
 template<typename T>
 template<typename U>
-inline void ptr<T>::reset(memory::allocator& _allocator, U* _data) {
+inline void Ptr<T>::reset(Memory::Allocator& _allocator, U* _data) {
   destroy();
   m_allocator = _allocator;
   m_data = _data;
 }
 
 template<typename T>
-inline T* ptr<T>::release() {
-  return utility::exchange(m_data, nullptr);
+inline T* Ptr<T>::release() {
+  return Utility::exchange(m_data, nullptr);
 }
 
 template<typename T>
-inline T& ptr<T>::operator*() const {
+inline T& Ptr<T>::operator*() const {
   RX_ASSERT(m_data, "nullptr");
   return *m_data;
 }
 
 template<typename T>
-RX_HINT_FORCE_INLINE T* ptr<T>::operator->() const {
+RX_HINT_FORCE_INLINE T* Ptr<T>::operator->() const {
   return m_data;
 }
 
 template<typename T>
-RX_HINT_FORCE_INLINE ptr<T>::operator bool() const {
+RX_HINT_FORCE_INLINE Ptr<T>::operator bool() const {
   return m_data != nullptr;
 }
 
 template<typename T>
-RX_HINT_FORCE_INLINE T* ptr<T>::get() const {
+RX_HINT_FORCE_INLINE T* Ptr<T>::get() const {
   return m_data;
 }
 
 template<typename T>
-RX_HINT_FORCE_INLINE constexpr memory::allocator& ptr<T>::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Ptr<T>::allocator() const {
   return m_allocator;
 }
 
 template<typename T>
-inline constexpr rx_size ptr<T>::hash() const {
-  return rx::hash<T*>{}(m_data);
+inline constexpr Size Ptr<T>::hash() const {
+  return Rx::Hash<T*>{}(m_data);
 }
 
 template<typename T>
-inline void ptr<T>::destroy() {
+inline void Ptr<T>::destroy() {
   allocator().template destroy<T>(m_data);
 }
 
 // Helper function to make a unique ptr.
 template<typename T, typename... Ts>
-inline ptr<T> make_ptr(memory::allocator& _allocator, Ts&&... _arguments) {
-  return {_allocator, _allocator.create<T>(utility::forward<Ts>(_arguments)...)};
+inline Ptr<T> make_ptr(Memory::Allocator& _allocator, Ts&&... _arguments) {
+  return {_allocator, _allocator.create<T>(Utility::forward<Ts>(_arguments)...)};
 }
 
 } // namespace rx

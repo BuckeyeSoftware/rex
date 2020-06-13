@@ -2,13 +2,13 @@
 #define RX_CORE_UTILITY_SWAP_H
 #include "rx/core/utility/move.h"
 
-namespace rx::utility {
+namespace Rx::Utility {
 
 template<typename T>
 inline void swap(T& lhs_, T& rhs_) {
-  T tmp = utility::move(lhs_);
-  lhs_ = utility::move(rhs_);
-  rhs_ = utility::move(tmp);
+  T tmp = Utility::move(lhs_);
+  lhs_ = Utility::move(rhs_);
+  rhs_ = Utility::move(tmp);
 }
 
 } // namespace rx::utility

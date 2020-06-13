@@ -6,20 +6,20 @@
 #include "rx/core/hints/restrict.h"
 #include "rx/core/hints/assume_aligned.h"
 
-namespace rx::texture {
+namespace Rx::Texture {
 
 // R => RGBA
 // R => RGB
 // R => BGRA
 // R => BGR
-static RX_HINT_NO_INLINE void r_to_rgba(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void r_to_rgba(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, _src += 1, dst_ += 4) {
-    const rx_byte r{_src[0]};
+  for (Size i{0}; i < _samples; i++, _src += 1, dst_ += 4) {
+    const Byte r{_src[0]};
     dst_[0] = r;
     dst_[1] = r;
     dst_[2] = r;
@@ -27,13 +27,13 @@ static RX_HINT_NO_INLINE void r_to_rgba(rx_byte *RX_HINT_RESTRICT dst_,
   }
 }
 
-static RX_HINT_NO_INLINE void r_to_rgb(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void r_to_rgb(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, dst_ += 3, _src += 1) {
+  for (Size i{0}; i < _samples; i++, dst_ += 3, _src += 1) {
     dst_[0] = _src[0];
     dst_[1] = _src[0];
     dst_[2] = _src[0];
@@ -47,37 +47,37 @@ static const constexpr auto r_to_bgr{r_to_rgb};
 // RGB => BGR
 // RGB => BGRA
 // RGB => RGBA
-static RX_HINT_NO_INLINE void rgb_to_r(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void rgb_to_r(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, dst_ += 1, _src += 3) {
+  for (Size i{0}; i < _samples; i++, dst_ += 1, _src += 3) {
     dst_[0] = _src[0];
   }
 }
 
-static RX_HINT_NO_INLINE void rgb_to_bgr(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void rgb_to_bgr(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, dst_ += 3, _src += 3) {
+  for (Size i{0}; i < _samples; i++, dst_ += 3, _src += 3) {
     dst_[0] = _src[2];
     dst_[1] = _src[1];
     dst_[2] = _src[0];
   }
 }
 
-static RX_HINT_NO_INLINE void rgb_to_bgra(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void rgb_to_bgra(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, dst_ += 4, _src += 3) {
+  for (Size i{0}; i < _samples; i++, dst_ += 4, _src += 3) {
     dst_[0] = _src[2];
     dst_[1] = _src[1];
     dst_[2] = _src[0];
@@ -85,13 +85,13 @@ static RX_HINT_NO_INLINE void rgb_to_bgra(rx_byte *RX_HINT_RESTRICT dst_,
   }
 }
 
-static RX_HINT_NO_INLINE void rgb_to_rgba(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void rgb_to_rgba(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, dst_ += 4, _src += 3) {
+  for (Size i{0}; i < _samples; i++, dst_ += 4, _src += 3) {
     dst_[0] = _src[0];
     dst_[1] = _src[1];
     dst_[2] = _src[2];
@@ -103,13 +103,13 @@ static RX_HINT_NO_INLINE void rgb_to_rgba(rx_byte *RX_HINT_RESTRICT dst_,
 // BGR => RGB
 // BGR => RGBA
 // BGR => BGRA
-static RX_HINT_NO_INLINE void bgr_to_r(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void bgr_to_r(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, dst_ += 1, _src += 3) {
+  for (Size i{0}; i < _samples; i++, dst_ += 1, _src += 3) {
     dst_[0] = _src[2];
   }
 }
@@ -122,50 +122,50 @@ static const constexpr auto bgr_to_bgra{rgb_to_rgba};
 // RGBA => RGB
 // RGBA => BGR
 // RGBA => BGRA
-static RX_HINT_NO_INLINE void rgba_to_r(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void rgba_to_r(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, dst_ += 1, _src += 4) {
+  for (Size i{0}; i < _samples; i++, dst_ += 1, _src += 4) {
     dst_[0] = _src[0];
   }
 }
 
-static RX_HINT_NO_INLINE void rgba_to_rgb(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void rgba_to_rgb(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, dst_ += 3, _src += 4) {
+  for (Size i{0}; i < _samples; i++, dst_ += 3, _src += 4) {
     dst_[0] = _src[0];
     dst_[1] = _src[1];
     dst_[2] = _src[2];
   }
 }
 
-static RX_HINT_NO_INLINE void rgba_to_bgr(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void rgba_to_bgr(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, dst_ += 3, _src += 4) {
+  for (Size i{0}; i < _samples; i++, dst_ += 3, _src += 4) {
     dst_[0] = _src[2];
     dst_[1] = _src[1];
     dst_[2] = _src[0];
   }
 }
 
-static RX_HINT_NO_INLINE void rgba_to_bgra(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void rgba_to_bgra(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, dst_ += 4, _src += 4) {
+  for (Size i{0}; i < _samples; i++, dst_ += 4, _src += 4) {
     dst_[0] = _src[2];
     dst_[1] = _src[1];
     dst_[2] = _src[0];
@@ -177,24 +177,24 @@ static RX_HINT_NO_INLINE void rgba_to_bgra(rx_byte *RX_HINT_RESTRICT dst_,
 // BGRA => RGB
 // BGRA => BGR
 // BGRA => RGBA
-static RX_HINT_NO_INLINE void bgra_to_r(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void bgra_to_r(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, dst_ += 1, _src += 4) {
+  for (Size i{0}; i < _samples; i++, dst_ += 1, _src += 4) {
     dst_[0] = _src[2];
   }
 }
 
-static RX_HINT_NO_INLINE void bgra_to_rgb(rx_byte *RX_HINT_RESTRICT dst_,
-  const rx_byte *RX_HINT_RESTRICT _src, rx_size _samples)
+static RX_HINT_NO_INLINE void bgra_to_rgb(Byte *RX_HINT_RESTRICT dst_,
+  const Byte *RX_HINT_RESTRICT _src, Size _samples)
 {
-  RX_HINT_ASSUME_ALIGNED(dst_, memory::allocator::k_alignment);
-  RX_HINT_ASSUME_ALIGNED(_src, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::k_alignment);
 
-  for (rx_size i{0}; i < _samples; i++, dst_ += 3, _src += 4) {
+  for (Size i{0}; i < _samples; i++, dst_ += 3, _src += 4) {
     dst_[0] = _src[2];
     dst_[1] = _src[1];
     dst_[2] = _src[0];
@@ -204,121 +204,121 @@ static RX_HINT_NO_INLINE void bgra_to_rgb(rx_byte *RX_HINT_RESTRICT dst_,
 static const constexpr auto bgra_to_bgr{rgba_to_rgb};
 static const constexpr auto bgra_to_rgba{rgba_to_bgra};
 
-static RX_HINT_FORCE_INLINE rx_size bpp_for_pixel_format(pixel_format _format) {
+static RX_HINT_FORCE_INLINE Size bpp_for_pixel_format(PixelFormat _format) {
   switch (_format) {
-  case pixel_format::k_rgba_u8:
+  case PixelFormat::k_rgba_u8:
     return 4;
-  case pixel_format::k_bgra_u8:
+  case PixelFormat::k_bgra_u8:
     return 4;
-  case pixel_format::k_rgb_u8:
+  case PixelFormat::k_rgb_u8:
     return 3;
-  case pixel_format::k_bgr_u8:
+  case PixelFormat::k_bgr_u8:
     return 3;
-  case pixel_format::k_r_u8:
+  case PixelFormat::k_r_u8:
     return 1;
   }
   RX_HINT_UNREACHABLE();
 }
 
-vector<rx_byte> convert(memory::allocator& _allocator, const rx_byte* _data,
-  rx_size _samples, pixel_format _in_format, pixel_format _out_format)
+Vector<Byte> convert(Memory::Allocator& _allocator, const Byte* _data,
+                        Size _samples, PixelFormat _in_format, PixelFormat _out_format)
 {
-  RX_HINT_ASSUME_ALIGNED(_data, memory::allocator::k_alignment);
+  RX_HINT_ASSUME_ALIGNED(_data, Memory::Allocator::k_alignment);
 
-  vector<rx_byte> result{_allocator,
-    _samples * bpp_for_pixel_format(_out_format), utility::uninitialized{}};
+  Vector<Byte> result{_allocator,
+    _samples * bpp_for_pixel_format(_out_format), Utility::UninitializedTag{}};
 
-  const rx_byte *RX_HINT_RESTRICT src{_data};
-  rx_byte *RX_HINT_RESTRICT dst{result.data()};
+  const Byte *RX_HINT_RESTRICT src = _data;
+  Byte *RX_HINT_RESTRICT dst = result.data();
 
   switch (_in_format) {
-  case pixel_format::k_rgba_u8:
+  case PixelFormat::k_rgba_u8:
     switch (_out_format) {
-    case pixel_format::k_rgba_u8:
+    case PixelFormat::k_rgba_u8:
       break;
-    case pixel_format::k_bgra_u8:
+    case PixelFormat::k_bgra_u8:
       rgba_to_bgra(dst, src, _samples);
       break;
-    case pixel_format::k_rgb_u8:
+    case PixelFormat::k_rgb_u8:
       rgba_to_rgb(dst, src, _samples);
       break;
-    case pixel_format::k_bgr_u8:
+    case PixelFormat::k_bgr_u8:
       rgba_to_bgr(dst, src, _samples);
       break;
-    case pixel_format::k_r_u8:
+    case PixelFormat::k_r_u8:
       rgba_to_r(dst, src, _samples);
       break;
     }
     break;
-  case pixel_format::k_bgra_u8:
+  case PixelFormat::k_bgra_u8:
     switch (_out_format) {
-    case pixel_format::k_rgba_u8:
+    case PixelFormat::k_rgba_u8:
       bgra_to_rgba(dst, src, _samples);
       break;
-    case pixel_format::k_bgra_u8:
+    case PixelFormat::k_bgra_u8:
       break;
-    case pixel_format::k_rgb_u8:
+    case PixelFormat::k_rgb_u8:
       bgra_to_rgb(dst, src, _samples);
       break;
-    case pixel_format::k_bgr_u8:
+    case PixelFormat::k_bgr_u8:
       bgra_to_bgr(dst, src, _samples);
       break;
-    case pixel_format::k_r_u8:
+    case PixelFormat::k_r_u8:
       bgra_to_r(dst, src, _samples);
       break;
     }
     break;
-  case pixel_format::k_rgb_u8:
+  case PixelFormat::k_rgb_u8:
     switch (_out_format) {
-    case pixel_format::k_rgba_u8:
+    case PixelFormat::k_rgba_u8:
       rgb_to_rgba(dst, src, _samples);
       break;
-    case pixel_format::k_bgra_u8:
+    case PixelFormat::k_bgra_u8:
       rgb_to_bgra(dst, src, _samples);
       break;
-    case pixel_format::k_rgb_u8:
+    case PixelFormat::k_rgb_u8:
       break;
-    case pixel_format::k_bgr_u8:
+    case PixelFormat::k_bgr_u8:
       rgb_to_bgr(dst, src, _samples);
       break;
-    case pixel_format::k_r_u8:
+    case PixelFormat::k_r_u8:
       rgb_to_r(dst, src, _samples);
       break;
     }
     break;
-  case pixel_format::k_bgr_u8:
+  case PixelFormat::k_bgr_u8:
     switch (_out_format) {
-    case pixel_format::k_rgba_u8:
+    case PixelFormat::k_rgba_u8:
       bgr_to_rgba(dst, src, _samples);
       break;
-    case pixel_format::k_bgra_u8:
+    case PixelFormat::k_bgra_u8:
       bgr_to_bgra(dst, src, _samples);
       break;
-    case pixel_format::k_rgb_u8:
+    case PixelFormat::k_rgb_u8:
       bgr_to_rgb(dst, src, _samples);
       break;
-    case pixel_format::k_bgr_u8:
+    case PixelFormat::k_bgr_u8:
       break;
-    case pixel_format::k_r_u8:
+    case PixelFormat::k_r_u8:
       bgr_to_r(dst, src, _samples);
       break;
     }
     break;
-  case pixel_format::k_r_u8:
+  case PixelFormat::k_r_u8:
     switch (_out_format) {
-    case pixel_format::k_rgba_u8:
+    case PixelFormat::k_rgba_u8:
       r_to_rgba(dst, src, _samples);
       break;
-    case pixel_format::k_bgra_u8:
+    case PixelFormat::k_bgra_u8:
       r_to_bgra(dst, src, _samples);
       break;
-    case pixel_format::k_rgb_u8:
+    case PixelFormat::k_rgb_u8:
       r_to_rgb(dst, src, _samples);
       break;
-    case pixel_format::k_bgr_u8:
+    case PixelFormat::k_bgr_u8:
       r_to_bgr(dst, src, _samples);
       break;
-    case pixel_format::k_r_u8:
+    case PixelFormat::k_r_u8:
       break;
     }
     break;

@@ -2,7 +2,7 @@
 #define RX_CORE_TRAITS_IS_UNSIGNED_H
 #include "rx/core/traits/is_integral.h"
 
-namespace rx::traits {
+namespace Rx::traits {
 
 template<typename T>
 inline constexpr bool is_unsigned = is_integral<T> && T(0) < T(-1);

@@ -4,21 +4,21 @@
 #include "rx/math/vec2.h"
 #include "rx/math/vec4.h"
 
-namespace rx::input {
+namespace Rx::Input {
 
-struct mouse_device {
-  mouse_device();
+struct Mouse {
+  Mouse();
 
   static constexpr const auto k_buttons{32};
 
-  void update(rx_f32 _delta_time);
+  void update(Float32 _delta_time);
   void update_button(bool _down, int _button);
-  void update_motion(const math::vec4i& _movement);
-  void update_scroll(const math::vec2i& _scroll);
+  void update_motion(const Math::Vec4i& _movement);
+  void update_scroll(const Math::Vec2i& _scroll);
 
-  const math::vec2i& movement() const;
-  const math::vec2i& position() const;
-  const math::vec2i& scroll() const;
+  const Math::Vec2i& movement() const;
+  const Math::Vec2i& position() const;
+  const Math::Vec2i& scroll() const;
 
 private:
   enum {
@@ -29,22 +29,22 @@ private:
 
   int m_buttons[k_buttons];
 
-  math::vec2i m_position;
-  math::vec2i m_movement;
-  math::vec2i m_scroll;
+  Math::Vec2i m_position;
+  Math::Vec2i m_movement;
+  Math::Vec2i m_scroll;
 
   bool m_scrolled;
 };
 
-inline const math::vec2i& mouse_device::movement() const {
+inline const Math::Vec2i& Mouse::movement() const {
   return m_movement;
 }
 
-inline const math::vec2i& mouse_device::position() const {
+inline const Math::Vec2i& Mouse::position() const {
   return m_position;
 }
 
-inline const math::vec2i& mouse_device::scroll() const {
+inline const Math::Vec2i& Mouse::scroll() const {
   return m_scroll;
 }
 

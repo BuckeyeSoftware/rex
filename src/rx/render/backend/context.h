@@ -1,34 +1,34 @@
 #ifndef RX_RENDER_BACKEND_CONTEXT_H
 #define RX_RENDER_BACKEND_CONTEXT_H
 #include "rx/core/vector.h"
-#include "rx/core/concepts/interface.h" // concepts::interface
+#include "rx/core/concepts/interface.h" // concepts::Interface
 
-namespace rx::render::backend {
+namespace Rx::Render::Backend {
 
 // sizes of resources reported by the backend
-struct allocation_info {
-  rx_size buffer_size;
-  rx_size target_size;
-  rx_size program_size;
-  rx_size texture1D_size;
-  rx_size texture2D_size;
-  rx_size texture3D_size;
-  rx_size textureCM_size;
+struct AllocationInfo {
+  Size buffer_size;
+  Size target_size;
+  Size program_size;
+  Size texture1D_size;
+  Size texture2D_size;
+  Size texture3D_size;
+  Size textureCM_size;
 };
 
-struct device_info {
+struct DeviceInfo {
   const char* vendor;
   const char* renderer;
   const char* version;
 };
 
-struct context
-  : concepts::interface
+struct Context
+  : Concepts::Interface
 {
-  virtual allocation_info query_allocation_info() const = 0;
-  virtual device_info query_device_info() const = 0;
+  virtual AllocationInfo query_allocation_info() const = 0;
+  virtual DeviceInfo query_device_info() const = 0;
   virtual bool init() = 0;
-  virtual void process(const vector<rx_byte*>& _commands) = 0;
+  virtual void process(const Vector<Byte*>& _commands) = 0;
   virtual void swap() = 0;
 };
 

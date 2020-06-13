@@ -6,20 +6,20 @@
 
 #include "rx/core/hints/empty_bases.h"
 
-namespace rx {
+namespace Rx {
 
-struct RX_HINT_EMPTY_BASES dynamic_pool
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES DynamicPool
+  : Concepts::NoCopy
 {
-  constexpr dynamic_pool(memory::allocator& _allocator, rx_size _object_size, rx_size _objects_per_pool);
-  constexpr dynamic_pool(rx_size _object_size, rx_size _per_pool);
-  dynamic_pool(dynamic_pool&& pool_);
+  constexpr DynamicPool(Memory::Allocator& _allocator, Size _object_size, Size _objects_per_pool);
+  constexpr DynamicPool(Size _object_size, Size _per_pool);
+  DynamicPool(DynamicPool&& pool_);
 
-  dynamic_pool& operator=(dynamic_pool&& pool_);
-  rx_byte* operator[](rx_size _index) const;
+  DynamicPool& operator=(DynamicPool&& pool_);
+  Byte* operator[](Size _index) const;
 
-  rx_size allocate();
-  void deallocate(rx_size _index);
+  Size allocate();
+  void deallocate(Size _index);
 
   template<typename T, typename... Ts>
   T* create(Ts&&... _arguments);
@@ -27,25 +27,25 @@ struct RX_HINT_EMPTY_BASES dynamic_pool
   template<typename T>
   void destroy(T* _data);
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
-  rx_size object_size() const;
-  rx_size size() const;
+  Size object_size() const;
+  Size size() const;
 
-  rx_byte* data_of(rx_size _index) const;
-  rx_size index_of(const rx_byte* _data) const;
+  Byte* data_of(Size _index) const;
+  Size index_of(const Byte* _data) const;
 
 private:
   [[nodiscard]] bool add_pool();
-  rx_size pool_index_of(const rx_byte* _data) const;
+  Size pool_index_of(const Byte* _data) const;
 
-  ref<memory::allocator> m_allocator;
-  rx_size m_object_size;
-  rx_size m_objects_per_pool;
-  vector<ptr<static_pool>> m_pools;
+  Ref<Memory::Allocator> m_allocator;
+  Size m_object_size;
+  Size m_objects_per_pool;
+  Vector<Ptr<StaticPool>> m_pools;
 };
 
-inline constexpr dynamic_pool::dynamic_pool(memory::allocator& _allocator, rx_size _object_size, rx_size _objects_per_pool)
+inline constexpr DynamicPool::DynamicPool(Memory::Allocator& _allocator, Size _object_size, Size _objects_per_pool)
   : m_allocator{_allocator}
   , m_object_size{_object_size}
   , m_objects_per_pool{_objects_per_pool}
@@ -53,35 +53,35 @@ inline constexpr dynamic_pool::dynamic_pool(memory::allocator& _allocator, rx_si
 {
 }
 
-inline constexpr dynamic_pool::dynamic_pool(rx_size _object_size, rx_size _per_pool)
-  : dynamic_pool{memory::system_allocator::instance(), _object_size, _per_pool}
+inline constexpr DynamicPool::DynamicPool(Size _object_size, Size _per_pool)
+  : DynamicPool{Memory::SystemAllocator::instance(), _object_size, _per_pool}
 {
 }
 
-RX_HINT_FORCE_INLINE rx_byte* dynamic_pool::operator[](rx_size _index) const {
+RX_HINT_FORCE_INLINE Byte* DynamicPool::operator[](Size _index) const {
   return data_of(_index);
 }
 
 template<typename T, typename... Ts>
-inline T* dynamic_pool::create(Ts&&... _arguments) {
-  const rx_size pools = m_pools.size();
-  for (rx_size i = 0; i < pools; i++) {
+inline T* DynamicPool::create(Ts&&... _arguments) {
+  const Size pools = m_pools.size();
+  for (Size i = 0; i < pools; i++) {
     auto& pool = m_pools[i];
     if (pool->can_allocate()) {
-      return pool->create<T>(utility::forward<Ts>(_arguments)...);
+      return pool->create<T>(Utility::forward<Ts>(_arguments)...);
     }
   }
 
   if (add_pool()) {
-    return create<T>(utility::forward<Ts>(_arguments)...);
+    return create<T>(Utility::forward<Ts>(_arguments)...);
   }
 
   return nullptr;
 }
 
 template<typename T>
-void dynamic_pool::destroy(T* _data) {
-  const rx_size index = pool_index_of(reinterpret_cast<const rx_byte*>(_data));
+void DynamicPool::destroy(T* _data) {
+  const Size index = pool_index_of(reinterpret_cast<const Byte*>(_data));
   if (index == -1_z) {
     return;
   }
@@ -98,15 +98,15 @@ void dynamic_pool::destroy(T* _data) {
   }
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& dynamic_pool::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& DynamicPool::allocator() const {
   return m_allocator;
 }
 
-RX_HINT_FORCE_INLINE rx_size dynamic_pool::object_size() const {
+RX_HINT_FORCE_INLINE Size DynamicPool::object_size() const {
   return m_object_size;
 }
 
-RX_HINT_FORCE_INLINE rx_size dynamic_pool::size() const {
+RX_HINT_FORCE_INLINE Size DynamicPool::size() const {
   return m_pools.size();
 }
 

@@ -4,7 +4,7 @@
 
 #include "rx/core/global.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
 // # System Allocator
 //
@@ -12,30 +12,30 @@ namespace rx::memory {
 // allocator to track global system allocations. When something isn't provided
 // an allocator, this is the allocator used. More specifically, the global
 // g_system_allocator is used.
-struct system_allocator
-  final : allocator
+struct SystemAllocator
+  final : Allocator
 {
-  system_allocator();
+  SystemAllocator();
 
-  virtual rx_byte* allocate(rx_size _size);
-  virtual rx_byte* reallocate(void* _data, rx_size _size);
+  virtual Byte* allocate(Size _size);
+  virtual Byte* reallocate(void* _data, Size _size);
   virtual void deallocate(void* _data);
 
-  stats_allocator::statistics stats() const;
+  StatsAllocator::Statistics stats() const;
 
-  static constexpr allocator& instance();
+  static constexpr Allocator& instance();
 
 private:
-  stats_allocator m_stats_allocator;
+  StatsAllocator m_stats_allocator;
 
-  static global<system_allocator> s_instance;
+  static Global<SystemAllocator> s_instance;
 };
 
-inline stats_allocator::statistics system_allocator::stats() const {
+inline StatsAllocator::Statistics SystemAllocator::stats() const {
   return m_stats_allocator.stats();
 }
 
-inline constexpr allocator& system_allocator::instance() {
+inline constexpr Allocator& SystemAllocator::instance() {
   return *s_instance;
 }
 

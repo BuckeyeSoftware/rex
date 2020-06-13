@@ -13,25 +13,25 @@
 
 RX_LOG("filesystem/file", logger);
 
-namespace rx::filesystem {
+namespace Rx::Filesystem {
 
-rx_u32 file::flags_from_mode(const char* _mode) {
-  rx_u32 flags = 0;
+Uint32 File::flags_from_mode(const char* _mode) {
+  Uint32 flags = 0;
 
   // These few flags are true regardless of the mode.
-  flags |= stream::k_tell;
-  flags |= stream::k_seek;
+  flags |= Stream::k_tell;
+  flags |= Stream::k_seek;
 
   for (const char* ch = _mode; *ch; ch++) {
     switch (*ch) {
     case 'r':
-      flags |= stream::k_read;
+      flags |= Stream::k_read;
       break;
     case 'w':
       [[fallthrough]];
     case '+':
-      flags |= stream::k_write;
-      flags |= stream::k_flush;
+      flags |= Stream::k_write;
+      flags |= Stream::k_flush;
       break;
     }
   }
@@ -40,8 +40,8 @@ rx_u32 file::flags_from_mode(const char* _mode) {
 }
 
 #if defined(RX_PLATFORM_WINDOWS)
-file::file(memory::allocator& _allocator, const char* _file_name, const char* _mode)
-  : stream{flags_from_mode(_mode)}
+File::File(memory::Allocator& _allocator, const char* _file_name, const char* _mode)
+  : Stream{flags_from_mode(_mode)}
   , m_allocator{_allocator}
   , m_impl{nullptr}
   , m_name{allocator(), _file_name}
@@ -51,7 +51,7 @@ file::file(memory::allocator& _allocator, const char* _file_name, const char* _m
   const wide_string file_name = string(_file_name).to_utf16();
 
   // Convert the mode string to a wide char version. The mode string is in ascii
-  // so there's no conversion necessary other than extending the type size.
+  // so there's no conversion necessary other than extending the Type size.
   wchar_t mode_buffer[8];
   wchar_t *mode = mode_buffer;
   for (const char* ch = _mode; *ch; ch++) {
@@ -65,8 +65,8 @@ file::file(memory::allocator& _allocator, const char* _file_name, const char* _m
     _wfopen(reinterpret_cast<const wchar_t*>(file_name.data()), mode_buffer));
 }
 #else
-file::file(memory::allocator& _allocator, const char* _file_name, const char* _mode)
-  : stream{flags_from_mode(_mode)}
+File::File(Memory::Allocator& _allocator, const char* _file_name, const char* _mode)
+  : Stream{flags_from_mode(_mode)}
   , m_allocator{_allocator}
   , m_impl{static_cast<void*>(fopen(_file_name, _mode))}
   , m_name{allocator(), _file_name}
@@ -75,46 +75,46 @@ file::file(memory::allocator& _allocator, const char* _file_name, const char* _m
 }
 #endif
 
-rx_u64 file::on_read(rx_byte* _data, rx_u64 _size) {
+Uint64 File::on_read(Byte* _data, Uint64 _size) {
   RX_ASSERT(m_impl, "invalid");
   return fread(_data, 1, _size, static_cast<FILE*>(m_impl));
 }
 
-rx_u64 file::on_write(const rx_byte* _data, rx_u64 _size) {
+Uint64 File::on_write(const Byte* _data, Uint64 _size) {
   RX_ASSERT(m_impl, "invalid");
   return fwrite(_data, 1, _size, static_cast<FILE*>(m_impl));
 }
 
-bool file::on_seek(rx_s64 _where, whence _whence) {
+bool File::on_seek(Sint64 _where, Whence _whence) {
   RX_ASSERT(m_impl, "invalid");
 
   const auto fp = static_cast<FILE*>(m_impl);
   const auto where = static_cast<long>(_where);
 
   switch (_whence) {
-  case whence::k_set:
+  case Whence::k_set:
     return fseek(fp, where, SEEK_SET) == 0;
-  case whence::k_current:
+  case Whence::k_current:
     return fseek(fp, where, SEEK_CUR) == 0;
-  case whence::k_end:
+  case Whence::k_end:
     return fseek(fp, where, SEEK_END) == 0;
   }
 
   RX_HINT_UNREACHABLE();
 }
 
-rx_u64 file::on_tell() {
+Uint64 File::on_tell() {
   RX_ASSERT(m_impl, "invalid");
   const auto fp = static_cast<FILE*>(m_impl);
   return ftell(fp);
 }
 
-bool file::on_flush() {
+bool File::on_flush() {
   RX_ASSERT(m_impl, "invalid");
   return fflush(static_cast<FILE*>(m_impl)) == 0;
 }
 
-bool file::close() {
+bool File::close() {
   if (m_impl) {
     fclose(static_cast<FILE*>(m_impl));
     m_impl = nullptr;
@@ -123,21 +123,21 @@ bool file::close() {
   return false;
 }
 
-file& file::operator=(file&& file_) {
+File& File::operator=(File&& file_) {
   RX_ASSERT(&file_ != this, "self assignment");
 
   close();
-  m_impl = utility::exchange(file_.m_impl, nullptr);
+  m_impl = Utility::exchange(file_.m_impl, nullptr);
   return *this;
 }
 
-bool file::print(string&& contents_) {
+bool File::print(String&& contents_) {
   RX_ASSERT(m_impl, "invalid");
   RX_ASSERT(strcmp(m_mode, "w") == 0, "cannot print with mode '%s'", m_mode);
   return fprintf(static_cast<FILE*>(m_impl), "%s", contents_.data()) > 0;
 }
 
-bool file::read_line(string& line_) {
+bool File::read_line(String& line_) {
   auto* fp = static_cast<FILE*>(m_impl);
 
   line_.clear();
@@ -151,7 +151,7 @@ bool file::read_line(string& line_) {
       return false;
     }
 
-    rx_size length{strlen(buffer)};
+    Size length{strlen(buffer)};
 
     if (length && buffer[length - 1] == '\n') {
       length--;
@@ -171,8 +171,8 @@ bool file::read_line(string& line_) {
   return false;
 }
 
-optional<vector<rx_byte>> read_binary_file(memory::allocator& _allocator, const char* _file_name) {
-  if (file open_file{_file_name, "rb"}) {
+Optional<Vector<Byte>> read_binary_file(Memory::Allocator& _allocator, const char* _file_name) {
+  if (File open_file{_file_name, "rb"}) {
     return read_binary_stream(_allocator, &open_file);
   }
 
@@ -182,8 +182,8 @@ optional<vector<rx_byte>> read_binary_file(memory::allocator& _allocator, const 
   return nullopt;
 }
 
-optional<vector<rx_byte>> read_text_file(memory::allocator& _allocator, const char* _file_name) {
-  if (file open_file{_file_name, "rb"}) {
+Optional<Vector<Byte>> read_text_file(Memory::Allocator& _allocator, const char* _file_name) {
+  if (File open_file{_file_name, "rb"}) {
     return read_text_stream(_allocator, &open_file);
   }
 

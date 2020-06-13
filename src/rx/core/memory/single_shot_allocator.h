@@ -3,7 +3,7 @@
 #include "rx/core/memory/allocator.h"
 #include "rx/core/concurrency/atomic.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
 // # Single Shot Allocator
 //
@@ -20,20 +20,20 @@ namespace rx::memory {
 // The purpose of this allocator is to enable containers which manage a single
 // allocation, such as array and string to be made fixed-sized without introducing
 // fixed-size variants.
-struct single_shot_allocator
-  final : allocator
+struct SingleShotAllocator
+  final : Allocator
 {
-  single_shot_allocator() = delete;
-  single_shot_allocator(rx_byte* _data, rx_size _size);
+  SingleShotAllocator() = delete;
+  SingleShotAllocator(Byte* _data, Size _size);
 
-  virtual rx_byte* allocate(rx_size _size);
-  virtual rx_byte* reallocate(void* _data, rx_size _size);
+  virtual Byte* allocate(Size _size);
+  virtual Byte* reallocate(void* _data, Size _size);
   virtual void deallocate(void* _data);
 
 private:
-  rx_byte* m_data;
-  rx_size m_size;
-  concurrency::atomic<bool> m_allocated;
+  Byte* m_data;
+  Size m_size;
+  Concurrency::Atomic<bool> m_allocated;
 };
 
 } // namespace rx::memory

@@ -1,7 +1,7 @@
 #ifndef RX_CORE_TRAITS_DETECT_H
 #define RX_CORE_TRAITS_DETECT_H
 
-namespace rx::traits {
+namespace Rx::traits {
 
 namespace detail {
   template<typename...>

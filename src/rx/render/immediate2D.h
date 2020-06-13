@@ -13,68 +13,68 @@
 
 #include "rx/render/frontend/state.h"
 
-namespace rx::render {
+namespace Rx::Render {
 
-namespace frontend {
-  struct buffer;
-  struct target;
-  struct technique;
-  struct texture2D;
-  struct context;
+namespace Frontend {
+  struct Buffer;
+  struct Target;
+  struct Technique;
+  struct Texture2D;
+  struct Context;
 }
 
-struct immediate2D {
-  enum class text_align {
+struct Immediate2D {
+  enum class TextAlign {
     k_left,
     k_center,
     k_right
   };
 
-  struct RX_HINT_EMPTY_BASES queue
-    : concepts::no_copy
+  struct RX_HINT_EMPTY_BASES Queue
+    : Concepts::NoCopy
   {
-    queue() = default;
-    queue(memory::allocator& _allocator);
-    queue(queue&& queue_);
+    Queue() = default;
+    Queue(Memory::Allocator& _allocator);
+    Queue(Queue&& queue_);
 
-    queue& operator=(queue&& queue_);
+    Queue& operator=(Queue&& queue_);
 
-    struct box {
-      math::vec2f position;
-      math::vec2f size;
-      bool operator!=(const box& _box) const;
+    struct Box {
+      Math::Vec2f position;
+      Math::Vec2f size;
+      bool operator!=(const Box& _box) const;
     };
 
-    struct rectangle : box {
-      rx_f32 roundness;
-      bool operator!=(const rectangle& _rectangle) const;
+    struct Rectangle : Box {
+      Float32 roundness;
+      bool operator!=(const Rectangle& _rectangle) const;
     };
 
-    struct triangle : box {};
-    struct scissor : box {};
+    struct Triangle : Box {};
+    struct Scissor : Box {};
 
-    struct line {
-      math::vec2f points[2];
-      rx_f32 roundness;
-      rx_f32 thickness;
-      bool operator!=(const line& _line) const;
+    struct Line {
+      Math::Vec2f points[2];
+      Float32 roundness;
+      Float32 thickness;
+      bool operator!=(const Line& _line) const;
     };
 
-    struct text {
-      math::vec2f position;
-      rx_s32 size;
-      rx_f32 scale;
-      rx_size font_index;
-      rx_size font_length;
-      rx_size text_index;
-      rx_size text_length;
-      bool operator!=(const text& _text) const;
+    struct Text {
+      Math::Vec2f position;
+      Sint32 size;
+      Float32 scale;
+      Size font_index;
+      Size font_length;
+      Size text_index;
+      Size text_length;
+      bool operator!=(const Text& _text) const;
     };
 
-    struct command {
-      constexpr command();
+    struct Command {
+      constexpr Command();
 
-      enum class type {
+      enum class Type {
         k_uninitialized,
         k_rectangle,
         k_triangle,
@@ -83,211 +83,213 @@ struct immediate2D {
         k_scissor
       };
 
-      bool operator!=(const command& _command) const;
+      bool operator!=(const Command& _command) const;
 
-      type kind;
-      rx_u32 flags;
-      rx_size hash;
-      math::vec4f color;
+      Type type;
+      Uint32 flags;
+      Size hash;
+      Math::Vec4f color;
 
       union {
-        utility::nat as_nat;
-        line as_line;
-        text as_text;
-        rectangle as_rectangle;
-        scissor as_scissor;
-        triangle as_triangle;
+        Utility::Nat as_nat;
+        Line as_line;
+        Text as_text;
+        Rectangle as_rectangle;
+        Scissor as_scissor;
+        Triangle as_triangle;
       };
     };
 
-    void record_scissor(const math::vec2f& _position, const math::vec2f& _size);
-    void record_rectangle(const math::vec2f& _position, const math::vec2f& _size,
-      rx_f32 _roundness, const math::vec4f& _color);
-    void record_line(const math::vec2f& _point_a, const math::vec2f& _point_b,
-      rx_f32 _roundness, rx_f32 _thickness, const math::vec4f& _color);
-    void record_triangle(const math::vec2f& _position, const math::vec2f& _size,
-      rx_u32 _flags, const math::vec4f& _color);
+    void record_scissor(const Math::Vec2f& _position, const Math::Vec2f& _size);
+    void record_rectangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
+                          Float32 _roundness, const Math::Vec4f& _color);
+    void record_line(const Math::Vec2f& _point_a, const Math::Vec2f& _point_b,
+                     Float32 _roundness, Float32 _thickness, const Math::Vec4f& _color);
+    void record_triangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
+                         Uint32 _flags, const Math::Vec4f& _color);
 
-    void record_text(const char* _font, rx_size _font_length,
-      const math::vec2f& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
-      const char* _contents, rx_size _contents_length, const math::vec4f& _color);
+    void record_text(const char* _font, Size _font_length,
+                     const Math::Vec2f& _position, Sint32 _size, Float32 _scale, TextAlign _align,
+                     const char* _contents, Size _contents_length, const Math::Vec4f& _color);
 
-    void record_text(const char* _font, const math::vec2f& _position,
-      rx_s32 _size, rx_f32 _scale, text_align _align, const char* _contents,
-      const math::vec4f& _color);
+    void record_text(const char* _font, const Math::Vec2f& _position,
+                     Sint32 _size, Float32 _scale, TextAlign _align, const char* _contents,
+                     const Math::Vec4f& _color);
 
-    void record_text(const string& _font, const math::vec2f& _position,
-      rx_s32 _size, rx_f32 _scale, text_align _align, const string& _contents,
-      const math::vec4f& _color);
+    void record_text(const String& _font, const Math::Vec2f& _position,
+                     Sint32 _size, Float32 _scale, TextAlign _align, const String& _contents,
+                     const Math::Vec4f& _color);
 
-    bool operator!=(const queue& _queue) const;
+    bool operator!=(const Queue& _queue) const;
     void clear();
     bool is_empty() const;
 
   private:
-    friend struct immediate2D;
+    friend struct Immediate2D;
 
-    vector<command> m_commands;
-    string_table m_string_table;
-    optional<box> m_scissor;
+    Vector<Command> m_commands;
+    StringTable m_string_table;
+    Optional<Box> m_scissor;
   };
 
-  immediate2D(frontend::context* _frontend);
-  ~immediate2D();
+  Immediate2D(Frontend::Context* _frontend);
+  ~Immediate2D();
 
-  void render(frontend::target* _target);
-  queue& frame_queue();
-  frontend::context* frontend() const;
+  void render(Frontend::Target* _target);
+  Queue& frame_queue();
+  Frontend::Context* frontend() const;
 
-  rx_f32 measure_text_length(const string& _font, const char* _text,
-    rx_size _text_length, rx_s32 _size, rx_f32 _scale);
-  rx_f32 measure_text_length(const char* _font, const char* _text,
-    rx_size _text_length, rx_s32 _size, rx_f32 _scale);
+  Float32 measure_text_length(const String& _font, const char* _text,
+    Size _text_length, Sint32 _size, Float32 _scale);
+  Float32 measure_text_length(const char* _font, const char* _text,
+    Size _text_length, Sint32 _size, Float32 _scale);
 
-  struct font {
-    static constexpr const rx_size k_default_resolution{128};
+  struct Font {
+    static constexpr const Size k_default_resolution{128};
 
-    struct quad {
-      math::vec2f position[2];
-      math::vec2f coordinate[2];
+    struct Quad {
+      Math::Vec2f position[2];
+      Math::Vec2f coordinate[2];
     };
 
-    struct glyph {
-      math::vec2<rx_u16> position[2];
-      math::vec2f offset;
-      rx_f32 x_advance;
+    struct Glyph {
+      Math::Vec2<Uint16> position[2];
+      Math::Vec2f offset;
+      Float32 x_advance;
     };
 
-    struct key {
-      rx_s32 size;
-      string name;
-      rx_size hash() const;
-      bool operator==(const key& _key) const;
+    struct Key {
+      Sint32 size;
+      String name;
+      Size hash() const;
+      bool operator==(const Key& _key) const;
     };
 
-    font(const key& _key, frontend::context* _frontend);
-    font(font&& font_);
-    ~font();
+    Font(const Key& _key, Frontend::Context* _frontend);
+    Font(Font&& font_);
+    ~Font();
 
-    quad quad_for_glyph(rx_size _glyph, rx_f32 _scale, math::vec2f& position_) const;
-    glyph glyph_for_code(rx_u32 _code) const;
+    Quad quad_for_glyph(Size _glyph, Float32 _scale, Math::Vec2f& position_) const;
+    Glyph glyph_for_code(Uint32 _code) const;
 
-    rx_s32 size() const;
-    frontend::texture2D* texture() const;
-    frontend::context* frontend() const;
+    Sint32 size() const;
+    Frontend::Texture2D* texture() const;
+    Frontend::Context* frontend() const;
 
   private:
-    frontend::context* m_frontend;
-    rx_s32 m_size;
-    rx_size m_resolution;
-    frontend::texture2D* m_texture;
-    vector<glyph> m_glyphs;
+    Frontend::Context* m_frontend;
+    Sint32 m_size;
+    Size m_resolution;
+    Frontend::Texture2D* m_texture;
+    Vector<Glyph> m_glyphs;
   };
 
 private:
-  struct vertex {
-    math::vec2f position;
-    math::vec2f coordinate;
-    math::vec4f color;
+  struct Vertex {
+    Math::Vec2f position;
+    Math::Vec2f coordinate;
+    Math::Vec4f color;
   };
 
-  struct batch {
-    enum type {
+  struct Batch {
+    enum Type {
       k_text,
       k_triangles,
       k_lines,
     };
 
-    rx_size offset;
-    rx_size count;
-    type kind;
-    frontend::state render_state;
-    frontend::texture2D* texture;
+    Size offset;
+    Size count;
+    Type type;
+    Frontend::State render_state;
+    Frontend::Texture2D* texture;
   };
 
-  static constexpr const rx_size k_buffers{2};
-  static constexpr const rx_size k_circle_vertices{16*4};
+  static constexpr const Size k_buffers{2};
+  static constexpr const Size k_circle_vertices{16 * 4};
 
-  template<rx_size E>
-  void generate_polygon(const math::vec2f (&coordinates)[E],
-    rx_f32 _thickness, const math::vec4f& _color);
-  void generate_rectangle(const math::vec2f& _position, const math::vec2f& _size,
-    rx_f32 _roundness, const math::vec4f& _color);
-  void generate_line(const math::vec2f& _point_a,
-    const math::vec2f& _point_b, rx_f32 _thickness, rx_f32 _roundness,
-    const math::vec4f& _color);
-  void generate_text(rx_s32 _size, const char* _font, rx_size _font_length,
-    const char* _contents, rx_size _contents_length, rx_f32 _scale,
-    const math::vec2f& _position, text_align _align, const math::vec4f& _color);
-  void generate_triangle(const math::vec2f& _positions,
-    const math::vec2f& _size, const math::vec4f& _color);
+  template<Size E>
+  void generate_polygon(const Math::Vec2f (&coordinates)[E],
+    Float32 _thickness, const Math::Vec4f& _color);
+  void generate_rectangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
+                          Float32 _roundness, const Math::Vec4f& _color);
+  void generate_line(const Math::Vec2f& _point_a,
+                     const Math::Vec2f& _point_b, Float32 _thickness, Float32 _roundness,
+                     const Math::Vec4f& _color);
+  void generate_text(Sint32 _size, const char* _font, Size _font_length,
+                     const char* _contents, Size _contents_length, Float32 _scale,
+                     const Math::Vec2f& _position, TextAlign _align, const Math::Vec4f& _color);
+  void generate_triangle(const Math::Vec2f& _positions,
+                         const Math::Vec2f& _size, const Math::Vec4f& _color);
 
-  template<rx_size E>
-  void size_polygon(rx_size& n_vertices_, rx_size& n_elements_);
-  void size_rectangle(rx_f32 _roundness, rx_size& n_vertices_, rx_size& n_elements_);
-  void size_line(rx_f32 _roundness, rx_size& n_vertices_, rx_size& n_elements_);
-  void size_text(const char* _contents, rx_size _contents_length,
-    rx_size& n_vertices_, rx_size& n_elements_);
-  void size_triangle(rx_size& n_vertices_, rx_size& n_elements_);
-  void add_batch(rx_size _offset, batch::type _type, bool _blend,
-    frontend::texture2D* _texture = nullptr);
+  template<Size E>
+  void size_polygon(Size& n_vertices_, Size& n_elements_);
+  void size_rectangle(Float32 _roundness, Size& n_vertices_, Size& n_elements_);
+  void size_line(Float32 _roundness, Size& n_vertices_, Size& n_elements_);
+  void size_text(const char* _contents, Size _contents_length,
+    Size& n_vertices_, Size& n_elements_);
+  void size_triangle(Size& n_vertices_, Size& n_elements_);
+  void add_batch(Size _offset, Batch::Type _type, bool _blend,
+                 Frontend::Texture2D* _texture = nullptr);
 
-  void add_element(rx_u32 _element);
-  void add_vertex(vertex&& vertex_);
+  void add_element(Uint32 _element);
+  void add_vertex(Vertex&& vertex_);
 
-  ptr<font>& access_font(const font::key& _key);
+  Ptr<Font>& access_font(const Font::Key& _key);
 
-  frontend::context* m_frontend;
-  frontend::technique* m_technique;
+  Frontend::Context* m_frontend;
+  Frontend::Technique* m_technique;
 
   // loaded fonts
-  map<font::key, ptr<font>> m_fonts;
+  Map<Font::Key, Ptr<Font>> m_fonts;
 
   // current scissor rectangle
-  math::vec2i m_scissor_position;
-  math::vec2i m_scissor_size;
+  Math::Vec2i m_scissor_position;
+  Math::Vec2i m_scissor_size;
 
   // precomputed circle vertices
-  math::vec2f m_circle_vertices[k_circle_vertices];
+  Math::Vec2f m_circle_vertices[k_circle_vertices];
 
   // generated commands, vertices, elements and batches
-  queue m_queue;
-  vector<vertex> m_vertices;
-  vector<rx_u32> m_elements;
-  vector<batch> m_batches;
+  Queue m_queue;
 
-  rx_size m_vertex_index;
-  rx_size m_element_index;
+  Vertex* m_vertices;
+  Uint32* m_elements;
+
+  Vector<Batch> m_batches;
+
+  Size m_vertex_index;
+  Size m_element_index;
 
   // buffering of batched immediates
-  rx_size m_rd_index;
-  rx_size m_wr_index;
-  vector<batch> m_render_batches[k_buffers];
-  frontend::buffer* m_buffers[k_buffers];
-  queue m_render_queue[k_buffers];
+  Size m_rd_index;
+  Size m_wr_index;
+  Vector<Batch> m_render_batches[k_buffers];
+  Frontend::Buffer* m_buffers[k_buffers];
+  Queue m_render_queue[k_buffers];
 };
 
-inline bool immediate2D::queue::box::operator!=(const box& _box) const {
+inline bool Immediate2D::Queue::Box::operator!=(const Box& _box) const {
   return _box.position != position || _box.size != size;
 }
 
-inline bool immediate2D::queue::rectangle::operator!=(const rectangle& _rectangle) const {
-  return box::operator!=(_rectangle) || _rectangle.roundness != roundness;
+inline bool Immediate2D::Queue::Rectangle::operator!=(const Rectangle& _rectangle) const {
+  return Box::operator!=(_rectangle) || _rectangle.roundness != roundness;
 }
 
-inline bool immediate2D::queue::line::operator!=(const line& _line) const {
+inline bool Immediate2D::Queue::Line::operator!=(const Line& _line) const {
   return _line.points[0] != points[0] || _line.points[1] != points[1] ||
     _line.roundness != roundness || _line.thickness != thickness;
 }
 
-inline bool immediate2D::queue::text::operator!=(const text& _text) const {
+inline bool Immediate2D::Queue::Text::operator!=(const Text& _text) const {
   return _text.position != position || _text.size != size || _text.scale != scale
     || _text.font_index != font_index || _text.font_length != font_length
     || _text.text_index != text_index || _text.text_length != text_length;
 }
 
-inline constexpr immediate2D::queue::command::command()
-  : kind{queue::command::type::k_uninitialized}
+inline constexpr Immediate2D::Queue::Command::Command()
+  : type{Queue::Command::Type::k_uninitialized}
   , flags{0}
   , hash{0}
   , color{}
@@ -295,53 +297,53 @@ inline constexpr immediate2D::queue::command::command()
 {
 }
 
-inline void immediate2D::queue::record_text(const string& _font,
-  const math::vec2f& _position, rx_s32 _size, rx_f32 _scale, text_align _align,
-  const string& _contents, const math::vec4f& _color)
+inline void Immediate2D::Queue::record_text(const String& _font,
+                                            const Math::Vec2f& _position, Sint32 _size, Float32 _scale, TextAlign _align,
+                                            const String& _contents, const Math::Vec4f& _color)
 {
   record_text(_font.data(), _font.size(), _position, _size, _scale, _align,
     _contents.data(), _contents.size(), _color);
 }
 
-inline bool immediate2D::queue::is_empty() const {
+inline bool Immediate2D::Queue::is_empty() const {
   return m_commands.is_empty();
 }
 
-inline rx_size immediate2D::font::key::hash() const {
-  return hash_combine(name.hash(), rx::hash<rx_s32>{}(size));
+inline Size Immediate2D::Font::Key::hash() const {
+  return hash_combine(name.hash(), Rx::Hash<Sint32>{}(size));
 }
 
-inline immediate2D::queue& immediate2D::frame_queue() {
+inline Immediate2D::Queue& Immediate2D::frame_queue() {
   return m_queue;
 }
 
-inline frontend::context* immediate2D::frontend() const {
+inline Frontend::Context* Immediate2D::frontend() const {
   return m_frontend;
 }
 
-inline rx_f32 immediate2D::measure_text_length(const string& _font,
-  const char* _text, rx_size _text_length, rx_s32 _size, rx_f32 _scale)
+inline Float32 Immediate2D::measure_text_length(const String& _font,
+                                               const char* _text, Size _text_length, Sint32 _size, Float32 _scale)
 {
   return measure_text_length(_font.data(), _text, _text_length, _size, _scale);
 }
 
-inline bool immediate2D::font::key::operator==(const key& _key) const {
+inline bool Immediate2D::Font::Key::operator==(const Key& _key) const {
   return name == _key.name && size == _key.size;
 }
 
-inline immediate2D::font::glyph immediate2D::font::glyph_for_code(rx_u32 _code) const {
-  return m_glyphs[static_cast<rx_size>(_code)];
+inline Immediate2D::Font::Glyph Immediate2D::Font::glyph_for_code(Uint32 _code) const {
+  return m_glyphs.in_range(_code) ? m_glyphs[static_cast<Size>(_code)] : m_glyphs[0];
 }
 
-inline rx_s32 immediate2D::font::size() const {
+inline Sint32 Immediate2D::Font::size() const {
   return m_size;
 }
 
-inline frontend::texture2D* immediate2D::font::texture() const {
+inline Frontend::Texture2D* Immediate2D::Font::texture() const {
   return m_texture;
 }
 
-inline frontend::context* immediate2D::font::frontend() const {
+inline Frontend::Context* Immediate2D::Font::frontend() const {
   return m_frontend;
 }
 

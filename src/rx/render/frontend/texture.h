@@ -10,29 +10,29 @@
 #include "rx/math/vec3.h"
 #include "rx/math/vec4.h"
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
-struct context;
+struct Context;
 
-struct texture
-  : resource
+struct Texture
+  : Resource
 {
-  texture(context* _frontend, resource::type _type);
+  Texture(Context* _frontend, Resource::Type _type);
 
   template<typename T>
   struct level_info {
-    rx_size offset;
-    rx_size size;
+    Size offset;
+    Size size;
     T dimensions;
   };
 
-  struct filter_options {
+  struct FilterOptions {
     bool bilinear;
     bool trilinear;
     bool mipmaps;
   };
 
-  enum class wrap_type : rx_u8 {
+  enum class WrapType : Uint8 {
     k_clamp_to_edge,
     k_clamp_to_border,
     k_mirrored_repeat,
@@ -40,7 +40,7 @@ struct texture
     k_repeat
   };
 
-  enum class data_format : rx_u8 {
+  enum class DataFormat : Uint8 {
     k_r_u8,
     k_rgb_u8,
     k_rgba_u8,
@@ -61,7 +61,7 @@ struct texture
     k_srgba_u8
   };
 
-  enum class type : rx_u8 {
+  enum class Type : Uint8 {
     k_attachment,
     k_static,
     k_dynamic
@@ -69,33 +69,33 @@ struct texture
 
   // get byte size for one pixel of |_format|
   // NOTE: can be fractional for compressed block formats
-  static rx_size bits_per_pixel(data_format _format);
+  static Size bits_per_pixel(DataFormat _format);
 
   // get channel count of |_format|
-  static rx_size channel_count_of_format(data_format _format);
+  static Size channel_count_of_format(DataFormat _format);
 
-  void record_format(data_format _format);
-  void record_type(type _type);
-  void record_filter(const filter_options& _options);
-  void record_levels(rx_size _levels); // the number of levels including the base level
-  void record_border(const math::vec4f& _color);
+  void record_format(DataFormat _format);
+  void record_type(Type _type);
+  void record_filter(const FilterOptions& _options);
+  void record_levels(Size _levels); // the number of levels including the base level
+  void record_border(const Math::Vec4f& _color);
 
   void validate() const;
 
-  const vector<rx_byte>& data() const &;
-  data_format format() const;
-  filter_options filter() const;
-  rx_size channels() const;
-  type kind() const;
-  rx_size levels() const;
-  const math::vec4f& border() const &;
+  const Vector<Byte>& data() const &;
+  DataFormat format() const;
+  FilterOptions filter() const;
+  Size channels() const;
+  Type kind() const;
+  Size levels() const;
+  const Math::Vec4f& border() const &;
 
-  static bool is_compressed_format(data_format _format);
-  static bool is_color_format(data_format _format);
-  static bool is_depth_format(data_format _format);
-  static bool is_stencil_format(data_format _format);
-  static bool is_depth_stencil_format(data_format _format);
-  static bool is_srgb_color_format(data_format _format);
+  static bool is_compressed_format(DataFormat _format);
+  static bool is_color_format(DataFormat _format);
+  static bool is_depth_format(DataFormat _format);
+  static bool is_stencil_format(DataFormat _format);
+  static bool is_depth_stencil_format(DataFormat _format);
+  static bool is_srgb_color_format(DataFormat _format);
 
   bool is_compressed_format() const;
   bool is_color_format() const;
@@ -105,17 +105,17 @@ struct texture
   bool is_srgb_color_format() const;
 
   bool is_swapchain() const;
-  bool is_level_in_range(rx_size _level) const;
+  bool is_level_in_range(Size _level) const;
 
   template<typename T>
-  struct edit {
-    rx_size level;
+  struct Edit {
+    Size level;
     T offset;
     T size;
   };
 
 protected:
-  enum : rx_u8 {
+  enum : Uint8 {
     k_format     = 1 << 0,
     k_type       = 1 << 1,
     k_filter     = 1 << 2,
@@ -126,123 +126,123 @@ protected:
     k_border     = 1 << 7
   };
 
-  friend struct context;
+  friend struct Context;
 
-  vector<rx_byte> m_data;
-  data_format m_format;
-  type m_type;
-  filter_options m_filter;
-  rx_u16 m_flags;
-  rx_size m_levels;
-  math::vec4f m_border;
+  Vector<Byte> m_data;
+  DataFormat m_format;
+  Type m_type;
+  FilterOptions m_filter;
+  Uint16 m_flags;
+  Size m_levels;
+  Math::Vec4f m_border;
 };
 
-struct texture1D : texture {
-  using dimension_type = rx_size;
-  using wrap_options = wrap_type;
+struct Texture1D : Texture {
+  using DimensionType = Size;
+  using WrapOptions = WrapType;
 
-  texture1D(context* _frontend);
-  ~texture1D();
+  Texture1D(Context* _frontend);
+  ~Texture1D();
 
   // write data |_data| to store for miplevel |_level|
-  void write(const rx_byte* _data, rx_size _level);
+  void write(const Byte* _data, Size _level);
 
   // map data for miplevel |_level|
-  rx_byte* map(rx_size _level);
+  Byte* map(Size _level);
+
+  void record_dimensions(const DimensionType& _dimensions);
+  void record_wrap(const WrapOptions& _wrap);
+
+  const DimensionType& dimensions() const &;
+  const WrapOptions& wrap() const &;
+  const level_info<DimensionType>& info_for_level(Size _index) const &;
+  Vector<Edit < DimensionType>>&& edits();
+
+  // Record an edit to level |_level| of this texture at offset |_offset| of
+  // dimensions |_dimensions|.
+  void record_edit(Size _level, const DimensionType& _offset,
+    const DimensionType& _dimensions);
+
+private:
+  DimensionType m_dimensions;
+  WrapOptions m_wrap;
+  Vector<level_info < DimensionType>> m_level_info;
+  Vector<Edit < DimensionType>> m_edits;
+};
+
+struct Texture2D : Texture {
+  using dimension_type = Math::Vec2z;
+  using wrap_options = Math::Vec2<WrapType>;
+
+  Texture2D(Context* _frontend);
+  ~Texture2D();
+
+  // write data |_data| to store for miplevel |_level|
+  void write(const Byte* _data, Size _level);
+
+  // map data for miplevel |_level|
+  Byte* map(Size _level);
 
   void record_dimensions(const dimension_type& _dimensions);
   void record_wrap(const wrap_options& _wrap);
 
   const dimension_type& dimensions() const &;
   const wrap_options& wrap() const &;
-  const level_info<dimension_type>& info_for_level(rx_size _index) const &;
-  vector<edit<dimension_type>>&& edits();
+  const level_info<dimension_type>& info_for_level(Size _index) const &;
+  Vector<Edit < dimension_type>>&& edits();
 
   // Record an edit to level |_level| of this texture at offset |_offset| of
   // dimensions |_dimensions|.
-  void record_edit(rx_size _level, const dimension_type& _offset,
+  void record_edit(Size _level, const dimension_type& _offset,
     const dimension_type& _dimensions);
 
 private:
-  dimension_type m_dimensions;
-  wrap_options m_wrap;
-  vector<level_info<dimension_type>> m_level_info;
-  vector<edit<dimension_type>> m_edits;
-};
-
-struct texture2D : texture {
-  using dimension_type = math::vec2z;
-  using wrap_options = math::vec2<wrap_type>;
-
-  texture2D(context* _frontend);
-  ~texture2D();
-
-  // write data |_data| to store for miplevel |_level|
-  void write(const rx_byte* _data, rx_size _level);
-
-  // map data for miplevel |_level|
-  rx_byte* map(rx_size _level);
-
-  void record_dimensions(const dimension_type& _dimensions);
-  void record_wrap(const wrap_options& _wrap);
-
-  const dimension_type& dimensions() const &;
-  const wrap_options& wrap() const &;
-  const level_info<dimension_type>& info_for_level(rx_size _index) const &;
-  vector<edit<dimension_type>>&& edits();
-
-  // Record an edit to level |_level| of this texture at offset |_offset| of
-  // dimensions |_dimensions|.
-  void record_edit(rx_size _level, const dimension_type& _offset,
-    const dimension_type& _dimensions);
-
-private:
-  friend struct context;
+  friend struct Context;
 
   dimension_type m_dimensions;
   wrap_options m_wrap;
-  vector<level_info<dimension_type>> m_level_info;
-  vector<edit<dimension_type>> m_edits;
+  Vector<level_info<dimension_type>> m_level_info;
+  Vector<Edit < dimension_type>> m_edits;
 };
 
-struct texture3D : texture {
-  using dimension_type = math::vec3z;
-  using wrap_options = math::vec3<wrap_type>;
+struct Texture3D : Texture {
+  using dimension_type = Math::Vec3z;
+  using wrap_options = Math::Vec3<WrapType>;
 
-  texture3D(context* _frontend);
-  ~texture3D();
+  Texture3D(Context* _frontend);
+  ~Texture3D();
 
   // write 3D data |_data| to store for miplevel |_level|
-  void write(const rx_byte* _data, rx_size _level);
+  void write(const Byte* _data, Size _level);
 
   // map data for miplevel |_level|
-  rx_byte* map(rx_size _level);
+  Byte* map(Size _level);
 
   void record_dimensions(const dimension_type& _dimensions);
   void record_wrap(const wrap_options& _wrap);
 
   const dimension_type& dimensions() const &;
   const wrap_options& wrap() const &;
-  const level_info<dimension_type>& info_for_level(rx_size _index) const &;
-  vector<edit<dimension_type>>&& edits();
+  const level_info<dimension_type>& info_for_level(Size _index) const &;
+  Vector<Edit < dimension_type>>&& edits();
 
   // Record an edit to level |_level| of this texture at offset |_offset| with
   // dimensions |_dimensions|.
-  void record_edit(rx_size _level, const dimension_type& _offset,
+  void record_edit(Size _level, const dimension_type& _offset,
     const dimension_type& _dimensions);
 
 private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
-  vector<level_info<dimension_type>> m_level_info;
-  vector<edit<dimension_type>> m_edits;
+  Vector<level_info<dimension_type>> m_level_info;
+  Vector<Edit < dimension_type>> m_edits;
 };
 
-struct textureCM : texture {
-  using dimension_type = math::vec2z;
-  using wrap_options = math::vec3<wrap_type>;
+struct TextureCM : Texture {
+  using dimension_type = Math::Vec2z;
+  using wrap_options = Math::Vec3<WrapType>;
 
-  enum class face : rx_u8 {
+  enum class face : Uint8 {
     k_right,  // +x
     k_left,   // -x
     k_top,    // +y
@@ -251,267 +251,267 @@ struct textureCM : texture {
     k_back    // -z
   };
 
-  textureCM(context* _frontend);
-  ~textureCM();
+  TextureCM(Context* _frontend);
+  ~TextureCM();
 
   // write data |_data| for face |_face| to store for miplevel |_level|
-  void write(const rx_byte* _data, face _face, rx_size _level);
+  void write(const Byte* _data, face _face, Size _level);
 
   // map data for face |_face| for miplevel |_level|
-  rx_byte* map(rx_size _level, face _face);
+  Byte* map(Size _level, face _face);
 
   void record_dimensions(const dimension_type& _dimensions);
   void record_wrap(const wrap_options& _wrap);
 
   const dimension_type& dimensions() const &;
   const wrap_options& wrap() const &;
-  const level_info<dimension_type>& info_for_level(rx_size _index) const &;
+  const level_info<dimension_type>& info_for_level(Size _index) const &;
 
 private:
   dimension_type m_dimensions;
   wrap_options m_wrap;
-  vector<level_info<dimension_type>> m_level_info;
+  Vector<level_info<dimension_type>> m_level_info;
 };
 
 // texture
-inline const vector<rx_byte>& texture::data() const & {
+inline const Vector<Byte>& Texture::data() const & {
   return m_data;
 }
 
-inline texture::data_format texture::format() const {
+inline Texture::DataFormat Texture::format() const {
   return m_format;
 }
 
-inline texture::filter_options texture::filter() const {
+inline Texture::FilterOptions Texture::filter() const {
   return m_filter;
 }
 
-inline rx_size texture::channels() const {
+inline Size Texture::channels() const {
   return channel_count_of_format(m_format);
 }
 
-inline texture::type texture::kind() const {
+inline Texture::Type Texture::kind() const {
   return m_type;
 }
 
-inline rx_size texture::levels() const {
+inline Size Texture::levels() const {
   return m_levels;
 }
 
-inline const math::vec4f& texture::border() const & {
+inline const Math::Vec4f& Texture::border() const & {
   RX_ASSERT(m_flags & k_border, "border not recorded");
   return m_border;
 }
 
-inline bool texture::is_color_format(data_format _format) {
-  return _format == data_format::k_r_u8
-      || _format == data_format::k_rgb_u8
-      || _format == data_format::k_rgba_u8
-      || _format == data_format::k_bgr_u8
-      || _format == data_format::k_bgra_u8
-      || _format == data_format::k_rgba_f16
-      || _format == data_format::k_bgra_f16
-      || _format == data_format::k_dxt1
-      || _format == data_format::k_dxt5
-      || _format == data_format::k_srgb_u8
-      || _format == data_format::k_srgba_u8;
+inline bool Texture::is_color_format(DataFormat _format) {
+  return _format == DataFormat::k_r_u8
+      || _format == DataFormat::k_rgb_u8
+      || _format == DataFormat::k_rgba_u8
+      || _format == DataFormat::k_bgr_u8
+      || _format == DataFormat::k_bgra_u8
+      || _format == DataFormat::k_rgba_f16
+      || _format == DataFormat::k_bgra_f16
+      || _format == DataFormat::k_dxt1
+      || _format == DataFormat::k_dxt5
+      || _format == DataFormat::k_srgb_u8
+      || _format == DataFormat::k_srgba_u8;
 }
 
-inline bool texture::is_depth_format(data_format _format) {
-  return _format == data_format::k_d16
-      || _format == data_format::k_d24
-      || _format == data_format::k_d32
-      || _format == data_format::k_d32f;
+inline bool Texture::is_depth_format(DataFormat _format) {
+  return _format == DataFormat::k_d16
+      || _format == DataFormat::k_d24
+      || _format == DataFormat::k_d32
+      || _format == DataFormat::k_d32f;
 }
 
-inline bool texture::is_stencil_format(data_format _format) {
-  return _format == data_format::k_s8;
+inline bool Texture::is_stencil_format(DataFormat _format) {
+  return _format == DataFormat::k_s8;
 }
 
-inline bool texture::is_depth_stencil_format(data_format _format) {
-  return _format == data_format::k_d24_s8
-      || _format == data_format::k_d32f_s8;
+inline bool Texture::is_depth_stencil_format(DataFormat _format) {
+  return _format == DataFormat::k_d24_s8
+      || _format == DataFormat::k_d32f_s8;
 }
 
-inline bool texture::is_compressed_format(data_format _format) {
-  return _format == data_format::k_dxt1
-      || _format == data_format::k_dxt5;
+inline bool Texture::is_compressed_format(DataFormat _format) {
+  return _format == DataFormat::k_dxt1
+      || _format == DataFormat::k_dxt5;
 }
 
-inline bool texture::is_srgb_color_format(data_format _format) {
-  return _format == data_format::k_srgb_u8
-      || _format == data_format::k_srgba_u8;
+inline bool Texture::is_srgb_color_format(DataFormat _format) {
+  return _format == DataFormat::k_srgb_u8
+      || _format == DataFormat::k_srgba_u8;
 }
 
-inline bool texture::is_compressed_format() const {
+inline bool Texture::is_compressed_format() const {
   return is_compressed_format(m_format);
 }
 
-inline bool texture::is_color_format() const {
+inline bool Texture::is_color_format() const {
   return is_color_format(m_format);
 }
 
-inline bool texture::is_depth_format() const {
+inline bool Texture::is_depth_format() const {
   return is_depth_format(m_format);
 }
 
-inline bool texture::is_stencil_format() const {
+inline bool Texture::is_stencil_format() const {
   return is_stencil_format(m_format);
 }
 
-inline bool texture::is_depth_stencil_format() const {
+inline bool Texture::is_depth_stencil_format() const {
   return is_depth_stencil_format(m_format);
 }
 
-inline bool texture::is_srgb_color_format() const {
+inline bool Texture::is_srgb_color_format() const {
   return is_srgb_color_format(m_format);
 }
 
-inline bool texture::is_swapchain() const {
+inline bool Texture::is_swapchain() const {
   return m_flags & k_swapchain;
 }
 
-inline bool texture::is_level_in_range(rx_size _level) const {
+inline bool Texture::is_level_in_range(Size _level) const {
   return _level < m_levels;
 }
 
-inline rx_size texture::bits_per_pixel(data_format _format) {
+inline Size Texture::bits_per_pixel(DataFormat _format) {
   switch (_format) {
-  case data_format::k_rgba_u8:
+  case DataFormat::k_rgba_u8:
     return 4 * 8;
-  case data_format::k_rgb_u8:
+  case DataFormat::k_rgb_u8:
     return 3 * 8;
-  case data_format::k_bgra_u8:
+  case DataFormat::k_bgra_u8:
     return 4 * 8;
-  case data_format::k_bgr_u8:
+  case DataFormat::k_bgr_u8:
     return 3 * 8;
-  case data_format::k_rgba_f16:
+  case DataFormat::k_rgba_f16:
     return 4 * 16;
-  case data_format::k_bgra_f16:
+  case DataFormat::k_bgra_f16:
     return 4 * 16;
-  case data_format::k_d16:
+  case DataFormat::k_d16:
     return 16;
-  case data_format::k_d24:
+  case DataFormat::k_d24:
     return 24;
-  case data_format::k_d32:
+  case DataFormat::k_d32:
     return 32;
-  case data_format::k_d32f:
+  case DataFormat::k_d32f:
     return 32;
-  case data_format::k_d24_s8:
+  case DataFormat::k_d24_s8:
     return 32;
-  case data_format::k_d32f_s8:
+  case DataFormat::k_d32f_s8:
     return 40;
-  case data_format::k_s8:
+  case DataFormat::k_s8:
     return 8;
-  case data_format::k_r_u8:
+  case DataFormat::k_r_u8:
     return 8;
-  case data_format::k_dxt1:
+  case DataFormat::k_dxt1:
     return 4;
-  case data_format::k_dxt5:
+  case DataFormat::k_dxt5:
     return 8;
-  case data_format::k_srgb_u8:
+  case DataFormat::k_srgb_u8:
     return 24;
-  case data_format::k_srgba_u8:
+  case DataFormat::k_srgba_u8:
     return 32;
   }
   return 0;
 }
 
-inline rx_size texture::channel_count_of_format(data_format _format) {
+inline Size Texture::channel_count_of_format(DataFormat _format) {
   switch (_format) {
-  case data_format::k_rgba_u8:
+  case DataFormat::k_rgba_u8:
     return 4;
-  case data_format::k_rgb_u8:
+  case DataFormat::k_rgb_u8:
     return 3;
-  case data_format::k_bgra_u8:
+  case DataFormat::k_bgra_u8:
     return 4;
-  case data_format::k_bgr_u8:
+  case DataFormat::k_bgr_u8:
     return 3;
-  case data_format::k_rgba_f16:
+  case DataFormat::k_rgba_f16:
     return 4;
-  case data_format::k_bgra_f16:
+  case DataFormat::k_bgra_f16:
     return 4;
-  case data_format::k_d16:
+  case DataFormat::k_d16:
     return 1;
-  case data_format::k_d24:
+  case DataFormat::k_d24:
     return 1;
-  case data_format::k_d32:
+  case DataFormat::k_d32:
     return 1;
-  case data_format::k_d32f:
+  case DataFormat::k_d32f:
     return 1;
-  case data_format::k_d24_s8:
+  case DataFormat::k_d24_s8:
     return 2;
-  case data_format::k_d32f_s8:
+  case DataFormat::k_d32f_s8:
     return 2;
-  case data_format::k_s8:
+  case DataFormat::k_s8:
     return 1;
-  case data_format::k_r_u8:
+  case DataFormat::k_r_u8:
     return 1;
-  case data_format::k_dxt1:
+  case DataFormat::k_dxt1:
     return 3;
-  case data_format::k_dxt5:
+  case DataFormat::k_dxt5:
     return 4;
-  case data_format::k_srgb_u8:
+  case DataFormat::k_srgb_u8:
     return 3;
-  case data_format::k_srgba_u8:
+  case DataFormat::k_srgba_u8:
     return 4;
   }
   return 0;
 }
 
 // texture1D
-inline const texture1D::dimension_type& texture1D::dimensions() const & {
+inline const Texture1D::DimensionType& Texture1D::dimensions() const & {
   return m_dimensions;
 }
 
-inline const texture1D::wrap_options& texture1D::wrap() const & {
+inline const Texture1D::WrapOptions& Texture1D::wrap() const & {
   return m_wrap;
 }
 
-inline const texture::level_info<texture1D::dimension_type>&
-texture1D::info_for_level(rx_size _index) const & {
+inline const Texture::level_info<Texture1D::DimensionType>&
+Texture1D::info_for_level(Size _index) const & {
   return m_level_info[_index];
 }
 
 // texture2D
-inline const texture2D::dimension_type& texture2D::dimensions() const & {
+inline const Texture2D::dimension_type& Texture2D::dimensions() const & {
   return m_dimensions;
 }
 
-inline const texture2D::wrap_options& texture2D::wrap() const & {
+inline const Texture2D::wrap_options& Texture2D::wrap() const & {
   return m_wrap;
 }
 
-inline const texture::level_info<texture2D::dimension_type>&
-texture2D::info_for_level(rx_size _index) const & {
+inline const Texture::level_info<Texture2D::dimension_type>&
+Texture2D::info_for_level(Size _index) const & {
   return m_level_info[_index];
 }
 
 // texture3D
-inline const texture3D::dimension_type& texture3D::dimensions() const & {
+inline const Texture3D::dimension_type& Texture3D::dimensions() const & {
   return m_dimensions;
 }
 
-inline const texture3D::wrap_options& texture3D::wrap() const & {
+inline const Texture3D::wrap_options& Texture3D::wrap() const & {
   return m_wrap;
 }
 
-inline const texture::level_info<texture3D::dimension_type>&
-texture3D::info_for_level(rx_size _index) const & {
+inline const Texture::level_info<Texture3D::dimension_type>&
+Texture3D::info_for_level(Size _index) const & {
   return m_level_info[_index];
 }
 
 // textureCM
-inline const textureCM::dimension_type& textureCM::dimensions() const & {
+inline const TextureCM::dimension_type& TextureCM::dimensions() const & {
   return m_dimensions;
 }
 
-inline const textureCM::wrap_options& textureCM::wrap() const & {
+inline const TextureCM::wrap_options& TextureCM::wrap() const & {
   return m_wrap;
 }
 
-inline const texture::level_info<textureCM::dimension_type>&
-textureCM::info_for_level(rx_size _index) const & {
+inline const Texture::level_info<TextureCM::dimension_type>&
+TextureCM::info_for_level(Size _index) const & {
   return m_level_info[_index];
 }
 

@@ -1,8 +1,8 @@
 #include "rx/core/filesystem/path_resolver.h"
 
-namespace rx::filesystem {
+namespace Rx::Filesystem {
 
-bool path_resolver::stack::push() {
+bool PathResolver::Stack::push() {
   if (size >= sizeof data / sizeof *data) {
     return false;
   }
@@ -13,7 +13,7 @@ bool path_resolver::stack::push() {
   return true;
 }
 
-rx_size path_resolver::stack::pop() {
+Size PathResolver::Stack::pop() {
   const auto result = data[size - 1];
 
   // Clear out what ever was queued for the next push.
@@ -27,7 +27,7 @@ rx_size path_resolver::stack::pop() {
   return result;
 }
 
-bool path_resolver::append(const char* _path) {
+bool PathResolver::append(const char* _path) {
   // Always have the root character in the path at the beginning.
   if (m_data.is_empty() && !m_data.push_back('/')) {
     return false;
@@ -47,7 +47,7 @@ bool path_resolver::append(const char* _path) {
   return true;
 }
 
-bool path_resolver::push(int _ch) {
+bool PathResolver::push(int _ch) {
   if (m_data.last() == '\0') {
     // Path is terminated.
     return false;

@@ -2,68 +2,68 @@
 #define RX_CORE_MATH_SHAPE_H
 #include "rx/core/types.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
 template<typename T>
-union shape;
+union Shape;
 
 template<>
-union shape<rx_f32> {
-  constexpr shape(rx_f32 _f);
-  constexpr shape(rx_u32 _u);
-  constexpr shape(rx_s32 _s);
-  rx_f32 as_f32;
-  rx_u32 as_u32;
-  rx_s32 as_s32;
+union Shape<Float32> {
+  constexpr Shape(Float32 _f);
+  constexpr Shape(Uint32 _u);
+  constexpr Shape(Sint32 _s);
+  Float32 as_f32;
+  Uint32 as_u32;
+  Sint32 as_s32;
 };
 
-inline constexpr shape<rx_f32>::shape(rx_f32 _f)
+inline constexpr Shape<Float32>::Shape(Float32 _f)
   : as_f32{_f}
 {
 }
 
-inline constexpr shape<rx_f32>::shape(rx_u32 _u)
+inline constexpr Shape<Float32>::Shape(Uint32 _u)
   : as_u32{_u}
 {
 }
 
-inline constexpr shape<rx_f32>::shape(rx_s32 _s)
+inline constexpr Shape<Float32>::Shape(Sint32 _s)
   : as_s32{_s}
 {
 }
 
-shape(rx_f32) -> shape<rx_f32>;
-shape(rx_u32) -> shape<rx_f32>;
-shape(rx_s32) -> shape<rx_f32>;
+Shape(Uint32) -> Shape<Float32>;
+Shape(Float32) -> Shape<Float32>;
+Shape(Sint32) -> Shape<Float32>;
 
 template<>
-union shape<rx_f64> {
-  constexpr shape(rx_f64 _f);
-  constexpr shape(rx_u64 _u);
-  constexpr shape(rx_s64 _s);
-  rx_f64 as_f64;
-  rx_u64 as_u64;
-  rx_s64 as_s64;
+union Shape<Float64> {
+  constexpr Shape(Float64 _f);
+  constexpr Shape(Uint64 _u);
+  constexpr Shape(Sint64 _s);
+  Float64 as_f64;
+  Uint64 as_u64;
+  Sint64 as_s64;
 };
 
-inline constexpr shape<rx_f64>::shape(rx_f64 _f)
+inline constexpr Shape<Float64>::Shape(Float64 _f)
   : as_f64{_f}
 {
 }
 
-inline constexpr shape<rx_f64>::shape(rx_u64 _u)
+inline constexpr Shape<Float64>::Shape(Uint64 _u)
   : as_u64{_u}
 {
 }
 
-inline constexpr shape<rx_f64>::shape(rx_s64 _s)
+inline constexpr Shape<Float64>::Shape(Sint64 _s)
   : as_s64{_s}
 {
 }
 
-shape(rx_f64) -> shape<rx_f64>;
-shape(rx_u64) -> shape<rx_f64>;
-shape(rx_s64) -> shape<rx_f64>;
+Shape(Float64) -> Shape<Float64>;
+Shape(Uint64) -> Shape<Float64>;
+Shape(Sint64) -> Shape<Float64>;
 
 } // namespace rx::math
 

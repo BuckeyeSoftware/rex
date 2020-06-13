@@ -4,10 +4,10 @@
 
 // # Fowler-Noll-Vo hash
 
-namespace rx::hash {
+namespace Rx::Hash {
 
 template<typename T>
-T fnv1a(const rx_byte* _data, rx_size _size);
+T fnv1a(const Byte* _data, Size _size);
 
 } // namespace rx::hash
 

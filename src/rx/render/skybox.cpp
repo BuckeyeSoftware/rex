@@ -14,9 +14,9 @@
 #include "rx/texture/loader.h"
 #include "rx/texture/convert.h"
 
-namespace rx::render {
+namespace Rx::Render {
 
-static constexpr const math::vec3f k_skybox_vertices[]{
+static constexpr const Math::Vec3f k_skybox_vertices[]{
   { 1.0f, -1.0f, -1.0f},
   { 1.0f, -1.0f,  1.0f},
   { 1.0f,  1.0f,  1.0f},
@@ -27,7 +27,7 @@ static constexpr const math::vec3f k_skybox_vertices[]{
   {-1.0f,  1.0f,  1.0f},
 };
 
-static constexpr const rx_u8 k_skybox_elements[]{
+static constexpr const Uint8 k_skybox_elements[]{
   0, 1, 2, 2, 3, 0, // right
   4, 5, 6, 6, 7, 4, // left
   6, 3, 2, 2, 7, 6, // up
@@ -36,45 +36,45 @@ static constexpr const rx_u8 k_skybox_elements[]{
   5, 0, 3, 3, 6, 5  // back
 };
 
-skybox::skybox(frontend::context* _frontend)
+Skybox::Skybox(Frontend::Context* _frontend)
   : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("skybox")}
   , m_texture{nullptr}
   , m_buffer{nullptr}
 {
   m_buffer = m_frontend->create_buffer(RX_RENDER_TAG("skybox"));
-  m_buffer->record_type(frontend::buffer::type::k_static);
-  m_buffer->record_element_type(frontend::buffer::element_type::k_u8);
-  m_buffer->record_attribute(frontend::buffer::attribute::type::k_f32, 3, 0);
-  m_buffer->record_stride(sizeof(math::vec3f));
+  m_buffer->record_type(Frontend::Buffer::Type::k_static);
+  m_buffer->record_element_type(Frontend::Buffer::ElementType::k_u8);
+  m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 3, 0);
+  m_buffer->record_stride(sizeof(Math::Vec3f));
   m_buffer->write_vertices(k_skybox_vertices, sizeof k_skybox_vertices);
   m_buffer->write_elements(k_skybox_elements, sizeof k_skybox_elements);
   m_frontend->initialize_buffer(RX_RENDER_TAG("skybox"), m_buffer);
 }
 
-skybox::~skybox() {
+Skybox::~Skybox() {
   m_frontend->destroy_texture(RX_RENDER_TAG("skybox"), m_texture);
   m_frontend->destroy_buffer(RX_RENDER_TAG("skybox"), m_buffer);
 }
 
-void skybox::render(frontend::target* _target, const math::mat4x4f& _view,
-  const math::mat4x4f& _projection)
+void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
+                    const Math::Mat4x4f& _projection)
 {
-  profiler::cpu_sample sample{"skybox::render"};
+  Profiler::CPUSample sample{"skybox::render"};
 
   if (!m_texture) {
     return;
   }
 
   // eliminate translation from the view matrix
-  math::mat4x4f view{_view};
+  Math::Mat4x4f view{_view};
   view.w = {0.0f, 0.0f, 0.0f, 1.0f};
 
-  frontend::program* program{*m_technique};
+  Frontend::Program* program{*m_technique};
 
   program->uniforms()[0].record_mat4x4f(view * _projection);
 
-  frontend::state state;
+  Frontend::State state;
   state.depth.record_test(true);
   state.depth.record_write(true);
 
@@ -84,38 +84,38 @@ void skybox::render(frontend::target* _target, const math::mat4x4f& _view,
 
   // glStencilFunc(GL_EQUAL, 0, 0xFF);
   state.stencil.record_enable(true);
-  state.stencil.record_function(frontend::stencil_state::function_type::k_equal);
+  state.stencil.record_function(Frontend::StencilState::FunctionType::k_equal);
   state.stencil.record_reference(0);
   state.stencil.record_mask(0xFF);
 
   // Record all textures.
-  frontend::textures draw_textures;
+  Frontend::Textures draw_textures;
   draw_textures.add(m_texture);
 
   // Record all draw buffers.
-  frontend::buffers draw_buffers;
+  Frontend::Buffers draw_buffers;
   draw_buffers.add(0);
 
   m_frontend->draw(
-      RX_RENDER_TAG("skybox"),
-      state,
-      _target,
-      draw_buffers,
-      m_buffer,
-      program,
-      36,
-      0,
-      frontend::primitive_type::k_triangles,
-      draw_textures);
+          RX_RENDER_TAG("skybox"),
+          state,
+          _target,
+          draw_buffers,
+          m_buffer,
+          program,
+          36,
+          0,
+          Frontend::PrimitiveType::k_triangles,
+          draw_textures);
 }
 
-bool skybox::load(const string& _file_name) {
-  auto data{filesystem::read_text_file(_file_name)};
+bool Skybox::load(const String& _file_name) {
+  auto data{Filesystem::read_text_file(_file_name)};
   if (!data) {
     return false;
   }
 
-  const json description{data->disown()};
+  const JSON description{data->disown()};
   if (!description) {
     // could not parse json
     return false;
@@ -132,7 +132,7 @@ bool skybox::load(const string& _file_name) {
   }
 
   const auto& faces{description["faces"]};
-  if (!faces || !faces.is_array_of(json::type::k_string) || faces.size() != 6) {
+  if (!faces || !faces.is_array_of(JSON::Type::k_string) || faces.size() != 6) {
     return false;
   }
 
@@ -140,20 +140,20 @@ bool skybox::load(const string& _file_name) {
 
   m_frontend->destroy_texture(RX_RENDER_TAG("skybox"), m_texture);
   m_texture = m_frontend->create_textureCM(RX_RENDER_TAG("skybox"));
-  m_texture->record_type(frontend::texture::type::k_static);
-  m_texture->record_format(frontend::texture::data_format::k_rgb_u8);
+  m_texture->record_type(Frontend::Texture::Type::k_static);
+  m_texture->record_format(Frontend::Texture::DataFormat::k_rgb_u8);
   m_texture->record_levels(1);
   m_texture->record_filter({false, false, false});
   m_texture->record_wrap({
-    frontend::texture::wrap_type::k_clamp_to_edge,
-    frontend::texture::wrap_type::k_clamp_to_edge,
-    frontend::texture::wrap_type::k_clamp_to_edge});
+                                 Frontend::Texture::WrapType::k_clamp_to_edge,
+                                 Frontend::Texture::WrapType::k_clamp_to_edge,
+                                 Frontend::Texture::WrapType::k_clamp_to_edge});
 
-  math::vec2z dimensions;
-  frontend::textureCM::face face{frontend::textureCM::face::k_right};
-  bool result{faces.each([&](const json& file_name) {
-    texture::loader texture{m_frontend->allocator()};
-    if (!texture.load(file_name.as_string(), texture::pixel_format::k_rgb_u8)) {
+  Math::Vec2z dimensions;
+  Frontend::TextureCM::face face{Frontend::TextureCM::face::k_right};
+  bool result{faces.each([&](const JSON& file_name) {
+    Texture::Loader texture{m_frontend->allocator()};
+    if (!texture.load(file_name.as_string(), Texture::PixelFormat::k_rgb_u8)) {
       return false;
     }
 
@@ -164,17 +164,17 @@ bool skybox::load(const string& _file_name) {
       return false;
     }
 
-    if (texture.format() != texture::pixel_format::k_rgb_u8) {
+    if (texture.format() != Texture::PixelFormat::k_rgb_u8) {
       // Convert everything to RGB8 if not already.
-      const vector<rx_byte>& data =
-        texture::convert(m_frontend->allocator(), texture.data().data(),
-          texture.dimensions().area(), texture.format(),
-          texture::pixel_format::k_rgb_u8);
+      const Vector<Byte>& data =
+        Texture::convert(m_frontend->allocator(), texture.data().data(),
+                         texture.dimensions().area(), texture.format(),
+                         Texture::PixelFormat::k_rgb_u8);
       m_texture->write(data.data(), face, 0);
     } else {
       m_texture->write(texture.data().data(), face, 0);
     }
-    face = static_cast<frontend::textureCM::face>(static_cast<rx_size>(face) + 1);
+    face = static_cast<Frontend::TextureCM::face>(static_cast<Size>(face) + 1);
     return true;
   })};
 

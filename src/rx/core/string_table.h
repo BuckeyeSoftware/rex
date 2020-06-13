@@ -3,96 +3,96 @@
 #include "rx/core/vector.h"
 #include "rx/core/optional.h"
 
-namespace rx {
+namespace Rx {
 
-struct string;
+struct String;
 
-struct string_table {
-  constexpr string_table();
-  constexpr string_table(memory::allocator& _allocator);
+struct StringTable {
+  constexpr StringTable();
+  constexpr StringTable(Memory::Allocator& _allocator);
 
   // Construct a string table from raw string data.
-  string_table(vector<char>&& data_);
-  string_table(memory::allocator& _allocator, const char* _data, rx_size _size);
+  StringTable(Vector<char>&& data_);
+  StringTable(Memory::Allocator& _allocator, const char* _data, Size _size);
 
-  string_table(string_table&& string_table_);
-  string_table(const string_table& _string_table);
+  StringTable(StringTable&& string_table_);
+  StringTable(const StringTable& _string_table);
 
-  string_table& operator=(string_table&& string_table_);
-  string_table& operator=(const string_table& _string_table);
+  StringTable& operator=(StringTable&& string_table_);
+  StringTable& operator=(const StringTable& _string_table);
 
-  optional<rx_size> insert(const char* _string, rx_size _length);
-  optional<rx_size> insert(const char* _string);
-  optional<rx_size> insert(const string& _string);
+  Optional<Size> insert(const char* _string, Size _length);
+  Optional<Size> insert(const char* _string);
+  Optional<Size> insert(const String& _string);
 
-  const char* operator[](rx_size _index) const;
+  const char* operator[](Size _index) const;
 
   const char* data() const;
-  rx_size size() const;
+  Size size() const;
 
   void clear();
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
-  optional<rx_size> find(const char* _string) const;
-  optional<rx_size> add(const char* _string, rx_size _size);
+  Optional<Size> find(const char* _string) const;
+  Optional<Size> add(const char* _string, Size _size);
 
-  vector<char> m_data;
+  Vector<char> m_data;
 };
 
-inline constexpr string_table::string_table()
-  : string_table{memory::system_allocator::instance()}
+inline constexpr StringTable::StringTable()
+  : StringTable{Memory::SystemAllocator::instance()}
 {
 }
 
-inline constexpr string_table::string_table(memory::allocator& _allocator)
+inline constexpr StringTable::StringTable(Memory::Allocator& _allocator)
   : m_data{_allocator}
 {
 }
 
-inline string_table::string_table(vector<char>&& data_)
-  : m_data{utility::move(data_)}
+inline StringTable::StringTable(Vector<char>&& data_)
+  : m_data{Utility::move(data_)}
 {
 }
 
-inline string_table::string_table(string_table&& string_table_)
-  : m_data{utility::move(string_table_.m_data)}
+inline StringTable::StringTable(StringTable&& string_table_)
+  : m_data{Utility::move(string_table_.m_data)}
 {
 }
 
-inline string_table::string_table(const string_table& _string_table)
+inline StringTable::StringTable(const StringTable& _string_table)
   : m_data{_string_table.m_data}
 {
 }
 
-inline string_table& string_table::operator=(string_table&& string_table_) {
-  m_data = utility::move(string_table_.m_data);
+inline StringTable& StringTable::operator=(StringTable&& string_table_) {
+  m_data = Utility::move(string_table_.m_data);
   return *this;
 }
 
-inline string_table& string_table::operator=(const string_table& _string_table) {
+inline StringTable& StringTable::operator=(const StringTable& _string_table) {
   m_data = _string_table.m_data;
   return *this;
 }
 
-inline const char* string_table::operator[](rx_size _index) const {
+inline const char* StringTable::operator[](Size _index) const {
   return &m_data[_index];
 }
 
-inline const char* string_table::data() const {
+inline const char* StringTable::data() const {
   return m_data.data();
 }
 
-inline rx_size string_table::size() const {
+inline Size StringTable::size() const {
   return m_data.size();
 }
 
-inline void string_table::clear() {
+inline void StringTable::clear() {
   m_data.clear();
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& string_table::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& StringTable::allocator() const {
   return m_data.allocator();
 }
 

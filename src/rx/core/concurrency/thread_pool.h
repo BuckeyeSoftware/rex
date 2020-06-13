@@ -10,49 +10,49 @@
 
 #include "rx/core/hints/empty_bases.h"
 
-namespace rx::concurrency {
+namespace Rx::Concurrency {
 
-struct RX_HINT_EMPTY_BASES thread_pool
-  : concepts::no_copy
-  , concepts::no_move
+struct RX_HINT_EMPTY_BASES ThreadPool
+  : Concepts::NoCopy
+  , Concepts::NoMove
 {
-  thread_pool(memory::allocator& _allocator, rx_size _threads, rx_size _static_pool_size);
-  thread_pool(rx_size _threads, rx_size _job_pool_size);
-  ~thread_pool();
+  ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _static_pool_size);
+  ThreadPool(Size _threads, Size _job_pool_size);
+  ~ThreadPool();
 
   // insert |_task| into the thread pool to be executed, the integer passed
   // to |_task| is the thread id of the calling thread in the pool
-  void add(function<void(int)>&& task_);
+  void add(Function<void(int)>&& task_);
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
-  static constexpr thread_pool& instance();
+  static constexpr ThreadPool& instance();
 
 private:
-  memory::allocator& m_allocator;
+  Memory::Allocator& m_allocator;
 
-  mutex m_mutex;
-  condition_variable m_task_cond;
-  condition_variable m_ready_cond;
+  Mutex m_mutex;
+  ConditionVariable m_task_cond;
+  ConditionVariable m_ready_cond;
 
-  intrusive_list m_queue;    // protected by |m_mutex|
-  vector<thread> m_threads;  // protected by |m_mutex|
-  dynamic_pool m_job_memory; // protected by |m_mutex|
+  IntrusiveList m_queue;     // protected by |m_mutex|
+  Vector<Thread> m_threads;  // protected by |m_mutex|
+  DynamicPool m_job_memory; // protected by |m_mutex|
   bool m_stop;               // protected by |m_mutex|
 
-  static global<thread_pool> s_instance;
+  static Global<ThreadPool> s_instance;
 };
 
-inline thread_pool::thread_pool(rx_size _threads, rx_size _static_pool_size)
-  : thread_pool{memory::system_allocator::instance(), _threads, _static_pool_size}
+inline ThreadPool::ThreadPool(Size _threads, Size _static_pool_size)
+  : ThreadPool{Memory::SystemAllocator::instance(), _threads, _static_pool_size}
 {
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& thread_pool::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& ThreadPool::allocator() const {
   return m_allocator;
 }
 
-RX_HINT_FORCE_INLINE constexpr thread_pool& thread_pool::instance() {
+RX_HINT_FORCE_INLINE constexpr ThreadPool& ThreadPool::instance() {
   return *s_instance;
 }
 

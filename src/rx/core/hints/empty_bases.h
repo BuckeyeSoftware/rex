@@ -11,7 +11,7 @@
 // However, on some platforms such as Windows, respecting this newer language
 // requirement would break older, existing code. The following hint provides
 // a mechanism to explicitly opt-in to the newer behavior.
-#if defined(RX_PLATFORM_WINDOWS)
+#if defined(RX_PLATFORM_WINDOWS) && !defined(__MINGW32__)
 #define RX_HINT_EMPTY_BASES __declspec(empty_bases)
 #else
 #define RX_HINT_EMPTY_BASES

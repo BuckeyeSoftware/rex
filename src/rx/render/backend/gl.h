@@ -7,24 +7,24 @@
 #include <SDL_video.h> // SDL_GL_GetProcAddress
 #include <SDL_opengl.h>
 
-namespace rx::render {
+namespace Rx::Render {
 
-GLenum convert_blend_factor(frontend::blend_state::factor_type _factor_type);
-GLenum convert_stencil_operation(frontend::stencil_state::operation_type _operation_type);
-GLenum convert_stencil_function(frontend::stencil_state::function_type _function_type);
-GLenum convert_polygon_mode(frontend::polygon_state::mode_type _mode_type);
-GLenum convert_texture_data_format(frontend::texture::data_format _data_format);
-GLenum convert_texture_data_type(frontend::texture::data_format _data_format);
-GLenum convert_texture_format(frontend::texture::data_format _data_format);
-GLenum convert_primitive_type(frontend::primitive_type _primitive_type);
-GLenum convert_texture_wrap(const frontend::texture::wrap_type _type);
+GLenum convert_blend_factor(Frontend::BlendState::FactorType _factor_type);
+GLenum convert_stencil_operation(Frontend::StencilState::OperationType _operation_type);
+GLenum convert_stencil_function(Frontend::StencilState::FunctionType _function_type);
+GLenum convert_polygon_mode(Frontend::PolygonState::ModeType _mode_type);
+GLenum convert_texture_data_format(Frontend::Texture::DataFormat _data_format);
+GLenum convert_texture_data_type(Frontend::Texture::DataFormat _data_format);
+GLenum convert_texture_format(Frontend::Texture::DataFormat _data_format);
+GLenum convert_primitive_type(Frontend::PrimitiveType _primitive_type);
+GLenum convert_texture_wrap(const Frontend::Texture::WrapType _type);
 
-struct filter {
+struct Filter {
   GLuint min;
   GLuint mag;
 };
 
-filter convert_texture_filter(const frontend::texture::filter_options& _filter_options);
+Filter convert_texture_filter(const Frontend::Texture::FilterOptions& _filter_options);
 
 template<typename... Ts>
 inline bool requires_border_color(Ts... _types) {

@@ -1,27 +1,27 @@
 #ifndef RX_CORE_CONCURRENCY_SCOPE_LOCK_H
 #define RX_CORE_CONCURRENCY_SCOPE_LOCK_H
 
-namespace rx::concurrency {
+namespace Rx::Concurrency {
 
 // generic scoped lock
 template<typename T>
-struct scope_lock {
-  explicit constexpr scope_lock(T& lock_);
-  ~scope_lock();
+struct ScopeLock {
+  explicit constexpr ScopeLock(T& lock_);
+  ~ScopeLock();
 private:
-  friend struct condition_variable;
+  friend struct ConditionVariable;
   T& m_lock;
 };
 
 template<typename T>
-inline constexpr scope_lock<T>::scope_lock(T& lock_)
+inline constexpr ScopeLock<T>::ScopeLock(T& lock_)
   : m_lock{lock_}
 {
   m_lock.lock();
 }
 
 template<typename T>
-inline scope_lock<T>::~scope_lock() {
+inline ScopeLock<T>::~ScopeLock() {
   m_lock.unlock();
 }
 

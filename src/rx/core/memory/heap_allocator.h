@@ -4,7 +4,7 @@
 
 #include "rx/core/global.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
 // # Heap Allocator
 //
@@ -14,22 +14,22 @@ namespace rx::memory {
 //
 // The purpose of this allocator is to provide a generic, heap allocator
 // that can be used for anything.
-struct heap_allocator
-  final : allocator
+struct HeapAllocator
+  final : Allocator
 {
-  constexpr heap_allocator() = default;
+  constexpr HeapAllocator() = default;
 
-  virtual rx_byte* allocate(rx_size _size);
-  virtual rx_byte* reallocate(void* _data, rx_size _size);
+  virtual Byte* allocate(Size _size);
+  virtual Byte* reallocate(void* _data, Size _size);
   virtual void deallocate(void* _data);
 
-  static constexpr allocator& instance();
+  static constexpr Allocator& instance();
 
 private:
-  static global<heap_allocator> s_instance;
+  static Global<HeapAllocator> s_instance;
 };
 
-inline constexpr allocator& heap_allocator::instance() {
+inline constexpr Allocator& HeapAllocator::instance() {
   return *s_instance;
 }
 

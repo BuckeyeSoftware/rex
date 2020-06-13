@@ -6,27 +6,27 @@
 #include "rx/math/mat3x4.h"
 #include "rx/math/mat4x4.h"
 
-namespace rx::model {
+namespace Rx::Model {
 
-struct loader;
+struct Loader;
 
-struct animation {
-  animation(loader* _model, rx_size _index);
+struct Animation {
+  Animation(Loader* _model, Size _index);
 
-  void update(rx_f32 _delta_time, bool _loop);
+  void update(Float32 _delta_time, bool _loop);
 
-  const vector<math::mat3x4f>& frames() const &;
-  rx_size joints() const;
+  const Vector<Math::Mat3x4f>& frames() const &;
+  Size joints() const;
 
 private:
-  loader* m_model;
-  vector<math::mat3x4f> m_frames;
-  rx_size m_animation;
-  rx_f32 m_current_frame;
+  Loader* m_model;
+  Vector<Math::Mat3x4f> m_frames;
+  Size m_animation;
+  Float32 m_current_frame;
   bool m_completed;
 };
 
-inline const vector<math::mat3x4f>& animation::frames() const & {
+inline const Vector<Math::Mat3x4f>& Animation::frames() const & {
   return m_frames;
 }
 

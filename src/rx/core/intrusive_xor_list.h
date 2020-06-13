@@ -5,7 +5,7 @@
 #include "rx/core/hints/empty_bases.h"
 #include "rx/core/utility/exchange.h"
 
-namespace rx {
+namespace Rx {
 
 // # XOR doubly-linked-list
 //
@@ -20,74 +20,74 @@ namespace rx {
 // node in your structure.
 //
 // This should not be used unless you need to reduce the storage costs of your
-// nodes. Rex makes use of this for it's globals system since rx::global<T> is
+// nodes. Rex makes use of this for it's globals system since rx::Global<T> is
 // quite large and minimizing the size is worthwhile.
 //
 // 32-bit: 8 bytes
 // 64-bit: 16 bytes
 struct RX_HINT_EMPTY_BASES intrusive_xor_list
-  : concepts::no_copy
+  : Concepts::NoCopy
 {
-  struct node;
+  struct Node;
 
   constexpr intrusive_xor_list();
   intrusive_xor_list(intrusive_xor_list&& xor_list_);
   intrusive_xor_list& operator=(intrusive_xor_list&& xor_list_);
 
-  void push(node* _node);
+  void push(Node* _node);
 
   // 32-bit: 4 bytes
   // 64-bit: 8 bytes
-  struct RX_HINT_EMPTY_BASES node
-    : concepts::no_copy
+  struct RX_HINT_EMPTY_BASES Node
+    : Concepts::NoCopy
   {
-    constexpr node();
-    node(node&& node_);
-    node& operator=(node&& node_);
+    constexpr Node();
+    Node(Node&& node_);
+    Node& operator=(Node&& node_);
 
     template<typename T>
-    const T* data(node T::*_link) const;
+    const T* data(Node T::*_link) const;
 
     template<typename T>
-    T* data(node T::*_link);
+    T* data(Node T::*_link);
 
   private:
     friend struct intrusive_xor_list;
 
-    node* m_link;
+    Node* m_link;
   };
 
 private:
-  node* m_head;
-  node* m_tail;
+  Node* m_head;
+  Node* m_tail;
 
   // 32-bit: 12 bytes
   // 64-bit: 24 bytes
-  struct RX_HINT_EMPTY_BASES iterator
-    : concepts::no_copy
+  struct RX_HINT_EMPTY_BASES Iterator
+    : Concepts::NoCopy
   {
-    constexpr iterator(node* _node);
-    iterator(iterator&& iterator_);
-    iterator& operator=(iterator&& iterator_);
+    constexpr Iterator(Node* _node);
+    Iterator(Iterator&& iterator_);
+    Iterator& operator=(Iterator&& iterator_);
 
     void next();
     void prev();
 
   protected:
-    node* m_this;
-    node* m_prev;
-    node* m_next;
+    Node* m_this;
+    Node* m_prev;
+    Node* m_next;
   };
 
 public:
   // 32-bit: 12 (base class) + 4 bytes
   // 64-bit: 24 (base class) + 8 bytes
   template<typename T>
-  struct enumerate
-    : iterator
+  struct Enumerate
+    : Iterator
   {
-    enumerate(enumerate&& enumerate_);
-    enumerate& operator=(enumerate&& enumerate_);
+    Enumerate(Enumerate&& enumerate_);
+    Enumerate& operator=(Enumerate&& enumerate_);
 
     operator bool() const;
 
@@ -102,15 +102,15 @@ public:
 
   private:
     friend struct intrusive_xor_list;
-    constexpr enumerate(node* _root, node T::*_link);
+    constexpr Enumerate(Node* _root, Node T::*_link);
 
-    node T::*m_link;
+    Node T::*m_link;
   };
 
   template<typename T>
-  enumerate<T> enumerate_head(node T::*_link) const;
+  Enumerate<T> enumerate_head(Node T::*_link) const;
   template<typename T>
-  enumerate<T> enumerate_tail(node T::*_link) const;
+  Enumerate<T> enumerate_tail(Node T::*_link) const;
 
   bool is_empty() const;
 };
@@ -123,24 +123,24 @@ inline constexpr intrusive_xor_list::intrusive_xor_list()
 }
 
 inline intrusive_xor_list::intrusive_xor_list(intrusive_xor_list&& xor_list_)
-  : m_head{utility::exchange(xor_list_.m_head, nullptr)}
-  , m_tail{utility::exchange(xor_list_.m_tail, nullptr)}
+  : m_head{Utility::exchange(xor_list_.m_head, nullptr)}
+  , m_tail{Utility::exchange(xor_list_.m_tail, nullptr)}
 {
 }
 
 inline intrusive_xor_list& intrusive_xor_list::operator=(intrusive_xor_list&& xor_list_) {
-  m_head = utility::exchange(xor_list_.m_head, nullptr);
-  m_tail = utility::exchange(xor_list_.m_tail, nullptr);
+  m_head = Utility::exchange(xor_list_.m_head, nullptr);
+  m_tail = Utility::exchange(xor_list_.m_tail, nullptr);
   return *this;
 }
 
 template<typename T>
-inline intrusive_xor_list::enumerate<T> intrusive_xor_list::enumerate_head(node T::*_link) const {
+inline intrusive_xor_list::Enumerate<T> intrusive_xor_list::enumerate_head(Node T::*_link) const {
   return {m_head, _link};
 }
 
 template<typename T>
-inline intrusive_xor_list::enumerate<T> intrusive_xor_list::enumerate_tail(node T::*_link) const {
+inline intrusive_xor_list::Enumerate<T> intrusive_xor_list::enumerate_tail(Node T::*_link) const {
   return {m_tail, _link};
 }
 
@@ -149,103 +149,103 @@ inline bool intrusive_xor_list::is_empty() const {
 }
 
 // intrusive_xor_list::node
-inline constexpr intrusive_xor_list::node::node()
+inline constexpr intrusive_xor_list::Node::Node()
   : m_link{nullptr}
 {
 }
 
 template<typename T>
-inline const T* intrusive_xor_list::node::data(node T::*_link) const {
-  const auto this_address = reinterpret_cast<rx_uintptr>(this);
+inline const T* intrusive_xor_list::Node::data(Node T::*_link) const {
+  const auto this_address = reinterpret_cast<UintPtr>(this);
   const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
-  const auto link_address = reinterpret_cast<rx_uintptr>(link_offset);
+  const auto link_address = reinterpret_cast<UintPtr>(link_offset);
   return reinterpret_cast<const T*>(this_address - link_address);
 }
 
 template<typename T>
-inline T* intrusive_xor_list::node::data(node T::*_link) {
-  const auto this_address = reinterpret_cast<rx_uintptr>(this);
+inline T* intrusive_xor_list::Node::data(Node T::*_link) {
+  const auto this_address = reinterpret_cast<UintPtr>(this);
   const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
-  const auto link_address = reinterpret_cast<rx_uintptr>(link_offset);
+  const auto link_address = reinterpret_cast<UintPtr>(link_offset);
   return reinterpret_cast<T*>(this_address - link_address);
 }
 
 // intrusive_xor_list::iterator
-inline constexpr intrusive_xor_list::iterator::iterator(node* _node)
+inline constexpr intrusive_xor_list::Iterator::Iterator(Node* _node)
   : m_this{_node}
   , m_prev{nullptr}
   , m_next{nullptr}
 {
 }
 
-inline intrusive_xor_list::iterator::iterator(iterator&& iterator_)
-  : m_this{utility::exchange(iterator_.m_this, nullptr)}
-  , m_prev{utility::exchange(iterator_.m_prev, nullptr)}
-  , m_next{utility::exchange(iterator_.m_next, nullptr)}
+inline intrusive_xor_list::Iterator::Iterator(Iterator&& iterator_)
+  : m_this{Utility::exchange(iterator_.m_this, nullptr)}
+  , m_prev{Utility::exchange(iterator_.m_prev, nullptr)}
+  , m_next{Utility::exchange(iterator_.m_next, nullptr)}
 {
 }
 
-inline intrusive_xor_list::iterator& intrusive_xor_list::iterator::operator=(iterator&& iterator_) {
-  m_this = utility::exchange(iterator_.m_this, nullptr);
-  m_prev = utility::exchange(iterator_.m_prev, nullptr);
-  m_next = utility::exchange(iterator_.m_next, nullptr);
+inline intrusive_xor_list::Iterator& intrusive_xor_list::Iterator::operator=(Iterator&& iterator_) {
+  m_this = Utility::exchange(iterator_.m_this, nullptr);
+  m_prev = Utility::exchange(iterator_.m_prev, nullptr);
+  m_next = Utility::exchange(iterator_.m_next, nullptr);
   return *this;
 }
 
 // intrusive_xor_list::enumerate
 template<typename T>
-inline intrusive_xor_list::enumerate<T>::enumerate(enumerate&& enumerate_)
-  : iterator{utility::move(enumerate_)}
-  , m_link{utility::exchange(enumerate_.m_link, nullptr)}
+inline intrusive_xor_list::Enumerate<T>::Enumerate(Enumerate&& enumerate_)
+  : Iterator{Utility::move(enumerate_)}
+  , m_link{Utility::exchange(enumerate_.m_link, nullptr)}
 {
 }
 
 template<typename T>
-inline intrusive_xor_list::enumerate<T>& intrusive_xor_list::enumerate<T>::operator=(enumerate&& enumerate_) {
-  iterator::operator=(utility::move(enumerate_));
-  m_link = utility::exchange(enumerate_.m_link, nullptr);
+inline intrusive_xor_list::Enumerate<T>& intrusive_xor_list::Enumerate<T>::operator=(Enumerate&& enumerate_) {
+  Iterator::operator=(Utility::move(enumerate_));
+  m_link = Utility::exchange(enumerate_.m_link, nullptr);
   return *this;
 }
 
 template<typename T>
-inline constexpr intrusive_xor_list::enumerate<T>::enumerate(node* _root, node T::*_link)
-  : iterator{_root}
+inline constexpr intrusive_xor_list::Enumerate<T>::Enumerate(Node* _root, Node T::*_link)
+  : Iterator{_root}
   , m_link{_link}
 {
 }
 
 template<typename T>
-inline intrusive_xor_list::enumerate<T>::operator bool() const {
+inline intrusive_xor_list::Enumerate<T>::operator bool() const {
   return m_this != nullptr;
 }
 
 template<typename T>
-inline T& intrusive_xor_list::enumerate<T>::operator*() {
+inline T& intrusive_xor_list::Enumerate<T>::operator*() {
   return *data();
 }
 
 template<typename T>
-inline const T& intrusive_xor_list::enumerate<T>::operator*() const {
+inline const T& intrusive_xor_list::Enumerate<T>::operator*() const {
   return *data();
 }
 
 template<typename T>
-inline T* intrusive_xor_list::enumerate<T>::operator->() {
+inline T* intrusive_xor_list::Enumerate<T>::operator->() {
   return data();
 }
 
 template<typename T>
-inline const T* intrusive_xor_list::enumerate<T>::operator->() const {
+inline const T* intrusive_xor_list::Enumerate<T>::operator->() const {
   return data();
 }
 
 template<typename T>
-inline T* intrusive_xor_list::enumerate<T>::data() {
+inline T* intrusive_xor_list::Enumerate<T>::data() {
   return m_this->data<T>(m_link);
 }
 
 template<typename T>
-inline const T* intrusive_xor_list::enumerate<T>::data() const {
+inline const T* intrusive_xor_list::Enumerate<T>::data() const {
   return m_this->data<T>(m_link);
 }
 

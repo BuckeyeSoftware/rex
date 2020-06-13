@@ -1,17 +1,17 @@
 #ifndef RX_HUD_MEMORY_STATS_H
 #define RX_HUD_MEMORY_STATS_H
 
-namespace rx::render {
-  struct immediate2D;
+namespace Rx::Render {
+  struct Immediate2D;
 } // namespace rx::render
 
-namespace rx::hud {
+namespace Rx::hud {
 
-struct memory_stats {
-  memory_stats(render::immediate2D* _immediate);
+struct MemoryStats {
+  MemoryStats(Render::Immediate2D* _immediate);
   void render();
 private:
-  render::immediate2D* m_immediate;
+  Render::Immediate2D* m_immediate;
 };
 
 } // namespace rx::hud

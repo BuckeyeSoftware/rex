@@ -2,13 +2,13 @@
 #define RX_CORE_MATH_FORCE_EVAL_H
 #include "rx/core/types.h"
 
-inline void force_eval_f32(rx_f32 _x) {
-  [[maybe_unused]] volatile rx_f32 y;
+inline void force_eval_f32(Float32 _x) {
+  [[maybe_unused]] volatile Float32 y;
   y = _x;
 }
 
-inline void force_eval_f64(rx_f64 _x) {
-  [[maybe_unused]] volatile rx_f64 y;
+inline void force_eval_f64(Float64 _x) {
+  [[maybe_unused]] volatile Float64 y;
   y = _x;
 }
 

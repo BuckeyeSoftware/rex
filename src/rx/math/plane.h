@@ -2,47 +2,47 @@
 #define RX_MATH_PLANE_H
 #include "rx/math/vec3.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
-struct plane {
-  constexpr plane();
-  plane(const vec3f& _normal, rx_f32 _distance);
-  plane(const vec3f& _normal, const vec3f& _point);
+struct Plane {
+  constexpr Plane();
+  Plane(const Vec3f& _normal, Float32 _distance);
+  Plane(const Vec3f& _normal, const Vec3f& _point);
 
-  const vec3f& normal() const &;
-  rx_f32 distance() const;
+  const Vec3f& normal() const &;
+  Float32 distance() const;
 
 private:
-  vec3f m_normal;
-  rx_f32 m_distance;
+  Vec3f m_normal;
+  Float32 m_distance;
 };
 
-inline constexpr plane::plane()
+inline constexpr Plane::Plane()
   : m_normal{}
   , m_distance{0.0f}
 {
 }
 
-inline plane::plane(const vec3f& _normal, rx_f32 _distance)
+inline Plane::Plane(const Vec3f& _normal, Float32 _distance)
   : m_normal{_normal}
   , m_distance{_distance}
 {
-  const rx_f32 magnitude{1.0f / length(m_normal)};
+  const Float32 magnitude = 1.0f / length(m_normal);
   m_normal *= magnitude;
   m_distance *= magnitude;
 }
 
-inline plane::plane(const vec3f& _normal, const vec3f& _point)
+inline Plane::Plane(const Vec3f& _normal, const Vec3f& _point)
   : m_normal{normalize(_normal)}
   , m_distance{dot(m_normal, _point)}
 {
 }
 
-inline const vec3f& plane::normal() const & {
+inline const Vec3f& Plane::normal() const & {
   return m_normal;
 }
 
-inline rx_f32 plane::distance() const {
+inline Float32 Plane::distance() const {
   return m_distance;
 }
 

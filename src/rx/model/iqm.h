@@ -2,25 +2,25 @@
 #define RX_MODEL_IQM_H
 #include "rx/model/importer.h"
 
-namespace rx::model {
+namespace Rx::Model {
 
-struct iqm
-  : importer
+struct IQM
+  : Importer
 {
-  iqm();
-  iqm(memory::allocator& _allocator);
+  IQM();
+  IQM(Memory::Allocator& _allocator);
 
-  struct header;
+  struct Header;
 
-  virtual bool read(stream* _stream);
+  virtual bool read(Stream* _stream);
 
 private:
-  bool read_meshes(const header& _header, const vector<rx_byte>& _data);
-  bool read_animations(const header& _header, const vector<rx_byte>& _data);
+  bool read_meshes(const Header& _header, const Vector<Byte>& _data);
+  bool read_animations(const Header& _header, const Vector<Byte>& _data);
 };
 
-inline iqm::iqm(memory::allocator& _allocator)
-  : importer{_allocator}
+inline IQM::IQM(Memory::Allocator& _allocator)
+  : Importer{_allocator}
 {
 }
 

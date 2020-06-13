@@ -2,23 +2,23 @@
 #define RX_CORE_SERIALIZE_HEADER_H
 #include "rx/core/types.h"
 
-namespace rx::serialize {
+namespace Rx::serialize {
 
-struct header {
-  constexpr header();
+struct Header {
+  constexpr Header();
 
   // The magic string, always "REX".
-  rx_byte magic[4];
+  Byte magic[4];
 
   // The serialization version number.
-  rx_u32 version;
+  Uint32 version;
 
   // The size of the data and string tables, respectively.
-  rx_u64 data_size;
-  rx_u64 string_size;
+  Uint64 data_size;
+  Uint64 string_size;
 };
 
-inline constexpr header::header()
+inline constexpr Header::Header()
   : magic{'R', 'E', 'X', '\0'}
   , version{0}
   , data_size{0}

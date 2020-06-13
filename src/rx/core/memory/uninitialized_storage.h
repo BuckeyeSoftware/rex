@@ -10,17 +10,17 @@
 
 #include "rx/core/hints/empty_bases.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
 // represents uninitialized storage suitable in size and alignment for
-// an object of type |T|, can be type erased for implementing deferred static
+// an object of Type |T|, can be Type erased for implementing deferred static
 // globals and variant types
 template<typename T>
-struct RX_HINT_EMPTY_BASES uninitialized_storage
-  : concepts::no_copy
-  , concepts::no_move
+struct RX_HINT_EMPTY_BASES UninitializedStorage
+  : Concepts::NoCopy
+  , Concepts::NoMove
 {
-  constexpr uninitialized_storage();
+  constexpr UninitializedStorage();
 
   // explicitly initialize the storage with |args|
   template<typename... Ts>
@@ -35,36 +35,36 @@ struct RX_HINT_EMPTY_BASES uninitialized_storage
 
 private:
   union {
-    utility::nat m_nat;
-    alignas(T) mutable rx_byte m_data[sizeof(T)];
+    Utility::Nat m_nat;
+    alignas(T) mutable Byte m_data[sizeof(T)];
   };
 };
 
 // uninitialized_storage
 template<typename T>
-inline constexpr uninitialized_storage<T>::uninitialized_storage()
+inline constexpr UninitializedStorage<T>::UninitializedStorage()
   : m_nat{}
 {
 }
 
 template<typename T>
 template<typename... Ts>
-inline void uninitialized_storage<T>::init(Ts&&... _args) {
-  utility::construct<T>(reinterpret_cast<void*>(m_data), utility::forward<Ts>(_args)...);
+inline void UninitializedStorage<T>::init(Ts&&... _args) {
+  Utility::construct<T>(reinterpret_cast<void*>(m_data), Utility::forward<Ts>(_args)...);
 }
 
 template<typename T>
-inline void uninitialized_storage<T>::fini() {
-  utility::destruct<T>(reinterpret_cast<void*>(m_data));
+inline void UninitializedStorage<T>::fini() {
+  Utility::destruct<T>(reinterpret_cast<void*>(m_data));
 }
 
 template<typename T>
-inline T* uninitialized_storage<T>::data() {
+inline T* UninitializedStorage<T>::data() {
   return reinterpret_cast<T*>(m_data);
 }
 
 template<typename T>
-inline const T* uninitialized_storage<T>::data() const {
+inline const T* UninitializedStorage<T>::data() const {
   return reinterpret_cast<const T*>(m_data);
 }
 

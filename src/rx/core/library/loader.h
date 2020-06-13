@@ -3,17 +3,17 @@
 #include "rx/core/string.h"
 #include "rx/core/optional.h"
 
-namespace rx::library {
+namespace Rx::library {
 
-struct RX_HINT_EMPTY_BASES loader
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES Loader
+  : Concepts::NoCopy
 {
-  loader(const string& _file_name);
-  loader(memory::allocator& _allocator, const string& _file_name);
-  loader(loader&& _loader);
-  ~loader();
+  Loader(const String& _file_name);
+  Loader(Memory::Allocator& _allocator, const String& _file_name);
+  Loader(Loader&& _loader);
+  ~Loader();
 
-  loader& operator=(loader&& loader_);
+  Loader& operator=(Loader&& loader_);
 
   operator bool() const;
   bool is_valid() const;
@@ -25,7 +25,7 @@ struct RX_HINT_EMPTY_BASES loader
   bool link(F*& function_, const char* _symbol_name) const;
 
   template<typename F>
-  bool link(F*& function_, const string& _symbol_name) const;
+  bool link(F*& function_, const String& _symbol_name) const;
 
 private:
   void close_unlocked();
@@ -33,31 +33,31 @@ private:
   // Returns nullptr when |_symbol_name| isn't found.
   void* address_of(const char* _symbol_name) const;
 
-  ref<memory::allocator> m_allocator;
+  Ref<Memory::Allocator> m_allocator;
   void* m_handle;
 };
 
-inline loader::loader(const string& _file_name)
-  : loader{memory::system_allocator::instance(), _file_name}
+inline Loader::Loader(const String& _file_name)
+  : Loader{Memory::SystemAllocator::instance(), _file_name}
 {
 }
 
-inline loader::loader(loader&& loader_)
+inline Loader::Loader(Loader&& loader_)
   : m_allocator{loader_.m_allocator}
-  , m_handle{utility::exchange(loader_.m_handle, nullptr)}
+  , m_handle{Utility::exchange(loader_.m_handle, nullptr)}
 {
 }
 
-inline loader::operator bool() const {
+inline Loader::operator bool() const {
   return m_handle != nullptr;
 }
 
-inline bool loader::is_valid() const {
+inline bool Loader::is_valid() const {
   return m_handle != nullptr;
 }
 
 template<typename F>
-inline bool loader::link(F*& function_, const char* _symbol_name) const {
+inline bool Loader::link(F*& function_, const char* _symbol_name) const {
   RX_ASSERT(m_handle, "no handle");
   if (const auto proc = address_of(_symbol_name)) {
     *reinterpret_cast<void**>(&function_) = proc;
@@ -67,7 +67,7 @@ inline bool loader::link(F*& function_, const char* _symbol_name) const {
 }
 
 template<typename F>
-inline bool loader::link(F*& function_, const string& _symbol_name) const {
+inline bool Loader::link(F*& function_, const String& _symbol_name) const {
   return link(function_, _symbol_name.data());
 }
 

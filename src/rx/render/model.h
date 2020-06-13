@@ -8,72 +8,72 @@
 #include "rx/math/mat4x4.h"
 #include "rx/math/aabb.h"
 
-namespace rx::render {
+namespace Rx::Render {
 
-namespace frontend {
-  struct context;
-  struct technique;
-  struct buffer;
-  struct target;
+namespace Frontend {
+  struct Context;
+  struct Technique;
+  struct Buffer;
+  struct Target;
 }
 
-struct immediate3D;
-struct ibl;
+struct Immediate3D;
+struct ImageBasedLighting;
 
-struct model {
-  model(frontend::context* _frontend);
-  ~model();
+struct Model {
+  Model(Frontend::Context* _frontend);
+  ~Model();
 
-  struct mesh {
-    rx_size offset;
-    rx_size count;
-    rx_size material;
-    math::aabb bounds;
+  struct Mesh {
+    Size offset;
+    Size count;
+    Size material;
+    Math::AABB bounds;
   };
 
-  void animate(rx_size _index, bool _loop);
+  void animate(Size _index, bool _loop);
 
-  void update(rx_f32 _delta_time);
+  void update(Float32 _delta_time);
 
-  void render(frontend::target* _target, const math::mat4x4f& _model,
-    const math::mat4x4f& _view, const math::mat4x4f& _projection);
+  void render(Frontend::Target* _target, const Math::Mat4x4f& _model,
+              const Math::Mat4x4f& _view, const Math::Mat4x4f& _projection);
 
-  void render_normals(const math::mat4x4f& _world, render::immediate3D* _immediate);
-  void render_skeleton(const math::mat4x4f& _world, render::immediate3D* _immediate);
+  void render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate);
+  void render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate);
 
-  bool load(stream* _stream);
-  bool load(const string& _file_name);
+  bool load(Stream* _stream);
+  bool load(const String& _file_name);
 
-  const vector<mesh>& opaque_meshes() const &;
-  const vector<mesh>& transparent_meshes() const &;
+  const Vector<Mesh>& opaque_meshes() const &;
+  const Vector<Mesh>& transparent_meshes() const &;
 
 private:
   bool upload();
 
-  frontend::context* m_frontend;
-  frontend::technique* m_technique;
-  frontend::buffer* m_buffer;
-  vector<frontend::material> m_materials;
-  vector<mesh> m_opaque_meshes;
-  vector<mesh> m_transparent_meshes;
-  rx::model::loader m_model;
-  optional<rx::model::animation> m_animation;
-  math::aabb m_aabb;
+  Frontend::Context* m_frontend;
+  Frontend::Technique* m_technique;
+  Frontend::Buffer* m_buffer;
+  Vector<Frontend::Material> m_materials;
+  Vector<Mesh> m_opaque_meshes;
+  Vector<Mesh> m_transparent_meshes;
+  Rx::Model::Loader m_model;
+  Optional<Rx::Model::Animation> m_animation;
+  Math::AABB m_aabb;
 };
 
-inline bool model::load(stream* _stream) {
+inline bool Model::load(Stream* _stream) {
   return m_model.load(_stream) && upload();
 }
 
-inline bool model::load(const string& _file_name) {
+inline bool Model::load(const String& _file_name) {
   return m_model.load(_file_name) && upload();
 }
 
-inline const vector<model::mesh>& model::opaque_meshes() const & {
+inline const Vector<Model::Mesh>& Model::opaque_meshes() const & {
   return m_opaque_meshes;
 }
 
-inline const vector<model::mesh>& model::transparent_meshes() const & {
+inline const Vector<Model::Mesh>& Model::transparent_meshes() const & {
   return m_transparent_meshes;
 }
 

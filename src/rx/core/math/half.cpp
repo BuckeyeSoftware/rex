@@ -3,14 +3,14 @@
 
 #include "rx/core/global.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
-static constexpr const rx_u32 k_magic{113 << 23};
-static constexpr const rx_u32 k_shift_exp{0x7C00 << 13}; // exp mask after shift
-static constexpr shape<rx_f32> k_magic_bits{k_magic};
+static constexpr const Uint32 k_magic = 113 << 23;
+static constexpr const Uint32 k_shift_exp = 0x7C00 << 13; // exp mask after shift
+static constexpr Shape<Float32> k_magic_bits = k_magic;
 
-struct half_lut {
-  half_lut() {
+struct HalfTable {
+  HalfTable() {
     for (int i{0}, e{0}; i < 256; i++) {
       e = i - 127;
       if (e < -24) {
@@ -42,20 +42,20 @@ struct half_lut {
     }
   }
 
-  rx_u32 base[512];
-  rx_u8 shift[512];
+  Uint32 base[512];
+  Uint8 shift[512];
 };
 
-static const global<half_lut> g_table{"system", "half"};
+static const Global<HalfTable> g_table{"system", "half"};
 
-half half::to_half(rx_f32 _f) {
-  const shape u{_f};
-  return half(static_cast<rx_u16>(g_table->base[(u.as_u32 >> 23) & 0x1FF] +
-    ((u.as_u32 & 0x007FFFFF) >> g_table->shift[(u.as_u32 >> 23) & 0x1FF])));
+Half Half::to_half(Float32 _f) {
+  const Shape u{_f};
+  return Half(static_cast<Uint16>(g_table->base[(u.as_u32 >> 23) & 0x1FF] +
+                                  ((u.as_u32 & 0x007FFFFF) >> g_table->shift[(u.as_u32 >> 23) & 0x1FF])));
 }
 
-rx_f32 half::to_f32() const {
-  shape out{static_cast<rx_u32>((m_bits & 0x7FFF) << 13)}; // exp/mantissa
+Float32 Half::to_f32() const {
+  Shape out{static_cast<Uint32>((m_bits & 0x7FFF) << 13)}; // exp/mantissa
   const auto exp{k_shift_exp & out.as_u32}; // exp
   out.as_u32 += (127 - 15) << 23; // adjust exp
   if (exp == k_shift_exp) {

@@ -3,7 +3,7 @@
 #include "rx/core/traits/is_referenceable.h"
 #include "rx/core/traits/type_identity.h"
 
-namespace rx::traits {
+namespace Rx::traits {
 
 namespace detail {
   template<typename T, bool = traits::is_referenceable<T>>

@@ -3,45 +3,45 @@
 #include "rx/core/string.h"
 #include "rx/math/vec2.h"
 
-namespace rx::input {
+namespace Rx::Input {
 
-struct input;
+struct Cnput;
 
-struct text {
-  text();
+struct Text {
+  Text();
 
-  static constexpr const rx_f32 k_cursor_visible_time{0.50f};
+  static constexpr const Float32 k_cursor_visible_time = 0.50f;
 
-  enum class position {
+  enum class Position {
     k_left,
     k_right,
     k_home,
     k_end
   };
 
-  void update(rx_f32 _delta_time);
+  void update(Float32 _delta_time);
 
-  string copy() const;
-  string cut();
-  void paste(const string& _contents);
+  String copy() const;
+  String cut();
+  void paste(const String& _contents);
   void select(bool _select);
   void select_all();
 
-  void move_cursor(position _position);
+  void move_cursor(Position _position);
   void erase();
-  void assign(const string& _contents);
+  void assign(const String& _contents);
   void clear();
 
   bool is_cursor_visible() const;
   bool is_selecting() const;
   bool is_selected() const;
   bool is_active() const;
-  const string& contents() const;
-  rx_size cursor() const;
-  const rx_size (&selection() const)[2];
+  const String& contents() const;
+  Size cursor() const;
+  const Size (&selection() const)[2];
 
 private:
-  friend struct input;
+  friend struct Context;
 
   void reset_selection();
   void reset_cursor();
@@ -55,38 +55,38 @@ private:
     k_active         = 1 << 5
   };
 
-  string m_contents;
-  rx_size m_selection[2];
-  rx_size m_cursor;
-  rx_f32 m_cursor_visible_time;
+  String m_contents;
+  Size m_selection[2];
+  Size m_cursor;
+  Float32 m_cursor_visible_time;
   int m_flags;
 };
 
-inline bool text::is_cursor_visible() const {
+inline bool Text::is_cursor_visible() const {
   return m_flags & k_cursor_visible;
 }
 
-inline bool text::is_selecting() const {
+inline bool Text::is_selecting() const {
   return m_flags & k_selecting;
 }
 
-inline bool text::is_selected() const {
+inline bool Text::is_selected() const {
   return m_flags & k_selected;
 }
 
-inline bool text::is_active() const {
+inline bool Text::is_active() const {
   return m_flags & k_active;
 }
 
-inline const string& text::contents() const {
+inline const String& Text::contents() const {
   return m_contents;
 }
 
-inline rx_size text::cursor() const {
+inline Size Text::cursor() const {
   return m_cursor;
 }
 
-inline const rx_size (&text::selection() const)[2] {
+inline const Size (&Text::selection() const)[2] {
   return m_selection;
 }
 

@@ -5,45 +5,45 @@
 #include "rx/core/math/mod.h"
 #include "rx/core/hints/force_inline.h"
 
-namespace rx::time {
+namespace Rx::Time {
 
-RX_HINT_FORCE_INLINE rx_u64 ticks_per_second(rx_u64 _frequency) {
+RX_HINT_FORCE_INLINE Uint64 ticks_per_second(Uint64 _frequency) {
   return _frequency;
 }
 
-RX_HINT_FORCE_INLINE rx_u64 ticks_per_minute(rx_u64 _frequency) {
+RX_HINT_FORCE_INLINE Uint64 ticks_per_minute(Uint64 _frequency) {
   return ticks_per_second(_frequency) * 60;
 }
 
-RX_HINT_FORCE_INLINE rx_u64 ticks_per_hour(rx_u64 _frequency) {
+RX_HINT_FORCE_INLINE Uint64 ticks_per_hour(Uint64 _frequency) {
   return ticks_per_minute(_frequency) * 60;
 }
 
-RX_HINT_FORCE_INLINE rx_u64 ticks_per_day(rx_u64 _frequency) {
+RX_HINT_FORCE_INLINE Uint64 ticks_per_day(Uint64 _frequency) {
   return ticks_per_hour(_frequency) * 24;
 }
 
-rx_s64 span::days() const {
+Sint64 Span::days() const {
   const auto scale = ticks_per_day(m_frequency);
   return (m_ticks / scale) * m_sign;
 }
 
-rx_s64 span::hours() const {
+Sint64 Span::hours() const {
   const auto scale = ticks_per_hour(m_frequency);
   return ((m_ticks / scale) % 24) * m_sign;
 }
 
-rx_s64 span::minutes() const {
+Sint64 Span::minutes() const {
   const auto scale = ticks_per_minute(m_frequency);
   return ((m_ticks / scale) % 60) * m_sign;
 }
 
-rx_s64 span::seconds() const {
+Sint64 Span::seconds() const {
   const auto scale = ticks_per_second(m_frequency);
   return ((m_ticks / scale) % 60) * m_sign;
 }
 
-rx_f64 span::milliseconds() const {
+Float64 Span::milliseconds() const {
   // NOTE(dweiler): Scale |m_ticks| towards seconds then divide by frequency
   // which is always given as "ticks per second", so that the division by scale
   // later is in units of the frequency, this has better rounding behavior for
@@ -54,30 +54,30 @@ rx_f64 span::milliseconds() const {
   const auto scale = ticks_per_second(m_frequency);
   const auto result = (m_ticks * 1000.0) / scale;
   const auto sign = m_sign ? 1.0 : -1.0;
-  return (result > 1000.0 ? math::mod(result, 1000.0) : result) * sign;
+  return (result > 1000.0 ? Math::mod(result, 1000.0) : result) * sign;
 }
 
-rx_f64 span::total_days() const {
+Float64 Span::total_days() const {
   const auto scale = 1.0 / ticks_per_day(m_frequency);
   return m_ticks * scale;
 }
 
-rx_f64 span::total_hours() const {
+Float64 Span::total_hours() const {
   const auto scale = 1.0 / ticks_per_hour(m_frequency);
   return m_ticks * scale;
 }
 
-rx_f64 span::total_minutes() const {
+Float64 Span::total_minutes() const {
   const auto scale = 1.0 / ticks_per_minute(m_frequency);
   return m_ticks * scale;
 }
 
-rx_f64 span::total_seconds() const {
+Float64 Span::total_seconds() const {
   const auto scale = 1.0 / ticks_per_second(m_frequency);
   return m_ticks * scale;
 }
 
-rx_f64 span::total_milliseconds() const {
+Float64 Span::total_milliseconds() const {
   // Use the same behavior here as |milliseconds|.
   //
   // NOTE(dweiler): Would be dangerous to introduce something like
@@ -91,7 +91,7 @@ rx_f64 span::total_milliseconds() const {
 
 } // namespace rx::time
 
-const char* rx::format_type<rx::time::span>::operator()(const time::span& _value) {
+const char* Rx::FormatNormalize<Rx::Time::Span>::operator()(const Time::Span& _value) {
   const auto days = _value.days();
   const auto hours = _value.hours();
   const auto minutes = _value.minutes();

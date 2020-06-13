@@ -7,7 +7,7 @@
 
 #include "rx/console/variable.h"
 
-namespace rx::hud {
+namespace Rx::hud {
 
 RX_CONSOLE_SVAR(
   font_name,
@@ -23,35 +23,35 @@ RX_CONSOLE_IVAR(
   64,
   25);
 
-memory_stats::memory_stats(render::immediate2D* _immediate)
+MemoryStats::MemoryStats(Render::Immediate2D* _immediate)
   : m_immediate{_immediate}
 {
 }
 
-void memory_stats::render() {
-  const auto allocator = &memory::system_allocator::instance();
-  const auto stats = static_cast<const memory::system_allocator*>(allocator)->stats();
+void MemoryStats::render() {
+  const auto allocator = &Memory::SystemAllocator::instance();
+  const auto stats = static_cast<const Memory::SystemAllocator*>(allocator)->stats();
 
-  const render::frontend::context& frontend = *m_immediate->frontend();
-  const math::vec2f &screen_size = frontend.swapchain()->dimensions().cast<rx_f32>();
+  const Render::Frontend::Context& frontend = *m_immediate->frontend();
+  const Math::Vec2f &screen_size = frontend.swapchain()->dimensions().cast<Float32>();
 
-  rx_f32 y = 25.0f;
-  auto line{[&](const string &_line) {
+  Float32 y = 25.0f;
+  auto line{[&](const String &_line) {
     m_immediate->frame_queue().record_text(
-      *font_name,
-      math::vec2f{screen_size.x - 25.0f, y},
-      *font_size,
-      1.0f,
-      render::immediate2D::text_align::k_right,
-      _line,
-      {1.0f, 1.0f, 1.0f, 1.0f});
+            *font_name,
+            Math::Vec2f{screen_size.x - 25.0f, y},
+            *font_size,
+            1.0f,
+            Render::Immediate2D::TextAlign::k_right,
+            _line,
+            {1.0f, 1.0f, 1.0f, 1.0f});
     y += *font_size;
   }};
 
-  line(string::format("used memory (requested): %s", string::human_size_format(stats.used_request_bytes)));
-  line(string::format("used memory (actual):    %s", string::human_size_format(stats.used_actual_bytes)));
-  line(string::format("peak memory (requested): %s", string::human_size_format(stats.peak_request_bytes)));
-  line(string::format("peak memory (actual):    %s", string::human_size_format(stats.peak_actual_bytes)));
+  line(String::format("used memory (requested): %s", String::human_size_format(stats.used_request_bytes)));
+  line(String::format("used memory (actual):    %s", String::human_size_format(stats.used_actual_bytes)));
+  line(String::format("peak memory (requested): %s", String::human_size_format(stats.peak_request_bytes)));
+  line(String::format("peak memory (actual):    %s", String::human_size_format(stats.peak_actual_bytes)));
 }
 
 } // namespace rx::hud

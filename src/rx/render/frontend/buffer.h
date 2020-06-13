@@ -4,86 +4,86 @@
 
 #include "rx/render/frontend/resource.h"
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
-struct context;
+struct Context;
 
-struct buffer : resource {
-  struct attribute {
-    enum class type {
+struct Buffer : Resource {
+  struct Attribute {
+    enum class Type {
       k_f32,
       k_u8
     };
-    rx_size count;
-    rx_size offset;
-    type kind;
+    Size count;
+    Size offset;
+    Type type;
   };
 
-  enum class element_type {
+  enum class ElementType {
     k_none,
     k_u8,
     k_u16,
     k_u32
   };
 
-  enum class type {
+  enum class Type {
     k_static,
     k_dynamic
   };
 
-  struct edit {
-    rx_size sink;
-    rx_size offset;
-    rx_size size;
+  struct Edit {
+    Size sink;
+    Size offset;
+    Size size;
   };
 
-  buffer(context* _frontend);
-  ~buffer();
+  Buffer(Context* _frontend);
+  ~Buffer();
 
   // write |_size| bytes from |_data| into vertex store
   template<typename T>
-  void write_vertices(const T* _data, rx_size _size);
+  void write_vertices(const T* _data, Size _size);
 
   // write |_size| bytes from |_data| into element store
   template<typename T>
-  void write_elements(const T* _data, rx_size _size);
+  void write_elements(const T* _data, Size _size);
 
   // map |_size| bytes of vertices
-  rx_byte* map_vertices(rx_size _size);
+  Byte* map_vertices(Size _size);
 
   // map |_size| bytes of elements
-  rx_byte* map_elements(rx_size _size);
+  Byte* map_elements(Size _size);
 
   // record attribute of |_count| elements of |_type| starting at |_offset|
-  void record_attribute(attribute::type _type, rx_size _count, rx_size _offset);
+  void record_attribute(Attribute::Type _type, Size _count, Size _offset);
 
-  // record buffer type |_type|
-  void record_type(type _type);
+  // record buffer Type |_type|
+  void record_type(Type _type);
 
   // record vertex stride |_stride|
-  void record_stride(rx_size _stride);
+  void record_stride(Size _stride);
 
   // record element format |_type|
-  void record_element_type(element_type _type);
+  void record_element_type(ElementType _type);
 
   // Records an edit to the buffer at byte |_offset| of size |_size|.
-  void record_vertices_edit(rx_size _offset, rx_size _size);
-  void record_elements_edit(rx_size _offset, rx_size _size);
+  void record_vertices_edit(Size _offset, Size _size);
+  void record_elements_edit(Size _offset, Size _size);
 
-  const vector<rx_byte>& vertices() const &;
-  const vector<rx_byte>& elements() const &;
-  const vector<attribute>& attributes() const &;
-  rx_size stride() const;
-  element_type element_kind() const;
-  type kind() const;
-  rx_size size() const;
-  vector<edit>&& edits();
+  const Vector<Byte>& vertices() const &;
+  const Vector<Byte>& elements() const &;
+  const Vector<Attribute>& attributes() const &;
+  Size stride() const;
+  ElementType element_type() const;
+  Type type() const;
+  Size size() const;
+  Vector<Edit>&& edits();
 
   void validate() const;
 
 private:
-  void write_vertices_data(const rx_byte* _data, rx_size _size);
-  void write_elements_data(const rx_byte* _data, rx_size _size);
+  void write_vertices_data(const Byte* _data, Size _size);
+  void write_elements_data(const Byte* _data, Size _size);
 
   enum {
     k_stride       = 1 << 0,
@@ -92,97 +92,97 @@ private:
     k_attribute    = 1 << 3
   };
 
-  vector<rx_byte> m_vertices_store;
-  vector<rx_byte> m_elements_store;
-  vector<attribute> m_attributes;
-  vector<edit> m_edits;
-  element_type m_element_type;
-  type m_type;
-  rx_size m_stride;
+  Vector<Byte> m_vertices_store;
+  Vector<Byte> m_elements_store;
+  Vector<Attribute> m_attributes;
+  Vector<Edit> m_edits;
+  ElementType m_element_type;
+  Type m_type;
+  Size m_stride;
   int m_recorded;
 };
 
 template<typename T>
-inline void buffer::write_vertices(const T* _data, rx_size _size) {
-  write_vertices_data(reinterpret_cast<const rx_byte*>(_data), _size);
+inline void Buffer::write_vertices(const T* _data, Size _size) {
+  write_vertices_data(reinterpret_cast<const Byte*>(_data), _size);
 }
 
 template<typename T>
-inline void buffer::write_elements(const T* _data, rx_size _size) {
-  static_assert((traits::is_same<T, rx_byte> || traits::is_same<T, rx_u16>
-    || traits::is_same<T, rx_u32>), "unsupported element type T");
+inline void Buffer::write_elements(const T* _data, Size _size) {
+  static_assert((traits::is_same<T, Byte> || traits::is_same<T, Uint16>
+                 || traits::is_same<T, Uint32>), "unsupported element Type T");
 
   RX_ASSERT(_size % sizeof(T) == 0, "_size isn't a multiple of T");
 
-  if constexpr (traits::is_same<T, rx_byte>) {
-    write_elements_data(reinterpret_cast<const rx_byte*>(_data), _size);
-  } else if constexpr (traits::is_same<T, rx_u16>) {
-    write_elements_data(reinterpret_cast<const rx_byte*>(_data), _size);
-  } else if constexpr (traits::is_same<T, rx_u32>) {
-    write_elements_data(reinterpret_cast<const rx_byte*>(_data), _size);
+  if constexpr (traits::is_same<T, Byte>) {
+    write_elements_data(reinterpret_cast<const Byte*>(_data), _size);
+  } else if constexpr (traits::is_same<T, Uint16>) {
+    write_elements_data(reinterpret_cast<const Byte*>(_data), _size);
+  } else if constexpr (traits::is_same<T, Uint32>) {
+    write_elements_data(reinterpret_cast<const Byte*>(_data), _size);
   }
 }
 
-inline void buffer::record_attribute(attribute::type _type, rx_size _count,
-  rx_size _offset)
+inline void Buffer::record_attribute(Attribute::Type _type, Size _count,
+  Size _offset)
 {
   m_recorded |= k_attribute;
   m_attributes.push_back({_count, _offset, _type});
 }
 
-inline void buffer::record_type(type _type) {
-  RX_ASSERT(!(m_recorded & k_type), "already recorded type");
+inline void Buffer::record_type(Type _type) {
+  RX_ASSERT(!(m_recorded & k_type), "already recorded Type");
   m_recorded |= k_type;
   m_type = _type;
 }
 
-inline void buffer::record_stride(rx_size _stride) {
+inline void Buffer::record_stride(Size _stride) {
   RX_ASSERT(!(m_recorded & k_stride), "already recorded stride");
   m_recorded |= k_stride;
   m_stride = _stride;
 }
 
-inline void buffer::record_element_type(element_type _type) {
-  RX_ASSERT(!(m_recorded & k_element_type), "already recorded element type");
+inline void Buffer::record_element_type(ElementType _type) {
+  RX_ASSERT(!(m_recorded & k_element_type), "already recorded element Type");
   m_recorded |= k_element_type;
   m_element_type = _type;
 }
 
-inline void buffer::record_vertices_edit(rx_size _offset, rx_size _size) {
+inline void Buffer::record_vertices_edit(Size _offset, Size _size) {
   m_edits.emplace_back(0_z, _offset, _size);
 }
 
-inline void buffer::record_elements_edit(rx_size _offset, rx_size _size) {
-  RX_ASSERT(m_element_type != element_type::k_none,
+inline void Buffer::record_elements_edit(Size _offset, Size _size) {
+  RX_ASSERT(m_element_type != ElementType::k_none,
     "cannot record edit to elements");
   m_edits.emplace_back(1_z, _offset, _size);
 }
 
-inline const vector<rx_byte>& buffer::vertices() const & {
+inline const Vector<Byte>& Buffer::vertices() const & {
   return m_vertices_store;
 }
 
-inline const vector<rx_byte>& buffer::elements() const & {
+inline const Vector<Byte>& Buffer::elements() const & {
   return m_elements_store;
 }
 
-inline const vector<buffer::attribute>& buffer::attributes() const & {
+inline const Vector<Buffer::Attribute>& Buffer::attributes() const & {
   return m_attributes;
 }
 
-inline rx_size buffer::stride() const {
+inline Size Buffer::stride() const {
   return m_stride;
 }
 
-inline buffer::element_type buffer::element_kind() const {
+inline Buffer::ElementType Buffer::element_type() const {
   return m_element_type;
 }
 
-inline buffer::type buffer::kind() const {
+inline Buffer::Type Buffer::type() const {
   return m_type;
 }
 
-inline rx_size buffer::size() const {
+inline Size Buffer::size() const {
   return m_vertices_store.size() + m_elements_store.size();
 }
 

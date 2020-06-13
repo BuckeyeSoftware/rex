@@ -2,10 +2,10 @@
 #define RX_IMAGE_NORMAL_MAP_H
 #include "rx/image/intensity_map.h"
 
-namespace rx::image {
+namespace Rx::Image {
 
-struct normal_map {
-  enum class kernel {
+struct NormalMap {
+  enum class Kernel {
     k_sobel,
     k_prewitt
   };
@@ -16,24 +16,24 @@ struct normal_map {
     k_detail = 1 << 2
   };
 
-  normal_map(const matrix& _image);
-  normal_map(matrix&& image_);
+  NormalMap(const Matrix& _image);
+  NormalMap(Matrix&& image_);
 
-  matrix generate(intensity_map::mode _mode, const math::vec4f& _multiplier,
-    kernel _kernel, rx_f32 _strength, int _flags,
-    rx_f32 _detail = 0.0f) const;
+  Matrix generate(IntensityMap::Mode _mode, const Math::Vec4f& _multiplier,
+                  Kernel _kernel, Float32 _strength, int _flags,
+                  Float32 _detail = 0.0f) const;
 
 private:
-  matrix m_image;
+  Matrix m_image;
 };
 
-inline normal_map::normal_map(const matrix& _image)
+inline NormalMap::NormalMap(const Matrix& _image)
   : m_image{_image}
 {
 }
 
-inline normal_map::normal_map(matrix&& image_)
-  : m_image{utility::move(image_)}
+inline NormalMap::NormalMap(Matrix&& image_)
+  : m_image{Utility::move(image_)}
 {
 }
 

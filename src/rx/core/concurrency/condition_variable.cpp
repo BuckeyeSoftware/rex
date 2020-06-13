@@ -13,9 +13,9 @@
 #error "missing condition variable implementation"
 #endif
 
-namespace rx::concurrency {
+namespace Rx::Concurrency {
 
-condition_variable::condition_variable() {
+ConditionVariable::ConditionVariable() {
 #if defined(RX_PLATFORM_POSIX)
   auto handle = reinterpret_cast<pthread_cond_t*>(m_cond);
   if (pthread_cond_init(handle, nullptr) != 0) {
@@ -27,7 +27,7 @@ condition_variable::condition_variable() {
 #endif
 }
 
-condition_variable::~condition_variable() {
+ConditionVariable::~ConditionVariable() {
 #if defined(RX_PLATFORM_POSIX)
   auto handle = reinterpret_cast<pthread_cond_t*>(m_cond);
   if (pthread_cond_destroy(handle) != 0) {
@@ -37,7 +37,7 @@ condition_variable::~condition_variable() {
   // Windows does not require destruction of CONDITION_VARIABLE.
 }
 
-void condition_variable::wait([[maybe_unused]] mutex& _mutex) {
+void ConditionVariable::wait([[maybe_unused]] Mutex& _mutex) {
 #if defined(RX_PLATFORM_POSIX)
   auto cond_handle = reinterpret_cast<pthread_cond_t*>(m_cond);
   auto mutex_handle = reinterpret_cast<pthread_mutex_t*>(_mutex.m_mutex);
@@ -53,7 +53,7 @@ void condition_variable::wait([[maybe_unused]] mutex& _mutex) {
 #endif
 }
 
-void condition_variable::signal() {
+void ConditionVariable::signal() {
 #if defined(RX_PLATFORM_POSIX)
   auto handle = reinterpret_cast<pthread_cond_t*>(m_cond);
   if (pthread_cond_signal(handle) != 0) {
@@ -65,7 +65,7 @@ void condition_variable::signal() {
 #endif
 }
 
-void condition_variable::broadcast() {
+void ConditionVariable::broadcast() {
 #if defined(RX_PLATFORM_POSIX)
   auto handle = reinterpret_cast<pthread_cond_t*>(m_cond);
   if (pthread_cond_broadcast(handle) != 0) {

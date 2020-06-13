@@ -10,51 +10,51 @@
 
 #include "rx/core/utility/exchange.h"
 
-namespace rx {
+namespace Rx {
 
 // 32-bit: 12 bytes
 // 64-bit: 24 bytes
-struct bitset {
-  using bit_type = rx_u64;
+struct Bitset {
+  using BitType = Uint64;
 
-  static constexpr const bit_type k_bit_one{1};
-  static constexpr const rx_size k_word_bits{8 * sizeof(bit_type)};
+  static constexpr const BitType k_bit_one = 1;
+  static constexpr const Size k_word_bits = 8 * sizeof(BitType);
 
-  bitset(memory::allocator& _allocator, rx_size _size);
-  bitset(rx_size _size);
-  bitset(bitset&& bitset_);
-  bitset(const bitset& _bitset);
-  ~bitset();
+  Bitset(Memory::Allocator& _allocator, Size _size);
+  Bitset(Size _size);
+  Bitset(Bitset&& bitset_);
+  Bitset(const Bitset& _bitset);
+  ~Bitset();
 
-  bitset& operator=(bitset&& bitset_);
-  bitset& operator=(const bitset& _bitset);
+  Bitset& operator=(Bitset&& bitset_);
+  Bitset& operator=(const Bitset& _bitset);
 
   // set |_bit|
-  void set(rx_size _bit);
+  void set(Size _bit);
 
   // clear |_bit|
-  void clear(rx_size _bit);
+  void clear(Size _bit);
 
   // clear all bits
   void clear_all();
 
   // test if bit |_bit| is set
-  bool test(rx_size _bit) const;
+  bool test(Size _bit) const;
 
   // the amount of bits
-  rx_size size() const;
+  Size size() const;
 
   // count the # of set bits
-  rx_size count_set_bits() const;
+  Size count_set_bits() const;
 
   // count the # of unset bits
-  rx_size count_unset_bits() const;
+  Size count_unset_bits() const;
 
   // find the index of the first set bit
-  rx_size find_first_set() const;
+  Size find_first_set() const;
 
   // find the index of the first unset bit
-  rx_size find_first_unset() const;
+  Size find_first_unset() const;
 
   // iterate bitset invoking |_function| with index of each set bit
   template<typename F>
@@ -64,69 +64,69 @@ struct bitset {
   template<typename F>
   void each_unset(F&& _function) const;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
-  static rx_size bytes_for_size(rx_size _size);
+  static Size bytes_for_size(Size _size);
 
-  static rx_size index(rx_size bit);
-  static rx_size offset(rx_size bit);
+  static Size index(Size bit);
+  static Size offset(Size bit);
 
-  ref<memory::allocator> m_allocator;
-  rx_size m_size;
-  bit_type* m_data;
+  Ref<Memory::Allocator> m_allocator;
+  Size m_size;
+  BitType* m_data;
 };
 
-inline bitset::bitset(rx_size _size)
-  : bitset{memory::system_allocator::instance(), _size}
+inline Bitset::Bitset(Size _size)
+  : Bitset{Memory::SystemAllocator::instance(), _size}
 {
 }
 
-inline bitset::bitset(bitset&& bitset_)
+inline Bitset::Bitset(Bitset&& bitset_)
   : m_allocator{bitset_.allocator()}
-  , m_size{utility::exchange(bitset_.m_size, 0)}
-  , m_data{utility::exchange(bitset_.m_data, nullptr)}
+  , m_size{Utility::exchange(bitset_.m_size, 0)}
+  , m_data{Utility::exchange(bitset_.m_data, nullptr)}
 {
 }
 
-inline bitset::~bitset() {
+inline Bitset::~Bitset() {
   allocator().deallocate(m_data);
 }
 
-inline void bitset::set(rx_size _bit) {
+inline void Bitset::set(Size _bit) {
   RX_ASSERT(_bit < m_size, "out of bounds");
   m_data[index(_bit)] |= k_bit_one << offset(_bit);
 }
 
-inline void bitset::clear(rx_size _bit) {
+inline void Bitset::clear(Size _bit) {
   RX_ASSERT(_bit < m_size, "out of bounds");
   m_data[index(_bit)] &= ~(k_bit_one << offset(_bit));
 }
 
-inline bool bitset::test(rx_size _bit) const {
+inline bool Bitset::test(Size _bit) const {
   RX_ASSERT(_bit < m_size, "out of bounds");
   return !!(m_data[index(_bit)] & (k_bit_one << offset(_bit)));
 }
 
-inline rx_size bitset::size() const {
+inline Size Bitset::size() const {
   return m_size;
 }
 
-inline rx_size bitset::bytes_for_size(rx_size _size) {
-  return sizeof(bit_type) * (_size / k_word_bits + 1);
+inline Size Bitset::bytes_for_size(Size _size) {
+  return sizeof(BitType) * (_size / k_word_bits + 1);
 }
 
-inline rx_size bitset::index(rx_size _bit) {
+inline Size Bitset::index(Size _bit) {
   return _bit / k_word_bits;
 }
 
-inline rx_size bitset::offset(rx_size _bit) {
+inline Size Bitset::offset(Size _bit) {
   return _bit % k_word_bits;
 }
 
 template<typename F>
-inline void bitset::each_set(F&& _function) const {
-  for (rx_size i{0}; i < m_size; i++) {
+inline void Bitset::each_set(F&& _function) const {
+  for (Size i{0}; i < m_size; i++) {
     if (test(i)) {
       if constexpr (traits::is_same<bool, traits::return_type<F>>) {
         if (!_function(i)) {
@@ -140,8 +140,8 @@ inline void bitset::each_set(F&& _function) const {
 }
 
 template<typename F>
-inline void bitset::each_unset(F&& _function) const {
-  for (rx_size i{0}; i < m_size; i++) {
+inline void Bitset::each_unset(F&& _function) const {
+  for (Size i{0}; i < m_size; i++) {
     if (!test(i)) {
       if constexpr (traits::is_same<bool, traits::return_type<F>>) {
         if (!_function(i)) {
@@ -154,7 +154,7 @@ inline void bitset::each_unset(F&& _function) const {
   }
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& bitset::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Bitset::allocator() const {
   return m_allocator;
 }
 

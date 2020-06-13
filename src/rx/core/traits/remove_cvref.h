@@ -3,7 +3,7 @@
 #include "rx/core/traits/remove_cv.h"
 #include "rx/core/traits/remove_reference.h"
 
-namespace rx::traits {
+namespace Rx::traits {
 
 template<typename T>
 using remove_cvref = remove_cv<remove_reference<T>>;

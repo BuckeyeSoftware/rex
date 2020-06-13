@@ -9,96 +9,96 @@
 
 #include "rx/core/utility/exchange.h"
 
-namespace rx {
+namespace Rx {
 
 // 32-bit: 12 bytes
 // 64-bit: 24 bytes
 template<typename T>
-struct function;
+struct Function;
 
 template<typename R, typename... Ts>
-struct function<R(Ts...)> {
-  constexpr function(memory::allocator& _allocator);
-  constexpr function();
+struct Function<R(Ts...)> {
+  constexpr Function(Memory::Allocator& _allocator);
+  constexpr Function();
 
   template<typename F, typename = traits::enable_if<traits::is_callable<F, Ts...>>>
-  function(memory::allocator& _allocator, F&& _function);
+  Function(Memory::Allocator& _allocator, F&& _function);
 
   template<typename F, typename = traits::enable_if<traits::is_callable<F, Ts...>>>
-  function(F&& _function);
+  Function(F&& _function);
 
-  function(const function& _function);
-  function(function&& function_);
+  Function(const Function& _function);
+  Function(Function&& function_);
 
-  function& operator=(const function& _function);
-  function& operator=(function&& function_);
-  function& operator=(rx_nullptr);
+  Function& operator=(const Function& _function);
+  Function& operator=(Function&& function_);
+  Function& operator=(NullPointer);
 
-  ~function();
+  ~Function();
 
   R operator()(Ts... _arguments) const;
 
   operator bool() const;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
-  enum class lifetime {
+  enum class Lifetime {
     k_construct,
     k_destruct
   };
 
-  using invoke_fn = R (*)(const rx_byte*, Ts&&...);
-  using modify_lifetime_fn = void (*)(lifetime, rx_byte*, const rx_byte*);
+  using InvokeFn = R (*)(const Byte*, Ts&&...);
+  using ModifyLifetimeFn = void (*)(Lifetime, Byte*, const Byte*);
 
   template<typename F>
-  static R invoke(const rx_byte* _function, Ts&&... _arguments) {
+  static R invoke(const Byte* _function, Ts&&... _arguments) {
     if constexpr(traits::is_same<R, void>) {
-      (*reinterpret_cast<const F*>(_function))(utility::forward<Ts>(_arguments)...);
+      (*reinterpret_cast<const F*>(_function))(Utility::forward<Ts>(_arguments)...);
     } else {
-      return (*reinterpret_cast<const F*>(_function))(utility::forward<Ts>(_arguments)...);
+      return (*reinterpret_cast<const F*>(_function))(Utility::forward<Ts>(_arguments)...);
     }
   }
 
   template<typename F>
-  static void modify_lifetime(lifetime _lifetime, rx_byte* _dst, const rx_byte* _src) {
+  static void modify_lifetime(Lifetime _lifetime, Byte* _dst, const Byte* _src) {
     switch (_lifetime) {
-    case lifetime::k_construct:
-      utility::construct<F>(_dst, *reinterpret_cast<const F*>(_src));
+    case Lifetime::k_construct:
+      Utility::construct<F>(_dst, *reinterpret_cast<const F*>(_src));
       break;
-    case lifetime::k_destruct:
-      utility::destruct<F>(_dst);
+    case Lifetime::k_destruct:
+      Utility::destruct<F>(_dst);
       break;
     }
   }
 
   // Keep control block aligned so the function proceeding it in |m_data| is
   // always aligned by |k_alignment| too.
-  struct alignas(memory::allocator::k_alignment) control_block {
-    constexpr control_block(modify_lifetime_fn _modify_lifetime, invoke_fn _invoke)
+  struct alignas(Memory::Allocator::k_alignment) ControlBlock {
+    constexpr ControlBlock(ModifyLifetimeFn _modify_lifetime, InvokeFn _invoke)
       : modify_lifetime{_modify_lifetime}
       , invoke{_invoke}
     {
     }
-    modify_lifetime_fn modify_lifetime;
-    invoke_fn invoke;
+    ModifyLifetimeFn modify_lifetime;
+    InvokeFn invoke;
   };
 
   void destroy();
 
-  control_block* control();
-  const control_block* control() const;
+  ControlBlock* control();
+  const ControlBlock* control() const;
 
-  rx_byte* storage();
-  const rx_byte* storage() const;
+  Byte* storage();
+  const Byte* storage() const;
 
-  ref<memory::allocator> m_allocator;
-  rx_byte* m_data;
-  rx_size m_size;
+  Ref<Memory::Allocator> m_allocator;
+  Byte* m_data;
+  Size m_size;
 };
 
 template<typename R, typename... Ts>
-inline constexpr function<R(Ts...)>::function(memory::allocator& _allocator)
+inline constexpr Function<R(Ts...)>::Function(Memory::Allocator& _allocator)
   : m_allocator{_allocator}
   , m_data{nullptr}
   , m_size{0}
@@ -106,34 +106,34 @@ inline constexpr function<R(Ts...)>::function(memory::allocator& _allocator)
 }
 
 template<typename R, typename... Ts>
-inline constexpr function<R(Ts...)>::function()
-  : function{memory::system_allocator::instance()}
+inline constexpr Function<R(Ts...)>::Function()
+  : Function{Memory::SystemAllocator::instance()}
 {
 }
 
 template<typename R, typename... Ts>
 template<typename F, typename>
-inline function<R(Ts...)>::function(F&& _function)
-  : function{memory::system_allocator::instance(), utility::forward<F>(_function)}
+inline Function<R(Ts...)>::Function(F&& _function)
+  : Function{Memory::SystemAllocator::instance(), Utility::forward<F>(_function)}
 {
 }
 
 template<typename R, typename... Ts>
 template<typename F, typename>
-inline function<R(Ts...)>::function(memory::allocator& _allocator, F&& _function)
-  : function{_allocator}
+inline Function<R(Ts...)>::Function(Memory::Allocator& _allocator, F&& _function)
+  : Function{_allocator}
 {
-  m_size = sizeof(control_block) + sizeof _function;
+  m_size = sizeof(ControlBlock) + sizeof _function;
   m_data = allocator().allocate(m_size);
   RX_ASSERT(m_data, "out of memory");
 
-  utility::construct<control_block>(m_data, &modify_lifetime<F>, &invoke<F>);
-  utility::construct<F>(storage(), utility::forward<F>(_function));
+  Utility::construct<ControlBlock>(m_data, &modify_lifetime<F>, &invoke<F>);
+  Utility::construct<F>(storage(), Utility::forward<F>(_function));
 }
 
 template<typename R, typename... Ts>
-inline function<R(Ts...)>::function(const function& _function)
-  : function{_function.allocator()}
+inline Function<R(Ts...)>::Function(const Function& _function)
+  : Function{_function.allocator()}
 {
   if (_function.m_data) {
     m_size = _function.m_size;
@@ -141,25 +141,25 @@ inline function<R(Ts...)>::function(const function& _function)
     RX_ASSERT(m_data, "out of memory");
 
     // Copy construct the control block and the function.
-    utility::construct<control_block>(m_data, *_function.control());
-    control()->modify_lifetime(lifetime::k_construct, storage(), _function.storage());
+    Utility::construct<ControlBlock>(m_data, *_function.control());
+    control()->modify_lifetime(Lifetime::k_construct, storage(), _function.storage());
   }
 }
 
 template<typename R, typename... Ts>
-inline function<R(Ts...)>::function(function&& function_)
+inline Function<R(Ts...)>::Function(Function&& function_)
   : m_allocator{function_.m_allocator}
-  , m_data{utility::exchange(function_.m_data, nullptr)}
-  , m_size{utility::exchange(function_.m_size, 0)}
+  , m_data{Utility::exchange(function_.m_data, nullptr)}
+  , m_size{Utility::exchange(function_.m_size, 0)}
 {
 }
 
 template<typename R, typename... Ts>
-inline function<R(Ts...)>& function<R(Ts...)>::operator=(const function& _function) {
+inline Function<R(Ts...)>& Function<R(Ts...)>::operator=(const Function& _function) {
   RX_ASSERT(&_function != this, "self assignment");
 
   if (m_data) {
-    control()->modify_lifetime(lifetime::k_destruct, storage(), nullptr);
+    control()->modify_lifetime(Lifetime::k_destruct, storage(), nullptr);
   }
 
   if (_function.m_data) {
@@ -170,8 +170,8 @@ inline function<R(Ts...)>& function<R(Ts...)>::operator=(const function& _functi
       RX_ASSERT(m_data, "out of memory");
     }
     // Copy construct the control block and the function.
-    utility::construct<control_block>(m_data, *_function.control());
-    control()->modify_lifetime(lifetime::k_construct, storage(), _function.storage());
+    Utility::construct<ControlBlock>(m_data, *_function.control());
+    control()->modify_lifetime(Lifetime::k_construct, storage(), _function.storage());
   } else {
     destroy();
   }
@@ -180,81 +180,81 @@ inline function<R(Ts...)>& function<R(Ts...)>::operator=(const function& _functi
 }
 
 template<typename R, typename... Ts>
-inline function<R(Ts...)>& function<R(Ts...)>::operator=(function&& function_) {
+inline Function<R(Ts...)>& Function<R(Ts...)>::operator=(Function&& function_) {
   RX_ASSERT(&function_ != this, "self assignment");
 
   if (m_data) {
-    control()->modify_lifetime(lifetime::k_destruct, storage(), nullptr);
+    control()->modify_lifetime(Lifetime::k_destruct, storage(), nullptr);
   }
 
   m_allocator = function_.m_allocator;
-  m_size = utility::exchange(function_.m_size, 0);
-  m_data = utility::exchange(function_.m_data, nullptr);
+  m_size = Utility::exchange(function_.m_size, 0);
+  m_data = Utility::exchange(function_.m_data, nullptr);
 
   return *this;
 }
 
 template<typename R, typename... Ts>
-inline function<R(Ts...)>& function<R(Ts...)>::operator=(rx_nullptr) {
+inline Function<R(Ts...)>& Function<R(Ts...)>::operator=(NullPointer) {
   if (m_data) {
-    control()->modify_lifetime(lifetime::k_destruct, storage(), nullptr);
+    control()->modify_lifetime(Lifetime::k_destruct, storage(), nullptr);
     destroy();
   }
   return *this;
 }
 
 template<typename R, typename... Ts>
-inline function<R(Ts...)>::~function() {
+inline Function<R(Ts...)>::~Function() {
   if (m_data) {
-    control()->modify_lifetime(lifetime::k_destruct, storage(), nullptr);
+    control()->modify_lifetime(Lifetime::k_destruct, storage(), nullptr);
     destroy();
   }
 }
 
 template<typename R, typename... Ts>
-inline R function<R(Ts...)>::operator()(Ts... _arguments) const {
+inline R Function<R(Ts...)>::operator()(Ts... _arguments) const {
   if constexpr(traits::is_same<R, void>) {
-    control()->invoke(storage(), utility::forward<Ts>(_arguments)...);
+    control()->invoke(storage(), Utility::forward<Ts>(_arguments)...);
   } else {
-    return control()->invoke(storage(), utility::forward<Ts>(_arguments)...);
+    return control()->invoke(storage(), Utility::forward<Ts>(_arguments)...);
   }
 }
 
 template<typename R, typename... Ts>
-function<R(Ts...)>::operator bool() const {
+Function<R(Ts...)>::operator bool() const {
   return m_size != 0;
 }
 
 template<typename R, typename... Ts>
-RX_HINT_FORCE_INLINE constexpr memory::allocator& function<R(Ts...)>::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Function<R(Ts...)>::allocator() const {
   return m_allocator;
 }
 
 template<typename R, typename... Ts>
-inline void function<R(Ts...)>::destroy() {
+inline void Function<R(Ts...)>::destroy() {
   allocator().deallocate(m_data);
   m_data = nullptr;
   m_size = 0;
 }
 
 template<typename R, typename... Ts>
-RX_HINT_FORCE_INLINE typename function<R(Ts...)>::control_block* function<R(Ts...)>::control() {
-  return reinterpret_cast<control_block*>(m_data);
+RX_HINT_FORCE_INLINE typename Function<R(Ts...)>::ControlBlock* Function<R(Ts...)>::control() {
+  return reinterpret_cast<ControlBlock*>(m_data);
 }
 
 template<typename R, typename... Ts>
-RX_HINT_FORCE_INLINE const typename function<R(Ts...)>::control_block* function<R(Ts...)>::control() const {
-  return reinterpret_cast<const control_block*>(m_data);
+RX_HINT_FORCE_INLINE const typename Function<R(Ts...)>::ControlBlock* Function<R(Ts...)>::control() const {
+  return reinterpret_cast<const ControlBlock*>(m_data);
 }
 
 template<typename R, typename... Ts>
-RX_HINT_FORCE_INLINE rx_byte* function<R(Ts...)>::storage() {
-  return m_data + sizeof(control_block);
+RX_HINT_FORCE_INLINE Byte* Function<R(Ts...)>::storage() {
+  return m_data + sizeof(ControlBlock);
 }
 
 template<typename R, typename... Ts>
-RX_HINT_FORCE_INLINE const rx_byte* function<R(Ts...)>::storage() const {
-  return m_data + sizeof(control_block);
+RX_HINT_FORCE_INLINE const Byte* Function<R(Ts...)>::storage() const {
+  return m_data + sizeof(ControlBlock);
 }
 
 } // namespace rx::core

@@ -2,15 +2,15 @@
 #define RX_INPUT_CONTROLLER_H
 #include "rx/core/types.h" // rx_size, rx_f32
 
-namespace rx::input {
+namespace Rx::Input {
 
-struct controller_device {
-  controller_device();
-  
-  static constexpr const rx_size k_buttons{15};
-  static constexpr const rx_size k_axii{6};
+struct Controller {
+  Controller();
 
-  enum class button {
+  static constexpr const Size k_buttons{15};
+  static constexpr const Size k_axii{6};
+
+  enum class Button {
     k_a,
     k_b,
     k_x,
@@ -28,7 +28,7 @@ struct controller_device {
     k_dpad_right
   };
 
-  enum class axis {
+  enum class Axis {
     k_left_x,       // in range [-1, 1]
     k_left_y,       // in range [-1, 1]
     k_right_x,      // in range [-1, 1]
@@ -37,15 +37,15 @@ struct controller_device {
     k_trigger_right // in range [0, 1]
   };
 
-  void update_button(bool _down, button _button);
-  void update_axis(axis _axis, rx_f32 _value);
-  void update(rx_f32 _delta_time);
+  void update_button(bool _down, Button _button);
+  void update_axis(Axis _axis, Float32 _value);
+  void update(Float32 _delta_time);
 
-  bool is_pressed(button _button) const;
-  bool is_released(button _button) const;
-  bool is_held(button _button) const;
+  bool is_pressed(Button _button) const;
+  bool is_released(Button _button) const;
+  bool is_held(Button _button) const;
 
-  rx_f32 axis_value(axis _axis) const;
+  Float32 axis_value(Axis _axis) const;
 
 private:
   enum {
@@ -55,23 +55,23 @@ private:
   };
 
   int m_buttons[k_buttons];
-  rx_f32 m_axis_values[k_axii];
+  Float32 m_axis_values[k_axii];
 };
 
-inline bool controller_device::is_pressed(button _button) const {
-  return m_buttons[static_cast<rx_size>(_button)] & k_pressed;
+inline bool Controller::is_pressed(Button _button) const {
+  return m_buttons[static_cast<Size>(_button)] & k_pressed;
 }
 
-inline bool controller_device::is_released(button _button) const {
-  return m_buttons[static_cast<rx_size>(_button)] & k_released;
+inline bool Controller::is_released(Button _button) const {
+  return m_buttons[static_cast<Size>(_button)] & k_released;
 }
 
-inline bool controller_device::is_held(button _button) const {
-  return m_buttons[static_cast<rx_size>(_button)] & k_held;
+inline bool Controller::is_held(Button _button) const {
+  return m_buttons[static_cast<Size>(_button)] & k_held;
 }
 
-inline rx_f32 controller_device::axis_value(axis _axis) const {
-  return m_axis_values[static_cast<rx_size>(_axis)];
+inline Float32 Controller::axis_value(Axis _axis) const {
+  return m_axis_values[static_cast<Size>(_axis)];
 }
 
 } // namespace rx::input

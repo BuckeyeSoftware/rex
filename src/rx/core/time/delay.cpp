@@ -12,9 +12,9 @@
 #error "missing delay implementation"
 #endif
 
-namespace rx::time {
+namespace Rx::Time {
 
-void delay(rx_u64 _milliseconds) {
+void delay(Uint64 _milliseconds) {
 #if defined(RX_PLATFORM_POSIX)
   struct timespec elapsed;
   elapsed.tv_sec = _milliseconds / 1000;

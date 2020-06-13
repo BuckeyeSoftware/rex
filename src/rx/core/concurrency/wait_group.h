@@ -5,30 +5,30 @@
 #include "rx/core/concurrency/mutex.h"
 #include "rx/core/concurrency/condition_variable.h"
 
-namespace rx::concurrency {
+namespace Rx::Concurrency {
 
-struct wait_group {
-  wait_group(rx_size _count);
-  wait_group();
+struct WaitGroup {
+  WaitGroup(Size _count);
+  WaitGroup();
 
   void signal();
   void wait();
 
 private:
-  rx_size m_signaled_count; // protected by |m_mutex|
-  rx_size m_count;          // protected by |m_mutex|
-  mutex m_mutex;
-  condition_variable m_condition_variable;
+  Size m_signaled_count; // protected by |m_mutex|
+  Size m_count;          // protected by |m_mutex|
+  Mutex m_mutex;
+  ConditionVariable m_condition_variable;
 };
 
-inline wait_group::wait_group(rx_size _count)
+inline WaitGroup::WaitGroup(Size _count)
   : m_signaled_count{0}
   , m_count{_count}
 {
 }
 
-inline wait_group::wait_group()
-  : wait_group{0}
+inline WaitGroup::WaitGroup()
+  : WaitGroup{0}
 {
 }
 

@@ -2,17 +2,17 @@
 #define RX_TEXTURE_DXT_H
 #include "rx/core/vector.h"
 
-namespace rx::texture {
+namespace Rx::Texture {
 
-enum class dxt_type {
+enum class DXTType {
   k_dxt1,
   k_dxt5
 };
 
-template<dxt_type T>
-vector<rx_byte> dxt_compress(memory::allocator& _allocator,
-  const rx_byte *const _uncompressed, rx_size _width, rx_size _height,
-  rx_size _channels, rx_size& out_size_, rx_size& optimized_blocks_);
+template<DXTType T>
+Vector<Byte> dxt_compress(Memory::Allocator& _allocator,
+                             const Byte *const _uncompressed, Size _width, Size _height,
+                             Size _channels, Size& out_size_, Size& optimized_blocks_);
 
 } // namespace rx::texture
 

@@ -17,23 +17,23 @@
 #error "missing thread implementation"
 #endif
 
-namespace rx::concurrency {
+namespace Rx::Concurrency {
 
-static atomic<int> g_thread_id;
+static Atomic<int> g_thread_id;
 
-thread::~thread() {
+Thread::~Thread() {
   if (m_state) {
     join();
   }
 }
 
-void thread::join() {
+void Thread::join() {
   RX_ASSERT(m_state, "join on empty thread");
   m_state->join();
 }
 
 // state
-void* thread::state::wrap(void* _data) {
+void* Thread::State::wrap(void* _data) {
 #if defined(RX_PLATFORM_POSIX)
   // Don't permit any signal delivery to threads.
   sigset_t mask;
@@ -43,8 +43,8 @@ void* thread::state::wrap(void* _data) {
 #endif
 
   // Record the thread name into the global profiler.
-  auto self = reinterpret_cast<state*>(_data);
-  profiler::instance().set_thread_name(self->m_name);
+  auto self = reinterpret_cast<State*>(_data);
+  Profiler::instance().set_thread_name(self->m_name);
 
   // Dispatch the actual thread function.
   self->m_function(g_thread_id++);
@@ -52,7 +52,7 @@ void* thread::state::wrap(void* _data) {
   return nullptr;
 }
 
-void thread::state::spawn() {
+void Thread::State::spawn() {
 #if defined(RX_PLATFORM_POSIX)
   // Spawn the thread.
   auto handle = reinterpret_cast<pthread_t*>(m_thread);
@@ -85,7 +85,7 @@ void thread::state::spawn() {
   // Convert thread name to UTF-16 and set the thread's name with the new
   // |SetThreadDescription| API.
   const wide_string converted_name = string(m_name).to_utf16();
-  SetThreadDescription(thread_handle, reinterpret_cast<PCWSTR>(converted_name.data()));
+  // SetThreadDescription(thread_handle, reinterpret_cast<PCWSTR>(converted_name.data()));
 
   // Store the result of |_beginthreadex| into the HANDLE storage given by
   // |m_thread|.
@@ -93,7 +93,7 @@ void thread::state::spawn() {
 #endif
 }
 
-void thread::state::join() {
+void Thread::State::join() {
   if (m_joined) {
     return;
   }

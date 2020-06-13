@@ -15,33 +15,33 @@
 
 #include "rx/core/memory/system_allocator.h" // allocator, g_system_allocator
 
-namespace rx {
+namespace Rx {
 
 // 32-bit: 28 bytes
 // 64-bit: 56 bytes
 template<typename K, typename V>
-struct map {
-  template<typename Kt, typename Vt, rx_size E>
-  using initializers = array<pair<Kt, Vt>[E]>;
+struct Map {
+  template<typename Kt, typename Vt, Size E>
+  using Initializers = Array<Pair<Kt, Vt>[E]>;
 
-  static constexpr rx_size k_initial_size{256};
-  static constexpr rx_size k_load_factor{90};
+  static constexpr Size k_initial_size{256};
+  static constexpr Size k_load_factor{90};
 
-  map();
-  map(memory::allocator& _allocator);
-  map(map&& map_);
-  map(const map& _map);
+  Map();
+  Map(Memory::Allocator& _allocator);
+  Map(Map&& map_);
+  Map(const Map& _map);
 
-  template<typename Kt, typename Vt, rx_size E>
-  map(memory::allocator& _allocator, initializers<Kt, Vt, E>&& initializers_);
+  template<typename Kt, typename Vt, Size E>
+  Map(Memory::Allocator& _allocator, Initializers<Kt, Vt, E>&& initializers_);
 
-  template<typename Kt, typename Vt, rx_size E>
-  map(initializers<Kt, Vt, E>&& initializers_);
+  template<typename Kt, typename Vt, Size E>
+  Map(Initializers<Kt, Vt, E>&& initializers_);
 
-  ~map();
+  ~Map();
 
-  map& operator=(map&& map_);
-  map& operator=(const map& _map);
+  Map& operator=(Map&& map_);
+  Map& operator=(const Map& _map);
 
   V* insert(const K& _key, V&& value_);
   V* insert(const K& _key, const V& _value);
@@ -50,7 +50,7 @@ struct map {
   const V* find(const K& _key) const;
 
   bool erase(const K& _key);
-  rx_size size() const;
+  Size size() const;
   bool is_empty() const;
 
   void clear();
@@ -70,52 +70,52 @@ struct map {
   template<typename F>
   bool each_pair(F&& _function) const;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
   void clear_and_deallocate();
 
-  static rx_size hash_key(const K& _key);
-  static bool is_deleted(rx_size _hash);
+  static Size hash_key(const K& _key);
+  static bool is_deleted(Size _hash);
 
-  rx_size desired_position(rx_size _hash) const;
-  rx_size probe_distance(rx_size _hash, rx_size _slot_index) const;
+  Size desired_position(Size _hash) const;
+  Size probe_distance(Size _hash, Size _slot_index) const;
 
-  rx_size& element_hash(rx_size index);
-  rx_size element_hash(rx_size index) const;
+  Size& element_hash(Size index);
+  Size element_hash(Size index) const;
 
   [[nodiscard]] bool allocate();
   [[nodiscard]] bool grow();
 
   // move and non-move construction functions
-  V* construct(rx_size _index, rx_size _hash, K&& key_, V&& value_);
+  V* construct(Size _index, Size _hash, K&& key_, V&& value_);
 
-  V* inserter(rx_size _hash, K&& key_, V&& value_);
-  V* inserter(rx_size _hash, const K& _key, const V& _value);
-  V* inserter(rx_size _hash, const K& _key, V&& value_);
+  V* inserter(Size _hash, K&& key_, V&& value_);
+  V* inserter(Size _hash, const K& _key, const V& _value);
+  V* inserter(Size _hash, const K& _key, V&& value_);
 
-  bool lookup_index(const K& _key, rx_size& _index) const;
+  bool lookup_index(const K& _key, Size& _index) const;
 
-  ref<memory::allocator> m_allocator;
+  Ref<Memory::Allocator> m_allocator;
 
   K* m_keys;
   V* m_values;
-  rx_size* m_hashes;
+  Size* m_hashes;
 
-  rx_size m_size;
-  rx_size m_capacity;
-  rx_size m_resize_threshold;
-  rx_size m_mask;
+  Size m_size;
+  Size m_capacity;
+  Size m_resize_threshold;
+  Size m_mask;
 };
 
 template<typename K, typename V>
-inline map<K, V>::map()
-  : map{memory::system_allocator::instance()}
+inline Map<K, V>::Map()
+  : Map{Memory::SystemAllocator::instance()}
 {
 }
 
 template<typename K, typename V>
-inline map<K, V>::map(memory::allocator& _allocator)
+inline Map<K, V>::Map(Memory::Allocator& _allocator)
   : m_allocator{_allocator}
   , m_keys{nullptr}
   , m_values{nullptr}
@@ -129,23 +129,23 @@ inline map<K, V>::map(memory::allocator& _allocator)
 }
 
 template<typename K, typename V>
-inline map<K, V>::map(map&& map_)
+inline Map<K, V>::Map(Map&& map_)
   : m_allocator{map_.allocator()}
-  , m_keys{utility::exchange(map_.m_keys, nullptr)}
-  , m_values{utility::exchange(map_.m_values, nullptr)}
-  , m_hashes{utility::exchange(map_.m_hashes, nullptr)}
-  , m_size{utility::exchange(map_.m_size, 0)}
-  , m_capacity{utility::exchange(map_.m_capacity, 0)}
-  , m_resize_threshold{utility::exchange(map_.m_resize_threshold, 0)}
-  , m_mask{utility::exchange(map_.m_mask, 0)}
+  , m_keys{Utility::exchange(map_.m_keys, nullptr)}
+  , m_values{Utility::exchange(map_.m_values, nullptr)}
+  , m_hashes{Utility::exchange(map_.m_hashes, nullptr)}
+  , m_size{Utility::exchange(map_.m_size, 0)}
+  , m_capacity{Utility::exchange(map_.m_capacity, 0)}
+  , m_resize_threshold{Utility::exchange(map_.m_resize_threshold, 0)}
+  , m_mask{Utility::exchange(map_.m_mask, 0)}
 {
 }
 
 template<typename K, typename V>
-inline map<K, V>::map(const map& _map)
-  : map{_map.allocator()}
+inline Map<K, V>::Map(const Map& _map)
+  : Map{_map.allocator()}
 {
-  for (rx_size i{0}; i < _map.m_capacity; i++) {
+  for (Size i{0}; i < _map.m_capacity; i++) {
     const auto hash = _map.element_hash(i);
     if (hash != 0 && !_map.is_deleted(hash)) {
       insert(_map.m_keys[i], _map.m_values[i]);
@@ -154,42 +154,42 @@ inline map<K, V>::map(const map& _map)
 }
 
 template<typename K, typename V>
-template<typename Kt, typename Vt, rx_size E>
-inline map<K, V>::map(memory::allocator& _allocator, initializers<Kt, Vt, E>&& initializers_)
-  : map{_allocator}
+template<typename Kt, typename Vt, Size E>
+inline Map<K, V>::Map(Memory::Allocator& _allocator, Initializers<Kt, Vt, E>&& initializers_)
+  : Map{_allocator}
 {
-  for (rx_size i = 0; i < E; i++) {
+  for (Size i = 0; i < E; i++) {
     auto& item = initializers_[i];
-    insert(utility::move(item.first), utility::move(item.second));
+    insert(Utility::move(item.first), Utility::move(item.second));
   }
 }
 
 template<typename K, typename V>
-template<typename Kt, typename Vt, rx_size E>
-inline map<K, V>::map(initializers<Kt, Vt, E>&& initializers_)
-  : map{memory::system_allocator::instance(), utility::move(initializers_)}
+template<typename Kt, typename Vt, Size E>
+inline Map<K, V>::Map(Initializers<Kt, Vt, E>&& initializers_)
+  : Map{Memory::SystemAllocator::instance(), Utility::move(initializers_)}
 {
 }
 
 template<typename K, typename V>
-inline map<K, V>::~map() {
+inline Map<K, V>::~Map() {
   clear_and_deallocate();
 }
 
 template<typename K, typename V>
-inline void map<K, V>::clear() {
+inline void Map<K, V>::clear() {
   if (m_size == 0) {
     return;
   }
 
-  for (rx_size i{0}; i < m_capacity; i++) {
+  for (Size i{0}; i < m_capacity; i++) {
     const auto hash = element_hash(i);
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (!traits::is_trivially_destructible<K>) {
-        utility::destruct<K>(m_keys + i);
+        Utility::destruct<K>(m_keys + i);
       }
       if constexpr (!traits::is_trivially_destructible<V>) {
-        utility::destruct<V>(m_values + i);
+        Utility::destruct<V>(m_values + i);
       }
       element_hash(i) = 0;
     }
@@ -199,7 +199,7 @@ inline void map<K, V>::clear() {
 }
 
 template<typename K, typename V>
-inline void map<K, V>::clear_and_deallocate() {
+inline void Map<K, V>::clear_and_deallocate() {
   clear();
 
   allocator().deallocate(m_keys);
@@ -208,25 +208,25 @@ inline void map<K, V>::clear_and_deallocate() {
 }
 
 template<typename K, typename V>
-inline map<K, V>& map<K, V>::operator=(map<K, V>&& map_) {
+inline Map<K, V>& Map<K, V>::operator=(Map<K, V>&& map_) {
   RX_ASSERT(&map_ != this, "self assignment");
 
   clear_and_deallocate();
 
   m_allocator = map_.allocator();
-  m_keys = utility::exchange(map_.m_keys, nullptr);
-  m_values = utility::exchange(map_.m_values, nullptr);
-  m_hashes = utility::exchange(map_.m_hashes, nullptr);
-  m_size = utility::exchange(map_.m_size, 0);
-  m_capacity = utility::exchange(map_.m_capacity, 0);
-  m_resize_threshold = utility::exchange(map_.m_resize_threshold, 0);
-  m_mask = utility::exchange(map_.m_mask, 0);
+  m_keys = Utility::exchange(map_.m_keys, nullptr);
+  m_values = Utility::exchange(map_.m_values, nullptr);
+  m_hashes = Utility::exchange(map_.m_hashes, nullptr);
+  m_size = Utility::exchange(map_.m_size, 0);
+  m_capacity = Utility::exchange(map_.m_capacity, 0);
+  m_resize_threshold = Utility::exchange(map_.m_resize_threshold, 0);
+  m_mask = Utility::exchange(map_.m_mask, 0);
 
   return *this;
 }
 
 template<typename K, typename V>
-inline map<K, V>& map<K, V>::operator=(const map<K, V>& _map) {
+inline Map<K, V>& Map<K, V>::operator=(const Map<K, V>& _map) {
   RX_ASSERT(&_map != this, "self assignment");
 
   clear_and_deallocate();
@@ -234,7 +234,7 @@ inline map<K, V>& map<K, V>::operator=(const map<K, V>& _map) {
   m_capacity = _map.m_capacity;
   RX_ASSERT(allocate(), "out of memory");
 
-  for (rx_size i{0}; i < _map.m_capacity; i++) {
+  for (Size i{0}; i < _map.m_capacity; i++) {
     const auto hash = _map.element_hash(i);
     if (hash != 0 && !_map.is_deleted(hash)) {
       insert(_map.m_keys[i], _map.m_values[i]);
@@ -245,15 +245,15 @@ inline map<K, V>& map<K, V>::operator=(const map<K, V>& _map) {
 }
 
 template<typename K, typename V>
-inline V* map<K, V>::insert(const K& _key, V&& value_) {
+inline V* Map<K, V>::insert(const K& _key, V&& value_) {
   if (++m_size >= m_resize_threshold && !grow()) {
     return nullptr;
   }
-  return inserter(hash_key(_key), _key, utility::forward<V>(value_));
+  return inserter(hash_key(_key), _key, Utility::forward<V>(value_));
 }
 
 template<typename K, typename V>
-inline V* map<K, V>::insert(const K& _key, const V& _value) {
+inline V* Map<K, V>::insert(const K& _key, const V& _value) {
   if (++m_size >= m_resize_threshold && !grow()) {
     return nullptr;
   }
@@ -261,29 +261,29 @@ inline V* map<K, V>::insert(const K& _key, const V& _value) {
 }
 
 template<typename K, typename V>
-V* map<K, V>::find(const K& _key) {
-  if (rx_size index; lookup_index(_key, index)) {
+V* Map<K, V>::find(const K& _key) {
+  if (Size index; lookup_index(_key, index)) {
     return m_values + index;
   }
   return nullptr;
 }
 
 template<typename K, typename V>
-const V* map<K, V>::find(const K& _key) const {
-  if (rx_size index; lookup_index(_key, index)) {
+const V* Map<K, V>::find(const K& _key) const {
+  if (Size index; lookup_index(_key, index)) {
     return m_values + index;
   }
   return nullptr;
 }
 
 template<typename K, typename V>
-inline bool map<K, V>::erase(const K& _key) {
-  if (rx_size index; lookup_index(_key, index)) {
+inline bool Map<K, V>::erase(const K& _key) {
+  if (Size index; lookup_index(_key, index)) {
     if constexpr (!traits::is_trivially_destructible<K>) {
-      utility::destruct<K>(m_keys + index);
+      Utility::destruct<K>(m_keys + index);
     }
     if constexpr (!traits::is_trivially_destructible<V>) {
-      utility::destruct<V>(m_values + index);
+      Utility::destruct<V>(m_values + index);
     }
 
     if constexpr (sizeof index == 8) {
@@ -299,18 +299,18 @@ inline bool map<K, V>::erase(const K& _key) {
 }
 
 template<typename K, typename V>
-inline rx_size map<K, V>::size() const {
+inline Size Map<K, V>::size() const {
   return m_size;
 }
 
 template<typename K, typename V>
-inline bool map<K, V>::is_empty() const {
+inline bool Map<K, V>::is_empty() const {
   return m_size == 0;
 }
 
 template<typename K, typename V>
-inline rx_size map<K, V>::hash_key(const K& _key) {
-  auto hash_value{hash<K>{}(_key)};
+inline Size Map<K, V>::hash_key(const K& _key) {
+  auto hash_value{Hash<K>{}(_key)};
 
   // MSB is used to indicate deleted elements
   if constexpr(sizeof hash_value == 8) {
@@ -326,42 +326,42 @@ inline rx_size map<K, V>::hash_key(const K& _key) {
 }
 
 template<typename K, typename V>
-inline bool map<K, V>::is_deleted(rx_size _hash) {
+inline bool Map<K, V>::is_deleted(Size _hash) {
   // MSB indicates tombstones
   return (_hash >> ((sizeof _hash * 8) - 1)) != 0;
 }
 
 template<typename K, typename V>
-inline rx_size map<K, V>::desired_position(rx_size _hash) const {
+inline Size Map<K, V>::desired_position(Size _hash) const {
   return _hash & m_mask;
 }
 
 template<typename K, typename V>
-inline rx_size map<K, V>::probe_distance(rx_size _hash, rx_size _slot_index) const {
+inline Size Map<K, V>::probe_distance(Size _hash, Size _slot_index) const {
   return (_slot_index + m_capacity - desired_position(_hash)) & m_mask;
 }
 
 template<typename K, typename V>
-inline rx_size& map<K, V>::element_hash(rx_size _index) {
+inline Size& Map<K, V>::element_hash(Size _index) {
   return m_hashes[_index];
 }
 
 template<typename K, typename V>
-inline rx_size map<K, V>::element_hash(rx_size _index) const {
+inline Size Map<K, V>::element_hash(Size _index) const {
   return m_hashes[_index];
 }
 
 template<typename K, typename V>
-inline bool map<K, V>::allocate() {
+inline bool Map<K, V>::allocate() {
   m_keys = reinterpret_cast<K*>(allocator().allocate(sizeof(K) * m_capacity));
   m_values = reinterpret_cast<V*>(allocator().allocate(sizeof(V) * m_capacity));
-  m_hashes = reinterpret_cast<rx_size*>(allocator().allocate(sizeof(rx_size) * m_capacity));
+  m_hashes = reinterpret_cast<Size*>(allocator().allocate(sizeof(Size) * m_capacity));
 
   if (!m_keys || !m_values || !m_hashes) {
     return false;
   }
 
-  for (rx_size i{0}; i < m_capacity; i++) {
+  for (Size i{0}; i < m_capacity; i++) {
     element_hash(i) = 0;
   }
 
@@ -372,7 +372,7 @@ inline bool map<K, V>::allocate() {
 }
 
 template<typename K, typename V>
-inline bool map<K, V>::grow() {
+inline bool Map<K, V>::grow() {
   const auto old_capacity{m_capacity};
 
   auto keys_data = m_keys;
@@ -386,15 +386,15 @@ inline bool map<K, V>::grow() {
     return false;
   }
 
-  for (rx_size i{0}; i < old_capacity; i++) {
+  for (Size i{0}; i < old_capacity; i++) {
     const auto hash{hashes_data[i]};
     if (hash != 0 && !is_deleted(hash)) {
-      inserter(hash, utility::move(keys_data[i]), utility::move(values_data[i]));
+      inserter(hash, Utility::move(keys_data[i]), Utility::move(values_data[i]));
       if constexpr (!traits::is_trivially_destructible<K>) {
-        utility::destruct<K>(keys_data + i);
+        Utility::destruct<K>(keys_data + i);
       }
       if constexpr (!traits::is_trivially_destructible<V>) {
-        utility::destruct<V>(values_data + i);
+        Utility::destruct<V>(values_data + i);
       }
     }
   }
@@ -407,29 +407,29 @@ inline bool map<K, V>::grow() {
 }
 
 template<typename K, typename V>
-inline V* map<K, V>::construct(rx_size _index, rx_size _hash, K&& key_, V&& value_) {
-  utility::construct<K>(m_keys + _index, utility::forward<K>(key_));
-  utility::construct<V>(m_values + _index, utility::forward<V>(value_));
+inline V* Map<K, V>::construct(Size _index, Size _hash, K&& key_, V&& value_) {
+  Utility::construct<K>(m_keys + _index, Utility::forward<K>(key_));
+  Utility::construct<V>(m_values + _index, Utility::forward<V>(value_));
   element_hash(_index) = _hash;
   return m_values + _index;
 }
 
 template<typename K, typename V>
-inline V* map<K, V>::inserter(rx_size _hash, K&& key_, V&& value_) {
-  rx_size position = desired_position(_hash);
-  rx_size distance = 0;
+inline V* Map<K, V>::inserter(Size _hash, K&& key_, V&& value_) {
+  Size position = desired_position(_hash);
+  Size distance = 0;
 
   V* result = nullptr;
   for (;;) {
     if (element_hash(position) == 0) {
-      V* insert = construct(position, _hash, utility::forward<K>(key_), utility::forward<V>(value_));
+      V* insert = construct(position, _hash, Utility::forward<K>(key_), Utility::forward<V>(value_));
       return result ? result : insert;
     }
 
-    const rx_size existing_element_probe_distance{probe_distance(element_hash(position), position)};
+    const Size existing_element_probe_distance{probe_distance(element_hash(position), position)};
     if (existing_element_probe_distance < distance) {
       if (is_deleted(element_hash(position))) {
-        V* insert = construct(position, _hash, utility::forward<K>(key_), utility::forward<V>(value_));
+        V* insert = construct(position, _hash, Utility::forward<K>(key_), Utility::forward<V>(value_));
         return result ? result : insert;
       }
 
@@ -437,9 +437,9 @@ inline V* map<K, V>::inserter(rx_size _hash, K&& key_, V&& value_) {
         result = m_values + position;
       }
 
-      utility::swap(_hash, element_hash(position));
-      utility::swap(key_, m_keys[position]);
-      utility::swap(value_, m_values[position]);
+      Utility::swap(_hash, element_hash(position));
+      Utility::swap(key_, m_keys[position]);
+      Utility::swap(value_, m_values[position]);
 
       distance = existing_element_probe_distance;
     }
@@ -452,25 +452,25 @@ inline V* map<K, V>::inserter(rx_size _hash, K&& key_, V&& value_) {
 }
 
 template<typename K, typename V>
-inline V* map<K, V>::inserter(rx_size _hash, const K& _key, V&& value_) {
+inline V* Map<K, V>::inserter(Size _hash, const K& _key, V&& value_) {
   K key{_key};
-  return inserter(_hash, utility::move(key), utility::forward<V>(value_));
+  return inserter(_hash, Utility::move(key), Utility::forward<V>(value_));
 }
 
 template<typename K, typename V>
-inline V* map<K, V>::inserter(rx_size _hash, const K& _key, const V& _value) {
+inline V* Map<K, V>::inserter(Size _hash, const K& _key, const V& _value) {
   K key{_key};
   V value{_value};
-  return inserter(_hash, utility::move(key), utility::move(value));
+  return inserter(_hash, Utility::move(key), Utility::move(value));
 }
 
 template<typename K, typename V>
-inline bool map<K, V>::lookup_index(const K& _key, rx_size& _index) const {
-  const rx_size hash{hash_key(_key)};
-  rx_size position{desired_position(hash)};
-  rx_size distance{0};
+inline bool Map<K, V>::lookup_index(const K& _key, Size& _index) const {
+  const Size hash{hash_key(_key)};
+  Size position{desired_position(hash)};
+  Size distance{0};
   for (;;) {
-    const rx_size hash_element{element_hash(position)};
+    const Size hash_element{element_hash(position)};
     if (hash_element == 0) {
       return false;
     } else if (distance > probe_distance(hash_element, position)) {
@@ -488,8 +488,8 @@ inline bool map<K, V>::lookup_index(const K& _key, rx_size& _index) const {
 
 template<typename K, typename V>
 template<typename F>
-inline bool map<K, V>::each_key(F&& _function) {
- for (rx_size i{0}; i < m_capacity; i++) {
+inline bool Map<K, V>::each_key(F&& _function) {
+ for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (traits::is_same<traits::return_type<F>, bool>) {
@@ -506,8 +506,8 @@ inline bool map<K, V>::each_key(F&& _function) {
 
 template<typename K, typename V>
 template<typename F>
-inline bool map<K, V>::each_key(F&& _function) const {
- for (rx_size i{0}; i < m_capacity; i++) {
+inline bool Map<K, V>::each_key(F&& _function) const {
+ for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (traits::is_same<traits::return_type<F>, bool>) {
@@ -524,8 +524,8 @@ inline bool map<K, V>::each_key(F&& _function) const {
 
 template<typename K, typename V>
 template<typename F>
-inline bool map<K, V>::each_value(F&& _function) {
- for (rx_size i{0}; i < m_capacity; i++) {
+inline bool Map<K, V>::each_value(F&& _function) {
+ for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (traits::is_same<traits::return_type<F>, bool>) {
@@ -542,8 +542,8 @@ inline bool map<K, V>::each_value(F&& _function) {
 
 template<typename K, typename V>
 template<typename F>
-inline bool map<K, V>::each_value(F&& _function) const {
- for (rx_size i{0}; i < m_capacity; i++) {
+inline bool Map<K, V>::each_value(F&& _function) const {
+ for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (traits::is_same<traits::return_type<F>, bool>) {
@@ -560,8 +560,8 @@ inline bool map<K, V>::each_value(F&& _function) const {
 
 template<typename K, typename V>
 template<typename F>
-inline bool map<K, V>::each_pair(F&& _function) {
-  for (rx_size i{0}; i < m_capacity; i++) {
+inline bool Map<K, V>::each_pair(F&& _function) {
+  for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (traits::is_same<traits::return_type<F>, bool>) {
@@ -578,8 +578,8 @@ inline bool map<K, V>::each_pair(F&& _function) {
 
 template<typename K, typename V>
 template<typename F>
-inline bool map<K, V>::each_pair(F&& _function) const {
-  for (rx_size i{0}; i < m_capacity; i++) {
+inline bool Map<K, V>::each_pair(F&& _function) const {
+  for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (traits::is_same<traits::return_type<F>, bool>) {
@@ -595,7 +595,7 @@ inline bool map<K, V>::each_pair(F&& _function) const {
 }
 
 template<typename K, typename V>
-RX_HINT_FORCE_INLINE constexpr memory::allocator& map<K, V>::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Map<K, V>::allocator() const {
   return m_allocator;
 }
 

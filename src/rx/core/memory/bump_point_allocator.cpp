@@ -8,9 +8,9 @@
 
 #include "rx/core/assert.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
-bump_point_allocator::bump_point_allocator(rx_byte* _data, rx_size _size)
+BumpPointAllocator::BumpPointAllocator(Byte* _data, Size _size)
   : m_size{_size}
   , m_data{_data}
   , m_this_point{m_data}
@@ -19,21 +19,21 @@ bump_point_allocator::bump_point_allocator(rx_byte* _data, rx_size _size)
   RX_ASSERT(_data, "no memory supplied");
 
   // Ensure the memory given is suitably aligned and size is suitably rounded.
-  RX_ASSERT(reinterpret_cast<rx_uintptr>(m_data) % k_alignment == 0,
+  RX_ASSERT(reinterpret_cast<UintPtr>(m_data) % k_alignment == 0,
     "_data not aligned on k_alignment boundary");
   RX_ASSERT(m_size % k_alignment == 0,
     "_size not a multiple of k_alignment");
 }
 
-rx_byte* bump_point_allocator::allocate(rx_size _size) {
-  concurrency::scope_lock locked{m_lock};
+Byte* BumpPointAllocator::allocate(Size _size) {
+  Concurrency::ScopeLock locked{m_lock};
   return allocate_unlocked(_size);
 }
 
-rx_byte* bump_point_allocator::allocate_unlocked(rx_size _size) {
+Byte* BumpPointAllocator::allocate_unlocked(Size _size) {
   // Round |_size| to a multiple of k_alignment to keep all pointers
   // aligned by k_alignment.
-  _size = allocator::round_to_alignment(_size);
+  _size = Allocator::round_to_alignment(_size);
 
   // Check for available space for the allocation.
   if (RX_HINT_UNLIKELY(m_this_point + _size >= m_data + m_size)) {
@@ -49,13 +49,13 @@ rx_byte* bump_point_allocator::allocate_unlocked(rx_size _size) {
   return m_last_point;
 }
 
-rx_byte* bump_point_allocator::reallocate(void* _data, rx_size _size) {
+Byte* BumpPointAllocator::reallocate(void* _data, Size _size) {
   if (RX_HINT_LIKELY(_data)) {
-    concurrency::scope_lock locked{m_lock};
+    Concurrency::ScopeLock locked{m_lock};
 
     // Round |_size| to a multiple of k_alignment to keep all pointers
     // aligned by k_alignment.
-    _size = allocator::round_to_alignment(_size);
+    _size = Allocator::round_to_alignment(_size);
 
     // Can only reallocate in-place provided |_data| is the address of |m_last_point|,
     // i.e it's the most recently allocated.
@@ -69,8 +69,8 @@ rx_byte* bump_point_allocator::reallocate(void* _data, rx_size _size) {
       // Bump the pointer along by the last point and new size.
       m_this_point = m_last_point + _size;
 
-      return static_cast<rx_byte*>(_data);
-    } else if (rx_byte* data = allocate_unlocked(_size)) {
+      return static_cast<Byte*>(_data);
+    } else if (Byte* data = allocate_unlocked(_size)) {
       // This path is hit when resizing an allocation which isn't the last thing
       // allocated.
       //
@@ -92,8 +92,8 @@ rx_byte* bump_point_allocator::reallocate(void* _data, rx_size _size) {
   return allocate(_size);
 }
 
-void bump_point_allocator::deallocate(void* _data) {
-  concurrency::scope_lock locked{m_lock};
+void BumpPointAllocator::deallocate(void* _data) {
+  Concurrency::ScopeLock locked{m_lock};
 
   // Can only deallocate provided |_data| is the address of |m_last_point|,
   // i.e it's the most recently allocated or reallocated.
@@ -102,8 +102,8 @@ void bump_point_allocator::deallocate(void* _data) {
   }
 }
 
-void bump_point_allocator::reset() {
-  concurrency::scope_lock locked{m_lock};
+void BumpPointAllocator::reset() {
+  Concurrency::ScopeLock locked{m_lock};
 
   m_this_point = m_data;
   m_last_point = m_data;

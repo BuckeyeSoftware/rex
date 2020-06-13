@@ -2,20 +2,20 @@
 #define RX_CORE_CONCURRENCY_MUTEX_H
 #include "rx/core/types.h" // rx_byte
 
-namespace rx::concurrency {
+namespace Rx::Concurrency {
 
-struct mutex {
-  mutex();
-  ~mutex();
+struct Mutex {
+  Mutex();
+  ~Mutex();
 
   void lock();
   void unlock();
 
 private:
-  friend struct condition_variable;
+  friend struct ConditionVariable;
 
-  // Fixed-capacity storage for any OS mutex type, adjust if necessary.
-  alignas(16) rx_byte m_mutex[64];
+  // Fixed-capacity storage for any OS mutex Type, adjust if necessary.
+  alignas(16) Byte m_mutex[64];
 };
 
 } // namespace rx::concurrency

@@ -5,15 +5,15 @@
 
 #include "rx/core/hints/empty_bases.h"
 
-namespace rx {
+namespace Rx {
 
-struct string;
+struct String;
 
-struct RX_HINT_EMPTY_BASES stream
-   : concepts::no_copy
+struct RX_HINT_EMPTY_BASES Stream
+   : Concepts::NoCopy
 {
   // Stream flags.
-  enum : rx_u32 {
+  enum : Uint32 {
     k_read  = 1 << 0,
     k_write = 1 << 1,
     k_tell  = 1 << 2,
@@ -21,23 +21,23 @@ struct RX_HINT_EMPTY_BASES stream
     k_flush = 1 << 4
   };
 
-  constexpr stream(rx_u32 _flags);
-  stream(stream&& stream_);
-  virtual ~stream();
+  constexpr Stream(Uint32 _flags);
+  Stream(Stream&& stream_);
+  virtual ~Stream();
 
-  enum class whence {
+  enum class Whence {
     k_set,     // Beginning of stream.
     k_current, // Current position
     k_end      // End of stream.
   };
 
-  [[nodiscard]] rx_u64 read(rx_byte* _data, rx_u64 _size);
-  [[nodiscard]] rx_u64 write(const rx_byte* _data, rx_u64 _size);
-  [[nodiscard]] bool seek(rx_s64 _where, whence _whence);
+  [[nodiscard]] Uint64 read(Byte* _data, Uint64 _size);
+  [[nodiscard]] Uint64 write(const Byte* _data, Uint64 _size);
+  [[nodiscard]] bool seek(Sint64 _where, Whence _whence);
   [[nodiscard]] bool flush();
 
-  rx_u64 tell();
-  rx_u64 size();
+  Uint64 tell();
+  Uint64 size();
 
   // Query the support of features on the given stream.
   constexpr bool can_read() const;
@@ -51,62 +51,62 @@ struct RX_HINT_EMPTY_BASES stream
   // function for it and ignore the flag when constructing this base class.
 
   // The name of the stream. This must always be implemented.
-  virtual const string& name() const & = 0;
+  virtual const String& name() const & = 0;
 
   // Read |_size| bytes from stream into |_data|.
-  virtual rx_u64 on_read(rx_byte* _data, rx_u64 _size);
+  virtual Uint64 on_read(Byte* _data, Uint64 _size);
 
   // Write |_size| bytes from |_data| into stream.
-  virtual rx_u64 on_write(const rx_byte* _data, rx_u64 _size);
+  virtual Uint64 on_write(const Byte* _data, Uint64 _size);
 
   // Seek to |_where| in stream relative to |_whence|.
-  virtual bool on_seek(rx_s64 _where, whence _whence);
+  virtual bool on_seek(Sint64 _where, Whence _whence);
 
   // Flush any buffered contents in the stream out.
   virtual bool on_flush();
 
   // Where we are in the stream.
-  virtual rx_u64 on_tell();
+  virtual Uint64 on_tell();
 
 private:
-  rx_u32 m_flags;
+  Uint32 m_flags;
 };
 
-inline constexpr stream::stream(rx_u32 _flags)
+inline constexpr Stream::Stream(Uint32 _flags)
   : m_flags{_flags}
 {
 }
 
-inline stream::stream(stream&& stream_)
+inline Stream::Stream(Stream&& stream_)
   : m_flags{stream_.m_flags}
 {
   stream_.m_flags = 0;
 }
 
-inline stream::~stream() = default;
+inline Stream::~Stream() = default;
 
-bool inline constexpr stream::can_read() const {
+bool inline constexpr Stream::can_read() const {
   return m_flags & k_read;
 }
 
-bool inline constexpr stream::can_write() const {
+bool inline constexpr Stream::can_write() const {
   return m_flags & k_write;
 }
 
-bool inline constexpr stream::can_tell() const {
+bool inline constexpr Stream::can_tell() const {
   return m_flags & k_tell;
 }
 
-bool inline constexpr stream::can_seek() const {
+bool inline constexpr Stream::can_seek() const {
   return m_flags & k_seek;
 }
 
-bool inline constexpr stream::can_flush() const {
+bool inline constexpr Stream::can_flush() const {
   return m_flags & k_flush;
 }
 
-optional<vector<rx_byte>> read_binary_stream(memory::allocator& _allocator, stream* _stream);
-optional<vector<rx_byte>> read_text_stream(memory::allocator& _allocator, stream* _stream);
+Optional<Vector<Byte>> read_binary_stream(Memory::Allocator& _allocator, Stream* _stream);
+Optional<Vector<Byte>> read_text_stream(Memory::Allocator& _allocator, Stream* _stream);
 
 } // namespace rx
 

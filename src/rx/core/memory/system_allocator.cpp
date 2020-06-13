@@ -2,29 +2,29 @@
 #include "rx/core/memory/electric_fence_allocator.h"
 #include "rx/core/memory/heap_allocator.h"
 
-namespace rx::memory {
+namespace Rx::Memory {
 
-system_allocator::system_allocator()
+SystemAllocator::SystemAllocator()
 #if defined(RX_ESAN)
-  : m_stats_allocator{electric_fence_allocator::instance()}
+  : m_stats_allocator{ElectricFenceAllocator::instance()}
 #else
-  : m_stats_allocator{heap_allocator::instance()}
+  : m_stats_allocator{HeapAllocator::instance()}
 #endif
 {
 }
 
-rx_byte* system_allocator::allocate(rx_size _size) {
+Byte* SystemAllocator::allocate(Size _size) {
   return m_stats_allocator.allocate(_size);
 }
 
-rx_byte* system_allocator::reallocate(void* _data, rx_size _size) {
+Byte* SystemAllocator::reallocate(void* _data, Size _size) {
   return m_stats_allocator.reallocate(_data, _size);
 }
 
-void system_allocator::deallocate(void* _data) {
+void SystemAllocator::deallocate(void* _data) {
   return m_stats_allocator.deallocate(_data);
 }
 
-global<system_allocator> system_allocator::s_instance{"system", "allocator"};
+Global<SystemAllocator> SystemAllocator::s_instance{"system", "allocator"};
 
 } // namespace rx::memory

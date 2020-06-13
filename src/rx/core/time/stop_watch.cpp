@@ -1,17 +1,17 @@
-#include "rx/core/time/stopwatch.h"
+#include "rx/core/time/stop_watch.h"
 #include "rx/core/time/qpc.h"
 
-namespace rx::time {
+namespace Rx::Time {
 
-void stopwatch::start() {
+void StopWatch::start() {
   m_start_ticks = qpc_ticks();
 }
 
-void stopwatch::stop() {
+void StopWatch::stop() {
   m_stop_ticks = qpc_ticks();
 }
 
-span stopwatch::elapsed() const {
+Span StopWatch::elapsed() const {
   return {m_stop_ticks - m_start_ticks, qpc_frequency()};
 }
 

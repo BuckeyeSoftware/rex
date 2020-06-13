@@ -6,29 +6,29 @@
 
 RX_LOG("render/resource", logger);
 
-namespace rx::render::frontend {
+namespace Rx::Render::Frontend {
 
-static constexpr const char* resource_type_to_string(resource::type _type) {
+static constexpr const char* resource_type_to_string(Resource::Type _type) {
   switch (_type) {
-  case resource::type::k_buffer:
+  case Resource::Type::k_buffer:
     return "buffer";
-  case resource::type::k_program:
+  case Resource::Type::k_program:
     return "program";
-  case resource::type::k_target:
+  case Resource::Type::k_target:
     return "target";
-  case resource::type::k_texture1D:
+  case Resource::Type::k_texture1D:
     return "texture1D";
-  case resource::type::k_texture2D:
+  case Resource::Type::k_texture2D:
     return "texture2D";
-  case resource::type::k_texture3D:
+  case Resource::Type::k_texture3D:
     return "texture3D";
-  case resource::type::k_textureCM:
+  case Resource::Type::k_textureCM:
     return "textureCM";
   }
   return "";
 }
 
-resource::resource(context* _frontend, type _type)
+Resource::Resource(Context* _frontend, Type _type)
   : m_frontend{_frontend}
   , m_resource_type{_type}
   , m_resource_usage{0}
@@ -37,15 +37,15 @@ resource::resource(context* _frontend, type _type)
   logger->verbose("%p init %s", this, resource_type_to_string(m_resource_type));
 }
 
-resource::~resource() {
-  const auto index{static_cast<rx_size>(m_resource_type)};
+Resource::~Resource() {
+  const auto index{static_cast<Size>(m_resource_type)};
   m_frontend->m_resource_usage[index] -= m_resource_usage;
 
   logger->verbose("%p fini %s", this, resource_type_to_string(m_resource_type));
 }
 
-void resource::update_resource_usage(rx_size _bytes) {
-  const auto index{static_cast<rx_size>(m_resource_type)};
+void Resource::update_resource_usage(Size _bytes) {
+  const auto index{static_cast<Size>(m_resource_type)};
   m_frontend->m_resource_usage[index] -= m_resource_usage;
   m_resource_usage = _bytes;
   m_frontend->m_resource_usage[index] += m_resource_usage;

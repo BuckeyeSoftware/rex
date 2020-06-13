@@ -3,105 +3,105 @@
 #include "rx/core/types.h"
 #include "rx/core/assert.h" // RX_ASSERT
 
-namespace rx::math {
+namespace Rx::Math {
 
-struct half {
-  constexpr half(const half& _h);
-  constexpr half& operator=(const half& _h);
+struct Half {
+  constexpr Half(const Half& _h);
+  constexpr Half& operator=(const Half& _h);
 
-  half(rx_f32 _f);
-  half(rx_f64 _f);
+  Half(Float32 _f);
+  Half(Float64 _f);
 
-  rx_f32 to_f32() const;
-  rx_f64 to_f64() const;
+  Float32 to_f32() const;
+  Float64 to_f64() const;
 
-  friend half operator+(half _lhs, half _rhs);
-  friend half operator-(half _lhs, half _rhs);
-  friend half operator*(half _lhs, half _rhs);
-  friend half operator/(half _lhs, half _rhs);
+  friend Half operator+(Half _lhs, Half _rhs);
+  friend Half operator-(Half _lhs, Half _rhs);
+  friend Half operator*(Half _lhs, Half _rhs);
+  friend Half operator/(Half _lhs, Half _rhs);
 
-  friend half& operator+=(half& _lhs, half _rhs);
-  friend half& operator-=(half& _lhs, half _rhs);
-  friend half& operator*=(half& _lhs, half _rhs);
-  friend half& operator/=(half& _lhs, half _rhs);
+  friend Half& operator+=(Half& _lhs, Half _rhs);
+  friend Half& operator-=(Half& _lhs, Half _rhs);
+  friend Half& operator*=(Half& _lhs, Half _rhs);
+  friend Half& operator/=(Half& _lhs, Half _rhs);
 
-  friend half operator-(half _h);
-  friend half operator+(half _h);
+  friend Half operator-(Half _h);
+  friend Half operator+(Half _h);
 
 private:
-  constexpr explicit half(rx_u16 _bits);
+  constexpr explicit Half(Uint16 _bits);
 
-  half to_half(rx_f32 _f);
-  rx_u16 m_bits;
+  Half to_half(Float32 _f);
+  Uint16 m_bits;
 };
 
-inline constexpr half::half(const half& _h)
+inline constexpr Half::Half(const Half& _h)
   : m_bits{_h.m_bits}
 {
 }
 
-inline constexpr half& half::operator=(const half& _h) {
+inline constexpr Half& Half::operator=(const Half& _h) {
   RX_ASSERT(&_h != this, "self assignment");
 
   m_bits = _h.m_bits;
   return *this;
 }
 
-inline half::half(rx_f32 _f)
-  : half{to_half(_f)}
+inline Half::Half(Float32 _f)
+  : Half{to_half(_f)}
 {
 }
 
-inline half::half(rx_f64 _f)
-  : half{static_cast<rx_f32>(_f)}
+inline Half::Half(Float64 _f)
+  : Half{static_cast<Float32>(_f)}
 {
 }
 
-inline rx_f64 half::to_f64() const {
-  return static_cast<rx_f64>(to_f32());
+inline Float64 Half::to_f64() const {
+  return static_cast<Float64>(to_f32());
 }
 
-inline half operator+(half _lhs, half _rhs) {
+inline Half operator+(Half _lhs, Half _rhs) {
   return _lhs.to_f32() + _rhs.to_f32();
 }
 
-inline half operator-(half _lhs, half _rhs) {
+inline Half operator-(Half _lhs, Half _rhs) {
   return _lhs.to_f32() - _rhs.to_f32();
 }
 
-inline half operator*(half _lhs, half _rhs) {
+inline Half operator*(Half _lhs, Half _rhs) {
   return _lhs.to_f32() * _rhs.to_f32();
 }
 
-inline half operator/(half _lhs, half _rhs) {
+inline Half operator/(Half _lhs, Half _rhs) {
   return _lhs.to_f32() / _rhs.to_f32();
 }
 
-inline half& operator+=(half& _lhs, half _rhs) {
+inline Half& operator+=(Half& _lhs, Half _rhs) {
   return _lhs = _lhs + _rhs;
 }
 
-inline half& operator-=(half& _lhs, half _rhs) {
+inline Half& operator-=(Half& _lhs, Half _rhs) {
   return _lhs = _lhs - _rhs;
 }
 
-inline half& operator*=(half& _lhs, half _rhs) {
+inline Half& operator*=(Half& _lhs, Half _rhs) {
   return _lhs = _lhs * _rhs;
 }
 
-inline half& operator/=(half& _lhs, half _rhs) {
+inline Half& operator/=(Half& _lhs, Half _rhs) {
   return _lhs = _lhs / _rhs;
 }
 
-inline half operator-(half _h) {
+inline Half operator-(Half _h) {
   return -_h.to_f32();
 }
 
-inline half operator+(half _h) {
+inline Half operator+(Half _h) {
   return +_h.to_f32();
 }
 
-inline constexpr half::half(rx_u16 _bits)
+inline constexpr Half::Half(Uint16 _bits)
   : m_bits{_bits}
 {
 }

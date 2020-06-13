@@ -1,7 +1,7 @@
 #ifndef RX_CORE_MATH_SIGN_H
 #define RX_CORE_MATH_SIGN_H
 
-namespace rx::math {
+namespace Rx::Math {
 
 template<typename T>
 inline constexpr T sign(T _value) {

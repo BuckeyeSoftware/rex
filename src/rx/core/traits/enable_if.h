@@ -2,7 +2,7 @@
 #define RX_CORE_TRAITS_ENABLE_IF_H
 #include "rx/core/traits/type_identity.h"
 
-namespace rx::traits {
+namespace Rx::traits {
 
 namespace detail {
   template<bool B, typename T>

@@ -4,14 +4,14 @@
 
 #include "rx/math/vec3.h" // vec3
 
-namespace rx {
+namespace Rx {
 
-const char* format_type<math::vec3f>::operator()(const math::vec3f& value) {
+const char* FormatNormalize<Math::Vec3f>::operator()(const Math::Vec3f& value) {
   snprintf(scratch, sizeof scratch, "{%f, %f, %f}", value.x, value.y, value.z);
   return scratch;
 }
 
-const char* format_type<math::vec3i>::operator()(const math::vec3i& value) {
+const char* FormatNormalize<Math::Vec3i>::operator()(const Math::Vec3i& value) {
   snprintf(scratch, sizeof scratch, "{%d, %d, %d}", value.x, value.y, value.z);
   return scratch;
 }

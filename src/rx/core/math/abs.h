@@ -2,10 +2,10 @@
 #define RX_CORE_MATH_ABS_H
 #include "rx/core/types.h"
 
-namespace rx::math {
+namespace Rx::Math {
 
-rx_f64 abs(rx_f64 _x);
-rx_f32 abs(rx_f32 _x);
+Float64 abs(Float64 _x);
+Float32 abs(Float32 _x);
 
 } // namespace rx::math
 

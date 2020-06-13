@@ -7,7 +7,7 @@
 
 #include "rx/core/utility/exchange.h"
 
-namespace rx::console {
+namespace Rx::Console {
 
 // The signature specification works like this
 //  b -> boolean
@@ -15,175 +15,175 @@ namespace rx::console {
 //  i -> int
 //  f -> float
 //  v -> vector, followed by 2, 3, 4 for # of components, followed by i or f.
-struct RX_HINT_EMPTY_BASES command
-  : concepts::no_copy
+struct RX_HINT_EMPTY_BASES Command
+  : Concepts::NoCopy
 {
-  struct RX_HINT_EMPTY_BASES argument
-    : concepts::no_copy
+  struct RX_HINT_EMPTY_BASES Argument
+    : Concepts::NoCopy
   {
-    explicit argument(){}
-    explicit argument(bool _value);
-    explicit argument(const string& _value);
-    explicit argument(rx_s32 _value);
-    explicit argument(rx_f32 _value);
-    explicit argument(const math::vec4f& _value);
-    explicit argument(const math::vec4i& _value);
-    explicit argument(const math::vec3f& _value);
-    explicit argument(const math::vec3i& _value);
-    explicit argument(const math::vec2f& _value);
-    explicit argument(const math::vec2i& _value);
+    explicit Argument(){}
+    explicit Argument(bool _value);
+    explicit Argument(const String& _value);
+    explicit Argument(Sint32 _value);
+    explicit Argument(Float32 _value);
+    explicit Argument(const Math::Vec4f& _value);
+    explicit Argument(const Math::Vec4i& _value);
+    explicit Argument(const Math::Vec3f& _value);
+    explicit Argument(const Math::Vec3i& _value);
+    explicit Argument(const Math::Vec2f& _value);
+    explicit Argument(const Math::Vec2i& _value);
 
-    argument(argument&& _argument);
+    Argument(Argument&& _argument);
 
-    ~argument();
+    ~Argument();
 
-    variable_type type;
+    VariableType type;
     union {
       bool as_boolean;
-      string as_string;
-      rx_s32 as_int;
-      rx_f32 as_float;
-      math::vec4f as_vec4f;
-      math::vec4i as_vec4i;
-      math::vec3f as_vec3f;
-      math::vec3i as_vec3i;
-      math::vec2f as_vec2f;
-      math::vec2i as_vec2i;
+      String as_string;
+      Sint32 as_int;
+      Float32 as_float;
+      Math::Vec4f as_vec4f;
+      Math::Vec4i as_vec4i;
+      Math::Vec3f as_vec3f;
+      Math::Vec3i as_vec3i;
+      Math::Vec2f as_vec2f;
+      Math::Vec2i as_vec2i;
     };
   };
 
-  using delegate = function<bool(const vector<argument>& _arguments)>;
+  using Delegate = Function<bool(const Vector<Argument>& _arguments)>;
 
-  command(memory::allocator& _allocator, const string& _name,
-    const char* _signature, delegate&& _function);
-  command(const string& _name, const char* _signature, delegate&& _function);
-  command(command&& command_);
+  Command(Memory::Allocator& _allocator, const String& _name,
+          const char* _signature, Delegate&& _function);
+  Command(const String& _name, const char* _signature, Delegate&& _function);
+  Command(Command&& command_);
 
-  command& operator=(command&& command_);
+  Command& operator=(Command&& command_);
 
   template<typename... Ts>
   bool execute_arguments(Ts&&... _arguments);
 
-  bool execute_tokens(const vector<token>& _tokens);
+  bool execute_tokens(const Vector<Token>& _tokens);
 
-  const string& name() const &;
+  const String& name() const &;
 
-  constexpr memory::allocator& allocator() const;
+  constexpr Memory::Allocator& allocator() const;
 
 private:
   bool execute();
 
-  ref<memory::allocator> m_allocator;
-  delegate m_delegate;
-  vector<argument> m_arguments;
-  string m_declaration;
-  string m_name;
+  Ref<Memory::Allocator> m_allocator;
+  Delegate m_delegate;
+  Vector<Argument> m_arguments;
+  String m_declaration;
+  String m_name;
   const char* m_signature;
-  rx_size m_argument_count;
+  Size m_argument_count;
 };
 
-inline command::argument::argument(bool _value)
-  : type{variable_type::k_boolean}
+inline Command::Argument::Argument(bool _value)
+  : type{VariableType::k_boolean}
 {
   as_boolean = _value;
 }
 
-inline command::argument::argument(const string& _value)
-  : type{variable_type::k_string}
+inline Command::Argument::Argument(const String& _value)
+  : type{VariableType::k_string}
 {
-  utility::construct<string>(&as_string, _value);
+  Utility::construct<String>(&as_string, _value);
 }
 
-inline command::argument::argument(rx_s32 _value)
-  : type{variable_type::k_int}
+inline Command::Argument::Argument(Sint32 _value)
+  : type{VariableType::k_int}
 {
   as_int = _value;
 }
 
-inline command::argument::argument(rx_f32 _value)
-  : type{variable_type::k_float}
+inline Command::Argument::Argument(Float32 _value)
+  : type{VariableType::k_float}
 {
   as_float = _value;
 }
 
-inline command::argument::argument(const math::vec4f& _value)
-  : type{variable_type::k_vec4f}
+inline Command::Argument::Argument(const Math::Vec4f& _value)
+  : type{VariableType::k_vec4f}
 {
   as_vec4f = _value;
 }
 
-inline command::argument::argument(const math::vec4i& _value)
-  : type{variable_type::k_vec4i}
+inline Command::Argument::Argument(const Math::Vec4i& _value)
+  : type{VariableType::k_vec4i}
 {
   as_vec4i = _value;
 }
 
-inline command::argument::argument(const math::vec3f& _value)
-  : type{variable_type::k_vec3f}
+inline Command::Argument::Argument(const Math::Vec3f& _value)
+  : type{VariableType::k_vec3f}
 {
   as_vec3f = _value;
 }
 
-inline command::argument::argument(const math::vec3i& _value)
-  : type{variable_type::k_vec3i}
+inline Command::Argument::Argument(const Math::Vec3i& _value)
+  : type{VariableType::k_vec3i}
 {
   as_vec3i = _value;
 }
 
-inline command::argument::argument(const math::vec2f& _value)
-  : type{variable_type::k_vec2f}
+inline Command::Argument::Argument(const Math::Vec2f& _value)
+  : type{VariableType::k_vec2f}
 {
   as_vec2f = _value;
 }
 
-inline command::argument::argument(const math::vec2i& _value)
-  : type{variable_type::k_vec2i}
+inline Command::Argument::Argument(const Math::Vec2i& _value)
+  : type{VariableType::k_vec2i}
 {
   as_vec2i = _value;
 }
 
-inline command::command(const string& _name, const char* _signature, delegate&& _function)
-  : command{memory::system_allocator::instance(), _name, _signature, utility::move(_function)}
+inline Command::Command(const String& _name, const char* _signature, Delegate&& _function)
+  : Command{Memory::SystemAllocator::instance(), _name, _signature, Utility::move(_function)}
 {
 }
 
-inline command::command(command&& command_)
+inline Command::Command(Command&& command_)
   : m_allocator{command_.m_allocator}
-  , m_delegate{utility::move(command_.m_delegate)}
-  , m_arguments{utility::move(command_.m_arguments)}
-  , m_declaration{utility::move(command_.m_declaration)}
-  , m_name{utility::move(command_.m_name)}
-  , m_signature{utility::exchange(command_.m_signature, nullptr)}
-  , m_argument_count{utility::exchange(command_.m_argument_count, 0)}
+  , m_delegate{Utility::move(command_.m_delegate)}
+  , m_arguments{Utility::move(command_.m_arguments)}
+  , m_declaration{Utility::move(command_.m_declaration)}
+  , m_name{Utility::move(command_.m_name)}
+  , m_signature{Utility::exchange(command_.m_signature, nullptr)}
+  , m_argument_count{Utility::exchange(command_.m_argument_count, 0)}
 {
 }
 
-inline command& command::operator=(command&& command_) {
+inline Command& Command::operator=(Command&& command_) {
   RX_ASSERT(&command_ != this, "self assignment");
 
   m_allocator = command_.m_allocator;
-  m_delegate = utility::move(command_.m_delegate);
-  m_arguments = utility::move(command_.m_arguments);
-  m_declaration = utility::move(command_.m_declaration);
-  m_name = utility::move(command_.m_name);
-  m_signature = utility::exchange(command_.m_signature, nullptr);
-  m_argument_count = utility::exchange(command_.m_argument_count, 0);
+  m_delegate = Utility::move(command_.m_delegate);
+  m_arguments = Utility::move(command_.m_arguments);
+  m_declaration = Utility::move(command_.m_declaration);
+  m_name = Utility::move(command_.m_name);
+  m_signature = Utility::exchange(command_.m_signature, nullptr);
+  m_argument_count = Utility::exchange(command_.m_argument_count, 0);
 
   return *this;
 }
 
 template<typename... Ts>
-inline bool command::execute_arguments(Ts&&... _arguments) {
+inline bool Command::execute_arguments(Ts&&... _arguments) {
   m_arguments.clear();
   (m_arguments.emplace_back(_arguments), ...);
   return execute();
 }
 
-inline const string& command::name() const & {
+inline const String& Command::name() const & {
   return m_name;
 }
 
-RX_HINT_FORCE_INLINE constexpr memory::allocator& command::allocator() const {
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Command::allocator() const {
   return m_allocator;
 }
 
