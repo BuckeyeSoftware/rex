@@ -17,8 +17,8 @@
 namespace Rx::Filesystem {
 
 #if defined(RX_PLATFORM_WINDOWS)
-struct find_context {
-  Vector<rx_u16> path_data;
+struct FindContext {
+  Vector<Uint16> path_data;
   WIN32_FIND_DATAW find_data;
   HANDLE handle;
 };
@@ -34,14 +34,14 @@ Directory::Directory(Memory::Allocator& _allocator, String&& path_)
   // The only thing we can cache between reuses of a directory object is the
   // path conversion and the initial find handle on Windows. Subsequent reuses
   // will need to reopen the directory.
-  find_context* Context = allocator().create<find_context>();
+  FindContext* Context = allocator().create<FindContext>();
   RX_ASSERT(Context, "out of memory");
 
   // Convert |m_path| to UTF-16 for Windows.
-  const wide_string path_utf16 = m_path.to_utf16();
+  const WideString path_utf16 = m_path.to_utf16();
   static constexpr const wchar_t k_path_extra[] = L"\\*";
-  Vector<rx_u16> path_data{allocator(), path_utf16.size() + sizeof k_path_extra,
-    utility::uninitialized{}};
+  Vector<Uint16> path_data{allocator(), path_utf16.size() + sizeof k_path_extra,
+    Utility::UninitializedTag{}};
 
   memcpy(path_data.data(), path_utf16.data(), path_utf16.size() * 2);
   memcpy(path_data.data() + path_utf16.size(), k_path_extra, sizeof k_path_extra);
@@ -53,10 +53,10 @@ Directory::Directory(Memory::Allocator& _allocator, String&& path_)
     // The directory exists and has been opened. Cache the handle and the path
     // conversion for |each|.
     Context->handle = handle;
-    Context->path_data = utility::move(path_data);
+    Context->path_data = Utility::move(path_data);
     m_impl = reinterpret_cast<void*>(Context);
   } else {
-    allocator().destroy<find_context>(Context);
+    allocator().destroy<FindContext>(Context);
     m_impl = nullptr;
   }
 #endif
@@ -69,7 +69,7 @@ Directory::~Directory() {
   }
 #elif defined(RX_PLATFORM_WINDOWS)
   if (m_impl) {
-    allocator().destroy<find_context>(m_impl);
+    allocator().destroy<FindContext>(m_impl);
   }
 #endif
 }
@@ -113,7 +113,7 @@ void Directory::each(Function<void(Item&&)>&& _function) {
 
   rewinddir(dir);
 #elif defined(RX_PLATFORM_WINDOWS)
-  auto* Context = reinterpret_cast<find_context*>(m_impl);
+  auto* Context = reinterpret_cast<FindContext*>(m_impl);
 
   // The handle has been closed, this can only happen when reusing the directory
   // object, i.e multiple calls to |each|.
@@ -125,7 +125,7 @@ void Directory::each(Function<void(Item&&)>&& _function) {
       Context->handle = handle;
     } else {
       // Destroy the Context and clear |m_impl| out so operator bool reflects this.
-      allocator().destroy<find_context>(Context);
+      allocator().destroy<FindContext>(Context);
       m_impl = nullptr;
       return;
     }
@@ -143,7 +143,7 @@ void Directory::each(Function<void(Item&&)>&& _function) {
       continue;
     }
 
-    const wide_string utf16_name = reinterpret_cast<rx_u16*>(&Context->find_data.cFileName);
+    const WideString utf16_name = reinterpret_cast<Uint16*>(&Context->find_data.cFileName);
     const Item::Type kind = Context->find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
       ? Item::Type::k_directory
       : Item::Type::k_file;

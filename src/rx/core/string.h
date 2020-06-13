@@ -156,7 +156,7 @@ struct WideString {
 
   ~WideString();
 
-  // disable all assignment operators because you're not supposed to use wide_string
+  // disable all assignment operators because you're not supposed to use WideString
   // for any other purpose than to convert string (which is utf8) to utf16 for
   // interfaces expecting that, such as the ones on Windows
   WideString& operator=(const WideString&) = delete;
