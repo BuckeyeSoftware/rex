@@ -117,7 +117,7 @@ RX_CONSOLE_IVAR(
   4096,
   1024);
 
-static Concurrency::Atomic<Game::status> g_status{Game::status::k_restart};
+static Concurrency::Atomic<Game::Status> g_status{Game::Status::k_restart};
 
 RX_LOG("main", logger);
 
@@ -128,7 +128,7 @@ int main(int _argc, char** _argv) {
   (void)_argv;
 
   auto catch_signal = [](int) {
-    g_status.store(Game::status::k_shutdown);
+    g_status.store(Game::Status::k_shutdown);
   };
 
   signal(SIGINT, catch_signal);
@@ -235,19 +235,19 @@ int main(int _argc, char** _argv) {
 
     Console::Interface::add_command("exit", "",
                                     [](const Vector<Console::Command::Argument>&) {
-        g_status = Game::status::k_shutdown;
+        g_status = Game::Status::k_shutdown;
         return true;
       });
 
     Console::Interface::add_command("quit", "",
                                     [&](const Vector<Console::Command::Argument>&) {
-        g_status = Game::status::k_shutdown;
+        g_status = Game::Status::k_shutdown;
         return true;
       });
 
     Console::Interface::add_command("restart", "",
                                     [&](const Vector<Console::Command::Argument>&) {
-        g_status = Game::status::k_restart;
+        g_status = Game::Status::k_restart;
         return true;
       });
 
@@ -279,7 +279,7 @@ int main(int _argc, char** _argv) {
     // k_running, k_restart and k_shutdown.
     //
     // This is where engine restart is handled.
-    while (g_status == Game::status::k_restart) {
+    while (g_status == Game::Status::k_restart) {
       if (!Console::Interface::load("config.cfg")) {
         Console::Interface::save("config.cfg");
       }
@@ -452,18 +452,18 @@ int main(int _argc, char** _argv) {
         }
 
         // At this point, the game is officially running.
-        g_status = Game::status::k_running;
+        g_status = Game::Status::k_running;
 
         frontend.process();
         frontend.swap();
 
         Input::Context input;
-        while (g_status == Game::status::k_running) {
+        while (g_status == Game::Status::k_running) {
           for (SDL_Event event; SDL_PollEvent(&event);) {
             Input::Event ievent;
             switch (event.type) {
             case SDL_QUIT:
-              g_status = Game::status::k_shutdown;
+              g_status = Game::Status::k_shutdown;
               break;
             case SDL_KEYDOWN:
             case SDL_KEYUP:
@@ -534,14 +534,14 @@ int main(int _argc, char** _argv) {
             }
           }
 
-          if (g_status != Game::status::k_running) {
+          if (g_status != Game::Status::k_running) {
             break;
           }
 
           // Execute one slice of the game.
-          const Game::status status{g->on_slice(input)};
+          const Game::Status status{g->on_slice(input)};
 
-          if (g_status != Game::status::k_running) {
+          if (g_status != Game::Status::k_running) {
             break;
           }
 

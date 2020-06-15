@@ -225,7 +225,7 @@ void Texture2D::record_dimensions(const Math::Vec2z& _dimensions) {
   m_dimensions = _dimensions;
   m_flags |= k_dimensions;
 
-  dimension_type dimensions{m_dimensions};
+  DimensionType dimensions{m_dimensions};
   Size offset{0};
   const auto bpp{bits_per_pixel(m_format)};
   for (Size i{0}; i < m_levels; i++) {
@@ -243,21 +243,21 @@ void Texture2D::record_dimensions(const Math::Vec2z& _dimensions) {
   }
 }
 
-void Texture2D::record_wrap(const wrap_options& _wrap) {
+void Texture2D::record_wrap(const WrapOptions& _wrap) {
   RX_ASSERT(!(m_flags & k_wrap), "wrap already recorded");
 
   m_wrap = _wrap;
   m_flags |= k_wrap;
 }
 
-void Texture2D::record_edit(Size _level, const dimension_type& _offset,
-                            const dimension_type& _dimensions)
+void Texture2D::record_edit(Size _level, const DimensionType& _offset,
+                            const DimensionType& _dimensions)
 {
   RX_ASSERT(is_level_in_range(_level), "mipmap level out of bounds");
   m_edits.emplace_back(_level, _offset, _dimensions);
 }
 
-Vector<Texture::Edit<Texture2D::dimension_type>>&& Texture2D::edits() {
+Vector<Texture::Edit<Texture2D::DimensionType>>&& Texture2D::edits() {
   optimize_edits(m_edits);
   return Utility::move(m_edits);
 }
@@ -302,7 +302,7 @@ void Texture3D::record_dimensions(const Math::Vec3z& _dimensions) {
   m_dimensions = _dimensions;
   m_flags |= k_dimensions;
 
-  dimension_type dimensions{m_dimensions};
+  DimensionType dimensions{m_dimensions};
   Size offset{0};
   const auto bpp{bits_per_pixel(m_format)};
   for (Size i{0}; i < m_levels; i++) {
@@ -320,21 +320,21 @@ void Texture3D::record_dimensions(const Math::Vec3z& _dimensions) {
   }
 }
 
-void Texture3D::record_wrap(const wrap_options& _wrap) {
+void Texture3D::record_wrap(const WrapOptions& _wrap) {
   RX_ASSERT(!(m_flags & k_wrap), "wrap already recorded");
 
   m_wrap = _wrap;
   m_flags |= k_wrap;
 }
 
-void Texture3D::record_edit(Size _level, const dimension_type& _offset,
-                            const dimension_type& _dimensions)
+void Texture3D::record_edit(Size _level, const DimensionType& _offset,
+                            const DimensionType& _dimensions)
 {
   RX_ASSERT(is_level_in_range(_level), "mipmap level out of bounds");
   m_edits.emplace_back(_level, _offset, _dimensions);
 }
 
-Vector<Texture::Edit<Texture3D::dimension_type>>&& Texture3D::edits() {
+Vector<Texture::Edit<Texture3D::DimensionType>>&& Texture3D::edits() {
   optimize_edits(m_edits);
   return Utility::move(m_edits);
 }
@@ -349,7 +349,7 @@ TextureCM::TextureCM(Context* _frontend)
 TextureCM::~TextureCM() {
 }
 
-void TextureCM::write(const Byte* _data, face _face, Size _level) {
+void TextureCM::write(const Byte* _data, Face _face, Size _level) {
   RX_ASSERT(_data, "_data is null");
   RX_ASSERT(is_level_in_range(_level), "mipmap level out of bounds");
   validate();
@@ -358,7 +358,7 @@ void TextureCM::write(const Byte* _data, face _face, Size _level) {
   memcpy(map(_level, _face), _data, info.size / 6);
 }
 
-Byte* TextureCM::map(Size _level, face _face) {
+Byte* TextureCM::map(Size _level, Face _face) {
   RX_ASSERT(is_level_in_range(_level), "mipmap level out of bounds");
   validate();
 

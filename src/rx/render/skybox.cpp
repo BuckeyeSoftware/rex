@@ -150,7 +150,7 @@ bool Skybox::load(const String& _file_name) {
                                  Frontend::Texture::WrapType::k_clamp_to_edge});
 
   Math::Vec2z dimensions;
-  Frontend::TextureCM::face face{Frontend::TextureCM::face::k_right};
+  Frontend::TextureCM::Face face{Frontend::TextureCM::Face::k_right};
   bool result{faces.each([&](const JSON& file_name) {
     Texture::Loader texture{m_frontend->allocator()};
     if (!texture.load(file_name.as_string(), Texture::PixelFormat::k_rgb_u8)) {
@@ -174,7 +174,7 @@ bool Skybox::load(const String& _file_name) {
     } else {
       m_texture->write(texture.data().data(), face, 0);
     }
-    face = static_cast<Frontend::TextureCM::face>(static_cast<Size>(face) + 1);
+    face = static_cast<Frontend::TextureCM::Face>(static_cast<Size>(face) + 1);
     return true;
   })};
 

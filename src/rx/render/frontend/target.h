@@ -28,7 +28,7 @@ struct Target : Resource {
 
       struct {
         TextureCM* texture;
-        TextureCM::face face;
+        TextureCM::Face face;
       } as_textureCM;
     };
   };
@@ -58,7 +58,7 @@ struct Target : Resource {
   void attach_texture(Texture2D* _texture, Size _level);
 
   // attach cubemap face |_face| texture |_texture| level |_level| to target
-  void attach_texture(TextureCM* _texture, TextureCM::face _face, Size _level);
+  void attach_texture(TextureCM* _texture, TextureCM::Face _face, Size _level);
 
   // attach cubemap texture |_texture| level |_level| to target
   // attaches _all_ faces in -x, +x, -y, +y, -z, +z order
@@ -108,12 +108,12 @@ private:
 };
 
 inline void Target::attach_texture(TextureCM* _texture, Size _level) {
-  attach_texture(_texture, TextureCM::face::k_right, _level);  // +x
-  attach_texture(_texture, TextureCM::face::k_left, _level);   // -x
-  attach_texture(_texture, TextureCM::face::k_top, _level);    // +y
-  attach_texture(_texture, TextureCM::face::k_bottom, _level); // -y
-  attach_texture(_texture, TextureCM::face::k_front, _level);  // +z
-  attach_texture(_texture, TextureCM::face::k_back, _level);   // -z
+  attach_texture(_texture, TextureCM::Face::k_right, _level);  // +x
+  attach_texture(_texture, TextureCM::Face::k_left, _level);   // -x
+  attach_texture(_texture, TextureCM::Face::k_top, _level);    // +y
+  attach_texture(_texture, TextureCM::Face::k_bottom, _level); // -y
+  attach_texture(_texture, TextureCM::Face::k_front, _level);  // +z
+  attach_texture(_texture, TextureCM::Face::k_back, _level);   // -z
 }
 
 inline Texture2D* Target::depth() const {

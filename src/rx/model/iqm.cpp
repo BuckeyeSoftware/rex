@@ -8,7 +8,7 @@
 
 namespace Rx::Model {
 
-struct iqm_mesh {
+struct IQMMesh {
   Uint32 name;
   Uint32 material;
   Uint32 first_vertex;
@@ -17,7 +17,7 @@ struct iqm_mesh {
   Uint32 num_triangles;
 };
 
-enum class vertex_attribute {
+enum class VertexAttribute {
   k_position,
   k_coordinate,
   k_normal,
@@ -28,7 +28,7 @@ enum class vertex_attribute {
   k_custom = 0x10
 };
 
-enum class vertex_format {
+enum class VertexFormat {
   k_s8,
   k_u8,
   k_s16,
@@ -40,11 +40,11 @@ enum class vertex_format {
   k_f64
 };
 
-struct iqm_triangle {
+struct IQMTriangle {
   Uint32 vertex[3];
 };
 
-struct iqm_joint {
+struct IQMJoint {
   Uint32 name;
   Sint32 parent;
   Float32 translate[3];
@@ -52,14 +52,14 @@ struct iqm_joint {
   Float32 scale[3];
 };
 
-struct iqm_pose {
+struct IQMPose {
   Sint32 parent;
   Uint32 mask;
   Float32 channel_offset[10];
   Float32 channel_scale[10];
 };
 
-struct iqm_animation {
+struct IQMAnimation {
   Uint32 name;
   Uint32 first_frame;
   Uint32 num_frames;
@@ -67,7 +67,7 @@ struct iqm_animation {
   Uint32 flags;
 };
 
-struct iqm_vertex_array {
+struct IQMVertexArray {
   Uint32 type;
   Uint32 flags;
   Uint32 format;
@@ -75,7 +75,7 @@ struct iqm_vertex_array {
   Uint32 offset;
 };
 
-struct iqm_bounds {
+struct IQMBounds {
   Float32 min[3];
   Float32 max[3];
   Uint32 xy_radius;
@@ -165,17 +165,17 @@ bool IQM::read_meshes(const Header& _header, const Vector<Byte>& _data) {
   const Byte* in_blend_index{nullptr};
   const Byte* in_blend_weight{nullptr};
 
-  const auto vertex_arrays{reinterpret_cast<const iqm_vertex_array*>(_data.data() + _header.vertex_arrays_offset)};
+  const auto vertex_arrays{reinterpret_cast<const IQMVertexArray*>(_data.data() + _header.vertex_arrays_offset)};
   for (Uint32 i{0}; i < _header.vertex_arrays; i++) {
-    const iqm_vertex_array& array{vertex_arrays[i]};
-    const auto attribute{static_cast<vertex_attribute>(array.type)};
-    const auto format{static_cast<vertex_format>(array.format)};
+    const IQMVertexArray& array{vertex_arrays[i]};
+    const auto attribute{static_cast<VertexAttribute>(array.type)};
+    const auto format{static_cast<VertexFormat>(array.format)};
     const Size size{array.size};
     const Size offset{array.offset};
 
     switch (attribute) {
-    case vertex_attribute::k_position:
-      if (format != vertex_format::k_f32) {
+    case VertexAttribute::k_position:
+      if (format != VertexFormat::k_f32) {
         return error("unsupported format for position");
       }
       if (size != 3) {
@@ -183,8 +183,8 @@ bool IQM::read_meshes(const Header& _header, const Vector<Byte>& _data) {
       }
       in_position = reinterpret_cast<const Float32*>(_data.data() + offset);
       break;
-    case vertex_attribute::k_normal:
-      if (format != vertex_format::k_f32) {
+    case VertexAttribute::k_normal:
+      if (format != VertexFormat::k_f32) {
         return error("unsupported format for normal");
       }
       if (size != 3) {
@@ -192,8 +192,8 @@ bool IQM::read_meshes(const Header& _header, const Vector<Byte>& _data) {
       }
       in_normal = reinterpret_cast<const Float32*>(_data.data() + offset);
       break;
-    case vertex_attribute::k_tangent:
-      if (format != vertex_format::k_f32) {
+    case VertexAttribute::k_tangent:
+      if (format != VertexFormat::k_f32) {
         return error("unsupported format for tangent");
       }
       if (size != 4) {
@@ -201,8 +201,8 @@ bool IQM::read_meshes(const Header& _header, const Vector<Byte>& _data) {
       }
       in_tangent = reinterpret_cast<const Float32*>(_data.data() + offset);
       break;
-    case vertex_attribute::k_coordinate:
-      if (format != vertex_format::k_f32) {
+    case VertexAttribute::k_coordinate:
+      if (format != VertexFormat::k_f32) {
         return error("unsupported format for coordinate");
       }
       if (size != 2) {
@@ -210,8 +210,8 @@ bool IQM::read_meshes(const Header& _header, const Vector<Byte>& _data) {
       }
       in_coordinate = reinterpret_cast<const Float32*>(_data.data() + offset);
       break;
-    case vertex_attribute::k_blend_weights:
-      if (format != vertex_format::k_u8) {
+    case VertexAttribute::k_blend_weights:
+      if (format != VertexFormat::k_u8) {
         return error("unsupported format for blend weights");
       }
       if (size != 4) {
@@ -219,8 +219,8 @@ bool IQM::read_meshes(const Header& _header, const Vector<Byte>& _data) {
       }
       in_blend_weight = _data.data() + offset;
       break;
-    case vertex_attribute::k_blend_indexes:
-      if (format != vertex_format::k_u8) {
+    case VertexAttribute::k_blend_indexes:
+      if (format != VertexFormat::k_u8) {
         return error("unsupported format for blend indices");
       }
       if (size != 4) {
@@ -298,7 +298,7 @@ bool IQM::read_meshes(const Header& _header, const Vector<Byte>& _data) {
     }
   }
 
-  const auto meshes{reinterpret_cast<const iqm_mesh *>(_data.data() + _header.meshes_offset)};
+  const auto meshes{reinterpret_cast<const IQMMesh *>(_data.data() + _header.meshes_offset)};
   for (Uint32 i{0}; i < _header.meshes; i++) {
     const auto& this_mesh{meshes[i]};
     const char* material_name{string_table + this_mesh.material};
@@ -307,7 +307,7 @@ bool IQM::read_meshes(const Header& _header, const Vector<Byte>& _data) {
 
   m_elements.resize(_header.triangles * 3);
   for (Uint32 i{0}; i < _header.triangles; i++) {
-    const auto* this_triangle{reinterpret_cast<const iqm_triangle*>(_data.data() + _header.triangles_offset) + i};
+    const auto* this_triangle{reinterpret_cast<const IQMTriangle*>(_data.data() + _header.triangles_offset) + i};
     m_elements[i * 3 + 0] = this_triangle->vertex[0];
     m_elements[i * 3 + 1] = this_triangle->vertex[1];
     m_elements[i * 3 + 2] = this_triangle->vertex[2];
@@ -324,7 +324,7 @@ bool IQM::read_animations(const Header& _header, const Vector<Byte>& _data) {
 
   m_joints.resize(n_joints);
 
-  const auto joints{reinterpret_cast<const iqm_joint*>(_data.data() + _header.joints_offset)};
+  const auto joints{reinterpret_cast<const IQMJoint*>(_data.data() + _header.joints_offset)};
 
   // Read base bind pose.
   for (Size i{0}; i < n_joints; i++) {
@@ -347,20 +347,20 @@ bool IQM::read_animations(const Header& _header, const Vector<Byte>& _data) {
   }
 
   const char* string_table{reinterpret_cast<const char *>(_data.data() + _header.text_offset)};
-  const iqm_animation* animations{reinterpret_cast<const iqm_animation*>(_data.data() + _header.animations_offset)};
+  const IQMAnimation* animations{reinterpret_cast<const IQMAnimation*>(_data.data() + _header.animations_offset)};
   for (Uint32 i{0}; i < _header.animations; i++) {
-    const iqm_animation& this_animation{animations[i]};
+    const IQMAnimation& this_animation{animations[i]};
     m_animations.push_back({this_animation.frame_rate, this_animation.first_frame,
       this_animation.num_frames, string_table + this_animation.name});
   }
 
   m_frames.resize(n_joints * _header.frames);
-  const auto* poses{reinterpret_cast<const iqm_pose*>(_data.data() + _header.poses_offset)};
+  const auto* poses{reinterpret_cast<const IQMPose*>(_data.data() + _header.poses_offset)};
   const Uint16* frame_data{reinterpret_cast<const Uint16*>(_data.data() + _header.frames_offset)};
 
   for (Uint32 i{0}; i < _header.frames; i++) {
     for (Uint32 j{0}; j < _header.poses; j++) {
-      const iqm_pose& this_pose{poses[j]};
+      const IQMPose& this_pose{poses[j]};
       Float32 channel_data[10];
       for (Size k{0}; k < 10; k++) {
         channel_data[k] = this_pose.channel_offset[k];

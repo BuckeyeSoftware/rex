@@ -9,14 +9,14 @@ namespace Rx {
 struct Game
   : Concepts::Interface
 {
-  enum class status {
+  enum class Status {
     k_running,
     k_restart,
     k_shutdown
   };
 
   virtual bool on_init() = 0;
-  virtual status on_slice(Input::Context& _input) = 0;
+  virtual Status on_slice(Input::Context& _input) = 0;
   virtual void on_resize(const Math::Vec2z& _resolution) = 0;
 };
 
