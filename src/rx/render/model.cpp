@@ -113,8 +113,8 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
 {
   Math::Frustum frustum{_view * _projection};
 
-  Profiler::CPUSample cpu_sample{"model::render"};
-  Profiler::GPUSample gpu_sample{"model::render"};
+  RX_PROFILE_CPU("model::render");
+  RX_PROFILE_GPU("model::render");
 
   Frontend::State state;
 
@@ -160,8 +160,8 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
       return true;
     }
 
-    Profiler::CPUSample cpu_sample{"batch"};
-    Profiler::GPUSample gpu_sample{"batch"};
+    RX_PROFILE_CPU("batch");
+    RX_PROFILE_GPU("batch");
 
     const auto& material{m_materials[_mesh.material]};
 

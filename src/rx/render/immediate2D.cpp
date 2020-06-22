@@ -84,7 +84,7 @@ bool Immediate2D::Queue::Command::operator!=(const Command& _command) const {
 void Immediate2D::Queue::record_scissor(const Math::Vec2f& _position,
                                         const Math::Vec2f& _size)
 {
-  Profiler::CPUSample sample{"immediate2D::queue::record_scissor"};
+  RX_PROFILE_CPU("immediate2D::queue::record_scissor");
 
   if (_position.x < 0.0f) {
     m_scissor = nullopt;
@@ -110,7 +110,7 @@ void Immediate2D::Queue::record_scissor(const Math::Vec2f& _position,
 void Immediate2D::Queue::record_rectangle(const Math::Vec2f& _position,
                                           const Math::Vec2f& _size, Float32 _roundness, const Math::Vec4f& _color)
 {
-  Profiler::CPUSample sample{"immediate2D::queue::record_rectangle"};
+  RX_PROFILE_CPU("immediate2D::queue::record_rectangle");
 
   Command next_command;
   next_command.type = Command::Type::k_rectangle;
@@ -134,7 +134,7 @@ void Immediate2D::Queue::record_line(const Math::Vec2f& _point_a,
                                      const Math::Vec2f& _point_b, Float32 _roundness, Float32 _thickness,
                                      const Math::Vec4f& _color)
 {
-  Profiler::CPUSample sample{"immediate2D::queue::record_line"};
+  RX_PROFILE_CPU("immediate2D::queue::record_line");
 
   Command next_command;
   next_command.type = Command::Type::k_line;
@@ -153,7 +153,7 @@ void Immediate2D::Queue::record_line(const Math::Vec2f& _point_a,
 void Immediate2D::Queue::record_triangle(const Math::Vec2f& _position,
                                          const Math::Vec2f& _size, Uint32 _flags, const Math::Vec4f& _color)
 {
-  Profiler::CPUSample sample{"immediate2D::queue::record_triangle"};
+  RX_PROFILE_CPU("immediate2D::queue::record_triangle");
 
   Command next_command;
   next_command.type = Command::Type::k_triangle;
@@ -175,7 +175,7 @@ void Immediate2D::Queue::record_text(const char* _font, Size _font_length,
                                      const Math::Vec2f& _position, Sint32 _size, Float32 _scale, TextAlign _align,
                                      const char* _text, Size _text_length, const Math::Vec4f& _color)
 {
-  Profiler::CPUSample sample{"immediate2D::queue::record_text"};
+  RX_PROFILE_CPU("immediate2D::queue::record_text");
 
   if (_text_length == 0) {
     return;
@@ -431,7 +431,7 @@ Immediate2D::~Immediate2D() {
 }
 
 void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
-  Profiler::CPUSample sample{"immediate2D::render"};
+  RX_PROFILE_CPU("immediate2D::render");
 
   // avoid rendering if the last update did not produce any draw commands and
   // this iteration has no updates either
@@ -611,7 +611,7 @@ template<Size E>
 void Immediate2D::generate_polygon(const Math::Vec2f (&_coordinates)[E],
                                    const Float32 _thickness, const Math::Vec4f& _color)
 {
-  Profiler::CPUSample sample{"immediate2D::generate_polygon"};
+  RX_PROFILE_CPU("immediate2D::generate_polygon");
 
   Math::Vec2f normals[E];
   Math::Vec2f coordinates[E];
@@ -669,7 +669,7 @@ void Immediate2D::generate_polygon(const Math::Vec2f (&_coordinates)[E],
 void Immediate2D::generate_rectangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
                                      Float32 _roundness, const Math::Vec4f& _color)
 {
-  Profiler::CPUSample sample{"immediate2D::generate_rectangle"};
+  RX_PROFILE_CPU("immediate2D::generate_rectangle");
 
   if (_roundness > 0.0f) {
     static constexpr const Size k_round{k_circle_vertices / 4};
@@ -711,7 +711,7 @@ void Immediate2D::generate_line(const Math::Vec2f& _point_a,
                                 const Math::Vec2f& _point_b, Float32 _thickness, Float32 _roundness,
                                 const Math::Vec4f& _color)
 {
-  Profiler::CPUSample smaple{"immediate2D::generate_line"};
+  RX_PROFILE_CPU("immediate2D::generate_line");
 
   if (_roundness > 0.0f) {
     Math::Vec2f delta{Math::normalize(_point_b - _point_a)};
@@ -816,7 +816,7 @@ static Float32 calculate_text_length(Ptr<Immediate2D::Font>& _font, Float32 _sca
 Float32 Immediate2D::measure_text_length(const char* _font,
                                         const char* _text, Size _text_length, Sint32 _size, Float32 _scale)
 {
-  Profiler::CPUSample sample{"immediate2D::measure_text_length"};
+  RX_PROFILE_CPU("immediate2D::measure_text_length");
 
   auto& font_map = access_font({_size, _font});
   return calculate_text_length(font_map, _scale, _text, _text_length);
@@ -827,7 +827,7 @@ void Immediate2D::generate_text(Sint32 _size, const char* _font,
                                 Float32 _scale, const Math::Vec2f& _position, TextAlign _align,
                                 const Math::Vec4f& _color)
 {
-  Profiler::CPUSample sample{"immediate2D::generate_text"};
+  RX_PROFILE_CPU("immediate2D::generate_text");
 
   (void)_font_length;
 
@@ -944,7 +944,7 @@ void Immediate2D::size_triangle(Size& n_vertices_, Size& n_elements_) {
 void Immediate2D::add_batch(Size _offset, Batch::Type _type, bool _blend,
                             Frontend::Texture2D* _texture)
 {
-  Profiler::CPUSample sample{"immediate2D::add_batch"};
+  RX_PROFILE_CPU("immediate2D::add_batch");
 
   const Size count{m_element_index - _offset};
   if (count == 0) {

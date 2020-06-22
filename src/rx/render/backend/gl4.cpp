@@ -318,7 +318,7 @@ namespace detail_gl4 {
     }
 
     void use_state(const Frontend::State* _render_state) {
-      Profiler::CPUSample sample{"use_state"};
+      RX_PROFILE_CPU("use_state");
 
       const auto& scissor{_render_state->scissor};
       const auto& blend{_render_state->blend};
@@ -534,7 +534,7 @@ namespace detail_gl4 {
     }
 
     void use_draw_target(Frontend::Target* _render_target, const Frontend::Buffers* _draw_buffers) {
-      Profiler::CPUSample sample{"use_draw_target"};
+      RX_PROFILE_CPU("use_draw_target");
 
       const auto this_target{reinterpret_cast<const target*>(_render_target + 1)};
       if (this_target->fbo != m_bound_fbo) {
@@ -566,7 +566,7 @@ namespace detail_gl4 {
     }
 
     void use_program(const Frontend::Program* _render_program) {
-      Profiler::CPUSample sample{"use_program"};
+      RX_PROFILE_CPU("use_program");
       const auto this_program{reinterpret_cast<const program*>(_render_program + 1)};
       if (this_program->handle != m_bound_program) {
         pglUseProgram(this_program->handle);
@@ -575,7 +575,7 @@ namespace detail_gl4 {
     }
 
     void use_buffer(const Frontend::Buffer* _render_buffer) {
-      Profiler::CPUSample sample{"use_buffer"};
+      RX_PROFILE_CPU("use_buffer");
       if (_render_buffer) {
         const auto this_buffer{reinterpret_cast<const buffer*>(_render_buffer + 1)};
         if (this_buffer->va != m_bound_vao) {
@@ -597,7 +597,7 @@ namespace detail_gl4 {
 
     template<typename Ft, typename Bt, GLuint texture_unit::*name>
     void use_texture_template(const Ft* _render_texture, GLuint unit) {
-      Profiler::CPUSample sample{"use_texture"};
+      RX_PROFILE_CPU("use_texture");
 
       const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
       auto& texture_unit{m_texture_units[unit]};
@@ -992,7 +992,7 @@ void GL4::process(const Vector<Byte*>& _commands) {
 }
 
 void GL4::process(Byte* _command) {
-  Profiler::CPUSample sample{"gl4::process"};
+  RX_PROFILE_CPU("gl4::process");
 
   auto state{reinterpret_cast<detail_gl4::state*>(m_impl)};
   auto header{reinterpret_cast<Frontend::CommandHeader*>(_command)};
@@ -1519,13 +1519,13 @@ void GL4::process(Byte* _command) {
     break;
   case Frontend::CommandType::k_resource_update:
     {
-      Profiler::CPUSample sample{"update"};
+      RX_PROFILE_CPU("update");
 
       const auto resource{reinterpret_cast<const Frontend::UpdateCommand*>(header + 1)};
       switch (resource->type) {
       case Frontend::UpdateCommand::Type::k_buffer:
         {
-          Profiler::CPUSample sampler{"buffer"};
+          RX_PROFILE_CPU("buffer");
 
           const auto render_buffer{resource->as_buffer};
           auto buffer{reinterpret_cast<detail_gl4::buffer*>(render_buffer + 1)};
@@ -1595,7 +1595,7 @@ void GL4::process(Byte* _command) {
     break;
   case Frontend::CommandType::k_clear:
     {
-      Profiler::CPUSample sample{"clear"};
+      RX_PROFILE_CPU("clear");
 
       const auto command{reinterpret_cast<Frontend::ClearCommand*>(header + 1)};
       const auto render_state{&command->render_state};
@@ -1638,7 +1638,7 @@ void GL4::process(Byte* _command) {
     break;
   case Frontend::CommandType::k_draw:
     {
-      Profiler::CPUSample sample{"draw"};
+      RX_PROFILE_CPU("draw");
 
       const auto command{reinterpret_cast<Frontend::DrawCommand*>(header + 1)};
       const auto render_state{&command->render_state};
@@ -1794,7 +1794,7 @@ void GL4::process(Byte* _command) {
     break;
   case Frontend::CommandType::k_blit:
     {
-      Profiler::CPUSample sample{"blit"};
+      RX_PROFILE_CPU("blit");
 
       const auto command{reinterpret_cast<Frontend::BlitCommand*>(header + 1)};
       const auto render_state{&command->render_state};
@@ -1851,7 +1851,7 @@ void GL4::process(Byte* _command) {
 }
 
 void GL4::swap() {
-  Profiler::CPUSample sample{"GL4::swap"};
+  RX_PROFILE_CPU("swap");
   SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(m_data));
 }
 
