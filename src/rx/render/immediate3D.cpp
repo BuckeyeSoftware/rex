@@ -190,7 +190,7 @@ Immediate3D::~Immediate3D() {
 void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
                          const Math::Mat4x4f& _projection)
 {
-  Profiler::CPUSample sample{"immediate3D::render"};
+  RX_PROFILE_CPU("immediate3D::render");
 
   // avoid rendering if the last update did not produce any draw commands and
   // this iteration has no updates either

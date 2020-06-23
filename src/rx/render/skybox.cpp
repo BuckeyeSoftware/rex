@@ -60,7 +60,7 @@ Skybox::~Skybox() {
 void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
                     const Math::Mat4x4f& _projection)
 {
-  Profiler::CPUSample sample{"skybox::render"};
+  RX_PROFILE_CPU("skybox::render");
 
   if (!m_texture) {
     return;

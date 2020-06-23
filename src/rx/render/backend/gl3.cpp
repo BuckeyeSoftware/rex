@@ -288,7 +288,7 @@ namespace detail_gl3 {
     }
 
     void use_state(const Frontend::State* _render_state) {
-      Profiler::CPUSample sample{"use_state"};
+      RX_PROFILE_CPU("use_state");
 
       const auto& scissor{_render_state->scissor};
       const auto& blend{_render_state->blend};
@@ -504,7 +504,7 @@ namespace detail_gl3 {
     }
 
     void use_draw_target(Frontend::Target* _render_target, const Frontend::Buffers* _draw_buffers) {
-      Profiler::CPUSample sample{"use_draw_target"};
+      RX_PROFILE_CPU("use_draw_target");
 
       auto this_target{reinterpret_cast<target*>(_render_target + 1)};
       if (m_bound_draw_fbo != this_target->fbo) {
@@ -531,7 +531,7 @@ namespace detail_gl3 {
     }
 
     void use_read_target(Frontend::Target* _render_target, const Frontend::Buffers* _read_buffers) {
-      Profiler::CPUSample sample{"use_read_target"};
+      RX_PROFILE_CPU("use_read_target");
 
       auto this_target{reinterpret_cast<target*>(_render_target + 1)};
       if (m_bound_read_fbo != this_target->fbo) {
@@ -554,7 +554,7 @@ namespace detail_gl3 {
     }
 
     void use_program(const Frontend::Program* _render_program) {
-      Profiler::CPUSample sample{"use_program"};
+      RX_PROFILE_CPU("use_program");
 
       const auto this_program{reinterpret_cast<const program*>(_render_program + 1)};
       if (this_program->handle != m_bound_program) {
@@ -564,7 +564,7 @@ namespace detail_gl3 {
     }
 
     void use_buffer(const Frontend::Buffer* _render_buffer) {
-      Profiler::CPUSample sample{"use_buffer"};
+      RX_PROFILE_CPU("use_buffer");
       if (_render_buffer) {
         const auto this_buffer{reinterpret_cast<const buffer*>(_render_buffer + 1)};
         if (this_buffer->va != m_bound_vao) {
@@ -578,7 +578,7 @@ namespace detail_gl3 {
     }
 
     void use_vbo(GLuint _vbo) {
-      Profiler::CPUSample sample{"use_vbo"};
+      RX_PROFILE_CPU("use_vbo");
 
       if (m_bound_vbo != _vbo) {
         pglBindBuffer(GL_ARRAY_BUFFER, _vbo);
@@ -587,7 +587,7 @@ namespace detail_gl3 {
     }
 
     void use_ebo(GLuint _ebo) {
-      Profiler::CPUSample sample{"use_ebo"};
+      RX_PROFILE_CPU("use_ebo");
 
       if (m_bound_ebo != _ebo) {
         pglBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
@@ -604,7 +604,7 @@ namespace detail_gl3 {
 
     template<GLuint texture_unit::*name, typename Bt, typename Ft>
     void use_texture_template(GLenum _type, const Ft* _render_texture) {
-      Profiler::CPUSample sample{"use_texture"};
+      RX_PROFILE_CPU("use_texture");
 
       const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
       auto& texture_unit{m_texture_units[m_active_texture]};
@@ -1027,7 +1027,7 @@ void GL3::process(const Vector<Byte*>& _commands) {
 }
 
 void GL3::process(Byte* _command) {
-  Profiler::CPUSample sample{"gl3::process"};
+  RX_PROFILE_CPU("GL3::process");
 
   auto state{reinterpret_cast<detail_gl3::state*>(m_impl)};
   auto header{reinterpret_cast<Frontend::CommandHeader*>(_command)};
@@ -1589,7 +1589,7 @@ void GL3::process(Byte* _command) {
     break;
   case Frontend::CommandType::k_clear:
     {
-      Profiler::CPUSample sample{"clear"};
+      RX_PROFILE_CPU("clear");
 
       const auto command{reinterpret_cast<Frontend::ClearCommand*>(header + 1)};
       const auto render_state{&command->render_state};
@@ -1622,7 +1622,7 @@ void GL3::process(Byte* _command) {
     break;
   case Frontend::CommandType::k_draw:
     {
-      Profiler::CPUSample sample{"draw"};
+      RX_PROFILE_CPU("draw");
 
       const auto command{reinterpret_cast<Frontend::DrawCommand*>(header + 1)};
       const auto render_state{&command->render_state};
@@ -1778,7 +1778,7 @@ void GL3::process(Byte* _command) {
     break;
   case Frontend::CommandType::k_blit:
     {
-      Profiler::CPUSample sample{"blit"};
+      RX_PROFILE_CPU("blit");
 
       const auto command{reinterpret_cast<Frontend::BlitCommand*>(header + 1)};
       const auto render_state{&command->render_state};
@@ -1827,7 +1827,7 @@ void GL3::process(Byte* _command) {
 }
 
 void GL3::swap() {
-  Profiler::CPUSample sample{"gl3::swap"};
+  RX_PROFILE_CPU("swap");
   SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(m_data));
 }
 

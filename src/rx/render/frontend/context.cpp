@@ -731,7 +731,7 @@ void Context::resize(const Math::Vec2z& _resolution) {
 }
 
 bool Context::process() {
-  Profiler::CPUSample sample{"frontend::process"};
+  RX_PROFILE_CPU("process");
 
   if (m_commands.is_empty()) {
     return false;
@@ -825,7 +825,7 @@ Context::Statistics Context::stats(Resource::Type _type) const {
 }
 
 bool Context::swap() {
-  Profiler::CPUSample sample{"frontend::swap"};
+  RX_PROFILE_CPU("swap");
 
   m_backend->swap();
 
