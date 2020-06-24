@@ -3,6 +3,8 @@
 #include "rx/core/function.h"
 #include "rx/core/ptr.h"
 
+#include "rx/core/concepts/no_move_assign.h"
+
 #include "rx/core/hints/empty_bases.h"
 
 namespace Rx::Concurrency {
@@ -11,6 +13,7 @@ namespace Rx::Concurrency {
 // NOTR: Cannot deliver signals to threads.
 struct RX_HINT_EMPTY_BASES Thread
   : Concepts::NoCopy
+  , Concepts::NoMoveAssign
 {
   template<typename F>
   Thread(Memory::Allocator& _allocator, const char* _name, F&& _function);
@@ -20,8 +23,6 @@ struct RX_HINT_EMPTY_BASES Thread
 
   Thread(Thread&& thread_);
   ~Thread();
-
-  Thread& operator=(Thread&& thread_) = delete;
 
   void join();
 
