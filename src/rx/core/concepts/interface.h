@@ -1,14 +1,15 @@
 #ifndef RX_CORE_CONCEPTS_INTERFACE_H
 #define RX_CORE_CONCEPTS_INTERFACE_H
-#include "rx/core/concepts/no_copy.h" // no_copy
-#include "rx/core/concepts/no_move.h" // no_move
+#include "rx/core/concepts/no_copy.h"
+#include "rx/core/concepts/no_move.h"
 
 namespace Rx::Concepts {
 
-struct Interface
+struct RX_HINT_EMPTY_BASES Interface
   : NoCopy
   , NoMove
 {
+  constexpr Interface() = default;
   virtual ~Interface() = 0;
 };
 
