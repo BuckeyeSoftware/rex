@@ -22,7 +22,10 @@ struct Mesh {
 };
 
 struct Importer {
-  RX_MARK_INTERFACE(Importer);
+  RX_MARK_NO_COPY(Importer);
+  RX_MARK_NO_MOVE(Importer);
+
+  virtual ~Importer() = default;
 
   Importer(Memory::Allocator& _allocator);
 
