@@ -1,6 +1,6 @@
 #ifndef RX_CORE_UTILITY_CONSTRUCT_H
 #define RX_CORE_UTILITY_CONSTRUCT_H
-#include "rx/core/types.h" // rx_size
+#include "rx/core/types.h" // Size
 #include "rx/core/utility/forward.h" // utility::forward
 #include "rx/core/hints/force_inline.h"
 

@@ -71,7 +71,7 @@ bool VMA::allocate(Size _page_size, Size _page_count) {
   if (map) {
     m_page_size = _page_size;
     m_page_count = _page_count;
-    m_base = reinterpret_cast<rx_byte*>(map);
+    m_base = reinterpret_cast<Byte*>(map);
     return true;
   }
 #endif
