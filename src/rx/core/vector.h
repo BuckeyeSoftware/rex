@@ -87,6 +87,8 @@ struct Vector {
   template<typename... Ts>
   bool emplace_back(Ts&&... _args);
 
+  bool append(const Vector<T>& vector_to_append);
+
   Size size() const;
   Size capacity() const;
 
@@ -460,6 +462,18 @@ inline bool Vector<T>::emplace_back(Ts&&... _args) {
   Utility::construct<T>(m_data + m_size, Utility::forward<Ts>(_args)...);
 
   m_size++;
+  return true;
+}
+
+template <typename T>
+bool Vector<T>::append(const Vector<T>& vector_to_append) {
+  if(!reserve(m_size + vector_to_append.size())) {
+    return false;
+  }
+
+  // Don't need to check the return value of `push_back` because we already ensured the underlying storage was large enough
+  vector_to_append.each_fwd([&](const T& elem) { push_back(elem); });
+
   return true;
 }
 
