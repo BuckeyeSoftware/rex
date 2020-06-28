@@ -5,10 +5,7 @@
 namespace Rx {
 
 [[noreturn]]
-void abort_full(const char* _message);
-
-[[noreturn]]
-void abort_truncated(const char* _message);
+void abort_message(const char* _message, bool _truncated);
 
 template<typename... Ts>
 [[noreturn]]
@@ -16,15 +13,11 @@ void abort(const char* _format, Ts&&... _arguments) {
   // When we have format arguments use an on-stack format buffer.
   if constexpr(sizeof...(Ts) > 0) {
     char buffer[4096];
-    const Size result = format_buffer(buffer, sizeof buffer, _format,
+    const Size length = format_buffer(buffer, sizeof buffer, _format,
       Utility::forward<Ts>(_arguments)...);
-    if (result >= sizeof buffer) {
-      abort_truncated(buffer);
-    } else {
-      abort_full(buffer);
-    }
+    abort_message(buffer, length >= sizeof buffer);
   } else {
-    abort_full(_format);
+    abort_message(_format, false);
   }
 }
 

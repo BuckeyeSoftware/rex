@@ -40,7 +40,9 @@ static void abort_release() {
 }
 
 [[noreturn]]
-static void abort_epilogue() {
+void abort_message(const char* _message, bool _truncated) {
+  logger->error(_truncated ? "%s... [truncated]" : "%s", _message);
+
   // Forcefully flush the current log contents before we abort, so that any
   // messages that may include the reason for the abortion end up in the log.
   Log::flush();
@@ -50,18 +52,6 @@ static void abort_epilogue() {
 #else
   abort_release();
 #endif
-}
-
-[[noreturn]]
-void abort_full(const char* _message) {
-  logger->error("%s", _message);
-  abort_epilogue();
-}
-
-[[noreturn]]
-void abort_truncated(const char* _message) {
-  logger->error("%s... [truncated]", _message);
-  abort_epilogue();
 }
 
 } // namespace rx

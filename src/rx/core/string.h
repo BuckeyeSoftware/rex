@@ -126,7 +126,7 @@ struct String {
   Memory::View disown();
 
 private:
-  static String formatter(Memory::Allocator& _allocator, const char* _format, ...);
+  static String formatter(Memory::Allocator& _allocator, const char* _format, ...) RX_HINT_FORMAT(2, 3);
 
   void swap(String& other);
 

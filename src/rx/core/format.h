@@ -5,6 +5,7 @@
 
 #include "rx/core/utility/forward.h"
 #include "rx/core/traits/remove_cvref.h"
+#include "rx/core/hints/format.h"
 #include "rx/core/types.h" // rx_size
 
 namespace Rx {
@@ -55,14 +56,14 @@ inline auto format_normalize(T&& _value) {
 };
 
 // Low-level format functions.
-Size format_buffer_va(char* buffer_, Size _length, const char* _format,
-  va_list _list);
+Size format_buffer_va_list(char* buffer_, Size _length, const char* _format, va_list _list);
+Size format_buffer_va_args(char* buffer_, Size _length, const char* _format, ...) RX_HINT_FORMAT(3, 4);
 
 template<typename... Ts>
 inline Size format_buffer(char* buffer_, Size _length, const char* _format,
   Ts&&... _arguments)
 {
-  return format_buffer_va(buffer_, _length,
+  return format_buffer_va_args(buffer_, _length, _format,
     format_normalize(Utility::forward<Ts>(_arguments))...);
 }
 
