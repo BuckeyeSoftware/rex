@@ -21,10 +21,10 @@ enum class PixelFormat {
   k_r_u8
 };
 
-struct Loader
-  : Concepts::NoCopy
-  , Concepts::NoMove
-{
+struct Loader {
+  RX_MARK_NO_COPY(Loader);
+  RX_MARK_NO_MOVE(Loader);
+
   constexpr Loader();
   constexpr Loader(Memory::Allocator& _allocator);
   ~Loader() = default;

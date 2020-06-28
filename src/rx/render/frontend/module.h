@@ -13,9 +13,9 @@ namespace Rx {
 
 namespace Rx::Render::Frontend {
 
-struct Module
-  : Concepts::NoCopy
-{
+struct Module {
+  RX_MARK_NO_COPY(Module);
+
   Module(Memory::Allocator& _allocator);
   Module(Module&& module_);
 

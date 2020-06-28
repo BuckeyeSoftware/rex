@@ -1,13 +1,5 @@
 #ifndef RX_RENDER_FRONTEND_MATERIAL_H
 #define RX_RENDER_FRONTEND_MATERIAL_H
-#include "rx/core/string.h"
-
-#include "rx/core/concepts/no_copy.h"
-
-#include "rx/core/hints/empty_bases.h"
-
-#include "rx/math/transform.h"
-
 #include "rx/material/loader.h"
 
 namespace Rx::Render::Frontend {
@@ -15,9 +7,10 @@ namespace Rx::Render::Frontend {
 struct Texture2D;
 struct Context;
 
-struct RX_HINT_EMPTY_BASES Material
-  : Concepts::NoCopy
+struct Material
 {
+  RX_MARK_NO_COPY(Material);
+
   Material(Context* _frontend);
   ~Material();
 

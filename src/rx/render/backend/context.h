@@ -1,7 +1,6 @@
 #ifndef RX_RENDER_BACKEND_CONTEXT_H
 #define RX_RENDER_BACKEND_CONTEXT_H
 #include "rx/core/vector.h"
-#include "rx/core/concepts/interface.h" // concepts::Interface
 
 namespace Rx::Render::Backend {
 
@@ -22,9 +21,9 @@ struct DeviceInfo {
   const char* version;
 };
 
-struct Context
-  : Concepts::Interface
-{
+struct Context {
+  RX_MARK_INTERFACE(Context);
+
   virtual AllocationInfo query_allocation_info() const = 0;
   virtual DeviceInfo query_device_info() const = 0;
   virtual bool init() = 0;

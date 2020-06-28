@@ -1,11 +1,6 @@
 #ifndef RX_RENDER_FRONTEND_TECHNIQUE_H
 #define RX_RENDER_FRONTEND_TECHNIQUE_H
-#include "rx/core/string.h"
-#include "rx/core/vector.h"
-#include "rx/core/map.h"
 #include "rx/core/log.h"
-
-#include "rx/core/hints/empty_bases.h"
 
 #include "rx/render/frontend/program.h"
 
@@ -21,9 +16,9 @@ struct Technique;
 struct Context;
 struct Module;
 
-struct RX_HINT_EMPTY_BASES Technique
-  : Concepts::NoCopy
-{
+struct Technique {
+  RX_MARK_NO_COPY(Technique);
+
   Technique() = default;
   Technique(Context* _frontend);
   ~Technique();
@@ -145,7 +140,7 @@ inline const String& Technique::name() const {
 
 template<typename... Ts>
 inline bool Technique::error(const char* _format, Ts&&... _arguments) const {
-  log(Log::Level::k_error, "%s", String::format(_format, Utility::forward<Ts>(_arguments)...));
+  log(Log::Level::k_error, _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 

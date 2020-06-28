@@ -6,8 +6,6 @@
 #include "rx/core/map.h"
 #include "rx/core/ptr.h"
 
-#include "rx/core/hints/empty_bases.h"
-
 #include "rx/math/vec2.h"
 #include "rx/math/vec4.h"
 
@@ -30,9 +28,9 @@ struct Immediate2D {
     k_right
   };
 
-  struct RX_HINT_EMPTY_BASES Queue
-    : Concepts::NoCopy
-  {
+  struct Queue {
+    RX_MARK_NO_COPY(Queue);
+
     Queue() = default;
     Queue(Memory::Allocator& _allocator);
     Queue(Queue&& queue_);

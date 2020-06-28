@@ -1,3 +1,5 @@
+#include <stddef.h> // offsetof
+
 #include "rx/render/model.h"
 #include "rx/render/image_based_lighting.h"
 #include "rx/render/immediate3D.h"

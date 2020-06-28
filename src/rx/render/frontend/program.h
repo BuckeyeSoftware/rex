@@ -4,10 +4,6 @@
 #include "rx/core/vector.h"
 #include "rx/core/map.h"
 
-#include "rx/core/concepts/no_copy.h"
-
-#include "rx/core/hints/empty_bases.h"
-
 #include "rx/math/vec2.h"
 #include "rx/math/mat3x3.h"
 #include "rx/math/mat3x4.h"
@@ -20,9 +16,9 @@ namespace Rx::Render::Frontend {
 struct Context;
 struct Program;
 
-struct RX_HINT_EMPTY_BASES Uniform
-  : Concepts::NoCopy
-{
+struct Uniform {
+  RX_MARK_NO_COPY(Uniform);
+
   enum class Type {
     k_sampler1D,
     k_sampler2D,

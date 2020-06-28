@@ -1,9 +1,7 @@
 #ifndef RX_CORE_MEMORY_UNINITIALIZED_STORAGE_H
 #define RX_CORE_MEMORY_UNINITIALIZED_STORAGE_H
-#include "rx/core/concepts/no_copy.h"
-#include "rx/core/concepts/no_move.h"
-
 #include "rx/core/types.h"
+#include "rx/core/markers.h"
 
 #include "rx/core/utility/nat.h"
 
@@ -18,10 +16,10 @@ namespace Rx::Memory {
 // This is a convenience type that allows the storage to be used in constexpr
 // contexts without actually initializing the contents of the storage.
 template<Size S, Size A>
-struct RX_HINT_EMPTY_BASES UninitializedStorage
-  : Concepts::NoMove
-  , Concepts::NoCopy
-{
+struct UninitializedStorage {
+  RX_MARK_NO_COPY(UninitializedStorage);
+  RX_MARK_NO_MOVE(UninitializedStorage);
+
   constexpr UninitializedStorage();
 
   constexpr Byte* data();

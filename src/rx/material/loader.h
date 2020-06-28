@@ -1,11 +1,7 @@
 #ifndef RX_MATERIAL_LOADER_H
 #define RX_MATERIAL_LOADER_H
 #include "rx/core/vector.h"
-#include "rx/core/string.h"
 #include "rx/core/map.h"
-#include "rx/core/log.h"
-
-#include "rx/core/hints/empty_bases.h"
 
 #include "rx/math/transform.h"
 
@@ -18,9 +14,9 @@ namespace Rx {
 
 namespace Rx::Material {
 
-struct RX_HINT_EMPTY_BASES Loader
-  : Concepts::NoCopy
-{
+struct Loader {
+  RX_MARK_NO_COPY(Loader);
+
   Loader(Memory::Allocator& _allocator);
   Loader(Loader&& loader_);
 

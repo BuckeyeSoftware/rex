@@ -140,6 +140,8 @@ private:
 
 // utf-16, Windows compatible "wide-string"
 struct WideString {
+  RX_MARK_NO_MOVE_ASSIGN(WideString);
+
   // custom allocator versions
   WideString(Memory::Allocator& _allocator);
   WideString(Memory::Allocator& _allocator, const WideString& _other);
@@ -159,7 +161,6 @@ struct WideString {
   // disable all assignment operators because you're not supposed to use wide_string
   // for any other purpose than to convert string (which is utf8) to utf16 for
   // interfaces expecting that, such as the ones on Windows
-  WideString& operator=(const WideString&) = delete;
   WideString& operator=(const Uint16*) = delete;
   WideString& operator=(const char*) = delete;
   WideString& operator=(const String&) = delete;
