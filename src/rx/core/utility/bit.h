@@ -2,6 +2,8 @@
 #define RX_CORE_UTILITY_BIT_H
 #include "rx/core/types.h"
 
+namespace Rx {
+
 template<typename T>
 inline Size bit_search_lsb(T _bits);
 
@@ -58,7 +60,7 @@ inline rx_size bit_pop_count(rx_u32 _bits) {
   static constexpr const rx_u32 k_m2{0x33333333}; // binary: 2 zeros, 2 ones repeating: 00110011...
   static constexpr const rx_u32 k_m4{0x0f0f0f0f}; // binary: 4 zeros, 4 ones repeating: 00001111...
   static constexpr const rx_u32 k_h0{0x01010101}; // sum of 256 to the power of 0,1,2,3...
-  
+
   _bits -= ((_bits >> 1) & k_m1);
   _bits = (_bits & k_m2) + ((_bits >> 2) & k_m2);
   _bits = (_bits + (_bits >> 4)) & k_m4;
@@ -74,7 +76,7 @@ inline rx_size bit_pop_count(rx_u64 _bits) {
   static constexpr const rx_u64 k_m2{0x3333333333333333}; // binary: 2 zeros, 2 ones repeating: 00110011...
   static constexpr const rx_u64 k_m4{0x0f0f0f0f0f0f0f0f}; // binary: 4 zeros, 4 ones repeating: 00001111...
   static constexpr const rx_u64 k_h0{0x0101010101010101}; // sum of 256 to the power of 0,1,2,3...
-  
+
   _bits -= ((_bits >> 1) & k_m1);
   _bits = (_bits & k_m2) + ((_bits >> 2) & k_m2);
   _bits = (_bits + (_bits >> 4)) & k_m4;
@@ -88,5 +90,7 @@ template<typename T>
 inline Size bit_next(T _bits, Size _bit) {
   return bit_search_lsb<T>(_bits & ~((T{1} << _bit) - 1));
 }
+
+} // namespace Rx
 
 #endif // RX_CORE_UTILITY_BIT_H

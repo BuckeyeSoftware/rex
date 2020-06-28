@@ -2,11 +2,11 @@
 #include "rx/core/assert.h"
 #include "rx/core/abort.h"
 
-void* operator new(Size) {
+void* operator new(Rx::Size) {
   Rx::abort("operator new is disabled");
 }
 
-void* operator new[](Size) {
+void* operator new[](Rx::Size) {
   Rx::abort("operator new[] is disabled");
 }
 
@@ -14,7 +14,7 @@ void operator delete(void*) {
   Rx::abort("operator delete is disabled");
 }
 
-void operator delete(void*, Size) {
+void operator delete(void*, Rx::Size) {
   Rx::abort("operator delete is disabled");
 }
 
@@ -22,7 +22,7 @@ void operator delete[](void*) {
   Rx::abort("operator delete[] is disabled");
 }
 
-void operator delete[](void*, Size) {
+void operator delete[](void*, Rx::Size) {
   Rx::abort("operator delete[] is disabled");
 }
 
@@ -31,10 +31,10 @@ extern "C" {
     Rx::abort("pure virtual function call");
   }
 
-  static constexpr Uint8 k_complete{1 << 0};
-  static constexpr Uint8 k_pending{1 << 1};
+  static constexpr Rx::Uint8 k_complete{1 << 0};
+  static constexpr Rx::Uint8 k_pending{1 << 1};
 
-  bool __cxa_guard_acquire(Uint8* guard_) {
+  bool __cxa_guard_acquire(Rx::Uint8* guard_) {
     if (guard_[1] == k_complete) {
       return false;
     }
@@ -47,7 +47,7 @@ extern "C" {
     return true;
   }
 
-  void __cxa_guard_release(Uint8* guard_) {
+  void __cxa_guard_release(Rx::Uint8* guard_) {
     guard_[1] = k_complete;
   }
 }
