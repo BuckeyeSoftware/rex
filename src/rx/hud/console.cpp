@@ -90,8 +90,14 @@ void Console::update(Input::Context& _input) {
     m_text.clear();
   }
 
-  m_suggestions  = Rx::Console::Interface::auto_complete_variables(m_text.contents());
-  m_suggestions += Rx::Console::Interface::auto_complete_commands(m_text.contents());
+  auto complete_variables = Rx::Console::Interface::auto_complete_variables(m_text.contents());
+  auto complete_commands = Rx::Console::Interface::auto_complete_commands(m_text.contents());
+
+  m_suggestions = Utility::move(complete_variables);
+
+  complete_commands.each_fwd([&](String& command_) {
+    m_suggestions.push_back(Utility::move(command_));
+  });
 
   if (m_suggestions.is_empty()) {
     m_selection = 0;

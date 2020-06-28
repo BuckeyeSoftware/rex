@@ -57,9 +57,6 @@ struct Vector {
   Vector& operator=(const Vector& _other);
   Vector& operator=(Vector&& other_);
 
-  Vector& operator+=(const Vector& _other);
-  Vector& operator+=(Vector&& other_);
-
   T& operator[](Size _index);
   const T& operator[](Size _index) const;
 
@@ -285,25 +282,6 @@ inline Vector<T>& Vector<T>::operator=(Vector&& other_) {
   m_size = Utility::exchange(other_.m_size, 0);
   m_capacity = Utility::exchange(other_.m_capacity, 0);
 
-  return *this;
-}
-
-template<typename T>
-inline Vector<T>& Vector<T>::operator+=(const Vector& _other) {
-  reserve(size() + _other.size());
-  _other.each_fwd([this](const T& _value) {
-    push_back(_value);
-  });
-  return *this;
-}
-
-template<typename T>
-inline Vector<T>& Vector<T>::operator+=(Vector&& other_) {
-  reserve(size() + other_.size());
-  other_.each_fwd([this](T& value_) {
-    push_back(Utility::move(value_));
-  });
-  other_.clear();
   return *this;
 }
 

@@ -3,6 +3,7 @@
 
 #include "rx/core/map.h"
 #include "rx/core/ptr.h"
+#include "rx/core/json.h"
 #include "rx/core/filesystem/file.h"
 #include "rx/core/algorithm/clamp.h"
 

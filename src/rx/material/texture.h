@@ -3,8 +3,6 @@
 #include "rx/core/log.h"
 #include "rx/core/optional.h"
 
-#include "rx/core/hints/empty_bases.h"
-
 #include "rx/math/transform.h"
 
 #include "rx/texture/chain.h"
@@ -16,9 +14,9 @@ namespace Rx {
 
 namespace Rx::Material {
 
-struct RX_HINT_EMPTY_BASES Texture
-  : Concepts::NoCopy
-{
+struct Texture {
+  RX_MARK_NO_COPY(Texture);
+
   struct Filter {
     bool bilinear;
     bool trilinear;

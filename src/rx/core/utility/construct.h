@@ -6,7 +6,7 @@
 
 struct RxPlacementNewTag {};
 
-RX_HINT_FORCE_INLINE void* operator new(Size, void* _data, RxPlacementNewTag) {
+RX_HINT_FORCE_INLINE void* operator new(Rx::Size, void* _data, RxPlacementNewTag) {
   return _data;
 }
 

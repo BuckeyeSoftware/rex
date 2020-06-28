@@ -2,11 +2,10 @@
 #define RX_CORE_EVENT_H
 #include "rx/core/function.h"
 #include "rx/core/vector.h"
+#include "rx/core/markers.h"
 
 #include "rx/core/concurrency/spin_lock.h"
 #include "rx/core/concurrency/scope_lock.h"
-
-#include "rx/core/hints/empty_bases.h"
 
 #include "rx/core/utility/exchange.h"
 
@@ -19,9 +18,9 @@ template<typename R, typename... Ts>
 struct Event<R(Ts...)> {
   using Delegate = Function<R(Ts...)>;
 
-  struct RX_HINT_EMPTY_BASES Handle
-    : Concepts::NoCopy
-  {
+  struct Handle {
+    RX_MARK_NO_COPY(Handle);
+
     constexpr Handle(Event* _event, Size _index);
     constexpr Handle(Handle&& _existing);
     ~Handle();

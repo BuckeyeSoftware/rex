@@ -4,19 +4,12 @@
 
 #include "rx/material/loader.h"
 
-#include "rx/core/log.h"
-#include "rx/core/json.h"
-
-#include "rx/core/hints/empty_bases.h"
-
-#include "rx/math/transform.h"
-
 namespace Rx::Model {
 
-struct RX_HINT_EMPTY_BASES Loader
-  : Concepts::NoCopy
-  , Concepts::NoMove
-{
+struct Loader {
+  RX_MARK_NO_COPY(Loader);
+  RX_MARK_NO_MOVE(Loader);
+
   Loader(Memory::Allocator& _allocator);
   ~Loader();
 

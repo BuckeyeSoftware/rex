@@ -1,6 +1,5 @@
 #ifndef RX_MODEL_IMPORTER_H
 #define RX_MODEL_IMPORTER_H
-#include "rx/core/concepts/interface.h"
 #include "rx/core/vector.h"
 #include "rx/core/log.h"
 
@@ -22,9 +21,12 @@ struct Mesh {
   Math::AABB bounds;
 };
 
-struct Importer
-  : Concepts::Interface
-{
+struct Importer {
+  RX_MARK_NO_COPY(Importer);
+  RX_MARK_NO_MOVE(Importer);
+
+  virtual ~Importer() = default;
+
   Importer(Memory::Allocator& _allocator);
 
   bool load(Stream* _stream);

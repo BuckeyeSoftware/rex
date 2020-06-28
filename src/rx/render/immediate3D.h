@@ -2,8 +2,6 @@
 #define RX_RENDER_IMMEDIATE3D_H
 #include "rx/core/vector.h"
 
-#include "rx/core/hints/empty_bases.h"
-
 #include "rx/math/vec3.h"
 #include "rx/math/mat4x4.h"
 
@@ -24,9 +22,9 @@ struct Immediate3D {
     k_depth_write = 1 << 1
   };
 
-  struct RX_HINT_EMPTY_BASES Queue
-    : Concepts::NoCopy
-  {
+  struct Queue {
+    RX_MARK_NO_COPY(Queue);
+
     Queue() = default;
     Queue(Memory::Allocator& _allocator);
     Queue(Queue&& queue_);

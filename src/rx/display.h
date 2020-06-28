@@ -3,16 +3,14 @@
 #include "rx/core/vector.h"
 #include "rx/core/string.h"
 
-#include "rx/core/hints/empty_bases.h"
-
 #include "rx/math/vec2.h"
 #include "rx/math/rectangle.h"
 
 namespace Rx {
 
-struct RX_HINT_EMPTY_BASES Display
-  : Concepts::NoCopy
-{
+struct Display {
+  RX_MARK_NO_COPY(Display);
+
   Display(Memory::Allocator& _allocator);
   Display(Display&& display_);
 

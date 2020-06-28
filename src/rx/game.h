@@ -1,14 +1,14 @@
 #ifndef RX_GAME_H
 #define RX_GAME_H
-#include "rx/core/concepts/interface.h"
-
 #include "rx/input/context.h"
+
+#include "rx/core/markers.h"
 
 namespace Rx {
 
-struct Game
-  : Concepts::Interface
-{
+struct Game {
+  RX_MARK_INTERFACE(Game);
+
   enum class Status {
     k_running,
     k_restart,
