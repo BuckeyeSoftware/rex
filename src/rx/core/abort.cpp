@@ -1,11 +1,10 @@
-#include <stdlib.h> // exit
-
 #include "rx/core/log.h"
 
 #if defined(RX_PLATFORM_POSIX)
 #include <signal.h> // raise, SIGABRT
 #elif defined(RX_PLATFORM_WINDOWS)
 #include <intrin.h> // __debugbreak
+#include <stdlib.h> // exit
 #endif
 
 namespace Rx {
@@ -41,9 +40,7 @@ static void abort_release() {
 }
 
 [[noreturn]]
-void abort(const char* _message) {
-  logger->error("%s", _message);
-
+static void abort_epilogue() {
   // Forcefully flush the current log contents before we abort, so that any
   // messages that may include the reason for the abortion end up in the log.
   Log::flush();
@@ -53,6 +50,18 @@ void abort(const char* _message) {
 #else
   abort_release();
 #endif
+}
+
+[[noreturn]]
+void abort_full(const char* _message) {
+  logger->error("%s", _message);
+  abort_epilogue();
+}
+
+[[noreturn]]
+void abort_truncated(const char* _message) {
+  logger->error("%s... [truncated]", _message);
+  abort_epilogue();
 }
 
 } // namespace rx
