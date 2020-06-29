@@ -157,7 +157,7 @@ inline T atomic_fetch_add(AtomicBase<T>* base_, T _delta,
 }
 
 template<typename T>
-inline T* atomic_fetch_add(volatile AtomicBase<T>* base_, rx_ptrdiff _delta,
+inline T* atomic_fetch_add(volatile AtomicBase<T>* base_, PtrDiff _delta,
   MemoryOrder _order)
 {
   T old{base_->value};
@@ -169,7 +169,7 @@ inline T* atomic_fetch_add(volatile AtomicBase<T>* base_, rx_ptrdiff _delta,
 }
 
 template<typename T>
-inline T* atomic_fetch_add(AtomicBase<T>* base_, rx_ptrdiff _delta,
+inline T* atomic_fetch_add(AtomicBase<T>* base_, PtrDiff _delta,
   MemoryOrder _order)
 {
   T old{base_->value};
@@ -205,7 +205,7 @@ inline T atomic_fetch_sub(AtomicBase<T>* base_, T _delta,
 }
 
 template<typename T>
-inline T* atomic_fetch_sub(volatile AtomicBase<T>* base_, rx_ptrdiff _delta,
+inline T* atomic_fetch_sub(volatile AtomicBase<T>* base_, PtrDiff _delta,
   MemoryOrder _order)
 {
   T old{base_->value};
@@ -217,7 +217,7 @@ inline T* atomic_fetch_sub(volatile AtomicBase<T>* base_, rx_ptrdiff _delta,
 }
 
 template<typename T>
-inline T* atomic_fetch_sub(AtomicBase<T>* base_, rx_ptrdiff _delta,
+inline T* atomic_fetch_sub(AtomicBase<T>* base_, PtrDiff _delta,
   MemoryOrder _order)
 {
   T old{base_->value};
