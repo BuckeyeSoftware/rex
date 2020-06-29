@@ -25,7 +25,7 @@ IndirectLightingPass::~IndirectLightingPass() {
   destroy();
 }
 
-void IndirectLightingPass::render(const Math::camera& _camera) {
+void IndirectLightingPass::render(const Math::Camera& _camera) {
   Frontend::State state;
   state.viewport.record_dimensions(m_target->dimensions());
   state.cull.record_enable(false);

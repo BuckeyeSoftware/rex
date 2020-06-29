@@ -19,7 +19,7 @@ struct IndirectLightingPass {
   IndirectLightingPass(Frontend::Context* _frontend, const gbuffer* _gbuffer, const ImageBasedLighting* _ibl);
   ~IndirectLightingPass();
 
-  void render(const Math::camera& _camera);
+  void render(const Math::Camera& _camera);
 
   void create(const Math::Vec2z& _resolution);
   void resize(const Math::Vec2z& _resolution);

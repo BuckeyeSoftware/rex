@@ -278,7 +278,7 @@ struct TestGame
   Render::IndirectLightingPass m_indirect_lighting_pass;
 
   Math::Transform model_transform[3];
-  Math::camera m_camera;
+  Math::Camera m_camera;
 };
 
 Ptr<Game> create(Render::Frontend::Context& _frontend) {

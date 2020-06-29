@@ -19,7 +19,7 @@ struct Display {
     Float32 refresh_rate;
   };
 
-  using Extents = Math::rectangle<Sint32>;
+  using Extents = Math::Rectangle<Sint32>;
 
   static Vector<Display> displays(Memory::Allocator& _allocator);
 

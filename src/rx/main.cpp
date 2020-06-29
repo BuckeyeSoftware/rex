@@ -498,7 +498,7 @@ int main(int _argc, char** _argv) {
               case SDL_WINDOWEVENT_MOVED:
                 {
                   // When the display moves, attempt to determine if it moved to a different display.
-                  Math::rectangle<Sint32> extents;
+                  Math::Rectangle<Sint32> extents;
                   extents.dimensions = display_resolution->get();
                   const Math::Vec2i offset{event.window.data1, event.window.data2};
                   extents.offset = offset;
