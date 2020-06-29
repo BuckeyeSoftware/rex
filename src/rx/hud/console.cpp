@@ -90,6 +90,10 @@ void Console::update(Input::Context& _input) {
     m_text.clear();
   }
 
+  if (m_text.contents().is_empty()) {
+    return;
+  }
+
   auto complete_variables = Rx::Console::Interface::auto_complete_variables(m_text.contents());
   auto complete_commands = Rx::Console::Interface::auto_complete_commands(m_text.contents());
 
