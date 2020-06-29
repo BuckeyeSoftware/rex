@@ -94,10 +94,7 @@ void Console::update(Input::Context& _input) {
   auto complete_commands = Rx::Console::Interface::auto_complete_commands(m_text.contents());
 
   m_suggestions = Utility::move(complete_variables);
-
-  complete_commands.each_fwd([&](String& command_) {
-    m_suggestions.push_back(Utility::move(command_));
-  });
+  m_suggestions.append(complete_commands);
 
   if (m_suggestions.is_empty()) {
     m_selection = 0;

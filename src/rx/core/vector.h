@@ -69,6 +69,8 @@ struct Vector {
   // reserve |size| elements
   bool reserve(Size _size);
 
+  bool append(const Vector& _other);
+
   void clear();
 
   Size find(const T& _value) const;
@@ -380,6 +382,33 @@ bool Vector<T>::reserve(Size _size) {
   }
 
   RX_HINT_UNREACHABLE();
+}
+
+template<typename T>
+bool Vector<T>::append(const Vector& _other) {
+  const auto new_size = m_size + _other.m_size;
+
+  // Slight optimization for trivially copyable |T|.
+  if constexpr (traits::is_trivially_copyable<T>) {
+    if (!resize(new_size)) {
+      return false;
+    }
+    // Use fast copy.
+    detail::copy(m_data + m_size, _other.m_data, sizeof(T) * _other.m_size);
+  } else {
+    if (!reserve(new_size)) {
+      return false;
+    }
+
+    // Copy construct the objects.
+    for (Size i = 0; i < _other.m_size; i++) {
+      Utility::construct<T>(m_data + m_size + i, _other[i]);
+    }
+
+    m_size = new_size;
+  }
+
+  return true;
 }
 
 template<typename T>
