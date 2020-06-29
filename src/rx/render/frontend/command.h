@@ -213,7 +213,7 @@ struct UpdateCommand {
   // a footer on this structure. It's contents encode a variable amount of edits
   // to the given resource.
   //
-  // The encoding of the edit stream is a list of rx_size integers. The number
+  // The encoding of the edit stream is a list of Size integers. The number
   // of integers per edit is determined by the resource Type |kind|.
   //
   // Buffer edits are represented by a three-tuple of integers of the format
@@ -327,24 +327,24 @@ inline int Buffers::last() const {
 
 // draw_command
 inline const Byte *DrawCommand::uniforms() const {
-  // NOTE: standard permits aliasing with char (rx_byte)
+  // NOTE: standard permits aliasing with char (Byte)
   return reinterpret_cast<const Byte *>(this) + sizeof *this;
 }
 
 inline Byte *DrawCommand::uniforms() {
-  // NOTE: standard permits aliasing with char (rx_byte)
+  // NOTE: standard permits aliasing with char (Byte)
   return reinterpret_cast<Byte *>(this) + sizeof *this;
 }
 
 // update_command
 inline const Size *UpdateCommand::edit() const {
-  // NOTE: standard permits aliasing with char (rx_byte)
+  // NOTE: standard permits aliasing with char (Byte)
   const auto *opaque = reinterpret_cast<const Byte *>(this) + sizeof *this;
   return reinterpret_cast<const Size *>(opaque);
 }
 
 inline Size *UpdateCommand::edit() {
-  // NOTE: standard permits aliasing with char (rx_byte)
+  // NOTE: standard permits aliasing with char (Byte)
   auto *opaque = reinterpret_cast<Byte *>(this) + sizeof *this;
   return reinterpret_cast<Size *>(opaque);
 }

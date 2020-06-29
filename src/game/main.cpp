@@ -70,10 +70,10 @@ struct TestGame
   virtual Status on_slice(Input::Context& _input) {
 #if 0
     const math::vec2i& noise_dimensions{100, 100};
-    const rx_f32 noise_scale{100.0f};
-    const rx_s32 octaves{4};
-    const rx_f32 persistence{0.5f};
-    const rx_f32 lacunarity{2.0f};
+    const Float32 noise_scale{100.0f};
+    const Sint32 octaves{4};
+    const Float32 persistence{0.5f};
+    const Float32 lacunarity{2.0f};
 
     auto rgb = [](int r, int g, int b) {
       return math::vec3f{r/255.0f, g/255.0f, b/255.0f};

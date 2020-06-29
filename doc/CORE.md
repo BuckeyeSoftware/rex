@@ -11,8 +11,8 @@ We don't make use of exceptions. Nothing can throw, this leads to a far simpler 
 ### No iterators
 It was discovered that the exception to the rule of iterating through all elements in a container is quite rare in most code and the amount of code to implement iterators is quite significant for something that is quite rare. Making it a poor fit to implement at all. Instead, all containers implement an `each` method that can take a callback. Care was taken to make it safe to mutate while inside the callback too. The callback itself is implemented as a template argument so it's _always_ inlined.
 
-When you do need to manage an index into a container like a `vector` or `string` you can just use `rx_size`. Since `map` and `set` are unordered, an iterator for the purposes of inserting or removing an element before or after another makes little sense as there's no order. The `find` interface of the unordered containers also gives you a pointer to the node
-which can be used to store and refer to elements later, like an iterator. One other nice benefit is that, provided the containers do not resize, these pointers are safe from invalidation caused by mutation to `map` and `set`.
+When you do need to manage an index into a container like a `Vector` or `String` you can just use `Size`. Since `Map` and `Set` are unordered, an iterator for the purposes of inserting or removing an element before or after another makes little sense as there's no order. The `find` interface of the unordered containers also gives you a pointer to the node
+which can be used to store and refer to elements later, like an iterator. One other nice benefit is that, provided the containers do not resize, these pointers are safe from invalidation caused by mutation to `Map` and `Set`.
 
 One downside to this is that most generic algorithms cannot be implemented for our types.
 
@@ -24,12 +24,12 @@ One downside to this is most types end up consuming more memory than most standa
 ## No new or delete
 Since everything should go through the polymorphic allocators, all forms of `new` and `delete` are disabled, including array variants. You cannot call them, they just forward to `abort`.
 
-The `array` container exists specifically to do "array constructions" through an allocator.
+The `Array` container exists specifically to do "array constructions" through an allocator, as well as provide a less ambigious way to do initializer lists for things like `Vector` and `Map`.
 
 ## No runtime support
 The C++ runtime support library is not used. This means features such as: `new`, `delete`, exceptions, and RTTI does not exist. Instead a very minimal, stublet implementation exists to call `abort` if it encounters such things being used.
 
-Similarly, Rex does not support concurrent initialization of static globals, instead `rx::global` should be used. This interface provides a much stronger set of features for controlling global initialization too.
+Similarly, Rex does not support concurrent initialization of static globals, instead `rx::Global` should be used. This interface provides a much stronger set of features for controlling global initialization too.
 
 Pure virtual function calls just forward to `abort`.
 
@@ -55,15 +55,15 @@ One unfortunute consequence of C++'s hash containers, `unordered_{mapm,set}` is 
 ### Uninitialized vectors
 There's no way with C++'s `vector` to initialize with size or resize the contents such that they stay uninitialized. This means something like `vector<char> data(1024)` will force all 1024 bytes to be zero initialized, only for you to replace them later.
 
-We support both forms for trivially-constructible types through the use of the `uninitialized{}` tag value.
+We support both forms for trivially-constructible types through the use of the `UninitializedTag{}` tag value.
 
 ### Disowning memory
 Any container that manages a single, contiguous allocation can have it's memory stolen from it through a `disown` method, returning an untyped, owning view. This view can be given to anything that can reasonably make sense of the contents. This allows copy-free transmuations like the following:
 
-  * `vector<char>` => `string`
-  * `vector<rx_byte>` => `string`
-  * `string` => `vector<char>`
-  * `string` => `vector<rx_byte>`
+  * `Vector<char>` => `String`
+  * `Vector<Byte>` => `String`
+  * `String` => `Vector<char>`
+  * `String` => `Vector<Byte>`
 
 This is used extensively in file loading code.
 
@@ -86,36 +86,31 @@ There's a few algorithm implementations:
   * `quick_sort`
   * `topological_sort`
 
-## Concepts
-
-Concepts are not to be confused with C++20's "concepts", instead they're inheritable classes which annotate a class.
-
-The following concepts exist
-  * `interface` Makes a class non-copyable and non-movable with a virtual destructor (i.e an "interface")
-  * `no_copy` Makes a class non-copyable.
-  * `no_move` Makes a class non-moveable.
-
 ## Concurrency
 
-The following concurrency primitives are implemented:
-  * `atomic` Exact implementation of `std::atomic<T>`.
-  * `condition_variable`.
-  * `future` Similar to `std::future<T>`
-  * `mutex` A non-recursive mutex.
-  * `scope_lock` A generic locked scope (works with any `T` that implements `lock` and `unlock` functions.)
-  * `scope_unlock` A generic unlocked scope (works with any `T` that implements `lock` and `unlock` functions.)
-  * `spin_lock` A non-recursive spin-lock.
-  * `thread_pool` A generic thread pool.
-  * `thread` A kernel thread.
-  * `wait_group` Helper primitive to wait for a group of work to complete.
+The following concurrency types are implemented:
+  * `Atomic` Exact implementation of `std::atomic<T>`.
+  * `ConditionVariable`.
+  * `Mutex` A non-recursive mutex.
+  * `ScopeLock` A generic locked scope (works with any `T` that implements `lock` and `unlock` functions.)
+  * `ScopeUnlock` A generic unlocked scope (works with any `T` that implements `lock` and `unlock` functions.)
+  * `SpinLock` A non-recursive spin-lock.
+  * `ThreadPool` A generic thread pool.
+  * `Thread` A kernel thread.
+  * `WaitGroup` Helper primitive to wait for a group of work to complete.
+
+The following concurrency primtiives are implements:
   * `yield` Relinquish the thread to the OS.
 
 ## Filesystem
 
-The following filesystem primitives are implemented:
-  * `directory` Open and manipulate a directory.
-  * `file` Open and manipulate files.
-  * `mmap` Map and treat memory as a file.
+The following filesystem types are implemented:
+  * `Directory` Open and manipulate a directory.
+  * `File` Open and manipulate files.
+
+The following filesystem functions are implements:
+  * `read_text_stream`
+  * `read_binary_stream`
 
 ## Hints
 
@@ -155,36 +150,43 @@ The following math kernel functions have been implemented:
 
 Everything that allocates memory in the core library, including the containers, depend on a polymorphic allocator interface provided by `allocator`. As a result, many types of allocators can be used virtually anywhere.
 
-The following allocators exist:
-  * `bump_point_allocator`
-  * `heap_allocator`
-  * `single_shot_allocator`
-  * `stats_allocator`
-  * `system_allocator`
+The following allocator types exist:
+  * `ElectricFenceAllocator`
+  * `BumpPointAllocator`
+  * `HeapAllocator`
+  * `SingleShotAllocator`
+  * `StatsAllocator`
+  * `HeapAllocator`
 
-Some additional, low-level memory manipulation and containers exist as well such as `uninitialized_storage`.
+Some additional, low-level memory types exist as well such as:
+  * `UnintializedStorage`
 
 ## PRNG
 
-There exists some implementations of random-number generators:
+There exists some implementations of random-number generators
 
-  * `mt19937` Mersenne Twister
+The following PRNG types exist:
+  * `MT19937` Mersenne Twister
 
 ## Serialize
 
-A generic binary searializer for any `stream`.
+A generic binary searializer for any `Stream`.
 
-  * `encoder`
-  * `decoder`
+The following types exist:
+  * `Encoder`
+  * `Decoder`
 
 ## Time
 
 Time library
 
+The following types exist:
+  * `Span` Represents a time span
+  * `Stopwatch` Simple stop watch using QPC.
+
+The following functions exist:
   * `delay` Delay calling thread
   * `qpc` Query performance counter
-  * `span` Represents a time span
-  * `stopwatch` Simple stop watch using QPC.
 
 ## Traits
 
@@ -233,43 +235,53 @@ The following traits exist:
 
 A very small subset of the functionality found by `<utility>` exists here.
 
+The following types exist:
+  * `UninitializedTag` Key-hole type to use on containers you'd prefer stay uninitialized, like `vector`.
+  * `Nat` Not-a-type, used to enable `constexpr` initialization of unions.
+  * `Pair` Similar to `std::pair`.
+
+The following functions exist:
   * `bit` A bunch of bit manipulation functions and bitwise helpers.
   * `construct` A more powerful, placement `new` wrapper.
   * `declval` Exact implementation of `std::declval`.
   * `destruct` A more powerful way to call the destructor.
   * `forward` Exact implementation of `std::forward`.
   * `move` Exact implementation of `std::move`.
-  * `nat` Not-a-type, used to enable `constexpr` initialization of unions.
   * `swap` Exact implementation of `std::swap`.
-  * `uninitialized` Key-hole type to use on containers you'd prefer stay uninitialized, like `vector`.
 
 ## Containers
-  * `array` Similar to `std::array`. 1D only.
-  * `bitset` A fixed-capacity bitset.
-  * `dynamic_pool` A dynamic-capacity pool.
-  * `static_pool` A fixed-capacity pool.
-  * `intrusive_list` An intrusive doubly-linked list.
-  * `intrusive_xor_list` A space-optimized intrusive doubly-linked list.
-  * `function` A fast delegate that is similar to `std::function`.
-  * `deferred_function` A fast delegate that gets called when the function goes out of scope.
-  * `global` Global variables are wrapped with this type.
-  * `map` An unordered flat map using Robin-hood hashing.
-  * `set` An unordered flat set using Robin-hood hashing.
-  * `optional` Optional type implementation.
-  * `string` A UTF-8-safe string and a UTF16 conversion interface for Windows.
-  * `string_table` A UTF-8-safe string table.
-  * `vector` A dynamic resizing array.
+
+The following types exist:
+  * `Array` Similar to `std::array`. 1D only.
+  * `Bitset` A fixed-capacity bitset.
+  * `DynamicPool` A dynamic-capacity pool.
+  * `StaticPool` A fixed-capacity pool.
+  * `IntrusiveList` An intrusive doubly-linked list.
+  * `IntrusiveCompressedList` A space-optimized intrusive doubly-linked list.
+  * `Function` A fast delegate that is similar to `std::function`.
+  * `DeferredFunction` A fast delegate that gets called when the function goes out of scope.
+  * `Global` Global variables are wrapped with this type.
+  * `Map` An unordered flat map using Robin-hood hashing.
+  * `Set` An unordered flat set using Robin-hood hashing.
+  * `Optional` Optional type implementation.
+  * `String` A UTF-8-safe string and a UTF16 conversion interface for Windows.
+  * `WideString` A UTF-16 safe string used to round-trip convert to `String`.
+  * `StringTable` A UTF-8-safe string table.
+  * `Vector` A dynamic resizing array.
 
 ## Misc
+
+The following types exist:
+  * `Event` An event system with signal and slots. Slot adds a delegate, signal calls all delegates.
+  * `Profiler` A CPU and GPU profiler framework.
+  * `Stream` Stream interface including stream conversion functions.
+  * `JSON` A JSON5 reader and parser into a tree-like structure.
+
+Other things not easily documented:
   * `abort` Take down the runtime safely while logging an abortion message.
   * `assert` Runtime assertions for `RX_DEBUG` builds. With optional messages.
-  * `bit_stream` Bit stream, for writing values smaller than a byte to a `stream`.
   * `config` Feature test macros.
-  * `event` An event system with signal and slots. Slot adds a delegate, signal calls all delegates.
   * `format` Type safe formatting of types for printing.
   * `hash` Hash functions for various types and generalized hash combiner.
-  * `json` A JSON5 reader and parser into a tree-like structure.
   * `log` Generalized, thread-safe, concurrent logging framework.
-  * `profiler` A CPU and GPU profiler framework.
-  * `stream` Stream interface including stream conversion functions.
-  * `types` Sized types like `rx_{u,s}{8,16,32,64}`.
+  * `types` Sized types like `{U,S}int{8,16,32,64}`

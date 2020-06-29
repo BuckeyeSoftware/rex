@@ -6,7 +6,7 @@
 #include "rx/core/utility/forward.h"
 #include "rx/core/traits/remove_cvref.h"
 #include "rx/core/hints/format.h"
-#include "rx/core/types.h" // rx_size
+#include "rx/core/types.h" // Size
 
 namespace Rx {
 

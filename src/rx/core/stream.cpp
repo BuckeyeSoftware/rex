@@ -127,33 +127,33 @@ Optional<Vector<Byte>> read_text_stream(Memory::Allocator& _allocator, Stream* _
 
 #if defined(RX_PLATFORM_WINDOWS)
     // Quickly scan through word at a time |_src| for CR.
-    auto scan = [](const void* _src, rx_size _size) {
-      static constexpr auto k_ss = sizeof(rx_size);
+    auto scan = [](const void* _src, Size _size) {
+      static constexpr auto k_ss = sizeof(Size);
       static constexpr auto k_align = k_ss - 1;
       static constexpr auto k_ones = -1_z / UCHAR_MAX; // All bits set.
       static constexpr auto k_highs = k_ones * (UCHAR_MAX / 2 + 1); // All high bits set.
-      static constexpr auto k_c = static_cast<const rx_byte>('\r');
+      static constexpr auto k_c = static_cast<const Byte>('\r');
       static constexpr auto k_k = k_ones * k_c;
 
-      auto has_zero = [&](rx_size _value) {
+      auto has_zero = [&](Size _value) {
         return _value - k_ones & (~_value) & k_highs;
       };
 
       // Search for CR until |s| is aligned on |k_align| alignment.
-      auto s = reinterpret_cast<const rx_byte*>(_src);
+      auto s = reinterpret_cast<const Byte*>(_src);
       auto n = _size;
-      for (; (reinterpret_cast<rx_uintptr>(s) & k_align) && n && *s != k_c; s++, n--);
+      for (; (reinterpret_cast<UintPtr>(s) & k_align) && n && *s != k_c; s++, n--);
 
       // Do checks for CR word at a time, stopping at word containing CR.
       if (n && *s != k_c) {
         // Need to typedef with an alias Type since we're breaking strict
         // aliasing, let the compiler know.
-        typedef rx_size RX_HINT_MAY_ALIAS word_type;
+        typedef Size RX_HINT_MAY_ALIAS WordType;
 
         // Scan word at a time, stopping at word containing first |k_c|.
-        auto w = reinterpret_cast<const word_type*>(s);
+        auto w = reinterpret_cast<const WordType*>(s);
         for (; n >= k_ss && !has_zero(*w ^ k_k); w++, n -= k_ss);
-        s = reinterpret_cast<const rx_byte*>(w);
+        s = reinterpret_cast<const Byte*>(w);
       }
 
       // Handle trailing bytes to determine where in word |k_c| is.
@@ -162,9 +162,9 @@ Optional<Vector<Byte>> read_text_stream(Memory::Allocator& _allocator, Stream* _
       return n ? s : nullptr;
     };
 
-    const rx_byte* src = data.data();
-    rx_byte* dst = data.data();
-    rx_size size = data.size();
+    const Byte* src = data.data();
+    Byte* dst = data.data();
+    Size size = data.size();
     auto next = scan(src, size);
     if (!next) {
       // Contents do not contain any CR.

@@ -174,7 +174,7 @@ bool Loader::parse_textures(const JSON& _textures) {
 
   // Revisit with wait groups
 #if 0
-  const rx_size n_textures{_textures.size()};
+  const Size n_textures{_textures.size()};
   // concurrency::thread_pool threads{m_allocator, n_textures};
   concurrency::wait_group group{n_textures};
   concurrency::atomic<bool> success{true};

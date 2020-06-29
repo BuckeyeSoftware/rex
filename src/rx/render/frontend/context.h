@@ -87,21 +87,21 @@ struct Context {
   //
   // The packet data described in |...| is passed, parsed and interpreted in
   // the following order.
-  //  depth:   rx_f64 (truncated to rx_f32)
-  //  stencil: rx_s32
-  //  colors:  const rx_f32*
+  //  depth:   Float64 (truncated to Float32)
+  //  stencil: Sint32
+  //  colors:  const Float32*
   //
   // When RX_RENDER_CLEAR_DEPTH is present in |_clear_mask|, the depth clear
-  // value is expected as rx_f64 (truncated to rx_f32) in first position.
+  // value is expected as Float64 (truncated to Float32) in first position.
   //
   // When RX_RENDER_CLEAR_STENCIL is present in |_clear_mask|, the stencil
-  // clear value is expected as rx_s32 in one of two positions depending on
+  // clear value is expected as Sint32 in one of two positions depending on
   // if RX_RENDER_CLEAR_DEPTH is supplied. When RX_RENDER_CLEAR_DEPTH isn't
   // supplied, the stencil clear value is expected in first position, otherwise
   // it's expected in second position.
   //
   // When RX_RENDER_CLEAR_COLOR(n) for any |n| is present in |_clear_mask|, the
-  // clear value is expected as a pointer to rx_f32 (rx_f32*) containing four
+  // clear value is expected as a pointer to Float32 (Float32*) containing four
   // color values in normalized range in RGBA order. The |n| refers to the index
   // in the |_draw_buffers| specification to clear. The association of the clear
   // value in |...| and the |n| is done in order. When a RX_RENDER_CLEAR_COLOR

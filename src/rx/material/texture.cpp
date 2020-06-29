@@ -211,7 +211,7 @@ bool Texture::load_texture_file() {
       flags_bitset);
 
     // Convert normal map to data.
-    Vector<rx_byte> data{allocator()};
+    Vector<Byte> data{allocator()};
     if (!image::convert(matrix, data)) {
       return false;
     }

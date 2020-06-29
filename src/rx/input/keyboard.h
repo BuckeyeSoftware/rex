@@ -1,6 +1,6 @@
 #ifndef RX_INPUT_KEYBOARD_H
 #define RX_INPUT_KEYBOARD_H
-#include "rx/core/types.h" // rx_f32
+#include "rx/core/types.h" // Float32, Sint32
 
 namespace Rx::Input {
 

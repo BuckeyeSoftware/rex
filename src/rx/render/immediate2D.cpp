@@ -848,7 +848,7 @@ void Immediate2D::generate_text(Sint32 _size, const char* _font,
   }
 
   // scale relative to font size
-  // _scale /= static_cast<rx_f32>(font_map->size());
+  // _scale /= static_cast<Float32>(font_map->size());
 
   const Size offset{m_element_index};
   for (Size i{0}; i < _contents_length; i++) {

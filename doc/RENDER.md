@@ -25,7 +25,7 @@
 Rex employs a renderer abstraction interface to isolate graphics API code from the actual engine rendering. This is done by `src/rx/render/frontend`. The documentation of how this frontend interface works is provided here to get you up to speed on how to render things.
 
 ### Frontend Interface
-All rendering resources and commands happen through `frontend::context`. Every command on the frontend is associated with a tag that tracks the file and line information of the command in the engine as well as a static string describing it, this is provided to the interface with the `RX_RENDER_TAG("string")` macro.
+All rendering resources and commands happen through `frontend::Context`. Every command on the frontend is associated with a tag that tracks the file and line information of the command in the engine as well as a static string describing it, this is provided to the interface with the `RX_RENDER_TAG("string")` macro.
 
 The entire rendering interface is _thread safe_, any and all commands can be called from any thread at any time.
 
@@ -37,15 +37,15 @@ Indexed and non-indexed draws are done with `frontend.draw`. When a buffer has n
 Here's the definition:
 ```cpp
 void draw(
-  const command_header::info& _info,
-  const state& _state,
-  target* _target,
+  const CommandHeader::Info& _info,
+  const State& _state,
+  Target* _target,
   const char* _draw_buffers,
-  buffer* _buffer,
-  program* _program,
-  rx_size _count,
-  rx_size _offset,
-  primitive_type _primitive_type,
+  Buffer* _buffer,
+  Program* _program,
+  Size _count,
+  Size _offset,
+  PrimitiveType _primitive_type,
   const char* _textures,
   ...);
 ```
@@ -74,15 +74,15 @@ The string can have a maximum length of eight, meaning you can have a maximum am
 The draw buffer specification string is a string-literal encoding the attachments to use for this draw and in which order those attachments should be configured as draw buffers. The string can have a maximum of eight characters.
 
 #### Clearing
-Clearing of a render target is done by `interface::clear`, here's the definition:
+Clearing of a render target is done by `Context::clear`, here's the definition:
 
 ```cpp
   void clear(
-    const command_header::info& _info,
-    const state& _state,
-    target* _target,
+    const CommandHeader::Info& _info,
+    const State& _state,
+    Target* _target,
     const char* _draw_buffers,
-    rx_u32 _clear_mask,
+    Uint32 _clear_mask,
     ...
   );
 ```
@@ -97,26 +97,26 @@ Clearing of a render target is done by `interface::clear`, here's the definition
 Performs a clear operation on `_target` with specified draw buffer layout `_draw_buffers` and state `_state`. The clear mask specified by `clear_mask` describes the packet layout of `...`.
 
 The packet data described in `...` is passed, parsed and interpreted in the following order:
-  * depth:   `rx_f64` _truncated to `rx_f32`_
-  * stencil: `rx_s32`
-  * colors:  `const rx_f32*`
+  * depth:   `Float64` _truncated to `Float32`_
+  * stencil: `Sint32`
+  * colors:  `const Float32*`
 
-When `RX_RENDER_CLEAR_DEPTH` is present in `_clear_mask`, the depth clear value is expected as `rx_f64` (truncated to rx_f32) in first position.
+When `RX_RENDER_CLEAR_DEPTH` is present in `_clear_mask`, the depth clear value is expected as `Float64` (truncated to `Float32`) in first position.
 
-When `RX_RENDER_CLEAR_STENCIL` is present in `_clear_mask|`, the stencil clear value is expected as `rx_s32` in one of two positions depending on if `RX_RENDER_CLEAR_DEPTH` is supplied. When `RX_RENDER_CLEAR_DEPTH` isn't supplied, the stencil clear value is expected in first position, otherwise it's expected in second position.
+When `RX_RENDER_CLEAR_STENCIL` is present in `_clear_mask|`, the stencil clear value is expected as `Sint32` in one of two positions depending on if `RX_RENDER_CLEAR_DEPTH` is supplied. When `RX_RENDER_CLEAR_DEPTH` isn't supplied, the stencil clear value is expected in first position, otherwise it's expected in second position.
 
-When `RX_RENDER_CLEAR_COLOR(n)` for any `n` is present in `_clear_mask`, the clear value is expected as a pointer to `rx_f32` (`const rx_f32*`) containing four color values in normalized range in RGBA order. The `n` refers to the index in the `_draw_buffers` specification to clear. The association of the clear value in `...` and the `n` is done in order. When a `RX_RENDER_CLEAR_COLOR` does not exist for a given `n`, the one proceeding it takes it's place, thus gaps are skipped.
+When `RX_RENDER_CLEAR_COLOR(n)` for any `n` is present in `_clear_mask`, the clear value is expected as a pointer to `Float32` (`const Float32*`) containing four color values in normalized range in RGBA order. The `n` refers to the index in the `_draw_buffers` specification to clear. The association of the clear value in `...` and the `n` is done in order. When a `RX_RENDER_CLEAR_COLOR` does not exist for a given `n`, the one proceeding it takes it's place, thus gaps are skipped.
 
 #### Blitting
-Blitting of a render target is done by `interface::blit`, here's the definition:
+Blitting of a render target is done by `Context::blit`, here's the definition:
 
 ```cpp
 void blit(
-  const command_header::info& _info,
-  target* _src_target,
-  rx_size _src_attachment,
-  target* _dst_target,
-  rx_size _dst_attachment
+  const CommandHeader::Info& _info,
+  Target* _src_target,
+  Size _src_attachment,
+  Target* _dst_target,
+  Size _dst_attachment
 );
 ```
 
@@ -128,7 +128,7 @@ void blit(
 * `_dst_attachment` is the destination attachment to use for the _write_.
 
 #### Swapchain
-The swapchain target is exposed by `interface::swapchain()`.
+The swapchain target is exposed by `Context::swapchain()`.
 
 This target is special in that it's the target used to render to the window or display.
 
@@ -138,21 +138,21 @@ It has exactly one color attachment that represents the window or display's back
 You may query information about the renderer with the following member functions:
 
 ```cpp
-struct statistics {
-  rx_size total;
-  rx_size used;
-  rx_size cached;
-  rx_size memory;
+struct Statistics {
+  Size total;
+  Size used;
+  Size cached;
+  Size memory;
 };
 
-statistics stats(resource::type _type) const;
-rx_size draw_calls() const;
-rx_size clear_calls() const;
-rx_size blit_calls() const;
-rx_size vertices() const;
-rx_size triangles() const;
-rx_size lines() const;
-rx_size points() const;
+Statistics stats(Resource::Type _type) const;
+Size draw_calls() const;
+Size clear_calls() const;
+Size blit_calls() const;
+Size vertices() const;
+Size triangles() const;
+Size lines() const;
+Size points() const;
 ```
 
 The `stats` function in particular can tell you how many objects you can have of that type; `total`, how many are currently in use; `used`, how many are cached; `cached` and how much memory (in bytes) is being used currently for those used objects _last_ frame.
@@ -164,24 +164,24 @@ The `vertices`, `triangles`, `lines` and `points` tell you how many primitives w
 In addition, timing information for a frame can be accessed with the following member function:
 
 ```cpp
-const frame_timer& timer() const &;
+const FrameTimer& timer() const &;
 ```
 
 Which consists of a lot of information that can be queried with the following member functions:
 
 ```cpp
-rx_f32 mspf() const;
-rx_u32 fps() const;
-rx_f32 delta_time() const;
-rx_f64 resolution() const;
-rx_u64 ticks() const;
+Float32 mspf() const;
+Uint32 fps() const;
+Float32 delta_time() const;
+Float64 resolution() const;
+Uint64 ticks() const;
 
-struct frame_time {
-  rx_f64 life;
-  rx_f64 frame;
+struct FrameTime {
+  Float64 life;
+  Float64 frame;
 };
 
-const vector<frame_time>& frame_times() const &;
+const Vector<FrameTime>& frame_times() const &;
 ```
 
 ### Resources
@@ -194,14 +194,14 @@ There's multiple resource types provided by the frontend, they're listed here.
   * textureCM
   * program
 
-All resources are created by `interface::create_*()` functions, e.g `interface::create_buffer()` creates a buffer, likewise, all resources are destroyed by `interface::destroy_*()` functions.
+All resources are created by `Context::create_*()` functions, e.g `Context::create_buffer()` creates a buffer, likewise, all resources are destroyed by `Context::destroy_*()` functions.
 
-Created resources are **not initialized** resources, instead you record information or request requirements of that resource through it's member functions and initialize the resource with `interface::initialize_*()` functions.
+Created resources are **not initialized** resources, instead you record information or request requirements of that resource through it's member functions and initialize the resource with `Context::initialize_*()` functions.
 Once a resource is initialized it's properties are immutable, **you cannot reinitialize or respecifiy it**.
 
-While resources cannot have their properties reinitialized or respecified, their contents can be updated. This is done with the `interface::update_*()` functions.
+While resources cannot have their properties reinitialized or respecified, their contents can be updated. This is done with the `Context::update_*()` functions.
 
-Every resource is validated when `interface::initialize_*()` is called. If at any point the resource is not fully specified (something was not recorded or requested), or an attempt was made to record a property or request a requirement that has already been recorded or requested, an assertion will be triggered. These assertions are disabled in release builds.
+Every resource is validated when `Context::initialize_*()` is called. If at any point the resource is not fully specified (something was not recorded or requested), or an attempt was made to record a property or request a requirement that has already been recorded or requested, an assertion will be triggered. These assertions are disabled in release builds.
 
 #### Buffer
 A buffer resource represents a combined vertex and element buffer for geometry. The properties that **must be** recorded are provided by the following:
@@ -211,37 +211,37 @@ A buffer resource represents a combined vertex and element buffer for geometry. 
 // |_type| is the attribute type (e.g float, int)
 // |_count| is the # of elements of the attribute type (3 for a vec3)
 // |_offset| is the offset in the vertex format this attribute begins in bytes
-void record_attribute(attribute::type _type, rx_size _count, rx_size _offset);
+void record_attribute(Attribute::Type _type, Size _count, Size _offset);
 
 // record vertex stride
 // |_stride| is the size of the vertex format in bytes
-void record_stride(rx_size _stride);
+void record_stride(Size _stride);
 
 // record element type
 // |_type| is the element type, k_none for no elements
-void record_element_type(element_type _type);
+void record_element_type(ElementType _type);
 
 // record type |_type|
 // k_static is for buffers that will not be updated
 // k_dynamic is for buffers that will be updated
-void record_type(type _type);
+void record_type(Type _type);
 ```
 
 The contents of the buffer can be specified and updated by calling the following functions:
 ```cpp
 // write |_size| bytes from |_data| into vertex store
 template<typename T>
-void write_vertices(const T* _data, rx_size _size);
+void write_vertices(const T* _data, Size _size);
 
 // write |_size| bytes from |_data| into element store
 template<typename T>
-void write_elements(const T* _data, rx_size _size);
+void write_elements(const T* _data, Size _size);
 
 // map |_size| bytes of vertices
-rx_byte* map_vertices(rx_size _size);
+Byte* map_vertices(Size _size);
 
 // map |_size| bytes of elements
-rx_byte* map_elements(rx_size _size);
+Byte* map_elements(Size _size);
 ```
 
 Assertions can be triggered in the following cases:
@@ -266,16 +266,16 @@ Before initializing a target you request certain requirements. Those requirement
 void request_swapchain();
 
 // request target have depth attachment |_format| with size |_dimensions|
-void request_depth(texture::data_format _format,
-  const math::vec2z& _dimensions);
+void request_depth(Texture::DataFormat _format,
+  const math::Vec2z& _dimensions);
 
 // request target have stencil attachment |_format| with size |_dimensions|
-void request_stencil(texture::data_format _format,
-  const math::vec2z& _dimensions);
+void request_stencil(Texture::DataFormat _format,
+  const math::Vec2z& _dimensions);
 
 // request target have combined depth stencil attachment with size |_dimensions|
-void request_depth_stencil(texture::data_format _format,
-  const math::vec2z& _dimensions);
+void request_depth_stencil(Texture::DataFormat _format,
+  const math::Vec2z& _dimensions);
 ```
 
 A target can also be attached existing textures with the following member functions:
@@ -283,15 +283,15 @@ A target can also be attached existing textures with the following member functi
 ```cpp
 // attach existing depth texture |_depth| to target
 // can only attach one depth texture
-void attach_depth(texture2D* _depth);
+void attach_depth(Texture2D* _depth);
 
 // attach existing stencil texture |_stencil| to target
 // can only attach one stencil texture
-void attach_stencil(texture2D* _stencil);
+void attach_stencil(Texture2D* _stencil);
 
 // attach texture |_texture| to target
 // the order this function is called is the order the textures are attached
-void attach_texture(texture2D* _texture);
+void attach_texture(Texture2D* _texture);
 ```
 
 Targets are immutable. Once initially specified they can no longer be changed.
@@ -313,33 +313,33 @@ Before you can initialize a texture certain information must be recorded by the 
 
 ```cpp
 // record format |_format|
-void record_format(data_format _format);
+void record_format(DataFormat _format);
 
 // record type
 // |_type| can be one of k_static, k_dynamic, k_attachment
 // k_static is for textures that will not be updated
 // k_dynamic is for textures that will be updated
 // k_attachment is for textures that will only be used as target attachments
-void record_type(type _type);
+void record_type(Type _type);
 
 // record filter options |_options|
-void record_filter(const filter_options& _options);
+void record_filter(const FilterOptions& _options);
 
 // record dimensions |_dimensions|
-void record_dimensions(const dimension_type& _dimensions);
+void record_dimensions(const DimensionType& _dimensions);
 
 // record wrapping behavior |_wrap|
-void record_wrap(const wrap_options& _wrap);
+void record_wrap(const WrapOptions& _wrap);
 ```
 
 The contents of the texture can be specified and updated by calling the following functions:
 
 ```cpp
 // write data |_data| to store for miplevel |_level|
-void write(const rx_byte* _data, rx_size _level);
+void write(const Byte* _data, Size _level);
 
 // map data for miplevel |_level|
-rx_byte* map(rx_size _level);
+Byte* map(Size _level);
 ```
 
 Assertions can be triggered in the following cases:
@@ -355,7 +355,7 @@ Assertions can be triggered in the following cases:
 All miplevels _must_ be provided to the render resource. There is no automatic derivation of miplevels in the render frontend or backend. You may derive the miplevels for a texture with `texture::chain` interface instead.
 
 #### Program
-This resource is not actually used directly. It's used to implement `frontend::technique` which provides specialization, variants and program permutations.
+This resource is not actually used directly. It's used to implement `frontend::Technique` which provides specialization, variants and program permutations.
 
 It's listed here for completion sake.
 
@@ -363,10 +363,10 @@ Shaders and uniforms are added to a constructed program before initialization wi
 
 ```cpp
 // add a shader definition |_shader|
-void add_shader(shader&& shader_);
+void add_shader(Shader&& shader_);
 
 // add a uniform with name |_name| and type |_type|
-uniform& add_uniform(const string& _name, uniform::type _type);
+Uniform& add_uniform(const String& _name, Uniform::Type _type);
 ```
 
 Assertions can be triggered in the following cases:
@@ -376,15 +376,15 @@ Assertions can be triggered in the following cases:
 
 
 ### State
-All rendering state aside from bound resources is completely isolated into one single state vector that is passed around for draw calls. This vector is described by `frontend::state` and consists of the following state:
+All rendering state aside from bound resources is completely isolated into one single state vector that is passed around for draw calls. This vector is described by `frontend::State` and consists of the following state:
 
 ```
-scissor_state scissor;
-blend_state blend;
-depth_state depth;
-cull_state cull;
-stencil_state stencil;
-polygon_state polygon;
+ScissorState scissor;
+BlendState blend;
+DepthState depth;
+CullState cull;
+StencilState stencil;
+PolygonState polygon;
 ```
 
 The state vector is hashed as well as the nested state objects to avoid excessive state changes in the backend. You do not need to manage any state when rendering, state bleed is not possible. This vector can be built every frame for every draw command.
@@ -393,7 +393,7 @@ The state vector is hashed as well as the nested state objects to avoid excessiv
 
 Techniques are [data-driven](https://en.wikipedia.org/wiki/Data-driven_programming) and described by JSON5. Information on how that's done is documented [here](TECHNIQUE.md)
 
-Once a technique is loaded by `frontend::technique::load` you may fetch a program from that technique with the `operator program*()`, `variant()` or `permute()` member functions depending on what is needed.
+Once a technique is loaded by `frontend::Technique::load` you may fetch a program from that technique with the `operator Program*()`, `variant()` or `permute()` member functions depending on what is needed.
 
 When getting a variant you pass an index of the variant you want to use. The variant used is the one listed in the `"variants"` array in the JSON5.
 
@@ -403,13 +403,13 @@ When getting a permute you pass the flags of the permutations you want to use. T
 Here's a simple example of rendering a textured quad
 ```cpp
 // vertex format
-struct quad_vertex {
-  rx::math::vec2f position;
-  rx::math::vec2f coordinate;
+struct QuadVertex {
+  rx::math::Vec2f position;
+  rx::math::Vec2f coordinate;
 };
 
 // vertices of our quad
-static constexpr const quad_vertex k_quad_vertices[]{
+static constexpr const QuadVertex k_quad_vertices[]{
   {{ -1.0f,  1.0f}, {0.0f, 1.0f}},
   {{  1.0f,  1.0f}, {1.0f, 1.0f}},
   {{ -1.0f, -1.0f}, {0.0f, 0.0f}},
@@ -417,27 +417,27 @@ static constexpr const quad_vertex k_quad_vertices[]{
 };
 
 // elements of our quad
-static constexpr const rx_byte k_quad_elements[]{
+static constexpr const Byte k_quad_elements[]{
   0, 1, 2, 3
 };
 
 // create a buffer
-rx::render::frontend::buffer* quad{frontend.create_buffer(RX_RENDER_TAG("quad"))};
+rx::render::frontend::Buffer* quad = frontend.create_buffer(RX_RENDER_TAG("quad"));
 
 // the contents will not change
-quad->record_type(rx::render::frontend::buffer::type::k_static);
+quad->record_type(rx::render::frontend::Buffer::Type::k_static);
 
 // record the element format
-quad->record_element_type(rx::render::frontend::buffer::element_type::k_u8);
+quad->record_element_type(rx::render::frontend::Buffer::ElementType::k_u8);
 
 // record the vertex format
-quad->record_stride(sizeof(quad_vertex));
+quad->record_stride(sizeof(QuadVertex));
 
 // record the attributes
-quad->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 2,
-  offsetof(quad_vertex, position));
-quad->record_attribute(rx::render::frontend::buffer::attribute::type::k_f32, 2,
-  offsetof(quad_vertex, coordinate);
+quad->record_attribute(rx::render::frontend::Buffer::Attribute::Type::k_f32, 2,
+  offsetof(QuadVertex, position));
+quad->record_attribute(rx::render::frontend::Buffer::Attribute::Type::k_f32, 2,
+  offsetof(QuadVertex, coordinate);
 
 // write the vertices and elements into the buffer
 quad->write_vertices(k_quad_vertices, sizeof k_quad_vertices);
@@ -457,12 +457,12 @@ frontend.clear(RX_RENDER_TAG("test"),
   {1.0f, 0.0f, 0.0f, 1.0f});
 
 // assume we have some program handle here, left out for brevity
-rx::render::frontend::program* program{...};
+rx::render::frontend::Program* program{...};
 // ...
 frontend.initialize_program(RX_RENER_TAG("quad"), program);
 
 // assume we have some texture2D handle here, left out for brevity
-rx::render::frontend::texture2D* texture{...};
+rx::render::frontend::Texture2D* texture{...};
 // ...
 frontend.initialize_texture(RX_RENER_TAG("quad"), texture);
 
@@ -480,7 +480,7 @@ frontend.draw(
   program,
   4,
   0,
-  rx::render::frontend::primitive_type::k_triangle_strip,
+  rx::render::frontend::PrimitiveType::k_triangle_strip,
   "2" // since 2D texture
   texture);
 ```
@@ -498,18 +498,18 @@ The following backends already exist:
 ### Command Buffer
 The [frontend interface](#frontend-interface) allocates commands from a command buffer which are executed by the [backend interface](#backend-interface) `process()` function.
 
-Each command has a 16-byte memory alignment and memory layout that includes a `command_header`.
+Each command has a 16-byte memory alignment and memory layout that includes a `CommandHeader`.
 
-The lifetime of a command lasts for exactly one frame, for the command buffer is cleared by `frontend::process` every frame.
+The lifetime of a command lasts for exactly one frame, for the command buffer is cleared by `Context::process` every frame.
 
 Every command on the command buffer is prefixed with a command header which indicates the command type as well as an info object, called a tag that can be used to track where the command origniated from.
 
 The command header looks like this:
 
 ```cpp
-struct alignas(16) command_header {
-  struct info {
-    constexpr info(const char* _file, const char* _description, int _line)
+struct alignas(16) CommandHeader {
+  struct Info {
+    constexpr Info(const char* _file, const char* _description, int _line)
       : file{_file}
       , description{_description}
       , line{_line}
@@ -520,18 +520,18 @@ struct alignas(16) command_header {
     int line;
   };
 
-  command_type type;
-  info tag;
+  CommandType type;
+  Info tag;
 };
 ```
 
-The `RX_RENDER_TAG(...)` macro is what constructs the `command_header::info` object which allows for file, line and a description string to be tracked through the frontend and the backend for debugging purposes.
+The `RX_RENDER_TAG(...)` macro is what constructs the `CommandHeader::Info` object which allows for file, line and a description string to be tracked through the frontend and the backend for debugging purposes.
 
 #### Commands
 The following command types exist:
 
 ```cpp
-enum class command_type : rx_u8 {
+enum class CommandType : Byte {
   k_resource_allocate,
   k_resource_construct,
   k_resource_update,
@@ -545,8 +545,8 @@ enum class command_type : rx_u8 {
 As well as their appropriate structures:
 
 ```cpp
-struct resource_command {
-  enum class type : rx_u8 {
+struct ResourceCommand {
+  enum class Type : Byte {
     k_buffer,
     k_target,
     k_program,
@@ -556,63 +556,63 @@ struct resource_command {
     k_textureCM
   };
 
-  type kind;
+  Type kind;
 
   union {
-    target* as_target;
-    buffer* as_buffer;
-    program* as_program;
-    texture1D* as_texture1D;
-    texture2D* as_texture2D;
-    texture3D* as_texture3D;
-    textureCM* as_textureCM;
+    Target* as_target;
+    Buffer* as_buffer;
+    Program* as_program;
+    Texture1D* as_texture1D;
+    Texture2D* as_texture2D;
+    Texture3D* as_texture3D;
+    TextureCM* as_textureCM;
   };
 };
 
-struct clear_command : state {
-  target* render_target;
+struct ClearCommand : State {
+  Target* render_target;
   int clear_mask;
-  math::vec4f clear_color;
+  math::Vec4f clear_color;
 };
 
-struct blit_command : state {
-  target* src_target;
-  rx_size src_attachment;
-  target* dst_target;
-  rx_size dst_attachment;
+struct BlitCommand : State {
+  Target* src_target;
+  Size src_attachment;
+  Target* dst_target;
+  Size dst_attachment;
 };
 
-struct draw_command : state {
-  target* render_target;
-  buffer* render_buffer;
-  program* render_program;
-  rx_size count;
-  rx_size offset;
+struct DrawCommand : State {
+  Target* render_target;
+  Buffer* render_buffer;
+  Program* render_program;
+  Size count;
+  Size offset;
   char texture_types[8];
   void* texture_binds[8];
-  primitive_type type;
-  rx_u64 dirty_uniforms_bitset;
+  PrimitiveType type;
+  Uint64 dirty_uniforms_bitset;
 
-  const rx_byte* uniforms() const;
-  rx_byte* uniforms();
+  const Byte* uniforms() const;
+  Byte* uniforms();
 };
 ```
 
-All command structures, aside from `resource_command`, include a `frontend::state` object that represents the state vector to use for that operation.
+All command structures, aside from `ResourceCommand`, include a `frontend::State` object that represents the state vector to use for that operation.
 
-The `resource_command` structure is used by all the resource commands and merely represents a tagged union of which resource to `allocate`, `construct`, `update`, or `destroy`.
+The `ResourceCommand` structure is used by all the resource commands and merely represents a tagged union of which resource to `allocate`, `construct`, `update`, or `destroy`.
 
-The `draw_command` is special in that it's size is actually variable. The `frontend::context::draw` function over allocates `draw_command` from the command buffer to make room to store the raw data of any changed uniforms of `render_program`. The member function `uniforms()` actually returns a pointer to `this + 1` to reach into that memory. The `dirty_uniform_bitset` has a set bit for each uniform in `render_program` that has changed. The index of these set bits are the uniform indices in `render_program`. The sizes of each uniform can be read from there as well as their type.
-The uniform data in `draw_command` is tightly packed. An example of unpacking this data is provided:
+The `DrawCommand` is special in that it's size is actually variable. The `frontend::Context::draw` function over allocates `DrawCommand` from the command buffer to make room to store the raw data of any changed uniforms of `render_program`. The member function `uniforms()` actually returns a pointer to `this + 1` to reach into that memory. The `dirty_uniform_bitset` has a set bit for each uniform in `render_program` that has changed. The index of these set bits are the uniform indices in `render_program`. The sizes of each uniform can be read from there as well as their type.
+The uniform data in `DrawCommand` is tightly packed. An example of unpacking this data is provided:
 
 ```cpp
 if (command->dirty_uniforms_bitset) {
-  const auto& program_uniforms{render_program->uniforms()};
-  const rx_byte* draw_uniforms{command->uniforms()};
+  const auto& program_uniforms = render_program->uniforms();
+  const Byte* draw_uniforms = command->uniforms();
 
-  for (rx_size i{0}; i < 64; i++) {
+  for (Size i = 0; i < 64; i++) {
     if (command->dirty_uniforms_bitset & (1_u64 << i)) {
-      const auto& uniform{program_uniforms[i]};
+      const auto& uniform = program_uniforms[i];
 
       // data for uniform is in draw_uniforms
 
@@ -628,29 +628,29 @@ Rendering backends implement a small interface which looks like:
 
 ```cpp
 // sizes of resources reported by the backend
-struct allocation_info {
-  rx_size buffer_size;
-  rx_size target_size;
-  rx_size program_size;
-  rx_size texture1D_size;
-  rx_size texture2D_size;
-  rx_size texture3D_size;
-  rx_size textureCM_size;
+struct AllocationInfo {
+  Size buffer_size;
+  Size target_size;
+  Size program_size;
+  Size texture1D_size;
+  Size texture2D_size;
+  Size texture3D_size;
+  Size textureCM_size;
 };
 
-struct device_info {
+struct DeviceInfo {
   const char* vendor;
   const char* renderer;
   const char* version;
 };
 
-struct context
-  : concepts::interface
-{
-  virtual allocation_info query_allocation_info() const = 0;
-  virtual device_info query_device_info() const = 0;
+struct Context {
+  RX_MARK_INTERFACE(Context);
+
+  virtual AllocationInfo query_allocation_info() const = 0;
+  virtual DeviceInfo query_device_info() const = 0;
   virtual bool init() = 0;
-  virtual void process(const vector<rx_byte*>& _commands) = 0;
+  virtual void process(const Vector<Byte*>& _commands) = 0;
   virtual void swap() = 0;
 };
 ```
@@ -659,6 +659,6 @@ The purposes of `query_allocation_info()` is to allow the frontend to over alloc
 
 The `init()` function implements the _initialization_ of the backend. It should return `false` on failure. Do not do initialization work in the constructor since there's no way to indicate errors as exceptions are not used in Rex.
 
-The `process(const vector<rx_byte*>& _commands)` function implements the processing of commands as mentioned above. One call is made for every command.
+The `process(const Vector<Byte*>& _commands)` function implements the processing of commands as mentioned above. One call is made for every frame.
 
 The `swap()` function is used to swap the swapchain.
