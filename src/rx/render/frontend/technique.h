@@ -107,8 +107,10 @@ private:
 
   bool parse_inouts(const JSON& _inouts, const char* _type,
                     Map<String, ShaderDefinition::InOut>& inouts_);
+
   bool parse_inout(const JSON& _inout, const char* _type,
-                   Map<String, ShaderDefinition::InOut>& inouts_);
+                   Map<String, ShaderDefinition::InOut>& inouts_,
+                   Size& index_);
 
   bool parse_specializations(const JSON& _specializations, const char* _type);
   bool parse_specialization(const JSON& _specialization, const char* _type);

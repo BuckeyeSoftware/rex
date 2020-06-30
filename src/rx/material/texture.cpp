@@ -54,7 +54,7 @@ bool Texture::parse(const JSON& _definition) {
   }
 
   if (!type) {
-    return error("missing 'Type'");
+    return error("missing 'type'");
   }
 
   if (!filter) {

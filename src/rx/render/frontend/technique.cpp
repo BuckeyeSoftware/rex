@@ -651,7 +651,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
   }
 
   if (!type) {
-    return error("missing 'Type' in uniform");
+    return error("missing 'type' in uniform");
   }
 
   if (!name.is_string()) {
@@ -659,7 +659,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
   }
 
   if (!type.is_string()) {
-    return error("expected String for 'Type'");
+    return error("expected String for 'type'");
   }
 
   if (when && !when.is_string()) {
@@ -861,7 +861,7 @@ bool Technique::parse_shader(const JSON& _shader) {
   const auto& imports{_shader["imports"]};
 
   if (!type) {
-    return error("missing 'Type' in shader");
+    return error("missing 'type' in shader");
   }
 
   if (!source) {
@@ -869,7 +869,7 @@ bool Technique::parse_shader(const JSON& _shader) {
   }
 
   if (!type.is_string()) {
-    return error("expected String for 'Type'");
+    return error("expected String for 'type'");
   }
 
   if (!source.is_string()) {
@@ -941,13 +941,15 @@ bool Technique::parse_inouts(const JSON& _inouts, const char* _type,
     return error("expected Array[Object] in %ss", _type);
   }
 
+  Size index = 0;
   return _inouts.each([&](const JSON& _inout) {
-    return parse_inout(_inout, _type, inouts_);
+    return parse_inout(_inout, _type, inouts_, index);
   });
 }
 
 bool Technique::parse_inout(const JSON& _inout, const char* _type,
-                            Map<String, ShaderDefinition::InOut>& inouts_)
+                            Map<String, ShaderDefinition::InOut>& inouts_,
+                            Size& index_)
 {
   const auto& name{_inout["name"]};
   const auto& type{_inout["type"]};
@@ -958,7 +960,7 @@ bool Technique::parse_inout(const JSON& _inout, const char* _type,
   }
 
   if (!type) {
-    return error("missing 'Type' in %s", _type);
+    return error("missing 'type' in %s", _type);
   }
 
   if (!name.is_string()) {
@@ -966,7 +968,7 @@ bool Technique::parse_inout(const JSON& _inout, const char* _type,
   }
 
   if (!type.is_string()) {
-    return error("expected String for 'Type'");
+    return error("expected String for 'type'");
   }
 
   if (when && !when.is_string()) {
@@ -981,13 +983,26 @@ bool Technique::parse_inout(const JSON& _inout, const char* _type,
   const auto type_string{type.as_string()};
   const auto kind{inout_type_from_string(type_string)};
   if (!kind) {
-    return error("unknown Type '%s' for '%s'", type_string, name_string);
+    return error("unknown type '%s' for '%s'", type_string, name_string);
   }
 
   ShaderDefinition::InOut inout;
-  inout.index = inouts_.size();
+  inout.index = index_;
   inout.kind = *kind;
   inout.when = when ? when.as_string() : "";
+
+  switch (*kind) {
+  case Shader::InOutType::k_mat3x3f:
+    index_ += 3; // One for each vector in the mat3x3f
+    break;
+  case Shader::InOutType::k_mat4x4f:
+    index_ += 4; // One for each vector in the mat4x4f
+    break;
+  default:
+    index_ += 1;
+    break;
+  }
+
 
   inouts_.insert(name_string, inout);
   return true;
