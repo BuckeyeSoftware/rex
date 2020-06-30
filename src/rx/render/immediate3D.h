@@ -155,8 +155,8 @@ private:
   Frontend::Technique* m_technique;
 
   Queue m_queue;
-  Vector<Vertex> m_vertices;
-  Vector<Uint32> m_elements;
+  Vertex* m_vertices;
+  Uint32* m_elements;
   Vector<Batch> m_batches;
 
   Size m_vertex_index;

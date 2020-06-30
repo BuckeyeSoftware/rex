@@ -156,8 +156,8 @@ Immediate3D::Immediate3D(Frontend::Context* _frontend)
   : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("immediate3D")}
   , m_queue{m_frontend->allocator()}
-  , m_vertices{m_frontend->allocator()}
-  , m_elements{m_frontend->allocator()}
+  , m_vertices{nullptr}
+  , m_elements{nullptr}
   , m_batches{m_frontend->allocator()}
   , m_vertex_index{0}
   , m_element_index{0}
@@ -202,8 +202,8 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
   // avoid generating geomtry and uploading if the contents didn't change
   if (m_queue != m_render_queue[m_rd_index]) {
     // calculate storage needed
-    Size n_vertices{0};
-    Size n_elements{0};
+    Size n_vertices = 0;
+    Size n_elements = 0;
     m_queue.m_commands.each_fwd([&](const Queue::Command& _command) {
       switch (_command.kind) {
       case Queue::Command::Type::k_point:
@@ -227,8 +227,8 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     });
 
     // allocate storage
-    m_vertices.resize(n_vertices);
-    m_elements.resize(n_elements);
+    m_vertices = (Vertex*)m_buffers[m_wr_index]->map_vertices(n_vertices * sizeof(Vertex));
+    m_elements = (Uint32*)m_buffers[m_wr_index]->map_elements(n_elements * sizeof(Uint32));
 
     // generate geometry for a future frame
     m_queue.m_commands.each_fwd([this](const Queue::Command& _command) {
@@ -264,24 +264,20 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
       }
     });
 
-    // upload the geometry
-    m_buffers[m_wr_index]->write_vertices(m_vertices.data(), m_vertices.size() * sizeof(Vertex));
-    m_buffers[m_wr_index]->write_elements(m_elements.data(), m_elements.size() * sizeof(Uint32));
-
     // Record the edit.
-    m_buffers[m_wr_index]->record_vertices_edit(0, m_vertices.size() * sizeof(Vertex));
-    m_buffers[m_wr_index]->record_elements_edit(0, m_elements.size() * sizeof(Uint32));
+    m_buffers[m_wr_index]->record_vertices_edit(0, n_vertices * sizeof(Vertex));
+    m_buffers[m_wr_index]->record_elements_edit(0, n_elements * sizeof(Uint32));
     m_frontend->update_buffer(RX_RENDER_TAG("immediate3D"), m_buffers[m_wr_index]);
 
-    // clear staging buffers
-    m_vertices.clear();
-    m_elements.clear();
+    // Clear staging buffers
+    m_vertices = nullptr;
+    m_elements = nullptr;
 
-    // reset indices
+    // Reset indices
     m_vertex_index = 0;
     m_element_index = 0;
 
-    // write buffer will be processed some time in the future
+    // Write buffer will be processed some time in the future
     m_render_batches[m_wr_index] = Utility::move(m_batches);
     m_render_queue[m_wr_index] = Utility::move(m_queue);
 
