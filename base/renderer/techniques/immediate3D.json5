@@ -2,6 +2,7 @@
   name: "immediate3D",
   variants: [
     "USE_STANDARD",
+    "USE_INSTANCED",
     "USE_POINTS"
   ],
   uniforms: [
@@ -14,17 +15,24 @@
       inputs: [
         { name: "a_position",    type: "vec3f" },
         { name: "a_size",        type: "float" },
-        { name: "a_color",       type: "vec4f" }
+        { name: "a_color",       type: "vec4f" },
+        { name: "a_transform",   type: "mat4x4f", when: "USE_INSTANCED" }
       ],
       outputs: [
         { name: "vs_color",      type: "vec4f" },
-        { name: "vs_view",       type: "vec3f", when: "USE_STANDARD" }
+        { name: "vs_view",       type: "vec3f", when: "USE_STANDARD || USE_INSTANCED" }
       ],
       source: "
         void main() {
           vs_color = a_color;
 
-          vec4f eye_position = u_view * vec4(a_position, 1.0);
+        #if defined(USE_INSTANCED)
+          vec4f position = a_transform * vec4f(a_position, 1.0);
+        #else
+          vec4f position = vec4f(a_position, 1.0);
+        #endif
+
+          vec4f eye_position = u_view * position;
 
           rx_position = u_projection * eye_position;
 
@@ -41,7 +49,7 @@
       type: "fragment",
       inputs: [
         { name: "vs_color", type: "vec4f" },
-        { name: "vs_view",  type: "vec3f", when: "USE_STANDARD" }
+        { name: "vs_view",  type: "vec3f", when: "USE_STANDARD || USE_INSTANCED" }
       ],
       outputs: [
         { name: "fs_color", type: "vec4f" }

@@ -65,21 +65,22 @@ struct Context {
   void destroy_texture(const CommandHeader::Info& _info, Texture3D* _texture);
   void destroy_texture(const CommandHeader::Info& _info, TextureCM* _texture);
 
-  // Renders |_count| geometric primitives on |_target| with specified draw
-  // buffer layout |_draw_buffers| and state |_state| from array data at
-  // |_offset| in |_buffer| of Type |_primitive_type| with textures described
-  // by |_draw_textures|.
+  // Renders |_instances| instances of |_count| geometric primitive of
+  // |_primitive_type| to |_target| with draw buffer layout |_draw_buffers|
+  // and render |_state| from array data at |_offset| in |_buffer| with textures
+  // |_draw_textures|.
   void draw(
-          const CommandHeader::Info& _info,
-          const State& _state,
-          Target* _target,
-          const Buffers& _draw_buffers,
-          Buffer* _buffer,
-          Program* _program,
-          Size _count,
-          Size _offset,
-          PrimitiveType _primitive_type,
-          const Textures& _draw_textures);
+    const CommandHeader::Info& _info,
+    const State& _state,
+    Target* _target,
+    const Buffers& _draw_buffers,
+    Buffer* _buffer,
+    Program* _program,
+    Size _count,
+    Size _offset,
+    Size _instances,
+    PrimitiveType _primitive_type,
+    const Textures& _draw_textures);
 
   // Performs a clear operation on |_target| with specified draw buffer layout
   // |_draw_buffers| and state |_state|. The clear mask specified by
@@ -131,26 +132,24 @@ struct Context {
   //  draw buffer 0 (attachment 3) to red, and draw buffer 2 (attachment 0)
   //  to green, leaving draw buffer 1 (attachment 1) untouched.
   void clear(
-          const CommandHeader::Info& _info,
-          const State& _state,
-          Target* _target,
-          const Buffers& _draw_buffers,
-          Uint32 _clear_mask,
-          ...
-  );
+    const CommandHeader::Info& _info,
+    const State& _state,
+    Target* _target,
+    const Buffers& _draw_buffers,
+    Uint32 _clear_mask,
+    ...);
 
   // Performs a blit from |_src| attachment |_src_attachment| to |_dst| attachment
   // |_dst_attachment|.
   //
   // The blit considers depth, stencil and scissor state specified in |_state|.
   void blit(
-          const CommandHeader::Info& _info,
-          const State& _state,
-          Target* _src,
-          Size _src_attachment,
-          Target* _dst,
-          Size _dst_attachment
-  );
+    const CommandHeader::Info& _info,
+    const State& _state,
+    Target* _src,
+    Size _src_attachment,
+    Target* _dst,
+    Size _dst_attachment);
 
   // Used by profile::gpu_sample to insert profile markers. The backend is
   // supposed to consume the k_profile command and when a tag is specified,
@@ -201,6 +200,7 @@ struct Context {
   Statistics stats(Resource::Type _type) const;
 
   Size draw_calls() const;
+  Size instanced_draw_calls() const;
   Size clear_calls() const;
   Size blit_calls() const;
   Size vertices() const;
@@ -275,6 +275,7 @@ private:
   Map<String, Module> m_modules;               // protected by |m_mutex|
 
   Concurrency::Atomic<Size> m_draw_calls[2];
+  Concurrency::Atomic<Size> m_instanced_draw_calls[2];
   Concurrency::Atomic<Size> m_clear_calls[2];
   Concurrency::Atomic<Size> m_blit_calls[2];
   Concurrency::Atomic<Size> m_vertices[2];
@@ -312,6 +313,10 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Context::allocator() const {
 
 inline Size Context::draw_calls() const {
   return m_draw_calls[1].load();
+}
+
+inline Size Context::instanced_draw_calls() const {
+  return m_instanced_draw_calls[1].load();
 }
 
 inline Size Context::clear_calls() const {

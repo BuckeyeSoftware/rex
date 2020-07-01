@@ -239,6 +239,21 @@ GLenum convert_texture_wrap(const Frontend::Texture::WrapType _type) {
   RX_HINT_UNREACHABLE();
 }
 
+GLenum convert_element_type(Frontend::Buffer::ElementType _element_type) {
+  using Type = Frontend::Buffer::ElementType;
+  switch (_element_type) {
+  case Type::k_none:
+    return GL_NONE;
+  case Type::k_u8:
+    return GL_UNSIGNED_BYTE;
+  case Type::k_u16:
+    return GL_UNSIGNED_SHORT;
+  case Type::k_u32:
+    return GL_UNSIGNED_INT;
+  }
+  RX_HINT_UNREACHABLE();
+}
+
 Filter convert_texture_filter(const Frontend::Texture::FilterOptions& _filter_options) {
   static constexpr const GLenum k_min_table[]{
     GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_NEAREST,

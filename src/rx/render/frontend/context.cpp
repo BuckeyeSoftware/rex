@@ -505,16 +505,17 @@ void Context::destroy_texture_unlocked(const CommandHeader::Info& _info, Texture
 }
 
 void Context::draw(
-        const CommandHeader::Info& _info,
-        const State& _state,
-        Target* _target,
-        const Buffers& _draw_buffers,
-        Buffer* _buffer,
-        Program* _program,
-        Size _count,
-        Size _offset,
-        PrimitiveType _primitive_type,
-        const Textures& _draw_textures)
+  const CommandHeader::Info& _info,
+  const State& _state,
+  Target* _target,
+  const Buffers& _draw_buffers,
+  Buffer* _buffer,
+  Program* _program,
+  Size _count,
+  Size _offset,
+  Size _instances,
+  PrimitiveType _primitive_type,
+  const Textures& _draw_textures)
 {
   RX_ASSERT(_state.viewport.dimensions().area() > 0, "empty viewport");
 
@@ -522,24 +523,29 @@ void Context::draw(
   RX_ASSERT(_program, "expected program");
   RX_ASSERT(_count != 0, "empty draw call");
 
+  RX_ASSERT(_instances, "instances must be >= 1");
+
   if (!_buffer) {
     RX_ASSERT(_offset == 0, "bufferless draws cannot have an offset");
+    RX_ASSERT(_instances == 1, "bufferless draws cannot have more than one instance");
+  } else if (_instances > 1) {
+    RX_ASSERT(_buffer->is_instanced(), "instanced draw requires instanced buffer");
   }
 
-  m_vertices[0] += _count;
+  m_vertices[0] += _count * _instances;
 
   switch (_primitive_type) {
   case PrimitiveType::k_lines:
-    m_lines[0] += _count / 2;
+    m_lines[0] += (_count  / 2) * _instances;
     break;
   case PrimitiveType::k_points:
-    m_points[0] += _count;
+    m_points[0] += _count * _instances;
     break;
   case PrimitiveType::k_triangle_strip:
-    m_triangles[0] += _count - 2;
+    m_triangles[0] += (_count - 2) * _instances;
     break;
   case PrimitiveType::k_triangles:
-    m_triangles[0] += _count / 3;
+    m_triangles[0] += (_count / 3) * _instances;
     break;
   }
 
@@ -560,6 +566,7 @@ void Context::draw(
 
     command->count = _count;
     command->offset = _offset;
+    command->instances = _instances;
     command->type = _primitive_type;
     command->dirty_uniforms_bitset = _program->dirty_uniforms_bitset();
 
@@ -574,6 +581,10 @@ void Context::draw(
   }
 
   m_draw_calls[0]++;
+
+  if (_instances > 1) {
+    m_instanced_draw_calls[0]++;
+  }
 }
 
 void Context::clear(
@@ -790,6 +801,7 @@ bool Context::process() {
   };
 
   swap(m_draw_calls);
+  swap(m_instanced_draw_calls);
   swap(m_clear_calls);
   swap(m_blit_calls);
   swap(m_vertices);

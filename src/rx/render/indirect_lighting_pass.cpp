@@ -63,16 +63,17 @@ void IndirectLightingPass::render(const Math::Camera& _camera) {
   draw_textures.add(m_ibl->scale_bias());
 
   m_frontend->draw(
-          RX_RENDER_TAG("indirect lighting pass"),
-          state,
-          m_target,
-          draw_buffers,
-          nullptr,
-          program,
-          3,
-          0,
-          Render::Frontend::PrimitiveType::k_triangles,
-          draw_textures);
+    RX_RENDER_TAG("indirect lighting pass"),
+    state,
+    m_target,
+    draw_buffers,
+    nullptr,
+    program,
+    3,
+    0,
+    1,
+    Render::Frontend::PrimitiveType::k_triangles,
+    draw_textures);
 }
 
 void IndirectLightingPass::resize(const Math::Vec2z& _dimensions) {

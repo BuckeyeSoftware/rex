@@ -34,26 +34,27 @@ bool Model::upload() {
   m_frontend->destroy_buffer(RX_RENDER_TAG("model"), m_buffer);
   m_buffer = m_frontend->create_buffer(RX_RENDER_TAG("model"));
   m_buffer->record_type(Frontend::Buffer::Type::k_static);
+  m_buffer->record_instanced(false);
 
   if (m_model.is_animated()) {
     using Vertex = Rx::Model::Loader::AnimatedVertex;
     const auto &vertices = m_model.animated_vertices();
-    m_buffer->record_stride(sizeof(Vertex));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, normal));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, tangent));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec4b, offsetof(Vertex, blend_weights));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec4b, offsetof(Vertex, blend_indices));
+    m_buffer->record_vertex_stride(sizeof(Vertex));
+    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position));
+    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, normal));
+    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, tangent));
+    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate));
+    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec4b, offsetof(Vertex, blend_weights));
+    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec4b, offsetof(Vertex, blend_indices));
     m_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(Vertex));
   } else {
     using Vertex = Rx::Model::Loader::Vertex;
     const auto &vertices{m_model.vertices()};
-    m_buffer->record_stride(sizeof(Vertex));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, normal));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, tangent));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate));
+    m_buffer->record_vertex_stride(sizeof(Vertex));
+    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position));
+    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, normal));
+    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, tangent));
+    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate));
     m_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(Vertex));
   }
 
@@ -213,16 +214,17 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     state.cull.record_enable(!material.alpha_test());
 
     m_frontend->draw(
-            RX_RENDER_TAG("model mesh"),
-            state,
-            _target,
-            draw_buffers,
-            m_buffer,
-            program,
-            _mesh.count,
-            _mesh.offset,
-            Render::Frontend::PrimitiveType::k_triangles,
-            draw_textures);
+      RX_RENDER_TAG("model mesh"),
+      state,
+      _target,
+      draw_buffers,
+      m_buffer,
+      program,
+      _mesh.count,
+      _mesh.offset,
+      1,
+      Render::Frontend::PrimitiveType::k_triangles,
+      draw_textures);
 
     return true;
   });

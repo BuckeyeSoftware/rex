@@ -52,7 +52,7 @@ void RenderStats::render() {
   }};
 
   auto render_stat{[&](const char *_label, const auto &_stats) {
-    const auto format{
+    const auto format =
       String::format(
         "^w%s: ^[%x]%zu ^wof ^m%zu ^g%s ^w(%zu cached)",
         _label,
@@ -60,35 +60,35 @@ void RenderStats::render() {
         _stats.used,
         _stats.total,
         String::human_size_format(_stats.memory),
-        _stats.cached)};
+        _stats.cached);
 
     m_immediate->frame_queue().record_text(
-            *font_name,
-            offset,
-            *font_size,
-            1.0f,
-            Render::Immediate2D::TextAlign::k_left,
-            format,
-            {1.0f, 1.0f, 1.0f, 1.0f});
+      *font_name,
+      offset,
+      *font_size,
+      1.0f,
+      Render::Immediate2D::TextAlign::k_left,
+      format,
+      {1.0f, 1.0f, 1.0f, 1.0f});
 
     offset.y += *font_size;
   }};
 
-  const auto &command_buffer{frontend.get_command_buffer()};
-  const Size commands_used{command_buffer.used()};
-  const Size commands_total{command_buffer.size()};
+  const auto &command_buffer = frontend.get_command_buffer();
+  const Size commands_used = command_buffer.used();
+  const Size commands_total = command_buffer.size();
   m_immediate->frame_queue().record_text(
-          *font_name,
-          offset,
-          *font_size,
-          1.0f,
-          Render::Immediate2D::TextAlign::k_left,
-          String::format(
+    *font_name,
+    offset,
+    *font_size,
+    1.0f,
+    Render::Immediate2D::TextAlign::k_left,
+    String::format(
       "commands: ^[%x]%s ^wof ^g%s",
       color_ratio(commands_used, commands_total),
       String::human_size_format(commands_used),
       String::human_size_format(commands_total)),
-          {1.0f, 1.0f, 1.0f, 1.0f});
+    {1.0f, 1.0f, 1.0f, 1.0f});
 
   offset.y += *font_size;
 
@@ -102,13 +102,13 @@ void RenderStats::render() {
 
   auto render_number{[&](const char* _name, Size _number) {
     m_immediate->frame_queue().record_text(
-            *font_name,
-            offset,
-            *font_size,
-            1.0f,
-            Render::Immediate2D::TextAlign::k_left,
-            String::format("%s: %zu", _name, _number),
-            {1.0f, 1.0f, 1.0f, 1.0f});
+      *font_name,
+      offset,
+      *font_size,
+      1.0f,
+      Render::Immediate2D::TextAlign::k_left,
+      String::format("%s: %zu", _name, _number),
+      {1.0f, 1.0f, 1.0f, 1.0f});
     offset.y += *font_size;
   }};
 
@@ -118,23 +118,32 @@ void RenderStats::render() {
   render_number("vertices", frontend.vertices());
   render_number("blits", frontend.blit_calls());
   render_number("clears", frontend.clear_calls());
-  render_number("draws", frontend.draw_calls());
+
+  m_immediate->frame_queue().record_text(
+    *font_name,
+    offset,
+    *font_size,
+    1.0f,
+    Render::Immediate2D::TextAlign::k_left,
+    String::format("draws: %zu (%zu instanced)", frontend.draw_calls(), frontend.instanced_draw_calls()),
+    {1.0f, 1.0f, 1.0f, 1.0f});
+  offset.y += *font_size;
 
   const Math::Vec2f &screen_size{frontend.swapchain()->dimensions().cast<Float32>()};
 
   // mspf and fps
   const auto& _timer{frontend.timer()};
   m_immediate->frame_queue().record_text(
-          *font_name,
-          screen_size - Math::Vec2f{25, 25},
-          *font_size,
-          1.0f,
-          Render::Immediate2D::TextAlign::k_right,
-          String::format(
+    *font_name,
+    screen_size - Math::Vec2f{25, 25},
+    *font_size,
+    1.0f,
+    Render::Immediate2D::TextAlign::k_right,
+    String::format(
       "MSPF: %.2f | FPS: %d",
       _timer.mspf(),
       _timer.fps()),
-          {1.0f, 1.0f, 1.0f, 1.0f});
+    {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
 } // namespace rx::hud

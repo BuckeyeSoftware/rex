@@ -19,6 +19,7 @@ GLenum convert_texture_data_type(Frontend::Texture::DataFormat _data_format);
 GLenum convert_texture_format(Frontend::Texture::DataFormat _data_format);
 GLenum convert_primitive_type(Frontend::PrimitiveType _primitive_type);
 GLenum convert_texture_wrap(const Frontend::Texture::WrapType _type);
+GLenum convert_element_type(Frontend::Buffer::ElementType _element_type);
 
 struct Filter {
   GLuint min;

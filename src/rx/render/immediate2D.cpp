@@ -414,12 +414,13 @@ Immediate2D::Immediate2D(Frontend::Context* _frontend)
 
   for (Size i{0}; i < k_buffers; i++) {
     m_buffers[i] = m_frontend->create_buffer(RX_RENDER_TAG("immediate2D"));
-    m_buffers[i]->record_stride(sizeof(Vertex));
     m_buffers[i]->record_type(Frontend::Buffer::Type::k_dynamic);
+    m_buffers[i]->record_instanced(false);
     m_buffers[i]->record_element_type(Frontend::Buffer::ElementType::k_u32);
-    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, position));
-    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate));
-    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, color));
+    m_buffers[i]->record_vertex_stride(sizeof(Vertex));
+    m_buffers[i]->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, position));
+    m_buffers[i]->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate));
+    m_buffers[i]->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, color));
     m_frontend->initialize_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[i]);
   }
 }
@@ -556,45 +557,48 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
       switch (_batch.type) {
       case Batch::Type::k_triangles:
         m_frontend->draw(
-                RX_RENDER_TAG("immediate2D triangles"),
-                _batch.render_state,
-                _target,
-                draw_buffers,
-                m_buffers[m_rd_index],
-                m_technique->variant(0),
-                _batch.count,
-                _batch.offset,
-                Frontend::PrimitiveType::k_triangles,
-                {});
+          RX_RENDER_TAG("immediate2D triangles"),
+          _batch.render_state,
+          _target,
+          draw_buffers,
+          m_buffers[m_rd_index],
+          m_technique->variant(0),
+          _batch.count,
+          _batch.offset,
+          1,
+          Frontend::PrimitiveType::k_triangles,
+          {});
           break;
       case Batch::Type::k_lines:
         m_frontend->draw(
-                RX_RENDER_TAG("immediate2D lines"),
-                _batch.render_state,
-                _target,
-                draw_buffers,
-                m_buffers[m_rd_index],
-                m_technique->variant(0),
-                _batch.count,
-                _batch.offset,
-                Frontend::PrimitiveType::k_lines,
-                {});
+          RX_RENDER_TAG("immediate2D lines"),
+          _batch.render_state,
+          _target,
+          draw_buffers,
+          m_buffers[m_rd_index],
+          m_technique->variant(0),
+          _batch.count,
+          _batch.offset,
+          1,
+          Frontend::PrimitiveType::k_lines,
+          {});
           break;
       case Batch::Type::k_text:
         draw_textures.clear();
         draw_textures.add(_batch.texture);
 
         m_frontend->draw(
-                RX_RENDER_TAG("immediate2D text"),
-                _batch.render_state,
-                _target,
-                draw_buffers,
-                m_buffers[m_rd_index],
-                m_technique->variant(1),
-                _batch.count,
-                _batch.offset,
-                Frontend::PrimitiveType::k_triangles,
-                draw_textures);
+          RX_RENDER_TAG("immediate2D text"),
+          _batch.render_state,
+          _target,
+          draw_buffers,
+          m_buffers[m_rd_index],
+          m_technique->variant(1),
+          _batch.count,
+          _batch.offset,
+          1,
+          Frontend::PrimitiveType::k_triangles,
+          draw_textures);
         break;
       default:
         break;

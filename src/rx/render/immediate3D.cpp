@@ -161,6 +161,7 @@ Immediate3D::Immediate3D(Frontend::Context* _frontend)
   , m_batches{m_frontend->allocator()}
   , m_vertex_index{0}
   , m_element_index{0}
+  , m_instance_index{0}
   , m_rd_index{1}
   , m_wr_index{0}
 {
@@ -171,12 +172,18 @@ Immediate3D::Immediate3D(Frontend::Context* _frontend)
 
   for (Size i{0}; i < k_buffers; i++) {
     m_buffers[i] = m_frontend->create_buffer(RX_RENDER_TAG("immediate3D"));
-    m_buffers[i]->record_stride(sizeof(Vertex));
     m_buffers[i]->record_type(Frontend::Buffer::Type::k_dynamic);
     m_buffers[i]->record_element_type(Frontend::Buffer::ElementType::k_u32);
-    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position));
-    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, offsetof(Vertex, size));
-    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, color));
+
+    m_buffers[i]->record_instanced(true);
+    m_buffers[i]->record_instance_stride(sizeof(Math::Mat4x4f));
+    m_buffers[i]->record_instance_attribute(Frontend::Buffer::Attribute::Type::k_mat4x4f, 0);
+
+    m_buffers[i]->record_vertex_stride(sizeof(Vertex));
+    m_buffers[i]->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position));
+    m_buffers[i]->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_f32, offsetof(Vertex, size));
+    m_buffers[i]->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, color));
+
     m_frontend->initialize_buffer(RX_RENDER_TAG("immediate3D"), m_buffers[i]);
   }
 }
@@ -204,22 +211,27 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     // calculate storage needed
     Size n_vertices = 0;
     Size n_elements = 0;
+    Size n_instances = 0;
     m_queue.m_commands.each_fwd([&](const Queue::Command& _command) {
       switch (_command.kind) {
       case Queue::Command::Type::k_point:
         size_point(n_vertices, n_elements);
+        n_instances++;
         break;
       case Queue::Command::Type::k_line:
         size_line(n_vertices, n_elements);
+        n_instances++;
         break;
       case Queue::Command::Type::k_solid_sphere:
         size_solid_sphere(
           _command.as_solid_sphere.slices_and_stacks,
           n_vertices,
           n_elements);
+        n_instances++;
         break;
       case Queue::Command::Type::k_solid_cube:
         size_solid_cube(n_vertices, n_elements);
+        n_instances++;
         break;
       default:
         break;
@@ -229,6 +241,7 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     // allocate storage
     m_vertices = (Vertex*)m_buffers[m_wr_index]->map_vertices(n_vertices * sizeof(Vertex));
     m_elements = (Uint32*)m_buffers[m_wr_index]->map_elements(n_elements * sizeof(Uint32));
+    m_instances = (Math::Mat4x4f*)m_buffers[m_wr_index]->map_instances(n_instances * sizeof(Math::Mat4x4f));
 
     // generate geometry for a future frame
     m_queue.m_commands.each_fwd([this](const Queue::Command& _command) {
@@ -267,15 +280,18 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     // Record the edit.
     m_buffers[m_wr_index]->record_vertices_edit(0, n_vertices * sizeof(Vertex));
     m_buffers[m_wr_index]->record_elements_edit(0, n_elements * sizeof(Uint32));
+    m_buffers[m_wr_index]->record_instances_edit(0, n_instances * sizeof(Math::Mat4x4f));
     m_frontend->update_buffer(RX_RENDER_TAG("immediate3D"), m_buffers[m_wr_index]);
 
     // Clear staging buffers
     m_vertices = nullptr;
     m_elements = nullptr;
+    m_instances = nullptr;
 
     // Reset indices
     m_vertex_index = 0;
     m_element_index = 0;
+    m_instance_index = 0;
 
     // Write buffer will be processed some time in the future
     m_render_batches[m_wr_index] = Utility::move(m_batches);
@@ -286,11 +302,10 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
 
   // if the last queue has any draw commands, render them now
   if (!last_empty) {
-    m_technique->variant(0)->uniforms()[0].record_mat4x4f(_view);
-    m_technique->variant(0)->uniforms()[1].record_mat4x4f(_projection);
-
-    m_technique->variant(1)->uniforms()[0].record_mat4x4f(_view);
-    m_technique->variant(1)->uniforms()[1].record_mat4x4f(_projection);
+    for (Size i = 0; i < 3; i++) {
+      m_technique->variant(i)->uniforms()[0].record_mat4x4f(_view);
+      m_technique->variant(i)->uniforms()[1].record_mat4x4f(_projection);
+    }
 
     // process the batches
     m_render_batches[m_rd_index].each_fwd([&](Batch& _batch) {
@@ -305,44 +320,47 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
         break;
       case Queue::Command::Type::k_point:
         m_frontend->draw(
-                RX_RENDER_TAG("immediate3D points"),
-                _batch.render_state,
-                _target,
-                draw_buffers,
-                m_buffers[m_rd_index],
-                m_technique->variant(1),
-                _batch.count,
-                _batch.offset,
-                Frontend::PrimitiveType::k_points,
-                {});
+          RX_RENDER_TAG("immediate3D points"),
+          _batch.render_state,
+          _target,
+          draw_buffers,
+          m_buffers[m_rd_index],
+          m_technique->variant(2),
+          _batch.count,
+          _batch.offset,
+          1,
+          Frontend::PrimitiveType::k_points,
+          {});
         break;
       case Queue::Command::Type::k_line:
         m_frontend->draw(
-                RX_RENDER_TAG("immediate3D lines"),
-                _batch.render_state,
-                _target,
-                draw_buffers,
-                m_buffers[m_rd_index],
-                m_technique->variant(0),
-                _batch.count,
-                _batch.offset,
-                Frontend::PrimitiveType::k_lines,
-                {});
+          RX_RENDER_TAG("immediate3D lines"),
+          _batch.render_state,
+          _target,
+          draw_buffers,
+          m_buffers[m_rd_index],
+          m_technique->variant(0),
+          _batch.count,
+          _batch.offset,
+          1,
+          Frontend::PrimitiveType::k_lines,
+          {});
         break;
       case Queue::Command::Type::k_solid_sphere:
         [[fallthrough]];
       case Queue::Command::Type::k_solid_cube:
         m_frontend->draw(
-                RX_RENDER_TAG("immediate3D triangles"),
-                _batch.render_state,
-                _target,
-                draw_buffers,
-                m_buffers[m_rd_index],
-                m_technique->variant(0),
-                _batch.count,
-                _batch.offset,
-                Frontend::PrimitiveType::k_triangles,
-                {});
+          RX_RENDER_TAG("immediate3D triangles"),
+          _batch.render_state,
+          _target,
+          draw_buffers,
+          m_buffers[m_rd_index],
+          m_technique->variant(_batch.instances > 1 ? 1 : 0),
+          _batch.count,
+          _batch.offset,
+          _batch.instances,
+          Frontend::PrimitiveType::k_triangles,
+          {});
         break;
       }
     });
@@ -356,8 +374,8 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
 void Immediate3D::generate_point(const Math::Vec3f& _position, Float32 _size,
                                  const Math::Vec4f& _color, Uint32 _flags)
 {
-  const auto offset{m_element_index};
-  const auto element{static_cast<Uint32>(m_vertex_index)};
+  const auto offset = m_element_index;
+  const auto element = static_cast<Uint32>(m_vertex_index);
 
   add_element(element);
   add_vertex({_position, _size, _color});
@@ -368,8 +386,8 @@ void Immediate3D::generate_point(const Math::Vec3f& _position, Float32 _size,
 void Immediate3D::generate_line(const Math::Vec3f& _point_a,
                                 const Math::Vec3f& _point_b, const Math::Vec4f& _color, Uint32 _flags)
 {
-  const auto offset{m_element_index};
-  const auto element{static_cast<Uint32>(m_vertex_index)};
+  const auto offset = m_element_index;
+  const auto element = static_cast<Uint32>(m_vertex_index);
 
   add_element(element + 0);
   add_element(element + 1);
@@ -395,7 +413,8 @@ void Immediate3D::generate_solid_sphere(const Math::Vec2f& _slices_and_stacks,
     return {cos_x * sin_y, cos_y, sin_x * sin_y};
   }};
 
-  const auto offset{m_element_index};
+  const auto offset = m_element_index;
+
   for (Float32 i{0.0f}; i < _slices_and_stacks.x; i++) {
     for (Float32 j{0.0f}; j < _slices_and_stacks.y; j++) {
       const Float32 ua{i * step.x + begin.x};
@@ -433,8 +452,8 @@ void Immediate3D::generate_solid_cube(const Math::Mat4x4f& _transform,
   const Float32 min[]{-1.0f, -1.0f, -1.0f};
   const Float32 max[]{1.0f, 1.0f, 1.0f};
 
-  auto offset{m_element_index};
-  auto element{static_cast<Uint32>(m_vertex_index)};
+  auto offset = m_element_index;
+  auto element = static_cast<Uint32>(m_vertex_index);
 
   auto face{[&, this](const Math::Vec3f& _a, const Math::Vec3f& _b,
                       const Math::Vec3f& _c, const Math::Vec3f& _d)
@@ -556,7 +575,7 @@ void Immediate3D::add_batch(Size _offset, Queue::Command::Type _type,
     }
   }
 
-  m_batches.push_back({_offset, count, _type, render_state});
+  m_batches.push_back({count, _offset, 1, _type, render_state});
 }
 
 void Immediate3D::add_element(Uint32 _element) {
@@ -565,6 +584,10 @@ void Immediate3D::add_element(Uint32 _element) {
 
 void Immediate3D::add_vertex(Vertex&& vertex_) {
   m_vertices[m_vertex_index++] = Utility::move(vertex_);
+}
+
+void Immediate3D::add_instance(Math::Mat4x4f&& instance_) {
+  m_instances[m_instance_index++] = Utility::move(instance_);
 }
 
 } // namespace rx::render

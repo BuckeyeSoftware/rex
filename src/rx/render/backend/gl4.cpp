@@ -42,6 +42,7 @@ static void (GLAPIENTRYP pglVertexArrayElementBuffer)(GLuint, GLuint);
 static void (GLAPIENTRYP pglEnableVertexArrayAttrib)(GLuint, GLuint);
 static void (GLAPIENTRYP pglVertexArrayAttribFormat)(GLuint, GLuint, GLint, GLenum, GLboolean, GLuint);
 static void (GLAPIENTRYP pglVertexArrayAttribBinding)(GLuint, GLuint, GLuint);
+static void (GLAPIENTRYP pglVertexArrayBindingDivisor)(GLuint, GLuint, GLuint);
 static void (GLAPIENTRYP pglBindVertexArray)(GLuint);
 
 // textures
@@ -130,10 +131,17 @@ static const GLubyte* (GLAPIENTRYP pglGetStringi)(GLenum, GLuint);
 
 // draw calls
 static void (GLAPIENTRYP pglDrawArrays)(GLenum, GLint, GLsizei);
+static void (GLAPIENTRYP pglDrawArraysInstanced)(GLenum, GLint, GLsizei, GLsizei);
 static void (GLAPIENTRYP pglDrawElements)(GLenum, GLsizei, GLenum, const GLvoid*);
+static void (GLAPIENTRYP pglDrawElementsInstanced)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei);
 
+// flush
 static void (GLAPIENTRYP pglFinish)(void);
 
+// ARB_texture_filter_anisotropic
+//
+// Supported by our version of OpenGL here, but we have to define the enum
+// values if not defined because SDL_opengl.h
 #ifndef GL_TEXTURE_MAX_ANISOTROPY
 #define GL_TEXTURE_MAX_ANISOTROPY              0x84FE
 #endif
@@ -141,22 +149,30 @@ static void (GLAPIENTRYP pglFinish)(void);
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY          0x84FF
 #endif
 
+template<typename F>
+static void fetch(const char* _name, F& function_) {
+  auto address = SDL_GL_GetProcAddress(_name);
+  logger->verbose("loaded %08p '%s'", address, _name);
+  *reinterpret_cast<void**>(&function_) = address;
+}
+
 namespace detail_gl4 {
   struct buffer {
     buffer() {
-      pglCreateBuffers(2, bo);
+      pglCreateBuffers(3, bo);
       pglCreateVertexArrays(1, &va);
     }
 
     ~buffer() {
-      pglDeleteBuffers(2, bo);
+      pglDeleteBuffers(3, bo);
       pglDeleteVertexArrays(1, &va);
     }
 
-    GLuint bo[2];
+    GLuint bo[3];
     GLuint va;
     Size elements_size;
     Size vertices_size;
+    Size instances_size;
   };
 
   struct target {
@@ -661,13 +677,6 @@ namespace detail_gl4 {
   };
 }
 
-template<typename F>
-static void fetch(const char* _name, F& function_) {
-  auto address{SDL_GL_GetProcAddress(_name)};
-  logger->verbose("loaded %08p '%s'", address, _name);
-  *reinterpret_cast<void**>(&function_) = address;
-}
-
 static constexpr const char* inout_to_string(Frontend::Shader::InOutType _type) {
   switch (_type) {
   case Frontend::Shader::InOutType::k_mat4x4f:
@@ -885,6 +894,7 @@ bool GL4::init() {
   fetch("glEnableVertexArrayAttrib", pglEnableVertexArrayAttrib);
   fetch("glVertexArrayAttribFormat", pglVertexArrayAttribFormat);
   fetch("glVertexArrayAttribBinding", pglVertexArrayAttribBinding);
+  fetch("glVertexArrayBindingDivisor", pglVertexArrayBindingDivisor);
   fetch("glBindVertexArray", pglBindVertexArray);
 
   // textures
@@ -973,8 +983,11 @@ bool GL4::init() {
 
   // draw calls
   fetch("glDrawArrays", pglDrawArrays);
+  fetch("glDrawArraysInstanced", pglDrawArraysInstanced);
   fetch("glDrawElements", pglDrawElements);
+  fetch("glDrawElementsInstanced", pglDrawElementsInstanced);
 
+  // flush
   fetch("glFinish", pglFinish);
 
   m_impl = m_allocator.create<detail_gl4::state>(context);
@@ -1079,53 +1092,104 @@ void GL4::process(Byte* _command) {
       switch (resource->type) {
       case Frontend::ResourceCommand::Type::k_buffer:
         {
-          const auto render_buffer{resource->as_buffer};
-          auto buffer{reinterpret_cast<detail_gl4::buffer*>(render_buffer + 1)};
-          const auto& vertices{render_buffer->vertices()};
-          const auto& elements{render_buffer->elements()};
-          const auto type{render_buffer->type() == Frontend::Buffer::Type::k_dynamic
-            ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW};
+          auto render_buffer = resource->as_buffer;
+          auto buffer = reinterpret_cast<detail_gl4::buffer*>(render_buffer + 1);
 
-          if (vertices.size()) {
-            pglNamedBufferData(buffer->bo[0], vertices.size(), vertices.data(), type);
-            buffer->vertices_size = vertices.size();
-          } else {
-            pglNamedBufferData(buffer->bo[0], k_buffer_slab_size, nullptr, type);
-            buffer->vertices_size = k_buffer_slab_size;
-          }
+          const auto type = render_buffer->type() == Frontend::Buffer::Type::k_dynamic
+            ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
-          if (elements.size()) {
-            pglNamedBufferData(buffer->bo[1], elements.size(), elements.data(), type);
-            buffer->elements_size = elements.size();
-          } else {
-            pglNamedBufferData(buffer->bo[1], k_buffer_slab_size, nullptr, type);
-            buffer->elements_size = k_buffer_slab_size;
-          }
+          auto setup_attributes = [](GLuint _vao,
+                                     const Vector<Frontend::Buffer::Attribute>& attributes,
+                                     Size _index_offset,
+                                     bool _instanced)
+          {
+            const auto n_attributes = attributes.size();
+            Size count = 0;
+            for (Size i = 0; i < n_attributes; i++) {
+              const auto& attribute = attributes[i];
+              const auto index = static_cast<GLuint>(i + _index_offset);
+              const auto result = convert_attribute(attribute);
 
-          pglVertexArrayVertexBuffer(buffer->va, 0, buffer->bo[0], 0,
-            static_cast<GLsizei>(render_buffer->stride()));
-          pglVertexArrayElementBuffer(buffer->va, buffer->bo[1]);
-
-          const auto& attributes{render_buffer->attributes()};
-          for (Size i{0}; i < attributes.size(); i++) {
-            const auto& attribute = attributes[i];
-            const auto index = static_cast<GLuint>(i);
-
-            pglEnableVertexArrayAttrib(buffer->va, index);
-            pglVertexArrayAttribBinding(buffer->va, index, 0);
-
-            const auto result = convert_attribute(attribute);
-            Size offset = attribute.offset;
-            for (GLsizei j = 0; j < result.instances; j++) {
-              pglVertexArrayAttribFormat(
-                buffer->va,
-                index,
-                result.components,
-                result.type_enum,
-                GL_FALSE,
-                static_cast<GLsizei>(offset));
-              offset += result.type_size * result.components;
+              Size offset = attribute.offset;
+              for (GLsizei j = 0; j < result.instances; j++) {
+                pglEnableVertexArrayAttrib(_vao, index + j);
+                pglVertexArrayAttribBinding(_vao, index + j, _instanced ? 1 : 0);
+                pglVertexArrayAttribFormat(
+                  _vao,
+                  index + j,
+                  result.components,
+                  result.type_enum,
+                  GL_FALSE,
+                  static_cast<GLsizei>(offset));
+                offset += result.type_size * result.components;
+                count++;
+              }
             }
+
+            if (_instanced) {
+              pglVertexArrayBindingDivisor(_vao, 1, 1);
+            }
+            return count;
+          };
+
+          Size current_attribute = 0;
+
+          // Setup element buffer.
+          if (render_buffer->is_indexed()) {
+            const auto& elements = render_buffer->elements();
+            if (elements.is_empty()) {
+              pglNamedBufferData(buffer->bo[0], k_buffer_slab_size, nullptr, type);
+              buffer->elements_size = k_buffer_slab_size;
+            } else {
+              pglNamedBufferData(buffer->bo[0], elements.size(), elements.data(), type);
+              buffer->elements_size = elements.size();
+            }
+            pglVertexArrayElementBuffer(buffer->va, buffer->bo[0]);
+          }
+
+          // Setup vertex buffer and attributes.
+          const auto& vertices = render_buffer->vertices();
+          if (vertices.is_empty()) {
+            pglNamedBufferData(buffer->bo[1], k_buffer_slab_size, nullptr, type);
+            buffer->vertices_size = k_buffer_slab_size;
+          } else {
+            pglNamedBufferData(buffer->bo[1], vertices.size(), vertices.data(), type);
+            buffer->vertices_size = vertices.size();
+          }
+          pglVertexArrayVertexBuffer(
+            buffer->va,
+            0,
+            buffer->bo[1],
+            0,
+            static_cast<GLsizei>(render_buffer->vertex_stride()));
+          current_attribute = setup_attributes(
+            buffer->va,
+            render_buffer->vertex_attributes(),
+            current_attribute,
+            false);
+
+          // Setup instance buffer and attributes.
+          if (render_buffer->is_instanced()) {
+            const auto& instances = render_buffer->instances();
+            if (instances.size()) {
+              // Nearly all instanced data is going to be dynamic in nature.
+              pglNamedBufferData(buffer->bo[2], instances.size(), instances.data(), type);
+              buffer->instances_size = instances.size();
+            } else {
+              pglNamedBufferData(buffer->bo[2], k_buffer_slab_size, nullptr, type);
+              buffer->instances_size = k_buffer_slab_size;
+            }
+            pglVertexArrayVertexBuffer(
+              buffer->va,
+              1,
+              buffer->bo[2],
+              0,
+              static_cast<GLsizei>(render_buffer->instance_stride()));
+            current_attribute = setup_attributes(
+              buffer->va,
+              render_buffer->instance_attributes(),
+              current_attribute,
+              true);
           }
         }
         break;
@@ -1516,55 +1580,76 @@ void GL4::process(Byte* _command) {
       switch (resource->type) {
       case Frontend::UpdateCommand::Type::k_buffer:
         {
-          RX_PROFILE_CPU("buffer");
+          const auto render_buffer = resource->as_buffer;
+          const auto& vertices = render_buffer->vertices();
+          const auto type = render_buffer->type() == Frontend::Buffer::Type::k_dynamic
+              ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
-          const auto render_buffer{resource->as_buffer};
-          auto buffer{reinterpret_cast<detail_gl4::buffer*>(render_buffer + 1)};
-          const auto& vertices{render_buffer->vertices()};
-          const auto& elements{render_buffer->elements()};
-          const auto type{render_buffer->type() == Frontend::Buffer::Type::k_dynamic
-            ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW};
+          bool use_vertices_edits = false;
+          bool use_elements_edits = false;
+          bool use_instances_edits = false;
 
-          bool use_vertices_edits{false};
-          bool use_elements_edits{false};
+          auto buffer = reinterpret_cast<detail_gl4::buffer*>(render_buffer + 1);
+
+          // state->use_buffer(render_buffer);
+
+          // Check for element updates.
+          if (render_buffer->is_indexed()) {
+            const auto& elements = render_buffer->elements();
+            if (elements.size() > buffer->elements_size) {
+              pglNamedBufferData(buffer->bo[0], elements.size(), elements.data(), type);
+              buffer->elements_size = elements.size();
+            } else {
+              use_elements_edits = true;
+            }
+          }
+
           if (vertices.size() > buffer->vertices_size) {
-            // Respecify buffer storage if we exceed what is available to use.
+            pglNamedBufferData(buffer->bo[1], vertices.size(), vertices.data(), type);
             buffer->vertices_size = vertices.size();
-            pglNamedBufferData(buffer->bo[0], vertices.size(), vertices.data(), type);
           } else {
             use_vertices_edits = true;
           }
 
-          if (elements.size() > buffer->elements_size) {
-            // respecify buffer storage if we exceed what is available to use
-            buffer->elements_size = elements.size();
-            pglNamedBufferData(buffer->bo[1], elements.size(), elements.data(), type);
-          } else {
-            use_elements_edits = true;
+          // Check for instance updates.
+          if (render_buffer->is_instanced()) {
+            const auto& instances = render_buffer->instances();
+            if (instances.size() > buffer->instances_size) {
+              pglNamedBufferData(buffer->bo[2], instances.size(), instances.data(), type);
+              buffer->instances_size = instances.size();
+            } else {
+              use_instances_edits = true;
+            }
           }
 
           // Enumerate and apply all buffer edits.
-          if (use_vertices_edits || use_elements_edits) {
-            const Size* edit{resource->edit()};
+          if (use_vertices_edits || use_elements_edits || use_instances_edits) {
+            const Size* edit = resource->edit();
             for (Size i{0}; i < resource->edits; i++) {
               switch (edit[0]) {
-              case 0: // vertices
-                if (use_vertices_edits) {
-                  pglNamedBufferSubData(buffer->bo[0], edit[1], edit[2], vertices.data() + edit[1]);
-                }
-                break;
-              case 1: // elements
+              case 0:
                 if (use_elements_edits) {
-                  pglNamedBufferSubData(buffer->bo[1], edit[1], edit[2], elements.data() + edit[1]);
+                  const auto& elements = render_buffer->elements();
+                  pglNamedBufferSubData(buffer->bo[0], edit[1], edit[2], elements.data() + edit[1]);
                 }
                 break;
+              case 1:
+                if (use_vertices_edits) {
+                  pglNamedBufferSubData(buffer->bo[1], edit[1], edit[2], vertices.data() + edit[1]);
+                }
+                break;
+              case 2:
+                if (use_instances_edits) {
+                  const auto& instances = render_buffer->instances();
+                  pglNamedBufferSubData(buffer->bo[2], edit[1], edit[2], instances.data() + edit[1]);
+                }
               }
               edit += 3;
             }
           }
         }
         break;
-            case Frontend::UpdateCommand::Type::k_texture1D:
+      case Frontend::UpdateCommand::Type::k_texture1D:
         {
           // TODO(dweiler): implement
         }
@@ -1745,41 +1830,29 @@ void GL4::process(Byte* _command) {
         }
       }
 
+      const auto offset = static_cast<GLint>(command->offset);
+      const auto count = static_cast<GLsizei>(command->count);
+      const auto primitive_type = convert_primitive_type(command->type);
+
       if (render_buffer) {
-        switch (render_buffer->element_type()) {
-        case Frontend::Buffer::ElementType::k_u8:
-          pglDrawElements(
-            convert_primitive_type(command->type),
-            static_cast<GLsizei>(command->count),
-            GL_UNSIGNED_BYTE,
-            reinterpret_cast<void*>(sizeof(GLubyte) * command->offset));
-          break;
-        case Frontend::Buffer::ElementType::k_u16:
-          pglDrawElements(
-            convert_primitive_type(command->type),
-            static_cast<GLsizei>(command->count),
-            GL_UNSIGNED_SHORT,
-            reinterpret_cast<void*>(sizeof(GLushort) * command->offset));
-          break;
-        case Frontend::Buffer::ElementType::k_u32:
-          pglDrawElements(
-            convert_primitive_type(command->type),
-            static_cast<GLsizei>(command->count),
-            GL_UNSIGNED_INT,
-            reinterpret_cast<void*>(sizeof(GLuint) * command->offset));
-          break;
-        case Frontend::Buffer::ElementType::k_none:
-          pglDrawArrays(
-            convert_primitive_type(command->type),
-            static_cast<GLint>(command->offset),
-            static_cast<GLsizei>(command->count));
-          break;
+        const auto element_type = convert_element_type(render_buffer->element_type());
+        const auto indices = reinterpret_cast<const GLvoid*>(render_buffer->element_size() * command->offset);
+        if (command->instances > 1) {
+          if (render_buffer->is_indexed()) {
+            pglDrawElementsInstanced(primitive_type, count, element_type, indices, command->instances);
+          } else {
+            pglDrawArraysInstanced(primitive_type, offset, count, command->instances);
+          }
+        } else {
+          if (render_buffer->is_indexed()) {
+            pglDrawElements(primitive_type, count, element_type, indices);
+          } else {
+            pglDrawArrays(primitive_type, offset, count);
+          }
         }
       } else {
-        pglDrawArrays(
-          convert_primitive_type(command->type),
-          0,
-          static_cast<GLint>(command->count));
+        // Bufferless draw calls
+        pglDrawArrays(primitive_type, 0, count);
       }
     }
     break;

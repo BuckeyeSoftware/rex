@@ -133,6 +133,7 @@ struct DrawCommand {
   Program *render_program;
   Size count;
   Size offset;
+  Size instances;
   PrimitiveType type;
   Uint64 dirty_uniforms_bitset;
 
@@ -218,7 +219,7 @@ struct UpdateCommand {
   //
   // Buffer edits are represented by a three-tuple of integers of the format
   // {
-  //   sink:   sink to edit: 0 = vertex, 1 = element
+  //   sink:   sink to edit: 0 = elements, 1 = vertices, 2 = instances
   //   offset: byte offset
   //   size:   size in bytes
   // }
