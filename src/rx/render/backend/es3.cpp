@@ -1221,13 +1221,12 @@ void ES3::process(Byte* _command) {
           if (render_buffer->is_instanced()) {
             const auto& instances = render_buffer->instances();
             state->use_vbo(buffer->bo[2]);
-            if (instances.size()) {
-              // Nearly all instanced data is going to be dynamic in nature.
-              pglBufferData(GL_ARRAY_BUFFER, instances.size(), instances.data(), type);
-              buffer->instances_size = instances.size();
-            } else {
+            if (instances.is_empty()) {
               pglBufferData(GL_ARRAY_BUFFER, k_buffer_slab_size, nullptr, type);
               buffer->instances_size = k_buffer_slab_size;
+            } else {
+              pglBufferData(GL_ARRAY_BUFFER, instances.size(), instances.data(), type);
+              buffer->instances_size = instances.size();
             }
             current_attribute = setup_attributes(
               render_buffer->instance_attributes(),

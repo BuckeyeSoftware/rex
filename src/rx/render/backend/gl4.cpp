@@ -1171,13 +1171,12 @@ void GL4::process(Byte* _command) {
           // Setup instance buffer and attributes.
           if (render_buffer->is_instanced()) {
             const auto& instances = render_buffer->instances();
-            if (instances.size()) {
-              // Nearly all instanced data is going to be dynamic in nature.
-              pglNamedBufferData(buffer->bo[2], instances.size(), instances.data(), type);
-              buffer->instances_size = instances.size();
-            } else {
+            if (instances.is_empty()) {
               pglNamedBufferData(buffer->bo[2], k_buffer_slab_size, nullptr, type);
               buffer->instances_size = k_buffer_slab_size;
+            } else {
+              pglNamedBufferData(buffer->bo[2], instances.size(), instances.data(), type);
+              buffer->instances_size = instances.size();
             }
             pglVertexArrayVertexBuffer(
               buffer->va,
@@ -1590,8 +1589,6 @@ void GL4::process(Byte* _command) {
           bool use_instances_edits = false;
 
           auto buffer = reinterpret_cast<detail_gl4::buffer*>(render_buffer + 1);
-
-          // state->use_buffer(render_buffer);
 
           // Check for element updates.
           if (render_buffer->is_indexed()) {
