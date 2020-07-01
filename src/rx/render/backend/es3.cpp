@@ -1,7 +1,6 @@
 #include "rx/render/backend/gl.h"
 #include "rx/render/backend/es3.h"
 
-#include "rx/render/frontend/buffer.h"
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/program.h"
 
@@ -1173,18 +1172,24 @@ void ES3::process(Byte* _command) {
 
             switch (attribute.type) {
             case Frontend::Buffer::Attribute::Type::k_f32:
+              [[fallthrough]];
+            case Frontend::Buffer::Attribute::Type::k_vec2f:
+              [[fallthrough]];
+            case Frontend::Buffer::Attribute::Type::k_vec3f:
+              [[fallthrough]];
+            case Frontend::Buffer::Attribute::Type::k_vec4f:
               pglVertexAttribPointer(
                 index,
-                static_cast<GLsizei>(attribute.count),
+                count_for_attribute_type(attribute.type),
                 GL_FLOAT,
                 GL_FALSE,
                 render_buffer->stride(),
                 reinterpret_cast<const GLvoid*>(attribute.offset));
               break;
-            case Frontend::Buffer::Attribute::Type::k_u8:
+            case Frontend::Buffer::Attribute::Type::k_vec4b:
               pglVertexAttribPointer(
                 index,
-                static_cast<GLsizei>(attribute.count),
+                4,
                 GL_UNSIGNED_BYTE,
                 GL_FALSE,
                 render_buffer->stride(),

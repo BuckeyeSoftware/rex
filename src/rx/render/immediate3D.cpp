@@ -174,9 +174,9 @@ Immediate3D::Immediate3D(Frontend::Context* _frontend)
     m_buffers[i]->record_stride(sizeof(Vertex));
     m_buffers[i]->record_type(Frontend::Buffer::Type::k_dynamic);
     m_buffers[i]->record_element_type(Frontend::Buffer::ElementType::k_u32);
-    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 3, offsetof(Vertex, position));
-    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 1, offsetof(Vertex, size));
-    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 4, offsetof(Vertex, color));
+    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position));
+    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, offsetof(Vertex, size));
+    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, color));
     m_frontend->initialize_buffer(RX_RENDER_TAG("immediate3D"), m_buffers[i]);
   }
 }

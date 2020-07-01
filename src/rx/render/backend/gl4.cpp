@@ -1,11 +1,8 @@
 #include "rx/render/backend/gl.h"
 #include "rx/render/backend/gl4.h"
 
-#include "rx/render/frontend/command.h"
-#include "rx/render/frontend/buffer.h"
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/program.h"
-#include "rx/render/frontend/texture.h"
 
 #include "rx/core/algorithm/max.h"
 #include "rx/core/math/log2.h"
@@ -1116,19 +1113,25 @@ void GL4::process(Byte* _command) {
             pglEnableVertexArrayAttrib(buffer->va, index);
             switch (attribute.type) {
             case Frontend::Buffer::Attribute::Type::k_f32:
+              [[fallthrough]];
+            case Frontend::Buffer::Attribute::Type::k_vec2f:
+              [[fallthrough]];
+            case Frontend::Buffer::Attribute::Type::k_vec3f:
+              [[fallthrough]];
+            case Frontend::Buffer::Attribute::Type::k_vec4f:
               pglVertexArrayAttribFormat(
                 buffer->va,
                 index,
-                static_cast<GLsizei>(attribute.count),
+                count_for_attribute_type(attribute.type),
                 GL_FLOAT,
                 GL_FALSE,
                 static_cast<GLsizei>(attribute.offset));
               break;
-            case Frontend::Buffer::Attribute::Type::k_u8:
+            case Frontend::Buffer::Attribute::Type::k_vec4b:
               pglVertexArrayAttribFormat(
                 buffer->va,
                 index,
-                static_cast<GLsizei>(attribute.count),
+                4,
                 GL_UNSIGNED_BYTE,
                 GL_FALSE,
                 static_cast<GLsizei>(attribute.offset));

@@ -39,21 +39,21 @@ bool Model::upload() {
     using Vertex = Rx::Model::Loader::AnimatedVertex;
     const auto &vertices = m_model.animated_vertices();
     m_buffer->record_stride(sizeof(Vertex));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 3, offsetof(Vertex, position));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 3, offsetof(Vertex, normal));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 4, offsetof(Vertex, tangent));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 2, offsetof(Vertex, coordinate));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_u8, 4, offsetof(Vertex, blend_weights));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_u8, 4, offsetof(Vertex, blend_indices));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, normal));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, tangent));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec4b, offsetof(Vertex, blend_weights));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec4b, offsetof(Vertex, blend_indices));
     m_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(Vertex));
   } else {
     using Vertex = Rx::Model::Loader::Vertex;
     const auto &vertices{m_model.vertices()};
     m_buffer->record_stride(sizeof(Vertex));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 3, offsetof(Vertex, position));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 3, offsetof(Vertex, normal));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 4, offsetof(Vertex, tangent));
-    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 2, offsetof(Vertex, coordinate));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, normal));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, tangent));
+    m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate));
     m_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(Vertex));
   }
 

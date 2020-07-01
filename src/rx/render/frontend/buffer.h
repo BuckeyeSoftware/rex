@@ -11,10 +11,12 @@ struct Context;
 struct Buffer : Resource {
   struct Attribute {
     enum class Type {
-      k_f32,
-      k_u8
+      k_f32,   // 1 x Float32
+      k_vec2f, // 2 x Float32
+      k_vec3f, // 3 x Float32
+      k_vec4f, // 4 x Float32
+      k_vec4b  // 4 x Byte
     };
-    Size count;
     Size offset;
     Type type;
   };
@@ -54,8 +56,8 @@ struct Buffer : Resource {
   // map |_size| bytes of elements
   Byte* map_elements(Size _size);
 
-  // record attribute of |_count| elements of |_type| starting at |_offset|
-  void record_attribute(Attribute::Type _type, Size _count, Size _offset);
+  // record attribute of of |_type| starting at |_offset|
+  void record_attribute(Attribute::Type _type, Size _offset);
 
   // record buffer Type |_type|
   void record_type(Type _type);
@@ -123,11 +125,10 @@ inline void Buffer::write_elements(const T* _data, Size _size) {
   }
 }
 
-inline void Buffer::record_attribute(Attribute::Type _type, Size _count,
-  Size _offset)
+inline void Buffer::record_attribute(Attribute::Type _type, Size _offset)
 {
   m_recorded |= k_attribute;
-  m_attributes.push_back({_count, _offset, _type});
+  m_attributes.push_back({_offset, _type});
 }
 
 inline void Buffer::record_type(Type _type) {

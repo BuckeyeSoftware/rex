@@ -417,9 +417,9 @@ Immediate2D::Immediate2D(Frontend::Context* _frontend)
     m_buffers[i]->record_stride(sizeof(Vertex));
     m_buffers[i]->record_type(Frontend::Buffer::Type::k_dynamic);
     m_buffers[i]->record_element_type(Frontend::Buffer::ElementType::k_u32);
-    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 2, offsetof(Vertex, position));
-    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 2, offsetof(Vertex, coordinate));
-    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 4, offsetof(Vertex, color));
+    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, position));
+    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate));
+    m_buffers[i]->record_attribute(Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, color));
     m_frontend->initialize_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[i]);
   }
 }

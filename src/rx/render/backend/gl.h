@@ -2,6 +2,7 @@
 #define RX_RENDER_BACKEND_GL_H
 #include "rx/render/frontend/state.h"
 #include "rx/render/frontend/texture.h"
+#include "rx/render/frontend/buffer.h"
 #include "rx/render/frontend/command.h"
 
 #include <SDL_video.h> // SDL_GL_GetProcAddress
@@ -29,6 +30,23 @@ Filter convert_texture_filter(const Frontend::Texture::FilterOptions& _filter_op
 template<typename... Ts>
 inline bool requires_border_color(Ts... _types) {
   return ((_types == GL_CLAMP_TO_BORDER) || ...);
+}
+
+inline GLsizei count_for_attribute_type(Frontend::Buffer::Attribute::Type _type) {
+  using Type = Frontend::Buffer::Attribute::Type;
+  switch (_type) {
+  case Type::k_f32:
+    return 1;
+  case Type::k_vec2f:
+    return 2;
+  case Type::k_vec3f:
+    return 3;
+  case Type::k_vec4f:
+    [[fallthrough]];
+  case Type::k_vec4b:
+    return 4;
+  }
+  RX_HINT_UNREACHABLE();
 }
 
 } // namespace rx::render

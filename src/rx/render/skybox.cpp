@@ -45,7 +45,7 @@ Skybox::Skybox(Frontend::Context* _frontend)
   m_buffer = m_frontend->create_buffer(RX_RENDER_TAG("skybox"));
   m_buffer->record_type(Frontend::Buffer::Type::k_static);
   m_buffer->record_element_type(Frontend::Buffer::ElementType::k_u8);
-  m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_f32, 3, 0);
+  m_buffer->record_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, 0);
   m_buffer->record_stride(sizeof(Math::Vec3f));
   m_buffer->write_vertices(k_skybox_vertices, sizeof k_skybox_vertices);
   m_buffer->write_elements(k_skybox_elements, sizeof k_skybox_elements);
