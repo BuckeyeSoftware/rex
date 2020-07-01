@@ -298,11 +298,11 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
 
   // Render all the joints.
   for (Size i{0}; i < joints.size(); i++) {
-    const Math::Mat3x4f& frame{m_animation->frames()[i] * joints[i].frame};
+    const Math::Mat3x4f& frame = m_animation->frames()[i] * joints[i].frame;
 
-    const Math::Vec3f& x{Math::normalize({frame.x.x, frame.y.x, frame.z.x})};
-    const Math::Vec3f& y{Math::normalize({frame.x.y, frame.y.y, frame.z.y})};
-    const Math::Vec3f& z{Math::normalize({frame.x.z, frame.y.z, frame.z.z})};
+    const Math::Vec3f& x = Math::normalize({frame.x.x, frame.y.x, frame.z.x});
+    const Math::Vec3f& y = Math::normalize({frame.x.y, frame.y.y, frame.z.y});
+    const Math::Vec3f& z = Math::normalize({frame.x.z, frame.y.z, frame.z.z});
     const Math::Vec3f& w{frame.x.w, frame.y.w, frame.z.w};
 
     const Math::Mat4x4f& joint{{x.x, x.y, x.z, 0.0f},
@@ -310,11 +310,13 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
                                {z.x, z.y, z.z, 0.0f},
                                {w.x, w.y, w.z, 1.0f}};
 
+    const auto scale = m_aabb.scale().max_element() * 0.01f;
+
     _immediate->frame_queue().record_solid_sphere(
-            {16.0f, 16.0f},
-            {0.5f, 0.5f, 1.0f, 1.0f},
-            Math::Mat4x4f::scale(m_aabb.scale() * 0.01f) * joint * _world,
-            0);
+      {16.0f, 16.0f},
+      {0.5f, 0.5f, 1.0f, 1.0f},
+      Math::Mat4x4f::scale({scale, scale, scale}) * joint * _world,
+      0);
   }
 
   // Render the skeleton.
@@ -329,10 +331,10 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
       const Math::Vec3f& parent_position{parent_frame.x.w, parent_frame.y.w, parent_frame.z.w};
 
       _immediate->frame_queue().record_line(
-              Math::Mat4x4f::transform_point(w, _world),
-              Math::Mat4x4f::transform_point(parent_position, _world),
-              {0.5f, 0.5f, 1.0f, 1.0f},
-              0);
+        Math::Mat4x4f::transform_point(w, _world),
+        Math::Mat4x4f::transform_point(parent_position, _world),
+        {0.5f, 0.5f, 1.0f, 1.0f},
+        0);
     }
   }
 }
