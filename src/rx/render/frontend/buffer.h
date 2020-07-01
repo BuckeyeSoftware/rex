@@ -11,12 +11,19 @@ struct Context;
 struct Buffer : Resource {
   struct Attribute {
     enum class Type {
-      k_f32,   // 1 x Float32
-      k_vec2f, // 2 x Float32
-      k_vec3f, // 3 x Float32
-      k_vec4f, // 4 x Float32
-      k_vec4b  // 4 x Byte
+      // Scalars
+      k_f32,    // 1 x Float32
+
+      // Vectors
+      k_vec2f,  // 2 x Float32
+      k_vec3f,  // 3 x Float32
+      k_vec4f,  // 4 x Float32
+      k_vec4b,  // 4 x Byte
+
+      // Matrices
+      k_mat4x4f // 4x4 x Float32
     };
+
     Size offset;
     Type type;
   };

@@ -1166,18 +1166,23 @@ void ES3::process(Byte* _command) {
 
           const auto& attributes{render_buffer->attributes()};
           for (Size i{0}; i < attributes.size(); i++) {
-            const auto& attribute{attributes[i]};
-            const auto index{static_cast<GLuint>(i)};
+            const auto& attribute = attributes[i];
+            const auto index = static_cast<GLuint>(i);
+
             pglEnableVertexAttribArray(index);
 
             const auto result = convert_attribute(attribute);
-            pglVertexAttribPointer(
-              index,
-              result.count,
-              result.type,
-              GL_FALSE,
-              render_buffer->stride(),
-              reinterpret_cast<const GLvoid*>(attribute.offset));
+            Size offset = attribute.offset;
+            for (GLsizei j = 0; j < result.instances; j++) {
+              pglVertexAttribPointer(
+                index,
+                result.components,
+                result.type_enum,
+                GL_FALSE,
+                render_buffer->stride(),
+                reinterpret_cast<const GLvoid*>(offset));
+              offset += result.type_size * result.components;
+            }
           }
         }
         break;

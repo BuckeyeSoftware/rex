@@ -259,15 +259,17 @@ Attribute convert_attribute(const Frontend::Buffer::Attribute& _attribute) {
   using Type = Frontend::Buffer::Attribute::Type;
   switch (_attribute.type) {
   case Type::k_f32:
-    return {GL_FLOAT, 1};
+    return {GL_FLOAT,         sizeof(Float32), 1, 1};
   case Type::k_vec2f:
-    return {GL_FLOAT, 2};
+    return {GL_FLOAT,         sizeof(Float32), 2, 1};
   case Type::k_vec3f:
-    return {GL_FLOAT, 3};
+    return {GL_FLOAT,         sizeof(Float32), 3, 1};
   case Type::k_vec4f:
-    return {GL_FLOAT, 4};
+    return {GL_FLOAT,         sizeof(Float32), 4, 1};
   case Type::k_vec4b:
-    return {GL_UNSIGNED_BYTE, 4};
+    return {GL_UNSIGNED_BYTE, sizeof(Byte),    4, 1};
+  case Type::k_mat4x4f:
+    return {GL_FLOAT,         sizeof(Float32), 4, 4};
   }
 
   RX_HINT_UNREACHABLE();

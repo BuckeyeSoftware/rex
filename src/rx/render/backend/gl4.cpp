@@ -1108,20 +1108,24 @@ void GL4::process(Byte* _command) {
 
           const auto& attributes{render_buffer->attributes()};
           for (Size i{0}; i < attributes.size(); i++) {
-            const auto& attribute{attributes[i]};
-            const auto index{static_cast<GLuint>(i)};
+            const auto& attribute = attributes[i];
+            const auto index = static_cast<GLuint>(i);
+
             pglEnableVertexArrayAttrib(buffer->va, index);
+            pglVertexArrayAttribBinding(buffer->va, index, 0);
 
             const auto result = convert_attribute(attribute);
-            pglVertexArrayAttribFormat(
-              buffer->va,
-              index,
-              result.count,
-              result.type,
-              GL_FALSE,
-              static_cast<GLsizei>(attribute.offset));
-
-            pglVertexArrayAttribBinding(buffer->va, index, 0);
+            Size offset = attribute.offset;
+            for (GLsizei j = 0; j < result.instances; j++) {
+              pglVertexArrayAttribFormat(
+                buffer->va,
+                index,
+                result.components,
+                result.type_enum,
+                GL_FALSE,
+                static_cast<GLsizei>(offset));
+              offset += result.type_size * result.components;
+            }
           }
         }
         break;

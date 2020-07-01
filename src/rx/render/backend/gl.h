@@ -33,8 +33,10 @@ inline bool requires_border_color(Ts... _types) {
 }
 
 struct Attribute {
-  GLenum type;
-  GLsizei count;
+  GLenum type_enum;
+  GLsizei type_size;
+  GLsizei components;
+  GLsizei instances;
 };
 
 Attribute convert_attribute(const Frontend::Buffer::Attribute& _attribute);
