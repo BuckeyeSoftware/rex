@@ -121,7 +121,6 @@ private:
   struct Batch {
     Size count;
     Size offset;
-    Size instances;
     Queue::Command::Type type;
     Frontend::State render_state;
   };
@@ -149,7 +148,6 @@ private:
 
   void add_element(Uint32 _element);
   void add_vertex(Vertex&& vertex_);
-  void add_instance(Math::Mat4x4f&& instance_);
 
   static constexpr const Size k_buffers{2};
 
@@ -159,12 +157,10 @@ private:
   Queue m_queue;
   Vertex* m_vertices;
   Uint32* m_elements;
-  Math::Mat4x4f* m_instances;
   Vector<Batch> m_batches;
 
   Size m_vertex_index;
   Size m_element_index;
-  Size m_instance_index;
 
   Size m_rd_index;
   Size m_wr_index;

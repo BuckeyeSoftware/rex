@@ -1,9 +1,8 @@
 {
   name: "immediate3D",
   variants: [
-    "USE_STANDARD",
-    "USE_INSTANCED",
-    "USE_POINTS"
+    "USE_POINTS",
+    "USE_STANDARD"
   ],
   uniforms: [
     { name: "u_view",       type: "mat4x4f" },
@@ -14,13 +13,12 @@
       type: "vertex",
       inputs: [
         { name: "a_position",    type: "vec3f" },
-        { name: "a_size",        type: "float" },
-        { name: "a_color",       type: "vec4f" },
-        { name: "a_transform",   type: "mat4x4f", when: "USE_INSTANCED" }
+        { name: "a_size",        type: "float", when: "USE_POINTS" },
+        { name: "a_color",       type: "vec4f" }
       ],
       outputs: [
         { name: "vs_color",      type: "vec4f" },
-        { name: "vs_view",       type: "vec3f", when: "USE_STANDARD || USE_INSTANCED" }
+        { name: "vs_view",       type: "vec3f", when: "USE_STANDARD" }
       ],
       source: "
         void main() {
@@ -49,7 +47,7 @@
       type: "fragment",
       inputs: [
         { name: "vs_color", type: "vec4f" },
-        { name: "vs_view",  type: "vec3f", when: "USE_STANDARD || USE_INSTANCED" }
+        { name: "vs_view",  type: "vec3f", when: "USE_STANDARD" }
       ],
       outputs: [
         { name: "fs_color", type: "vec4f" }
