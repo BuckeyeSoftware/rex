@@ -222,6 +222,23 @@ GLenum convert_primitive_type(Frontend::PrimitiveType _primitive_type) {
   RX_HINT_UNREACHABLE();
 }
 
+GLenum convert_texture_wrap(const Frontend::Texture::WrapType _type) {
+  switch (_type) {
+  case Frontend::Texture::WrapType::k_clamp_to_edge:
+    return GL_CLAMP_TO_EDGE;
+  case Frontend::Texture::WrapType::k_clamp_to_border:
+    return GL_CLAMP_TO_BORDER;
+  case Frontend::Texture::WrapType::k_mirrored_repeat:
+    return GL_MIRRORED_REPEAT;
+  case Frontend::Texture::WrapType::k_repeat:
+    return GL_REPEAT;
+  case Frontend::Texture::WrapType::k_mirror_clamp_to_edge:
+    return GL_MIRROR_CLAMP_TO_EDGE;
+  }
+
+  RX_HINT_UNREACHABLE();
+}
+
 Filter convert_texture_filter(const Frontend::Texture::FilterOptions& _filter_options) {
   static constexpr const GLenum k_min_table[]{
     GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_NEAREST,
@@ -238,18 +255,19 @@ Filter convert_texture_filter(const Frontend::Texture::FilterOptions& _filter_op
   return {min, mag};
 }
 
-GLenum convert_texture_wrap(const Frontend::Texture::WrapType _type) {
-  switch (_type) {
-  case Frontend::Texture::WrapType::k_clamp_to_edge:
-    return GL_CLAMP_TO_EDGE;
-  case Frontend::Texture::WrapType::k_clamp_to_border:
-    return GL_CLAMP_TO_BORDER;
-  case Frontend::Texture::WrapType::k_mirrored_repeat:
-    return GL_MIRRORED_REPEAT;
-  case Frontend::Texture::WrapType::k_repeat:
-    return GL_REPEAT;
-  case Frontend::Texture::WrapType::k_mirror_clamp_to_edge:
-    return GL_MIRROR_CLAMP_TO_EDGE;
+Attribute convert_attribute(const Frontend::Buffer::Attribute& _attribute) {
+  using Type = Frontend::Buffer::Attribute::Type;
+  switch (_attribute.type) {
+  case Type::k_f32:
+    return {GL_FLOAT, 1};
+  case Type::k_vec2f:
+    return {GL_FLOAT, 2};
+  case Type::k_vec3f:
+    return {GL_FLOAT, 3};
+  case Type::k_vec4f:
+    return {GL_FLOAT, 4};
+  case Type::k_vec4b:
+    return {GL_UNSIGNED_BYTE, 4};
   }
 
   RX_HINT_UNREACHABLE();

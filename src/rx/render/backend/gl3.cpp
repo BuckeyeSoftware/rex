@@ -1165,32 +1165,14 @@ void GL3::process(Byte* _command) {
             const auto index{static_cast<GLuint>(i)};
             pglEnableVertexAttribArray(index);
 
-            switch (attribute.type) {
-            case Frontend::Buffer::Attribute::Type::k_f32:
-              [[fallthrough]];
-            case Frontend::Buffer::Attribute::Type::k_vec2f:
-              [[fallthrough]];
-            case Frontend::Buffer::Attribute::Type::k_vec3f:
-              [[fallthrough]];
-            case Frontend::Buffer::Attribute::Type::k_vec4f:
-              pglVertexAttribPointer(
-                index,
-                count_for_attribute_type(attribute.type),
-                GL_FLOAT,
-                GL_FALSE,
-                render_buffer->stride(),
-                reinterpret_cast<const GLvoid*>(attribute.offset));
-              break;
-            case Frontend::Buffer::Attribute::Type::k_vec4b:
-              pglVertexAttribPointer(
-                index,
-                4,
-                GL_UNSIGNED_BYTE,
-                GL_FALSE,
-                render_buffer->stride(),
-                reinterpret_cast<const GLvoid*>(attribute.offset));
-              break;
-            }
+            const auto result = convert_attribute(attribute);
+            pglVertexAttribPointer(
+              index,
+              result.count,
+              result.type,
+              GL_FALSE,
+              render_buffer->stride(),
+              reinterpret_cast<const GLvoid*>(attribute.offset));
           }
         }
         break;

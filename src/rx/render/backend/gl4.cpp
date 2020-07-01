@@ -1111,32 +1111,16 @@ void GL4::process(Byte* _command) {
             const auto& attribute{attributes[i]};
             const auto index{static_cast<GLuint>(i)};
             pglEnableVertexArrayAttrib(buffer->va, index);
-            switch (attribute.type) {
-            case Frontend::Buffer::Attribute::Type::k_f32:
-              [[fallthrough]];
-            case Frontend::Buffer::Attribute::Type::k_vec2f:
-              [[fallthrough]];
-            case Frontend::Buffer::Attribute::Type::k_vec3f:
-              [[fallthrough]];
-            case Frontend::Buffer::Attribute::Type::k_vec4f:
-              pglVertexArrayAttribFormat(
-                buffer->va,
-                index,
-                count_for_attribute_type(attribute.type),
-                GL_FLOAT,
-                GL_FALSE,
-                static_cast<GLsizei>(attribute.offset));
-              break;
-            case Frontend::Buffer::Attribute::Type::k_vec4b:
-              pglVertexArrayAttribFormat(
-                buffer->va,
-                index,
-                4,
-                GL_UNSIGNED_BYTE,
-                GL_FALSE,
-                static_cast<GLsizei>(attribute.offset));
-              break;
-            }
+
+            const auto result = convert_attribute(attribute);
+            pglVertexArrayAttribFormat(
+              buffer->va,
+              index,
+              result.count,
+              result.type,
+              GL_FALSE,
+              static_cast<GLsizei>(attribute.offset));
+
             pglVertexArrayAttribBinding(buffer->va, index, 0);
           }
         }

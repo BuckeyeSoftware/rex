@@ -32,22 +32,12 @@ inline bool requires_border_color(Ts... _types) {
   return ((_types == GL_CLAMP_TO_BORDER) || ...);
 }
 
-inline GLsizei count_for_attribute_type(Frontend::Buffer::Attribute::Type _type) {
-  using Type = Frontend::Buffer::Attribute::Type;
-  switch (_type) {
-  case Type::k_f32:
-    return 1;
-  case Type::k_vec2f:
-    return 2;
-  case Type::k_vec3f:
-    return 3;
-  case Type::k_vec4f:
-    [[fallthrough]];
-  case Type::k_vec4b:
-    return 4;
-  }
-  RX_HINT_UNREACHABLE();
-}
+struct Attribute {
+  GLenum type;
+  GLsizei count;
+};
+
+Attribute convert_attribute(const Frontend::Buffer::Attribute& _attribute);
 
 } // namespace rx::render
 
