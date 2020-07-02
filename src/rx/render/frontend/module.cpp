@@ -8,7 +8,7 @@ namespace Rx::Render::Frontend {
 RX_LOG("render/module", logger);
 
 Module::Module(Memory::Allocator& _allocator)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_name{allocator()}
   , m_source{allocator()}
   , m_dependencies{allocator()}

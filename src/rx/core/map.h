@@ -2,7 +2,6 @@
 #define RX_CORE_MAP_H
 #include "rx/core/array.h"
 #include "rx/core/hash.h"
-#include "rx/core/ref.h"
 
 #include "rx/core/traits/is_trivially_destructible.h"
 #include "rx/core/traits/return_type.h"

@@ -1,13 +1,11 @@
 #ifndef RX_CORE_FUNCTION_H
 #define RX_CORE_FUNCTION_H
-#include "rx/core/ref.h"
-
-#include "rx/core/memory/system_allocator.h"
-
 #include "rx/core/traits/is_callable.h"
 #include "rx/core/traits/enable_if.h"
 
 #include "rx/core/utility/exchange.h"
+
+#include "rx/core/memory/system_allocator.h"
 
 namespace Rx {
 

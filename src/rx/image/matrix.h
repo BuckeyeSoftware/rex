@@ -37,14 +37,14 @@ struct Matrix
   constexpr Memory::Allocator& allocator() const;
 
 private:
-  Ref<Memory::Allocator> m_allocator;
+  Memory::Allocator* m_allocator;
   Vector<Float32> m_data;
   Math::Vec2z m_dimensions;
   Size m_channels;
 };
 
 inline constexpr Matrix::Matrix(Memory::Allocator& _allocator)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_data{allocator()}
   , m_channels{0}
 {
@@ -56,7 +56,7 @@ inline constexpr Matrix::Matrix()
 }
 
 inline Matrix::Matrix(Memory::Allocator& _allocator, const Math::Vec2z& _dimensions, Size _channels)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_data{allocator()}
 {
   RX_ASSERT(resize(_dimensions, _channels), "out of memory");
@@ -141,7 +141,7 @@ inline Size Matrix::channels() const {
 }
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Matrix::allocator() const {
-  return m_allocator;
+  return *m_allocator;
 }
 
 } // namespace rx::image

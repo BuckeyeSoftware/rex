@@ -10,7 +10,7 @@ namespace Rx::Material {
 RX_LOG("material/loader", logger);
 
 Loader::Loader(Memory::Allocator& _allocator)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_textures{allocator()}
   , m_name{allocator()}
   , m_flags{0}
@@ -20,7 +20,7 @@ Loader::Loader(Memory::Allocator& _allocator)
 }
 
 Loader::Loader(Loader&& loader_)
-  : m_allocator{loader_.allocator()}
+  : m_allocator{&loader_.allocator()}
   , m_textures{Utility::move(loader_.m_textures)}
   , m_name{Utility::move(loader_.m_name)}
   , m_flags{Utility::exchange(loader_.m_flags, 0)}
@@ -32,7 +32,7 @@ Loader::Loader(Loader&& loader_)
 void Loader::operator=(Loader&& loader_) {
   RX_ASSERT(&loader_ != this, "self assignment");
 
-  m_allocator = loader_.allocator();
+  m_allocator = &loader_.allocator();
   m_textures = Utility::move(loader_.m_textures);
   m_name = Utility::move(loader_.m_name);
   m_flags = Utility::exchange(loader_.m_flags, 0);

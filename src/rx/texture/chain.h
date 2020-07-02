@@ -48,7 +48,7 @@ struct Chain {
 private:
   void generate_mipchain(bool _has_mipchain, bool _want_mipchain);
 
-  Ref<Memory::Allocator> m_allocator;
+  Memory::Allocator* m_allocator;
   Vector<Byte> m_data;
   Vector<Level> m_levels;
   Math::Vec2z m_dimensions;
@@ -64,7 +64,7 @@ inline constexpr Chain::Chain()
 }
 
 inline constexpr Chain::Chain(Memory::Allocator& _allocator)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_data{allocator()}
   , m_levels{allocator()}
   , m_nat{}
@@ -149,7 +149,7 @@ inline Size Chain::bpp() const {
 }
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Chain::allocator() const {
-  return m_allocator;
+  return *m_allocator;
 }
 
 } // namespace rx::texture

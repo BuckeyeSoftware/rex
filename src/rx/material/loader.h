@@ -54,7 +54,7 @@ private:
     k_no_compress = 1 << 2
   };
 
-  Ref<Memory::Allocator> m_allocator;
+  Memory::Allocator* m_allocator;
   Vector<Texture> m_textures;
   String m_name;
   Uint32 m_flags;
@@ -64,7 +64,7 @@ private:
 };
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Loader::allocator() const {
-  return m_allocator;
+  return *m_allocator;
 }
 
 inline Vector<Texture>&& Loader::textures() {

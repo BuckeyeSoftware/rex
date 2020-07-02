@@ -41,7 +41,7 @@ private:
 
   void write_log(Log::Level _level, String&& message_) const;
 
-  Ref<Memory::Allocator> m_allocator;
+  Memory::Allocator* m_allocator;
   String m_name;
   String m_source;
   Vector<String> m_dependencies;
@@ -60,7 +60,7 @@ inline const Vector<String>& Module::dependencies() const & {
 }
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Module::allocator() const {
-  return m_allocator;
+  return *m_allocator;
 }
 
 template<typename... Ts>

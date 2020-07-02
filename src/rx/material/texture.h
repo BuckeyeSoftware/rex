@@ -70,7 +70,7 @@ private:
 
   void write_log(Log::Level _level, String&& message_) const;
 
-  Ref<Memory::Allocator> m_allocator;
+  Memory::Allocator* m_allocator;
   Rx::Texture::Chain m_chain;
   Filter m_filter;
   Wrap m_wrap;
@@ -91,7 +91,7 @@ inline void Texture::log(Log::Level _level, const char* _format, Ts&&... _argume
 }
 
 inline Texture::Texture(Memory::Allocator& _allocator)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_chain{allocator()}
   , m_type{allocator()}
   , m_file{allocator()}
@@ -152,7 +152,7 @@ inline Rx::Texture::Chain&& Texture::chain() {
 }
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Texture::allocator() const {
-  return m_allocator;
+  return *m_allocator;
 }
 
 } // namespace rx::material

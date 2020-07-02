@@ -1,7 +1,6 @@
 #ifndef RX_CORE_VECTOR_H
 #define RX_CORE_VECTOR_H
 #include "rx/core/array.h"
-#include "rx/core/ref.h"
 
 #include "rx/core/traits/is_same.h"
 #include "rx/core/traits/is_trivially_copyable.h"

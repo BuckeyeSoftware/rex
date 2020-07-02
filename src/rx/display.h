@@ -41,7 +41,7 @@ struct Display {
   constexpr Memory::Allocator& allocator() const;
 
 private:
-  Ref<Memory::Allocator> m_allocator;
+  Memory::Allocator* m_allocator;
   Vector<Mode> m_modes;
   String m_name;
   Extents m_bounds;
@@ -51,7 +51,7 @@ private:
 };
 
 inline Display::Display(Memory::Allocator& _allocator)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_modes{allocator()}
   , m_name{allocator()}
   , m_diagonal_dpi{0.0f}
@@ -101,7 +101,7 @@ inline bool Display::contains(const Extents& _extents) const {
 }
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Display::allocator() const {
-  return m_allocator;
+  return *m_allocator;
 }
 
 } // namespace rx
