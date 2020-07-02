@@ -92,14 +92,14 @@ private:
   Byte* storage();
   const Byte* storage() const;
 
-  Ref<Memory::Allocator> m_allocator;
+  Memory::Allocator* m_allocator;
   Byte* m_data;
   Size m_size;
 };
 
 template<typename R, typename... Ts>
 inline constexpr Function<R(Ts...)>::Function(Memory::Allocator& _allocator)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_data{nullptr}
   , m_size{0}
 {
@@ -227,7 +227,7 @@ Function<R(Ts...)>::operator bool() const {
 
 template<typename R, typename... Ts>
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Function<R(Ts...)>::allocator() const {
-  return m_allocator;
+  return *m_allocator;
 }
 
 template<typename R, typename... Ts>

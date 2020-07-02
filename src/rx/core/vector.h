@@ -124,7 +124,7 @@ private:
   // NOTE(dweiler): This does not adjust m_size, it only adjusts capacity.
   bool grow_or_shrink_to(Size _size);
 
-  Ref<Memory::Allocator> m_allocator;
+  Memory::Allocator* m_allocator;
   T* m_data;
   Size m_size;
   Size m_capacity;
@@ -138,7 +138,7 @@ inline constexpr Vector<T>::Vector()
 
 template<typename T>
 inline constexpr Vector<T>::Vector(Memory::Allocator& _allocator)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_data{nullptr}
   , m_size{0}
   , m_capacity{0}
@@ -177,7 +177,7 @@ inline Vector<T>::Vector(Initializers<U, E>&& _initializers)
 
 template<typename T>
 inline Vector<T>::Vector(Memory::Allocator& _allocator, Size _size, Utility::UninitializedTag)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_data{nullptr}
   , m_size{_size}
   , m_capacity{_size}
@@ -191,7 +191,7 @@ inline Vector<T>::Vector(Memory::Allocator& _allocator, Size _size, Utility::Uni
 
 template<typename T>
 inline Vector<T>::Vector(Memory::Allocator& _allocator, Size _size)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_data{nullptr}
   , m_size{_size}
   , m_capacity{_size}
@@ -207,7 +207,7 @@ inline Vector<T>::Vector(Memory::Allocator& _allocator, Size _size)
 
 template<typename T>
 inline Vector<T>::Vector(Memory::Allocator& _allocator, const Vector& _other)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_data{nullptr}
   , m_size{_other.m_size}
   , m_capacity{_other.m_capacity}
@@ -230,7 +230,7 @@ inline Vector<T>::Vector(Size _size)
 
 template<typename T>
 inline Vector<T>::Vector(const Vector& _other)
-  : Vector{_other.m_allocator, _other}
+  : Vector{*_other.m_allocator, _other}
 {
 }
 
@@ -629,12 +629,12 @@ RX_HINT_FORCE_INLINE T* Vector<T>::data() {
 
 template<typename T>
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Vector<T>::allocator() const {
-  return m_allocator;
+  return *m_allocator;
 }
 
 template<typename T>
 inline Memory::View Vector<T>::disown() {
-  Memory::View view{&allocator(), reinterpret_cast<Byte*>(data()), capacity() * sizeof(T)};
+  Memory::View view{m_allocator, reinterpret_cast<Byte*>(data()), capacity() * sizeof(T)};
   m_data = nullptr;
   m_size = 0;
   m_capacity = 0;
