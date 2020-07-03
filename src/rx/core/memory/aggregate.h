@@ -12,9 +12,9 @@ struct Aggregate {
   Size operator[](Size _index) const;
 
   template<typename T>
-  [[nodiscard]] bool add();
-  [[nodiscard]] bool add(Size _size, Size _alignment);
-  [[nodiscard]] bool finalize();
+  bool add(Size _count);
+  bool add(Size _size, Size _alignment, Size _count);
+  bool finalize();
 
 private:
   struct Entry {
@@ -50,8 +50,8 @@ inline Size Aggregate::operator[](Size _index) const {
 }
 
 template<typename T>
-inline bool Aggregate::add() {
-  return add(sizeof(T), alignof(T));
+inline bool Aggregate::add(Size _count) {
+  return add(sizeof(T), alignof(T), _count);
 }
 
 } // namespace Rx::Memory

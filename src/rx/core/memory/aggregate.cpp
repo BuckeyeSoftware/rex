@@ -32,11 +32,11 @@ bool Aggregate::finalize() {
   return true;
 }
 
-bool Aggregate::add(Size _size, Size _alignment) {
+bool Aggregate::add(Size _size, Size _alignment, Size _count) {
   RX_ASSERT(_size && _alignment, "empty field");
   RX_ASSERT(!m_bytes, "already finalized");
   if (m_size < sizeof m_entries / sizeof *m_entries) {
-    m_entries[m_size++] = {_size, _alignment, 0};
+    m_entries[m_size++] = {_size * _count, _alignment, 0};
     return true;
   }
   return false;
