@@ -281,6 +281,7 @@ namespace detail_gl4 {
       m_swap_chain_fbo = static_cast<GLuint>(swap_chain_fbo);
 
       pglEnable(GL_CULL_FACE);
+      pglEnable(GL_PROGRAM_POINT_SIZE);
       pglCullFace(GL_BACK);
       pglFrontFace(GL_CW);
 
@@ -772,7 +773,8 @@ static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
     "#define rx_textureCMLod textureLod\n"
     "#define rx_position gl_Position\n"
     "#define rx_vertex_id gl_VertexID\n"
-    "#define rx_point_size gl_PointSize\n";
+    "#define rx_point_size gl_PointSize\n"
+    "#define rx_point_coord gl_PointCoord\n";
 
   String contents{k_prelude};
 
