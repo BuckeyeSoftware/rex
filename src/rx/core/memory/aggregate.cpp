@@ -35,11 +35,19 @@ bool Aggregate::finalize() {
 bool Aggregate::add(Size _size, Size _alignment, Size _count) {
   RX_ASSERT(_size && _alignment, "empty field");
   RX_ASSERT(!m_bytes, "already finalized");
-  if (m_size < sizeof m_entries / sizeof *m_entries) {
-    m_entries[m_size++] = {_size * _count, _alignment, 0};
-    return true;
+
+  // Would |_size * _count| overflow?
+  if (_size && _count > -1_z / _size) {
+    return false;
   }
-  return false;
+
+  // Would another entry overflow |m_entries|?
+  if (m_size >= sizeof m_entries / sizeof *m_entries) {
+    return false;
+  }
+
+  m_entries[m_size++] = {_size * _count, _alignment, 0};
+  return true;
 }
 
 } // namespace Rx::Memory
