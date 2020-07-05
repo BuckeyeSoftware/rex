@@ -319,8 +319,8 @@ inline Size Set<K>::element_hash(Size _index) const {
 
 template<typename K>
 inline bool Set<K>::allocate() {
-  m_keys = reinterpret_cast<K*>(allocator().allocate(sizeof(K) * m_capacity));
-  m_hashes = reinterpret_cast<Size*>(allocator().allocate(sizeof(Size) * m_capacity));
+  m_keys = reinterpret_cast<K*>(allocator().allocate(sizeof(K), m_capacity));
+  m_hashes = reinterpret_cast<Size*>(allocator().allocate(sizeof(Size), m_capacity));
 
   if (!m_keys || !m_hashes) {
     return false;

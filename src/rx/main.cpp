@@ -28,12 +28,12 @@
 using namespace Rx;
 
 RX_CONSOLE_V2IVAR(
-        display_resolution,
-        "display.resolution",
-        "display resolution",
-        Math::Vec2i(800, 600),
-        Math::Vec2i(4096, 4096),
-        Math::Vec2i(1600, 900));
+  display_resolution,
+  "display.resolution",
+  "display resolution",
+  Math::Vec2i(800, 600),
+  Math::Vec2i(4096, 4096),
+  Math::Vec2i(1600, 900));
 
 RX_CONSOLE_IVAR(
   display_fullscreen,
@@ -258,7 +258,7 @@ int main(int _argc, char** _argv) {
         return Memory::SystemAllocator::instance().allocate(_size);
       },
       [](Size _size, Size _elements) -> void* {
-        Byte* data = Memory::SystemAllocator::instance().allocate(_size * _elements);
+        Byte* data = Memory::SystemAllocator::instance().allocate(_size, _elements);
         if (data) {
           memset(data, 0, _size * _elements);
           return data;

@@ -352,9 +352,9 @@ inline Size Map<K, V>::element_hash(Size _index) const {
 
 template<typename K, typename V>
 inline bool Map<K, V>::allocate() {
-  m_keys = reinterpret_cast<K*>(allocator().allocate(sizeof(K) * m_capacity));
-  m_values = reinterpret_cast<V*>(allocator().allocate(sizeof(V) * m_capacity));
-  m_hashes = reinterpret_cast<Size*>(allocator().allocate(sizeof(Size) * m_capacity));
+  m_keys = reinterpret_cast<K*>(allocator().allocate(sizeof(K), m_capacity));
+  m_values = reinterpret_cast<V*>(allocator().allocate(sizeof(V), m_capacity));
+  m_hashes = reinterpret_cast<Size*>(allocator().allocate(sizeof(Size), m_capacity));
 
   if (!m_keys || !m_values || !m_hashes) {
     return false;

@@ -132,7 +132,8 @@ private:
                      const Math::Vec4f& _color, Uint32 _flags);
 
   void generate_solid_sphere(const Math::Vec2f& _slices_and_stacks,
-                             const Math::Mat4x4f& _transform, const Math::Vec4f& _color, Uint32 _flags);
+                             const Math::Mat4x4f& _transform,
+                             const Math::Vec4f& _color, Uint32 _flags);
 
   void generate_solid_cube(const Math::Mat4x4f& _transform,
                            const Math::Vec4f& _color, Uint32 _flags);

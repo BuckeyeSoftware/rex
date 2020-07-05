@@ -696,7 +696,7 @@ WideString::WideString(Memory::Allocator& _allocator, const Uint16* _contents,
   : m_allocator{&_allocator}
   , m_size{_size}
 {
-  m_data = reinterpret_cast<Uint16*>(allocator().allocate(sizeof(Uint16) * (_size + 1)));
+  m_data = reinterpret_cast<Uint16*>(allocator().allocate(sizeof(Uint16), _size + 1));
   RX_ASSERT(m_data, "out of memory");
 
   memcpy(m_data, _contents, sizeof(Uint16) * (_size + 1));
