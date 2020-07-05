@@ -231,48 +231,48 @@ private:
 
   mutable Concurrency::Mutex m_mutex;
 
-  Memory::Allocator& m_allocator;              // protected by |m_mutex|
-  Backend::Context* m_backend;                 // protected by |m_mutex|
+  Memory::Allocator& m_allocator               RX_HINT_GUARDED_BY(m_mutex);
+  Backend::Context* m_backend                  RX_HINT_GUARDED_BY(m_mutex);
 
   // size of resources as reported by the backend
   Backend::AllocationInfo m_allocation_info;
 
-  StaticPool m_buffer_pool;                   // protected by |m_mutex|
-  StaticPool m_target_pool;                   // protected by |m_mutex|
-  StaticPool m_program_pool;                  // protected by |m_mutex|
-  StaticPool m_texture1D_pool;                // protected by |m_mutex|
-  StaticPool m_texture2D_pool;                // protected by |m_mutex|
-  StaticPool m_texture3D_pool;                // protected by |m_mutex|
-  StaticPool m_textureCM_pool;                // protected by |m_mutex|
+  StaticPool m_buffer_pool                     RX_HINT_GUARDED_BY(m_mutex);
+  StaticPool m_target_pool                     RX_HINT_GUARDED_BY(m_mutex);
+  StaticPool m_program_pool                    RX_HINT_GUARDED_BY(m_mutex);
+  StaticPool m_texture1D_pool                  RX_HINT_GUARDED_BY(m_mutex);
+  StaticPool m_texture2D_pool                  RX_HINT_GUARDED_BY(m_mutex);
+  StaticPool m_texture3D_pool                  RX_HINT_GUARDED_BY(m_mutex);
+  StaticPool m_textureCM_pool                  RX_HINT_GUARDED_BY(m_mutex);
 
-  Vector<Buffer*> m_destroy_buffers;           // protected by |m_mutex|
-  Vector<Target*> m_destroy_targets;           // protected by |m_mutex|
-  Vector<Program*> m_destroy_programs;         // protected by |m_mutex|
-  Vector<Texture1D*> m_destroy_textures1D;     // protected by |m_mutex|
-  Vector<Texture2D*> m_destroy_textures2D;     // protected by |m_mutex|
-  Vector<Texture3D*> m_destroy_textures3D;     // protected by |m_mutex|
-  Vector<TextureCM*> m_destroy_texturesCM;     // protected by |m_mutex|
+  Vector<Buffer*> m_destroy_buffers            RX_HINT_GUARDED_BY(m_mutex);
+  Vector<Target*> m_destroy_targets            RX_HINT_GUARDED_BY(m_mutex);
+  Vector<Program*> m_destroy_programs          RX_HINT_GUARDED_BY(m_mutex);
+  Vector<Texture1D*> m_destroy_textures1D      RX_HINT_GUARDED_BY(m_mutex);
+  Vector<Texture2D*> m_destroy_textures2D      RX_HINT_GUARDED_BY(m_mutex);
+  Vector<Texture3D*> m_destroy_textures3D      RX_HINT_GUARDED_BY(m_mutex);
+  Vector<TextureCM*> m_destroy_texturesCM      RX_HINT_GUARDED_BY(m_mutex);
 
-  Target* m_swapchain_target;                  // protected by |m_mutex|
-  Texture2D* m_swapchain_texture;              // protected by |m_mutex|
+  Target* m_swapchain_target                   RX_HINT_GUARDED_BY(m_mutex);
+  Texture2D* m_swapchain_texture               RX_HINT_GUARDED_BY(m_mutex);
 
-  Vector<Byte*> m_commands;                 // protected by |m_mutex|
-  CommandBuffer m_command_buffer;             // protected by |m_mutex|
+  Vector<Byte*> m_commands                     RX_HINT_GUARDED_BY(m_mutex);
+  CommandBuffer m_command_buffer               RX_HINT_GUARDED_BY(m_mutex);
 
-  Map<String, Buffer*> m_cached_buffers;       // protected by |m_mutex|
-  Map<String, Target*> m_cached_targets;       // protected by |m_mutex|
-  Map<String, Texture1D*> m_cached_textures1D; // protected by |m_mutex|
-  Map<String, Texture2D*> m_cached_textures2D; // protected by |m_mutex|
-  Map<String, Texture3D*> m_cached_textures3D; // protected by |m_mutex|
-  Map<String, TextureCM*> m_cached_texturesCM; // protected by |m_mutex|
+  Map<String, Buffer*> m_cached_buffers        RX_HINT_GUARDED_BY(m_mutex);
+  Map<String, Target*> m_cached_targets        RX_HINT_GUARDED_BY(m_mutex);
+  Map<String, Texture1D*> m_cached_textures1D  RX_HINT_GUARDED_BY(m_mutex);
+  Map<String, Texture2D*> m_cached_textures2D  RX_HINT_GUARDED_BY(m_mutex);
+  Map<String, Texture3D*> m_cached_textures3D  RX_HINT_GUARDED_BY(m_mutex);
+  Map<String, TextureCM*> m_cached_texturesCM  RX_HINT_GUARDED_BY(m_mutex);
 
   // NOTE(dweiler): This has to come before techniques and modules. Everything
   // above must stay alive for the destruction of m_techniques and m_modules
   // to work.
   DeferredFunction<void()> m_deferred_process;
 
-  Map<String, Technique> m_techniques;         // protected by |m_mutex|
-  Map<String, Module> m_modules;               // protected by |m_mutex|
+  Map<String, Technique> m_techniques          RX_HINT_GUARDED_BY(m_mutex);
+  Map<String, Module> m_modules                RX_HINT_GUARDED_BY(m_mutex);
 
   Concurrency::Atomic<Size> m_draw_calls[2];
   Concurrency::Atomic<Size> m_instanced_draw_calls[2];
