@@ -28,6 +28,7 @@ struct Map {
 
   Map();
   Map(Memory::Allocator& _allocator);
+  Map(Memory::Allocator& _allocator, const Map& _map);
   Map(Map&& map_);
   Map(const Map& _map);
 
@@ -141,8 +142,8 @@ inline Map<K, V>::Map(Map&& map_)
 }
 
 template<typename K, typename V>
-inline Map<K, V>::Map(const Map& _map)
-  : Map{_map.allocator()}
+inline Map<K, V>::Map(Memory::Allocator& _allocator, const Map& _map)
+  : Map{_allocator}
 {
   for (Size i{0}; i < _map.m_capacity; i++) {
     const auto hash = _map.element_hash(i);
@@ -150,6 +151,12 @@ inline Map<K, V>::Map(const Map& _map)
       insert(_map.m_keys[i], _map.m_values[i]);
     }
   }
+}
+
+template<typename K, typename V>
+inline Map<K, V>::Map(const Map& _map)
+  : Map{_map.allocator(), _map}
+{
 }
 
 template<typename K, typename V>

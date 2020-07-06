@@ -27,6 +27,7 @@ struct Set {
 
   Set();
   Set(Memory::Allocator& _allocator);
+  Set(Memory::Allocator& _allocator, const Set& _set);
   Set(Set&& set_);
   Set(const Set& _set);
 
@@ -125,8 +126,8 @@ inline Set<K>::Set(Set&& set_)
 }
 
 template<typename K>
-inline Set<K>::Set(const Set& _set)
-  : Set{_set.allocator()}
+inline Set<K>::Set(Memory::Allocator& _allocator, const Set& _set)
+  : Set{_allocator}
 {
   for (Size i{0}; i < _set.m_capacity; i++) {
     const auto hash = _set.element_hash(i);
@@ -134,6 +135,12 @@ inline Set<K>::Set(const Set& _set)
       insert(_set.m_keys[i]);
     }
   }
+}
+
+template<typename K>
+inline Set<K>::Set(const Set& _set)
+  : Set{_set.allocator(), _set}
+{
 }
 
 template<typename K>
