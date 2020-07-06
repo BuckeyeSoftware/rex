@@ -17,6 +17,9 @@ struct Event;
 
 template<typename R, typename... Ts>
 struct Event<R(Ts...)> {
+  RX_MARK_NO_COPY(Event);
+  RX_MARK_NO_MOVE(Event);
+
   using Delegate = Function<R(Ts...)>;
 
   struct Handle {
