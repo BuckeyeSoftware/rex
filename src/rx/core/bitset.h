@@ -22,8 +22,7 @@ struct Bitset {
   Bitset(Memory::Allocator& _allocator, Size _size);
   Bitset(Memory::Allocator& _allocator, const Bitset& _bitset);
 
-  // Bitset(Size _size);
-
+  Bitset(Size _size);
   Bitset(Bitset&& bitset_);
   Bitset(const Bitset& _bitset);
   ~Bitset();
@@ -85,7 +84,7 @@ inline Bitset::Bitset(Size _size)
 }
 
 inline Bitset::Bitset(const Bitset& _bitset)
-  : Bitset{Memory::SystemAllocator::instance(), _bitset}
+  : Bitset{_bitset.allocator(), _bitset}
 {
 }
 
