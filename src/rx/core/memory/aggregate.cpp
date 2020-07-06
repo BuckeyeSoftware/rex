@@ -13,15 +13,14 @@ bool Aggregate::finalize() {
   }
 
   auto align = [](Size _alignment, Size _offset) {
-    return (_alignment - (_offset & (_alignment - 1))) & (_alignment - 1);
+    return (_offset + (_alignment - 1)) & ~(_alignment - 1);
   };
 
   Size offset = 0;
   Size alignment = 0;
   for (Size i = 0; i < m_size; i++) {
     auto& entry = m_entries[i];
-    const Size padding = align(entry.align, offset);
-    const Size aligned = offset + padding;
+    const Size aligned = align(entry.align, offset);
     entry.offset = aligned;
     offset = aligned + entry.size;
     alignment = Algorithm::max(alignment, entry.align);
