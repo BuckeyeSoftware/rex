@@ -565,7 +565,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           m_technique->variant(0),
           _batch.count,
           _batch.offset,
-          1,
+          0,
           Frontend::PrimitiveType::k_triangles,
           {});
           break;
@@ -579,7 +579,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           m_technique->variant(0),
           _batch.count,
           _batch.offset,
-          1,
+          0,
           Frontend::PrimitiveType::k_lines,
           {});
           break;
@@ -596,7 +596,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           m_technique->variant(1),
           _batch.count,
           _batch.offset,
-          1,
+          0,
           Frontend::PrimitiveType::k_triangles,
           draw_textures);
         break;

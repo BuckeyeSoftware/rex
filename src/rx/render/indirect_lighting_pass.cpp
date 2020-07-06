@@ -71,7 +71,7 @@ void IndirectLightingPass::render(const Math::Camera& _camera) {
     program,
     3,
     0,
-    1,
+    0,
     Render::Frontend::PrimitiveType::k_triangles,
     draw_textures);
 }

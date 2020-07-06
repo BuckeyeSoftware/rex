@@ -106,7 +106,7 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     program,
     36,
     0,
-    1,
+    0,
     Frontend::PrimitiveType::k_triangles,
     draw_textures);
 }

@@ -52,7 +52,7 @@ ImageBasedLighting::ImageBasedLighting(Frontend::Context* _frontend)
     *scale_bias_technique,
     3,
     0,
-    1,
+    0,
     Frontend::PrimitiveType::k_triangles,
     {});
 
@@ -134,7 +134,7 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
       program,
       3,
       0,
-      1,
+      0,
       Frontend::PrimitiveType::k_triangles,
       draw_textures);
 
@@ -176,7 +176,7 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
         program,
         3,
         0,
-        1,
+        0,
         Frontend::PrimitiveType::k_triangles,
         draw_textures);
 

@@ -1813,7 +1813,7 @@ void GL3::process(Byte* _command) {
       if (render_buffer) {
         const auto element_type = convert_element_type(render_buffer->element_type());
         const auto indices = reinterpret_cast<const GLvoid*>(render_buffer->element_size() * command->offset);
-        if (command->instances > 1) {
+        if (command->instances) {
           if (render_buffer->is_indexed()) {
             pglDrawElementsInstanced(primitive_type, count, element_type, indices, command->instances);
           } else {
