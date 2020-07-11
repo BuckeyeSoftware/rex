@@ -4,7 +4,7 @@
 
 #include "rx/core/hints/unreachable.h"
 
-namespace Rx::Concurrency::Detail {
+namespace Rx::Concurrency::detail {
 
 static inline constexpr std::memory_order convert_memory_order(MemoryOrder _order) {
   switch (_order) {
@@ -211,6 +211,6 @@ inline T atomic_fetch_xor(AtomicBase<T>* base_, T _pattern,
   return std::atomic_fetch_xor_explicit(&base_->value, _pattern, convert_memory_order(_order));
 }
 
-} // namespace Rx::Concurrency::Detail
+} // namespace Rx::Concurrency::detail
 
 #endif // RX_CORE_CONCURRENCY_STD_ATOMIC_H
