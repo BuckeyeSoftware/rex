@@ -20,14 +20,15 @@ enum class MemoryOrder {
 
 } // namespace rx::concurrency
 
+#include "rx/core/concurrency/std/atomic.h"
+
 #if defined(RX_COMPILER_GCC)
 #include "rx/core/concurrency/gcc/atomic.h"
 #elif defined(RX_COMPILER_CLANG)
 #include "rx/core/concurrency/clang/atomic.h"
-#elif defined(RX_COMPILER_MSVC)
-#include "rx/core/concurrency/msvc/atomic.h"
 #else
-#error "missing atomic implementation"
+// Use <atomic> as fallback.
+#include "rx/core/concurrency/std/atomic.h"
 #endif
 
 namespace Rx::Concurrency {
