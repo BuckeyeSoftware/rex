@@ -27,7 +27,7 @@ enum class MemoryOrder {
 #elif defined(RX_COMPILER_CLANG)
 #include "rx/core/concurrency/clang/atomic.h"
 #else
-// Use <atomic> as fallback.
+// Use <atomic> as fallback,
 #include "rx/core/concurrency/std/atomic.h"
 #endif
 
