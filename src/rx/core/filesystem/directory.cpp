@@ -1,3 +1,5 @@
+#include <string.h> // memcpy
+
 #include "rx/core/config.h" // RX_PLATFORM_*
 #include "rx/core/assert.h" // RX_ASSERT
 
@@ -16,6 +18,30 @@
 
 namespace Rx::Filesystem {
 
+Optional<Directory> Directory::Item::as_directory() const {
+  if (is_directory()) {
+    auto& allocator = m_directory->allocator();
+
+    // Construct the path in-place as one allocation, as operator+ may require
+    // up to three allocations to format the final path.
+    const auto& root = m_directory->path();
+    const auto& filename = name();
+
+    const auto length = root.size() + 1 + filename.size() + 1;
+
+    if (auto data = allocator.allocate(length)) {
+      memcpy(data, root.data(), root.size());
+      data[root.size()] = '/';
+      memcpy(data + root.size() + 1, filename.data(), filename.size());
+      data[length - 1] = '\0';
+
+      return Directory{allocator, Memory::View{&allocator, data, length}};
+    }
+  }
+
+  return nullopt;
+}
+
 #if defined(RX_PLATFORM_WINDOWS)
 struct FindContext {
   Vector<Uint16> path_data;
@@ -25,7 +51,7 @@ struct FindContext {
 #endif
 
 Directory::Directory(Memory::Allocator& _allocator, String&& path_)
-  : m_allocator{_allocator}
+  : m_allocator{&_allocator}
   , m_path{Utility::move(path_)}
 {
 #if defined(RX_PLATFORM_POSIX)
@@ -98,10 +124,10 @@ void Directory::each(Function<void(Item&&)>&& _function) {
       // Only accept regular files and directories, symbolic links are not allowed.
       switch (next->d_type) {
       case DT_DIR:
-        _function({{allocator(), next->d_name}, Item::Type::k_directory});
+        _function({this, {allocator(), next->d_name}, Item::Type::k_directory});
         break;
       case DT_REG:
-        _function({{allocator(), next->d_name}, Item::Type::k_file});
+        _function({this, {allocator(), next->d_name}, Item::Type::k_file});
         break;
       }
 
