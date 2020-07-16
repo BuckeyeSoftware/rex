@@ -519,8 +519,8 @@ void Immediate3D::size_line(Size& n_vertices_, Size& n_elements_) {
 void Immediate3D::size_solid_sphere(const Math::Vec2f& _slices_and_stacks,
                                     Size& n_vertices_, Size& n_elements_)
 {
-  n_vertices_ += 4 * _slices_and_stacks.area();
-  n_elements_ += 6 * _slices_and_stacks.area();
+  n_vertices_ += 4 * static_cast<Size>(_slices_and_stacks.area());
+  n_elements_ += 6 * static_cast<Size>(_slices_and_stacks.area());
 }
 
 void Immediate3D::size_solid_cube(Size& n_vertices_, Size& n_elements_) {

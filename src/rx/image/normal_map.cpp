@@ -40,9 +40,9 @@ static int blend_softlight(int _color1, int _color2) {
   const auto a{static_cast<Float32>(_color1)};
   const auto b{static_cast<Float32>(_color2)};
 
-  return b * 2.0f < 255.0f
+  return static_cast<int>(b * 2.0f < 255.0f
     ? (((a + 127.5f) * b) / 255.0f)
-    : (255.0f - (((382.5f - a) * (255.0f - b)) / 255.0f));
+    : (255.0f - (((382.5f - a) * (255.0f - b)) / 255.0f)));
 }
 
 Matrix NormalMap::generate(IntensityMap::Mode _mode,
@@ -113,7 +113,7 @@ Matrix NormalMap::generate(IntensityMap::Mode _mode,
     // Run the calculation on the downscaled image, except don't run a detailing
     // pass for the scaled image.
     Matrix downscaled = NormalMap(scaled).generate(_mode, _multiplier,
-                                                   _kernel, _detail, 0.0f, _flags & ~k_detail);
+                                                   _kernel, _detail, _flags & ~k_detail, 0.0f);
 
     // Scale it back up
     downscaled = downscaled.scaled(m_image.dimensions());
@@ -124,9 +124,9 @@ Matrix NormalMap::generate(IntensityMap::Mode _mode,
         const Float32* rgb_lhs{result(x, y)};
         const Float32* rgb_rhs{downscaled(x, y)};
 
-        const Sint32 r{blend_softlight(rgb_lhs[0] * 255.0, rgb_rhs[0] * 255.0f)};
-        const Sint32 g{blend_softlight(rgb_lhs[1] * 255.0, rgb_rhs[1] * 255.0f)};
-        const Sint32 b{blend_softlight(rgb_lhs[2] * 255.0, rgb_rhs[2] * 255.0f)};
+        const Sint32 r{blend_softlight(static_cast<int>(rgb_lhs[0] * 255.0), static_cast<int>(rgb_rhs[0] * 255.0f))};
+        const Sint32 g{blend_softlight(static_cast<int>(rgb_lhs[1] * 255.0), static_cast<int>(rgb_rhs[1] * 255.0f))};
+        const Sint32 b{blend_softlight(static_cast<int>(rgb_lhs[2] * 255.0), static_cast<int>(rgb_rhs[2] * 255.0f))};
 
         Float32* dst{result(x, y)};
 

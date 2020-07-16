@@ -218,7 +218,7 @@ void Console::render() {
         *console_font_name,
         m_text.contents().data(),
         selection[0],
-        font_size,
+        static_cast<Sint32>(font_size),
         1.0f)};
 
       // Measure text from selection[0] to selection[1]
@@ -226,7 +226,7 @@ void Console::render() {
         *console_font_name,
         m_text.contents().data() + selection[0],
         selection[1] - selection[0],
-        font_size,
+        static_cast<Sint32>(font_size),
         1.0f)};
 
       m_immediate->frame_queue().record_rectangle(
@@ -246,7 +246,7 @@ void Console::render() {
         *console_font_name,
         m_text.contents().data(),
         m_text.cursor(),
-        font_size,
+        static_cast<Sint32>(font_size),
         1.0f)};
 
     // Render 1px wide, vertical white line that represents the cursor.
@@ -293,7 +293,7 @@ void Console::render() {
     m_immediate->frame_queue().record_text(
             *console_font_name,
             {padding, resolution.h - suggestion_y + font_size*0.15f},
-            font_size,
+            static_cast<Sint32>(font_size),
             1.0f,
             Render::Immediate2D::TextAlign::k_left,
             _suggestion,

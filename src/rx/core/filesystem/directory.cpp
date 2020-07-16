@@ -174,7 +174,7 @@ void Directory::each(Function<void(Item&&)>&& _function) {
       ? Item::Type::k_directory
       : Item::Type::k_file;
 
-    _function({utf16_name.to_utf8(), kind});
+    _function({this, utf16_name.to_utf8(), kind});
 
     if (!FindNextFileW(context->handle, &context->find_data)) {
       break;

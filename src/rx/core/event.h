@@ -26,7 +26,13 @@ struct Event<R(Ts...)> {
     RX_MARK_NO_COPY(Handle);
 
     constexpr Handle(Event* _event, Size _index);
-    constexpr Handle(Handle&& _existing);
+
+    // NOTE(dweiler): This is done inside this struct, rather than outside to avoid an ICE in MSVC
+    Handle(Handle&& handle_)
+        : m_event{Utility::exchange(handle_.m_event, nullptr)}
+        , m_index{Utility::exchange(handle_.m_index, 0)}
+    {
+    }
     ~Handle();
   private:
     Event* m_event;
@@ -58,12 +64,7 @@ inline constexpr Event<R(Ts...)>::Handle::Handle(Event<R(Ts...)>* _event, Size _
 {
 }
 
-template<typename R, typename... Ts>
-inline constexpr Event<R(Ts...)>::Handle::Handle(Handle&& handle_)
-  : m_event{Utility::exchange(handle_.m_event, nullptr)}
-  , m_index{Utility::exchange(handle_.m_index, 0)}
-{
-}
+
 
 template<typename R, typename... Ts>
 inline Event<R(Ts...)>::Handle::~Handle() {

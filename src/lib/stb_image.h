@@ -873,7 +873,14 @@ static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp);
 #endif
 
 // this is not threadsafe
-_Thread_local static const char *stbi__g_failure_reason;
+#if defined(_MSC_VER)
+// NOTE(dweiler):
+// The use of _Thread_local is a C11 concept which MSVC does not understand yet.
+_declspec(thread)
+#else
+_Thread_local
+#endif
+static const char* stbi__g_failure_reason;
 
 STBIDEF const char *stbi_failure_reason(void)
 {

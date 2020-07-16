@@ -1,6 +1,6 @@
 #include <signal.h> // signal, SIG{INT,TERM,HUP,QUIT,KILL,PIPE,ALRM,STOP}
 
-#define SDL_MAIN_HANDLED
+// #define SDL_MAIN_HANDLED
 #include <SDL.h>
 
 #include "rx/console/interface.h"
@@ -251,6 +251,7 @@ int main(int _argc, char** _argv) {
         return true;
       });
 
+#if 0
     // Replace SDL2s allocator with our system allocator so we can track it's
     // memory usage.
     SDL_SetMemoryFunctions(
@@ -272,6 +273,7 @@ int main(int _argc, char** _argv) {
         Memory::SystemAllocator::instance().deallocate(_data);
       }
     );
+#endif
     SDL_SetMainReady();
 
     // The initial status is always |k_restart| so the restart loop can be

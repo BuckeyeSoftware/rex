@@ -94,7 +94,7 @@ void Immediate2D::Queue::record_scissor(const Math::Vec2f& _position,
 
   Command next_command;
   next_command.type = Command::Type::k_scissor;
-  next_command.flags = _position.x < 0.0f ? 0.0f : 1.0f;
+  next_command.flags = _position.x < 0.0f ? 0 : 1;
   next_command.color = {};
   next_command.as_scissor.position = _position;
   next_command.as_scissor.size = _size;
