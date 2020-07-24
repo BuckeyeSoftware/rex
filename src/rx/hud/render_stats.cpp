@@ -29,18 +29,18 @@ RenderStats::RenderStats(Render::Immediate2D* _immediate)
 }
 
 void RenderStats::render() {
-  const Render::Frontend::Context& frontend{*m_immediate->frontend()};
-  const auto &buffer_stats{frontend.stats(Render::Frontend::Resource::Type::k_buffer)};
-  const auto &program_stats{frontend.stats(Render::Frontend::Resource::Type::k_program)};
-  const auto &target_stats{frontend.stats(Render::Frontend::Resource::Type::k_target)};
-  const auto &texture1D_stats{frontend.stats(Render::Frontend::Resource::Type::k_texture1D)};
-  const auto &texture2D_stats{frontend.stats(Render::Frontend::Resource::Type::k_texture2D)};
-  const auto &texture3D_stats{frontend.stats(Render::Frontend::Resource::Type::k_texture3D)};
-  const auto &textureCM_stats{frontend.stats(Render::Frontend::Resource::Type::k_textureCM)};
+  const Render::Frontend::Context& frontend = *m_immediate->frontend();
+  const auto &buffer_stats = frontend.stats(Render::Frontend::Resource::Type::k_buffer);
+  const auto &program_stats = frontend.stats(Render::Frontend::Resource::Type::k_program);
+  const auto &target_stats = frontend.stats(Render::Frontend::Resource::Type::k_target);
+  const auto &texture1D_stats = frontend.stats(Render::Frontend::Resource::Type::k_texture1D);
+  const auto &texture2D_stats = frontend.stats(Render::Frontend::Resource::Type::k_texture2D);
+  const auto &texture3D_stats = frontend.stats(Render::Frontend::Resource::Type::k_texture3D);
+  const auto &textureCM_stats = frontend.stats(Render::Frontend::Resource::Type::k_textureCM);
 
   Math::Vec2f offset{25.0f, 25.0f};
 
-  auto color_ratio{[](Size _used, Size _total) -> Uint32 {
+  auto color_ratio = [](Size _used, Size _total) -> Uint32 {
     const Math::Vec3f bad{1.0f, 0.0f, 0.0f};
     const Math::Vec3f good{0.0f, 1.0f, 0.0f};
     const Float32 scaled{static_cast<Float32>(_used) / static_cast<Float32>(_total)};
@@ -49,9 +49,9 @@ void RenderStats::render() {
            (Uint32(color.g * 255.0f) << 16) |
            (Uint32(color.b * 255.0f) << 8) |
            0xFF;
-  }};
+  };
 
-  auto render_stat{[&](const char *_label, const auto &_stats) {
+  auto render_stat = [&](const char *_label, const auto &_stats) {
     const auto format =
       String::format(
         "^w%s: ^[%x]%zu ^wof ^m%zu ^g%s ^w(%zu cached)",
@@ -72,7 +72,7 @@ void RenderStats::render() {
       {1.0f, 1.0f, 1.0f, 1.0f});
 
     offset.y += *font_size;
-  }};
+  };
 
   const auto &command_buffer = frontend.get_command_buffer();
   const Size commands_used = command_buffer.used();
@@ -101,7 +101,7 @@ void RenderStats::render() {
   render_stat("buffers", buffer_stats);
   render_stat("targets", target_stats);
 
-  auto render_number{[&](const char* _name, Size _number) {
+  auto render_number = [&](const char* _name, Size _number) {
     m_immediate->frame_queue().record_text(
       *font_name,
       offset,
@@ -111,7 +111,7 @@ void RenderStats::render() {
       String::format("%s: %zu", _name, _number),
       {1.0f, 1.0f, 1.0f, 1.0f});
     offset.y += *font_size;
-  }};
+  };
 
   render_number("points", frontend.points());
   render_number("lines", frontend.lines());
@@ -130,10 +130,11 @@ void RenderStats::render() {
     {1.0f, 1.0f, 1.0f, 1.0f});
   offset.y += *font_size;
 
-  const Math::Vec2f &screen_size{frontend.swapchain()->dimensions().cast<Float32>()};
+  const Math::Vec2f& screen_size =
+    frontend.swapchain()->dimensions().cast<Float32>();
 
   // mspf and fps
-  const auto& _timer{frontend.timer()};
+  const auto& _timer = frontend.timer();
   m_immediate->frame_queue().record_text(
     *font_name,
     screen_size - Math::Vec2f{25, 25},
