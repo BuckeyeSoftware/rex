@@ -84,10 +84,11 @@ void RenderStats::render() {
     1.0f,
     Render::Immediate2D::TextAlign::k_left,
     String::format(
-      "commands: ^[%x]%s ^wof ^g%s",
+      "commands: ^[%x]%s ^wof ^g%s ^w(%zu total)",
       color_ratio(commands_used, commands_total),
       String::human_size_format(commands_used),
-      String::human_size_format(commands_total)),
+      String::human_size_format(commands_total),
+      frontend.commands()),
     {1.0f, 1.0f, 1.0f, 1.0f});
 
   offset.y += *font_size;

@@ -207,6 +207,7 @@ struct Context {
   Size triangles() const;
   Size lines() const;
   Size points() const;
+  Size commands() const;
 
   Target* swapchain() const;
 
@@ -282,6 +283,7 @@ private:
   Concurrency::Atomic<Size> m_triangles[2];
   Concurrency::Atomic<Size> m_lines[2];
   Concurrency::Atomic<Size> m_points[2];
+  Concurrency::Atomic<Size> m_commands_recorded[2];
 
   Size m_resource_usage[Resource::count()];
 
@@ -341,6 +343,10 @@ inline Size Context::lines() const {
 
 inline Size Context::points() const {
   return m_points[1].load();
+}
+
+inline Size Context::commands() const {
+  return m_commands_recorded[1].load();
 }
 
 inline Target* Context::swapchain() const {

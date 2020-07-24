@@ -740,6 +740,8 @@ void Context::resize(const Math::Vec2z& _resolution) {
 bool Context::process() {
   RX_PROFILE_CPU("process");
 
+  m_commands_recorded[0] = m_commands.size();
+
   if (m_commands.is_empty()) {
     return false;
   }
@@ -804,6 +806,7 @@ bool Context::process() {
   swap(m_points);
   swap(m_lines);
   swap(m_triangles);
+  swap(m_commands_recorded);
 
   return true;
 }
