@@ -132,8 +132,13 @@ static const GLubyte* (GLAPIENTRYP pglGetStringi)(GLenum, GLuint);
 // draw calls
 static void (GLAPIENTRYP pglDrawArrays)(GLenum, GLint, GLsizei);
 static void (GLAPIENTRYP pglDrawArraysInstanced)(GLenum, GLint, GLsizei, GLsizei);
+static void (GLAPIENTRYP pglDrawArraysInstancedBaseInstance)(GLenum, GLint, GLsizei, GLsizei, GLuint);
 static void (GLAPIENTRYP pglDrawElements)(GLenum, GLsizei, GLenum, const GLvoid*);
+static void (GLAPIENTRYP pglDrawElementsBaseVertex)(GLenum, GLsizei, GLenum, const GLvoid*, GLint);
 static void (GLAPIENTRYP pglDrawElementsInstanced)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei);
+static void (GLAPIENTRYP pglDrawElementsInstancedBaseVertex)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei, GLint);
+static void (GLAPIENTRYP pglDrawElementsInstancedBaseInstance)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei, GLuint);
+static void (GLAPIENTRYP pglDrawElementsInstancedBaseVertexBaseInstance)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei, GLint, GLuint);
 
 // flush
 static void (GLAPIENTRYP pglFinish)(void);
@@ -986,8 +991,13 @@ bool GL4::init() {
   // draw calls
   fetch("glDrawArrays", pglDrawArrays);
   fetch("glDrawArraysInstanced", pglDrawArraysInstanced);
+  fetch("glDrawArraysInstancedBaseInstance", pglDrawArraysInstancedBaseInstance);
   fetch("glDrawElements", pglDrawElements);
+  fetch("glDrawElementsBaseVertex", pglDrawElementsBaseVertex);
   fetch("glDrawElementsInstanced", pglDrawElementsInstanced);
+  fetch("glDrawElementsInstancedBaseVertex", pglDrawElementsInstancedBaseVertex);
+  fetch("glDrawElementsInstancedBaseInstance", pglDrawElementsInstancedBaseInstance);
+  fetch("glDrawElementsInstancedBaseVertexBaseInstance", pglDrawElementsInstancedBaseVertexBaseInstance);
 
   // flush
   fetch("glFinish", pglFinish);
@@ -1715,12 +1725,12 @@ void GL4::process(Byte* _command) {
     {
       RX_PROFILE_CPU("draw");
 
-      const auto command{reinterpret_cast<Frontend::DrawCommand*>(header + 1)};
-      const auto render_state{&command->render_state};
-      const auto render_target{command->render_target};
-      const auto render_buffer{command->render_buffer};
-      const auto render_program{command->render_program};
-      const auto this_program{reinterpret_cast<detail_gl4::program*>(render_program + 1)};
+      const auto command = reinterpret_cast<Frontend::DrawCommand*>(header + 1);
+      const auto render_state = &command->render_state;
+      const auto render_target = command->render_target;
+      const auto render_buffer = command->render_buffer;
+      const auto render_program = command->render_program;
+      const auto this_program = reinterpret_cast<detail_gl4::program*>(render_program + 1);
 
       state->use_draw_target(render_target, &command->draw_buffers);
       state->use_buffer(render_buffer);
@@ -1732,10 +1742,10 @@ void GL4::process(Byte* _command) {
         const auto& program_uniforms{render_program->uniforms()};
         const Byte* draw_uniforms{command->uniforms()};
 
-        for (Size i{0}; i < 64; i++) {
+        for (Size i = 0; i < 64; i++) {
           if (command->dirty_uniforms_bitset & (1_u64 << i)) {
-            const auto& uniform{program_uniforms[i]};
-            const auto location{this_program->uniforms[i]};
+            const auto& uniform = program_uniforms[i];
+            const auto location = this_program->uniforms[i];
 
             if (location == -1) {
               draw_uniforms += uniform.size();
@@ -1809,8 +1819,8 @@ void GL4::process(Byte* _command) {
       }
 
       // apply any textures
-      for (Size i{0}; i < command->draw_textures.size(); i++) {
-        Frontend::Texture* texture{command->draw_textures[i]};
+      for (Size i = 0; i < command->draw_textures.size(); i++) {
+        Frontend::Texture* texture = command->draw_textures[i];
         switch (texture->resource_type()) {
           case Frontend::Resource::Type::k_texture1D:
             state->use_texture(static_cast<Frontend::Texture1D*>(texture), i);
@@ -1837,14 +1847,72 @@ void GL4::process(Byte* _command) {
         const auto element_type = convert_element_type(render_buffer->element_type());
         const auto indices = reinterpret_cast<const GLvoid*>(render_buffer->element_size() * command->offset);
         if (command->instances) {
+          const bool base_instance = command->base_instance != 0;
           if (render_buffer->is_indexed()) {
-            pglDrawElementsInstanced(primitive_type, count, element_type, indices, command->instances);
+            const bool base_vertex = command->base_vertex != 0;
+            if (base_vertex) {
+              if (base_instance) {
+                pglDrawElementsInstancedBaseVertexBaseInstance(
+                  primitive_type,
+                  count,
+                  element_type,
+                  indices,
+                  static_cast<GLsizei>(command->instances),
+                  static_cast<GLint>(command->base_vertex),
+                  static_cast<GLuint>(command->base_instance));
+              } else {
+                pglDrawElementsInstancedBaseVertex(
+                  primitive_type,
+                  count,
+                  element_type,
+                  indices,
+                  static_cast<GLsizei>(command->instances),
+                  static_cast<GLint>(command->base_vertex));
+              }
+            } else if (base_instance) {
+              pglDrawElementsInstancedBaseInstance(
+                primitive_type,
+                count,
+                element_type,
+                indices,
+                static_cast<GLsizei>(command->instances),
+                static_cast<GLint>(command->base_instance));
+            } else {
+              pglDrawElementsInstanced(
+                primitive_type,
+                count,
+                element_type,
+                indices,
+                static_cast<GLsizei>(command->instances));
+            }
           } else {
-            pglDrawArraysInstanced(primitive_type, offset, count, command->instances);
+            if (base_instance) {
+              pglDrawArraysInstancedBaseInstance(
+                primitive_type,
+                offset,
+                count,
+                static_cast<GLsizei>(command->instances),
+                static_cast<GLuint>(command->base_instance));
+            } else {
+              pglDrawArraysInstanced(
+                primitive_type,
+                offset,
+                count,
+                static_cast<GLsizei>(command->instances));
+            }
           }
         } else {
           if (render_buffer->is_indexed()) {
-            pglDrawElements(primitive_type, count, element_type, indices);
+            if (command->base_vertex) {
+              pglDrawElementsBaseVertex(
+                primitive_type,
+                count,
+                element_type,
+                indices,
+                static_cast<GLint>(command->base_vertex));
+            } else {
+              pglDrawElements(primitive_type, count, element_type, indices);
+            }
           } else {
             pglDrawArrays(primitive_type, offset, count);
           }

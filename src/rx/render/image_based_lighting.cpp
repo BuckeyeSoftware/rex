@@ -53,6 +53,8 @@ ImageBasedLighting::ImageBasedLighting(Frontend::Context* _frontend)
     3,
     0,
     0,
+    0,
+    0,
     Frontend::PrimitiveType::k_triangles,
     {});
 
@@ -135,6 +137,8 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
       3,
       0,
       0,
+      0,
+      0,
       Frontend::PrimitiveType::k_triangles,
       draw_textures);
 
@@ -175,6 +179,8 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
         nullptr,
         program,
         3,
+        0,
+        0,
         0,
         0,
         Frontend::PrimitiveType::k_triangles,

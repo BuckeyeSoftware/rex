@@ -9,6 +9,7 @@
 
 #include "rx/core/profiler.h"
 #include "rx/core/log.h"
+#include "rx/core/abort.h"
 
 namespace Rx::Render::Backend {
 
@@ -120,10 +121,17 @@ static const GLubyte* (GLAPIENTRYP pglGetStringi)(GLenum, GLuint);
 static void (GLAPIENTRYP pglDrawArrays)(GLenum, GLint, GLsizei);
 static void (GLAPIENTRYP pglDrawArraysInstanced)(GLenum, GLint, GLsizei, GLsizei);
 static void (GLAPIENTRYP pglDrawElements)(GLenum, GLsizei, GLenum, const GLvoid*);
+static void (GLAPIENTRYP pglDrawElementsBaseVertex)(GLenum, GLsizei, GLenum, const GLvoid*, GLint);
 static void (GLAPIENTRYP pglDrawElementsInstanced)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei);
+static void (GLAPIENTRYP pglDrawElementsInstancedBaseVertex)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei, GLint);
 
 // flush
 static void (GLAPIENTRYP pglFinish)(void);
+
+// GL_EXT_base_instance
+static void (GLAPIENTRYP pglDrawArraysInstancedBaseInstanceEXT)(GLenum, GLint, GLsizei, GLsizei, GLuint);
+static void (GLAPIENTRYP pglDrawElementsInstancedBaseInstanceEXT)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei, GLuint);
+static void (GLAPIENTRYP pglDrawElementsInstancedBaseVertexBaseInstanceEXT)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei, GLint, GLuint);
 
 template<typename F>
 static void fetch(const char* _name, F& function_) {
@@ -279,9 +287,23 @@ namespace detail_es3 {
 
       GLint extensions{0};
       pglGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
+      bool has_ext_base_instance = false;
+
       for (GLint i{0}; i < extensions; i++) {
         const auto name{reinterpret_cast<const char*>(pglGetStringi(GL_EXTENSIONS, i))};
         logger->verbose("extension '%s' supported", name);
+
+        // GL_EXT_base_instance
+        if (!strcmp(name, "GL_EXT_base_instance")) {
+          fetch("glDrawArraysInstancedBaseInstanceEXT", pglDrawArraysInstancedBaseInstanceEXT);
+          fetch("glDrawElementsInstancedBaseInstanceEXT", pglDrawElementsInstancedBaseInstanceEXT);
+          fetch("glDrawElementsInstancedBaseVertexBaseInstanceEXT", pglDrawElementsInstancedBaseVertexBaseInstanceEXT);
+          has_ext_base_instance = true;
+        }
+      }
+
+      if (!has_ext_base_instance) {
+        abort("GPU does not support GL_EXT_base_instance");
       }
     }
 
@@ -1819,14 +1841,72 @@ void ES3::process(Byte* _command) {
         const auto element_type = convert_element_type(render_buffer->element_type());
         const auto indices = reinterpret_cast<const GLvoid*>(render_buffer->element_size() * command->offset);
         if (command->instances) {
+          const bool base_instance = command->base_instance != 0;
           if (render_buffer->is_indexed()) {
-            pglDrawElementsInstanced(primitive_type, count, element_type, indices, command->instances);
+            const bool base_vertex = command->base_vertex != 0;
+            if (base_vertex) {
+              if (base_instance) {
+                pglDrawElementsInstancedBaseVertexBaseInstanceEXT(
+                  primitive_type,
+                  count,
+                  element_type,
+                  indices,
+                  static_cast<GLsizei>(command->instances),
+                  static_cast<GLint>(command->base_vertex),
+                  static_cast<GLuint>(command->base_instance));
+              } else {
+                pglDrawElementsInstancedBaseVertex(
+                  primitive_type,
+                  count,
+                  element_type,
+                  indices,
+                  static_cast<GLsizei>(command->instances),
+                  static_cast<GLint>(command->base_vertex));
+              }
+            } else if (base_instance) {
+              pglDrawElementsInstancedBaseInstanceEXT(
+                primitive_type,
+                count,
+                element_type,
+                indices,
+                static_cast<GLsizei>(command->instances),
+                static_cast<GLint>(command->base_instance));
+            } else {
+              pglDrawElementsInstanced(
+                primitive_type,
+                count,
+                element_type,
+                indices,
+                static_cast<GLsizei>(command->instances));
+            }
           } else {
-            pglDrawArraysInstanced(primitive_type, offset, count, command->instances);
+            if (base_instance) {
+              pglDrawArraysInstancedBaseInstanceEXT(
+                primitive_type,
+                offset,
+                count,
+                static_cast<GLsizei>(command->instances),
+                static_cast<GLuint>(command->base_instance));
+            } else {
+              pglDrawArraysInstanced(
+                primitive_type,
+                offset,
+                count,
+                static_cast<GLsizei>(command->instances));
+            }
           }
         } else {
           if (render_buffer->is_indexed()) {
-            pglDrawElements(primitive_type, count, element_type, indices);
+            if (command->base_vertex) {
+              pglDrawElementsBaseVertex(
+                primitive_type,
+                count,
+                element_type,
+                indices,
+                static_cast<GLint>(command->base_vertex));
+            } else {
+              pglDrawElements(primitive_type, count, element_type, indices);
+            }
           } else {
             pglDrawArrays(primitive_type, offset, count);
           }

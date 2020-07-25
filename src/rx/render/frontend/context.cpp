@@ -514,6 +514,8 @@ void Context::draw(
   Size _count,
   Size _offset,
   Size _instances,
+  Size _base_vertex,
+  Size _base_instance,
   PrimitiveType _primitive_type,
   const Textures& _draw_textures)
 {
@@ -528,6 +530,8 @@ void Context::draw(
   if (!_buffer) {
     RX_ASSERT(_offset == 0, "bufferless draws cannot have an offset");
     RX_ASSERT(_instances == 0, "bufferless draws cannot have instances");
+    RX_ASSERT(_base_vertex == 0, "bufferless draws cannot have a base vertex");
+    RX_ASSERT(_base_instance == 0, "bufferless draws cannot have a base instance");
   } else if (_instances) {
     RX_ASSERT(_buffer->is_instanced(), "instanced draw requires instanced buffer");
     instances = _instances;
@@ -568,6 +572,8 @@ void Context::draw(
     command->count = _count;
     command->offset = _offset;
     command->instances = _instances;
+    command->base_vertex = _base_vertex;
+    command->base_instance = _base_instance;
     command->type = _primitive_type;
     command->dirty_uniforms_bitset = _program->dirty_uniforms_bitset();
 

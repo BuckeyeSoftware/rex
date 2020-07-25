@@ -134,6 +134,8 @@ struct DrawCommand {
   Size count;
   Size offset;
   Size instances;
+  Size base_vertex;
+  Size base_instance;
   PrimitiveType type;
   Uint64 dirty_uniforms_bitset;
 

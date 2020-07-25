@@ -223,6 +223,8 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
       _mesh.count,
       _mesh.offset,
       0,
+      0,
+      0,
       Render::Frontend::PrimitiveType::k_triangles,
       draw_textures);
 

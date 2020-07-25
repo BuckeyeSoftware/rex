@@ -79,6 +79,8 @@ struct Context {
     Size _count,
     Size _offset,
     Size _instances,
+    Size _base_vertex,
+    Size _base_instance,
     PrimitiveType _primitive_type,
     const Textures& _draw_textures);
 
