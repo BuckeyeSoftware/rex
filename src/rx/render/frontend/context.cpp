@@ -537,6 +537,10 @@ void Context::draw(
     instances = _instances;
   }
 
+  if (_base_vertex) {
+    RX_ASSERT(_buffer->is_indexed(), "base vertex draw requires indexed buffer");
+  }
+
   m_vertices[0] += _count * instances;
 
   switch (_primitive_type) {
