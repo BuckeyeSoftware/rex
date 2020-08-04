@@ -821,7 +821,6 @@ bool Context::process() {
   // Consume all recorded commands on the backend.
   m_backend->process(m_commands);
 
-
   // Clear edit lists
   m_edit_buffers.each_fwd([this](Buffer* _buffer) { _buffer->clear_edits(); });
   m_edit_textures1D.each_fwd([this](Texture1D* _texture) { _texture->clear_edits(); });

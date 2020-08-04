@@ -27,9 +27,6 @@ struct TextureCM;
 struct Technique;
 struct Module;
 
-struct Recorder;
-struct Replayer;
-
 struct Context {
   Context(Memory::Allocator& _allocator, Backend::Context* _backend);
   ~Context();
