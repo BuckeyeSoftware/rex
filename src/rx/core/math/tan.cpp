@@ -2,6 +2,7 @@
 #include <math.h> // M_PI_2
 
 #include "rx/core/math/tan.h"
+#include "rx/core/math/abs.h"
 #include "rx/core/math/shape.h"
 #include "rx/core/math/force_eval.h"
 
