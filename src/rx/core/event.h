@@ -1,7 +1,5 @@
 #ifndef RX_CORE_EVENT_H
 #define RX_CORE_EVENT_H
-#include <stdio.h>
-
 #include "rx/core/function.h"
 #include "rx/core/vector.h"
 #include "rx/core/markers.h"
