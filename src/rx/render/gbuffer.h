@@ -10,9 +10,9 @@ namespace Frontend {
   struct Texture2D;
 }
 
-struct gbuffer {
-  gbuffer(Frontend::Context* _frontend);
-  ~gbuffer();
+struct GBuffer {
+  GBuffer(Frontend::Context* _frontend);
+  ~GBuffer();
 
   void create(const Math::Vec2z& _resolution);
   void resize(const Math::Vec2z& _resolution);
@@ -34,19 +34,19 @@ private:
   Frontend::Texture2D* m_emission_texture;
 };
 
-inline Frontend::Texture2D* gbuffer::albedo() const {
+inline Frontend::Texture2D* GBuffer::albedo() const {
   return m_albedo_texture;
 }
 
-inline Frontend::Texture2D* gbuffer::normal() const {
+inline Frontend::Texture2D* GBuffer::normal() const {
   return m_normal_texture;
 }
 
-inline Frontend::Texture2D* gbuffer::emission() const {
+inline Frontend::Texture2D* GBuffer::emission() const {
   return m_emission_texture;
 }
 
-inline Frontend::Target* gbuffer::target() const {
+inline Frontend::Target* GBuffer::target() const {
   return m_target;
 }
 

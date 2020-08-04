@@ -3,7 +3,6 @@
 #include "rx/render/frontend/context.h"
 #include "rx/render/frontend/target.h"
 
-#include "rx/render/indirect_lighting_pass.h"
 #include "rx/render/immediate2D.h"
 #include "rx/render/immediate3D.h"
 #include "rx/render/gbuffer.h"
@@ -11,16 +10,44 @@
 #include "rx/render/skybox.h"
 #include "rx/render/model.h"
 
+#include "rx/render/indirect_lighting_pass.h"
+#include "rx/render/lens_distortion_pass.h"
+
 #include "rx/hud/console.h"
 #include "rx/hud/frame_graph.h"
 #include "rx/hud/memory_stats.h"
 #include "rx/hud/render_stats.h"
 
 #include "rx/console/interface.h"
+#include "rx/console/variable.h"
 
 #include "rx/math/camera.h"
 
 using namespace Rx;
+
+RX_CONSOLE_FVAR(
+  lens_distortion,
+  "lens.distortion",
+  "lens distortion",
+  0.0f,
+  1.0f,
+  0.1f);
+
+RX_CONSOLE_FVAR(
+  lens_scale,
+  "lens.scale",
+  "lens scale",
+  0.0f,
+  1.0f,
+  0.9f);
+
+RX_CONSOLE_FVAR(
+  lens_dispersion,
+  "lens.dispersion",
+  "lens dispersion",
+  0.0f,
+  1.0f,
+  0.01f);
 
 struct TestGame
   : Game
@@ -40,6 +67,7 @@ struct TestGame
     , m_model2{&m_frontend}
     , m_ibl{&m_frontend}
     , m_indirect_lighting_pass{&m_frontend, &m_gbuffer, &m_ibl}
+    , m_lens_distortion_pass{&m_frontend}
   {
     model_transform[0].translate = {-5.0f, 0.0f, 0.0f};
     model_transform[0].scale     = { 2.0f, 2.0f, 2.0f};
@@ -59,6 +87,7 @@ struct TestGame
     m_ibl.render(m_skybox.cubemap(), 256);
 
     m_indirect_lighting_pass.create(m_frontend.swapchain()->dimensions());
+    m_lens_distortion_pass.create(m_frontend.swapchain()->dimensions());
 
     m_model0.animate(0, true);
     m_model1.animate(0, true);
@@ -230,11 +259,17 @@ struct TestGame
     // Then 3D immediates.
     m_immediate3D.render(m_indirect_lighting_pass.target(), m_camera.view(), m_camera.projection);
 
-    // Blit indirect diffuse pass to backbuffer
+    // Lens distortion pass.
+    m_lens_distortion_pass.distortion = *lens_distortion;
+    m_lens_distortion_pass.dispersion = *lens_dispersion;
+    m_lens_distortion_pass.scale = *lens_scale;
+    m_lens_distortion_pass.render(m_indirect_lighting_pass.texture());
+
+    // Blit lens distortion pass to backbuffer
     m_frontend.blit(
       RX_RENDER_TAG("test"),
       state,
-      m_indirect_lighting_pass.target(),
+      m_lens_distortion_pass.target(),
       0,
       m_frontend.swapchain(),
       0);
@@ -267,7 +302,7 @@ struct TestGame
   hud::MemoryStats m_memory_stats;
   hud::RenderStats m_render_stats;
 
-  Render::gbuffer m_gbuffer;
+  Render::GBuffer m_gbuffer;
   Render::Skybox m_skybox;
   Render::Model m_model0;
   Render::Model m_model1;
@@ -276,6 +311,7 @@ struct TestGame
   Render::ImageBasedLighting m_ibl;
 
   Render::IndirectLightingPass m_indirect_lighting_pass;
+  Render::LensDistortionPass m_lens_distortion_pass;
 
   Math::Transform model_transform[3];
   Math::Camera m_camera;

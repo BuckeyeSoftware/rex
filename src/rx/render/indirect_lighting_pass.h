@@ -6,17 +6,19 @@
 namespace Rx::Render {
 
 namespace Frontend {
-  struct Target;
-  struct Texture2D;
-  struct Technique;
-  struct Context;
-} // namespace frontend
 
-struct gbuffer;
+struct Target;
+struct Texture2D;
+struct Technique;
+struct Context;
+
+} // namespace Frontend
+
+struct GBuffer;
 struct ImageBasedLighting;
 
 struct IndirectLightingPass {
-  IndirectLightingPass(Frontend::Context* _frontend, const gbuffer* _gbuffer, const ImageBasedLighting* _ibl);
+  IndirectLightingPass(Frontend::Context* _frontend, const GBuffer* _gbuffer, const ImageBasedLighting* _ibl);
   ~IndirectLightingPass();
 
   void render(const Math::Camera& _camera);
@@ -28,7 +30,6 @@ struct IndirectLightingPass {
   Frontend::Target* target() const;
 
 private:
-  void create();
   void destroy();
 
   Frontend::Context* m_frontend;
@@ -36,9 +37,18 @@ private:
   Frontend::Texture2D* m_texture;
   Frontend::Target* m_target;
 
-  const gbuffer* m_gbuffer;
+  const GBuffer* m_gbuffer;
   const ImageBasedLighting* m_ibl;
 };
+
+inline IndirectLightingPass::~IndirectLightingPass() {
+  destroy();
+}
+
+inline void IndirectLightingPass::resize(const Math::Vec2z& _dimensions) {
+  destroy();
+  create(_dimensions);
+}
 
 inline Frontend::Texture2D* IndirectLightingPass::texture() const {
   return m_texture;

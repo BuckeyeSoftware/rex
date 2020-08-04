@@ -11,7 +11,8 @@
 namespace Rx::Render {
 
 IndirectLightingPass::IndirectLightingPass(Frontend::Context* _frontend,
-                                           const gbuffer* _gbuffer, const ImageBasedLighting* _ibl)
+                                           const GBuffer* _gbuffer,
+                                           const ImageBasedLighting* _ibl)
   : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("deferred_indirect")}
   , m_texture{nullptr}
@@ -19,10 +20,6 @@ IndirectLightingPass::IndirectLightingPass(Frontend::Context* _frontend,
   , m_gbuffer{_gbuffer}
   , m_ibl{_ibl}
 {
-}
-
-IndirectLightingPass::~IndirectLightingPass() {
-  destroy();
 }
 
 void IndirectLightingPass::render(const Math::Camera& _camera) {
@@ -35,17 +32,16 @@ void IndirectLightingPass::render(const Math::Camera& _camera) {
   program->uniforms()[6].record_mat4x4f(Math::Mat4x4f::invert(_camera.view() * _camera.projection));
   program->uniforms()[7].record_vec3f(_camera.translate);
 
-
   Frontend::Buffers draw_buffers;
   draw_buffers.add(0);
 
   m_frontend->clear(
-          RX_RENDER_TAG("indirect lighting pass"),
-          state,
-          m_target,
-          draw_buffers,
-          RX_RENDER_CLEAR_COLOR(0),
-          Math::Vec4f{0.0f, 0.0f, 0.0f, 1.0f}.data());
+    RX_RENDER_TAG("indirect lighting pass"),
+    state,
+    m_target,
+    draw_buffers,
+    RX_RENDER_CLEAR_COLOR(0),
+    Math::Vec4f{0.0f, 0.0f, 0.0f, 1.0f}.data());
 
   state.stencil.record_enable(true);
 
@@ -78,11 +74,6 @@ void IndirectLightingPass::render(const Math::Camera& _camera) {
     draw_textures);
 }
 
-void IndirectLightingPass::resize(const Math::Vec2z& _dimensions) {
-  destroy();
-  create(_dimensions);
-}
-
 void IndirectLightingPass::create(const Math::Vec2z& _dimensions) {
   m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("indirect lighting pass"));
   m_texture->record_type(Frontend::Texture::Type::k_attachment);
@@ -91,8 +82,8 @@ void IndirectLightingPass::create(const Math::Vec2z& _dimensions) {
   m_texture->record_levels(1);
   m_texture->record_dimensions(_dimensions);
   m_texture->record_wrap({
-                                 Frontend::Texture::WrapType::k_clamp_to_edge,
-                                 Frontend::Texture::WrapType::k_clamp_to_edge});
+    Frontend::Texture::WrapType::k_clamp_to_edge,
+    Frontend::Texture::WrapType::k_clamp_to_edge});
   m_frontend->initialize_texture(RX_RENDER_TAG("indirect lighting pass"), m_texture);
 
   m_target = m_frontend->create_target(RX_RENDER_TAG("indirect lighting pass"));

@@ -6,7 +6,7 @@
 
 namespace Rx::Render {
 
-gbuffer::gbuffer(Frontend::Context* _frontend)
+GBuffer::GBuffer(Frontend::Context* _frontend)
   : m_frontend{_frontend}
   , m_target{nullptr}
   , m_albedo_texture{nullptr}
@@ -15,18 +15,18 @@ gbuffer::gbuffer(Frontend::Context* _frontend)
 {
 }
 
-gbuffer::~gbuffer() {
+GBuffer::~GBuffer() {
   destroy();
 }
 
-void gbuffer::destroy() {
+void GBuffer::destroy() {
   m_frontend->destroy_texture(RX_RENDER_TAG("gbuffer albedo"), m_albedo_texture);
   m_frontend->destroy_texture(RX_RENDER_TAG("gbuffer normal"), m_normal_texture);
   m_frontend->destroy_texture(RX_RENDER_TAG("gbuffer emission"), m_emission_texture);
   m_frontend->destroy_target(RX_RENDER_TAG("gbuffer"), m_target);
 }
 
-void gbuffer::create(const Math::Vec2z& _resolution) {
+void GBuffer::create(const Math::Vec2z& _resolution) {
   m_albedo_texture = m_frontend->create_texture2D(RX_RENDER_TAG("gbuffer albedo"));
   m_albedo_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
   m_albedo_texture->record_type(Frontend::Texture::Type::k_attachment);
@@ -68,12 +68,12 @@ void gbuffer::create(const Math::Vec2z& _resolution) {
   m_frontend->initialize_target(RX_RENDER_TAG("gbuffer"), m_target);
 }
 
-void gbuffer::resize(const Math::Vec2z& _resolution) {
+void GBuffer::resize(const Math::Vec2z& _resolution) {
   destroy();
   create(_resolution);
 }
 
-Frontend::Texture2D* gbuffer::depth_stencil() const {
+Frontend::Texture2D* GBuffer::depth_stencil() const {
   return m_target->depth_stencil();
 }
 
