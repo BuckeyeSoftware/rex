@@ -408,7 +408,7 @@ int main(int _argc, char** _argv) {
           abort("failed to initialize rendering backend");
         }
 
-        if (is_gl) {
+        if (is_gl || is_es) {
           SDL_GL_SetSwapInterval(*display_swap_interval);
         }
 
