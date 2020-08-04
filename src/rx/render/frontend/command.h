@@ -92,6 +92,8 @@ struct Buffers {
 
   int last() const;
 
+  const int *data() const;
+
 private:
   union {
     Utility::Nat m_nat;
@@ -326,6 +328,10 @@ inline int Buffers::operator[](Size _index) const {
 
 inline int Buffers::last() const {
   return m_elements[m_index - 1];
+}
+
+inline const int* Buffers::data() const {
+  return m_elements;
 }
 
 // draw_command

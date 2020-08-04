@@ -67,10 +67,10 @@ template<> struct VariableTrait<Vec3i>  : VariableTypeTrait<VariableType::k_vec3
 template<> struct VariableTrait<Vec4f>  : VariableTypeTrait<VariableType::k_vec4f> {};
 template<> struct VariableTrait<Vec4i>  : VariableTypeTrait<VariableType::k_vec4i> {};
 
-static constexpr const Sint32 k_int_min = -INT_MAX - 1;
-static constexpr const Sint32 k_int_max = INT_MAX;
-static constexpr const Float32 k_float_min = -FLT_MAX;
-static constexpr const Float32 k_float_max = FLT_MAX;
+static inline constexpr const Sint32 k_int_min = -INT_MAX - 1;
+static inline constexpr const Sint32 k_int_max = INT_MAX;
+static inline constexpr const Float32 k_float_min = -FLT_MAX;
+static inline constexpr const Float32 k_float_max = FLT_MAX;
 
 struct VariableReference {
   VariableReference() = default;

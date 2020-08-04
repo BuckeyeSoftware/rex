@@ -233,12 +233,12 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
 }
 
 void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {
-  static constexpr Float32 k_size{0.1f};
+  const auto scale = m_aabb.transform(_world).scale() * 0.25f;
 
   if (m_model.is_animated()) {
     m_model.animated_vertices().each_fwd([&](const Rx::Model::Loader::AnimatedVertex& _vertex) {
       const Math::Vec3f point_a{_vertex.position};
-      const Math::Vec3f point_b{_vertex.position + _vertex.normal * k_size};
+      const Math::Vec3f point_b{_vertex.position + _vertex.normal * scale};
 
       const Math::Vec3f color{_vertex.normal * 0.5f + 0.5f};
 

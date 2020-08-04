@@ -10,7 +10,7 @@ struct Context;
 
 struct Buffer : Resource {
   struct Attribute {
-    enum class Type {
+    enum class Type : Uint8 {
       // Scalars
       k_f32,    // 1 x Float32
 
@@ -112,7 +112,10 @@ struct Buffer : Resource {
   Type type() const;
   Size size() const;
 
-  Vector<Edit>&& edits();
+  const Vector<Edit>& edits() const;
+  Size bytes_for_edits() const;
+  void optimize_edits();
+  void clear_edits();
 
   void validate() const;
 
@@ -283,6 +286,14 @@ inline Buffer::Type Buffer::type() const {
 
 inline Size Buffer::size() const {
   return m_vertices_store.size() + m_elements_store.size() + m_instances_store.size();
+}
+
+inline const Vector<Buffer::Edit>& Buffer::edits() const {
+  return m_edits;
+}
+
+inline void Buffer::clear_edits() {
+  m_edits.clear();
 }
 
 inline bool Buffer::is_instanced() const {

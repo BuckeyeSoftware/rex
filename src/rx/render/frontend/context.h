@@ -26,7 +26,9 @@ struct Texture3D;
 struct TextureCM;
 struct Technique;
 struct Module;
-struct Material;
+
+struct Recorder;
+struct Replayer;
 
 struct Context {
   Context(Memory::Allocator& _allocator, Backend::Context* _backend);
@@ -210,6 +212,8 @@ struct Context {
   Size lines() const;
   Size points() const;
   Size commands() const;
+  Size footprint() const;
+  Uint64 frame() const;
 
   Target* swapchain() const;
 
@@ -248,6 +252,8 @@ private:
   StaticPool m_texture3D_pool                  RX_HINT_GUARDED_BY(m_mutex);
   StaticPool m_textureCM_pool                  RX_HINT_GUARDED_BY(m_mutex);
 
+  // Resources that were destroyed are recorded into the following vectors
+  // so that the destruction can be handled at the end of the frame.
   Vector<Buffer*> m_destroy_buffers            RX_HINT_GUARDED_BY(m_mutex);
   Vector<Target*> m_destroy_targets            RX_HINT_GUARDED_BY(m_mutex);
   Vector<Program*> m_destroy_programs          RX_HINT_GUARDED_BY(m_mutex);
@@ -255,6 +261,14 @@ private:
   Vector<Texture2D*> m_destroy_textures2D      RX_HINT_GUARDED_BY(m_mutex);
   Vector<Texture3D*> m_destroy_textures3D      RX_HINT_GUARDED_BY(m_mutex);
   Vector<TextureCM*> m_destroy_texturesCM      RX_HINT_GUARDED_BY(m_mutex);
+
+  // Resources that were edited are recorded into the following vectors
+  // so that the edits can be handled at the start of the frame.
+  Vector<Buffer*> m_edit_buffers               RX_HINT_GUARDED_BY(m_mutex);
+  Vector<Texture1D*> m_edit_textures1D         RX_HINT_GUARDED_BY(m_mutex);
+  Vector<Texture2D*> m_edit_textures2D         RX_HINT_GUARDED_BY(m_mutex);
+  Vector<Texture3D*> m_edit_textures3D         RX_HINT_GUARDED_BY(m_mutex);
+  Vector<TextureCM*> m_edit_texturesCM         RX_HINT_GUARDED_BY(m_mutex);
 
   Target* m_swapchain_target                   RX_HINT_GUARDED_BY(m_mutex);
   Texture2D* m_swapchain_texture               RX_HINT_GUARDED_BY(m_mutex);
@@ -286,6 +300,9 @@ private:
   Concurrency::Atomic<Size> m_lines[2];
   Concurrency::Atomic<Size> m_points[2];
   Concurrency::Atomic<Size> m_commands_recorded[2];
+  Concurrency::Atomic<Size> m_footprint[2];
+
+  Uint64 m_frame;
 
   Size m_resource_usage[Resource::count()];
 
@@ -349,6 +366,14 @@ inline Size Context::points() const {
 
 inline Size Context::commands() const {
   return m_commands_recorded[1].load();
+}
+
+inline Size Context::footprint() const {
+  return m_footprint[1].load();
+}
+
+inline Uint64 Context::frame() const {
+  return m_frame;
 }
 
 inline Target* Context::swapchain() const {

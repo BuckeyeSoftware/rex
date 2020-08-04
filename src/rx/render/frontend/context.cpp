@@ -243,6 +243,7 @@ void Context::initialize_buffer(const CommandHeader::Info& _info, Buffer* _buffe
   command->type = ResourceCommand::Type::k_buffer;
   command->as_buffer = _buffer;
   m_commands.push_back(command_base);
+  m_footprint[0] += _buffer->resource_usage();
 }
 
 void Context::initialize_target(const CommandHeader::Info& _info, Target* _target) {
@@ -255,6 +256,7 @@ void Context::initialize_target(const CommandHeader::Info& _info, Target* _targe
   command->type = ResourceCommand::Type::k_target;
   command->as_target = _target;
   m_commands.push_back(command_base);
+  m_footprint[0] += _target->resource_usage();
 }
 
 void Context::initialize_program(const CommandHeader::Info& _info, Program* _program) {
@@ -267,6 +269,7 @@ void Context::initialize_program(const CommandHeader::Info& _info, Program* _pro
   command->type = ResourceCommand::Type::k_program;
   command->as_program = _program;
   m_commands.push_back(command_base);
+  m_footprint[0] += _program->resource_usage();
 }
 
 void Context::initialize_texture(const CommandHeader::Info& _info, Texture1D* _texture) {
@@ -279,6 +282,7 @@ void Context::initialize_texture(const CommandHeader::Info& _info, Texture1D* _t
   command->type = ResourceCommand::Type::k_texture1D;
   command->as_texture1D = _texture;
   m_commands.push_back(command_base);
+  m_footprint[0] += _texture->resource_usage();
 }
 
 void Context::initialize_texture(const CommandHeader::Info& _info, Texture2D* _texture) {
@@ -291,6 +295,7 @@ void Context::initialize_texture(const CommandHeader::Info& _info, Texture2D* _t
   command->type = ResourceCommand::Type::k_texture2D;
   command->as_texture2D = _texture;
   m_commands.push_back(command_base);
+  m_footprint[0] += _texture->resource_usage();
 }
 
 void Context::initialize_texture(const CommandHeader::Info& _info, Texture3D* _texture) {
@@ -303,6 +308,7 @@ void Context::initialize_texture(const CommandHeader::Info& _info, Texture3D* _t
   command->type = ResourceCommand::Type::k_texture3D;
   command->as_texture3D = _texture;
   m_commands.push_back(command_base);
+  m_footprint[0] += _texture->resource_usage();
 }
 
 void Context::initialize_texture(const CommandHeader::Info& _info, TextureCM* _texture) {
@@ -315,90 +321,143 @@ void Context::initialize_texture(const CommandHeader::Info& _info, TextureCM* _t
   command->type = ResourceCommand::Type::k_textureCM;
   command->as_textureCM = _texture;
   m_commands.push_back(command_base);
+  m_footprint[0] += _texture->resource_usage();
 }
 
 // update_*
 void Context::update_buffer(const CommandHeader::Info& _info, Buffer* _buffer) {
   if (_buffer) {
-    auto edits{Utility::move(_buffer->edits())};
-    const Size edit_count{edits.size()};
-    if (edit_count) {
-      Concurrency::ScopeLock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
 
-      const Size edit_bytes{edit_count * sizeof(Size) * 3};
+    // Optimize the edits. Any overlapping, redundant, or superfluous edits
+    // will be coalesced or removed at this point.
+    _buffer->optimize_edits();
 
-      auto command_base{m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::k_resource_update, _info)};
-      auto command{reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader))};
+    // Keep track of frame footprint.
+    m_footprint[0] += _buffer->bytes_for_edits();
 
-      command->edits = edit_count;
-      command->type = UpdateCommand::Type::k_buffer;
-      command->as_buffer = _buffer;
-      memcpy(command->edit(), edits.data(), edit_bytes);
-      m_commands.push_back(command_base);
+    const auto& edits = _buffer->edits();
+    if (edits.is_empty()) {
+      // Nothing to update.
+      return;
     }
+
+    const auto n_edits = edits.size();
+    const Size edit_bytes = n_edits * sizeof(Buffer::Edit);
+
+    auto command_base = m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::k_resource_update, _info);
+    auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
+
+    command->edits = n_edits;
+    command->type = UpdateCommand::Type::k_buffer;
+    command->as_buffer = _buffer;
+    memcpy(command->edit(), edits.data(), edit_bytes);
+    m_commands.push_back(command_base);
+
+    // So we can clear edit list after processing.
+    m_edit_buffers.push_back(_buffer);
   }
 }
 
 void Context::update_texture(const CommandHeader::Info& _info, Texture1D* _texture) {
   if (_texture) {
-    auto edits{Utility::move(_texture->edits())};
-    const Size edit_count{edits.size()};
-    if (edit_count) {
-      Concurrency::ScopeLock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
 
-      const Size edit_bytes{edit_count * sizeof(Size) * 3};
+    // Optimize the edits. Any overlapping, redundant, or superfluous edits
+    // will be coalesced or removed at this point.
+    _texture->optimize_edits();
 
-      auto command_base{m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::k_resource_update, _info)};
-      auto command{reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader))};
+    // Keep track of frame footprint.
+    m_footprint[0] += _texture->bytes_for_edits();
 
-      command->edits = edit_count;
-      command->type = UpdateCommand::Type::k_texture1D;
-      command->as_texture1D = _texture;
-      memcpy(command->edit(), edits.data(), edit_bytes);
-      m_commands.push_back(command_base);
+    const auto& edits = _texture->edits();
+    if (edits.is_empty()) {
+      // Nothing to update.
+      return;
     }
+
+    const auto n_edits = edits.size();
+    const Size edit_bytes = n_edits * sizeof(Texture::Edit<Texture1D::DimensionType>);
+
+    auto command_base = m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::k_resource_update, _info);
+    auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
+
+    command->edits = n_edits;
+    command->type = UpdateCommand::Type::k_texture1D;
+    command->as_texture1D = _texture;
+    memcpy(command->edit(), edits.data(), edit_bytes);
+    m_commands.push_back(command_base);
+
+    // So we can clear edit list after processing.
+    m_edit_textures1D.push_back(_texture);
   }
 }
 
 void Context::update_texture(const CommandHeader::Info& _info, Texture2D* _texture) {
   if (_texture) {
-    auto edits{Utility::move(_texture->edits())};
-    const Size edit_count{edits.size()};
-    if (edit_count) {
-      Concurrency::ScopeLock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
 
-      const Size edit_bytes{edit_count * sizeof(Size) * 5};
+    // Optimize the edits. Any overlapping, redundant, or superfluous edits
+    // will be coalesced or removed at this point.
+    _texture->optimize_edits();
 
-      auto command_base{m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::k_resource_update, _info)};
-      auto command{reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader))};
+    // Keep track of frame footprint.
+    m_footprint[0] += _texture->bytes_for_edits();
 
-      command->edits = edit_count;
-      command->type = UpdateCommand::Type::k_texture2D;
-      command->as_texture2D = _texture;
-      memcpy(command->edit(), edits.data(), edit_bytes);
-      m_commands.push_back(command_base);
+    const auto& edits = _texture->edits();
+    if (edits.is_empty()) {
+      // Nothing to update.
+      return;
     }
+
+    const auto n_edits = edits.size();
+    const Size edit_bytes = n_edits * sizeof(Texture::Edit<Texture2D::DimensionType>);
+
+    auto command_base = m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::k_resource_update, _info);
+    auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
+
+    command->edits = n_edits;
+    command->type = UpdateCommand::Type::k_texture2D;
+    command->as_texture2D = _texture;
+    memcpy(command->edit(), edits.data(), edit_bytes);
+    m_commands.push_back(command_base);
+
+    // So we can clear edit list after processing.
+    m_edit_textures2D.push_back(_texture);
   }
 }
 
 void Context::update_texture(const CommandHeader::Info& _info, Texture3D* _texture) {
   if (_texture) {
-    auto edits{Utility::move(_texture->edits())};
-    const Size edit_count{edits.size()};
-    if (edit_count) {
-      Concurrency::ScopeLock lock{m_mutex};
+    Concurrency::ScopeLock lock{m_mutex};
 
-      const Size edit_bytes{edit_count * sizeof(Size) * 7};
+    // Optimize the edits. Any overlapping, redundant, or superfluous edits
+    // will be coalesced or removed at this point.
+    _texture->optimize_edits();
 
-      auto command_base{m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::k_resource_update, _info)};
-      auto command{reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader))};
+    // Keep track of frame footprint.
+    m_footprint[0] += _texture->bytes_for_edits();
 
-      command->edits = edit_count;
-      command->type = UpdateCommand::Type::k_texture3D;
-      command->as_texture3D = _texture;
-      memcpy(command->edit(), edits.data(), edit_bytes);
-      m_commands.push_back(command_base);
+    const auto& edits = _texture->edits();
+    if (edits.is_empty()) {
+      // Nothing to update.
+      return;
     }
+
+    const auto n_edits = edits.size();
+    const Size edit_bytes = n_edits * sizeof(Texture::Edit<Texture2D::DimensionType>);
+
+    auto command_base = m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::k_resource_update, _info);
+    auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
+
+    command->edits = n_edits;
+    command->type = UpdateCommand::Type::k_texture3D;
+    command->as_texture3D = _texture;
+    memcpy(command->edit(), edits.data(), edit_bytes);
+    m_commands.push_back(command_base);
+
+    // So we can clear edit list after processing.
+    m_edit_textures3D.push_back(_texture);
   }
 }
 
@@ -545,7 +604,7 @@ void Context::draw(
 
   switch (_primitive_type) {
   case PrimitiveType::k_lines:
-    m_lines[0] += (_count  / 2) * instances;
+    m_lines[0] += (_count / 2) * instances;
     break;
   case PrimitiveType::k_points:
     m_points[0] += _count * _instances;
@@ -586,6 +645,7 @@ void Context::draw(
     // Copy the uniforms directly into the command.
     if (dirty_uniforms_size) {
       _program->flush_dirty_uniforms(command->uniforms());
+      m_footprint[0] += dirty_uniforms_size;
     }
 
     m_commands.push_back(command_base);
@@ -656,12 +716,12 @@ void Context::clear(const CommandHeader::Info& _info, const State& _state,
 }
 
 void Context::blit(
-        const CommandHeader::Info& _info,
-        const State& _state,
-        Target* _src_target,
-        Size _src_attachment,
-        Target* _dst_target,
-        Size _dst_attachment)
+  const CommandHeader::Info& _info,
+  const State& _state,
+  Target* _src_target,
+  Size _src_attachment,
+  Target* _dst_target,
+  Size _dst_attachment)
 {
   // Blitting from an attachment in a target to another attachment in the same
   // target is not allowed.
@@ -750,50 +810,44 @@ void Context::resize(const Math::Vec2z& _resolution) {
 bool Context::process() {
   RX_PROFILE_CPU("process");
 
-  m_commands_recorded[0] = m_commands.size();
-
   if (m_commands.is_empty()) {
     return false;
   }
+
+  m_commands_recorded[0] = m_commands.size();
 
   Concurrency::ScopeLock lock{m_mutex};
 
   // Consume all recorded commands on the backend.
   m_backend->process(m_commands);
 
+
+  // Clear edit lists
+  m_edit_buffers.each_fwd([this](Buffer* _buffer) { _buffer->clear_edits(); });
+  m_edit_textures1D.each_fwd([this](Texture1D* _texture) { _texture->clear_edits(); });
+  m_edit_textures2D.each_fwd([this](Texture2D* _texture) { _texture->clear_edits(); });
+  m_edit_textures3D.each_fwd([this](Texture3D* _texture) { _texture->clear_edits(); });
+
   // Cleanup unreferenced frontend resources.
-  m_destroy_buffers.each_fwd([this](Buffer* _buffer) {
-    m_buffer_pool.destroy<Buffer>(_buffer);
-  });
+  m_destroy_buffers.each_fwd([this](Buffer* _buffer) { m_buffer_pool.destroy<Buffer>(_buffer); });
+  m_destroy_targets.each_fwd([this](Target* _target) { m_target_pool.destroy<Target>(_target); });
+  m_destroy_programs.each_fwd([this](Program* _program) { m_program_pool.destroy<Program>(_program); });
+  m_destroy_textures1D.each_fwd([this](Texture1D* _texture) { m_texture1D_pool.destroy<Texture1D>(_texture); });
+  m_destroy_textures2D.each_fwd([this](Texture2D* _texture) { m_texture2D_pool.destroy<Texture2D>(_texture); });
+  m_destroy_textures3D.each_fwd([this](Texture3D* _texture) { m_texture3D_pool.destroy<Texture3D>(_texture); });
+  m_destroy_texturesCM.each_fwd([this](TextureCM* _texture) { m_textureCM_pool.destroy<TextureCM>(_texture); });
 
-  m_destroy_targets.each_fwd([this](Target* _target) {
-    m_target_pool.destroy<Target>(_target);
-  });
-
-  m_destroy_programs.each_fwd([this](Program* _program) {
-    m_program_pool.destroy<Program>(_program);
-  });
-
-  m_destroy_textures1D.each_fwd([this](Texture1D* _texture) {
-    m_texture1D_pool.destroy<Texture1D>(_texture);
-  });
-
-  m_destroy_textures2D.each_fwd([this](Texture2D* _texture) {
-    m_texture2D_pool.destroy<Texture2D>(_texture);
-  });
-
-  m_destroy_textures3D.each_fwd([this](Texture3D* _texture) {
-    m_texture3D_pool.destroy<Texture3D>(_texture);
-  });
-
-  m_destroy_texturesCM.each_fwd([this](TextureCM* _texture) {
-    m_textureCM_pool.destroy<TextureCM>(_texture);
-  });
-
-  // Reset the command buffer and unreferenced resource lists.
+  // Reset the command buffer.
   m_commands.clear();
   m_command_buffer.reset();
 
+  // Cleanup edit lists.
+  m_edit_buffers.clear();
+  m_edit_textures1D.clear();
+  m_edit_textures2D.clear();
+  m_edit_textures3D.clear();
+
+  // Cleanup destroyed resources list.
   m_destroy_buffers.clear();
   m_destroy_targets.clear();
   m_destroy_programs.clear();
@@ -803,10 +857,7 @@ bool Context::process() {
   m_destroy_texturesCM.clear();
 
   // Update all rendering stats for the last frame.
-  auto swap = [](Concurrency::Atomic<Size> (&_value)[2]) {
-    _value[1] = _value[0].load();
-    _value[0] = 0;
-  };
+  auto swap = [](Concurrency::Atomic<Size> (&value_)[2]) { value_[1] = value_[0].exchange(0); };
 
   swap(m_draw_calls);
   swap(m_instanced_draw_calls);
@@ -817,6 +868,7 @@ bool Context::process() {
   swap(m_lines);
   swap(m_triangles);
   swap(m_commands_recorded);
+  swap(m_footprint);
 
   return true;
 }
@@ -849,6 +901,8 @@ bool Context::swap() {
   RX_PROFILE_CPU("swap");
 
   m_backend->swap();
+
+  m_frame++;
 
   return m_timer.update();
 }

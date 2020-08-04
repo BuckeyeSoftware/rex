@@ -82,7 +82,13 @@ void Buffer::validate() const {
   }
 }
 
-Vector<Buffer::Edit>&& Buffer::edits() {
+Size Buffer::bytes_for_edits() const {
+  Size bytes = 0;
+  m_edits.each_fwd([&](const Edit& _edit) { bytes += _edit.size; });
+  return bytes;
+}
+
+void Buffer::optimize_edits() {
   // Determines if |_lhs| is fully inside |_rhs|.
   auto inside = [](const Edit& _lhs, const Edit& _rhs) {
     return !(_lhs.offset < _rhs.offset || _lhs.offset + _lhs.size > _rhs.offset + _rhs.size);
@@ -112,8 +118,6 @@ Vector<Buffer::Edit>&& Buffer::edits() {
       }
     }
   }
-
-  return Utility::move(m_edits);
 }
 
 } // namespace rx::render::frontend

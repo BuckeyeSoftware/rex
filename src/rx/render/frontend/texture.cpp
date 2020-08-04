@@ -13,7 +13,7 @@ namespace Rx::Render::Frontend {
 // nested edit. Remove such edits (duplicate and fully overlapping) to produce a
 // minimal and coalesced edit list for the backend.
 template<typename T>
-static void optimize_edits(Vector<T>& edits_) {
+static void coalesce_edits(Vector<T>& edits_) {
   // Determines if |_lhs| is fully inside |_rhs|.
   auto inside = [](const T& _lhs, const T& _rhs) {
     return !(_lhs.offset < _rhs.offset || _lhs.offset + _lhs.size > _rhs.offset + _rhs.size);
@@ -108,7 +108,7 @@ void Texture::validate() const {
   }
 }
 
-// texture1D
+// Texture1D
 Texture1D::Texture1D(Context* _frontend)
   : Texture{_frontend, Resource::Type::k_texture1D}
   , m_level_info{_frontend->allocator()}
@@ -177,12 +177,17 @@ void Texture1D::record_edit(Size _level, const DimensionType& _offset,
   m_edits.emplace_back(_level, _offset, _dimensions);
 }
 
-Vector<Texture::Edit<Texture1D::DimensionType>>&& Texture1D::edits() {
-  optimize_edits(m_edits);
-  return Utility::move(m_edits);
+Size Texture1D::bytes_for_edits() const {
+  Size bytes = 0;
+  m_edits.each_fwd([&](const EditType& _edit) { bytes += _edit.size; });
+  return bytes * bits_per_pixel(format()) / 8;
 }
 
-// texture2D
+void Texture1D::optimize_edits() {
+  coalesce_edits(m_edits);
+}
+
+// Texture2D
 Texture2D::Texture2D(Context* _frontend)
   : Texture{_frontend, Resource::Type::k_texture2D}
   , m_level_info{_frontend->allocator()}
@@ -257,12 +262,17 @@ void Texture2D::record_edit(Size _level, const DimensionType& _offset,
   m_edits.emplace_back(_level, _offset, _dimensions);
 }
 
-Vector<Texture::Edit<Texture2D::DimensionType>>&& Texture2D::edits() {
-  optimize_edits(m_edits);
-  return Utility::move(m_edits);
+Size Texture2D::bytes_for_edits() const {
+  Size bytes = 0;
+  m_edits.each_fwd([&](const EditType& _edit) { bytes += _edit.size.area(); });
+  return bytes * bits_per_pixel(format()) / 8;
 }
 
-// texture3D
+void Texture2D::optimize_edits() {
+  coalesce_edits(m_edits);
+}
+
+// Texture3D
 Texture3D::Texture3D(Context* _frontend)
   : Texture{_frontend, Resource::Type::k_texture3D}
   , m_level_info{_frontend->allocator()}
@@ -334,12 +344,17 @@ void Texture3D::record_edit(Size _level, const DimensionType& _offset,
   m_edits.emplace_back(_level, _offset, _dimensions);
 }
 
-Vector<Texture::Edit<Texture3D::DimensionType>>&& Texture3D::edits() {
-  optimize_edits(m_edits);
-  return Utility::move(m_edits);
+Size Texture3D::bytes_for_edits() const {
+  Size bytes = 0;
+  m_edits.each_fwd([&](const EditType& _edit) { bytes += _edit.size.area(); });
+  return bytes * bits_per_pixel(format()) / 8;
 }
 
-// textureCM
+void Texture3D::optimize_edits() {
+  coalesce_edits(m_edits);
+}
+
+// TextureCM
 TextureCM::TextureCM(Context* _frontend)
   : Texture{_frontend, Resource::Type::k_textureCM}
   , m_level_info{_frontend->allocator()}
@@ -383,7 +398,7 @@ void TextureCM::record_dimensions(const Math::Vec2z& _dimensions) {
   m_dimensions = _dimensions;
   m_flags |= k_dimensions;
 
-  dimension_type dimensions{m_dimensions};
+  DimensionType dimensions{m_dimensions};
   Size offset{0};
   const auto bpp{bits_per_pixel(m_format)};
   for (Size i{0}; i < m_levels; i++) {
@@ -401,7 +416,7 @@ void TextureCM::record_dimensions(const Math::Vec2z& _dimensions) {
   }
 }
 
-void TextureCM::record_wrap(const wrap_options& _wrap) {
+void TextureCM::record_wrap(const WrapOptions& _wrap) {
   RX_ASSERT(!(m_flags & k_wrap), "wrap already recorded");
 
   m_wrap = _wrap;

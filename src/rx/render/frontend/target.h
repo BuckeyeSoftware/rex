@@ -74,6 +74,10 @@ struct Target : Resource {
   bool has_stencil() const;
   bool has_depth_stencil() const;
 
+  bool owns_depth() const;
+  bool owns_stencil() const;
+  bool owns_depth_stencil() const;
+
   const Math::Vec2z& dimensions() const;
 
   void validate() const;
@@ -146,6 +150,18 @@ inline bool Target::has_stencil() const {
 
 inline bool Target::has_depth_stencil() const {
   return has_depth() && has_stencil();
+}
+
+inline bool Target::owns_depth() const {
+  return m_flags & k_owns_depth;
+}
+
+inline bool Target::owns_stencil() const {
+  return m_flags & k_owns_stencil;
+}
+
+inline bool Target::owns_depth_stencil() const {
+  return owns_depth() && owns_stencil();
 }
 
 inline const Math::Vec2z& Target::dimensions() const {

@@ -31,6 +31,7 @@ struct Resource {
   void acquire_reference();
 
   Type resource_type() const;
+  Size resource_usage() const;
 
 protected:
   Context* m_frontend;
@@ -55,6 +56,10 @@ inline void Resource::acquire_reference() {
 
 inline Resource::Type Resource::resource_type() const {
   return m_resource_type;
+}
+
+inline Size Resource::resource_usage() const {
+  return m_resource_usage;
 }
 
 } // namespace rx::render::frontend
