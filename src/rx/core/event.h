@@ -1,5 +1,7 @@
 #ifndef RX_CORE_EVENT_H
 #define RX_CORE_EVENT_H
+#include <stdio.h>
+
 #include "rx/core/function.h"
 #include "rx/core/vector.h"
 #include "rx/core/markers.h"
@@ -100,8 +102,9 @@ template<typename R, typename... Ts>
 inline typename Event<R(Ts...)>::Handle Event<R(Ts...)>::connect(Delegate&& delegate_) {
   Concurrency::ScopeLock lock{m_lock};
   const Size delegates = m_delegates.size();
-  for (Size i{0}; i < delegates; i++) {
+  for (Size i = 0; i < delegates; i++) {
     if (!m_delegates[i]) {
+      m_delegates[i] = Utility::move(delegate_);
       return {this, i};
     }
   }
