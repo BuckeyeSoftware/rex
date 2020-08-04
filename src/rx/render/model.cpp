@@ -278,7 +278,7 @@ void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _im
   } else {
     m_model.vertices().each_fwd([&](const Rx::Model::Loader::Vertex& _vertex) {
       const Math::Vec3f point_a{_vertex.position};
-      const Math::Vec3f point_b{_vertex.position + _vertex.normal * k_size};
+      const Math::Vec3f point_b{_vertex.position + _vertex.normal * scale};
 
       const Math::Vec3f color{_vertex.normal * 0.5f + 0.5f};
 
