@@ -2,8 +2,7 @@
   name: "lens_distortion",
   uniforms: [
     { name: "u_parameters", type: "vec3f" },
-    { name: "u_color",      type: "sampler2D", value: 0 },
-    { name: "u_depth",      type: "sampler2D", value: 1 }
+    { name: "u_color",      type: "sampler2D", value: 0 }
   ],
   shaders: [
     {
@@ -29,9 +28,6 @@
       ],
       outputs: [
         { name: "fs_color",      type: "vec4f" }
-      ],
-      imports: [
-        "rand"
       ],
       source: "
         void main() {

@@ -21,7 +21,7 @@ void LensDistortionPass::create(const Math::Vec2z& _resolution) {
   m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("LensDistortionPass"));
   m_texture->record_type(Frontend::Texture::Type::k_attachment);
   m_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
-  m_texture->record_filter({false, false, false});
+  m_texture->record_filter({true, false, false});
   m_texture->record_levels(1);
   m_texture->record_dimensions(_resolution);
   m_texture->record_wrap({
