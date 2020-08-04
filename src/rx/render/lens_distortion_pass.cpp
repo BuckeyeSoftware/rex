@@ -26,8 +26,7 @@ void LensDistortionPass::create(const Math::Vec2z& _resolution) {
   m_texture->record_dimensions(_resolution);
   m_texture->record_wrap({
     Frontend::Texture::WrapType::k_clamp_to_edge,
-    Frontend::Texture::WrapType::k_clamp_to_edge
-  });
+    Frontend::Texture::WrapType::k_clamp_to_edge});
   m_frontend->initialize_texture(RX_RENDER_TAG("LensDistortionPass"), m_texture);
 
   m_target = m_frontend->create_target(RX_RENDER_TAG("LensDistortionPass"));
