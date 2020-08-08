@@ -25,14 +25,15 @@
 Rex employs a renderer abstraction interface to isolate graphics API code from the actual engine rendering. This is done by `src/rx/render/frontend`. The documentation of how this frontend interface works is provided here to get you up to speed on how to render things.
 
 ### Frontend Interface
-All rendering resources and commands happen through `frontend::Context`. Every command on the frontend is associated with a tag that tracks the file and line information of the command in the engine as well as a static string describing it, this is provided to the interface with the `RX_RENDER_TAG("string")` macro.
+All rendering resources and commands happen through `Frontend::Context`. Every command on the frontend is associated with a tag that tracks the file and line information of the command in the engine as well as a static string describing it, this is provided to the interface with the `RX_RENDER_TAG("string")` macro.
 
-The entire rendering interface is _thread safe_, any and all commands can be called from any thread at any time.
+The entire rendering interface is _thread safe_, any and all commands can be called from any thread at any time. With the exception of the `process` function which must be called on the main thread.
 
-The frontend **does not** do immediate rendering. Every command executed is only recorded into a command buffer for later execution by the backend. There's exactly a frame of latency incurred by this but it's also what permits thread-safety for APIs like OpenGL which cannot be called from multiple threads. The backend implements the `process` function and interprets commands. Every command is prefixed with that `RX_RENDER_TAG` so it's very easy to see where in the engine a command originated from.
+The frontend **does not** do immediate rendering. Every command executed is only recorded into a command buffer for later execution by the backend. There's some latency incurred by this, but it's also what permits thread-safety for APIs like OpenGL which cannot be called from multiple threads. The backend implements the `process` function and interprets commands. Every command is prefixed with a header including the data built by that `RX_RENDER_TAG` so it's very easy to see where in the engine a command originated from. These commands can be debugged with the in-engine renderer debugger.
+
 
 #### Drawing
-Indexed and non-indexed draws are done with `frontend.draw`. When a buffer has no elements, e.g `element_kind == k_none` the draw is treated as a non-indexed draw.
+All drawing is done with a single function `Context::draw`.
 
 Here's the definition:
 ```cpp
@@ -40,42 +41,51 @@ void draw(
   const CommandHeader::Info& _info,
   const State& _state,
   Target* _target,
-  const char* _draw_buffers,
+  const Buffers& _draw_buffers,
   Buffer* _buffer,
   Program* _program,
   Size _count,
   Size _offset,
+  Size _instances,
+  Size _base_vertex,
+  Size _base_instance,
   PrimitiveType _primitive_type,
-  const char* _textures,
-  ...);
+  const Textures& _draw_textures);
 ```
 
 Lets disect what everything is:
-* `_info` is the render tag containing file, line and static string information as described at the beginning of this document. You construct one with `RX_RENDER_TAG(...)`.
-* `_state` is the entire state vector to use.
+* `_info` is the render tag containing file, line and static string information as described at the beginning of this document. You construct one with `RX_RENDER_TAG(...)` macro.
+* `_state` is the entire state vector to use. This is described [here]().
 * `_target` is the render target to render into.
-* `_draw_buffers` is the draw buffer specification to use (described below.)
-* `_buffer` is the combined vertex and element buffer to source.
+* `_draw_buffers` is the draw buffers in the target to use and how they're configured.
+* `_buffer` is a combined vertex, element, and instance buffer to use for the draw.
 * `_program` is the program to use.
-* `_count` is the number of elements to source.
-* `_offset` is the offset in the element buffer to begin renering from.
+* `_count` is the number of primitives to render.
+* `_offset` is the offset in the element buffer to begin renering from. This should be 0 for non-indexed buffers.
+* `_instances` is the number of instances to render. This should be 0 for non-instanced buffers.
+* `_base_vertex` is the base vertex to add to each element. This should be 0 for non-indexed buffers.
+* `_base_instance` is the base instance. This should be 0 for non-instanced buffers.
 * `_primitive_type` is the primitive type to render, e.g `k_triangles`.
-* `_textures` is the texture specification to use (described below.)
-* `...` is a list of `texture{1D, 2D, 3D, CM}` to use for the draw.
+* `_draw_textures` is a description of textures to use in the draw.
 
-The texture specification string is a string-literal encoding the textures to use for this call using the following table
-  * `1` 1D texture
-  * `2` 2D texture
-  * `3` 3D texture
-  * `c` Cubemap texture
+When executed, primitives are assembled from the buffer `_buffer` using the primitive topology specified by `_primitive_type` and count `_count` consecutive vertex indices at offset `_offset` with the first vertex index value equal to `_base_vertex`. The primitives drawn `_instances` count times with the instance index starting with `_base_instance` and increasing sequentially for each instance. The assembled primitives execute the program `_program` and output to target `_target` configured by `_draw_buffers`. Textures bound for the program are configured by `_draw_textures`.
 
-The string can have a maximum length of eight, meaning you can have a maximum amount of eight textures. There must be exactly as many textures passed in `...` as this string's length. They must mach the specification, e.g
+Assertions can be triggered in the following cases:
 
-The draw buffer specification string is a string-literal encoding the attachments to use for this draw and in which order those attachments should be configured as draw buffers. The string can have a maximum of eight characters.
+  * The viewport specified by state `_state` has zero-area.
+  * The draw buffers are empty.
+  * When `_program == nullptr`.
+  * When `_count == 0`.
+  * When `_offset != 0` when buffer-less.
+  * When `_instances != 0` when buffer-less.
+  * When `_base_vertex != 0` when buffer-less.
+  * When `_base_instance != 0` when buffer-less.
+  * When `_instances > 0` when `_buffer` is not instanced.
+  * When `_offset > 0` when `_buffer` is not indexed.
+  * When `_base_vertex > 0` when `_buffer` is not indexed.
 
 #### Clearing
 Clearing of a render target is done by `Context::clear`, here's the definition:
-
 ```cpp
   void clear(
     const CommandHeader::Info& _info,
@@ -103,7 +113,7 @@ The packet data described in `...` is passed, parsed and interpreted in the foll
 
 When `RX_RENDER_CLEAR_DEPTH` is present in `_clear_mask`, the depth clear value is expected as `Float64` (truncated to `Float32`) in first position.
 
-When `RX_RENDER_CLEAR_STENCIL` is present in `_clear_mask|`, the stencil clear value is expected as `Sint32` in one of two positions depending on if `RX_RENDER_CLEAR_DEPTH` is supplied. When `RX_RENDER_CLEAR_DEPTH` isn't supplied, the stencil clear value is expected in first position, otherwise it's expected in second position.
+When `RX_RENDER_CLEAR_STENCIL` is present in `_clear_mask`, the stencil clear value is expected as `Sint32` in one of two positions depending on if `RX_RENDER_CLEAR_DEPTH` is supplied. When `RX_RENDER_CLEAR_DEPTH` isn't supplied, the stencil clear value is expected in first position, otherwise it's expected in second position.
 
 When `RX_RENDER_CLEAR_COLOR(n)` for any `n` is present in `_clear_mask`, the clear value is expected as a pointer to `Float32` (`const Float32*`) containing four color values in normalized range in RGBA order. The `n` refers to the index in the `_draw_buffers` specification to clear. The association of the clear value in `...` and the `n` is done in order. When a `RX_RENDER_CLEAR_COLOR` does not exist for a given `n`, the one proceeding it takes it's place, thus gaps are skipped.
 
@@ -146,20 +156,31 @@ struct Statistics {
 };
 
 Statistics stats(Resource::Type _type) const;
+
 Size draw_calls() const;
+Size instanced_draw_calls() const;
 Size clear_calls() const;
 Size blit_calls() const;
 Size vertices() const;
 Size triangles() const;
 Size lines() const;
 Size points() const;
+Size commands() const;
+Size footprint() const;
+Uint64 frame() const;
 ```
 
 The `stats` function in particular can tell you how many objects you can have of that type; `total`, how many are currently in use; `used`, how many are cached; `cached` and how much memory (in bytes) is being used currently for those used objects _last_ frame.
 
-The `draw_calls`, `clear_calls` and `blit_calls` tell you how many draws, clears and blits happened last frame.
+The `draw_calls`, `instanced_draw_calls`, `clear_calls`, and `blit_calls` tell you how many draws, clears and blits happened _last_ frame.
 
-The `vertices`, `triangles`, `lines` and `points` tell you how many primitives were generated of each type last frame.
+The `vertices`, `triangles`, `lines`, and `points` tell you how many primitives were generated of each type _last frame_.
+
+The `commands` function tells you how many frontend render commands were generated _last frame_.
+
+The `footprint` function gives an estimate (in bytes) of how much memory the _last frame_ took in GPU bandwidth.
+
+The `frame` function ggives you the frame number of the _last frame_.
 
 In addition, timing information for a frame can be accessed with the following member function:
 
@@ -167,7 +188,7 @@ In addition, timing information for a frame can be accessed with the following m
 const FrameTimer& timer() const &;
 ```
 
-Which consists of a lot of information that can be queried with the following member functions:
+Which consists of information that can be queried with the following member functions:
 
 ```cpp
 Float32 mspf() const;
@@ -184,15 +205,17 @@ struct FrameTime {
 const Vector<FrameTime>& frame_times() const &;
 ```
 
+Where `frame_times` here is an array of previous frame times used for computing histograms, averaging, etc.
+
 ### Resources
 There's multiple resource types provided by the frontend, they're listed here.
-  * buffer
-  * target
-  * texture1D
-  * texture2D
-  * texture3D
-  * textureCM
-  * program
+  * Buffer
+  * Target
+  * Texture1D
+  * Texture2D
+  * Texture3D
+  * TextureCM
+  * Program
 
 All resources are created by `Context::create_*()` functions, e.g `Context::create_buffer()` creates a buffer, likewise, all resources are destroyed by `Context::destroy_*()` functions.
 
@@ -204,97 +227,131 @@ While resources cannot have their properties reinitialized or respecified, their
 Every resource is validated when `Context::initialize_*()` is called. If at any point the resource is not fully specified (something was not recorded or requested), or an attempt was made to record a property or request a requirement that has already been recorded or requested, an assertion will be triggered. These assertions are disabled in release builds.
 
 #### Buffer
-A buffer resource represents a combined vertex and element buffer for geometry. The properties that **must be** recorded are provided by the following:
+A buffer resource represents a combined vertex, element, and instance buffer. Properties of the buffer are recorded with the following functions.
 ```cpp
-// record vertex attributes
-// the order of calls is the order of the attributes
-// |_type| is the attribute type (e.g float, int)
-// |_count| is the # of elements of the attribute type (3 for a vec3)
-// |_offset| is the offset in the vertex format this attribute begins in bytes
-void record_attribute(Attribute::Type _type, Size _count, Size _offset);
+// Record vertex attribute of |_type| starting at |_offset|.
+void record_vertex_attribute(Attribute::Type _type, Size _offset);
 
-// record vertex stride
-// |_stride| is the size of the vertex format in bytes
-void record_stride(Size _stride);
+// Record instance attribute of |_type| starting at |_offset|.
+void record_instance_attribute(Attribute::Type _type, Size _offset);
 
-// record element type
-// |_type| is the element type, k_none for no elements
-void record_element_type(ElementType _type);
-
-// record type |_type|
-// k_static is for buffers that will not be updated
-// k_dynamic is for buffers that will be updated
+// Record buffer type |_type|.
 void record_type(Type _type);
+
+// Record if instanced.
+void record_instanced(bool _instanced);
+
+// Record vertex stride |_stride|.
+void record_vertex_stride(Size _stride);
+
+// Record instance stride |_stride|.
+void record_instance_stride(Size _stride);
+
+// Record element format |_type|.
+void record_element_type(ElementType _type);
 ```
 
-The contents of the buffer can be specified and updated by calling the following functions:
+The attributes type is listed here for completion sake to show that Rex does not use the usual offset, type, **count** tuple, but rather the type also implies the count.
 ```cpp
-// write |_size| bytes from |_data| into vertex store
+struct Attribute {
+  enum class Type : Uint8 {
+    // Scalars
+    k_f32,    // 1 x Float32
+
+    // Vectors
+    k_vec2f,  // 2 x Float32
+    k_vec3f,  // 3 x Float32
+    k_vec4f,  // 4 x Float32
+    k_vec4b,  // 4 x Byte
+
+    // Matrices
+    k_mat4x4f // 4x4 x Float32
+  };
+
+  Size offset;
+  Type type;
+};
+```
+
+The contents of the buffer can be initially specified or completely replaced by calling the following functions:
+```cpp
+// Write |_size| bytes from |_data| into store.
 template<typename T>
 void write_vertices(const T* _data, Size _size);
-
-// write |_size| bytes from |_data| into element store
 template<typename T>
 void write_elements(const T* _data, Size _size);
-
-// map |_size| bytes of vertices
-Byte* map_vertices(Size _size);
-
-// map |_size| bytes of elements
-Byte* map_elements(Size _size);
+template<typename T>
+void write_instances(const T* _data, Size _size);
 ```
 
+The contents of the buffer can be updated by mapping the store for each and updating the contents.
+```cpp
+// Map |_size| bytes from store.
+Byte* map_vertices(Size _size);
+Byte* map_elements(Size _size);
+Byte* map_instances(Size _size);
+```
+
+When performing an update either by completely replacing the contents with `write_*` functions or updating through `map_` functions, the range of the edit needs to be recorded with the following functions:
+```cpp
+// Records an edit to the buffer at byte |_offset| of size |_size|.
+void record_vertices_edit(Size _offset, Size _size);
+void record_elements_edit(Size _offset, Size _size);
+void record_instances_edit(Size _offset, Size _size);
+```
+
+> WARNING: Multiple buffer changes can be recorded by multiple calls to `record_*_edit`, however the contents of the edits are only visible to the backend once per frame. You cannot make edits between draw calls and expect those draw calls to see the changed contents. This invokes undefined behavior. The frontend will assert if it sees `update_buffer` for the same buffer more than once per frame.
+
 Assertions can be triggered in the following cases:
-* Not everything was recorded
-* The `map_vertices` function is called with a size that is not a multiple of the recorded vertex stride.
-* The `map_elements` function is called with a size that is not a multiple of the recorded element type's byte size.
-* The `write_vertices` or `write_elements` functions are called with a size that is not a multiple of `sizeof(T)`.
-* The `write_vertices`, `write_elements`, `map_vertices`, or `map_elements` functions are called with a recorded type that is `k_static` after the buffer has been initialized.
-* The `write_elements` or `map_elements` functions are called with a recorded element type `k_none`.
-* An attribute overlaps an existing attribute.
-* An attribute exceeds the recorded vertex stride.
+* Not everything was recorded.
+* The `map_vertices`, or `map_instances` functions are called with a size that is not a multiple of the recorded store stride.
+* The `map_elements` function is called with a size that is not a multiple of the recorded element type's size.
+* The `write_vertices`, `write_elements`, or `write_instances` functions are called with a size that is not a multiple of `sizeof(T)`.
+* Any of the `write_*` or `map_*` functions are called when the recorded type is `k_static` after the buffer has been initialized.
+* The `write_elements` or `map_elements` functions are called with a non-indexed buffer (`k_none` given to `record_type`.)
+* The `write_instances` or `map_instances` functions are called with a non-instanced buffer (`false` given to `record_instanced`.)
+* A vertex or instance attribute overlaps an existing attribute.
+* A vertex or instance attribute exceeds the recorded stride.
 * An attempt was made to modify the buffer after it was initialized.
 
 #### Target
 Targets are essentially frame buffer objects. They can contain multiple attachments.
 
-Before initializing a target you request certain requirements. Those requirements are requested with the following member functions:
-
+Before initializing a target you can request it have and manage it's own textures as attachments or record your own, non-managed attachments from existing textures. This is down with the following member functions:
 ```cpp
-// request the swap chain for this target
-// you cannot request or attach anything if you request this
-void request_swapchain();
-
-// request target have depth attachment |_format| with size |_dimensions|
+// Request target have depth attachment |_format| with size |_dimensions|.
 void request_depth(Texture::DataFormat _format,
-  const math::Vec2z& _dimensions);
+                    const Math::Vec2z& _dimensions);
 
-// request target have stencil attachment |_format| with size |_dimensions|
+// Request target have stencil attachment |_format| with size |_dimensions|.
 void request_stencil(Texture::DataFormat _format,
-  const math::Vec2z& _dimensions);
+                     const Math::Vec2z& _dimensions);
 
-// request target have combined depth stencil attachment with size |_dimensions|
+// Request target have combined depth stencil attachment with size |_dimensions|.
 void request_depth_stencil(Texture::DataFormat _format,
-  const math::Vec2z& _dimensions);
-```
+                           const Math::Vec2z& _dimensions);
 
-A target can also be attached existing textures with the following member functions:
-
-```cpp
-// attach existing depth texture |_depth| to target
-// can only attach one depth texture
+// Attach existing depth texture |_depth| to target.
 void attach_depth(Texture2D* _depth);
 
-// attach existing stencil texture |_stencil| to target
-// can only attach one stencil texture
+// Attach existing stencil texture |_stencil| to target.
 void attach_stencil(Texture2D* _stencil);
 
-// attach texture |_texture| to target
-// the order this function is called is the order the textures are attached
-void attach_texture(Texture2D* _texture);
+// Attach existing depth stencil texture |_depth_stencil| to target.
+void attach_depth_stencil(Texture2D* _depth_stencil);
+
+// Attach texture |_texture| level |_level| to target.
+void attach_texture(Texture2D* _texture, Size _level);
+
+// Attach cubemap face |_face| texture |_texture| level |_level| to target.
+void attach_texture(TextureCM* _texture, TextureCM::Face _face, Size _level);
+
+// Attach cubemap texture |_texture| level |_level| to target, this attaches
+// all faces of a cubemap in +x, -x, +y, -y, +z, -z order.
+void attach_texture(TextureCM* _texture, Size _level);
 ```
 
-Targets are immutable. Once initially specified they can no longer be changed.
+Targets are immutable. Once initially specified they can no longer be updated.
 
 Assertions can be triggered in the following cases:
 * An attempt was made to attach a texture that has already been attached.
@@ -307,76 +364,72 @@ Assertions can be triggered in the following cases:
 * An attempt was made to modify the target after it was initialized.
 
 #### Texture
-1D, 2D, 3D and Cubemap textures are used either for drawing to (if attached to a target) or for actual texture mapping during rendering.
+1D, 2D, 3D and Cubemap textures are available in various capacities for texture sampling and rendering to (render to texture).
 
-Before you can initialize a texture certain information must be recorded by the following member functions:
+> NOTE: Only 2D and Cubemap textures can be used for drawing to.
+
 
 ```cpp
-// record format |_format|
+// Record the data format |_format|.
 void record_format(DataFormat _format);
 
-// record type
-// |_type| can be one of k_static, k_dynamic, k_attachment
-// k_static is for textures that will not be updated
-// k_dynamic is for textures that will be updated
-// k_attachment is for textures that will only be used as target attachments
+// Record the texture type |_type|.
 void record_type(Type _type);
 
-// record filter options |_options|
+// Record the texture filter options |_options|.
 void record_filter(const FilterOptions& _options);
 
-// record dimensions |_dimensions|
-void record_dimensions(const DimensionType& _dimensions);
+// Record the number of levels |_levels|, including the base-level.
+void record_levels(Size _levels);
 
-// record wrapping behavior |_wrap|
-void record_wrap(const WrapOptions& _wrap);
+// Record the optional border color |_color|.
+void record_border(const Math::Vec4f& _color);
 ```
 
 The contents of the texture can be specified and updated by calling the following functions:
 
 ```cpp
-// write data |_data| to store for miplevel |_level|
+// Write data |_data| to store for level |_level|.
 void write(const Byte* _data, Size _level);
 
-// map data for miplevel |_level|
+// Map data for level |_level|.
 Byte* map(Size _level);
 ```
 
-Assertions can be triggered in the following cases:
-* Not all miplevels were written.
-* A depth, stencil or combined depth-stencil format was recorded and `k_attachment` was not used for type.
-* An attempt was made to write or map a miplevel when `k_attachment` was recorded as the type.
-* An attempt was made to write or map a miplevel when `k_static` was recorded as the type after initialization.
-* An attempt was made to write or map a miplevel that is out of bounds.
-* An attempt was made to write or map a miplevel other than zero for a texture with no mipmaps.
-* An attempt was made to record dimensions that are greater than 4096 pixels in any dimension.
-* An attempt was made to modify the texture after it was initialized.
+> WARNING: Multiple textures changes can be recorded by multiple calls to `record_edit`, however the contents of the edits are only visible to the backend once per frame. You cannot make edits between draw calls and expect those draw calls to see the changed contents. This invokes undefined behavior. The frontend will assert if it sees `update_texture` for the same texture more than once per frame.
 
-All miplevels _must_ be provided to the render resource. There is no automatic derivation of miplevels in the render frontend or backend. You may derive the miplevels for a texture with `texture::chain` interface instead.
+> NOTE: All levels _must_ be provided. There is no automatic derivation of miplevels in the frontend or backend. You may calculate the miplevels for a texture with `Texture::Chain`.
+
+Assertions can be triggered in the following cases:
+* Not all levels were written.
+* A depth, stencil or combined depth-stencil format was recorded and `k_attachment` was not used for type.
+* An attempt was made to write or map a level when `k_attachment` was recorded as the type.
+* An attempt was made to write or map a level when `k_static` was recorded as the type after initialization.
+* An attempt was made to write or map a level that is out of bounds.
+* An attempt was made to write or map a level other than zero for a texture with no mipmaps.
+* An attempt was made to record dimensions that are greater than 4096 pixels in any dimension.
 
 #### Program
-This resource is not actually used directly. It's used to implement `frontend::Technique` which provides specialization, variants and program permutations.
+This resource is not actually used directly. It's used to implement `Frontend::Technique` which provides specialization, variants and permutations.
 
 It's listed here for completion sake.
 
 Shaders and uniforms are added to a constructed program before initialization with the following member functions:
 
 ```cpp
-// add a shader definition |_shader|
+// Add a shader definition |_shader|.
 void add_shader(Shader&& shader_);
 
-// add a uniform with name |_name| and type |_type|
+// Add a uniform with name |_name| and type |_type|.
 Uniform& add_uniform(const String& _name, Uniform::Type _type);
 ```
 
 Assertions can be triggered in the following cases:
 * A shader was added that has already been added (e.g more than one vertex, fragment, compute, etc shader).
 * A uniform was added that has already been added.
-* An attempt was made to modify the program after it was initialized.
-
 
 ### State
-All rendering state aside from bound resources is completely isolated into one single state vector that is passed around for draw calls. This vector is described by `frontend::State` and consists of the following state:
+All rendering state aside from bound resources is completely isolated into one single state vector that is passed around for draw calls. This vector is described by `Frontend::State` and consists of the following state vectors:
 
 ```
 ScissorState scissor;
@@ -393,7 +446,7 @@ The state vector is hashed as well as the nested state objects to avoid excessiv
 
 Techniques are [data-driven](https://en.wikipedia.org/wiki/Data-driven_programming) and described by JSON5. Information on how that's done is documented [here](TECHNIQUE.md)
 
-Once a technique is loaded by `frontend::Technique::load` you may fetch a program from that technique with the `operator Program*()`, `variant()` or `permute()` member functions depending on what is needed.
+Once a technique is loaded by `Frontend::Technique::load` you may fetch a program from that technique with the `operator Program*()`, `variant()` or `permute()` member functions depending on what is needed.
 
 When getting a variant you pass an index of the variant you want to use. The variant used is the one listed in the `"variants"` array in the JSON5.
 
@@ -402,87 +455,6 @@ When getting a permute you pass the flags of the permutations you want to use. T
 ### Minimal fullscreen quad example
 Here's a simple example of rendering a textured quad
 ```cpp
-// vertex format
-struct QuadVertex {
-  rx::math::Vec2f position;
-  rx::math::Vec2f coordinate;
-};
-
-// vertices of our quad
-static constexpr const QuadVertex k_quad_vertices[]{
-  {{ -1.0f,  1.0f}, {0.0f, 1.0f}},
-  {{  1.0f,  1.0f}, {1.0f, 1.0f}},
-  {{ -1.0f, -1.0f}, {0.0f, 0.0f}},
-  {{  1.0f, -1.0f}, {1.0f, 0.0f}}
-};
-
-// elements of our quad
-static constexpr const Byte k_quad_elements[]{
-  0, 1, 2, 3
-};
-
-// create a buffer
-rx::render::frontend::Buffer* quad = frontend.create_buffer(RX_RENDER_TAG("quad"));
-
-// the contents will not change
-quad->record_type(rx::render::frontend::Buffer::Type::k_static);
-
-// record the element format
-quad->record_element_type(rx::render::frontend::Buffer::ElementType::k_u8);
-
-// record the vertex format
-quad->record_stride(sizeof(QuadVertex));
-
-// record the attributes
-quad->record_attribute(rx::render::frontend::Buffer::Attribute::Type::k_f32, 2,
-  offsetof(QuadVertex, position));
-quad->record_attribute(rx::render::frontend::Buffer::Attribute::Type::k_f32, 2,
-  offsetof(QuadVertex, coordinate);
-
-// write the vertices and elements into the buffer
-quad->write_vertices(k_quad_vertices, sizeof k_quad_vertices);
-quad->write_elements(k_quad_elements, sizeof k_quad_elements);
-
-// initialize it
-frontend.initialize_buffer(RX_RENDER_TAG("quad"), quad);
-
-// at this point nothing can be changed, we also cannot change the contents
-// because we used k_static for our buffer type
-
-// clear swapchain target with red
-frontend.clear(RX_RENDER_TAG("test"),
-  {},
-  frontend.swapchain(),
-  RX_RENDER_CLEAR_COLOR(0),
-  {1.0f, 0.0f, 0.0f, 1.0f});
-
-// assume we have some program handle here, left out for brevity
-rx::render::frontend::Program* program{...};
-// ...
-frontend.initialize_program(RX_RENER_TAG("quad"), program);
-
-// assume we have some texture2D handle here, left out for brevity
-rx::render::frontend::Texture2D* texture{...};
-// ...
-frontend.initialize_texture(RX_RENER_TAG("quad"), texture);
-
-// we can record changes to the program here before
-// a draw call, e.g program->uniforms()[index]->set_float(1.0f)...
-//
-// the contents are _copied_ into the draw command when do you this
-
-// draw the textured quad to the swapchain
-frontend.draw(
-  RX_RENDER_TAG("test"),
-  state,
-  frontend.swapchain(),
-  quad,
-  program,
-  4,
-  0,
-  rx::render::frontend::PrimitiveType::k_triangle_strip,
-  "2" // since 2D texture
-  texture);
 ```
 
 ## Backend
@@ -504,20 +476,16 @@ The lifetime of a command lasts for exactly one frame, for the command buffer is
 
 Every command on the command buffer is prefixed with a command header which indicates the command type as well as an info object, called a tag that can be used to track where the command origniated from.
 
-The command header looks like this:
-
+The command header looks like this.
 ```cpp
 struct alignas(16) CommandHeader {
   struct Info {
-    constexpr Info(const char* _file, const char* _description, int _line)
-      : file{_file}
-      , description{_description}
-      , line{_line}
-    {
+    constexpr Info(const char *_description, const SourceLocation &_source_location)
+      : description{_description}, source_info{_source_location} {
     }
-    const char* file;
-    const char* description;
-    int line;
+
+    const char *description;
+    SourceLocation source_info;
   };
 
   CommandType type;
@@ -525,7 +493,11 @@ struct alignas(16) CommandHeader {
 };
 ```
 
-The `RX_RENDER_TAG(...)` macro is what constructs the `CommandHeader::Info` object which allows for file, line and a description string to be tracked through the frontend and the backend for debugging purposes.
+The `RX_RENDER_TAG(...)` macro is what constructs the `CommandHeader::Info` object which allows for file, line and a description string to be tracked through the frontend and the backend for debugging purposes. It's listed here for posterity sake.
+```cpp
+#define RX_RENDER_TAG(_description) \
+  ::Rx::Render::Frontend::CommandHeader::Info{(_description), RX_SOURCE_LOCATION}
+```
 
 #### Commands
 The following command types exist:
@@ -538,15 +510,60 @@ enum class CommandType : Byte {
   k_resource_destroy,
   k_clear,
   k_draw,
-  k_blit
+  k_blit,
+  k_profile
 };
 ```
 
 As well as their appropriate structures:
 
 ```cpp
+struct DrawCommand {
+  Buffers draw_buffers;
+  Textures draw_textures;
+  State render_state;
+  Target *render_target;
+  Buffer *render_buffer;
+  Program *render_program;
+  Size count;
+  Size offset;
+  Size instances;
+  Size base_vertex;
+  Size base_instance;
+  PrimitiveType type;
+  Uint64 dirty_uniforms_bitset;
+
+  const Byte *uniforms() const;
+
+  Byte *uniforms();
+};
+
+struct ClearCommand {
+  Buffers draw_buffers;
+  State render_state;
+  Target *render_target;
+  bool clear_depth;
+  bool clear_stencil;
+  Uint32 clear_colors;
+  Uint8 stencil_value;
+  Float32 depth_value;
+  Math::Vec4f color_values[Buffers::k_max_buffers];
+};
+
+struct BlitCommand {
+  State render_state;
+  Target *src_target;
+  Size src_attachment;
+  Target *dst_target;
+  Size dst_attachment;
+};
+
+struct ProfileCommand {
+  const char *tag;
+};
+
 struct ResourceCommand {
-  enum class Type : Byte {
+  enum class Type : Uint8 {
     k_buffer,
     k_target,
     k_program,
@@ -556,49 +573,66 @@ struct ResourceCommand {
     k_textureCM
   };
 
-  Type kind;
+  Type type;
 
   union {
-    Target* as_target;
-    Buffer* as_buffer;
-    Program* as_program;
-    Texture1D* as_texture1D;
-    Texture2D* as_texture2D;
-    Texture3D* as_texture3D;
-    TextureCM* as_textureCM;
+    Target *as_target;
+    Buffer *as_buffer;
+    Program *as_program;
+    Texture1D *as_texture1D;
+    Texture2D *as_texture2D;
+    Texture3D *as_texture3D;
+    TextureCM *as_textureCM;
   };
 };
 
-struct ClearCommand : State {
-  Target* render_target;
-  int clear_mask;
-  math::Vec4f clear_color;
-};
+struct UpdateCommand {
+  enum class Type : Uint8 {
+    k_buffer,
+    k_texture1D,
+    k_texture2D,
+    k_texture3D
+  };
 
-struct BlitCommand : State {
-  Target* src_target;
-  Size src_attachment;
-  Target* dst_target;
-  Size dst_attachment;
-};
+  Type type;
 
-struct DrawCommand : State {
-  Target* render_target;
-  Buffer* render_buffer;
-  Program* render_program;
-  Size count;
-  Size offset;
-  char texture_types[8];
-  void* texture_binds[8];
-  PrimitiveType type;
-  Uint64 dirty_uniforms_bitset;
+  union {
+    Buffer *as_buffer;
+    Texture1D *as_texture1D;
+    Texture2D *as_texture2D;
+    Texture3D *as_texture3D;
+  };
 
-  const Byte* uniforms() const;
-  Byte* uniforms();
+  // The number of edits to the resource in this update.
+  Size edits;
+
+  // The edit stream is an additional, variably-sized stream of data included as
+  // a footer on this structure. It's contents encode a variable amount of edits
+  // to the given resource.
+  //
+  // The encoding of the edit stream is a list of Size integers. The number
+  // of integers per edit is determined by the resource Type |kind|.
+  //
+  // Buffer edits are represented by a three-tuple of integers of the format
+  // {
+  //   sink:   sink to edit: 0 = elements, 1 = vertices, 2 = instances
+  //   offset: byte offset
+  //   size:   size in bytes
+  // }
+  //
+  // Texture edits are represented by a variable-tuple of integers of the format
+  // {
+  //   level:  miplevel to edit
+  //   offset: offset in pixels (1, 2, or 3 integers for 1D, 2D and 3D textures, respectively)
+  //   size:   size in pixels (1, 2, or 3 integers for 1D, 2D and 3D textures, respectively)
+  // }
+  const Size *edit() const;
+
+  Size *edit();
 };
 ```
 
-All command structures, aside from `ResourceCommand`, include a `frontend::State` object that represents the state vector to use for that operation.
+All command structures, aside from `ResourceCommand`, include a `Frontend::State` object that represents the state vector to use for that operation.
 
 The `ResourceCommand` structure is used by all the resource commands and merely represents a tagged union of which resource to `allocate`, `construct`, `update`, or `destroy`.
 
