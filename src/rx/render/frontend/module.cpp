@@ -126,7 +126,7 @@ bool resolve_module_dependencies(
 
 void Module::write_log(Log::Level _level, String&& message_) const {
   if (m_name.is_empty()) {
-    logger->write(_level, "%s", Utility::move(message_));
+    logger->write(_level, Utility::move(message_));
   } else {
     logger->write(_level, "module '%s': %s", m_name, Utility::move(message_));
   }

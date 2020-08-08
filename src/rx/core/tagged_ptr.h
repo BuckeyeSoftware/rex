@@ -58,6 +58,6 @@ inline Byte TaggedPtr<T>::as_tag() const {
   return m_as_bits & k_tag_mask;
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_TAGGED_POINTER_H
