@@ -1,4 +1,6 @@
 #include <stddef.h> // offsetof
+#include <string.h> // memcpy
+#include <stdio.h> // printf
 
 #include "rx/render/model.h"
 #include "rx/render/image_based_lighting.h"
@@ -8,6 +10,7 @@
 #include "rx/render/frontend/technique.h"
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/buffer.h"
+#include "rx/render/frontend/arena.h"
 
 #include "rx/math/frustum.h"
 
@@ -18,7 +21,7 @@ namespace Rx::Render {
 Model::Model(Frontend::Context* _frontend)
   : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("geometry")}
-  , m_buffer{nullptr}
+  , m_arena{nullptr}
   , m_materials{m_frontend->allocator()}
   , m_opaque_meshes{m_frontend->allocator()}
   , m_transparent_meshes{m_frontend->allocator()}
@@ -27,41 +30,66 @@ Model::Model(Frontend::Context* _frontend)
 }
 
 Model::~Model() {
-  m_frontend->destroy_buffer(RX_RENDER_TAG("model"), m_buffer);
+  // Nothing ...
 }
 
 bool Model::upload() {
-  m_frontend->destroy_buffer(RX_RENDER_TAG("model"), m_buffer);
-  m_buffer = m_frontend->create_buffer(RX_RENDER_TAG("model"));
-  m_buffer->record_type(Frontend::Buffer::Type::k_static);
-  m_buffer->record_instanced(false);
+  // Clear incase being called multiple times for model changes.
+  m_materials.clear();
+  m_opaque_meshes.clear();
+  m_transparent_meshes.clear();
 
   if (m_model.is_animated()) {
     using Vertex = Rx::Model::Loader::AnimatedVertex;
+
+    Frontend::Buffer::Format format;
+    format.record_type(Frontend::Buffer::Type::k_static);
+    format.record_element_type(Frontend::Buffer::ElementType::k_u32);
+    format.record_vertex_stride(sizeof(Vertex));
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, normal)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, tangent)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec4b, offsetof(Vertex, blend_weights)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec4b, offsetof(Vertex, blend_indices)});
+    format.finalize();
+
+    m_arena = m_frontend->arena(format);
+    m_block = m_arena;
+
     const auto &vertices = m_model.animated_vertices();
-    m_buffer->record_vertex_stride(sizeof(Vertex));
-    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position));
-    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, normal));
-    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, tangent));
-    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate));
-    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec4b, offsetof(Vertex, blend_weights));
-    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec4b, offsetof(Vertex, blend_indices));
-    m_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(Vertex));
+    const auto size = vertices.size() * sizeof(Vertex);
+
+    m_block.write_vertices(vertices.data(), size);
+    m_block.record_vertices_edit(0, size);
   } else {
     using Vertex = Rx::Model::Loader::Vertex;
-    const auto &vertices{m_model.vertices()};
-    m_buffer->record_vertex_stride(sizeof(Vertex));
-    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position));
-    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, normal));
-    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, tangent));
-    m_buffer->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate));
-    m_buffer->write_vertices(vertices.data(), vertices.size() * sizeof(Vertex));
+
+    Frontend::Buffer::Format format;
+    format.record_type(Frontend::Buffer::Type::k_static);
+    format.record_element_type(Frontend::Buffer::ElementType::k_u32);
+    format.record_vertex_stride(sizeof(Vertex));
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, normal)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, tangent)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate)});
+    format.finalize();
+
+    m_arena = m_frontend->arena(format);
+    m_block = m_arena;
+
+    const auto &vertices = m_model.vertices();
+    const auto size = vertices.size() * sizeof(Vertex);
+    m_block.write_vertices(vertices.data(), size);
+    m_block.record_vertices_edit(0, size);
   }
 
-  const auto &elements{m_model.elements()};
-  m_buffer->record_element_type(Frontend::Buffer::ElementType::k_u32);
-  m_buffer->write_elements(elements.data(), elements.size() * sizeof(Uint32));
-  m_frontend->initialize_buffer(RX_RENDER_TAG("model"), m_buffer);
+  const auto &elements = m_model.elements();
+  const auto size = elements.size() * sizeof(Uint32);
+  m_block.write_elements(elements.data(), size);
+  m_block.record_elements_edit(0, size);
+
+  m_frontend->update_buffer(RX_RENDER_TAG("Model"), m_arena->buffer());
 
   m_materials.clear();
 
@@ -100,9 +128,10 @@ bool Model::upload() {
 }
 
 void Model::animate(Size _index, [[maybe_unused]] bool _loop) {
-  if (m_model.is_animated()) {
+  if (_index != -1_z && m_model.is_animated()) {
     m_animation = {&m_model, _index};
   }
+  m_animation = nullopt;
 }
 
 void Model::update(Float32 _delta_time) {
@@ -218,13 +247,13 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
       state,
       _target,
       draw_buffers,
-      m_buffer,
+      m_arena->buffer(),
       program,
       _mesh.count,
-      _mesh.offset,
+      m_block.base_element() + _mesh.offset,
       0,
-      0,
-      0,
+      m_block.base_vertex(),
+      m_block.base_instance(),
       Render::Frontend::PrimitiveType::k_triangles,
       draw_textures);
 

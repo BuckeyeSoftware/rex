@@ -169,18 +169,18 @@ Immediate3D::Immediate3D(Frontend::Context* _frontend)
     m_render_queue[i] = {m_frontend->allocator()};
   }
 
+  Frontend::Buffer::Format format;
+  format.record_type(Frontend::Buffer::Type::k_dynamic);
+  format.record_element_type(Frontend::Buffer::ElementType::k_u32);
+  format.record_vertex_stride(sizeof(Vertex));
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_f32, offsetof(Vertex, size)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, color)});
+  format.finalize();
+
   for (Size i{0}; i < k_buffers; i++) {
     m_buffers[i] = m_frontend->create_buffer(RX_RENDER_TAG("immediate3D"));
-    m_buffers[i]->record_type(Frontend::Buffer::Type::k_dynamic);
-    m_buffers[i]->record_element_type(Frontend::Buffer::ElementType::k_u32);
-
-    m_buffers[i]->record_instanced(false);
-
-    m_buffers[i]->record_vertex_stride(sizeof(Vertex));
-    m_buffers[i]->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position));
-    m_buffers[i]->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_f32, offsetof(Vertex, size));
-    m_buffers[i]->record_vertex_attribute(Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, color));
-
+    m_buffers[i]->record_format(format);
     m_frontend->initialize_buffer(RX_RENDER_TAG("immediate3D"), m_buffers[i]);
   }
 }

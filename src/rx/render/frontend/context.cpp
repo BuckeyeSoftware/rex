@@ -592,12 +592,12 @@ void Context::draw(
     RX_ASSERT(_base_vertex == 0, "bufferless draws cannot have a base vertex");
     RX_ASSERT(_base_instance == 0, "bufferless draws cannot have a base instance");
   } else if (_instances) {
-    RX_ASSERT(_buffer->is_instanced(), "instanced draw requires instanced buffer");
+    RX_ASSERT(_buffer->format().is_instanced(), "instanced draw requires instanced buffer");
     instances = _instances;
   }
 
-  if (_base_vertex) {
-    RX_ASSERT(_buffer->is_indexed(), "base vertex draw requires indexed buffer");
+  if (_buffer && _base_vertex) {
+    RX_ASSERT(_buffer->format().is_indexed(), "base vertex draw requires indexed buffer");
   }
 
   m_vertices[0] += _count * instances;
@@ -998,6 +998,23 @@ void Context::cache_texture(TextureCM* _texture, const String& _key) {
 
 Technique* Context::find_technique_by_name(const char* _name) {
   return m_techniques.find(_name);
+}
+
+Arena* Context::arena(const Buffer::Format& _format) {
+  // Check if an arena for this buffer |_format| already exists.
+  Concurrency::ScopeLock lock{m_mutex};
+  if (auto find = m_arenas.find(_format)) {
+    return find;
+  }
+
+  // Create a new arena for this buffer |_format|.
+  //
+  // Unlock the mutex here because |Arena::Arena| will need to acquire.
+  m_mutex.unlock();
+  Frontend::Arena arena{this, _format};
+  m_mutex.lock();
+
+  return m_arenas.insert(_format, Utility::move(arena));
 }
 
 } // namespace rx::render::frontend

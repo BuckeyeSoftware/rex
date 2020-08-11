@@ -34,6 +34,10 @@ Loader::Loader(Memory::Allocator& _allocator)
 }
 
 Loader::~Loader() {
+  destroy();
+}
+
+void Loader::destroy() {
   if (m_flags & k_constructed) {
     if (m_flags & k_animated) {
       Utility::destruct<Vector<AnimatedVertex>>(&as_animated_vertices);
@@ -41,6 +45,8 @@ Loader::~Loader() {
       Utility::destruct<Vector<Vertex>>(&as_vertices);
     }
   }
+
+  m_flags = 0;
 }
 
 bool Loader::load(Stream* _stream) {
@@ -102,6 +108,7 @@ bool Loader::parse(const JSON& _definition) {
     return error("expected Array[Object] for 'materials'");
   }
 
+  m_transform = nullopt;
   if (transform && !parse_transform(transform)) {
     return false;
   }
@@ -112,6 +119,8 @@ bool Loader::parse(const JSON& _definition) {
 
   // Load all the materials across multiple threads.
   // concurrency::thread_pool pool{m_allocator, 32};
+
+  // Clear incase we're being run multiple times to change.
   Concurrency::Mutex mutex;
   Concurrency::WaitGroup group{materials.size()};
   materials.each([&](const JSON& _material) {
@@ -132,8 +141,6 @@ bool Loader::parse(const JSON& _definition) {
 }
 
 bool Loader::import(const String& _file_name) {
-  RX_ASSERT(!(m_flags & k_constructed), "already imported");
-
   Ptr<Importer> new_loader;
 
   // determine the model format based on the extension
@@ -146,109 +153,114 @@ bool Loader::import(const String& _file_name) {
     return error("unsupported model format");
   }
 
-  const bool result{new_loader->load(_file_name)};
-  if (result) {
-    m_positions = Utility::move(new_loader->positions());
-    m_meshes = Utility::move(new_loader->meshes());
-    m_elements = Utility::move(new_loader->elements());
-    m_animations = Utility::move(new_loader->animations());
-    m_frames = Utility::move(new_loader->frames());
-    m_joints = Utility::move(new_loader->joints());
+  const bool result = new_loader->load(_file_name);
+  if (!result) {
+    return false;
+  }
 
-    const auto& normals{new_loader->normals()};
-    const auto& tangents{new_loader->tangents()};
-    const auto& coordinates{new_loader->coordinates()};
+  // We may possibly call import multiple times.
+  destroy();
+  m_materials.clear();
 
-    const Size n_vertices{m_positions.size()};
+  m_positions = Utility::move(new_loader->positions());
+  m_meshes = Utility::move(new_loader->meshes());
+  m_elements = Utility::move(new_loader->elements());
+  m_animations = Utility::move(new_loader->animations());
+  m_frames = Utility::move(new_loader->frames());
+  m_joints = Utility::move(new_loader->joints());
 
+  const auto& normals = new_loader->normals();
+  const auto& tangents = new_loader->tangents();
+  const auto& coordinates =new_loader->coordinates();
+
+  const Size n_vertices{m_positions.size()};
+
+  if (m_animations.is_empty()) {
+    Utility::construct<Vector<Vertex>>(&as_vertices, allocator(), n_vertices);
+    m_flags = k_constructed;
+  } else {
+    Utility::construct<Vector<AnimatedVertex>>(&as_animated_vertices, allocator(), n_vertices);
+    m_flags = k_constructed | k_animated;
+  }
+
+  // Hoist the transform check outside the for loops for faster model loading.
+  if (m_transform) {
+    const auto transform = m_transform->to_mat4();
     if (m_animations.is_empty()) {
-      Utility::construct<Vector<Vertex>>(&as_vertices, allocator(), n_vertices);
-      m_flags |= k_constructed;
-    } else {
-      Utility::construct<Vector<AnimatedVertex>>(&as_animated_vertices, allocator(), n_vertices);
-      m_flags |= k_constructed;
-      m_flags |= k_animated;
-    }
-
-    // Hoist the transform check outside the for loops for faster model loading.
-    if (m_transform) {
-      const auto transform{m_transform->to_mat4()};
-      if (m_animations.is_empty()) {
-        for (Size i{0}; i < n_vertices; i++) {
-          const Math::Vec3f tangent{Math::Mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
-          as_vertices[i].position = Math::Mat4x4f::transform_point(m_positions[i], transform);
-          as_vertices[i].normal = Math::Mat4x4f::transform_vector(normals[i], transform);
-          as_vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangents[i].w};
-          as_vertices[i].coordinate = coordinates[i];
-        }
-      } else {
-        const auto& blend_weights{new_loader->blend_weights()};
-        const auto& blend_indices{new_loader->blend_indices()};
-        for (Size i{0}; i < n_vertices; i++) {
-          const Math::Vec3f tangent{Math::Mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
-          as_animated_vertices[i].position = Math::Mat4x4f::transform_point(m_positions[i], transform);
-          as_animated_vertices[i].normal = Math::Mat4x4f::transform_vector(normals[i], transform);
-          as_animated_vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangents[i].w};
-          as_animated_vertices[i].coordinate = coordinates[i];
-          as_animated_vertices[i].blend_weights = blend_weights[i];
-          as_animated_vertices[i].blend_indices = blend_indices[i];
-        }
+      for (Size i{0}; i < n_vertices; i++) {
+        const Math::Vec3f tangent{Math::Mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
+        as_vertices[i].position = Math::Mat4x4f::transform_point(m_positions[i], transform);
+        as_vertices[i].normal = Math::Mat4x4f::transform_vector(normals[i], transform);
+        as_vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangents[i].w};
+        as_vertices[i].coordinate = coordinates[i];
       }
-
-      const Math::Mat3x4f& xform{
-        {transform.x.x, transform.y.x, transform.z.x, transform.w.x},
-        {transform.x.y, transform.y.y, transform.z.y, transform.w.y},
-        {transform.x.z, transform.y.z, transform.z.z, transform.w.z}};
-
-      const Math::Mat3x4f& inv_xform{Math::Mat3x4f::invert(xform)};
-
-      m_frames.each_fwd([&](Math::Mat3x4f& frame_) {
-        frame_ = xform * frame_ * inv_xform;
-      });
-
-      m_joints.each_fwd([&](Importer::Joint& joint_) {
-        joint_.frame = xform * joint_.frame * inv_xform;
-      });
-
     } else {
-      if (m_animations.is_empty()) {
-        for (Size i{0}; i < n_vertices; i++) {
-          as_vertices[i].position = m_positions[i];
-          as_vertices[i].normal = normals[i];
-          as_vertices[i].tangent = tangents[i];
-          as_vertices[i].coordinate = coordinates[i];
-        }
-      } else {
-        const auto& blend_weights = new_loader->blend_weights();
-        const auto& blend_indices = new_loader->blend_indices();
-        for (Size i{0}; i < n_vertices; i++) {
-          as_animated_vertices[i].position = m_positions[i];
-          as_animated_vertices[i].normal = normals[i];
-          as_animated_vertices[i].tangent = tangents[i];
-          as_animated_vertices[i].coordinate = coordinates[i];
-          as_animated_vertices[i].blend_weights = blend_weights[i];
-          as_animated_vertices[i].blend_indices = blend_indices[i];
-        }
+      const auto& blend_weights{new_loader->blend_weights()};
+      const auto& blend_indices{new_loader->blend_indices()};
+      for (Size i{0}; i < n_vertices; i++) {
+        const Math::Vec3f tangent{Math::Mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
+        as_animated_vertices[i].position = Math::Mat4x4f::transform_point(m_positions[i], transform);
+        as_animated_vertices[i].normal = Math::Mat4x4f::transform_vector(normals[i], transform);
+        as_animated_vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangents[i].w};
+        as_animated_vertices[i].coordinate = coordinates[i];
+        as_animated_vertices[i].blend_weights = blend_weights[i];
+        as_animated_vertices[i].blend_indices = blend_indices[i];
       }
     }
 
-    // Bounds need to be recalculated if there was a transform
-    if (m_transform) {
-      m_meshes.each_fwd([&](Mesh& _mesh) {
-        Math::AABB bounds;
-        for (Size i{0}; i < _mesh.count; i++) {
-          if (m_animations.is_empty()) {
-            bounds.expand(as_vertices[m_elements[_mesh.offset + i]].position);
-          } else {
-            bounds.expand(as_animated_vertices[m_elements[_mesh.offset + i]].position);
-          }
-        }
-        _mesh.bounds = bounds;
-      });
+    const Math::Mat3x4f& xform{
+      {transform.x.x, transform.y.x, transform.z.x, transform.w.x},
+      {transform.x.y, transform.y.y, transform.z.y, transform.w.y},
+      {transform.x.z, transform.y.z, transform.z.z, transform.w.z}};
+
+    const Math::Mat3x4f& inv_xform{Math::Mat3x4f::invert(xform)};
+
+    m_frames.each_fwd([&](Math::Mat3x4f& frame_) {
+      frame_ = xform * frame_ * inv_xform;
+    });
+
+    m_joints.each_fwd([&](Importer::Joint& joint_) {
+      joint_.frame = xform * joint_.frame * inv_xform;
+    });
+
+  } else {
+    if (m_animations.is_empty()) {
+      for (Size i{0}; i < n_vertices; i++) {
+        as_vertices[i].position = m_positions[i];
+        as_vertices[i].normal = normals[i];
+        as_vertices[i].tangent = tangents[i];
+        as_vertices[i].coordinate = coordinates[i];
+      }
+    } else {
+      const auto& blend_weights = new_loader->blend_weights();
+      const auto& blend_indices = new_loader->blend_indices();
+      for (Size i{0}; i < n_vertices; i++) {
+        as_animated_vertices[i].position = m_positions[i];
+        as_animated_vertices[i].normal = normals[i];
+        as_animated_vertices[i].tangent = tangents[i];
+        as_animated_vertices[i].coordinate = coordinates[i];
+        as_animated_vertices[i].blend_weights = blend_weights[i];
+        as_animated_vertices[i].blend_indices = blend_indices[i];
+      }
     }
   }
 
-  return result;
+  // Bounds need to be recalculated if there was a transform
+  if (m_transform) {
+    m_meshes.each_fwd([&](Mesh& _mesh) {
+      Math::AABB bounds;
+      for (Size i{0}; i < _mesh.count; i++) {
+        if (m_animations.is_empty()) {
+          bounds.expand(as_vertices[m_elements[_mesh.offset + i]].position);
+        } else {
+          bounds.expand(as_animated_vertices[m_elements[_mesh.offset + i]].position);
+        }
+      }
+      _mesh.bounds = bounds;
+    });
+  }
+
+  return true;
 }
 
 bool Loader::parse_transform(const JSON& _transform) {

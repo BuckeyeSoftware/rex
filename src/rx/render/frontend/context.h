@@ -11,6 +11,7 @@
 
 #include "rx/render/frontend/command.h"
 #include "rx/render/frontend/resource.h"
+#include "rx/render/frontend/arena.h"
 #include "rx/render/frontend/timer.h"
 
 #include "rx/render/backend/context.h"
@@ -216,6 +217,8 @@ struct Context {
 
   Technique* find_technique_by_name(const char* _name);
 
+  Arena* arena(const Buffer::Format& _format);
+
   const FrameTimer& timer() const &;
   const CommandBuffer& get_command_buffer() const &;
   const DeviceInfo& get_device_info() const &;
@@ -287,6 +290,7 @@ private:
 
   Map<String, Technique> m_techniques          RX_HINT_GUARDED_BY(m_mutex);
   Map<String, Module> m_modules                RX_HINT_GUARDED_BY(m_mutex);
+  Map<Buffer::Format, Arena> m_arenas          RX_HINT_GUARDED_BY(m_mutex);
 
   Concurrency::Atomic<Size> m_draw_calls[2];
   Concurrency::Atomic<Size> m_instanced_draw_calls[2];

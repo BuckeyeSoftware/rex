@@ -1105,9 +1105,10 @@ void GL4::process(Byte* _command) {
       case Frontend::ResourceCommand::Type::k_buffer:
         {
           auto render_buffer = resource->as_buffer;
+          const auto& format = render_buffer->format();
           auto buffer = reinterpret_cast<detail_gl4::buffer*>(render_buffer + 1);
 
-          const auto type = render_buffer->type() == Frontend::Buffer::Type::k_dynamic
+          const auto type = format.type() == Frontend::Buffer::Type::k_dynamic
             ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
           auto setup_attributes = [](GLuint _vao,
@@ -1147,7 +1148,7 @@ void GL4::process(Byte* _command) {
           Size current_attribute = 0;
 
           // Setup element buffer.
-          if (render_buffer->is_indexed()) {
+          if (format.is_indexed()) {
             const auto& elements = render_buffer->elements();
             if (elements.is_empty()) {
               pglNamedBufferData(buffer->bo[0], k_buffer_slab_size, nullptr, type);
@@ -1173,15 +1174,15 @@ void GL4::process(Byte* _command) {
             0,
             buffer->bo[1],
             0,
-            static_cast<GLsizei>(render_buffer->vertex_stride()));
+            static_cast<GLsizei>(format.vertex_stride()));
           current_attribute = setup_attributes(
             buffer->va,
-            render_buffer->vertex_attributes(),
+            format.vertex_attributes(),
             current_attribute,
             false);
 
           // Setup instance buffer and attributes.
-          if (render_buffer->is_instanced()) {
+          if (format.is_instanced()) {
             const auto& instances = render_buffer->instances();
             if (instances.is_empty()) {
               pglNamedBufferData(buffer->bo[2], k_buffer_slab_size, nullptr, type);
@@ -1195,10 +1196,10 @@ void GL4::process(Byte* _command) {
               1,
               buffer->bo[2],
               0,
-              static_cast<GLsizei>(render_buffer->instance_stride()));
+              static_cast<GLsizei>(format.instance_stride()));
             current_attribute = setup_attributes(
               buffer->va,
-              render_buffer->instance_attributes(),
+              format.instance_attributes(),
               current_attribute,
               true);
           }
@@ -1592,8 +1593,9 @@ void GL4::process(Byte* _command) {
       case Frontend::UpdateCommand::Type::k_buffer:
         {
           const auto render_buffer = resource->as_buffer;
+          const auto& format = render_buffer->format();
           const auto& vertices = render_buffer->vertices();
-          const auto type = render_buffer->type() == Frontend::Buffer::Type::k_dynamic
+          const auto type = format.type() == Frontend::Buffer::Type::k_dynamic
               ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
           bool use_vertices_edits = false;
@@ -1603,7 +1605,7 @@ void GL4::process(Byte* _command) {
           auto buffer = reinterpret_cast<detail_gl4::buffer*>(render_buffer + 1);
 
           // Check for element updates.
-          if (render_buffer->is_indexed()) {
+          if (format.is_indexed()) {
             const auto& elements = render_buffer->elements();
             if (elements.size() > buffer->elements_size) {
               pglNamedBufferData(buffer->bo[0], elements.size(), elements.data(), type);
@@ -1621,7 +1623,7 @@ void GL4::process(Byte* _command) {
           }
 
           // Check for instance updates.
-          if (render_buffer->is_instanced()) {
+          if (format.is_instanced()) {
             const auto& instances = render_buffer->instances();
             if (instances.size() > buffer->instances_size) {
               pglNamedBufferData(buffer->bo[2], instances.size(), instances.data(), type);
@@ -1844,11 +1846,12 @@ void GL4::process(Byte* _command) {
       const auto primitive_type = convert_primitive_type(command->type);
 
       if (render_buffer) {
-        const auto element_type = convert_element_type(render_buffer->element_type());
-        const auto indices = reinterpret_cast<const GLvoid*>(render_buffer->element_size() * command->offset);
+        const auto& format = render_buffer->format();
+        const auto element_type = convert_element_type(format.element_type());
+        const auto indices = reinterpret_cast<const GLvoid*>(format.element_size() * command->offset);
         if (command->instances) {
           const bool base_instance = command->base_instance != 0;
-          if (render_buffer->is_indexed()) {
+          if (format.is_indexed()) {
             const bool base_vertex = command->base_vertex != 0;
             if (base_vertex) {
               if (base_instance) {
@@ -1902,7 +1905,7 @@ void GL4::process(Byte* _command) {
             }
           }
         } else {
-          if (render_buffer->is_indexed()) {
+          if (format.is_indexed()) {
             if (command->base_vertex) {
               pglDrawElementsBaseVertex(
                 primitive_type,

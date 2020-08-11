@@ -106,6 +106,34 @@ struct Hash<T*> {
   }
 };
 
+template<>
+struct Hash<Uint8> {
+  constexpr Size operator()(Uint8 _value) const {
+    Size hash = _value * 251;
+    hash += ~(_value << 3);
+    hash ^= (_value >> 1);
+    hash += ~(_value << 7);
+    hash ^= (_value >> 6);
+    hash += (_value << 2);
+    return hash;
+  }
+};
+
+template<>
+struct Hash<Uint16> {
+  constexpr Size operator()(Uint16 _value) const {
+    const Size z = (_value << 8) | (_value >> 8);
+    Size hash = z;
+    hash += ~(z << 5);
+    hash ^= (z >> 2);
+    hash += ~(z << 13);
+    hash ^= (z >> 10);
+    hash += ~(z << 4);
+    hash = (hash << 10) | (hash >> 10);
+    return hash;
+  }
+};
+
 inline constexpr Size hash_combine(Size _hash1, Size _hash2) {
   return _hash1 ^ (_hash2 + 0x9E3779B9 + (_hash1 << 6) + (_hash1 >> 2));
 }

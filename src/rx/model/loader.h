@@ -46,9 +46,13 @@ struct Loader {
   Vector<Importer::Joint>&& joints();
   const Vector<Importer::Animation>& animations() const &;
 
+  const String& name() const &;
+
   constexpr Memory::Allocator& allocator() const;
 
 private:
+  void destroy();
+
   friend struct Animation;
 
   template<typename... Ts>
@@ -133,6 +137,10 @@ inline Vector<Importer::Joint>&& Loader::joints() {
 
 inline const Vector<Importer::Animation>& Loader::animations() const & {
   return m_animations;
+}
+
+inline const String& Loader::name() const & {
+  return m_name;
 }
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Loader::allocator() const {

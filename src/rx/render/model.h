@@ -1,12 +1,15 @@
 #ifndef RX_RENDER_MODEL_H
 #define RX_RENDER_MODEL_H
 #include "rx/render/frontend/material.h"
+#include "rx/render/frontend/arena.h"
 
 #include "rx/model/loader.h"
 #include "rx/model/animation.h"
 
 #include "rx/math/mat4x4.h"
 #include "rx/math/aabb.h"
+
+#include "rx/core/uninitialized.h"
 
 namespace Rx::Render {
 
@@ -15,6 +18,7 @@ namespace Frontend {
   struct Technique;
   struct Buffer;
   struct Target;
+  struct Arena;
 }
 
 struct Immediate3D;
@@ -52,7 +56,8 @@ private:
 
   Frontend::Context* m_frontend;
   Frontend::Technique* m_technique;
-  Frontend::Buffer* m_buffer;
+  Frontend::Arena* m_arena;
+  Frontend::Arena::Block m_block;
   Vector<Frontend::Material> m_materials;
   Vector<Mesh> m_opaque_meshes;
   Vector<Mesh> m_transparent_meshes;
@@ -66,6 +71,7 @@ inline bool Model::load(Stream* _stream) {
 }
 
 inline bool Model::load(const String& _file_name) {
+  m_animation = nullopt;
   return m_model.load(_file_name) && upload();
 }
 
