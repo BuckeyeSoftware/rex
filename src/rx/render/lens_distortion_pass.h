@@ -1,5 +1,5 @@
 #ifndef RX_RENDER_LENS_DISTORTION_PASS_H
-#define RX_RENDER_LENS_DISTROTION_PASS_H
+#define RX_RENDER_LENS_DISTORTION_PASS_H
 #include "rx/math/camera.h"
 #include "rx/math/vec2.h"
 
@@ -13,8 +13,6 @@ struct Texture2D;
 struct Target;
 
 } // namespace Frontend
-
-struct GBuffer;
 
 struct LensDistortionPass {
   LensDistortionPass(Frontend::Context* _frontend);
@@ -39,8 +37,6 @@ private:
   Frontend::Technique* m_technique;
   Frontend::Texture2D* m_texture;
   Frontend::Target* m_target;
-
-  const GBuffer* m_gbuffer;
 };
 
 inline LensDistortionPass::~LensDistortionPass() {
