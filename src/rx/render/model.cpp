@@ -25,12 +25,29 @@ Model::Model(Frontend::Context* _frontend)
   , m_materials{m_frontend->allocator()}
   , m_opaque_meshes{m_frontend->allocator()}
   , m_transparent_meshes{m_frontend->allocator()}
-  , m_model{m_frontend->allocator()}
+  , m_model{m_frontend->allocator().create<Rx::Model::Loader>(m_frontend->allocator())}
+{
+}
+
+
+Model::Model(Model&& model_)
+  : m_frontend{Utility::exchange(model_.m_frontend, nullptr)}
+  , m_technique{Utility::exchange(model_.m_technique, nullptr)}
+  , m_arena{Utility::exchange(model_.m_arena, nullptr)}
+  , m_block{Utility::move(model_.m_block)}
+  , m_materials{Utility::move(model_.m_materials)}
+  , m_opaque_meshes{Utility::move(model_.m_opaque_meshes)}
+  , m_transparent_meshes{Utility::move(model_.m_transparent_meshes)}
+  , m_model{Utility::exchange(model_.m_model, nullptr)}
+  , m_animation{Utility::move(model_.m_animation)}
+  , m_aabb{Utility::move(model_.m_aabb)}
 {
 }
 
 Model::~Model() {
-  // Nothing ...
+  if (m_model) {
+    m_frontend->allocator().destroy<Rx::Model::Loader>(m_model);
+  }
 }
 
 bool Model::upload() {
@@ -39,7 +56,7 @@ bool Model::upload() {
   m_opaque_meshes.clear();
   m_transparent_meshes.clear();
 
-  if (m_model.is_animated()) {
+  if (m_model->is_animated()) {
     using Vertex = Rx::Model::Loader::AnimatedVertex;
 
     Frontend::Buffer::Format format;
@@ -57,7 +74,7 @@ bool Model::upload() {
     m_arena = m_frontend->arena(format);
     m_block = m_arena;
 
-    const auto &vertices = m_model.animated_vertices();
+    const auto &vertices = m_model->animated_vertices();
     const auto size = vertices.size() * sizeof(Vertex);
 
     m_block.write_vertices(vertices.data(), size);
@@ -78,13 +95,13 @@ bool Model::upload() {
     m_arena = m_frontend->arena(format);
     m_block = m_arena;
 
-    const auto &vertices = m_model.vertices();
+    const auto &vertices = m_model->vertices();
     const auto size = vertices.size() * sizeof(Vertex);
     m_block.write_vertices(vertices.data(), size);
     m_block.record_vertices_edit(0, size);
   }
 
-  const auto &elements = m_model.elements();
+  const auto &elements = m_model->elements();
   const auto size = elements.size() * sizeof(Uint32);
   m_block.write_elements(elements.data(), size);
   m_block.record_elements_edit(0, size);
@@ -97,7 +114,7 @@ bool Model::upload() {
   // using indices to refer to them rather than strings.
   Map<String, Size> material_indices{m_frontend->allocator()};
   const bool material_load_result =
-    m_model.materials().each_pair([this, &material_indices](const String& _name, Material::Loader& material_) {
+    m_model->materials().each_pair([this, &material_indices](const String& _name, Material::Loader& material_) {
       Frontend::Material material{m_frontend};
       if (material.load(Utility::move(material_))) {
         const Size material_index{m_materials.size()};
@@ -113,7 +130,7 @@ bool Model::upload() {
   }
 
   // Resolve all the meshes of the loaded model.
-  m_model.meshes().each_fwd([this, &material_indices](const Rx::Model::Mesh& _mesh) {
+  m_model->meshes().each_fwd([this, &material_indices](const Rx::Model::Mesh& _mesh) {
     if (auto* find = material_indices.find(_mesh.material)) {
       if (m_materials[*find].has_alpha()) {
         m_transparent_meshes.push_back({_mesh.offset, _mesh.count, *find, _mesh.bounds});
@@ -128,8 +145,8 @@ bool Model::upload() {
 }
 
 void Model::animate(Size _index, [[maybe_unused]] bool _loop) {
-  if (_index != -1_z && m_model.is_animated()) {
-    m_animation = {&m_model, _index};
+  if (_index != -1_z && m_model->is_animated()) {
+    m_animation = {m_model, _index};
   }
   m_animation = nullopt;
 }
@@ -187,7 +204,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
   // Viewport(0, 0, w, h)
   state.viewport.record_dimensions(_target->dimensions());
 
-  m_opaque_meshes.each_fwd([&](const Mesh& _mesh) {
+  auto draw = [&](const Mesh& _mesh, bool _allow_cull) {
     if (!frustum.is_aabb_inside(_mesh.bounds.transform(_model))) {
       return true;
     }
@@ -240,7 +257,11 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     draw_buffers.add(3);
 
     // Disable backface culling for alpha-tested geometry.
-    state.cull.record_enable(!material.alpha_test());
+    if (_allow_cull) {
+      state.cull.record_enable(!material.alpha_test());
+    } else {
+      state.cull.record_enable(false);
+    }
 
     m_frontend->draw(
       RX_RENDER_TAG("model mesh"),
@@ -258,14 +279,22 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
       draw_textures);
 
     return true;
-  });
+  };
+
+  m_opaque_meshes.each_fwd([&](const Mesh& _mesh) { draw(_mesh, true); });
+
+  state.blend.record_enable(true);
+  state.blend.record_blend_factors(
+    Render::Frontend::BlendState::FactorType::k_src_alpha,
+    Render::Frontend::BlendState::FactorType::k_one_minus_src_alpha);
+  m_transparent_meshes.each_fwd([&](const Mesh& _mesh) { draw(_mesh, false); });
 }
 
 void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {
   const auto scale = m_aabb.transform(_world).scale() * 0.25f;
 
-  if (m_model.is_animated()) {
-    m_model.animated_vertices().each_fwd([&](const Rx::Model::Loader::AnimatedVertex& _vertex) {
+  if (m_model->is_animated()) {
+    m_model->animated_vertices().each_fwd([&](const Rx::Model::Loader::AnimatedVertex& _vertex) {
       const Math::Vec3f point_a{_vertex.position};
       const Math::Vec3f point_b{_vertex.position + _vertex.normal * scale};
 
@@ -305,7 +334,7 @@ void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _im
       }
     });
   } else {
-    m_model.vertices().each_fwd([&](const Rx::Model::Loader::Vertex& _vertex) {
+    m_model->vertices().each_fwd([&](const Rx::Model::Loader::Vertex& _vertex) {
       const Math::Vec3f point_a{_vertex.position};
       const Math::Vec3f point_b{_vertex.position + _vertex.normal * scale};
 
@@ -325,7 +354,7 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
     return;
   }
 
-  const auto& joints{m_model.joints()};
+  const auto& joints = m_model->joints();
 
   // Render all the joints.
   for (Size i{0}; i < joints.size(); i++) {

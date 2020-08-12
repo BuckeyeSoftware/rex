@@ -26,6 +26,7 @@ struct ImageBasedLighting;
 
 struct Model {
   Model(Frontend::Context* _frontend);
+  Model(Model&& model_);
   ~Model();
 
   struct Mesh {
@@ -61,18 +62,18 @@ private:
   Vector<Frontend::Material> m_materials;
   Vector<Mesh> m_opaque_meshes;
   Vector<Mesh> m_transparent_meshes;
-  Rx::Model::Loader m_model;
+  Rx::Model::Loader* m_model;
   Optional<Rx::Model::Animation> m_animation;
   Math::AABB m_aabb;
 };
 
 inline bool Model::load(Stream* _stream) {
-  return m_model.load(_stream) && upload();
+  return m_model->load(_stream) && upload();
 }
 
 inline bool Model::load(const String& _file_name) {
   m_animation = nullopt;
-  return m_model.load(_file_name) && upload();
+  return m_model->load(_file_name) && upload();
 }
 
 inline const Vector<Model::Mesh>& Model::opaque_meshes() const & {

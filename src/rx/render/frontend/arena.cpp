@@ -247,10 +247,12 @@ Arena::Block& Arena::Block::operator=(Block&& block_) {
 }
 
 void Arena::Block::destroy() {
-  // Release memory owned by this block.
-  for (Size i = 0; i < 3; i++) {
-    if (Uint32 offset = m_ranges[i].offset; offset != -1_u32) {
-      RX_ASSERT(m_arena->m_lists[i].deallocate(offset), "consistency error");
+  if (m_arena) {
+    // Release memory owned by this block.
+    for (Size i = 0; i < 3; i++) {
+      if (Uint32 offset = m_ranges[i].offset; offset != -1_u32) {
+        RX_ASSERT(m_arena->m_lists[i].deallocate(offset), "consistency error");
+      }
     }
   }
 }
