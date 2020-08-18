@@ -16,49 +16,15 @@
 
 namespace Rx::Render {
 
-static constexpr const Math::Vec3f k_skybox_vertices[]{
-  { 1.0f, -1.0f, -1.0f},
-  { 1.0f, -1.0f,  1.0f},
-  { 1.0f,  1.0f,  1.0f},
-  { 1.0f,  1.0f, -1.0f},
-  {-1.0f, -1.0f,  1.0f},
-  {-1.0f, -1.0f, -1.0f},
-  {-1.0f,  1.0f, -1.0f},
-  {-1.0f,  1.0f,  1.0f},
-};
-
-static constexpr const Uint8 k_skybox_elements[]{
-  0, 1, 2, 2, 3, 0, // right
-  4, 5, 6, 6, 7, 4, // left
-  6, 3, 2, 2, 7, 6, // up
-  4, 1, 0, 0, 5, 4, // down
-  1, 4, 7, 7, 2, 1, // front
-  5, 0, 3, 3, 6, 5  // back
-};
-
 Skybox::Skybox(Frontend::Context* _frontend)
   : m_frontend{_frontend}
   , m_technique{m_frontend->find_technique_by_name("skybox")}
   , m_texture{nullptr}
-  , m_buffer{nullptr}
 {
-  Frontend::Buffer::Format format;
-  format.record_type(Frontend::Buffer::Type::k_static);
-  format.record_element_type(Frontend::Buffer::ElementType::k_u8);
-  format.record_vertex_stride(sizeof(Math::Vec3f));
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, 0});
-  format.finalize();
-
-  m_buffer = m_frontend->create_buffer(RX_RENDER_TAG("skybox"));
-  m_buffer->record_format(format);
-  m_buffer->write_vertices(k_skybox_vertices, sizeof k_skybox_vertices);
-  m_buffer->write_elements(k_skybox_elements, sizeof k_skybox_elements);
-  m_frontend->initialize_buffer(RX_RENDER_TAG("skybox"), m_buffer);
 }
 
 Skybox::~Skybox() {
   m_frontend->destroy_texture(RX_RENDER_TAG("skybox"), m_texture);
-  m_frontend->destroy_buffer(RX_RENDER_TAG("skybox"), m_buffer);
 }
 
 void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
@@ -76,25 +42,28 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
 
   Frontend::Program* program{*m_technique};
 
-  program->uniforms()[0].record_mat4x4f(view * _projection);
+  // program->uniforms()[0].record_mat4x4f(view * _projection);
+  program->uniforms()[0].record_mat4x4f(Math::Mat4x4f::invert(_projection));
+  program->uniforms()[1].record_mat4x4f(Math::Mat4x4f::invert(view));
 
   Frontend::State state;
   state.depth.record_test(true);
   state.depth.record_write(true);
 
   state.blend.record_enable(false);
+  state.cull.record_enable(false);
 
   state.viewport.record_dimensions(_target->dimensions());
 
   // glStencilFunc(GL_EQUAL, 0, 0xFF);
-  state.stencil.record_enable(true);
-  state.stencil.record_function(Frontend::StencilState::FunctionType::k_equal);
-  state.stencil.record_reference(0);
-  state.stencil.record_mask(0xFF);
+  //state.stencil.record_enable(true);
+  //state.stencil.record_function(Frontend::StencilState::FunctionType::k_equal);
+  //state.stencil.record_reference(0);
+  //state.stencil.record_mask(0xFF);
 
   // Record all textures.
   Frontend::Textures draw_textures;
-  draw_textures.add(m_texture);
+  program->uniforms()[2].record_sampler(draw_textures.add(m_texture));
 
   // Record all draw buffers.
   Frontend::Buffers draw_buffers;
@@ -105,9 +74,9 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     state,
     _target,
     draw_buffers,
-    m_buffer,
+    nullptr,
     program,
-    36,
+    3,
     0,
     0,
     0,

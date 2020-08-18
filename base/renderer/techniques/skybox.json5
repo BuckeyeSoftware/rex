@@ -1,22 +1,26 @@
 {
   name: "skybox",
   uniforms: [
-    { name: "u_transform", type: "mat4x4f" },
-    { name: "u_sampler",   type: "samplerCM", value: 0 }
+    { name: "u_inverse_projection", type: "mat4x4f" },
+    { name: "u_inverse_view",       type: "mat4x4f" },
+    { name: "u_sampler",            type: "samplerCM", value: 0 }
   ],
   shaders: [
     {
       type: "vertex",
-      inputs: [
-        { name: "a_position",    type: "vec3f" }
+      imports: [
+        "fullscreen_triangle"
       ],
       outputs: [
         { name: "vs_coordinate", type: "vec3f" }
       ],
       source: "
         void main() {
-          rx_position = (u_transform * vec4(a_position, 1.0)).xyww;
-          vs_coordinate = a_position;
+          vec4f triangle = fullscreen_triangle();
+          vec4f position = vec4f(triangle.xy, 0.0, 1.0);
+          vec4f unprojected = u_inverse_projection * position;
+          vs_coordinate = (u_inverse_view * unprojected).xyz;
+          rx_position = position.xyww;
         }
       "
     },{

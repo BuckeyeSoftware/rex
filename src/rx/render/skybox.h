@@ -14,7 +14,6 @@ namespace Frontend {
   struct Technique;
   struct TextureCM;
   struct Target;
-  struct Buffer;
 }
 
 struct Skybox {
@@ -35,7 +34,6 @@ private:
   Frontend::Context* m_frontend;
   Frontend::Technique* m_technique;
   Frontend::TextureCM* m_texture;
-  Frontend::Buffer* m_buffer;
   String m_name;
 };
 
