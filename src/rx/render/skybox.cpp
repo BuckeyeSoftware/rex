@@ -40,11 +40,7 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
   Math::Mat4x4f view{_view};
   view.w = {0.0f, 0.0f, 0.0f, 1.0f};
 
-  Frontend::Program* program{*m_technique};
-
-  // program->uniforms()[0].record_mat4x4f(view * _projection);
-  program->uniforms()[0].record_mat4x4f(Math::Mat4x4f::invert(_projection));
-  program->uniforms()[1].record_mat4x4f(Math::Mat4x4f::invert(view));
+  Frontend::Program* program = *m_technique;
 
   Frontend::State state;
   state.depth.record_test(true);
@@ -55,14 +51,10 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
 
   state.viewport.record_dimensions(_target->dimensions());
 
-  // glStencilFunc(GL_EQUAL, 0, 0xFF);
-  //state.stencil.record_enable(true);
-  //state.stencil.record_function(Frontend::StencilState::FunctionType::k_equal);
-  //state.stencil.record_reference(0);
-  //state.stencil.record_mask(0xFF);
-
   // Record all textures.
   Frontend::Textures draw_textures;
+  program->uniforms()[0].record_mat4x4f(Math::Mat4x4f::invert(_projection));
+  program->uniforms()[1].record_mat4x4f(Math::Mat4x4f::invert(view));
   program->uniforms()[2].record_sampler(draw_textures.add(m_texture));
 
   // Record all draw buffers.
