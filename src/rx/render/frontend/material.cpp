@@ -39,6 +39,9 @@ Material::Material(Context* _frontend)
   , m_has_alpha{false}
   , m_roughness_value{1.0f}
   , m_metalness_value{0.0f}
+  , m_occlusion_value{1.0f}
+  , m_albedo_color{1.0f, 1.0f, 1.0f}
+  , m_emission_color{0.0f, 0.0f, 0.0f}
   , m_name{m_frontend->allocator()}
 {
 }
@@ -60,6 +63,9 @@ bool Material::load(Rx::Material::Loader&& loader_) {
   m_has_alpha = loader_.has_alpha();
   m_roughness_value = loader_.roughness();
   m_metalness_value = loader_.metalness();
+  m_occlusion_value = loader_.occlusion();
+  m_albedo_color = loader_.albedo();
+  m_emission_color = loader_.emission();
   m_transform = loader_.transform();
 
   // Simple table to map Type strings to texture2D destinations in this object.

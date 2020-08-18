@@ -35,6 +35,9 @@ struct Loader {
   bool no_compress() const;
   Float32 roughness() const;
   Float32 metalness() const;
+  Float32 occlusion() const;
+  const Math::Vec3f& emission() const &;
+  const Math::Vec3f& albedo() const &;
   const Optional<Math::Transform>& transform() const &;
 
 private:
@@ -60,6 +63,9 @@ private:
   Uint32 m_flags;
   Float32 m_roughness;
   Float32 m_metalness;
+  Float32 m_occlusion;
+  Math::Vec3f m_albedo;
+  Math::Vec3f m_emission;
   Optional<Math::Transform> m_transform;
 };
 
@@ -93,6 +99,18 @@ inline Float32 Loader::roughness() const {
 
 inline Float32 Loader::metalness() const {
   return m_metalness;
+}
+
+inline Float32 Loader::occlusion() const {
+  return m_occlusion;
+}
+
+inline const Math::Vec3f& Loader::emission() const & {
+  return m_emission;
+}
+
+inline const Math::Vec3f& Loader::albedo() const & {
+  return m_albedo;
 }
 
 inline const Optional<Math::Transform>& Loader::transform() const & {

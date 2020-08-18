@@ -11,18 +11,22 @@
     "HAS_EMISSIVE"
   ],
   uniforms: [
-    { name: "u_model",      type: "mat4x4f" },
-    { name: "u_view",       type: "mat4x4f" },
-    { name: "u_projection", type: "mat4x4f" },
-    { name: "u_transform",  type: "mat3x3f", value: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]},
-    { name: "u_bones",      type: "bonesf", when: "HAS_SKELETON" },
-    { name: "u_properties", type: "vec2f" },
-    { name: "u_albedo",     type: "sampler2D", value: 0, when: "HAS_ALBEDO" },
-    { name: "u_normal",     type: "sampler2D", value: 1, when: "HAS_NORMAL" },
-    { name: "u_metalness",  type: "sampler2D", value: 2, when: "HAS_METALNESS" },
-    { name: "u_roughness",  type: "sampler2D", value: 3, when: "HAS_ROUGHNESS" },
-    { name: "u_ambient",    type: "sampler2D", value: 4, when: "HAS_AMBIENT" },
-    { name: "u_emissive",   type: "sampler2D", value: 5, when: "HAS_EMISSIVE" }
+    { name: "u_model",           type: "mat4x4f" },
+    { name: "u_view",            type: "mat4x4f" },
+    { name: "u_projection",      type: "mat4x4f" },
+    { name: "u_transform",       type: "mat3x3f", value: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]},
+    { name: "u_bones",           type: "bonesf", when: "HAS_SKELETON" },
+    { name: "u_roughness_value", type: "float", value: 1.0},
+    { name: "u_metalness_value", type: "float", value: 1.0},
+    { name: "u_occlusion_value", type: "float", value: 1.0},
+    { name: "u_albedo_color",    type: "vec3f", value: [1.0, 1.0, 1.0] },
+    { name: "u_emissive_color",  type: "vec3f", value: [1.0, 1.0, 1.0] },
+    { name: "u_albedo",          type: "sampler2D", value: 0, when: "HAS_ALBEDO" },
+    { name: "u_normal",          type: "sampler2D", value: 1, when: "HAS_NORMAL" },
+    { name: "u_metalness",       type: "sampler2D", value: 2, when: "HAS_METALNESS" },
+    { name: "u_roughness",       type: "sampler2D", value: 3, when: "HAS_ROUGHNESS" },
+    { name: "u_ambient",         type: "sampler2D", value: 4, when: "HAS_AMBIENT" },
+    { name: "u_emissive",        type: "sampler2D", value: 5, when: "HAS_EMISSIVE" }
   ],
   shaders: [
     {
@@ -83,9 +87,9 @@
       source: "
         void main() {
           // Calculate albedo factor from material if present.
-          vec4f albedo = vec4f(1.0);
+          vec4f albedo = vec4f(u_albedo_color, 1.0);
         #if defined(HAS_ALBEDO)
-          albedo = rx_texture2D(u_albedo, vs_coordinate);
+          albedo *= rx_texture2D(u_albedo, vs_coordinate);
         #endif
 
           // Alpha testing as early as possible.
@@ -96,27 +100,27 @@
         #endif
 
           // Calculate roughness factor from material if present.
-          float roughness = u_properties.x;
+          float roughness = u_roughness_value;
         #if defined(HAS_ROUGHNESS)
           roughness *= rx_texture2D(u_roughness, vs_coordinate).r;
         #endif
 
           // Calculate metalness facor from material if present.
-          float metalness = u_properties.y;
+          float metalness = u_metalness_value;
         #if defined(HAS_METALNESS)
           metalness = (1.0 - metalness) * rx_texture2D(u_metalness, vs_coordinate).r;
         #endif
 
           // Calculate ambient factor from material if present.
-          float ambient = 1.0;
+          float ambient = u_occlusion_value;
         #if defined(HAS_AMBIENT)
-          ambient = rx_texture2D(u_ambient, vs_coordinate).r;
+          ambient *= rx_texture2D(u_ambient, vs_coordinate).r;
         #endif
 
           // Calculate emissiveness from material if present.
-          vec3f emission = vec3f(0.0);
+          vec3f emission = vec3f(0.0f);
         #if defined(HAS_EMISSIVE)
-          emission = rx_texture2D(u_emissive, vs_coordinate).rgb;
+          emission += rx_texture2D(u_emissive, vs_coordinate).rgb;
         #endif
 
           // Calculate normal.

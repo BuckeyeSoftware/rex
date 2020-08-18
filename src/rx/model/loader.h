@@ -50,6 +50,8 @@ struct Loader {
 
   constexpr Memory::Allocator& allocator() const;
 
+  bool import(const String& _file_name);
+
 private:
   void destroy();
 
@@ -63,7 +65,6 @@ private:
 
   void write_log(Log::Level _level, String&& message_) const;
 
-  bool import(const String& _file_name);
   bool parse_transform(const JSON& _transform);
 
   enum {

@@ -29,9 +29,6 @@ void IndirectLightingPass::render(const Math::Camera& _camera) {
 
   Frontend::Program* program{*m_technique};
 
-  program->uniforms()[6].record_mat4x4f(Math::Mat4x4f::invert(_camera.view() * _camera.projection));
-  program->uniforms()[7].record_vec3f(_camera.translate);
-
   Frontend::Buffers draw_buffers;
   draw_buffers.add(0);
 
@@ -43,20 +40,15 @@ void IndirectLightingPass::render(const Math::Camera& _camera) {
     RX_RENDER_CLEAR_COLOR(0),
     Math::Vec4f{0.0f, 0.0f, 0.0f, 1.0f}.data());
 
-  state.stencil.record_enable(true);
-
-  // StencilFunc(GL_EQUAL, 1, 0xFF)
-  state.stencil.record_function(Render::Frontend::StencilState::FunctionType::k_equal);
-  state.stencil.record_reference(1);
-  state.stencil.record_mask(0xFF);
-
   Frontend::Textures draw_textures;
-  draw_textures.add(m_gbuffer->albedo());
-  draw_textures.add(m_gbuffer->normal());
-  draw_textures.add(m_gbuffer->depth_stencil());
-  draw_textures.add(m_ibl->irradiance());
-  draw_textures.add(m_ibl->prefilter());
-  draw_textures.add(m_ibl->scale_bias());
+  program->uniforms()[0].record_sampler(draw_textures.add(m_gbuffer->albedo()));
+  program->uniforms()[1].record_sampler(draw_textures.add(m_gbuffer->normal()));
+  program->uniforms()[2].record_sampler(draw_textures.add(m_gbuffer->depth_stencil()));
+  program->uniforms()[3].record_sampler(draw_textures.add(m_ibl->irradiance()));
+  program->uniforms()[4].record_sampler(draw_textures.add(m_ibl->prefilter()));
+  program->uniforms()[5].record_sampler(draw_textures.add(m_ibl->scale_bias()));
+  program->uniforms()[6].record_mat4x4f(Math::Mat4x4f::invert(_camera.view() * _camera.projection));
+  program->uniforms()[7].record_vec3f(_camera.translate);
 
   m_frontend->draw(
     RX_RENDER_TAG("indirect lighting pass"),
@@ -77,7 +69,7 @@ void IndirectLightingPass::render(const Math::Camera& _camera) {
 void IndirectLightingPass::create(const Math::Vec2z& _dimensions) {
   m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("indirect lighting pass"));
   m_texture->record_type(Frontend::Texture::Type::k_attachment);
-  m_texture->record_format(Frontend::Texture::DataFormat::k_rgb_u8);
+  m_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
   m_texture->record_filter({false, false, false});
   m_texture->record_levels(1);
   m_texture->record_dimensions(_dimensions);

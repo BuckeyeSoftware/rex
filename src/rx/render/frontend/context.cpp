@@ -355,7 +355,8 @@ void Context::update_buffer(const CommandHeader::Info& _info, Buffer* _buffer) {
     m_commands.push_back(command_base);
 
     // So we can clear edit list after processing.
-    m_edit_buffers.push_back(_buffer);
+    // m_edit_buffers.push_back(_buffer);
+    _buffer->clear_edits();
   }
 }
 

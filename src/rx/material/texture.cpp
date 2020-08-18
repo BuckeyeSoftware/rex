@@ -237,8 +237,8 @@ bool Texture::parse_type(const JSON& _type) {
     "normal",
     "metalness",
     "roughness",
-    "ambient",
-    "emissive"
+    "occlusion",
+    "emission"
   };
 
   for (const auto& match : k_matches) {

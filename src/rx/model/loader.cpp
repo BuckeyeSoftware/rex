@@ -104,8 +104,8 @@ bool Loader::parse(const JSON& _definition) {
     return error("missing 'materials'");
   }
 
-  if (!materials.is_array_of(JSON::Type::k_object)) {
-    return error("expected Array[Object] for 'materials'");
+  if (!materials.is_array_of(JSON::Type::k_object) && !materials.is_array_of(JSON::Type::k_string)) {
+    return error("expected Array[Object] or Array[String] for 'materials'");
   }
 
   m_transform = nullopt;

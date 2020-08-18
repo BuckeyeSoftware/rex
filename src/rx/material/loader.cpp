@@ -2,6 +2,7 @@
 #include "rx/core/concurrency/thread_pool.h"
 #include "rx/core/concurrency/wait_group.h"
 #include "rx/core/json.h"
+#include "rx/core/algorithm/clamp.h"
 
 #include "rx/material/loader.h"
 
@@ -16,6 +17,9 @@ Loader::Loader(Memory::Allocator& _allocator)
   , m_flags{0}
   , m_roughness{1.0f}
   , m_metalness{0.0f}
+  , m_occlusion{1.0f}
+  , m_albedo{1.0f, 1.0f, 1.0f}
+  , m_emission{0.0f, 0.0f, 0.0f}
 {
 }
 
@@ -26,9 +30,11 @@ Loader::Loader(Loader&& loader_)
   , m_flags{Utility::exchange(loader_.m_flags, 0)}
   , m_roughness{Utility::exchange(loader_.m_roughness, 1.0f)}
   , m_metalness{Utility::exchange(loader_.m_metalness, 0.0f)}
+  , m_occlusion{Utility::exchange(loader_.m_occlusion, 1.0f)}
+  , m_albedo{Utility::exchange(loader_.m_albedo, {1.0f, 1.0f, 1.0f})}
+  , m_emission{Utility::exchange(loader_.m_emission, {0.0f, 0.0f, 0.0f})}
 {
 }
-
 void Loader::operator=(Loader&& loader_) {
   RX_ASSERT(&loader_ != this, "self assignment");
 
@@ -38,6 +44,9 @@ void Loader::operator=(Loader&& loader_) {
   m_flags = Utility::exchange(loader_.m_flags, 0);
   m_roughness = Utility::exchange(loader_.m_roughness, 1.0f);
   m_metalness = Utility::exchange(loader_.m_metalness, 0.0f);
+  m_occlusion = Utility::exchange(loader_.m_occlusion, 1.0f);
+  m_albedo = Utility::exchange(loader_.m_albedo, {1.0f, 1.0f, 1.0f});
+  m_emission = Utility::exchange(loader_.m_emission, {0.0f, 0.0f, 0.0f});
 }
 
 bool Loader::load(Stream* _stream) {
@@ -84,6 +93,45 @@ bool Loader::parse(const JSON& _definition) {
     m_flags |= k_alpha_test;
   }
 
+  if (const auto& roughness = _definition["roughness"]) {
+    if (!roughness.is_number()) {
+      return error("expected Number for 'roughness'");
+    }
+    m_roughness = Algorithm::clamp(roughness.as_float(), 0.0f, 1.0f);
+  }
+
+  if (const auto& metalness = _definition["metalness"]) {
+    if (!metalness.is_number()) {
+      return error("expected Number for 'metalness'");
+    }
+    m_metalness = Algorithm::clamp(metalness.as_float(), 0.0f, 1.0f);
+  }
+
+  if (const auto& occlusion = _definition["occlusion"]) {
+    if (!occlusion.is_number()) {
+      return error("expected Number for 'occlusion'");
+    }
+    m_occlusion = Algorithm::clamp(occlusion.as_float(), 0.0f, 1.0f);
+  }
+
+  if (const auto& emission = _definition["emission"]) {
+    if (!emission.is_array_of(JSON::Type::k_number, 3)) {
+      return error("expected Array[Number, 3] for 'emission'");
+    }
+    m_emission.r = Algorithm::clamp(emission[0_z].as_float(), 0.0f, 1.0f);
+    m_emission.g = Algorithm::clamp(emission[1_z].as_float(), 0.0f, 1.0f);
+    m_emission.b = Algorithm::clamp(emission[2_z].as_float(), 0.0f, 1.0f);
+  }
+
+  if (const auto& albedo = _definition["albedo"]) {
+    if (!albedo.is_array_of(JSON::Type::k_number, 3)) {
+      return error("expected Array[Number, 3] for 'emission'");
+    }
+    m_albedo.r = Algorithm::clamp(albedo[0_z].as_float(), 0.0f, 1.0f);
+    m_albedo.g = Algorithm::clamp(albedo[1_z].as_float(), 0.0f, 1.0f);
+    m_albedo.b = Algorithm::clamp(albedo[2_z].as_float(), 0.0f, 1.0f);
+  }
+
   const auto& no_compress{_definition["no_compress"]};
   if (no_compress && !no_compress.is_boolean()) {
     return error("expected Boolean for 'no_compress'");
@@ -125,30 +173,27 @@ bool Loader::parse(const JSON& _definition) {
     return true;
   }
 
-  const auto& textures{_definition["textures"]};
-  if (!textures) {
-    return error("missing 'textures'");
-  }
+  if (const auto& textures = _definition["textures"]) {
+    if (!textures.is_array_of(JSON::Type::k_object)) {
+      return error("expected Array[Object] for 'textures'");
+    }
 
-  if (!textures.is_array_of(JSON::Type::k_object)) {
-    return error("expected Array[Object] for 'textures'");
-  }
-
-  m_textures.reserve(textures.size());
-  if (!parse_textures(textures)) {
-    return false;
+    m_textures.reserve(textures.size());
+    if (!parse_textures(textures)) {
+      return false;
+    }
   }
 
   // Determine if the diffuse texture has an alpha channel.
   m_textures.each_fwd([this](const Texture& _texture) {
-    if (_texture.type() != "diffuse") {
+    if (_texture.type() != "albedo") {
       return true;
     }
 
     if (_texture.chain().bpp() == 4) {
       m_flags |= k_has_alpha;
     } else if (m_flags & k_alpha_test) {
-      logger->warning("'alpha_test' disabled (\"diffuse\" has no alpha channel)");
+      logger->warning("'alpha_test' disabled (\"albedo\" has no alpha channel)");
       m_flags &= ~k_alpha_test;
     }
     return false;

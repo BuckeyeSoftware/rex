@@ -147,8 +147,9 @@ bool Model::upload() {
 void Model::animate(Size _index, [[maybe_unused]] bool _loop) {
   if (_index != -1_z && m_model->is_animated()) {
     m_animation = {m_model, _index};
+  } else {
+    m_animation = nullopt;
   }
-  m_animation = nullopt;
 }
 
 void Model::update(Float32 _delta_time) {
@@ -170,11 +171,8 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
   // Enable(DEPTH_TEST)
   state.depth.record_test(true);
 
-  // Enable(STENCIL_TEST)
-  state.stencil.record_enable(true);
-
   // Enable(CULL_FACE)
-  state.cull.record_enable(true);
+  state.cull.record_enable(false);
 
   // Disable(BLEND)
   state.blend.record_enable(false);
@@ -187,19 +185,6 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
 
   // DepthMask(TRUE)
   state.depth.record_write(true);
-
-  // StencilFunc(ALWAYS, 1, 0xFF)
-  state.stencil.record_function(Frontend::StencilState::FunctionType::k_always);
-  state.stencil.record_reference(1);
-  state.stencil.record_mask(0xFF);
-
-  // StencilMask(0xFF)
-  state.stencil.record_write_mask(0xFF);
-
-  // StencilOp(KEEP, REPLACE, REPLACE)
-  state.stencil.record_fail_action(Frontend::StencilState::OperationType::k_keep);
-  state.stencil.record_depth_fail_action(Frontend::StencilState::OperationType::k_replace);
-  state.stencil.record_depth_pass_action(Frontend::StencilState::OperationType::k_replace);
 
   // Viewport(0, 0, w, h)
   state.viewport.record_dimensions(_target->dimensions());
@@ -238,23 +223,26 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
       uniforms[4].record_bones(m_animation->frames(), m_animation->joints());
     }
 
-    uniforms[5].record_vec2f({material.roughness_value(), material.metalness_value()});
+    uniforms[5].record_float(material.roughness_value());
+    uniforms[6].record_float(material.metalness_value());
+    uniforms[7].record_float(material.occlusion_value());
+    uniforms[8].record_vec3f(material.albedo_color());
+    uniforms[9].record_vec3f(material.emission_color());
 
     // Record all the textures.
     Frontend::Textures draw_textures;
-    if (material.albedo())    uniforms[ 6].record_sampler(draw_textures.add(material.albedo()));
-    if (material.normal())    uniforms[ 7].record_sampler(draw_textures.add(material.normal()));
-    if (material.metalness()) uniforms[ 8].record_sampler(draw_textures.add(material.metalness()));
-    if (material.roughness()) uniforms[ 9].record_sampler(draw_textures.add(material.roughness()));
-    if (material.ambient())   uniforms[10].record_sampler(draw_textures.add(material.ambient()));
-    if (material.emissive())  uniforms[11].record_sampler(draw_textures.add(material.emissive()));
+    if (material.albedo())    uniforms[10].record_sampler(draw_textures.add(material.albedo()));
+    if (material.normal())    uniforms[11].record_sampler(draw_textures.add(material.normal()));
+    if (material.metalness()) uniforms[12].record_sampler(draw_textures.add(material.metalness()));
+    if (material.roughness()) uniforms[13].record_sampler(draw_textures.add(material.roughness()));
+    if (material.ambient())   uniforms[14].record_sampler(draw_textures.add(material.ambient()));
+    if (material.emissive())  uniforms[15].record_sampler(draw_textures.add(material.emissive()));
 
     // Record all the draw buffers.
     Frontend::Buffers draw_buffers;
-    draw_buffers.add(0);
-    draw_buffers.add(1);
-    draw_buffers.add(2);
-    draw_buffers.add(3);
+    draw_buffers.add(0); // gbuffer albedo    (albedo.r,   albedo.g,   albedo.b,   ambient)
+    draw_buffers.add(1); // gbuffer normal    (normal.r,   normal.g,   roughness,  metalness)
+    draw_buffers.add(2); // gbuffer emission  (emission.r, emission.g, emission.b, 0.0)
 
     // Disable backface culling for alpha-tested geometry.
     if (_allow_cull) {
@@ -283,10 +271,11 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
 
   m_opaque_meshes.each_fwd([&](const Mesh& _mesh) { draw(_mesh, true); });
 
+/*
   state.blend.record_enable(true);
   state.blend.record_blend_factors(
     Render::Frontend::BlendState::FactorType::k_src_alpha,
-    Render::Frontend::BlendState::FactorType::k_one_minus_src_alpha);
+    Render::Frontend::BlendState::FactorType::k_one_minus_src_alpha);*/
   m_transparent_meshes.each_fwd([&](const Mesh& _mesh) { draw(_mesh, false); });
 }
 
@@ -356,6 +345,7 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
 
   const auto& joints = m_model->joints();
 
+#if 0
   // Render all the joints.
   for (Size i{0}; i < joints.size(); i++) {
     const Math::Mat3x4f& frame = m_animation->frames()[i] * joints[i].frame;
@@ -378,6 +368,7 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
       Math::Mat4x4f::scale({scale, scale, scale}) * joint * _world,
       0);
   }
+#endif
 
   // Render the skeleton.
   for (Size i{0}; i < joints.size(); i++) {

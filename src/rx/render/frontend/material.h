@@ -33,6 +33,9 @@ struct Material
 
   Float32 roughness_value() const;
   Float32 metalness_value() const;
+  Float32 occlusion_value() const;
+  const Math::Vec3f& albedo_color() const &;
+  const Math::Vec3f& emission_color() const &;
 
 private:
   Context* m_frontend;
@@ -46,6 +49,9 @@ private:
   bool m_has_alpha;
   Float32 m_roughness_value;
   Float32 m_metalness_value;
+  Float32 m_occlusion_value;
+  Math::Vec3f m_albedo_color;
+  Math::Vec3f m_emission_color;
   String m_name;
   Optional<Math::Transform> m_transform;
 };
@@ -62,6 +68,9 @@ inline Material::Material(Material&& material_)
   , m_has_alpha{Utility::exchange(material_.m_has_alpha, false)}
   , m_roughness_value{Utility::exchange(material_.m_roughness_value, 1.0f)}
   , m_metalness_value{Utility::exchange(material_.m_metalness_value, 0.0f)}
+  , m_occlusion_value{Utility::exchange(material_.m_occlusion_value, 0.0f)}
+  , m_albedo_color{Utility::exchange(material_.m_albedo_color, {1.0f, 1.0f, 1.0f})}
+  , m_emission_color{Utility::exchange(material_.m_emission_color, {0.0f, 0.0f, 0.0f})}
   , m_name{Utility::move(material_.m_name)}
   , m_transform{Utility::move(material_.m_transform)}
 {
@@ -83,6 +92,9 @@ inline Material& Material::operator=(Material&& material_) {
   m_has_alpha = Utility::exchange(material_.m_has_alpha, false);
   m_roughness_value = Utility::exchange(material_.m_roughness_value, 1.0f);
   m_metalness_value = Utility::exchange(material_.m_metalness_value, 0.0f);
+  m_occlusion_value = Utility::exchange(material_.m_occlusion_value, 0.0f);
+  m_albedo_color = Utility::exchange(material_.m_albedo_color, {1.0f, 1.0f, 1.0f});
+  m_emission_color = Utility::exchange(material_.m_emission_color, {0.0f, 0.0f, 0.0f});
   m_name = Utility::move(material_.m_name);
   m_transform = Utility::move(material_.m_transform);
 
@@ -135,6 +147,18 @@ inline Float32 Material::roughness_value() const {
 
 inline Float32 Material::metalness_value() const {
   return m_metalness_value;
+}
+
+inline Float32 Material::occlusion_value() const {
+  return m_occlusion_value;
+}
+
+inline const Math::Vec3f& Material::albedo_color() const & {
+  return m_albedo_color;
+}
+
+inline const Math::Vec3f& Material::emission_color() const & {
+  return m_emission_color;
 }
 
 } // namespace rx::render::frontend
