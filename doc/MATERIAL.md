@@ -12,8 +12,11 @@ The top level schema of a material looks like:
   name:       required String
   textures:   required Array[#MaterialTexture]
   alpha_test: optional Boolean
+  albedo:     optional Array[@Float, 3]
   roughness:  optional Float
   metalness:  optional Float
+  occlusion:  optional Float
+  emission:   optional Array[@Float, 3]
   transform:  optional #MaterialTransform
 }
 ```
@@ -25,8 +28,11 @@ The top level schema of a material looks like:
 Information on `#Texture` is described [here](TEXTURE.md)
 
 * `alpha_test` controls if surfaces with this material will be alpha tested or not.
-* `roughness` saturated value in [0, 1] range which acts as the roughness for the whole surface when a roughness map isn't present or as a multiplier if present. A val
+* `roughness` saturated value in [0, 1] range which acts as the roughness for the whole surface when a roughness map isn't present or as a multiplier if present.
 * `metalness` saturated value in [0, 1] range which acts as the metalness for the whole surface when a metalness map isn't present or as a multiplier if present.
+* `occlusion` saturated value in [0, 1] range which acts as the ambient-occlusion value for the whole surface when an occlusion map isn't present or as a multiplier if present.
+* `emisssion` array of saturated values in [0, 1] range which act as the emissive color for the whole surface when an emission map isn't present or as a multiplier if present.
+* `albedo` array of ssaturated values in [0, 1] range which act as the albedo color for the whole surface when an albedo map isn't present or as a multiplier if present.
 
 `#MaterialTransform` schema looks like:
 ```
