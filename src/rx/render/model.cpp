@@ -172,7 +172,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
   state.depth.record_test(true);
 
   // Enable(CULL_FACE)
-  state.cull.record_enable(false);
+  state.cull.record_enable(true);
 
   // Disable(BLEND)
   state.blend.record_enable(false);
