@@ -276,7 +276,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
   state.blend.record_blend_factors(
     Render::Frontend::BlendState::FactorType::k_src_alpha,
     Render::Frontend::BlendState::FactorType::k_one_minus_src_alpha);*/
-  m_transparent_meshes.each_fwd([&](const Mesh& _mesh) { draw(_mesh, false); });
+  m_transparent_meshes.each_fwd([&](const Mesh& _mesh) { draw(_mesh, true); });
 }
 
 void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {
