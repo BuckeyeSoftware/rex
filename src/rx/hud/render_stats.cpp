@@ -30,13 +30,14 @@ RenderStats::RenderStats(Render::Immediate2D* _immediate)
 
 void RenderStats::render() {
   const Render::Frontend::Context& frontend = *m_immediate->frontend();
-  const auto &buffer_stats = frontend.stats(Render::Frontend::Resource::Type::k_buffer);
-  const auto &program_stats = frontend.stats(Render::Frontend::Resource::Type::k_program);
-  const auto &target_stats = frontend.stats(Render::Frontend::Resource::Type::k_target);
-  const auto &texture1D_stats = frontend.stats(Render::Frontend::Resource::Type::k_texture1D);
-  const auto &texture2D_stats = frontend.stats(Render::Frontend::Resource::Type::k_texture2D);
-  const auto &texture3D_stats = frontend.stats(Render::Frontend::Resource::Type::k_texture3D);
-  const auto &textureCM_stats = frontend.stats(Render::Frontend::Resource::Type::k_textureCM);
+  const auto& buffer_stats = frontend.stats(Render::Frontend::Resource::Type::k_buffer);
+  const auto& program_stats = frontend.stats(Render::Frontend::Resource::Type::k_program);
+  const auto& target_stats = frontend.stats(Render::Frontend::Resource::Type::k_target);
+  const auto& texture1D_stats = frontend.stats(Render::Frontend::Resource::Type::k_texture1D);
+  const auto& texture2D_stats = frontend.stats(Render::Frontend::Resource::Type::k_texture2D);
+  const auto& texture3D_stats = frontend.stats(Render::Frontend::Resource::Type::k_texture3D);
+  const auto& textureCM_stats = frontend.stats(Render::Frontend::Resource::Type::k_textureCM);
+  const auto& downloader_stats = frontend.stats(Render::Frontend::Resource::Type::k_downloader);
 
   Math::Vec2f offset{25.0f, 25.0f};
 
@@ -93,6 +94,7 @@ void RenderStats::render() {
 
   offset.y += *font_size;
 
+  render_stat("downloaders", downloader_stats);
   render_stat("texturesCM", textureCM_stats);
   render_stat("textures3D", texture3D_stats);
   render_stat("textures2D", texture2D_stats);

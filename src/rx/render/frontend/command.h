@@ -8,6 +8,7 @@
 #include "rx/render/frontend/state.h"
 
 namespace Rx::Render::Frontend {
+
 struct Target;
 struct Buffer;
 struct Program;
@@ -16,9 +17,12 @@ struct Texture1D;
 struct Texture2D;
 struct Texture3D;
 struct TextureCM;
+struct Downloader;
+
 #define RX_RENDER_CLEAR_DEPTH (1 << 0)
 #define RX_RENDER_CLEAR_STENCIL (1 << 1)
 #define RX_RENDER_CLEAR_COLOR(INDEX) (1 << (2 + (INDEX)))
+
 enum class PrimitiveType : Uint8 {
   k_triangles,
   k_triangle_strip,
@@ -34,6 +38,7 @@ enum class CommandType : Uint8 {
   k_clear,
   k_draw,
   k_blit,
+  k_download,
   k_profile
 };
 
@@ -166,6 +171,13 @@ struct BlitCommand {
   Size dst_attachment;
 };
 
+struct DownloadCommand {
+  Target* src_target;
+  Size src_attachment;
+  Math::Vec2z offset;
+  Downloader* downloader;
+};
+
 struct ProfileCommand {
   const char *tag;
 };
@@ -178,19 +190,21 @@ struct ResourceCommand {
     k_texture1D,
     k_texture2D,
     k_texture3D,
-    k_textureCM
+    k_textureCM,
+    k_downloader
   };
 
   Type type;
 
   union {
-    Target *as_target;
-    Buffer *as_buffer;
-    Program *as_program;
-    Texture1D *as_texture1D;
-    Texture2D *as_texture2D;
-    Texture3D *as_texture3D;
-    TextureCM *as_textureCM;
+    Target* as_target;
+    Buffer* as_buffer;
+    Program* as_program;
+    Texture1D* as_texture1D;
+    Texture2D* as_texture2D;
+    Texture3D* as_texture3D;
+    TextureCM* as_textureCM;
+    Downloader* as_downloader;
   };
 };
 

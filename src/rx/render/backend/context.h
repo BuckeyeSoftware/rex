@@ -13,6 +13,7 @@ struct AllocationInfo {
   Size texture2D_size;
   Size texture3D_size;
   Size textureCM_size;
+  Size downloader_size;
 };
 
 struct DeviceInfo {

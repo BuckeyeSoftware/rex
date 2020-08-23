@@ -7,6 +7,8 @@
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/program.h"
 #include "rx/render/frontend/texture.h"
+#include "rx/render/frontend/downloader.h"
+
 #include "rx/render/frontend/technique.h"
 #include "rx/render/frontend/module.h"
 #include "rx/render/frontend/material.h"
@@ -27,6 +29,7 @@ RX_CONSOLE_IVAR(max_texture1D, "render.max_texture1D", "maximum 1D textures", 16
 RX_CONSOLE_IVAR(max_texture2D, "render.max_texture2D", "maximum 2D textures", 16, 4096, 1024);
 RX_CONSOLE_IVAR(max_texture3D, "render.max_texture3D", "maximum 3D textures", 16, 128, 16);
 RX_CONSOLE_IVAR(max_textureCM, "render.max_textureCM", "maximum CM textures", 16, 128, 16);
+RX_CONSOLE_IVAR(max_downloaders, "render.max_downloaders", "maximum downloaders", 2, 16, 8);
 RX_CONSOLE_IVAR(command_memory, "render.command_memory", "memory for command buffer in MiB", 1, 4, 2);
 
 RX_CONSOLE_V2IVAR(
@@ -58,6 +61,7 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend)
   , m_texture2D_pool{allocator(), m_allocation_info.texture2D_size + sizeof(Texture2D), static_cast<Size>(*max_texture2D)}
   , m_texture3D_pool{allocator(), m_allocation_info.texture3D_size + sizeof(Texture3D), static_cast<Size>(*max_texture3D)}
   , m_textureCM_pool{allocator(), m_allocation_info.textureCM_size + sizeof(TextureCM), static_cast<Size>(*max_textureCM)}
+  , m_downloader_pool{allocator(), m_allocation_info.downloader_size + sizeof(Downloader), static_cast<Size>(*max_downloaders)}
   , m_destroy_buffers{allocator()}
   , m_destroy_targets{allocator()}
   , m_destroy_textures1D{allocator()}
@@ -232,6 +236,16 @@ TextureCM* Context::create_textureCM(const CommandHeader::Info& _info) {
   return command->as_textureCM;
 }
 
+Downloader* Context::create_downloader(const CommandHeader::Info& _info) {
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base = allocate_command(ResourceCommand, CommandType::k_resource_allocate);
+  auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
+  command->type = ResourceCommand::Type::k_downloader;
+  command->as_downloader = m_downloader_pool.create<Downloader>(this);
+  m_commands.push_back(command_base);
+  return command->as_downloader;
+}
+
 // initialize_*
 void Context::initialize_buffer(const CommandHeader::Info& _info, Buffer* _buffer) {
   RX_ASSERT(_buffer, "_buffer is null");
@@ -322,6 +336,17 @@ void Context::initialize_texture(const CommandHeader::Info& _info, TextureCM* _t
   command->as_textureCM = _texture;
   m_commands.push_back(command_base);
   m_footprint[0] += _texture->resource_usage();
+}
+
+void Context::initialize_downloader(const CommandHeader::Info& _info, Downloader* _downloader) {
+  RX_ASSERT(_downloader, "_downloader is null");
+
+  Concurrency::ScopeLock lock{m_mutex};
+  auto command_base = allocate_command(ResourceCommand, CommandType::k_resource_construct);
+  auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
+  command->type = ResourceCommand::Type::k_downloader;
+  command->as_downloader = _downloader;
+  m_commands.push_back(command_base);
 }
 
 // update_*
@@ -564,6 +589,19 @@ void Context::destroy_texture_unlocked(const CommandHeader::Info& _info, Texture
   }
 }
 
+void Context::destroy_downloader(const CommandHeader::Info& _info, Downloader* _downloader) {
+  // NOTE(dweiler): Do not manage a reference count for downloader resources as they're not shareable.
+  if (_downloader) {
+    Concurrency::ScopeLock lock{m_mutex};
+    auto command_base = allocate_command(ResourceCommand, CommandType::k_resource_destroy);
+    auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
+    command->type = ResourceCommand::Type::k_downloader;
+    command->as_downloader = _downloader;
+    m_commands.push_back(command_base);
+    m_destroy_downloaders.push_back(_downloader);
+  }
+}
+
 void Context::draw(
   const CommandHeader::Info& _info,
   const State& _state,
@@ -791,6 +829,26 @@ void Context::blit(
   m_blit_calls[0]++;
 }
 
+void Context::download(
+  const CommandHeader::Info& _info,
+  Target* _src_target,
+  Size _src_attachment,
+  const Math::Vec2z& _offset,
+  Downloader* _downloader)
+{
+  Concurrency::ScopeLock lock{m_mutex};
+
+  auto command_base = m_command_buffer.allocate(sizeof(DownloadCommand), CommandType::k_download, _info);
+  auto command = reinterpret_cast<DownloadCommand*>(command_base + sizeof(CommandHeader));
+
+  command->src_target = _src_target;
+  command->src_attachment = _src_attachment;
+  command->offset = _offset;
+  command->downloader = _downloader;
+
+  m_commands.push_back(command_base);
+}
+
 void Context::profile(const char* _tag) {
   Concurrency::ScopeLock lock{m_mutex};
 
@@ -836,6 +894,7 @@ bool Context::process() {
   m_destroy_textures2D.each_fwd([this](Texture2D* _texture) { m_texture2D_pool.destroy<Texture2D>(_texture); });
   m_destroy_textures3D.each_fwd([this](Texture3D* _texture) { m_texture3D_pool.destroy<Texture3D>(_texture); });
   m_destroy_texturesCM.each_fwd([this](TextureCM* _texture) { m_textureCM_pool.destroy<TextureCM>(_texture); });
+  m_destroy_downloaders.each_fwd([this](Downloader* _downloader) { m_downloader_pool.destroy<Downloader>(_downloader); });
 
   // Reset the command buffer.
   m_commands.clear();
@@ -855,6 +914,7 @@ bool Context::process() {
   m_destroy_textures2D.clear();
   m_destroy_textures3D.clear();
   m_destroy_texturesCM.clear();
+  m_destroy_downloaders.clear();
 
   // Update all rendering stats for the last frame.
   auto swap = [](Concurrency::Atomic<Size> (&value_)[2]) { value_[1] = value_[0].exchange(0); };
@@ -892,6 +952,8 @@ Context::Statistics Context::stats(Resource::Type _type) const {
     return {m_texture3D_pool.capacity(), m_texture3D_pool.size(), m_cached_textures3D.size(), m_resource_usage[index]};
   case Resource::Type::k_textureCM:
     return {m_textureCM_pool.capacity(), m_textureCM_pool.size(), m_cached_texturesCM.size(), m_resource_usage[index]};
+  case Resource::Type::k_downloader:
+    return {m_downloader_pool.capacity(), m_downloader_pool.size(), 0, m_resource_usage[index]};
   }
 
   RX_HINT_UNREACHABLE();

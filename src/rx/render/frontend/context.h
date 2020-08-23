@@ -18,6 +18,7 @@
 
 namespace Rx::Render::Frontend {
 
+// Lower-level resource types.
 struct Buffer;
 struct Target;
 struct Program;
@@ -25,6 +26,9 @@ struct Texture1D;
 struct Texture2D;
 struct Texture3D;
 struct TextureCM;
+struct Downloader;
+
+// Higher-level resource types.
 struct Technique;
 struct Module;
 
@@ -40,6 +44,7 @@ struct Context {
   Texture2D* create_texture2D(const CommandHeader::Info& _info);
   Texture3D* create_texture3D(const CommandHeader::Info& _info);
   TextureCM* create_textureCM(const CommandHeader::Info& _info);
+  Downloader* create_downloader(const CommandHeader::Info& _info);
 
   // Initialize rendering resources.
   void initialize_buffer(const CommandHeader::Info& _info, Buffer* _buffer);
@@ -49,6 +54,7 @@ struct Context {
   void initialize_texture(const CommandHeader::Info& _info, Texture2D* _texture);
   void initialize_texture(const CommandHeader::Info& _info, Texture3D* _texture);
   void initialize_texture(const CommandHeader::Info& _info, TextureCM* _texture);
+  void initialize_downloader(const CommandHeader::Info& _info, Downloader* _downloader);
 
   // Update rendering resources.
   void update_buffer(const CommandHeader::Info& _info, Buffer* _buffer);
@@ -64,6 +70,7 @@ struct Context {
   void destroy_texture(const CommandHeader::Info& _info, Texture2D* _texture);
   void destroy_texture(const CommandHeader::Info& _info, Texture3D* _texture);
   void destroy_texture(const CommandHeader::Info& _info, TextureCM* _texture);
+  void destroy_downloader(const CommandHeader::Info& _info, Downloader* _downloader);
 
   // Renders |_instances| instances of |_count| geometric primitive of
   // |_primitive_type| to |_target| with draw buffer layout |_draw_buffers|
@@ -152,6 +159,21 @@ struct Context {
     Size _src_attachment,
     Target* _dst,
     Size _dst_attachment);
+
+  // Performs an asyncrounous download from |_src| attachment |_src_attachment|
+  // at |_offset| into the downloader object |downloader_|.
+  //
+  // The size and format of the downloaded data is decided upon by how the
+  // downloader resource is initialized.
+  //
+  // Conversion of the data may incur longer download times. In general a
+  // download has multi-frame latency.
+  void download(
+    const CommandHeader::Info& _info,
+    Target* _src,
+    Size _src_attachment,
+    const Math::Vec2z& _offset,
+    Downloader* downloader_);
 
   // Used by profile::gpu_sample to insert profile markers. The backend is
   // supposed to consume the k_profile command and when a tag is specified,
@@ -251,6 +273,7 @@ private:
   StaticPool m_texture2D_pool                  RX_HINT_GUARDED_BY(m_mutex);
   StaticPool m_texture3D_pool                  RX_HINT_GUARDED_BY(m_mutex);
   StaticPool m_textureCM_pool                  RX_HINT_GUARDED_BY(m_mutex);
+  StaticPool m_downloader_pool                 RX_HINT_GUARDED_BY(m_mutex);
 
   // Resources that were destroyed are recorded into the following vectors
   // so that the destruction can be handled at the end of the frame.
@@ -261,6 +284,7 @@ private:
   Vector<Texture2D*> m_destroy_textures2D      RX_HINT_GUARDED_BY(m_mutex);
   Vector<Texture3D*> m_destroy_textures3D      RX_HINT_GUARDED_BY(m_mutex);
   Vector<TextureCM*> m_destroy_texturesCM      RX_HINT_GUARDED_BY(m_mutex);
+  Vector<Downloader*> m_destroy_downloaders    RX_HINT_GUARDED_BY(m_mutex);
 
   // Resources that were edited are recorded into the following vectors
   // so that the edits can be handled at the start of the frame.

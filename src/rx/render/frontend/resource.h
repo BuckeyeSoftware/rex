@@ -17,7 +17,8 @@ struct Resource {
     k_texture1D,
     k_texture2D,
     k_texture3D,
-    k_textureCM
+    k_textureCM,
+    k_downloader
   };
 
   static constexpr Size count();
@@ -43,7 +44,7 @@ private:
 };
 
 inline constexpr Size Resource::count() {
-  return static_cast<Size>(Type::k_textureCM) + 1;
+  return static_cast<Size>(Type::k_downloader) + 1;
 }
 
 inline bool Resource::release_reference() {
