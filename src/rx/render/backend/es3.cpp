@@ -1069,7 +1069,7 @@ void ES3::process(Byte* _command) {
   auto state{reinterpret_cast<detail_es3::state*>(m_impl)};
   auto header{reinterpret_cast<Frontend::CommandHeader*>(_command)};
   switch (header->type) {
-  case Frontend::CommandType::k_resource_allocate:
+  case Frontend::CommandType::RESOURCE_ALLOCATE:
     {
       const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
       switch (resource->type) {
@@ -1107,7 +1107,7 @@ void ES3::process(Byte* _command) {
       }
     }
     break;
-  case Frontend::CommandType::k_resource_destroy:
+  case Frontend::CommandType::RESOURCE_DESTROY:
     {
       const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
       switch (resource->type) {
@@ -1163,7 +1163,7 @@ void ES3::process(Byte* _command) {
       }
     }
     break;
-  case Frontend::CommandType::k_resource_construct:
+  case Frontend::CommandType::RESOURCE_CONSTRUCT:
     {
       const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
       switch (resource->type) {
@@ -1582,7 +1582,7 @@ void ES3::process(Byte* _command) {
       }
     }
     break;
-  case Frontend::CommandType::k_resource_update:
+  case Frontend::CommandType::RESOURCE_UPDATE:
     {
       const auto resource{reinterpret_cast<const Frontend::UpdateCommand*>(header + 1)};
       switch (resource->type) {
@@ -1684,7 +1684,7 @@ void ES3::process(Byte* _command) {
       }
     }
     break;
-  case Frontend::CommandType::k_clear:
+  case Frontend::CommandType::CLEAR:
     {
       RX_PROFILE_CPU("clear");
 
@@ -1717,7 +1717,7 @@ void ES3::process(Byte* _command) {
       }
     }
     break;
-  case Frontend::CommandType::k_draw:
+  case Frontend::CommandType::DRAW:
     {
       RX_PROFILE_CPU("draw");
 
@@ -1920,12 +1920,12 @@ void ES3::process(Byte* _command) {
       }
     }
     break;
-  case Frontend::CommandType::k_blit:
+  case Frontend::CommandType::BLIT:
     {
       RX_PROFILE_CPU("blit");
 
-      const auto command{reinterpret_cast<Frontend::BlitCommand*>(header + 1)};
-      const auto render_state{&command->render_state};
+      const auto command = reinterpret_cast<Frontend::BlitCommand*>(header + 1);
+      const auto render_state = &command->render_state;
 
       // TODO(dweiler): optimize use_state to only consider the things that matter
       // during a blit operation:
@@ -1965,7 +1965,11 @@ void ES3::process(Byte* _command) {
 
       break;
     }
-  case Frontend::CommandType::k_profile:
+  case Frontend::CommandType::DOWNLOAD:
+    // TODO(dweiler): Implement.
+    break;
+  case Frontend::CommandType::PROFILE:
+    // TODO(dweiler): Implement.
     break;
   }
 }

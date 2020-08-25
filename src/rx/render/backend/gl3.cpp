@@ -3,6 +3,7 @@
 
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/program.h"
+#include "rx/render/frontend/downloader.h"
 
 #include "rx/core/algorithm/max.h"
 #include "rx/core/math/log2.h"
@@ -245,6 +246,16 @@ namespace detail_gl3 {
     GLuint tex;
   };
 
+  struct downloader {
+    downloader() : index{0} {}
+    ~downloader() {
+      pglDeleteBuffers(buffers.size(), buffers.data());
+    }
+
+    Vector<GLuint> buffers;
+    Size index;
+  };
+
   struct state
     : Frontend::State
   {
@@ -254,6 +265,7 @@ namespace detail_gl3 {
       , m_bound_vbo{0}
       , m_bound_ebo{0}
       , m_bound_vao{0}
+      , m_bound_pbo{0}
       , m_bound_draw_fbo{0}
       , m_bound_read_fbo{0}
       , m_bound_program{0}
@@ -628,6 +640,15 @@ namespace detail_gl3 {
       }
     }
 
+    void use_pbo(GLuint _pbo) {
+      RX_PROFILE_CPU("us_pbo");
+
+      if (m_bound_pbo != _pbo) {
+        pglBindBuffer(GL_PIXEL_PACK_BUFFER, _pbo);
+        m_bound_pbo = _pbo;
+      }
+    }
+
     struct texture_unit {
       GLuint texture1D;
       GLuint texture2D;
@@ -726,6 +747,7 @@ namespace detail_gl3 {
     GLuint m_bound_vbo;
     GLuint m_bound_ebo;
     GLuint m_bound_vao;
+    GLuint m_bound_pbo;
     GLuint m_bound_draw_fbo;
     GLuint m_bound_read_fbo;
     GLuint m_bound_program;
@@ -912,6 +934,7 @@ AllocationInfo GL3::query_allocation_info() const {
   info.texture2D_size = sizeof(detail_gl3::texture2D);
   info.texture3D_size = sizeof(detail_gl3::texture3D);
   info.textureCM_size = sizeof(detail_gl3::textureCM);
+  info.downloader_size = sizeof(detail_gl3::downloader);
   return info;
 }
 
@@ -1065,7 +1088,7 @@ void GL3::process(Byte* _command) {
   auto state{reinterpret_cast<detail_gl3::state*>(m_impl)};
   auto header{reinterpret_cast<Frontend::CommandHeader*>(_command)};
   switch (header->type) {
-  case Frontend::CommandType::k_resource_allocate:
+  case Frontend::CommandType::RESOURCE_ALLOCATE:
     {
       const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
       switch (resource->type) {
@@ -1100,10 +1123,13 @@ void GL3::process(Byte* _command) {
       case Frontend::ResourceCommand::Type::k_textureCM:
         Utility::construct<detail_gl3::textureCM>(resource->as_textureCM + 1);
         break;
+      case Frontend::ResourceCommand::Type::k_downloader:
+        Utility::construct<detail_gl3::downloader>(resource->as_downloader + 1);
+        break;
       }
     }
     break;
-  case Frontend::CommandType::k_resource_destroy:
+  case Frontend::CommandType::RESOURCE_DESTROY:
     {
       const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
       switch (resource->type) {
@@ -1156,10 +1182,21 @@ void GL3::process(Byte* _command) {
         state->invalidate_texture(resource->as_textureCM);
         Utility::destruct<detail_gl3::textureCM>(resource->as_textureCM + 1);
         break;
+      case Frontend::ResourceCommand::Type::k_downloader:
+        {
+          // Ensure the PBO is invalidated from the state cache on destruction.
+          auto downloader = reinterpret_cast<detail_gl3::downloader*>(resource->as_downloader + 1);
+          if (downloader->buffers.find(state->m_bound_pbo) != -1_z)
+          {
+            state->m_bound_pbo = 0;
+          }
+          Utility::destruct<detail_gl3::downloader>(downloader);
+        }
+        break;
       }
     }
     break;
-  case Frontend::CommandType::k_resource_construct:
+  case Frontend::CommandType::RESOURCE_CONSTRUCT:
     {
       const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
       switch (resource->type) {
@@ -1575,10 +1612,25 @@ void GL3::process(Byte* _command) {
           }
         }
         break;
+      case Frontend::ResourceCommand::Type::k_downloader:
+        {
+          auto render_downloader = resource->as_downloader;
+          auto downloader = reinterpret_cast<detail_gl3::downloader*>(render_downloader + 1);
+          auto n_buffers = render_downloader->buffers();
+
+          // Ensure we have all the buffers.
+          downloader->buffers.resize(n_buffers);
+          pglGenBuffers(downloader->buffers.size(), downloader->buffers.data());
+          for (Size i = 0; i < n_buffers; i++) {
+            pglBindBuffer(GL_PIXEL_PACK_BUFFER, downloader->buffers[i]);
+            pglBufferData(GL_PIXEL_PACK_BUFFER, render_downloader->pixels().size(), nullptr, GL_STREAM_READ);
+          }
+        }
+        break;
       }
     }
     break;
-  case Frontend::CommandType::k_resource_update:
+  case Frontend::CommandType::RESOURCE_UPDATE:
     {
       const auto resource{reinterpret_cast<const Frontend::UpdateCommand*>(header + 1)};
       switch (resource->type) {
@@ -1680,7 +1732,7 @@ void GL3::process(Byte* _command) {
       }
     }
     break;
-  case Frontend::CommandType::k_clear:
+  case Frontend::CommandType::CLEAR:
     {
       RX_PROFILE_CPU("clear");
 
@@ -1713,7 +1765,7 @@ void GL3::process(Byte* _command) {
       }
     }
     break;
-  case Frontend::CommandType::k_draw:
+  case Frontend::CommandType::DRAW:
     {
       RX_PROFILE_CPU("draw");
 
@@ -1916,12 +1968,12 @@ void GL3::process(Byte* _command) {
       }
     }
     break;
-  case Frontend::CommandType::k_blit:
+  case Frontend::CommandType::BLIT:
     {
       RX_PROFILE_CPU("blit");
 
-      const auto command{reinterpret_cast<Frontend::BlitCommand*>(header + 1)};
-      const auto render_state{&command->render_state};
+      const auto command = reinterpret_cast<Frontend::BlitCommand*>(header + 1);
+      const auto render_state = &command->render_state;
 
       // TODO(dweiler): optimize use_state to only consider the things that matter
       // during a blit operation:
@@ -1961,7 +2013,11 @@ void GL3::process(Byte* _command) {
 
       break;
     }
-  case Frontend::CommandType::k_profile:
+  case Frontend::CommandType::DOWNLOAD:
+    // TODO(dweiler): Implement.
+    break;
+  case Frontend::CommandType::PROFILE:
+    // TODO(dweiler): Implement.
     break;
   }
 }

@@ -31,15 +31,15 @@ enum class PrimitiveType : Uint8 {
 };
 
 enum class CommandType : Uint8 {
-  k_resource_allocate,
-  k_resource_construct,
-  k_resource_update,
-  k_resource_destroy,
-  k_clear,
-  k_draw,
-  k_blit,
-  k_download,
-  k_profile
+  RESOURCE_ALLOCATE,
+  RESOURCE_CONSTRUCT,
+  RESOURCE_UPDATE,
+  RESOURCE_DESTROY,
+  CLEAR,
+  DRAW,
+  BLIT,
+  DOWNLOAD,
+  PROFILE
 };
 
 struct alignas(16) CommandHeader {
