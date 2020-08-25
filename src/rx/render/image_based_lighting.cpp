@@ -55,7 +55,7 @@ ImageBasedLighting::ImageBasedLighting(Frontend::Context* _frontend)
     0,
     0,
     0,
-    Frontend::PrimitiveType::k_triangles,
+    Frontend::PrimitiveType::TRIANGLES,
     {});
 
   m_frontend->destroy_target(RX_RENDER_TAG("ibl: scale bias"), target);
@@ -139,7 +139,7 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
       0,
       0,
       0,
-      Frontend::PrimitiveType::k_triangles,
+      Frontend::PrimitiveType::TRIANGLES,
       draw_textures);
 
     m_frontend->destroy_target(RX_RENDER_TAG("ibl: irradiance"), target);
@@ -183,7 +183,7 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
         0,
         0,
         0,
-        Frontend::PrimitiveType::k_triangles,
+        Frontend::PrimitiveType::TRIANGLES,
         draw_textures);
 
       m_frontend->destroy_target(RX_RENDER_TAG("ibl: prefilter"), target);

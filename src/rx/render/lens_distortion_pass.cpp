@@ -68,7 +68,7 @@ void LensDistortionPass::render(Frontend::Texture2D* _source) {
     0,
     0,
     0,
-    Frontend::PrimitiveType::k_triangles,
+    Frontend::PrimitiveType::TRIANGLES,
     draw_textures);
 }
 

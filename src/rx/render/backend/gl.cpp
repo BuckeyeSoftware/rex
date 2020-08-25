@@ -209,13 +209,13 @@ GLenum convert_texture_format(Frontend::Texture::DataFormat _data_format) {
 
 GLenum convert_primitive_type(Frontend::PrimitiveType _primitive_type) {
   switch (_primitive_type) {
-  case Frontend::PrimitiveType::k_triangles:
+  case Frontend::PrimitiveType::TRIANGLES:
     return GL_TRIANGLES;
-  case Frontend::PrimitiveType::k_triangle_strip:
+  case Frontend::PrimitiveType::TRIANGLE_STRIP:
     return GL_TRIANGLE_STRIP;
-  case Frontend::PrimitiveType::k_points:
+  case Frontend::PrimitiveType::POINTS:
     return GL_POINTS;
-  case Frontend::PrimitiveType::k_lines:
+  case Frontend::PrimitiveType::LINES:
     return GL_LINES;
   }
 

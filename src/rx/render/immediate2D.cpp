@@ -572,7 +572,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           0,
           0,
           0,
-          Frontend::PrimitiveType::k_triangles,
+          Frontend::PrimitiveType::TRIANGLES,
           {});
           break;
       case Batch::Type::k_lines:
@@ -588,7 +588,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           0,
           0,
           0,
-          Frontend::PrimitiveType::k_lines,
+          Frontend::PrimitiveType::LINES,
           {});
           break;
       case Batch::Type::k_text:
@@ -607,7 +607,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           0,
           0,
           0,
-          Frontend::PrimitiveType::k_triangles,
+          Frontend::PrimitiveType::TRIANGLES,
           draw_textures);
         break;
       default:

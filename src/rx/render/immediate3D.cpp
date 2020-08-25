@@ -319,7 +319,7 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
           0,
           0,
           0,
-          Frontend::PrimitiveType::k_points,
+          Frontend::PrimitiveType::POINTS,
           {});
         break;
       case Queue::Command::Type::k_line:
@@ -335,7 +335,7 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
           0,
           0,
           0,
-          Frontend::PrimitiveType::k_lines,
+          Frontend::PrimitiveType::LINES,
           {});
         break;
       case Queue::Command::Type::k_solid_sphere:
@@ -353,7 +353,7 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
           0,
           0,
           0,
-          Frontend::PrimitiveType::k_triangles,
+          Frontend::PrimitiveType::TRIANGLES,
           {});
         break;
       }

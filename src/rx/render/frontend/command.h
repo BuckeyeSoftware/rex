@@ -24,10 +24,10 @@ struct Downloader;
 #define RX_RENDER_CLEAR_COLOR(INDEX) (1 << (2 + (INDEX)))
 
 enum class PrimitiveType : Uint8 {
-  k_triangles,
-  k_triangle_strip,
-  k_points,
-  k_lines
+  TRIANGLES,
+  TRIANGLE_STRIP,
+  POINTS,
+  LINES
 };
 
 enum class CommandType : Uint8 {

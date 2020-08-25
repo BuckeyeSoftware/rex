@@ -263,7 +263,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
       0,
       m_block.base_vertex(),
       m_block.base_instance(),
-      Render::Frontend::PrimitiveType::k_triangles,
+      Render::Frontend::PrimitiveType::TRIANGLES,
       draw_textures);
 
     return true;

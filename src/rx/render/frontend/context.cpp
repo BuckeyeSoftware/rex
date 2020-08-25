@@ -642,16 +642,16 @@ void Context::draw(
   m_vertices[0] += _count * instances;
 
   switch (_primitive_type) {
-  case PrimitiveType::k_lines:
+  case PrimitiveType::LINES:
     m_lines[0] += (_count / 2) * instances;
     break;
-  case PrimitiveType::k_points:
+  case PrimitiveType::POINTS:
     m_points[0] += _count * _instances;
     break;
-  case PrimitiveType::k_triangle_strip:
+  case PrimitiveType::TRIANGLE_STRIP:
     m_triangles[0] += (_count - 2) * instances;
     break;
-  case PrimitiveType::k_triangles:
+  case PrimitiveType::TRIANGLES:
     m_triangles[0] += (_count / 3) * instances;
     break;
   }
