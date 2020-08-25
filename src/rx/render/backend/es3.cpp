@@ -1104,6 +1104,9 @@ void ES3::process(Byte* _command) {
       case Frontend::ResourceCommand::Type::TEXTURECM:
         Utility::construct<detail_es3::textureCM>(resource->as_textureCM + 1);
         break;
+      case Frontend::ResourceCommand::Type::DOWNLOADER:
+        // TODO(dweiler): Implement.
+        break;
       }
     }
     break;
@@ -1159,6 +1162,9 @@ void ES3::process(Byte* _command) {
       case Frontend::ResourceCommand::Type::TEXTURECM:
         state->invalidate_texture(resource->as_textureCM);
         Utility::destruct<detail_es3::textureCM>(resource->as_textureCM + 1);
+        break;
+      case Frontend::ResourceCommand::Type::DOWNLOADER:
+        // TODO(dweiler): Implement.
         break;
       }
     }
@@ -1578,6 +1584,9 @@ void ES3::process(Byte* _command) {
             }
           }
         }
+        break;
+      case Frontend::ResourceCommand::Type::DOWNLOADER:
+        // TODO(dweiler): Implement.
         break;
       }
     }

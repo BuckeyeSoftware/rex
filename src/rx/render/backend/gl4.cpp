@@ -1054,6 +1054,9 @@ void GL4::process(Byte* _command) {
       case Frontend::ResourceCommand::Type::TEXTURECM:
         Utility::construct<detail_gl4::textureCM>(resource->as_textureCM + 1);
         break;
+      case Frontend::ResourceCommand::Type::DOWNLOADER:
+        // TODO(dweiler): Implement.
+        break;
       }
     }
     break;
@@ -1094,6 +1097,9 @@ void GL4::process(Byte* _command) {
       case Frontend::ResourceCommand::Type::TEXTURECM:
         state->invalidate_texture(resource->as_textureCM);
         Utility::destruct<detail_gl4::textureCM>(resource->as_textureCM + 1);
+        break;
+      case Frontend::ResourceCommand::Type::DOWNLOADER:
+        // TODO(dweiler): Implement.
         break;
       }
     }
@@ -1581,6 +1587,9 @@ void GL4::process(Byte* _command) {
           }
         }
         break;
+      case Frontend::ResourceCommand::Type::DOWNLOADER:
+        // TODO(dweiler): Implement.
+        break;
       }
     }
     break;
@@ -1661,21 +1670,13 @@ void GL4::process(Byte* _command) {
         }
         break;
       case Frontend::UpdateCommand::Type::TEXTURE1D:
-        {
-          // TODO(dweiler): implement
-        }
+        // TODO(dweiler): Implement.
         break;
       case Frontend::UpdateCommand::Type::TEXTURE2D:
-        {
-          // TODO(dweiler): implement
-        }
+        // TODO(dweiler): Implement.
         break;
       case Frontend::UpdateCommand::Type::TEXTURE3D:
-        {
-          // TODO(dweiler): implement
-        }
-        break;
-      default:
+        // TODO(dweiler): Implement.
         break;
       }
     }
