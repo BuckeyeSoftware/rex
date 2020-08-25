@@ -1,7 +1,5 @@
 #include "rx/render/frontend/command.h"
 
-#include "rx/core/memory/allocator.h" // memory::Allocator::round_to_alignment
-
 namespace Rx::Render::Frontend {
 
 CommandBuffer::CommandBuffer(Memory::Allocator& _allocator, Size _size)
@@ -17,7 +15,7 @@ CommandBuffer::~CommandBuffer() {
 
 Byte* CommandBuffer::allocate(Size _size, CommandType _command, const CommandHeader::Info& _info) {
   Byte* data = m_allocator.allocate(sizeof(CommandHeader) + _size);
-  RX_ASSERT(data, "out of memory in command buffer");
+  RX_ASSERT(data, "Out of memory");
 
   auto* header = reinterpret_cast<CommandHeader*>(data);
   header->type = _command;

@@ -112,8 +112,7 @@ struct Textures {
 
   constexpr Textures();
 
-  template<typename T>
-  int add(T *_texture);
+  int add(Texture* _texture);
 
   bool is_empty() const;
 
@@ -126,7 +125,7 @@ struct Textures {
 private:
   union {
     Utility::Nat m_nat;
-    void *m_handles[k_max_textures];
+    Texture* m_handles[k_max_textures];
   };
   Size m_index;
 };
@@ -184,14 +183,14 @@ struct ProfileCommand {
 
 struct ResourceCommand {
   enum class Type : Uint8 {
-    k_buffer,
-    k_target,
-    k_program,
-    k_texture1D,
-    k_texture2D,
-    k_texture3D,
-    k_textureCM,
-    k_downloader
+    BUFFER,
+    TARGET,
+    PROGRAM,
+    TEXTURE1D,
+    TEXTURE2D,
+    TEXTURE3D,
+    TEXTURECM,
+    DOWNLOADER
   };
 
   Type type;
@@ -210,10 +209,10 @@ struct ResourceCommand {
 
 struct UpdateCommand {
   enum class Type : Uint8 {
-    k_buffer,
-    k_texture1D,
-    k_texture2D,
-    k_texture3D
+    BUFFER,
+    TEXTURE1D,
+    TEXTURE2D,
+    TEXTURE3D
   };
 
   Type type;
@@ -267,17 +266,9 @@ inline constexpr Textures::Textures()
   : m_nat{}, m_index{0} {
 }
 
-template<typename T>
-inline int Textures::add(T *_texture) {
-  static_assert(
-    traits::is_same<T, Texture1D> ||
-    traits::is_same<T, Texture2D> ||
-    traits::is_same<T, Texture3D> ||
-    traits::is_same<T, TextureCM>,
-    "|_texture| isn't a texture pointer");
-
+inline int Textures::add(Texture* _texture) {
   RX_ASSERT(m_index < k_max_textures, "too many draw textures");
-  m_handles[m_index] = static_cast<void *>(_texture);
+  m_handles[m_index] = _texture;
   return static_cast<int>(m_index++);
 }
 
@@ -300,7 +291,9 @@ inline Texture *Textures::operator[](Size _index) const {
 
 // buffers
 inline constexpr Buffers::Buffers()
-  : m_nat{}, m_index{0} {
+  : m_nat{}
+  , m_index{0}
+{
 }
 
 inline void Buffers::add(int _buffer) {

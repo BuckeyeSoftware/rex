@@ -1023,10 +1023,10 @@ void GL4::process(Byte* _command) {
     {
       const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
       switch (resource->type) {
-      case Frontend::ResourceCommand::Type::k_buffer:
+      case Frontend::ResourceCommand::Type::BUFFER:
         Utility::construct<detail_gl4::buffer>(resource->as_buffer + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_target:
+      case Frontend::ResourceCommand::Type::TARGET:
         {
           const auto render_target{resource->as_target};
           if (render_target->is_swapchain()) {
@@ -1036,22 +1036,22 @@ void GL4::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_program:
+      case Frontend::ResourceCommand::Type::PROGRAM:
         Utility::construct<detail_gl4::program>(resource->as_program + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_texture1D:
+      case Frontend::ResourceCommand::Type::TEXTURE1D:
         Utility::construct<detail_gl4::texture1D>(resource->as_texture1D + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_texture2D:
+      case Frontend::ResourceCommand::Type::TEXTURE2D:
         if (resource->as_texture2D->is_swapchain()) {
           break;
         }
         Utility::construct<detail_gl4::texture2D>(resource->as_texture2D + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_texture3D:
+      case Frontend::ResourceCommand::Type::TEXTURE3D:
         Utility::construct<detail_gl4::texture3D>(resource->as_texture3D + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_textureCM:
+      case Frontend::ResourceCommand::Type::TEXTURECM:
         Utility::construct<detail_gl4::textureCM>(resource->as_textureCM + 1);
         break;
       }
@@ -1061,37 +1061,37 @@ void GL4::process(Byte* _command) {
     {
       const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
       switch (resource->type) {
-      case Frontend::ResourceCommand::Type::k_buffer:
+      case Frontend::ResourceCommand::Type::BUFFER:
         if (state->m_bound_vao == reinterpret_cast<detail_gl4::buffer*>(resource->as_buffer + 1)->va) {
           state->m_bound_vao = 0;
         }
         Utility::destruct<detail_gl4::buffer>(resource->as_buffer + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_target:
+      case Frontend::ResourceCommand::Type::TARGET:
         if (state->m_bound_fbo == reinterpret_cast<detail_gl4::target*>(resource->as_target + 1)->fbo) {
           state->m_bound_fbo = 0;
         }
         Utility::destruct<detail_gl4::target>(resource->as_target + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_program:
+      case Frontend::ResourceCommand::Type::PROGRAM:
         Utility::destruct<detail_gl4::program>(resource->as_program + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_texture1D:
+      case Frontend::ResourceCommand::Type::TEXTURE1D:
         state->invalidate_texture(resource->as_texture1D);
         Utility::destruct<detail_gl4::texture1D>(resource->as_texture1D + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_texture2D:
+      case Frontend::ResourceCommand::Type::TEXTURE2D:
         if (resource->as_texture2D->is_swapchain()) {
           break;
         }
         state->invalidate_texture(resource->as_texture2D);
         Utility::destruct<detail_gl4::texture2D>(resource->as_texture2D + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_texture3D:
+      case Frontend::ResourceCommand::Type::TEXTURE3D:
         state->invalidate_texture(resource->as_texture3D);
         Utility::destruct<detail_gl4::texture3D>(resource->as_texture3D + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_textureCM:
+      case Frontend::ResourceCommand::Type::TEXTURECM:
         state->invalidate_texture(resource->as_textureCM);
         Utility::destruct<detail_gl4::textureCM>(resource->as_textureCM + 1);
         break;
@@ -1102,7 +1102,7 @@ void GL4::process(Byte* _command) {
     {
       const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
       switch (resource->type) {
-      case Frontend::ResourceCommand::Type::k_buffer:
+      case Frontend::ResourceCommand::Type::BUFFER:
         {
           auto render_buffer = resource->as_buffer;
           const auto& format = render_buffer->format();
@@ -1205,7 +1205,7 @@ void GL4::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_target:
+      case Frontend::ResourceCommand::Type::TARGET:
         {
           const auto render_target{resource->as_target};
           if (render_target->is_swapchain()) {
@@ -1256,7 +1256,7 @@ void GL4::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_program:
+      case Frontend::ResourceCommand::Type::PROGRAM:
         {
           const auto render_program{resource->as_program};
           const auto program{reinterpret_cast<detail_gl4::program*>(render_program + 1)};
@@ -1305,7 +1305,7 @@ void GL4::process(Byte* _command) {
           });
         }
         break;
-      case Frontend::ResourceCommand::Type::k_texture1D:
+      case Frontend::ResourceCommand::Type::TEXTURE1D:
         {
           const auto render_texture{resource->as_texture1D};
           const auto texture{reinterpret_cast<const detail_gl4::texture1D*>(render_texture + 1)};
@@ -1364,7 +1364,7 @@ void GL4::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_texture2D:
+      case Frontend::ResourceCommand::Type::TEXTURE2D:
         {
           const auto render_texture{resource->as_texture2D};
           if (render_texture->is_swapchain()) {
@@ -1434,7 +1434,7 @@ void GL4::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_texture3D:
+      case Frontend::ResourceCommand::Type::TEXTURE3D:
         {
           const auto render_texture{resource->as_texture3D};
           const auto texture{reinterpret_cast<const detail_gl4::texture3D*>(render_texture + 1)};
@@ -1507,7 +1507,7 @@ void GL4::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_textureCM:
+      case Frontend::ResourceCommand::Type::TEXTURECM:
         {
           const auto render_texture{resource->as_textureCM};
           const auto texture{reinterpret_cast<const detail_gl4::textureCM*>(render_texture + 1)};
@@ -1590,7 +1590,7 @@ void GL4::process(Byte* _command) {
 
       const auto resource{reinterpret_cast<const Frontend::UpdateCommand*>(header + 1)};
       switch (resource->type) {
-      case Frontend::UpdateCommand::Type::k_buffer:
+      case Frontend::UpdateCommand::Type::BUFFER:
         {
           const auto render_buffer = resource->as_buffer;
           const auto& format = render_buffer->format();
@@ -1660,17 +1660,17 @@ void GL4::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::UpdateCommand::Type::k_texture1D:
+      case Frontend::UpdateCommand::Type::TEXTURE1D:
         {
           // TODO(dweiler): implement
         }
         break;
-      case Frontend::UpdateCommand::Type::k_texture2D:
+      case Frontend::UpdateCommand::Type::TEXTURE2D:
         {
           // TODO(dweiler): implement
         }
         break;
-      case Frontend::UpdateCommand::Type::k_texture3D:
+      case Frontend::UpdateCommand::Type::TEXTURE3D:
         {
           // TODO(dweiler): implement
         }

@@ -167,7 +167,7 @@ Buffer* Context::create_buffer(const CommandHeader::Info& _info) {
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_ALLOCATE, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_buffer;
+  command->type = ResourceCommand::Type::BUFFER;
   command->as_buffer = m_buffer_pool.create<Buffer>(this);
   m_commands.push_back(command_base);
   return command->as_buffer;
@@ -177,7 +177,7 @@ Target* Context::create_target(const CommandHeader::Info& _info) {
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_ALLOCATE, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_target;
+  command->type = ResourceCommand::Type::TARGET;
   command->as_target = m_target_pool.create<Target>(this);
   m_commands.push_back(command_base);
   return command->as_target;
@@ -187,7 +187,7 @@ Program* Context::create_program(const CommandHeader::Info& _info) {
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_ALLOCATE, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_program;
+  command->type = ResourceCommand::Type::PROGRAM;
   command->as_program = m_program_pool.create<Program>(this);
   m_commands.push_back(command_base);
   return command->as_program;
@@ -197,7 +197,7 @@ Texture1D* Context::create_texture1D(const CommandHeader::Info& _info) {
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_ALLOCATE, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_texture1D;
+  command->type = ResourceCommand::Type::TEXTURE1D;
   command->as_texture1D = m_texture1D_pool.create<Texture1D>(this);
   m_commands.push_back(command_base);
   return command->as_texture1D;
@@ -207,7 +207,7 @@ Texture2D* Context::create_texture2D(const CommandHeader::Info& _info) {
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_ALLOCATE, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_texture2D;
+  command->type = ResourceCommand::Type::TEXTURE2D;
   command->as_texture2D = m_texture2D_pool.create<Texture2D>(this);
   m_commands.push_back(command_base);
   return command->as_texture2D;
@@ -217,7 +217,7 @@ Texture3D* Context::create_texture3D(const CommandHeader::Info& _info) {
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_ALLOCATE, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_texture3D;
+  command->type = ResourceCommand::Type::TEXTURE3D;
   command->as_texture3D = m_texture3D_pool.create<Texture3D>(this);
   m_commands.push_back(command_base);
   return command->as_texture3D;
@@ -227,7 +227,7 @@ TextureCM* Context::create_textureCM(const CommandHeader::Info& _info) {
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_ALLOCATE, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_textureCM;
+  command->type = ResourceCommand::Type::TEXTURECM;
   command->as_textureCM = m_textureCM_pool.create<TextureCM>(this);
   m_commands.push_back(command_base);
   return command->as_textureCM;
@@ -237,7 +237,7 @@ Downloader* Context::create_downloader(const CommandHeader::Info& _info) {
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_ALLOCATE, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_downloader;
+  command->type = ResourceCommand::Type::DOWNLOADER;
   command->as_downloader = m_downloader_pool.create<Downloader>(this);
   m_commands.push_back(command_base);
   return command->as_downloader;
@@ -251,7 +251,7 @@ void Context::initialize_buffer(const CommandHeader::Info& _info, Buffer* _buffe
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_CONSTRUCT, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_buffer;
+  command->type = ResourceCommand::Type::BUFFER;
   command->as_buffer = _buffer;
   m_commands.push_back(command_base);
   m_footprint[0] += _buffer->resource_usage();
@@ -264,7 +264,7 @@ void Context::initialize_target(const CommandHeader::Info& _info, Target* _targe
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_CONSTRUCT, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_target;
+  command->type = ResourceCommand::Type::TARGET;
   command->as_target = _target;
   m_commands.push_back(command_base);
   m_footprint[0] += _target->resource_usage();
@@ -277,7 +277,7 @@ void Context::initialize_program(const CommandHeader::Info& _info, Program* _pro
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_CONSTRUCT, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_program;
+  command->type = ResourceCommand::Type::PROGRAM;
   command->as_program = _program;
   m_commands.push_back(command_base);
   m_footprint[0] += _program->resource_usage();
@@ -290,7 +290,7 @@ void Context::initialize_texture(const CommandHeader::Info& _info, Texture1D* _t
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_CONSTRUCT, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_texture1D;
+  command->type = ResourceCommand::Type::TEXTURE1D;
   command->as_texture1D = _texture;
   m_commands.push_back(command_base);
   m_footprint[0] += _texture->resource_usage();
@@ -303,7 +303,7 @@ void Context::initialize_texture(const CommandHeader::Info& _info, Texture2D* _t
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_CONSTRUCT, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_texture2D;
+  command->type = ResourceCommand::Type::TEXTURE2D;
   command->as_texture2D = _texture;
   m_commands.push_back(command_base);
   m_footprint[0] += _texture->resource_usage();
@@ -316,7 +316,7 @@ void Context::initialize_texture(const CommandHeader::Info& _info, Texture3D* _t
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_CONSTRUCT, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_texture3D;
+  command->type = ResourceCommand::Type::TEXTURE3D;
   command->as_texture3D = _texture;
   m_commands.push_back(command_base);
   m_footprint[0] += _texture->resource_usage();
@@ -329,7 +329,7 @@ void Context::initialize_texture(const CommandHeader::Info& _info, TextureCM* _t
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_CONSTRUCT, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_textureCM;
+  command->type = ResourceCommand::Type::TEXTURECM;
   command->as_textureCM = _texture;
   m_commands.push_back(command_base);
   m_footprint[0] += _texture->resource_usage();
@@ -341,7 +341,7 @@ void Context::initialize_downloader(const CommandHeader::Info& _info, Downloader
   Concurrency::ScopeLock lock{m_mutex};
   auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_CONSTRUCT, _info);
   auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-  command->type = ResourceCommand::Type::k_downloader;
+  command->type = ResourceCommand::Type::DOWNLOADER;
   command->as_downloader = _downloader;
   m_commands.push_back(command_base);
 }
@@ -371,7 +371,7 @@ void Context::update_buffer(const CommandHeader::Info& _info, Buffer* _buffer) {
     auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
 
     command->edits = n_edits;
-    command->type = UpdateCommand::Type::k_buffer;
+    command->type = UpdateCommand::Type::BUFFER;
     command->as_buffer = _buffer;
     memcpy(command->edit(), edits.data(), edit_bytes);
     m_commands.push_back(command_base);
@@ -406,7 +406,7 @@ void Context::update_texture(const CommandHeader::Info& _info, Texture1D* _textu
     auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
 
     command->edits = n_edits;
-    command->type = UpdateCommand::Type::k_texture1D;
+    command->type = UpdateCommand::Type::TEXTURE1D;
     command->as_texture1D = _texture;
     memcpy(command->edit(), edits.data(), edit_bytes);
     m_commands.push_back(command_base);
@@ -440,7 +440,7 @@ void Context::update_texture(const CommandHeader::Info& _info, Texture2D* _textu
     auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
 
     command->edits = n_edits;
-    command->type = UpdateCommand::Type::k_texture2D;
+    command->type = UpdateCommand::Type::TEXTURE2D;
     command->as_texture2D = _texture;
     memcpy(command->edit(), edits.data(), edit_bytes);
     m_commands.push_back(command_base);
@@ -474,7 +474,7 @@ void Context::update_texture(const CommandHeader::Info& _info, Texture3D* _textu
     auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
 
     command->edits = n_edits;
-    command->type = UpdateCommand::Type::k_texture3D;
+    command->type = UpdateCommand::Type::TEXTURE3D;
     command->as_texture3D = _texture;
     memcpy(command->edit(), edits.data(), edit_bytes);
     m_commands.push_back(command_base);
@@ -491,7 +491,7 @@ void Context::destroy_buffer(const CommandHeader::Info& _info, Buffer* _buffer) 
     remove_from_cache(m_cached_buffers, _buffer);
     auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_DESTROY, _info);
     auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-    command->type = ResourceCommand::Type::k_buffer;
+    command->type = ResourceCommand::Type::BUFFER;
     command->as_buffer = _buffer;
     m_commands.push_back(command_base);
     m_destroy_buffers.push_back(_buffer);
@@ -504,7 +504,7 @@ void Context::destroy_target(const CommandHeader::Info& _info, Target* _target) 
     remove_from_cache(m_cached_targets, _target);
     auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_DESTROY, _info);
     auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-    command->type = ResourceCommand::Type::k_target;
+    command->type = ResourceCommand::Type::TARGET;
     command->as_target = _target;
     m_commands.push_back(command_base);
     m_destroy_targets.push_back(_target);
@@ -523,7 +523,7 @@ void Context::destroy_program(const CommandHeader::Info& _info, Program* _progra
     // remove_from_cache(m_cached_programs, _program);
     auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_DESTROY, _info);
     auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-    command->type = ResourceCommand::Type::k_program;
+    command->type = ResourceCommand::Type::PROGRAM;
     command->as_program = _program;
     m_commands.push_back(command_base);
     m_destroy_programs.push_back(_program);
@@ -536,7 +536,7 @@ void Context::destroy_texture(const CommandHeader::Info& _info, Texture1D* _text
     remove_from_cache(m_cached_textures1D, _texture);
     auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_DESTROY, _info);
     auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-    command->type = ResourceCommand::Type::k_texture1D;
+    command->type = ResourceCommand::Type::TEXTURE1D;
     command->as_texture1D = _texture;
     m_commands.push_back(command_base);
     m_destroy_textures1D.push_back(_texture);
@@ -554,7 +554,7 @@ void Context::destroy_texture(const CommandHeader::Info& _info, Texture3D* _text
     remove_from_cache(m_cached_textures3D, _texture);
     auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_DESTROY, _info);
     auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-    command->type = ResourceCommand::Type::k_texture3D;
+    command->type = ResourceCommand::Type::TEXTURE3D;
     command->as_texture3D = _texture;
     m_commands.push_back(command_base);
     m_destroy_textures3D.push_back(_texture);
@@ -567,7 +567,7 @@ void Context::destroy_texture(const CommandHeader::Info& _info, TextureCM* _text
     remove_from_cache(m_cached_texturesCM, _texture);
     auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_DESTROY, _info);
     auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-    command->type = ResourceCommand::Type::k_textureCM;
+    command->type = ResourceCommand::Type::TEXTURECM;
     command->as_textureCM = _texture;
     m_commands.push_back(command_base);
     m_destroy_texturesCM.push_back(_texture);
@@ -579,7 +579,7 @@ void Context::destroy_texture_unlocked(const CommandHeader::Info& _info, Texture
     remove_from_cache(m_cached_textures2D, _texture);
     auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_DESTROY, _info);
     auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-    command->type = ResourceCommand::Type::k_texture2D;
+    command->type = ResourceCommand::Type::TEXTURE2D;
     command->as_texture2D = _texture;
     m_commands.push_back(command_base);
     m_destroy_textures2D.push_back(_texture);
@@ -592,7 +592,7 @@ void Context::destroy_downloader(const CommandHeader::Info& _info, Downloader* _
     Concurrency::ScopeLock lock{m_mutex};
     auto command_base = m_command_buffer.allocate(sizeof(ResourceCommand), CommandType::RESOURCE_DESTROY, _info);
     auto command = reinterpret_cast<ResourceCommand*>(command_base + sizeof(CommandHeader));
-    command->type = ResourceCommand::Type::k_downloader;
+    command->type = ResourceCommand::Type::DOWNLOADER;
     command->as_downloader = _downloader;
     m_commands.push_back(command_base);
     m_destroy_downloaders.push_back(_downloader);

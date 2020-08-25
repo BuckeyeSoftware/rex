@@ -1092,10 +1092,10 @@ void GL3::process(Byte* _command) {
     {
       const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
       switch (resource->type) {
-      case Frontend::ResourceCommand::Type::k_buffer:
+      case Frontend::ResourceCommand::Type::BUFFER:
         Utility::construct<detail_gl3::buffer>(resource->as_buffer + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_target:
+      case Frontend::ResourceCommand::Type::TARGET:
         {
           const auto render_target{resource->as_target};
           if (render_target->is_swapchain()) {
@@ -1105,25 +1105,25 @@ void GL3::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_program:
+      case Frontend::ResourceCommand::Type::PROGRAM:
         Utility::construct<detail_gl3::program>(resource->as_program + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_texture1D:
+      case Frontend::ResourceCommand::Type::TEXTURE1D:
         Utility::construct<detail_gl3::texture1D>(resource->as_texture1D + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_texture2D:
+      case Frontend::ResourceCommand::Type::TEXTURE2D:
         if (resource->as_texture2D->is_swapchain()) {
           break;
         }
         Utility::construct<detail_gl3::texture2D>(resource->as_texture2D + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_texture3D:
+      case Frontend::ResourceCommand::Type::TEXTURE3D:
         Utility::construct<detail_gl3::texture3D>(resource->as_texture3D + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_textureCM:
+      case Frontend::ResourceCommand::Type::TEXTURECM:
         Utility::construct<detail_gl3::textureCM>(resource->as_textureCM + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_downloader:
+      case Frontend::ResourceCommand::Type::DOWNLOADER:
         Utility::construct<detail_gl3::downloader>(resource->as_downloader + 1);
         break;
       }
@@ -1133,7 +1133,7 @@ void GL3::process(Byte* _command) {
     {
       const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
       switch (resource->type) {
-      case Frontend::ResourceCommand::Type::k_buffer:
+      case Frontend::ResourceCommand::Type::BUFFER:
         {
           auto buffer{reinterpret_cast<detail_gl3::buffer*>(resource->as_buffer + 1)};
           if (state->m_bound_vbo == buffer->bo[0]) {
@@ -1148,7 +1148,7 @@ void GL3::process(Byte* _command) {
           Utility::destruct<detail_gl3::buffer>(resource->as_buffer + 1);
         }
         break;
-      case Frontend::ResourceCommand::Type::k_target:
+      case Frontend::ResourceCommand::Type::TARGET:
         {
           auto target{reinterpret_cast<detail_gl3::target*>(resource->as_target + 1)};
           if (state->m_bound_draw_fbo == target->fbo) {
@@ -1160,29 +1160,29 @@ void GL3::process(Byte* _command) {
           Utility::destruct<detail_gl3::target>(resource->as_target + 1);
         }
         break;
-      case Frontend::ResourceCommand::Type::k_program:
+      case Frontend::ResourceCommand::Type::PROGRAM:
         Utility::destruct<detail_gl3::program>(resource->as_program + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_texture1D:
+      case Frontend::ResourceCommand::Type::TEXTURE1D:
         state->invalidate_texture(resource->as_texture1D);
         Utility::destruct<detail_gl3::texture1D>(resource->as_texture1D + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_texture2D:
+      case Frontend::ResourceCommand::Type::TEXTURE2D:
         if (resource->as_texture2D->is_swapchain()) {
           break;
         }
         state->invalidate_texture(resource->as_texture2D);
         Utility::destruct<detail_gl3::texture2D>(resource->as_texture2D + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_texture3D:
+      case Frontend::ResourceCommand::Type::TEXTURE3D:
         state->invalidate_texture(resource->as_texture3D);
         Utility::destruct<detail_gl3::texture3D>(resource->as_texture3D + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_textureCM:
+      case Frontend::ResourceCommand::Type::TEXTURECM:
         state->invalidate_texture(resource->as_textureCM);
         Utility::destruct<detail_gl3::textureCM>(resource->as_textureCM + 1);
         break;
-      case Frontend::ResourceCommand::Type::k_downloader:
+      case Frontend::ResourceCommand::Type::DOWNLOADER:
         {
           // Ensure the PBO is invalidated from the state cache on destruction.
           auto downloader = reinterpret_cast<detail_gl3::downloader*>(resource->as_downloader + 1);
@@ -1200,7 +1200,7 @@ void GL3::process(Byte* _command) {
     {
       const auto resource{reinterpret_cast<const Frontend::ResourceCommand*>(header + 1)};
       switch (resource->type) {
-      case Frontend::ResourceCommand::Type::k_buffer:
+      case Frontend::ResourceCommand::Type::BUFFER:
         {
           auto render_buffer = resource->as_buffer;
           const auto& format = render_buffer->format();
@@ -1294,7 +1294,7 @@ void GL3::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_target:
+      case Frontend::ResourceCommand::Type::TARGET:
         {
           const auto render_target{resource->as_target};
           if (render_target->is_swapchain()) {
@@ -1347,7 +1347,7 @@ void GL3::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_program:
+      case Frontend::ResourceCommand::Type::PROGRAM:
         {
           const auto render_program{resource->as_program};
           const auto program{reinterpret_cast<detail_gl3::program*>(render_program + 1)};
@@ -1396,7 +1396,7 @@ void GL3::process(Byte* _command) {
           });
         }
         break;
-      case Frontend::ResourceCommand::Type::k_texture1D:
+      case Frontend::ResourceCommand::Type::TEXTURE1D:
         {
           const auto render_texture{resource->as_texture1D};
           const auto wrap{render_texture->wrap()};
@@ -1444,7 +1444,7 @@ void GL3::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_texture2D:
+      case Frontend::ResourceCommand::Type::TEXTURE2D:
         {
           const auto render_texture{resource->as_texture2D};
           if (render_texture->is_swapchain()) {
@@ -1500,7 +1500,7 @@ void GL3::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_texture3D:
+      case Frontend::ResourceCommand::Type::TEXTURE3D:
         {
           const auto render_texture{resource->as_texture3D};
           const auto wrap{render_texture->wrap()};
@@ -1556,7 +1556,7 @@ void GL3::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_textureCM:
+      case Frontend::ResourceCommand::Type::TEXTURECM:
         {
           const auto render_texture{resource->as_textureCM};
           const auto wrap{render_texture->wrap()};
@@ -1612,7 +1612,7 @@ void GL3::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::ResourceCommand::Type::k_downloader:
+      case Frontend::ResourceCommand::Type::DOWNLOADER:
         {
           auto render_downloader = resource->as_downloader;
           auto downloader = reinterpret_cast<detail_gl3::downloader*>(render_downloader + 1);
@@ -1634,7 +1634,7 @@ void GL3::process(Byte* _command) {
     {
       const auto resource{reinterpret_cast<const Frontend::UpdateCommand*>(header + 1)};
       switch (resource->type) {
-      case Frontend::UpdateCommand::Type::k_buffer:
+      case Frontend::UpdateCommand::Type::BUFFER:
         {
           const auto render_buffer = resource->as_buffer;
           const auto& format = render_buffer->format();
@@ -1712,17 +1712,17 @@ void GL3::process(Byte* _command) {
           }
         }
         break;
-      case Frontend::UpdateCommand::Type::k_texture1D:
+      case Frontend::UpdateCommand::Type::TEXTURE1D:
         {
           // TODO(dweiler): implement
         }
         break;
-      case Frontend::UpdateCommand::Type::k_texture2D:
+      case Frontend::UpdateCommand::Type::TEXTURE2D:
         {
           // TODO(dweiler): implement
         }
         break;
-      case Frontend::UpdateCommand::Type::k_texture3D:
+      case Frontend::UpdateCommand::Type::TEXTURE3D:
         {
           // TODO(dweiler): implement
         }
