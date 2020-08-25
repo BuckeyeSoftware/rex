@@ -45,7 +45,9 @@ enum class CommandType : Uint8 {
 struct alignas(16) CommandHeader {
   struct Info {
     constexpr Info(const char *_description, const SourceLocation &_source_location)
-      : description{_description}, source_info{_source_location} {
+      : description{_description}
+      , source_info{_source_location}
+    {
     }
 
     const char *description;
@@ -55,12 +57,12 @@ struct alignas(16) CommandHeader {
   CommandType type;
   Info tag;
 };
+
 #define RX_RENDER_TAG(_description) \
   ::Rx::Render::Frontend::CommandHeader::Info{(_description), RX_SOURCE_LOCATION}
 
 struct CommandBuffer {
   CommandBuffer(Memory::Allocator &_allocator, Size _size);
-
   ~CommandBuffer();
 
   Byte *allocate(Size _size, CommandType _command,
@@ -263,7 +265,9 @@ inline Size CommandBuffer::size() const {
 
 // textures
 inline constexpr Textures::Textures()
-  : m_nat{}, m_index{0} {
+  : m_nat{}
+  , m_index{0}
+{
 }
 
 inline int Textures::add(Texture* _texture) {
