@@ -3,7 +3,7 @@
 namespace Rx::Render::Backend {
 
 AllocationInfo Null::query_allocation_info() const {
-  return { 0, 0, 0, 0, 0, 0, 0 };
+  return { 0, 0, 0, 0, 0, 0, 0, 0 };
 }
 
 DeviceInfo Null::query_device_info() const {

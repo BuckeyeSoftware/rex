@@ -70,7 +70,7 @@ struct Arena {
       Uint32 offset = -1_u32;
       Uint32 size   = -1_u32;
     };
-    Range m_ranges[3];
+    Array<Range[3]> m_ranges;
 
     // Helpers to form a reference to a range given a |Sink| enum value.
     Range& range_for(Sink _sink) &;
@@ -140,7 +140,7 @@ private:
 
   Context* m_context;
   Buffer* m_buffer;
-  List m_lists[3];
+  Array<List[3]> m_lists;
 };
 
 // [Arena::List]
@@ -184,11 +184,7 @@ inline constexpr Arena::Block::Block(Arena* _arena)
 
 inline Arena::Block::Block(Block&& block_)
   : m_arena{Utility::exchange(block_.m_arena, nullptr)}
-  , m_ranges{
-      Utility::move(block_.m_ranges[0]),
-      Utility::move(block_.m_ranges[1]),
-      Utility::move(block_.m_ranges[2])
-    }
+  , m_ranges{Utility::move(block_.m_ranges)}
 {
 }
 

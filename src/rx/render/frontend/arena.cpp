@@ -374,11 +374,7 @@ Arena::Arena(Context* _context, const Buffer::Format& _format)
 Arena::Arena(Arena&& arena_)
   : m_context{Utility::exchange(arena_.m_context, nullptr)}
   , m_buffer{Utility::exchange(arena_.m_buffer, nullptr)}
-  , m_lists{
-    Utility::move(arena_.m_lists[0]),
-    Utility::move(arena_.m_lists[1]),
-    Utility::move(arena_.m_lists[2])
-  }
+  , m_lists{Utility::move(arena_.m_lists)}
 {
 }
 
@@ -396,9 +392,7 @@ Arena& Arena::operator=(Arena&& arena_) {
   destroy();
   m_context = Utility::exchange(arena_.m_context, nullptr);
   m_buffer = Utility::exchange(arena_.m_buffer, nullptr);
-  m_lists[0] = Utility::move(arena_.m_lists[0]);
-  m_lists[1] = Utility::move(arena_.m_lists[1]);
-  m_lists[2] = Utility::move(arena_.m_lists[2]);
+  m_lists = Utility::move(arena_.m_lists);
   return *this;
 }
 
