@@ -21,7 +21,7 @@ ImageBasedLighting::ImageBasedLighting(Frontend::Context* _frontend)
 {
   m_scale_bias_texture = m_frontend->create_texture2D(RX_RENDER_TAG("ibl: scale bias"));
   m_scale_bias_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
-  m_scale_bias_texture->record_type(Frontend::Texture::Type::k_attachment);
+  m_scale_bias_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   m_scale_bias_texture->record_levels(1);
   m_scale_bias_texture->record_dimensions({256, 256});
   m_scale_bias_texture->record_filter({true, false, false});
@@ -80,7 +80,7 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
 
   m_irradiance_texture = m_frontend->create_textureCM(RX_RENDER_TAG("ibl: irradiance"));
   m_irradiance_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
-  m_irradiance_texture->record_type(Frontend::Texture::Type::k_attachment);
+  m_irradiance_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   m_irradiance_texture->record_levels(1);
   m_irradiance_texture->record_dimensions({_irradiance_map_size, _irradiance_map_size});
   m_irradiance_texture->record_filter({true, false, false});
@@ -93,7 +93,7 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
   static constexpr const Size k_max_prefilter_levels{5};
   m_prefilter_texture = m_frontend->create_textureCM(RX_RENDER_TAG("ibl: prefilter"));
   m_prefilter_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
-  m_prefilter_texture->record_type(Frontend::Texture::Type::k_attachment);
+  m_prefilter_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   m_prefilter_texture->record_levels(k_max_prefilter_levels + 1);
   m_prefilter_texture->record_dimensions(_environment->dimensions());
   m_prefilter_texture->record_filter({true, false, true});

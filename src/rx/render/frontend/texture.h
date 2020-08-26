@@ -62,9 +62,9 @@ struct Texture
   };
 
   enum class Type : Uint8 {
-    k_attachment,
-    k_static,
-    k_dynamic
+    ATTACHMENT,
+    STATIC,
+    DYNAMIC
   };
 
   // get byte size for one pixel of |_format|

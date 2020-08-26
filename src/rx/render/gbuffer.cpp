@@ -29,7 +29,7 @@ void GBuffer::destroy() {
 void GBuffer::create(const Math::Vec2z& _resolution) {
   m_albedo_texture = m_frontend->create_texture2D(RX_RENDER_TAG("gbuffer albedo"));
   m_albedo_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
-  m_albedo_texture->record_type(Frontend::Texture::Type::k_attachment);
+  m_albedo_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   m_albedo_texture->record_levels(1);
   m_albedo_texture->record_dimensions(_resolution);
   m_albedo_texture->record_filter({false, false, false});
@@ -40,7 +40,7 @@ void GBuffer::create(const Math::Vec2z& _resolution) {
 
   m_normal_texture = m_frontend->create_texture2D(RX_RENDER_TAG("gbuffer normal"));
   m_normal_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
-  m_normal_texture->record_type(Frontend::Texture::Type::k_attachment);
+  m_normal_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   m_normal_texture->record_levels(1);
   m_normal_texture->record_dimensions(_resolution);
   m_normal_texture->record_filter({false, false, false});
@@ -51,7 +51,7 @@ void GBuffer::create(const Math::Vec2z& _resolution) {
 
   m_emission_texture = m_frontend->create_texture2D(RX_RENDER_TAG("gbuffer emission"));
   m_emission_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
-  m_emission_texture->record_type(Frontend::Texture::Type::k_attachment);
+  m_emission_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   m_emission_texture->record_levels(1);
   m_emission_texture->record_dimensions(_resolution);
   m_emission_texture->record_filter({false, false, false});

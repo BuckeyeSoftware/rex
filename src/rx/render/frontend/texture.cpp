@@ -157,7 +157,7 @@ void Texture1D::record_dimensions(const DimensionType& _dimensions) {
     dimensions = Algorithm::max(dimensions / 2, 1_z);
   }
 
-  if (m_type != Type::k_attachment) {
+  if (m_type != Type::ATTACHMENT) {
     m_data.resize(offset, Utility::UninitializedTag{});
     update_resource_usage(m_data.size());
   }
@@ -242,7 +242,7 @@ void Texture2D::record_dimensions(const Math::Vec2z& _dimensions) {
     });
   }
 
-  if (m_type != Type::k_attachment) {
+  if (m_type != Type::ATTACHMENT) {
     m_data.resize(offset, Utility::UninitializedTag{});
     update_resource_usage(m_data.size());
   }
@@ -324,7 +324,7 @@ void Texture3D::record_dimensions(const Math::Vec3z& _dimensions) {
     });
   }
 
-  if (m_type != Type::k_attachment) {
+  if (m_type != Type::ATTACHMENT) {
     m_data.resize(offset, Utility::UninitializedTag{});
     update_resource_usage(m_data.size());
   }
@@ -410,7 +410,7 @@ void TextureCM::record_dimensions(const Math::Vec2z& _dimensions) {
     });
   }
 
-  if (m_type != Type::k_attachment) {
+  if (m_type != Type::ATTACHMENT) {
     m_data.resize(offset, Utility::UninitializedTag{});
     update_resource_usage(m_data.size());
   }

@@ -108,7 +108,7 @@ bool Skybox::load(const String& _file_name) {
 
   m_frontend->destroy_texture(RX_RENDER_TAG("skybox"), m_texture);
   m_texture = m_frontend->create_textureCM(RX_RENDER_TAG("skybox"));
-  m_texture->record_type(Frontend::Texture::Type::k_static);
+  m_texture->record_type(Frontend::Texture::Type::STATIC);
   m_texture->record_format(Frontend::Texture::DataFormat::k_rgb_u8);
   m_texture->record_levels(1);
   m_texture->record_filter({false, false, false});

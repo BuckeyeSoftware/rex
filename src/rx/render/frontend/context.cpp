@@ -117,7 +117,7 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend)
 
   m_swapchain_texture = create_texture2D(RX_RENDER_TAG("swapchain"));
   m_swapchain_texture->record_format(hdr ? Texture::DataFormat::k_rgba_f16 : Texture::DataFormat::k_rgba_u8);
-  m_swapchain_texture->record_type(Texture::Type::k_attachment);
+  m_swapchain_texture->record_type(Texture::Type::ATTACHMENT);
   m_swapchain_texture->record_levels(1);
   m_swapchain_texture->record_dimensions(dimensions.cast<Size>());
   m_swapchain_texture->record_filter({false, false, false});

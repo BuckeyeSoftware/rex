@@ -124,7 +124,7 @@ bool Material::load(Rx::Material::Loader&& loader_) {
       break;
     }
 
-    texture->record_type(Texture::Type::k_static);
+    texture->record_type(Texture::Type::STATIC);
     texture->record_levels(chain.levels().size());
     texture->record_dimensions(chain.dimensions());
     texture->record_filter({filter.bilinear, filter.trilinear, filter.mipmaps});

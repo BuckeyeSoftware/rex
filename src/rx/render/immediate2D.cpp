@@ -306,7 +306,7 @@ Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
         // create and upload baked atlas
         m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("font"));
         m_texture->record_format(Frontend::Texture::DataFormat::k_r_u8);
-        m_texture->record_type(Frontend::Texture::Type::k_static);
+        m_texture->record_type(Frontend::Texture::Type::STATIC);
         m_texture->record_levels(chain.levels().size());
         m_texture->record_dimensions({m_resolution, m_resolution});
         m_texture->record_filter({true, false, true});
