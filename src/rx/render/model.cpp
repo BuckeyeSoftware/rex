@@ -216,7 +216,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     uniforms[1].record_mat4x4f(_view);
     uniforms[2].record_mat4x4f(_projection);
     if (const auto transform{material.transform()}) {
-      uniforms[3].record_mat3x3f(transform->to_mat3());
+      uniforms[3].record_mat3x3f(transform->as_mat3());
     }
 
     if (m_animation) {

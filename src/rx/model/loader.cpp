@@ -185,7 +185,7 @@ bool Loader::import(const String& _file_name) {
 
   // Hoist the transform check outside the for loops for faster model loading.
   if (m_transform) {
-    const auto transform = m_transform->to_mat4();
+    const auto transform = m_transform->as_mat4();
     if (m_animations.is_empty()) {
       for (Size i{0}; i < n_vertices; i++) {
         const Math::Vec3f tangent{Math::Mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};

@@ -2,6 +2,7 @@
 
 #include "rx/render/frontend/context.h"
 #include "rx/render/frontend/target.h"
+#include "rx/render/frontend/downloader.h"
 
 #include "rx/render/immediate2D.h"
 #include "rx/render/immediate3D.h"
@@ -62,17 +63,10 @@ struct TestGame
     , m_render_stats{&m_immediate2D}
     , m_gbuffer{&m_frontend}
     , m_skybox{&m_frontend}
-    , m_model0{&m_frontend}
-    , m_model1{&m_frontend}
-    , m_model2{&m_frontend}
     , m_ibl{&m_frontend}
     , m_indirect_lighting_pass{&m_frontend, &m_gbuffer, &m_ibl}
     , m_lens_distortion_pass{&m_frontend}
   {
-    model_transform[0].translate = {-5.0f, 0.0f, 0.0f};
-    model_transform[0].scale     = { 2.0f, 2.0f, 2.0f};
-
-    model_transform[2].translate = { 5.0f, 0.0f, 0.0f};
   }
 
   ~TestGame() {
@@ -81,17 +75,19 @@ struct TestGame
   virtual bool on_init() {
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
     m_skybox.load("base/skyboxes/yokohama/yokohama.json5");
-    m_model0.load("base/models/chest/chest.json5");
-    m_model1.load("base/models/fire_hydrant/fire_hydrant.json5");
-    m_model2.load("base/models/mrfixit/mrfixit.json5");
     m_ibl.render(m_skybox.cubemap(), 256);
 
     m_indirect_lighting_pass.create(m_frontend.swapchain()->dimensions());
     m_lens_distortion_pass.create(m_frontend.swapchain()->dimensions());
 
-    m_model0.animate(0, true);
-    m_model1.animate(0, true);
-    m_model2.animate(0, true);
+    Render::Model model{&m_frontend};
+    if (model.load("base/models/san-miguel/san-miguel.json5")) {
+      m_models.push_back(Utility::move(model));
+    }
+
+    m_models.each_fwd([](Render::Model& _model) {
+      _model.animate(0, true);
+    });
 
     return true;
   }
@@ -166,19 +162,19 @@ struct TestGame
       }
 
       if (_input.keyboard().is_held(Input::ScanCode::k_w)) {
-        const auto f{m_camera.to_mat4().z};
+        const auto f{m_camera.as_mat4().z};
         m_camera.translate += Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
       }
       if (_input.keyboard().is_held(Input::ScanCode::k_s)) {
-        const auto f{m_camera.to_mat4().z};
+        const auto f{m_camera.as_mat4().z};
         m_camera.translate -= Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
       }
       if (_input.keyboard().is_held(Input::ScanCode::k_d)) {
-        const auto l{m_camera.to_mat4().x};
+        const auto l{m_camera.as_mat4().x};
         m_camera.translate += Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
       }
       if (_input.keyboard().is_held(Input::ScanCode::k_a)) {
-        const auto l{m_camera.to_mat4().x};
+        const auto l{m_camera.as_mat4().x};
         m_camera.translate -= Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
       }
     }
@@ -222,34 +218,28 @@ struct TestGame
     draw_buffers.add(0);
     draw_buffers.add(1);
     draw_buffers.add(2);
-    draw_buffers.add(3);
 
     m_frontend.clear(
-            RX_RENDER_TAG("gbuffer"),
-            state,
-            m_gbuffer.target(),
-            draw_buffers,
+      RX_RENDER_TAG("gbuffer"),
+      state,
+      m_gbuffer.target(),
+      draw_buffers,
       RX_RENDER_CLEAR_DEPTH |
       RX_RENDER_CLEAR_STENCIL |
       RX_RENDER_CLEAR_COLOR(0) |
       RX_RENDER_CLEAR_COLOR(1) |
-      RX_RENDER_CLEAR_COLOR(2) |
-      RX_RENDER_CLEAR_COLOR(3),
-            1.0f,
-            0,
-            Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data(),
-            Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data(),
-            Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data(),
-            Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data());
+      RX_RENDER_CLEAR_COLOR(2),
+      1.0f,
+      0,
+      Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
+      Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
+      Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data());
 
-    // model_xform.rotate += math::vec3f(0.0f, 20.0f, 0.0f) * ;
-    m_model0.update(m_frontend.timer().delta_time());
-    m_model1.update(m_frontend.timer().delta_time());
-    m_model2.update(m_frontend.timer().delta_time());
-
-    m_model0.render(m_gbuffer.target(), model_transform[0].to_mat4(), m_camera.view(), m_camera.projection);
-    m_model1.render(m_gbuffer.target(), model_transform[1].to_mat4(), m_camera.view(), m_camera.projection);
-    m_model2.render(m_gbuffer.target(), model_transform[2].to_mat4(), m_camera.view(), m_camera.projection);
+    m_models.each_fwd([&](Render::Model& model_) {
+      model_.update(m_frontend.timer().delta_time());
+      model_.render(m_gbuffer.target(), {}, m_camera.view(), m_camera.projection);
+      model_.render_skeleton({}, &m_immediate3D);
+    });
 
     m_indirect_lighting_pass.render(m_camera);
 
@@ -304,16 +294,13 @@ struct TestGame
 
   Render::GBuffer m_gbuffer;
   Render::Skybox m_skybox;
-  Render::Model m_model0;
-  Render::Model m_model1;
-  Render::Model m_model2;
+  Vector<Render::Model> m_models;
 
   Render::ImageBasedLighting m_ibl;
 
   Render::IndirectLightingPass m_indirect_lighting_pass;
   Render::LensDistortionPass m_lens_distortion_pass;
 
-  Math::Transform model_transform[3];
   Math::Camera m_camera;
 };
 
