@@ -102,8 +102,8 @@ private:
   static constexpr Size k_dirty_bit{1_z << (sizeof(Size) * 8 - 1)};
   Size m_hash;
 
-  enum {
-    k_test = 1 << 0,
+  enum : Uint8 {
+    k_test  = 1 << 0,
     k_write = 1 << 1
   };
 

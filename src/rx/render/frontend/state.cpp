@@ -315,19 +315,19 @@ void State::flush() {
 }
 
 bool State::operator==(const State& _state) const {
+  // The specific order of these comparisons are finely tuned for the quickest
+  // early-out based on two criterons.
+  //
+  // 1) Smaller and easier to compare sub states are compared first as they take
+  //    less time to compare than larger and harder sub states.
+  //
+  // 2) More frequently changing state is compared first. Something like
+  //    PolygonState is statistically less likely to change in a renderer than
+  //    say DepthState as an example.
+  //
+  // The hash - which represents a really crude bloom filter, is always compared
+  // first as it's a simple integer comparison.
   if (_state.m_hash != m_hash) {
-    return false;
-  }
-
-  if (_state.scissor != scissor) {
-    return false;
-  }
-
-  if (_state.blend != blend) {
-    return false;
-  }
-
-  if (_state.depth != depth) {
     return false;
   }
 
@@ -335,7 +335,11 @@ bool State::operator==(const State& _state) const {
     return false;
   }
 
-  if (_state.stencil != stencil) {
+  if (_state.depth != depth) {
+    return false;
+  }
+
+  if (_state.blend != blend) {
     return false;
   }
 
@@ -343,7 +347,15 @@ bool State::operator==(const State& _state) const {
     return false;
   }
 
+  if (_state.stencil != stencil) {
+    return false;
+  }
+
   if (_state.viewport != viewport) {
+    return false;
+  }
+
+  if (_state.scissor != scissor) {
     return false;
   }
 
