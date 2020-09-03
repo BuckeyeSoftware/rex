@@ -20,6 +20,10 @@ struct Mouse {
   const Math::Vec2i& position() const;
   const Math::Vec2i& scroll() const;
 
+  bool is_pressed(int _button) const;
+  bool is_held(int _button) const;
+  bool is_released(int _button) const;
+
 private:
   enum {
     k_pressed  = 1 << 0,
@@ -46,6 +50,21 @@ inline const Math::Vec2i& Mouse::position() const {
 
 inline const Math::Vec2i& Mouse::scroll() const {
   return m_scroll;
+}
+
+inline bool Mouse::is_pressed(int _button) const {
+  RX_ASSERT(_button && _button < k_buttons, "out of range");
+  return m_buttons[_button] & k_pressed;
+}
+
+inline bool Mouse::is_held(int _button) const {
+  RX_ASSERT(_button && _button < k_buttons, "out of range");
+  return m_buttons[_button] & k_held;
+}
+
+inline bool Mouse::is_released(int _button) const {
+  RX_ASSERT(_button && _button < k_buttons, "out of range");
+  return m_buttons[_button] & k_released;
 }
 
 } // namspace rx::input
