@@ -5,8 +5,8 @@
 namespace Rx::Math {
 
 struct Line {
-  Vec3f a;
-  Vec3f b;
+  Vec3f start;
+  Vec3f end;
 };
 
 } // namespace Rx::Math
