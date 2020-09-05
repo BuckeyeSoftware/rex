@@ -3,6 +3,8 @@
 Note that most of this can be enforced with the `.clang-format` in the root of
 the source tree.
 
+Rex uses C++14.
+
 ## Hard no's
 The following are a list of hard no's that are not tolerated in the code base
 in any capacity and are provided here early.
@@ -147,15 +149,6 @@ if (x) for (Size i = 0; i < 10; i++) {
 * Function inputs should be preceeded with an underscore.
 * Function outputs should be proceeded with an underscore.
 
-## Classes
-* Prefer the `struct` keyword over `class`.
-* Non-public class members should be prefixed with `m_`.
-* Non-public static class members should be prefixed with `s_`.
-* **Do not** use multiple-inheritence.
-* Avoid inheritence, if needed it should be public and one-level deep only.
-* **Do not** implement method bodies inline the class. Put them _outside_.
- (This is faster for compilers to parse, in addition it's easier to read the class definition as a synopsis of the functionality it provides when it doesn't have inline code in it.)
-
 A function input that is also an output should be treated as an output.
 ```c
 void foo(int x);   // invalid
@@ -164,6 +157,15 @@ void foo(int* x);  // invalid
 void foo(int _x);  // valid
 void foo(int* x_); // valid
 ```
+
+## Classes
+* Prefer the `struct` keyword over `class`.
+* Non-public class members should be prefixed with `m_`.
+* Non-public static class members should be prefixed with `s_`.
+* **Do not** use multiple-inheritence.
+* Avoid inheritence, if needed it should be public and one-level deep only.
+* **Do not** implement method bodies inline the class. Put them _outside_.
+ (This is faster for compilers to parse, in addition it's easier to read the class definition as a synopsis of the functionality it provides when it doesn't have inline code in it.)
 
 ## Const
 * Try to use `const` as much as possible.
@@ -230,5 +232,6 @@ named `color.h` and optional `color.cpp`, placed in a directory named `particle`
 The `Color` type would be in the `Particle` namespace.
 
 This structure makes it easier to navigate code when you view your filesystem
-as being your "solution" when you don't use an IDE. Text editors that can just
-"open folder" as a project, like VSCode, JEdit, CLion, Sublime, etc.
+as being your "solution" when you don't use an IDE. This makes it very easy to
+use text editors that can just "open folder" as a project, like VSCode, JEdit,
+CLion, Sublime, etc.
