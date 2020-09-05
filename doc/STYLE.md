@@ -12,7 +12,7 @@ in any capacity and are provided here early.
 * No exceptions.
 * No multiple inheritence.
 * No `dynamic_cast`.
-* No `new`, `new[]`, `delete`, or `delete[]`.
+* No `new`, `new[]`, `delete`, or `delete[]`. (They all call `abort` in Rex)
 * No multi-dimensional arrays.
 * No standard library.
 
@@ -67,7 +67,7 @@ printf("hello world\n");   // valid
 ((x + 1) * 2) / 0.5     // valid
 ```
 
-Always put a space proceeding the closing paranthesis of a statement expecting
+Always put a space proceeding the closing parenthesis of a statement expecting
 a scope.
 ```c
 if (x){  // invalid
@@ -143,7 +143,7 @@ if (x) for (Size i = 0; i < 10; i++) {
 * All constants, including enumerators are `TITLECASE`.
 * All macros are `TITLECASE`.
 * All namespaces are `PascalCase`.
-* Source files, headers and directories are named `snake_case`.
+* Source files, headers and directories are `snake_case`.
 
 ## Function parameters
 * Function inputs should be preceeded with an underscore.
@@ -186,7 +186,7 @@ the one area in Rex that most programmers will be unfamiliar with.
 ### Loop in reverse complaint
 One common complaint about the use of use of unsigned is when a loop counter
 needs to iterate in reverse and you want the 0th case to also be executed,
-there's no way to write `i > 0` as the conditional. The solution here is to
+there's no way to write `i >= 0` as the conditional. The solution here is to
 exploit the fact that unsigned integer underflow is **well defined**.
 
 Try to write the code like this.
@@ -201,6 +201,10 @@ so the loop stops. Not only is this **extremely fast** since you require no
 clever per-iteration arithmetic to handle a subtraction case. It's a fast path
 in the CPU where the loop branch becomes a test for underflow, and branch on
 underflow has lesser latency than a branch on comparison.
+
+When `size` is already unsigned, it may be tempting to cast the result of it to
+a signed type like `Sint64` here for the loop to write the condition `i >= 0`,
+this introduces a bug when `size >= 0x7fffffffffffffff`. Try to avoid this.
 
 ## Use explicitly sized types
 * Use `Uint8`, `Uint16`, `Uint32`, `Uint64`, `Sint8`, `Sint16`, `Sint32`,
