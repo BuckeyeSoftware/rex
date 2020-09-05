@@ -53,10 +53,10 @@ Foo::Foo()
 > Take note of the `:` and `,` being aligned in a line for the constructor.
 
 **Do not** put spaces around parenthesis in a function call expression, or
-before the paratnehsis in a call expression.
+before the paratnehsis in a function call expression.
 ```c
 printf( "hello world\n" ); // invalid
-printf ("helllo world\n"); // invalid
+printf ("hello world\n"); // invalid
 
 printf("hello world\n");   // valid
 ```
