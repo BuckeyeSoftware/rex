@@ -34,7 +34,7 @@ while (x)  // valid
 switch (x) // valid
 ```
 
-## Mem-initializer list
+### Mem-initializer list
 The mem-initializer list of a class should be formatted this way:
 ```c
 struct Foo {
