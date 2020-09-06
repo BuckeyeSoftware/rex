@@ -280,6 +280,35 @@ int const x; // invalid
 const int x; // valid
 ```
 
+## Globals
+All globals should be of type `Rx::Global<T>` and named with `g_` prefix. The
+use of any other type for a global is not allowed. The `Rx::Global` wrapper
+helps make handling of globals much easier, faster, and less error-prone.
+
+In particular is solves all the usual problems with globals in C++, including:
+  * Static initialization order fiasco.
+  * Concurrent initialization.
+  * Hot reloading.
+  * Querying initialization state.
+  * Defering initialization when there's dependencies.
+  * Plugin reloading.
+
+In addition, there exists the notion of a global "group" to help organize globals
+into groups that can be initialized and deinitialized at once. So a system that
+depends on some globals can be convienently organized.
+
+## Thread local storage
+The use of the `thread_local` keyword is supported. All compilers and toolchains
+have support for it now.
+
+## Structure alignment and packing
+Everything in Rex has 16-byte alignment requirements. This simplifies the
+handling of a lot of word-at-a-time algorithms and SIMD code. Avoids the need to
+make special aligned allocations and copies for SIMD kernels and it's generally
+the required alignment on x86_64 anyways. All allocators in Rex return memory
+suitably aligned by 16-byte. The usual C/C++ structure packing rules apply
+otherwise.
+
 ## Almost always unsigned
 There's very few instance where signed integer arithmetic is what you want.
 If the value can never be `< 0`, never use a signed integer. This is probably
