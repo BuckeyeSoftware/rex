@@ -40,6 +40,48 @@ struct Hash<bool> {
 };
 
 template<>
+struct Hash<Uint8> {
+  constexpr Size operator()(Uint8 _value) const {
+    Size hash = _value * 251;
+    hash += ~(_value << 3);
+    hash ^= (_value >> 1);
+    hash += ~(_value << 7);
+    hash ^= (_value >> 6);
+    hash += (_value << 2);
+    return hash;
+  }
+};
+
+template<>
+struct Hash<Sint8> {
+  constexpr Size operator()(Sint8 _value) const {
+    return Hash<Uint8>{}(static_cast<Uint8>(_value));
+  }
+};
+
+template<>
+struct Hash<Uint16> {
+  constexpr Size operator()(Uint16 _value) const {
+    const Size z = (_value << 8) | (_value >> 8);
+    Size hash = z;
+    hash += ~(z << 5);
+    hash ^= (z >> 2);
+    hash += ~(z << 13);
+    hash ^= (z >> 10);
+    hash += ~(z << 4);
+    hash = (hash << 10) | (hash >> 10);
+    return hash;
+  }
+};
+
+template<>
+struct Hash<Sint16> {
+  constexpr Size operator()(Sint16 _value) const {
+    return Hash<Uint16>{}(static_cast<Uint16>(_value));
+  }
+};
+
+template<>
 struct Hash<Uint32> {
   constexpr Size operator()(Uint32 _value) const {
     _value = (_value ^ 61) ^ (_value >> 16);
@@ -103,34 +145,6 @@ struct Hash<T*> {
     } else {
       return Hash<Uint32>{}(reinterpret_cast<Uint32>(_value));
     }
-  }
-};
-
-template<>
-struct Hash<Uint8> {
-  constexpr Size operator()(Uint8 _value) const {
-    Size hash = _value * 251;
-    hash += ~(_value << 3);
-    hash ^= (_value >> 1);
-    hash += ~(_value << 7);
-    hash ^= (_value >> 6);
-    hash += (_value << 2);
-    return hash;
-  }
-};
-
-template<>
-struct Hash<Uint16> {
-  constexpr Size operator()(Uint16 _value) const {
-    const Size z = (_value << 8) | (_value >> 8);
-    Size hash = z;
-    hash += ~(z << 5);
-    hash ^= (z >> 2);
-    hash += ~(z << 13);
-    hash ^= (z >> 10);
-    hash += ~(z << 4);
-    hash = (hash << 10) | (hash >> 10);
-    return hash;
   }
 };
 
