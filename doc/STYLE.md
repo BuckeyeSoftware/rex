@@ -146,8 +146,8 @@ For the same reasons as two spaces for indentation, too much indentation moves
 the code too far right.
 
 ### 80 column soft limit
-This is a reasonable line-length as lots of tools still operate on the assumption
-of 80 columns.
+This is a reasonable line-length as many tools operate on the assumption of 80
+columns.
 
 ## Spacing
 
@@ -184,10 +184,10 @@ Foo::Foo()
 
 ### Function call expressions
 **Do not** put spaces around parenthesis in a function call expression, or
-before the paratnehsis in a function call expression.
+before the parenthesis in a function call expression.
 ```c
 printf( "hello world\n" ); // invalid
-printf ("hello world\n"); // invalid
+printf ("hello world\n");  // invalid
 
 printf("hello world\n");   // valid
 ```
@@ -223,7 +223,7 @@ int&&... args; // valid
 ```
 
 ## Bracing
-We use the one true brace style. It looks something like the following.
+Rex the one true brace style [1TBS](https://en.wikipedia.org/wiki/Indentation_style#Variant:_1TBS_(OTBS)). It looks something like the following.
 ```c
 if (x) {
   <code>
@@ -248,8 +248,7 @@ namespace Foo {
 }
 ```
 
-**Do not** omit the braces in a statement even if you only have one statement
-proceeding it.
+**Do not** omit the braces in a statement even if only one statement proceeds it.
 ```c
 if (x) foo(); // invalid
 if (x)
@@ -261,8 +260,8 @@ if (x) {
 }
 ```
 
-The one **and only** exception to this rule is when you have another statement
-proceeding it which requires braces and it's the only one.
+The one **and only** exception to this rule is if another statement proceeding
+it requires its own braces.
 ```c
 // valid
 if (x) for (Size i = 0; i < 10; i++) {
@@ -271,17 +270,17 @@ if (x) for (Size i = 0; i < 10; i++) {
 ```
 
 ## Casing
-* All functions, including methods of classes are `snake_case`.
+* All functions, including methods of a class are `snake_case`.
 * All function locals, including arguments are `snake_case`.
 * All types, including classes, enums, typedefs, and using are `PascalCase`.
 * All constants, including enumerators are `TITLECASE`.
 * All macros are `TITLECASE`.
 * All namespaces are `PascalCase`.
-* Source files, headers and directories are `snake_case`.
+* Source files, headers, and directories are `snake_case`.
 
 ## Function parameters
-* Function inputs should be preceeded with an underscore.
-* Function outputs should be proceeded with an underscore.
+* Function inputs should be **pre**ceeded with an underscore.
+* Function outputs should be **pro**ceeded with an underscore.
 
 A function input that is also an output should be treated as an output.
 ```c
@@ -297,9 +296,9 @@ void foo(int* x_); // valid
 * Non-public class members should be prefixed with `m_`.
 * Non-public static class members should be prefixed with `s_`.
 * **Do not** use multiple-inheritence.
-* Avoid inheritence, if needed it should be public and one-level deep only.
-* **Do not** implement method bodies inline the class. Put them _outside_.
- (This is faster for compilers to parse, in addition it's easier to read the class definition as a synopsis of the functionality it provides when it doesn't have inline code in it.)
+* Avoid inheritence; if needed inheritence should be public and can only be one-level deep.
+* **Do not** implement method bodies inline the class, put them _outside_.
+  This is faster for compilers to parse and it's easier to read the class definition as a synopsis of the functionality it provides when it doesn't have inline code in it.
 
 ## Const
 * Try to use `const` as much as possible.
@@ -317,17 +316,16 @@ All globals should be of type `Rx::Global<T>` and named with `g_` prefix. The
 use of any other type for a global is not allowed. The `Rx::Global` wrapper
 helps make handling of globals much easier, faster, and less error-prone.
 
-In particular is solves all the usual problems with globals in C++, including:
+In particular it solves all the usual problems with globals in C++.
   * Static initialization order fiasco.
   * Concurrent initialization.
   * Hot reloading.
   * Querying initialization state.
-  * Defering initialization when there's dependencies.
+  * Deferring initialization due to dependencies.
   * Plugin reloading.
 
-In addition, there exists the notion of a global "group" to help organize globals
-into groups that can be initialized and deinitialized at once. So a system that
-depends on some globals can be convienently organized.
+Convienently, the type `Rx::GlobalGroup` exists to organize globals into
+collections that can be initialized and finalized as a group.
 
 ## Thread local storage
 The use of the `thread_local` keyword is supported. All compilers and toolchains
@@ -335,16 +333,21 @@ have support for it now.
 
 ## Structure alignment and packing
 Everything in Rex has 16-byte alignment requirements. This simplifies the
-handling of a lot of word-at-a-time algorithms and SIMD code. Avoids the need to
-make special aligned allocations and copies for SIMD kernels and it's generally
-the required alignment on x86_64 anyways. All allocators in Rex return memory
-suitably aligned by 16-byte. The usual C/C++ structure packing rules apply
-otherwise.
+handling of word-at-a-time algorithms, SIMD code, and is generally the required
+alignment on most architectures. All allocators in Rex return memory
+suitably aligned by 16 bytes. The usual C/C++ structure packing rules still
+apply.
 
 ## Almost always unsigned
-There's very few instances where signed integer arithmetic is what you want.
-If the value can never be `< 0`, never use a signed integer. This is probably
-the one area in Rex that most programmers will be unfamiliar with.
+The need for signed integer arithmetic is often misplaced as most integers
+never represent negative values. The indexing of an array and iteration count
+of a loop reflects this concept as well. With this observation, there is a
+propensity use unsigned integers more often than signed.
+
+This can be an unfamiliar observation in existing code bases that use signed
+integer arithmetic because the diagnostics that would be emitted by compilers
+are silenced when all integers are signed, or suppressed in a code base by the
+use of potentially unsafe type casts.
 
 ### Loop in reverse complaint
 One common complaint about the use of use of unsigned is when a loop counter
