@@ -348,10 +348,10 @@ be emitted by compilers are silenced when all integers are signed, or suppressed
 by potentially unsafe type casts.
 
 ### Loop in reverse complaint
-The most common complaint about the use of use of unsigned is when a loop
-counter needs to count in reverse and the body of the loop needs to execute
-when the counter is zero. There's way to write `i >= 0` as the conditional as
-that's always true. It's tempting to write a for loop like the following.
+The most common complaint about the use of unsigned is when a loop counter needs
+to count in reverse and the body of the loop needs to execute when the counter
+is zero. The condition `i >= 0` cannot be expressed as it's always true. It may
+be tempting to write a for loop like the following.
 ```c
 for (Sint64 i = Sint64(size) - 1; i >= 0; i--) {
   <code>
@@ -360,8 +360,8 @@ for (Sint64 i = Sint64(size) - 1; i >= 0; i--) {
 
 Putting aside the argument that a `size >= 0x7fffffffffffffff` would be
 pathological, this introduces a silent bug that leads to a hard crash when given
-a pathological value.The only acceptable solution in Rex is to recognize that
-unsigned integer underflow is **well defined** and make use of that.
+a pathological value. The only acceptable solution in Rex is to recognize that
+unsigned integer underflow is **well defined** and make use of it.
 ```c
 for (Size i = size - 1; i < size; i--) {
   <code>
@@ -371,7 +371,7 @@ Here's a description of what happens. The loop counter begins from `size - 1`
 and counts down on each iteration. When the counter reaches zero, the decrement
 causes the counter to underflow and wrap around to the max possible value of
 `Size` type. This value is far larger than `size` so the condition `i < size`
-evaluates false, loop stops.
+evaluates false, and the loop stops.
 
 With this approach, the hard crash on the pathological input is avoided since it
 permits every possible size value from [0, 0xFFFFFFFFFFFFFFFF). No casts are
