@@ -1,6 +1,6 @@
 # Coding style and rule guide
 
-* [Hard no's](#hard-no-s)
+* [Hard no's](#hard-nos)
   + [No exceptions](#no-exceptions)
   + [No multiple inheritence](#no-multiple-inheritence)
   + [No `dynamic_cast`](#no-dynamic_cast)
@@ -14,7 +14,12 @@
   + [Do not indent nested namespaces](#do-not-indent-nested-namespaces)
   + [80-column soft limit](#80-column-soft-limit)
 * [Spacing](#spacing)
+  + [Statements](#statements)
   + [Mem-initializer list](#mem-initializer-list)
+  + [Function call expressions](#function-call-expressions)
+  + [Parenthesized expressions](#parenthesized-expressions)
+  + [Scopes](#scopes)
+  + [Sigils](#sigils)
 * [Bracing](#bracing)
 * [Casing](#casing)
 * [Function parameters](#function-parameters)
@@ -29,6 +34,7 @@
 * [Use explicitly sized types](#use-explicitly-sized-types)
 * [Size](#size)
 * [Organization](#organization)
+
 
 Note that most of this can be enforced with the `.clang-format` in the root of
 the source tree.
@@ -154,8 +160,10 @@ tools still operate on this assumption, including the web-browser when viewing
 diffs.
 
 ## Spacing
+
+### Statements
 Always put a space between all statements and the opening parenthesis of that
-statement.
+statement:
 ```c
 if(x)      // invalid
 while(x)   // invalid
@@ -184,6 +192,7 @@ Foo::Foo()
 
 > Take note of the `:` and `,` being aligned in a line for the constructor.
 
+### Function call expressions
 **Do not** put spaces around parenthesis in a function call expression, or
 before the paratnehsis in a function call expression.
 ```c
@@ -193,12 +202,14 @@ printf ("hello world\n"); // invalid
 printf("hello world\n");   // valid
 ```
 
+### Parenthesized expressions
 **Do not** introduce unnecessary spacing in parenthesized expressions.
 ```c
 ( ( x + 1 ) * 2 ) / 0.5 // invalid
 ((x + 1) * 2) / 0.5     // valid
 ```
 
+### Scopes
 Always put a space proceeding the closing parenthesis of a statement expecting
 a scope.
 ```c
@@ -206,6 +217,7 @@ if (x){  // invalid
 if (x) { // valid
 ```
 
+### Sigils
 The reference and pointer sigil should be grouped with the type rather than the
 identifier. This also applies for rvalue references and parameter packs.
 ```c
