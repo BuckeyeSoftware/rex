@@ -93,32 +93,33 @@ to implement multi-dimensional arrays as wrapper types over single-dimension
 arrays and that is encouraged.
 
 ### No standard library.
-The standard library is ill-suited for Rex as:
+The standard library is ill-suited for Rex.
 
   * The C++ standard library makes extensive use of exceptions which are
     disabled in Rex. With exceptions disabled, the standard library's handling
     of errors result in a call to `std::terminate` which terminates the
-    application. This behavior is not ideal as errors cannot be handled and
+    application. This behavior is not desired as errors cannot be handled and
     unexpected termination is not very stable.
   * All standard library functionaliy that makes use of heap allocation does so
     through the use of the global system allocator. The added constraints of how
-    Rex handles memory management isn't compatible with this.
-  * It's not possible to reason about because its implementations are
-    inconsistent, and these inconsistencies are difficult to overcome.
-  * It often trades performance for convenience and performance is paramount to Rex.
+    Rex handles memory management makes this incompatible.
+  * Implementations of the standard library are inconsistent. These
+    inconsistencies can be challenging to overcome.
+  * It often trades performance for convenience and performance is paramount to
+    Rex.
 
-To mitigate these short-comings, Rex employs it's own foundation library as
-a substitute for the standard library which can be read about [here](CORE.md).
+To mitigate these short-comings, Rex employs its own foundation library as
+a substitute for the standard library. Additional information is available
+[here](CORE.md).
 
 ### No `<math.h>`
-Rex implements it's own math kernels and functions in software or with the help
+Rex implements its own math kernels and functions in software or with the help
 of compiler intrinsics that are focused primarily around game development. In
 particular they operate on the assumption that inputs are not pathological,
 values will not contain `NaNs` and the rounding mode does not change from the
-default which is assumed to be "round to nearest". This enables a much wider
-array of optimization possibilities than `<math.h>` enables. At the same time,
-Rex's math also strives to be bit-compatible across implementations enabling
-a level of consistency that should make debugging and networking easier.
+default ("round to nearest"). This enables a much wider array of optimization possibilities than `<math.h>` permits. Additionally, Rex's math is designed
+to be bit-identical across implementations enabling a level of consistency that
+makes debugging and networking easier.
 
 ## Indentation
 * Two spaces for indentation.
@@ -126,33 +127,27 @@ a level of consistency that should make debugging and networking easier.
 * Do not indent nested namespaces.
 * 80-column soft limit.
 
-Here's some rationales for these rules.
-
 ### Two spaces for indentation
 Two spaces for indentation is a compromise. C++ code tends to indent heavily
-due to the use of namespaces and classes, in addition, lambdas and nesting of
-lambdas in more "functional-style" code causes the code to move to the right,
-yet we still want to maintain sensible line-lengths, as too wide of line is
-harder to read and often is outside the viewport requiring horizontal scrolling
-in tools to even inspect. This is pretty important when looking at diffs,
-especially in a web-browser. Halving, or quarterning (depending on preference)
-the whitespace mitigates these problems while still being easy to work with.
-It's the style Google and LLVM uses too, if you're looking for some precedence.
+due to the use of namespaces, classes, and functions. Futher, lambdas
+and nesting of lambdas in more "functional-style" code causes the code to move
+to the right.
+
+Maintaining sensible line-lengths is more convieient for tooling and reading.
+> It's the style Google and LLVM uses too, if you're looking for some precedence.
 
 ### No tabs
-Tabs for indentation would be ideal, but people often mix tabs and spaces when
-trying to "align" code, which completely falls apart the moment the tab width
-is different. Disallowing tabs means local alignment of code, which may be more
-visually pleasing to some, doesn't need to become a mess for others.
+Tabs for indentation would be ideal, however mixing of tabs and spaces occurs
+when trying to align code. This practice fails to maintain alignment under
+variable tab-width. Spaces do not exhibit this problem.
 
 ### Do not indent nested namespaces
 For the same reasons as two spaces for indentation, too much indentation moves
 the code too far right.
 
-### 80-column soft limit
-It's a sensible line-length, even in the age of wide-screen displays. Lots of
-tools still operate on this assumption, including the web-browser when viewing
-diffs.
+### 80 column soft limit
+This is a reasonable line-length as lots of tools still operate on the assumption
+of 80 columns.
 
 ## Spacing
 
