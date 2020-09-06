@@ -367,16 +367,15 @@ for (Size i = size - 1; i < size; i--) {
   <code>
 }
 ```
-Here's a description of what happens. The loop counter begins from `size - 1`
-and counts down on each iteration. When the counter reaches zero, the decrement
-causes the counter to underflow and wrap around to the max possible value of
-`Size` type. This value is far larger than `size` so the condition `i < size`
-evaluates false, and the loop stops.
+The loop counter begins from `size - 1` and counts down on each iteration. When
+the counter reaches zero, the decrement causes the counter to underflow and wrap
+around to the max possible value of `Size` type. This value is far larger than
+`size` so the condition `i < size` evaluates false, and the loop stops.
 
 With this approach, the hard crash on the pathological input is avoided since it
 permits every possible size value from [0, 0xFFFFFFFFFFFFFFFF). No casts are
 needed. Another common work around is to offset the index by one by introducing
-per-iteration arithmetic, this avoids such work arounds too.
+per-iteration arithmetic, this avoids the need for such work arounds too.
 
 ## Use explicitly sized types
 * Use `Uint8`, `Uint16`, `Uint32`, `Uint64`, `Sint8`, `Sint16`, `Sint32`,
@@ -402,11 +401,10 @@ expensive modular arithmetic on some platforms.
 Rex has a 1:1 organizational code structure where the filesystem layout of
 source files, matches the namespace layout, which matches the class name layout.
 
-For instance, a `Color` type for a particle `Particle` may exist in a file
-named `color.h` and optional `color.cpp`, placed in a directory named `particle`.
-The `Color` type would be in the `Particle` namespace.
+For instance, a `Color` type for a `Particle` may exist in a file named `color.h`
+and optional `color.cpp`, placed in a directory named `particle`. The `Color`
+type would be in the `Particle` namespace.
 
-This structure makes it easier to navigate code when you view your filesystem
-as being your "solution" when you don't use an IDE. This makes it very easy to
-use text editors that can just "open folder" as a project, like VSCode, JEdit,
-CLion, Sublime, etc.
+This structure makes navigating code across platforms, text editors, and IDEs
+more managable as there's a direct 1:1 association between all organizational
+hierarchies.
