@@ -341,41 +341,46 @@ apply.
 ## Almost always unsigned
 The need for signed integer arithmetic is often misplaced as most integers
 never represent negative values. The indexing of an array and iteration count
-of a loop reflects this concept as well. With this observation, there is a
-propensity use unsigned integers more often than signed.
-
-This can be an unfamiliar observation in existing code bases that use signed
-integer arithmetic because the diagnostics that would be emitted by compilers
-are silenced when all integers are signed, or suppressed in a code base by the
-use of potentially unsafe type casts.
+of a loop reflects this concept as well. There should be a propensity to use
+unsigned integers more often than signed, but it can be an unfamiliar observation
+in existing code that use signed integer arithmetic. The diagnostics that would
+be emitted by compilers are silenced when all integers are signed, or suppressed
+by potentially unsafe type casts.
 
 ### Loop in reverse complaint
-One common complaint about the use of use of unsigned is when a loop counter
-needs to iterate in reverse and you want the 0th case to also be executed,
-there's no way to write `i >= 0` as the conditional. The solution here is to
-exploit the fact that unsigned integer underflow is **well defined**.
+The most common complaint about the use of use of unsigned is when a loop
+counter needs to count in reverse and the body of the loop needs to execute
+when the counter is zero. There's way to write `i >= 0` as the conditional as
+that's always true. It's tempting to write a for loop like the following.
+```c
+for (Sint64 i = Sint64(size) - 1; i >= 0; i--) {
+  <code>
+}
+```
 
-Try to write the code like this.
+Putting aside the argument that a `size >= 0x7fffffffffffffff` would be
+pathological, this introduces a silent bug that leads to a hard crash when given
+a pathological value.The only acceptable solution in Rex is to recognize that
+unsigned integer underflow is **well defined** and make use of that.
 ```c
 for (Size i = size - 1; i < size; i--) {
   <code>
 }
 ```
-As you can see, starting from `size - 1`, we walk in reverse and when `i == 0`
-we underflow and end up at the maximum value of `Size` which is `> size` and
-so the loop stops. Not only is this **extremely fast** since you require no
-clever per-iteration arithmetic to handle a subtraction case. It's a fast path
-in the CPU where the loop branch becomes a test for underflow, and branch on
-underflow has lesser latency than a branch on comparison.
+Here's a description of what happens. The loop counter begins from `size - 1`
+and counts down on each iteration. When the counter reaches zero, the decrement
+causes the counter to underflow and wrap around to the max possible value of
+`Size` type. This value is far larger than `size` so the condition `i < size`
+evaluates false, loop stops.
 
-When `size` is already unsigned, it may be tempting to cast the result of it to
-a signed type like `Sint64` here for the loop to write the condition `i >= 0`,
-this introduces a bug when `size >= 0x7fffffffffffffff`. Try to avoid this.
+With this approach, the hard crash on the pathological input is avoided since it
+permits every possible size value from [0, 0xFFFFFFFFFFFFFFFF). No casts are
+needed. Another common work around is to offset the index by one by introducing
+per-iteration arithmetic, this avoids such work arounds too.
 
 ## Use explicitly sized types
 * Use `Uint8`, `Uint16`, `Uint32`, `Uint64`, `Sint8`, `Sint16`, `Sint32`,
   and `Sint64` over non-sized integer types.
-
 * Use `Float16`, `Float32`, and `Float64` over non-sized floating-point type.
 
 ## Size
