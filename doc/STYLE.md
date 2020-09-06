@@ -35,7 +35,6 @@
 * [Size](#size)
 * [Organization](#organization)
 
-
 Note that most of this can be enforced with the `.clang-format` in the root of
 the source tree.
 
@@ -56,11 +55,11 @@ in any capacity and are provided here early.
 Here's the following rationale for each of the "Hard no's".
 
 ### No exceptions
-Exceptions complicate the flow of control. They introduce a ton of complexity
-since you now have to write "exception-safe" code which is non-trivial. The use
-of them encourages a style of programming where non-exceptional errors become
-exceptions. They become an impedence mismatch for applications that have
-non-local lifetime requirements (engines.)
+Exceptions complicate the flow of control. They introduce complexity in requiring
+non-trivial, "excpetion-safety". The use of exceptions encourages a style of
+programming where non-exceptional errors become exceptions. They become an
+impedence mismatch for applications that have non-local lifetime requirements.
+These concerns makes it ill-suited for Rex.
 
 ### No multiple inheritence
 Taking dependencies on multiple classes impedes compilation performance as full
@@ -68,18 +67,18 @@ class definitions need to be available in all translation units. Class inheriten
 is about "is-a" relationships between type, it's non-trivial to describe "is-a"
 relationships in a consistent manner for single-level inheritence, never mind
 multiple-level inheritence. Similarly, "is-a" relationships are mental models
-that map poorly and violate Data Oriented Design.
+that map poorly and violate [Data Oriented Design](https://en.wikipedia.org/wiki/Data-oriented_design).
 
 ### No `dynamic_cast`
-Polymorphism has it's uses but uses should be limited. When multiple-inheritence
-isn't allowed, implementing your own type-check for casts between types with the
-use of simple integers is not only far faster, it's far easier to reason about
+Polymorphism has its uses but they should be limited. When multiple-inheritence
+isn't allowed, implementing a type-check for casts between types with the
+use of integers is not only far faster, it's far easier to reason about
 when inspecting the state of objects in a debugger.
 
 ### No `new`, `new[]`, `delete`, or `delete[]`
 Rex uses a fully polymorphic allocator interface where every container and
-function that requires dynamic memory allocation requires as a dependency. This
-allows backing everything with custom allocators with different lifetime
+function that requires dynamic memory allocation, must be given as a dependency.
+This allows backing everything with custom allocators with different lifetime
 requirements without having to introduce separate types that are incompatible
 with one another at interface boundaries. The use of traditional memory
 management in C++ does not enable any of this behavior and is outright disabled
@@ -88,32 +87,28 @@ in Rex (calls `abort`). Memory management in Rex is part of the problem domain.
 ### No multi-dimensional arrays.
 The use of multi-dimensional arrays shows a misunderstanding of memory layout.
 Similarly, it's hard to discern if a column-major or row-major layout will be
-more optimal at runtime, depending on architecture and kernel. In the end all
-memory accessing is just 1D indexing and we shouldn't hide from that. It's
-trivial to implement multi-dimensional arrays as wrapper types over single-
-dimension arrays and we want to encourage that.
+more optimal at runtime, depending on architecture and kernel. In actuality,
+memory accessing is just 1D indexing and that shouldn't be hidden. It's trivial
+to implement multi-dimensional arrays as wrapper types over single-dimension
+arrays and that is encouraged.
 
 ### No standard library.
-The C++ standard library makes extensive use of exceptions which we disable,
-under this behavior the standard library calls `std::terminate` which is not
-very robust, there's no way to handle errors this way.
+The standard library is ill-suited for Rex as:
 
-All standard library containers and functions make use of the global system
-allocator which lets them sneak past all the hard work we put into making memory
-part of the problem domain.
+  * The C++ standard library makes extensive use of exceptions which are
+    disabled in Rex. With exceptions disabled, the standard library's handling
+    of errors result in a call to `std::terminate` which terminates the
+    application. This behavior is not ideal as errors cannot be handled and
+    unexpected termination is not very stable.
+  * All standard library functionaliy that makes use of heap allocation does so
+    through the use of the global system allocator. The added constraints of how
+    Rex handles memory management isn't compatible with this.
+  * It's not possible to reason about because its implementations are
+    inconsistent, and these inconsistencies are difficult to overcome.
+  * It often trades performance for convenience and performance is paramount to Rex.
 
-The standard library is inconsistent in implementation across platforms, there's
-no way to reason about it as it's not a fixed implementation. There's no way to
-optimize it, there's no way to extend it in meaningful ways.
-
-It solves the wrong problems, introduces slow compilation times through massive
-headers full of includes. It's not cache-efficient and often trades performance
-for dubious conveniences, see `std::unordered_{set,map}` as prime examples of
-this.
-
-To work around these short-comings of the standard library, we have our own
-foundation library of containers, types, and functions we call the "core"
-library which can be read about [here](CORE.md)
+To mitigate these short-comings, Rex employs it's own foundation library as
+a substitute for the standard library which can be read about [here](CORE.md).
 
 ### No `<math.h>`
 Rex implements it's own math kernels and functions in software or with the help
@@ -352,7 +347,7 @@ suitably aligned by 16-byte. The usual C/C++ structure packing rules apply
 otherwise.
 
 ## Almost always unsigned
-There's very few instance where signed integer arithmetic is what you want.
+There's very few instances where signed integer arithmetic is what you want.
 If the value can never be `< 0`, never use a signed integer. This is probably
 the one area in Rex that most programmers will be unfamiliar with.
 
