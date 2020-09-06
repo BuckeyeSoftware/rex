@@ -3,7 +3,7 @@
 Note that most of this can be enforced with the `.clang-format` in the root of
 the source tree.
 
-Rex uses C++14.
+Rex uses C++17.
 
 ## Hard no's
 The following are a list of hard no's that are not tolerated in the code base
@@ -93,6 +93,35 @@ a level of consistency that should make debugging and networking easier.
 * Two spaces for indentation.
 * No tabs.
 * Do not indent nested namespaces.
+* 80-column soft limit.
+
+Here's some rationales for these rules.
+
+### Two spaces for indentation
+Two spaces for indentation is a compromise. C++ code tends to indent heavily
+due to the use of namespaces and classes, in addition, lambdas and nesting of
+lambdas in more "functional-style" code causes the code to move to the right,
+yet we still want to maintain sensible line-lengths, as too wide of line is
+harder to read and often is outside the viewport requiring horizontal scrolling
+in tools to even inspect. This is pretty important when looking at diffs,
+especially in a web-browser. Halving, or quarterning (depending on preference)
+the whitespace mitigates these problems while still being easy to work with.
+It's the style Google and LLVM uses too, if you're looking for some precedence.
+
+### No tabs
+Tabs for indentation would be ideal, but people often mix tabs and spaces when
+trying to "align" code, which completely falls apart the moment the tab width
+is different. Disallowing tabs means local alignment of code, which may be more
+visually pleasing to some, doesn't need to become a mess for others.
+
+### Do not indent nested namespaces
+For the same reasons as two spaces for indentation, too much indentation moves
+the code too far right.
+
+### 80-column soft limit
+It's a sensible line-length, even in the age of wide-screen displays. Lots of
+tools still operate on this assumption, including the web-browser when viewing
+diffs.
 
 ## Spacing
 Always put a space between all statements and the opening parenthesis of that
