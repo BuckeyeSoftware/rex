@@ -15,6 +15,79 @@ in any capacity and are provided here early.
 * No `new`, `new[]`, `delete`, or `delete[]`. (They all call `abort` in Rex)
 * No multi-dimensional arrays.
 * No standard library.
+* No `<math.h>`.
+
+Here's the following rationale for each of the "Hard no's".
+
+### No exceptions
+Exceptions complicate the flow of control. They introduce a ton of complexity
+since you now have to write "exception-safe" code which is non-trivial. The use
+of them encourages a style of programming where non-exceptional errors become
+exceptions. They become an impedence mismatch for applications that have
+non-local lifetime requirements (engines.)
+
+### No multiple inheritence
+Taking dependencies on multiple classes impedes compilation performance as full
+class definitions need to be available in all translation units. Class inheritence
+is about "is-a" relationships between type, it's non-trivial to describe "is-a"
+relationships in a consistent manner for single-level inheritence, never mind
+multiple-level inheritence. Similarly, "is-a" relationships are mental models
+that map poorly and violate Data Oriented Design.
+
+### No `dynamic_cast`
+Polymorphism has it's uses but uses should be limited. When multiple-inheritence
+isn't allowed, implementing your own type-check for casts between types with the
+use of simple integers is not only far faster, it's far easier to reason about
+when inspecting the state of objects in a debugger.
+
+### No `new`, `new[]`, `delete`, or `delete[]`
+Rex uses a fully polymorphic allocator interface where every container and
+function that requires dynamic memory allocation requires as a dependency. This
+allows backing everything with custom allocators with different lifetime
+requirements without having to introduce separate types that are incompatible
+with one another at interface boundaries. The use of traditional memory
+management in C++ does not enable any of this behavior and is outright disabled
+in Rex (calls `abort`). Memory management in Rex is part of the problem domain.
+
+### No multi-dimensional arrays.
+The use of multi-dimensional arrays shows a misunderstanding of memory layout.
+Similarly, it's hard to discern if a column-major or row-major layout will be
+more optimal at runtime, depending on architecture and kernel. In the end all
+memory accessing is just 1D indexing and we shouldn't hide from that. It's
+trivial to implement multi-dimensional arrays as wrapper types over single-
+dimension arrays and we want to encourage that.
+
+### No standard library.
+The C++ standard library makes extensive use of exceptions which we disable,
+under this behavior the standard library calls `std::terminate` which is not
+very robust, there's no way to handle errors this way.
+
+All standard library containers and functions make use of the global system
+allocator which lets them sneak past all the hard work we put into making memory
+part of the problem domain.
+
+The standard library is inconsistent in implementation across platforms, there's
+no way to reason about it as it's not a fixed implementation. There's no way to
+optimize it, there's no way to extend it in meaningful ways.
+
+It solves the wrong problems, introduces slow compilation times through massive
+headers full of includes. It's not cache-efficient and often trades performance
+for dubious conveniences, see `std::unordered_{set,map}` as prime examples of
+this.
+
+To work around these short-comings of the standard library, we have our own
+foundation library of containers, types, and functions we call the "core"
+library which can be read about [here](CORE.md)
+
+### No `<math.h>`
+Rex implements it's own math kernels and functions in software or with the help
+of compiler intrinsics that are focused primarily around game development. In
+particular they operate on the assumption that inputs are not pathological,
+values will not contain `NaNs` and the rounding mode does not change from the
+default which is assumed to be "round to nearest". This enables a much wider
+array of optimization possibilities than `<math.h>` enables. At the same time,
+Rex's math also strives to be bit-compatible across implementations enabling
+a level of consistency that should make debugging and networking easier.
 
 ## Indentation
 * Two spaces for indentation.
