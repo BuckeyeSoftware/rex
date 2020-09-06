@@ -1,5 +1,35 @@
 # Coding style and rule guide
 
+* [Hard no's](#hard-no-s)
+  + [No exceptions](#no-exceptions)
+  + [No multiple inheritence](#no-multiple-inheritence)
+  + [No `dynamic_cast`](#no--dynamic-cast-)
+  + [No `new`, `new[]`, `delete`, or `delete[]`](#no--new----new------delete---or--delete---)
+  + [No multi-dimensional arrays.](#no-multi-dimensional-arrays)
+  + [No standard library.](#no-standard-library)
+  + [No `<math.h>`](#no---mathh--)
+* [Indentation](#indentation)
+  + [Two spaces for indentation](#two-spaces-for-indentation)
+  + [No tabs](#no-tabs)
+  + [Do not indent nested namespaces](#do-not-indent-nested-namespaces)
+  + [80-column soft limit](#80-column-soft-limit)
+* [Spacing](#spacing)
+  + [Mem-initializer list](#mem-initializer-list)
+* [Bracing](#bracing)
+* [Casing](#casing)
+* [Function parameters](#function-parameters)
+* [Classes](#classes)
+* [Const](#const)
+  + [Placement](#placement)
+* [Globals](#globals)
+* [Thread local storage](#thread-local-storage)
+* [Structure alignment and packing](#structure-alignment-and-packing)
+* [Almost always unsigned](#almost-always-unsigned)
+  + [Loop in reverse complaint](#loop-in-reverse-complaint)
+* [Use explicitly sized types](#use-explicitly-sized-types)
+* [Size](#size)
+* [Organization](#organization)
+
 Note that most of this can be enforced with the `.clang-format` in the root of
 the source tree.
 
