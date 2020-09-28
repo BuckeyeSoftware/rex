@@ -171,6 +171,8 @@ bool Logger::subscribe(Stream* _stream) {
 bool Logger::unsubscribe(Stream* _stream) {
   Concurrency::ScopeLock lock{m_mutex};
   if (const auto find = m_streams.find(_stream); find != -1_z) {
+    // Flush any contents when removing a stream from the logger.
+    flush_unlocked();
     m_streams.erase(find, find + 1);
     return true;
   }

@@ -119,6 +119,8 @@ RX_CONSOLE_IVAR(
 
 static Concurrency::Atomic<Game::Status> g_status{Game::Status::RESTART};
 
+static Global<Filesystem::File> g_log{"system", "log", "log.log", "wb"};
+
 RX_LOG("main", logger);
 
 int main(int _argc, char** _argv) {
@@ -154,26 +156,9 @@ int main(int _argc, char** _argv) {
   // Link all globals into their respective groups.
   Globals::link();
 
-  auto* system_group = Globals::find("system");
-  auto* console_group = Globals::find("console");
-  auto* cvars_group = Globals::find("cvars");
-
-  // Explicitly initialize globals that need to be initialized in a specific
-  // order for things to work.
-  system_group->find("heap_allocator")->init();
-  system_group->find("electric_fence_allocator")->init();
-  system_group->find("allocator")->init();
-  system_group->find("logger")->init();
-  system_group->find("profiler")->init();
-
   // Give the logger a stream to write to.
-  Filesystem::File log{"log.log", "wb"};
-  (void)Log::subscribe(&log);
-
-  // Initialize console variables. Then load the configuration to set those
-  // console variables.
-  cvars_group->init();
-  console_group->init();
+  // Filesystem::File log{"log.log", "wb"};
+  (void)Log::subscribe(&g_log);
 
   if (!Console::Interface::load("config.cfg")) {
     Console::Interface::save("config.cfg");
@@ -181,7 +166,7 @@ int main(int _argc, char** _argv) {
 
   const Size static_pool_size = *thread_pool_static_pool_size;
   const Size threads = *thread_pool_threads ? *thread_pool_threads : SDL_GetCPUCount();
-  system_group->find("thread_pool")->init(threads, static_pool_size);
+  Globals::find("system")->find("thread_pool")->init(threads, static_pool_size);
 
   // The following scope exists because anything inside here needs to go out
   // of scope before the engine can safely return from main. This is because main
@@ -579,18 +564,6 @@ int main(int _argc, char** _argv) {
   }
 
   SDL_Quit();
-
-  Globals::fini();
-
-  console_group->fini();
-  cvars_group->fini();
-
-  system_group->find("thread_pool")->fini();
-  system_group->find("profiler")->fini();
-  system_group->find("logger")->fini();
-  system_group->find("allocator")->fini();
-  system_group->find("electric_fence_allocator")->fini();
-  system_group->find("heap_allocator")->fini();
 
   return 0;
 }

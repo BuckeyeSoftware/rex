@@ -13,70 +13,38 @@ RX_LOG("global", logger);
 
 static Concurrency::SpinLock g_lock;
 
-// GlobalNode
-void GlobalNode::init_global() {
-  const auto flags = m_argument_store.as_tag();
-  if (!(flags & k_enabled)) {
-    return;
-  }
+static GlobalGroup g_group_system{"system"};
 
-  RX_ASSERT(!(flags & k_initialized), "already initialized");
-  logger->verbose("%p init: %s/%s", this, m_group, m_name);
-
-  m_storage_dispatch(StorageMode::k_init_global, data(), m_argument_store.as_ptr());
-
-  m_argument_store.retag(flags | k_initialized);
-}
-
-void GlobalNode::fini_global() {
-  const auto flags = m_argument_store.as_tag();
-
-  if (!(flags & k_enabled)) {
-    return;
-  }
-
-  RX_ASSERT(flags & k_initialized, "not initialized");
-  logger->verbose("%p fini: %s/%s", this, m_group, m_name);
-
-  m_storage_dispatch(StorageMode::k_fini_global, data(), nullptr);
-  if (flags & k_arguments) {
-    auto argument_store = m_argument_store.as_ptr();
-    m_storage_dispatch(StorageMode::k_fini_arguments, nullptr, argument_store);
-    reallocate_arguments(argument_store, 0);
-  }
-
-  m_argument_store.retag(flags & ~k_initialized);
+Byte* GlobalNode::allocate(Size _size) {
+  return static_cast<Byte*>(malloc(_size));
 }
 
 void GlobalNode::init() {
   const auto flags = m_argument_store.as_tag();
-  RX_ASSERT(!(flags & k_initialized), "already initialized");
+  if (flags & INITIALIZED) {
+    return;
+  }
 
-  m_storage_dispatch(StorageMode::k_init_global, data(), m_argument_store.as_ptr());
-
-  m_argument_store.retag((flags & ~k_enabled) | k_initialized);
+  m_storage_dispatch(StorageMode::INIT, data(), m_argument_store.as_ptr());
+  Globals::s_initialized_list.push_back(&m_initialized);
+  m_argument_store.retag(flags | INITIALIZED);
 }
 
 void GlobalNode::fini() {
   const auto flags = m_argument_store.as_tag();
-  RX_ASSERT(flags & k_initialized, "not initialized");
-
-  m_storage_dispatch(StorageMode::k_fini_global, data(), nullptr);
-  if (flags & k_arguments) {
-    auto argument_store = m_argument_store.as_ptr();
-    m_storage_dispatch(StorageMode::k_fini_arguments, nullptr, argument_store);
-    reallocate_arguments(argument_store, 0);
+  if (!(flags & INITIALIZED)) {
+    return;
   }
 
-  m_argument_store.retag((flags & ~k_enabled) | k_initialized);
-}
-
-Byte* GlobalNode::reallocate_arguments(Byte* _existing, Size _size) {
-  if (_existing && _size == 0) {
-    free(_existing);
-    return nullptr;
+  if (flags & ARGUMENTS) {
+    m_storage_dispatch(StorageMode::FINI, data(), m_argument_store.as_ptr());
+    free(m_argument_store.as_ptr());
+    m_argument_store = nullptr;
+  } else {
+    m_storage_dispatch(StorageMode::FINI, data(), nullptr);
   }
-  return reinterpret_cast<Byte*>(realloc(nullptr, _size));
+
+  Globals::s_initialized_list.erase(&m_initialized);
 }
 
 // GlobalGroup
@@ -101,19 +69,7 @@ void GlobalGroup::fini() {
   }
 }
 
-void GlobalGroup::init_global() {
-  for (auto node = m_list.enumerate_head(&GlobalNode::m_grouped); node; node.next()) {
-    node->init_global();
-  }
-}
-
-void GlobalGroup::fini_global() {
-  for (auto node = m_list.enumerate_tail(&GlobalNode::m_grouped); node; node.prev()) {
-    node->fini_global();
-  }
-}
-
-// globals
+// Globals
 GlobalGroup* Globals::find(const char* _name) {
   for (auto group = s_group_list.enumerate_head(&GlobalGroup::m_link); group; group.next()) {
     if (!strcmp(group->name(), _name)) {
@@ -152,13 +108,14 @@ void Globals::link() {
 
 void Globals::init() {
   for (auto group = s_group_list.enumerate_head(&GlobalGroup::m_link); group; group.next()) {
-    group->init_global();
+    group->init();
   }
 }
 
 void Globals::fini() {
-  for (auto group = s_group_list.enumerate_tail(&GlobalGroup::m_link); group; group.prev()) {
-    group->fini_global();
+  // Finalize all globals in the reverse order they were initialized.
+  for (auto node = s_initialized_list.enumerate_tail(&GlobalNode::m_initialized); node; node.prev()) {
+    node->fini();
   }
 }
 
@@ -172,6 +129,11 @@ void Globals::link(GlobalGroup* _group) {
   s_group_list.push(&_group->m_link);
 }
 
-static GlobalGroup g_group_system{"system"};
+// Register Globals::fini with atexit.
+static struct AtExit {
+  AtExit() {
+    atexit(&Globals::fini);
+  }
+} g_globals_at_exit;
 
 } // namespace rx
