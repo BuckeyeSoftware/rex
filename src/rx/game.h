@@ -10,13 +10,14 @@ struct Game {
   RX_MARK_INTERFACE(Game);
 
   enum class Status {
-    k_running,
-    k_restart,
-    k_shutdown
+    RUNNING,
+    RESTART,
+    SHUTDOWN
   };
 
   virtual bool on_init() = 0;
-  virtual Status on_slice(Input::Context& _input) = 0;
+  virtual Status on_update(Input::Context& _input) = 0;
+  virtual bool on_render() = 0;
   virtual void on_resize(const Math::Vec2z& _resolution) = 0;
 };
 

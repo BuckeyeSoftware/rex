@@ -92,52 +92,7 @@ struct TestGame
     return true;
   }
 
-  virtual Status on_slice(Input::Context& _input) {
-#if 0
-    const math::vec2i& noise_dimensions{100, 100};
-    const Float32 noise_scale{100.0f};
-    const Sint32 octaves{4};
-    const Float32 persistence{0.5f};
-    const Float32 lacunarity{2.0f};
-
-    auto rgb = [](int r, int g, int b) {
-      return math::vec3f{r/255.0f, g/255.0f, b/255.0f};
-    };
-
-    //const auto& noise_map{generate_noise_map(noise_dimensions, noise_scale, octaves, persistence, lacunarity)};
-    //write_noise_map(noise_map, noise_dimensions);
-    Vector<terrain_type> terrain{8};
-    terrain[0].height = 0.1f;
-    terrain[0].color = rgb(51, 99, 193);
-
-    terrain[1].height = 0.2f;
-    terrain[1].color = rgb(54, 102, 198);
-
-    terrain[2].height = 0.4f;
-    terrain[2].color = rgb(207, 209, 127);
-
-    terrain[3].height = 0.55f;
-    terrain[3].color = rgb(85, 152, 22);
-
-    terrain[4].height = 0.6f;
-    terrain[4].color = rgb(63, 106, 19);
-
-    terrain[5].height = 0.7f;
-    terrain[5].color = rgb(92, 69, 63);
-
-    terrain[6].height = 0.9f;
-    terrain[6].color = rgb(74, 60, 55);
-
-    terrain[7].height = 1.0f;
-    terrain[7].color = rgb(255, 255, 255);
-
-    const auto& terrain_map{generate_noise_map(noise_dimensions, noise_scale, octaves, persistence, lacunarity)};
-    // write_color_map(terrain_map, noise_dimensions);
-    generate_terrain_mesh(terrain_map, noise_dimensions);
-
-    abort();
-#endif
-
+  virtual Status on_update(Input::Context& _input) {
     static auto display_resolution{Console::Interface::find_variable_by_name("display.resolution")->cast<Math::Vec2i>()};
     static auto display_swap_interval{Console::Interface::find_variable_by_name("display.swap_interval")->cast<Sint32>()};
     static auto display_fullscreen{Console::Interface::find_variable_by_name("display.fullscreen")->cast<Sint32>()};
@@ -194,7 +149,7 @@ struct TestGame
     }
 
     if (_input.keyboard().is_released(Input::ScanCode::k_escape)) {
-      return Status::k_shutdown;
+      return Status::SHUTDOWN;
     }
 
     if (_input.keyboard().is_released(Input::ScanCode::k_f12)) {
@@ -210,6 +165,14 @@ struct TestGame
       m_skybox.load(next);
       m_ibl.render(m_skybox.cubemap(), 256);
     }
+
+    m_console.update(_input);
+
+    return Status::RUNNING;
+  }
+
+  virtual bool on_render() {
+    static auto display_resolution{Console::Interface::find_variable_by_name("display.resolution")->cast<Math::Vec2i>()};
 
     Render::Frontend::State state;
     state.viewport.record_dimensions(display_resolution->get().cast<Size>());
@@ -268,12 +231,11 @@ struct TestGame
     m_render_stats.render();
     m_memory_stats.render();
 
-    m_console.update(_input);
     m_console.render();
 
     m_immediate2D.render(m_frontend.swapchain());
 
-    return Status::k_running;
+    return true;
   }
 
   void on_resize(const Math::Vec2z& _dimensions) {
