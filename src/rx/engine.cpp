@@ -121,6 +121,9 @@ Engine::~Engine() {
   auto& allocator = Memory::SystemAllocator::instance();
   allocator.destroy<Render::Frontend::Context>(m_render_frontend);
   allocator.destroy<Render::Backend::Context>(m_render_backend);
+
+  // TODO(dweiler): Move to SDL_SubSystemInit rather than global.
+  SDL_Quit();
 }
 
 bool Engine::init() {
