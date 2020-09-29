@@ -117,12 +117,11 @@ Engine::~Engine() {
 }
 
 bool Engine::init() {
-  /*
   // Early initialization may need values loaded from the configuration file.
   static constexpr const char* CONFIG = "config.cfg";
   if (!m_console.load(CONFIG) && !m_console.save(CONFIG)) {
     return false;
-  }*/
+  }
 
   const Size static_pool_size = *thread_pool_static_pool_size;
   const Size threads = *thread_pool_threads ? *thread_pool_threads : SDL_GetCPUCount();
