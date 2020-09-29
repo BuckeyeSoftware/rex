@@ -1,6 +1,8 @@
 #ifndef RX_RENDER_SKYBOX_H
 #define RX_RENDER_SKYBOX_H
+#include "rx/math/vec2.h"
 #include "rx/math/mat4x4.h"
+
 #include "rx/core/string.h"
 
 namespace Rx {
@@ -23,8 +25,8 @@ struct Skybox {
   void render(Frontend::Target* _target, const Math::Mat4x4f& _view,
               const Math::Mat4x4f& _projection);
 
-  bool load(Stream* _stream);
-  bool load(const String& _file_name);
+  bool load(Stream* _stream, const Math::Vec2z& _max_face_dimensions);
+  bool load(const String& _file_name, const Math::Vec2z& _max_face_dimensions);
 
   Frontend::TextureCM* cubemap() const;
 

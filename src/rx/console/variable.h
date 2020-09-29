@@ -98,7 +98,7 @@ struct VariableReference {
   bool is_initial() const;
 
 private:
-  friend struct Interface;
+  friend struct Context;
 
   const char* m_name;
   const char* m_description;

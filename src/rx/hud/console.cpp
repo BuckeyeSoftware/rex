@@ -5,7 +5,7 @@
 
 #include "rx/render/immediate2D.h"
 
-#include "rx/console/interface.h"
+#include "rx/console/context.h"
 
 #include "rx/input/context.h"
 
@@ -72,21 +72,24 @@ Console::Console(Render::Immediate2D* _immediate)
 {
 }
 
-void Console::update(Input::Context& _input) {
+void Console::update(Rx::Console::Context& console_, Input::Context& input_) {
+  // Make a copy of the console line output for rendering.
+  m_lines = console_.lines();
+
   bool made_selection = false;
-  if (_input.keyboard().is_pressed(Input::ScanCode::k_grave)) {
-    _input.capture_text(_input.active_text() == &m_text ? nullptr : &m_text);
-    _input.capture_mouse(_input.active_text() ? false : true);
-  } else if (_input.keyboard().is_pressed(Input::ScanCode::k_down)) {
+  if (input_.keyboard().is_pressed(Input::ScanCode::k_grave)) {
+    input_.capture_text(input_.active_text() == &m_text ? nullptr : &m_text);
+    input_.capture_mouse(input_.active_text() ? false : true);
+  } else if (input_.keyboard().is_pressed(Input::ScanCode::k_down)) {
     m_selection++;
-  } else if (_input.keyboard().is_pressed(Input::ScanCode::k_up)) {
+  } else if (input_.keyboard().is_pressed(Input::ScanCode::k_up)) {
     if (m_selection) {
       m_selection--;
     }
-  } else if (_input.keyboard().is_pressed(Input::ScanCode::k_tab)) {
+  } else if (input_.keyboard().is_pressed(Input::ScanCode::k_tab)) {
     made_selection = true;
-  } else if (_input.keyboard().is_pressed(Input::ScanCode::k_return)) {
-    Rx::Console::Interface::execute(m_text.contents());
+  } else if (input_.keyboard().is_pressed(Input::ScanCode::k_return)) {
+    console_.execute(m_text.contents());
     m_text.clear();
   }
 
@@ -94,8 +97,8 @@ void Console::update(Input::Context& _input) {
     return;
   }
 
-  auto complete_variables = Rx::Console::Interface::auto_complete_variables(m_text.contents());
-  auto complete_commands = Rx::Console::Interface::auto_complete_commands(m_text.contents());
+  auto complete_variables = console_.auto_complete_variables(m_text.contents());
+  auto complete_commands = console_.auto_complete_commands(m_text.contents());
 
   m_suggestions = Utility::move(complete_variables);
   m_suggestions.append(complete_commands);
@@ -142,25 +145,23 @@ void Console::render() {
     {resolution.w, console_h}
   );
 
-  const Vector<String>& lines = Rx::Console::Interface::lines();
-
   // Scrolling of the text by offsetting it inside the box. Scissor will remove
   // the text outside.
   Float32 text_y{padding + font_size * 0.75f};
-  if (lines.size() > console_lines) {
-    text_y -= (lines.size() - console_lines) * font_size;
+  if (m_lines.size() > console_lines) {
+    text_y -= (m_lines.size() - console_lines) * font_size;
   }
 
   // Render every line for the console, lines outside will be scissored.
-  lines.each_fwd([&](const String& _line) {
+  m_lines.each_fwd([&](const String& _line) {
     m_immediate->frame_queue().record_text(
-            *console_font_name,
-            {padding, resolution.h - text_y},
-            static_cast<Sint32>(font_size),
-            1.0f,
-            Render::Immediate2D::TextAlign::k_left,
-            _line,
-            {1.0f, 1.0f, 1.0f, 1.0f});
+      *console_font_name,
+      {padding, resolution.h - text_y},
+      static_cast<Sint32>(font_size),
+      1.0f,
+      Render::Immediate2D::TextAlign::k_left,
+      _line,
+      {1.0f, 1.0f, 1.0f, 1.0f});
     text_y += font_size;
   });
 
@@ -202,13 +203,13 @@ void Console::render() {
 
   // Render the current input text inside the box, centered.
   m_immediate->frame_queue().record_text(
-          *console_font_name,
-          {padding, resolution.h - textbox_y - font_size * 0.75f},
-          static_cast<Sint32>(font_size),
-          1.0f,
-          Render::Immediate2D::TextAlign::k_left,
-          m_text.contents(),
-          {1.0f, 1.0f, 1.0f, 1.0f});
+    *console_font_name,
+    {padding, resolution.h - textbox_y - font_size * 0.75f},
+    static_cast<Sint32>(font_size),
+    1.0f,
+    Render::Immediate2D::TextAlign::k_left,
+    m_text.contents(),
+    {1.0f, 1.0f, 1.0f, 1.0f});
 
   if (m_text.is_selected()) {
     const auto& selection{m_text.selection()};
@@ -291,13 +292,13 @@ void Console::render() {
   // Draw each suggestion now inside that box.
   m_suggestions.each_fwd([&](const String& _suggestion){
     m_immediate->frame_queue().record_text(
-            *console_font_name,
-            {padding, resolution.h - suggestion_y + font_size*0.15f},
-            static_cast<Sint32>(font_size),
-            1.0f,
-            Render::Immediate2D::TextAlign::k_left,
-            _suggestion,
-            {1.0f, 1.0f, 1.0f, 1.0f});
+      *console_font_name,
+      {padding, resolution.h - suggestion_y + font_size*0.15f},
+      static_cast<Sint32>(font_size),
+      1.0f,
+      Render::Immediate2D::TextAlign::k_left,
+      _suggestion,
+      {1.0f, 1.0f, 1.0f, 1.0f});
     suggestion_y += font_size;
   });
 

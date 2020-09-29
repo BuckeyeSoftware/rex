@@ -3,8 +3,10 @@
 // #define SDL_MAIN_HANDLED
 #include <SDL.h>
 
-#include "rx/console/interface.h"
+#include "rx/console/context.h"
 #include "rx/console/variable.h"
+
+#include "rx/input/context.h"
 
 #include "rx/render/frontend/context.h"
 #include "rx/render/backend/gl4.h"
@@ -19,8 +21,6 @@
 #include "rx/core/abort.h"
 #include "rx/core/log.h"
 #include "rx/core/ptr.h"
-
-#include "rx/core/math/sin.h"
 
 #include "rx/game.h"
 #include "rx/display.h"
@@ -160,8 +160,9 @@ int main(int _argc, char** _argv) {
   // Filesystem::File log{"log.log", "wb"};
   (void)Log::subscribe(&g_log);
 
-  if (!Console::Interface::load("config.cfg")) {
-    Console::Interface::save("config.cfg");
+  Console::Context console;
+  if (!console.load("config.cfg")) {
+    console.save("config.cfg");
   }
 
   const Size static_pool_size = *thread_pool_static_pool_size;
@@ -180,20 +181,20 @@ int main(int _argc, char** _argv) {
     Vector<Log::WriteEvent::Handle> logging_event_handles;
     Globals::find("loggers")->each([&](GlobalNode* _logger) {
       logging_event_handles.push_back(_logger->cast<Rx::Log>()->on_queue(
-        [](Log::Level _level, const String& _message) {
+        [&](Log::Level _level, const String& _message) {
           switch (_level) {
           case Log::Level::k_error:
-            Console::Interface::print("^rerror: ^w%s", _message);
+            console.print("^rerror: ^w%s", _message);
             break;
           case Log::Level::k_info:
-            Console::Interface::print("^cinfo: ^w%s", _message);
+            console.print("^cinfo: ^w%s", _message);
             break;
           case Log::Level::k_verbose:
             // Don't write verbose messages to the console.
-            // console::interface::print("^yverbose: ^w%s", _message);
+            // console.print("^yverbose: ^w%s", _message);
             break;
           case Log::Level::k_warning:
-            Console::Interface::print("^mwarning: ^w%s", _message);
+            console.print("^mwarning: ^w%s", _message);
             break;
           }
         }));
@@ -203,38 +204,33 @@ int main(int _argc, char** _argv) {
     Globals::init();
 
     // Bind some useful console commands early
-    Console::Interface::add_command("reset", "s",
-                                    [](const Vector<Console::Command::Argument>& _arguments) {
-        if (auto* variable{Console::Interface::find_variable_by_name(_arguments[0].as_string)}) {
-          variable->reset();
-          return true;
-        }
-        return false;
-      });
-
-    Console::Interface::add_command("clear", "",
-                                    [](const Vector<Console::Command::Argument>&) {
-        Console::Interface::clear();
+    console.add_command("reset", "s", [&](const Vector<Console::Command::Argument>& _arguments) {
+      if (auto* variable = console.find_variable_by_name(_arguments[0].as_string)) {
+        variable->reset();
         return true;
-      });
+      }
+      return false;
+    });
 
-    Console::Interface::add_command("exit", "",
-                                    [](const Vector<Console::Command::Argument>&) {
-        g_status = Game::Status::SHUTDOWN;
-        return true;
-      });
+    console.add_command("clear", "", [&](const Vector<Console::Command::Argument>&) {
+      console.clear();
+      return true;
+    });
 
-    Console::Interface::add_command("quit", "",
-                                    [&](const Vector<Console::Command::Argument>&) {
-        g_status = Game::Status::SHUTDOWN;
-        return true;
-      });
+    console.add_command("exit", "", [](const Vector<Console::Command::Argument>&) {
+      g_status = Game::Status::SHUTDOWN;
+      return true;
+    });
 
-    Console::Interface::add_command("restart", "",
-                                    [&](const Vector<Console::Command::Argument>&) {
-        g_status = Game::Status::RESTART;
-        return true;
-      });
+    console.add_command("quit", "", [](const Vector<Console::Command::Argument>&) {
+      g_status = Game::Status::SHUTDOWN;
+      return true;
+    });
+
+    console.add_command("restart", "", [&](const Vector<Console::Command::Argument>&) {
+      g_status = Game::Status::RESTART;
+      return true;
+    });
 
 #if 0
     // Replace SDL2s allocator with our system allocator so we can track it's
@@ -267,8 +263,8 @@ int main(int _argc, char** _argv) {
     //
     // This is where engine restart is handled.
     while (g_status == Game::Status::RESTART) {
-      if (!Console::Interface::load("config.cfg")) {
-        Console::Interface::save("config.cfg");
+      if (!console.load("config.cfg")) {
+        console.save("config.cfg");
       }
 
       if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -397,7 +393,9 @@ int main(int _argc, char** _argv) {
           SDL_GL_SetSwapInterval(*display_swap_interval);
         }
 
-        Render::Frontend::Context frontend{allocator, backend.get()};
+        Render::Frontend::Context frontend{allocator, backend.get(),
+          display_resolution->get().cast<Size>(),
+          display_hdr->get()};
 
         // Quickly get a black screen.
         frontend.process();
@@ -526,7 +524,7 @@ int main(int _argc, char** _argv) {
           }
 
           // Execute one slice of the game.
-          const Game::Status status = g->on_update(input);
+          const Game::Status status = g->on_update(console, input);
 
           if (g_status != Game::Status::RUNNING) {
             break;
@@ -545,7 +543,7 @@ int main(int _argc, char** _argv) {
           }
 
           // Render ....
-          g->on_render();
+          g->on_render(console);
 
           // Submit all rendering work.
           if (frontend.process()) {
@@ -556,11 +554,10 @@ int main(int _argc, char** _argv) {
         }
       }
 
-      Console::Interface::save("config.cfg");
+      console.save("config.cfg");
 
       SDL_DestroyWindow(window);
     }
-
   }
 
   SDL_Quit();

@@ -19,7 +19,7 @@
 #include "rx/hud/memory_stats.h"
 #include "rx/hud/render_stats.h"
 
-#include "rx/console/interface.h"
+#include "rx/console/context.h"
 #include "rx/console/variable.h"
 
 #include "rx/math/camera.h"
@@ -74,7 +74,7 @@ struct TestGame
 
   virtual bool on_init() {
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
-    m_skybox.load("base/skyboxes/yokohama/yokohama.json5");
+    m_skybox.load("base/skyboxes/yokohama/yokohama.json5", {1024, 1024});
     m_ibl.render(m_skybox.cubemap(), 256);
 
     m_indirect_lighting_pass.create(m_frontend.swapchain()->dimensions());
@@ -92,49 +92,52 @@ struct TestGame
     return true;
   }
 
-  virtual Status on_update(Input::Context& _input) {
-    static auto display_resolution{Console::Interface::find_variable_by_name("display.resolution")->cast<Math::Vec2i>()};
-    static auto display_swap_interval{Console::Interface::find_variable_by_name("display.swap_interval")->cast<Sint32>()};
-    static auto display_fullscreen{Console::Interface::find_variable_by_name("display.fullscreen")->cast<Sint32>()};
+  virtual Status on_update(Console::Context& console_, Input::Context& input_) {
+    static auto display_resolution =
+      console_.find_variable_by_name("display.resolution")->cast<Math::Vec2i>();
+    static auto display_swap_interval =
+      console_.find_variable_by_name("display.swap_interval")->cast<Sint32>();
+    static auto display_fullscreen =
+      console_.find_variable_by_name("display.fullscreen")->cast<Sint32>();
 
     const auto& dimensions{display_resolution->get().cast<Float32>()};
     m_camera.projection = Math::Mat4x4f::perspective(90.0f, {0.01f, 2048.0f},
       dimensions.w / dimensions.h);
 
-    if (!_input.active_text()) {
+    if (!input_.active_text()) {
       Float32 move_speed{0.0f};
       const Float32 sens{0.2f};
-      const auto &delta{_input.mouse().movement()};
+      const auto &delta = input_.mouse().movement();
 
 
       Math::Vec3f move{static_cast<Float32>(delta.y) * sens, static_cast<Float32>(delta.x) * sens, 0.0f};
       m_camera.rotate = m_camera.rotate + move;
 
-      if (_input.keyboard().is_held(Input::ScanCode::k_left_control)) {
+      if (input_.keyboard().is_held(Input::ScanCode::k_left_control)) {
         move_speed = 10.0f;
       } else {
         move_speed = 5.0f;
       }
 
-      if (_input.keyboard().is_held(Input::ScanCode::k_w)) {
+      if (input_.keyboard().is_held(Input::ScanCode::k_w)) {
         const auto f{m_camera.as_mat4().z};
         m_camera.translate += Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (_input.keyboard().is_held(Input::ScanCode::k_s)) {
+      if (input_.keyboard().is_held(Input::ScanCode::k_s)) {
         const auto f{m_camera.as_mat4().z};
         m_camera.translate -= Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (_input.keyboard().is_held(Input::ScanCode::k_d)) {
+      if (input_.keyboard().is_held(Input::ScanCode::k_d)) {
         const auto l{m_camera.as_mat4().x};
         m_camera.translate += Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (_input.keyboard().is_held(Input::ScanCode::k_a)) {
+      if (input_.keyboard().is_held(Input::ScanCode::k_a)) {
         const auto l{m_camera.as_mat4().x};
         m_camera.translate -= Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
       }
     }
 
-    if (_input.keyboard().is_released(Input::ScanCode::k_f1)) {
+    if (input_.keyboard().is_released(Input::ScanCode::k_f1)) {
       switch (display_swap_interval->get()) {
       case -1:
         display_swap_interval->set(0);
@@ -148,31 +151,32 @@ struct TestGame
       }
     }
 
-    if (_input.keyboard().is_released(Input::ScanCode::k_escape)) {
+    if (input_.keyboard().is_released(Input::ScanCode::k_escape)) {
       return Status::SHUTDOWN;
     }
 
-    if (_input.keyboard().is_released(Input::ScanCode::k_f12)) {
+    if (input_.keyboard().is_released(Input::ScanCode::k_f12)) {
       display_fullscreen->set((display_fullscreen->get() + 1) % 3);
     }
 
-    if (_input.keyboard().is_released(Input::ScanCode::k_f11)) {
+    if (input_.keyboard().is_released(Input::ScanCode::k_f11)) {
       const auto &name{m_skybox.name()};
       const char* next{nullptr};
       /**/ if (name == "miramar")  next = "base/skyboxes/nebula/nebula.json5";
       else if (name == "nebula")   next = "base/skyboxes/yokohama/yokohama.json5";
       else if (name == "yokohama") next = "base/skyboxes/miramar/miramar.json5";
-      m_skybox.load(next);
+      m_skybox.load(next, {1024, 1024});
       m_ibl.render(m_skybox.cubemap(), 256);
     }
 
-    m_console.update(_input);
+    m_console.update(console_, input_);
 
     return Status::RUNNING;
   }
 
-  virtual bool on_render() {
-    static auto display_resolution{Console::Interface::find_variable_by_name("display.resolution")->cast<Math::Vec2i>()};
+  virtual bool on_render(Console::Context& console_) {
+    static auto display_resolution =
+      console_.find_variable_by_name("display.resolution")->cast<Math::Vec2i>();
 
     Render::Frontend::State state;
     state.viewport.record_dimensions(display_resolution->get().cast<Size>());

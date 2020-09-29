@@ -20,7 +20,6 @@
 #include "rx/core/log.h"
 
 #include "rx/console/variable.h"
-#include "rx/console/interface.h"
 
 RX_CONSOLE_IVAR(max_buffers, "render.max_buffers","maximum buffers", 16, 128, 64);
 RX_CONSOLE_IVAR(max_targets, "render.max_targets", "maximum targets", 16, 128, 16);
@@ -47,7 +46,7 @@ static constexpr const char* k_module_path = "base/renderer/modules";
 
 namespace Rx::Render::Frontend {
 
-Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend)
+Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, const Math::Vec2z& _dimensions, bool _hdr)
   : m_allocator{_allocator}
   , m_backend{_backend}
   , m_allocation_info{m_backend->query_allocation_info()}
@@ -112,14 +111,11 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend)
   }
 
   // Generate swapchain target.
-  static auto& dimensions{Console::Interface::find_variable_by_name("display.resolution")->cast<Math::Vec2i>()->get()};
-  static auto& hdr{Console::Interface::find_variable_by_name("display.hdr")->cast<bool>()->get()};
-
   m_swapchain_texture = create_texture2D(RX_RENDER_TAG("swapchain"));
-  m_swapchain_texture->record_format(hdr ? Texture::DataFormat::k_rgba_f16 : Texture::DataFormat::k_rgba_u8);
+  m_swapchain_texture->record_format(_hdr ? Texture::DataFormat::k_rgba_f16 : Texture::DataFormat::k_rgba_u8);
   m_swapchain_texture->record_type(Texture::Type::ATTACHMENT);
   m_swapchain_texture->record_levels(1);
-  m_swapchain_texture->record_dimensions(dimensions.cast<Size>());
+  m_swapchain_texture->record_dimensions(_dimensions);
   m_swapchain_texture->record_filter({false, false, false});
   m_swapchain_texture->record_wrap({
                                            Texture::WrapType::k_clamp_to_edge,

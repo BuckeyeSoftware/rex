@@ -33,7 +33,7 @@ struct Technique;
 struct Module;
 
 struct Context {
-  Context(Memory::Allocator& _allocator, Backend::Context* _backend);
+  Context(Memory::Allocator& _allocator, Backend::Context* _backend, const Math::Vec2z& _dimensions, bool _hdr);
   ~Context();
 
   // Create rendering resources.

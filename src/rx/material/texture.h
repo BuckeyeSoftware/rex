@@ -55,7 +55,7 @@ struct Texture {
   constexpr Memory::Allocator& allocator() const;
 
 private:
-  bool load_texture_file();
+  bool load_texture_file(const Math::Vec2z& _max_dimensions);
 
   bool parse_type(const JSON& _type);
   bool parse_filter(const JSON& _filter, bool& _mipmaps);

@@ -77,8 +77,15 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     draw_textures);
 }
 
-bool Skybox::load(const String& _file_name) {
-  auto data{Filesystem::read_text_file(_file_name)};
+bool Skybox::load(const String& _file_name, const Math::Vec2z& _max_face_dimensions) {
+  if (Filesystem::File file{_file_name, "rb"}) {
+    return load(&file, _max_face_dimensions);
+  }
+  return false;
+}
+
+bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
+  auto data = read_text_stream(Memory::SystemAllocator::instance(), _stream);
   if (!data) {
     return false;
   }
@@ -121,7 +128,7 @@ bool Skybox::load(const String& _file_name) {
   Frontend::TextureCM::Face face{Frontend::TextureCM::Face::k_right};
   bool result{faces.each([&](const JSON& file_name) {
     Texture::Loader texture{m_frontend->allocator()};
-    if (!texture.load(file_name.as_string(), Texture::PixelFormat::k_rgb_u8)) {
+    if (!texture.load(file_name.as_string(), Texture::PixelFormat::k_rgb_u8, _max_face_dimensions)) {
       return false;
     }
 

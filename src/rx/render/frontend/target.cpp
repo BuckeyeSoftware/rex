@@ -2,9 +2,6 @@
 #include "rx/render/frontend/command.h"
 #include "rx/render/frontend/context.h"
 
-#include "rx/console/interface.h"
-#include "rx/console/variable.h"
-
 namespace Rx::Render::Frontend {
 
 Target::Target(Context* _frontend)

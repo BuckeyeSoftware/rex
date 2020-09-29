@@ -31,8 +31,6 @@ struct Loader {
 
   bool load(Stream* _stream, PixelFormat _want_format,
     const Math::Vec2z& _max_dimensions);
-  bool load(Stream* _stream, PixelFormat _want_format);
-  bool load(const String& _file_name, PixelFormat _want_format);
   bool load(const String& _file_name, PixelFormat _want_format,
     const Math::Vec2z& _max_dimensions);
 

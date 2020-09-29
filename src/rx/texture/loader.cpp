@@ -9,8 +9,6 @@
 
 #include "lib/stb_image.h"
 
-#include "rx/console/interface.h"
-
 RX_LOG("texture/loader", logger);
 
 namespace Rx::Texture {
@@ -129,21 +127,6 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
     m_dimensions.w, m_dimensions.h, m_bpp);
 
   return true;
-}
-
-bool Loader::load(Stream* _stream, PixelFormat _want_format) {
-  static auto* max_dimensions_reference =
-    Console::Interface::find_variable_by_name("render.max_texture_dimensions");
-  static auto& max_dimensions_variable =
-    max_dimensions_reference->cast<Math::Vec2i>()->get();
-  return load(_stream, _want_format, max_dimensions_variable.cast<Size>());
-}
-
-bool Loader::load(const String& _file_name, PixelFormat _want_format) {
-  if (Filesystem::File file{_file_name, "rb"}) {
-    return load(&file, _want_format);
-  }
-  return false;
 }
 
 bool Loader::load(const String& _file_name, PixelFormat _want_format,

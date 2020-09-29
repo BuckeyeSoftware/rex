@@ -11,7 +11,6 @@
 #include "rx/core/log.h"
 
 #include "rx/console/variable.h"
-#include "rx/console/interface.h"
 
 namespace Rx::Render::Backend {
 

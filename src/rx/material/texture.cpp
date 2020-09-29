@@ -92,10 +92,11 @@ bool Texture::parse(const JSON& _definition) {
 
   m_file = file.as_string();
 
-  return load_texture_file();
+  // TODO(dweiler): Inject the max dimensions from a higher level place.
+  return load_texture_file({4096, 4096});
 }
 
-bool Texture::load_texture_file() {
+bool Texture::load_texture_file(const Math::Vec2z& _max_dimensions) {
   Rx::Texture::PixelFormat want_format;
   if (m_type == "albedo") {
     want_format = Rx::Texture::PixelFormat::k_rgba_u8;
@@ -106,7 +107,7 @@ bool Texture::load_texture_file() {
   }
 
   Rx::Texture::Loader loader{allocator()};
-  if (!loader.load(m_file, want_format)) {
+  if (!loader.load(m_file, want_format, _max_dimensions)) {
     return false;
   }
 
