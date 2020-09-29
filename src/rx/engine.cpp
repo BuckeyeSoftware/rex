@@ -106,6 +106,7 @@ RX_CONSOLE_IVAR(
   1024);
 
 static Global<Filesystem::File> g_engine_log{"system", "log", "log.log", "wb"};
+static constexpr const char* CONFIG = "config.cfg";
 
 Engine::Engine()
   : m_render_backend{nullptr}
@@ -118,6 +119,9 @@ Engine::~Engine() {
   // Force game to deinitialized now.
   m_game = nullptr;
 
+  // Save the console configuration
+  m_console.save(CONFIG);
+
   auto& allocator = Memory::SystemAllocator::instance();
   allocator.destroy<Render::Frontend::Context>(m_render_frontend);
   allocator.destroy<Render::Backend::Context>(m_render_backend);
@@ -128,12 +132,13 @@ Engine::~Engine() {
 
 bool Engine::init() {
   Log::subscribe(&g_engine_log);
-    // return false;
+
+  // These need to be initialized early for the console.
+  Globals::find("console")->init();
 
   // Early initialization may need values loaded from the configuration file.
-  static constexpr const char* CONFIG = "config.cfg";
-  if (!m_console.load(CONFIG) && !m_console.save(CONFIG)) {
-    return false;
+  if (!m_console.load(CONFIG)) {
+    m_console.save(CONFIG);
   }
 
   const Size static_pool_size = *thread_pool_static_pool_size;

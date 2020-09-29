@@ -716,11 +716,11 @@ inline bool VariableType_is_ranged(VariableType _type) {
 
 #define RX_CONSOLE_TRVAR(_type, _label, _name, _description, _min, _max, _initial) \
   static ::Rx::Global<::Rx::Console::Variable<_type>> _label \
-    {"cvars", (_name), (_name), (_description), (_min), (_max), (_initial)}
+    {"console", (_name), (_name), (_description), (_min), (_max), (_initial)}
 
 #define RX_CONSOLE_TUVAR(_type, _label, _name, _description, _initial) \
   static ::Rx::Global<::Rx::Console::Variable<_type>> _label \
-    {"cvars", (_name), (_name), (_description), (_initial)}
+    {"console", (_name), (_name), (_description), (_initial)}
 
 // helper macros to define console variables
 #define RX_CONSOLE_BVAR(_label, _name, _description, _initial) \

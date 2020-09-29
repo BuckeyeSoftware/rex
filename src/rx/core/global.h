@@ -9,7 +9,7 @@ namespace Rx {
 
 // 32-bit: 32 bytes
 // 64-bit: 64 bytes
-struct alignas(Memory::Allocator::k_alignment) GlobalNode {
+struct alignas(Memory::Allocator::ALIGNMENT) GlobalNode {
   template<typename T, typename... Ts>
   GlobalNode(const char* _group, const char* _name, Uninitialized<T>& _storage, Ts&&... _arguments);
 

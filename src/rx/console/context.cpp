@@ -22,8 +22,7 @@ static VariableReference* g_head RX_HINT_GUARDED_BY(g_lock);
 
 RX_LOG("console", logger);
 
-static GlobalGroup g_group_cvars{"cvars"};
-static GlobalGroup g_group_console{"console"};
+static GlobalGroup g_group_cvars{"console"};
 
 static bool type_check(VariableType _VariableType, Token::Type _token_type) {
   switch (_VariableType) {

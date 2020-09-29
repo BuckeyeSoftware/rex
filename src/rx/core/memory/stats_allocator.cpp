@@ -6,14 +6,14 @@
 
 namespace Rx::Memory {
 
-struct alignas(Allocator::k_alignment) Header {
+struct alignas(Allocator::ALIGNMENT) Header {
   Size size;
   Byte* base;
 };
 
 Byte* StatsAllocator::allocate(Size _size) {
   const auto rounded_size = round_to_alignment(_size);
-  const auto bytes = k_alignment + rounded_size + sizeof(Header);
+  const auto bytes = ALIGNMENT + rounded_size + sizeof(Header);
 
   auto base = m_allocator.allocate(bytes);
   if (RX_HINT_UNLIKELY(!base)) {
@@ -45,12 +45,12 @@ Byte* StatsAllocator::reallocate(void* _data, Size _size) {
   const auto old_header = reinterpret_cast<Header*>(_data) - 1;
   const auto old_size = old_header->size;
   const auto old_rounded_size = round_to_alignment(old_size);
-  const auto old_bytes = k_alignment + old_rounded_size + sizeof(Header);
+  const auto old_bytes = ALIGNMENT + old_rounded_size + sizeof(Header);
   const auto old_base = old_header->base;
 
   const auto new_size = _size;
   const auto new_rounded_size = round_to_alignment(new_size);
-  const auto new_bytes = k_alignment + new_rounded_size + sizeof(Header);
+  const auto new_bytes = ALIGNMENT + new_rounded_size + sizeof(Header);
   const auto new_base = m_allocator.reallocate(old_base, new_bytes);
   if (RX_HINT_UNLIKELY(!new_base)) {
     return nullptr;
@@ -84,7 +84,7 @@ void StatsAllocator::deallocate(void* _data) {
   const auto old_header = reinterpret_cast<Header*>(_data) - 1;
   const auto old_size = old_header->size;
   const auto old_rounded_size = round_to_alignment(old_size);
-  const auto old_bytes = k_alignment + old_rounded_size + sizeof(Header);
+  const auto old_bytes = ALIGNMENT + old_rounded_size + sizeof(Header);
   const auto old_base = old_header->base;
 
   {
