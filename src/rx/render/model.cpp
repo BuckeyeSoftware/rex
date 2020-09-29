@@ -1,6 +1,5 @@
 #include <stddef.h> // offsetof
 #include <string.h> // memcpy
-#include <stdio.h> // printf
 
 #include "rx/render/model.h"
 #include "rx/render/image_based_lighting.h"

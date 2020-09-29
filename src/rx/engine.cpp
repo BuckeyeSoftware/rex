@@ -105,6 +105,8 @@ RX_CONSOLE_IVAR(
   4096,
   1024);
 
+static Global<Filesystem::File> g_engine_log{"system", "log", "log.log", "wb"};
+
 Engine::Engine()
   : m_render_backend{nullptr}
   , m_render_frontend{nullptr}
@@ -113,10 +115,19 @@ Engine::Engine()
 }
 
 Engine::~Engine() {
+  // Force game to deinitialized now.
+  m_game = nullptr;
 
+  auto& allocator = Memory::SystemAllocator::instance();
+  allocator.destroy<Render::Frontend::Context>(m_render_frontend);
+  allocator.destroy<Render::Backend::Context>(m_render_backend);
 }
 
 bool Engine::init() {
+  if (!Log::subscribe(&g_engine_log)) {
+    return false;
+  }
+
   // Early initialization may need values loaded from the configuration file.
   static constexpr const char* CONFIG = "config.cfg";
   if (!m_console.load(CONFIG) && !m_console.save(CONFIG)) {
@@ -183,7 +194,6 @@ bool Engine::init() {
 
   // Try this as early as possible.
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-    printf("Failed to initialize SDL2: %s\n", SDL_GetError());
     return false;
   }
 
@@ -274,7 +284,6 @@ bool Engine::init() {
   }
 
   if (!window) {
-    printf("Failed to create window: %s\n", SDL_GetError());
     return false;
     // abort("failed to create window");
   }
@@ -298,13 +307,11 @@ bool Engine::init() {
   } else if (driver_name == "null") {
     m_render_backend = allocator.create<Render::Backend::Null>(allocator, reinterpret_cast<void*>(window));
   } else {
-    printf("Unsupported rendering backend %s\n", driver_name.data());
     return false;
     // abort("invalid driver");
   }
 
   if (!m_render_backend || !m_render_backend->init()) {
-    printf("Failed to initialize rendering backend\n");
     return false;
   }
 
@@ -320,7 +327,6 @@ bool Engine::init() {
     display_hdr->get());
 
   if (!m_render_frontend) {
-    printf("Failed to initialize rendering frontend\n");
     return false;
   }
 
@@ -331,7 +337,6 @@ bool Engine::init() {
   // Create the game instance...
   m_game = create(*m_render_frontend);
   if (!m_game || !m_game->on_init()) {
-    printf("Failed to initialize game\n");
     return false;
   }
 

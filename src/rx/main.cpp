@@ -1,5 +1,4 @@
 #include <signal.h> // signal, sig_atomic_t, SIG{INT,TERM,HUP,QUIT,KILL,PIPE,ALRM,STOP}
-#include <stdio.h>
 #include <stdlib.h> // malloc
 
 #include "rx/engine.h"
