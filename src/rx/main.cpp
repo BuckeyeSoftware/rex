@@ -204,57 +204,34 @@ int main(int _argc, char** _argv) {
     Globals::init();
 
     // Bind some useful console commands early
-    console.add_command("reset", "s", [&](const Vector<Console::Command::Argument>& _arguments) {
-      if (auto* variable = console.find_variable_by_name(_arguments[0].as_string)) {
+    console.add_command("reset", "s", [](Console::Context& console_, const Vector<Console::Command::Argument>& _arguments) {
+      if (auto* variable = console_.find_variable_by_name(_arguments[0].as_string)) {
         variable->reset();
         return true;
       }
       return false;
     });
 
-    console.add_command("clear", "", [&](const Vector<Console::Command::Argument>&) {
-      console.clear();
+    console.add_command("clear", "", [](Console::Context& console_, const Vector<Console::Command::Argument>&) {
+      console_.clear();
       return true;
     });
 
-    console.add_command("exit", "", [](const Vector<Console::Command::Argument>&) {
+    console.add_command("exit", "", [](Console::Context&, const Vector<Console::Command::Argument>&) {
       g_status = Game::Status::SHUTDOWN;
       return true;
     });
 
-    console.add_command("quit", "", [](const Vector<Console::Command::Argument>&) {
+    console.add_command("quit", "", [](Console::Context&, const Vector<Console::Command::Argument>&) {
       g_status = Game::Status::SHUTDOWN;
       return true;
     });
 
-    console.add_command("restart", "", [&](const Vector<Console::Command::Argument>&) {
+    console.add_command("restart", "", [](Console::Context&, const Vector<Console::Command::Argument>&) {
       g_status = Game::Status::RESTART;
       return true;
     });
 
-#if 0
-    // Replace SDL2s allocator with our system allocator so we can track it's
-    // memory usage.
-    SDL_SetMemoryFunctions(
-      [](Size _size) -> void* {
-        return Memory::SystemAllocator::instance().allocate(_size);
-      },
-      [](Size _size, Size _elements) -> void* {
-        Byte* data = Memory::SystemAllocator::instance().allocate(_size, _elements);
-        if (data) {
-          memset(data, 0, _size * _elements);
-          return data;
-        }
-        return nullptr;
-      },
-      [](void* _data, Size _size) -> void* {
-        return Memory::SystemAllocator::instance().reallocate(_data, _size);
-      },
-      [](void* _data){
-        Memory::SystemAllocator::instance().deallocate(_data);
-      }
-    );
-#endif
     SDL_SetMainReady();
 
     // The initial status is always |k_restart| so the restart loop can be

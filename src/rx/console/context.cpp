@@ -64,7 +64,7 @@ const Vector<String>& Context::lines() {
 }
 
 Command* Context::add_command(const String& _name, const char* _signature,
-  Function<bool(const Vector<Command::Argument>&)>&& _function)
+  Function<bool(Context& console_, const Vector<Command::Argument>&)>&& _function)
 {
   // Don't allow adding the same command multiple times.
   if (m_commands.find(_name)) {
@@ -133,7 +133,7 @@ bool Context::execute(const String& _contents) {
     }
   } else if (auto* command = m_commands.find(atom)) {
     tokens.erase(0, 1);
-    command->execute_tokens(tokens);
+    command->execute_tokens(*this, tokens);
   } else {
     print("^rerror: ^wCommand or variable \"%s\", not found", atom);
   }

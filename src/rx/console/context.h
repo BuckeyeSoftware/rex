@@ -22,7 +22,7 @@ struct Context {
   static VariableReference* add_variable(VariableReference* _reference);
 
   Command* add_command(const String& _name, const char* _signature,
-    Function<bool(const Vector<Command::Argument>&)>&& _function);
+    Function<bool(Context& console_, const Vector<Command::Argument>&)>&& _function);
 
   VariableReference* find_variable_by_name(const String& _name);
   VariableReference* find_variable_by_name(const char* _name);
