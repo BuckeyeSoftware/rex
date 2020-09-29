@@ -25,6 +25,15 @@ struct Event<R(Ts...)> {
   struct Handle {
     RX_MARK_NO_COPY(Handle);
 
+    // TODO(dweiler): Check if this breaks on MSVC like the one below,
+    // ideally these should be defined _outside_.
+    Handle& operator=(Handle&& handle_) {
+      m_event = Utility::exchange(handle_.m_event, nullptr);
+      m_index = Utility::exchange(handle_.m_index, 0);
+      return *this;
+    }
+
+    constexpr Handle();
     constexpr Handle(Event* _event, Size _index);
 
     // NOTE(dweiler): This is done inside this struct, rather than outside to avoid an ICE in MSVC
@@ -58,13 +67,18 @@ private:
 };
 
 template<typename R, typename... Ts>
+inline constexpr Event<R(Ts...)>::Handle::Handle()
+  : m_event{nullptr}
+  , m_index{0}
+{
+}
+
+template<typename R, typename... Ts>
 inline constexpr Event<R(Ts...)>::Handle::Handle(Event<R(Ts...)>* _event, Size _index)
   : m_event{_event}
   , m_index{_index}
 {
 }
-
-
 
 template<typename R, typename... Ts>
 inline Event<R(Ts...)>::Handle::~Handle() {

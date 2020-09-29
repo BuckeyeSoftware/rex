@@ -28,19 +28,16 @@
 #include "rx/core/math/ceil.h"
 #include "rx/core/math/floor.h"
 
-extern "C" {
-	static inline float floorf(float x) {
-		return Rx::Math::floor(x);
-	}
-}
-
-// #define floorf(x) Rx::Math::floor(x)
+#define floorf(x) Rx::Math::floor(x)
 
 #include "nanovg.h"
 #define FONTSTASH_IMPLEMENTATION
+// #define FONTSTASH_FLOOR
 #include "fontstash.h"
 //#define STB_IMAGE_IMPLEMENTATION
+extern "C" {
 #include "stb_image.h"
+}
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4100)  // unreferenced formal parameter

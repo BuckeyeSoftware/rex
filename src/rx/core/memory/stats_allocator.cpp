@@ -6,7 +6,7 @@
 
 namespace Rx::Memory {
 
-struct Header {
+struct alignas(16) Header {
   // requested allocation size, the actual size is round_to_alignment(size) + sizeof(header) + k_alignment
   Size size;
   Byte* base;

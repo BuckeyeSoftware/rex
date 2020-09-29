@@ -123,7 +123,7 @@ private:
       }
       break;
     case StorageMode::TRAITS:
-      return (sizeof(T) << 32_u64) | alignof(T);
+      return (Uint64(sizeof(T)) << 32_u64) | alignof(T);
     }
     return 0;
   }

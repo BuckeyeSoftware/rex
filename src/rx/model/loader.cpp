@@ -121,6 +121,8 @@ bool Loader::parse(const JSON& _definition) {
   // concurrency::thread_pool pool{m_allocator, 32};
 
   // Clear incase we're being run multiple times to change.
+  m_materials.clear();
+
   Concurrency::Mutex mutex;
   Concurrency::WaitGroup group{materials.size()};
   materials.each([&](const JSON& _material) {
@@ -137,6 +139,7 @@ bool Loader::parse(const JSON& _definition) {
     });
   });
   group.wait();
+
   return true;
 }
 

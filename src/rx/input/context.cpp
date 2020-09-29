@@ -80,7 +80,7 @@ int Context::update(Float32 _delta_time) {
 void Context::handle_event(const Event& _event) {
   switch (_event.type) {
   case Event::Type::k_none:
-    RX_HINT_UNREACHABLE();
+    break;
   case Event::Type::k_keyboard:
     m_keyboard.update_key(_event.as_keyboard.down, _event.as_keyboard.scan_code,
       _event.as_keyboard.symbol);
