@@ -92,7 +92,7 @@ struct TestGame
     return true;
   }
 
-  virtual Status on_update(Console::Context& console_, Input::Context& input_) {
+  virtual bool on_update(Console::Context& console_, Input::Context& input_) {
     static auto display_resolution =
       console_.find_variable_by_name("display.resolution")->cast<Math::Vec2i>();
     static auto display_swap_interval =
@@ -108,7 +108,6 @@ struct TestGame
       Float32 move_speed{0.0f};
       const Float32 sens{0.2f};
       const auto &delta = input_.mouse().movement();
-
 
       Math::Vec3f move{static_cast<Float32>(delta.y) * sens, static_cast<Float32>(delta.x) * sens, 0.0f};
       m_camera.rotate = m_camera.rotate + move;
@@ -152,7 +151,7 @@ struct TestGame
     }
 
     if (input_.keyboard().is_released(Input::ScanCode::k_escape)) {
-      return Status::SHUTDOWN;
+      return false;
     }
 
     if (input_.keyboard().is_released(Input::ScanCode::k_f12)) {
@@ -171,7 +170,7 @@ struct TestGame
 
     m_console.update(console_, input_);
 
-    return Status::RUNNING;
+    return true;
   }
 
   virtual bool on_render(Console::Context& console_) {

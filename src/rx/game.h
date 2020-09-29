@@ -12,14 +12,8 @@ namespace Input { struct Context; }
 struct Game {
   RX_MARK_INTERFACE(Game);
 
-  enum class Status {
-    RUNNING,
-    RESTART,
-    SHUTDOWN
-  };
-
   virtual bool on_init() = 0;
-  virtual Status on_update(Console::Context& console_, Input::Context& _input) = 0;
+  virtual bool on_update(Console::Context& console_, Input::Context& _input) = 0;
   virtual bool on_render(Console::Context& console_) = 0;
   virtual void on_resize(const Math::Vec2z& _resolution) = 0;
 };

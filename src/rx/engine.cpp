@@ -124,9 +124,8 @@ Engine::~Engine() {
 }
 
 bool Engine::init() {
-  if (!Log::subscribe(&g_engine_log)) {
-    return false;
-  }
+  Log::subscribe(&g_engine_log);
+    // return false;
 
   // Early initialization may need values loaded from the configuration file.
   static constexpr const char* CONFIG = "config.cfg";
@@ -371,11 +370,6 @@ bool Engine::init() {
 }
 
 Engine::Status Engine::run() {
-  // Something externally modified the running status.
-  if (m_status != Status::RUNNING) {
-    return m_status;
-  }
-
   // Process all events from SDL.
   for (SDL_Event event; SDL_PollEvent(&event);) {
     Input::Event input;
@@ -449,20 +443,8 @@ Engine::Status Engine::run() {
   }
 
   // This can be rate limited (e.g lock 60fps).
-  const auto status = m_game->on_update(m_console, m_input);
-
-  // Update |m_status| based on the game state. This copy of status
-  // is necessary if this is rate limited.
-  switch (status) {
-  case Game::Status::RESTART:
-    m_status = Status::RESTART;
-    break;
-  case Game::Status::SHUTDOWN:
+  if (!m_game->on_update(m_console, m_input)) {
     m_status = Status::SHUTDOWN;
-    break;
-  case Game::Status::RUNNING:
-    m_status = Status::RUNNING;
-    break;
   }
 
   // Update the input system.
