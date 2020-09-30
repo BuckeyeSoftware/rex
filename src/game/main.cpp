@@ -251,6 +251,8 @@ struct TestGame
 
   void on_resize(const Math::Vec2z& _dimensions) {
     m_gbuffer.resize(_dimensions);
+    m_copy_pass.attach_depth_stencil(m_gbuffer.depth_stencil());
+    m_copy_pass.resize(_dimensions);
     m_indirect_lighting_pass.resize(_dimensions);
     m_frontend.resize(_dimensions);
   }

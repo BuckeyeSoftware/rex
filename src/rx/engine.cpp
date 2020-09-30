@@ -409,7 +409,8 @@ Engine::Status Engine::run() {
     case SDL_WINDOWEVENT:
       switch (event.window.event) {
       case SDL_WINDOWEVENT_SIZE_CHANGED:
-        display_resolution->set({event.window.data1, event.window.data2});
+        display_resolution->set({event.window.data1, event.window.data2}, false);
+        m_game->on_resize({event.window.data1, event.window.data2});
         break;
       case SDL_WINDOWEVENT_MOVED:
         {
