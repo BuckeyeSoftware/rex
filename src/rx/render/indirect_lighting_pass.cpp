@@ -80,7 +80,7 @@ void IndirectLightingPass::create(const Math::Vec2z& _dimensions) {
 
   m_target = m_frontend->create_target(RX_RENDER_TAG("indirect lighting pass"));
   m_target->attach_texture(m_texture, 0);
-  m_target->attach_depth_stencil(m_gbuffer->depth_stencil());
+  // m_target->attach_depth_stencil(m_gbuffer->depth_stencil());
   m_frontend->initialize_target(RX_RENDER_TAG("indirect lighting pass"), m_target);
 }
 

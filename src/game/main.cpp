@@ -13,6 +13,7 @@
 
 #include "rx/render/indirect_lighting_pass.h"
 #include "rx/render/lens_distortion_pass.h"
+#include "rx/render/copy_pass.h"
 
 #include "rx/hud/console.h"
 #include "rx/hud/frame_graph.h"
@@ -66,6 +67,7 @@ struct TestGame
     , m_ibl{&m_frontend}
     , m_indirect_lighting_pass{&m_frontend, &m_gbuffer, &m_ibl}
     , m_lens_distortion_pass{&m_frontend}
+    , m_copy_pass{&m_frontend}
   {
   }
 
@@ -79,9 +81,11 @@ struct TestGame
 
     m_indirect_lighting_pass.create(m_frontend.swapchain()->dimensions());
     m_lens_distortion_pass.create(m_frontend.swapchain()->dimensions());
+    m_copy_pass.attach_depth_stencil(m_gbuffer.depth_stencil());
+    m_copy_pass.create(m_frontend.swapchain()->dimensions());
 
     Render::Model model{&m_frontend};
-    if (model.load("base/models/san-miguel/san-miguel.json5")) {
+    if (model.load("base/models/mrfixit/mrfixit.json5")) {
       m_models.push_back(Utility::move(model));
     }
 
@@ -207,19 +211,23 @@ struct TestGame
       model_.render_skeleton({}, &m_immediate3D);
     });
 
+    // Render indirect lighting pass.
     m_indirect_lighting_pass.render(m_camera);
 
-    // Render the skybox absolutely last.
-    m_skybox.render(m_indirect_lighting_pass.target(), m_camera.view(), m_camera.projection);
+    // Copy the indirect result.
+    m_copy_pass.render(m_indirect_lighting_pass.texture());
+
+    // Render the skybox absolutely last into the copy pass target.
+    m_skybox.render(m_copy_pass.target(), m_camera.view(), m_camera.projection);
 
     // Then 3D immediates.
-    m_immediate3D.render(m_indirect_lighting_pass.target(), m_camera.view(), m_camera.projection);
+    m_immediate3D.render(m_copy_pass.target(), m_camera.view(), m_camera.projection);
 
     // Lens distortion pass.
     m_lens_distortion_pass.distortion = *lens_distortion;
     m_lens_distortion_pass.dispersion = *lens_dispersion;
     m_lens_distortion_pass.scale = *lens_scale;
-    m_lens_distortion_pass.render(m_indirect_lighting_pass.texture());
+    m_lens_distortion_pass.render(m_copy_pass.texture());
 
     // Blit lens distortion pass to backbuffer
     m_frontend.blit(
@@ -265,6 +273,7 @@ struct TestGame
 
   Render::IndirectLightingPass m_indirect_lighting_pass;
   Render::LensDistortionPass m_lens_distortion_pass;
+  Render::CopyPass m_copy_pass;
 
   Math::Camera m_camera;
 };

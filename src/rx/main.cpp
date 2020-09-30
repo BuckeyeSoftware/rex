@@ -1,12 +1,12 @@
 #include <signal.h> // signal, sig_atomic_t, SIG{INT,TERM,HUP,QUIT,KILL,PIPE,ALRM,STOP}
 #include <stdlib.h> // malloc
 
+#include "rx/engine.h"
+
 #if defined(RX_PLATFORM_EMSCRIPTEN)
 #include <emscripten.h>
 #include <emscripten/html5.h>
 #endif // defined(RX_PLATFORM_EMSCRIPTEN)
-
-#include "rx/engine.h"
 
 [[maybe_unused]] static volatile sig_atomic_t g_running = 1;
 
