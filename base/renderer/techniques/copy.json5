@@ -1,0 +1,38 @@
+{
+  name: "copy",
+  uniforms: [
+    { name: "u_color", type: "sampler2D", value: 0 }
+  ],
+  shaders: [
+    {
+      type: "vertex",
+      outputs: [
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      imports: [
+        "fullscreen_triangle"
+      ],
+      source: "
+        void main() {
+          vec4f triangle = fullscreen_triangle();
+          rx_position = vec4f(triangle.xy, 0.0, 1.0);
+          vs_coordinate = triangle.zw;
+        }
+      "
+    },
+    {
+      type: "fragment",
+      inputs: [
+        { name: "vs_coordinate", type: "vec2f" }
+      ],
+      outputs: [
+        { name: "fs_color",      type: "vec4f" }
+      ],
+      source: "
+        void main() {
+          fs_color = vec4f(rx_texture2D(u_color, vs_coordinate).rgb, 1.0);
+        }
+      "
+    }
+  ]
+}
