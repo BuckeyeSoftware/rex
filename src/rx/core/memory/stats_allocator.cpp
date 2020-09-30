@@ -6,73 +6,76 @@
 
 namespace Rx::Memory {
 
+// We waste some memory here as the header must be a multiple of the |ALIGNMENT|
+// yet |Header::request_bytes| is typically half the size of that.
+//
+// There's room to embed additional information here if we ever need to store
+// more statistics about the given allocation.
 struct alignas(Allocator::ALIGNMENT) Header {
-  Size size;
-  Byte* base;
+  Size request_bytes;
 };
 
-Byte* StatsAllocator::allocate(Size _size) {
-  const auto rounded_size = round_to_alignment(_size);
-  const auto bytes = ALIGNMENT + rounded_size + sizeof(Header);
+static_assert(sizeof(Header) == Allocator::ALIGNMENT);
+static_assert(alignof(Header) == Allocator::ALIGNMENT);
 
-  auto base = m_allocator.allocate(bytes);
+static constexpr inline Size actual_bytes_for_request(Size _request_bytes) {
+  return Allocator::round_to_alignment(_request_bytes + sizeof(Header));
+}
+
+Byte* StatsAllocator::allocate(Size _request_bytes) {
+  const auto actual_bytes = actual_bytes_for_request(_request_bytes);
+  const auto base = m_allocator.allocate(actual_bytes);
   if (RX_HINT_UNLIKELY(!base)) {
     return nullptr;
   }
 
-  auto header = reinterpret_cast<Header*>(round_to_alignment(base));
-  header->size = _size;
-  header->base = base;
+  const auto header = reinterpret_cast<Header*>(base);
+  header->request_bytes = _request_bytes;
 
-  auto aligned = reinterpret_cast<Byte*>(header + 1);
-
+  const auto aligned = reinterpret_cast<Byte*>(header + 1);
   {
     Concurrency::ScopeLock locked{m_lock};
     m_statistics.allocations++;
-    m_statistics.used_request_bytes += _size;
-    m_statistics.used_actual_bytes += bytes;
+    m_statistics.used_request_bytes += _request_bytes;
+    m_statistics.used_actual_bytes += actual_bytes;
     m_statistics.peak_request_bytes = Algorithm::max(m_statistics.peak_request_bytes, m_statistics.used_request_bytes);
     m_statistics.peak_actual_bytes = Algorithm::max(m_statistics.peak_actual_bytes, m_statistics.used_actual_bytes);
   }
   return aligned;
 }
 
-Byte* StatsAllocator::reallocate(void* _data, Size _size) {
+Byte* StatsAllocator::reallocate(void* _data, Size _new_request_bytes) {
   if (RX_HINT_UNLIKELY(!_data)) {
-    return allocate(_size);
+    return allocate(_new_request_bytes);
   }
 
   const auto old_header = reinterpret_cast<Header*>(_data) - 1;
-  const auto old_size = old_header->size;
-  const auto old_rounded_size = round_to_alignment(old_size);
-  const auto old_bytes = ALIGNMENT + old_rounded_size + sizeof(Header);
-  const auto old_base = old_header->base;
+  const auto old_request_bytes = old_header->request_bytes;
+  const auto old_actual_bytes = actual_bytes_for_request(old_request_bytes);
+  const auto old_base = reinterpret_cast<Byte*>(old_header);
 
-  const auto new_size = _size;
-  const auto new_rounded_size = round_to_alignment(new_size);
-  const auto new_bytes = ALIGNMENT + new_rounded_size + sizeof(Header);
-  const auto new_base = m_allocator.reallocate(old_base, new_bytes);
+  const auto new_actual_bytes = round_to_alignment(_new_request_bytes + sizeof(Header));
+  const auto new_base = m_allocator.reallocate(old_base, new_actual_bytes);
   if (RX_HINT_UNLIKELY(!new_base)) {
     return nullptr;
   }
 
-  const auto new_header = reinterpret_cast<Header*>(round_to_alignment(new_base));
-  new_header->size = new_size;
-  new_header->base = new_base;
+  const auto new_header = reinterpret_cast<Header*>(new_base);
+  new_header->request_bytes = _new_request_bytes;
 
   const auto aligned = reinterpret_cast<Byte*>(new_header + 1);
-
   {
     Concurrency::ScopeLock locked{m_lock};
     m_statistics.request_reallocations++;
     if (new_base == old_base) {
       m_statistics.actual_reallocations++;
     }
-    m_statistics.used_request_bytes -= old_size;
-    m_statistics.used_actual_bytes -= old_bytes;
-    m_statistics.used_request_bytes += new_size;
-    m_statistics.used_actual_bytes += new_bytes;
+    m_statistics.used_request_bytes -= old_request_bytes;
+    m_statistics.used_actual_bytes -= old_actual_bytes;
+    m_statistics.used_request_bytes += _new_request_bytes;
+    m_statistics.used_actual_bytes += new_actual_bytes;
   }
+
   return aligned;
 }
 
@@ -82,16 +85,15 @@ void StatsAllocator::deallocate(void* _data) {
   }
 
   const auto old_header = reinterpret_cast<Header*>(_data) - 1;
-  const auto old_size = old_header->size;
-  const auto old_rounded_size = round_to_alignment(old_size);
-  const auto old_bytes = ALIGNMENT + old_rounded_size + sizeof(Header);
-  const auto old_base = old_header->base;
+  const auto old_request_bytes = old_header->request_bytes;
+  const auto old_actual_bytes = actual_bytes_for_request(old_request_bytes);
+  const auto old_base = reinterpret_cast<Byte*>(old_header);
 
   {
     Concurrency::ScopeLock locked{m_lock};
     m_statistics.deallocations++;
-    m_statistics.used_request_bytes -= old_size;
-    m_statistics.used_actual_bytes -= old_bytes;
+    m_statistics.used_request_bytes -= old_request_bytes;
+    m_statistics.used_actual_bytes -= old_actual_bytes;
   }
 
   m_allocator.deallocate(old_base);

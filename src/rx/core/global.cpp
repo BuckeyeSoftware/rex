@@ -1,5 +1,5 @@
 #include <string.h> // strcmp
-#include <stdlib.h> // malloc, free
+#include <stdlib.h> // atexit
 
 #include "rx/core/global.h"
 #include "rx/core/log.h"
@@ -15,8 +15,22 @@ static Concurrency::SpinLock g_lock;
 
 static GlobalGroup g_group_system{"system"};
 
+// Early initialization of globals depends on heap allocation for parameters to
+// globals. Since HeapAllocator is a global itself and implements the necessary
+// functionality for ensuring memory is always aligned by Allocator::ALIGNMENT
+// we need to implement a boot strapping allocator that ensures this alignment.
 Byte* GlobalNode::allocate(Size _size) {
-  return static_cast<Byte*>(malloc(_size));
+  auto offset = Memory::Allocator::ALIGNMENT - 1 + sizeof(Byte*);
+  if (auto p1 = reinterpret_cast<Byte*>(malloc(_size + offset))) {
+    auto p2 = reinterpret_cast<Byte**>((reinterpret_cast<UintPtr>(p1) + offset) & ~(Memory::Allocator::ALIGNMENT- 1));
+    p2[-1] = p1;
+    return reinterpret_cast<Byte*>(p2);
+  }
+  return nullptr;
+}
+
+void GlobalNode::deallocate(Byte* _data) {
+  free(reinterpret_cast<void**>(_data)[-1]);
 }
 
 void GlobalNode::init() {
@@ -38,7 +52,7 @@ void GlobalNode::fini() {
 
   if (flags & ARGUMENTS) {
     m_storage_dispatch(StorageMode::FINI, data(), m_argument_store.as_ptr());
-    free(m_argument_store.as_ptr());
+    deallocate(m_argument_store.as_ptr());
     m_argument_store = nullptr;
   } else {
     m_storage_dispatch(StorageMode::FINI, data(), nullptr);

@@ -129,6 +129,7 @@ private:
   }
 
   Byte* allocate(Size _size);
+  void deallocate(Byte* _data);
 
   // Flag is set in |m_argument_store|.
   enum : Byte {

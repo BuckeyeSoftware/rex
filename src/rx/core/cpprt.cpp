@@ -2,6 +2,8 @@
 #include "rx/core/assert.h"
 #include "rx/core/abort.h"
 
+// These cannot be disabled in debug builds under Emscripten.
+#if !defined(RX_PLATFORM_EMSCRIPTEN) || (defined(RX_PLATFORM_EMSCRIPTEN) && !defined(RX_DEBUG))
 void* operator new(Rx::Size) {
   Rx::abort("operator new is disabled");
 }
@@ -25,6 +27,7 @@ void operator delete[](void*) {
 void operator delete[](void*, Rx::Size) {
   Rx::abort("operator delete[] is disabled");
 }
+#endif
 
 extern "C" {
   void __cxa_pure_virtual() {

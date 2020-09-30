@@ -32,15 +32,18 @@ struct Allocator {
 
   Byte* allocate(Size _size, Size _count);
 
-  static UintPtr round_to_alignment(UintPtr _ptr_or_size);
-  static Byte* round_to_alignment(Byte* _ptr);
+  static constexpr UintPtr round_to_alignment(UintPtr _ptr_or_size);
+
+  template<typename T>
+  static Byte* round_to_alignment(T* _ptr);
 };
 
-inline UintPtr Allocator::round_to_alignment(UintPtr _ptr_or_size) {
+inline constexpr UintPtr Allocator::round_to_alignment(UintPtr _ptr_or_size) {
   return (_ptr_or_size + (ALIGNMENT - 1)) & ~(ALIGNMENT - 1);
 }
 
-inline Byte* Allocator::round_to_alignment(Byte* _ptr) {
+template<typename T>
+inline Byte* Allocator::round_to_alignment(T* _ptr) {
   return reinterpret_cast<Byte*>(round_to_alignment(reinterpret_cast<UintPtr>(_ptr)));
 }
 

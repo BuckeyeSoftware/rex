@@ -42,7 +42,7 @@ enum class CommandType : Uint8 {
   PROFILE
 };
 
-struct alignas(16) CommandHeader {
+struct alignas(Memory::Allocator::ALIGNMENT) CommandHeader {
   struct Info {
     constexpr Info(const char *_description, const SourceLocation &_source_location)
       : description{_description}
