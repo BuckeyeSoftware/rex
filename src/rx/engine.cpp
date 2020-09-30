@@ -61,7 +61,7 @@ RX_CONSOLE_SVAR(
   render_driver,
   "render.driver",
   "which driver to use for renderer (gl3, gl4, es3, null)",
-  "es3");
+  "gl4");
 
 RX_CONSOLE_BVAR(
   profile_cpu,
