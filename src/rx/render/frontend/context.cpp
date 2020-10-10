@@ -632,6 +632,13 @@ void Context::draw(
     RX_ASSERT(_buffer->format().is_indexed(), "base vertex draw requires indexed buffer");
   }
 
+  // Check for feedback loops.
+  const auto n_draw_textures = _draw_textures.size();
+  for (Size i = 0; i < n_draw_textures; i++) {
+    RX_ASSERT(!_target->has_feedback(_draw_textures[i], _draw_buffers),
+      "draw call forms texture <=> target feedback loop");
+  }
+
   m_vertices[0] += _count * instances;
 
   switch (_primitive_type) {

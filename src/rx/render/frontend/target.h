@@ -8,6 +8,7 @@
 namespace Rx::Render::Frontend {
 
 struct Context;
+struct Buffers;
 
 struct Target : Resource {
   Target(Context* _frontend);
@@ -31,6 +32,8 @@ struct Target : Resource {
         TextureCM::Face face;
       } as_textureCM;
     };
+
+    bool texture_is(const Texture* _texture) const;
   };
 
   // request target have depth attachment |_format| with size |_dimensions|
@@ -74,6 +77,8 @@ struct Target : Resource {
   bool has_stencil() const;
   bool has_depth_stencil() const;
 
+  bool has_feedback(const Texture* _texture, const Buffers& _draw_buffers) const;
+
   bool owns_depth() const;
   bool owns_stencil() const;
   bool owns_depth_stencil() const;
@@ -83,6 +88,9 @@ struct Target : Resource {
   void validate() const;
 
 private:
+  bool has_texture(const Texture* _texture) const;
+  bool has_cubemap_face(const TextureCM* _texture, TextureCM::Face _face) const;
+
   void destroy();
 
   friend struct Context;
@@ -111,6 +119,18 @@ private:
   int m_flags;
 };
 
+// Target::Attachment
+inline bool Target::Attachment::texture_is(const Texture* _texture) const {
+  switch (kind) {
+  case Type::k_texture2D:
+    return as_texture2D.texture == _texture;
+  case Type::k_textureCM:
+    return as_textureCM.texture == _texture;
+  }
+  RX_HINT_UNREACHABLE();
+}
+
+// Target
 inline void Target::attach_texture(TextureCM* _texture, Size _level) {
   attach_texture(_texture, TextureCM::Face::k_right, _level);  // +x
   attach_texture(_texture, TextureCM::Face::k_left, _level);   // -x

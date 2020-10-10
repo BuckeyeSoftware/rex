@@ -190,12 +190,7 @@ void Target::attach_texture(Texture2D* _texture, Size _level) {
     RX_ASSERT(dimensions == m_dimensions, "invalid dimensions");
   }
 
-  m_attachments.each_fwd([_texture](const Attachment& _attachment) {
-    if (_attachment.kind == Attachment::Type::k_texture2D) {
-      RX_ASSERT(_texture != _attachment.as_texture2D.texture,
-        "texture already attached");
-    }
-  });
+  RX_ASSERT(!has_texture(_texture), "texture already attached");
 
   if (!(m_flags & k_dimensions)) {
     m_dimensions = dimensions;
@@ -224,14 +219,7 @@ void Target::attach_texture(TextureCM* _texture, TextureCM::Face _face, Size _le
   }
 
   // Don't allow attaching the same cubemap face multiple times.
-  m_attachments.each_fwd([_texture, _face](const Attachment& _attachment) {
-    if (_attachment.kind == Attachment::Type::k_textureCM
-      && _attachment.as_textureCM.texture == _texture)
-    {
-      RX_ASSERT(_attachment.as_textureCM.face != _face,
-        "texture already attached");
-    }
-  });
+  RX_ASSERT(!has_cubemap_face(_texture, _face), "texture already attached");
 
   if (!(m_flags & k_dimensions)) {
     m_dimensions = dimensions;
@@ -291,5 +279,52 @@ void Target::update_resource_usage() {
 
   Resource::update_resource_usage(static_cast<Size>(usage));
 }
+
+bool Target::has_texture(const Texture* _texture) const {
+  if (_texture->is_color_format()) {
+    auto find = [_texture](const Attachment& _attachment) {
+      return _attachment.texture_is(_texture);
+    };
+    return m_attachments.find_if(find) != -1_z;
+  } else if (_texture->is_depth_stencil_format()) {
+    return has_depth_stencil() && m_depth_stencil_texture == _texture;
+  } else if (_texture->is_depth_format()) {
+    return has_depth() && m_depth_texture == _texture;
+  } else if (_texture->is_stencil_format()) {
+    return has_stencil() && m_stencil_texture == _texture;
+  }
+  return false;
+}
+
+bool Target::has_cubemap_face(const TextureCM* _texture, TextureCM::Face _face) const {
+  const auto n_attachments = m_attachments.size();
+  for (Size i = 0; i < n_attachments; i++) {
+    const auto& attachment = m_attachments[i];
+    if (attachment.texture_is(_texture) && attachment.as_textureCM.face == _face) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool Target::has_feedback(const Texture* _texture, const Buffers& _draw_buffers) const {
+  if (_texture->is_color_format()) {
+    const auto n_draw_buffers = _draw_buffers.size();
+    for (Size i = 0; i < n_draw_buffers; i++) {
+      const auto& attachment = m_attachments[_draw_buffers[i]];
+      if (attachment.texture_is(_texture)) {
+        return true;
+      }
+    }
+  } else if (_texture->is_depth_stencil_format()) {
+    return has_depth_stencil() && m_depth_stencil_texture == _texture;
+  } else if (_texture->is_depth_format()) {
+    return has_depth() && m_depth_texture == _texture;
+  } else if (_texture->is_stencil_format()) {
+    return has_stencil() && m_stencil_texture == _texture;
+  }
+  return false;
+}
+
 
 } // namespace rx::render::frontend
