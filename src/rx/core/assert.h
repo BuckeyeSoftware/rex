@@ -5,7 +5,7 @@
 
 namespace Rx {
 
-RX_API [[noreturn]] void assert_message(const char* _expression,
+[[noreturn]] RX_API void assert_message(const char* _expression,
   const SourceLocation& _source_location, const char* _message, bool _truncated);
 
 template<typename... Ts>
