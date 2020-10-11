@@ -18,7 +18,7 @@ namespace Rx {
 
 // 32-bit: 8 bytes
 // 64-bit: 16 bytes
-struct JSON {
+struct RX_API JSON {
   constexpr JSON();
   JSON(Memory::Allocator& _allocator, const char* _contents, Size _length);
   JSON(Memory::Allocator& _allocator, const char* _contents);

@@ -7,7 +7,7 @@
 
 namespace Rx::Memory {
 
-struct Allocator {
+struct RX_API Allocator {
   RX_MARK_INTERFACE(Allocator);
 
   static constexpr const Size ALIGNMENT = 16;

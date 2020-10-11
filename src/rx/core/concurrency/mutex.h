@@ -5,7 +5,7 @@
 
 namespace Rx::Concurrency {
 
-struct RX_HINT_LOCKABLE Mutex {
+struct RX_API RX_HINT_LOCKABLE Mutex {
   Mutex();
   ~Mutex();
 

@@ -8,7 +8,7 @@ namespace Rx::Concurrency {
 struct Mutex;
 struct RecursiveMutex;
 
-struct ConditionVariable {
+struct RX_API ConditionVariable {
   ConditionVariable();
   ~ConditionVariable();
 

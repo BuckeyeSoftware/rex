@@ -14,7 +14,7 @@ struct WideString;
 
 // 32-bit: 16 + k_small_string bytes
 // 64-bit: 32 + k_small_string bytes
-struct String {
+struct RX_API String {
   static constexpr const Size k_npos{-1_z};
   static constexpr const Size k_small_string{16};
 

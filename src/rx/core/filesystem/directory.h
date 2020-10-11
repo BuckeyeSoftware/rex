@@ -6,7 +6,7 @@
 
 namespace Rx::Filesystem {
 
-struct Directory {
+struct RX_API Directory {
   RX_MARK_NO_COPY(Directory);
 
   Directory(Memory::Allocator& _allocator, const char* _path);

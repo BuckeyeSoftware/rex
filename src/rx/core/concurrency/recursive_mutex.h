@@ -5,7 +5,7 @@
 
 namespace Rx::Concurrency {
 
-struct RX_HINT_LOCKABLE RecursiveMutex {
+struct RX_API RX_HINT_LOCKABLE RecursiveMutex {
   RecursiveMutex();
   ~RecursiveMutex();
 
