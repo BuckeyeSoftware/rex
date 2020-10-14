@@ -14,7 +14,7 @@ struct Game {
 
   virtual bool on_init() = 0;
   virtual bool on_update(Console::Context& console_, Input::Context& input_) = 0;
-  virtual bool on_render(Console::Context& console_, Input::Context& input_) = 0;
+  virtual bool on_render(Console::Context& console_) = 0;
   virtual void on_resize(const Math::Vec2z& _resolution) = 0;
 };
 
