@@ -7,8 +7,8 @@ namespace Rx::Input {
 struct Controller {
   Controller();
 
-  static constexpr const Size k_buttons{15};
-  static constexpr const Size k_axii{6};
+  static inline constexpr const Size BUTTONS = 15;
+  static inline constexpr const Size AXII = 6;
 
   enum class Button {
     k_a,
@@ -48,26 +48,26 @@ struct Controller {
   Float32 axis_value(Axis _axis) const;
 
 private:
-  enum {
-    k_pressed  = 1 << 0,
-    k_released = 1 << 1,
-    k_held     = 1 << 2
+  enum : Uint8 {
+    PRESSED  = 1 << 0,
+    RELEASED = 1 << 1,
+    HELD     = 1 << 2
   };
 
-  int m_buttons[k_buttons];
-  Float32 m_axis_values[k_axii];
+  Uint8 m_buttons[BUTTONS];
+  Float32 m_axis_values[AXII];
 };
 
 inline bool Controller::is_pressed(Button _button) const {
-  return m_buttons[static_cast<Size>(_button)] & k_pressed;
+  return m_buttons[static_cast<Size>(_button)] & PRESSED;
 }
 
 inline bool Controller::is_released(Button _button) const {
-  return m_buttons[static_cast<Size>(_button)] & k_released;
+  return m_buttons[static_cast<Size>(_button)] & RELEASED;
 }
 
 inline bool Controller::is_held(Button _button) const {
-  return m_buttons[static_cast<Size>(_button)] & k_held;
+  return m_buttons[static_cast<Size>(_button)] & HELD;
 }
 
 inline Float32 Controller::axis_value(Axis _axis) const {

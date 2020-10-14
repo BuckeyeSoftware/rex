@@ -44,51 +44,72 @@ RX_CONSOLE_IVAR(
   8);
 
 RX_CONSOLE_V4FVAR(
-        console_background_color,
-        "console.background_color",
-        "background color of console",
-        Math::Vec4f(0.0f, 0.0f, 0.0f, 0.0f),
-        Math::Vec4f(1.0f, 1.0f, 1.0f, 1.0f),
-        Math::Vec4f(0.1176f, 0.1176f, 0.1176f, 1.0f));
+  console_background_color,
+  "console.background_color",
+  "background color of console",
+  Math::Vec4f(0.0f, 0.0f, 0.0f, 0.0f),
+  Math::Vec4f(1.0f, 1.0f, 1.0f, 1.0f),
+  Math::Vec4f(0.1176f, 0.1176f, 0.1176f, 1.0f));
 
 RX_CONSOLE_V4FVAR(
-        console_text_input_bakckgound_color,
-        "console.text_input_background_color",
-        "background color for console text input",
-        Math::Vec4f(0.0f, 0.0f, 0.0f, 0.0f),
-        Math::Vec4f(1.0f, 1.0f, 1.0f, 1.0f),
-        Math::Vec4f(0x29 / 255.0f, 0x29 / 255.0f, 0x29 / 255.0f, 1.0f));
+  console_text_input_bakckgound_color,
+  "console.text_input_background_color",
+  "background color for console text input",
+  Math::Vec4f(0.0f, 0.0f, 0.0f, 0.0f),
+  Math::Vec4f(1.0f, 1.0f, 1.0f, 1.0f),
+  Math::Vec4f(0x29 / 255.0f, 0x29 / 255.0f, 0x29 / 255.0f, 1.0f));
 
 RX_CONSOLE_V4FVAR(
-        console_selection_highlight_background_color,
-        "console.selection_highlight_background_color",
-        "console text selection highlight color",
-        Math::Vec4f(0.0f, 0.0f, 0.0f, 0.0f),
-        Math::Vec4f(1.0f, 1.0f, 1.0f, 1.0f),
-        Math::Vec4f(0.6784f, 0.8392f, 1.0f, 1.0f - 0.1490f));
+  console_selection_highlight_background_color,
+  "console.selection_highlight_background_color",
+  "console text selection highlight color",
+  Math::Vec4f(0.0f, 0.0f, 0.0f, 0.0f),
+  Math::Vec4f(1.0f, 1.0f, 1.0f, 1.0f),
+  Math::Vec4f(0.6784f, 0.8392f, 1.0f, 1.0f - 0.1490f));
 
-Console::Console(Render::Immediate2D* _immediate)
+Console::Console(Render::Immediate2D* _immediate, Input::Context& input_)
   : m_immediate{_immediate}
+  , m_input_context{input_}
+  , m_input_layer{&m_input_context}
+  , m_selection{0}
 {
+  m_input_layer.capture_text(&m_text);
 }
 
-void Console::update(Rx::Console::Context& console_, Input::Context& input_) {
+void Console::update(Rx::Console::Context& console_) {
+  const auto& dimensions = m_immediate->frontend()->swapchain()->dimensions();
+
+  const Float32 padding = 10.0f;
+  const Float32 font_size = static_cast<Float32>(*console_font_size);
+  const Size console_lines = static_cast<Size>(*console_output_lines);
+
+  Float32 height = 0.0f;
+  height += console_lines * font_size + padding * 2.0f; // Printable area
+  height += 1.0f;                                       // Single pixel line
+  height += font_size * 2.0f;                           // Text box
+  height += 1.0f;                                       // Singlle pixel line
+
+  // Resize and mosue the input layer accordingly.
+  m_input_layer.resize({dimensions.w, Size(height)});
+  m_input_layer.move({0, dimensions.h - Size(height)});
+
   // Make a copy of the console line output for rendering.
   m_lines = console_.lines();
 
   bool made_selection = false;
-  if (input_.keyboard().is_pressed(Input::ScanCode::k_grave)) {
-    input_.capture_text(input_.active_text() == &m_text ? nullptr : &m_text);
-    input_.capture_mouse(input_.active_text() ? false : true);
-  } else if (input_.keyboard().is_pressed(Input::ScanCode::k_down)) {
+  if (m_input_layer.keyboard().is_pressed(Input::ScanCode::k_grave)) {
+    // The grave character will be given during text events. Just erase it.
+    m_text.erase();
+    m_input_context.root_layer().raise();
+  } else if (m_input_layer.keyboard().is_pressed(Input::ScanCode::k_down)) {
     m_selection++;
-  } else if (input_.keyboard().is_pressed(Input::ScanCode::k_up)) {
+  } else if (m_input_layer.keyboard().is_pressed(Input::ScanCode::k_up)) {
     if (m_selection) {
       m_selection--;
     }
-  } else if (input_.keyboard().is_pressed(Input::ScanCode::k_tab)) {
+  } else if (m_input_layer.keyboard().is_pressed(Input::ScanCode::k_tab)) {
     made_selection = true;
-  } else if (input_.keyboard().is_pressed(Input::ScanCode::k_return)) {
+  } else if (m_input_layer.keyboard().is_pressed(Input::ScanCode::k_return)) {
     console_.execute(m_text.contents());
     m_text.clear();
   }
@@ -114,7 +135,7 @@ void Console::update(Rx::Console::Context& console_, Input::Context& input_) {
 }
 
 void Console::render() {
-  if (!m_text.is_active()) {
+  if (!m_input_layer.is_active()) {
     return;
   }
 

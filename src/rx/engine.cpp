@@ -10,8 +10,10 @@
 #include "rx/engine.h"
 #include "rx/display.h"
 
+#include "rx/core/filesystem/file.h"
+
 // TODO(dweiler): Game factory...
-extern Rx::Ptr<Rx::Game> create(Rx::Render::Frontend::Context&);
+extern Rx::Ptr<Rx::Game> create(Rx::Render::Frontend::Context&, Rx::Input::Context&);
 
 namespace Rx {
 
@@ -104,7 +106,6 @@ RX_CONSOLE_IVAR(
   32,
   4096,
   1024);
-
 static Global<Filesystem::File> g_engine_log{"system", "log", "log.log", "wb"};
 static constexpr const char* CONFIG = "config.cfg";
 
@@ -116,7 +117,7 @@ Engine::Engine()
 }
 
 Engine::~Engine() {
-  // Force game to deinitialized now.
+  // Force game to deinitialize now.
   m_game = nullptr;
 
   // Save the console configuration
@@ -128,10 +129,15 @@ Engine::~Engine() {
 
   // TODO(dweiler): Move to SDL_SubSystemInit rather than global.
   SDL_Quit();
+
+  // TODO(dweiler): See what is broken here?
+  Log::flush();
 }
 
 bool Engine::init() {
-  Log::subscribe(&g_engine_log);
+  if (!Log::subscribe(&g_engine_log)) {
+    return false;
+  }
 
   // These need to be initialized early for the console.
   Globals::find("console")->init();
@@ -290,6 +296,14 @@ bool Engine::init() {
     }
   }
 
+  // Get the actual created window dimensions and update the display resolution.
+  Math::Vec2i size;
+  SDL_GetWindowSize(window, &size.w, &size.h);
+  display_resolution->set(size);
+
+  // Notify the input system of the possible resize.
+  m_input.on_resize(size.cast<Size>());
+
   if (!window) {
     return false;
     // abort("failed to create window");
@@ -342,7 +356,7 @@ bool Engine::init() {
   m_render_frontend->swap();
 
   // Create the game instance...
-  m_game = create(*m_render_frontend);
+  m_game = create(*m_render_frontend, m_input);
   if (!m_game || !m_game->on_init()) {
     return false;
   }
@@ -359,6 +373,7 @@ bool Engine::init() {
     Math::Vec2i size;
     SDL_GetWindowSize(window, &size.w, &size.h);
     m_game->on_resize(size.cast<Size>());
+    m_input.on_resize(size.cast<Size>());
   });
 
   m_on_swap_interval_change = display_swap_interval->on_change([](Sint32 _value) {
@@ -371,6 +386,7 @@ bool Engine::init() {
 
   m_on_display_resolution_changed = display_resolution->on_change([&](const Math::Vec2i& _resolution) {
     m_game->on_resize(_resolution.cast<Size>());
+    m_input.on_resize(_resolution.cast<Size>());
     SDL_SetWindowSize(window, _resolution.w, _resolution.h);
   });
 
@@ -397,10 +413,19 @@ Engine::Status Engine::run() {
       input.type = Input::Event::Type::k_mouse_button;
       input.as_mouse_button.down = event.type == SDL_MOUSEBUTTONDOWN;
       input.as_mouse_button.button = event.button.button;
+      // Translate SDL's top-left coordinates to bottom-left coordinates.
+      input.as_mouse_button.position = {
+        event.button.x,
+        display_resolution->get().h - event.button.y};
       break;
     case SDL_MOUSEMOTION:
       input.type = Input::Event::Type::k_mouse_motion;
-      input.as_mouse_motion.value = {event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel};
+      // Translate SDL's top-left coordinates to bottom-left coordinates.
+      input.as_mouse_motion.value = {
+        event.motion.x,
+        display_resolution->get().h - event.motion.y,
+        event.motion.xrel,
+        event.motion.yrel};
       break;
     case SDL_MOUSEWHEEL:
       input.type = Input::Event::Type::k_mouse_scroll;
@@ -409,8 +434,11 @@ Engine::Status Engine::run() {
     case SDL_WINDOWEVENT:
       switch (event.window.event) {
       case SDL_WINDOWEVENT_SIZE_CHANGED:
-        display_resolution->set({event.window.data1, event.window.data2}, false);
-        m_game->on_resize({event.window.data1, event.window.data2});
+        {
+          const Math::Vec2i size{event.window.data1, event.window.data2};
+          display_resolution->set(size, false);
+          m_game->on_resize(size.cast<Size>());
+        }
         break;
       case SDL_WINDOWEVENT_MOVED:
         {
@@ -457,16 +485,16 @@ Engine::Status Engine::run() {
   }
 
   // Update the input system.
-  const int updated = m_input.update(m_render_frontend->timer().delta_time());
-  if (updated & Input::Context::k_clipboard) {
+  const int updated = m_input.on_update(m_render_frontend->timer().delta_time());
+  if (updated & Input::Context::CLIPBOARD) {
     SDL_SetClipboardText(m_input.clipboard().data());
   }
 
-  if (updated & Input::Context::k_mouse_capture) {
-    SDL_SetRelativeMouseMode(m_input.is_mouse_captured() ? SDL_TRUE : SDL_FALSE);
+  if (updated & Input::Context::MOUSE_CAPTURE) {
+    SDL_SetRelativeMouseMode(m_input.active_layer().is_mouse_captured() ? SDL_TRUE : SDL_FALSE);
   }
 
-  m_game->on_render(m_console);
+  m_game->on_render(m_console, m_input);
 
   // Submit all rendering work.
   if (m_render_frontend->process()) {

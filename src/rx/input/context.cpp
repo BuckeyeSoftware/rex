@@ -2,127 +2,109 @@
 
 #include "rx/core/hints/unreachable.h"
 
+#include "rx/core/utility/swap.h"
+
 namespace Rx::Input {
 
-int Context::update(Float32 _delta_time) {
-  // Handle line editing features for the active text.
-  if (m_active_text) {
-    if (m_keyboard.is_held(ScanCode::k_left_control)
-      || m_keyboard.is_held(ScanCode::k_right_control))
-    {
-      if (m_keyboard.is_pressed(ScanCode::k_a)) {
-        // Control+A = Select All
-        m_active_text->select_all();
-      } else if (m_keyboard.is_pressed(ScanCode::k_c)) {
-        // Control+C = Copy
-        change_clipboard_text(m_active_text->copy());
-      } else if (m_keyboard.is_pressed(ScanCode::k_v)) {
-        // Control+V = Paste
-        m_active_text->paste(m_clipboard);
-      } else if (m_keyboard.is_pressed(ScanCode::k_x)) {
-        // Control+X = Cut
-        change_clipboard_text(m_active_text->cut());
-      } else if (m_keyboard.is_pressed(ScanCode::k_insert)) {
-        // Control+Insert = Copy
-        change_clipboard_text(m_active_text->copy());
-      }
-    }
-
-    if (m_keyboard.is_held(ScanCode::k_left_shift)
-      || m_keyboard.is_held(ScanCode::k_right_shift))
-    {
-      if (m_keyboard.is_pressed(ScanCode::k_delete)) {
-        // Shift+Delete = Cut
-        change_clipboard_text(m_active_text->cut());
-      } else if (m_keyboard.is_pressed(ScanCode::k_insert)) {
-        // Shift+Insert = Paste
-        m_active_text->paste(m_clipboard);
-      } else {
-        // While holding SHIFT we're selecting.
-        m_active_text->select(true);
-      }
-    } else {
-      m_active_text->select(false);
-    }
-
-    if (m_keyboard.is_pressed(ScanCode::k_left)) {
-      m_active_text->move_cursor(Text::Position::k_left);
-    } else if (m_keyboard.is_pressed(ScanCode::k_right)) {
-      m_active_text->move_cursor(Text::Position::k_right);
-    } else if (m_keyboard.is_pressed(ScanCode::k_home)) {
-      m_active_text->move_cursor(Text::Position::k_home);
-    } else if (m_keyboard.is_pressed(ScanCode::k_end)) {
-      m_active_text->move_cursor(Text::Position::k_end);
-    }
-
-    if (m_keyboard.is_pressed(ScanCode::k_backspace)) {
-      m_active_text->erase();
-    }
-  }
-
-  int updated{m_updated};
-
-  if (m_active_text) {
-    m_active_text->update(_delta_time);
-  }
-
-  m_mouse.update(_delta_time);
-  m_keyboard.update(_delta_time);
-  m_controllers.each_fwd([_delta_time](Controller& _device) {
-    _device.update(_delta_time);
-  });
-
-  m_updated = 0;
-
-  return updated;
+Context::Context(Memory::Allocator& _allocator)
+  : m_allocator{_allocator}
+  , m_layers{m_allocator}
+  , m_root{this}
+  , m_clipboard{m_allocator}
+  , m_updated{false}
+{
+  // The root context should have the mouse captured.
+  m_root.capture_mouse(true);
 }
 
 void Context::handle_event(const Event& _event) {
   switch (_event.type) {
-  case Event::Type::k_none:
-    break;
-  case Event::Type::k_keyboard:
-    m_keyboard.update_key(_event.as_keyboard.down, _event.as_keyboard.scan_code,
-      _event.as_keyboard.symbol);
+  case Event::Type::k_mouse_button:
+    // Can only change layer when mouse isn't captured and button was pressed.
+    if (!m_layers[0]->is_mouse_captured() && _event.as_mouse_button.down) {
+      const auto& position = _event.as_mouse_button.position.cast<Size>();
+      // Ignore if the press occured in the active layer.
+      if (!m_layers[0]->region().contains(position)) {
+        // Check for intersection in all other layers.
+        for (Size n_layers = m_layers.size(), i = 0; i < n_layers; i++) {
+          // When we intersect, make that layer active.
+          if (m_layers[i]->region().contains(position)) {
+            raise_layer_by_index(i);
+            break;
+          }
+        }
+      }
+    }
+    [[fallthrough]];
+  default:
+    // Send the event to the active layer.
+    m_layers[0]->handle_event(_event);
     break;
   case Event::Type::k_controller_notification:
-    switch (_event.as_controller_notification.kind) {
-    case ControllerNotificationEvent::Type::k_connected:
-      m_controllers.resize(_event.as_controller_notification.index);
-      break;
-    case ControllerNotificationEvent::Type::k_disconnected:
-      m_controllers.erase(_event.as_controller_notification.index,
-        _event.as_controller_notification.index + 1);
-      break;
-    }
-    break;
-  case Event::Type::k_controller_button:
-    m_controllers[_event.as_controller_button.index].update_button(
-      _event.as_controller_button.down, _event.as_controller_button.button);
-    break;
-  case Event::Type::k_controller_motion:
-    m_controllers[_event.as_controller_motion.index].update_axis(
-      _event.as_controller_motion.axis, _event.as_controller_motion.value);
-    break;
-  case Event::Type::k_mouse_button:
-    m_mouse.update_button(_event.as_mouse_button.down,
-      _event.as_mouse_button.button);
-    break;
-  case Event::Type::k_mouse_scroll:
-    m_mouse.update_scroll(_event.as_mouse_scroll.value);
-    break;
-  case Event::Type::k_mouse_motion:
-    m_mouse.update_motion(_event.as_mouse_motion.value);
-    break;
-  case Event::Type::k_text_input:
-    if (m_active_text) {
-      m_active_text->paste(_event.as_text_input.contents);
-    }
+    // Controller notification events should be sent to every layer.
+    m_layers.each_fwd([&](Layer* _layer) { _layer->handle_event(_event); });
     break;
   case Event::Type::k_clipboard:
+    // The clipboard is context-global.
     m_clipboard = Utility::move(_event.as_clipboard.contents);
     break;
   }
+}
+
+int Context::on_update(Float32 _delta_time) {
+  m_layers.each_fwd([&](Layer* _layer) { _layer->update(_delta_time); });
+  update_mouse_capture();
+  return Utility::exchange(m_updated, 0);
+}
+
+void Context::on_resize(const Math::Vec2z& _dimensions) {
+  m_root.resize(_dimensions);
+}
+
+bool Context::raise_layer_by_pointer(Layer* _layer) {
+  return raise_layer_by_index(m_layers.find(_layer));
+}
+
+bool Context::raise_layer_by_index(Size _index) {
+  if (!m_layers.in_range(_index)) {
+    return false;
+  }
+
+  // Shift layers [0, _index) down to [1, _index) erasing |_index|.
+  Layer* layer = m_layers[_index];
+  for (Size i = 1; i <= _index; i++) {
+    m_layers[i] = m_layers[i - 1];
+  }
+
+  // Then bring that layer to the front.
+  m_layers[0] = layer;
+
+  return true;
+}
+
+bool Context::remove_layer_by_index(Size _index) {
+  if (m_layers.in_range(_index)) {
+    m_layers.erase(_index, _index + 1);
+    return true;
+  }
+  return false;
+}
+
+bool Context::remove_layer_by_pointer(Layer* _layer) {
+  return remove_layer_by_index(m_layers.find(_layer));
+}
+
+void Context::update_mouse_capture() {
+  bool capture = active_layer().is_mouse_captured();
+  if (capture != m_mouse_captured) {
+    m_updated |= MOUSE_CAPTURE;
+    m_mouse_captured = capture;
+  }
+}
+
+void Context::update_clipboard(String&& contents_) {
+  m_updated |= CLIPBOARD;
+  m_clipboard = Utility::move(contents_);
 }
 
 } // namespace rx::input

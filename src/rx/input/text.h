@@ -5,8 +5,6 @@
 
 namespace Rx::Input {
 
-struct Cnput;
-
 struct Text {
   Text();
 
@@ -41,7 +39,7 @@ struct Text {
   const Size (&selection() const)[2];
 
 private:
-  friend struct Context;
+  friend struct Layer;
 
   void reset_selection();
   void reset_cursor();

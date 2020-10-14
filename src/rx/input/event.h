@@ -41,6 +41,7 @@ struct ControllerMotionEvent {
 struct MouseButtonEvent {
   bool down;
   int button;
+  Math::Vec2i position;
 };
 
 struct MouseScrollEvent {

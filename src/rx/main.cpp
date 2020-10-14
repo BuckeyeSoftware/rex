@@ -105,5 +105,7 @@ restart:
   }
 #endif
 
+  Rx::Globals::fini();
+
   return 0;
 }
