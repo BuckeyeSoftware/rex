@@ -494,7 +494,7 @@ Engine::Status Engine::run() {
     SDL_SetRelativeMouseMode(m_input.active_layer().is_mouse_captured() ? SDL_TRUE : SDL_FALSE);
   }
 
-  m_game->on_render(m_console, m_input);
+  m_game->on_render(m_console);
 
   // Submit all rendering work.
   if (m_render_frontend->process()) {

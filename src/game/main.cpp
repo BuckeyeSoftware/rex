@@ -182,7 +182,7 @@ struct TestGame
     return true;
   }
 
-  virtual bool on_render(Console::Context& console_, Input::Context& input_) {
+  virtual bool on_render(Console::Context& console_) {
     static auto display_resolution =
       console_.find_variable_by_name("display.resolution")->cast<Math::Vec2i>();
 
