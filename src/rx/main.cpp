@@ -14,6 +14,11 @@ int main([[maybe_unused]] int _argc, [[maybe_unused]] char** argv) {
   // Link all globals into their respective groups.
   Rx::Globals::link();
 
+  // Initialize all globals now. Any order dependence will be handled entierly
+  // by the globals system. The order of initialization is recorded so that
+  // finalization occurs in reverse initialization order.
+  Rx::Globals::init();
+
   // Emscripten does not allow us to block in main as that blocks the browser
   // and prevents worker threads from being posted. Instead let the browser
   // drive our main loop with RAF (Request Animation Frame).
@@ -105,6 +110,9 @@ restart:
   }
 #endif
 
+  // Destroy all initialized globals now. The globals system keeps track of which
+  // globals are initialized and in which order. This will deinitialize them in
+  // reverse order for only the ones that are actively initialized.
   Rx::Globals::fini();
 
   return 0;
