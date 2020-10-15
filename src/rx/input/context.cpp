@@ -104,11 +104,9 @@ void Context::update_clipboard(String&& contents_) {
 }
 
 void Context::render_regions(Render::Immediate2D* _immediate) const {
-  // Render the layers in reverse order.
-  const auto n_layers = m_layers.size();
-  for (Size i = n_layers - 1; i < n_layers; i--) {
-    m_layers[i]->render_region(_immediate);
-  }
+  m_layers.each_fwd([_immediate](const Layer* _layer) {
+    _layer->render_region(_immediate);
+  });
 }
 
 } // namespace rx::input
