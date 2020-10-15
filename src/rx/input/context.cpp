@@ -1,3 +1,5 @@
+#include <string.h> // memmove
+
 #include "rx/input/context.h"
 
 #include "rx/core/hints/unreachable.h"
@@ -21,15 +23,15 @@ void Context::handle_event(const Event& _event) {
   switch (_event.type) {
   case Event::Type::k_mouse_button:
     // Can only change layer when mouse isn't captured and button was pressed.
-    if (!m_layers[0]->is_mouse_captured() && _event.as_mouse_button.down) {
+    if (!active_layer().is_mouse_captured() && _event.as_mouse_button.down) {
       const auto& position = _event.as_mouse_button.position.cast<Size>();
       // Ignore if the press occured in the active layer.
-      if (!m_layers[0]->region().contains(position)) {
+      if (!active_layer().region().contains(position)) {
         // Check for intersection in all other layers.
         for (Size n_layers = m_layers.size(), i = 0; i < n_layers; i++) {
           // When we intersect, make that layer active.
           if (m_layers[i]->region().contains(position)) {
-            raise_layer_by_index(i);
+            raise_layer(m_layers[i]);
             break;
           }
         }
@@ -38,7 +40,7 @@ void Context::handle_event(const Event& _event) {
     [[fallthrough]];
   default:
     // Send the event to the active layer.
-    m_layers[0]->handle_event(_event);
+    active_layer().handle_event(_event);
     break;
   case Event::Type::k_controller_notification:
     // Controller notification events should be sent to every layer.
@@ -61,37 +63,31 @@ void Context::on_resize(const Math::Vec2z& _dimensions) {
   m_root.resize(_dimensions);
 }
 
-bool Context::raise_layer_by_pointer(Layer* _layer) {
-  return raise_layer_by_index(m_layers.find(_layer));
-}
-
-bool Context::raise_layer_by_index(Size _index) {
-  if (!m_layers.in_range(_index)) {
-    return false;
-  }
-
-  // Shift layers [0, _index) down to [1, _index) erasing |_index|.
-  Layer* layer = m_layers[_index];
-  for (Size i = 1; i <= _index; i++) {
-    m_layers[i] = m_layers[i - 1];
-  }
-
-  // Then bring that layer to the front.
-  m_layers[0] = layer;
-
-  return true;
-}
-
-bool Context::remove_layer_by_index(Size _index) {
-  if (m_layers.in_range(_index)) {
-    m_layers.erase(_index, _index + 1);
-    return true;
+bool Context::raise_layer(Layer* _layer) {
+  if (const auto index = m_layers.find(_layer); index != -1_z) {
+    // Erase the layer and push it to the back.
+    auto layer = m_layers[index];
+    m_layers.erase(index, index + 1);
+    return m_layers.push_back(layer);
   }
   return false;
 }
 
-bool Context::remove_layer_by_pointer(Layer* _layer) {
-  return remove_layer_by_index(m_layers.find(_layer));
+bool Context::append_layer(Layer* _layer) {
+  // Prevent appending the same layer more than once.
+  if (const auto index = m_layers.find(_layer); index != -1_z) {
+    return false;
+  }
+  m_layers.push_back(_layer);
+  return true;
+}
+
+bool Context::remove_layer(Layer* _layer) {
+  if (const auto index = m_layers.find(_layer); index != -1_z) {
+    m_layers.erase(index, index + 1);
+    return true;
+  }
+  return false;
 }
 
 void Context::update_mouse_capture() {
@@ -105,6 +101,14 @@ void Context::update_mouse_capture() {
 void Context::update_clipboard(String&& contents_) {
   m_updated |= CLIPBOARD;
   m_clipboard = Utility::move(contents_);
+}
+
+void Context::render_regions(Render::Immediate2D* _immediate) const {
+  // Render the layers in reverse order.
+  const auto n_layers = m_layers.size();
+  for (Size i = n_layers - 1; i < n_layers; i--) {
+    m_layers[i]->render_region(_immediate);
+  }
 }
 
 } // namespace rx::input

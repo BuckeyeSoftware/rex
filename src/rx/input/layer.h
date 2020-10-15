@@ -10,6 +10,10 @@
 
 #include "rx/math/rectangle.h"
 
+namespace Rx::Render {
+  struct Immediate2D;
+} // namespace Rx::Render
+
 namespace Rx::Input {
 
 struct Context;
@@ -44,6 +48,8 @@ struct Layer {
   const Keyboard& keyboard() const &;
   const Vector<Controller>& controllers() const &;
   Text* text() const;
+
+  void render_region(Render::Immediate2D* _immediate) const;
 
 private:
   friend struct Context;

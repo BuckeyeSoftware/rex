@@ -1,6 +1,8 @@
 #include "rx/input/layer.h"
 #include "rx/input/context.h"
 
+#include "rx/render/immediate2D.h"
+
 namespace Rx::Input {
 
 Layer::Layer(Context* _context)
@@ -9,11 +11,11 @@ Layer::Layer(Context* _context)
   , m_controllers{_context->allocator()}
   , m_mouse_captured{false}
 {
-  m_context->m_layers.push_back(this);
+  m_context->append_layer(this);
 }
 
 Layer::~Layer() {
-  m_context->remove_layer_by_pointer(this);
+  m_context->remove_layer(this);
 }
 
 void Layer::handle_event(const Event& _event) {
@@ -83,11 +85,11 @@ void Layer::capture_text(Text* text_) {
 }
 
 void Layer::raise() {
-  m_context->raise_layer_by_pointer(this);
+  m_context->raise_layer(this);
 }
 
 bool Layer::is_active() const {
-  return m_context->m_layers[0] == this;
+  return &m_context->active_layer() == this;
 }
 
 void Layer::update(Float32 _delta_time) {
@@ -156,5 +158,18 @@ void Layer::update(Float32 _delta_time) {
     _device.update(_delta_time);
   });
 }
+
+void Layer::render_region(Render::Immediate2D* _immediate) const {
+  const auto color = is_active()
+    ? Math::Vec4f{0.0f, 1.0f, 0.0f, 0.5f}
+    : Math::Vec4f{1.0f, 0.0f, 0.0f, 0.5f};
+
+  _immediate->frame_queue().record_rectangle(
+    region().offset.cast<Float32>(),
+    region().dimensions.cast<Float32>(),
+    0.0f,
+    color);
+}
+
 
 } // namespace Rx::Input

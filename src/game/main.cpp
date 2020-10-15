@@ -51,6 +51,12 @@ RX_CONSOLE_FVAR(
   1.0f,
   0.01f);
 
+RX_CONSOLE_BVAR(
+  input_debug_layers,
+  "input.debug_layers",
+  "draw debug rectangles for each input layer",
+  false);
+
 struct TestGame
   : Game
 {
@@ -69,6 +75,7 @@ struct TestGame
     , m_lens_distortion_pass{&m_frontend}
     , m_copy_pass{&m_frontend}
   {
+    input_.root_layer().raise();
   }
 
   ~TestGame() {
@@ -107,7 +114,6 @@ struct TestGame
     const auto& dimensions{display_resolution->get().cast<Float32>()};
     m_camera.projection = Math::Mat4x4f::perspective(90.0f, {0.01f, 2048.0f},
       dimensions.w / dimensions.h);
-
 
     if (input_.root_layer().is_active()) {
       Float32 move_speed{0.0f};
@@ -182,7 +188,7 @@ struct TestGame
     return true;
   }
 
-  virtual bool on_render(Console::Context& console_) {
+  virtual bool on_render(Console::Context& console_, Input::Context& input_) {
     static auto display_resolution =
       console_.find_variable_by_name("display.resolution")->cast<Math::Vec2i>();
 
@@ -248,6 +254,10 @@ struct TestGame
     m_memory_stats.render();
 
     m_console.render();
+
+    if (*input_debug_layers) {
+      input_.render_regions(&m_immediate2D);
+    }
 
     m_immediate2D.render(m_frontend.swapchain());
 

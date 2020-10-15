@@ -1,5 +1,4 @@
 #include <signal.h> // signal, sig_atomic_t, SIG{INT,TERM,HUP,QUIT,KILL,PIPE,ALRM,STOP}
-#include <stdlib.h> // malloc
 
 #include "rx/engine.h"
 
@@ -91,21 +90,24 @@ int main([[maybe_unused]] int _argc, [[maybe_unused]] char** argv) {
   signal(SIGSTOP, catch_signal);
 #endif // !defined(RX_PLATFORM_WINDOWS)
 
-  // Restart is just a matter of goto.
-restart:
-  Rx::Engine engine;
-  if (!engine.init()) {
-    return 1;
-  }
+  // So that engine is destroyed before fini is called.
+  {
+    // Restart is just a matter of goto.
+  restart:
+    Rx::Engine engine;
+    if (!engine.init()) {
+      return 1;
+    }
 
-  while (g_running) {
-    switch (engine.run()) {
-    case Rx::Engine::Status::RESTART:
-      goto restart;
-    case Rx::Engine::Status::SHUTDOWN:
-      return 0;
-    case Rx::Engine::Status::RUNNING:
-      break;
+    while (g_running) {
+      switch (engine.run()) {
+      case Rx::Engine::Status::RESTART:
+        goto restart;
+      case Rx::Engine::Status::SHUTDOWN:
+        return 0;
+      case Rx::Engine::Status::RUNNING:
+        break;
+      }
     }
   }
 #endif

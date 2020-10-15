@@ -106,6 +106,7 @@ RX_CONSOLE_IVAR(
   32,
   4096,
   1024);
+
 static Global<Filesystem::File> g_engine_log{"system", "log", "log.log", "wb"};
 static constexpr const char* CONFIG = "config.cfg";
 
@@ -130,8 +131,9 @@ Engine::~Engine() {
   // TODO(dweiler): Move to SDL_SubSystemInit rather than global.
   SDL_Quit();
 
-  // TODO(dweiler): See what is broken here?
+  // The engine log should be moved to main so that it survives a longer time.
   Log::flush();
+  Log::unsubscribe(&g_engine_log);
 }
 
 bool Engine::init() {
@@ -494,7 +496,7 @@ Engine::Status Engine::run() {
     SDL_SetRelativeMouseMode(m_input.active_layer().is_mouse_captured() ? SDL_TRUE : SDL_FALSE);
   }
 
-  m_game->on_render(m_console);
+  m_game->on_render(m_console, m_input);
 
   // Submit all rendering work.
   if (m_render_frontend->process()) {

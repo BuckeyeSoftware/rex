@@ -28,14 +28,14 @@ struct Context {
   const String& clipboard() const &;
   Memory::Allocator& allocator() const;
 
+  void render_regions(Render::Immediate2D* _immediate) const;
+
 private:
   friend struct Layer;
 
-  bool raise_layer_by_index(Size _index);
-  bool raise_layer_by_pointer(Layer* _layer);
-  bool remove_layer_by_index(Size _index);
-  bool remove_layer_by_pointer(Layer* _layer);
-
+  bool raise_layer(Layer* _layer);
+  bool append_layer(Layer* _layer);
+  bool remove_layer(Layer* _layer);
   void update_mouse_capture();
   void update_clipboard(String&& contents_);
 
@@ -61,11 +61,11 @@ inline const Layer& Context::root_layer() const & {
 }
 
 inline Layer& Context::active_layer() & {
-  return *m_layers[0];
+  return *m_layers.last();
 }
 
 inline const Layer& Context::active_layer() const & {
-  return *m_layers[0];
+  return *m_layers.last();
 }
 
 inline const Vector<Layer*>& Context::layers() const & {
