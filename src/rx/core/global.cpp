@@ -107,13 +107,19 @@ bool Globals::link() {
   // name as the group.
   Concurrency::ScopeLock lock{g_lock};
   for (auto node = s_node_list.enumerate_head(&GlobalNode::m_ungrouped); node; node.next()) {
+    bool unlinked = true;
     for (auto group = s_group_list.enumerate_head(&GlobalGroup::m_link); group; group.next()) {
       if (!strcmp(node->m_group, group->name())) {
         group->m_list.push(&node->m_grouped);
-        return false;
+        unlinked = false;
       }
     }
+
+    if (unlinked) {
+      return false;
+    }
   }
+
   return true;
 }
 
