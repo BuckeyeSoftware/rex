@@ -100,31 +100,21 @@ GlobalGroup* Globals::find(const char* _name) {
   return nullptr;
 }
 
-void Globals::link() {
+bool Globals::link() {
   // Link ungrouped globals from |s_node_list| managed by |GlobalNode::m_ungrouped|
   // with the appropriate group given by |GlobalGroup::m_list|, which is managed
   // by |GlobalNode::m_grouped| when the given global shares the same group
   // name as the group.
   Concurrency::ScopeLock lock{g_lock};
   for (auto node = s_node_list.enumerate_head(&GlobalNode::m_ungrouped); node; node.next()) {
-    bool unlinked = true;
     for (auto group = s_group_list.enumerate_head(&GlobalGroup::m_link); group; group.next()) {
       if (!strcmp(node->m_group, group->name())) {
         group->m_list.push(&node->m_grouped);
-        unlinked = false;
-        break;
+        return false;
       }
     }
-
-    if (unlinked) {
-      // NOTE(dweiler): If you've hit this code-enforced crash it means there
-      // exists an rx::Global<T> that is associated with a group by name which
-      // doesn't exist. This can be caused by misnaming the group in the
-      // global's constructor, or because the rx::GlobalGroup with that name
-      // doesn't exist in any translation unit.
-      *reinterpret_cast<volatile int*>(0) = 0;
-    }
   }
+  return true;
 }
 
 void Globals::init() {
