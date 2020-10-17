@@ -35,15 +35,25 @@ struct RX_API Stream {
     END      // End of stream.
   };
 
+  // Read |_size| bytes into |_data|. Returns the amount of bytes written.
   [[nodiscard]] Uint64 read(Byte* _data, Uint64 _size);
-  [[nodiscard]] Uint64 write(const Byte* _data, Uint64 _size);
-  [[nodiscard]] bool seek(Sint64 _where, Whence _whence);
-  [[nodiscard]] bool stat(Stat& state_) const;
 
+  // Write |_size| bytes from |_data|. Returns the amount of bytes written.
+  [[nodiscard]] Uint64 write(const Byte* _data, Uint64 _size);
+
+  // Seek stream |_where| bytes relative to |_whence|. Returns true on success.
+  [[nodiscard]] bool seek(Sint64 _where, Whence _whence);
+
+  // Stat stream for info.
+  [[nodiscard]] Optional<Stat> stat() const;
+
+  // Where in the stream we are.
   Uint64 tell() const;
+
+  // The size of the stream.
   Optional<Uint64> size() const;
 
-  // Query the support of features on the given stream.
+  // Supported stream functions.
   constexpr bool can_read() const;
   constexpr bool can_write() const;
   constexpr bool can_seek() const;
@@ -52,6 +62,7 @@ struct RX_API Stream {
   // The name of the stream. This must always be implemented.
   virtual const String& name() const & = 0;
 
+protected:
   // Read |_size| bytes from stream into |_data|.
   virtual Uint64 on_read(Byte* _data, Uint64 _size);
 
@@ -88,8 +99,8 @@ inline Uint64 Stream::tell() const {
 }
 
 inline Optional<Uint64> Stream::size() const {
-  if (Stat s; stat(s)) {
-    return s.size;
+  if (auto s = stat()) {
+    return s->size;
   }
   return nullopt;
 }

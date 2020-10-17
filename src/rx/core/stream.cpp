@@ -85,8 +85,8 @@ bool Stream::seek(Sint64 _where, Whence _whence) {
     offset = _where;
   } else if (_whence == Whence::END) {
     // Can only seek relative to END when we can stat.
-    if (Stat s; stat(s)) {
-      offset = s.size + _where;
+    if (auto s = stat()) {
+      offset = s->size + _where;
     } else {
       return false;
     }
@@ -100,8 +100,11 @@ bool Stream::seek(Sint64 _where, Whence _whence) {
   return false;
 }
 
-bool Stream::stat(Stat& stat_) const {
-  return can_stat() ? on_stat(stat_) : false;
+Optional<Stream::Stat> Stream::stat() const {
+  if (Stat s; can_stat() && on_stat(s)) {
+    return s;
+  }
+  return nullopt;
 }
 
 Optional<Vector<Byte>> read_binary_stream(Memory::Allocator& _allocator, Stream* _stream) {
