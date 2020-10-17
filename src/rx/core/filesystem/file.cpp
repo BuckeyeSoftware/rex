@@ -102,12 +102,13 @@ bool File::on_stat(Stat& stat_) const {
   RX_ASSERT(m_impl, "invalid");
 
   const auto fp = static_cast<FILE*>(m_impl);
-  const auto fd = fileno(fp);
-
-  struct stat buf;
 #if defined(RX_PLATFORM_WINDOWS)
+  struct _stat buf;
+  const auto fd = _fileno(fp);
   const auto status = _fstat(fd, &buf);
 #else
+  struct stat buf;
+  const auto fd = fileno(fp);
   const auto status = fstat(fd, &buf);
 #endif
 
