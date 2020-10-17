@@ -38,7 +38,7 @@ static inline Uint32 flags_from_mode(const char* _mode) {
   return flags;
 }
 
-static void* open_file(const char* _file_name, const char* _mode) {
+static void* open_file([[maybe_unused]] Memory::Allocator& _allocator, const char* _file_name, const char* _mode) {
   FILE* fp = nullptr;
 
 #if defined(RX_PLATFORM_WINDOWS)
@@ -56,7 +56,7 @@ static void* open_file(const char* _file_name, const char* _mode) {
   *mode++ = L'\0';
 
   // Utilize _wfopen on Windows so we can open files with UNICODE names.
-  fp = _wfopen(reinterpret_cast<const wchar_t*>(file_name.data()), mode_buffer));
+  fp = _wfopen(reinterpret_cast<const wchar_t*>(file_name.data()), mode_buffer);
 #else
   fp = fopen(_file_name, _mode);
 #endif
@@ -73,7 +73,7 @@ static void* open_file(const char* _file_name, const char* _mode) {
 File::File(Memory::Allocator& _allocator, const char* _file_name, const char* _mode)
   : Stream{flags_from_mode(_mode)}
   , m_allocator{_allocator}
-  , m_impl{open_file(_file_name, _mode)}
+  , m_impl{open_file(m_allocator, _file_name, _mode)}
   , m_name{allocator(), _file_name}
   , m_mode{_mode}
 {
@@ -104,7 +104,14 @@ bool File::on_stat(Stat& stat_) const {
   const auto fp = static_cast<FILE*>(m_impl);
   const auto fd = fileno(fp);
 
-  if (struct stat buf; fstat(fd, &buf) != -1) {
+  struct stat buf;
+#if defined(RX_PLATFORM_WINDOWS)
+  const auto status = _fstat(fd, &buf);
+#else
+  const auto status = fstat(fd, &buf);
+#endif
+
+  if (status != -1) {
     stat_.size = buf.st_size;
     return true;
   }
