@@ -11,12 +11,9 @@
 
 int main([[maybe_unused]] int _argc, [[maybe_unused]] char** argv) {
   // Link all globals into their respective groups.
-  Rx::Globals::link();
-
-  // Initialize all globals now. Any order dependence will be handled entierly
-  // by the globals system. The order of initialization is recorded so that
-  // finalization occurs in reverse initialization order.
-  Rx::Globals::init();
+  if (!Rx::Globals::link()) {
+    return 1;
+  }
 
   // Emscripten does not allow us to block in main as that blocks the browser
   // and prevents worker threads from being posted. Instead let the browser
