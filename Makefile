@@ -39,9 +39,18 @@ else
 	LD := $(CXX)
 endif
 
+# Determine build type
+ifeq ($(DEBUG), 1)
+	TYPE := debug
+else ifeq ($(PROFILE),1)
+	TYPE := profile
+else
+	TYPE := release
+endif
+
 # Build artifact directories
-OBJDIR := .build/objs
-DEPDIR := .build/deps
+OBJDIR := .build/$(TYPE)/objs
+DEPDIR := .build/$(TYPE)/deps
 
 # Collect all .cpp, .c and .S files for build in the source directory.
 SRCS := $(call rwildcard, $(SRCDIR)/, *cpp)
