@@ -117,7 +117,7 @@ static bool stat_file(void* _impl, File::Stat& stat_) {
 }
 #elif defined(RX_PLATFORM_WINDOWS)
 static void* open_file([[maybe_unused]] Memory::Allocator& _allocator, const char* _file_name, const char* _mode) {
- WideString file_name = String::format(_allocator, "\\?\%s", _file_name).to_utf16();
+ WideString file_name = String::format(_allocator, "\\\\?\\%s", _file_name).to_utf16();
 
   DWORD dwDesiredAccess = 0;
   DWORD dwShareMode = 0;
@@ -170,7 +170,7 @@ static bool close_file(void* _impl) {
 static bool read_file(void* _impl, Byte* _data, Size _size, Uint64 _offset, Size& n_bytes_) {
   OVERLAPPED overlapped{};
   overlapped.OffsetHigh = static_cast<Uint32>((_offset & 0xFFFFFFFF00000000_u64) >> 32);
-  overlapped.Offset = static_cast<Uint32>((_offfset & 0xFFFFFFFF_u64));
+  overlapped.Offset = static_cast<Uint32>((_offset & 0xFFFFFFFF_u64));
 
   long unsigned int n_read_bytes = 0;
   const bool result = ReadFile(
