@@ -26,7 +26,6 @@ namespace Rx::Filesystem {
 static inline Uint32 flags_from_mode(const char* _mode) {
   Uint32 flags = 0;
 
-  flags |= Stream::SEEK;
   flags |= Stream::STAT;
 
   for (const char* ch = _mode; *ch; ch++) {
@@ -231,36 +230,32 @@ File::File(Memory::Allocator& _allocator, const char* _file_name, const char* _m
 Uint64 File::on_read(Byte* _data, Uint64 _size, Uint64 _offset) {
   RX_ASSERT(m_impl, "invalid");
 
-  // To handle 4GB limits in some APIs, process reads in a loop.
-  Uint64 n_bytes = 0;
-  while (_size) {
-    Size n_read = 0;
-    if (!read_file(m_impl, _data, _size, _offset, n_read) || !n_read) {
+  // Process reads in loop since |read_file| can read less than requested.
+  Uint64 bytes = 0;
+  while (bytes < _size) {
+    Size read = 0;
+    if (!read_file(m_impl, _data, _size - bytes, _offset + bytes, read) || !read) {
       break;
     }
-    n_bytes += n_read;
-    _size -= n_read;
-    _offset += n_read;
+    bytes += read;
   }
-  return n_bytes;
+  return bytes;
 }
 
 Uint64 File::on_write(const Byte* _data, Uint64 _size, Uint64 _offset) {
   RX_ASSERT(m_impl, "invalid");
 
-  // To handle 4GB limits in some APIs, process writes in a loop.
-  Uint64 n_bytes = 0;
-  while (_size) {
-    Size n_write = 0;
-    if (!write_file(m_impl, _data, _size, _offset, n_write) || !n_write) {
+  // Process writes in loop since |write_file| can write less than requested.
+  Uint64 bytes = 0;
+  while (bytes < _size) {
+    Size wrote = 0;
+    if (!write_file(m_impl, _data, _size - bytes, _offset + bytes, wrote) || !wrote) {
       break;
     }
-    n_bytes += n_write;
-    _size -= n_write;
-    _offset += n_write;
+    bytes += wrote;
   }
 
-  return n_bytes;
+  return bytes;
 }
 
 bool File::on_stat(Stat& stat_) const {
@@ -291,12 +286,13 @@ bool File::print(String&& contents_) {
 
 bool File::read_line(String& line_) {
   line_.clear();
+
   for (;;) {
-    char buffer[128];
+    char buffer[1024];
     const auto n_bytes = read(reinterpret_cast<Byte*>(buffer), sizeof buffer);
 
-    // Check for EOF.
-    if (n_bytes == 0) {
+    // Check for EOS.
+    if (is_eos()) {
       return !line_.is_empty();
     }
 
@@ -325,9 +321,7 @@ bool File::read_line(String& line_) {
       // The line terminates inside the buffer.
       const auto where = static_cast<Sint64>(n_bytes - (length + new_line_length));
 
-      // Seek back in the stream to right after the new line. This is necessary
-      // because the read of |sizeof buffer| can read past the new line and
-      // subsequent calls of this function should read line-by-line.
+      // Seek back in the stream to right after the new line.
       if (!seek(-where, Whence::CURRENT)) {
         return false;
       }
