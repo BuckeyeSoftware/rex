@@ -47,16 +47,12 @@ static Vector<Byte> convert_text_encoding(Vector<Byte>&& data_) {
   return Utility::move(data_);
 }
 
-Uint64 Stream::on_read(Byte*, Uint64) {
+Uint64 Stream::on_read(Byte*, Uint64, Uint64) {
   abort("stream does not implement on_read");
 }
 
-Uint64 Stream::on_write(const Byte*, Uint64) {
+Uint64 Stream::on_write(const Byte*, Uint64, Uint64) {
   abort("stream does not implement on_write");
-}
-
-bool Stream::on_seek(Uint64) {
-  abort("stream does not implement on_seek");
 }
 
 bool Stream::on_stat(Stat&) const {
@@ -64,13 +60,13 @@ bool Stream::on_stat(Stat&) const {
 }
 
 Uint64 Stream::read(Byte* _data, Uint64 _size) {
-  const auto read = can_read() ? on_read(_data, _size) : 0;
+  const auto read = can_read() ? on_read(_data, _size, m_offset) : 0;
   m_offset += read;
   return read;
 }
 
 Uint64 Stream::write(const Byte* _data, Uint64 _size) {
-  const auto write = can_write() ? on_write(_data, _size) : 0;
+  const auto write = can_write() ? on_write(_data, _size, m_offset) : 0;
   m_offset += write;
   return write;
 }
@@ -84,7 +80,12 @@ bool Stream::seek(Sint64 _where, Whence _whence) {
   } else if (_whence == Whence::SET) {
     offset = _where;
   } else if (_whence == Whence::END) {
-    // Can only seek relative to END when we can stat.
+    // Seeking past the end of the stream isn't allowed.
+    if (_where > 0) {
+      return false;
+    }
+
+    // Can only seek relative to END.
     if (auto s = stat()) {
       offset = s->size + _where;
     } else {
@@ -92,12 +93,8 @@ bool Stream::seek(Sint64 _where, Whence _whence) {
     }
   }
 
-  if (on_seek(offset)) {
-    m_offset = offset;
-    return true;
-  }
-
-  return false;
+  m_offset = offset;
+  return true;
 }
 
 Optional<Stream::Stat> Stream::stat() const {

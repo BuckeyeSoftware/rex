@@ -63,14 +63,11 @@ struct RX_API Stream {
   virtual const String& name() const & = 0;
 
 protected:
-  // Read |_size| bytes from stream into |_data|.
-  virtual Uint64 on_read(Byte* _data, Uint64 _size);
+  // Read |_size| bytes from stream at |_offset| into |_data|.
+  virtual Uint64 on_read(Byte* _data, Uint64 _size, Uint64 _offset);
 
-  // Write |_size| bytes from |_data| into stream.
-  virtual Uint64 on_write(const Byte* _data, Uint64 _size);
-
-  // Seek to |_where| in stream.
-  virtual bool on_seek(Uint64 _where);
+  // Write |_size| bytes from |_data| into stream at |_offset|.
+  virtual Uint64 on_write(const Byte* _data, Uint64 _size, Uint64 _offset);
 
   // Stat the stream.
   virtual bool on_stat(Stat& stat_) const;
