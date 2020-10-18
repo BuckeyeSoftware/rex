@@ -1,5 +1,4 @@
 #include <string.h> // strcmp, strerror
-#include <stdio.h> // printf
 
 #include "rx/core/log.h"
 #include "rx/core/assert.h"
