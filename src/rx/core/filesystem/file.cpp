@@ -293,7 +293,7 @@ bool File::print(String&& contents_) {
 bool File::read_line(String& line_) {
   line_.clear();
   for (;;) {
-    char buffer[4096];
+    char buffer[128];
     const auto n_bytes = read(reinterpret_cast<Byte*>(buffer), sizeof buffer);
 
     // Check for EOF.
@@ -324,7 +324,7 @@ bool File::read_line(String& line_) {
       line_.append(buffer, n_bytes);
     } else {
       // The line terminates inside the buffer.
-      const auto where = static_cast<Sint64>(n_bytes - new_line_length);
+      const auto where = static_cast<Sint64>(n_bytes - (length + new_line_length));
 
       // Seek back in the stream to right after the new line. This is necessary
       // because the read of |sizeof buffer| can read past the new line and
