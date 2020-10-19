@@ -239,7 +239,7 @@
     </ClCompile>
     <ClCompile Include="src\lib\stb_truetype.cpp" />
     <ClCompile Include="src\rx\console\command.cpp" />
-    <ClCompile Include="src\rx\console\interface.cpp" />
+    <ClCompile Include="src\rx\console\context.cpp" />
     <ClCompile Include="src\rx\console\parser.cpp" />
     <ClCompile Include="src\rx\console\variable.cpp" />
     <ClCompile Include="src\rx\core\abort.cpp" />
@@ -261,8 +261,8 @@
     <ClCompile Include="src\rx\core\format.cpp" />
     <ClCompile Include="src\rx\core\global.cpp" />
     <ClCompile Include="src\rx\core\hash\fnv1a.cpp" />
+    <ClCompile Include="src\rx\core\intrusive_compressed_list.cpp" />
     <ClCompile Include="src\rx\core\intrusive_list.cpp" />
-    <ClCompile Include="src\rx\core\intrusive_xor_list.cpp" />
     <ClCompile Include="src\rx\core\json.cpp" />
     <ClCompile Include="src\rx\core\library\loader.cpp" />
     <ClCompile Include="src\rx\core\log.cpp" />
@@ -302,6 +302,7 @@
     <ClCompile Include="src\rx\core\time\stop_watch.cpp" />
     <ClCompile Include="src\rx\core\vector.cpp" />
     <ClCompile Include="src\rx\display.cpp" />
+    <ClCompile Include="src\rx\engine.cpp" />
     <ClCompile Include="src\rx\hud\console.cpp" />
     <ClCompile Include="src\rx\hud\frame_graph.cpp" />
     <ClCompile Include="src\rx\hud\memory_stats.cpp" />
@@ -313,6 +314,7 @@
     <ClCompile Include="src\rx\input\context.cpp" />
     <ClCompile Include="src\rx\input\controller.cpp" />
     <ClCompile Include="src\rx\input\keyboard.cpp" />
+    <ClCompile Include="src\rx\input\layer.cpp" />
     <ClCompile Include="src\rx\input\mouse.cpp" />
     <ClCompile Include="src\rx\input\text.cpp" />
     <ClCompile Include="src\rx\main.cpp" />
@@ -337,9 +339,12 @@
     <ClCompile Include="src\rx\render\backend\gl3.cpp" />
     <ClCompile Include="src\rx\render\backend\gl4.cpp" />
     <ClCompile Include="src\rx\render\backend\null.cpp" />
+    <ClCompile Include="src\rx\render\copy_pass.cpp" />
+    <ClCompile Include="src\rx\render\frontend\arena.cpp" />
     <ClCompile Include="src\rx\render\frontend\buffer.cpp" />
     <ClCompile Include="src\rx\render\frontend\command.cpp" />
     <ClCompile Include="src\rx\render\frontend\context.cpp" />
+    <ClCompile Include="src\rx\render\frontend\downloader.cpp" />
     <ClCompile Include="src\rx\render\frontend\material.cpp" />
     <ClCompile Include="src\rx\render\frontend\module.cpp" />
     <ClCompile Include="src\rx\render\frontend\program.cpp" />
@@ -354,6 +359,7 @@
     <ClCompile Include="src\rx\render\immediate2D.cpp" />
     <ClCompile Include="src\rx\render\immediate3D.cpp" />
     <ClCompile Include="src\rx\render\indirect_lighting_pass.cpp" />
+    <ClCompile Include="src\rx\render\lens_distortion_pass.cpp" />
     <ClCompile Include="src\rx\render\model.cpp" />
     <ClCompile Include="src\rx\render\skybox.cpp" />
     <ClCompile Include="src\rx\texture\chain.cpp" />
@@ -366,7 +372,7 @@
     <ClInclude Include="src\lib\stb_image.h" />
     <ClInclude Include="src\lib\stb_truetype.h" />
     <ClInclude Include="src\rx\console\command.h" />
-    <ClInclude Include="src\rx\console\interface.h" />
+    <ClInclude Include="src\rx\console\context.h" />
     <ClInclude Include="src\rx\console\parser.h" />
     <ClInclude Include="src\rx\console\variable.h" />
     <ClInclude Include="src\rx\core\abort.h" />
@@ -416,8 +422,8 @@
     <ClInclude Include="src\rx\core\hints\thread.h" />
     <ClInclude Include="src\rx\core\hints\unlikely.h" />
     <ClInclude Include="src\rx\core\hints\unreachable.h" />
+    <ClInclude Include="src\rx\core\intrusive_compressed_list.h" />
     <ClInclude Include="src\rx\core\intrusive_list.h" />
-    <ClInclude Include="src\rx\core\intrusive_xor_list.h" />
     <ClInclude Include="src\rx\core\json.h" />
     <ClInclude Include="src\rx\core\library\loader.h" />
     <ClInclude Include="src\rx\core\log.h" />
@@ -524,6 +530,7 @@
     <ClInclude Include="src\rx\core\utility\uninitialized.h" />
     <ClInclude Include="src\rx\core\vector.h" />
     <ClInclude Include="src\rx\display.h" />
+    <ClInclude Include="src\rx\engine.h" />
     <ClInclude Include="src\rx\game.h" />
     <ClInclude Include="src\rx\hud\console.h" />
     <ClInclude Include="src\rx\hud\frame_graph.h" />
@@ -537,6 +544,7 @@
     <ClInclude Include="src\rx\input\controller.h" />
     <ClInclude Include="src\rx\input\event.h" />
     <ClInclude Include="src\rx\input\keyboard.h" />
+    <ClInclude Include="src\rx\input\layer.h" />
     <ClInclude Include="src\rx\input\mouse.h" />
     <ClInclude Include="src\rx\input\text.h" />
     <ClInclude Include="src\rx\material\loader.h" />
@@ -569,9 +577,12 @@
     <ClInclude Include="src\rx\render\backend\gl3.h" />
     <ClInclude Include="src\rx\render\backend\gl4.h" />
     <ClInclude Include="src\rx\render\backend\null.h" />
+    <ClInclude Include="src\rx\render\copy_pass.h" />
+    <ClInclude Include="src\rx\render\frontend\arena.h" />
     <ClInclude Include="src\rx\render\frontend\buffer.h" />
     <ClInclude Include="src\rx\render\frontend\command.h" />
     <ClInclude Include="src\rx\render\frontend\context.h" />
+    <ClInclude Include="src\rx\render\frontend\downloader.h" />
     <ClInclude Include="src\rx\render\frontend\material.h" />
     <ClInclude Include="src\rx\render\frontend\module.h" />
     <ClInclude Include="src\rx\render\frontend\program.h" />
@@ -586,6 +597,7 @@
     <ClInclude Include="src\rx\render\immediate2D.h" />
     <ClInclude Include="src\rx\render\immediate3D.h" />
     <ClInclude Include="src\rx\render\indirect_lighting_pass.h" />
+    <ClInclude Include="src\rx\render\lens_distortion_pass.h" />
     <ClInclude Include="src\rx\render\model.h" />
     <ClInclude Include="src\rx\render\skybox.h" />
     <ClInclude Include="src\rx\texture\chain.h" />

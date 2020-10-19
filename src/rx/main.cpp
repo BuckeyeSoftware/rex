@@ -1,5 +1,5 @@
 #include <signal.h> // signal, sig_atomic_t, SIG{INT,TERM,HUP,QUIT,KILL,PIPE,ALRM,STOP}
-
+#include <SDL.h>
 #include "rx/engine.h"
 
 #if defined(RX_PLATFORM_EMSCRIPTEN)
