@@ -440,6 +440,7 @@ Engine::Status Engine::run() {
           const Math::Vec2i size{event.window.data1, event.window.data2};
           display_resolution->set(size, false);
           m_game->on_resize(size.cast<Size>());
+          m_input.on_resize(size.cast<Size>());
         }
         break;
       case SDL_WINDOWEVENT_MOVED:

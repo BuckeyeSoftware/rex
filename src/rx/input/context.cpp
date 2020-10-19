@@ -24,7 +24,7 @@ void Context::handle_event(const Event& _event) {
   case Event::Type::k_mouse_button:
     // Can only change layer when mouse isn't captured and button was pressed.
     if (!active_layer().is_mouse_captured() && _event.as_mouse_button.down) {
-      const auto& position = _event.as_mouse_button.position.cast<Size>();
+      const auto& position = _event.as_mouse_button.position.cast<Float32>();
       // Ignore if the press occured in the active layer.
       if (!active_layer().region().contains(position)) {
         // Check for intersection in all other layers.
@@ -60,7 +60,17 @@ int Context::on_update(Float32 _delta_time) {
 }
 
 void Context::on_resize(const Math::Vec2z& _dimensions) {
-  m_root.resize(_dimensions);
+  const auto new_scale = _dimensions.cast<Float32>();
+  if (m_root.region().dimensions.area() <= 0.0f) {
+    m_root.resize(new_scale);
+    return;
+  }
+  const auto old_scale = m_root.region().dimensions;
+  m_layers.each_fwd([&](Layer* layer_) {
+    const auto& region = layer_->region();
+    layer_->resize(region.dimensions / old_scale * new_scale);
+    layer_->move(region.offset/ old_scale * new_scale);
+  });
 }
 
 bool Context::raise_layer(Layer* _layer) {
