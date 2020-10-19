@@ -90,8 +90,8 @@ void Console::update(Rx::Console::Context& console_) {
   height += 1.0f;                                       // Singlle pixel line
 
   // Resize and mosue the input layer accordingly.
-  m_input_layer.resize({dimensions.w, Size(height)});
-  m_input_layer.move({0, dimensions.h - Size(height)});
+  m_input_layer.resize({static_cast<Float32>(dimensions.w), height});
+  m_input_layer.move({0.0f, dimensions.h - height});
 
   // Make a copy of the console line output for rendering.
   m_lines = console_.lines();
