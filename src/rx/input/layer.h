@@ -29,15 +29,15 @@ struct Context;
 //
 // Layers retain input state when switched between.
 struct Layer {
-  using Region = Math::Rectangle<Size>;
+  using Region = Math::Rectangle<Float32>;
 
   Layer(Context* _context);
   ~Layer();
 
   void capture_mouse(bool _capture);
   void capture_text(Text* text_);
-  void resize(const Math::Vec2z& _dimensions);
-  void move(const Math::Vec2z& _offset);
+  void resize(const Math::Vec2f& _dimensions);
+  void move(const Math::Vec2f& _offset);
   void raise();
 
   bool is_active() const;
@@ -66,11 +66,11 @@ private:
   bool m_mouse_captured;
 };
 
-inline void Layer::resize(const Math::Vec2z& _dimensions) {
+inline void Layer::resize(const Math::Vec2f& _dimensions) {
   m_region.dimensions = _dimensions;
 }
 
-inline void Layer::move(const Math::Vec2z& _offset) {
+inline void Layer::move(const Math::Vec2f& _offset) {
   m_region.offset = _offset;
 }
 
