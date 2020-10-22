@@ -43,6 +43,9 @@ struct RX_API Stream {
   // Seek stream |_where| bytes relative to |_whence|. Returns true on success.
   [[nodiscard]] bool seek(Sint64 _where, Whence _whence);
 
+  // Rewind the stream. Convenience and prose alias for seek(0, SET).
+  void rewind();
+
   // Stat stream for info.
   [[nodiscard]] Optional<Stat> stat() const;
 

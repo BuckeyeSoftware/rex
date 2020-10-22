@@ -115,7 +115,7 @@ bool Stream::seek(Sint64 _where, Whence _whence) {
     }
     m_offset = _where;
   } else if (_whence == Whence::END) {
-    // Seeking past the end of the stram is an error.
+    // Seeking past the end of the stream is an error.
     if (_where > 0) {
       return false;
     }
@@ -136,6 +136,11 @@ bool Stream::seek(Sint64 _where, Whence _whence) {
   }
 
   return true;
+}
+
+void Stream::rewind() {
+  m_flags &= ~EOS;
+  m_offset = 0;
 }
 
 Optional<Stream::Stat> Stream::stat() const {
