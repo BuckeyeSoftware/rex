@@ -393,11 +393,12 @@ bool Vector<T>::append(const Vector& _other) {
 
   // Slight optimization for trivially copyable |T|.
   if constexpr (traits::is_trivially_copyable<T>) {
+    const auto old_size = m_size;
     if (!resize(new_size)) {
       return false;
     }
     // Use fast copy.
-    detail::copy(m_data + m_size, _other.m_data, sizeof(T) * _other.m_size);
+    detail::copy(m_data + old_size, _other.m_data, sizeof(T) * _other.m_size);
   } else {
     if (!reserve(new_size)) {
       return false;
