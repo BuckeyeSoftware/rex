@@ -355,36 +355,36 @@ bool Vector<T>::reserve(Size _size) {
   }
 
   // Always resize capacity with the Golden ratio.
-  while (m_capacity < _size) {
-    m_capacity = ((m_capacity + 1) * 3) / 2;
+  Size capacity = m_capacity;
+  while (capacity < _size) {
+    capacity = ((capacity + 1) * 3) / 2;
   }
 
+  T* resize = nullptr;
   if constexpr (traits::is_trivially_copyable<T>) {
-    T* resize = reinterpret_cast<T*>(allocator().reallocate(m_data, m_capacity * sizeof *m_data));
-    if (RX_HINT_UNLIKELY(!resize)) {
-      return false;
-    }
-    m_data = resize;
-    return true;
+    resize = reinterpret_cast<T*>(allocator().reallocate(m_data, capacity * sizeof *m_data));
   } else {
-    T* resize = reinterpret_cast<T*>(allocator().allocate(sizeof(T), m_capacity));
-    if (RX_HINT_UNLIKELY(!resize)) {
-      return false;
-    }
+    resize = reinterpret_cast<T*>(allocator().allocate(sizeof(T), capacity));
+  }
 
-    // Avoid the heavy indirect call through |m_allocator| for freeing nullptr.
-    if (m_data) {
-      for (Size i{0}; i < m_size; i++) {
+  if (RX_HINT_UNLIKELY(!resize)) {
+    return false;
+  }
+
+  if (m_data) {
+    if constexpr (!traits::is_trivially_copyable<T>) {
+      for (Size i = 0; i < m_size; i++) {
         Utility::construct<T>(resize + i, Utility::move(*(m_data + i)));
         Utility::destruct<T>(m_data + i);
       }
       allocator().deallocate(m_data);
     }
-    m_data = resize;
-    return true;
   }
 
-  RX_HINT_UNREACHABLE();
+  m_data = resize;
+  m_capacity = capacity;
+
+  return true;
 }
 
 template<typename T>
