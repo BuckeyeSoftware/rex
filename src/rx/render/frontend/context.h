@@ -1,6 +1,5 @@
 #ifndef RX_RENDER_FRONTEND_CONTEXT_H
 #define RX_RENDER_FRONTEND_CONTEXT_H
-#include "rx/core/deferred_function.h"
 #include "rx/core/vector.h"
 #include "rx/core/string.h"
 #include "rx/core/static_pool.h"
@@ -307,13 +306,9 @@ private:
   Map<String, Texture3D*> m_cached_textures3D  RX_HINT_GUARDED_BY(m_mutex);
   Map<String, TextureCM*> m_cached_texturesCM  RX_HINT_GUARDED_BY(m_mutex);
 
-  // NOTE(dweiler): This has to come before techniques and modules. Everything
-  // above must stay alive for the destruction of m_techniques and m_modules
-  // to work.
-  DeferredFunction<void()> m_deferred_process;
-
   Map<String, Technique> m_techniques          RX_HINT_GUARDED_BY(m_mutex);
   Map<String, Module> m_modules                RX_HINT_GUARDED_BY(m_mutex);
+
   Map<Buffer::Format, Arena> m_arenas          RX_HINT_GUARDED_BY(m_mutex);
 
   Concurrency::Atomic<Size> m_draw_calls[2];

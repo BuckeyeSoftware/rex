@@ -68,7 +68,6 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
   , m_swapchain_texture{nullptr}
   , m_commands{allocator()}
   , m_command_buffer{allocator(), static_cast<Size>(*command_memory) * 1024 * 1024}
-  , m_deferred_process{[this]() { process(); }}
   , m_device_info{allocator()}
 {
   RX_ASSERT(_backend, "expected valid backend");
@@ -156,6 +155,12 @@ Context::~Context() {
   m_cached_texturesCM.each_value([this](TextureCM* _texture) {
     destroy_texture(RX_RENDER_TAG("cached texture"), _texture);
   });
+
+  m_arenas.clear();
+  m_modules.clear();
+  m_techniques.clear();
+
+  process();
 }
 
 // create_*
