@@ -73,13 +73,13 @@ Global<Logger> Logger::s_instance{"system", "logger"};
 
 static inline const char* string_for_level(Log::Level _level) {
   switch (_level) {
-  case Log::Level::k_warning:
+  case Log::Level::WARNING:
     return "warning";
-  case Log::Level::k_info:
+  case Log::Level::INFO:
     return "info";
-  case Log::Level::k_verbose:
+  case Log::Level::VERBOSE:
     return "verbose";
-  case Log::Level::k_error:
+  case Log::Level::ERROR:
     return "error";
   }
   return nullptr;
@@ -105,10 +105,10 @@ Logger::Logger()
 {
   // Calculate padding needed for formatting log level.
   int max_level = Algorithm::max(
-    strlen(string_for_level(Log::Level::k_warning)),
-    strlen(string_for_level(Log::Level::k_info)),
-    strlen(string_for_level(Log::Level::k_verbose)),
-    strlen(string_for_level(Log::Level::k_error)));
+    strlen(string_for_level(Log::Level::WARNING)),
+    strlen(string_for_level(Log::Level::INFO)),
+    strlen(string_for_level(Log::Level::VERBOSE)),
+    strlen(string_for_level(Log::Level::ERROR)));
 
   int max_name = 0;
   g_group_loggers.each([&](GlobalNode* _node) {

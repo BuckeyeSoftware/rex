@@ -158,17 +158,17 @@ bool Engine::init() {
     m_logging_event_handles.push_back(_logger->cast<Rx::Log>()->on_queue(
       [&](Log::Level _level, const String& _message) {
         switch (_level) {
-        case Log::Level::k_error:
+        case Log::Level::ERROR:
           m_console.print("^rerror: ^w%s", _message);
           break;
-        case Log::Level::k_info:
+        case Log::Level::INFO:
           m_console.print("^cinfo: ^w%s", _message);
           break;
-        case Log::Level::k_verbose:
+        case Log::Level::VERBOSE:
           // Don't write verbose messages to the console.
           // console.print("^yverbose: ^w%s", _message);
           break;
-        case Log::Level::k_warning:
+        case Log::Level::WARNING:
           m_console.print("^mwarning: ^w%s", _message);
           break;
         }

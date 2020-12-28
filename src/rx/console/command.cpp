@@ -269,6 +269,7 @@ bool Command::execute_tokens(Context& console_, const Vector<Token>& _tokens) {
       if (!m_arguments.emplace_back(_token.as_vec2i())) return false;
       break;
     }
+    return false;
   });
 
   return result && execute(console_);

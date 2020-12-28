@@ -142,7 +142,7 @@ inline const String& Technique::name() const {
 
 template<typename... Ts>
 inline bool Technique::error(const char* _format, Ts&&... _arguments) const {
-  log(Log::Level::k_error, _format, Utility::forward<Ts>(_arguments)...);
+  log(Log::Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 
@@ -150,7 +150,11 @@ template<typename... Ts>
 inline void Technique::log(Log::Level _level, const char* _format,
                            Ts&&... _arguments) const
 {
-  write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));
+  if constexpr (sizeof...(Ts) != 0) {
+    write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));
+  } else {
+    write_log(_level, _format);
+  }
 }
 
 } // namespace rx::render::frontend

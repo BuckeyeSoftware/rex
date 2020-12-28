@@ -119,7 +119,7 @@ inline const Optional<Math::Transform>& Loader::transform() const & {
 
 template<typename... Ts>
 inline bool Loader::error(const char* _format, Ts&&... _arguments) const {
-  log(Log::Level::k_error, _format, Utility::forward<Ts>(_arguments)...);
+  log(Log::Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 

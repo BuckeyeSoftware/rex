@@ -10,10 +10,10 @@ struct Stream;
 
 struct RX_API Log {
   enum class Level {
-    k_warning,
-    k_info,
-    k_verbose,
-    k_error
+    WARNING,
+    INFO,
+    VERBOSE,
+    ERROR
   };
 
   using QueueEvent = Event<void(Level, String)>;
@@ -128,22 +128,22 @@ inline bool Log::write(Level _level, String&& message_) {
 
 template<typename... Ts>
 inline bool Log::warning(const char* _format, Ts&&... _arguments) {
-  return write(Level::k_warning, _format, Utility::forward<Ts>(_arguments)...);
+  return write(Level::WARNING, _format, Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename... Ts>
 inline bool Log::info(const char* _format, Ts&&... _arguments) {
-  return write(Level::k_info, _format, Utility::forward<Ts>(_arguments)...);
+  return write(Level::INFO, _format, Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename... Ts>
 inline bool Log::verbose(const char* _format, Ts&&... _arguments) {
-  return write(Level::k_verbose, _format, Utility::forward<Ts>(_arguments)...);
+  return write(Level::VERBOSE, _format, Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename... Ts>
 inline bool Log::error(const char* _format, Ts&&... _arguments) {
-  return write(Level::k_error, _format, Utility::forward<Ts>(_arguments)...);
+  return write(Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
 }
 
 inline const char* Log::name() const {

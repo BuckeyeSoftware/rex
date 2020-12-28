@@ -288,24 +288,25 @@ bool Parser::parse(const String& _contents) {
 
       switch (i) {
       case 2:
-        if (is_float ? m_tokens.push_back(Math::Vec2f{fs[0], fs[1]})
-                     : m_tokens.push_back(Math::Vec2i{is[0], is[1]}))
+        if (is_float ? !m_tokens.push_back(Math::Vec2f{fs[0], fs[1]})
+                     : !m_tokens.push_back(Math::Vec2i{is[0], is[1]}))
         {
-          return false;
+          goto oom;
         }
         break;
       case 3:
-        if (is_float ? m_tokens.push_back(Math::Vec3f{fs[0], fs[1], fs[2]})
-                     : m_tokens.push_back(Math::Vec3i{is[0], is[1], is[2]}))
+        if (is_float ? !m_tokens.push_back(Math::Vec3f{fs[0], fs[1], fs[2]})
+                     : !m_tokens.push_back(Math::Vec3i{is[0], is[1], is[2]}))
         {
-          return false;
+          goto oom;
         }
         break;
       case 4:
-        if (is_float ? m_tokens.push_back(Math::Vec4f{fs[0], fs[1], fs[2], fs[3]})
-                     : m_tokens.push_back(Math::Vec4i{is[0], is[1], is[2], is[3]}))
+        if (is_float ? !m_tokens.push_back(Math::Vec4f{fs[0], fs[1], fs[2], fs[3]})
+                     : !m_tokens.push_back(Math::Vec4i{is[0], is[1], is[2], is[3]}))
         {
-          return false;
+        oom:;
+          return error(false, "out of memory");
         }
         break;
       }
