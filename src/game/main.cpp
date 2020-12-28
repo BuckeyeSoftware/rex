@@ -93,7 +93,9 @@ struct TestGame
 
     Render::Model model{&m_frontend};
     if (model.load("base/models/mrfixit/mrfixit.json5")) {
-      m_models.push_back(Utility::move(model));
+      if (!m_models.push_back(Utility::move(model))) {
+        return false;
+      }
     }
 
     m_models.each_fwd([](Render::Model& _model) {

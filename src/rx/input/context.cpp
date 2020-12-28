@@ -88,8 +88,7 @@ bool Context::append_layer(Layer* _layer) {
   if (const auto index = m_layers.find(_layer)) {
     return false;
   }
-  m_layers.push_back(_layer);
-  return true;
+  return m_layers.push_back(_layer);
 }
 
 bool Context::remove_layer(Layer* _layer) {

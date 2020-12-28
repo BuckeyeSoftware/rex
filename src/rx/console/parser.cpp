@@ -305,8 +305,7 @@ bool Parser::parse(const String& _contents) {
         if (is_float ? !m_tokens.push_back(Math::Vec4f{fs[0], fs[1], fs[2], fs[3]})
                      : !m_tokens.push_back(Math::Vec4i{is[0], is[1], is[2], is[3]}))
         {
-        oom:;
-          return error(false, "out of memory");
+          goto oom;
         }
         break;
       }
@@ -314,23 +313,31 @@ bool Parser::parse(const String& _contents) {
       record_span();
       if (float_like(m_ch)) {
         if (Float32 value; parse_float(m_ch, value)) {
-          m_tokens.emplace_back(value);
+          if (!m_tokens.emplace_back(value)) {
+            goto oom;
+          }
         } else {
           return false;
         }
       } else {
         if (Sint32 value; parse_int(m_ch, value)) {
-          m_tokens.emplace_back(value);
+          if (!m_tokens.emplace_back(value)) {
+            goto oom;
+          }
         } else {
           return false;
         }
       }
       record_span();
     } else if (!strncmp(m_ch, "true", 4)) {
-      m_tokens.emplace_back(true);
+      if (!m_tokens.emplace_back(true)) {
+        goto oom;
+      }
       m_ch += 4;
     } else if (!strncmp(m_ch, "false", 5)) {
-      m_tokens.emplace_back(false);
+      if (!m_tokens.emplace_back(false)) {
+        goto oom;
+      }
       m_ch += 5;
     } else if (is_identifier(*m_ch)) {
       record_span();
@@ -339,7 +346,7 @@ bool Parser::parse(const String& _contents) {
         contents += *m_ch++;
       }
       if (!m_tokens.emplace_back(Token::Type::ATOM, Utility::move(contents))) {
-        return false;
+        goto oom;
       }
       record_span();
     }
@@ -354,6 +361,9 @@ bool Parser::parse(const String& _contents) {
   }
 
   return true;
+
+oom:
+  return error(false, "out of memory");
 }
 
 bool Parser::parse_int(const char*& contents_, Sint32& value_) {

@@ -177,8 +177,7 @@ inline Command& Command::operator=(Command&& command_) {
 template<typename... Ts>
 inline bool Command::execute_arguments(Context& console_, Ts&&... _arguments) {
   m_arguments.clear();
-  (m_arguments.emplace_back(_arguments), ...);
-  return execute(console_);
+  return (m_arguments.emplace_back(_arguments) && ...) && execute(console_);
 }
 
 inline const String& Command::name() const & {
