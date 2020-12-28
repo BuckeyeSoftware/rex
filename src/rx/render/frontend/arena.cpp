@@ -57,7 +57,7 @@ bool Arena::List::allocate(Uint32 _size, Uint32& offset_) {
 
 bool Arena::List::reallocate(Uint32 _old_offset, Uint32 _size, Uint32& new_offset_) {
   const auto index = index_of(_old_offset);
-  if (index == -1_z) {
+  if (!index) {
     return false;
   }
 
@@ -98,8 +98,8 @@ bool Arena::List::reallocate(Uint32 _old_offset, Uint32 _size, Uint32& new_offse
 }
 
 bool Arena::List::deallocate(Uint32 _offset) {
-  if (auto index = index_of(_offset); index != -1_z) {
-    remove_at(index);
+  if (auto index = index_of(_offset)) {
+    remove_at(*index);
     return true;
   }
   return false;
@@ -160,7 +160,7 @@ bool Arena::List::insert_at(Size _index, const Region& _region) {
   return shift_up_at(_index) && memcpy(m_data + _index, &_region, sizeof _region);
 }
 
-Size Arena::List::index_of(Uint32 _offset) const {
+Optional<Size> Arena::List::index_of(Uint32 _offset) const {
   Size l = 0;
   Size r = m_size - 1;
 
@@ -178,7 +178,7 @@ Size Arena::List::index_of(Uint32 _offset) const {
     }
   }
 
-  return -1_z;
+  return nullopt;
 }
 
 void Arena::List::shift_down_at(Size _index) {

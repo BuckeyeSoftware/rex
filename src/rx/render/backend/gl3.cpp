@@ -1186,8 +1186,7 @@ void GL3::process(Byte* _command) {
         {
           // Ensure the PBO is invalidated from the state cache on destruction.
           auto downloader = reinterpret_cast<detail_gl3::downloader*>(resource->as_downloader + 1);
-          if (downloader->buffers.find(state->m_bound_pbo) != -1_z)
-          {
+          if (downloader->buffers.find(state->m_bound_pbo)) {
             state->m_bound_pbo = 0;
           }
           Utility::destruct<detail_gl3::downloader>(downloader);

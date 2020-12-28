@@ -1,6 +1,7 @@
 #ifndef RX_CORE_VECTOR_H
 #define RX_CORE_VECTOR_H
 #include "rx/core/array.h"
+#include "rx/core/optional.h"
 
 #include "rx/core/traits/is_same.h"
 #include "rx/core/traits/is_trivially_copyable.h"
@@ -28,8 +29,6 @@ template<typename T>
 struct Vector {
   template<typename U, Size E>
   using Initializers = Array<U[E]>;
-
-  static inline constexpr const Size k_npos{-1_z};
 
   constexpr Vector();
   constexpr Vector(Memory::Allocator& _allocator);
@@ -72,10 +71,10 @@ struct Vector {
 
   void clear();
 
-  Size find(const T& _value) const;
+  Optional<Size> find(const T& _value) const;
 
   template<typename F>
-  Size find_if(F&& _compare) const;
+  Optional<Size> find_if(F&& _compare) const;
 
   // append |data| by copy
   bool push_back(const T& _data);
@@ -429,24 +428,25 @@ inline void Vector<T>::clear() {
 }
 
 template<typename T>
-inline Size Vector<T>::find(const T& _value) const {
-  for (Size i{0}; i < m_size; i++) {
+inline Optional<Size> Vector<T>::find(const T& _value) const {
+  for (Size i = 0; i < m_size; i++) {
     if (m_data[i] == _value) {
       return i;
     }
   }
-  return k_npos;
+
+  return nullopt;
 }
 
 template<typename T>
 template<typename F>
-inline Size Vector<T>::find_if(F&& _compare) const {
-  for (Size i{0}; i < m_size; i++) {
+inline Optional<Size> Vector<T>::find_if(F&& _compare) const {
+  for (Size i = 0; i < m_size; i++) {
     if (_compare(m_data[i])) {
       return i;
     }
   }
-  return k_npos;
+  return nullopt;
 }
 
 template<typename T>

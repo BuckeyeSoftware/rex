@@ -74,10 +74,10 @@ void Context::on_resize(const Math::Vec2z& _dimensions) {
 }
 
 bool Context::raise_layer(Layer* _layer) {
-  if (const auto index = m_layers.find(_layer); index != -1_z) {
+  if (const auto index = m_layers.find(_layer)) {
     // Erase the layer and push it to the back.
-    auto layer = m_layers[index];
-    m_layers.erase(index, index + 1);
+    auto layer = m_layers[*index];
+    m_layers.erase(*index, *index + 1);
     return m_layers.push_back(layer);
   }
   return false;
@@ -85,7 +85,7 @@ bool Context::raise_layer(Layer* _layer) {
 
 bool Context::append_layer(Layer* _layer) {
   // Prevent appending the same layer more than once.
-  if (const auto index = m_layers.find(_layer); index != -1_z) {
+  if (const auto index = m_layers.find(_layer)) {
     return false;
   }
   m_layers.push_back(_layer);
@@ -93,8 +93,8 @@ bool Context::append_layer(Layer* _layer) {
 }
 
 bool Context::remove_layer(Layer* _layer) {
-  if (const auto index = m_layers.find(_layer); index != -1_z) {
-    m_layers.erase(index, index + 1);
+  if (const auto index = m_layers.find(_layer)) {
+    m_layers.erase(*index, *index + 1);
     return true;
   }
   return false;

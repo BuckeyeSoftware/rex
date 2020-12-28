@@ -222,7 +222,7 @@ bool Engine::init() {
     });
 
   const Display* found_display =
-    found_display_index != -1_z ? &m_displays[found_display_index] : nullptr;
+    found_display_index ? &m_displays[*found_display_index] : nullptr;
 
   if (!found_display) {
     // Use the first display if we could not match a display.

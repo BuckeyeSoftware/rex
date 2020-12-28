@@ -161,7 +161,8 @@ bool Logger::subscribe(Stream* _stream) {
   }
 
   Concurrency::ScopeLock lock{m_mutex};
-  if (const auto find = m_streams.find(_stream); find != -1_z) {
+  // Don't allow subscribing the same stream more than once.
+  if (const auto find = m_streams.find(_stream)) {
     return false;
   }
 
@@ -170,10 +171,10 @@ bool Logger::subscribe(Stream* _stream) {
 
 bool Logger::unsubscribe(Stream* _stream) {
   Concurrency::ScopeLock lock{m_mutex};
-  if (const auto find = m_streams.find(_stream); find != -1_z) {
+  if (const auto find = m_streams.find(_stream)) {
     // Flush any contents when removing a stream from the logger.
     flush_unlocked();
-    m_streams.erase(find, find + 1);
+    m_streams.erase(*find, *find + 1);
     return true;
   }
   return false;
@@ -186,30 +187,30 @@ bool Logger::enqueue(Log* _owner, Log::Level _level, String&& message_) {
     return _queue.owner == _owner;
   });
 
-  if (index != -1_z) {
-    auto& this_queue = m_queues[index];
-
-    // Record the message.
-    auto this_message = make_ptr<Message>(Memory::SystemAllocator::instance(),
-                                          &this_queue, _level, time(nullptr), Utility::move(message_),
-                                          IntrusiveList::Node{});
-
-    if (!this_message || !m_messages.emplace_back(Utility::move(this_message))) {
-      return false;
-    }
-
-    // Record the link.
-    this_queue.messages.push_back(&m_messages.last()->link);
-
-    // Wakeup logging thread when we have a few messages.
-    if (m_streams.size() && m_messages.size() >= 1000) {
-      m_wakeup_cond.signal();
-    }
-
-    return true;
+  if (!index) {
+    return false;
   }
 
-  return false;
+  auto& this_queue = m_queues[*index];
+
+  // Record the message.
+  auto this_message = make_ptr<Message>(Memory::SystemAllocator::instance(),
+                                        &this_queue, _level, time(nullptr), Utility::move(message_),
+                                        IntrusiveList::Node{});
+
+  if (!this_message || !m_messages.emplace_back(Utility::move(this_message))) {
+    return false;
+  }
+
+  // Record the link.
+  this_queue.messages.push_back(&m_messages.last()->link);
+
+  // Wakeup logging thread when we have a few messages.
+  if (m_streams.size() && m_messages.size() >= 1000) {
+    m_wakeup_cond.signal();
+  }
+
+  return true;
 }
 
 void Logger::flush() {

@@ -669,14 +669,15 @@ bool Technique::parse_uniform(const JSON& _uniform) {
   const auto name_string{name.as_string()};
   const auto type_string{type.as_string()};
 
-  // ensure we don't have multiple definitions of the same uniform
-  if (m_uniform_definitions.find_if([name_string](const UniformDefinition& _uniform_definition)
-    { return _uniform_definition.name == name_string; }) != -1_z)
-  {
+  // Ensure we don't have multiple definitions of the same uniform.
+  auto find = [name_string](const UniformDefinition& _uniform_definition) {
+    return _uniform_definition.name == name_string;
+  };
+  if (m_uniform_definitions.find_if(find)) {
     return error("duplicate uniform '%s'", name_string);
   }
 
-  const auto kind{uniform_type_from_string(type_string)};
+  const auto kind = uniform_type_from_string(type_string);
   if (!kind) {
     return error("unknown Type '%s' for '%s'", type_string, name_string);
   }

@@ -79,22 +79,22 @@ Size Bitset::count_unset_bits() const {
   return count;
 }
 
-Size Bitset::find_first_unset() const {
+Optional<Size> Bitset::find_first_unset() const {
   for (Size i = 0; i < m_size; i++) {
     if (!test(i)) {
       return i;
     }
   }
-  return -1_z;
+  return nullopt;
 }
 
-Size Bitset::find_first_set() const {
+Optional<Size> Bitset::find_first_set() const {
   for (Size i = 0; i < m_size; i++) {
     if (test(i)) {
       return i;
     }
   }
-  return -1_z;
+  return nullopt;
 }
 
 } // namespace rx

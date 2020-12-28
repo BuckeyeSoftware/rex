@@ -34,14 +34,14 @@ StaticPool& StaticPool::operator=(StaticPool&& pool_) {
   return *this;
 }
 
-Size StaticPool::allocate() {
-  const Size index{m_bitset.find_first_unset()};
-  if (RX_HINT_UNLIKELY(index == -1_z)) {
-    return -1_z;
+Optional<Size> StaticPool::allocate() {
+  const auto index = m_bitset.find_first_unset();
+  if (RX_HINT_UNLIKELY(!index)) {
+    return nullopt;
   }
 
-  m_bitset.set(index);
-  return index;
+  m_bitset.set(*index);
+  return *index;
 }
 
 void StaticPool::deallocate(Size _index) {

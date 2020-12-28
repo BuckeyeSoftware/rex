@@ -14,7 +14,7 @@ DynamicPool& DynamicPool::operator=(DynamicPool&& pool_) {
   return *this;
 }
 
-Size DynamicPool::pool_index_of(const Byte* _data) const {
+Optional<Size> DynamicPool::pool_index_of(const Byte* _data) const {
   return m_pools.find_if([_data](const Ptr<StaticPool>& _pool) {
     return _pool->owns(_data);
   });
@@ -26,11 +26,11 @@ Byte* DynamicPool::data_of(Size _index) const {
   return m_pools[pool_index]->data_of(object_index);
 }
 
-Size DynamicPool::index_of(const Byte* _data) const {
-  if (const Size index = pool_index_of(_data); index != -1_z) {
-    return index * m_pools.size();
+Optional<Size> DynamicPool::index_of(const Byte* _data) const {
+  if (const auto index = pool_index_of(_data)) {
+    return *index * m_pools.size();
   }
-  return -1_z;
+  return nullopt;
 }
 
 bool DynamicPool::add_pool() {

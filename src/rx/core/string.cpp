@@ -268,30 +268,30 @@ bool String::resize(Size _size) {
   return true;
 }
 
-Size String::find_first_of(int _ch) const {
-  if (char* search{strchr(m_data, _ch)}) {
+Optional<Size> String::find_first_of(int _ch) const {
+  if (char* search = strchr(m_data, _ch)) {
     return search - m_data;
   }
-  return k_npos;
+  return nullopt;
 }
 
-Size String::find_first_of(const char* _contents) const {
-  if (const char* search{strstr(m_data, _contents)}) {
+Optional<Size> String::find_first_of(const char* _contents) const {
+  if (const char* search = strstr(m_data, _contents)) {
     return search - m_data;
   }
-  return k_npos;
+  return nullopt;
 }
 
-Size String::find_last_of(int _ch) const {
-  if (const char* search{strrchr(m_data, _ch)}) {
+Optional<Size> String::find_last_of(int _ch) const {
+  if (const char* search = strrchr(m_data, _ch)) {
     return search - m_data;
   }
-  return k_npos;
+  return nullopt;
 }
 
-Size String::find_last_of(const char* _contents) const {
-  auto reverse_strstr{[](const char* _haystack, const char* _needle) {
-    const char* r{nullptr};
+Optional<Size> String::find_last_of(const char* _contents) const {
+  auto reverse_strstr = [](const char* _haystack, const char* _needle) {
+    const char* r = nullptr;
     for (;;) {
       const char* p = strstr(_haystack, _needle);
       if (!p) {
@@ -300,12 +300,13 @@ Size String::find_last_of(const char* _contents) const {
       r = p;
       _haystack = p + 1;
     }
-  }};
+  };
 
-  if (const char* search{reverse_strstr(m_data, _contents)}) {
+  if (const char* search = reverse_strstr(m_data, _contents)) {
     return search - m_data;
   }
-  return k_npos;
+
+  return nullopt;;
 }
 
 String& String::append(const char* _first, const char *_last) {

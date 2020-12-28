@@ -114,7 +114,7 @@ private:
 
     // Find the index in |m_data| for a given |Region| based on it's |_offset|.
     // This performs a binary search and has O(log n) performance.
-    Size index_of(Uint32 _offset) const;
+    Optional<Size> index_of(Uint32 _offset) const;
 
     bool grow();
     bool push(const Region& _region);
@@ -166,9 +166,9 @@ RX_HINT_FORCE_INLINE const Arena::List::Region& Arena::List::region_by_index(Siz
 }
 
 inline const Arena::List::Region& Arena::List::region_by_offset(Uint32 _offset) const & {
-  const Size index = index_of(_offset);
-  RX_ASSERT(index != -1_z, "invalid offset");
-  return region_by_index(index);
+  const auto index = index_of(_offset);
+  RX_ASSERT(index, "invalid offset");
+  return region_by_index(*index);
 }
 
 // [Arena::Block]

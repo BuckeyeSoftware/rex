@@ -31,11 +31,11 @@ struct RX_API DynamicPool {
   Size size() const;
 
   Byte* data_of(Size _index) const;
-  Size index_of(const Byte* _data) const;
+  Optional<Size> index_of(const Byte* _data) const;
 
 private:
   [[nodiscard]] bool add_pool();
-  Size pool_index_of(const Byte* _data) const;
+  Optional<Size> pool_index_of(const Byte* _data) const;
 
   Memory::Allocator* m_allocator;
   Size m_object_size;
@@ -79,14 +79,14 @@ inline T* DynamicPool::create(Ts&&... _arguments) {
 
 template<typename T>
 void DynamicPool::destroy(T* _data) {
-  const Size index = pool_index_of(reinterpret_cast<const Byte*>(_data));
-  if (index == -1_z) {
+  const auto index = pool_index_of(reinterpret_cast<const Byte*>(_data));
+  if (!index) {
     return;
   }
 
   // Fetch the static pool with the given index, then destroy the data on
   // that pool, as it own's it.
-  auto& pool = m_pools[index];
+  auto& pool = m_pools[*index];
   pool->destroy<T>(_data);
 
   // When the pool is empty and it's the last pool in the list, to reduce

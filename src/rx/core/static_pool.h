@@ -18,7 +18,7 @@ struct RX_API StaticPool {
   StaticPool& operator=(StaticPool&& pool_);
   Byte* operator[](Size _index) const;
 
-  Size allocate();
+  Optional<Size> allocate();
   void deallocate(Size _index);
 
   template<typename T, typename... Ts>
@@ -70,12 +70,12 @@ inline T* StaticPool::create(Ts&&... _arguments) {
   RX_ASSERT(sizeof(T) <= m_object_size, "object too large (%zu > %zu)",
     sizeof(T), m_object_size);
 
-  const Size index{allocate()};
-  if (RX_HINT_UNLIKELY(index == -1_z)) {
+  const auto index = allocate();
+  if (RX_HINT_UNLIKELY(!index)) {
     return nullptr;
   }
 
-  return Utility::construct<T>(data_of(index),
+  return Utility::construct<T>(data_of(*index),
                                Utility::forward<Ts>(_arguments)...);
 }
 

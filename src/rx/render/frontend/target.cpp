@@ -285,7 +285,7 @@ bool Target::has_texture(const Texture* _texture) const {
     auto find = [_texture](const Attachment& _attachment) {
       return _attachment.texture_is(_texture);
     };
-    return m_attachments.find_if(find) != -1_z;
+    return m_attachments.find_if(find);
   } else if (_texture->is_depth_stencil_format()) {
     return has_depth_stencil() && m_depth_stencil_texture == _texture;
   } else if (_texture->is_depth_format()) {

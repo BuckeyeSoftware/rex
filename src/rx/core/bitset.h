@@ -1,6 +1,6 @@
 #ifndef RX_CORE_BITSET_H
 #define RX_CORE_BITSET_H
-#include "rx/core/assert.h"
+#include "rx/core/optional.h"
 
 #include "rx/core/traits/is_same.h"
 #include "rx/core/traits/return_type.h"
@@ -52,10 +52,10 @@ struct RX_API Bitset {
   Size count_unset_bits() const;
 
   // find the index of the first set bit
-  Size find_first_set() const;
+  Optional<Size> find_first_set() const;
 
   // find the index of the first unset bit
-  Size find_first_unset() const;
+  Optional<Size> find_first_unset() const;
 
   // iterate bitset invoking |_function| with index of each set bit
   template<typename F>

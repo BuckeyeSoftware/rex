@@ -2,7 +2,8 @@
 #define RX_CORE_STRING_H
 #include "rx/core/assert.h" // RX_ASSERT
 #include "rx/core/format.h" // format
-#include "rx/core/vector.h" // vector
+#include "rx/core/vector.h" // Vector
+#include "rx/core/optional.h" // Optional
 
 #include "rx/core/traits/remove_cvref.h"
 
@@ -15,7 +16,6 @@ struct WideString;
 // 32-bit: 16 + k_small_string bytes
 // 64-bit: 32 + k_small_string bytes
 struct RX_API String {
-  static inline constexpr const Size k_npos{-1_z};
   static inline constexpr const Size k_small_string{16};
 
   constexpr String(Memory::Allocator& _allocator);
@@ -47,13 +47,13 @@ struct RX_API String {
   bool reserve(Size _size);
   bool resize(Size _size);
 
-  Size find_first_of(int _ch) const;
-  Size find_first_of(const char* _contents) const;
-  Size find_first_of(const String& _contents) const;
+  Optional<Size> find_first_of(int _ch) const;
+  Optional<Size> find_first_of(const char* _contents) const;
+  Optional<Size> find_first_of(const String& _contents) const;
 
-  Size find_last_of(int _ch) const;
-  Size find_last_of(const char* _contents) const;
-  Size find_last_of(const String& _contents) const;
+  Optional<Size> find_last_of(int _ch) const;
+  Optional<Size> find_last_of(const char* _contents) const;
+  Optional<Size> find_last_of(const String& _contents) const;
 
   Size size() const;
   Size capacity() const;
@@ -245,11 +245,11 @@ inline String::String(const char* _first, const char* _last)
 {
 }
 
-inline Size String::find_first_of(const String& _contents) const {
+inline Optional<Size> String::find_first_of(const String& _contents) const {
   return find_first_of(_contents.data());
 }
 
-inline Size String::find_last_of(const String& _contents) const {
+inline Optional<Size> String::find_last_of(const String& _contents) const {
   return find_last_of(_contents.data());
 }
 
