@@ -26,25 +26,25 @@ static GlobalGroup g_group_cvars{"console"};
 
 static bool type_check(VariableType _VariableType, Token::Type _token_type) {
   switch (_VariableType) {
-  case VariableType::k_boolean:
+  case VariableType::BOOLEAN:
     return _token_type == Token::Type::k_boolean;
-  case VariableType::k_string:
+  case VariableType::STRING:
     return _token_type == Token::Type::k_string;
-  case VariableType::k_int:
+  case VariableType::INT:
     return _token_type == Token::Type::k_int;
-  case VariableType::k_float:
+  case VariableType::FLOAT:
     return _token_type == Token::Type::k_float;
-  case VariableType::k_vec4f:
+  case VariableType::VEC4F:
     return _token_type == Token::Type::k_vec4f;
-  case VariableType::k_vec4i:
+  case VariableType::VEC4I:
     return _token_type == Token::Type::k_vec4i;
-  case VariableType::k_vec3f:
+  case VariableType::VEC3F:
     return _token_type == Token::Type::k_vec3f;
-  case VariableType::k_vec3i:
+  case VariableType::VEC3I:
     return _token_type == Token::Type::k_vec3i;
-  case VariableType::k_vec2f:
+  case VariableType::VEC2F:
     return _token_type == Token::Type::k_vec2f;
-  case VariableType::k_vec2i:
+  case VariableType::VEC2I:
     return _token_type == Token::Type::k_vec2i;
   }
   return false;
@@ -114,14 +114,14 @@ bool Context::execute(const String& _contents) {
   if (auto* variable = find_variable_by_name(atom)) {
     if (tokens.size() > 1) {
       switch (set_from_reference_and_token(variable, tokens[1])) {
-      case VariableStatus::k_success:
+      case VariableStatus::SUCCESS:
         print("^gsuccess: ^wChanged: \"%s\" to %s", atom, tokens[1].print());
         break;
-      case VariableStatus::k_out_of_range:
+      case VariableStatus::OUT_OF_RANGE:
         print("^rerror: ^wOut of range: \"%s\" has range %s", atom,
           variable->print_range());
         break;
-      case VariableStatus::k_type_mismatch:
+      case VariableStatus::TYPE_MISMATCH:
         print("^rerror: ^wType mismatch: \"%s\" expected %s, got %s", atom,
           VariableType_as_string(variable->type()),
           token_type_as_string(tokens[1].kind()));
@@ -236,7 +236,7 @@ VariableStatus Context::set_from_reference_and_value(VariableReference* _referen
   if (auto* cast{_reference->try_cast<T>()}) {
     return cast->set(_value);
   } else {
-    return VariableStatus::k_type_mismatch;
+    return VariableStatus::TYPE_MISMATCH;
   }
 }
 
@@ -253,29 +253,29 @@ template VariableStatus Context::set_from_reference_and_value<Math::Vec2i>(Varia
 
 VariableStatus Context::set_from_reference_and_token(VariableReference* reference_, const Token& _token) {
   if (!type_check(reference_->type(), _token.kind())) {
-    return VariableStatus::k_type_mismatch;
+    return VariableStatus::TYPE_MISMATCH;
   }
 
   switch (reference_->type()) {
-  case VariableType::k_boolean:
-    return reference_->cast<bool>()->set(_token.as_boolean());
-  case VariableType::k_string:
+  case VariableType::BOOLEAN:
+    return reference_->cast<Bool>()->set(_token.as_boolean());
+  case VariableType::STRING:
     return reference_->cast<String>()->set(_token.as_string());
-  case VariableType::k_int:
+  case VariableType::INT:
     return reference_->cast<Sint32>()->set(_token.as_int());
-  case VariableType::k_float:
+  case VariableType::FLOAT:
     return reference_->cast<Float32>()->set(_token.as_float());
-  case VariableType::k_vec4f:
+  case VariableType::VEC4F:
     return reference_->cast<Math::Vec4f>()->set(_token.as_vec4f());
-  case VariableType::k_vec4i:
+  case VariableType::VEC4I:
     return reference_->cast<Math::Vec4i>()->set(_token.as_vec4i());
-  case VariableType::k_vec3f:
+  case VariableType::VEC3F:
     return reference_->cast<Math::Vec3f>()->set(_token.as_vec3f());
-  case VariableType::k_vec3i:
+  case VariableType::VEC3I:
     return reference_->cast<Math::Vec3i>()->set(_token.as_vec3i());
-  case VariableType::k_vec2f:
+  case VariableType::VEC2F:
     return reference_->cast<Math::Vec2f>()->set(_token.as_vec2f());
-  case VariableType::k_vec2i:
+  case VariableType::VEC2I:
     return reference_->cast<Math::Vec2i>()->set(_token.as_vec2i());
   }
 

@@ -41,7 +41,7 @@ struct Command {
 
     VariableType type;
     union {
-      bool as_boolean;
+      Bool as_boolean;
       String as_string;
       Sint32 as_int;
       Float32 as_float;
@@ -85,61 +85,61 @@ private:
 };
 
 inline Command::Argument::Argument(bool _value)
-  : type{VariableType::k_boolean}
+  : type{VariableType::BOOLEAN}
 {
   as_boolean = _value;
 }
 
 inline Command::Argument::Argument(const String& _value)
-  : type{VariableType::k_string}
+  : type{VariableType::STRING}
 {
   Utility::construct<String>(&as_string, _value);
 }
 
 inline Command::Argument::Argument(Sint32 _value)
-  : type{VariableType::k_int}
+  : type{VariableType::INT}
 {
   as_int = _value;
 }
 
 inline Command::Argument::Argument(Float32 _value)
-  : type{VariableType::k_float}
+  : type{VariableType::FLOAT}
 {
   as_float = _value;
 }
 
 inline Command::Argument::Argument(const Math::Vec4f& _value)
-  : type{VariableType::k_vec4f}
+  : type{VariableType::VEC4F}
 {
   as_vec4f = _value;
 }
 
 inline Command::Argument::Argument(const Math::Vec4i& _value)
-  : type{VariableType::k_vec4i}
+  : type{VariableType::VEC4I}
 {
   as_vec4i = _value;
 }
 
 inline Command::Argument::Argument(const Math::Vec3f& _value)
-  : type{VariableType::k_vec3f}
+  : type{VariableType::VEC3F}
 {
   as_vec3f = _value;
 }
 
 inline Command::Argument::Argument(const Math::Vec3i& _value)
-  : type{VariableType::k_vec3i}
+  : type{VariableType::VEC3I}
 {
   as_vec3i = _value;
 }
 
 inline Command::Argument::Argument(const Math::Vec2f& _value)
-  : type{VariableType::k_vec2f}
+  : type{VariableType::VEC2F}
 {
   as_vec2f = _value;
 }
 
 inline Command::Argument::Argument(const Math::Vec2i& _value)
-  : type{VariableType::k_vec2i}
+  : type{VariableType::VEC2I}
 {
   as_vec2i = _value;
 }

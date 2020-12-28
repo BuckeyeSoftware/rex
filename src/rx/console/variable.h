@@ -29,43 +29,43 @@ template<typename T>
 struct Variable;
 
 enum class VariableType {
-  k_boolean,
-  k_string,
-  k_int,
-  k_float,
-  k_vec4f,
-  k_vec4i,
-  k_vec3f,
-  k_vec3i,
-  k_vec2f,
-  k_vec2i,
+  BOOLEAN,
+  STRING,
+  INT,
+  FLOAT,
+  VEC4F,
+  VEC4I,
+  VEC3F,
+  VEC3I,
+  VEC2F,
+  VEC2I,
 };
 
 enum class VariableStatus {
-  k_success,
-  k_out_of_range,
-  k_type_mismatch
+  SUCCESS,
+  OUT_OF_RANGE,
+  TYPE_MISMATCH
 };
 
 // Type traits
 template<VariableType T>
 struct VariableTypeTrait {
-  static constexpr const VariableType type = T;
+  static inline constexpr const VariableType type = T;
 };
 
 template<typename T>
 struct VariableTrait;
 
-template<> struct VariableTrait<bool>   : VariableTypeTrait<VariableType::k_boolean> {};
-template<> struct VariableTrait<String> : VariableTypeTrait<VariableType::k_string> {};
-template<> struct VariableTrait<Sint32> : VariableTypeTrait<VariableType::k_int> {};
-template<> struct VariableTrait<Float32> : VariableTypeTrait<VariableType::k_float> {};
-template<> struct VariableTrait<Vec2f>  : VariableTypeTrait<VariableType::k_vec2f> {};
-template<> struct VariableTrait<Vec2i>  : VariableTypeTrait<VariableType::k_vec2i> {};
-template<> struct VariableTrait<Vec3f>  : VariableTypeTrait<VariableType::k_vec3f> {};
-template<> struct VariableTrait<Vec3i>  : VariableTypeTrait<VariableType::k_vec3i> {};
-template<> struct VariableTrait<Vec4f>  : VariableTypeTrait<VariableType::k_vec4f> {};
-template<> struct VariableTrait<Vec4i>  : VariableTypeTrait<VariableType::k_vec4i> {};
+template<> struct VariableTrait<Bool>    : VariableTypeTrait<VariableType::BOOLEAN> {};
+template<> struct VariableTrait<String>  : VariableTypeTrait<VariableType::STRING> {};
+template<> struct VariableTrait<Sint32>  : VariableTypeTrait<VariableType::INT> {};
+template<> struct VariableTrait<Float32> : VariableTypeTrait<VariableType::FLOAT> {};
+template<> struct VariableTrait<Vec2f>   : VariableTypeTrait<VariableType::VEC2F> {};
+template<> struct VariableTrait<Vec2i>   : VariableTypeTrait<VariableType::VEC2I> {};
+template<> struct VariableTrait<Vec3f>   : VariableTypeTrait<VariableType::VEC3F> {};
+template<> struct VariableTrait<Vec3i>   : VariableTypeTrait<VariableType::VEC3I> {};
+template<> struct VariableTrait<Vec4f>   : VariableTypeTrait<VariableType::VEC4F> {};
+template<> struct VariableTrait<Vec4i>   : VariableTypeTrait<VariableType::VEC4I> {};
 
 static inline constexpr const Sint32 k_int_min = -INT_MAX - 1;
 static inline constexpr const Sint32 k_int_max = INT_MAX;
@@ -174,8 +174,8 @@ private:
 
 // specialization for boolean
 template<>
-struct Variable<bool> {
-  using OnChangeEvent = Event<void(Variable<bool>&)>;
+struct Variable<Bool> {
+  using OnChangeEvent = Event<void(Variable<Bool>&)>;
 
   Variable(const char* _name, const char* _description, bool _initial);
 
@@ -373,7 +373,7 @@ inline void Variable<T>::reset() {
 template<typename T>
 inline VariableStatus Variable<T>::set(const T& _value, bool _signal_change) {
   if (_value < m_min || _value > m_max) {
-    return VariableStatus::k_out_of_range;
+    return VariableStatus::OUT_OF_RANGE;
   }
 
   if (m_current != _value) {
@@ -383,7 +383,7 @@ inline VariableStatus Variable<T>::set(const T& _value, bool _signal_change) {
     }
   }
 
-  return VariableStatus::k_success;
+  return VariableStatus::SUCCESS;
 }
 
 template<typename T>
@@ -391,39 +391,39 @@ inline typename Variable<T>::OnChangeEvent::Handle Variable<T>::on_change(typena
   return m_on_change.connect(Utility::move(on_change_));
 }
 
-// Variable<bool>
-inline Variable<bool>::Variable(const char* _name, const char* _description, bool _initial)
+// Variable<Bool>
+inline Variable<Bool>::Variable(const char* _name, const char* _description, bool _initial)
   : m_reference{_name, _description, static_cast<void*>(this), VariableTrait<bool>::type}
   , m_initial{_initial}
   , m_current{_initial}
 {
 }
 
-inline Variable<bool>::operator const bool&() const {
+inline Variable<Bool>::operator const bool&() const {
   return m_current;
 }
 
-inline const bool& Variable<bool>::get() const {
+inline const bool& Variable<Bool>::get() const {
   return m_current;
 }
 
-inline const bool& Variable<bool>::initial() const {
+inline const bool& Variable<Bool>::initial() const {
   return m_initial;
 }
 
-inline VariableReference* Variable<bool>::reference() {
+inline VariableReference* Variable<Bool>::reference() {
   return &m_reference;
 }
 
-inline const VariableReference* Variable<bool>::reference() const {
+inline const VariableReference* Variable<Bool>::reference() const {
   return &m_reference;
 }
 
-inline void Variable<bool>::reset() {
+inline void Variable<Bool>::reset() {
   m_current = m_initial;
 }
 
-inline VariableStatus Variable<bool>::set(bool value, bool _signal_change) {
+inline VariableStatus Variable<Bool>::set(bool value, bool _signal_change) {
   if (m_current != value) {
     m_current = value;
     if (_signal_change) {
@@ -431,15 +431,15 @@ inline VariableStatus Variable<bool>::set(bool value, bool _signal_change) {
     }
   }
 
-  return VariableStatus::k_success;
+  return VariableStatus::SUCCESS;
 }
 
-inline void Variable<bool>::toggle() {
+inline void Variable<Bool>::toggle() {
   m_current = !m_current;
   m_on_change.signal(*this);
 }
 
-inline typename Variable<bool>::OnChangeEvent::Handle Variable<bool>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
+inline typename Variable<Bool>::OnChangeEvent::Handle Variable<Bool>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
   return m_on_change.connect(Utility::move(on_change_));
 }
 
@@ -483,7 +483,7 @@ inline VariableStatus Variable<String>::set(const char* _value, bool _signal_cha
     }
   }
 
-  return VariableStatus::k_success;
+  return VariableStatus::SUCCESS;
 }
 
 inline VariableStatus Variable<String>::set(const String& _value, bool _signal_change) {
@@ -494,7 +494,7 @@ inline VariableStatus Variable<String>::set(const String& _value, bool _signal_c
     }
   }
 
-  return VariableStatus::k_success;
+  return VariableStatus::SUCCESS;
 }
 
 inline typename Variable<String>::OnChangeEvent::Handle Variable<String>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
@@ -558,7 +558,7 @@ inline VariableStatus Variable<Vec2<T>>::set(const Vec2<T>& _value, bool _signal
   if (_value.x < m_min.x || _value.y < m_min.y ||
       _value.x > m_max.x || _value.y > m_max.y)
   {
-    return VariableStatus::k_out_of_range;
+    return VariableStatus::OUT_OF_RANGE;
   }
 
   if (m_current != _value) {
@@ -568,7 +568,7 @@ inline VariableStatus Variable<Vec2<T>>::set(const Vec2<T>& _value, bool _signal
     }
   }
 
-  return VariableStatus::k_success;
+  return VariableStatus::SUCCESS;
 }
 
 template<typename T>
@@ -633,7 +633,7 @@ inline VariableStatus Variable<Vec3<T>>::set(const Vec3<T>& _value, bool _signal
   if (_value.x < m_min.x || _value.y < m_min.y || _value.z < m_min.z ||
       _value.x > m_max.x || _value.y > m_max.y || _value.z > m_max.z)
   {
-    return VariableStatus::k_out_of_range;
+    return VariableStatus::OUT_OF_RANGE;
   }
 
   if (m_current != _value) {
@@ -643,7 +643,7 @@ inline VariableStatus Variable<Vec3<T>>::set(const Vec3<T>& _value, bool _signal
     }
   }
 
-  return VariableStatus::k_success;
+  return VariableStatus::SUCCESS;
 }
 
 template<typename T>
@@ -708,7 +708,7 @@ inline VariableStatus Variable<Vec4<T>>::set(const Vec4<T>& _value, bool _signal
   if (_value.x < m_min.x || _value.y < m_min.y || _value.z < m_min.z || _value.w < m_min.w ||
       _value.x > m_max.x || _value.y > m_max.y || _value.z > m_max.z || _value.w > m_max.w)
   {
-    return VariableStatus::k_out_of_range;
+    return VariableStatus::OUT_OF_RANGE;
   }
 
   if (m_current != _value) {
@@ -718,7 +718,7 @@ inline VariableStatus Variable<Vec4<T>>::set(const Vec4<T>& _value, bool _signal
     }
   }
 
-  return VariableStatus::k_success;
+  return VariableStatus::SUCCESS;
 }
 
 template<typename T>
@@ -729,7 +729,7 @@ inline typename Variable<Vec4<T>>::OnChangeEvent::Handle Variable<Vec4<T>>::on_c
 const char* VariableType_as_string(VariableType _type);
 
 inline bool VariableType_is_ranged(VariableType _type) {
-  return _type != VariableType::k_boolean && _type != VariableType::k_string;
+  return _type != VariableType::BOOLEAN && _type != VariableType::STRING;
 }
 
 } // namespace rx::console

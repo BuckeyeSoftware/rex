@@ -7,25 +7,25 @@ namespace Rx::Console {
 
 const char* VariableType_as_string(VariableType _type) {
   switch (_type) {
-  case VariableType::k_boolean:
+  case VariableType::BOOLEAN:
     return "bool";
-  case VariableType::k_string:
+  case VariableType::STRING:
     return "string";
-  case VariableType::k_int:
+  case VariableType::INT:
     return "int";
-  case VariableType::k_float:
+  case VariableType::FLOAT:
     return "float";
-  case VariableType::k_vec4f:
+  case VariableType::VEC4F:
     return "vec4f";
-  case VariableType::k_vec4i:
+  case VariableType::VEC4I:
     return "vec4i";
-  case VariableType::k_vec3f:
+  case VariableType::VEC3F:
     return "vec3f";
-  case VariableType::k_vec3i:
+  case VariableType::VEC3I:
     return "vec3i";
-  case VariableType::k_vec2f:
+  case VariableType::VEC2F:
     return "vec2f";
-  case VariableType::k_vec2i:
+  case VariableType::VEC2I:
     return "vec2i";
   }
   RX_HINT_UNREACHABLE();
@@ -61,34 +61,34 @@ VariableReference::VariableReference(const char* name,
 
 void VariableReference::reset() {
   switch (m_type) {
-  case VariableType::k_boolean:
-    cast<bool>()->reset();
+  case VariableType::BOOLEAN:
+    cast<Bool>()->reset();
     break;
-  case VariableType::k_string:
+  case VariableType::STRING:
     cast<String>()->reset();
     break;
-  case VariableType::k_int:
+  case VariableType::INT:
     cast<Sint32>()->reset();
     break;
-  case VariableType::k_float:
+  case VariableType::FLOAT:
     cast<Float32>()->reset();
     break;
-  case VariableType::k_vec4f:
+  case VariableType::VEC4F:
     cast<Math::Vec4f>()->reset();
     break;
-  case VariableType::k_vec4i:
+  case VariableType::VEC4I:
     cast<Math::Vec4i>()->reset();
     break;
-  case VariableType::k_vec3f:
+  case VariableType::VEC3F:
     cast<Math::Vec3f>()->reset();
     break;
-  case VariableType::k_vec3i:
+  case VariableType::VEC3I:
     cast<Math::Vec3i>()->reset();
     break;
-  case VariableType::k_vec2f:
+  case VariableType::VEC2F:
     cast<Math::Vec2f>()->reset();
     break;
-  case VariableType::k_vec2i:
+  case VariableType::VEC2I:
     cast<Math::Vec2i>()->reset();
     break;
   }
@@ -96,25 +96,25 @@ void VariableReference::reset() {
 
 String VariableReference::print_current() const {
   switch (m_type) {
-  case VariableType::k_boolean:
-    return cast<bool>()->get() ? "true" : "false";
-  case VariableType::k_string:
+  case VariableType::BOOLEAN:
+    return cast<Bool>()->get() ? "true" : "false";
+  case VariableType::STRING:
     return String::format("\"%s\"", escape(cast<String>()->get()));
-  case VariableType::k_int:
+  case VariableType::INT:
     return String::format("%d", cast<Sint32>()->get());
-  case VariableType::k_float:
+  case VariableType::FLOAT:
     return String::format("%f", cast<Float32>()->get());
-  case VariableType::k_vec4f:
+  case VariableType::VEC4F:
     return String::format("%s", cast<Math::Vec4f>()->get());
-  case VariableType::k_vec4i:
+  case VariableType::VEC4I:
     return String::format("%s", cast<Math::Vec4i>()->get());
-  case VariableType::k_vec3f:
+  case VariableType::VEC3F:
     return String::format("%s", cast<Math::Vec3f>()->get());
-  case VariableType::k_vec3i:
+  case VariableType::VEC3I:
     return String::format("%s", cast<Math::Vec3i>()->get());
-  case VariableType::k_vec2f:
+  case VariableType::VEC2F:
     return String::format("%s", cast<Math::Vec2f>()->get());
-  case VariableType::k_vec2i:
+  case VariableType::VEC2I:
     return String::format("%s", cast<Math::Vec2i>()->get());
   }
 
@@ -122,21 +122,21 @@ String VariableReference::print_current() const {
 }
 
 String VariableReference::print_range() const {
-  if (m_type == VariableType::k_int) {
+  if (m_type == VariableType::INT) {
     const auto handle{cast<Sint32>()};
     const auto min{handle->min()};
     const auto max{handle->max()};
     const auto min_fmt{min == k_int_min ? "-inf" : String::format("%d", min)};
     const auto max_fmt{max == k_int_max ? "+inf" : String::format("%d", max)};
     return String::format("[%s, %s]", min_fmt, max_fmt);
-  } else if (m_type == VariableType::k_float) {
+  } else if (m_type == VariableType::FLOAT) {
     const auto handle{cast<Float32>()};
     const auto min{handle->min()};
     const auto max{handle->max()};
     const auto min_fmt{min == k_float_min ? "-inf" : String::format("%f", min)};
     const auto max_fmt{max == k_float_max ? "+inf" : String::format("%f", max)};
     return String::format("[%s, %s]", min_fmt, max_fmt);
-  } else if (m_type == VariableType::k_vec4f) {
+  } else if (m_type == VariableType::VEC4F) {
     const auto handle{cast<Vec4f>()};
     const auto min{handle->min()};
     const auto max{handle->max()};
@@ -164,7 +164,7 @@ String VariableReference::print_range() const {
     }
 
     return String::format("[%s, %s]", min_fmt, max_fmt);
-  } else if (m_type == VariableType::k_vec4i) {
+  } else if (m_type == VariableType::VEC4I) {
     const auto handle{cast<Vec4i>()};
     const auto min{handle->min()};
     const auto max{handle->max()};
@@ -192,7 +192,7 @@ String VariableReference::print_range() const {
     }
 
     return String::format("[%s, %s]", min_fmt, max_fmt);
-  } else if (m_type == VariableType::k_vec3f) {
+  } else if (m_type == VariableType::VEC3F) {
     const auto handle{cast<Vec3f>()};
     const auto min{handle->min()};
     const auto max{handle->max()};
@@ -218,7 +218,7 @@ String VariableReference::print_range() const {
     }
 
     return String::format("[%s, %s]", min_fmt, max_fmt);
-  } else if (m_type == VariableType::k_vec3i) {
+  } else if (m_type == VariableType::VEC3I) {
     const auto handle{cast<Vec3i>()};
     const auto min{handle->min()};
     const auto max{handle->max()};
@@ -244,7 +244,7 @@ String VariableReference::print_range() const {
     }
 
     return String::format("[%s, %s]", min_fmt, max_fmt);
-  } else if (m_type == VariableType::k_vec2f) {
+  } else if (m_type == VariableType::VEC2F) {
     const auto handle{cast<Vec2f>()};
     const auto min{handle->min()};
     const auto max{handle->max()};
@@ -268,7 +268,7 @@ String VariableReference::print_range() const {
     }
 
     return String::format("[%s, %s]", min_fmt, max_fmt);
-  } else if (m_type == VariableType::k_vec2i) {
+  } else if (m_type == VariableType::VEC2I) {
     const auto handle{cast<Vec2i>()};
     const auto min{handle->min()};
     const auto max{handle->max()};
@@ -299,25 +299,25 @@ String VariableReference::print_range() const {
 
 String VariableReference::print_initial() const {
   switch (m_type) {
-  case VariableType::k_boolean:
-    return cast<bool>()->initial() ? "true" : "false";
-  case VariableType::k_string:
+  case VariableType::BOOLEAN:
+    return cast<Bool>()->initial() ? "true" : "false";
+  case VariableType::STRING:
     return String::format("\"%s\"", escape(cast<String>()->initial()));
-  case VariableType::k_int:
+  case VariableType::INT:
     return String::format("%d", cast<Sint32>()->initial());
-  case VariableType::k_float:
+  case VariableType::FLOAT:
     return String::format("%f", cast<Float32>()->initial());
-  case VariableType::k_vec4f:
+  case VariableType::VEC4F:
     return String::format("%s", cast<Math::Vec4f>()->initial());
-  case VariableType::k_vec4i:
+  case VariableType::VEC4I:
     return String::format("%s", cast<Math::Vec4i>()->initial());
-  case VariableType::k_vec3f:
+  case VariableType::VEC3F:
     return String::format("%s", cast<Math::Vec3f>()->initial());
-  case VariableType::k_vec3i:
+  case VariableType::VEC3I:
     return String::format("%s", cast<Math::Vec3i>()->initial());
-  case VariableType::k_vec2f:
+  case VariableType::VEC2F:
     return String::format("%s", cast<Math::Vec2f>()->initial());
-  case VariableType::k_vec2i:
+  case VariableType::VEC2I:
     return String::format("%s", cast<Math::Vec2i>()->initial());
   }
 
@@ -326,25 +326,25 @@ String VariableReference::print_initial() const {
 
 bool VariableReference::is_initial() const {
   switch (m_type) {
-  case VariableType::k_boolean:
-    return cast<bool>()->get() == cast<bool>()->initial();
-  case VariableType::k_string:
+  case VariableType::BOOLEAN:
+    return cast<Bool>()->get() == cast<Bool>()->initial();
+  case VariableType::STRING:
     return cast<String>()->get() == cast<String>()->initial();
-  case VariableType::k_int:
+  case VariableType::INT:
     return cast<Sint32>()->get() == cast<Sint32>()->initial();
-  case VariableType::k_float:
+  case VariableType::FLOAT:
     return cast<Float32>()->get() == cast<Float32>()->initial();
-  case VariableType::k_vec4f:
+  case VariableType::VEC4F:
     return cast<Math::Vec4f>()->get() == cast<Math::Vec4f>()->initial();
-  case VariableType::k_vec4i:
+  case VariableType::VEC4I:
     return cast<Math::Vec4i>()->get() == cast<Math::Vec4i>()->initial();
-  case VariableType::k_vec3f:
+  case VariableType::VEC3F:
     return cast<Math::Vec3f>()->get() == cast<Math::Vec3f>()->initial();
-  case VariableType::k_vec3i:
+  case VariableType::VEC3I:
     return cast<Math::Vec3i>()->get() == cast<Math::Vec3i>()->initial();
-  case VariableType::k_vec2f:
+  case VariableType::VEC2F:
     return cast<Math::Vec2f>()->get() == cast<Math::Vec2f>()->initial();
-  case VariableType::k_vec2i:
+  case VariableType::VEC2I:
     return cast<Math::Vec2i>()->get() == cast<Math::Vec2i>()->initial();
   }
 
