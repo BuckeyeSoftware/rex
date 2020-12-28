@@ -254,7 +254,7 @@ Technique& Technique::operator=(Technique&& technique_) {
 
 bool Technique::evaluate_when_for_permute(const String& _when, Uint64 _flags) const {
   Map<String, bool> values{m_frontend->allocator()};
-  for (Size i{0}; i < m_specializations.size(); i++) {
+  for (Size i = 0; i < m_specializations.size(); i++) {
     values.insert(m_specializations[i], _flags & (1_u64 << i));
   }
   const int result{binexp_evaluate(_when.data(), values)};
@@ -267,7 +267,7 @@ bool Technique::evaluate_when_for_permute(const String& _when, Uint64 _flags) co
 
 bool Technique::evaluate_when_for_variant(const String& _when, Size _index) const {
   Map<String, bool> values{m_frontend->allocator()};
-  for (Size i{0}; i < m_specializations.size(); i++) {
+  for (Size i = 0; i < m_specializations.size(); i++) {
     values.insert(m_specializations[i], i == _index);
   }
   const int result{binexp_evaluate(_when.data(), values)};
@@ -1001,9 +1001,7 @@ bool Technique::parse_inout(const JSON& _inout, const char* _type,
     break;
   }
 
-
-  inouts_.insert(name_string, inout);
-  return true;
+  return inouts_.insert(name_string, inout) != nullptr;
 }
 
 bool Technique::parse_specializations(const JSON& _specializations,
@@ -1025,8 +1023,7 @@ bool Technique::parse_specialization(const JSON& _specialization,
     return error("expected String for '%s'", _type);
   }
 
-  m_specializations.push_back(_specialization.as_string());
-  return true;
+  return m_specializations.push_back(_specialization.as_string());
 }
 
 bool Technique::resolve_dependencies(const Map<String, Module>& _modules) {

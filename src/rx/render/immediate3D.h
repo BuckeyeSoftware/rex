@@ -144,7 +144,7 @@ private:
     Size& n_vertices_, Size& n_elements_);
   void size_solid_cube(Size& n_vertices_, Size& n_elements_);
 
-  void add_batch(Size _offset, Queue::Command::Type _type, Uint32 _flags,
+  bool add_batch(Size _offset, Queue::Command::Type _type, Uint32 _flags,
                  bool _blend);
 
   void add_element(Uint32 _element);

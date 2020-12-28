@@ -1062,34 +1062,34 @@ TextureCM* Context::cached_textureCM(const String& _key) {
   return nullptr;
 }
 
-void Context::cache_buffer(Buffer* _buffer, const String& _key) {
+bool Context::cache_buffer(Buffer* _buffer, const String& _key) {
   Concurrency::ScopeLock lock{m_mutex};
-  m_cached_buffers.insert(_key, _buffer);
+  return m_cached_buffers.insert(_key, _buffer) != nullptr;
 }
 
-void Context::cache_target(Target* _target, const String& _key) {
+bool Context::cache_target(Target* _target, const String& _key) {
   Concurrency::ScopeLock lock{m_mutex};
-  m_cached_targets.insert(_key, _target);
+  return m_cached_targets.insert(_key, _target) != nullptr;
 }
 
-void Context::cache_texture(Texture1D* _texture, const String& _key) {
+bool Context::cache_texture(Texture1D* _texture, const String& _key) {
   Concurrency::ScopeLock lock{m_mutex};
-  m_cached_textures1D.insert(_key, _texture);
+  return m_cached_textures1D.insert(_key, _texture) != nullptr;
 }
 
-void Context::cache_texture(Texture2D* _texture, const String& _key) {
+bool Context::cache_texture(Texture2D* _texture, const String& _key) {
   Concurrency::ScopeLock lock{m_mutex};
-  m_cached_textures2D.insert(_key, _texture);
+  return m_cached_textures2D.insert(_key, _texture) != nullptr;
 }
 
-void Context::cache_texture(Texture3D* _texture, const String& _key) {
+bool Context::cache_texture(Texture3D* _texture, const String& _key) {
   Concurrency::ScopeLock lock{m_mutex};
-  m_cached_textures3D.insert(_key, _texture);
+  return m_cached_textures3D.insert(_key, _texture) != nullptr;
 }
 
-void Context::cache_texture(TextureCM* _texture, const String& _key) {
+bool Context::cache_texture(TextureCM* _texture, const String& _key) {
   Concurrency::ScopeLock lock{m_mutex};
-  m_cached_texturesCM.insert(_key, _texture);
+  return m_cached_texturesCM.insert(_key, _texture) != nullptr;
 }
 
 Technique* Context::find_technique_by_name(const char* _name) {

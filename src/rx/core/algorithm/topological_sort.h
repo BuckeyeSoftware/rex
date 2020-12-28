@@ -76,9 +76,10 @@ inline bool TopologicalSort<K>::add(const K& _key, const K& _dependency) {
   // Dependents of the dependency.
   {
     auto find = m_map.find(_dependency);
-    if (!find) {
-      find = m_map.insert(_dependency, {allocator()});
+    if (!find && !(find = m_map.insert(_dependency, {allocator()}))) {
+      return false;
     }
+
     auto& dependents = find->dependents;
 
     // Already a dependency.
@@ -86,14 +87,16 @@ inline bool TopologicalSort<K>::add(const K& _key, const K& _dependency) {
       return true;
     }
 
-    dependents.insert(_key);
+    if (!dependents.insert(_key)) {
+      return false;
+    }
   }
 
   // Dependents of the key.
   {
     auto find = m_map.find(_key);
-    if (!find) {
-      find = m_map.insert(_key, {allocator()});
+    if (!find && !(find = m_map.insert(_key, {allocator()}))) {
+      return false;
     }
 
     auto& dependencies = find->dependencies;

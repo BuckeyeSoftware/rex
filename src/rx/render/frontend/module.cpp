@@ -80,17 +80,18 @@ bool Module::parse(const JSON& _description) {
   // Trim any leading and trailing whitespace characters from the contents too.
   m_source = source.as_string().strip("\t\r\n ");
 
-  if (const JSON& imports{_description["imports"]}) {
-    if (!imports.is_array_of(JSON::Type::k_string)) {
-      return error("expected Array[String] for 'imports'");
-    }
-
-    imports.each([&](const JSON& _import) {
-      m_dependencies.push_back(_import.as_string());
-    });
+  const JSON& imports = _description["imports"];
+  if (!imports) {
+    return true;
   }
 
-  return true;
+  if (!imports.is_array_of(JSON::Type::k_string)) {
+    return error("expected Array[String] for 'imports'");
+  }
+
+  return imports.each([&](const JSON& _import) {
+    return m_dependencies.push_back(_import.as_string());
+  });
 }
 
 bool resolve_module_dependencies(
@@ -113,10 +114,12 @@ bool resolve_module_dependencies(
       return true;
     }
 
-    visited_.insert(_dependency);
+    if (!visited_.insert(_dependency)) {
+      return false;
+    }
 
     // Recursively apply dependencies.
-    if (auto find{_modules.find(_dependency)}) {
+    if (auto find = _modules.find(_dependency)) {
       return resolve_module_dependencies(_modules, *find, visited_, sorter_);
     }
 

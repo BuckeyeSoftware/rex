@@ -442,7 +442,7 @@ void Immediate3D::generate_solid_sphere(const Math::Vec2f& _slices_and_stacks,
     }
   }
 
-  return add_batch(offset, Queue::Command::Type::k_solid_sphere, _flags, _color.a < 1.0f);
+  add_batch(offset, Queue::Command::Type::k_solid_sphere, _flags, _color.a < 1.0f);
 }
 
 void Immediate3D::generate_solid_cube(const Math::Mat4x4f& _transform,
@@ -539,10 +539,14 @@ void Immediate3D::size_solid_cube(Size& n_vertices_, Size& n_elements_) {
   n_elements_ += 6 * 6;
 }
 
-void Immediate3D::add_batch(Size _offset, Queue::Command::Type _type,
+bool Immediate3D::add_batch(Size _offset, Queue::Command::Type _type,
                             Uint32 _flags, bool _blend)
 {
   const Size count = m_element_index - _offset;
+
+  if (count == 0) {
+    return true;
+  }
 
   Frontend::State render_state;
 
@@ -570,11 +574,11 @@ void Immediate3D::add_batch(Size _offset, Queue::Command::Type _type,
     auto& batch = m_batches.last();
     if (batch.type == _type && batch.render_state == render_state) {
       batch.count += count;
-      return;
+      return true;
     }
   }
 
-  m_batches.emplace_back(count, _offset, _type, render_state);
+  return m_batches.emplace_back(count, _offset, _type, render_state);
 }
 
 void Immediate3D::add_element(Uint32 _element) {

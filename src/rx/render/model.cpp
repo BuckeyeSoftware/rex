@@ -136,8 +136,7 @@ bool Model::upload() {
       Frontend::Material material{m_frontend};
       if (material.load(Utility::move(material_))) {
         const Size material_index{m_materials.size()};
-        material_indices.insert(_name, material_index);
-        return m_materials.push_back(Utility::move(material));
+        return material_indices.insert(_name, material_index) && m_materials.push_back(Utility::move(material));
       }
       return false;
     });

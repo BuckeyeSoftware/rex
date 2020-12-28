@@ -227,7 +227,7 @@ private:
   void size_text(const char* _contents, Size _contents_length,
     Size& n_vertices_, Size& n_elements_);
   void size_triangle(Size& n_vertices_, Size& n_elements_);
-  void add_batch(Size _offset, Batch::Type _type, bool _blend,
+  bool add_batch(Size _offset, Batch::Type _type, bool _blend,
                  Frontend::Texture2D* _texture = nullptr);
 
   void add_element(Uint32 _element);

@@ -197,12 +197,12 @@ struct Context {
 
   // Pin a given resource to the render cache with the given |_key| allowing
   // it to be reused by checking the cache with the above functions.
-  void cache_buffer(Buffer* _buffer, const String& _key);
-  void cache_target(Target* _target, const String& _key);
-  void cache_texture(Texture1D* _texture, const String& _key);
-  void cache_texture(Texture2D* _texture, const String& _key);
-  void cache_texture(Texture3D* _texture, const String& _key);
-  void cache_texture(TextureCM* _texture, const String& _key);
+  bool cache_buffer(Buffer* _buffer, const String& _key);
+  bool cache_target(Target* _target, const String& _key);
+  bool cache_texture(Texture1D* _texture, const String& _key);
+  bool cache_texture(Texture2D* _texture, const String& _key);
+  bool cache_texture(Texture3D* _texture, const String& _key);
+  bool cache_texture(TextureCM* _texture, const String& _key);
 
   constexpr Memory::Allocator& allocator() const;
 

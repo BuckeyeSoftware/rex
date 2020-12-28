@@ -960,7 +960,7 @@ void Immediate2D::size_triangle(Size& n_vertices_, Size& n_elements_) {
   size_polygon<3>(n_vertices_, n_elements_);
 }
 
-void Immediate2D::add_batch(Size _offset, Batch::Type _type, bool _blend,
+bool Immediate2D::add_batch(Size _offset, Batch::Type _type, bool _blend,
                             Frontend::Texture2D* _texture)
 {
   RX_PROFILE_CPU("immediate2D::add_batch");
@@ -968,7 +968,7 @@ void Immediate2D::add_batch(Size _offset, Batch::Type _type, bool _blend,
   const Size count{m_element_index - _offset};
   if (count == 0) {
     // Generated no geometry for this batch, discard it.
-    return;
+    return true;
   }
 
   Frontend::State render_state;
@@ -997,11 +997,11 @@ void Immediate2D::add_batch(Size _offset, Batch::Type _type, bool _blend,
     auto& batch{m_batches.last()};
     if (batch.render_state == render_state && batch.type == _type && batch.texture == _texture) {
       batch.count += count;
-      return;
+      return true;
     }
   }
 
-  m_batches.emplace_back(_offset, count, _type, render_state, _texture);
+  return m_batches.emplace_back(_offset, count, _type, render_state, _texture);
 }
 
 void Immediate2D::add_element(Uint32 _element) {
