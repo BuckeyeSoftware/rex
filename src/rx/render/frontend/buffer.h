@@ -96,8 +96,14 @@ struct Buffer : Resource {
     Size m_hash;
   };
 
+  enum class Sink : Size {
+    ELEMENTS,
+    VERTICES,
+    INSTANCES
+  };
+
   struct Edit {
-    Size sink;
+    Sink sink;
     Size offset;
     Size size;
   };
@@ -105,34 +111,29 @@ struct Buffer : Resource {
   Buffer(Context* _frontend);
   ~Buffer();
 
-  // Write |_size| bytes from |_data| into vertex store.
-  template<typename T>
-  void write_vertices(const T* _data, Size _size);
-
-  // Write |_size| bytes from |_data| into element store.
-  template<typename T>
-  void write_elements(const T* _data, Size _size);
-
-  // Write |_size| bytes from |_data| into instance store.
-  template<typename T>
-  void write_instances(const T* _data, Size _size);
-
-  // Map |_size| bytes of vertices.
-  Byte* map_vertices(Size _size);
-
-  // Map |_size| bytes of elements.
-  Byte* map_elements(Size _size);
-
-  // Map |_size| bytes of instances.
-  Byte* map_instances(Size _size);
-
   // Record buffer format.
   void record_format(const Format& _format);
 
-  // Records an edit to the buffer at byte |_offset| of size |_size|.
-  void record_vertices_edit(Size _offset, Size _size);
-  void record_elements_edit(Size _offset, Size _size);
-  void record_instances_edit(Size _offset, Size _size);
+  // Map |_size| bytes for vertices.
+  Byte* map_vertices(Size _size);
+  // Map |_size| bytes for elements.
+  Byte* map_elements(Size _size);
+  // Map |_size| bytes for instances.
+  Byte* map_instances(Size _size);
+
+  // Write |_size| bytes of vertices from |_data|.
+  template<typename T>
+  bool write_vertices(const T* _data, Size _size);
+  // Write |_size| bytes of elements from |_data|.
+  template<typename T>
+  bool write_elements(const T* _data, Size _size);
+  // Write |_size| bytes of instances from |_data|.
+  template<typename T>
+  bool write_instances(const T* _data, Size _size);
+
+  bool record_vertices_edit(Size _offset, Size _size);
+  bool record_elements_edit(Size _offset, Size _size);
+  bool record_instances_edit(Size _offset, Size _size);
 
   const Vector<Byte>& vertices() const &;
   const Vector<Byte>& elements() const &;
@@ -150,11 +151,16 @@ struct Buffer : Resource {
   const Format& format() const &;
 
 private:
-  friend struct Arena;
+  // Map |_size| bytes of sink |_sink|.
+  Byte* map_sink_data(Sink _sink, Size _size);
 
-  void write_vertices_data(const Byte* _data, Size _size);
-  void write_elements_data(const Byte* _data, Size _size);
-  void write_instances_data(const Byte* _data, Size _size);
+  // Write |_size| bytes from |_data| into sink |_sink|.
+  bool write_sink_data(Sink _sink, const Byte* _data, Size _size);
+
+  // Record edit to sinkk |_sink| at offset |_offset| of size |_size|.
+  bool record_sink_edit(Sink _sink, Size _offset, Size _size);
+
+  friend struct Arena;
 
   enum {
     FORMAT = 1 << 1
@@ -286,46 +292,49 @@ inline Size Buffer::Format::hash() const {
 }
 
 // [Buffer]
-template<typename T>
-inline void Buffer::write_vertices(const T* _data, Size _size) {
-  write_vertices_data(reinterpret_cast<const Byte*>(_data), _size);
+inline Byte* Buffer::map_vertices(Size _size) {
+  return map_sink_data(Sink::VERTICES, _size);
+}
+
+inline Byte* Buffer::map_elements(Size _size) {
+  return map_sink_data(Sink::ELEMENTS, _size);
+}
+
+inline Byte* Buffer::map_instances(Size _size) {
+  return map_sink_data(Sink::INSTANCES, _size);
 }
 
 template<typename T>
-inline void Buffer::write_elements(const T* _data, Size _size) {
-  static_assert((traits::is_same<T, Uint8> || traits::is_same<T, Uint16> || traits::is_same<T, Uint32>),
-    "unsupported element type T");
+inline bool Buffer::write_vertices(const T* _data, Size _size) {
+  return write_sink_data(Sink::VERTICES, reinterpret_cast<const Byte*>(_data), _size);
+}
 
-  RX_ASSERT(_size % sizeof(T) == 0, "_size isn't a multiple of T");
+template<typename T>
+inline bool Buffer::write_elements(const T* _data, Size _size) {
+  return write_sink_data(Sink::ELEMENTS, reinterpret_cast<const Byte*>(_data), _size);
+}
 
-  if constexpr (traits::is_same<T, Byte>) {
-    write_elements_data(reinterpret_cast<const Byte*>(_data), _size);
-  } else if constexpr (traits::is_same<T, Uint16>) {
-    write_elements_data(reinterpret_cast<const Byte*>(_data), _size);
-  } else if constexpr (traits::is_same<T, Uint32>) {
-    write_elements_data(reinterpret_cast<const Byte*>(_data), _size);
-  }
+template<typename T>
+inline bool Buffer::write_instances(const T* _data, Size _size) {
+  return write_sink_data(Sink::INSTANCES, reinterpret_cast<const Byte*>(_data), _size);
+}
+
+inline bool Buffer::record_vertices_edit(Size _offset, Size _size) {
+  return record_sink_edit(Sink::VERTICES, _offset, _size);
+}
+
+inline bool Buffer::record_elements_edit(Size _offset, Size _size) {
+  return record_sink_edit(Sink::ELEMENTS, _offset, _size);
+}
+
+inline bool Buffer::record_instances_edit(Size _offset, Size _size) {
+  return record_sink_edit(Sink::INSTANCES, _offset, _size);
 }
 
 inline void Buffer::record_format(const Format& _format) {
   RX_ASSERT(!(m_recorded & FORMAT), "already recorded");
   m_format = _format;
   m_recorded |= FORMAT;
-}
-
-inline void Buffer::record_vertices_edit(Size _offset, Size _size) {
-  m_edits.emplace_back(1_z, _offset, _size);
-}
-
-inline void Buffer::record_elements_edit(Size _offset, Size _size) {
-  RX_ASSERT(m_format.element_type() != ElementType::k_none,
-    "cannot record edit to elements");
-  m_edits.emplace_back(0_z, _offset, _size);
-}
-
-inline void Buffer::record_instances_edit(Size _offset, Size _size) {
-  RX_ASSERT(m_format.is_instanced(), "cannot record edit to instances");
-  m_edits.emplace_back(2_z, _offset, _size);
 }
 
 inline const Vector<Byte>& Buffer::vertices() const & {

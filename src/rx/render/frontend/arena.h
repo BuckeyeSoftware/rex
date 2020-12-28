@@ -26,22 +26,20 @@ struct Arena {
     ~Block();
     Block& operator=(Block&& block_);
 
-    template<typename T>
-    void write_vertices(const T* _data, Size _size);
-
-    template<typename T>
-    void write_elements(const T* _data, Size _size);
-
-    template<typename T>
-    void write_instances(const T* _data, Size _size);
-
     Byte* map_vertices(Size _size);
     Byte* map_elements(Size _size);
     Byte* map_instances(Size _size);
 
-    void record_vertices_edit(Size _offset, Size _size);
-    void record_elements_edit(Size _offset, Size _size);
-    void record_instances_edit(Size _offset, Size _size);
+    template<typename T>
+    bool write_vertices(const T* _data, Size _size);
+    template<typename T>
+    bool write_elements(const T* _data, Size _size);
+    template<typename T>
+    bool write_instances(const T* _data, Size _size);
+
+    bool record_vertices_edit(Size _offset, Size _size);
+    bool record_elements_edit(Size _offset, Size _size);
+    bool record_instances_edit(Size _offset, Size _size);
 
     Size base_vertex() const;
     Size base_element() const;
@@ -50,17 +48,9 @@ struct Arena {
   private:
     void destroy();
 
-    void write_vertices_data(const Byte* _data, Size _size);
-    void write_elements_data(const Byte* _data, Size _size);
-    void write_instances_data(const Byte* _data, Size _size);
-
-    enum class Sink {
-      VERTICES,
-      ELEMENTS,
-      INSTANCES
-    };
-
-    Byte* map(Sink _sink, Uint32 _size);
+    Byte* map_sink_data(Buffer::Sink _sink, Uint32 _size);
+    bool write_sink_data(Buffer::Sink _sink, const Byte* _data, Size _size);
+    bool record_sink_edit(Buffer::Sink _sink, Size _offset, Size _size);
 
     // The arena which owns this |Block|.
     Arena* m_arena;
@@ -73,8 +63,8 @@ struct Arena {
     Array<Range[3]> m_ranges;
 
     // Helpers to form a reference to a range given a |Sink| enum value.
-    Range& range_for(Sink _sink) &;
-    const Range& range_for(Sink _sink) const &;
+    Range& range_for(Buffer::Sink _sink) &;
+    const Range& range_for(Buffer::Sink _sink) const &;
   };
 
   Arena(Context* _frontend, const Buffer::Format& _format);
@@ -188,76 +178,74 @@ inline Arena::Block::Block(Block&& block_)
 {
 }
 
-template<typename T>
-inline void Arena::Block::write_vertices(const T* _data, Size _size) {
-  write_vertices_data(reinterpret_cast<const Byte*>(_data), _size);
-}
-
-template<typename T>
-inline void Arena::Block::write_elements(const T* _data, Size _size) {
-  write_elements_data(reinterpret_cast<const Byte*>(_data), _size);
-}
-
-template<typename T>
-inline void Arena::Block::write_instances(const T* _data, Size _size) {
-  write_instances_data(reinterpret_cast<const Byte*>(_data), _size);
-}
-
 RX_HINT_FORCE_INLINE Byte* Arena::Block::map_vertices(Size _size) {
-  return map(Sink::VERTICES, _size);
+  return map_sink_data(Buffer::Sink::VERTICES, _size);
 }
 
 RX_HINT_FORCE_INLINE Byte* Arena::Block::map_elements(Size _size) {
-  return map(Sink::ELEMENTS, _size);
+  return map_sink_data(Buffer::Sink::ELEMENTS, _size);
 }
 
 RX_HINT_FORCE_INLINE Byte* Arena::Block::map_instances(Size _size) {
-  return map(Sink::INSTANCES, _size);
+  return map_sink_data(Buffer::Sink::INSTANCES, _size);
 }
 
-inline void Arena::Block::record_vertices_edit(Size _offset, Size _size) {
-  // Ensure the recorded edit is inside the block allocation.
-  const auto& range = range_for(Sink::VERTICES);
-  RX_ASSERT(_offset + _size <= range.offset + range.size, "out of bounds edit in block");
-  return m_arena->m_buffer->record_vertices_edit(range.offset + _offset, _size);
+template<typename T>
+inline bool Arena::Block::write_vertices(const T* _data, Size _size) {
+  return write_sink_data(Buffer::Sink::VERTICES, reinterpret_cast<const Byte*>(_data), _size);
 }
 
-inline void Arena::Block::record_elements_edit(Size _offset, Size _size) {
-  // Ensure the recorded edit is inside the block allocation.
-  const auto& range = range_for(Sink::ELEMENTS);
-  RX_ASSERT(_offset + _size <= range.offset + range.size, "out of bounds edit in block");
-  return m_arena->m_buffer->record_elements_edit(range.offset + _offset, _size);
+template<typename T>
+inline bool Arena::Block::write_elements(const T* _data, Size _size) {
+  return write_sink_data(Buffer::Sink::ELEMENTS, reinterpret_cast<const Byte*>(_data), _size);
 }
 
-inline void Arena::Block::record_instances_edit(Size _offset, Size _size) {
+template<typename T>
+inline bool Arena::Block::write_instances(const T* _data, Size _size) {
+  return write_sink_data(Buffer::Sink::INSTANCES, reinterpret_cast<const Byte*>(_data), _size);
+}
+
+inline bool Arena::Block::record_vertices_edit(Size _offset, Size _size) {
+  return record_sink_edit(Buffer::Sink::VERTICES, _offset, _size);
+}
+
+inline bool Arena::Block::record_elements_edit(Size _offset, Size _size) {
+  return record_sink_edit(Buffer::Sink::ELEMENTS, _offset, _size);
+}
+
+inline bool Arena::Block::record_instances_edit(Size _offset, Size _size) {
+  return record_sink_edit(Buffer::Sink::INSTANCES, _offset, _size);
+}
+
+inline bool Arena::Block::record_sink_edit(Buffer::Sink _sink, Size _offset, Size _size) {
   // Ensure the recorded edit is inside the block allocation.
-  const auto& range = range_for(Sink::INSTANCES);
+  const auto& range = range_for(_sink);
   RX_ASSERT(_offset + _size <= range.offset + range.size, "out of bounds edit in block");
-  return m_arena->m_buffer->record_instances_edit(range.offset + _offset, _size);
+  return m_arena->m_buffer->record_sink_edit(_sink, range.offset + _offset, _size);
 }
 
 RX_HINT_FORCE_INLINE Size Arena::Block::base_vertex() const {
   const auto& format = m_arena->m_buffer->format();
-  return range_for(Sink::VERTICES).offset / format.vertex_stride();
+  return range_for(Buffer::Sink::VERTICES).offset / format.vertex_stride();
 }
 
 RX_HINT_FORCE_INLINE Size Arena::Block::base_element() const {
   const auto& format = m_arena->m_buffer->format();
-  const auto& range = range_for(Sink::ELEMENTS);
+  const auto& range = range_for(Buffer::Sink::ELEMENTS);
   return range.offset != -1_u32 ? range.offset / format.element_size() : 0;
 }
 
 RX_HINT_FORCE_INLINE Size Arena::Block::base_instance() const {
   const auto& format = m_arena->m_buffer->format();
-  const auto& range = range_for(Sink::INSTANCES);
+  const auto& range = range_for(Buffer::Sink::INSTANCES);
   return range.offset != -1_u32 ? range.offset / format.instance_stride() : 0;
 }
 
-RX_HINT_FORCE_INLINE Arena::Block::Range& Arena::Block::range_for(Sink _sink) & {
+RX_HINT_FORCE_INLINE Arena::Block::Range& Arena::Block::range_for(Buffer::Sink _sink) & {
   return m_ranges[static_cast<Size>(_sink)];
 }
 
-RX_HINT_FORCE_INLINE const Arena::Block::Range& Arena::Block::range_for(Sink _sink) const & {
+RX_HINT_FORCE_INLINE const Arena::Block::Range& Arena::Block::range_for(Buffer::Sink _sink) const & {
   return m_ranges[static_cast<Size>(_sink)];
 }
 

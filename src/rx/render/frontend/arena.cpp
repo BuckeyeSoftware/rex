@@ -247,29 +247,27 @@ Arena::Block& Arena::Block::operator=(Block&& block_) {
 }
 
 void Arena::Block::destroy() {
-  if (m_arena) {
-    // Release memory owned by this block.
-    for (Size i = 0; i < 3; i++) {
-      if (Uint32 offset = m_ranges[i].offset; offset != -1_u32) {
-        RX_ASSERT(m_arena->m_lists[i].deallocate(offset), "consistency error");
-      }
+  if (!m_arena) {
+    return;
+  }
+
+  // Release memory owned by this block.
+  for (Size i = 0; i < 3; i++) {
+    if (Uint32 offset = m_ranges[i].offset; offset != -1_u32) {
+      RX_ASSERT(m_arena->m_lists[i].deallocate(offset), "consistency error");
     }
   }
 }
 
-void Arena::Block::write_vertices_data(const Byte* _data, Size _size) {
-  memcpy(map_vertices(_size), _data, _size);
+bool Arena::Block::write_sink_data(Buffer::Sink _sink, const Byte* _data, Size _size) {
+  if (auto data = map_sink_data(_sink, _size)) {
+    memcpy(data, _data, _size);
+    return true;
+  }
+  return false;
 }
 
-void Arena::Block::write_elements_data(const Byte* _data, Size _size) {
-  memcpy(map_elements(_size), _data, _size);
-}
-
-void Arena::Block::write_instances_data(const Byte* _data, Size _size) {
-  memcpy(map_instances(_size), _data, _size);
-}
-
-Byte* Arena::Block::map(Sink _sink, Uint32 _size) {
+Byte* Arena::Block::map_sink_data(Buffer::Sink _sink, Uint32 _size) {
   Buffer* buffer = m_arena->m_buffer;
 
   List& list = m_arena->m_lists[static_cast<Size>(_sink)];
@@ -277,13 +275,13 @@ Byte* Arena::Block::map(Sink _sink, Uint32 _size) {
 
   Vector<Byte>* store = nullptr;
   switch (_sink) {
-  case Sink::VERTICES:
+  case Buffer::Sink::VERTICES:
     store = &buffer->m_vertices_store;
     break;
-  case Sink::ELEMENTS:
+  case Buffer::Sink::ELEMENTS:
     store = &buffer->m_elements_store;
     break;
-  case Sink::INSTANCES:
+  case Buffer::Sink::INSTANCES:
     store = &buffer->m_instances_store;
     break;
   }
@@ -315,17 +313,7 @@ Byte* Arena::Block::map(Sink _sink, Uint32 _size) {
 
         // When the contents of the data are moved, we need to record an edit
         // on the range of data in the |buffer| we replaced.
-        switch (_sink) {
-        case Sink::VERTICES:
-          buffer->record_vertices_edit(new_offset, old_size);
-          break;
-        case Sink::ELEMENTS:
-          buffer->record_elements_edit(new_offset, old_size);
-          break;
-        case Sink::INSTANCES:
-          buffer->record_instances_edit(new_offset, old_size);
-          break;
-        }
+        buffer->record_sink_edit(_sink, new_offset, old_size);
       }
     } else {
       // Ran out of memory in |list| data structure.

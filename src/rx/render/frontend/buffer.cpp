@@ -96,53 +96,55 @@ Buffer::Buffer(Context* _frontend)
 Buffer::~Buffer() {
 }
 
-void Buffer::write_vertices_data(const Byte* _data, Size _size) {
-  RX_ASSERT(_data, "null data");
-  memcpy(map_vertices(_size), _data, _size);
-}
+Byte* Buffer::map_sink_data(Sink _sink, Size _size) {
+  Byte* result = nullptr;
+  switch (_sink) {
+  case Sink::VERTICES:
+    RX_ASSERT(_size != 0, "_size is zero");
+    RX_ASSERT(_size % m_format.vertex_stride() == 0,
+      "_size not a multiple of vertex stride");
+    m_vertices_store.resize(_size, Utility::UninitializedTag{});
+    result = m_vertices_store.data();
+    break;
+  case Sink::ELEMENTS:
+    RX_ASSERT(m_format.is_indexed(), "not an indexed format");
+    RX_ASSERT(_size != 0, "_size is zero");
+    RX_ASSERT(_size % m_format.element_size() == 0, "_size is not a multiple of element size");
+    m_elements_store.resize(_size, Utility::UninitializedTag{});
+    result = m_elements_store.data();
+    break;
+  case Sink::INSTANCES:
+    RX_ASSERT(m_format.is_instanced(), "not an instanced format");
+    RX_ASSERT(_size != 0, "_size is zero");
+    RX_ASSERT(_size % m_format.instance_stride() == 0, "_size not a multiple of instance stride");
+    m_instances_store.resize(_size, Utility::UninitializedTag{});
+    result = m_instances_store.data();
+    break;
+  }
 
-void Buffer::write_elements_data(const Byte* _data, Size _size) {
-  RX_ASSERT(_data, "null data");
-  memcpy(map_elements(_size), _data, _size);
-}
-
-void Buffer::write_instances_data(const Byte* _data, Size _size) {
-  RX_ASSERT(_data, "null data");
-  memcpy(map_instances(_size), _data, _size);
-}
-
-Byte* Buffer::map_vertices(Size _size) {
-  // RX_ASSERT(m_recorded & k_vertex_stride, "vertex stride not recorded");
-  RX_ASSERT(_size != 0, "_size is zero");
-  RX_ASSERT(_size % m_format.vertex_stride() == 0,
-    "_size not a multiple of vertex stride");
-
-  m_vertices_store.resize(_size, Utility::UninitializedTag{});
   update_resource_usage(size());
 
-  return m_vertices_store.data();
+  return result;
 }
 
-Byte* Buffer::map_elements(Size _size) {
-  RX_ASSERT(m_format.is_indexed(), "not an indexed format");
-  RX_ASSERT(_size != 0, "_size is zero");
-  RX_ASSERT(_size % m_format.element_size() == 0, "_size is not a multiple of element size");
-
-  m_elements_store.resize(_size, Utility::UninitializedTag{});
-  update_resource_usage(size());
-
-  return m_elements_store.data();
+bool Buffer::write_sink_data(Sink _sink, const Byte* _data, Size _size) {
+  RX_ASSERT(_data, "null data");
+  if (auto data = map_sink_data(_sink, _size)) {
+    memcpy(data, _data, _size);
+    return true;
+  }
+  return false;
 }
 
-Byte* Buffer::map_instances(Size _size) {
-  RX_ASSERT(m_format.is_instanced(), "not an instanced format");
-  RX_ASSERT(_size != 0, "_size is zero");
-  RX_ASSERT(_size % m_format.instance_stride() == 0, "_size not a multiple of instance stride");
-
-  m_instances_store.resize(_size, Utility::UninitializedTag{});
-  update_resource_usage(size());
-
-  return m_instances_store.data();
+bool Buffer::record_sink_edit(Sink _sink, Size _offset, Size _size) {
+  if (_sink == Sink::ELEMENTS) {
+    auto check = m_format.element_type() != ElementType::k_none;
+    RX_ASSERT(check, "cannot record edit to elements");
+  } else if (_sink == Sink::INSTANCES) {
+    auto check = m_format.is_instanced();
+    RX_ASSERT(check, "cannot record edit to instances");
+  }
+  return m_edits.emplace_back(_sink, _offset, _size);
 }
 
 void Buffer::validate() const {
