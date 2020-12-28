@@ -230,6 +230,11 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
       }
     });
 
+    // The commands generated did not produce any primitives to render.
+    if (n_elements == 0) {
+      return;
+    }
+
     // allocate storage
     m_vertices = (Vertex*)m_buffers[m_wr_index]->map_vertices(n_vertices * sizeof(Vertex));
     m_elements = (Uint32*)m_buffers[m_wr_index]->map_elements(n_elements * sizeof(Uint32));

@@ -476,6 +476,11 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
       }
     });
 
+    // The commands generated did not produce any primitives.
+    if (n_elements == 0) {
+      return;
+    }
+
     // allocate storage
     m_vertices = (Vertex*)m_buffers[m_wr_index]->map_vertices(n_vertices * sizeof(Vertex));
     m_elements = (Uint32*)m_buffers[m_wr_index]->map_elements(n_elements * sizeof(Uint32));
