@@ -847,8 +847,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
     }
   }
 
-  m_uniform_definitions.push_back({*kind, name_string, when ? when.as_string() : "", constant, value ? true : false});
-  return true;
+  return m_uniform_definitions.emplace_back(*kind, name_string, when ? when.as_string() : "", constant, value ? true : false);
 }
 
 bool Technique::parse_shader(const JSON& _shader) {

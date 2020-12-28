@@ -131,9 +131,9 @@ bool Model::upload() {
   m_model->meshes().each_fwd([this, &material_indices](const Rx::Model::Mesh& _mesh) {
     if (auto* find = material_indices.find(_mesh.material)) {
       if (m_materials[*find].has_alpha()) {
-        return m_transparent_meshes.push_back({_mesh.offset, _mesh.count, *find, _mesh.bounds});
+        return m_transparent_meshes.emplace_back(_mesh.offset, _mesh.count, *find, _mesh.bounds);
       } else {
-        return m_opaque_meshes.push_back({_mesh.offset, _mesh.count, *find, _mesh.bounds});
+        return m_opaque_meshes.emplace_back(_mesh.offset, _mesh.count, *find, _mesh.bounds);
       }
     }
     m_aabb.expand(_mesh.bounds);

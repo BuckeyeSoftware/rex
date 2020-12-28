@@ -152,7 +152,7 @@ void Texture1D::record_dimensions(const DimensionType& _dimensions) {
   const auto bpp{bits_per_pixel(m_format)};
   for (Size i{0}; i < m_levels; i++) {
     const auto size{static_cast<Size>(dimensions * bpp / 8)};
-    m_level_info.push_back({offset, size, dimensions});
+    m_level_info.emplace_back(offset, size, dimensions);
     offset += size;
     dimensions = Algorithm::max(dimensions / 2, 1_z);
   }
@@ -235,7 +235,7 @@ void Texture2D::record_dimensions(const Math::Vec2z& _dimensions) {
   const auto bpp{bits_per_pixel(m_format)};
   for (Size i{0}; i < m_levels; i++) {
     const auto size{static_cast<Size>(dimensions.area() * bpp / 8)};
-    m_level_info.push_back({offset, size, dimensions});
+    m_level_info.emplace_back(offset, size, dimensions);
     offset += size;
     dimensions = dimensions.map([](Size _dim) {
       return Algorithm::max(_dim / 2, 1_z);
@@ -317,7 +317,7 @@ void Texture3D::record_dimensions(const Math::Vec3z& _dimensions) {
   const auto bpp{bits_per_pixel(m_format)};
   for (Size i{0}; i < m_levels; i++) {
     const auto size{static_cast<Size>(dimensions.area() * bpp / 8)};
-    m_level_info.push_back({offset, size, dimensions});
+    m_level_info.emplace_back(offset, size, dimensions);
     offset += size;
     dimensions = dimensions.map([](Size _dim) {
       return Algorithm::max(_dim / 2, 1_z);
@@ -403,7 +403,7 @@ void TextureCM::record_dimensions(const Math::Vec2z& _dimensions) {
   const auto bpp{bits_per_pixel(m_format)};
   for (Size i{0}; i < m_levels; i++) {
     const auto size{static_cast<Size>(dimensions.area() * bpp / 8 * 6)};
-    m_level_info.push_back({offset, size, dimensions});
+    m_level_info.emplace_back(offset, size, dimensions);
     offset += size;
     dimensions = dimensions.map([](Size _dim) {
       return Algorithm::max(_dim / 2, 1_z);

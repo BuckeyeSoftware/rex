@@ -51,7 +51,7 @@ bool FrameTimer::update() {
 
   const Float64 life_time{m_current_ticks * m_resolution};
   const Float64 frame_time{(life_time - (m_last_frame_ticks * m_resolution)) * 1000.0};
-  m_frame_times.push_back({life_time, frame_time});
+  m_frame_times.emplace_back(life_time, frame_time);
 
   // Erase old frame times. We only want a window that is |k_frame_history_seconds|
   // in size.

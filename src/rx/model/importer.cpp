@@ -115,8 +115,8 @@ bool Importer::load(Stream* _stream) {
     for (Size i{0}; i < _mesh.count; i++) {
       bounds.expand(m_positions[m_elements[_mesh.offset + i]]);
     }
-    if (auto* find{batches.find(_mesh.material)}) {
-      find->push_back({_mesh.offset, _mesh.count, bounds});
+    if (auto* find = batches.find(_mesh.material)) {
+      find->emplace_back(_mesh.offset, _mesh.count, bounds);
     } else {
       Vector<Batch> result{allocator()};
       result.emplace_back(_mesh.offset, _mesh.count, bounds);
@@ -136,8 +136,8 @@ bool Importer::load(Stream* _stream) {
         m_elements.data() + _batch.offset, sizeof(Uint32) * _batch.count);
       bounds.expand(_batch.bounds);
     });
-    const Size count{optimized_elements.size() - elements};
-    optimized_meshes.push_back({elements, count, _material_name, bounds});
+    const Size count = optimized_elements.size() - elements;
+    optimized_meshes.emplace_back(elements, count, _material_name, bounds);
   });
 
   if (optimized_meshes.size() < m_meshes.size()) {

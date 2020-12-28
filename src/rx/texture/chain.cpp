@@ -57,14 +57,14 @@ static Vector<Chain::Level> generate_levels(Memory::Allocator& _allocator,
     Size offset = 0;
     for (Size i{0}; i < levels; i++) {
       const Size size = dimensions.area() * _bpp;
-      result.push_back({offset, size, dimensions});
+      result.emplace_back(offset, size, dimensions);
       offset += size;
       dimensions = dimensions.map([](Size _dim) {
         return Algorithm::max(_dim / 2, 1_z);
       });
     };
   } else {
-    result.push_back({0, _dimensions.area() * _bpp, _dimensions});
+    result.emplace_back(0_z, _dimensions.area() * _bpp, _dimensions);
   }
 
   return result;

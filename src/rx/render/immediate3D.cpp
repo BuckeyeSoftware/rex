@@ -569,7 +569,7 @@ void Immediate3D::add_batch(Size _offset, Queue::Command::Type _type,
     }
   }
 
-  m_batches.push_back({count, _offset, _type, render_state});
+  m_batches.emplace_back(count, _offset, _type, render_state);
 }
 
 void Immediate3D::add_element(Uint32 _element) {

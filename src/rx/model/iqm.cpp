@@ -305,7 +305,7 @@ bool IQM::read_meshes(const Header& _header, const Vector<Byte>& _data) {
   for (Uint32 i{0}; i < _header.meshes; i++) {
     const auto& this_mesh{meshes[i]};
     const char* material_name{string_table + this_mesh.material};
-    m_meshes.push_back({this_mesh.first_triangle * 3, this_mesh.num_triangles * 3, material_name, {}});
+    m_meshes.emplace_back(this_mesh.first_triangle * 3, this_mesh.num_triangles * 3, material_name, Math::AABB{});
   }
 
   m_elements.resize(_header.triangles * 3);
@@ -353,8 +353,8 @@ bool IQM::read_animations(const Header& _header, const Vector<Byte>& _data) {
   const IQMAnimation* animations{reinterpret_cast<const IQMAnimation*>(_data.data() + _header.animations_offset)};
   for (Uint32 i{0}; i < _header.animations; i++) {
     const IQMAnimation& this_animation{animations[i]};
-    m_animations.push_back({this_animation.frame_rate, this_animation.first_frame,
-      this_animation.num_frames, string_table + this_animation.name});
+    m_animations.emplace_back(this_animation.frame_rate, this_animation.first_frame,
+      this_animation.num_frames, string_table + this_animation.name);
   }
 
   m_frames.resize(n_joints * _header.frames);
