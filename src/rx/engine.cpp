@@ -129,7 +129,7 @@ Engine::~Engine() {
   allocator.destroy<Render::Backend::Context>(m_render_backend);
 
   // TODO(dweiler): Move to SDL_SubSystemInit rather than global.
-  SDL_Quit();
+  SDL_QuitSubSystem(SDL_INIT_VIDEO);
 
   // The engine log should be moved to main so that it survives a longer time.
   Log::flush();
@@ -208,7 +208,7 @@ bool Engine::init() {
   });
 
   // Try this as early as possible.
-  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+  if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
     return false;
   }
 
