@@ -28,9 +28,9 @@ struct Logger {
   void flush();
 
 private:
-  enum {
-    k_running = 1 << 0,
-    k_ready   = 1 << 1
+  enum : Uint8 {
+    RUNNING = 1 << 0,
+    READY   = 1 << 1
   };
 
   struct Queue {
@@ -99,7 +99,7 @@ static inline String string_for_time(time_t _time) {
 }
 
 Logger::Logger()
-  : m_status{k_running}
+  : m_status{RUNNING}
   , m_padding{0}
   , m_thread{"logger", [this](int _thread_id) { process(_thread_id); }}
 {
@@ -130,7 +130,7 @@ Logger::Logger()
   // Wakeup |process| thread.
   {
     Concurrency::ScopeLock lock{m_mutex};
-    m_status |= k_ready;
+    m_status |= READY;
     m_ready_cond.signal();
   }
 }
@@ -139,7 +139,7 @@ Logger::~Logger() {
   // Signal the |process| thread to terminate.
   {
     Concurrency::ScopeLock lock{m_mutex};
-    m_status &= ~k_running;
+    m_status &= ~RUNNING;
     m_wakeup_cond.signal();
   }
 
@@ -222,9 +222,9 @@ void Logger::process([[maybe_unused]] int _thread_id) {
   Concurrency::ScopeLock locked{m_mutex};
 
   // Block the logging thread until |this| is ready.
-  m_ready_cond.wait(locked, [this] { return m_status & k_ready; });
+  m_ready_cond.wait(locked, [this] { return m_status & READY; });
 
-  while (m_status & k_running) {
+  while (m_status & RUNNING) {
     // Block until another we're woken up again to flush something.
     m_wakeup_cond.wait(locked);
 

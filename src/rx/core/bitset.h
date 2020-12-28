@@ -16,8 +16,8 @@ namespace Rx {
 struct RX_API Bitset {
   using BitType = Uint64;
 
-  static constexpr const BitType k_bit_one = 1;
-  static constexpr const Size k_word_bits = 8 * sizeof(BitType);
+  static constexpr const BitType BIT_ONE = 1;
+  static constexpr const Size WORD_BITS = 8 * sizeof(BitType);
 
   Bitset(Memory::Allocator& _allocator, Size _size);
   Bitset(Memory::Allocator& _allocator, const Bitset& _bitset);
@@ -101,17 +101,17 @@ inline Bitset::~Bitset() {
 
 inline void Bitset::set(Size _bit) {
   RX_ASSERT(_bit < m_size, "out of bounds");
-  m_data[index(_bit)] |= k_bit_one << offset(_bit);
+  m_data[index(_bit)] |= BIT_ONE << offset(_bit);
 }
 
 inline void Bitset::clear(Size _bit) {
   RX_ASSERT(_bit < m_size, "out of bounds");
-  m_data[index(_bit)] &= ~(k_bit_one << offset(_bit));
+  m_data[index(_bit)] &= ~(BIT_ONE << offset(_bit));
 }
 
 inline bool Bitset::test(Size _bit) const {
   RX_ASSERT(_bit < m_size, "out of bounds");
-  return !!(m_data[index(_bit)] & (k_bit_one << offset(_bit)));
+  return !!(m_data[index(_bit)] & (BIT_ONE << offset(_bit)));
 }
 
 inline Size Bitset::size() const {
@@ -119,15 +119,15 @@ inline Size Bitset::size() const {
 }
 
 inline Size Bitset::bytes_for_size(Size _size) {
-  return sizeof(BitType) * (_size / k_word_bits + 1);
+  return sizeof(BitType) * (_size / WORD_BITS + 1);
 }
 
 inline Size Bitset::index(Size _bit) {
-  return _bit / k_word_bits;
+  return _bit / WORD_BITS;
 }
 
 inline Size Bitset::offset(Size _bit) {
-  return _bit % k_word_bits;
+  return _bit % WORD_BITS;
 }
 
 template<typename F>
