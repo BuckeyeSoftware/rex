@@ -47,7 +47,7 @@ struct RX_API Stream {
   void rewind();
 
   // Stat stream for info.
-  [[nodiscard]] Optional<Stat> stat() const;
+  Optional<Stat> stat() const;
 
   // Where in the stream we are.
   Uint64 tell() const;
