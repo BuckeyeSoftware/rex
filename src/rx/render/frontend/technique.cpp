@@ -911,8 +911,7 @@ bool Technique::parse_shader(const JSON& _shader) {
       if (!_import.is_string()) {
         return error("expected String for import");
       }
-      definition.dependencies.push_back(_import.as_string());
-      return true;
+      return definition.dependencies.push_back(_import.as_string());
     })};
 
     if (!result) {
@@ -930,8 +929,7 @@ bool Technique::parse_shader(const JSON& _shader) {
     return false;
   }
 
-  m_shader_definitions.push_back(Utility::move(definition));
-  return true;
+  return m_shader_definitions.push_back(Utility::move(definition));
 }
 
 bool Technique::parse_inouts(const JSON& _inouts, const char* _type,

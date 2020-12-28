@@ -219,10 +219,10 @@ Program::Program(Context* _frontend)
 {
 }
 
-void Program::add_shader(Shader&& shader_) {
+bool Program::add_shader(Shader&& shader_) {
   // Run the formatter on the |_shader_.source|.
   shader_.source = format_shader(shader_.source);
-  m_shaders.push_back(Utility::move(shader_));
+  return m_shaders.push_back(Utility::move(shader_));
 }
 
 void Program::validate() const {

@@ -117,7 +117,7 @@ struct Program : Resource {
 
   void validate() const;
 
-  void add_shader(Shader&& shader_);
+  bool add_shader(Shader&& shader_);
   Uniform& add_uniform(const String& _name, Uniform::Type _type, bool _is_padding);
   Uint64 dirty_uniforms_bitset() const;
   Size dirty_uniforms_size() const;
