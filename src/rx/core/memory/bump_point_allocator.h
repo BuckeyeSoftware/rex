@@ -60,6 +60,6 @@ inline Size BumpPointAllocator::available() const {
   return size() - used();
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory
 
 #endif // RX_CORE_MEMORY_BUMP_POINT_ALLOCATOR_H

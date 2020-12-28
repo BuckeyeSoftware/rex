@@ -400,4 +400,4 @@ void Parser::record_span() {
   m_diagnostic.inside = !m_diagnostic.inside;
 }
 
-} // namespace rx::console
+} // namespace Rx::Console

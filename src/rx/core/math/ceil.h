@@ -7,6 +7,6 @@ namespace Rx::Math {
 RX_API Float64 ceil(Float64 _x);
 RX_API Float32 ceil(Float32 _x);
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_CORE_MATH_CEIL_H

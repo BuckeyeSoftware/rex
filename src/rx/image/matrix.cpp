@@ -41,4 +41,4 @@ Matrix Matrix::scaled(const Math::Vec2z& _dimensions) const {
   return result;
 }
 
-} // namespace rx::image
+} // namespace Rx::Image

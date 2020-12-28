@@ -84,6 +84,6 @@ bool resolve_module_dependencies(
   Set<String>& visited_,
   Algorithm::TopologicalSort<String>& sorter_);
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend
 
 #endif // RX_RENDER_FRONTEND_MODULE_H

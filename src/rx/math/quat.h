@@ -125,6 +125,6 @@ inline constexpr T dot(const Quat<T>& _lhs, const Quat<T>& _rhs) {
 Float32 length(const Quatf& _value);
 Quatf normalize(const Quatf& _value);
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_MATH_QUAT_H

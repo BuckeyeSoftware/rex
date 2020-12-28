@@ -54,6 +54,6 @@ inline Mat3x3f Transform::as_local_mat3() const {
   return Mat3x3f::scale(scale) * Mat3x3f::rotate(rotate) * Mat3x3f::translate(translate);
 }
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_MATH_TRANSFORM_H

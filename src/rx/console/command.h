@@ -189,6 +189,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Command::allocator() const {
   return *m_allocator;
 }
 
-} // namespace rx::console
+} // namespace Rx::Console
 
 #endif // RX_CONSOLE_COMMAND

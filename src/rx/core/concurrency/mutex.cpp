@@ -72,4 +72,4 @@ void Mutex::unlock() {
 #endif
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency

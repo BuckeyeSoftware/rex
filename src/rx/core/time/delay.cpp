@@ -32,4 +32,4 @@ void delay(Uint64 _milliseconds) {
 #endif
 }
 
-} // namespace rx::time
+} // namespace Rx::Time

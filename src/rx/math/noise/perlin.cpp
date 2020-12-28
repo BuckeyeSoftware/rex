@@ -73,4 +73,4 @@ Float32 Perlin::noise(Float32 _x, Float32 _y, Float32 _z) const {
                                  grad(m_data[BB + 1], _x - 1.0f, _y - 1.0f, _z - 1.0f))));
 }
 
-} // namespace rx::math::noise
+} // namespace Rx::Math::noise

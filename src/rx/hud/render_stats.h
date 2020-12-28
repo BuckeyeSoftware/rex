@@ -3,7 +3,7 @@
 
 namespace Rx::Render {
   struct Immediate2D;
-} // namespace rx::render
+} // namespace Rx::Render
 
 namespace Rx::hud {
 

@@ -290,4 +290,4 @@ Attribute convert_attribute(const Frontend::Buffer::Attribute& _attribute) {
   RX_HINT_UNREACHABLE();
 }
 
-} // namespace rx::render
+} // namespace Rx::Render

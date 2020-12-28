@@ -223,7 +223,7 @@ inline T atomic_fetch_xor(AtomicBase<T>* base_, T _pattern,
   return __atomic_fetch_xor(&base_->value, _pattern, to_success_order(_order));
 }
 
-} // namespace rx::concurrency::detail
+} // namespace Rx::Concurrency::detail
 
 #endif // defined(RX_COMPILER_GCC)
 #endif // RX_CORE_CONCURRENCY_GCC_ATOMIC_H

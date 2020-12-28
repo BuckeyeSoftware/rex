@@ -135,6 +135,6 @@ RX_HINT_FORCE_INLINE Directory::Item::Item(const Directory* _directory, String&&
 
 bool create_directory(const String& _path);
 
-} // namespace rx::filesystem
+} // namespace Rx::Filesystem
 
 #endif // RX_CORE_FILESYSTEM_DIRECTORY_H

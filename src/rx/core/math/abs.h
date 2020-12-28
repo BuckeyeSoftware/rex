@@ -7,6 +7,6 @@ namespace Rx::Math {
 RX_API Float64 abs(Float64 _x);
 RX_API Float32 abs(Float32 _x);
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_CORE_MATH_ABS_H

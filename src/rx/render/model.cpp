@@ -389,4 +389,4 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
   }
 }
 
-} // namespace rx::render
+} // namespace Rx::Render

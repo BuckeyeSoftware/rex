@@ -92,4 +92,4 @@ void ElectricFenceAllocator::deallocate(void* _data) {
   }
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory

@@ -81,4 +81,4 @@ void MT19937::generate() {
   m_state[k_size - 1] = m_state[k_period - 1] ^ (y >> 1) ^ (0x9908b0df * odd(y));
 }
 
-} // namespace rx::prng
+} // namespace Rx::PRNG

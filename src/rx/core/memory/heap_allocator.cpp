@@ -128,4 +128,4 @@ void HeapAllocator::deallocate(void* _data) {
   }
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory

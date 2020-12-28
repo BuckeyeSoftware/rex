@@ -326,4 +326,4 @@ Vector<Byte> convert(Memory::Allocator& _allocator, const Byte* _data,
   return result;
 }
 
-} // namespace rx::texture
+} // namespace Rx::Texture

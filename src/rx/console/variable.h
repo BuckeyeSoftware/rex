@@ -732,7 +732,7 @@ inline bool VariableType_is_ranged(VariableType _type) {
   return _type != VariableType::BOOLEAN && _type != VariableType::STRING;
 }
 
-} // namespace rx::console
+} // namespace Rx::Console
 
 #define RX_CONSOLE_TRVAR(_type, _label, _name, _description, _min, _max, _initial) \
   static ::Rx::Global<::Rx::Console::Variable<_type>> _label \

@@ -96,4 +96,4 @@ Float32 sqrt(Float32 _x) {
   return Shape{ix}.as_f32;
 }
 
-} // namespace rx::math
+} // namespace Rx::Math

@@ -111,6 +111,6 @@ inline Byte* VMA::release() {
   return Utility::exchange(m_base, nullptr);
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory
 
 #endif // RX_CORE_MEMORY_VMA_H

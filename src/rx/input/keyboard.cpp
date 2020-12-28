@@ -36,4 +36,4 @@ void Keyboard::update_key(bool down, int scan_code, int symbol) {
   }
 }
 
-} // namespace rx::input
+} // namespace Rx::Input

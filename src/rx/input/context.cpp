@@ -119,4 +119,4 @@ void Context::render_regions(Render::Immediate2D* _immediate) const {
   });
 }
 
-} // namespace rx::input
+} // namespace Rx::Input

@@ -25,6 +25,6 @@ inline ScopeLock<T>::~ScopeLock() {
   m_lock.unlock();
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency
 
 #endif // RX_CORE_CONCURRENCY_SCOPE_LOCK_H

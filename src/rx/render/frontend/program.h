@@ -177,6 +177,6 @@ inline Vector<Uniform>& Program::uniforms() & {
   return m_uniforms;
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend
 
 #endif // RX_RENDER_FRONTEND_PROGRAM_H

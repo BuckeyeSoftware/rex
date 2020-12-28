@@ -161,4 +161,4 @@ bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
   return false;
 }
 
-} // namespace rx::render
+} // namespace Rx::Render

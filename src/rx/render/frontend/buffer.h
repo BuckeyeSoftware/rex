@@ -356,6 +356,6 @@ inline const Buffer::Format& Buffer::format() const & {
   return m_format;
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend
 
 #endif // RX_RENDER_FRONTEND_BUFFER_H

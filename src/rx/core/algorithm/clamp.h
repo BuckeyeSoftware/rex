@@ -10,6 +10,6 @@ RX_HINT_FORCE_INLINE constexpr T clamp(T _value, T _min, T _max) {
   return _value < _min ? _min : (_value > _max ? _max : _value);
 }
 
-} // namespace rx::algorithm
+} // namespace Rx::Algorithm
 
 #endif // RX_CORE_ALGORITHM_CLAMP_H

@@ -14,6 +14,6 @@ Vector<Byte> dxt_compress(Memory::Allocator& _allocator,
                              const Byte *const _uncompressed, Size _width, Size _height,
                              Size _channels, Size& out_size_, Size& optimized_blocks_);
 
-} // namespace rx::texture
+} // namespace Rx::Texture
 
 #endif // RX_TEXTURE_DXT_H

@@ -360,4 +360,4 @@ template struct Variable<Vec3f>;
 template struct Variable<Vec4i>;
 template struct Variable<Vec4f>;
 
-} // namespace rx::console
+} // namespace Rx::Console

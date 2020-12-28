@@ -140,4 +140,4 @@ Matrix NormalMap::generate(IntensityMap::Mode _mode,
   return result;
 }
 
-} // namespace rx::image
+} // namespace Rx::Image

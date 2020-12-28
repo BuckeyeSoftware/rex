@@ -411,4 +411,4 @@ template Vector<Byte> dxt_compress<DXTType::k_dxt5>(
         Size _width, Size _height, Size _channels, Size& out_size_,
         Size& optimized_blocks_);
 
-} // namespace rx::texture
+} // namespace Rx::Texture

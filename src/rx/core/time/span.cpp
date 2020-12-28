@@ -89,7 +89,7 @@ Float64 Span::total_milliseconds() const {
   return (m_ticks * 1000.0) * scale;
 }
 
-} // namespace rx::time
+} // namespace Rx::Time
 
 const char* Rx::FormatNormalize<Rx::Time::Span>::operator()(const Time::Span& _value) {
   const auto days = _value.days();

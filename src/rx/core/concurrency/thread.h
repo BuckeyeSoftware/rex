@@ -82,6 +82,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Thread::allocator() const {
   return m_state.allocator();
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency
 
 #endif // RX_CORE_CONCURRENCY_THREAD_H

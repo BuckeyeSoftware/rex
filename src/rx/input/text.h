@@ -88,6 +88,6 @@ inline const Size (&Text::selection() const)[2] {
   return m_selection;
 }
 
-} // namespace rx::input
+} // namespace Rx::Input
 
 #endif // RX_INPUT_TEXT

@@ -144,6 +144,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Matrix::allocator() const {
   return *m_allocator;
 }
 
-} // namespace rx::image
+} // namespace Rx::Image
 
 #endif // RX_IMAGE_MATRIX_H

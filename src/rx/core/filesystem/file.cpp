@@ -353,4 +353,4 @@ Optional<Vector<Byte>> read_text_file(Memory::Allocator& _allocator, const char*
   return nullopt;
 }
 
-} // namespace rx::filesystem
+} // namespace Rx::Filesystem

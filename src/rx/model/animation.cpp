@@ -66,4 +66,4 @@ void Animation::update(Float32 _delta_time, bool _loop) {
   }
 }
 
-} // namespace rx::model
+} // namespace Rx::Model

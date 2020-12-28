@@ -187,6 +187,6 @@ inline constexpr Vec3<T> Mat3x3<T>::reduce_rotation_angles(const Vec3<T>& _rotat
   });
 }
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_MATH_MAT3X3_H

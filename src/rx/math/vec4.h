@@ -208,7 +208,7 @@ inline Vec4f normalize(const Vec4f& _v) {
   return (1.0f / length(_v)) * _v;
 }
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 namespace Rx {
   template<>

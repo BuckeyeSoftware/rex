@@ -269,6 +269,6 @@ inline bool Parser::error(bool _caret, const char* _format, Ts&&... _arguments) 
 
 const char* token_type_as_string(Token::Type _type);
 
-} // namespace rx::console
+} // namespace Rx::Console
 
 #endif // RX_CONSOLE_PARSER_H

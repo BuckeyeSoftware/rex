@@ -157,4 +157,4 @@ bool PathResolver::push(int _ch) {
   return true;
 }
 
-} // namespace rx::filesystem
+} // namespace Rx::Filesystem

@@ -233,4 +233,4 @@ void Text::reset_cursor() {
   m_cursor_visible_time = k_cursor_visible_time;
 }
 
-} // namespace rx::input
+} // namespace Rx::Input

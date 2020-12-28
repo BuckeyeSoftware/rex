@@ -188,6 +188,6 @@ inline const Math::Vec2z& Target::dimensions() const {
   return m_dimensions;
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend
 
 #endif // RX_RENDER_FRONTEND_TARGET_H

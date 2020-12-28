@@ -1020,4 +1020,4 @@ Ptr<Immediate2D::Font>& Immediate2D::access_font(const Font::Key& _key) {
   return *m_fonts.insert(_key, Utility::move(new_font));
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

@@ -12,6 +12,6 @@ inline bool epsilon_compare(Float32 _x, Float32 _y) {
   return abs(_x - _y) <= k_epsilon<Float32> * Algorithm::max(1.0f, _x, _y);
 }
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_MATH_COMPARE_H

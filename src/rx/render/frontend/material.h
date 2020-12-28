@@ -161,6 +161,6 @@ inline const Math::Vec3f& Material::emission_color() const & {
   return m_emission_color;
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend
 
 #endif // RX_RENDER_FRONTEND_MATERIAL_H

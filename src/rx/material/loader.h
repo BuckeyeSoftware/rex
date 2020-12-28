@@ -130,6 +130,6 @@ inline void Loader::log(Log::Level _level, const char* _format,
   write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));
 }
 
-} // namespace rx::material
+} // namespace Rx::Material
 
 #endif // RX_MATERIAL_LOADER_H

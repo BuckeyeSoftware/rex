@@ -19,6 +19,6 @@ private:
   alignas(16) Byte m_mutex[64];
 };
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency
 
 #endif // RX_CORE_CONCURRENCY_MUTEX_H

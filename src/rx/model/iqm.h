@@ -24,6 +24,6 @@ inline IQM::IQM(Memory::Allocator& _allocator)
 {
 }
 
-} // namespace rx::model
+} // namespace Rx::Model
 
 #endif // RX_MODEL_IQM_H

@@ -35,4 +35,4 @@ void Controller::update(Float32) {
   }
 }
 
-} // namespace rx::input
+} // namespace Rx::Input

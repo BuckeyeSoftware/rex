@@ -69,4 +69,4 @@ void RecursiveMutex::unlock() {
 #endif
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency

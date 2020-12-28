@@ -77,4 +77,4 @@ Frontend::Texture2D* GBuffer::depth_stencil() const {
   return m_target->depth_stencil();
 }
 
-} // namespace rx::render
+} // namespace Rx::Render

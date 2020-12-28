@@ -157,6 +157,6 @@ inline void Technique::log(Log::Level _level, const char* _format,
   }
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend
 
 #endif // RX_RENDER_FRONTEND_TECHNIQUE_H

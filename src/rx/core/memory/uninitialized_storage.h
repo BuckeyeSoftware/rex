@@ -48,6 +48,6 @@ RX_HINT_FORCE_INLINE constexpr const Byte* UninitializedStorage<S, A>::data() co
   return m_as_bytes;
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory
 
 #endif // RX_CORE_MEMORY_UNINITIALIZED_STORAGE_H

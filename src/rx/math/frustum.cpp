@@ -33,4 +33,4 @@ bool Frustum::is_aabb_inside(const AABB& _aabb) const {
   return true;
 }
 
-} // namespace rx::math
+} // namespace Rx::Math

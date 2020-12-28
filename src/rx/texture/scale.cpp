@@ -234,4 +234,4 @@ void scale(const Byte *RX_HINT_RESTRICT _src, Size _sw, Size _sh,
   }
 }
 
-} // namespace rx::texture
+} // namespace Rx::Texture

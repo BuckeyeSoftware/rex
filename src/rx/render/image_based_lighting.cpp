@@ -191,4 +191,4 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
   }
 }
 
-} // namespace rx::render
+} // namespace Rx::Render

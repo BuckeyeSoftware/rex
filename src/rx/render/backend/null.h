@@ -18,6 +18,6 @@ struct Null
   void swap();
 };
 
-} // namespace rx::render::backend
+} // namespace Rx::Render::Backend
 
 #endif // RX_RENDER_BACKEND_GL3_H

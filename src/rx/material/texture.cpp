@@ -344,4 +344,4 @@ void Texture::write_log(Log::Level _level, String&& message_) const {
   }
 }
 
-} // namespace rx::material
+} // namespace Rx::Material

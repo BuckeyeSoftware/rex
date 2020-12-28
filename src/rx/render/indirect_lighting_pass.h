@@ -58,6 +58,6 @@ inline Frontend::Target* IndirectLightingPass::target() const {
   return m_target;
 }
 
-} // namespace rx::render
+} // namespace Rx::Render
 
 #endif // RX_RENDER_INDIRECT_LIGHTING_PASS_H

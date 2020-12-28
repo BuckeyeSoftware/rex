@@ -155,6 +155,6 @@ inline bool Keyboard::is_held(ScanCode _scan_code) const {
   return m_scan_codes[static_cast<Size>(_scan_code)] & k_held;
 }
 
-} // namespace rx::input
+} // namespace Rx::Input
 
 #endif // RX_INPUT_KEYBOARD_H

@@ -42,4 +42,4 @@ Uint64 qpc_frequency() {
 #endif
 }
 
-} // namespace rx::time
+} // namespace Rx::Time

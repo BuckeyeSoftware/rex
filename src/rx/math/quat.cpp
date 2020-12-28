@@ -76,4 +76,4 @@ Quatf normalize(const Quatf& _value) {
   return _value * (1.0f / Math::length(_value));
 }
 
-} // namespace rx::math
+} // namespace Rx::Math

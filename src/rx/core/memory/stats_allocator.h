@@ -53,6 +53,6 @@ inline constexpr StatsAllocator::StatsAllocator(Allocator& _allocator)
 {
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory
 
 #endif // RX_CORE_MEMORY_STATS_ALLOCATOR_H

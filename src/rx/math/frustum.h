@@ -16,6 +16,6 @@ private:
   Plane m_planes[6];
 };
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_MATH_FRUSTUM_H

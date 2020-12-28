@@ -175,4 +175,4 @@ void Chain::resize(const Math::Vec2z& _dimensions) {
   }
 }
 
-} // namespace rx::texture
+} // namespace Rx::Texture

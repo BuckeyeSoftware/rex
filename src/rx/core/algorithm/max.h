@@ -15,6 +15,6 @@ RX_HINT_FORCE_INLINE constexpr T max(T _a, T _b, Ts&&... _args) {
   return max(_a > _b ? _a : _b, Utility::forward<Ts>(_args)...);
 }
 
-} // namespace rx::algorithm
+} // namespace Rx::Algorithm
 
 #endif // RX_CORE_ALGORITHM_MAX_H

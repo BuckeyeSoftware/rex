@@ -262,6 +262,6 @@ RX_HINT_FORCE_INLINE const Byte* Function<R(Ts...)>::storage() const {
   return m_data + sizeof(ControlBlock);
 }
 
-} // namespace rx::core
+} // namespace Rx
 
 #endif // RX_CORE_FUNCTION_H

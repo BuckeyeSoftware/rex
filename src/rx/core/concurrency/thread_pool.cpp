@@ -110,4 +110,4 @@ void ThreadPool::add(Function<void(int)>&& task_) {
   m_task_cond.signal();
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency

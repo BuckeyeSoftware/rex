@@ -30,6 +30,6 @@ inline Float32 Perlin::noise(Float32 _x, Float32 _y) const {
   return noise(_x, _y, 0.0f);
 }
 
-} // namespace rx::math::noise
+} // namespace Rx::Math::noise
 
 #endif // RX_MATH_NOISE_PERLIN_H

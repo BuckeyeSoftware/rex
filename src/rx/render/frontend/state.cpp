@@ -362,4 +362,4 @@ bool State::operator==(const State& _state) const {
   return true;
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

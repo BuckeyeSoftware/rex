@@ -84,6 +84,6 @@ inline const Vector<Model::Mesh>& Model::transparent_meshes() const & {
   return m_transparent_meshes;
 }
 
-} // namespace rx::render
+} // namespace Rx::Render
 
 #endif // RX_RENDER_MODEL_H

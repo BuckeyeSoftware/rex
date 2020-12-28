@@ -59,7 +59,7 @@ constexpr Span::Span(bool _negate, Uint64 _ticks, Uint64 _frequency)
 {
 }
 
-} // namespace rx::time
+} // namespace Rx::Time
 
 namespace Rx {
   template<>

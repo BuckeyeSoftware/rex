@@ -87,6 +87,6 @@ inline bool PathResolver::reserve_more(Size _size) {
   return m_data.reserve(m_data.capacity() + _size);
 }
 
-} // namespace rx::filesystem
+} // namespace Rx::Filesystem
 
 #endif // RX_CORE_FILESYSTEM_PATH_RESOLVER_H

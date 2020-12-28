@@ -96,4 +96,4 @@ void ConditionVariable::broadcast() {
 #endif
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency

@@ -42,4 +42,4 @@ bool convert(const Byte* _data, const Math::Vec2z& _dimensions,
   return true;
 }
 
-} // namespace rx::image
+} // namespace Rx::Image

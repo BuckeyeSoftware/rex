@@ -157,4 +157,4 @@ Float32 acos(Float32 _x) {
   return 2*(df+w);
 }
 
-} // namespace rx::math
+} // namespace Rx::Math

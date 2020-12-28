@@ -8,6 +8,6 @@ RX_API Float32 tan(Float32 _x);
 RX_API Float32 atan(Float32 _x);
 RX_API Float32 atan2(Float32 _x, Float32 _y);
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_CORE_MATH_TAN_H

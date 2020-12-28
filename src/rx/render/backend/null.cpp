@@ -30,4 +30,4 @@ void Null::swap() {
   // {empty}
 }
 
-} // namespace rx::render::backend
+} // namespace Rx::Render::Backend

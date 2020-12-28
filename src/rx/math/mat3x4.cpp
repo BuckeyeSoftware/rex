@@ -32,4 +32,4 @@ template Mat3x4<Float32>::Mat3x4(const Quat<Float32>& _rotation,
 template Mat3x4<Float32>::Mat3x4(const Vec3<Float32>& _scale,
                                 const Quat<Float32>& _rotation, const Vec3<Float32>& _translation);
 
-} // namespace rx::math
+} // namespace Rx::Math

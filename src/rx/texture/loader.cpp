@@ -138,4 +138,4 @@ bool Loader::load(const String& _file_name, PixelFormat _want_format,
   return false;
 }
 
-} // namespace rx::texture
+} // namespace Rx::Texture

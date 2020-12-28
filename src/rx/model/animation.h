@@ -30,6 +30,6 @@ inline const Vector<Math::Mat3x4f>& Animation::frames() const & {
   return m_frames;
 }
 
-} // namespace rx::model
+} // namespace Rx::Model
 
 #endif // RX_MODEL_ANIMATION

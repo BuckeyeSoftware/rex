@@ -11,4 +11,4 @@ Float32 pow(Float32 _x, Float32 _y) {
   return static_cast<Float32>(Shape{static_cast<Sint64>(t2) << 32}.as_f64);
 }
 
-} // namespace rx::math
+} // namespace Rx::Math

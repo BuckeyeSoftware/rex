@@ -54,6 +54,6 @@ RX_HINT_FORCE_INLINE constexpr ThreadPool& ThreadPool::instance() {
   return *s_instance;
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency
 
 #endif // RX_CORE_CONCURRENCY_THREAD_POOL_H

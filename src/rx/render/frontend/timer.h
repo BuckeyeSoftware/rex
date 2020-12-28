@@ -71,6 +71,6 @@ inline const Vector<FrameTimer::FrameTime>& FrameTimer::frame_times() const & {
   return m_frame_times;
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend
 
 #endif // RX_RENDER_FRONTEND_TIMER_H

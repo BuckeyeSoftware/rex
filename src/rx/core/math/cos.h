@@ -7,6 +7,6 @@ namespace Rx::Math {
 RX_API Float32 cos(Float32 _x);
 RX_API Float32 acos(Float32 _x);
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_CORE_MATH_COS_H

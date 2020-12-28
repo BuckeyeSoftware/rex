@@ -365,7 +365,7 @@ inline Vec3f perp(const Vec3f& _v) {
   return {0.0f, _v.z, -_v.x};
 }
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 namespace Rx {
   template<>

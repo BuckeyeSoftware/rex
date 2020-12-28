@@ -26,6 +26,6 @@ void scale(const Byte *RX_HINT_RESTRICT _src, Size _sw, Size _sh,
   Size _bpp, Size _stride, Byte *RX_HINT_RESTRICT dst_, Size _dw,
   Size _dh);
 
-} // namespace rx::texture
+} // namespace Rx::Texture
 
 #endif // RX_TEXTURE_SCALE_H

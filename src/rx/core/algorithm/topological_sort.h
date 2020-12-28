@@ -157,6 +157,6 @@ RX_HINT_FORCE_INLINE TopologicalSort<T>::Relations::Relations(Memory::Allocator&
 {
 }
 
-} // namespace rx::algorithm
+} // namespace Rx::Algorithm
 
 #endif // RX_CORE_ALGORITHM_TOPOLIGCAL_SORT_H

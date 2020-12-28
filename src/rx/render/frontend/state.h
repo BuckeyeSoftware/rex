@@ -604,6 +604,6 @@ inline bool State::operator!=(const State& _state) const {
   return !operator==(_state);
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend
 
 #endif // RX_RENDER_FRONTEND_STATE_H

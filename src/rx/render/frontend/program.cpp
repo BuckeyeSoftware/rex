@@ -372,4 +372,4 @@ String Program::format_shader(const String& _source) {
   return result.disown();
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

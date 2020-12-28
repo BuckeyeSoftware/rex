@@ -20,6 +20,6 @@ inline void insertion_sort(T* start_, T* end_, F&& _compare) {
   }
 }
 
-} // namespace rx::algorithm
+} // namespace Rx::Algorithm
 
 #endif // RX_CORE_ALGORITHM_INSERTION_SORT_H

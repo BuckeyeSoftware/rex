@@ -37,4 +37,4 @@ void IntensityMap::invert() {
   }
 }
 
-} // namespace rx::image
+} // namespace Rx::Image

@@ -15,4 +15,4 @@ Span StopWatch::elapsed() const {
   return {m_stop_ticks - m_start_ticks, qpc_frequency()};
 }
 
-} // namespace rx::time
+} // namespace Rx::Time

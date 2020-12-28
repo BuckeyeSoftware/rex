@@ -295,4 +295,4 @@ Float32 atan2(Float32 _x, Float32 _y) {
   RX_HINT_UNREACHABLE();
 }
 
-} // namespace rx::math
+} // namespace Rx::Math

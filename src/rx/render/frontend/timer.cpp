@@ -97,4 +97,4 @@ bool FrameTimer::update() {
   return false;
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

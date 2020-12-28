@@ -123,6 +123,6 @@ inline constexpr Mat3x4<T>& Mat3x4<T>::operator+=(T _scalar) {
   return *this = *this + _scalar;
 }
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_MATH_MAT3X4_H

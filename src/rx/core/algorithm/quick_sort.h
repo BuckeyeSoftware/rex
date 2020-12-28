@@ -75,6 +75,6 @@ partitioned:
   insertion_sort(start_, end_, Utility::forward<F>(_compare));
 }
 
-} // namespace rx::algorithm
+} // namespace Rx::Algorithm
 
 #endif // RX_CORE_ALGORITHM_QUICK_SORT_H

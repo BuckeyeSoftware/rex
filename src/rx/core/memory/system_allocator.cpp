@@ -27,4 +27,4 @@ void SystemAllocator::deallocate(void* _data) {
 
 Global<SystemAllocator> SystemAllocator::s_instance{"system", "allocator"};
 
-} // namespace rx::memory
+} // namespace Rx::Memory

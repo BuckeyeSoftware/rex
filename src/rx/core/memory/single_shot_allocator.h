@@ -35,6 +35,6 @@ private:
   Concurrency::Atomic<bool> m_allocated;
 };
 
-} // namespace rx::memory
+} // namespace Rx::Memory
 
 #endif // RX_CORE_MEMORY_SINGLE_SHOT_ALLOCATOR_H

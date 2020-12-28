@@ -7,6 +7,6 @@ namespace Rx::Texture {
 Vector<Byte> convert(Memory::Allocator& _allocator, const Byte* _data,
                         Size _samples, PixelFormat _in_format, PixelFormat _out_format);
 
-} // namespace rx::texture
+} // namespace Rx::Texture
 
 #endif // RX_TEXTURE_CONVERT_H

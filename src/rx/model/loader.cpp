@@ -306,4 +306,4 @@ void Loader::write_log(Log::Level _level, String&& message_) const {
   }
 }
 
-} // namespace rx::model
+} // namespace Rx::Model

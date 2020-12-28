@@ -15,4 +15,4 @@ Float32 abs(Float32 _x) {
   return u.as_f32;
 }
 
-} // namespace rx::math
+} // namespace Rx::Math

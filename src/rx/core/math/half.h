@@ -106,6 +106,6 @@ inline constexpr Half::Half(Uint16 _bits)
 {
 }
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_CORE_MATH_HALF_H

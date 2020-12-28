@@ -39,6 +39,6 @@ inline constexpr Allocator& SystemAllocator::instance() {
   return *s_instance;
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory
 
 #endif // RX_CORE_MEMORY_SYSTEM_ALLOCATOR_H

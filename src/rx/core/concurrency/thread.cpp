@@ -120,4 +120,4 @@ void Thread::State::join() {
   m_joined = true;
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency

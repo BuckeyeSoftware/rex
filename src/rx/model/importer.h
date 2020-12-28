@@ -153,6 +153,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Importer::allocator() const {
   return m_allocator;
 }
 
-} // namespace rx::model
+} // namespace Rx::Model
 
 #endif // RX_MODEL_IMPORTER_H

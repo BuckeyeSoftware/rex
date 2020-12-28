@@ -18,6 +18,6 @@ inline bool convert(const Vector<Byte>& _data, const Math::Vec2z& _dimensions,
   return convert(_data.data(), _dimensions, _channels, matrix_);
 }
 
-} // namespace rx::image
+} // namespace Rx::Image
 
 #endif // RX_IMAGE_CONVERT_H

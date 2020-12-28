@@ -36,4 +36,4 @@ void Mouse::update_scroll(const Math::Vec2i& _scroll) {
   m_scrolled = true;
 }
 
-} // namespace rx::input
+} // namespace Rx::Input

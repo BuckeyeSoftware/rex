@@ -14,4 +14,4 @@ void WaitGroup::wait() {
   m_condition_variable.wait(lock, [&]{ return m_signaled_count == m_count; });
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency

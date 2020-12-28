@@ -41,6 +41,6 @@ inline Frontend::Texture2D* ImageBasedLighting::scale_bias() const {
   return m_scale_bias_texture;
 }
 
-} // namespace rx::render
+} // namespace Rx::Render
 
 #endif // RX_RENDER_IBL_H

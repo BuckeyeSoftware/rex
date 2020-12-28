@@ -107,4 +107,4 @@ void BumpPointAllocator::reset() {
   m_last_point = m_data;
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory

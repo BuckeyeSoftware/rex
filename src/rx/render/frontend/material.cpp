@@ -148,4 +148,4 @@ bool Material::load(Rx::Material::Loader&& loader_) {
   });
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

@@ -54,6 +54,6 @@ inline Float32 Plane::distance() const {
   return m_distance;
 }
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_MATH_PLANE_H

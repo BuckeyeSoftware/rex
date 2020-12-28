@@ -15,6 +15,6 @@ inline constexpr T rad_to_deg(T rad) {
   return rad * T{180.0} / k_pi<T>;
 }
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_MATH_TRIG_H

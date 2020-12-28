@@ -19,6 +19,6 @@ inline constexpr SpinLock::SpinLock()
 {
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency
 
 #endif // RX_CORE_CONCURRENCY_SPIN_LOCK_H

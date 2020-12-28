@@ -50,6 +50,6 @@ inline Frontend::Target* GBuffer::target() const {
   return m_target;
 }
 
-} // namespace rx::render
+} // namespace Rx::Render
 
 #endif // RX_RENDER_GBUFFER

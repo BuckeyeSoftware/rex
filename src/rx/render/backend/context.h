@@ -32,6 +32,6 @@ struct Context {
   virtual void swap() = 0;
 };
 
-} // namespace rx::render::backend
+} // namespace Rx::Render::Backend
 
 #endif // RX_RENDER_BACKEND_CONTEXT_H

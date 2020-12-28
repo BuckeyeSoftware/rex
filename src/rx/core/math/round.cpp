@@ -49,4 +49,4 @@ Float32 round(Float32 _x) {
   return y;
 }
 
-} // namespace rx::math
+} // namespace Rx::Math

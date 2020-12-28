@@ -25,6 +25,6 @@ private:
   void* m_tail RX_HINT_GUARDED_BY(m_lock);
 };
 
-} // namespace rx::memory
+} // namespace Rx::Memory
 
 #endif // RX_CORE_MEMORY_BUDDY_ALLOCATOR_H

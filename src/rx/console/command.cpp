@@ -275,4 +275,4 @@ bool Command::execute_tokens(Context& console_, const Vector<Token>& _tokens) {
   return result && execute(console_);
 }
 
-} // namespace rx::console
+} // namespace Rx::Console

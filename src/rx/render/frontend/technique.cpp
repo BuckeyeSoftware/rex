@@ -1097,4 +1097,4 @@ bool Technique::resolve_dependencies(const Map<String, Module>& _modules) {
   });
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

@@ -74,6 +74,6 @@ inline Float32 Controller::axis_value(Axis _axis) const {
   return m_axis_values[static_cast<Size>(_axis)];
 }
 
-} // namespace rx::input
+} // namespace Rx::Input
 
 #endif // RX_INPUT_CONTROLLER_H

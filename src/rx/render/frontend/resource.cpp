@@ -24,4 +24,4 @@ void Resource::update_resource_usage(Size _bytes) {
   m_frontend->m_resource_usage[index] += m_resource_usage;
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

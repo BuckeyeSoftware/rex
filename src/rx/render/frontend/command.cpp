@@ -28,4 +28,4 @@ void CommandBuffer::reset() {
   m_allocator.reset();
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

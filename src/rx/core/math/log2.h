@@ -50,6 +50,6 @@ inline Uint64 log2(Uint64 _value) {
 }
 #endif
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_MATH_LOG2_H

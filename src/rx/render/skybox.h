@@ -47,6 +47,6 @@ inline const String& Skybox::name() const & {
   return m_name;
 }
 
-} // namespace rx::render
+} // namespace Rx::Render
 
 #endif // RX_RENDER_SKYBOX

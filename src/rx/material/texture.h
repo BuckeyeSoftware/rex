@@ -155,6 +155,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Texture::allocator() const {
   return *m_allocator;
 }
 
-} // namespace rx::material
+} // namespace Rx::Material
 
 #endif // RX_MATERIAL_TEXTURE_H

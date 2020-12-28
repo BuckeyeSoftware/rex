@@ -63,6 +63,6 @@ inline Size Resource::resource_usage() const {
   return m_resource_usage;
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend
 
 #endif // RX_RENDER_FRONTEND_RESOURCE_H

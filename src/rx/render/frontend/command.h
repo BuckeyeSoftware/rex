@@ -369,6 +369,6 @@ inline Size *UpdateCommand::edit() {
   return reinterpret_cast<Size *>(opaque);
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend
 
 #endif // RX_RENDER_FRONTEND_COMMAND_H

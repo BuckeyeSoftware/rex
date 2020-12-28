@@ -12,6 +12,6 @@ inline bool isnan(Float32 _x) {
   return (Shape{_x}.as_u32 & 0x7fffffff) == 0x7f800000;
 }
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_CORE_MATH_ISNAN_H

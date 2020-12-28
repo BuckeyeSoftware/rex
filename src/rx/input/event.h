@@ -105,6 +105,6 @@ inline Event::~Event() {
   }
 }
 
-} // namespace rx::input
+} // namespace Rx::Input
 
 #endif // RX_INPUT_EVENT_H

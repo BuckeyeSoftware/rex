@@ -35,6 +35,6 @@ Rectangle<U> Rectangle<T>::cast() const {
   return {offset.template cast<U>(), dimensions.template cast<U>()};
 }
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_MATH_RECTANGLE_H

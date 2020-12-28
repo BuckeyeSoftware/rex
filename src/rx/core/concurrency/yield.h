@@ -6,6 +6,6 @@ namespace Rx::Concurrency {
 
 RX_API void yield();
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency
 
 #endif // RX_CORE_CONCURRENCY_YIELD_H

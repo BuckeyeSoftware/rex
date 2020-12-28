@@ -345,6 +345,6 @@ inline Frontend::Context* Immediate2D::Font::frontend() const {
   return m_frontend;
 }
 
-} // namespace rx::render
+} // namespace Rx::Render
 
 #endif // RX_RENDER_IMMEDIATE_H

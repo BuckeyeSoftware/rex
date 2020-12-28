@@ -6,6 +6,6 @@ namespace Rx::Math {
 
 RX_API Float32 sqrt(Float32 _x);
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_CORE_MATH_SQRT_H

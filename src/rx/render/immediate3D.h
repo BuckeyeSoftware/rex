@@ -203,6 +203,6 @@ inline Immediate3D::Queue& Immediate3D::frame_queue() {
   return m_queue;
 }
 
-} // namespace rx::render
+} // namespace Rx::Render
 
 #endif // RX_RENDER_IMMEDIATE3D_H

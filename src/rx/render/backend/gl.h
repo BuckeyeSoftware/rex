@@ -42,6 +42,6 @@ struct Attribute {
 
 Attribute convert_attribute(const Frontend::Buffer::Attribute& _attribute);
 
-} // namespace rx::render
+} // namespace Rx::Render
 
 #endif // RX_RENDER_BACKEND_GL_H

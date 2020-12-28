@@ -128,4 +128,4 @@ Float32 sin(Float32 _x) {
   RX_HINT_UNREACHABLE();
 }
 
-} // namespace rx::math
+} // namespace Rx::Math

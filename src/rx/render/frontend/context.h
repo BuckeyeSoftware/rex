@@ -412,6 +412,6 @@ inline const Context::DeviceInfo& Context::get_device_info() const & {
   return m_device_info;
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend
 
 #endif // RX_RENDER_FRONTEND_CONTEXT_H

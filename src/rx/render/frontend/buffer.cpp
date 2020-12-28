@@ -187,4 +187,4 @@ void Buffer::optimize_edits() {
   }
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

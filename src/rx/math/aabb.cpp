@@ -48,4 +48,4 @@ AABB AABB::transform(const Mat4x4f& _mat) const {
   };
 }
 
-} // namespace rx::math
+} // namespace Rx::Math

@@ -105,4 +105,4 @@ StatsAllocator::Statistics StatsAllocator::stats() const {
   return m_statistics;
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory

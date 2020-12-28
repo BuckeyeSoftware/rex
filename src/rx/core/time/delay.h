@@ -6,6 +6,6 @@ namespace Rx::Time {
 
 RX_API void delay(Uint64 _milliseconds);
 
-} // namespace rx::time
+} // namespace Rx::Time
 
 #endif // RX_CORE_TIME_DELAY_H

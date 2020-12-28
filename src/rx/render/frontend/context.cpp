@@ -1085,4 +1085,4 @@ Arena* Context::arena(const Buffer::Format& _format) {
   return m_arenas.insert(_format, Utility::move(arena));
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

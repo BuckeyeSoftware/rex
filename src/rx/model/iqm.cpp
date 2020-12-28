@@ -405,4 +405,4 @@ bool IQM::read_animations(const Header& _header, const Vector<Byte>& _data) {
   return true;
 }
 
-} // namespace rx::model
+} // namespace Rx::Model

@@ -65,6 +65,6 @@ Shape(Float64) -> Shape<Float64>;
 Shape(Uint64) -> Shape<Float64>;
 Shape(Sint64) -> Shape<Float64>;
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_CORE_MATH_SHAPE_H

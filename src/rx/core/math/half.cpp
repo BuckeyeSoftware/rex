@@ -68,4 +68,4 @@ Float32 Half::to_f32() const {
   return out.as_f32;
 }
 
-} // namespace rx::math
+} // namespace Rx::Math

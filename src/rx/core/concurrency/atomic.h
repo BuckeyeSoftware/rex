@@ -18,7 +18,7 @@ enum class MemoryOrder {
   k_seq_cst  // store-release load-acquire
 };
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency
 
 #if defined(RX_COMPILER_GCC)
 #include "rx/core/concurrency/gcc/atomic.h"
@@ -371,6 +371,6 @@ private:
   detail::AtomicBase<bool> m_value;
 };
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency
 
 #endif // RX_CORE_CONCURRENCY_ATOMIC_H

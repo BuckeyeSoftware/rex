@@ -7,6 +7,6 @@ namespace Rx::Time {
 RX_API Uint64 qpc_ticks();
 RX_API Uint64 qpc_frequency();
 
-} // namespace rx::time
+} // namespace Rx::Time
 
 #endif // RX_CORE_TIME_QPC_H

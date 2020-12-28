@@ -33,6 +33,6 @@ inline constexpr Allocator& HeapAllocator::instance() {
   return *s_instance;
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory
 
 #endif // RX_CORE_MEMORY_HEAP_ALLOCATOR_H

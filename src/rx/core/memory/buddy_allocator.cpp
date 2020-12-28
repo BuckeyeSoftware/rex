@@ -275,4 +275,4 @@ void BuddyAllocator::deallocate_unlocked(void* _data) {
   }
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory

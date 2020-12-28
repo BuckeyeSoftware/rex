@@ -21,4 +21,4 @@ void yield() {
 #endif
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency

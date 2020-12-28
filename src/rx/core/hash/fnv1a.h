@@ -9,6 +9,6 @@ namespace Rx::Hash {
 template<typename T>
 RX_API T fnv1a(const Byte* _data, Size _size);
 
-} // namespace rx::hash
+} // namespace Rx::Hash
 
 #endif // RX_CORE_HASH_FNV1A_H

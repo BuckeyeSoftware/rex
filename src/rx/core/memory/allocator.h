@@ -69,6 +69,6 @@ struct View {
   Size size;
 };
 
-} // namespace rx::memory
+} // namespace Rx::Memory
 
 #endif // RX_CORE_MEMORY_ALLOCATOR_H

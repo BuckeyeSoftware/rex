@@ -327,4 +327,4 @@ bool Target::has_feedback(const Texture* _texture, const Buffers& _draw_buffers)
 }
 
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

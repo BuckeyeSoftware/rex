@@ -132,4 +132,4 @@ void Module::write_log(Log::Level _level, String&& message_) const {
   }
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

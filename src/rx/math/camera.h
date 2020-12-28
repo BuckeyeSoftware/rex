@@ -22,6 +22,6 @@ inline Mat4x4f Camera::view() const {
   return Mat4x4f::invert(as_mat4());
 }
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_MATH_CAMERA_H

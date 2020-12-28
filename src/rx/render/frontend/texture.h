@@ -556,6 +556,6 @@ inline const TextureCM::LevelInfoType& TextureCM::info_for_level(Size _index) co
   return m_level_info[_index];
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend
 
 #endif // RX_RENDER_FRONTEND_TEXTURE_H

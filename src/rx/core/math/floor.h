@@ -7,6 +7,6 @@ namespace Rx::Math {
 RX_API Float64 floor(Float64 _x);
 RX_API Float32 floor(Float32 _x);
 
-} // namespace rx::math
+} // namespace Rx::Math
 
 #endif // RX_CORE_MATH_FLOOR_H

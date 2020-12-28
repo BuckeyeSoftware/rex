@@ -71,6 +71,6 @@ inline bool Loader::link(F*& function_, const String& _symbol_name) const {
   return link(function_, _symbol_name.data());
 }
 
-} // namespace rx::library
+} // namespace Rx::Library
 
 #endif // RX_CORE_LIBRARY_LOADER_H

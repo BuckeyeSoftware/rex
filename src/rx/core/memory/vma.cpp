@@ -128,4 +128,4 @@ bool VMA::uncommit(Range _range) {
   return false;
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory

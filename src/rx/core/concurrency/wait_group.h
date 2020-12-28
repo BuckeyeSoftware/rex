@@ -32,6 +32,6 @@ inline WaitGroup::WaitGroup()
 {
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency
 
 #endif // RX_CORE_CONCURRENCY_WAIT_GROUP_H

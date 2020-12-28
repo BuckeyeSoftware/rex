@@ -27,4 +27,4 @@ T fnv1a(const Byte* _data, Size _size) {
 template Uint32 fnv1a<Uint32>(const Byte* _data, Size _size);
 template Uint64 fnv1a<Uint64>(const Byte* _data, Size _size);
 
-} // namespace rx::hash
+} // namespace Rx::Hash

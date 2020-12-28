@@ -2026,4 +2026,4 @@ void GL3::swap() {
   SDL_GL_SwapWindow(reinterpret_cast<SDL_Window*>(m_data));
 }
 
-} // namespace rx::backend
+} // namespace Rx::Render::Backend

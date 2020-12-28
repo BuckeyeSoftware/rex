@@ -76,4 +76,4 @@ Float32 mod(Float32 _x, Float32 _y) {
   return ux.as_f32;
 }
 
-} // namespace rx::math
+} // namespace Rx::Math

@@ -88,4 +88,4 @@ void IndirectLightingPass::destroy() {
   m_frontend->destroy_target(RX_RENDER_TAG("indirect lighting pass"), m_target);
 }
 
-} // namespace rx::render
+} // namespace Rx::Render

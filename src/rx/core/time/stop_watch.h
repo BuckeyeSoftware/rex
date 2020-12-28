@@ -41,6 +41,6 @@ inline bool StopWatch::is_running() const {
   return m_start_ticks != 0;
 }
 
-} // namespace rx::time
+} // namespace Rx::Time
 
 #endif // RX_CORE_TIME_STOP_WATCH_H

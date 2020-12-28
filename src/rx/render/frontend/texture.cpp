@@ -423,4 +423,4 @@ void TextureCM::record_wrap(const WrapOptions& _wrap) {
   m_flags |= k_wrap;
 }
 
-} // namespace rx::render::frontend
+} // namespace Rx::Render::Frontend

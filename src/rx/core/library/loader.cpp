@@ -100,4 +100,4 @@ void Loader::close_unlocked() {
   }
 }
 
-} // namespace rx::library
+} // namespace Rx::Library

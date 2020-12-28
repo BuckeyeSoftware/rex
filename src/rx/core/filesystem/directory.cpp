@@ -206,4 +206,4 @@ bool create_directory(const String& _path) {
 #endif
 }
 
-} // namespace rx::filesystem
+} // namespace Rx::Filesystem

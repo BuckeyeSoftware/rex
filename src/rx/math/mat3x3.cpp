@@ -40,4 +40,4 @@ Mat3x3<T>::Mat3x3(const Vec3<T>& _scale, const Quat<T>& _rotation)
 template Mat3x3<Float32>::Mat3x3(const Quat<Float32>& _rotation);
 template Mat3x3<Float32>::Mat3x3(const Vec3<Float32>& _scale, const Quat<Float32>& _rotation);
 
-} // namespace rx::math
+} // namespace Rx::Math

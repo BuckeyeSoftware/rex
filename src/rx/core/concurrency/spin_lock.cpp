@@ -44,4 +44,4 @@ void SpinLock::unlock() {
   tsan_release(&m_lock);
 }
 
-} // namespace rx::concurrency
+} // namespace Rx::Concurrency

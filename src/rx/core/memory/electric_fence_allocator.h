@@ -41,6 +41,6 @@ inline constexpr Allocator& ElectricFenceAllocator::instance() {
   return *s_instance;
 }
 
-} // namespace rx::memory
+} // namespace Rx::Memory
 
 #endif // RX_CORE_MEMORY_ELECTRIC_FENCE_ALLOCATOR_H

@@ -37,6 +37,6 @@ inline NormalMap::NormalMap(Matrix&& image_)
 {
 }
 
-} // namespace rx::image
+} // namespace Rx::Image
 
 #endif // RX_IMAGE_NORMAL_MAP_H

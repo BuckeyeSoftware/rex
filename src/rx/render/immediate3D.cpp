@@ -580,4 +580,4 @@ void Immediate3D::add_vertex(Vertex&& vertex_) {
   m_vertices[m_vertex_index++] = Utility::move(vertex_);
 }
 
-} // namespace rx::render
+} // namespace Rx::Render

@@ -24,6 +24,6 @@ inline const Float32& IntensityMap::operator()(Size _x, Size _y) const {
   return *m_map(_x, _y);
 }
 
-} // namespace rx::image
+} // namespace Rx::Image
 
 #endif // RX_IMAGE_INTENSITY_MAP_H
