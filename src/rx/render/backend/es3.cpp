@@ -1047,6 +1047,7 @@ bool ES3::init() {
   fetch("glDrawArrays", pglDrawArrays);
   fetch("glDrawArraysInstanced", pglDrawArraysInstanced);
   fetch("glDrawElements", pglDrawElements);
+  fetch("glDrawElementsBaseVertex", pglDrawElementsBaseVertex);
   fetch("glDrawElementsInstanced", pglDrawElementsInstanced);
 
   // flush
