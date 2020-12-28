@@ -274,7 +274,7 @@ bool Engine::init() {
     }
 
     window = SDL_CreateWindow(
-      "rex",
+      "Rex",
       SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
       SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
       display_resolution->get().w,
