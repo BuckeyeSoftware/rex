@@ -97,10 +97,10 @@ Buffer::~Buffer() {
 }
 
 Byte* Buffer::map_sink_data(Sink _sink, Size _size) {
+  RX_ASSERT(_size != 0, "_size is zero");
   Byte* result = nullptr;
   switch (_sink) {
   case Sink::VERTICES:
-    RX_ASSERT(_size != 0, "_size is zero");
     RX_ASSERT(_size % m_format.vertex_stride() == 0,
       "_size not a multiple of vertex stride");
     m_vertices_store.resize(_size, Utility::UninitializedTag{});
@@ -108,15 +108,15 @@ Byte* Buffer::map_sink_data(Sink _sink, Size _size) {
     break;
   case Sink::ELEMENTS:
     RX_ASSERT(m_format.is_indexed(), "not an indexed format");
-    RX_ASSERT(_size != 0, "_size is zero");
-    RX_ASSERT(_size % m_format.element_size() == 0, "_size is not a multiple of element size");
+    RX_ASSERT(_size % m_format.element_size() == 0,
+      "_size is not a multiple of element size");
     m_elements_store.resize(_size, Utility::UninitializedTag{});
     result = m_elements_store.data();
     break;
   case Sink::INSTANCES:
     RX_ASSERT(m_format.is_instanced(), "not an instanced format");
-    RX_ASSERT(_size != 0, "_size is zero");
-    RX_ASSERT(_size % m_format.instance_stride() == 0, "_size not a multiple of instance stride");
+    RX_ASSERT(_size % m_format.instance_stride() == 0,
+      "_size not a multiple of instance stride");
     m_instances_store.resize(_size, Utility::UninitializedTag{});
     result = m_instances_store.data();
     break;
