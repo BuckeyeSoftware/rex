@@ -1,6 +1,10 @@
 #include <signal.h> // signal, sig_atomic_t, SIG{INT,TERM,HUP,QUIT,KILL,PIPE,ALRM,STOP}
 #include <SDL.h>
+
 #include "rx/engine.h"
+
+#include "rx/core/filesystem/file.h"
+#include "rx/core/log.h"
 
 #if defined(RX_PLATFORM_EMSCRIPTEN)
 #include <emscripten.h>
@@ -14,6 +18,9 @@ int main([[maybe_unused]] int _argc, [[maybe_unused]] char** argv) {
   if (!Rx::Globals::link()) {
     return 1;
   }
+
+  // Initialize logger as early as possible.
+  Rx::Globals::find("system")->find("logger")->init();
 
   // Emscripten does not allow us to block in main as that blocks the browser
   // and prevents worker threads from being posted. Instead let the browser
@@ -87,31 +94,39 @@ int main([[maybe_unused]] int _argc, [[maybe_unused]] char** argv) {
   signal(SIGSTOP, catch_signal);
 #endif // !defined(RX_PLATFORM_WINDOWS)
 
-  // So that engine is destroyed before fini is called.
-  {
-    // Restart is just a matter of goto.
-  restart:
+  Rx::Filesystem::File log{"log.log", "wb"};
+  if (!log || !Rx::Log::subscribe(&log)) {
+    return -1;
+  }
+
+  for (;;) {
     Rx::Engine engine;
     if (!engine.init()) {
-      return 1;
+      break;
     }
 
+    Rx::Engine::Status status;
     while (g_running) {
-      switch (engine.run()) {
-      case Rx::Engine::Status::RESTART:
-        goto restart;
-      case Rx::Engine::Status::SHUTDOWN:
-        return 0;
-      case Rx::Engine::Status::RUNNING:
+      status = engine.run();
+      if (status != Rx::Engine::Status::RUNNING) {
         break;
       }
+    }
+
+    if (status == Rx::Engine::Status::SHUTDOWN || !g_running) {
+      break;
     }
   }
 #endif
 
-  // Destroy all initialized globals now. The globals system keeps track of which
-  // globals are initialized and in which order. This will deinitialize them in
-  // reverse order for only the ones that are actively initialized.
+  if (!Rx::Log::unsubscribe(&log)) {
+    // Shouldn't fail but if it does, flush the logger.
+    Rx::Log::flush();
+  }
+
+  // Destroy all initialized globals now. The globals system keeps track of
+  // which globals are initialized and in which order. This will deinitialize
+  // them in reverse order for only the ones that are actively initialized.
   Rx::Globals::fini();
 
   return 0;

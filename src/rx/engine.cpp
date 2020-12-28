@@ -9,9 +9,6 @@
 
 #include "rx/engine.h"
 #include "rx/display.h"
-
-#include "rx/core/filesystem/file.h"
-
 // TODO(dweiler): Game factory...
 extern Rx::Ptr<Rx::Game> create(Rx::Render::Frontend::Context&, Rx::Input::Context&);
 
@@ -107,7 +104,6 @@ RX_CONSOLE_IVAR(
   4096,
   1024);
 
-static Global<Filesystem::File> g_engine_log{"system", "log", "log.log", "wb"};
 static constexpr const char* CONFIG = "config.cfg";
 
 Engine::Engine()
@@ -130,17 +126,9 @@ Engine::~Engine() {
 
   // TODO(dweiler): Move to SDL_SubSystemInit rather than global.
   SDL_QuitSubSystem(SDL_INIT_VIDEO);
-
-  // The engine log should be moved to main so that it survives a longer time.
-  Log::flush();
-  Log::unsubscribe(&g_engine_log);
 }
 
 bool Engine::init() {
-  if (!Log::subscribe(&g_engine_log)) {
-    return false;
-  }
-
   // These need to be initialized early for the console.
   Globals::find("console")->init();
 
