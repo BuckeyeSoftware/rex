@@ -273,22 +273,10 @@ Byte* Arena::Block::map_sink_data(Buffer::Sink _sink, Uint32 _size) {
   List& list = m_arena->m_lists[static_cast<Size>(_sink)];
   Range& range = range_for(_sink);
 
-  Vector<Byte>* store = nullptr;
-  switch (_sink) {
-  case Buffer::Sink::VERTICES:
-    store = &buffer->m_vertices_store;
-    break;
-  case Buffer::Sink::ELEMENTS:
-    store = &buffer->m_elements_store;
-    break;
-  case Buffer::Sink::INSTANCES:
-    store = &buffer->m_instances_store;
-    break;
-  }
-
   Uint32 new_offset = 0;
   Uint32 new_size = _size;
 
+  Byte* result = nullptr;
   // Already allocated, try to resize the range.
   if (range.offset != -1_u32) {
     const auto old_offset = range.offset;
@@ -296,20 +284,17 @@ Byte* Arena::Block::map_sink_data(Buffer::Sink _sink, Uint32 _size) {
     if (list.reallocate(old_offset, new_size, new_offset)) {
       if (new_offset != old_offset) {
         const Size total_size = new_offset + new_size;
-        if (total_size >= store->size()) {
-          // Ran out of memory in |store|.
-          if (!store->resize(total_size, Utility::UninitializedTag{})) {
-            // Undo the reallocation on |list|.
-            //
-            // This should never fail. Assert anyways because if it does fail it
-            // means the |list| data structure is in an inconsistent state.
-            RX_ASSERT(list.reallocate(new_offset, old_size, new_offset), "consistency error");
-            return nullptr;
-          }
+        if (!(result = buffer->map_sink_data(_sink, total_size))) {
+          // Undo the reallocation on |list|.
+          //
+          // This should never fail. Assert anyways because if it does fail it
+          // means the |list| data structure is in an inconsistent state.
+          RX_ASSERT(list.reallocate(new_offset, old_size, new_offset), "consistency error");
+          return nullptr;
         }
 
-        // Move the data since the reallocation moved it.
-        memmove(store->data() + new_offset, store->data() + old_offset, old_size);
+        // Move the data since the reallocation could've moved it.
+        memmove(result + new_offset, result + old_offset, old_size);
 
         // When the contents of the data are moved, we need to record an edit
         // on the range of data in the |buffer| we replaced.
@@ -324,16 +309,13 @@ Byte* Arena::Block::map_sink_data(Buffer::Sink _sink, Uint32 _size) {
   // This is a fresh allocation.
   if (list.allocate(_size, new_offset)) {
     const auto total_size = new_offset + new_size;
-    if (total_size >= store->size()) {
-      // Ran out of memory in |store|?
-      if (!store->resize(total_size, Utility::UninitializedTag{})) {
-        // Undo the allocation on |list|.
-        //
-        // This should never fail. Assert anyways because if it does fail it
-        // means the |list| data structure is in an inconsistent state.
-        RX_ASSERT(list.deallocate(new_offset), "consistency error");
-        return nullptr;
-      }
+    if (!(result = buffer->map_sink_data(_sink, total_size))) {
+      // Undo the allocation on |list|.
+      //
+      // This should never fail. Assert anyways because if it does fail it
+      // means the |list| data structure is in an inconsistent state.
+      RX_ASSERT(list.deallocate(new_offset), "consistency error");
+      return nullptr;
     }
   } else {
     // Ran out of memory in |list| data structure.
@@ -344,7 +326,7 @@ Byte* Arena::Block::map_sink_data(Buffer::Sink _sink, Uint32 _size) {
   range.offset = new_offset;
   range.size = new_size;
 
-  return store->data() + new_offset;
+  return result + new_offset;
 }
 
 // [Arena]
