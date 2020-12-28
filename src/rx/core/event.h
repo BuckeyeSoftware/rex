@@ -52,7 +52,7 @@ struct Event<R(Ts...)> {
   constexpr Event();
 
   void signal(Ts... _arguments);
-  Handle connect(Delegate&& function_);
+  Optional<Handle> connect(Delegate&& function_);
 
   Size size() const;
   bool is_empty() const;
@@ -111,17 +111,24 @@ inline void Event<R(Ts...)>::signal(Ts... _arguments) {
 }
 
 template<typename R, typename... Ts>
-inline typename Event<R(Ts...)>::Handle Event<R(Ts...)>::connect(Delegate&& delegate_) {
+inline Optional<typename Event<R(Ts...)>::Handle> Event<R(Ts...)>::connect(Delegate&& delegate_) {
   Concurrency::ScopeLock lock{m_lock};
-  const Size delegates = m_delegates.size();
+
+  const auto delegates = m_delegates.size();
   for (Size i = 0; i < delegates; i++) {
-    if (!m_delegates[i]) {
-      m_delegates[i] = Utility::move(delegate_);
-      return {this, i};
+    if (m_delegates[i]) {
+      continue;
     }
+
+    m_delegates[i] = Utility::move(delegate_);
+    return Handle{this, i};
   }
-  m_delegates.emplace_back(Utility::move(delegate_));
-  return {this, delegates};
+
+  if (m_delegates.emplace_back(Utility::move(delegate_))) {
+    return Handle{this, delegates};
+  }
+
+  return nullopt;
 }
 
 template<typename R, typename... Ts>

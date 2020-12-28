@@ -84,16 +84,16 @@ struct Immediate3D {
       };
     };
 
-    void record_point(const Math::Vec3f& _point, const Math::Vec4f& _color,
+    bool record_point(const Math::Vec3f& _point, const Math::Vec4f& _color,
                       Float32 _size, Uint8 _flags);
 
-    void record_line(const Math::Vec3f& _point_a, const Math::Vec3f& _point_b,
+    bool record_line(const Math::Vec3f& _point_a, const Math::Vec3f& _point_b,
                      const Math::Vec4f& _color, Uint8 _flags);
 
-    void record_solid_sphere(const Math::Vec2f& _slices_and_stacks,
+    bool record_solid_sphere(const Math::Vec2f& _slices_and_stacks,
                              const Math::Vec4f& _color, const Math::Mat4x4f& _transform, Uint8 _flags);
 
-    void record_solid_cube(const Math::Vec4f& _color,
+    bool record_solid_cube(const Math::Vec4f& _color,
                            const Math::Mat4x4f& _transform, Uint8 _flags);
 
     bool is_empty() const;

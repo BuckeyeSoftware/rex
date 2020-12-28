@@ -55,8 +55,8 @@ struct Buffer : Resource {
     void record_vertex_stride(Size _stride);
     void record_instance_stride(Size _stride);
 
-    void record_vertex_attribute(const Attribute& _attribute);
-    void record_instance_attribute(const Attribute& _attribute);
+    bool record_vertex_attribute(const Attribute& _attribute);
+    bool record_instance_attribute(const Attribute& _attribute);
 
     bool is_indexed() const;
     bool is_instanced() const;
@@ -219,14 +219,14 @@ inline void Buffer::Format::record_instance_stride(Size _stride) {
   m_flags |= INSTANCE_STRIDE;
 }
 
-inline void Buffer::Format::record_vertex_attribute(const Attribute& _attribute) {
+inline bool Buffer::Format::record_vertex_attribute(const Attribute& _attribute) {
   RX_ASSERT(!(m_flags & FINALIZED), "finalized");
-  m_vertex_attributes.push_back(_attribute);
+  return m_vertex_attributes.push_back(_attribute);
 }
 
-inline void Buffer::Format::record_instance_attribute(const Attribute& _attribute) {
+inline bool Buffer::Format::record_instance_attribute(const Attribute& _attribute) {
   RX_ASSERT(!(m_flags & FINALIZED), "finalized");
-  m_instance_attributes.push_back(_attribute);
+  return m_instance_attributes.push_back(_attribute);
 }
 
 inline bool Buffer::Format::is_indexed() const {

@@ -44,9 +44,9 @@ protected:
   Status m_status;
 
   // The following event handlers deal with common console events.
-  Event<void(Console::Variable<Sint32>&)>::Handle m_on_fullscreen_change;
-  Event<void(Console::Variable<Sint32>&)>::Handle m_on_swap_interval_change;
-  Event<void(Console::Variable<Math::Vec2i>&)>::Handle m_on_display_resolution_changed;
+  Event<void(Console::Variable<Sint32>&)>::Handle m_on_display_fullscreen_change;
+  Event<void(Console::Variable<Sint32>&)>::Handle m_on_display_swap_interval_change;
+  Event<void(Console::Variable<Math::Vec2i>&)>::Handle m_on_display_resolution_change;
 
   Ptr<Game> m_game;
 };

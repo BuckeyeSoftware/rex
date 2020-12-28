@@ -81,7 +81,7 @@ bool Immediate2D::Queue::Command::operator!=(const Command& _command) const {
   return false;
 }
 
-void Immediate2D::Queue::record_scissor(const Math::Vec2f& _position,
+bool Immediate2D::Queue::record_scissor(const Math::Vec2f& _position,
                                         const Math::Vec2f& _size)
 {
   RX_PROFILE_CPU("immediate2D::queue::record_scissor");
@@ -104,10 +104,10 @@ void Immediate2D::Queue::record_scissor(const Math::Vec2f& _position,
   next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec2f>{}(next_command.as_scissor.position));
   next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec2f>{}(next_command.as_scissor.size));
 
-  m_commands.push_back(Utility::move(next_command));
+  return m_commands.push_back(Utility::move(next_command));
 }
 
-void Immediate2D::Queue::record_rectangle(const Math::Vec2f& _position,
+bool Immediate2D::Queue::record_rectangle(const Math::Vec2f& _position,
                                           const Math::Vec2f& _size, Float32 _roundness, const Math::Vec4f& _color)
 {
   RX_PROFILE_CPU("immediate2D::queue::record_rectangle");
@@ -127,10 +127,10 @@ void Immediate2D::Queue::record_rectangle(const Math::Vec2f& _position,
   next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec2f>{}(next_command.as_rectangle.size));
   next_command.hash = hash_combine(next_command.hash, Hash<Float32>{}(next_command.as_rectangle.roundness));
 
-  m_commands.push_back(Utility::move(next_command));
+  return m_commands.push_back(Utility::move(next_command));
 }
 
-void Immediate2D::Queue::record_line(const Math::Vec2f& _point_a,
+bool Immediate2D::Queue::record_line(const Math::Vec2f& _point_a,
                                      const Math::Vec2f& _point_b, Float32 _roundness, Float32 _thickness,
                                      const Math::Vec4f& _color)
 {
@@ -147,10 +147,10 @@ void Immediate2D::Queue::record_line(const Math::Vec2f& _point_a,
 
   next_command.hash = Hash<Uint32>{}(static_cast<Uint32>(next_command.type));
 
-  m_commands.push_back(Utility::move(next_command));
+  return m_commands.push_back(Utility::move(next_command));
 }
 
-void Immediate2D::Queue::record_triangle(const Math::Vec2f& _position,
+bool Immediate2D::Queue::record_triangle(const Math::Vec2f& _position,
                                          const Math::Vec2f& _size, Uint32 _flags, const Math::Vec4f& _color)
 {
   RX_PROFILE_CPU("immediate2D::queue::record_triangle");
@@ -168,35 +168,35 @@ void Immediate2D::Queue::record_triangle(const Math::Vec2f& _position,
   next_command.hash = Hash<Math::Vec2f>{}(next_command.as_triangle.position);
   next_command.hash = Hash<Math::Vec2f>{}(next_command.as_triangle.size);
 
-  m_commands.push_back(Utility::move(next_command));
+  return m_commands.push_back(Utility::move(next_command));
 }
 
-void Immediate2D::Queue::record_text(const char* _font, Size _font_length,
+bool Immediate2D::Queue::record_text(const char* _font, Size _font_length,
                                      const Math::Vec2f& _position, Sint32 _size, Float32 _scale, TextAlign _align,
                                      const char* _text, Size _text_length, const Math::Vec4f& _color)
 {
   RX_PROFILE_CPU("immediate2D::queue::record_text");
 
   if (_text_length == 0) {
-    return;
+    return false;
   }
 
   // Quick and dirty rejection of text outside the scissor.
   if (m_scissor) {
     // The text is above the scissor rectangle.
     if (_position.y > m_scissor->position.y + m_scissor->size.h) {
-      return;
+      return false;
     }
 
     // The text is below the scissor rectangle.
     if (_position.y < m_scissor->position.y) {
-      return;
+      return false;
     }
 
     // Text is outside the right edge of the scissor while not right aligned.
     if (_align != TextAlign::k_right
       && _position.x > m_scissor->position.x + m_scissor->size.w) {
-      return;
+      return false;
     }
   }
 
@@ -213,9 +213,9 @@ void Immediate2D::Queue::record_text(const char* _font, Size _font_length,
   // insert strings into string table
   const auto font_index = m_string_table.insert(_font, _font_length);
   const auto text_index = m_string_table.insert(_text, _text_length);
-
-  RX_ASSERT(font_index, "failed to add font");
-  RX_ASSERT(text_index, "failed to add text");
+  if (!font_index || !text_index) {
+    return false;
+  }
 
   next_command.as_text.font_index = *font_index;
   next_command.as_text.text_index = *text_index;
@@ -231,15 +231,15 @@ void Immediate2D::Queue::record_text(const char* _font, Size _font_length,
   next_command.hash = hash_combine(next_command.hash, Hash<Size>{}(next_command.as_text.text_index));
   next_command.hash = hash_combine(next_command.hash, Hash<Size>{}(next_command.as_text.text_length));
 
-  m_commands.push_back(Utility::move(next_command));
+  return m_commands.push_back(Utility::move(next_command));
 }
 
-void Immediate2D::Queue::record_text(const char* _font,
+bool Immediate2D::Queue::record_text(const char* _font,
                                      const Math::Vec2f& _position, Sint32 _size, Float32 _scale, TextAlign _align,
                                      const char* _contents, const Math::Vec4f& _color)
 {
-  record_text(_font, strlen(_font), _position, _size, _scale, _align, _contents,
-    strlen(_contents), _color);
+  return record_text(_font, strlen(_font), _position, _size, _scale, _align,
+    _contents, strlen(_contents), _color);
 }
 
 bool Immediate2D::Queue::operator!=(const Queue& _queue) const {

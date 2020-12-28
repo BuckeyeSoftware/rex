@@ -98,23 +98,23 @@ struct Immediate2D {
       };
     };
 
-    void record_scissor(const Math::Vec2f& _position, const Math::Vec2f& _size);
-    void record_rectangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
+    bool record_scissor(const Math::Vec2f& _position, const Math::Vec2f& _size);
+    bool record_rectangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
                           Float32 _roundness, const Math::Vec4f& _color);
-    void record_line(const Math::Vec2f& _point_a, const Math::Vec2f& _point_b,
+    bool record_line(const Math::Vec2f& _point_a, const Math::Vec2f& _point_b,
                      Float32 _roundness, Float32 _thickness, const Math::Vec4f& _color);
-    void record_triangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
+    bool record_triangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
                          Uint32 _flags, const Math::Vec4f& _color);
 
-    void record_text(const char* _font, Size _font_length,
+    bool record_text(const char* _font, Size _font_length,
                      const Math::Vec2f& _position, Sint32 _size, Float32 _scale, TextAlign _align,
                      const char* _contents, Size _contents_length, const Math::Vec4f& _color);
 
-    void record_text(const char* _font, const Math::Vec2f& _position,
+    bool record_text(const char* _font, const Math::Vec2f& _position,
                      Sint32 _size, Float32 _scale, TextAlign _align, const char* _contents,
                      const Math::Vec4f& _color);
 
-    void record_text(const String& _font, const Math::Vec2f& _position,
+    bool record_text(const String& _font, const Math::Vec2f& _position,
                      Sint32 _size, Float32 _scale, TextAlign _align, const String& _contents,
                      const Math::Vec4f& _color);
 
@@ -295,11 +295,11 @@ inline constexpr Immediate2D::Queue::Command::Command()
 {
 }
 
-inline void Immediate2D::Queue::record_text(const String& _font,
+inline bool Immediate2D::Queue::record_text(const String& _font,
                                             const Math::Vec2f& _position, Sint32 _size, Float32 _scale, TextAlign _align,
                                             const String& _contents, const Math::Vec4f& _color)
 {
-  record_text(_font.data(), _font.size(), _position, _size, _scale, _align,
+  return record_text(_font.data(), _font.size(), _position, _size, _scale, _align,
     _contents.data(), _contents.size(), _color);
 }
 

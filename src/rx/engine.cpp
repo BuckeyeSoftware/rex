@@ -143,7 +143,7 @@ bool Engine::init() {
 
   // Setup all the loggers to emit to our console.
   Globals::find("loggers")->each([&](GlobalNode* _logger) {
-    m_logging_event_handles.push_back(_logger->cast<Rx::Log>()->on_queue(
+    auto on_queue = _logger->cast<Rx::Log>()->on_queue(
       [&](Log::Level _level, const String& _message) {
         switch (_level) {
         case Log::Level::ERROR:
@@ -160,7 +160,12 @@ bool Engine::init() {
           m_console.print("^mwarning: ^w%s", _message);
           break;
         }
-      }));
+      }
+    );
+
+    if (on_queue) {
+      m_logging_event_handles.push_back(Utility::move(*on_queue));
+    }
   });
 
   // Initialize any other globals not already initialized.
@@ -351,7 +356,7 @@ bool Engine::init() {
     return false;
   }
 
-  m_on_fullscreen_change = display_fullscreen->on_change([&](Sint32 _value) {
+  auto on_display_fullscreen_change = display_fullscreen->on_change([&](Sint32 _value) {
     if (_value == 0) {
       SDL_SetWindowFullscreen(window, 0);
     } else if (_value == 1) {
@@ -366,7 +371,7 @@ bool Engine::init() {
     m_input.on_resize(size.cast<Size>());
   });
 
-  m_on_swap_interval_change = display_swap_interval->on_change([](Sint32 _value) {
+  auto on_display_swap_interval_change = display_swap_interval->on_change([](Sint32 _value) {
     const bool is_gl = render_driver->get().begins_with("gl");
     const bool is_es = render_driver->get().begins_with("es");
     if (is_gl || is_es) {
@@ -374,11 +379,19 @@ bool Engine::init() {
     }
   });
 
-  m_on_display_resolution_changed = display_resolution->on_change([&](const Math::Vec2i& _resolution) {
+  auto on_display_resolution_change = display_resolution->on_change([&](const Math::Vec2i& _resolution) {
     m_game->on_resize(_resolution.cast<Size>());
     m_input.on_resize(_resolution.cast<Size>());
     SDL_SetWindowSize(window, _resolution.w, _resolution.h);
   });
+
+  if (!on_display_fullscreen_change || !on_display_swap_interval_change || !on_display_resolution_change) {
+    return false;
+  }
+
+  m_on_display_fullscreen_change = Utility::move(*on_display_fullscreen_change);
+  m_on_display_swap_interval_change = Utility::move(*on_display_swap_interval_change);
+  m_on_display_resolution_change = Utility::move(*on_display_resolution_change);
 
   return true;
 }

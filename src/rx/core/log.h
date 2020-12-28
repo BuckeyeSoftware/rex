@@ -60,30 +60,33 @@ struct RX_API Log {
   // by the same thread which calls |write|, |warning|, |info|, |verbose|, or
   // |error| immediately.
   //
-  // This function returns the event handle, keep the handle alive for as
-  // long as you want the delegate |callback_| to be called for such event.
+  // This function returns the event handle, or nullopt on error. Keep the
+  // handle alive for as ong as you want the delegate |callback_| to be called
+  // for such event.
   //
   // This function is thread-safe.
-  QueueEvent::Handle on_queue(QueueEvent::Delegate&& callback_);
+  Optional<QueueEvent::Handle> on_queue(QueueEvent::Delegate&& callback_);
 
   // When a message is written, all delegates associated by this function are
   // called. This is different from |on_queue| in that |callback_| is called
   // by the logging thread when the actual message is written.
   //
-  // This function returns the event handle, keep the handle alive for as
-  // long as you want the delegate |callback_| to be called for such event.
+  // This function returns the event handle, or nullopt on error. Keep the
+  // handle alive for as long as you want the delegate |callback_| to be called
+  // for such event.
   //
   // This function is thread-safe.
-  WriteEvent::Handle on_write(WriteEvent::Delegate&& callback_);
+  Optional<WriteEvent::Handle> on_write(WriteEvent::Delegate&& callback_);
 
   // When all messages queued for this log are actually written, all delegates
   // associated by this function are called.
   //
-  // This function returns an event handle, keep the handle alive for as long
-  // as you want the delegate |callback_| to be called for such event.
+  // This function returns an event handle, or nullopt on error. Keep the handle
+  // alive for as long as you want the delegate |callback_| to be called for
+  // such event.
   //
   // This function is thread-safe.
-  FlushEvent::Handle on_flush(FlushEvent::Delegate&& callback_);
+  Optional<FlushEvent::Handle> on_flush(FlushEvent::Delegate&& callback_);
 
   // Query the name of the logger, which is the name given to the |RX_LOG| macro.
   const char* name() const;
@@ -154,15 +157,15 @@ inline const SourceLocation& Log::source_info() const & {
   return m_source_location;
 }
 
-inline Log::QueueEvent::Handle Log::on_queue(QueueEvent::Delegate&& callback_) {
+inline Optional<Log::QueueEvent::Handle> Log::on_queue(QueueEvent::Delegate&& callback_) {
   return m_queue_event.connect(Utility::move(callback_));
 }
 
-inline Log::WriteEvent::Handle Log::on_write(WriteEvent::Delegate&& callback_) {
+inline Optional<Log::WriteEvent::Handle> Log::on_write(WriteEvent::Delegate&& callback_) {
   return m_write_event.connect(Utility::move(callback_));
 }
 
-inline Log::FlushEvent::Handle Log::on_flush(FlushEvent::Delegate&& callback_) {
+inline Optional<Log::FlushEvent::Handle> Log::on_flush(FlushEvent::Delegate&& callback_) {
   return m_flush_event.connect(Utility::move(callback_));
 }
 

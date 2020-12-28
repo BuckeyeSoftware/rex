@@ -60,7 +60,7 @@ bool Immediate3D::Queue::Command::operator!=(const Command& _command) const {
   return false;
 }
 
-void Immediate3D::Queue::record_point(const Math::Vec3f& _point,
+bool Immediate3D::Queue::record_point(const Math::Vec3f& _point,
                                       const Math::Vec4f& _color, Float32 _size, Uint8 _flags)
 {
   Command next_command;
@@ -76,10 +76,10 @@ void Immediate3D::Queue::record_point(const Math::Vec3f& _point,
   next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec3f>{}(next_command.as_point.position));
   next_command.hash = hash_combine(next_command.hash, Hash<Float32>{}(next_command.as_point.size));
 
-  m_commands.push_back(Utility::move(next_command));
+  return m_commands.push_back(Utility::move(next_command));
 }
 
-void Immediate3D::Queue::record_line(const Math::Vec3f& _point_a,
+bool Immediate3D::Queue::record_line(const Math::Vec3f& _point_a,
                                      const Math::Vec3f& _point_b, const Math::Vec4f& _color, Uint8 _flags)
 {
   Command next_command;
@@ -95,10 +95,10 @@ void Immediate3D::Queue::record_line(const Math::Vec3f& _point_a,
   next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec3f>{}(next_command.as_line.point_a));
   next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec3f>{}(next_command.as_line.point_b));
 
-  m_commands.push_back(Utility::move(next_command));
+  return m_commands.push_back(Utility::move(next_command));
 }
 
-void Immediate3D::Queue::record_solid_sphere(const Math::Vec2f& _slices_and_stacks,
+bool Immediate3D::Queue::record_solid_sphere(const Math::Vec2f& _slices_and_stacks,
                                              const Math::Vec4f& _color, const Math::Mat4x4f& _transform, Uint8 _flags)
 {
   Command next_command;
@@ -114,10 +114,10 @@ void Immediate3D::Queue::record_solid_sphere(const Math::Vec2f& _slices_and_stac
   next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec2f>{}(next_command.as_solid_sphere.slices_and_stacks));
   next_command.hash = hash_combine(next_command.hash, Hash<Math::Mat4x4f>{}(next_command.as_solid_sphere.transform));
 
-  m_commands.push_back(Utility::move(next_command));
+  return m_commands.push_back(Utility::move(next_command));
 }
 
-void Immediate3D::Queue::record_solid_cube(const Math::Vec4f& _color,
+bool Immediate3D::Queue::record_solid_cube(const Math::Vec4f& _color,
                                            const Math::Mat4x4f& _transform, Uint8 _flags)
 {
   Command next_command;
@@ -131,7 +131,7 @@ void Immediate3D::Queue::record_solid_cube(const Math::Vec4f& _color,
   next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec4f>{}(next_command.color));
   next_command.hash = hash_combine(next_command.hash, Hash<Math::Mat4x4f>{}(next_command.as_solid_cube.transform));
 
-  m_commands.push_back(Utility::move(next_command));
+  return m_commands.push_back(Utility::move(next_command));
 }
 
 bool Immediate3D::Queue::operator!=(const Queue& _queue) const {
