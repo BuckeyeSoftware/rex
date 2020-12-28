@@ -27,6 +27,7 @@ struct ImageBasedLighting;
 struct Model {
   Model(Frontend::Context* _frontend);
   Model(Model&& model_);
+  Model& operator=(Model&& model_);
   ~Model();
 
   struct Mesh {

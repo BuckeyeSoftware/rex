@@ -30,7 +30,7 @@ Model::Model(Frontend::Context* _frontend)
 
 
 Model::Model(Model&& model_)
-  : m_frontend{Utility::exchange(model_.m_frontend, nullptr)}
+  : m_frontend{model_.m_frontend}
   , m_technique{Utility::exchange(model_.m_technique, nullptr)}
   , m_arena{Utility::exchange(model_.m_arena, nullptr)}
   , m_block{Utility::move(model_.m_block)}
@@ -41,6 +41,25 @@ Model::Model(Model&& model_)
   , m_animation{Utility::move(model_.m_animation)}
   , m_aabb{Utility::move(model_.m_aabb)}
 {
+}
+
+Model& Model::operator=(Model&& model_) {
+  if (m_model) {
+    m_frontend->allocator().destroy<Rx::Model::Loader>(m_model);
+  }
+
+  m_frontend = model_.m_frontend;
+  m_technique = Utility::exchange(model_.m_technique, nullptr);
+  m_arena = Utility::exchange(model_.m_arena, nullptr);
+  m_block = Utility::move(model_.m_block);
+  m_materials = Utility::move(model_.m_materials);
+  m_opaque_meshes = Utility::move(model_.m_opaque_meshes);
+  m_transparent_meshes = Utility::move(model_.m_transparent_meshes);
+  m_model = Utility::exchange(model_.m_model, nullptr);
+  m_animation = Utility::move(model_.m_animation);
+  m_aabb = Utility::move(model_.m_aabb);
+
+  return *this;
 }
 
 Model::~Model() {
@@ -128,7 +147,7 @@ bool Model::upload() {
   }
 
   // Resolve all the meshes of the loaded model.
-  m_model->meshes().each_fwd([this, &material_indices](const Rx::Model::Mesh& _mesh) {
+  return m_model->meshes().each_fwd([this, &material_indices](const Rx::Model::Mesh& _mesh) {
     if (auto* find = material_indices.find(_mesh.material)) {
       if (m_materials[*find].has_alpha()) {
         return m_transparent_meshes.emplace_back(_mesh.offset, _mesh.count, *find, _mesh.bounds);
@@ -137,9 +156,8 @@ bool Model::upload() {
       }
     }
     m_aabb.expand(_mesh.bounds);
+    return true;
   });
-
-  return true;
 }
 
 void Model::animate(Size _index, [[maybe_unused]] bool _loop) {
