@@ -89,7 +89,7 @@ void Console::update(Rx::Console::Context& console_) {
   height += font_size * 2.0f;                           // Text box
   height += 1.0f;                                       // Singlle pixel line
 
-  // Resize and mosue the input layer accordingly.
+  // Resize and move the input layer accordingly.
   m_input_layer.resize({static_cast<Float32>(dimensions.w), height});
   m_input_layer.move({0.0f, dimensions.h - height});
 
