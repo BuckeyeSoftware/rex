@@ -35,8 +35,8 @@ struct Context {
   void clear();
   const Vector<String>& lines();
 
-  Vector<String> auto_complete_variables(const String& _prefix);
-  Vector<String> auto_complete_commands(const String& _prefix);
+  Optional<Vector<String>> auto_complete_variables(const String& _prefix);
+  Optional<Vector<String>> auto_complete_commands(const String& _prefix);
 
 private:
   // set variable |_reference| with token |_token|

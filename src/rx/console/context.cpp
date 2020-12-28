@@ -140,24 +140,34 @@ bool Context::execute(const String& _contents) {
   return true;
 }
 
-Vector<String> Context::auto_complete_variables(const String& _prefix) {
+Optional<Vector<String>> Context::auto_complete_variables(const String& _prefix) {
   Vector<String> results;
   for (VariableReference* node = g_head; node; node = node->m_next) {
     if (!strncmp(node->name(), _prefix.data(), _prefix.size())) {
-      results.push_back(node->name());
+      if (!results.push_back(node->name())) {
+        return nullopt;
+      }
     }
   }
   return results;
 }
 
-Vector<String> Context::auto_complete_commands(const String& _prefix) {
+Optional<Vector<String>> Context::auto_complete_commands(const String& _prefix) {
   Vector<String> results;
-  m_commands.each_key([&](const String& _key) {
+  auto result = m_commands.each_key([&](const String& _key) {
     if (!strncmp(_key.data(), _prefix.data(), _prefix.size())) {
-      results.push_back(_key);
+      if (!results.push_back(_key)) {
+        return false;
+      }
     }
+    return true;
   });
-  return results;
+
+  if (result) {
+    return results;
+  }
+
+  return nullopt;
 }
 
 bool Context::load(const char* file_name) {

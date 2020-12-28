@@ -120,9 +120,12 @@ void Console::update(Rx::Console::Context& console_) {
 
   auto complete_variables = console_.auto_complete_variables(m_text.contents());
   auto complete_commands = console_.auto_complete_commands(m_text.contents());
+  if (!complete_variables || !complete_commands) {
+    return;
+  }
 
-  m_suggestions = Utility::move(complete_variables);
-  m_suggestions.append(complete_commands);
+  m_suggestions = Utility::move(*complete_variables);
+  m_suggestions.append(*complete_commands);
 
   if (m_suggestions.is_empty()) {
     m_selection = 0;
