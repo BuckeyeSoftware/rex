@@ -11,27 +11,27 @@ namespace Rx::Console {
 
 const char* token_type_as_string(Token::Type _type) {
   switch (_type) {
-  case Token::Type::k_atom:
+  case Token::Type::ATOM:
     return "atom";
-  case Token::Type::k_string:
+  case Token::Type::STRING:
     return "string";
-  case Token::Type::k_boolean:
+  case Token::Type::BOOLEAN:
     return "boolean";
-  case Token::Type::k_int:
+  case Token::Type::INT:
     return "int";
-  case Token::Type::k_float:
+  case Token::Type::FLOAT:
     return "float";
-  case Token::Type::k_vec4f:
+  case Token::Type::VEC4F:
     return "vec4f";
-  case Token::Type::k_vec4i:
+  case Token::Type::VEC4I:
     return "vec4i";
-  case Token::Type::k_vec3f:
+  case Token::Type::VEC3F:
     return "vec3f";
-  case Token::Type::k_vec3i:
+  case Token::Type::VEC3I:
     return "vec3i";
-  case Token::Type::k_vec2f:
+  case Token::Type::VEC2F:
     return "vec2f";
-  case Token::Type::k_vec2i:
+  case Token::Type::VEC2I:
     return "vec2i";
   }
   RX_HINT_UNREACHABLE();
@@ -41,14 +41,14 @@ Token::Token(Type _type, String&& value_)
   : m_type{_type}
 {
   switch (m_type) {
-  case Type::k_atom:
+  case Type::ATOM:
     Utility::construct<String>(&m_as_atom, Utility::move(value_));
     break;
-  case Type::k_string:
+  case Type::STRING:
     Utility::construct<String>(&m_as_string, Utility::move(value_));
     break;
   default:
-    RX_ASSERT(0, "invalid Type");
+    RX_ASSERT(0, "invalid type");
     break;
   }
 }
@@ -71,39 +71,39 @@ void Token::assign(Token&& token_) {
   m_type = token_.m_type;
 
   switch (m_type) {
-  case Type::k_atom:
+  case Type::ATOM:
     Utility::construct<String>(&m_as_atom, Utility::move(token_.m_as_atom));
     Utility::destruct<String>(&token_.m_as_atom);
     break;
-  case Type::k_string:
+  case Type::STRING:
     Utility::construct<String>(&m_as_string, Utility::move(token_.m_as_string));
     Utility::destruct<String>(&token_.m_as_string);
     break;
-  case Type::k_boolean:
+  case Type::BOOLEAN:
     m_as_boolean = token_.m_as_boolean;
     break;
-  case Type::k_int:
+  case Type::INT:
     m_as_int = token_.m_as_int;
     break;
-  case Type::k_float:
+  case Type::FLOAT:
     m_as_float = token_.m_as_float;
     break;
-  case Type::k_vec4f:
+  case Type::VEC4F:
     m_as_vec4f = token_.m_as_vec4f;
     break;
-  case Type::k_vec4i:
+  case Type::VEC4I:
     m_as_vec4i = token_.m_as_vec4i;
     break;
-  case Type::k_vec3f:
+  case Type::VEC3F:
     m_as_vec3f = token_.m_as_vec3f;
     break;
-  case Type::k_vec3i:
+  case Type::VEC3I:
     m_as_vec3i = token_.m_as_vec3i;
     break;
-  case Type::k_vec2f:
+  case Type::VEC2F:
     m_as_vec2f = token_.m_as_vec2f;
     break;
-  case Type::k_vec2i:
+  case Type::VEC2I:
     m_as_vec2i = token_.m_as_vec2i;
     break;
   }
@@ -111,10 +111,10 @@ void Token::assign(Token&& token_) {
 
 void Token::destroy() {
   switch (m_type) {
-  case Type::k_string:
+  case Type::STRING:
     Utility::destruct<String>(&m_as_string);
     break;
-  case Type::k_atom:
+  case Type::ATOM:
     Utility::destruct<String>(&m_as_atom);
     break;
   default:
@@ -124,27 +124,27 @@ void Token::destroy() {
 
 String Token::print() const {
   switch (m_type) {
-  case Type::k_atom:
+  case Type::ATOM:
     return m_as_atom;
-  case Type::k_string:
+  case Type::STRING:
     return String::format("\"%s\"", m_as_string);
-  case Type::k_boolean:
+  case Type::BOOLEAN:
     return m_as_boolean ? "true" : "false";
-  case Type::k_int:
+  case Type::INT:
     return String::format("%d", m_as_int);
-  case Type::k_float:
+  case Type::FLOAT:
     return String::format("%f", m_as_float);
-  case Type::k_vec4f:
+  case Type::VEC4F:
     return String::format("%s", m_as_vec4f);
-  case Type::k_vec4i:
+  case Type::VEC4I:
     return String::format("%s", m_as_vec4i);
-  case Type::k_vec3f:
+  case Type::VEC3F:
     return String::format("%s", m_as_vec3f);
-  case Type::k_vec3i:
+  case Type::VEC3I:
     return String::format("%s", m_as_vec3i);
-  case Type::k_vec2f:
+  case Type::VEC2F:
     return String::format("%s", m_as_vec2f);
-  case Type::k_vec2i:
+  case Type::VEC2I:
     return String::format("%s", m_as_vec2i);
   }
 
@@ -218,7 +218,9 @@ bool Parser::parse(const String& _contents) {
         return error(true, "expected closing '\"'");
       }
       m_ch++; // Skip '\"'
-      m_tokens.emplace_back(Token::Type::k_string, Utility::move(contents));
+      if (!m_tokens.emplace_back(Token::Type::STRING, Utility::move(contents))) {
+        return false;
+      }
       record_span();
     } else if (*m_ch == '{') {
       m_ch++; // Skip '{'
@@ -286,16 +288,25 @@ bool Parser::parse(const String& _contents) {
 
       switch (i) {
       case 2:
-        is_float ? m_tokens.push_back(Math::Vec2f{fs[0], fs[1]})
-                 : m_tokens.push_back(Math::Vec2i{is[0], is[1]});
+        if (is_float ? m_tokens.push_back(Math::Vec2f{fs[0], fs[1]})
+                     : m_tokens.push_back(Math::Vec2i{is[0], is[1]}))
+        {
+          return false;
+        }
         break;
       case 3:
-        is_float ? m_tokens.push_back(Math::Vec3f{fs[0], fs[1], fs[2]})
-                 : m_tokens.push_back(Math::Vec3i{is[0], is[1], is[2]});
+        if (is_float ? m_tokens.push_back(Math::Vec3f{fs[0], fs[1], fs[2]})
+                     : m_tokens.push_back(Math::Vec3i{is[0], is[1], is[2]}))
+        {
+          return false;
+        }
         break;
       case 4:
-        is_float ? m_tokens.push_back(Math::Vec4f{fs[0], fs[1], fs[2], fs[3]})
-                 : m_tokens.push_back(Math::Vec4i{is[0], is[1], is[2], is[3]});
+        if (is_float ? m_tokens.push_back(Math::Vec4f{fs[0], fs[1], fs[2], fs[3]})
+                     : m_tokens.push_back(Math::Vec4i{is[0], is[1], is[2], is[3]}))
+        {
+          return false;
+        }
         break;
       }
     } else if (is_sign(*m_ch) || is_digit(*m_ch) || (*m_ch == '.' && is_digit(m_ch[1]))) {
@@ -326,7 +337,9 @@ bool Parser::parse(const String& _contents) {
       while (is_identifier(*m_ch) || is_digit(*m_ch) || *m_ch == '.') {
         contents += *m_ch++;
       }
-      m_tokens.emplace_back(Token::Type::k_atom, Utility::move(contents));
+      if (!m_tokens.emplace_back(Token::Type::ATOM, Utility::move(contents))) {
+        return false;
+      }
       record_span();
     }
 
@@ -344,7 +357,7 @@ bool Parser::parse(const String& _contents) {
 
 bool Parser::parse_int(const char*& contents_, Sint32& value_) {
   char* end;
-  const long long value{strtoll(contents_, &end, 10)};
+  const long long value = strtoll(contents_, &end, 10);
   contents_ = end;
 
   if (errno == ERANGE || value < k_int_min || value > k_int_max) {
@@ -357,7 +370,7 @@ bool Parser::parse_int(const char*& contents_, Sint32& value_) {
 
 bool Parser::parse_float(const char*& contents_, Float32& value_) {
   char* end;
-  const Float32 value{strtof(contents_, &end)};
+  const Float32 value = strtof(contents_, &end);
   contents_ = end;
 
   if (errno == ERANGE) {
@@ -377,7 +390,7 @@ void Parser::consume_spaces() {
 void Parser::record_span() {
   RX_ASSERT(m_ch >= m_first, "parser broken");
 
-  const auto offset{static_cast<Size>(m_ch - m_first)};
+  const auto offset = static_cast<Size>(m_ch - m_first);
   if (m_diagnostic.inside) {
     m_diagnostic.length = offset > m_diagnostic.offset ? offset - m_diagnostic.offset : 0;
   } else {

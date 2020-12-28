@@ -27,25 +27,25 @@ static GlobalGroup g_group_cvars{"console"};
 static bool type_check(VariableType _VariableType, Token::Type _token_type) {
   switch (_VariableType) {
   case VariableType::BOOLEAN:
-    return _token_type == Token::Type::k_boolean;
+    return _token_type == Token::Type::BOOLEAN;
   case VariableType::STRING:
-    return _token_type == Token::Type::k_string;
+    return _token_type == Token::Type::STRING;
   case VariableType::INT:
-    return _token_type == Token::Type::k_int;
+    return _token_type == Token::Type::INT;
   case VariableType::FLOAT:
-    return _token_type == Token::Type::k_float;
+    return _token_type == Token::Type::FLOAT;
   case VariableType::VEC4F:
-    return _token_type == Token::Type::k_vec4f;
+    return _token_type == Token::Type::VEC4F;
   case VariableType::VEC4I:
-    return _token_type == Token::Type::k_vec4i;
+    return _token_type == Token::Type::VEC4I;
   case VariableType::VEC3F:
-    return _token_type == Token::Type::k_vec3f;
+    return _token_type == Token::Type::VEC3F;
   case VariableType::VEC3I:
-    return _token_type == Token::Type::k_vec3i;
+    return _token_type == Token::Type::VEC3I;
   case VariableType::VEC2F:
-    return _token_type == Token::Type::k_vec2f;
+    return _token_type == Token::Type::VEC2F;
   case VariableType::VEC2I:
-    return _token_type == Token::Type::k_vec2i;
+    return _token_type == Token::Type::VEC2I;
   }
   return false;
 }
@@ -99,13 +99,13 @@ bool Context::execute(const String& _contents) {
     return false;
   }
 
-  auto tokens{Utility::move(parse.tokens())};
+  auto tokens = Utility::move(parse.tokens());
 
   if (tokens.is_empty()) {
     return false;
   }
 
-  if (tokens[0].kind() != Token::Type::k_atom) {
+  if (tokens[0].kind() != Token::Type::ATOM) {
     print("^rerror: ^wexpected atom");
     return false;
   }
@@ -191,12 +191,12 @@ bool Context::load(const char* file_name) {
         continue;
       }
 
-      if (tokens[0].kind() != Token::Type::k_atom) {
+      if (tokens[0].kind() != Token::Type::ATOM) {
         continue;
       }
 
-      const auto& atom{tokens[0].as_atom()};
-      if (auto* variable{find_variable_by_name(atom)}) {
+      const auto& atom = tokens[0].as_atom();
+      if (auto* variable = find_variable_by_name(atom)) {
         set_from_reference_and_token(variable, tokens[1]);
       } else {
         logger->error("'%s' not found", atom);

@@ -232,45 +232,46 @@ error:
 
 bool Command::execute_tokens(Context& console_, const Vector<Token>& _tokens) {
   m_arguments.clear();
-  _tokens.each_fwd([&](const Token& _token) {
+
+  const auto result = _tokens.each_fwd([&](const Token& _token) {
     switch (_token.kind()) {
-    case Token::Type::k_atom:
-      m_arguments.emplace_back(_token.as_atom());
+    case Token::Type::ATOM:
+      if (!m_arguments.emplace_back(_token.as_atom())) return false;
       break;
-    case Token::Type::k_string:
-      m_arguments.emplace_back(_token.as_string());
+    case Token::Type::STRING:
+      if (!m_arguments.emplace_back(_token.as_string())) return false;
       break;
-    case Token::Type::k_boolean:
-      m_arguments.emplace_back(_token.as_boolean());
+    case Token::Type::BOOLEAN:
+      if (!m_arguments.emplace_back(_token.as_boolean())) return false;
       break;
-    case Token::Type::k_int:
-      m_arguments.emplace_back(_token.as_int());
+    case Token::Type::INT:
+      if (!m_arguments.emplace_back(_token.as_int())) return false;
       break;
-    case Token::Type::k_float:
-      m_arguments.emplace_back(_token.as_float());
+    case Token::Type::FLOAT:
+      if (!m_arguments.emplace_back(_token.as_float())) return false;
       break;
-    case Token::Type::k_vec4f:
-      m_arguments.emplace_back(_token.as_vec4f());
+    case Token::Type::VEC4F:
+      if (!m_arguments.emplace_back(_token.as_vec4f())) return false;
       break;
-    case Token::Type::k_vec4i:
-      m_arguments.emplace_back(_token.as_vec4i());
+    case Token::Type::VEC4I:
+      if (!m_arguments.emplace_back(_token.as_vec4i())) return false;
       break;
-    case Token::Type::k_vec3f:
-      m_arguments.emplace_back(_token.as_vec3f());
+    case Token::Type::VEC3F:
+      if (!m_arguments.emplace_back(_token.as_vec3f())) return false;
       break;
-    case Token::Type::k_vec3i:
-      m_arguments.emplace_back(_token.as_vec3i());
+    case Token::Type::VEC3I:
+      if (!m_arguments.emplace_back(_token.as_vec3i())) return false;
       break;
-    case Token::Type::k_vec2f:
-      m_arguments.emplace_back(_token.as_vec2f());
+    case Token::Type::VEC2F:
+      if (!m_arguments.emplace_back(_token.as_vec2f())) return false;
       break;
-    case Token::Type::k_vec2i:
-      m_arguments.emplace_back(_token.as_vec2i());
+    case Token::Type::VEC2I:
+      if (!m_arguments.emplace_back(_token.as_vec2i())) return false;
       break;
     }
   });
 
-  return execute(console_);
+  return result && execute(console_);
 }
 
 } // namespace rx::console

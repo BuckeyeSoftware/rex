@@ -17,17 +17,17 @@ struct Token {
   RX_MARK_NO_COPY(Token);
 
   enum class Type {
-    k_atom,
-    k_string,
-    k_boolean,
-    k_int,
-    k_float,
-    k_vec4f,
-    k_vec4i,
-    k_vec3f,
-    k_vec3i,
-    k_vec2f,
-    k_vec2i,
+    ATOM,
+    STRING,
+    BOOLEAN,
+    INT,
+    FLOAT,
+    VEC4F,
+    VEC4I,
+    VEC3F,
+    VEC3I,
+    VEC2F,
+    VEC2I
   };
 
   Token(Type _type, String&& value_);
@@ -83,55 +83,55 @@ private:
 };
 
 inline constexpr Token::Token(bool _value)
-  : m_type{Type::k_boolean}
+  : m_type{Type::BOOLEAN}
   , m_as_boolean{_value}
 {
 }
 
 inline constexpr Token::Token(Sint32 _value)
-  : m_type{Type::k_int}
+  : m_type{Type::INT}
   , m_as_int{_value}
 {
 }
 
 inline constexpr Token::Token(Float32 _value)
-  : m_type{Type::k_float}
+  : m_type{Type::FLOAT}
   , m_as_float{_value}
 {
 }
 
 inline constexpr Token::Token(const Math::Vec4f& _value)
-  : m_type{Type::k_vec4f}
+  : m_type{Type::VEC4F}
   , m_as_vec4f{_value}
 {
 }
 
 inline constexpr Token::Token(const Math::Vec4i& _value)
-  : m_type{Type::k_vec4i}
+  : m_type{Type::VEC4I}
   , m_as_vec4i{_value}
 {
 }
 
 inline constexpr Token::Token(const Math::Vec3f& _value)
-  : m_type{Type::k_vec3f}
+  : m_type{Type::VEC3F}
   , m_as_vec3f{_value}
 {
 }
 
 inline constexpr Token::Token(const Math::Vec3i& _value)
-  : m_type{Type::k_vec3i}
+  : m_type{Type::VEC3I}
   , m_as_vec3i{_value}
 {
 }
 
 inline constexpr Token::Token(const Math::Vec2f& _value)
-  : m_type{Type::k_vec2f}
+  : m_type{Type::VEC2F}
   , m_as_vec2f{_value}
 {
 }
 
 inline constexpr Token::Token(const Math::Vec2i& _value)
-  : m_type{Type::k_vec2i}
+  : m_type{Type::VEC2I}
   , m_as_vec2i{_value}
 {
 }
@@ -141,57 +141,57 @@ inline constexpr Token::Type Token::kind() const {
 }
 
 inline const String& Token::as_atom() const & {
-  RX_ASSERT(m_type == Type::k_atom, "invalid Type");
+  RX_ASSERT(m_type == Type::ATOM, "invalid type");
   return m_as_atom;
 }
 
 inline const String& Token::as_string() const & {
-  RX_ASSERT(m_type == Type::k_string, "invalid Type");
+  RX_ASSERT(m_type == Type::STRING, "invalid type");
   return m_as_string;
 }
 
 inline bool Token::as_boolean() const {
-  RX_ASSERT(m_type == Type::k_boolean, "invalid Type");
+  RX_ASSERT(m_type == Type::BOOLEAN, "invalid type");
   return m_as_boolean;
 }
 
 inline Sint32 Token::as_int() const {
-  RX_ASSERT(m_type == Type::k_int, "invalid Type");
+  RX_ASSERT(m_type == Type::INT, "invalid type");
   return m_as_int;
 }
 
 inline Float32 Token::as_float() const {
-  RX_ASSERT(m_type == Type::k_float, "invalid Type");
+  RX_ASSERT(m_type == Type::FLOAT, "invalid type");
   return m_as_float;
 }
 
 inline const Math::Vec4f& Token::as_vec4f() const & {
-  RX_ASSERT(m_type == Type::k_vec4f, "invalid Type");
+  RX_ASSERT(m_type == Type::VEC4F, "invalid type");
   return m_as_vec4f;
 }
 
 inline const Math::Vec4i& Token::as_vec4i() const & {
-  RX_ASSERT(m_type == Type::k_vec4i, "invalid Type");
+  RX_ASSERT(m_type == Type::VEC4I, "invalid type");
   return m_as_vec4i;
 }
 
 inline const Math::Vec3f& Token::as_vec3f() const & {
-  RX_ASSERT(m_type == Type::k_vec3f, "invalid Type");
+  RX_ASSERT(m_type == Type::VEC3F, "invalid type");
   return m_as_vec3f;
 }
 
 inline const Math::Vec3i& Token::as_vec3i() const & {
-  RX_ASSERT(m_type == Type::k_vec3i, "invalid Type");
+  RX_ASSERT(m_type == Type::VEC3I, "invalid type");
   return m_as_vec3i;
 }
 
 inline const Math::Vec2f& Token::as_vec2f() const & {
-  RX_ASSERT(m_type == Type::k_vec2f, "invalid Type");
+  RX_ASSERT(m_type == Type::VEC2F, "invalid type");
   return m_as_vec2f;
 }
 
 inline const Math::Vec2i& Token::as_vec2i() const & {
-  RX_ASSERT(m_type == Type::k_vec2i, "invalid Type");
+  RX_ASSERT(m_type == Type::VEC2I, "invalid type");
   return m_as_vec2i;
 }
 
