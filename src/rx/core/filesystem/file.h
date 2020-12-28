@@ -21,7 +21,6 @@ struct RX_API File
 
   File& operator=(File&& file_);
 
-  bool read_line(String& line_);
   bool close();
 
   // Print |_fmt| with |_args| to file using |_allocator| for formatting.

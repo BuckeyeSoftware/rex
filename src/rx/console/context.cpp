@@ -170,47 +170,59 @@ Optional<Vector<String>> Context::auto_complete_commands(const String& _prefix) 
   return nullopt;
 }
 
-bool Context::load(const char* file_name) {
+bool Context::load(const char* _file_name) {
   // sort references
   {
     Concurrency::ScopeLock locked{g_lock};
     g_head = sort(g_head);
   }
 
-  Filesystem::File file(file_name, "r");
-  if (!file) {
+  auto& allocator = Memory::SystemAllocator::instance();
+
+  auto data = Filesystem::read_text_file(allocator, _file_name);
+  if (!data) {
     return false;
   }
 
-  logger->info("loading '%s'", file_name);
+  auto next_line = [&](char*& line_) -> char* {
+    if (!line_ || !*line_) {
+      return nullptr;
+    }
+    char* line = line_;
+    line_ += strcspn(line_, "\n");
+    *line_++ = '\0';
+    return line;
+  };
 
-  Parser parse{Memory::SystemAllocator::instance()};
-  for (String line_contents; file.read_line(line_contents); ) {
-    String line{line_contents.lstrip(" \t")};
-    if (line.is_empty() || strchr("#;[", line[0])) {
-      // ignore empty and comment lines
+  Parser parse{allocator};
+
+  auto token = reinterpret_cast<char*>(data->data());
+  while (auto line = next_line(token)) {
+    // Skip whitespace.
+    while (strchr(" \t", *line)) {
+      line++;
+    }
+
+    // Ignore empty and comment lines.
+    if (!*line || strchr("#;[", *line)) {
       continue;
     }
 
-    if (!parse.parse(line_contents)) {
+    if (!parse.parse(line)) {
       logger->error("%s", parse.error().message);
+      continue;
+    }
+
+    auto tokens = Utility::move(parse.tokens());
+    if (tokens.size() < 2 || tokens[0].kind() != Token::Type::ATOM) {
+      continue;
+    }
+
+    const auto& atom = tokens[0].as_atom();
+    if (auto variable = find_variable_by_name(atom)) {
+      set_from_reference_and_token(variable, tokens[1]);
     } else {
-      auto tokens{Utility::move(parse.tokens())};
-
-      if (tokens.size() < 2) {
-        continue;
-      }
-
-      if (tokens[0].kind() != Token::Type::ATOM) {
-        continue;
-      }
-
-      const auto& atom = tokens[0].as_atom();
-      if (auto* variable = find_variable_by_name(atom)) {
-        set_from_reference_and_token(variable, tokens[1]);
-      } else {
-        logger->error("'%s' not found", atom);
-      }
+      logger->error("'%s' not found", atom);
     }
   }
 

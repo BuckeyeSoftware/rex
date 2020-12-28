@@ -285,56 +285,6 @@ bool File::print(String&& contents_) {
   return write(reinterpret_cast<const Byte*>(contents_.data()), contents_.size());
 }
 
-bool File::read_line(String& line_) {
-  line_.clear();
-
-  for (;;) {
-    char buffer[1024];
-    const auto n_bytes = read(reinterpret_cast<Byte*>(buffer), sizeof buffer);
-
-    // Check for EOS.
-    if (is_eos()) {
-      return !line_.is_empty();
-    }
-
-    // Search the buffer for one of '\r' or '\n'. Count the length of the string
-    // up to such a character.
-    Uint64 length = 0;
-    Size new_line_length = 2;
-    for (Uint64 i = 0; i < n_bytes; i++) {
-      const int ch = buffer[i];
-      // Handles lines terminated by \r, \r\n, and \n.
-      if (ch == '\r' || ch == '\n') {
-        if (ch == '\r') {
-          new_line_length = (i + 1 < n_bytes && buffer[i + 1] == '\n' ? 2 : 1);
-        } else {
-          new_line_length = 1;
-        }
-        break;
-      }
-      length++;
-    }
-
-    // Line does not terminate inside |buffer|.
-    if (length == n_bytes) {
-      line_.append(buffer, n_bytes);
-    } else {
-      // The line terminates inside the buffer.
-      const auto where = static_cast<Sint64>(n_bytes - (length + new_line_length));
-
-      // Seek back in the stream to right after the new line.
-      if (!seek(-where, Whence::CURRENT)) {
-        return false;
-      }
-
-      line_.append(buffer, length);
-      return true;
-    }
-  }
-
-  RX_HINT_UNREACHABLE();
-}
-
 Optional<Vector<Byte>> read_binary_file(Memory::Allocator& _allocator, const char* _file_name) {
   if (File open_file{_file_name, "rb"}) {
     return read_binary_stream(_allocator, &open_file);
