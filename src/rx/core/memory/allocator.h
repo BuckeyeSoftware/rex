@@ -49,7 +49,7 @@ inline Byte* Allocator::round_to_alignment(T* _ptr) {
 
 template<typename T, typename... Ts>
 inline T* Allocator::create(Ts&&... _arguments) {
-  if (Byte* data = allocate(sizeof(T)); data) {
+  if (Byte* data = allocate(sizeof(T))) {
     return Utility::construct<T>(data, Utility::forward<Ts>(_arguments)...);
   }
   return nullptr;

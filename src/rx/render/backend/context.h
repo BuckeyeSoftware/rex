@@ -6,14 +6,14 @@ namespace Rx::Render::Backend {
 
 // sizes of resources reported by the backend
 struct AllocationInfo {
-  Size buffer_size;
-  Size target_size;
-  Size program_size;
-  Size texture1D_size;
-  Size texture2D_size;
-  Size texture3D_size;
-  Size textureCM_size;
-  Size downloader_size;
+  Size buffer_size = 0;
+  Size target_size = 0;
+  Size program_size = 0;
+  Size texture1D_size = 0;
+  Size texture2D_size = 0;
+  Size texture3D_size = 0;
+  Size textureCM_size = 0;
+  Size downloader_size = 0;
 };
 
 struct DeviceInfo {

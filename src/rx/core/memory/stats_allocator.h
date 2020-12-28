@@ -23,20 +23,20 @@ struct RX_API StatsAllocator
   virtual void deallocate(void* _data);
 
   struct Statistics {
-    Size allocations;           // Number of calls to allocate
-    Size request_reallocations; // Number of calls to reallocate in total
-    Size actual_reallocations;  // Number of calls to reallocate that actually in-place reallocated
-    Size deallocations;         // Number of calls to deallocate
+    Size allocations = 0;            // Number of calls to allocate
+    Size request_reallocations = 0;  // Number of calls to reallocate in total
+    Size actual_reallocations  = 0;  // Number of calls to reallocate that actually in-place reallocated
+    Size deallocations = 0;          // Number of calls to deallocate
 
     // Measures peak and in-use requested bytes.
     // Requested bytes are the sizes passed to allocate and reallocate.
-    Uint64 peak_request_bytes;
-    Uint64 used_request_bytes;
+    Uint64 peak_request_bytes = 0;
+    Uint64 used_request_bytes = 0;
 
     // Measures peak and in-use actual bytes.
     // Actual bytes are the sizes once rounded and adjusted to make room for metadata.
-    Uint64 peak_actual_bytes;
-    Uint64 used_actual_bytes;
+    Uint64 peak_actual_bytes = 0;
+    Uint64 used_actual_bytes = 0;
   };
 
   Statistics stats() const;

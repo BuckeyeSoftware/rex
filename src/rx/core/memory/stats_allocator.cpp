@@ -19,12 +19,13 @@ static_assert(sizeof(Header) == Allocator::ALIGNMENT);
 static_assert(alignof(Header) == Allocator::ALIGNMENT);
 
 static constexpr inline Size actual_bytes_for_request(Size _request_bytes) {
-  return Allocator::round_to_alignment(_request_bytes + sizeof(Header));
+  return Allocator::round_to_alignment(_request_bytes) + sizeof(Header);
 }
 
 Byte* StatsAllocator::allocate(Size _request_bytes) {
   const auto actual_bytes = actual_bytes_for_request(_request_bytes);
   const auto base = m_allocator.allocate(actual_bytes);
+
   if (RX_HINT_UNLIKELY(!base)) {
     return nullptr;
   }
@@ -54,7 +55,7 @@ Byte* StatsAllocator::reallocate(void* _data, Size _new_request_bytes) {
   const auto old_actual_bytes = actual_bytes_for_request(old_request_bytes);
   const auto old_base = reinterpret_cast<Byte*>(old_header);
 
-  const auto new_actual_bytes = round_to_alignment(_new_request_bytes + sizeof(Header));
+  const auto new_actual_bytes = actual_bytes_for_request(_new_request_bytes);
   const auto new_base = m_allocator.reallocate(old_base, new_actual_bytes);
   if (RX_HINT_UNLIKELY(!new_base)) {
     return nullptr;

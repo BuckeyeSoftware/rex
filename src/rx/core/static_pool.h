@@ -85,7 +85,7 @@ void StaticPool::destroy(T* _data) {
     sizeof(T), m_object_size);
 
   Utility::destruct<T>(_data);
-  deallocate(index_of(reinterpret_cast<Byte*>(_data)));
+  deallocate(index_of(_data));
 }
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& StaticPool::allocator() const {

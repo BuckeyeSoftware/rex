@@ -64,11 +64,39 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
   , m_destroy_textures2D{allocator()}
   , m_destroy_textures3D{allocator()}
   , m_destroy_texturesCM{allocator()}
+  , m_destroy_downloaders{allocator()}
+  , m_edit_buffers{allocator()}
+  , m_edit_textures1D{allocator()}
+  , m_edit_textures2D{allocator()}
+  , m_edit_textures3D{allocator()}
+  , m_edit_texturesCM{allocator()}
   , m_swapchain_target{nullptr}
   , m_swapchain_texture{nullptr}
   , m_commands{allocator()}
   , m_command_buffer{allocator(), static_cast<Size>(*command_memory) * 1024 * 1024}
+  , m_cached_buffers{allocator()}
+  , m_cached_targets{allocator()}
+  , m_cached_textures1D{allocator()}
+  , m_cached_textures2D{allocator()}
+  , m_cached_textures3D{allocator()}
+  , m_cached_texturesCM{allocator()}
+  , m_techniques{allocator()}
+  , m_modules{allocator()}
+  , m_arenas{allocator()}
+  , m_draw_calls{0, 0}
+  , m_instanced_draw_calls{0, 0}
+  , m_clear_calls{0, 0}
+  , m_blit_calls{0, 0}
+  , m_vertices{0, 0}
+  , m_triangles{0, 0}
+  , m_lines{0, 0}
+  , m_points{0, 0}
+  , m_commands_recorded{0, 0}
+  , m_footprint{0, 0}
+  , m_frame{0}
+  , m_resource_usage{}
   , m_device_info{allocator()}
+  , m_timer{}
 {
   RX_ASSERT(_backend, "expected valid backend");
 

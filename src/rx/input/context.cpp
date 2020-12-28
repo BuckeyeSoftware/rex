@@ -14,6 +14,7 @@ Context::Context(Memory::Allocator& _allocator)
   , m_root{this}
   , m_clipboard{m_allocator}
   , m_updated{false}
+  , m_mouse_captured{false}
 {
   // The root context should have the mouse captured.
   m_root.capture_mouse(true);
