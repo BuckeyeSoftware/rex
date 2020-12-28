@@ -13,16 +13,16 @@ struct Buffer : Resource {
   struct Attribute {
     enum class Type : Uint8 {
       // Scalars
-      k_f32,    // 1 x Float32
+      F32,    // 1 x Float32
 
       // Vectors
-      k_vec2f,  // 2 x Float32
-      k_vec3f,  // 3 x Float32
-      k_vec4f,  // 4 x Float32
-      k_vec4b,  // 4 x Byte
+      VEC2F,  // 2 x Float32
+      VEC3F,  // 3 x Float32
+      VEC4F,  // 4 x Float32
+      VEC4B,  // 4 x Byte
 
       // Matrices
-      k_mat4x4f // 4x4 x Float32
+      MAT4X4F // 4x4 x Float32
     };
 
     bool operator!=(const Attribute& _other) const;
@@ -33,15 +33,15 @@ struct Buffer : Resource {
   };
 
   enum class ElementType : Uint32 {
-    k_none,
-    k_u8,
-    k_u16,
-    k_u32
+    NONE,
+    U8,
+    U16,
+    U32
   };
 
   enum class Type : Uint32 {
-    k_static,
-    k_dynamic
+    STATIC,
+    DYNAMIC
   };
 
   // Type that describes the format.
@@ -188,7 +188,7 @@ inline Size Buffer::Attribute::hash() const {
 // [Buffer::Format]
 inline Buffer::Format::Format()
   : m_flags{0}
-  , m_element_type{ElementType::k_none}
+  , m_element_type{ElementType::NONE}
   , m_vertex_stride{0}
   , m_instance_stride{0}
   , m_hash{0}
@@ -231,7 +231,7 @@ inline bool Buffer::Format::record_instance_attribute(const Attribute& _attribut
 
 inline bool Buffer::Format::is_indexed() const {
   RX_ASSERT(m_flags & FINALIZED, "not finalized");
-  return m_element_type != ElementType::k_none;
+  return m_element_type != ElementType::NONE;
 }
 
 inline bool Buffer::Format::is_instanced() const {
@@ -271,13 +271,13 @@ inline Size Buffer::Format::instance_stride() const {
 
 inline Size Buffer::Format::element_size() const {
   switch (m_element_type) {
-  case ElementType::k_none:
+  case ElementType::NONE:
     return 0;
-  case ElementType::k_u8:
+  case ElementType::U8:
     return 1;
-  case ElementType::k_u16:
+  case ElementType::U16:
     return 2;
-  case ElementType::k_u32:
+  case ElementType::U32:
     return 4;
   }
   RX_HINT_UNREACHABLE();

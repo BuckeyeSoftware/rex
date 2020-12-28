@@ -242,13 +242,13 @@ GLenum convert_texture_wrap(const Frontend::Texture::WrapType _type) {
 GLenum convert_element_type(Frontend::Buffer::ElementType _element_type) {
   using Type = Frontend::Buffer::ElementType;
   switch (_element_type) {
-  case Type::k_none:
+  case Type::NONE:
     return GL_NONE;
-  case Type::k_u8:
+  case Type::U8:
     return GL_UNSIGNED_BYTE;
-  case Type::k_u16:
+  case Type::U16:
     return GL_UNSIGNED_SHORT;
-  case Type::k_u32:
+  case Type::U32:
     return GL_UNSIGNED_INT;
   }
   RX_HINT_UNREACHABLE();
@@ -273,17 +273,17 @@ Filter convert_texture_filter(const Frontend::Texture::FilterOptions& _filter_op
 Attribute convert_attribute(const Frontend::Buffer::Attribute& _attribute) {
   using Type = Frontend::Buffer::Attribute::Type;
   switch (_attribute.type) {
-  case Type::k_f32:
+  case Type::F32:
     return {GL_FLOAT,         sizeof(Float32), 1, 1};
-  case Type::k_vec2f:
+  case Type::VEC2F:
     return {GL_FLOAT,         sizeof(Float32), 2, 1};
-  case Type::k_vec3f:
+  case Type::VEC3F:
     return {GL_FLOAT,         sizeof(Float32), 3, 1};
-  case Type::k_vec4f:
+  case Type::VEC4F:
     return {GL_FLOAT,         sizeof(Float32), 4, 1};
-  case Type::k_vec4b:
+  case Type::VEC4B:
     return {GL_UNSIGNED_BYTE, sizeof(Byte),    4, 1};
-  case Type::k_mat4x4f:
+  case Type::MAT4X4F:
     return {GL_FLOAT,         sizeof(Float32), 4, 4};
   }
 

@@ -138,7 +138,7 @@ bool Buffer::write_sink_data(Sink _sink, const Byte* _data, Size _size) {
 
 bool Buffer::record_sink_edit(Sink _sink, Size _offset, Size _size) {
   if (_sink == Sink::ELEMENTS) {
-    auto check = m_format.element_type() != ElementType::k_none;
+    auto check = m_format.element_type() != ElementType::NONE;
     RX_ASSERT(check, "cannot record edit to elements");
   } else if (_sink == Sink::INSTANCES) {
     auto check = m_format.is_instanced();

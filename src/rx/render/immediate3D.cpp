@@ -170,12 +170,12 @@ Immediate3D::Immediate3D(Frontend::Context* _frontend)
   }
 
   Frontend::Buffer::Format format;
-  format.record_type(Frontend::Buffer::Type::k_dynamic);
-  format.record_element_type(Frontend::Buffer::ElementType::k_u32);
+  format.record_type(Frontend::Buffer::Type::DYNAMIC);
+  format.record_element_type(Frontend::Buffer::ElementType::U32);
   format.record_vertex_stride(sizeof(Vertex));
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position)});
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_f32, offsetof(Vertex, size)});
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, color)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, position)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32, offsetof(Vertex, size)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, color)});
   format.finalize();
 
   for (Size i{0}; i < k_buffers; i++) {

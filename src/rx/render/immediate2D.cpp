@@ -414,12 +414,12 @@ Immediate2D::Immediate2D(Frontend::Context* _frontend)
 
 
   Frontend::Buffer::Format format;
-  format.record_type(Frontend::Buffer::Type::k_dynamic);
-  format.record_element_type(Frontend::Buffer::ElementType::k_u32);
+  format.record_type(Frontend::Buffer::Type::DYNAMIC);
+  format.record_element_type(Frontend::Buffer::ElementType::U32);
   format.record_vertex_stride(sizeof(Vertex));
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, position)});
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate)});
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, color)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC2F, offsetof(Vertex, position)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC2F, offsetof(Vertex, coordinate)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC4F, offsetof(Vertex, color)});
   format.finalize();
 
   for (Size i{0}; i < k_buffers; i++) {

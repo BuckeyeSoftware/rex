@@ -78,15 +78,15 @@ bool Model::upload() {
     using Vertex = Rx::Model::Loader::AnimatedVertex;
 
     Frontend::Buffer::Format format;
-    format.record_type(Frontend::Buffer::Type::k_static);
-    format.record_element_type(Frontend::Buffer::ElementType::k_u32);
+    format.record_type(Frontend::Buffer::Type::STATIC);
+    format.record_element_type(Frontend::Buffer::ElementType::U32);
     format.record_vertex_stride(sizeof(Vertex));
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, normal)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, tangent)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec4b, offsetof(Vertex, blend_weights)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec4b, offsetof(Vertex, blend_indices)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, position)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, normal)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC4F, offsetof(Vertex, tangent)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC2F, offsetof(Vertex, coordinate)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC4B, offsetof(Vertex, blend_weights)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC4B, offsetof(Vertex, blend_indices)});
     format.finalize();
 
     m_arena = m_frontend->arena(format);
@@ -101,13 +101,13 @@ bool Model::upload() {
     using Vertex = Rx::Model::Loader::Vertex;
 
     Frontend::Buffer::Format format;
-    format.record_type(Frontend::Buffer::Type::k_static);
-    format.record_element_type(Frontend::Buffer::ElementType::k_u32);
+    format.record_type(Frontend::Buffer::Type::STATIC);
+    format.record_element_type(Frontend::Buffer::ElementType::U32);
     format.record_vertex_stride(sizeof(Vertex));
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, position)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec3f, offsetof(Vertex, normal)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec4f, offsetof(Vertex, tangent)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::k_vec2f, offsetof(Vertex, coordinate)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, position)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, normal)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC4F, offsetof(Vertex, tangent)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC2F, offsetof(Vertex, coordinate)});
     format.finalize();
 
     m_arena = m_frontend->arena(format);

@@ -1113,7 +1113,7 @@ void GL4::process(Byte* _command) {
           const auto& format = render_buffer->format();
           auto buffer = reinterpret_cast<detail_gl4::buffer*>(render_buffer + 1);
 
-          const auto type = format.type() == Frontend::Buffer::Type::k_dynamic
+          const auto type = format.type() == Frontend::Buffer::Type::DYNAMIC
             ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
           auto setup_attributes = [](GLuint _vao,
@@ -1603,7 +1603,7 @@ void GL4::process(Byte* _command) {
           const auto render_buffer = resource->as_buffer;
           const auto& format = render_buffer->format();
           const auto& vertices = render_buffer->vertices();
-          const auto type = format.type() == Frontend::Buffer::Type::k_dynamic
+          const auto type = format.type() == Frontend::Buffer::Type::DYNAMIC
               ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
           bool use_vertices_edits = false;
