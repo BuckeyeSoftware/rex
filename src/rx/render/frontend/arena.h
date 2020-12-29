@@ -231,14 +231,12 @@ RX_HINT_FORCE_INLINE Size Arena::Block::base_vertex() const {
 
 RX_HINT_FORCE_INLINE Size Arena::Block::base_element() const {
   const auto& format = m_arena->m_buffer->format();
-  RX_ASSERT(format.is_indexed(), "not an indexed arena");
   const auto& range = range_for(Buffer::Sink::ELEMENTS);
   return range.offset != -1_u32 ? range.offset / format.element_size() : 0;
 }
 
 RX_HINT_FORCE_INLINE Size Arena::Block::base_instance() const {
   const auto& format = m_arena->m_buffer->format();
-  RX_ASSERT(format.is_instanced(), "not an instanced arena");
   const auto& range = range_for(Buffer::Sink::INSTANCES);
   return range.offset != -1_u32 ? range.offset / format.instance_stride() : 0;
 }

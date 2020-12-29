@@ -205,7 +205,8 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
   state.viewport.record_dimensions(_target->dimensions());
 
   auto draw = [&](const Mesh& _mesh, bool _allow_cull) {
-    if (!frustum.is_aabb_inside(_mesh.bounds.transform(_model))) {
+    const auto& bounds = m_animation ? m_animation->bounds() : _mesh.bounds;
+    if (!frustum.is_aabb_inside(bounds.transform(_model))) {
       return true;
     }
 
@@ -291,7 +292,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
   state.blend.record_blend_factors(
     Render::Frontend::BlendState::FactorType::k_src_alpha,
     Render::Frontend::BlendState::FactorType::k_one_minus_src_alpha);*/
-  m_transparent_meshes.each_fwd([&](const Mesh& _mesh) { draw(_mesh, true); });
+  m_transparent_meshes.each_fwd([&](const Mesh& _mesh) { draw(_mesh, false); });
 }
 
 void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {

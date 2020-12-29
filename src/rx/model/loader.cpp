@@ -226,6 +226,11 @@ bool Loader::import(const String& _file_name) {
       joint_.frame = xform * joint_.frame * inv_xform;
     });
 
+    m_animations.each_fwd([&](Importer::Animation& animation_) {
+      animation_.bounds.each_fwd([&](Math::AABB& aabb_) {
+        aabb_ = aabb_.transform(transform); // TODO(dweiler): verify?
+      });
+    });
   } else {
     if (m_animations.is_empty()) {
       for (Size i{0}; i < n_vertices; i++) {

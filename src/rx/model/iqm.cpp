@@ -349,12 +349,33 @@ bool IQM::read_animations(const Header& _header, const Vector<Byte>& _data) {
     m_joints[i] = {generic_base_frame[i], this_joint.parent};
   }
 
+  const auto frame_bounds = _header.bounds_offset != 0
+    ? reinterpret_cast<const IQMBounds*>(_data.data() + _header.bounds_offset)
+    : nullptr;
+
   const char* string_table{reinterpret_cast<const char *>(_data.data() + _header.text_offset)};
   const IQMAnimation* animations{reinterpret_cast<const IQMAnimation*>(_data.data() + _header.animations_offset)};
   for (Uint32 i{0}; i < _header.animations; i++) {
     const IQMAnimation& this_animation{animations[i]};
+
+    // Per frame bounding boxes.
+    Vector<Math::AABB> animation_bounds{allocator()};
+    animation_bounds.resize(this_animation.num_frames);
+
+    for (Size i = 0; i < this_animation.num_frames; i++) {
+      if (frame_bounds) {
+        const auto bounds = frame_bounds[this_animation.first_frame + i];
+        // Convert Z-up to Y-up.
+        const Math::Vec3f min{bounds.min[0], bounds.min[2], bounds.min[1]};
+        const Math::Vec3f max{bounds.max[0], bounds.max[2], bounds.max[1]};
+        animation_bounds[i] = {min, max};
+      } else {
+        // TODO(dweiler): Calculate per-frame AABBs.
+      }
+    }
+
     m_animations.emplace_back(this_animation.frame_rate, this_animation.first_frame,
-      this_animation.num_frames, string_table + this_animation.name);
+      this_animation.num_frames, string_table + this_animation.name, Utility::move(animation_bounds));
   }
 
   m_frames.resize(n_joints * _header.frames);

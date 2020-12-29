@@ -52,10 +52,19 @@ void Animation::update(Float32 _delta_time, bool _loop) {
   const Math::Mat3x4f* mat1{&m_model->m_frames[frame_indices[0] * joints]};
   const Math::Mat3x4f* mat2{&m_model->m_frames[frame_indices[1] * joints]};
 
-  // interpolate matrices between the two closest frames
+  // Interpolate matrices between the two closest frames.
   for (Size i = 0; i < joints; i++) {
     m_frames[i] = mat1[i] * (1.0f - offset) + mat2[i] * offset;
   }
+
+  // Interpolate aabb between the two closet frames.
+  const auto& aabb1 = animation.bounds[frame1];
+  const auto& aabb2 = animation.bounds[frame2];
+
+  m_current_aabb = {
+    aabb1.min() * (1.0f - offset) + aabb2.min() * offset,
+    aabb1.max() * (1.0f - offset) + aabb2.max() * offset
+  };
 
   if (completes) {
     if (_loop) {
