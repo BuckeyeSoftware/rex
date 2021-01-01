@@ -13,10 +13,10 @@ namespace Rx {
 
 struct WideString;
 
-// 32-bit: 16 + k_small_string bytes
-// 64-bit: 32 + k_small_string bytes
+// 32-bit: 16 + INSITU_SIZE bytes
+// 64-bit: 32 + INSITU_SIZE bytes
 struct RX_API String {
-  static inline constexpr const Size k_small_string{16};
+  static inline constexpr const Size INSITU_SIZE = 16;
 
   constexpr String(Memory::Allocator& _allocator);
   String(Memory::Allocator& _allocator, const String& _contents);
@@ -136,7 +136,7 @@ private:
   char* m_last;
   char* m_capacity;
 
-  char m_buffer[k_small_string];
+  char m_buffer[INSITU_SIZE];
 };
 
 // utf-16, Windows compatible "wide-string"
@@ -215,7 +215,7 @@ inline constexpr String::String(Memory::Allocator& _allocator)
   : m_allocator{&_allocator}
   , m_data{m_buffer}
   , m_last{m_buffer}
-  , m_capacity{m_buffer + k_small_string}
+  , m_capacity{m_buffer + INSITU_SIZE}
   , m_buffer{}
 {
   m_buffer[0] = '\0';

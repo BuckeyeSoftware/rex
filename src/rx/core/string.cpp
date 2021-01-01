@@ -152,7 +152,7 @@ String::String(String&& contents_)
   if (contents_.m_data == contents_.m_buffer) {
     m_data = m_buffer;
     m_last = m_buffer;
-    m_capacity = m_buffer + k_small_string;
+    m_capacity = m_buffer + INSITU_SIZE;
     reserve(contents_.size());
     append(contents_.data(), contents_.size());
   } else {
@@ -163,7 +163,7 @@ String::String(String&& contents_)
 
   contents_.m_data = contents_.m_buffer;
   contents_.m_last = contents_.m_buffer;
-  contents_.m_capacity = contents_.m_buffer + k_small_string;
+  contents_.m_capacity = contents_.m_buffer + INSITU_SIZE;
   contents_.resize(0);
 }
 
@@ -550,7 +550,7 @@ Optional<Memory::View> String::disown() {
   // Reset the string back to small string optimization state.
   m_data = m_buffer;
   m_last = m_buffer;
-  m_capacity = m_buffer + k_small_string;
+  m_capacity = m_buffer + INSITU_SIZE;
 
   return Memory::View{&allocator(), data, n_bytes};
 }
@@ -571,12 +571,12 @@ void String::swap(String& other_) {
   Utility::swap(m_last, other_.m_last);
   Utility::swap(m_capacity, other_.m_capacity);
 
-  char buffer[k_small_string];
+  char buffer[INSITU_SIZE];
 
   if (m_data == other_.m_buffer) {
-    const char* element{other_.m_buffer};
-    const char* end{m_last};
-    char* out{buffer};
+    const char* element = other_.m_buffer;
+    const char* end = m_last;
+    char* out = buffer;
 
     while (element != end) {
       *out++ = *element++;
@@ -586,7 +586,7 @@ void String::swap(String& other_) {
   if (other_.m_data == m_buffer) {
     other_.m_last = other_.m_last - other_.m_data + other_.m_buffer;
     other_.m_data = other_.m_buffer;
-    other_.m_capacity = other_.m_buffer + k_small_string;
+    other_.m_capacity = other_.m_buffer + INSITU_SIZE;
 
     char* element = other_.m_data;
     const char* end = other_.m_last;
@@ -602,11 +602,11 @@ void String::swap(String& other_) {
   if (m_data == other_.m_buffer) {
     m_last = m_last - m_data + m_buffer;
     m_data = m_buffer;
-    m_capacity = m_buffer + k_small_string;
+    m_capacity = m_buffer + INSITU_SIZE;
 
-    char* element{m_data};
-    const char* end{m_last};
-    const char* in{buffer};
+    char* element = m_data;
+    const char* end = m_last;
+    const char* in = buffer;
 
     while (element != end) {
       *element++ = *in++;
