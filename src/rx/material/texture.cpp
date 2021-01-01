@@ -214,12 +214,12 @@ bool Texture::load_texture_file(const Math::Vec2z& _max_dimensions) {
       flags_bitset);
 
     // Convert normal map to data.
-    Vector<Byte> data{allocator()};
-    if (!image::convert(matrix, data)) {
+    LinearBuffer data{allocator()};
+    if (!Image::convert(matrix, data)) {
       return false;
     }
 
-    const rx::Texture::pixel_format format{loader.format()};
+    const Rx::Texture::PixelFormat format{loader.format()};
     m_chain.generate(utility::move(data), format, format,
       loader.dimensions(), false, has_mipmaps);
   }
