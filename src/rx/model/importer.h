@@ -59,7 +59,6 @@ struct Importer {
 
   // for skeletally animated models
   Vector<Math::Mat3x4f>&& frames();
-  Vector<Math::AABB>&& bounds();
   Vector<Animation>&& animations();
   const Vector<Math::Vec4b>& blend_indices() const &;
   const Vector<Math::Vec4b>& blend_weights() const &;
