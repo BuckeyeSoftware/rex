@@ -529,7 +529,9 @@ Program* Technique::variant(Size _index) const {
 bool Technique::load(Stream* _stream) {
   auto& allocator = m_frontend->allocator();
   if (auto data = read_text_stream(allocator, _stream)) {
-    return parse({data->disown()});
+    if (auto disown = data->disown()) {
+      return parse({*disown});
+    }
   }
   return false;
 }

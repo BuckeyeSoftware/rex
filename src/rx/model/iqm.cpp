@@ -141,7 +141,11 @@ bool IQM::read(Stream* _stream) {
   // Offsets in the header are relative to the beginning of the file, make a
   // hole in the memory and skip it, such that |read_meshes| and
   // |read_animations| can use the |read_header|'s values directly.
-  Vector<Byte> data{allocator(), static_cast<Size>(*size), Utility::UninitializedTag{}};
+  LinearBuffer data{allocator()};
+  if (!data.resize(*size)) {
+    return error("out of memory");
+  }
+
   const auto size_no_header = data.size() - sizeof read_header;
   if (_stream->read(data.data() + sizeof read_header, size_no_header) != size_no_header) {
     return error("unexpected end of file");
@@ -158,7 +162,7 @@ bool IQM::read(Stream* _stream) {
   return true;
 }
 
-bool IQM::read_meshes(const Header& _header, const Vector<Byte>& _data) {
+bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
   const char* string_table{_header.text_offset ? reinterpret_cast<const char *>(_data.data() + _header.text_offset) : ""};
 
   const Float32* in_position{nullptr};
@@ -319,7 +323,7 @@ bool IQM::read_meshes(const Header& _header, const Vector<Byte>& _data) {
   return true;
 }
 
-bool IQM::read_animations(const Header& _header, const Vector<Byte>& _data) {
+bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
   const auto n_joints{static_cast<Size>(_header.joints)};
 
   Vector<Math::Mat3x4f> generic_base_frame{allocator(), n_joints};

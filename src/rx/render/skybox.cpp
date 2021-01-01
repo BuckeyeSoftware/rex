@@ -90,7 +90,12 @@ bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
     return false;
   }
 
-  const JSON description{data->disown()};
+  auto disown = data->disown();
+  if (!disown) {
+    return false;
+  }
+
+  const JSON description{*disown};
   if (!description) {
     // could not parse json
     return false;
@@ -141,11 +146,16 @@ bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
 
     if (texture.format() != Texture::PixelFormat::k_rgb_u8) {
       // Convert everything to RGB8 if not already.
-      const Vector<Byte>& data =
-        Texture::convert(m_frontend->allocator(), texture.data().data(),
-                         texture.dimensions().area(), texture.format(),
-                         Texture::PixelFormat::k_rgb_u8);
-      m_texture->write(data.data(), face, 0);
+      auto data = Texture::convert(
+        m_frontend->allocator(),
+        texture.data().data(),
+        texture.dimensions().area(),
+        texture.format(),
+        Texture::PixelFormat::k_rgb_u8);
+      if (!data) {
+        return false;
+      }
+      m_texture->write(data->data(), face, 0);
     } else {
       m_texture->write(texture.data().data(), face, 0);
     }

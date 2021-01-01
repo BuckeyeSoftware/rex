@@ -9,13 +9,12 @@
 #include "rx/core/traits/return_type.h"
 
 #include "rx/core/utility/exchange.h"
-#include "rx/core/utility/uninitialized.h"
 
 #include "rx/core/hints/restrict.h"
 #include "rx/core/hints/unlikely.h"
 #include "rx/core/hints/unreachable.h"
 
-#include "rx/core/memory/system_allocator.h" // memory::{system_allocator, allocator}
+#include "rx/core/memory/system_allocator.h"
 
 namespace Rx {
 
@@ -42,7 +41,6 @@ struct Vector {
   template<typename U, Size E>
   Vector(Initializers<U, E>&& _initializers);
 
-  Vector(Memory::Allocator& _allocator, Size _size, Utility::UninitializedTag);
   Vector(Memory::Allocator& _allocator, Size _size);
   Vector(Memory::Allocator& _allocator, const Vector& _other);
   Vector(Size _size);
@@ -59,10 +57,6 @@ struct Vector {
 
   // resize to |size| with |value| for new objects
   bool resize(Size _size, const T& _value = {});
-
-  // Resize of |_size| where the contents stays uninitialized.
-  // This should only be used with trivially copyable T.
-  bool resize(Size _size, Utility::UninitializedTag);
 
   // reserve |size| elements
   bool reserve(Size _size);
@@ -171,20 +165,6 @@ template<typename U, Size E>
 inline Vector<T>::Vector(Initializers<U, E>&& _initializers)
   : Vector{Memory::SystemAllocator::instance(), Utility::move(_initializers)}
 {
-}
-
-template<typename T>
-inline Vector<T>::Vector(Memory::Allocator& _allocator, Size _size, Utility::UninitializedTag)
-  : m_allocator{&_allocator}
-  , m_data{nullptr}
-  , m_size{_size}
-  , m_capacity{_size}
-{
-  static_assert(traits::is_trivially_copyable<T>,
-    "T isn't trivial, cannot leave uninitialized");
-
-  m_data = reinterpret_cast<T*>(allocator().allocate(sizeof(T), m_size));
-  RX_ASSERT(m_data, "out of memory");
 }
 
 template<typename T>
@@ -328,19 +308,6 @@ bool Vector<T>::resize(Size _size, const T& _value) {
     } else {
       Utility::construct<T>(m_data + i, _value);
     }
-  }
-
-  m_size = _size;
-  return true;
-}
-
-template<typename T>
-bool Vector<T>::resize(Size _size, Utility::UninitializedTag) {
-  RX_ASSERT(traits::is_trivially_copyable<T>,
-    "T isn't trivial, cannot leave uninitialized");
-
-  if (!grow_or_shrink_to(_size)) {
-    return false;
   }
 
   m_size = _size;
@@ -645,6 +612,6 @@ inline Memory::View Vector<T>::disown() {
   return view;
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_VECTOR_H

@@ -1,6 +1,6 @@
 #ifndef RX_CORE_STRING_TABLE_H
 #define RX_CORE_STRING_TABLE_H
-#include "rx/core/vector.h"
+#include "rx/core/linear_buffer.h"
 #include "rx/core/optional.h"
 
 namespace Rx {
@@ -12,7 +12,7 @@ struct RX_API StringTable {
   constexpr StringTable(Memory::Allocator& _allocator);
 
   // Construct a string table from raw string data.
-  StringTable(Vector<char>&& data_);
+  StringTable(LinearBuffer&& data_);
   StringTable(Memory::Allocator& _allocator, const char* _data, Size _size);
 
   StringTable(StringTable&& string_table_);
@@ -38,7 +38,7 @@ private:
   Optional<Size> find(const char* _string) const;
   Optional<Size> add(const char* _string, Size _size);
 
-  Vector<char> m_data;
+  LinearBuffer m_data;
 };
 
 inline constexpr StringTable::StringTable()
@@ -51,7 +51,7 @@ inline constexpr StringTable::StringTable(Memory::Allocator& _allocator)
 {
 }
 
-inline StringTable::StringTable(Vector<char>&& data_)
+inline StringTable::StringTable(LinearBuffer&& data_)
   : m_data{Utility::move(data_)}
 {
 }
@@ -61,27 +61,17 @@ inline StringTable::StringTable(StringTable&& string_table_)
 {
 }
 
-inline StringTable::StringTable(const StringTable& _string_table)
-  : m_data{_string_table.m_data}
-{
-}
-
 inline StringTable& StringTable::operator=(StringTable&& string_table_) {
   m_data = Utility::move(string_table_.m_data);
   return *this;
 }
 
-inline StringTable& StringTable::operator=(const StringTable& _string_table) {
-  m_data = _string_table.m_data;
-  return *this;
-}
-
 inline const char* StringTable::operator[](Size _index) const {
-  return &m_data[_index];
+  return reinterpret_cast<const char*>(&m_data[_index]);
 }
 
 inline const char* StringTable::data() const {
-  return m_data.data();
+  return reinterpret_cast<const char*>(m_data.data());
 }
 
 inline Size StringTable::size() const {
@@ -96,6 +86,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& StringTable::allocator() const
   return m_data.allocator();
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_STRING_TABLE_H

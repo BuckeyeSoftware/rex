@@ -1,6 +1,6 @@
 #ifndef RX_TEXTURE_DXT_H
 #define RX_TEXTURE_DXT_H
-#include "rx/core/vector.h"
+#include "rx/core/linear_buffer.h"
 
 namespace Rx::Texture {
 
@@ -10,9 +10,9 @@ enum class DXTType {
 };
 
 template<DXTType T>
-Vector<Byte> dxt_compress(Memory::Allocator& _allocator,
-                             const Byte *const _uncompressed, Size _width, Size _height,
-                             Size _channels, Size& out_size_, Size& optimized_blocks_);
+Optional<LinearBuffer> dxt_compress(
+  Memory::Allocator& _allocator, const Byte *const _uncompressed, Size _width,
+  Size _height, Size _channels, Size& out_size_, Size& optimized_blocks_);
 
 } // namespace Rx::Texture
 

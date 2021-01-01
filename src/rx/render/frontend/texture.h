@@ -3,6 +3,7 @@
 #include "rx/render/frontend/resource.h"
 
 #include "rx/core/vector.h"
+#include "rx/core/linear_buffer.h"
 #include "rx/core/algorithm/max.h"
 #include "rx/core/math/log2.h"
 
@@ -82,7 +83,7 @@ struct Texture
 
   void validate() const;
 
-  const Vector<Byte>& data() const &;
+  const LinearBuffer& data() const &;
   DataFormat format() const;
   FilterOptions filter() const;
   Size channels() const;
@@ -128,7 +129,7 @@ protected:
 
   friend struct Context;
 
-  Vector<Byte> m_data;
+  LinearBuffer m_data;
   DataFormat m_format;
   Type m_type;
   FilterOptions m_filter;
@@ -293,16 +294,18 @@ private:
   Vector<LevelInfoType> m_level_info;
 };
 
-// texture
-inline const Vector<Byte>& Texture::data() const & {
+// Texture
+inline const LinearBuffer& Texture::data() const & {
   return m_data;
 }
 
 inline Texture::DataFormat Texture::format() const {
+  RX_ASSERT(m_flags & k_format, "format not recorded");
   return m_format;
 }
 
 inline Texture::FilterOptions Texture::filter() const {
+  RX_ASSERT(m_flags & k_filter, "filter not recorded");
   return m_filter;
 }
 

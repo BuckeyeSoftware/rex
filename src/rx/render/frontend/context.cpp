@@ -914,10 +914,10 @@ bool Context::process() {
   m_backend->process(m_commands);
 
   // Clear edit lists
-  m_edit_buffers.each_fwd([this](Buffer* _buffer) { _buffer->clear_edits(); });
-  m_edit_textures1D.each_fwd([this](Texture1D* _texture) { _texture->clear_edits(); });
-  m_edit_textures2D.each_fwd([this](Texture2D* _texture) { _texture->clear_edits(); });
-  m_edit_textures3D.each_fwd([this](Texture3D* _texture) { _texture->clear_edits(); });
+  m_edit_buffers.each_fwd([](Buffer* _buffer) { _buffer->clear_edits(); });
+  m_edit_textures1D.each_fwd([](Texture1D* _texture) { _texture->clear_edits(); });
+  m_edit_textures2D.each_fwd([](Texture2D* _texture) { _texture->clear_edits(); });
+  m_edit_textures3D.each_fwd([](Texture3D* _texture) { _texture->clear_edits(); });
 
   // Cleanup unreferenced frontend resources.
   m_destroy_buffers.each_fwd([this](Buffer* _buffer) { m_buffer_pool.destroy<Buffer>(_buffer); });

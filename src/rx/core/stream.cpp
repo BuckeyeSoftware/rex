@@ -2,17 +2,18 @@
 #include <string.h> // memmove
 
 #include "rx/core/stream.h"
-#include "rx/core/string.h" // utf16_to_utf8
+#include "rx/core/string.h"
+#include "rx/core/linear_buffer.h"
 #include "rx/core/abort.h"
 
 #include "rx/core/hints/may_alias.h"
 
 namespace Rx {
 
-static Vector<Byte> convert_text_encoding(Vector<Byte>&& data_) {
+static Optional<LinearBuffer> convert_text_encoding(LinearBuffer&& data_) {
   // Ensure the data contains a null-terminator.
-  if (data_.last() != 0) {
-    data_.push_back(0);
+  if (data_.last() != 0 && !data_.push_back(0)) {
+    return nullopt;
   }
 
   const bool utf16_le = data_.size() >= 2 && data_[0] == 0xFF && data_[1] == 0xFE;
@@ -21,7 +22,7 @@ static Vector<Byte> convert_text_encoding(Vector<Byte>&& data_) {
   // UTF-16.
   if (utf16_le || utf16_be) {
     // Remove the BOM.
-    data_.erase(0, 2);
+    // data_.erase(0, 2); TODO...
 
     auto contents = reinterpret_cast<Uint16*>(data_.data());
     const Size chars = data_.size() / 2;
@@ -36,12 +37,15 @@ static Vector<Byte> convert_text_encoding(Vector<Byte>&& data_) {
     const Size length = utf16_to_utf8(contents, chars, nullptr);
 
     // Convert UTF-16 to UTF-8.
-    Vector<Byte> result{data_.allocator(), length, Utility::UninitializedTag{}};
+    LinearBuffer result{data_.allocator()};
+    if (!result.resize(length)) {
+      return nullopt;
+    }
     utf16_to_utf8(contents, chars, reinterpret_cast<char*>(result.data()));
     return result;
   } else if (data_.size() >= 3 && data_[0] == 0xEF && data_[1] == 0xBB && data_[2] == 0xBF) {
     // Remove the BOM.
-    data_.erase(0, 3);
+    // data_.erase(0, 3); // TODO...
   }
 
   return Utility::move(data_);
@@ -150,13 +154,17 @@ Optional<Stream::Stat> Stream::stat() const {
   return nullopt;
 }
 
-Optional<Vector<Byte>> read_binary_stream(Memory::Allocator& _allocator, Stream* _stream) {
+Optional<LinearBuffer> read_binary_stream(Memory::Allocator& _allocator, Stream* _stream) {
   const auto size = _stream->size();
   if (!size) {
     return nullopt;
   }
 
-  Vector<Byte> result = {_allocator, static_cast<Size>(*size), Utility::UninitializedTag{}};
+  LinearBuffer result{_allocator};
+  if (!result.resize(*size)) {
+    return nullopt;
+  }
+
   if (_stream->read(result.data(), *size) == *size) {
     return result;
   }
@@ -164,7 +172,7 @@ Optional<Vector<Byte>> read_binary_stream(Memory::Allocator& _allocator, Stream*
   return nullopt;
 }
 
-Optional<Vector<Byte>> read_text_stream(Memory::Allocator& _allocator, Stream* _stream) {
+Optional<LinearBuffer> read_text_stream(Memory::Allocator& _allocator, Stream* _stream) {
   if (auto result = read_binary_stream(_allocator, _stream)) {
     // Convert the given byte stream into a compatible UTF-8 encoding. This will
     // introduce a null-terminator, strip Unicode BOMs and convert UTF-16

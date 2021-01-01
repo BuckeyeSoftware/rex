@@ -366,10 +366,12 @@ String Program::format_shader(const String& _source) {
 
   const auto length = pass(data, nullptr);
 
-  Vector<char> result{allocator, length, Utility::UninitializedTag{}};
-  pass(data, result.data());
+  LinearBuffer result{allocator};
+  result.resize(length);
 
-  return result.disown();
+  pass(data, reinterpret_cast<char*>(result.data()));
+
+  return *result.disown();
 }
 
 } // namespace Rx::Render::Frontend

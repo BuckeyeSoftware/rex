@@ -34,7 +34,9 @@ Module& Module::operator=(Module&& module_) {
 
 bool Module::load(Stream* _stream) {
   if (auto data = read_text_stream(allocator(), _stream)) {
-    return parse({data->disown()});
+    if (auto disown = data->disown()) {
+      return parse({*disown});
+    }
   }
   return false;
 }

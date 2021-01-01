@@ -52,18 +52,18 @@ Every container can be given a custom allocator. Small, on-stack containers with
 ### Robin-hood hash containers
 One unfortunute consequence of C++'s hash containers, `unordered_{mapm,set}` is their interface must talk in `pair` which means they're often stored together. This has awful cache characteristics for when you only need the keys or values. Similarly, all implementations use a bucketing strategy that leads to cache-inefficieny. We use a fully flat implementation of these containers with Robin-hood hashing.
 
-### Uninitialized vectors
-There's no way with C++'s `vector` to initialize with size or resize the contents such that they stay uninitialized. This means something like `vector<char> data(1024)` will force all 1024 bytes to be zero initialized, only for you to replace them later.
-
-We support both forms for trivially-constructible types through the use of the `UninitializedTag{}` tag value.
-
 ### Disowning memory
 Any container that manages a single, contiguous allocation can have it's memory stolen from it through a `disown` method, returning an untyped, owning view. This view can be given to anything that can reasonably make sense of the contents. This allows copy-free transmuations like the following:
 
+  * `String`       => `LinearBuffer`
+  * `String`       => `Vector<char>`
+  * `String`       => `Vector<Byte>`
+  * `Vector<T>`    => `LinearBuffer`
   * `Vector<char>` => `String`
   * `Vector<Byte>` => `String`
-  * `String` => `Vector<char>`
-  * `String` => `Vector<Byte>`
+  * `LinearBuffer` => `Vector<char>`
+  * `LinearBuffer` => `Vector<Byte>`
+  * `LinearBuffer` => `String`
 
 This is used extensively in file loading code.
 
@@ -236,7 +236,6 @@ The following traits exist:
 A very small subset of the functionality found by `<utility>` exists here.
 
 The following types exist:
-  * `UninitializedTag` Key-hole type to use on containers you'd prefer stay uninitialized, like `vector`.
   * `Nat` Not-a-type, used to enable `constexpr` initialization of unions.
   * `Pair` Similar to `std::pair`.
 

@@ -26,18 +26,21 @@ struct Chain {
   void generate(Loader&& loader_, bool _has_mipchain, bool _want_mipchain);
   void generate(Loader&& loader_, PixelFormat _want_format,
     bool _has_mipchain, bool _want_mipchain);
-  void generate(Vector<Byte>&& data_, PixelFormat _has_format,
+
+  void generate(LinearBuffer&& data_, PixelFormat _has_format,
     PixelFormat _want_format, const Math::Vec2z& _dimensions,
     bool _has_mipchain, bool _want_mipchain);
+
   void generate(const Byte* _data, PixelFormat _has_format,
     PixelFormat _want_format, const Math::Vec2z& _dimensions,
     bool _has_mipchain, bool _want_mipchain);
 
   void resize(const Math::Vec2z& _dimensions);
 
-  Vector<Byte>&& data();
+  LinearBuffer&& data();
+  const LinearBuffer& data() const;
+
   Vector<Level>&& levels();
-  const Vector<Byte>& data() const;
   const Vector<Level>& levels() const;
   const Math::Vec2z& dimensions() const;
   PixelFormat format() const;
@@ -49,7 +52,7 @@ private:
   void generate_mipchain(bool _has_mipchain, bool _want_mipchain);
 
   Memory::Allocator* m_allocator;
-  Vector<Byte> m_data;
+  LinearBuffer m_data;
   Vector<Level> m_levels;
   Math::Vec2z m_dimensions;
   union {
@@ -107,16 +110,16 @@ inline void Chain::generate(Loader&& loader_, PixelFormat _want_format,
            loader_.dimensions(), _has_mipchain, _want_mipchain);
 }
 
-inline Vector<Byte>&& Chain::data() {
+inline LinearBuffer&& Chain::data() {
   return Utility::move(m_data);
+}
+
+inline const LinearBuffer& Chain::data() const {
+  return m_data;
 }
 
 inline Vector<Chain::Level>&& Chain::levels() {
   return Utility::move(m_levels);
-}
-
-inline const Vector<Byte>& Chain::data() const {
-  return m_data;
 }
 
 inline const Vector<Chain::Level>& Chain::levels() const {

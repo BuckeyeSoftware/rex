@@ -21,7 +21,7 @@ struct Downloader
   Size latency() const;
   Size buffers() const;
 
-  const Vector<Byte>& pixels() const &;
+  const LinearBuffer& pixels() const &;
 
 // TODO(dweiler): Find out a way for the backend to update the frontend objects.
 // private:
@@ -35,7 +35,7 @@ struct Downloader
   Texture2D::DataFormat m_data_format;
   Math::Vec2z m_dimensions;
   Size m_buffers;
-  Vector<Byte> m_pixels;
+  LinearBuffer m_pixels;
   Concurrency::Atomic<Size> m_downloads;
   Concurrency::Atomic<Size> m_latency;
   Concurrency::Atomic<Size> m_count;
@@ -65,7 +65,7 @@ inline Size Downloader::buffers() const {
   return m_buffers;
 }
 
-inline const Vector<Byte>& Downloader::pixels() const & {
+inline const LinearBuffer& Downloader::pixels() const & {
   return m_pixels;
 }
 

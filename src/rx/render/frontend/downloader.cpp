@@ -27,7 +27,7 @@ void Downloader::record_dimensions(const Math::Vec2z& _dimensions) {
   RX_ASSERT(m_flags & BUFFERS, "buffers not recorded");
 
   const Size bytes = _dimensions.area() * Texture::bits_per_pixel(m_data_format) / 8;
-  RX_ASSERT(m_pixels.resize(bytes, Utility::UninitializedTag{}), "out of memory");
+  RX_ASSERT(m_pixels.resize(bytes), "out of memory");
   m_dimensions = _dimensions;
   m_flags |= DIMENSIONS;
 

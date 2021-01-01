@@ -1,6 +1,7 @@
 #ifndef RX_MODEL_IQM_H
 #define RX_MODEL_IQM_H
 #include "rx/model/importer.h"
+#include "rx/core/linear_buffer.h"
 
 namespace Rx::Model {
 
@@ -15,8 +16,8 @@ struct IQM
   virtual bool read(Stream* _stream);
 
 private:
-  bool read_meshes(const Header& _header, const Vector<Byte>& _data);
-  bool read_animations(const Header& _header, const Vector<Byte>& _data);
+  bool read_meshes(const Header& _header, const LinearBuffer& _data);
+  bool read_animations(const Header& _header, const LinearBuffer& _data);
 };
 
 inline IQM::IQM(Memory::Allocator& _allocator)

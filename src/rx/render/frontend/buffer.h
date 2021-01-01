@@ -1,5 +1,6 @@
 #ifndef RX_RENDER_FRONTEND_BUFFER_H
 #define RX_RENDER_FRONTEND_BUFFER_H
+#include "rx/core/linear_buffer.h"
 #include "rx/core/vector.h"
 #include "rx/core/hash.h"
 
@@ -135,9 +136,9 @@ struct Buffer : Resource {
   bool record_elements_edit(Size _offset, Size _size);
   bool record_instances_edit(Size _offset, Size _size);
 
-  const Vector<Byte>& vertices() const &;
-  const Vector<Byte>& elements() const &;
-  const Vector<Byte>& instances() const &;
+  const LinearBuffer& vertices() const &;
+  const LinearBuffer& elements() const &;
+  const LinearBuffer& instances() const &;
 
   Size size() const;
 
@@ -166,9 +167,9 @@ private:
     FORMAT = 1 << 1
   };
 
-  Vector<Byte> m_vertices_store;
-  Vector<Byte> m_elements_store;
-  Vector<Byte> m_instances_store;
+  LinearBuffer m_vertices_store;
+  LinearBuffer m_elements_store;
+  LinearBuffer m_instances_store;
 
   Format m_format;
   Vector<Edit> m_edits;
@@ -337,15 +338,15 @@ inline void Buffer::record_format(const Format& _format) {
   m_recorded |= FORMAT;
 }
 
-inline const Vector<Byte>& Buffer::vertices() const & {
+inline const LinearBuffer& Buffer::vertices() const & {
   return m_vertices_store;
 }
 
-inline const Vector<Byte>& Buffer::elements() const & {
+inline const LinearBuffer& Buffer::elements() const & {
   return m_elements_store;
 }
 
-inline const Vector<Byte>& Buffer::instances() const & {
+inline const LinearBuffer& Buffer::instances() const & {
   return m_instances_store;
 }
 

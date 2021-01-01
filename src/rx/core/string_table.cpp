@@ -8,8 +8,9 @@
 namespace Rx {
 
 StringTable::StringTable(Memory::Allocator& _allocator, const char* _data, Size _size)
-  : m_data{_allocator, _size}
+  : m_data{_allocator}
 {
+  RX_ASSERT(m_data.resize(_size), "out of memory");
   RX_ASSERT(_data[_size] == '\0', "missing null-terminator");
   memcpy(m_data.data(), _data, _size);
 }
@@ -19,8 +20,9 @@ Optional<Size> StringTable::find(const char* _string) const {
     return nullopt;
   }
 
-  if (const char* search = strstr(m_data.data(), _string)) {
-    return static_cast<Size>(search - m_data.data());
+  const auto haystack = reinterpret_cast<const char*>(m_data.data());
+  if (const char* search = strstr(haystack, _string)) {
+    return static_cast<Size>(search - haystack);
   }
   return nullopt;
 }
@@ -28,7 +30,7 @@ Optional<Size> StringTable::find(const char* _string) const {
 Optional<Size> StringTable::add(const char* _string, Size _size) {
   const Size index = m_data.size();
   const Size total = _size + 1;
-  if (m_data.resize(index + total, Utility::UninitializedTag{})) {
+  if (m_data.resize(index + total)) {
     memcpy(m_data.data() + index, _string, total);
     return index;
   }

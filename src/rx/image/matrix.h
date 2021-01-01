@@ -1,6 +1,6 @@
 #ifndef RX_IMAGE_MATRIX_H
 #define RX_IMAGE_MATRIX_H
-#include "rx/core/vector.h"
+#include "rx/core/linear_buffer.h"
 #include "rx/math/vec2.h"
 
 namespace Rx::Image {
@@ -23,7 +23,8 @@ struct Matrix
 
   Matrix scaled(const Math::Vec2z& _dimensions) const;
 
-  const Vector<Float32>& data() const &;
+  Float32* data();
+  const Float32* data() const;
 
   const Float32& operator[](Size _index) const;
   Float32& operator[](Size _index);
@@ -38,7 +39,7 @@ struct Matrix
 
 private:
   Memory::Allocator* m_allocator;
-  Vector<Float32> m_data;
+  LinearBuffer m_data;
   Math::Vec2z m_dimensions;
   Size m_channels;
 };
@@ -75,18 +76,10 @@ inline Matrix::Matrix(Matrix&& matrix_)
 {
 }
 
-inline Matrix::Matrix(const Matrix& _matrix)
-  : m_allocator{_matrix.m_allocator}
-  , m_data{_matrix.m_data}
-  , m_dimensions{_matrix.m_dimensions}
-  , m_channels{_matrix.m_channels}
-{
-}
-
 inline bool Matrix::resize(const Math::Vec2z& _dimensions, Size _channels) {
   m_dimensions = _dimensions;
   m_channels = _channels;
-  return m_data.resize(m_dimensions.area() * m_channels, Utility::UninitializedTag{});
+  return m_data.resize(m_dimensions.area() * m_channels);
 }
 
 inline Matrix& Matrix::operator=(Matrix&& matrix_) {
@@ -100,36 +93,30 @@ inline Matrix& Matrix::operator=(Matrix&& matrix_) {
   return *this;
 }
 
-inline Matrix& Matrix::operator=(const Matrix& _matrix) {
-  RX_ASSERT(this != &_matrix, "self assignment");
-
-  m_data = _matrix.m_data;
-  m_dimensions = _matrix.m_dimensions;
-  m_channels = _matrix.m_channels;
-
-  return *this;
+inline Float32* Matrix::data() {
+  return reinterpret_cast<Float32*>(m_data.data());
 }
 
-inline const Vector<Float32>& Matrix::data() const & {
-  return m_data;
+inline const Float32* Matrix::data() const {
+  return reinterpret_cast<const Float32*>(m_data.data());
 }
 
 inline const Float32& Matrix::operator[](Size _index) const {
-  return m_data[_index];
+  return data()[_index];
 }
 
 inline Float32& Matrix::operator[](Size _index) {
-  return m_data[_index];
+  return data()[_index];
 }
 
 inline const Float32* Matrix::operator()(Size _x, Size _y) const {
   RX_ASSERT(!m_data.is_empty(), "empty matrix");
-  return m_data.data() + (m_dimensions.w * _y + _x) * m_channels;
+  return data() + (m_dimensions.w * _y + _x) * m_channels;
 }
 
 inline Float32* Matrix::operator()(Size _x, Size _y) {
   RX_ASSERT(!m_data.is_empty(), "empty matrix");
-  return m_data.data() + (m_dimensions.w * _y + _x) * m_channels;
+  return data() + (m_dimensions.w * _y + _x) * m_channels;
 }
 
 inline const Math::Vec2z& Matrix::dimensions() const & {

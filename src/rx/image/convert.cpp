@@ -3,11 +3,11 @@
 
 namespace Rx::Image {
 
-bool convert(const Matrix& _matrix, Vector<Byte>& data_) {
+bool convert(const Matrix& _matrix, LinearBuffer& data_) {
   const Math::Vec2z& dimensions{_matrix.dimensions()};
   const Size channels{_matrix.channels()};
 
-  if (!data_.resize(dimensions.area() * _matrix.channels(), Utility::UninitializedTag{})) {
+  if (!data_.resize(dimensions.area() * _matrix.channels())) {
     return false;
   }
 
@@ -23,8 +23,8 @@ bool convert(const Matrix& _matrix, Vector<Byte>& data_) {
   return true;
 }
 
-bool convert(const Byte* _data, const Math::Vec2z& _dimensions,
-             Size _channels, Matrix& matrix_)
+bool convert(const Byte* _data, const Math::Vec2z& _dimensions, Size _channels,
+  Matrix& matrix_)
 {
   if (!matrix_.resize(_dimensions, _channels)) {
     return false;

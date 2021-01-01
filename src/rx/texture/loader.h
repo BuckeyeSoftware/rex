@@ -1,6 +1,6 @@
 #ifndef RX_TEXTURE_LOADER_H
 #define RX_TEXTURE_LOADER_H
-#include "rx/core/vector.h"
+#include "rx/core/linear_buffer.h"
 #include "rx/core/string.h"
 
 #include "rx/core/hints/unreachable.h"
@@ -37,14 +37,14 @@ struct Loader {
   Size bpp() const;
   Size channels() const;
   const Math::Vec2z& dimensions() const &;
-  Vector<Byte>&& data();
+  LinearBuffer&& data();
   PixelFormat format() const;
 
   constexpr Memory::Allocator& allocator() const;
 
 private:
   Memory::Allocator& m_allocator;
-  Vector<Byte> m_data;
+  LinearBuffer m_data;
   Size m_bpp;
   Size m_channels;
   Math::Vec2z m_dimensions;
@@ -76,7 +76,7 @@ inline const Math::Vec2z& Loader::dimensions() const & {
   return m_dimensions;
 }
 
-inline Vector<Byte>&& Loader::data() {
+inline LinearBuffer&& Loader::data() {
   return Utility::move(m_data);
 }
 

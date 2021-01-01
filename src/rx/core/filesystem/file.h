@@ -129,30 +129,30 @@ inline bool File::print(const char* _format, Ts&&... _arguments) {
   return print(Memory::SystemAllocator::instance(), _format, Utility::forward<Ts>(_arguments)...);
 }
 
-RX_API Optional<Vector<Byte>> read_binary_file(Memory::Allocator& _allocator, const char* _file_name);
-RX_API Optional<Vector<Byte>> read_text_file(Memory::Allocator& _allocator, const char* _file_name);
+RX_API Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator, const char* _file_name);
+RX_API Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator, const char* _file_name);
 
-inline Optional<Vector<Byte>> read_binary_file(Memory::Allocator& _allocator, const String& _file_name) {
+inline Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator, const String& _file_name) {
   return read_binary_file(_allocator, _file_name.data());
 }
 
-inline Optional<Vector<Byte>> read_binary_file(const String& _file_name) {
+inline Optional<LinearBuffer> read_binary_file(const String& _file_name) {
   return read_binary_file(Memory::SystemAllocator::instance(), _file_name);
 }
 
-inline Optional<Vector<Byte>> read_binary_file(const char* _file_name) {
+inline Optional<LinearBuffer> read_binary_file(const char* _file_name) {
   return read_binary_file(Memory::SystemAllocator::instance(), _file_name);
 }
 
-inline Optional<Vector<Byte>> read_text_file(Memory::Allocator& _allocator, const String& _file_name) {
+inline Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator, const String& _file_name) {
   return read_text_file(_allocator, _file_name.data());
 }
 
-inline Optional<Vector<Byte>> read_text_file(const String& _file_name) {
+inline Optional<LinearBuffer> read_text_file(const String& _file_name) {
   return read_text_file(Memory::SystemAllocator::instance(), _file_name);
 }
 
-inline Optional<Vector<Byte>> read_text_file(const char* _file_name) {
+inline Optional<LinearBuffer> read_text_file(const char* _file_name) {
   return read_text_file(Memory::SystemAllocator::instance(), _file_name);
 }
 

@@ -220,13 +220,16 @@ static RX_HINT_FORCE_INLINE Size bpp_for_pixel_format(PixelFormat _format) {
   RX_HINT_UNREACHABLE();
 }
 
-Vector<Byte> convert(Memory::Allocator& _allocator, const Byte* _data,
-                        Size _samples, PixelFormat _in_format, PixelFormat _out_format)
+Optional<LinearBuffer> convert(
+  Memory::Allocator& _allocator, const Byte* _data, Size _samples,
+  PixelFormat _in_format, PixelFormat _out_format)
 {
   RX_HINT_ASSUME_ALIGNED(_data, Memory::Allocator::ALIGNMENT);
 
-  Vector<Byte> result{_allocator,
-    _samples * bpp_for_pixel_format(_out_format), Utility::UninitializedTag{}};
+  LinearBuffer result{_allocator};
+  if (!result.resize(_samples * bpp_for_pixel_format(_out_format))) {
+    return nullopt;
+  }
 
   const Byte *RX_HINT_RESTRICT src = _data;
   Byte *RX_HINT_RESTRICT dst = result.data();

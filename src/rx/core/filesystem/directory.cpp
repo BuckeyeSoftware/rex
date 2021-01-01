@@ -44,7 +44,7 @@ Optional<Directory> Directory::Item::as_directory() const {
 
 #if defined(RX_PLATFORM_WINDOWS)
 struct FindContext {
-  Vector<Uint16> path_data;
+  LinearBuffer path_data;
   WIN32_FIND_DATAW find_data;
   HANDLE handle;
 };
@@ -66,8 +66,8 @@ Directory::Directory(Memory::Allocator& _allocator, String&& path_)
   // Convert |m_path| to UTF-16 for Windows.
   const auto path_utf16 = m_path.to_utf16();
   static constexpr const wchar_t k_path_extra[] = L"\\*";
-  Vector<Uint16> path_data{allocator(), path_utf16.size() + sizeof k_path_extra,
-    Utility::UninitializedTag{}};
+  LinearBuffer path_data{allocator()};
+  RX_ASSERT(path_data.resize(path_utf16.size() * 2 + sizeof k_path_extra), "out of memory");,
 
   memcpy(path_data.data(), path_utf16.data(), path_utf16.size() * 2);
   memcpy(path_data.data() + path_utf16.size(), k_path_extra, sizeof k_path_extra);

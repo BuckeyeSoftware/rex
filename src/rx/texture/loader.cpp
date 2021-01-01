@@ -41,16 +41,17 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
   }
 
   int channels;
-  Byte* decoded_image{stbi_load_from_memory(
+  Byte* decoded_image = stbi_load_from_memory(
     data->data(),
     static_cast<int>(data->size()),
     &dimensions.w,
     &dimensions.h,
     &channels,
-    want_channels)};
+    want_channels);
 
   if (!decoded_image) {
     logger->error("%s failed %s", _stream->name(), stbi_failure_reason());
+    stbi_image_free(decoded_image);
     return false;
   }
 
@@ -61,13 +62,19 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
   // Scale the texture down if it exceeds the max dimensions.
   if (m_dimensions > _max_dimensions) {
     m_dimensions = _max_dimensions;
-    m_data.resize(m_dimensions.area() * m_bpp, Utility::UninitializedTag{});
+    if (!m_data.resize(m_dimensions.area() * m_bpp)) {
+      stbi_image_free(decoded_image);
+      return false;
+    }
     scale(decoded_image, dimensions.w, dimensions.h, want_channels,
       dimensions.w * want_channels, m_data.data(), _max_dimensions.w,
       _max_dimensions.h);
   } else {
     // Otherwise just copy the decoded image data directly.
-    m_data.resize(m_dimensions.area() * m_bpp, Utility::UninitializedTag{});
+    if (!m_data.resize(m_dimensions.area() * m_bpp)) {
+      stbi_image_free(decoded_image);
+      return false;
+    }
     memcpy(m_data.data(), decoded_image, m_data.size());
   }
 

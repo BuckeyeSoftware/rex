@@ -51,7 +51,9 @@ void Loader::operator=(Loader&& loader_) {
 
 bool Loader::load(Stream* _stream) {
   if (auto contents = read_text_stream(allocator(), _stream)) {
-    return parse({contents->disown()});
+    if (auto disown = contents->disown()) {
+      return parse({*disown});
+    }
   }
   return false;
 }

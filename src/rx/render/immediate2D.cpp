@@ -285,8 +285,8 @@ Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
     // figure out the atlas size needed
     for (;;) {
       Vector<stbtt_bakedchar> baked_glyphs(m_frontend->allocator(), k_glyphs);
-      Vector<Byte> baked_atlas{m_frontend->allocator(),
-        m_resolution*m_resolution, Utility::UninitializedTag{}};
+      LinearBuffer baked_atlas{m_frontend->allocator()};
+      RX_ASSERT(baked_atlas.resize(m_resolution * m_resolution), "out of memory");
 
       const int result{stbtt_BakeFontBitmap(data->data(), 0,
         static_cast<Float32>(m_size), baked_atlas.data(),
@@ -297,7 +297,7 @@ Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
         // create a texture chain from this baked font bitmap
         Rx::Texture::Chain chain{m_frontend->allocator()};
         chain.generate(
-                Utility::move(baked_atlas),
+                baked_atlas.data(),
                 Rx::Texture::PixelFormat::k_r_u8,
                 Rx::Texture::PixelFormat::k_r_u8,
                 {m_resolution, m_resolution},

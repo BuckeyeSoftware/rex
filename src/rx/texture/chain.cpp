@@ -10,15 +10,16 @@
 
 namespace Rx::Texture {
 
-void Chain::generate(Vector<Byte>&& data_, PixelFormat _has_format,
-                     PixelFormat _want_format, const Math::Vec2z& _dimensions, bool _has_mipchain,
-                     bool _want_mipchain)
+void Chain::generate(LinearBuffer&& data_, PixelFormat _has_format,
+  PixelFormat _want_format, const Math::Vec2z& _dimensions, bool _has_mipchain,
+  bool _want_mipchain)
 {
   if (_has_format == _want_format) {
     m_data = Utility::move(data_);
   } else {
-    m_data = convert(allocator(), data_.data(), _dimensions.area(),
-      _has_format, _want_format);
+    auto data = convert(allocator(), data_.data(), _dimensions.area(), _has_format, _want_format);
+    RX_ASSERT(data, "out of memory");
+    m_data = Utility::move(*data);
   }
   m_dimensions = _dimensions;
   m_pixel_format = _want_format;
@@ -31,12 +32,14 @@ void Chain::generate(const Byte* _data, PixelFormat _has_format,
 {
   m_pixel_format = _want_format;
   m_dimensions = _dimensions;
-  m_data.resize(_dimensions.area() * bpp(), Utility::UninitializedTag{});
+  m_data.resize(_dimensions.area() * bpp());
   if (_has_format == _want_format) {
     memcpy(m_data.data(), _data, m_data.size());
   } else {
-    m_data = convert(allocator(), _data, _dimensions.area(),
+    auto data = convert(allocator(), _data, _dimensions.area(),
       _has_format, _want_format);
+    RX_ASSERT(data, "out of memory");
+    m_data = Utility::move(*data);
   }
   generate_mipchain(_has_mipchain, _want_mipchain);
 }
@@ -76,21 +79,22 @@ void Chain::generate_mipchain(bool _has_mipchain, bool _want_mipchain) {
 
   // we have a mipchain but we don't want it
   if (_has_mipchain && !_want_mipchain) {
-    // resize data for only base level
-    m_data.resize(m_dimensions.area() * bpp(), Utility::UninitializedTag{});
+    // Resize data for only base level.
+    m_data.resize(m_dimensions.area() * bpp());
   }
 
-  // we don't have a mipchain but we want one
+  // We don't have a mipchain but we want one
   if (!_has_mipchain && _want_mipchain) {
-    // calculate bytes needed for mipchain
+    // Calculate bytes needed for mipchain
     Size bytes_needed = 0;
     m_levels.each_fwd([&bytes_needed](const Level& _level) {
       bytes_needed += _level.size;
     });
 
-    m_data.resize(bytes_needed, Utility::UninitializedTag{});
+    // Resize for mipchain.
+    m_data.resize(bytes_needed);
 
-    // use the previous miplevel in the mipchain to downsample for the current
+    // Use the previous miplevel in the mipchain to downsample for the current
     // level, that is, NxN is always generated from N*2xN*x
     for (Size i = 1; i < m_levels.size(); i++) {
       const auto& src_level = m_levels[i-1];
@@ -137,7 +141,7 @@ void Chain::resize(const Math::Vec2z& _dimensions) {
       }
 
       // shrink to remove unnecessary data
-      m_data.resize(new_size, Utility::UninitializedTag{});
+      m_data.resize(new_size);
 
       // copy the mipchain from |best_index| forward to the beginning, this
       // is inplace and may overlap so memmove must be used
@@ -146,8 +150,8 @@ void Chain::resize(const Math::Vec2z& _dimensions) {
       generate_mipchain(true, true);
     } else {
       // resize mipchain image |best_index| to |_dimensions|
-      Vector<Byte> data{m_data.allocator(),
-        _dimensions.area() * bpp(), Utility::UninitializedTag{}};
+      LinearBuffer data{m_data.allocator()};
+      data.resize(_dimensions.area() * bpp());
 
       scale(m_data.data() + level.offset, level.dimensions.w,
         level.dimensions.h, bpp(), level.dimensions.w * bpp(), data.data(),
@@ -163,8 +167,8 @@ void Chain::resize(const Math::Vec2z& _dimensions) {
     // no mipchain
 
     // Resize and move data.
-    Vector<Byte> data{m_data.allocator(),
-      _dimensions.area() * bpp(), Utility::UninitializedTag{}};
+    LinearBuffer data{m_data.allocator()};
+    data.resize(_dimensions.area() * bpp());
 
     scale(m_data.data(), m_dimensions.w, m_dimensions.h, bpp(),
       m_dimensions.w * bpp(), data.data(), _dimensions.w, _dimensions.h);

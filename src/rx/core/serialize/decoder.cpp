@@ -1,6 +1,7 @@
 #include <string.h> // memcmp
 
 #include "rx/core/serialize/decoder.h"
+#include "rx/core/linear_buffer.h"
 #include "rx/core/stream.h"
 #include "rx/core/assert.h"
 
@@ -178,8 +179,8 @@ bool Decoder::read_strings() {
     return error("seek failed");
   }
 
-  Vector<char> strings{allocator()};
-  if (!strings.resize(m_header.string_size, Utility::UninitializedTag{})) {
+  LinearBuffer strings{allocator()};
+  if (!strings.resize(m_header.string_size)) {
     return error("out of memory");
   }
 

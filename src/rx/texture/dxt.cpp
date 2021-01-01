@@ -335,9 +335,9 @@ static inline void compress_alpha_block(const Byte *const _uncompressed,
 }
 
 template<DXTType T>
-Vector<Byte> dxt_compress(Memory::Allocator& _allocator,
-                             const Byte *const _uncompressed, Size _width, Size _height,
-                             Size _channels, Size& out_size_, Size& optimized_blocks_)
+Optional<LinearBuffer> dxt_compress(Memory::Allocator& _allocator,
+                              const Byte *const _uncompressed, Size _width, Size _height,
+                              Size _channels, Size& out_size_, Size& optimized_blocks_)
 {
   Size index{0};
   const Size chan_step{_channels < 3 ? 0_z : 1_z};
@@ -345,7 +345,10 @@ Vector<Byte> dxt_compress(Memory::Allocator& _allocator,
 
   out_size_ = ((_width + 3) >> 2) * ((_height + 3) >> 2) * (T == DXTType::k_dxt1 ? 8 : 16);
 
-  Vector<Byte> compressed{_allocator, out_size_, Utility::UninitializedTag{}};
+  LinearBuffer compressed{_allocator};
+  if (!compressed.resize(out_size_)) {
+    return nullopt;
+  }
 
   Byte ublock[16 * (T == DXTType::k_dxt1 ? 3 : 4)];
   Byte cblock[8];
@@ -401,14 +404,14 @@ Vector<Byte> dxt_compress(Memory::Allocator& _allocator,
   return compressed;
 }
 
-template Vector<Byte> dxt_compress<DXTType::k_dxt1>(
-        Memory::Allocator& _allocator, const Byte *const _uncompressed,
-        Size _width, Size _height, Size _channels, Size& out_size_,
-        Size& optimized_blocks_);
+template Optional<LinearBuffer> dxt_compress<DXTType::k_dxt1>(
+  Memory::Allocator& _allocator, const Byte *const _uncompressed,
+  Size _width, Size _height, Size _channels, Size& out_size_,
+  Size& optimized_blocks_);
 
-template Vector<Byte> dxt_compress<DXTType::k_dxt5>(
-        Memory::Allocator& _allocator, const Byte *const _uncompressed,
-        Size _width, Size _height, Size _channels, Size& out_size_,
-        Size& optimized_blocks_);
+template Optional<LinearBuffer> dxt_compress<DXTType::k_dxt5>(
+  Memory::Allocator& _allocator, const Byte *const _uncompressed,
+  Size _width, Size _height, Size _channels, Size& out_size_,
+  Size& optimized_blocks_);
 
 } // namespace Rx::Texture

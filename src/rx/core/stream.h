@@ -1,6 +1,6 @@
 #ifndef RX_CORE_STREAM_H
 #define RX_CORE_STREAM_H
-#include "rx/core/vector.h"
+#include "rx/core/linear_buffer.h"
 #include "rx/core/optional.h"
 
 namespace Rx {
@@ -124,8 +124,8 @@ inline constexpr bool Stream::is_eos() const {
   return m_flags & EOS;
 }
 
-RX_API Optional<Vector<Byte>> read_binary_stream(Memory::Allocator& _allocator, Stream* _stream);
-RX_API Optional<Vector<Byte>> read_text_stream(Memory::Allocator& _allocator, Stream* _stream);
+RX_API Optional<LinearBuffer> read_binary_stream(Memory::Allocator& _allocator, Stream* _stream);
+RX_API Optional<LinearBuffer> read_text_stream(Memory::Allocator& _allocator, Stream* _stream);
 
 } // namespace rx
 

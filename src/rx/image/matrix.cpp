@@ -24,10 +24,10 @@ Matrix Matrix::scaled(const Math::Vec2z& _dimensions) const {
       for (Size channel{0}; channel < channels; channel++) {
         const Size index{y_index * m_dimensions.w * channels + x_index * channels + channel};
 
-        const Float32 a{m_data[index]};
-        const Float32 b{m_data[index + channels]};
-        const Float32 c{m_data[index + m_dimensions.w * channels]};
-        const Float32 d{m_data[index + m_dimensions.w * channels + channels]};
+        const Float32 a{data()[index]};
+        const Float32 b{data()[index + channels]};
+        const Float32 c{data()[index + m_dimensions.w * channels]};
+        const Float32 d{data()[index + m_dimensions.w * channels + channels]};
 
         result[y * _dimensions.w * channels + x * channels + channel] =
            a * (1.0f - x_diff) * (1.0f - y_diff) +

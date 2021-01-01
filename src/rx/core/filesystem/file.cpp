@@ -285,7 +285,7 @@ bool File::print(String&& contents_) {
   return write(reinterpret_cast<const Byte*>(contents_.data()), contents_.size());
 }
 
-Optional<Vector<Byte>> read_binary_file(Memory::Allocator& _allocator, const char* _file_name) {
+Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator, const char* _file_name) {
   if (File open_file{_file_name, "rb"}) {
     return read_binary_stream(_allocator, &open_file);
   }
@@ -294,7 +294,7 @@ Optional<Vector<Byte>> read_binary_file(Memory::Allocator& _allocator, const cha
   return nullopt;
 }
 
-Optional<Vector<Byte>> read_text_file(Memory::Allocator& _allocator, const char* _file_name) {
+Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator, const char* _file_name) {
   if (File open_file{_file_name, "rb"}) {
     return read_text_stream(_allocator, &open_file);
   }
