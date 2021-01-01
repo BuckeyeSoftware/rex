@@ -58,6 +58,7 @@ struct RX_API String {
   Size size() const;
   Size capacity() const;
 
+  bool in_situ() const;
   bool is_empty() const;
 
   void clear();
@@ -123,7 +124,7 @@ struct RX_API String {
   WideString to_utf16() const;
 
   constexpr Memory::Allocator& allocator() const;
-  Memory::View disown();
+  Optional<Memory::View> disown();
 
 private:
   static RX_API String formatter(Memory::Allocator& _allocator, const char* _format, ...);
@@ -261,11 +262,16 @@ RX_HINT_FORCE_INLINE Size String::capacity() const {
   return m_capacity - m_data;
 }
 
+RX_HINT_FORCE_INLINE bool String::in_situ() const {
+  return m_data == m_buffer;
+}
+
 RX_HINT_FORCE_INLINE bool String::is_empty() const {
   return m_last - m_data == 0;
 }
 
 inline void String::clear() {
+  // NOTE(dweiler): This resize cannot fail.
   (void)!!resize(0);
 }
 

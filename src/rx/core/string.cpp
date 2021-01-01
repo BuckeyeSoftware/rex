@@ -528,7 +528,7 @@ Size String::hash() const {
   RX_HINT_UNREACHABLE();
 }
 
-Memory::View String::disown() {
+Optional<Memory::View> String::disown() {
   Byte* data = reinterpret_cast<Byte*>(m_data);
   Size n_bytes = 0;
 
@@ -537,7 +537,9 @@ Memory::View String::disown() {
     // an owning view.
     n_bytes = size() + 1;
     data = allocator().allocate(n_bytes);
-    RX_ASSERT(data, "out of memory");
+    if (!data) {
+      return nullopt;
+    }
     memcpy(data, m_data, n_bytes);
   } else {
     // The memory allocated by the string is potentially larger than the whole
@@ -550,7 +552,7 @@ Memory::View String::disown() {
   m_last = m_buffer;
   m_capacity = m_buffer + k_small_string;
 
-  return {&allocator(), data, n_bytes};
+  return Memory::View{&allocator(), data, n_bytes};
 }
 
 WideString String::to_utf16() const {
