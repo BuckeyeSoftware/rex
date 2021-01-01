@@ -25,6 +25,8 @@ struct LinearBuffer {
 
   void clear();
 
+  void erase(Size _from, Size _to);
+
   Byte* data();
   const Byte* data() const;
 

@@ -22,7 +22,7 @@ static Optional<LinearBuffer> convert_text_encoding(LinearBuffer&& data_) {
   // UTF-16.
   if (utf16_le || utf16_be) {
     // Remove the BOM.
-    // data_.erase(0, 2); TODO...
+    data_.erase(0, 2);
 
     auto contents = reinterpret_cast<Uint16*>(data_.data());
     const Size chars = data_.size() / 2;
@@ -45,7 +45,7 @@ static Optional<LinearBuffer> convert_text_encoding(LinearBuffer&& data_) {
     return result;
   } else if (data_.size() >= 3 && data_[0] == 0xEF && data_[1] == 0xBB && data_[2] == 0xBF) {
     // Remove the BOM.
-    // data_.erase(0, 3); // TODO...
+    data_.erase(0, 3);
   }
 
   return Utility::move(data_);

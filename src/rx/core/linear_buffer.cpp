@@ -36,6 +36,21 @@ LinearBuffer& LinearBuffer::operator=(LinearBuffer&& buffer_) {
   return *this;
 }
 
+void LinearBuffer::erase(Size _begin, Size _end) {
+  RX_ASSERT(_begin < _end, "invalid range");
+  RX_ASSERT(_begin < size(), "out of bounds");
+  RX_ASSERT(_end < size(), "out of bounds");
+
+  const auto begin = m_data + _begin;
+  const auto end = m_data + _end;
+
+  const auto length = (m_data + m_size) - end;
+
+  memmove(begin, end, length);
+
+  m_size -= _end - _begin;
+}
+
 void LinearBuffer::release() {
   if (!in_situ()) {
     m_allocator->deallocate(m_data);
