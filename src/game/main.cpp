@@ -1,4 +1,7 @@
-#include "rx/game.h"
+#include <stdio.h>
+
+#include "rx/application.h"
+#include "rx/engine.h"
 
 #include "rx/render/frontend/context.h"
 #include "rx/render/frontend/target.h"
@@ -24,6 +27,8 @@
 #include "rx/console/variable.h"
 
 #include "rx/math/camera.h"
+
+#include "rx/core/filesystem/directory.h"
 
 using namespace Rx;
 
@@ -58,13 +63,14 @@ RX_CONSOLE_BVAR(
   false);
 
 struct TestGame
-  : Game
+  : Application
 {
-  TestGame(Render::Frontend::Context& _frontend, Input::Context& input_)
-    : m_frontend{_frontend}
+  TestGame(Engine* _engine)
+    : Application(_engine)
+    , m_frontend{*engine()->renderer()}
     , m_immediate2D{&m_frontend}
     , m_immediate3D{&m_frontend}
-    , m_console{&m_immediate2D, input_}
+    , m_console{&m_immediate2D, engine()->input()}
     , m_frame_graph{&m_immediate2D}
     , m_memory_stats{&m_immediate2D}
     , m_render_stats{&m_immediate2D}
@@ -75,7 +81,7 @@ struct TestGame
     , m_lens_distortion_pass{&m_frontend}
     , m_copy_pass{&m_frontend}
   {
-    input_.root_layer().raise();
+    engine()->input().root_layer().raise();
   }
 
   ~TestGame() {
@@ -91,12 +97,35 @@ struct TestGame
     m_copy_pass.attach_depth_stencil(m_gbuffer.depth_stencil());
     m_copy_pass.create(m_frontend.swapchain()->dimensions());
 
-    Render::Model model{&m_frontend};
-    if (model.load("base/models/mrfixit/mrfixit.json5")) {
-      if (!m_models.push_back(Utility::move(model))) {
+    if (Filesystem::Directory dir{"base/models/light_unit"}) {
+      printf("opened light_unit\n");
+      dir.each([&](Filesystem::Directory::Item&& item_) {
+        if (item_.is_file() && item_.name().ends_with(".json5")) {
+          printf("found %s\n", item_.name().data());
+          Render::Model model{&m_frontend};
+          if (model.load("base/models/light_unit/" + item_.name())) {
+            m_models.push_back(Utility::move(model));
+          }
+        }
+      });
+    } else {
+      return false;
+    }
+
+    /*
+    Render::Model model1{&m_frontend};
+    Render::Model model2{&m_frontend};
+    if (model1.load("base/models/mrfixit/mrfixit.json5")) {
+      if (!m_models.push_back(Utility::move(model1))) {
         return false;
       }
     }
+
+    if (model2.load("base/models/roach/roach.json5")) {
+      if (!m_models.push_back(Utility::move(model2))) {
+        return false;
+      }
+    }*/
 
     m_models.each_fwd([](Render::Model& _model) {
       _model.animate(0, true);
@@ -105,51 +134,57 @@ struct TestGame
     return true;
   }
 
-  virtual bool on_update(Console::Context& console_, Input::Context& input_) {
+  virtual bool on_update() {
+    auto& input = engine()->input();
+    auto& console = engine()->console();
+
     static auto display_resolution =
-      console_.find_variable_by_name("display.resolution")->cast<Math::Vec2i>();
+      console.find_variable_by_name("display.resolution")->cast<Math::Vec2i>();
     static auto display_swap_interval =
-      console_.find_variable_by_name("display.swap_interval")->cast<Sint32>();
+      console.find_variable_by_name("display.swap_interval")->cast<Sint32>();
     static auto display_fullscreen =
-      console_.find_variable_by_name("display.fullscreen")->cast<Sint32>();
+      console.find_variable_by_name("display.fullscreen")->cast<Sint32>();
 
     const auto& dimensions{display_resolution->get().cast<Float32>()};
     m_camera.projection = Math::Mat4x4f::perspective(90.0f, {0.01f, 2048.0f},
       dimensions.w / dimensions.h);
 
-    if (input_.root_layer().is_active()) {
+    if (input.root_layer().is_active()) {
       Float32 move_speed{0.0f};
       const Float32 sens{0.2f};
-      const auto &delta = input_.root_layer().mouse().movement();
+      const auto &delta = input.root_layer().mouse().movement();
 
       Math::Vec3f move{static_cast<Float32>(delta.y) * sens, static_cast<Float32>(delta.x) * sens, 0.0f};
       m_camera.rotate = m_camera.rotate + move;
 
-      if (input_.root_layer().keyboard().is_held(Input::ScanCode::k_left_control)) {
+      if (input.root_layer().keyboard().is_held(Input::ScanCode::k_left_control)) {
         move_speed = 10.0f;
       } else {
         move_speed = 5.0f;
       }
 
-      if (input_.root_layer().keyboard().is_held(Input::ScanCode::k_w)) {
+      if (input.root_layer().keyboard().is_held(Input::ScanCode::k_w)) {
         const auto f{m_camera.as_mat4().z};
         m_camera.translate += Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (input_.root_layer().keyboard().is_held(Input::ScanCode::k_s)) {
+      if (input.root_layer().keyboard().is_held(Input::ScanCode::k_s)) {
         const auto f{m_camera.as_mat4().z};
         m_camera.translate -= Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (input_.root_layer().keyboard().is_held(Input::ScanCode::k_d)) {
+      if (input.root_layer().keyboard().is_held(Input::ScanCode::k_d)) {
         const auto l{m_camera.as_mat4().x};
         m_camera.translate += Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (input_.root_layer().keyboard().is_held(Input::ScanCode::k_a)) {
+      if (input.root_layer().keyboard().is_held(Input::ScanCode::k_a)) {
         const auto l{m_camera.as_mat4().x};
         m_camera.translate -= Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
       }
+      if (input.root_layer().keyboard().is_released(Input::ScanCode::k_t)) {
+        m_models.pop_back();
+      }
     }
 
-    if (input_.root_layer().keyboard().is_released(Input::ScanCode::k_f1)) {
+    if (input.root_layer().keyboard().is_released(Input::ScanCode::k_f1)) {
       switch (display_swap_interval->get()) {
       case -1:
         display_swap_interval->set(0);
@@ -163,19 +198,19 @@ struct TestGame
       }
     }
 
-    if (input_.root_layer().keyboard().is_pressed(Input::ScanCode::k_grave)) {
+    if (input.root_layer().keyboard().is_pressed(Input::ScanCode::k_grave)) {
       m_console.raise();
     }
 
-    if (input_.root_layer().keyboard().is_released(Input::ScanCode::k_escape)) {
+    if (input.root_layer().keyboard().is_released(Input::ScanCode::k_escape)) {
       return false;
     }
 
-    if (input_.root_layer().keyboard().is_released(Input::ScanCode::k_f12)) {
+    if (input.root_layer().keyboard().is_released(Input::ScanCode::k_f12)) {
       display_fullscreen->set((display_fullscreen->get() + 1) % 3);
     }
 
-    if (input_.root_layer().keyboard().is_released(Input::ScanCode::k_f11)) {
+    if (input.root_layer().keyboard().is_released(Input::ScanCode::k_f11)) {
       const auto &name{m_skybox.name()};
       const char* next{nullptr};
       /**/ if (name == "miramar")  next = "base/skyboxes/nebula/nebula.json5";
@@ -185,14 +220,17 @@ struct TestGame
       m_ibl.render(m_skybox.cubemap(), 256);
     }
 
-    m_console.update(console_);
+    m_console.update(console);
 
     return true;
   }
 
-  virtual bool on_render(Console::Context& console_, Input::Context& input_) {
+  virtual bool on_render() {
+    auto& input = engine()->input();
+    auto& console = engine()->console();
+
     static auto display_resolution =
-      console_.find_variable_by_name("display.resolution")->cast<Math::Vec2i>();
+      console.find_variable_by_name("display.resolution")->cast<Math::Vec2i>();
 
     Render::Frontend::State state;
     state.viewport.record_dimensions(display_resolution->get().cast<Size>());
@@ -219,9 +257,9 @@ struct TestGame
       Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data());
 
     m_models.each_fwd([&](Render::Model& model_) {
-      model_.update(m_frontend.timer().delta_time());
-      model_.render(m_gbuffer.target(), {}, m_camera.view(), m_camera.projection);
-      model_.render_skeleton({}, &m_immediate3D);
+      model_.update(m_frontend.timer().delta_time() * 0.25f);
+      model_.render(m_gbuffer.target(), Math::Mat4x4f::scale({50, 50, 50}), m_camera.view(), m_camera.projection);
+      //model_.render_skeleton({}, &m_immediate3D);
     });
 
     // Render indirect lighting pass.
@@ -258,7 +296,7 @@ struct TestGame
     m_console.render();
 
     if (*input_debug_layers) {
-      input_.render_regions(&m_immediate2D);
+      input.render_regions(&m_immediate2D);
     }
 
     m_immediate2D.render(m_frontend.swapchain());
@@ -297,6 +335,6 @@ struct TestGame
   Math::Camera m_camera;
 };
 
-Ptr<Game> create(Render::Frontend::Context& _frontend, Input::Context& input_) {
-  return make_ptr<TestGame>(Memory::SystemAllocator::instance(), _frontend, input_);
+Ptr<Application> create(Engine* _engine) {
+  return make_ptr<TestGame>(Memory::SystemAllocator::instance(), _engine);
 }

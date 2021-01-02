@@ -121,7 +121,7 @@ bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
   m_frontend->destroy_texture(RX_RENDER_TAG("skybox"), m_texture);
   m_texture = m_frontend->create_textureCM(RX_RENDER_TAG("skybox"));
   m_texture->record_type(Frontend::Texture::Type::STATIC);
-  m_texture->record_format(Frontend::Texture::DataFormat::k_rgb_u8);
+  m_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
   m_texture->record_levels(1);
   m_texture->record_filter({false, false, false});
   m_texture->record_wrap({
@@ -133,7 +133,7 @@ bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
   Frontend::TextureCM::Face face{Frontend::TextureCM::Face::k_right};
   bool result{faces.each([&](const JSON& file_name) {
     Texture::Loader texture{m_frontend->allocator()};
-    if (!texture.load(file_name.as_string(), Texture::PixelFormat::k_rgb_u8, _max_face_dimensions)) {
+    if (!texture.load(file_name.as_string(), Texture::PixelFormat::RGBA_U8, _max_face_dimensions)) {
       return false;
     }
 
@@ -144,14 +144,14 @@ bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
       return false;
     }
 
-    if (texture.format() != Texture::PixelFormat::k_rgb_u8) {
+    if (texture.format() != Texture::PixelFormat::RGBA_U8) {
       // Convert everything to RGB8 if not already.
       auto data = Texture::convert(
         m_frontend->allocator(),
         texture.data().data(),
         texture.dimensions().area(),
         texture.format(),
-        Texture::PixelFormat::k_rgb_u8);
+        Texture::PixelFormat::RGBA_U8);
       if (!data) {
         return false;
       }

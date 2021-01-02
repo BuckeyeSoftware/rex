@@ -101,11 +101,11 @@ bool Texture::parse(const JSON& _definition) {
 bool Texture::load_texture_file(const Math::Vec2z& _max_dimensions) {
   Rx::Texture::PixelFormat want_format;
   if (m_type == "albedo") {
-    want_format = Rx::Texture::PixelFormat::k_rgba_u8;
+    want_format = Rx::Texture::PixelFormat::RGBA_U8;
   } else if (m_type == "metalness" || m_type == "roughness") {
-    want_format = Rx::Texture::PixelFormat::k_r_u8;
+    want_format = Rx::Texture::PixelFormat::R_U8;
   } else {
-    want_format = Rx::Texture::PixelFormat::k_rgb_u8;
+    want_format = Rx::Texture::PixelFormat::RGB_U8;
   }
 
   Rx::Texture::Loader loader{allocator()};

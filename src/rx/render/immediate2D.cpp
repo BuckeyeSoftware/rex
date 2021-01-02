@@ -298,8 +298,8 @@ Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
         Rx::Texture::Chain chain{m_frontend->allocator()};
         chain.generate(
                 baked_atlas.data(),
-                Rx::Texture::PixelFormat::k_r_u8,
-                Rx::Texture::PixelFormat::k_r_u8,
+                Rx::Texture::PixelFormat::R_U8,
+                Rx::Texture::PixelFormat::R_U8,
                 {m_resolution, m_resolution},
                 false, true);
 

@@ -9,8 +9,8 @@
 
 #include "rx/engine.h"
 #include "rx/display.h"
-// TODO(dweiler): Game factory...
-extern Rx::Ptr<Rx::Game> create(Rx::Render::Frontend::Context&, Rx::Input::Context&);
+
+extern Rx::Ptr<Rx::Application> create(Rx::Engine* _engine);
 
 namespace Rx {
 
@@ -114,8 +114,8 @@ Engine::Engine()
 }
 
 Engine::~Engine() {
-  // Force game to deinitialize now.
-  m_game = nullptr;
+  // Force application to deinitialize now.
+  m_application = nullptr;
 
   // Save the console configuration
   m_console.save(CONFIG);
@@ -154,7 +154,7 @@ bool Engine::init() {
           break;
         case Log::Level::VERBOSE:
           // Don't write verbose messages to the console.
-          // console.print("^yverbose: ^w%s", _message);
+          // m_console.print("^yverbose: ^w%s", _message);
           break;
         case Log::Level::WARNING:
           m_console.print("^mwarning: ^w%s", _message);
@@ -350,9 +350,9 @@ bool Engine::init() {
   m_render_frontend->process();
   m_render_frontend->swap();
 
-  // Create the game instance...
-  m_game = create(*m_render_frontend, m_input);
-  if (!m_game || !m_game->on_init()) {
+  // Create the application instance.
+  m_application = create(this);
+  if (!m_application || !m_application->on_init()) {
     return false;
   }
 
@@ -367,7 +367,7 @@ bool Engine::init() {
 
     Math::Vec2i size;
     SDL_GetWindowSize(window, &size.w, &size.h);
-    m_game->on_resize(size.cast<Size>());
+    m_application->on_resize(size.cast<Size>());
     m_input.on_resize(size.cast<Size>());
   });
 
@@ -380,7 +380,7 @@ bool Engine::init() {
   });
 
   auto on_display_resolution_change = display_resolution->on_change([&](const Math::Vec2i& _resolution) {
-    m_game->on_resize(_resolution.cast<Size>());
+    m_application->on_resize(_resolution.cast<Size>());
     m_input.on_resize(_resolution.cast<Size>());
     SDL_SetWindowSize(window, _resolution.w, _resolution.h);
   });
@@ -440,7 +440,7 @@ Engine::Status Engine::run() {
         {
           const Math::Vec2i size{event.window.data1, event.window.data2};
           display_resolution->set(size, false);
-          m_game->on_resize(size.cast<Size>());
+          m_application->on_resize(size.cast<Size>());
           m_input.on_resize(size.cast<Size>());
         }
         break;
@@ -484,7 +484,7 @@ Engine::Status Engine::run() {
   }
 
   // This can be rate limited (e.g lock 60fps).
-  if (!m_game->on_update(m_console, m_input)) {
+  if (!m_application->on_update()) {
     m_status = Status::SHUTDOWN;
   }
 
@@ -498,7 +498,7 @@ Engine::Status Engine::run() {
     SDL_SetRelativeMouseMode(m_input.active_layer().is_mouse_captured() ? SDL_TRUE : SDL_FALSE);
   }
 
-  m_game->on_render(m_console, m_input);
+  m_application->on_render();
 
   // Submit all rendering work.
   if (m_render_frontend->process()) {

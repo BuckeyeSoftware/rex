@@ -136,15 +136,15 @@ inline PixelFormat Chain::format() const {
 
 inline Size Chain::bpp() const {
   switch (m_pixel_format) {
-  case PixelFormat::k_r_u8:
+  case PixelFormat::R_U8:
     return 1;
-  case PixelFormat::k_bgr_u8:
+  case PixelFormat::BGR_U8:
     [[fallthrough]];
-  case PixelFormat::k_rgb_u8:
+  case PixelFormat::RGB_U8:
     return 3;
-  case PixelFormat::k_bgra_u8:
+  case PixelFormat::BGRA_U8:
     [[fallthrough]];
-  case PixelFormat::k_rgba_u8:
+  case PixelFormat::RGBA_U8:
     return 4;
   }
 

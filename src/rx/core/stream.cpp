@@ -200,7 +200,7 @@ Optional<LinearBuffer> read_text_stream(Memory::Allocator& _allocator, Stream* _
 
       // Do checks for CR word at a time, stopping at word containing CR.
       if (n && *s != k_c) {
-        // Need to typedef with an alias Type since we're breaking strict
+        // Need to typedef with an alias type since we're breaking strict
         // aliasing, let the compiler know.
         typedef Size RX_HINT_MAY_ALIAS WordType;
 

@@ -65,12 +65,12 @@ Directory::Directory(Memory::Allocator& _allocator, String&& path_)
 
   // Convert |m_path| to UTF-16 for Windows.
   const auto path_utf16 = m_path.to_utf16();
-  static constexpr const wchar_t k_path_extra[] = L"\\*";
+  static constexpr const wchar_t PATH_EXTRA[] = L"\\*";
   LinearBuffer path_data{allocator()};
-  RX_ASSERT(path_data.resize(path_utf16.size() * 2 + sizeof k_path_extra), "out of memory");,
+  RX_ASSERT(path_data.resize(path_utf16.size() * 2 + sizeof PATH_EXTRA), "out of memory");,
 
   memcpy(path_data.data(), path_utf16.data(), path_utf16.size() * 2);
-  memcpy(path_data.data() + path_utf16.size(), k_path_extra, sizeof k_path_extra);
+  memcpy(path_data.data() + path_utf16.size(), PATH_EXTRA, sizeof PATH_EXTRA);
 
   // Execute one FindFirstFileW to check if the directory exists.
   const auto path = reinterpret_cast<const LPCWSTR>(path_data.data());

@@ -9,7 +9,7 @@
 #include "rx/input/context.h"
 
 #include "rx/display.h"
-#include "rx/game.h"
+#include "rx/application.h"
 
 namespace Rx {
 
@@ -34,7 +34,13 @@ struct Engine {
   // Run's one iteration of the engine loop.
   Status run();
 
+  Console::Context& console();
+  Input::Context& input();
+  Render::Frontend::Context* renderer();
+
 protected:
+  friend struct Application;
+
   Console::Context m_console;
   Input::Context m_input;
   Render::Backend::Context* m_render_backend;
@@ -48,8 +54,20 @@ protected:
   Event<void(Console::Variable<Sint32>&)>::Handle m_on_display_swap_interval_change;
   Event<void(Console::Variable<Math::Vec2i>&)>::Handle m_on_display_resolution_change;
 
-  Ptr<Game> m_game;
+  Ptr<Application> m_application;
 };
+
+inline Console::Context& Engine::console() {
+  return m_console;
+}
+
+inline Input::Context& Engine::input() {
+  return m_input;
+}
+
+inline Render::Frontend::Context* Engine::renderer() {
+  return m_render_frontend;
+}
 
 } // namespace Rx
 

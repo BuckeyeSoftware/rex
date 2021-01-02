@@ -206,15 +206,15 @@ static const constexpr auto bgra_to_rgba{rgba_to_bgra};
 
 static RX_HINT_FORCE_INLINE Size bpp_for_pixel_format(PixelFormat _format) {
   switch (_format) {
-  case PixelFormat::k_rgba_u8:
+  case PixelFormat::RGBA_U8:
     return 4;
-  case PixelFormat::k_bgra_u8:
+  case PixelFormat::BGRA_U8:
     return 4;
-  case PixelFormat::k_rgb_u8:
+  case PixelFormat::RGB_U8:
     return 3;
-  case PixelFormat::k_bgr_u8:
+  case PixelFormat::BGR_U8:
     return 3;
-  case PixelFormat::k_r_u8:
+  case PixelFormat::R_U8:
     return 1;
   }
   RX_HINT_UNREACHABLE();
@@ -235,93 +235,93 @@ Optional<LinearBuffer> convert(
   Byte *RX_HINT_RESTRICT dst = result.data();
 
   switch (_in_format) {
-  case PixelFormat::k_rgba_u8:
+  case PixelFormat::RGBA_U8:
     switch (_out_format) {
-    case PixelFormat::k_rgba_u8:
+    case PixelFormat::RGBA_U8:
       break;
-    case PixelFormat::k_bgra_u8:
+    case PixelFormat::BGRA_U8:
       rgba_to_bgra(dst, src, _samples);
       break;
-    case PixelFormat::k_rgb_u8:
+    case PixelFormat::RGB_U8:
       rgba_to_rgb(dst, src, _samples);
       break;
-    case PixelFormat::k_bgr_u8:
+    case PixelFormat::BGR_U8:
       rgba_to_bgr(dst, src, _samples);
       break;
-    case PixelFormat::k_r_u8:
+    case PixelFormat::R_U8:
       rgba_to_r(dst, src, _samples);
       break;
     }
     break;
-  case PixelFormat::k_bgra_u8:
+  case PixelFormat::BGRA_U8:
     switch (_out_format) {
-    case PixelFormat::k_rgba_u8:
+    case PixelFormat::RGBA_U8:
       bgra_to_rgba(dst, src, _samples);
       break;
-    case PixelFormat::k_bgra_u8:
+    case PixelFormat::BGRA_U8:
       break;
-    case PixelFormat::k_rgb_u8:
+    case PixelFormat::RGB_U8:
       bgra_to_rgb(dst, src, _samples);
       break;
-    case PixelFormat::k_bgr_u8:
+    case PixelFormat::BGR_U8:
       bgra_to_bgr(dst, src, _samples);
       break;
-    case PixelFormat::k_r_u8:
+    case PixelFormat::R_U8:
       bgra_to_r(dst, src, _samples);
       break;
     }
     break;
-  case PixelFormat::k_rgb_u8:
+  case PixelFormat::RGB_U8:
     switch (_out_format) {
-    case PixelFormat::k_rgba_u8:
+    case PixelFormat::RGBA_U8:
       rgb_to_rgba(dst, src, _samples);
       break;
-    case PixelFormat::k_bgra_u8:
+    case PixelFormat::BGRA_U8:
       rgb_to_bgra(dst, src, _samples);
       break;
-    case PixelFormat::k_rgb_u8:
+    case PixelFormat::RGB_U8:
       break;
-    case PixelFormat::k_bgr_u8:
+    case PixelFormat::BGR_U8:
       rgb_to_bgr(dst, src, _samples);
       break;
-    case PixelFormat::k_r_u8:
+    case PixelFormat::R_U8:
       rgb_to_r(dst, src, _samples);
       break;
     }
     break;
-  case PixelFormat::k_bgr_u8:
+  case PixelFormat::BGR_U8:
     switch (_out_format) {
-    case PixelFormat::k_rgba_u8:
+    case PixelFormat::RGBA_U8:
       bgr_to_rgba(dst, src, _samples);
       break;
-    case PixelFormat::k_bgra_u8:
+    case PixelFormat::BGRA_U8:
       bgr_to_bgra(dst, src, _samples);
       break;
-    case PixelFormat::k_rgb_u8:
+    case PixelFormat::RGB_U8:
       bgr_to_rgb(dst, src, _samples);
       break;
-    case PixelFormat::k_bgr_u8:
+    case PixelFormat::BGR_U8:
       break;
-    case PixelFormat::k_r_u8:
+    case PixelFormat::R_U8:
       bgr_to_r(dst, src, _samples);
       break;
     }
     break;
-  case PixelFormat::k_r_u8:
+  case PixelFormat::R_U8:
     switch (_out_format) {
-    case PixelFormat::k_rgba_u8:
+    case PixelFormat::RGBA_U8:
       r_to_rgba(dst, src, _samples);
       break;
-    case PixelFormat::k_bgra_u8:
+    case PixelFormat::BGRA_U8:
       r_to_bgra(dst, src, _samples);
       break;
-    case PixelFormat::k_rgb_u8:
+    case PixelFormat::RGB_U8:
       r_to_rgb(dst, src, _samples);
       break;
-    case PixelFormat::k_bgr_u8:
+    case PixelFormat::BGR_U8:
       r_to_bgr(dst, src, _samples);
       break;
-    case PixelFormat::k_r_u8:
+    case PixelFormat::R_U8:
       break;
     }
     break;

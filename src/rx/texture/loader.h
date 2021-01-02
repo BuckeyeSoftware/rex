@@ -14,11 +14,11 @@ namespace Rx {
 namespace Rx::Texture {
 
 enum class PixelFormat {
-  k_rgba_u8,
-  k_bgra_u8,
-  k_rgb_u8,
-  k_bgr_u8,
-  k_r_u8
+  RGBA_U8,
+  BGRA_U8,
+  RGB_U8,
+  BGR_U8,
+  R_U8
 };
 
 struct Loader {
@@ -83,11 +83,11 @@ inline LinearBuffer&& Loader::data() {
 inline PixelFormat Loader::format() const {
   switch (m_bpp) {
   case 4:
-    return PixelFormat::k_rgba_u8;
+    return PixelFormat::RGBA_U8;
   case 3:
-    return PixelFormat::k_rgb_u8;
+    return PixelFormat::RGB_U8;
   case 1:
-    return PixelFormat::k_r_u8;
+    return PixelFormat::R_U8;
   }
   RX_HINT_UNREACHABLE();
 }

@@ -23,8 +23,8 @@ struct TaggedPtr {
   Byte as_tag() const;
 
 private:
-  static inline constexpr auto k_tag_mask = Memory::Allocator::ALIGNMENT - 1;
-  static inline constexpr auto k_ptr_mask = ~k_tag_mask;
+  static inline constexpr auto TAG_MASK = Memory::Allocator::ALIGNMENT - 1;
+  static inline constexpr auto PTR_MASK = ~TAG_MASK;
 
   union {
     T* m_as_ptr;
@@ -34,28 +34,28 @@ private:
 
 template<typename T>
 TaggedPtr<T>::TaggedPtr(T* _ptr, Byte _tag) {
-  RX_ASSERT((reinterpret_cast<UintPtr>(_ptr) & k_tag_mask) == 0,
+  RX_ASSERT((reinterpret_cast<UintPtr>(_ptr) & TAG_MASK) == 0,
     "pointer not aligned");
-  RX_ASSERT((_tag & k_ptr_mask) == 0, "tag value too large");
+  RX_ASSERT((_tag & PTR_MASK) == 0, "tag value too large");
   m_as_ptr = _ptr;
   m_as_bits |= _tag;
 }
 
 template<typename T>
 void TaggedPtr<T>::retag(Byte _tag) {
-  RX_ASSERT((_tag & k_ptr_mask) == 0, "tag value too large");
+  RX_ASSERT((_tag & PTR_MASK) == 0, "tag value too large");
   m_as_ptr = as_ptr();
   m_as_bits |= _tag;
 }
 
 template<typename T>
 T* TaggedPtr<T>::as_ptr() const {
-  return reinterpret_cast<T*>(m_as_bits & k_ptr_mask);
+  return reinterpret_cast<T*>(m_as_bits & PTR_MASK);
 }
 
 template<typename T>
 Byte TaggedPtr<T>::as_tag() const {
-  return m_as_bits & k_tag_mask;
+  return m_as_bits & TAG_MASK;
 }
 
 } // namespace Rx

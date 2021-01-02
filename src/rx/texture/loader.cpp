@@ -25,17 +25,17 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
 
   int want_channels{0};
   switch (_want_format) {
-  case PixelFormat::k_r_u8:
+  case PixelFormat::R_U8:
     want_channels = 1;
     break;
-  case PixelFormat::k_rgb_u8:
+  case PixelFormat::RGB_U8:
     [[fallthrough]];
-  case PixelFormat::k_bgr_u8:
+  case PixelFormat::BGR_U8:
     want_channels = 3;
     break;
-  case PixelFormat::k_rgba_u8:
+  case PixelFormat::RGBA_U8:
     [[fallthrough]];
-  case PixelFormat::k_bgra_u8:
+  case PixelFormat::BGRA_U8:
     want_channels = 4;
     break;
   }
@@ -119,8 +119,8 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
   // When the requested pixel format is a BGR format go ahead and inplace
   // swap the pixels. We cannot use convert for this because we want this
   // to behave inplace.
-  if (_want_format == PixelFormat::k_bgr_u8
-    || _want_format == PixelFormat::k_bgra_u8)
+  if (_want_format == PixelFormat::BGR_U8
+    || _want_format == PixelFormat::BGRA_U8)
   {
     const Size samples =
       m_dimensions.area() * static_cast<Size>(channels);

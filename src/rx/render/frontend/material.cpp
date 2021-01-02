@@ -107,19 +107,19 @@ bool Material::load(Rx::Material::Loader&& loader_) {
       m_frontend->create_texture2D(RX_RENDER_TAG("material"));
 
     switch (chain.format()) {
-    case Rx::Texture::PixelFormat::k_rgba_u8:
+    case Rx::Texture::PixelFormat::RGBA_U8:
       texture->record_format(Texture::DataFormat::k_rgba_u8);
       break;
-    case Rx::Texture::PixelFormat::k_bgra_u8:
+    case Rx::Texture::PixelFormat::BGRA_U8:
       texture->record_format(Texture::DataFormat::k_bgra_u8);
       break;
-    case Rx::Texture::PixelFormat::k_rgb_u8:
+    case Rx::Texture::PixelFormat::RGB_U8:
       texture->record_format(Texture::DataFormat::k_rgb_u8);
       break;
-    case Rx::Texture::PixelFormat::k_bgr_u8:
+    case Rx::Texture::PixelFormat::BGR_U8:
       texture->record_format(Texture::DataFormat::k_bgr_u8);
       break;
-    case Rx::Texture::PixelFormat::k_r_u8:
+    case Rx::Texture::PixelFormat::R_U8:
       texture->record_format(Texture::DataFormat::k_r_u8);
       break;
     }
