@@ -27,11 +27,11 @@ Since everything should go through the polymorphic allocators, all forms of `new
 The `Array` container exists specifically to do "array constructions" through an allocator, as well as provide a less ambigious way to do initializer lists for things like `Vector` and `Map`.
 
 ## No runtime support
-The C++ runtime support library is not used. This means features such as: `new`, `delete`, exceptions, and RTTI does not exist. Instead a very minimal, stublet implementation exists to call `abort` if it encounters such things being used.
+The C++ runtime support library is not used. This means features such as: `new`, `delete`, exceptions, and RTTI does not exist. Instead a very minimal, stublet implementation exists to call `Rx::abort` if it encounters such things being used.
 
 Similarly, Rex does not support concurrent initialization of static globals, instead `Rx::Global` should be used. This interface provides a much stronger set of features for controlling global initialization too.
 
-Pure virtual function calls just forward to `abort`.
+Pure virtual function calls just forward to `Rx::abort`.
 
 ## Performance
 The core library was designed with performance in mind for all three places that performance matters:
@@ -88,9 +88,11 @@ There's a few algorithm implementations:
 
 ## Concurrency
 
+None of the concurrency primitives are safe out-of-process.
+
 The following concurrency types are implemented:
   * `Atomic` Exact implementation of `std::atomic<T>`.
-  * `ConditionVariable`.
+  * `ConditionVariable`. Standard condition variable.
   * `Mutex` A non-recursive mutex.
   * `RecursiveMutex` A recursive mutex.
   * `ScopeLock` A generic locked scope (works with any `T` that implements `lock` and `unlock` functions.)
