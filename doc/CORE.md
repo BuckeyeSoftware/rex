@@ -29,7 +29,7 @@ The `Array` container exists specifically to do "array constructions" through an
 ## No runtime support
 The C++ runtime support library is not used. This means features such as: `new`, `delete`, exceptions, and RTTI does not exist. Instead a very minimal, stublet implementation exists to call `abort` if it encounters such things being used.
 
-Similarly, Rex does not support concurrent initialization of static globals, instead `rx::Global` should be used. This interface provides a much stronger set of features for controlling global initialization too.
+Similarly, Rex does not support concurrent initialization of static globals, instead `Rx::Global` should be used. This interface provides a much stronger set of features for controlling global initialization too.
 
 Pure virtual function calls just forward to `abort`.
 
@@ -92,6 +92,7 @@ The following concurrency types are implemented:
   * `Atomic` Exact implementation of `std::atomic<T>`.
   * `ConditionVariable`.
   * `Mutex` A non-recursive mutex.
+  * `RecursiveMutex` A recursive mutex.
   * `ScopeLock` A generic locked scope (works with any `T` that implements `lock` and `unlock` functions.)
   * `ScopeUnlock` A generic unlocked scope (works with any `T` that implements `lock` and `unlock` functions.)
   * `SpinLock` A non-recursive spin-lock.
@@ -118,10 +119,12 @@ Many hints for the compiler:
   * `assume_aligned` Hint that a given pointer is aligned.
   * `empty_bases` Hint that base classes are empty to get EBO.
   * `force_inline` Used to force a function to inline.
+  * `format` Used to indicate function takes format string-literal.
   * `likely` To mark a branch as likely happening for better scheduling.
   * `may_alias` Disable alias-analysis to aovid strict-aliasing optimizations from breaking code that requires undefined behavior.
   * `no_inline` Used to force a function to __not__ inline.
   * `restrict` Indicate that local variables to a function do not overlap in memory to avoid spills and loads.
+  * `thread` Thread sanitizer annotations.
   * `unlikely` To mark a branch as being unlikely for better scheduling.
   * `unreachable` To mark an area of code as being unreachable.
 
@@ -151,15 +154,19 @@ The following math kernel functions have been implemented:
 Everything that allocates memory in the core library, including the containers, depend on a polymorphic allocator interface provided by `allocator`. As a result, many types of allocators can be used virtually anywhere.
 
 The following allocator types exist:
-  * `ElectricFenceAllocator`
-  * `BumpPointAllocator`
-  * `HeapAllocator`
-  * `SingleShotAllocator`
-  * `StatsAllocator`
-  * `HeapAllocator`
+  * `BuddyAllocator` Implementation of a Buddy allocator.
+  * `BumpPointAllocator` Linear burn allocator.
+  * `ElectricFenceAllocator` Debug allocator that traps over-writes and under-reads in an electric fence.
+  * `HeapAllocator` The default heap allocator.
+  * `SingleShotAllocator` One time use allocator.
+  * `StatsAllocator` Wraps an existing allocator to provide statistics about it.
+  * `SystemAllocato` The default system allocator.
 
 Some additional, low-level memory types exist as well such as:
-  * `UnintializedStorage`
+  * `Allocator` The allocator interface allocators must implement.
+  * `Aggregate` Perform an aggregate allocation of different types in one allocation instead of multiple.
+  * `UnintializedStorage` Storage with specific size and alignment that can be used in constexpr contexts while staying uninitialized.
+  * `VMA` Virtual memory allocator interfaces.
 
 ## PRNG
 
@@ -195,38 +202,35 @@ Unlike the standard library, the core library in Rex tries to keep each type tra
 There's also a few additional traits.
 
 The following traits exist:
-  * `add_const`
-  * `add_cv`
-  * `add_lvalue_reference`
   * `add_pointer`
   * `add_rvalue_reference`
-  * `add_volatile`
   * `conditional`
   * `decay`
   * `enable_if`
   * `is_array`
   * `is_assignable`
   * `is_callable`
-  * `is_floating_point`
+  * `is_enum`
   * `is_function`
   * `is_integral`
   * `is_lvalue_reference`
-  * `is_pointer`
-  * `is_reference`
   * `is_referenceable`
+  * `is_pointer`
   * `is_restrict`
+  * `is_reference`
   * `is_rvalue_reference`
   * `is_same`
+  * `is_signed`
   * `is_trivially_copyable`
   * `is_trivially_destructible`
-  * `is_void`
-  * `remove_all_extents`
+  * `is_unsigned`
   * `remove_const`
   * `remove_cv`
   * `remove_cvref`
   * `remove_extent`
   * `remove_pointer`
   * `remove_reference`
+  * `remove_volatile`
   * `return_type`
   * `type_identity`
   * `underlying_type`
@@ -244,6 +248,7 @@ The following functions exist:
   * `construct` A more powerful, placement `new` wrapper.
   * `declval` Exact implementation of `std::declval`.
   * `destruct` A more powerful way to call the destructor.
+  * `exchange` Exact implementation of `std::exchange`.
   * `forward` Exact implementation of `std::forward`.
   * `move` Exact implementation of `std::move`.
   * `swap` Exact implementation of `std::swap`.
@@ -254,27 +259,30 @@ The following types exist:
   * `Array` Similar to `std::array`. 1D only.
   * `Bitset` A fixed-capacity bitset.
   * `DynamicPool` A dynamic-capacity pool.
-  * `StaticPool` A fixed-capacity pool.
-  * `IntrusiveList` An intrusive doubly-linked list.
-  * `IntrusiveCompressedList` A space-optimized intrusive doubly-linked list.
   * `Function` A fast delegate that is similar to `std::function`.
-  * `DeferredFunction` A fast delegate that gets called when the function goes out of scope.
   * `Global` Global variables are wrapped with this type.
+  * `IntrusiveCompressedList` A space-optimized intrusive doubly-linked list.
+  * `IntrusiveList` An intrusive doubly-linked list.
+  * `LinearBuffer` A linear buffer with small size buffer optimization.
   * `Map` An unordered flat map using Robin-hood hashing.
-  * `Set` An unordered flat set using Robin-hood hashing.
   * `Optional` Optional type implementation.
-  * `String` A UTF-8-safe string and a UTF16 conversion interface for Windows.
-  * `WideString` A UTF-16 safe string used to round-trip convert to `String`.
+  * `Ptr` A unique pointer implementation.
+  * `Set` An unordered flat set using Robin-hood hashing.
+  * `StaticPool` A fixed-capacity pool.
   * `StringTable` A UTF-8-safe string table.
+  * `String` A UTF-8-safe string and a UTF16 conversion interface for Windows with small string optimization.
+  * `TaggedPtr` A tagged pointer for space saving optimizations.
+  * `WideString` A UTF-16 safe string used to round-trip convert to `String`.
   * `Vector` A dynamic resizing array.
 
 ## Misc
 
 The following types exist:
   * `Event` An event system with signal and slots. Slot adds a delegate, signal calls all delegates.
-  * `Profiler` A CPU and GPU profiler framework.
-  * `Stream` Stream interface including stream conversion functions.
   * `JSON` A JSON5 reader and parser into a tree-like structure.
+  * `Profiler` A CPU and GPU profiler framework.
+  * `SourceLocation` Type that describes file, line, and function where `RX_SOURCE_LOCATION` is used.
+  * `Stream` Stream interface including stream conversion functions.
 
 Other things not easily documented:
   * `abort` Take down the runtime safely while logging an abortion message.
@@ -283,4 +291,6 @@ Other things not easily documented:
   * `format` Type safe formatting of types for printing.
   * `hash` Hash functions for various types and generalized hash combiner.
   * `log` Generalized, thread-safe, concurrent logging framework.
+  * `markers` Helper macros for marking types as no-copy, no-move, etc.
+  * `pp` Preprocessor macros for standard token manipulation.
   * `types` Sized types like `{U,S}int{8,16,32,64}`
