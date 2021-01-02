@@ -10,7 +10,7 @@
 
 namespace Rx {
 struct Stream;
-} // namespace rx
+} // namespace Rx
 
 namespace Rx::Model {
 

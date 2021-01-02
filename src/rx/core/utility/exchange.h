@@ -12,6 +12,6 @@ T exchange(T& object_, U&& _new_value) {
   return old_value;
 }
 
-} // namespace rx::utility
+} // namespace Rx::Utility
 
 #endif // RX_CORE_UTILITY_EXCHANGE_H

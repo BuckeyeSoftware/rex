@@ -52,4 +52,4 @@ Optional<Size> StringTable::insert(const String& _string) {
   return insert(_string.data(), _string.size());
 }
 
-} // namespace rx
+} // namespace Rx

@@ -236,6 +236,6 @@ inline const T* IntrusiveList::Enumerate<T>::data() const {
   return m_this->data<T>(m_link);
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_INTRUSIVE_LIST_H

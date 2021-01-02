@@ -136,4 +136,4 @@ bool Encoder::finalize() {
   return write_header();
 }
 
-} // namespace rx::serialize
+} // namespace Rx::serialize

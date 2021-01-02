@@ -127,6 +127,6 @@ inline constexpr bool Stream::is_eos() const {
 RX_API Optional<LinearBuffer> read_binary_stream(Memory::Allocator& _allocator, Stream* _stream);
 RX_API Optional<LinearBuffer> read_text_stream(Memory::Allocator& _allocator, Stream* _stream);
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_STREAM_H

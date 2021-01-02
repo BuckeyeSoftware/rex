@@ -63,6 +63,6 @@ inline constexpr Pair<T1, T2>::Pair(Pair<U1, U2>&& pair_)
 template<typename T1, typename T2>
 Pair(T1, T2) -> Pair<T1, T2>;
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_UTILITY_PAIR_H

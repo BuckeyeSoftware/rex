@@ -10,8 +10,10 @@
 #include "rx/core/string_table.h"
 
 namespace Rx {
+
 struct Stream;
-} // namespace rx
+
+} // namespace Rx
 
 namespace Rx::serialize {
 
@@ -113,6 +115,6 @@ inline bool Encoder::error(const char* _format, Ts&&... _arguments) {
   return false;
 }
 
-} // namespace rx::serialzie
+} // namespace Rx::serialzie
 
 #endif // RX_CORE_SERIALIZE_ENCODER_H

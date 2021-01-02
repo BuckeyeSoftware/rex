@@ -47,6 +47,6 @@ inline int SourceLocation::line() const {
   return m_line;
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_SOURCE_LOCATION_H

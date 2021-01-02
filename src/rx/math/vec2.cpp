@@ -16,4 +16,4 @@ const char* FormatNormalize<Math::Vec2i>::operator()(const Math::Vec2i& value) {
   return scratch;
 }
 
-} // namespace rx
+} // namespace Rx

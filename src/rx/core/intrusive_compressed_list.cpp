@@ -31,4 +31,4 @@ void IntrusiveCompressedList::Iterator::prev() {
   next();
 }
 
-} // namespace rx
+} // namespace Rx

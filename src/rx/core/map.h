@@ -612,6 +612,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Map<K, V>::allocator() const {
   return *m_allocator;
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_MAP

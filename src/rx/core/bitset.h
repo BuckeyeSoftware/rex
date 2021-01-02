@@ -164,6 +164,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Bitset::allocator() const {
   return *m_allocator;
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_BITSET_H

@@ -91,4 +91,4 @@ bool Buffer::read(Uint64 _max_bytes) {
   return m_length != 0;
 }
 
-} // namespace rx::serialize
+} // namespace Rx::serialize

@@ -203,4 +203,4 @@ bool Decoder::read_strings() {
   return true;
 }
 
-} // namespace rx::serialize
+} // namespace Rx::serialize

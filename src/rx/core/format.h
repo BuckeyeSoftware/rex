@@ -61,6 +61,6 @@ inline Size format_buffer(char* buffer_, Size _length, const char* _format,
     FormatNormalize<traits::remove_cvref<Ts>>{}(Utility::forward<Ts>(_arguments))...);
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_FORMAT_H

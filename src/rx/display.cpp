@@ -90,4 +90,4 @@ Vector<Display> Display::displays(Memory::Allocator& _allocator) {
   return displays;
 }
 
-} // namespace rx
+} // namespace Rx

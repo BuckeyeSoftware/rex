@@ -13,4 +13,4 @@ void copy(void *RX_HINT_RESTRICT dst_, const void* RX_HINT_RESTRICT _src, Size _
   memcpy(dst_, _src, _size);
 }
 
-} // namespace rx
+} // namespace Rx

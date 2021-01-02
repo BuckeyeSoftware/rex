@@ -194,6 +194,6 @@ inline constexpr Size hash_combine(Size _hash1, Size _hash2) {
   return _hash1 ^ (_hash2 + 0x9E3779B9 + (_hash1 << 6) + (_hash1 >> 2));
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_HASH_H

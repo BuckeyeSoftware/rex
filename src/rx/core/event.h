@@ -154,6 +154,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Event<R(Ts...)>::allocator() c
   return m_delegates.allocator();
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_EVENT_H

@@ -65,6 +65,6 @@ inline constexpr Size Array<T[E]>::size() const {
   return E;
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_ARRAY_H

@@ -183,6 +183,6 @@ inline Ptr<T> make_ptr(Memory::Allocator& _allocator, Ts&&... _arguments) {
   return {_allocator, _allocator.create<T>(Utility::forward<Ts>(_arguments)...)};
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_PTR_H

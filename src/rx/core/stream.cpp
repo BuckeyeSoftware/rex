@@ -259,4 +259,4 @@ Optional<LinearBuffer> read_text_stream(Memory::Allocator& _allocator, Stream* _
   return nullopt;
 }
 
-} // namespace rx
+} // namespace Rx

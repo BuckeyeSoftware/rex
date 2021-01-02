@@ -748,4 +748,4 @@ WideString::~WideString() {
   allocator().deallocate(m_data);
 }
 
-} // namespace rx
+} // namespace Rx

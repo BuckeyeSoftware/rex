@@ -20,6 +20,6 @@ void abort(const char* _format, Ts&&... _arguments) {
   }
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_ABORT_H

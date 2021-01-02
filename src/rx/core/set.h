@@ -493,6 +493,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Set<K>::allocator() const {
   return *m_allocator;
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_SET

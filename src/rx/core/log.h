@@ -173,6 +173,6 @@ inline Optional<Log::FlushEvent::Handle> Log::on_flush(FlushEvent::Delegate&& ca
   static ::Rx::Global<::Rx::Log> _identifier{"loggers", (_name), (_name), \
     ::Rx::SourceLocation{__FILE__, "(global constructor)", __LINE__}}
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_LOG_H

@@ -216,7 +216,7 @@ inline void Profiler::end_gpu_sample(const GPUSample* _sample) {
   }
 }
 
-} // namespace rx
+} // namespace Rx
 
 #define RX_PROFILE_CPU(tag) \
   const ::Rx::Profiler::CPUSample RX_PP_UNIQUE(rx_profile){RX_SOURCE_LOCATION, (tag)}

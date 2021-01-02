@@ -399,6 +399,6 @@ namespace Rx {
       return hash_combine(hash_combine(x, y), z);
     }
   };
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_MATH_VEC3_H

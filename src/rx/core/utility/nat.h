@@ -11,6 +11,6 @@ namespace Rx::Utility {
 // uninitialized case initializes an embedded NAT.
 struct Nat { };
 
-} // namespace rx::utility
+} // namespace Rx::Utility
 
 #endif // RX_CORE_UTILITY_NAT_H

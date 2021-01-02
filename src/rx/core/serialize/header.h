@@ -26,6 +26,6 @@ inline constexpr Header::Header()
 {
 }
 
-} // namespace rx::serialize
+} // namespace Rx::serialize
 
 #endif // RX_CORE_SERIALIZE_HEADER_H

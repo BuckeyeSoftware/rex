@@ -49,4 +49,4 @@ void StaticPool::deallocate(Size _index) {
   m_bitset.clear(_index);
 }
 
-} // namespace rx
+} // namespace Rx

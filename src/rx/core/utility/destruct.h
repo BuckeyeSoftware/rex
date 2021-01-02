@@ -9,6 +9,6 @@ RX_HINT_FORCE_INLINE void destruct(void* _data) {
   reinterpret_cast<T*>(_data)->~T();
 }
 
-} // namespace rx::utility
+} // namespace Rx::Utility
 
 #endif // RX_CORE_UTILITY_DESTRUCT_H

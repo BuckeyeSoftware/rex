@@ -17,6 +17,6 @@ RX_HINT_FORCE_INLINE T* construct(void* _data, Ts&&... _args) {
   return new (_data, RxPlacementNewTag{}) T{Utility::forward<Ts>(_args)...};
 }
 
-} // namespace rx::utility
+} // namespace Rx::Utility
 
 #endif // RX_CORE_UTILITY_CONSTRUCT_H

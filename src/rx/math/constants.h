@@ -23,6 +23,6 @@ inline constexpr Range<T>::Range(const T& _min, const T& _max)
 {
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_MATH_CONSTANTS_H

@@ -108,6 +108,6 @@ RX_HINT_FORCE_INLINE Size DynamicPool::size() const {
   return m_pools.size();
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_DYNAMIC_POOL_H

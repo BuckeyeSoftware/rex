@@ -132,6 +132,6 @@ inline bool StaticPool::owns(const Byte* _data) const {
   return _data >= m_data && _data <= m_data + m_object_size * (m_capacity - 1);
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_POOL_H

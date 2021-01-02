@@ -104,6 +104,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Display::allocator() const {
   return *m_allocator;
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_DISPLAY_H

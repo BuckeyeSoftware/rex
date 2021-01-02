@@ -146,4 +146,4 @@ void Globals::link(GlobalGroup* _group) {
   s_group_list.push(&_group->m_link);
 }
 
-} // namespace rx
+} // namespace Rx

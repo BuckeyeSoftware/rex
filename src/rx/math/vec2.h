@@ -318,6 +318,6 @@ namespace Rx {
       return hash_combine(x, y);
     }
   };
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_MATH_VEC2_H

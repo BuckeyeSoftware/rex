@@ -97,4 +97,4 @@ Optional<Size> Bitset::find_first_set() const {
   return nullopt;
 }
 
-} // namespace rx
+} // namespace Rx

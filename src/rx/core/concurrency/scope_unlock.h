@@ -1,7 +1,7 @@
 #ifndef RX_CORE_CONCURRENCY_SCOPE_UNLOCK_H
 #define RX_CORE_CONCURRENCY_SCOPE_UNLOCK_H
 
-namespace rx::concurrency {
+namespace Rx::Concurrency {
 
 // generic scoped unlock
 template<typename T>

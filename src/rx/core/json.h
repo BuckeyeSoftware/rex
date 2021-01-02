@@ -288,6 +288,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& JSON::allocator() const {
   return m_shared->m_allocator;
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_JSON_H

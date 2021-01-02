@@ -315,4 +315,4 @@ bool Log::unsubscribe(Stream* _stream) {
   return Logger::instance().unsubscribe(_stream);
 }
 
-} // namespace rx
+} // namespace Rx

@@ -37,6 +37,6 @@ private:
   Size m_length;
 };
 
-} // namespace rx::serialize
+} // namespace Rx::serialize
 
 #endif // RX_CORE_SERIALIZE_BUFFER_H

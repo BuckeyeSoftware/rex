@@ -19,4 +19,4 @@ void assert_message(const char* _expression,
   abort(_truncated ? "%s... [truncated]" : "%s", _message);
 }
 
-} // namespace rx
+} // namespace Rx

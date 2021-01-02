@@ -85,4 +85,4 @@ IntrusiveList::Node* IntrusiveList::pop_back() {
   return nullptr;
 }
 
-} // namespace rx
+} // namespace Rx

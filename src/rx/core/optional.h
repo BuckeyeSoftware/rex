@@ -192,6 +192,6 @@ inline const T* Optional<T>::operator->() const {
   return m_data.data();
 }
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_CORE_OPTIONAL_H

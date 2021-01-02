@@ -38,4 +38,4 @@ bool DynamicPool::add_pool() {
   return pool ? m_pools.push_back(Utility::move(pool)) : false;
 }
 
-} // namespace rx
+} // namespace Rx

@@ -18,6 +18,6 @@ struct Game {
   virtual void on_resize(const Math::Vec2z& _resolution) = 0;
 };
 
-} // namespace rx
+} // namespace Rx
 
 #endif // RX_GAME_H

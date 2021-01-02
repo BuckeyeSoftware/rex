@@ -55,4 +55,4 @@ void abort_message(const char* _message, bool _truncated) {
 #endif
 }
 
-} // namespace rx
+} // namespace Rx

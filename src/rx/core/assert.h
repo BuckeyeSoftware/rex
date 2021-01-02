@@ -25,7 +25,7 @@ void assert_fail(const char* _expression,
   }
 }
 
-} // namespace rx
+} // namespace Rx
 
 #if defined(RX_DEBUG)
 #define RX_ASSERT(_condition, ...) \

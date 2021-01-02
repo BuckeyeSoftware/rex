@@ -11,6 +11,6 @@ inline void swap(T& lhs_, T& rhs_) {
   rhs_ = Utility::move(tmp);
 }
 
-} // namespace rx::utility
+} // namespace Rx::Utility
 
 #endif // RX_CORE_UTILITY_SWAP_H

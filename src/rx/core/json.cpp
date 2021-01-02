@@ -195,7 +195,7 @@ String JSON::as_string_with_allocator(Memory::Allocator& _allocator) const {
 }
 
 Size JSON::size() const {
-  RX_ASSERT(is_array() || is_object(), "not an indexable Type");
+  RX_ASSERT(is_array() || is_object(), "not an indexable type");
   switch (m_value->type) {
   case json_type_array:
     return reinterpret_cast<struct json_array_s*>(m_value->payload)->length;
@@ -205,4 +205,4 @@ Size JSON::size() const {
   return 0;
 }
 
-} // namespace rx
+} // namespace Rx
