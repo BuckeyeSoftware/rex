@@ -10,7 +10,12 @@ namespace Rx::Render::Frontend {
 
 struct Context;
 
-struct Buffer : Resource {
+struct Buffer
+  : Resource
+{
+  RX_MARK_NO_COPY(Buffer);
+  RX_MARK_NO_MOVE(Buffer);
+
   struct Attribute {
     enum class Type : Uint8 {
       // Scalars

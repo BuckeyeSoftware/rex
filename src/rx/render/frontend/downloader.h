@@ -7,6 +7,9 @@ namespace Rx::Render::Frontend {
 struct Downloader
   : Resource
 {
+  RX_MARK_NO_COPY(Downloader);
+  RX_MARK_NO_MOVE(Downloader);
+
   Downloader(Context* _context);
 
   void record_format(Texture2D::DataFormat _data_format);

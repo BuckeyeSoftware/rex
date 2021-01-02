@@ -10,7 +10,12 @@ namespace Rx::Render::Frontend {
 struct Context;
 struct Buffers;
 
-struct Target : Resource {
+struct Target
+  : Resource
+{
+  RX_MARK_NO_COPY(Target);
+  RX_MARK_NO_MOVE(Target);
+
   Target(Context* _frontend);
 
   struct Attachment {

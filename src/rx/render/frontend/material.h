@@ -7,8 +7,7 @@ namespace Rx::Render::Frontend {
 struct Texture2D;
 struct Context;
 
-struct Material
-{
+struct Material {
   RX_MARK_NO_COPY(Material);
 
   Material(Context* _frontend);

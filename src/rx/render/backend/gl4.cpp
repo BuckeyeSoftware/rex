@@ -1266,7 +1266,7 @@ void GL4::process(Byte* _command) {
           const auto render_program{resource->as_program};
           const auto program{reinterpret_cast<detail_gl4::program*>(render_program + 1)};
 
-          const auto shaders{render_program->shaders()};
+          const auto& shaders = render_program->shaders();
 
           Vector<GLuint> shader_handles;
           shaders.each_fwd([&](const Frontend::Shader& _shader) {

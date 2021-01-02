@@ -436,7 +436,7 @@ bool Vector<T>::push_back(T&& value_) {
   }
 
   // Move construct object.
-  Utility::construct<T>(m_data + m_size, Utility::forward<T>(value_));
+  Utility::construct<T>(m_data + m_size, Utility::move(value_));
 
   m_size++;
   return true;

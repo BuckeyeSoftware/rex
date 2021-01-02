@@ -18,6 +18,9 @@ struct Context;
 struct Texture
   : Resource
 {
+  RX_MARK_NO_COPY(Texture);
+  RX_MARK_NO_MOVE(Texture);
+
   Texture(Context* _frontend, Resource::Type _type);
 
   template<typename T>
