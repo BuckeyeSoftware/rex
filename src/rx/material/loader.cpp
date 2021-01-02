@@ -180,8 +180,7 @@ bool Loader::parse(const JSON& _definition) {
       return error("expected Array[Object] for 'textures'");
     }
 
-    m_textures.reserve(textures.size());
-    if (!parse_textures(textures)) {
+    if (!m_textures.reserve(textures.size()) || !parse_textures(textures)) {
       return false;
     }
   }

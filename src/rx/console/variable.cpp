@@ -31,9 +31,12 @@ const char* VariableType_as_string(VariableType _type) {
   RX_HINT_UNREACHABLE();
 }
 
-static String escape(const String& _contents) {
+static Optional<String> escape(const String& _contents) {
   String result{_contents.allocator()};
-  result.reserve(_contents.size() * 4);
+  if (!result.reserve(_contents.size() * 4)) {
+    return nullopt;
+  }
+
   for (Size i{0}; i < _contents.size(); i++) {
     switch (_contents[i]) {
     case '"':
@@ -46,6 +49,7 @@ static String escape(const String& _contents) {
       break;
     }
   }
+
   return result;
 };
 
@@ -99,7 +103,7 @@ String VariableReference::print_current() const {
   case VariableType::BOOLEAN:
     return cast<Bool>()->get() ? "true" : "false";
   case VariableType::STRING:
-    return String::format("\"%s\"", escape(cast<String>()->get()));
+    return String::format("\"%s\"", *escape(cast<String>()->get()));
   case VariableType::INT:
     return String::format("%d", cast<Sint32>()->get());
   case VariableType::FLOAT:

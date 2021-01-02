@@ -366,51 +366,6 @@ String String::strip(const char* _set) const {
   return {allocator(), beg, end + 1};
 }
 
-Vector<String> String::split(Memory::Allocator& _allocator, int _token, Size _count) const {
-  bool quoted{false};
-  bool limit{_count > 0};
-  Vector<String> result{_allocator};
-
-  // When there is a limit we can reserve the storage upfront.
-  if (limit) {
-    result.reserve(_count);
-  }
-
-  result.emplace_back(_allocator, "");
-  _count--;
-
-  for (const char* ch{m_data}; *ch; ch++) {
-    // Handle escapes of quoted strings.
-    if (*ch == '\\' && (ch[1] == '\\' || ch[1] == '\"')) {
-      if (ch[1] == '\\') {
-        result.last() += "\\";
-      }
-
-      if (ch[1] == '\"') {
-        result.last() += "\"";
-      }
-
-      ch += 2;
-      continue;
-    }
-
-    // Handle quoted strings.
-    if (_count && *ch == '\"') {
-      quoted = !quoted;
-      continue;
-    }
-
-    if (*ch == _token && !quoted && (!limit || _count)) {
-      result.emplace_back(_allocator, "");
-      _count--;
-    } else {
-      result.last() += *ch;
-    }
-  }
-
-  return result;
-}
-
 String String::substring(Size _offset, Size _length) const {
   const char* begin = m_data + _offset;
   RX_ASSERT(begin < m_data + size(), "out of bounds");

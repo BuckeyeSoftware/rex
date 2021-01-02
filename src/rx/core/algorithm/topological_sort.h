@@ -28,7 +28,7 @@ struct TopologicalSort {
   bool add(const K& _key);
   bool add(const K& _key, const K& _dependency);
 
-  Result sort();
+  Optional<Result> sort();
 
   void clear();
 
@@ -109,7 +109,7 @@ inline bool TopologicalSort<K>::add(const K& _key, const K& _dependency) {
 }
 
 template<typename K>
-inline typename TopologicalSort<K>::Result TopologicalSort<K>::sort() {
+inline Optional<typename TopologicalSort<K>::Result> TopologicalSort<K>::sort() {
   // Make a copy of the map because the sorting is destructive.
   auto map = m_map;
 
@@ -117,30 +117,45 @@ inline typename TopologicalSort<K>::Result TopologicalSort<K>::sort() {
   Vector<K> cycled{allocator()};
 
   // Each key that has no dependencies can be put in right away.
-  map.each_pair([&](const K& _key, const Relations& _relations) {
+  auto try_put_key = map.each_pair([&](const K& _key, const Relations& _relations) {
     if (!_relations.dependencies) {
-      sorted.push_back(_key);
+      return sorted.push_back(_key);
     }
+    return true;
   });
+
+  if (!try_put_key) {
+    return nullopt;
+  }
 
   // Check dependents of the ones with no dependencies and store for each
   // resolved dependency.
-  sorted.each_fwd([&](const K& _root_key) {
+  auto try_put_dependents = sorted.each_fwd([&](const K& _root_key) {
     map.find(_root_key)->dependents.each([&](const K& _key) {
       if (!--map.find(_key)->dependencies) {
-        sorted.push_back(_key);
+        return sorted.push_back(_key);
       }
+      return true;
     });
   });
 
+  if (!try_put_dependents) {
+    return nullopt;
+  }
+
   // When there's remaining dependencies of a relation then we've formed a cycle.
-  map.each_pair([&](const K& _key, const Relations& _relations) {
+  auto try_put_relations = map.each_pair([&](const K& _key, const Relations& _relations) {
     if (_relations.dependencies) {
-      cycled.push_back(_key);
+      return cycled.push_back(_key);
     }
+    return true;
   });
 
-  return {Utility::move(sorted), Utility::move(cycled)};
+  if (!try_put_relations) {
+    return nullopt;
+  }
+
+  return Result{Utility::move(sorted), Utility::move(cycled)};
 }
 
 template<typename T>

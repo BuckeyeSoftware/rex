@@ -82,10 +82,6 @@ struct RX_API String {
   // returns copy of string with leading and trailing characters in set removed
   String strip(const char* _set) const;
 
-  // split string by |token| up to |count| times, use |count| of zero for no limit
-  Vector<String> split(Memory::Allocator& _allocator, int _ch, Size _count = 0) const;
-  Vector<String> split(int _ch, Size _count = 0) const;
-
   // take substring from |offset| of |length|, use |length| of zero for whole string
   String substring(Size _offset, Size _length = 0) const;
 
@@ -289,10 +285,6 @@ inline String& String::append(char ch) {
 
 inline bool String::insert_at(Size _position, const String& _contents) {
   return insert_at(_position, _contents.data(), _contents.size());
-}
-
-inline Vector<String> String::split(int _ch, Size _count) const {
-  return split(allocator(), _ch, _count);
 }
 
 inline char& String::operator[](Size index) {

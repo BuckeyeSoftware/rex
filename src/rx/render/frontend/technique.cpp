@@ -1029,35 +1029,43 @@ bool Technique::parse_specialization(const JSON& _specialization,
 }
 
 bool Technique::resolve_dependencies(const Map<String, Module>& _modules) {
+  auto& allocator = m_frontend->allocator();
+
   // For every shader in technique.
   return m_shader_definitions.each_fwd([&](ShaderDefinition& _shader) {
-    Algorithm::TopologicalSort<String> sorter;
-    Set<String> visited;
+    Algorithm::TopologicalSort<String> sorter{allocator};
+    Set<String> visited{allocator};
 
     // For every dependency in the shader.
-    const bool result{_shader.dependencies.each_fwd([&](const String& _dependency) {
-      if (auto find{_modules.find(_dependency)}) {
+    const bool result = _shader.dependencies.each_fwd([&](const String& _dependency) {
+      if (auto find = _modules.find(_dependency)) {
         return resolve_module_dependencies(_modules, *find, visited, sorter);
       }
       return false;
-    })};
+    });
 
     if (!result) {
       return error("could not satisfy all dependencies");
     }
 
-    const auto& dependencies{sorter.sort()};
+    auto dependencies = sorter.sort();
+    if (!dependencies) {
+      return error("out of memory");
+    }
+
     // When cycles are formed in the resolution we cannot satisfy.
-    if (dependencies.cycled.size()) {
-      dependencies.cycled.each_fwd([&](const String& _module) {
-        error("dependency '%s' forms a cycle", _module);
+    if (dependencies->cycled.size()) {
+      auto has_cycles = !dependencies->cycled.each_fwd([&](const String& _module) {
+        return error("dependency '%s' forms a cycle", _module);
       });
-      return false;
+      if (has_cycles) {
+        return false;
+      }
     }
 
     // Fill out the source with all the modules in sorted order.
-    String source;
-    if (dependencies.sorted.size()) {
+    String source{allocator};
+    if (dependencies->sorted.size()) {
       const char* shader_type{""};
       switch (_shader.kind) {
       case Shader::Type::k_fragment:
@@ -1069,11 +1077,13 @@ bool Technique::resolve_dependencies(const Map<String, Module>& _modules) {
       }
 
       logger->verbose("'%s': %s shader has %zu dependencies",
-        m_name, shader_type, dependencies.sorted.size());
+        m_name, shader_type, dependencies->sorted.size());
 
-      dependencies.sorted.each_fwd([&](const String& _module) {
-        const auto find{_modules.find(_module)};
-        RX_ASSERT(find, "module '%s' not found", _module.data());
+      auto append_module = dependencies->sorted.each_fwd([&](const String& _module) {
+        const auto find = _modules.find(_module);
+        if (!find) {
+          return error("module '%s' not found", _module);
+        }
 
         logger->verbose("'%s': %s shader requires module '%s'",
           m_name, shader_type, _module);
@@ -1082,7 +1092,14 @@ bool Technique::resolve_dependencies(const Map<String, Module>& _modules) {
         source.append("// {\n");
         source.append(find->source());
         source.append("// }\n");
+
+        return true;
       });
+
+      if (!append_module) {
+        return false;
+      }
+
       source.append(_shader.source);
 
       // Replace the shader source with the new injected modules
