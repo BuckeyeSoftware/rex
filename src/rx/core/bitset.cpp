@@ -26,28 +26,6 @@ Optional<Bitset> Bitset::copy(Memory::Allocator& _allocator, const Bitset& _bits
   return nullopt;
 }
 
-/*
-Bitset::Bitset(Memory::Allocator& _allocator, Size _size)
-  : m_allocator{&_allocator}
-  , m_size{_size}
-  , m_data{nullptr}
-{
-  m_data = reinterpret_cast<BitType*>(allocator().allocate(bytes_for_size(m_size)));
-  RX_ASSERT(m_data, "out of memory");
-
-  clear_all();
-}
-
-Bitset::Bitset(Memory::Allocator& _allocator, const Bitset& _bitset)
-  : m_allocator{&_allocator}
-  , m_size{_bitset.m_size}
-  , m_data{reinterpret_cast<BitType*>(_allocator.allocate(bytes_for_size(m_size)))}
-{
-  RX_ASSERT(m_data, "out of memory");
-  memcpy(m_data, _bitset.m_data, bytes_for_size(m_size));
-}*/
-
-
 Bitset& Bitset::operator=(Bitset&& bitset_) {
   RX_ASSERT(&bitset_ != this, "self assignment");
 
@@ -57,21 +35,6 @@ Bitset& Bitset::operator=(Bitset&& bitset_) {
 
   return *this;
 }
-
-/*
-Bitset& Bitset::operator=(const Bitset& _bitset) {
-  RX_ASSERT(&_bitset != this, "self assignment");
-
-  allocator().deallocate(m_data);
-
-  m_size = _bitset.m_size;
-  m_data = reinterpret_cast<Uint64*>(allocator().allocate(bytes_for_size(m_size)));
-  RX_ASSERT(m_data, "out of memory");
-
-  memcpy(m_data, _bitset.m_data, bytes_for_size(m_size));
-
-  return *this;
-}*/
 
 Size Bitset::count_set_bits() const {
   Size count = 0;

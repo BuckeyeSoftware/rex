@@ -44,8 +44,8 @@ struct RX_API String {
   String& operator=(const char* _contents);
   String& operator=(String&& contents_);
 
-  bool reserve(Size _size);
-  bool resize(Size _size);
+  [[nodiscard]] bool reserve(Size _size);
+  /*[[nodiscard]]*/ bool resize(Size _size);
 
   Optional<Size> find_first_of(int _ch) const;
   Optional<Size> find_first_of(const char* _contents) const;
@@ -63,11 +63,11 @@ struct RX_API String {
 
   void clear();
 
-  String& append(const char* _first, const char* _last);
-  String& append(const char* _contents, Size _size);
-  String& append(const char* _contents);
-  String& append(const String& _contents);
-  String& append(char _ch);
+  /*[[nodiscard]]*/ bool append(const char* _first, const char* _last);
+  /*[[nodiscard]]*/ bool append(const char* _contents, Size _size);
+  /*[[nodiscard]]*/ bool append(const char* _contents);
+  /*[[nodiscard]]*/ bool append(const String& _contents);
+  /*[[nodiscard]]*/ bool append(char _ch);
 
   bool insert_at(Size _position, const char* _contents, Size _size);
   bool insert_at(Size _position, const char* _contents);
@@ -120,6 +120,7 @@ struct RX_API String {
   WideString to_utf16() const;
 
   constexpr Memory::Allocator& allocator() const;
+
   Optional<Memory::View> disown();
 
 private:
@@ -267,18 +268,18 @@ RX_HINT_FORCE_INLINE bool String::is_empty() const {
 
 inline void String::clear() {
   // NOTE(dweiler): This resize cannot fail.
-  (void)!!resize(0);
+  (void)resize(0);
 }
 
-inline String& String::append(const char* contents, Size size) {
+inline bool String::append(const char* contents, Size size) {
   return append(contents, contents + size);
 }
 
-inline String& String::append(const String& contents) {
+inline bool String::append(const String& contents) {
   return append(contents.data(), contents.size());
 }
 
-inline String& String::append(char ch) {
+inline bool String::append(char ch) {
   return append(&ch, 1);
 }
 
@@ -325,29 +326,38 @@ RX_HINT_FORCE_INLINE const char* String::data() const {
 }
 
 inline String operator+(const String& _lhs, const char* _rhs) {
-  return String(_lhs).append(_rhs);
+  String result;
+  (void)result.append(_lhs);
+  (void)result.append(_rhs);
+  return result;
 }
 
 inline String operator+(const String& _lhs, const String& _rhs) {
-  return String(_lhs).append(_rhs);
+  String result;
+  (void)result.append(_lhs);
+  (void)result.append(_rhs);
+  return result;
 }
 
 inline String operator+(const String& _lhs, const char _ch) {
-  return String(_lhs).append(_ch);
+  String result;
+  (void)result.append(_lhs);
+  (void)result.append(_ch);
+  return result;
 }
 
 inline String& operator+=(String& lhs_, const char* rhs) {
-  lhs_.append(rhs);
+  (void)lhs_.append(rhs);
   return lhs_;
 }
 
 inline String& operator+=(String& lhs_, char ch) {
-  lhs_.append(ch);
+  (void)lhs_.append(ch);
   return lhs_;
 }
 
 inline String& operator+=(String& lhs_, const String& _contents) {
-  lhs_.append(_contents);
+  (void)lhs_.append(_contents);
   return lhs_;
 }
 

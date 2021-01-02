@@ -5,8 +5,7 @@
 
 namespace Rx::Image {
 
-struct Matrix
-{
+struct Matrix {
   constexpr Matrix(Memory::Allocator& _allocator);
   constexpr Matrix();
 

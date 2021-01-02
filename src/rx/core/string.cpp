@@ -136,14 +136,14 @@ String::String(Memory::Allocator& _allocator, const char* _contents,
                Size _size)
   : String{_allocator}
 {
-  append(_contents, _size);
+  (void)append(_contents, _size);
 }
 
 String::String(Memory::Allocator& _allocator, const char* _first,
                const char* _last)
   : String{_allocator}
 {
-  append(_first, _last);
+  (void)append(_first, _last);
 }
 
 String::String(String&& contents_)
@@ -153,8 +153,8 @@ String::String(String&& contents_)
     m_data = m_buffer;
     m_last = m_buffer;
     m_capacity = m_buffer + INSITU_SIZE;
-    reserve(contents_.size());
-    append(contents_.data(), contents_.size());
+    (void)reserve(contents_.size());
+    (void)append(contents_.data(), contents_.size());
   } else {
     m_data = contents_.m_data;
     m_last = contents_.m_last;
@@ -309,21 +309,22 @@ Optional<Size> String::find_last_of(const char* _contents) const {
   return nullopt;;
 }
 
-String& String::append(const char* _first, const char *_last) {
-  const auto new_size{static_cast<Size>(m_last - m_data + _last - _first + 1)};
-  if (m_data + new_size > m_capacity) {
-    reserve((new_size * 3) / 2);
+bool String::append(const char* _first, const char *_last) {
+  const auto new_size = static_cast<Size>(m_last - m_data + _last - _first + 1);
+  if (m_data + new_size > m_capacity && !reserve((new_size * 3) / 2)) {
+    return false;
   }
 
-  const auto length{static_cast<Size>(_last - _first)};
+  const auto length = static_cast<Size>(_last - _first);
   memcpy(m_last, _first, length);
+
   m_last += length;
   *m_last = '\0';
 
-  return *this;
+  return true;
 }
 
-String& String::append(const char* _contents) {
+bool String::append(const char* _contents) {
   return append(_contents, strlen(_contents));
 }
 

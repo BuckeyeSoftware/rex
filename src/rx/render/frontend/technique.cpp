@@ -394,6 +394,7 @@ bool Technique::compile(const Map<String, Module>& _modules) {
       m_permute_flags.push_back(_flags);
 
       auto program{m_frontend->create_program(RX_RENDER_TAG("technique"))};
+
       m_shader_definitions.each_fwd([&](const ShaderDefinition& _shader_definition) {
         if (evaluate_when_for_permute(_shader_definition.when, _flags)) {
           Shader specialized_shader;
@@ -1088,19 +1089,19 @@ bool Technique::resolve_dependencies(const Map<String, Module>& _modules) {
         logger->verbose("'%s': %s shader requires module '%s'",
           m_name, shader_type, _module);
 
-        source.append(String::format("// Module %s\n", _module));
-        source.append("// {\n");
-        source.append(find->source());
-        source.append("// }\n");
-
-        return true;
+        return source.append(String::format("// Module %s\n", _module))
+            && source.append("// {\n")
+            && source.append(find->source())
+            && source.append("// }\n");
       });
 
       if (!append_module) {
         return false;
       }
 
-      source.append(_shader.source);
+      if (!source.append(_shader.source)) {
+        return false;
+      }
 
       // Replace the shader source with the new injected modules
       _shader.source = Utility::move(source);
