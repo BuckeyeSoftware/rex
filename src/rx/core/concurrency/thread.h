@@ -51,7 +51,7 @@ private:
 };
 
 template<typename F>
-inline Thread::State::State(Memory::Allocator& _allocator, const char* _name, F&& _function)
+Thread::State::State(Memory::Allocator& _allocator, const char* _name, F&& _function)
   : m_nat{}
   , m_allocator{_allocator}
   , m_function{m_allocator, Utility::forward<F>(_function)}
@@ -62,13 +62,13 @@ inline Thread::State::State(Memory::Allocator& _allocator, const char* _name, F&
 }
 
 template<typename F>
-inline Thread::Thread(Memory::Allocator& _allocator, const char* _name, F&& _function)
+Thread::Thread(Memory::Allocator& _allocator, const char* _name, F&& _function)
   : m_state{make_ptr<State>(_allocator, _allocator, _name, Utility::forward<F>(_function))}
 {
 }
 
 template<typename F>
-inline Thread::Thread(const char* _name, F&& _function)
+Thread::Thread(const char* _name, F&& _function)
   : Thread{Memory::SystemAllocator::instance(), _name, Utility::forward<F>(_function)}
 {
 }

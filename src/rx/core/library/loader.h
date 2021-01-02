@@ -57,7 +57,7 @@ inline bool Loader::is_valid() const {
 }
 
 template<typename F>
-inline bool Loader::link(F*& function_, const char* _symbol_name) const {
+bool Loader::link(F*& function_, const char* _symbol_name) const {
   RX_ASSERT(m_handle, "no handle");
   if (const auto proc = address_of(_symbol_name)) {
     *reinterpret_cast<void**>(&function_) = proc;
@@ -67,7 +67,7 @@ inline bool Loader::link(F*& function_, const char* _symbol_name) const {
 }
 
 template<typename F>
-inline bool Loader::link(F*& function_, const String& _symbol_name) const {
+bool Loader::link(F*& function_, const String& _symbol_name) const {
   return link(function_, _symbol_name.data());
 }
 

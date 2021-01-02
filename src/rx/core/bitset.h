@@ -131,7 +131,7 @@ inline Size Bitset::offset(Size _bit) {
 }
 
 template<typename F>
-inline void Bitset::each_set(F&& _function) const {
+void Bitset::each_set(F&& _function) const {
   for (Size i{0}; i < m_size; i++) {
     if (test(i)) {
       if constexpr (traits::is_same<bool, traits::return_type<F>>) {
@@ -146,7 +146,7 @@ inline void Bitset::each_set(F&& _function) const {
 }
 
 template<typename F>
-inline void Bitset::each_unset(F&& _function) const {
+void Bitset::each_unset(F&& _function) const {
   for (Size i{0}; i < m_size; i++) {
     if (!test(i)) {
       if constexpr (traits::is_same<bool, traits::return_type<F>>) {

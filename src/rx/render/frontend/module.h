@@ -64,13 +64,13 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Module::allocator() const {
 }
 
 template<typename... Ts>
-inline bool Module::error(const char* _format, Ts&&... _arguments) const {
+bool Module::error(const char* _format, Ts&&... _arguments) const {
   log(Log::Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 
 template<typename... Ts>
-inline void Module::log(Log::Level _level, const char* _format, Ts&&... _arguments) const {
+void Module::log(Log::Level _level, const char* _format, Ts&&... _arguments) const {
   if constexpr (sizeof...(Ts) != 0) {
     write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));
   } else {

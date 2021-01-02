@@ -99,13 +99,13 @@ private:
 };
 
 template<typename K>
-inline Set<K>::Set()
+Set<K>::Set()
   : Set{Memory::SystemAllocator::instance()}
 {
 }
 
 template<typename K>
-inline Set<K>::Set(Memory::Allocator& _allocator)
+Set<K>::Set(Memory::Allocator& _allocator)
   : m_allocator{&_allocator}
   , m_keys{nullptr}
   , m_hashes{nullptr}
@@ -118,7 +118,7 @@ inline Set<K>::Set(Memory::Allocator& _allocator)
 }
 
 template<typename K>
-inline Set<K>::Set(Set&& set_)
+Set<K>::Set(Set&& set_)
   : m_allocator{set_.m_allocator}
   , m_keys{Utility::exchange(set_.m_keys, nullptr)}
   , m_hashes{Utility::exchange(set_.m_hashes, nullptr)}
@@ -130,7 +130,7 @@ inline Set<K>::Set(Set&& set_)
 }
 
 template<typename K>
-inline Set<K>::Set(Memory::Allocator& _allocator, const Set& _set)
+Set<K>::Set(Memory::Allocator& _allocator, const Set& _set)
   : Set{_allocator}
 {
   for (Size i{0}; i < _set.m_capacity; i++) {
@@ -142,14 +142,14 @@ inline Set<K>::Set(Memory::Allocator& _allocator, const Set& _set)
 }
 
 template<typename K>
-inline Set<K>::Set(const Set& _set)
+Set<K>::Set(const Set& _set)
   : Set{_set.allocator(), _set}
 {
 }
 
 template<typename K>
 template<typename Kt, Size E>
-inline Set<K>::Set(Memory::Allocator& _allocator, Initializers<Kt, E>&& initializers_)
+Set<K>::Set(Memory::Allocator& _allocator, Initializers<Kt, E>&& initializers_)
   : Set{_allocator}
 {
   for (Size i = 0; i < E; i++) {
@@ -159,18 +159,18 @@ inline Set<K>::Set(Memory::Allocator& _allocator, Initializers<Kt, E>&& initiali
 
 template<typename K>
 template<typename Kt, Size E>
-inline Set<K>::Set(Initializers<Kt, E>&& initializers_)
+Set<K>::Set(Initializers<Kt, E>&& initializers_)
   : Set{Memory::SystemAllocator::instance(), Utility::move(initializers_)}
 {
 }
 
 template<typename K>
-inline Set<K>::~Set() {
+Set<K>::~Set() {
   clear_and_deallocate();
 }
 
 template<typename K>
-inline void Set<K>::clear() {
+void Set<K>::clear() {
   if (m_size == 0) {
     return;
   }
@@ -189,14 +189,13 @@ inline void Set<K>::clear() {
 }
 
 template<typename K>
-inline void Set<K>::clear_and_deallocate() {
+void Set<K>::clear_and_deallocate() {
   clear();
-
   allocator().deallocate(m_data);
 }
 
 template<typename K>
-inline Set<K>& Set<K>::operator=(Set<K>&& set_) {
+Set<K>& Set<K>::operator=(Set<K>&& set_) {
   RX_ASSERT(&set_ != this, "self assignment");
 
   clear_and_deallocate();
@@ -213,7 +212,7 @@ inline Set<K>& Set<K>::operator=(Set<K>&& set_) {
 }
 
 template<typename K>
-inline Set<K>& Set<K>::operator=(const Set<K>& _set) {
+Set<K>& Set<K>::operator=(const Set<K>& _set) {
   RX_ASSERT(&_set != this, "self assignment");
 
   clear_and_deallocate();
@@ -232,7 +231,7 @@ inline Set<K>& Set<K>::operator=(const Set<K>& _set) {
 }
 
 template<typename K>
-inline K* Set<K>::insert(K&& key_) {
+K* Set<K>::insert(K&& key_) {
   if (++m_size >= m_resize_threshold && !grow()) {
     return nullptr;
   }
@@ -240,7 +239,7 @@ inline K* Set<K>::insert(K&& key_) {
 }
 
 template<typename K>
-inline K* Set<K>::insert(const K& _key) {
+K* Set<K>::insert(const K& _key) {
   if (++m_size >= m_resize_threshold && !grow()) {
     return nullptr;
   }
@@ -256,7 +255,7 @@ K* Set<K>::find(const K& _key) const {
 }
 
 template<typename K>
-inline bool Set<K>::erase(const K& _key) {
+bool Set<K>::erase(const K& _key) {
   if (Size index; lookup_index(_key, index)) {
     if constexpr (!traits::is_trivially_destructible<K>) {
       Utility::destruct<K>(m_keys + index);
@@ -275,17 +274,17 @@ inline bool Set<K>::erase(const K& _key) {
 }
 
 template<typename K>
-inline Size Set<K>::size() const {
+Size Set<K>::size() const {
   return m_size;
 }
 
 template<typename K>
-inline bool Set<K>::is_empty() const {
+bool Set<K>::is_empty() const {
   return m_size == 0;
 }
 
 template<typename K>
-inline Size Set<K>::hash_key(const K& _key) {
+Size Set<K>::hash_key(const K& _key) {
   auto hash_value{Hash<K>{}(_key)};
 
   // MSB is used to indicate deleted elements
@@ -302,33 +301,33 @@ inline Size Set<K>::hash_key(const K& _key) {
 }
 
 template<typename K>
-inline bool Set<K>::is_deleted(Size _hash) {
+bool Set<K>::is_deleted(Size _hash) {
   // MSB indicates tombstones
   return (_hash >> ((sizeof _hash * 8) - 1)) != 0;
 }
 
 template<typename K>
-inline Size Set<K>::desired_position(Size _hash) const {
+Size Set<K>::desired_position(Size _hash) const {
   return _hash & m_mask;
 }
 
 template<typename K>
-inline Size Set<K>::probe_distance(Size _hash, Size _slot_index) const {
+Size Set<K>::probe_distance(Size _hash, Size _slot_index) const {
   return (_slot_index + m_capacity - desired_position(_hash)) & m_mask;
 }
 
 template<typename K>
-inline Size& Set<K>::element_hash(Size _index) {
+Size& Set<K>::element_hash(Size _index) {
   return m_hashes[_index];
 }
 
 template<typename K>
-inline Size Set<K>::element_hash(Size _index) const {
+Size Set<K>::element_hash(Size _index) const {
   return m_hashes[_index];
 }
 
 template<typename K>
-inline bool Set<K>::allocate() {
+bool Set<K>::allocate() {
   Memory::Aggregate aggregate;
   aggregate.add<K>(m_capacity);
   aggregate.add<Size>(m_capacity);
@@ -352,7 +351,7 @@ inline bool Set<K>::allocate() {
 }
 
 template<typename K>
-inline bool Set<K>::grow() {
+bool Set<K>::grow() {
   const auto old_capacity{m_capacity};
 
   auto data = m_data;
@@ -382,14 +381,14 @@ inline bool Set<K>::grow() {
 }
 
 template<typename K>
-inline K* Set<K>::construct(Size _index, Size _hash, K&& key_) {
+K* Set<K>::construct(Size _index, Size _hash, K&& key_) {
   Utility::construct<K>(m_keys + _index, Utility::forward<K>(key_));
   element_hash(_index) = _hash;
   return m_keys + _index;
 }
 
 template<typename K>
-inline K* Set<K>::inserter(Size _hash, K&& key_) {
+K* Set<K>::inserter(Size _hash, K&& key_) {
   Size position = desired_position(_hash);
   Size distance = 0;
 
@@ -425,13 +424,13 @@ inline K* Set<K>::inserter(Size _hash, K&& key_) {
 }
 
 template<typename K>
-inline K* Set<K>::inserter(Size _hash, const K& _key) {
+K* Set<K>::inserter(Size _hash, const K& _key) {
   K key{_key};
   return inserter(_hash, Utility::move(key));
 }
 
 template<typename K>
-inline bool Set<K>::lookup_index(const K& _key, Size& _index) const {
+bool Set<K>::lookup_index(const K& _key, Size& _index) const {
   const Size hash{hash_key(_key)};
   Size position{desired_position(hash)};
   Size distance{0};
@@ -454,7 +453,7 @@ inline bool Set<K>::lookup_index(const K& _key, Size& _index) const {
 
 template<typename K>
 template<typename F>
-inline bool Set<K>::each(F&& _function) {
+bool Set<K>::each(F&& _function) {
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
@@ -472,7 +471,7 @@ inline bool Set<K>::each(F&& _function) {
 
 template<typename K>
 template<typename F>
-inline bool Set<K>::each(F&& _function) const {
+bool Set<K>::each(F&& _function) const {
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {

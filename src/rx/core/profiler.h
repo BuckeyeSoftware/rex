@@ -107,7 +107,7 @@ inline Profiler::Sample::~Sample() {
 }
 
 template<typename T, typename... Ts>
-inline T* Profiler::Sample::enframe(Ts&&... _arguments) const {
+T* Profiler::Sample::enframe(Ts&&... _arguments) const {
   RX_ASSERT(!m_enframing_destruct, "already enframed");
   static_assert(sizeof(T) <= sizeof m_enframing, "too much data to enframe");
   m_enframing_destruct = &Utility::destruct<T>;
@@ -123,7 +123,7 @@ inline const char* Profiler::Sample::tag() const {
 }
 
 template<typename T>
-inline const T* Profiler::Sample::enframing() const {
+const T* Profiler::Sample::enframing() const {
   return reinterpret_cast<const T*>(m_enframing);
 }
 

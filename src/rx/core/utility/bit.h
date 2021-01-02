@@ -5,10 +5,10 @@
 namespace Rx {
 
 template<typename T>
-inline Size bit_search_lsb(T _bits);
+Size bit_search_lsb(T _bits);
 
 template<typename T>
-inline Size bit_pop_count(T _bits);
+Size bit_pop_count(T _bits);
 
 // use compiler intrinsics if available
 #if defined(RX_COMPILER_CLANG) || defined(RX_COMPILER_GCC)
@@ -87,7 +87,7 @@ inline Size bit_pop_count(Uint64 _bits) {
 #endif
 
 template<typename T>
-inline Size bit_next(T _bits, Size _bit) {
+Size bit_next(T _bits, Size _bit) {
   return bit_search_lsb<T>(_bits & ~((T{1} << _bit) - 1));
 }
 

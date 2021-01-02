@@ -32,12 +32,12 @@ struct AtomicBase {
 };
 
 template<typename T>
-inline void atomic_init(volatile AtomicBase<T>* base_, T _value) {
+void atomic_init(volatile AtomicBase<T>* base_, T _value) {
   std::atomic_init(base_->value, _value);
 }
 
 template<typename T>
-inline void atomic_init(AtomicBase<T>* base_, T _value) {
+void atomic_init(AtomicBase<T>* base_, T _value) {
   std::atomic_init(base_->value, _value);
 }
 
@@ -50,162 +50,162 @@ inline void atomic_signal_fence(MemoryOrder _order) {
 }
 
 template<typename T>
-inline void atomic_store(volatile AtomicBase<T>* base_, T _value,
+void atomic_store(volatile AtomicBase<T>* base_, T _value,
   MemoryOrder _order)
 {
   std::atomic_store_explicit(&base_->value, _value, convert_memory_order(_order));
 }
 
 template<typename T>
-inline void atomic_store(AtomicBase<T>* base_, T _value, MemoryOrder _order) {
+void atomic_store(AtomicBase<T>* base_, T _value, MemoryOrder _order) {
   std::atomic_store_explicit(&base_->value, _value, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_load(const volatile AtomicBase<T>* base_,
+T atomic_load(const volatile AtomicBase<T>* base_,
   MemoryOrder _order)
 {
   return std::atomic_load_explicit(&base_->value, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_load(const AtomicBase<T>* base_, MemoryOrder _order) {
+T atomic_load(const AtomicBase<T>* base_, MemoryOrder _order) {
   return std::atomic_load_explicit(&base_->value, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_exchange(volatile AtomicBase<T>* base_, T _value,
+T atomic_exchange(volatile AtomicBase<T>* base_, T _value,
   MemoryOrder _order)
 {
   return std::atomic_exchange_explicit(&base_->value, _value, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_exchange(AtomicBase<T>* base_, T _value, MemoryOrder _order) {
+T atomic_exchange(AtomicBase<T>* base_, T _value, MemoryOrder _order) {
   return std::atomic_exchange_explicit(&base_->value, _value, convert_memory_order(_order));
 }
 
 template<typename T>
-inline bool atomic_compare_exchange_strong(volatile AtomicBase<T>* base_,
+bool atomic_compare_exchange_strong(volatile AtomicBase<T>* base_,
   T* _expected, T _value, MemoryOrder _order)
 {
   return std::atomic_compare_exchange_strong_explicit(&base_->value, _expected, _value, convert_memory_order(_order));
 }
 
 template<typename T>
-inline bool atomic_compare_exchange_strong(AtomicBase<T>* base_, T* _expected,
+bool atomic_compare_exchange_strong(AtomicBase<T>* base_, T* _expected,
   T _value, MemoryOrder _order)
 {
   return std::atomic_compare_exchange_strong_explicit(&base_->value, _expected, _value, convert_memory_order(_order));
 }
 
 template<typename T>
-inline bool atomic_compare_exchange_weak(volatile AtomicBase<T>* base_,
+bool atomic_compare_exchange_weak(volatile AtomicBase<T>* base_,
   T* _expected, T _value, MemoryOrder _order)
 {
   return std::atomic_compare_exchange_weak_explicit(&base_->value, _expected, _value, convert_memory_order(_order));
 }
 
 template<typename T>
-inline bool atomic_compare_exchange_weak(AtomicBase<T>* base_, T* _expected,
+bool atomic_compare_exchange_weak(AtomicBase<T>* base_, T* _expected,
   T _value, MemoryOrder _order)
 {
   return std::atomic_compare_exchange_weak_explicit(&base_->value, _expected, _value, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_fetch_add(volatile AtomicBase<T>* base_, T _delta,
+T atomic_fetch_add(volatile AtomicBase<T>* base_, T _delta,
   MemoryOrder _order)
 {
   return std::atomic_fetch_add_explicit(&base_->value, _delta, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_fetch_add(AtomicBase<T>* base_, T _delta,
+T atomic_fetch_add(AtomicBase<T>* base_, T _delta,
   MemoryOrder _order)
 {
   return std::atomic_fetch_add_explicit(&base_->value, _delta, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T* atomic_fetch_add(volatile AtomicBase<T>* base_, PtrDiff _delta,
+T* atomic_fetch_add(volatile AtomicBase<T>* base_, PtrDiff _delta,
   MemoryOrder _order)
 {
   return std::atomic_fetch_add_explicit(&base_->value, _delta, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T* atomic_fetch_add(AtomicBase<T>* base_, PtrDiff _delta,
+T* atomic_fetch_add(AtomicBase<T>* base_, PtrDiff _delta,
   MemoryOrder _order)
 {
   return std::atomic_fetch_add_explicit(&base_->value, _delta, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_fetch_sub(volatile AtomicBase<T>* base_, T _delta,
+T atomic_fetch_sub(volatile AtomicBase<T>* base_, T _delta,
   MemoryOrder _order)
 {
   return std::atomic_fetch_sub_explicit(&base_->value, _delta, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_fetch_sub(AtomicBase<T>* base_, T _delta,
+T atomic_fetch_sub(AtomicBase<T>* base_, T _delta,
   MemoryOrder _order)
 {
   return std::atomic_fetch_sub_explicit(&base_->value, _delta, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T* atomic_fetch_sub(volatile AtomicBase<T>* base_, PtrDiff _delta,
+T* atomic_fetch_sub(volatile AtomicBase<T>* base_, PtrDiff _delta,
   MemoryOrder _order)
 {
   return std::atomic_fetch_sub_explicit(&base_->value, _delta, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T* atomic_fetch_sub(AtomicBase<T>* base_, PtrDiff _delta,
+T* atomic_fetch_sub(AtomicBase<T>* base_, PtrDiff _delta,
   MemoryOrder _order)
 {
   return std::atomic_fetch_sub_explicit(&base_->value, _delta, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_fetch_and(volatile AtomicBase<T>* base_, T _pattern,
+T atomic_fetch_and(volatile AtomicBase<T>* base_, T _pattern,
   MemoryOrder _order)
 {
   return std::atomic_fetch_and_explicit(&base_->value, _pattern, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_fetch_and(AtomicBase<T>* base_, T _pattern,
+T atomic_fetch_and(AtomicBase<T>* base_, T _pattern,
   MemoryOrder _order)
 {
   return std::atomic_fetch_and_explicit(&base_->value, _pattern, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_fetch_or(volatile AtomicBase<T>* base_, T _pattern,
+T atomic_fetch_or(volatile AtomicBase<T>* base_, T _pattern,
   MemoryOrder _order)
 {
   return std::atomic_fetch_or_explicit(&base_->value, _pattern, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_fetch_or(AtomicBase<T>* base_, T _pattern,
+T atomic_fetch_or(AtomicBase<T>* base_, T _pattern,
   MemoryOrder _order)
 {
   return std::atomic_fetch_or_explicit(&base_->value, _pattern, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_fetch_xor(volatile AtomicBase<T>* base_, T _pattern,
+T atomic_fetch_xor(volatile AtomicBase<T>* base_, T _pattern,
   MemoryOrder _order)
 {
   return std::atomic_fetch_xor_explicit(&base_->value, _pattern, convert_memory_order(_order));
 }
 
 template<typename T>
-inline T atomic_fetch_xor(AtomicBase<T>* base_, T _pattern,
+T atomic_fetch_xor(AtomicBase<T>* base_, T _pattern,
   MemoryOrder _order)
 {
   return std::atomic_fetch_xor_explicit(&base_->value, _pattern, convert_memory_order(_order));

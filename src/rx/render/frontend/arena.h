@@ -191,17 +191,17 @@ RX_HINT_FORCE_INLINE Byte* Arena::Block::map_instances(Size _size) {
 }
 
 template<typename T>
-inline bool Arena::Block::write_vertices(const T* _data, Size _size) {
+bool Arena::Block::write_vertices(const T* _data, Size _size) {
   return write_sink_data(Buffer::Sink::VERTICES, reinterpret_cast<const Byte*>(_data), _size);
 }
 
 template<typename T>
-inline bool Arena::Block::write_elements(const T* _data, Size _size) {
+bool Arena::Block::write_elements(const T* _data, Size _size) {
   return write_sink_data(Buffer::Sink::ELEMENTS, reinterpret_cast<const Byte*>(_data), _size);
 }
 
 template<typename T>
-inline bool Arena::Block::write_instances(const T* _data, Size _size) {
+bool Arena::Block::write_instances(const T* _data, Size _size) {
   return write_sink_data(Buffer::Sink::INSTANCES, reinterpret_cast<const Byte*>(_data), _size);
 }
 

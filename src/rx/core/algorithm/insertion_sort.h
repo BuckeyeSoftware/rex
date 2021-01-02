@@ -6,7 +6,7 @@ namespace Rx::Algorithm {
 
 //! insertion sort from _start to _end using _compare comparator
 template<typename T, typename F>
-inline void insertion_sort(T* start_, T* end_, F&& _compare) {
+void insertion_sort(T* start_, T* end_, F&& _compare) {
   for (T* item1 = start_ + 1; item1 < end_; item1++) {
     if (_compare(*item1, *(item1 - 1))) {
       T temp = Utility::move(*item1);

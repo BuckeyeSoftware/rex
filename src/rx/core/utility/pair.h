@@ -23,14 +23,14 @@ struct Pair {
 };
 
 template<typename T1, typename T2>
-inline constexpr Pair<T1, T2>::Pair()
+constexpr Pair<T1, T2>::Pair()
   : first{}
   , second{}
 {
 }
 
 template<typename T1, typename T2>
-inline constexpr Pair<T1, T2>::Pair(const T1& _first, const T2& _second)
+constexpr Pair<T1, T2>::Pair(const T1& _first, const T2& _second)
   : first{_first}
   , second{_second}
 {
@@ -38,7 +38,7 @@ inline constexpr Pair<T1, T2>::Pair(const T1& _first, const T2& _second)
 
 template<typename T1, typename T2>
 template<typename U1, typename U2>
-inline constexpr Pair<T1, T2>::Pair(U1&& first_, U2&& second_)
+constexpr Pair<T1, T2>::Pair(U1&& first_, U2&& second_)
   : first{Utility::forward<U1>(first_)}
   , second{Utility::forward<U2>(second_)}
 {
@@ -46,7 +46,7 @@ inline constexpr Pair<T1, T2>::Pair(U1&& first_, U2&& second_)
 
 template<typename T1, typename T2>
 template<typename U1, typename U2>
-inline constexpr Pair<T1, T2>::Pair(const Pair<U1, U2>& _pair)
+constexpr Pair<T1, T2>::Pair(const Pair<U1, U2>& _pair)
   : first{_pair.first}
   , second{_pair.second}
 {
@@ -54,7 +54,7 @@ inline constexpr Pair<T1, T2>::Pair(const Pair<U1, U2>& _pair)
 
 template<typename T1, typename T2>
 template<typename U1, typename U2>
-inline constexpr Pair<T1, T2>::Pair(Pair<U1, U2>&& pair_)
+constexpr Pair<T1, T2>::Pair(Pair<U1, U2>&& pair_)
   : first{Utility::forward<U1>(pair_.first)}
   , second{Utility::forward<U2>(pair_.second)}
 {

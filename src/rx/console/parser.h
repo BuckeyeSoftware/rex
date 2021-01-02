@@ -255,7 +255,7 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Parser::allocator() const {
 }
 
 template<typename... Ts>
-inline bool Parser::error(bool _caret, const char* _format, Ts&&... _arguments) {
+bool Parser::error(bool _caret, const char* _format, Ts&&... _arguments) {
   record_span();
   m_diagnostic.caret = _caret;
   if constexpr(sizeof...(Ts) != 0) {

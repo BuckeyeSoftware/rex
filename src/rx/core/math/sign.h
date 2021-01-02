@@ -4,7 +4,7 @@
 namespace Rx::Math {
 
 template<typename T>
-inline constexpr T sign(T _value) {
+constexpr T sign(T _value) {
     return T(T{0} < _value) - T(_value < T{0});
 }
 

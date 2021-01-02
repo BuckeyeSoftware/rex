@@ -6,12 +6,12 @@
 namespace Rx::Math {
 
 template<typename T>
-inline constexpr T deg_to_rad(T deg) {
+constexpr T deg_to_rad(T deg) {
   return deg * k_pi<T> / T{180.0};
 }
 
 template<typename T>
-inline constexpr T rad_to_deg(T rad) {
+constexpr T rad_to_deg(T rad) {
   return rad * T{180.0} / k_pi<T>;
 }
 

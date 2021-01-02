@@ -135,12 +135,12 @@ inline IntrusiveCompressedList& IntrusiveCompressedList::operator=(IntrusiveComp
 }
 
 template<typename T>
-inline IntrusiveCompressedList::Enumerate<T> IntrusiveCompressedList::enumerate_head(Node T::*_link) const {
+IntrusiveCompressedList::Enumerate<T> IntrusiveCompressedList::enumerate_head(Node T::*_link) const {
   return {m_head, _link};
 }
 
 template<typename T>
-inline IntrusiveCompressedList::Enumerate<T> IntrusiveCompressedList::enumerate_tail(Node T::*_link) const {
+IntrusiveCompressedList::Enumerate<T> IntrusiveCompressedList::enumerate_tail(Node T::*_link) const {
   return {m_tail, _link};
 }
 
@@ -155,7 +155,7 @@ inline constexpr IntrusiveCompressedList::Node::Node()
 }
 
 template<typename T>
-inline const T* IntrusiveCompressedList::Node::data(Node T::*_link) const {
+const T* IntrusiveCompressedList::Node::data(Node T::*_link) const {
   const auto this_address = reinterpret_cast<UintPtr>(this);
   const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
   const auto link_address = reinterpret_cast<UintPtr>(link_offset);
@@ -163,7 +163,7 @@ inline const T* IntrusiveCompressedList::Node::data(Node T::*_link) const {
 }
 
 template<typename T>
-inline T* IntrusiveCompressedList::Node::data(Node T::*_link) {
+T* IntrusiveCompressedList::Node::data(Node T::*_link) {
   const auto this_address = reinterpret_cast<UintPtr>(this);
   const auto link_offset = &(reinterpret_cast<const volatile T*>(0)->*_link);
   const auto link_address = reinterpret_cast<UintPtr>(link_offset);
@@ -192,60 +192,60 @@ inline IntrusiveCompressedList::Iterator& IntrusiveCompressedList::Iterator::ope
   return *this;
 }
 
-// intrusive_xor_list::enumerate
+// IntrusiveCompressedList::Enumerate
 template<typename T>
-inline IntrusiveCompressedList::Enumerate<T>::Enumerate(Enumerate&& enumerate_)
+IntrusiveCompressedList::Enumerate<T>::Enumerate(Enumerate&& enumerate_)
   : Iterator{Utility::move(enumerate_)}
   , m_link{Utility::exchange(enumerate_.m_link, nullptr)}
 {
 }
 
 template<typename T>
-inline IntrusiveCompressedList::Enumerate<T>& IntrusiveCompressedList::Enumerate<T>::operator=(Enumerate&& enumerate_) {
+IntrusiveCompressedList::Enumerate<T>& IntrusiveCompressedList::Enumerate<T>::operator=(Enumerate&& enumerate_) {
   Iterator::operator=(Utility::move(enumerate_));
   m_link = Utility::exchange(enumerate_.m_link, nullptr);
   return *this;
 }
 
 template<typename T>
-inline constexpr IntrusiveCompressedList::Enumerate<T>::Enumerate(Node* _root, Node T::*_link)
+constexpr IntrusiveCompressedList::Enumerate<T>::Enumerate(Node* _root, Node T::*_link)
   : Iterator{_root}
   , m_link{_link}
 {
 }
 
 template<typename T>
-inline IntrusiveCompressedList::Enumerate<T>::operator bool() const {
+IntrusiveCompressedList::Enumerate<T>::operator bool() const {
   return m_this != nullptr;
 }
 
 template<typename T>
-inline T& IntrusiveCompressedList::Enumerate<T>::operator*() {
+T& IntrusiveCompressedList::Enumerate<T>::operator*() {
   return *data();
 }
 
 template<typename T>
-inline const T& IntrusiveCompressedList::Enumerate<T>::operator*() const {
+const T& IntrusiveCompressedList::Enumerate<T>::operator*() const {
   return *data();
 }
 
 template<typename T>
-inline T* IntrusiveCompressedList::Enumerate<T>::operator->() {
+T* IntrusiveCompressedList::Enumerate<T>::operator->() {
   return data();
 }
 
 template<typename T>
-inline const T* IntrusiveCompressedList::Enumerate<T>::operator->() const {
+const T* IntrusiveCompressedList::Enumerate<T>::operator->() const {
   return data();
 }
 
 template<typename T>
-inline T* IntrusiveCompressedList::Enumerate<T>::data() {
+T* IntrusiveCompressedList::Enumerate<T>::data() {
   return m_this->data<T>(m_link);
 }
 
 template<typename T>
-inline const T* IntrusiveCompressedList::Enumerate<T>::data() const {
+const T* IntrusiveCompressedList::Enumerate<T>::data() const {
   return m_this->data<T>(m_link);
 }
 

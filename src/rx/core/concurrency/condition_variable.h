@@ -43,28 +43,28 @@ inline void ConditionVariable::wait(ScopeLock<RecursiveMutex>& _scope_lock) {
 
 
 template<typename P>
-inline void ConditionVariable::wait(Mutex& _mutex, P&& _predicate) {
+void ConditionVariable::wait(Mutex& _mutex, P&& _predicate) {
   while (!_predicate()) {
     wait(_mutex);
   }
 }
 
 template<typename P>
-inline void ConditionVariable::wait(RecursiveMutex& _mutex, P&& _predicate) {
+void ConditionVariable::wait(RecursiveMutex& _mutex, P&& _predicate) {
   while (!_predicate()) {
     wait(_mutex);
   }
 }
 
 template<typename P>
-inline void ConditionVariable::wait(ScopeLock<Mutex>& _scope_lock, P&& _predicate) {
+void ConditionVariable::wait(ScopeLock<Mutex>& _scope_lock, P&& _predicate) {
   while (!_predicate()) {
     wait(_scope_lock);
   }
 }
 
 template<typename P>
-inline void ConditionVariable::wait(ScopeLock<RecursiveMutex>& _scope_lock, P&& _predicate) {
+void ConditionVariable::wait(ScopeLock<RecursiveMutex>& _scope_lock, P&& _predicate) {
   while (!_predicate()) {
     wait(_scope_lock);
   }

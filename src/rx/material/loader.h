@@ -118,13 +118,13 @@ inline const Optional<Math::Transform>& Loader::transform() const & {
 }
 
 template<typename... Ts>
-inline bool Loader::error(const char* _format, Ts&&... _arguments) const {
+bool Loader::error(const char* _format, Ts&&... _arguments) const {
   log(Log::Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 
 template<typename... Ts>
-inline void Loader::log(Log::Level _level, const char* _format,
+void Loader::log(Log::Level _level, const char* _format,
   Ts&&... _arguments) const
 {
   write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));

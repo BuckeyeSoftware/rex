@@ -113,7 +113,7 @@ inline constexpr Log::Log(const char* _name, const SourceLocation& _source_locat
 }
 
 template<typename... Ts>
-inline bool Log::write(Level _level, const char* _format, Ts&&... _arguments) {
+bool Log::write(Level _level, const char* _format, Ts&&... _arguments) {
   if constexpr (sizeof...(Ts) > 0) {
     auto format = String::format(_format, Utility::forward<Ts>(_arguments)...);
     m_queue_event.signal(_level, {format.allocator(), format});
@@ -130,22 +130,22 @@ inline bool Log::write(Level _level, String&& message_) {
 }
 
 template<typename... Ts>
-inline bool Log::warning(const char* _format, Ts&&... _arguments) {
+bool Log::warning(const char* _format, Ts&&... _arguments) {
   return write(Level::WARNING, _format, Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename... Ts>
-inline bool Log::info(const char* _format, Ts&&... _arguments) {
+bool Log::info(const char* _format, Ts&&... _arguments) {
   return write(Level::INFO, _format, Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename... Ts>
-inline bool Log::verbose(const char* _format, Ts&&... _arguments) {
+bool Log::verbose(const char* _format, Ts&&... _arguments) {
   return write(Level::VERBOSE, _format, Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename... Ts>
-inline bool Log::error(const char* _format, Ts&&... _arguments) {
+bool Log::error(const char* _format, Ts&&... _arguments) {
   return write(Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
 }
 

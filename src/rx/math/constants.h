@@ -17,7 +17,7 @@ struct Range {
 };
 
 template<typename T>
-inline constexpr Range<T>::Range(const T& _min, const T& _max)
+constexpr Range<T>::Range(const T& _min, const T& _max)
   : min{_min}
   , max{_max}
 {

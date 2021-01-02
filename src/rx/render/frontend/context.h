@@ -338,7 +338,7 @@ inline constexpr Context::DeviceInfo::DeviceInfo(Memory::Allocator& _allocator)
 }
 
 template<typename T>
-inline void Context::remove_from_cache(Map<String, T*>& cache_, T* _object) {
+void Context::remove_from_cache(Map<String, T*>& cache_, T* _object) {
   cache_.each_pair([&](const String& _key, T* _value) {
     if (_value != _object) {
       return true;

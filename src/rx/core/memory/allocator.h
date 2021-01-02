@@ -43,12 +43,12 @@ inline constexpr UintPtr Allocator::round_to_alignment(UintPtr _ptr_or_size) {
 }
 
 template<typename T>
-inline Byte* Allocator::round_to_alignment(T* _ptr) {
+Byte* Allocator::round_to_alignment(T* _ptr) {
   return reinterpret_cast<Byte*>(round_to_alignment(reinterpret_cast<UintPtr>(_ptr)));
 }
 
 template<typename T, typename... Ts>
-inline T* Allocator::create(Ts&&... _arguments) {
+T* Allocator::create(Ts&&... _arguments) {
   if (Byte* data = allocate(sizeof(T))) {
     return Utility::construct<T>(data, Utility::forward<Ts>(_arguments)...);
   }
@@ -56,7 +56,7 @@ inline T* Allocator::create(Ts&&... _arguments) {
 }
 
 template<typename T>
-inline void Allocator::destroy(void* _data) {
+void Allocator::destroy(void* _data) {
   if (_data) {
     Utility::destruct<T>(_data);
     deallocate(_data);

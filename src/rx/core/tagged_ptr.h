@@ -33,7 +33,7 @@ private:
 };
 
 template<typename T>
-inline TaggedPtr<T>::TaggedPtr(T* _ptr, Byte _tag) {
+TaggedPtr<T>::TaggedPtr(T* _ptr, Byte _tag) {
   RX_ASSERT((reinterpret_cast<UintPtr>(_ptr) & k_tag_mask) == 0,
     "pointer not aligned");
   RX_ASSERT((_tag & k_ptr_mask) == 0, "tag value too large");
@@ -42,19 +42,19 @@ inline TaggedPtr<T>::TaggedPtr(T* _ptr, Byte _tag) {
 }
 
 template<typename T>
-inline void TaggedPtr<T>::retag(Byte _tag) {
+void TaggedPtr<T>::retag(Byte _tag) {
   RX_ASSERT((_tag & k_ptr_mask) == 0, "tag value too large");
   m_as_ptr = as_ptr();
   m_as_bits |= _tag;
 }
 
 template<typename T>
-inline T* TaggedPtr<T>::as_ptr() const {
+T* TaggedPtr<T>::as_ptr() const {
   return reinterpret_cast<T*>(m_as_bits & k_ptr_mask);
 }
 
 template<typename T>
-inline Byte TaggedPtr<T>::as_tag() const {
+Byte TaggedPtr<T>::as_tag() const {
   return m_as_bits & k_tag_mask;
 }
 

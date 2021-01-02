@@ -79,17 +79,17 @@ constexpr Mat4x4<T>::Mat4x4(const Vec& x, const Vec& y, const Vec& z, const Vec&
 }
 
 template<typename T>
-inline T* Mat4x4<T>::data() {
+T* Mat4x4<T>::data() {
   return x.data();
 }
 
 template<typename T>
-inline const T* Mat4x4<T>::data() const {
+const T* Mat4x4<T>::data() const {
   return x.data();
 }
 
 template<typename T>
-inline constexpr Mat4x4<T> Mat4x4<T>::scale(const Vec3<T>& _scale) {
+constexpr Mat4x4<T> Mat4x4<T>::scale(const Vec3<T>& _scale) {
   return {{_scale.x, 0,        0,        0},
           {0,        _scale.y, 0,        0},
           {0,        0,        _scale.z, 0},
@@ -97,7 +97,7 @@ inline constexpr Mat4x4<T> Mat4x4<T>::scale(const Vec3<T>& _scale) {
 }
 
 template<typename T>
-inline constexpr Mat4x4<T> Mat4x4<T>::rotate(const Vec3<T>& _rotate) {
+constexpr Mat4x4<T> Mat4x4<T>::rotate(const Vec3<T>& _rotate) {
   const auto reduce{reduce_rotation_angles(_rotate)};
   const auto sx{sin(deg_to_rad(-reduce.x))};
   const auto cx{cos(deg_to_rad(-reduce.x))};
@@ -112,7 +112,7 @@ inline constexpr Mat4x4<T> Mat4x4<T>::rotate(const Vec3<T>& _rotate) {
 }
 
 template<typename T>
-inline constexpr Mat4x4<T> Mat4x4<T>::translate(const Vec3<T>& _translate) {
+constexpr Mat4x4<T> Mat4x4<T>::translate(const Vec3<T>& _translate) {
   return {{1,            0,            0,            0},
           {0,            1,            0,            0},
           {0,            0,            1,            0},
@@ -121,14 +121,14 @@ inline constexpr Mat4x4<T> Mat4x4<T>::translate(const Vec3<T>& _translate) {
 }
 
 template<typename T>
-inline constexpr Mat4x4<T> Mat4x4<T>::transpose(const Mat4x4& _mat) {
+constexpr Mat4x4<T> Mat4x4<T>::transpose(const Mat4x4& _mat) {
   return {{_mat.x.x, _mat.y.x, _mat.z.x, _mat.w.x},
           {_mat.x.y, _mat.y.y, _mat.z.y, _mat.w.y},
           {_mat.x.z, _mat.y.z, _mat.z.z, _mat.w.z}};
 }
 
 template<typename T>
-inline constexpr Mat4x4<T> Mat4x4<T>::invert(const Mat4x4& _mat) {
+constexpr Mat4x4<T> Mat4x4<T>::invert(const Mat4x4& _mat) {
   const auto a1{_mat.x.x}, a2{_mat.x.y}, a3{_mat.x.z}, a4{_mat.x.w};
   const auto b1{_mat.y.x}, b2{_mat.y.y}, b3{_mat.y.z}, b4{_mat.y.w};
   const auto c1{_mat.z.x}, c2{_mat.z.y}, c3{_mat.z.z}, c4{_mat.z.w};
@@ -173,7 +173,7 @@ inline constexpr Mat4x4<T> Mat4x4<T>::invert(const Mat4x4& _mat) {
 }
 
 template<typename T>
-inline constexpr Mat4x4<T> Mat4x4<T>::perspective(T _fov, const Range<T>& _planes, T _aspect) {
+constexpr Mat4x4<T> Mat4x4<T>::perspective(T _fov, const Range<T>& _planes, T _aspect) {
   const T range{_planes.min - _planes.max};
   const T half{tan(deg_to_rad(_fov*T{.5}))};
   if (_aspect < 1) {
@@ -190,13 +190,13 @@ inline constexpr Mat4x4<T> Mat4x4<T>::perspective(T _fov, const Range<T>& _plane
 }
 
 template<typename T>
-inline constexpr Vec3<T> Mat4x4<T>::transform_point(const Vec3<T>& _point, const Mat4x4<T>& _mat) {
+constexpr Vec3<T> Mat4x4<T>::transform_point(const Vec3<T>& _point, const Mat4x4<T>& _mat) {
   const Vec3<T>& w{_mat.w.x, _mat.w.y, _mat.w.z};
   return transform_vector(_point, _mat) + w;
 }
 
 template<typename T>
-inline constexpr Vec3<T> Mat4x4<T>::transform_vector(const Vec3<T>& _vector, const Mat4x4<T>& _mat) {
+constexpr Vec3<T> Mat4x4<T>::transform_vector(const Vec3<T>& _vector, const Mat4x4<T>& _mat) {
   const Vec3<T>& x{_mat.x.x, _mat.x.y, _mat.x.z};
   const Vec3<T>& y{_mat.y.x, _mat.y.y, _mat.y.z};
   const Vec3<T>& z{_mat.z.x, _mat.z.y, _mat.z.z};
@@ -204,12 +204,12 @@ inline constexpr Vec3<T> Mat4x4<T>::transform_vector(const Vec3<T>& _vector, con
 }
 
 template<typename T>
-inline constexpr Vec4<T> Mat4x4<T>::transform_vector(const Vec4<T>& _vector, const Mat4x4& _mat) {
+constexpr Vec4<T> Mat4x4<T>::transform_vector(const Vec4<T>& _vector, const Mat4x4& _mat) {
   return (_mat.x * _vector.x) + (_mat.y * _vector.y) + (_mat.z * _vector.z) + (_mat.w * _vector.w);
 }
 
 template<typename T>
-inline constexpr Mat4x4<T> Mat4x4<T>::operator*(const Mat4x4& _mat) const {
+constexpr Mat4x4<T> Mat4x4<T>::operator*(const Mat4x4& _mat) const {
   return {_mat.x*x.x + _mat.y*x.y + _mat.z*x.z + _mat.w*x.w,
           _mat.x*y.x + _mat.y*y.y + _mat.z*y.z + _mat.w*y.w,
           _mat.x*z.x + _mat.y*z.y + _mat.z*z.z + _mat.w*z.w,
@@ -217,37 +217,37 @@ inline constexpr Mat4x4<T> Mat4x4<T>::operator*(const Mat4x4& _mat) const {
 }
 
 template<typename T>
-inline constexpr Mat4x4<T> Mat4x4<T>::operator+(const Mat4x4& _mat) const {
+constexpr Mat4x4<T> Mat4x4<T>::operator+(const Mat4x4& _mat) const {
   return {x + _mat.x, y + _mat.y, z + _mat.z, w + _mat.w};
 }
 
 template<typename T>
-inline constexpr Mat4x4<T> Mat4x4<T>::operator*(T _scalar) const {
+constexpr Mat4x4<T> Mat4x4<T>::operator*(T _scalar) const {
   return {x * _scalar, y * _scalar, z * _scalar, w * _scalar};
 }
 
 template<typename T>
-inline constexpr Mat4x4<T> Mat4x4<T>::operator+(T _scalar) const {
+constexpr Mat4x4<T> Mat4x4<T>::operator+(T _scalar) const {
   return {x + _scalar, y + _scalar, z + _scalar, w + _scalar};
 }
 
 template<typename T>
-inline constexpr Mat4x4<T>& Mat4x4<T>::operator*=(const Mat4x4& _mat) {
+constexpr Mat4x4<T>& Mat4x4<T>::operator*=(const Mat4x4& _mat) {
   return *this = *this * _mat;
 }
 
 template<typename T>
-inline constexpr Mat4x4<T>& Mat4x4<T>::operator+=(const Mat4x4& _mat) {
+constexpr Mat4x4<T>& Mat4x4<T>::operator+=(const Mat4x4& _mat) {
   return *this = *this + _mat;
 }
 
 template<typename T>
-inline constexpr Mat4x4<T>& Mat4x4<T>::operator*=(T _scalar) {
+constexpr Mat4x4<T>& Mat4x4<T>::operator*=(T _scalar) {
   return *this = *this * _scalar;
 }
 
 template<typename T>
-inline constexpr Mat4x4<T>& Mat4x4<T>::operator+=(T _scalar) {
+constexpr Mat4x4<T>& Mat4x4<T>::operator+=(T _scalar) {
   return *this = *this + _scalar;
 }
 
@@ -262,17 +262,17 @@ constexpr bool operator!=(const Mat4x4<U>& _lhs, const Mat4x4<U>& _rhs) {
 }
 
 template<typename T>
-inline constexpr T Mat4x4<T>::det2x2(T a, T b, T c, T d) {
+constexpr T Mat4x4<T>::det2x2(T a, T b, T c, T d) {
   return a*d - b*c;
 }
 
 template<typename T>
-inline constexpr T Mat4x4<T>::det3x3(T a1, T a2, T a3, T b1, T b2, T b3, T c1, T c2, T c3) {
+constexpr T Mat4x4<T>::det3x3(T a1, T a2, T a3, T b1, T b2, T b3, T c1, T c2, T c3) {
   return a1 * det2x2(b2, b3, c2, c3) - b1 * det2x2(a2, a3, c2, c3) + c1 * det2x2(a2, a3, b2, b3);
 }
 
 template<typename T>
-inline constexpr Vec3<T> Mat4x4<T>::reduce_rotation_angles(const Vec3<T>& _rotate) {
+constexpr Vec3<T> Mat4x4<T>::reduce_rotation_angles(const Vec3<T>& _rotate) {
   return _rotate.map([](T _angle) {
     while (_angle >  180) {
       _angle -= 360;

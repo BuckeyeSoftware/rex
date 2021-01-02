@@ -249,8 +249,8 @@ private:
 
 // GlobalNode
 template<typename T, typename... Ts>
-inline GlobalNode::GlobalNode(const char* _group, const char* _name,
-                              Uninitialized<T>& _global_store, Ts&&... _arguments)
+GlobalNode::GlobalNode(const char* _group, const char* _name,
+                      Uninitialized<T>& _global_store, Ts&&... _arguments)
   : m_group{_group ? _group : "system"}
   , m_name{_name}
   , m_storage_dispatch{storage_dispatch<T, Ts...>}
@@ -268,7 +268,7 @@ inline GlobalNode::GlobalNode(const char* _group, const char* _name,
 }
 
 template<typename... Ts>
-inline void GlobalNode::init(Ts&&... _arguments) {
+void GlobalNode::init(Ts&&... _arguments) {
   static_assert(sizeof...(Ts) != 0,
     "use void init() for default construction");
 
@@ -294,7 +294,7 @@ inline Byte* GlobalNode::data() {
 }
 
 template<typename T>
-inline T* GlobalNode::cast() {
+T* GlobalNode::cast() {
   validate_cast_for<T>();
   return reinterpret_cast<T*>(data());
 }
@@ -318,7 +318,7 @@ inline constexpr const char* GlobalGroup::name() const {
 }
 
 template<typename F>
-inline void GlobalGroup::each(F&& _function) {
+void GlobalGroup::each(F&& _function) {
   for (auto node = m_list.enumerate_head(&GlobalNode::m_grouped); node; node.next()) {
     _function(node.data());
   }
@@ -327,49 +327,49 @@ inline void GlobalGroup::each(F&& _function) {
 // Global
 template<typename T>
 template<typename... Ts>
-inline Global<T>::Global(const char* _group, const char* _name, Ts&&... _arguments)
+Global<T>::Global(const char* _group, const char* _name, Ts&&... _arguments)
   : m_node{_group, _name, m_global_store, Utility::forward<Ts>(_arguments)...}
 {
 }
 
 template<typename T>
-inline void Global<T>::init() {
+void Global<T>::init() {
   m_node.init();
 }
 
 template<typename T>
-inline void Global<T>::fini() {
+void Global<T>::fini() {
   m_node.fini();
 }
 
 template<typename T>
 template<typename... Ts>
-inline void Global<T>::init(Ts&&... _arguments) {
+void Global<T>::init(Ts&&... _arguments) {
   m_node.init(Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename T>
-inline constexpr const char* Global<T>::name() const {
+constexpr const char* Global<T>::name() const {
   return m_node.name();
 }
 
 template<typename T>
-inline constexpr T* Global<T>::operator&() {
+constexpr T* Global<T>::operator&() {
   return data();
 }
 
 template<typename T>
-inline constexpr const T* Global<T>::operator&() const {
+constexpr const T* Global<T>::operator&() const {
   return data();
 }
 
 template<typename T>
-inline constexpr T& Global<T>::operator*() {
+constexpr T& Global<T>::operator*() {
   return *data();
 }
 
 template<typename T>
-inline constexpr const T& Global<T>::operator*() const {
+constexpr const T& Global<T>::operator*() const {
   return *data();
 }
 
@@ -384,13 +384,13 @@ constexpr const T* Global<T>::operator->() const {
 }
 
 template<typename T>
-inline constexpr T* Global<T>::data() {
+constexpr T* Global<T>::data() {
   m_node.init();
   return m_global_store.data();
 }
 
 template<typename T>
-inline constexpr const T* Global<T>::data() const {
+constexpr const T* Global<T>::data() const {
   m_node.init();
   return m_global_store.data();
 }

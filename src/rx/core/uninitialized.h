@@ -31,12 +31,12 @@ private:
 
 template<typename T>
 template<typename... Ts>
-inline void Uninitialized<T>::init(Ts&&... _arguments) {
+void Uninitialized<T>::init(Ts&&... _arguments) {
   Utility::construct<T>(m_storage.data(), Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename T>
-inline void Uninitialized<T>::fini() {
+void Uninitialized<T>::fini() {
   Utility::destruct<T>(m_storage.data());
 }
 

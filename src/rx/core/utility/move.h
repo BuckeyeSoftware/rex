@@ -5,7 +5,7 @@
 namespace Rx::Utility {
 
 template<typename T>
-inline constexpr traits::remove_reference<T>&& move(T&& _value) {
+constexpr traits::remove_reference<T>&& move(T&& _value) {
   return static_cast<traits::remove_reference<T>&&>(_value);
 }
 

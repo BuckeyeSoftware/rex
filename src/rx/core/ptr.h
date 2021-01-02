@@ -70,27 +70,27 @@ private:
 };
 
 template<typename T>
-inline constexpr Ptr<T>::Ptr()
+constexpr Ptr<T>::Ptr()
   : Ptr{Memory::SystemAllocator::instance()}
 {
 }
 
 template<typename T>
-inline constexpr Ptr<T>::Ptr(Memory::Allocator& _allocator)
+constexpr Ptr<T>::Ptr(Memory::Allocator& _allocator)
   : m_allocator{&_allocator}
   , m_data{nullptr}
 {
 }
 
 template<typename T>
-inline constexpr Ptr<T>::Ptr(Memory::Allocator& _allocator, NullPointer)
+constexpr Ptr<T>::Ptr(Memory::Allocator& _allocator, NullPointer)
   : Ptr{_allocator}
 {
 }
 
 template<typename T>
 template<typename U>
-inline constexpr Ptr<T>::Ptr(Memory::Allocator& _allocator, U* _data)
+constexpr Ptr<T>::Ptr(Memory::Allocator& _allocator, U* _data)
   : m_allocator{&_allocator}
   , m_data{_data}
 {
@@ -98,20 +98,20 @@ inline constexpr Ptr<T>::Ptr(Memory::Allocator& _allocator, U* _data)
 
 template<typename T>
 template<typename U>
-inline Ptr<T>::Ptr(Ptr<U>&& other_)
+Ptr<T>::Ptr(Ptr<U>&& other_)
   : m_allocator{other_.m_allocator}
   , m_data{Utility::exchange(other_.m_data, nullptr)}
 {
 }
 
 template<typename T>
-inline Ptr<T>::~Ptr() {
+Ptr<T>::~Ptr() {
   destroy();
 }
 
 template<typename T>
 template<typename U>
-inline Ptr<T>& Ptr<T>::operator=(Ptr<U>&& ptr_) {
+Ptr<T>& Ptr<T>::operator=(Ptr<U>&& ptr_) {
   // The casts are necessary here since T and U may not be the same.
   RX_ASSERT(reinterpret_cast<UintPtr>(&ptr_)
     != reinterpret_cast<UintPtr>(this), "self assignment");
@@ -122,7 +122,7 @@ inline Ptr<T>& Ptr<T>::operator=(Ptr<U>&& ptr_) {
 }
 
 template<typename T>
-inline Ptr<T>& Ptr<T>::operator=(NullPointer) {
+Ptr<T>& Ptr<T>::operator=(NullPointer) {
   destroy();
   m_data = nullptr;
   return *this;
@@ -130,19 +130,19 @@ inline Ptr<T>& Ptr<T>::operator=(NullPointer) {
 
 template<typename T>
 template<typename U>
-inline void Ptr<T>::reset(Memory::Allocator& _allocator, U* _data) {
+void Ptr<T>::reset(Memory::Allocator& _allocator, U* _data) {
   destroy();
   m_allocator = &_allocator;
   m_data = _data;
 }
 
 template<typename T>
-inline T* Ptr<T>::release() {
+T* Ptr<T>::release() {
   return Utility::exchange(m_data, nullptr);
 }
 
 template<typename T>
-inline T& Ptr<T>::operator*() const {
+T& Ptr<T>::operator*() const {
   RX_ASSERT(m_data, "nullptr");
   return *m_data;
 }
@@ -168,18 +168,18 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Ptr<T>::allocator() const {
 }
 
 template<typename T>
-inline constexpr Size Ptr<T>::hash() const {
+constexpr Size Ptr<T>::hash() const {
   return Rx::Hash<T*>{}(m_data);
 }
 
 template<typename T>
-inline void Ptr<T>::destroy() {
+void Ptr<T>::destroy() {
   allocator().template destroy<T>(m_data);
 }
 
 // Helper function to make a unique ptr.
 template<typename T, typename... Ts>
-inline Ptr<T> make_ptr(Memory::Allocator& _allocator, Ts&&... _arguments) {
+Ptr<T> make_ptr(Memory::Allocator& _allocator, Ts&&... _arguments) {
   return {_allocator, _allocator.create<T>(Utility::forward<Ts>(_arguments)...)};
 }
 

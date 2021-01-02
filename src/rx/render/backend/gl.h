@@ -29,7 +29,7 @@ struct Filter {
 Filter convert_texture_filter(const Frontend::Texture::FilterOptions& _filter_options);
 
 template<typename... Ts>
-inline bool requires_border_color(Ts... _types) {
+bool requires_border_color(Ts... _types) {
   return ((_types == GL_CLAMP_TO_BORDER) || ...);
 }
 

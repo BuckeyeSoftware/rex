@@ -229,7 +229,7 @@ inline String JSON::as_string() const {
 }
 
 template<typename T>
-inline T JSON::decode(const T& _default) const {
+T JSON::decode(const T& _default) const {
   if constexpr(traits::is_same<T, Float32> || traits::is_same<T, Float64>) {
     if (is_number()) {
       return as_number();
@@ -250,7 +250,7 @@ inline T JSON::decode(const T& _default) const {
 }
 
 template<typename F>
-inline bool JSON::each(F&& _function) const {
+bool JSON::each(F&& _function) const {
   const bool array = is_array();
   const bool object = is_object();
 

@@ -6,14 +6,14 @@
 
 struct RxPlacementNewTag {};
 
-RX_HINT_FORCE_INLINE void* operator new(Rx::Size, void* _data, RxPlacementNewTag) {
+RX_HINT_FORCE_INLINE constexpr void* operator new(Rx::Size, void* _data, RxPlacementNewTag) {
   return _data;
 }
 
 namespace Rx::Utility {
 
 template<typename T, typename... Ts>
-RX_HINT_FORCE_INLINE T* construct(void* _data, Ts&&... _args) {
+RX_HINT_FORCE_INLINE constexpr T* construct(void* _data, Ts&&... _args) {
   return new (_data, RxPlacementNewTag{}) T{Utility::forward<Ts>(_args)...};
 }
 

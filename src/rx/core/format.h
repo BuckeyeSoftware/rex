@@ -54,7 +54,7 @@ RX_API Size format_buffer_va_list(char* buffer_, Size _length, const char* _form
 RX_API Size format_buffer_va_args(char* buffer_, Size _length, const char* _format, ...) RX_HINT_FORMAT(3, 4);
 
 template<typename... Ts>
-inline Size format_buffer(char* buffer_, Size _length, const char* _format,
+Size format_buffer(char* buffer_, Size _length, const char* _format,
   Ts&&... _arguments)
 {
   return format_buffer_va_args(buffer_, _length, _format,

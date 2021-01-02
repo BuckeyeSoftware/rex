@@ -20,12 +20,12 @@ struct Rectangle {
 };
 
 template<typename T>
-inline bool Rectangle<T>::contains(const Rectangle& _other) const {
+bool Rectangle<T>::contains(const Rectangle& _other) const {
   return _other.offset + _other.dimensions < offset + dimensions && _other.offset > offset;
 }
 
 template<typename T>
-inline bool Rectangle<T>::contains(const Vec2<T>& _point) const {
+bool Rectangle<T>::contains(const Vec2<T>& _point) const {
   return _point < offset + dimensions && _point > offset;
 }
 

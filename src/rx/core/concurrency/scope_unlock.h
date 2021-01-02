@@ -13,14 +13,14 @@ private:
 };
 
 template<typename T>
-inline constexpr ScopeUnlock<T>::ScopeUnlock(T& lock_)
+constexpr ScopeUnlock<T>::ScopeUnlock(T& lock_)
   : m_lock{lock_}
 {
   m_lock.unlock();
 }
 
 template<typename T>
-inline ScopeUnlock<T>::~ScopeUnlock() {
+ScopeUnlock<T>::~ScopeUnlock() {
   m_lock.lock();
 }
 

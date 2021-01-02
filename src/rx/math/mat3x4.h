@@ -47,7 +47,7 @@ struct Mat3x4 {
 using Mat3x4f = Mat3x4<Float32>;
 
 template<typename T>
-inline constexpr Mat3x4<T>::Mat3x4(const Vec& _x, const Vec& _y, const Vec& _z)
+constexpr Mat3x4<T>::Mat3x4(const Vec& _x, const Vec& _y, const Vec& _z)
   : x{_x}
   , y{_y}
   , z{_z}
@@ -55,17 +55,17 @@ inline constexpr Mat3x4<T>::Mat3x4(const Vec& _x, const Vec& _y, const Vec& _z)
 }
 
 template<typename T>
-inline T* Mat3x4<T>::data() {
+T* Mat3x4<T>::data() {
   return x.data();
 }
 
 template<typename T>
-inline const T* Mat3x4<T>::data() const {
+const T* Mat3x4<T>::data() const {
   return x.data();
 }
 
 template<typename T>
-inline Mat3x4<T> Mat3x4<T>::invert(const Mat3x4& _mat) {
+Mat3x4<T> Mat3x4<T>::invert(const Mat3x4& _mat) {
   Vec3<T> inverse_rotation_x{_mat.x.x, _mat.y.x, _mat.z.x};
   Vec3<T> inverse_rotation_y{_mat.x.y, _mat.y.y, _mat.z.y};
   Vec3<T> inverse_rotation_z{_mat.x.z, _mat.y.z, _mat.z.z};
@@ -82,44 +82,44 @@ inline Mat3x4<T> Mat3x4<T>::invert(const Mat3x4& _mat) {
 }
 
 template<typename T>
-inline constexpr Mat3x4<T> Mat3x4<T>::operator*(const Mat3x4& _mat) const {
+constexpr Mat3x4<T> Mat3x4<T>::operator*(const Mat3x4& _mat) const {
   return {(_mat.x*x.x + _mat.y*x.y + _mat.z*x.z) + Vec{0, 0, 0, x.w},
           (_mat.x*y.x + _mat.y*y.y + _mat.z*y.z) + Vec{0, 0, 0, y.w},
           (_mat.x*z.x + _mat.y*z.y + _mat.z*z.z) + Vec{0, 0, 0, z.w}};
 }
 
 template<typename T>
-inline constexpr Mat3x4<T> Mat3x4<T>::operator+(const Mat3x4& _mat) const {
+constexpr Mat3x4<T> Mat3x4<T>::operator+(const Mat3x4& _mat) const {
   return {x + _mat.x, y + _mat.y, z + _mat.z};
 }
 
 template<typename T>
-inline constexpr Mat3x4<T> Mat3x4<T>::operator*(T _scalar) const {
+constexpr Mat3x4<T> Mat3x4<T>::operator*(T _scalar) const {
   return {x * _scalar, y * _scalar, z * _scalar};
 }
 
 template<typename T>
-inline constexpr Mat3x4<T> Mat3x4<T>::operator+(T _scalar) const {
+constexpr Mat3x4<T> Mat3x4<T>::operator+(T _scalar) const {
   return {x + _scalar, y + _scalar, z + _scalar};
 }
 
 template<typename T>
-inline constexpr Mat3x4<T>& Mat3x4<T>::operator*=(const Mat3x4& _mat) {
+constexpr Mat3x4<T>& Mat3x4<T>::operator*=(const Mat3x4& _mat) {
   return *this = *this * _mat;
 }
 
 template<typename T>
-inline constexpr Mat3x4<T>& Mat3x4<T>::operator+=(const Mat3x4& _mat) {
+constexpr Mat3x4<T>& Mat3x4<T>::operator+=(const Mat3x4& _mat) {
   return *this = *this + _mat;
 }
 
 template<typename T>
-inline constexpr Mat3x4<T>& Mat3x4<T>::operator*=(T _scalar) {
+constexpr Mat3x4<T>& Mat3x4<T>::operator*=(T _scalar) {
   return *this = *this * _scalar;
 }
 
 template<typename T>
-inline constexpr Mat3x4<T>& Mat3x4<T>::operator+=(T _scalar) {
+constexpr Mat3x4<T>& Mat3x4<T>::operator+=(T _scalar) {
   return *this = *this + _scalar;
 }
 

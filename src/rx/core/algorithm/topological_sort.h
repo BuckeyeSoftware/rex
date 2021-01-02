@@ -46,20 +46,20 @@ protected:
 };
 
 template<typename K>
-inline TopologicalSort<K>::TopologicalSort()
+TopologicalSort<K>::TopologicalSort()
   : TopologicalSort{Memory::SystemAllocator::instance()}
 {
 }
 
 template<typename K>
-inline TopologicalSort<K>::TopologicalSort(Memory::Allocator& _allocator)
+TopologicalSort<K>::TopologicalSort(Memory::Allocator& _allocator)
   : m_allocator{&_allocator}
   , m_map{allocator()}
 {
 }
 
 template<typename K>
-inline bool TopologicalSort<K>::add(const K& _key) {
+bool TopologicalSort<K>::add(const K& _key) {
   if (m_map.find(_key)) {
     return false;
   }
@@ -67,7 +67,7 @@ inline bool TopologicalSort<K>::add(const K& _key) {
 }
 
 template<typename K>
-inline bool TopologicalSort<K>::add(const K& _key, const K& _dependency) {
+bool TopologicalSort<K>::add(const K& _key, const K& _dependency) {
   // Cannot be a dependency of one-self.
   if (_key == _dependency) {
     return false;
@@ -109,7 +109,7 @@ inline bool TopologicalSort<K>::add(const K& _key, const K& _dependency) {
 }
 
 template<typename K>
-inline Optional<typename TopologicalSort<K>::Result> TopologicalSort<K>::sort() {
+Optional<typename TopologicalSort<K>::Result> TopologicalSort<K>::sort() {
   // Make a copy of the map because the sorting is destructive.
   auto map = m_map;
 

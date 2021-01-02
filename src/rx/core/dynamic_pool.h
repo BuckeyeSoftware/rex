@@ -61,7 +61,7 @@ RX_HINT_FORCE_INLINE Byte* DynamicPool::operator[](Size _index) const {
 }
 
 template<typename T, typename... Ts>
-inline T* DynamicPool::create(Ts&&... _arguments) {
+T* DynamicPool::create(Ts&&... _arguments) {
   const Size pools = m_pools.size();
   for (Size i = 0; i < pools; i++) {
     auto& pool = m_pools[i];

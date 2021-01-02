@@ -68,7 +68,7 @@ inline bool Encoder::write_string(const String& _string) {
 }
 
 template<typename T>
-inline bool Encoder::write_uint_array(const T* _data, Size _count) {
+bool Encoder::write_uint_array(const T* _data, Size _count) {
   static_assert(traits::is_unsigned<T>, "T isn't unsigned integer Type");
 
   if (!write_uint(_count)) {
@@ -85,7 +85,7 @@ inline bool Encoder::write_uint_array(const T* _data, Size _count) {
 }
 
 template<typename T>
-inline bool Encoder::write_sint_array(const T* _data, Size _count) {
+bool Encoder::write_sint_array(const T* _data, Size _count) {
   static_assert(traits::is_signed<T>, "T isn't signed integer Type");
 
   if (!write_uint(_count)) {
@@ -110,7 +110,7 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Encoder::allocator() const {
 }
 
 template<typename... Ts>
-inline bool Encoder::error(const char* _format, Ts&&... _arguments) {
+bool Encoder::error(const char* _format, Ts&&... _arguments) {
   m_message = String::format(allocator(), _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }

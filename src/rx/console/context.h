@@ -57,7 +57,7 @@ private:
 };
 
 template<typename... Ts>
-inline bool Context::print(const char* _format, Ts&&... _arguments) {
+bool Context::print(const char* _format, Ts&&... _arguments) {
   if constexpr(sizeof...(Ts) != 0) {
     return write(String::format(_format, Utility::forward<Ts>(_arguments)...));
   } else {

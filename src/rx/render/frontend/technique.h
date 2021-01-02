@@ -141,15 +141,13 @@ inline const String& Technique::name() const {
 }
 
 template<typename... Ts>
-inline bool Technique::error(const char* _format, Ts&&... _arguments) const {
+bool Technique::error(const char* _format, Ts&&... _arguments) const {
   log(Log::Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 
 template<typename... Ts>
-inline void Technique::log(Log::Level _level, const char* _format,
-                           Ts&&... _arguments) const
-{
+void Technique::log(Log::Level _level, const char* _format,  Ts&&... _arguments) const {
   if constexpr (sizeof...(Ts) != 0) {
     write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));
   } else {

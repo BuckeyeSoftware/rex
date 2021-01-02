@@ -97,7 +97,7 @@ private:
 };
 
 template<typename R, typename... Ts>
-inline constexpr Function<R(Ts...)>::Function(Memory::Allocator& _allocator)
+constexpr Function<R(Ts...)>::Function(Memory::Allocator& _allocator)
   : m_allocator{&_allocator}
   , m_data{nullptr}
   , m_size{0}
@@ -105,21 +105,21 @@ inline constexpr Function<R(Ts...)>::Function(Memory::Allocator& _allocator)
 }
 
 template<typename R, typename... Ts>
-inline constexpr Function<R(Ts...)>::Function()
+constexpr Function<R(Ts...)>::Function()
   : Function{Memory::SystemAllocator::instance()}
 {
 }
 
 template<typename R, typename... Ts>
 template<typename F, typename>
-inline Function<R(Ts...)>::Function(F&& _function)
+Function<R(Ts...)>::Function(F&& _function)
   : Function{Memory::SystemAllocator::instance(), Utility::forward<F>(_function)}
 {
 }
 
 template<typename R, typename... Ts>
 template<typename F, typename>
-inline Function<R(Ts...)>::Function(Memory::Allocator& _allocator, F&& _function)
+Function<R(Ts...)>::Function(Memory::Allocator& _allocator, F&& _function)
   : Function{_allocator}
 {
   m_size = sizeof(ControlBlock) + sizeof _function;
@@ -131,7 +131,7 @@ inline Function<R(Ts...)>::Function(Memory::Allocator& _allocator, F&& _function
 }
 
 template<typename R, typename... Ts>
-inline Function<R(Ts...)>::Function(Memory::Allocator& _allocator, const Function& _function)
+Function<R(Ts...)>::Function(Memory::Allocator& _allocator, const Function& _function)
   : Function{_allocator}
 {
   if (_function.m_data) {
@@ -146,13 +146,13 @@ inline Function<R(Ts...)>::Function(Memory::Allocator& _allocator, const Functio
 }
 
 template<typename R, typename... Ts>
-inline Function<R(Ts...)>::Function(const Function& _function)
+Function<R(Ts...)>::Function(const Function& _function)
   : Function{_function.allocator(), _function}
 {
 }
 
 template<typename R, typename... Ts>
-inline Function<R(Ts...)>::Function(Function&& function_)
+Function<R(Ts...)>::Function(Function&& function_)
   : m_allocator{function_.m_allocator}
   , m_data{Utility::exchange(function_.m_data, nullptr)}
   , m_size{Utility::exchange(function_.m_size, 0)}
@@ -160,7 +160,7 @@ inline Function<R(Ts...)>::Function(Function&& function_)
 }
 
 template<typename R, typename... Ts>
-inline Function<R(Ts...)>& Function<R(Ts...)>::operator=(const Function& _function) {
+Function<R(Ts...)>& Function<R(Ts...)>::operator=(const Function& _function) {
   RX_ASSERT(&_function != this, "self assignment");
 
   if (m_data) {
@@ -185,7 +185,7 @@ inline Function<R(Ts...)>& Function<R(Ts...)>::operator=(const Function& _functi
 }
 
 template<typename R, typename... Ts>
-inline Function<R(Ts...)>& Function<R(Ts...)>::operator=(Function&& function_) {
+Function<R(Ts...)>& Function<R(Ts...)>::operator=(Function&& function_) {
   RX_ASSERT(&function_ != this, "self assignment");
 
   if (m_data) {
@@ -200,7 +200,7 @@ inline Function<R(Ts...)>& Function<R(Ts...)>::operator=(Function&& function_) {
 }
 
 template<typename R, typename... Ts>
-inline Function<R(Ts...)>& Function<R(Ts...)>::operator=(NullPointer) {
+Function<R(Ts...)>& Function<R(Ts...)>::operator=(NullPointer) {
   if (m_data) {
     control()->modify_lifetime(Lifetime::k_destruct, storage(), nullptr);
     destroy();
@@ -209,7 +209,7 @@ inline Function<R(Ts...)>& Function<R(Ts...)>::operator=(NullPointer) {
 }
 
 template<typename R, typename... Ts>
-inline Function<R(Ts...)>::~Function() {
+Function<R(Ts...)>::~Function() {
   if (m_data) {
     control()->modify_lifetime(Lifetime::k_destruct, storage(), nullptr);
     destroy();
@@ -217,7 +217,7 @@ inline Function<R(Ts...)>::~Function() {
 }
 
 template<typename R, typename... Ts>
-inline R Function<R(Ts...)>::operator()(Ts... _arguments) const {
+R Function<R(Ts...)>::operator()(Ts... _arguments) const {
   if constexpr(traits::is_same<R, void>) {
     control()->invoke(storage(), Utility::forward<Ts>(_arguments)...);
   } else {
@@ -236,7 +236,7 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Function<R(Ts...)>::allocator(
 }
 
 template<typename R, typename... Ts>
-inline void Function<R(Ts...)>::destroy() {
+void Function<R(Ts...)>::destroy() {
   allocator().deallocate(m_data);
   m_data = nullptr;
   m_size = 0;

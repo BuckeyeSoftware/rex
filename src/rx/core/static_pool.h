@@ -66,7 +66,7 @@ inline Byte* StaticPool::operator[](Size _index) const {
 }
 
 template<typename T, typename... Ts>
-inline T* StaticPool::create(Ts&&... _arguments) {
+T* StaticPool::create(Ts&&... _arguments) {
   RX_ASSERT(sizeof(T) <= m_object_size, "object too large (%zu > %zu)",
     sizeof(T), m_object_size);
 
@@ -124,7 +124,7 @@ inline Size StaticPool::index_of_untyped(const Byte* _data) const {
 }
 
 template<typename T>
-inline Size StaticPool::index_of(const T* _data) const {
+Size StaticPool::index_of(const T* _data) const {
   return index_of_untyped(reinterpret_cast<const Byte*>(_data));
 }
 

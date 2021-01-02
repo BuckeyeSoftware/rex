@@ -63,7 +63,7 @@ using Vec3i = Vec3<Sint32>;
 using Vec3z = Vec3<Size>;
 
 template<typename T>
-inline constexpr Vec3<T>::Vec3()
+constexpr Vec3<T>::Vec3()
   : x{0}
   , y{0}
   , z{0}
@@ -71,7 +71,7 @@ inline constexpr Vec3<T>::Vec3()
 }
 
 template<typename T>
-inline constexpr Vec3<T>::Vec3(T _x, T _y, T _z)
+constexpr Vec3<T>::Vec3(T _x, T _y, T _z)
   : x{_x}
   , y{_y}
   , z{_z}
@@ -79,7 +79,7 @@ inline constexpr Vec3<T>::Vec3(T _x, T _y, T _z)
 }
 
 template<typename T>
-inline constexpr Vec3<T>::Vec3(const T (&_values)[3])
+constexpr Vec3<T>::Vec3(const T (&_values)[3])
   : x{_values[0]}
   , y{_values[1]}
   , z{_values[2]}
@@ -87,92 +87,92 @@ inline constexpr Vec3<T>::Vec3(const T (&_values)[3])
 }
 
 template<typename T>
-inline T& Vec3<T>::operator[](Size _i) {
+T& Vec3<T>::operator[](Size _i) {
   RX_ASSERT(_i < 3, "out of bounds");
   return array[_i];
 }
 
 template<typename T>
-inline const T& Vec3<T>::operator[](Size _i) const {
+const T& Vec3<T>::operator[](Size _i) const {
   RX_ASSERT(_i < 3, "out of bounds");
   return array[_i];
 }
 
 template<typename T>
-inline bool Vec3<T>::is_any(T _value) const {
+bool Vec3<T>::is_any(T _value) const {
   return x == _value || y == _value || z == _value;
 }
 
 template<typename T>
-inline bool Vec3<T>::is_all(T _value) const {
+bool Vec3<T>::is_all(T _value) const {
   return x == _value && y == _value && z == _value;
 }
 
 template<typename T>
-inline T Vec3<T>::area() const {
+T Vec3<T>::area() const {
   return x * y * z;
 }
 
 template<typename T>
-inline T Vec3<T>::sum() const {
+T Vec3<T>::sum() const {
   return x + y + z;
 }
 
 template<typename T>
-inline T Vec3<T>::max_element() const {
+T Vec3<T>::max_element() const {
   return Algorithm::max(x, y, z);
 }
 
 template<typename T>
-inline T Vec3<T>::min_element() const {
+T Vec3<T>::min_element() const {
   return Algorithm::min(x, y, z);
 }
 
 template<typename T>
 template<typename F>
-inline Vec3<T> Vec3<T>::map(F&& _fn) const {
+Vec3<T> Vec3<T>::map(F&& _fn) const {
   return { _fn(x), _fn(y), _fn(z) };
 }
 
 template<typename T>
-inline T* Vec3<T>::data() {
+T* Vec3<T>::data() {
   return array;
 }
 
 template<typename T>
-inline const T* Vec3<T>::data() const {
+const T* Vec3<T>::data() const {
   return array;
 }
 
 template<typename T>
 template<typename T2>
-inline constexpr Vec3<T2> Vec3<T>::cast() const {
+constexpr Vec3<T2> Vec3<T>::cast() const {
   return {static_cast<T2>(x), static_cast<T2>(y), static_cast<T2>(z)};
 }
 
 template<typename T>
-inline void Vec3<T>::operator+=(const Vec3<T>& _v) {
+void Vec3<T>::operator+=(const Vec3<T>& _v) {
   x += _v.x;
   y += _v.y;
   z += _v.z;
 }
 
 template<typename T>
-inline void Vec3<T>::operator-=(const Vec3<T>& _v) {
+void Vec3<T>::operator-=(const Vec3<T>& _v) {
   x -= _v.x;
   y -= _v.y;
   z -= _v.z;
 }
 
 template<typename T>
-inline void Vec3<T>::operator*=(T _scalar) {
+void Vec3<T>::operator*=(T _scalar) {
   x *= _scalar;
   y *= _scalar;
   z *= _scalar;
 }
 
 template<typename T>
-inline void Vec3<T>::operator/=(T _scalar) {
+void Vec3<T>::operator/=(T _scalar) {
   x /= _scalar;
   y /= _scalar;
   z /= _scalar;
@@ -180,101 +180,101 @@ inline void Vec3<T>::operator/=(T _scalar) {
 
 // TODO: check
 template<typename T>
-inline void Vec3<T>::operator*=(const Vec3<T>& _v) {
+void Vec3<T>::operator*=(const Vec3<T>& _v) {
   x *= _v.x;
   y *= _v.y;
   z *= _v.z;
 }
 
 template<typename T>
-inline constexpr bool operator==(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
+constexpr bool operator==(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
   return _lhs.x == _rhs.x && _lhs.y == _rhs.y && _lhs.z == _rhs.z;
 }
 
 template<typename T>
-inline constexpr bool operator!=(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
+constexpr bool operator!=(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
   return _lhs.x != _rhs.x || _lhs.y != _rhs.y || _lhs.z != _rhs.z;
 }
 
 template<typename T>
-inline constexpr Vec3<T> operator-(const Vec3<T>& _v) {
+constexpr Vec3<T> operator-(const Vec3<T>& _v) {
   return {-_v.x, -_v.y, -_v.z};
 }
 
 template<typename T>
-inline constexpr Vec3<T> operator+(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
+constexpr Vec3<T> operator+(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
   return {_lhs.x + _rhs.x, _lhs.y + _rhs.y, _lhs.z + _rhs.z};
 }
 
 template<typename T>
-inline constexpr Vec3<T> operator-(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
+constexpr Vec3<T> operator-(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
   return {_lhs.x - _rhs.x, _lhs.y - _rhs.y, _lhs.z - _rhs.z};
 }
 
 template<typename T>
-inline constexpr Vec3<T> operator*(T _scalar, const Vec3<T>& _v) {
+constexpr Vec3<T> operator*(T _scalar, const Vec3<T>& _v) {
   return {_scalar * _v.x, _scalar * _v.y, _scalar * _v.z};
 }
 
 template<typename T>
-inline constexpr Vec3<T> operator*(const Vec3<T>& _v, T _scalar) {
+constexpr Vec3<T> operator*(const Vec3<T>& _v, T _scalar) {
   return _scalar * _v;
 }
 
 // NOTE: check
 template<typename T>
-inline constexpr Vec3<T> operator-(const Vec3<T>& _v, T _scalar) {
+constexpr Vec3<T> operator-(const Vec3<T>& _v, T _scalar) {
   return {_v.x - _scalar, _v.y - _scalar, _v.z - _scalar};
 }
 
 // NOTE: check
 template<typename T>
-inline constexpr Vec3<T> operator+(const Vec3<T>& _v, T _scalar) {
+constexpr Vec3<T> operator+(const Vec3<T>& _v, T _scalar) {
   return {_v.x + _scalar, _v.y + _scalar, _v.z + _scalar};
 }
 
 // NOTE: check
 template<typename T>
-inline constexpr Vec3<T> operator/(T _scalar, const Vec3<T>& _v) {
+constexpr Vec3<T> operator/(T _scalar, const Vec3<T>& _v) {
   return {_scalar / _v.x, _scalar / _v.y, _scalar / _v.z};
 }
 
 // NOTE: check
 template<typename T>
-inline constexpr Vec3<T> operator/(const Vec3<T>& _v, T _scalar) {
+constexpr Vec3<T> operator/(const Vec3<T>& _v, T _scalar) {
   return {_v.x / _scalar, _v.y / _scalar, _v.z / _scalar};
 }
 
 // NOTE: check
 template<typename T>
-inline constexpr Vec3<T> operator/(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
+constexpr Vec3<T> operator/(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
   return {_lhs.x / _rhs.x, _lhs.y / _rhs.y, _lhs.z / _rhs.z};
 }
 
 // NOTE: check
 template<typename T>
-inline constexpr Vec3<T> operator*(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
+constexpr Vec3<T> operator*(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
   return {_lhs.x * _rhs.x, _lhs.y * _rhs.y, _lhs.z * _rhs.z};
 }
 
 template<typename T>
-inline constexpr bool operator<(const Vec3<T>& _a, const Vec3<T>& _b) {
+constexpr bool operator<(const Vec3<T>& _a, const Vec3<T>& _b) {
   return _a.x < _b.x && _a.y < _b.y && _a.z < _b.z;
 }
 
 template<typename T>
-inline constexpr bool operator>(const Vec3<T>& _a, const Vec3<T>& _b) {
+constexpr bool operator>(const Vec3<T>& _a, const Vec3<T>& _b) {
   return _a.x > _b.x && _a.y > _b.y && _a.z > _b.z;
 }
 
 // Functions.
 template<typename T>
-inline constexpr T dot(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
+constexpr T dot(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
   return _lhs.x * _rhs.x + _lhs.y * _rhs.y + _lhs.z * _rhs.z;
 }
 
 template<typename T>
-inline constexpr Vec3<T> cross(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
+constexpr Vec3<T> cross(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
   return {_lhs.y * _rhs.z - _rhs.y * _lhs.z,
           _lhs.z * _rhs.x - _rhs.z * _lhs.x,
           _lhs.x * _rhs.y - _rhs.x * _lhs.y};
@@ -282,25 +282,25 @@ inline constexpr Vec3<T> cross(const Vec3<T>& _lhs, const Vec3<T>& _rhs) {
 
 // Compute the determinant of a matrix whose columns are three given vectors.
 template<typename T>
-inline constexpr T det(const Vec3<T>& _a, const Vec3<T>& _b, const Vec3<T>& _c) {
+constexpr T det(const Vec3<T>& _a, const Vec3<T>& _b, const Vec3<T>& _c) {
   return dot(_a, cross(_b, _c));
 }
 
 // Compute minimum vector between two vectors (per-element).
 template<typename T>
-inline constexpr Vec3<T> min(const Vec3<T>& _a, const Vec3<T>& _b) {
+constexpr Vec3<T> min(const Vec3<T>& _a, const Vec3<T>& _b) {
   return {Algorithm::min(_a.x, _b.x), Algorithm::min(_a.y, _b.y), Algorithm::min(_a.z, _b.z)};
 }
 
 // Compute maximum vector between two vectors (per-element).
 template<typename T>
-inline constexpr Vec3<T> max(const Vec3<T>& _a, const Vec3<T>& _b) {
+constexpr Vec3<T> max(const Vec3<T>& _a, const Vec3<T>& _b) {
   return {Algorithm::max(_a.x, _b.x), Algorithm::max(_a.y, _b.y), Algorithm::max(_a.z, _b.z)};
 }
 
 // Compute absolute vector of a given vectgor (per-element).
 template<typename T>
-inline Vec3<T> abs(const Vec3<T>& _v) {
+Vec3<T> abs(const Vec3<T>& _v) {
   return {abs(_v.x), abs(_v.y), abs(_v.y)};
 }
 

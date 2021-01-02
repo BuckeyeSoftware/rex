@@ -123,13 +123,13 @@ private:
 };
 
 template<typename T>
-inline constexpr Vector<T>::Vector()
+constexpr Vector<T>::Vector()
   : Vector{Memory::SystemAllocator::instance()}
 {
 }
 
 template<typename T>
-inline constexpr Vector<T>::Vector(Memory::Allocator& _allocator)
+constexpr Vector<T>::Vector(Memory::Allocator& _allocator)
   : m_allocator{&_allocator}
   , m_data{nullptr}
   , m_size{0}
@@ -138,7 +138,7 @@ inline constexpr Vector<T>::Vector(Memory::Allocator& _allocator)
 }
 
 template<typename T>
-inline constexpr Vector<T>::Vector(Memory::View _view)
+constexpr Vector<T>::Vector(Memory::View _view)
   : m_allocator{_view.owner}
   , m_data{reinterpret_cast<T*>(_view.data)}
   , m_size{_view.size / sizeof(T)}
@@ -148,7 +148,7 @@ inline constexpr Vector<T>::Vector(Memory::View _view)
 
 template<typename T>
 template<typename U, Size E>
-inline Vector<T>::Vector(Memory::Allocator& _allocator, Initializers<U, E>&& _initializers)
+Vector<T>::Vector(Memory::Allocator& _allocator, Initializers<U, E>&& _initializers)
   : Vector{_allocator}
 {
   grow_or_shrink_to(E);
@@ -162,13 +162,13 @@ inline Vector<T>::Vector(Memory::Allocator& _allocator, Initializers<U, E>&& _in
 
 template<typename T>
 template<typename U, Size E>
-inline Vector<T>::Vector(Initializers<U, E>&& _initializers)
+Vector<T>::Vector(Initializers<U, E>&& _initializers)
   : Vector{Memory::SystemAllocator::instance(), Utility::move(_initializers)}
 {
 }
 
 template<typename T>
-inline Vector<T>::Vector(Memory::Allocator& _allocator, Size _size)
+Vector<T>::Vector(Memory::Allocator& _allocator, Size _size)
   : m_allocator{&_allocator}
   , m_data{nullptr}
   , m_size{_size}
@@ -184,7 +184,7 @@ inline Vector<T>::Vector(Memory::Allocator& _allocator, Size _size)
 }
 
 template<typename T>
-inline Vector<T>::Vector(Memory::Allocator& _allocator, const Vector& _other)
+Vector<T>::Vector(Memory::Allocator& _allocator, const Vector& _other)
   : m_allocator{&_allocator}
   , m_data{nullptr}
   , m_size{_other.m_size}
@@ -203,19 +203,19 @@ inline Vector<T>::Vector(Memory::Allocator& _allocator, const Vector& _other)
 }
 
 template<typename T>
-inline Vector<T>::Vector(Size _size)
+Vector<T>::Vector(Size _size)
   : Vector{Memory::SystemAllocator::instance(), _size}
 {
 }
 
 template<typename T>
-inline Vector<T>::Vector(const Vector& _other)
+Vector<T>::Vector(const Vector& _other)
   : Vector{*_other.m_allocator, _other}
 {
 }
 
 template<typename T>
-inline Vector<T>::Vector(Vector&& other_)
+Vector<T>::Vector(Vector&& other_)
   : m_allocator{other_.m_allocator}
   , m_data{Utility::exchange(other_.m_data, nullptr)}
   , m_size{Utility::exchange(other_.m_size, 0)}
@@ -224,13 +224,13 @@ inline Vector<T>::Vector(Vector&& other_)
 }
 
 template<typename T>
-inline Vector<T>::~Vector() {
+Vector<T>::~Vector() {
   clear();
   allocator().deallocate(m_data);
 }
 
 template<typename T>
-inline Vector<T>& Vector<T>::operator=(const Vector& _other) {
+Vector<T>& Vector<T>::operator=(const Vector& _other) {
   RX_ASSERT(&_other != this, "self assignment");
 
   clear();
@@ -254,7 +254,7 @@ inline Vector<T>& Vector<T>::operator=(const Vector& _other) {
 }
 
 template<typename T>
-inline Vector<T>& Vector<T>::operator=(Vector&& other_) {
+Vector<T>& Vector<T>::operator=(Vector&& other_) {
   RX_ASSERT(&other_ != this, "self assignment");
 
   clear();
@@ -269,13 +269,13 @@ inline Vector<T>& Vector<T>::operator=(Vector&& other_) {
 }
 
 template<typename T>
-inline T& Vector<T>::operator[](Size _index) {
+T& Vector<T>::operator[](Size _index) {
   RX_ASSERT(m_data && in_range(_index), "out of bounds (%zu >= %zu)", _index, m_size);
   return m_data[_index];
 }
 
 template<typename T>
-inline const T& Vector<T>::operator[](Size _index) const {
+const T& Vector<T>::operator[](Size _index) const {
   RX_ASSERT(m_data && in_range(_index), "out of bounds (%zu >= %zu)", _index, m_size);
   return m_data[_index];
 }
@@ -382,7 +382,7 @@ bool Vector<T>::append(const Vector& _other) {
 }
 
 template<typename T>
-inline void Vector<T>::clear() {
+void Vector<T>::clear() {
   if (m_size) {
     if constexpr (!traits::is_trivially_destructible<T>) {
       RX_ASSERT(m_data, "m_data == nullptr when m_size != 0");
@@ -395,7 +395,7 @@ inline void Vector<T>::clear() {
 }
 
 template<typename T>
-inline Optional<Size> Vector<T>::find(const T& _value) const {
+Optional<Size> Vector<T>::find(const T& _value) const {
   for (Size i = 0; i < m_size; i++) {
     if (m_data[i] == _value) {
       return i;
@@ -407,7 +407,7 @@ inline Optional<Size> Vector<T>::find(const T& _value) const {
 
 template<typename T>
 template<typename F>
-inline Optional<Size> Vector<T>::find_if(F&& _compare) const {
+Optional<Size> Vector<T>::find_if(F&& _compare) const {
   for (Size i = 0; i < m_size; i++) {
     if (_compare(m_data[i])) {
       return i;
@@ -417,7 +417,7 @@ inline Optional<Size> Vector<T>::find_if(F&& _compare) const {
 }
 
 template<typename T>
-inline bool Vector<T>::push_back(const T& _value) {
+bool Vector<T>::push_back(const T& _value) {
   if (!grow_or_shrink_to(m_size + 1)) {
     return false;
   }
@@ -430,7 +430,7 @@ inline bool Vector<T>::push_back(const T& _value) {
 }
 
 template<typename T>
-inline bool Vector<T>::push_back(T&& value_) {
+bool Vector<T>::push_back(T&& value_) {
   if (!grow_or_shrink_to(m_size + 1)) {
     return false;
   }
@@ -443,7 +443,7 @@ inline bool Vector<T>::push_back(T&& value_) {
 }
 
 template<typename T>
-inline void Vector<T>::pop_back() {
+void Vector<T>::pop_back() {
   RX_ASSERT(m_size, "empty vector");
   grow_or_shrink_to(m_size - 1);
   m_size--;
@@ -451,7 +451,7 @@ inline void Vector<T>::pop_back() {
 
 template<typename T>
 template<typename... Ts>
-inline bool Vector<T>::emplace_back(Ts&&... _args) {
+bool Vector<T>::emplace_back(Ts&&... _args) {
   if (!grow_or_shrink_to(m_size + 1)) {
     return false;
   }
@@ -485,7 +485,7 @@ RX_HINT_FORCE_INLINE bool Vector<T>::in_range(Size _index) const {
 
 template<typename T>
 template<typename F>
-inline bool Vector<T>::each_fwd(F&& _func) {
+bool Vector<T>::each_fwd(F&& _func) {
   for (Size i{0}; i < m_size; i++) {
     if constexpr (traits::is_same<traits::return_type<F>, bool>) {
       if (!_func(m_data[i])) {
@@ -500,7 +500,7 @@ inline bool Vector<T>::each_fwd(F&& _func) {
 
 template<typename T>
 template<typename F>
-inline bool Vector<T>::each_fwd(F&& _func) const {
+bool Vector<T>::each_fwd(F&& _func) const {
   for (Size i{0}; i < m_size; i++) {
     if constexpr (traits::is_same<traits::return_type<F>, bool>) {
       if (!_func(m_data[i])) {
@@ -515,7 +515,7 @@ inline bool Vector<T>::each_fwd(F&& _func) const {
 
 template<typename T>
 template<typename F>
-inline bool Vector<T>::each_rev(F&& _func) {
+bool Vector<T>::each_rev(F&& _func) {
   for (Size i{m_size - 1}; i < m_size; i--) {
     if constexpr (traits::is_same<traits::return_type<F>, bool>) {
       if (!_func(m_data[i])) {
@@ -529,7 +529,7 @@ inline bool Vector<T>::each_rev(F&& _func) {
 }
 
 template<typename T>
-inline void Vector<T>::erase(Size _from, Size _to) {
+void Vector<T>::erase(Size _from, Size _to) {
   const Size range{_to - _from};
   T* begin{m_data};
   T* end{m_data + m_size};
@@ -551,7 +551,7 @@ inline void Vector<T>::erase(Size _from, Size _to) {
 
 template<typename T>
 template<typename F>
-inline bool Vector<T>::each_rev(F&& _func) const {
+bool Vector<T>::each_rev(F&& _func) const {
   for (Size i{m_size - 1}; i < m_size; i--) {
     if constexpr (traits::is_same<traits::return_type<F>, bool>) {
       if (!_func(m_data[i])) {
@@ -604,7 +604,7 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Vector<T>::allocator() const {
 }
 
 template<typename T>
-inline Memory::View Vector<T>::disown() {
+Memory::View Vector<T>::disown() {
   Memory::View view{m_allocator, reinterpret_cast<Byte*>(data()), capacity() * sizeof(T)};
   m_data = nullptr;
   m_size = 0;

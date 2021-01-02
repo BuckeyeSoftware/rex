@@ -64,7 +64,7 @@ inline Decoder::Decoder(Stream* _stream)
 }
 
 template<typename T>
-inline bool Decoder::read_uint_array(T* result_, Size _count) {
+bool Decoder::read_uint_array(T* result_, Size _count) {
   static_assert(traits::is_unsigned<T>, "T must be unsigned integer");
 
   Uint64 count = 0;
@@ -86,7 +86,7 @@ inline bool Decoder::read_uint_array(T* result_, Size _count) {
 }
 
 template<typename T>
-inline bool Decoder::read_sint_array(T* result_, Size _count) {
+bool Decoder::read_sint_array(T* result_, Size _count) {
   static_assert(traits::is_signed<T>, "T must be signed integer");
 
   Uint64 count = 0;
@@ -116,7 +116,7 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Decoder::allocator() const {
 }
 
 template<typename... Ts>
-inline bool Decoder::error(const char* _format, Ts&&... _arguments) {
+bool Decoder::error(const char* _format, Ts&&... _arguments) {
   m_message = String::format(_format, Utility::forward<Ts>(_arguments)...);
   return false;
 }

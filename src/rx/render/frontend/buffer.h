@@ -306,17 +306,17 @@ inline Byte* Buffer::map_instances(Size _size) {
 }
 
 template<typename T>
-inline bool Buffer::write_vertices(const T* _data, Size _size) {
+bool Buffer::write_vertices(const T* _data, Size _size) {
   return write_sink_data(Sink::VERTICES, reinterpret_cast<const Byte*>(_data), _size);
 }
 
 template<typename T>
-inline bool Buffer::write_elements(const T* _data, Size _size) {
+bool Buffer::write_elements(const T* _data, Size _size) {
   return write_sink_data(Sink::ELEMENTS, reinterpret_cast<const Byte*>(_data), _size);
 }
 
 template<typename T>
-inline bool Buffer::write_instances(const T* _data, Size _size) {
+bool Buffer::write_instances(const T* _data, Size _size) {
   return write_sink_data(Sink::INSTANCES, reinterpret_cast<const Byte*>(_data), _size);
 }
 

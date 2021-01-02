@@ -53,7 +53,7 @@ using Vec4i = Vec4<Sint32>;
 using Vec4z = Vec4<Size>;
 
 template<typename T>
-inline constexpr Vec4<T>::Vec4()
+constexpr Vec4<T>::Vec4()
   : x{0}
   , y{0}
   , z{0}
@@ -62,7 +62,7 @@ inline constexpr Vec4<T>::Vec4()
 }
 
 template<typename T>
-inline constexpr Vec4<T>::Vec4(T _x, T _y, T _z, T _w)
+constexpr Vec4<T>::Vec4(T _x, T _y, T _z, T _w)
   : x{_x}
   , y{_y}
   , z{_z}
@@ -71,7 +71,7 @@ inline constexpr Vec4<T>::Vec4(T _x, T _y, T _z, T _w)
 }
 
 template<typename T>
-inline constexpr Vec4<T>::Vec4(const T (&_values)[4])
+constexpr Vec4<T>::Vec4(const T (&_values)[4])
   : x{_values[0]}
   , y{_values[1]}
   , z{_values[2]}
@@ -80,106 +80,106 @@ inline constexpr Vec4<T>::Vec4(const T (&_values)[4])
 }
 
 template<typename T>
-inline T& Vec4<T>::operator[](Size _i) {
+T& Vec4<T>::operator[](Size _i) {
   RX_ASSERT(_i < 4, "out of bounds");
   return array[_i];
 }
 
 template<typename T>
-inline const T& Vec4<T>::operator[](Size _i) const {
+const T& Vec4<T>::operator[](Size _i) const {
   RX_ASSERT(_i < 4, "out of bounds");
   return array[_i];
 }
 
 template<typename T>
-inline bool Vec4<T>::is_any(T _value) const {
+bool Vec4<T>::is_any(T _value) const {
   return x == _value || y == _value || z == _value || w == _value;
 }
 
 template<typename T>
-inline bool Vec4<T>::is_all(T _value) const {
+bool Vec4<T>::is_all(T _value) const {
   return x == _value && y == _value && z == _value && w == _value;
 }
 
 template<typename T>
-inline T Vec4<T>::area() const {
+T Vec4<T>::area() const {
   return x * y * z * w;
 }
 
 template<typename T>
-inline T Vec4<T>::sum() const {
+T Vec4<T>::sum() const {
   return x + y + z + w;
 }
 
 template<typename T>
-inline T Vec4<T>::max_element() const {
+T Vec4<T>::max_element() const {
   return Algorithm::max(x, y, z, w);
 }
 
 template<typename T>
-inline T Vec4<T>::min_element() const {
+T Vec4<T>::min_element() const {
   return Algorithm::min(x, y, z, w);
 }
 
 template<typename T>
 template<typename F>
-inline Vec4<T> Vec4<T>::map(F&& _fn) const {
+Vec4<T> Vec4<T>::map(F&& _fn) const {
   return { _fn(x), _fn(y), _fn(z), _fn(w) };
 }
 
 template<typename T>
-inline T* Vec4<T>::data() {
+T* Vec4<T>::data() {
   return array;
 }
 
 template<typename T>
-inline const T* Vec4<T>::data() const {
+const T* Vec4<T>::data() const {
   return array;
 }
 
 template<typename T>
 template<typename T2>
-inline Vec4<T2> Vec4<T>::cast() const {
+Vec4<T2> Vec4<T>::cast() const {
   return {static_cast<T2>(x), static_cast<T2>(y), static_cast<T2>(z), static_cast<T2>(w)};
 }
 
 template<typename T>
-inline constexpr bool operator==(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
+constexpr bool operator==(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
   return _lhs.x == _rhs.x && _lhs.y == _rhs.y && _lhs.z == _rhs.z && _lhs.w == _rhs.w;
 }
 
 template<typename T>
-inline constexpr bool operator!=(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
+constexpr bool operator!=(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
   return _lhs.x != _rhs.x || _lhs.y != _rhs.y || _lhs.z != _rhs.z || _lhs.w != _rhs.w;
 }
 
 template<typename T>
-inline constexpr Vec4<T> operator+(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
+constexpr Vec4<T> operator+(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
   return {_lhs.x + _rhs.x, _lhs.y + _rhs.y, _lhs.z + _rhs.z, _lhs.w + _rhs.w};
 }
 
 template<typename T>
-inline constexpr Vec4<T> operator-(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
+constexpr Vec4<T> operator-(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
   return {_lhs.x - _rhs.x, _lhs.y - _rhs.y, _lhs.z - _rhs.z, _lhs.w - _rhs.w};
 }
 
 template<typename T>
-inline constexpr Vec4<T> operator*(T _scalar, const Vec4<T>& _v) {
+constexpr Vec4<T> operator*(T _scalar, const Vec4<T>& _v) {
   return {_scalar * _v.x, _scalar * _v.y, _scalar * _v.z, _scalar * _v.w};
 }
 
 template<typename T>
-inline constexpr Vec4<T> operator*(const Vec4<T>& _v, T _scalar) {
+constexpr Vec4<T> operator*(const Vec4<T>& _v, T _scalar) {
   return _scalar * _v;
 }
 
 template<typename T>
-inline constexpr Vec4<T> operator<(const Vec4<T>& _a, const Vec4<T>& _b) {
+constexpr Vec4<T> operator<(const Vec4<T>& _a, const Vec4<T>& _b) {
   return _a.x < _b.x && _a.y < _b.y && _a.z < _b.z && _a.w < _b.w;
 }
 
 template<typename T>
-inline constexpr Vec4<T> operator>(const Vec4<T>& _a, const Vec4<T>& _b) {
+constexpr Vec4<T> operator>(const Vec4<T>& _a, const Vec4<T>& _b) {
   return _a.x > _b.x && _a.y > _b.y && _a.z > _b.z && _a.w > _b.w;
 }
 
@@ -191,7 +191,7 @@ inline constexpr Vec4<T> operator>(const Vec4<T>& _a, const Vec4<T>& _b) {
 
 // Functions.
 template<typename T>
-inline constexpr T dot(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
+constexpr T dot(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
   return _lhs.x * _rhs.x + _lhs.y * _rhs.y + _lhs.z * _rhs.z + _lhs.w * _rhs.w;
 }
 

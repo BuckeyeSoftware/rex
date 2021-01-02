@@ -120,12 +120,12 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& File::allocator() const {
 }
 
 template<typename... Ts>
-inline bool File::print(Memory::Allocator& _allocator, const char* _format, Ts&&... _arguments) {
+bool File::print(Memory::Allocator& _allocator, const char* _format, Ts&&... _arguments) {
   return print(String::format(_allocator, _format, Utility::forward<Ts>(_arguments)...));
 }
 
 template<typename... Ts>
-inline bool File::print(const char* _format, Ts&&... _arguments) {
+bool File::print(const char* _format, Ts&&... _arguments) {
   return print(Memory::SystemAllocator::instance(), _format, Utility::forward<Ts>(_arguments)...);
 }
 

@@ -50,7 +50,7 @@ inline Size Aggregate::operator[](Size _index) const {
 }
 
 template<typename T>
-inline bool Aggregate::add(Size _count) {
+bool Aggregate::add(Size _count) {
   return add(sizeof(T), alignof(T), _count);
 }
 

@@ -33,35 +33,35 @@ Array(T, Ts...) -> Array<T[1 + sizeof...(Ts)]>;
 
 template<typename T, Size E>
 template<typename... Ts>
-inline constexpr Array<T[E]>::Array(Ts&&... _arguments)
+constexpr Array<T[E]>::Array(Ts&&... _arguments)
   : m_data{Utility::forward<Ts>(_arguments)...}
 {
 }
 
 template<typename T, Size E>
-inline constexpr T& Array<T[E]>::operator[](Size _index) {
+constexpr T& Array<T[E]>::operator[](Size _index) {
   RX_ASSERT(_index < E, "out of bounds (%zu >= %zu)", _index, E);
   return m_data[_index];
 }
 
 template<typename T, Size E>
-inline constexpr const T& Array<T[E]>::operator[](Size _index) const {
+constexpr const T& Array<T[E]>::operator[](Size _index) const {
   RX_ASSERT(_index < E, "out of bounds (%zu >= %zu)", _index, E);
   return m_data[_index];
 }
 
 template<typename T, Size E>
-inline constexpr T* Array<T[E]>::data() {
+constexpr T* Array<T[E]>::data() {
   return m_data;
 }
 
 template<typename T, Size E>
-inline constexpr const T* Array<T[E]>::data() const {
+constexpr const T* Array<T[E]>::data() const {
   return m_data;
 }
 
 template<typename T, Size E>
-inline constexpr Size Array<T[E]>::size() const {
+constexpr Size Array<T[E]>::size() const {
   return E;
 }
 

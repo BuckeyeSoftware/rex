@@ -41,7 +41,7 @@ struct Quat {
 using Quatf = Quat<Float32>;
 
 template<typename T>
-inline constexpr Quat<T>::Quat(T _x, T _y, T _z, T _w)
+constexpr Quat<T>::Quat(T _x, T _y, T _z, T _w)
   : x{_x}
   , y{_y}
   , z{_z}
@@ -50,12 +50,12 @@ inline constexpr Quat<T>::Quat(T _x, T _y, T _z, T _w)
 }
 
 template<typename T>
-inline constexpr Quat<T> Quat<T>::operator-() const {
+constexpr Quat<T> Quat<T>::operator-() const {
   return {-x, -y, -z, w};
 }
 
 template<typename T>
-inline constexpr Quat<T> Quat<T>::operator*(const Quat& _quat) const {
+constexpr Quat<T> Quat<T>::operator*(const Quat& _quat) const {
   return {w * _quat.x + x * _quat.w - y * _quat.z + z * _quat.y,
           w * _quat.y + x * _quat.z + y * _quat.w - z * _quat.x,
           w * _quat.z - x * _quat.y + y * _quat.x + z * _quat.w,
@@ -63,62 +63,62 @@ inline constexpr Quat<T> Quat<T>::operator*(const Quat& _quat) const {
 }
 
 template<typename T>
-inline constexpr Quat<T> Quat<T>::operator+(const Quat& _quat) const {
+constexpr Quat<T> Quat<T>::operator+(const Quat& _quat) const {
   return {x + _quat.x, y + _quat.y, z + _quat.z, w + _quat.w};
 }
 
 template<typename T>
-inline constexpr Quat<T> Quat<T>::operator-(const Quat& _quat) const {
+constexpr Quat<T> Quat<T>::operator-(const Quat& _quat) const {
   return {x - _quat.x, y - _quat.y, z - _quat.z, w - _quat.w};
 }
 
 template<typename T>
-inline constexpr Quat<T>& Quat<T>::operator*=(const Quat& _quat) {
+constexpr Quat<T>& Quat<T>::operator*=(const Quat& _quat) {
   return *this = *this * _quat;
 }
 
 template<typename T>
-inline constexpr Quat<T>& Quat<T>::operator+=(const Quat& _quat) {
+constexpr Quat<T>& Quat<T>::operator+=(const Quat& _quat) {
   return *this = *this + _quat;
 }
 
 template<typename T>
-inline constexpr Quat<T>& Quat<T>::operator-=(const Quat& _quat) {
+constexpr Quat<T>& Quat<T>::operator-=(const Quat& _quat) {
   return *this = *this - _quat;
 }
 
 template<typename T>
-inline constexpr Quat<T> Quat<T>::operator*(T _scalar) const {
+constexpr Quat<T> Quat<T>::operator*(T _scalar) const {
   return {x * _scalar, y * _scalar, z * _scalar, w * _scalar};
 }
 
 template<typename T>
-inline constexpr Quat<T> Quat<T>::operator+(T _scalar) const {
+constexpr Quat<T> Quat<T>::operator+(T _scalar) const {
   return {x + _scalar, y + _scalar, z + _scalar, w + _scalar};
 }
 
 template<typename T>
-inline constexpr Quat<T> Quat<T>::operator-(T _scalar) const {
+constexpr Quat<T> Quat<T>::operator-(T _scalar) const {
   return {x - _scalar, y - _scalar, z - _scalar, w - _scalar};
 }
 
 template<typename T>
-inline constexpr Quat<T>& Quat<T>::operator*=(T _scalar) {
+constexpr Quat<T>& Quat<T>::operator*=(T _scalar) {
   return *this = *this * _scalar;
 }
 
 template<typename T>
-inline constexpr Quat<T>& Quat<T>::operator+=(T _scalar) {
+constexpr Quat<T>& Quat<T>::operator+=(T _scalar) {
   return *this = *this + _scalar;
 }
 
 template<typename T>
-inline constexpr Quat<T>& Quat<T>::operator-=(T _scalar) {
+constexpr Quat<T>& Quat<T>::operator-=(T _scalar) {
   return *this = *this - _scalar;
 }
 
 template<typename T>
-inline constexpr T dot(const Quat<T>& _lhs, const Quat<T>& _rhs) {
+constexpr T dot(const Quat<T>& _lhs, const Quat<T>& _rhs) {
   return _lhs.x*_rhs.x + _lhs.y*_rhs.y + _lhs.z*_rhs.z + _lhs.w*_rhs.w;
 }
 
