@@ -221,8 +221,11 @@ Program::Program(Context* _frontend)
 
 bool Program::add_shader(Shader&& shader_) {
   // Run the formatter on the |_shader_.source|.
-  shader_.source = format_shader(shader_.source);
-  return m_shaders.push_back(Utility::move(shader_));
+  if (auto format = format_shader(shader_.source)) {
+    shader_.source = Utility::move(*format);
+    return m_shaders.push_back(Utility::move(shader_));
+  }
+  return false;
 }
 
 void Program::validate() const {
@@ -276,7 +279,7 @@ void Program::mark_uniform_dirty(Uint64 _uniform_bit) {
 }
 
 // Reformats the given Rex shading |_source| into clean shader text.
-String Program::format_shader(const String& _source) {
+Optional<String> Program::format_shader(const String& _source) {
   auto pass = [&](const char* _ch, char* result_) -> Size {
     Size length = 0;
 
@@ -367,11 +370,18 @@ String Program::format_shader(const String& _source) {
   const auto length = pass(data, nullptr);
 
   LinearBuffer result{allocator};
-  result.resize(length);
+  if (!result.resize(length)) {
+    return nullopt;
+  }
 
   pass(data, reinterpret_cast<char*>(result.data()));
 
-  return *result.disown();
+  auto disown = result.disown();
+  if (!disown) {
+    return nullopt;
+  }
+
+  return String{*disown};
 }
 
 } // namespace Rx::Render::Frontend

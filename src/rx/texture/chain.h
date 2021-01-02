@@ -23,19 +23,19 @@ struct Chain {
 
   Chain& operator=(Chain&& chain_);
 
-  void generate(Loader&& loader_, bool _has_mipchain, bool _want_mipchain);
-  void generate(Loader&& loader_, PixelFormat _want_format,
+  bool generate(Loader&& loader_, bool _has_mipchain, bool _want_mipchain);
+  bool generate(Loader&& loader_, PixelFormat _want_format,
     bool _has_mipchain, bool _want_mipchain);
 
-  void generate(LinearBuffer&& data_, PixelFormat _has_format,
+  bool generate(LinearBuffer&& data_, PixelFormat _has_format,
     PixelFormat _want_format, const Math::Vec2z& _dimensions,
     bool _has_mipchain, bool _want_mipchain);
 
-  void generate(const Byte* _data, PixelFormat _has_format,
+  bool generate(const Byte* _data, PixelFormat _has_format,
     PixelFormat _want_format, const Math::Vec2z& _dimensions,
     bool _has_mipchain, bool _want_mipchain);
 
-  void resize(const Math::Vec2z& _dimensions);
+  bool resize(const Math::Vec2z& _dimensions);
 
   LinearBuffer&& data();
   const LinearBuffer& data() const;
@@ -49,7 +49,7 @@ struct Chain {
   constexpr Memory::Allocator& allocator() const;
 
 private:
-  void generate_mipchain(bool _has_mipchain, bool _want_mipchain);
+  bool generate_mipchain(bool _has_mipchain, bool _want_mipchain);
 
   Memory::Allocator* m_allocator;
   LinearBuffer m_data;
@@ -95,19 +95,19 @@ inline Chain& Chain::operator=(Chain&& chain_) {
   return *this;
 }
 
-inline void Chain::generate(Loader&& loader_, bool _has_mipchain,
+inline bool Chain::generate(Loader&& loader_, bool _has_mipchain,
   bool _want_mipchain)
 {
   const PixelFormat format = loader_.format();
-  generate(Utility::move(loader_.data()), format, format, loader_.dimensions(),
-           _has_mipchain, _want_mipchain);
+  return generate(Utility::move(loader_.data()), format, format,
+    loader_.dimensions(), _has_mipchain, _want_mipchain);
 }
 
-inline void Chain::generate(Loader&& loader_, PixelFormat _want_format,
+inline bool Chain::generate(Loader&& loader_, PixelFormat _want_format,
   bool _has_mipchain, bool _want_mipchain)
 {
-  generate(Utility::move(loader_.data()), loader_.format(), _want_format,
-           loader_.dimensions(), _has_mipchain, _want_mipchain);
+  return generate(Utility::move(loader_.data()), loader_.format(), _want_format,
+    loader_.dimensions(), _has_mipchain, _want_mipchain);
 }
 
 inline LinearBuffer&& Chain::data() {

@@ -108,7 +108,9 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
 
       m_channels = 3;
       m_bpp = 3;
-      m_data.resize(m_dimensions.area() * m_bpp);
+
+      // This cannot fail as we're making |m_data| smaller.
+      (void)m_data.resize(m_dimensions.area() * m_bpp);
 
       logger->info("%s removed alpha channel (not used)", _stream->name());
     }

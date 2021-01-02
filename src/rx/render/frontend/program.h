@@ -129,7 +129,7 @@ struct Program : Resource {
   Vector<Uniform>& uniforms() &;
 
 private:
-  String format_shader(const String& _source);
+  Optional<String> format_shader(const String& _source);
 
   void update_resource_usage();
 

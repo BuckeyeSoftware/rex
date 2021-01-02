@@ -44,8 +44,8 @@ struct LinearBuffer {
   bool in_situ() const;
   bool is_empty() const;
 
-  bool push_back(Byte _value);
-  bool resize(Size _size);
+  [[nodiscard]] bool push_back(Byte _value);
+  /*[[nodiscard]]*/ bool resize(Size _size);
 
   Optional<Memory::View> disown();
 
