@@ -15,9 +15,29 @@ struct Application {
 
   constexpr Application(Engine* _engine);
 
+  // Called on initialization of the application.
+  //
+  // This should return false when the application fails to initialize.
   virtual bool on_init() = 0;
+
+  // Called when application is updated.
+  //
+  // This is not necessarily called at the same rate as |on_render|.
+  //
+  // This should return true if the application should continue running.
   virtual bool on_update() = 0;
+
+  // Called when application is rendered.
+  //
+  // This is not necessarily called at the same rate as |on_update|.
+  //
+  // This should return true if something was rendered. When something is not
+  // rendered, returning false acts as a power saving optimization.
   virtual bool on_render() = 0;
+
+  // Called when application is resized.
+  //
+  // The resized resolution is given as |_resolution|.
   virtual void on_resize(const Math::Vec2z& _resolution) = 0;
 
   Engine* engine() const;
