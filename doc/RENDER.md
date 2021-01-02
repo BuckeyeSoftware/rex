@@ -65,7 +65,7 @@ Lets disect what everything is:
 * `_instances` is the number of instances to render. This should be 0 for non-instanced buffers.
 * `_base_vertex` is the base vertex to add to each element. This should be 0 for non-indexed buffers.
 * `_base_instance` is the base instance. This should be 0 for non-instanced buffers.
-* `_primitive_type` is the primitive type to render, e.g `k_triangles`.
+* `_primitive_type` is the primitive type to render, e.g `TRIANGLES`.
 * `_draw_textures` is a description of textures to use in the draw.
 
 When executed, primitives are assembled from the buffer `_buffer` using the primitive topology specified by `_primitive_type` and count `_count` consecutive vertex indices at offset `_offset` with the first vertex index value equal to `_base_vertex`. The primitives drawn `_instances` count times with the instance index starting with `_base_instance` and increasing sequentially for each instance. The assembled primitives execute the program `_program` and output to target `_target` configured by `_draw_buffers`. Textures bound for the program are configured by `_draw_textures`.
@@ -256,16 +256,16 @@ The attributes type is listed here for completion sake to show that Rex does not
 struct Attribute {
   enum class Type : Uint8 {
     // Scalars
-    k_f32,    // 1 x Float32
+    F32,    // 1 x Float32
 
     // Vectors
-    k_vec2f,  // 2 x Float32
-    k_vec3f,  // 3 x Float32
-    k_vec4f,  // 4 x Float32
-    k_vec4b,  // 4 x Byte
+    VEC2F,  // 2 x Float32
+    VEC3F,  // 3 x Float32
+    VEC4F,  // 4 x Float32
+    VEC4B,  // 4 x Byte
 
     // Matrices
-    k_mat4x4f // 4x4 x Float32
+    MAT4x4F // 4x4 x Float32
   };
 
   Size offset;
