@@ -19,19 +19,13 @@ struct RX_API Bitset {
   static constexpr const BitType BIT_ONE = 1;
   static constexpr const Size WORD_BITS = 8 * sizeof(BitType);
 
-  //Bitset(Memory::Allocator& _allocator, Size _size);
-  //Bitset(Memory::Allocator& _allocator, const Bitset& _bitset);
-
   static Optional<Bitset> create(Memory::Allocator& _allocator, Size _size);
   static Optional<Bitset> copy(Memory::Allocator& _allocator, const Bitset& _bitset);
 
-  //Bitset(Size _size);
   Bitset(Bitset&& bitset_);
-  //Bitset(const Bitset& _bitset);
   ~Bitset();
 
   Bitset& operator=(Bitset&& bitset_);
-  // Bitset& operator=(const Bitset& _bitset);
 
   // set |_bit|
   void set(Size _bit);
@@ -84,17 +78,6 @@ private:
   Size m_size;
   BitType* m_data;
 };
-
-/*
-inline Bitset::Bitset(Size _size)
-  : Bitset{Memory::SystemAllocator::instance(), _size}
-{
-}
-
-inline Bitset::Bitset(const Bitset& _bitset)
-  : Bitset{_bitset.allocator(), _bitset}
-{
-}*/
 
 inline Bitset::Bitset(Bitset&& bitset_)
   : m_allocator{bitset_.m_allocator}
