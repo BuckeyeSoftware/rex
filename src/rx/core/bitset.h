@@ -19,25 +19,25 @@ struct RX_API Bitset {
   static constexpr const BitType BIT_ONE = 1;
   static constexpr const Size WORD_BITS = 8 * sizeof(BitType);
 
-  Bitset(Memory::Allocator& _allocator, Size _size);
-  Bitset(Memory::Allocator& _allocator, const Bitset& _bitset);
+  //Bitset(Memory::Allocator& _allocator, Size _size);
+  //Bitset(Memory::Allocator& _allocator, const Bitset& _bitset);
 
-  Bitset(Size _size);
+  static Optional<Bitset> create(Memory::Allocator& _allocator, Size _size);
+  static Optional<Bitset> copy(Memory::Allocator& _allocator, const Bitset& _bitset);
+
+  //Bitset(Size _size);
   Bitset(Bitset&& bitset_);
-  Bitset(const Bitset& _bitset);
+  //Bitset(const Bitset& _bitset);
   ~Bitset();
 
   Bitset& operator=(Bitset&& bitset_);
-  Bitset& operator=(const Bitset& _bitset);
+  // Bitset& operator=(const Bitset& _bitset);
 
   // set |_bit|
   void set(Size _bit);
 
   // clear |_bit|
   void clear(Size _bit);
-
-  // clear all bits
-  void clear_all();
 
   // test if bit |_bit| is set
   bool test(Size _bit) const;
@@ -73,11 +73,19 @@ private:
   static Size index(Size bit);
   static Size offset(Size bit);
 
+  constexpr Bitset(Memory::Allocator& _allocator, Size _size, BitType* _data)
+    : m_allocator{&_allocator}
+    , m_size{_size}
+    , m_data{_data}
+  {
+  }
+
   Memory::Allocator* m_allocator;
   Size m_size;
   BitType* m_data;
 };
 
+/*
 inline Bitset::Bitset(Size _size)
   : Bitset{Memory::SystemAllocator::instance(), _size}
 {
@@ -86,7 +94,7 @@ inline Bitset::Bitset(Size _size)
 inline Bitset::Bitset(const Bitset& _bitset)
   : Bitset{_bitset.allocator(), _bitset}
 {
-}
+}*/
 
 inline Bitset::Bitset(Bitset&& bitset_)
   : m_allocator{bitset_.m_allocator}

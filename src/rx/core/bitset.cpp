@@ -7,6 +7,26 @@
 
 namespace Rx {
 
+Optional<Bitset> Bitset::create(Memory::Allocator& _allocator, Size _size) {
+  auto bytes = bytes_for_size(_size);
+  if (auto data = _allocator.allocate(bytes)) {
+    memset(data, 0, bytes);
+    return Bitset{_allocator, _size, reinterpret_cast<BitType*>(data)};
+  }
+  return nullopt;
+}
+
+Optional<Bitset> Bitset::copy(Memory::Allocator& _allocator, const Bitset& _bitset) {
+  auto size = _bitset.m_size;
+  auto bytes = bytes_for_size(size);
+  if (auto data = _allocator.allocate(bytes_for_size(bytes))) {
+    memcpy(data, _bitset.m_data, bytes);
+    return Bitset{_allocator, size, reinterpret_cast<BitType*>(data)};
+  }
+  return nullopt;
+}
+
+/*
 Bitset::Bitset(Memory::Allocator& _allocator, Size _size)
   : m_allocator{&_allocator}
   , m_size{_size}
@@ -25,7 +45,8 @@ Bitset::Bitset(Memory::Allocator& _allocator, const Bitset& _bitset)
 {
   RX_ASSERT(m_data, "out of memory");
   memcpy(m_data, _bitset.m_data, bytes_for_size(m_size));
-}
+}*/
+
 
 Bitset& Bitset::operator=(Bitset&& bitset_) {
   RX_ASSERT(&bitset_ != this, "self assignment");
@@ -37,6 +58,7 @@ Bitset& Bitset::operator=(Bitset&& bitset_) {
   return *this;
 }
 
+/*
 Bitset& Bitset::operator=(const Bitset& _bitset) {
   RX_ASSERT(&_bitset != this, "self assignment");
 
@@ -49,11 +71,7 @@ Bitset& Bitset::operator=(const Bitset& _bitset) {
   memcpy(m_data, _bitset.m_data, bytes_for_size(m_size));
 
   return *this;
-}
-
-void Bitset::clear_all() {
-  memset(m_data, 0, bytes_for_size(m_size));
-}
+}*/
 
 Size Bitset::count_set_bits() const {
   Size count = 0;

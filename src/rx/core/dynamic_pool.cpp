@@ -34,8 +34,17 @@ Optional<Size> DynamicPool::index_of(const Byte* _data) const {
 }
 
 bool DynamicPool::add_pool() {
-  auto pool = make_ptr<StaticPool>(allocator(), allocator(), m_object_size, m_objects_per_pool);
-  return pool ? m_pools.push_back(Utility::move(pool)) : false;
+  auto pool = StaticPool::create(allocator(), m_object_size, m_objects_per_pool);
+  if (!pool) {
+    return false;
+  }
+
+  auto ptr = make_ptr<StaticPool>(allocator(), Utility::move(*pool));
+  if (!ptr) {
+    return false;
+  }
+
+  return m_pools.push_back(Utility::move(ptr));
 }
 
 } // namespace Rx

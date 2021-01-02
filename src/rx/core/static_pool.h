@@ -10,8 +10,9 @@ namespace Rx {
 struct RX_API StaticPool {
   RX_MARK_NO_COPY(StaticPool);
 
-  StaticPool(Memory::Allocator& _allocator, Size _object_size, Size _object_count);
-  StaticPool(Size _object_size, Size _object_count);
+  static Optional<StaticPool> create(Memory::Allocator& _allocator,
+    Size _object_size, Size _object_count);
+
   StaticPool(StaticPool&& pool_);
   ~StaticPool();
 
@@ -44,17 +45,21 @@ struct RX_API StaticPool {
   bool owns(const Byte* _data) const;
 
 private:
+  StaticPool(Memory::Allocator& _allocator, Size _object_size, Size _object_count, Byte* _data, Bitset&& bitset_)
+    : m_allocator{&_allocator}
+    , m_object_size{_object_size}
+    , m_object_count{_object_count}
+    , m_data{_data}
+    , m_bitset{Utility::move(bitset_)}
+  {
+  }
+
   Memory::Allocator* m_allocator;
   Size m_object_size;
-  Size m_capacity;
+  Size m_object_count;
   Byte* m_data;
   Bitset m_bitset;
 };
-
-inline StaticPool::StaticPool(Size _object_size, Size _object_count)
-  : StaticPool{Memory::SystemAllocator::instance(), _object_size, _object_count}
-{
-}
 
 inline StaticPool::~StaticPool() {
   RX_ASSERT(m_bitset.count_set_bits() == 0, "leaked objects");
@@ -75,8 +80,7 @@ T* StaticPool::create(Ts&&... _arguments) {
     return nullptr;
   }
 
-  return Utility::construct<T>(data_of(*index),
-                               Utility::forward<Ts>(_arguments)...);
+  return Utility::construct<T>(data_of(*index), Utility::forward<Ts>(_arguments)...);
 }
 
 template<typename T>
@@ -97,7 +101,7 @@ RX_HINT_FORCE_INLINE Size StaticPool::object_size() const {
 }
 
 RX_HINT_FORCE_INLINE Size StaticPool::capacity() const {
-  return m_capacity;
+  return m_object_count;
 }
 
 RX_HINT_FORCE_INLINE Size StaticPool::size() const {
@@ -113,7 +117,7 @@ inline bool StaticPool::can_allocate() const {
 }
 
 inline Byte* StaticPool::data_of(Size _index) const {
-  RX_ASSERT(_index < m_capacity, "out of bounds");
+  RX_ASSERT(_index < m_object_count, "out of bounds");
   RX_ASSERT(m_bitset.test(_index), "unallocated (%zu)", _index);
   return m_data + m_object_size * _index;
 }
@@ -129,7 +133,7 @@ Size StaticPool::index_of(const T* _data) const {
 }
 
 inline bool StaticPool::owns(const Byte* _data) const {
-  return _data >= m_data && _data <= m_data + m_object_size * (m_capacity - 1);
+  return _data >= m_data && _data <= m_data + m_object_size * (m_object_count - 1);
 }
 
 } // namespace Rx

@@ -4,19 +4,29 @@
 
 namespace Rx {
 
-StaticPool::StaticPool(Memory::Allocator& _allocator, Size _object_size, Size _capacity)
-  : m_allocator{&_allocator}
-  , m_object_size{Memory::Allocator::round_to_alignment(_object_size)}
-  , m_capacity{_capacity}
-  , m_data{allocator().allocate(m_object_size, m_capacity)}
-  , m_bitset{allocator(), m_capacity}
+Optional<StaticPool> StaticPool::create(Memory::Allocator& _allocator,
+  Size _object_size, Size _object_count)
 {
+  auto object_size = Memory::Allocator::round_to_alignment(_object_size);
+  auto object_count = _object_count;
+
+  auto bitset = Bitset::create(_allocator, object_count);
+  if (!bitset) {
+    return nullopt;
+  }
+
+  auto data = _allocator.allocate(object_size, object_count);
+  if (!data) {
+    return nullopt;
+  }
+
+  return StaticPool{_allocator, object_size, object_count, data, Utility::move(*bitset)};
 }
 
 StaticPool::StaticPool(StaticPool&& pool_)
   : m_allocator{pool_.m_allocator}
   , m_object_size{Utility::exchange(pool_.m_object_size, 0)}
-  , m_capacity{Utility::exchange(pool_.m_capacity, 0)}
+  , m_object_count{Utility::exchange(pool_.m_object_count, 0)}
   , m_data{Utility::exchange(pool_.m_data, nullptr)}
   , m_bitset{Utility::move(pool_.m_bitset)}
 {
@@ -27,7 +37,7 @@ StaticPool& StaticPool::operator=(StaticPool&& pool_) {
 
   m_allocator = pool_.m_allocator;
   m_object_size = Utility::exchange(pool_.m_object_size, 0);
-  m_capacity = Utility::exchange(pool_.m_capacity, 0);
+  m_object_count = Utility::exchange(pool_.m_object_count, 0);
   m_data = Utility::exchange(pool_.m_data, nullptr);
   m_bitset = Utility::move(pool_.m_bitset);
 

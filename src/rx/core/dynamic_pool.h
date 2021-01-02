@@ -11,8 +11,8 @@ struct RX_API DynamicPool {
 
   constexpr DynamicPool(Memory::Allocator& _allocator, Size _object_size, Size _objects_per_pool);
   constexpr DynamicPool(Size _object_size, Size _per_pool);
-  DynamicPool(DynamicPool&& pool_);
 
+  DynamicPool(DynamicPool&& pool_);
   DynamicPool& operator=(DynamicPool&& pool_);
   Byte* operator[](Size _index) const;
 
