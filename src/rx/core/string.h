@@ -139,18 +139,17 @@ private:
 struct WideString {
   RX_MARK_NO_MOVE_ASSIGN(WideString);
 
-  // custom allocator versions
+  // Custom allocator versions.
   WideString(Memory::Allocator& _allocator);
   WideString(Memory::Allocator& _allocator, const WideString& _other);
   WideString(Memory::Allocator& _allocator, const Uint16* _contents);
   WideString(Memory::Allocator& _allocator, const Uint16* _contents, Size _size);
 
-  // constructors that use system allocator
+  // Constructors that use system allocator.
   WideString();
   WideString(const WideString& _other);
   WideString(const Uint16* _contents);
   WideString(const Uint16* _contents, Size _size);
-
   WideString(WideString&& other_);
 
   ~WideString();
