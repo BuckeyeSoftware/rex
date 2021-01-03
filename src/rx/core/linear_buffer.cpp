@@ -66,15 +66,14 @@ bool LinearBuffer::push_back(Byte _value) {
   return true;
 }
 
-bool LinearBuffer::resize(Size _size) {
-  if (_size < m_capacity) {
-    m_size = _size;
+bool LinearBuffer::reserve(Size _capacity) {
+  if (_capacity <= m_capacity) {
     return true;
   }
 
   // Always resize capacity with the Golden ratio.
   Size capacity = m_capacity;
-  while (capacity < _size) {
+  while (capacity < _capacity) {
     capacity = ((capacity + 1) * 3) / 2;
   }
 
@@ -83,14 +82,23 @@ bool LinearBuffer::resize(Size _size) {
     return false;
   }
 
-  // Copy when transitoning from in-situ.
+  // Copy from in-situ.
   if (in_situ()) {
     memcpy(data, m_data, m_size);
   }
 
   m_data = data;
-  m_size = _size;
   m_capacity = capacity;
+
+  return true;
+}
+
+bool LinearBuffer::resize(Size _size) {
+  if (!reserve(_size)) {
+    return false;
+  }
+
+  m_size = _size;
 
   return true;
 }

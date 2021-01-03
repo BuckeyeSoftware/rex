@@ -43,8 +43,10 @@ struct LinearBuffer {
 
   bool in_situ() const;
   bool is_empty() const;
+  bool in_range(Size _index) const;
 
   [[nodiscard]] bool push_back(Byte _value);
+  [[nodiscard]] bool reserve(Size _size);
   /*[[nodiscard]]*/ bool resize(Size _size);
 
   Optional<Memory::View> disown();
@@ -127,6 +129,10 @@ inline bool LinearBuffer::in_situ() const {
 
 inline bool LinearBuffer::is_empty() const {
   return m_size == 0;
+}
+
+inline bool LinearBuffer::in_range(Size _index) const {
+  return _index < m_size;
 }
 
 } // namespace Rx
