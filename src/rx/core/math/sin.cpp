@@ -1,10 +1,10 @@
 #define _USE_MATH_DEFINES
-#include <math.h> // M_PI_2
 #include <float.h> // {DBL,LDBL}_EPSILON
 
 #include "rx/core/math/sin.h"
 #include "rx/core/math/shape.h"
 #include "rx/core/math/force_eval.h"
+#include "rx/core/math/constants.h"
 
 #include "rx/core/abort.h"
 #include "rx/core/hints/unreachable.h"
@@ -58,10 +58,10 @@ Sint32 rempio2(Float32 _x, Float64& y_) {
 }
 
 // small multiplies of pi/2 rounded to double precision
-static constexpr Float64 k_s1_pi_2{1 * M_PI_2};
-static constexpr Float64 k_s2_pi_2{2 * M_PI_2};
-static constexpr Float64 k_s3_pi_2{3 * M_PI_2};
-static constexpr Float64 k_s4_pi_2{4 * M_PI_2};
+static constexpr Float64 k_s1_pi_2{1 * PI_2<Float64>};
+static constexpr Float64 k_s2_pi_2{2 * PI_2<Float64>};
+static constexpr Float64 k_s3_pi_2{3 * PI_2<Float64>};
+static constexpr Float64 k_s4_pi_2{4 * PI_2<Float64>};
 
 Float32 sin(Float32 _x) {
   Uint32 ix{Shape{_x}.as_u32};

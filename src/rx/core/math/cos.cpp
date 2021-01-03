@@ -1,10 +1,8 @@
-#define _USE_MATH_DEFINES
-#include <math.h> // M_PI_2
-
 #include "rx/core/math/cos.h"
 #include "rx/core/math/sqrt.h"
 #include "rx/core/math/shape.h"
 #include "rx/core/math/force_eval.h"
+#include "rx/core/math/constants.h"
 
 #include "rx/core/hints/unreachable.h"
 
@@ -29,10 +27,10 @@ Float32 cosdf(Float64 _x) {
 }
 
 // small multiplies of pi/2 rounded to double precision
-static constexpr const Float64 k_c1_pi_2{1 * M_PI_2};
-static constexpr const Float64 k_c2_pi_2{2 * M_PI_2};
-static constexpr const Float64 k_c3_pi_2{3 * M_PI_2};
-static constexpr const Float64 k_c4_pi_2{4 * M_PI_2};
+static constexpr const Float64 k_c1_pi_2{1 * PI_2<Float64>};
+static constexpr const Float64 k_c2_pi_2{2 * PI_2<Float64>};
+static constexpr const Float64 k_c3_pi_2{3 * PI_2<Float64>};
+static constexpr const Float64 k_c4_pi_2{4 * PI_2<Float64>};
 
 Sint32 rempio2(Float32 _x, Float64& y_); // sin.cpp
 

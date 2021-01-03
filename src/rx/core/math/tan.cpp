@@ -1,10 +1,10 @@
-#define _USE_MATH_DEFINES
-#include <math.h> // M_PI_2
 
 #include "rx/core/math/tan.h"
 #include "rx/core/math/abs.h"
 #include "rx/core/math/shape.h"
 #include "rx/core/math/force_eval.h"
+#include "rx/core/math/constants.h"
+#include "rx/core/math/isnan.h"
 
 #include "rx/core/hints/unreachable.h"
 
@@ -31,10 +31,10 @@ static Float32 tandf(Float64 _x) {
 }
 
 // small multiples of pi/2 rounded to double precision
-static constexpr const Float64 k_t1_pi_2{1 * M_PI_2};
-static constexpr const Float64 k_t2_pi_2{2 * M_PI_2};
-static constexpr const Float64 k_t3_pi_2{3 * M_PI_2};
-static constexpr const Float64 k_t4_pi_2{4 * M_PI_2};
+static constexpr const Float64 k_t1_pi_2{1 * PI_2<Float64>};
+static constexpr const Float64 k_t2_pi_2{2 * PI_2<Float64>};
+static constexpr const Float64 k_t3_pi_2{3 * PI_2<Float64>};
+static constexpr const Float64 k_t4_pi_2{4 * PI_2<Float64>};
 
 Sint32 rempio2(Float32 _x, Float64& y_); // sin.cpp
 
@@ -274,7 +274,7 @@ Float32 atan2(Float32 _x, Float32 _y) {
   if ((m & 2) && iy + (26 << 23) < ix) {
     z = 0.0;
   } else {
-    z = atan(fabs(_y / _x));
+    z = atan(abs(_y / _x));
   }
 
   switch (m) {
