@@ -4,7 +4,7 @@
 
 namespace Rx::Algorithm {
 
-//! clamp value to given range
+// Clamp value |_value| to the given range [|_min| |_max|].
 template<typename T>
 RX_HINT_FORCE_INLINE constexpr T clamp(T _value, T _min, T _max) {
   return _value < _min ? _min : (_value > _max ? _max : _value);
