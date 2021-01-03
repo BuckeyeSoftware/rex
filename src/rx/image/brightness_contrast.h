@@ -11,8 +11,8 @@ struct BrightnessContrast
   : Operation
 {
   struct Options {
-    Float64 brightness;
-    Float64 contrast;
+    Float64 brightness; // (in [-1, 1])
+    Float64 contrast;   // (in [-1, 1])
   };
 
   void configure(const Options& _options);
@@ -24,6 +24,7 @@ private:
 
 inline void BrightnessContrast::configure(const Options& _options) {
   using Algorithm::clamp;
+
   m_options.brightness = clamp(_options.brightness, -1.0, 1.0);
   m_options.contrast = clamp(_options.contrast, -1.0, 1.0);
 }

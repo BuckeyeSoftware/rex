@@ -13,9 +13,9 @@ struct Colorize
   : Operation
 {
   struct Options {
-    Float64 hue;
-    Float64 saturation;
-    Float64 lightness;
+    Float64 hue;        // (in [0, 1])
+    Float64 saturation; // (in [0, 1])
+    Float64 lightness;  // (in [-1, 1])
   };
 
   void configure(const Options& _options);
@@ -26,10 +26,12 @@ private:
 };
 
 inline void Colorize::configure(const Options& _options) {
+  using Algorithm::clamp;
   using Algorithm::saturate;
+
   m_options.hue = saturate(_options.hue);
   m_options.saturation = saturate(_options.saturation);
-  m_options.lightness = Algorithm::clamp(_options.lightness, -1.0, 1.0);
+  m_options.lightness = clamp(_options.lightness, -1.0, 1.0);
 }
 
 } // namespace Rx::Image

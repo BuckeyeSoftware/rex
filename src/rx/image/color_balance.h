@@ -27,17 +27,11 @@ private:
 inline void ColorBalance::configure(const ColorBalance::Options& _options) {
   using Algorithm::clamp;
 
-  m_options.cr[0] = clamp(m_options.cr[0], -1.0, 1.0);
-  m_options.cr[1] = clamp(m_options.cr[1], -1.0, 1.0);
-  m_options.cr[2] = clamp(m_options.cr[2], -1.0, 1.0);
-
-  m_options.mg[0] = clamp(m_options.mg[0], -1.0, 1.0);
-  m_options.mg[1] = clamp(m_options.mg[1], -1.0, 1.0);
-  m_options.mg[2] = clamp(m_options.mg[2], -1.0, 1.0);
-
-  m_options.yb[0] = clamp(m_options.yb[0], -1.0, 1.0);
-  m_options.yb[1] = clamp(m_options.yb[1], -1.0, 1.0);
-  m_options.yb[2] = clamp(m_options.yb[2], -1.0, 1.0);
+  for (Size i = 0; i < 3; i++) {
+    m_options.cr[i] = clamp(m_options.cr[i], -1.0, 1.0);
+    m_options.mg[i] = clamp(m_options.mg[i], -1.0, 1.0);
+    m_options.yb[i] = clamp(m_options.yb[i], -1.0, 1.0);
+  }
 
   m_options.preserve_luminosity = _options.preserve_luminosity;
 }
