@@ -401,7 +401,7 @@ void Immediate3D::generate_solid_sphere(const Math::Vec2f& _slices_and_stacks,
                                         const Math::Mat4x4f& _transform, const Math::Vec4f& _color, Uint32 _flags)
 {
   const Math::Vec2f begin{};
-  const Math::Vec2f end{Math::k_pi<Float32> * 2.0f, Math::k_pi<Float32>};
+  const Math::Vec2f end{Math::PI<Float32> * 2.0f, Math::PI<Float32>};
   const Math::Vec2f step{(end - begin) / _slices_and_stacks};
 
   auto parametric{[](const Math::Vec2f& _uv) -> Math::Vec3f {

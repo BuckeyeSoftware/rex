@@ -10,8 +10,7 @@
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/target.h"
 
-#include "rx/math/constants.h"
-
+#include "rx/core/math/constants.h"
 #include "rx/core/math/sin.h"
 #include "rx/core/math/cos.h"
 
@@ -406,9 +405,9 @@ Immediate2D::Immediate2D(Frontend::Context* _frontend)
     m_render_queue[i] = {m_frontend->allocator()};
   }
 
-  // generate circle geometry
+  // Generate circle geometry.
   for (Size i{0}; i < k_circle_vertices; i++) {
-    const Float32 phi{Float32(i) / Float32(k_circle_vertices) * Math::k_pi<Float32> * 2.0f};
+    const auto phi = Float32(i) / Float32(k_circle_vertices) * Math::PI<Float32> * 2.0f;
     m_circle_vertices[i] = {Math::cos(phi), Math::sin(phi)};
   }
 
