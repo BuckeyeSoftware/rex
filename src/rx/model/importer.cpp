@@ -9,7 +9,6 @@
 
 #include "rx/core/math/abs.h"
 
-#include "rx/math/constants.h"
 #include "rx/math/mat3x3.h"
 
 RX_LOG("model/importer", logger);
