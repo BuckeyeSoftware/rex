@@ -49,6 +49,7 @@ struct Vec4 {
 
 using Vec4b = Vec4<Byte>;
 using Vec4f = Vec4<Float32>;
+using Vec4d = Vec4<Float64>;
 using Vec4i = Vec4<Sint32>;
 using Vec4z = Vec4<Size>;
 

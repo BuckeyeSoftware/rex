@@ -1,8 +1,9 @@
 #ifndef RX_MATH_MAT4X4_H
 #define RX_MATH_MAT4X4_H
-#include "rx/math/vec3.h" // vec3
-#include "rx/math/vec4.h" // vec4
+#include "rx/math/vec3.h" // Vec3
+#include "rx/math/vec4.h" // Vec4
 #include "rx/math/trig.h" // deg_to_rad
+#include "rx/math/range.h" // Range
 #include "rx/math/compare.h"
 
 #include "rx/core/math/sin.h" // sin
