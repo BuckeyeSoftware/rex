@@ -23,10 +23,10 @@ struct HueSaturation
   };
 
   struct Options {
-    Float64 hue[7];         // {ALL, RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA} (in [-1, 1])
-    Float64 saturation[7];  // {ALL, RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA} (in [-1, 1])
-    Float64 lightness[7];   // {ALL, RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA} (in [-1, 1])
-    Float64 overlap;        // (in [0, 1])
+    Float64 hue[7] = { 0.0, };         // {ALL, RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA} (in [-1, 1])
+    Float64 saturation[7] = { 0.0, };  // {ALL, RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA} (in [-1, 1])
+    Float64 lightness[7] = { 0.0, };   // {ALL, RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA} (in [-1, 1])
+    Float64 overlap = 0.0;             // (in [0, 1])
   };
 
   void configure(const Options& _options);

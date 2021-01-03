@@ -135,7 +135,7 @@ bool HueSaturation::process(const Matrix& _src, Matrix& dst_) {
     dst->r = rgb.r;
     dst->g = rgb.g;
     dst->b = rgb.b;
-    dst->a = rgb.a;
+    dst->a = src->a;
 
     src++;
     dst++;

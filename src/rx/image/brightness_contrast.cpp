@@ -4,8 +4,6 @@
 #include "rx/core/math/tan.h"
 #include "rx/core/math/constants.h"
 
-#include <math.h>
-
 namespace Rx::Image {
 
 static inline Float32 map(Float32 _value, Float64 _brightness, Float64 _slant) {
@@ -22,7 +20,7 @@ static inline Float32 map(Float32 _value, Float64 _brightness, Float64 _slant) {
 
 bool BrightnessContrast::process(const Matrix& _src, Matrix& dst_) {
   const auto brightness = m_options.brightness / 2.0;
-  const auto slant = tan((m_options.contrast + 1.0) * Math::PI_4<Float64>);
+  const auto slant = Math::tan((m_options.contrast + 1.0) * Math::PI_4<Float64>);
 
   auto src = _src.data();
   auto dst = dst_.data();
