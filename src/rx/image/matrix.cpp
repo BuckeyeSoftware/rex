@@ -1,10 +1,4 @@
 #include "rx/image/matrix.h"
-#include "rx/core/filesystem/file.h"
-
-// #include "rx/core/math/pow.h"
-#include <math.h> // pow
-
-#include <stdio.h>
 
 namespace Rx::Image {
 
@@ -33,20 +27,6 @@ Optional<Matrix> Matrix::create(Memory::Allocator& _allocator, const Math::Vec2z
     return nullopt;
   }
   return Matrix{Utility::move(buffer), _dimensions};
-}
-
-void Matrix::dump(const String& _file_name) {
-  if (Filesystem::File file{_file_name, "w"}) {
-    file.write(m_data.data(), m_data.size());
-  }
-
-  auto str = String::format("convert -endian LSB -size %zux%zu -depth 32 -define quantum:format=floating-point %s fix.png",
-    m_dimensions.w, m_dimensions.h, _file_name);
-
-  system(str.data());
-  remove(_file_name.data());
-
-  // printf("%s\n", str.data());
 }
 
 /*

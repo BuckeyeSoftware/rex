@@ -16,8 +16,6 @@ struct Matrix {
   static Optional<Matrix> create_from_bytes(Memory::Allocator& _allocator, const Math::Vec2z& _dimensions, const Byte* _data);
   static Optional<Matrix> create(Memory::Allocator& _allocator, const Math::Vec2z& _dimensions);
 
-  void dump(const String& _file_name);
-
   Matrix(Matrix&& matrix_);
   Matrix& operator=(Matrix&& matrix_);
 
