@@ -80,42 +80,6 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
 
   stbi_image_free(decoded_image);
 
-  // When there's an alpha channel but it encodes fully opaque, remove it.
-  if (want_channels == 4) {
-    bool can_remove_alpha{true};
-    for (Size y = 0; y < m_dimensions.h; y++) {
-      const Size scan_line_offset{m_dimensions.w * y};
-      for (Size x = 0; x < m_dimensions.w; x++) {
-        // When an alpha pixel has a value other than 255, we can't optimize.
-        if (m_data[(scan_line_offset + x) * channels + 3] != 255) {
-          can_remove_alpha = false;
-          break;
-        }
-      }
-    }
-
-    if (can_remove_alpha) {
-      // Remove alpha channel from |m_data|.
-      const Byte* src = m_data.data();
-      Byte* dst = m_data.data();
-      for (Size i = 0; i < m_dimensions.area(); i++) {
-        dst[0] = src[0];
-        dst[1] = src[1];
-        dst[2] = src[2];
-        dst += 3;
-        src += 4;
-      }
-
-      m_channels = 3;
-      m_bpp = 3;
-
-      // This cannot fail as we're making |m_data| smaller.
-      (void)m_data.resize(m_dimensions.area() * m_bpp);
-
-      logger->info("%s removed alpha channel (not used)", _stream->name());
-    }
-  }
-
   // When the requested pixel format is a BGR format go ahead and inplace
   // swap the pixels. We cannot use convert for this because we want this
   // to behave inplace.
