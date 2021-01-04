@@ -27,8 +27,8 @@ static void coalesce_edits(Vector<T>& edits_) {
       }
 
       // Only when the edits are to the same level of the texture.
-      const auto& e1{edits_[i]};
-      const auto& e2{edits_[j]};
+      const auto& e1 = edits_[i];
+      const auto& e2 = edits_[j];
       if (e1.level != e2.level) {
         continue;
       }

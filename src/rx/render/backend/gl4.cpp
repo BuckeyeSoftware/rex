@@ -1432,7 +1432,7 @@ void GL4::process(Byte* _command) {
                   static_cast<GLsizei>(level_info.dimensions.w),
                   static_cast<GLsizei>(level_info.dimensions.h),
                   convert_texture_format(format),
-                  GL_UNSIGNED_BYTE,
+                  convert_texture_data_type(format),
                   data.data() + level_info.offset);
               }
             }
@@ -1505,7 +1505,7 @@ void GL4::process(Byte* _command) {
                   static_cast<GLsizei>(level_info.dimensions.h),
                   static_cast<GLsizei>(level_info.dimensions.d),
                   convert_texture_format(format),
-                  GL_UNSIGNED_BYTE,
+                  convert_texture_data_type(format),
                   data.data() + level_info.offset);
               }
             }
@@ -1578,7 +1578,7 @@ void GL4::process(Byte* _command) {
                     static_cast<GLsizei>(level_info.dimensions.h),
                     1,
                     convert_texture_format(format),
-                    GL_UNSIGNED_BYTE,
+                    convert_texture_data_type(format),
                     data.data() + level_info.offset + level_info.size / 6 * j);
                 }
               }
@@ -1675,7 +1675,38 @@ void GL4::process(Byte* _command) {
         // TODO(dweiler): Implement.
         break;
       case Frontend::UpdateCommand::Type::TEXTURE3D:
-        // TODO(dweiler): Implement.
+        {
+          const auto render_texture = resource->as_texture3D;
+          const auto texture = reinterpret_cast<detail_gl4::texture3D*>(render_texture + 1);
+          const Size* edit = resource->edit();
+
+          for (Size i = 0; i < resource->edits; i++) {
+            const auto x_offset = edit[1];
+            const auto y_offset = edit[2];
+            const auto z_offset = edit[3];
+            const auto bpp = render_texture->bytes_per_pixel();
+            const auto pitch = render_texture->dimensions().w * bpp;
+            const auto ptr = render_texture->data().data()
+              + z_offset * pitch * render_texture->dimensions().h
+              + y_offset * pitch
+              + x_offset * bpp;
+
+            pglTextureSubImage3D(
+              texture->tex,
+              edit[0],
+              x_offset,
+              y_offset,
+              z_offset,
+              edit[4], // width
+              edit[5], // height
+              edit[6], // depth
+              convert_texture_format(render_texture->format()),
+              convert_texture_data_type(render_texture->format()),
+              ptr);
+
+            edit += 7;
+          }
+        }
         break;
       }
     }

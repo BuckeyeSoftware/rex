@@ -92,6 +92,9 @@ struct Texture
   Size channels() const;
   Type type() const;
   Size levels() const;
+
+  Size bits_per_pixel() const;
+  Size bytes_per_pixel() const;
   const Math::Vec4f& border() const &;
 
   static bool is_compressed_format(DataFormat _format);
@@ -322,6 +325,14 @@ inline Texture::Type Texture::type() const {
 
 inline Size Texture::levels() const {
   return m_levels;
+}
+
+inline Size Texture::bits_per_pixel() const {
+  return bits_per_pixel(m_format);
+}
+
+inline Size Texture::bytes_per_pixel() const {
+  return bits_per_pixel() / 8;
 }
 
 inline const Math::Vec4f& Texture::border() const & {
