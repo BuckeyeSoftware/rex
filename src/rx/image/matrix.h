@@ -13,8 +13,9 @@ namespace Rx::Image {
 struct Matrix {
   RX_MARK_NO_COPY(Matrix);
 
-  static Optional<Matrix> create_from_bytes(Memory::Allocator& _allocator, const Math::Vec2z& _dimensions, const Byte* _data);
+  constexpr Matrix() = default;
 
+  static Optional<Matrix> create_from_bytes(Memory::Allocator& _allocator, const Math::Vec2z& _dimensions, const Byte* _data);
   static Optional<Matrix> create(Memory::Allocator& _allocator, const Math::Vec2z& _dimensions);
 
   Matrix(Matrix&& matrix_);
