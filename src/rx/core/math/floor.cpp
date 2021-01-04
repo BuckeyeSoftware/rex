@@ -47,17 +47,19 @@ Float64 floor(Float64 _x) {
 Float32 floor(Float32 _x) {
   Shape u{_x};
 
-  const auto e{static_cast<int>(u.as_u32 >> 23 & 0xff) - 0x7f};
+  const Sint32 e = (Sint32)(u.as_u32 >> 23 & 0xff) - 0x7f;
 
   if (e >= 23) {
     return _x;
   }
 
   if (e >= 0) {
-    const auto m{static_cast<Uint32>(0x007fffff >> e)};
+    const Uint32 m = 0x007fffff >> e;
     if ((u.as_u32 & m) == 0) {
       return _x;
     }
+
+    force_eval_f32(_x + 0x1p120f);
 
     if (u.as_u32 >> 31) {
       u.as_u32 += m;
@@ -65,10 +67,12 @@ Float32 floor(Float32 _x) {
 
     u.as_u32 &= ~m;
   } else {
+    force_eval_f32(_x + 0x1p120f);
+
     if (u.as_u32 >> 31 == 0) {
       u.as_u32 = 0;
     } else if (u.as_u32 << 1) {
-      u.as_f32 = -1.0;
+      u.as_f32 = -1.0f;
     }
   }
 
