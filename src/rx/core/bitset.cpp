@@ -36,6 +36,10 @@ Bitset& Bitset::operator=(Bitset&& bitset_) {
   return *this;
 }
 
+void Bitset::clear() {
+  memset(m_data, 0, bytes_for_size(m_size));
+}
+
 Size Bitset::count_set_bits() const {
   Size count = 0;
 

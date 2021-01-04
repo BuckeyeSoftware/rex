@@ -27,6 +27,9 @@ struct RX_API Bitset {
 
   Bitset& operator=(Bitset&& bitset_);
 
+  // Clear all set bits.
+  void clear();
+
   // set |_bit|
   void set(Size _bit);
 
