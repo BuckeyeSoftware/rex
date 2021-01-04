@@ -497,7 +497,7 @@ void Context::update_texture(const CommandHeader::Info& _info, Texture3D* _textu
     }
 
     const auto n_edits = edits.size();
-    const Size edit_bytes = n_edits * sizeof(Texture::Edit<Texture2D::DimensionType>);
+    const Size edit_bytes = n_edits * sizeof(Texture::Edit<Texture3D::DimensionType>);
 
     auto command_base = m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::RESOURCE_UPDATE, _info);
     auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
