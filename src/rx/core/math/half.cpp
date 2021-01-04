@@ -50,8 +50,8 @@ static const Global<HalfTable> g_table{"system", "half"};
 
 Half Half::to_half(Float32 _f) {
   const Shape u{_f};
-  return Half(static_cast<Uint16>(g_table->base[(u.as_u32 >> 23) & 0x1FF] +
-                                  ((u.as_u32 & 0x007FFFFF) >> g_table->shift[(u.as_u32 >> 23) & 0x1FF])));
+  return Half(Bits{static_cast<Uint16>(g_table->base[(u.as_u32 >> 23) & 0x1FF] +
+                                  ((u.as_u32 & 0x007FFFFF) >> g_table->shift[(u.as_u32 >> 23) & 0x1FF]))});
 }
 
 Float32 Half::to_f32() const {
