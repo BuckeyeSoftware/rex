@@ -153,6 +153,10 @@ GLenum convert_texture_data_type(Frontend::Texture::DataFormat _data_format) {
     return GL_UNSIGNED_INT;
   case Frontend::Texture::DataFormat::k_d32f:
     return GL_FLOAT;
+  case Frontend::Texture::DataFormat::k_rgba_f16:
+    [[fallthrough]];
+  case Frontend::Texture::DataFormat::k_bgra_f16:
+    return GL_HALF_FLOAT;
   case Frontend::Texture::DataFormat::k_d24_s8:
     return GL_UNSIGNED_INT_24_8;
   case Frontend::Texture::DataFormat::k_d32f_s8:
