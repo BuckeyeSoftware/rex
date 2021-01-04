@@ -27,15 +27,20 @@ Optional<Directory> Directory::Item::as_directory() const {
     const auto& root = m_directory->path();
     const auto& filename = name();
 
+    // Storage for "${root}/${filename}" including null-terminator.
     const auto length = root.size() + 1 + filename.size() + 1;
 
     if (auto data = allocator.allocate(length)) {
+      // Copy root without null-terminator.
       memcpy(data, root.data(), root.size());
-      data[root.size()] = '/';
-      memcpy(data + root.size() + 1, filename.data(), filename.size());
-      data[length - 1] = '\0';
 
-      return Directory{allocator, Memory::View{&allocator, data, length}};
+      // Write path separator in the middle.
+      data[root.size()] = '/';
+
+      // Copy filename with null-terminator to also terminate our string.
+      memcpy(data + root.size() + 1, filename.data(), filename.size() + 1);
+
+      return Directory{allocator, Memory::View{&allocator, data, length, length}};
     }
   }
 

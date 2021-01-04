@@ -112,18 +112,21 @@ Optional<Memory::View> LinearBuffer::disown() {
     }
 
     const auto size = Utility::exchange(m_size, 0);
+    const auto capacity = Utility::exchange(m_capacity, INSITU_SIZE);
 
     memcpy(data, m_data, size);
 
-    return Memory::View{m_allocator, data, size};
+    // Reset back to in-situ representation.
+    Utility::exchange(m_data, m_insitu.data());
+
+    return Memory::View{m_allocator, data, size, capacity};
   }
 
-  m_size = 0;
-
   const auto data = Utility::exchange(m_data, m_insitu.data());
+  const auto size = Utility::exchange(m_size, 0);
   const auto capacity = Utility::exchange(m_capacity, INSITU_SIZE);
 
-  return Memory::View{m_allocator, data, capacity};
+  return Memory::View{m_allocator, data, size, capacity};
 }
 
 } // namespace Rx

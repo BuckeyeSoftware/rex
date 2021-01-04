@@ -167,31 +167,20 @@ String::String(String&& contents_)
   contents_.resize(0);
 }
 
+// NOTE(dweiler): The subtraction of one is to account for the null-terminator.
 String::String(Memory::View _view)
   : m_allocator{_view.owner}
-  , m_data{nullptr}
-  , m_last{nullptr}
-  , m_capacity{nullptr}
+  , m_data{reinterpret_cast<char*>(_view.data)}
+  , m_last{m_data + _view.size - 1}
+  , m_capacity{m_data + _view.capacity - 1}
 {
-  // Search for the null-terminator in the view to find the end of the string.
-  m_last = reinterpret_cast<char*>(memchr(_view.data, 0, _view.size));
-
-  if (m_last) {
-    m_data = reinterpret_cast<char*>(_view.data);
-    m_capacity = reinterpret_cast<char*>(_view.data + _view.size);
-  } else {
-    // Could not find a terminator. Resize the memory given by the view, which
-    // can potentially be done in place, append the null-terminator and fill
-    // out the string.
-    Byte* data = allocator().reallocate(_view.data, _view.size + 1);
-    RX_ASSERT(data, "out of memory");
-
-    data[_view.size] = 0;
-
-    m_data = reinterpret_cast<char*>(data);
-    m_last = m_data + _view.size;
-    m_capacity = m_data + _view.size;
-  }
+  // Valide the view represents a string by ensuring |m_last| is equal in
+  // address to the position of the first null-terminator in the view.
+  //
+  // This will indicate no null-terminator exists in the middle and that the
+  // view's size field represents the string's length including the null.
+  RX_ASSERT(m_last == memchr(m_data, '\0', _view.capacity),
+    "malformed string view");
 }
 
 String::~String() {
@@ -306,7 +295,7 @@ Optional<Size> String::find_last_of(const char* _contents) const {
     return search - m_data;
   }
 
-  return nullopt;;
+  return nullopt;
 }
 
 bool String::append(const char* _first, const char *_last) {
@@ -486,21 +475,22 @@ Size String::hash() const {
 
 Optional<Memory::View> String::disown() {
   Byte* data = reinterpret_cast<Byte*>(m_data);
-  Size n_bytes = 0;
+
+  Size n_size = 0;
+  Size n_capacity = 0;
 
   if (m_data == m_buffer) {
-    // Cannot disown the memory of small string optimization. Copy it out into
-    // an owning view.
-    n_bytes = size() + 1;
-    data = allocator().allocate(n_bytes);
+    // Cannot disown the memory of small string optimization. Make copy.
+    n_size = size() + 1;
+    n_capacity = n_size;
+    data = allocator().allocate(n_capacity);
     if (!data) {
       return nullopt;
     }
-    memcpy(data, m_data, n_bytes);
+    memcpy(data, m_data, n_capacity);
   } else {
-    // The memory allocated by the string is potentially larger than the whole
-    // string, allow the view to reflect the full capacity.
-    n_bytes = capacity();
+    n_size = size() + 1;
+    n_capacity = capacity() + 1;
   }
 
   // Reset the string back to small string optimization state.
@@ -508,7 +498,7 @@ Optional<Memory::View> String::disown() {
   m_last = m_buffer;
   m_capacity = m_buffer + INSITU_SIZE;
 
-  return Memory::View{&allocator(), data, n_bytes};
+  return Memory::View{&allocator(), data, n_size, n_capacity};
 }
 
 WideString String::to_utf16() const {

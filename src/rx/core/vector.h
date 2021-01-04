@@ -142,7 +142,7 @@ constexpr Vector<T>::Vector(Memory::View _view)
   : m_allocator{_view.owner}
   , m_data{reinterpret_cast<T*>(_view.data)}
   , m_size{_view.size / sizeof(T)}
-  , m_capacity{m_size}
+  , m_capacity{_view.capacity / sizeof(T)}
 {
 }
 
@@ -605,11 +605,12 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Vector<T>::allocator() const {
 
 template<typename T>
 Memory::View Vector<T>::disown() {
-  Memory::View view{m_allocator, reinterpret_cast<Byte*>(data()), capacity() * sizeof(T)};
-  m_data = nullptr;
-  m_size = 0;
-  m_capacity = 0;
-  return view;
+  return {
+    m_allocator,
+    reinterpret_cast<Byte*>(Utility::exchange(m_data, nullptr)),
+    Utility::exchange(m_size, 0),
+    Utility::exchange(m_capacity, 0)
+  };
 }
 
 } // namespace Rx

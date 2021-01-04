@@ -67,6 +67,7 @@ struct View {
   Allocator* owner;
   Byte* data;
   Size size;
+  Size capacity;
 };
 
 } // namespace Rx::Memory

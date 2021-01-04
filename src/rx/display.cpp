@@ -13,8 +13,8 @@ Vector<Display> Display::displays(Memory::Allocator& _allocator) {
     Display result{_allocator};
     if (const char* name = SDL_GetDisplayName(i)) {
       // Copy the contents of the name for manipulation.
-      const Size name_size = strlen(name) + 1;
-      Byte* name_data = _allocator.allocate(name_size);
+      auto name_size = strlen(name) + 1;
+      auto name_data = reinterpret_cast<char*>(_allocator.allocate(name_size));
       RX_ASSERT(name_data, "out of memory");
       memcpy(name_data, name, name_size);
 
@@ -26,13 +26,12 @@ Vector<Display> Display::displays(Memory::Allocator& _allocator) {
       };
 
       // When " is found at the end of the string.
-      if (char* x = strrchr(reinterpret_cast<char*>(name_data), '"'); x && x[1] == '\0') {
+      if (char* x = strrchr(name_data, '"'); x && x[1] == '\0') {
         // Write zeros from the end until it's no longer numeric looking.
         char *y = x - 1;
         while (is_numeric(*y)) {
           *y-- = '\0';
         }
-
         // Remove trailing whitespace.
         while (*y == ' ') {
           *y-- = '\0';
@@ -40,7 +39,8 @@ Vector<Display> Display::displays(Memory::Allocator& _allocator) {
       }
 
       // The string now owns the memory, avoids a copy.
-      result.m_name = Memory::View{&_allocator, name_data, name_size};
+      // The |name_size + 1| is correct, we want to include the null-terminator.
+      result.m_name = Memory::View{&_allocator, reinterpret_cast<Byte*>(name_data), strlen(name_data) + 1, name_size};
     } else {
       result.m_name = String::format("Unknown (%d)", i);
     }
