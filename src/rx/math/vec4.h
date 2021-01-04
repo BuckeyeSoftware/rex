@@ -6,6 +6,7 @@
 #include "rx/core/assert.h" // RX_ASSERT
 
 #include "rx/core/math/sqrt.h"
+#include "rx/core/math/half.h"
 
 #include "rx/core/algorithm/min.h" // algorithm::min
 #include "rx/core/algorithm/max.h" // algorithm::max
@@ -48,6 +49,7 @@ struct Vec4 {
 };
 
 using Vec4b = Vec4<Byte>;
+using Vec4h = Vec4<Half>;
 using Vec4f = Vec4<Float32>;
 using Vec4d = Vec4<Float64>;
 using Vec4i = Vec4<Sint32>;
