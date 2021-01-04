@@ -70,7 +70,7 @@ There is no filter combination that produces a minification of `nearest_mipmap_l
 * `"clamp_to_edge"` causes the coordinates to be clamped to the range `(1/2n, 1-1/2n)`, where `n` is the size of the texture in the direction of clamping.
 * `"clamp_to_border"` evaluates coordinates in a similar manner to `"clamp_to_edge"`. However, in cases where clamping would have occured in `"clamp_to_edge"`, the fetched color is substituted with the color specified by `#Texture.border`.
 * `"repeat"` causes the integer part of the coordinate to be ignored; Rex only uses the fractional part, thereby creating a repeating pattern.
-* `"mirrored_repeat"` causes the coordinate to be set to the fractional part of the texture coordinate if the integer part of it is even; if the integer part is odd, then the coordinate is set to `1 - frac(c)`, where `frac(c)` represents the fractional part of the coordinate.
+* `"mirrored_repeat"` causes the coordinate to be set to the fractional part of the texture coordinate if the integer part of it is even; if the integer part is odd, then the coordinate is set to `1 - fract(c)`, where `fract(c)` represents the fractional part of the coordinate, i.e `x - floor(c)`.
 * `"mirror_clamp_to_edge"` causes the coordinate to be repeated for `"mirrored_repeat"` for one repretition of the texture, at which point the coordinate to be clamped as in `"clamp_to_edge"`.
 
 Use of `#Texture.border` is invalid unless one of the axis specified by `#Texture.wrap` is `"clamp_to_border"`.
