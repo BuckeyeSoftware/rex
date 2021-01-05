@@ -254,7 +254,7 @@ Optional<LinearBuffer> read_text_stream(Memory::Allocator& _allocator, Stream* _
     *dst++ = '\0';
 
     // Respecify the size of storage after removing all those CRs.
-    data.resize(dst - data.data());
+    data->resize(dst - data->data());
 #endif
     return data;
   }
