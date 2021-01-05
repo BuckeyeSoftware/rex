@@ -2,6 +2,7 @@
 
 #include "rx/core/config.h" // RX_PLATFORM_*
 #include "rx/core/assert.h" // RX_ASSERT
+#include "rx/core/linear_buffer.h"
 
 #if defined(RX_PLATFORM_POSIX)
 #include <dirent.h> // DIR, struct dirent, opendir, readdir, rewinddir, closedir
@@ -72,10 +73,10 @@ Directory::Directory(Memory::Allocator& _allocator, String&& path_)
   const auto path_utf16 = m_path.to_utf16();
   static constexpr const wchar_t PATH_EXTRA[] = L"\\*";
   LinearBuffer path_data{allocator()};
-  RX_ASSERT(path_data.resize(path_utf16.size() * 2 + sizeof PATH_EXTRA), "out of memory");,
+  RX_ASSERT(path_data.resize(path_utf16.size() * 2 + sizeof PATH_EXTRA), "out of memory");
 
   memcpy(path_data.data(), path_utf16.data(), path_utf16.size() * 2);
-  memcpy(path_data.data() + path_utf16.size(), PATH_EXTRA, sizeof PATH_EXTRA);
+  memcpy(path_data.data() + path_utf16.size() * 2, PATH_EXTRA, sizeof PATH_EXTRA);
 
   // Execute one FindFirstFileW to check if the directory exists.
   const auto path = reinterpret_cast<const LPCWSTR>(path_data.data());

@@ -178,6 +178,9 @@ Optional<LinearBuffer> read_text_stream(Memory::Allocator& _allocator, Stream* _
     // introduce a null-terminator, strip Unicode BOMs and convert UTF-16
     // encodings to UTF-8.
     auto data = convert_text_encoding(Utility::move(*result));
+    if (!data) {
+      return nullopt;
+    }
 
 #if defined(RX_PLATFORM_WINDOWS)
     // Quickly scan through word at a time |_src| for CR.
@@ -187,7 +190,7 @@ Optional<LinearBuffer> read_text_stream(Memory::Allocator& _allocator, Stream* _
       static constexpr auto ONES = -1_z / UCHAR_MAX; // All bits set.
       static constexpr auto HIGHS = ONES * (UCHAR_MAX / 2 + 1); // All high bits set.
       static constexpr auto C = static_cast<const Byte>('\r');
-      static constexpr auto K = ONES * K;
+      static constexpr auto K = ONES * C;
 
       auto has_zero = [&](Size _value) {
         return _value - ONES & (~_value) & HIGHS;
@@ -216,9 +219,9 @@ Optional<LinearBuffer> read_text_stream(Memory::Allocator& _allocator, Stream* _
       return n ? s : nullptr;
     };
 
-    const Byte* src = data.data();
-    Byte* dst = data.data();
-    Size size = data.size();
+    const Byte* src = data->data();
+    Byte* dst = data->data();
+    Size size = data->size();
     auto next = scan(src, size);
     if (!next) {
       // Contents do not contain any CR.

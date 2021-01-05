@@ -104,7 +104,7 @@ static Optional<Cube> load_cube(Memory::Allocator& _allocator, const String& _fi
     // Cannot read any RGB triplets if LUT_3D_SIZE was not seen or we have too
     // many samples in the file than what was defined by LUT_3D_SIZE.
     if (cube.size == 0 || samples.size() == cube.samples()) {
-      return nullopt;
+      break;
     }
 
     // Read a sample, remap it, and append.

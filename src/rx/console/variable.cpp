@@ -306,7 +306,7 @@ String VariableReference::print_initial() const {
   case VariableType::BOOLEAN:
     return cast<Bool>()->initial() ? "true" : "false";
   case VariableType::STRING:
-    return String::format("\"%s\"", escape(cast<String>()->initial()));
+    return String::format("\"%s\"", *escape(cast<String>()->initial()));
   case VariableType::INT:
     return String::format("%d", cast<Sint32>()->initial());
   case VariableType::FLOAT:

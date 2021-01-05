@@ -8,6 +8,8 @@
 #include <SDL_video.h> // SDL_GL_GetProcAddress
 #include <SDL_opengl.h>
 
+#undef ERROR
+
 namespace Rx::Render {
 
 GLenum convert_blend_factor(Frontend::BlendState::FactorType _factor_type);
