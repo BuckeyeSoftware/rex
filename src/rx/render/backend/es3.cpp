@@ -681,7 +681,7 @@ namespace detail_es3 {
     }
 
     void use_active_texture(const Frontend::Texture3D* _render_texture, Size _unit) {
-      use_active_texture_template<&texture_unit::texture1D, detail_es3::texture1D>(GL_TEXTURE_1D, _render_texture, _unit);
+      use_active_texture_template<&texture_unit::texture1D, detail_es3::texture1D>(GL_TEXTURE_3D, _render_texture, _unit);
     }
 
     void use_active_texture(const Frontend::TextureCM* _render_texture, Size _unit) {
@@ -1690,7 +1690,37 @@ void ES3::process(Byte* _command) {
         break;
       case Frontend::UpdateCommand::Type::TEXTURE3D:
         {
-          // TODO(dweiler): implement
+          const auto render_texture = resource->as_texture3D;
+          const Size* edit = resource->edit();
+
+          state->use_texture(render_texture);
+
+          for (Size i = 0; i < resource->edits; i++) {
+            const auto x_offset = edit[1];
+            const auto y_offset = edit[2];
+            const auto z_offset = edit[3];
+            const auto bpp = render_texture->bytes_per_pixel();
+            const auto pitch = render_texture->dimensions().w * bpp;
+            const auto ptr = render_texture->data().data()
+              + z_offset * pitch * render_texture->dimensions().h
+              + y_offset * pitch
+              + x_offset * bpp;
+
+            pglTexSubImage3D(
+              GL_TEXTURE_3D,
+              edit[0],
+              x_offset,
+              y_offset,
+              z_offset,
+              edit[4], // width
+              edit[5], // height
+              edit[6], // depth
+              convert_texture_format(render_texture->format()),
+              convert_texture_data_type(render_texture->format()),
+              ptr);
+
+            edit += 7;
+          }
         }
         break;
       default:
