@@ -8,13 +8,13 @@ namespace Rx::Input {
 struct Text {
   Text();
 
-  static constexpr const Float32 k_cursor_visible_time = 0.50f;
+  static inline constexpr const auto CURSOR_VISIBLE_TIME = 0.50f;
 
-  enum class Position {
-    k_left,
-    k_right,
-    k_home,
-    k_end
+  enum class Position : Uint8 {
+    LEFT,
+    RIGHT,
+    HOME,
+    END
   };
 
   void update(Float32 _delta_time);
@@ -44,13 +44,13 @@ private:
   void reset_selection();
   void reset_cursor();
 
-  enum {
-    k_selecting      = 1 << 0,
-    k_selected       = 1 << 1,
-    k_select_left    = 1 << 2,
-    k_select_right   = 1 << 3,
-    k_cursor_visible = 1 << 4,
-    k_active         = 1 << 5
+  enum : Uint8 {
+    SELECTING      = 1 << 0,
+    SELECTED       = 1 << 1,
+    SELECT_LEFT    = 1 << 2,
+    SELECT_RIGHT   = 1 << 3,
+    CURSOR_VISIBLE = 1 << 4,
+    ACTIVE         = 1 << 5
   };
 
   String m_contents;
@@ -61,19 +61,19 @@ private:
 };
 
 inline bool Text::is_cursor_visible() const {
-  return m_flags & k_cursor_visible;
+  return m_flags & CURSOR_VISIBLE;
 }
 
 inline bool Text::is_selecting() const {
-  return m_flags & k_selecting;
+  return m_flags & SELECTING;
 }
 
 inline bool Text::is_selected() const {
-  return m_flags & k_selected;
+  return m_flags & SELECTED;
 }
 
 inline bool Text::is_active() const {
-  return m_flags & k_active;
+  return m_flags & ACTIVE;
 }
 
 inline const String& Text::contents() const {

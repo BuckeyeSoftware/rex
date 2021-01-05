@@ -34,21 +34,21 @@ namespace Rx::Render::Frontend {
 // element    = "(", expression, ")"
 //            | identifier ;
 enum {
-  k_unmatched_parenthesis        = -1,
-  k_unexpected_character         = -2,
-  k_unexpected_end_of_expression = -3,
-  k_undeclared_identifier        = -4
+  UNMATCHED_PARENTHESIS        = -1,
+  UNEXPECTED_CHARACTER         = -2,
+  UNEXPECTED_END_OF_EXPRESSION = -3,
+  UNDECLARED_IDENTIFIER        = -4
 };
 
 static constexpr const char* binexp_result_to_string(int _result) {
   switch (_result) {
-  case k_unmatched_parenthesis:
+  case UNMATCHED_PARENTHESIS:
     return "unmatched parenthesis";
-  case k_unexpected_character:
+  case UNEXPECTED_CHARACTER:
     return "unexpected character";
-  case k_unexpected_end_of_expression:
+  case UNEXPECTED_END_OF_EXPRESSION:
     return "unexpected end of expression";
-  case k_undeclared_identifier:
+  case UNDECLARED_IDENTIFIER:
     return "undeclared identifier";
   }
   return nullptr;
@@ -76,7 +76,7 @@ static int binexp_parse_atom(const char*& expression_, int& parenthesis_, const 
       return result;
     }
     if (*expression_ != ')') {
-      return k_unmatched_parenthesis;
+      return UNMATCHED_PARENTHESIS;
     }
     expression_++; // skip ')'
     parenthesis_--;
@@ -84,7 +84,7 @@ static int binexp_parse_atom(const char*& expression_, int& parenthesis_, const 
   }
 
   String identifier;
-  const char* end{strpbrk(expression_, " )")}; // ' ' or ')' marks end of an identifier
+  const char* end = strpbrk(expression_, " )"); // ' ' or ')' marks end of an identifier
   if (end) {
     identifier = {expression_, end};
   } else {
@@ -92,9 +92,9 @@ static int binexp_parse_atom(const char*& expression_, int& parenthesis_, const 
     identifier = expression_;
   }
 
-  const auto find{_values.find(identifier)};
+  const auto find = _values.find(identifier);
   if (!find) {
-    return k_undeclared_identifier;
+    return UNDECLARED_IDENTIFIER;
   }
 
   expression_ += identifier.size();
@@ -110,14 +110,14 @@ static int binexp_parse_binary(const char*& expression_, int& parenthesis_, cons
 
   for (;;) {
     binexp_skip_spaces(expression_);
-    const bool is_and{!strncmp(expression_, "&&", 2)};
-    const bool is_or{!strncmp(expression_, "||", 2)};
+    const bool is_and = !strncmp(expression_, "&&", 2);
+    const bool is_or = !strncmp(expression_, "||", 2);
     if (!is_and && !is_or) {
       return result;
     }
 
     expression_ += 2; // skip '&&' or '||'
-    const auto tail_result{binexp_parse_atom(expression_, parenthesis_, _values)};
+    const auto tail_result = binexp_parse_atom(expression_, parenthesis_, _values);
     if (tail_result < 0) {
       return tail_result;
     }
@@ -129,7 +129,7 @@ static int binexp_parse_binary(const char*& expression_, int& parenthesis_, cons
     }
   }
 
-  return k_unexpected_end_of_expression;
+  return UNEXPECTED_END_OF_EXPRESSION;
 }
 
 static int binexp_evaluate(const char* _expression, const Map<String, bool>& _values) {
@@ -137,16 +137,16 @@ static int binexp_evaluate(const char* _expression, const Map<String, bool>& _va
     return 1;
   }
 
-  int parenthesis{0};
-  const auto result{binexp_parse_binary(_expression, parenthesis, _values)};
+  int parenthesis = 0;
+  const auto result = binexp_parse_binary(_expression, parenthesis, _values);
   if (result < 0) {
     return result;
   }
   if (parenthesis != 0 || *_expression == ')') {
-    return k_unmatched_parenthesis;
+    return UNMATCHED_PARENTHESIS;
   }
   if (*_expression != '\0') {
-    return k_unexpected_character;
+    return UNEXPECTED_CHARACTER;
   }
   return result;
 }
@@ -155,26 +155,26 @@ static Optional<Uniform::Type> uniform_type_from_string(const String& _type) {
   static constexpr const struct {
     const char* match;
     Uniform::Type kind;
-  } k_table[]{
-    {"sampler1D", Uniform::Type::k_sampler1D},
-    {"sampler2D", Uniform::Type::k_sampler2D},
-    {"sampler3D", Uniform::Type::k_sampler3D},
-    {"samplerCM", Uniform::Type::k_samplerCM},
-    {"bool",      Uniform::Type::k_bool},
-    {"int",       Uniform::Type::k_int},
-    {"float",     Uniform::Type::k_float},
-    {"vec2i",     Uniform::Type::k_vec2i},
-    {"vec3i",     Uniform::Type::k_vec3i},
-    {"vec4i",     Uniform::Type::k_vec4i},
-    {"vec2f",     Uniform::Type::k_vec2f},
-    {"vec3f",     Uniform::Type::k_vec3f},
-    {"vec4f",     Uniform::Type::k_vec4f},
-    {"mat4x4f",   Uniform::Type::k_mat4x4f},
-    {"mat3x3f",   Uniform::Type::k_mat3x3f},
-    {"bonesf",    Uniform::Type::k_bonesf}
+  } TABLE[] = {
+    {"sampler1D", Uniform::Type::SAMPLER1D},
+    {"sampler2D", Uniform::Type::SAMPLER2D},
+    {"sampler3D", Uniform::Type::SAMPLER3D},
+    {"samplerCM", Uniform::Type::SAMPLERCM},
+    {"bool",      Uniform::Type::BOOL},
+    {"int",       Uniform::Type::INT},
+    {"float",     Uniform::Type::FLOAT},
+    {"vec2i",     Uniform::Type::VEC2I},
+    {"vec3i",     Uniform::Type::VEC3I},
+    {"vec4i",     Uniform::Type::VEC4I},
+    {"vec2f",     Uniform::Type::VEC2F},
+    {"vec3f",     Uniform::Type::VEC3F},
+    {"vec4f",     Uniform::Type::VEC4F},
+    {"mat4x4f",   Uniform::Type::MAT4X4F},
+    {"mat3x3f",   Uniform::Type::MAT3X3F},
+    {"bonesf",    Uniform::Type::BONES}
   };
 
-  for (const auto& element : k_table) {
+  for (const auto& element : TABLE) {
     if (_type == element.match) {
       return element.kind;
     }
@@ -187,20 +187,20 @@ static Optional<Shader::InOutType> inout_type_from_string(const String& _type) {
   static constexpr const struct {
     const char* match;
     Shader::InOutType kind;
-  } k_table[]{
-    {"mat4x4f", Shader::InOutType::k_mat4x4f},
-    {"mat3x3f", Shader::InOutType::k_mat3x3f},
-    {"vec2i",   Shader::InOutType::k_vec2i},
-    {"vec3i",   Shader::InOutType::k_vec3i},
-    {"vec4i",   Shader::InOutType::k_vec4i},
-    {"vec2f",   Shader::InOutType::k_vec2f},
-    {"vec3f",   Shader::InOutType::k_vec3f},
-    {"vec4f",   Shader::InOutType::k_vec4f},
-    {"vec4b",   Shader::InOutType::k_vec4b},
-    {"float",   Shader::InOutType::k_float}
+  } TABLE[] = {
+    {"mat4x4f", Shader::InOutType::MAT4X4F},
+    {"mat3x3f", Shader::InOutType::MAT3X3F},
+    {"vec2i",   Shader::InOutType::VEC2I},
+    {"vec3i",   Shader::InOutType::VEC3I},
+    {"vec4i",   Shader::InOutType::VEC4I},
+    {"vec2f",   Shader::InOutType::VEC2F},
+    {"vec3f",   Shader::InOutType::VEC3F},
+    {"vec4f",   Shader::InOutType::VEC4F},
+    {"vec4b",   Shader::InOutType::VEC4B},
+    {"float",   Shader::InOutType::FLOAT}
   };
 
-  for (const auto& element : k_table) {
+  for (const auto& element : TABLE) {
     if (element.match == _type) {
       return element.kind;
     }
@@ -291,9 +291,9 @@ bool Technique::compile(const Map<String, Module>& _modules) {
   ShaderDefinition* vertex{nullptr};
   ShaderDefinition* fragment{nullptr};
   m_shader_definitions.each_fwd([&](ShaderDefinition& _shader) {
-    if (_shader.kind == Shader::Type::k_fragment) {
+    if (_shader.kind == Shader::Type::FRAGMENT) {
       fragment = &_shader;
-    } else if (_shader.kind == Shader::Type::k_vertex) {
+    } else if (_shader.kind == Shader::Type::VERTEX) {
       vertex = &_shader;
     }
     return true;
@@ -348,7 +348,7 @@ bool Technique::compile(const Map<String, Module>& _modules) {
     }
   }
 
-  if (m_type == Type::k_basic) {
+  if (m_type == Type::BASIC) {
     // create and add just a single program to m_programs
     auto program{m_frontend->create_program(RX_RENDER_TAG("technique"))};
 
@@ -388,7 +388,7 @@ bool Technique::compile(const Map<String, Module>& _modules) {
     m_frontend->initialize_program(RX_RENDER_TAG("technique"), program);
 
     m_programs.push_back(program);
-  } else if (m_type == Type::k_permute) {
+  } else if (m_type == Type::PERMUTE) {
     const Uint64 mask{(1_u64 << m_specializations.size()) - 1};
     auto generate{[&](Uint64 _flags) {
       m_permute_flags.push_back(_flags);
@@ -450,7 +450,7 @@ bool Technique::compile(const Map<String, Module>& _modules) {
     }
 
     generate(mask);
-  } else if (m_type == Type::k_variant) {
+  } else if (m_type == Type::VARIANT) {
     const Size specializations{m_specializations.size()};
     for (Size i{0}; i < specializations; i++) {
       const auto& specialization{m_specializations[i]};
@@ -504,12 +504,12 @@ bool Technique::compile(const Map<String, Module>& _modules) {
 }
 
 Technique::operator Program*() const {
-  RX_ASSERT(m_type == Type::k_basic, "not a basic technique");
+  RX_ASSERT(m_type == Type::BASIC, "not a basic technique");
   return m_programs[0];
 }
 
 Program* Technique::permute(Uint64 _flags) const {
-  RX_ASSERT(m_type == Type::k_permute, "not a permute technique");
+  RX_ASSERT(m_type == Type::PERMUTE, "not a permute technique");
 
   const Size permutations{m_permute_flags.size()};
   for (Size i{0}; i < permutations; i++) {
@@ -523,7 +523,7 @@ Program* Technique::permute(Uint64 _flags) const {
 }
 
 Program* Technique::variant(Size _index) const {
-  RX_ASSERT(m_type == Type::k_variant, "not a variant technique");
+  RX_ASSERT(m_type == Type::VARIANT, "not a variant technique");
   return m_programs[_index];
 }
 
@@ -599,14 +599,14 @@ bool Technique::parse(const JSON& _description) {
     if (!parse_specializations(permutes, "permutes")) {
       return false;
     }
-    m_type = Type::k_permute;
+    m_type = Type::PERMUTE;
   } else if (variants) {
     if (!parse_specializations(variants, "variants")) {
       return false;
     }
-    m_type = Type::k_variant;
+    m_type = Type::VARIANT;
   } else {
-    m_type = Type::k_basic;
+    m_type = Type::BASIC;
   }
 
   return true;
@@ -690,36 +690,33 @@ bool Technique::parse_uniform(const JSON& _uniform) {
 
   if (value) {
     switch (*kind) {
-    case Uniform::Type::k_sampler1D:
+    case Uniform::Type::SAMPLER1D: [[fallthrough]];
+    case Uniform::Type::SAMPLER2D: [[fallthrough]];
+    case Uniform::Type::SAMPLER3D: [[fallthrough]];
+    case Uniform::Type::SAMPLERCM:
       [[fallthrough]];
-    case Uniform::Type::k_sampler2D:
-      [[fallthrough]];
-    case Uniform::Type::k_sampler3D:
-      [[fallthrough]];
-    case Uniform::Type::k_samplerCM:
-      [[fallthrough]];
-    case Uniform::Type::k_int:
+    case Uniform::Type::INT:
       if (!value.is_integer()) {
         return error("expected Integer for %s", name_string);
       }
       constant.as_int = value.as_integer();
       break;
 
-    case Uniform::Type::k_bool:
+    case Uniform::Type::BOOL:
       if (!value.is_boolean()) {
         return error("expected Boolean for %s", name_string);
       }
       constant.as_bool = value.as_boolean();
       break;
 
-    case Uniform::Type::k_float:
+    case Uniform::Type::FLOAT:
       if (!value.is_number()) {
         return error("expected Number for %s", name_string);
       }
       constant.as_float = value.as_float();
       break;
 
-    case Uniform::Type::k_vec2i:
+    case Uniform::Type::VEC2I:
       if (!value.is_array_of(JSON::Type::INTEGER, 2)) {
         return error("expected Array[Integer, 2] for %s", name_string);
       }
@@ -729,7 +726,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
 
-    case Uniform::Type::k_vec3i:
+    case Uniform::Type::VEC3I:
       if (!value.is_array_of(JSON::Type::INTEGER, 3)) {
         return error("expected Array[Integer, 3] for %s", name_string);
       }
@@ -740,7 +737,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
 
-    case Uniform::Type::k_vec4i:
+    case Uniform::Type::VEC4I:
       if (!value.is_array_of(JSON::Type::INTEGER, 4)) {
         return error("expected Array[Integer, 4] for %s", name_string);
       }
@@ -752,7 +749,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
 
-    case Uniform::Type::k_vec2f:
+    case Uniform::Type::VEC2F:
       if (!value.is_array_of(JSON::Type::NUMBER, 2)) {
         return error("expected Array[Number, 2] for %s", name_string);
       }
@@ -762,7 +759,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
 
-    case Uniform::Type::k_vec3f:
+    case Uniform::Type::VEC3F:
       if (!value.is_array_of(JSON::Type::NUMBER, 3)) {
         return error("expected Array[Number, 3] for %s", name_string);
       }
@@ -773,7 +770,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
 
-    case Uniform::Type::k_vec4f:
+    case Uniform::Type::VEC4F:
       if (!value.is_array_of(JSON::Type::NUMBER, 4)) {
         return error("expected Array[Number, 4] for %s", name_string);
       }
@@ -785,7 +782,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
 
-    case Uniform::Type::k_mat4x4f:
+    case Uniform::Type::MAT4X4F:
       if (!value.is_array_of(JSON::Type::ARRAY, 4) ||
           !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 4); }))
       {
@@ -820,7 +817,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
 
-    case Uniform::Type::k_mat3x3f:
+    case Uniform::Type::MAT3X3F:
       if (!value.is_array_of(JSON::Type::ARRAY, 3) ||
           !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 3); }))
       {
@@ -846,7 +843,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
 
-    case Uniform::Type::k_bonesf:
+    case Uniform::Type::BONES:
       return error("cannot give value for bones");
     }
   }
@@ -891,9 +888,9 @@ bool Technique::parse_shader(const JSON& _shader) {
   const auto type_string{type.as_string()};
   Shader::Type shader_type;
   if (type_string == "vertex") {
-    shader_type = Shader::Type::k_vertex;
+    shader_type = Shader::Type::VERTEX;
   } else if (type_string == "fragment") {
-    shader_type = Shader::Type::k_fragment;
+    shader_type = Shader::Type::FRAGMENT;
   } else {
     return error("unknown Type '%s' for shader", type_string);
   }
@@ -994,11 +991,11 @@ bool Technique::parse_inout(const JSON& _inout, const char* _type,
   inout.when = when ? when.as_string() : "";
 
   switch (*kind) {
-  case Shader::InOutType::k_mat3x3f:
-    index_ += 3; // One for each vector in the mat3x3f
+  case Shader::InOutType::MAT3X3F:
+    index_ += 3; // One for each vector.
     break;
-  case Shader::InOutType::k_mat4x4f:
-    index_ += 4; // One for each vector in the mat4x4f
+  case Shader::InOutType::MAT4X4F:
+    index_ += 4; // One for each vector.
     break;
   default:
     index_ += 1;
@@ -1070,10 +1067,10 @@ bool Technique::resolve_dependencies(const Map<String, Module>& _modules) {
     if (dependencies->sorted.size()) {
       const char* shader_type{""};
       switch (_shader.kind) {
-      case Shader::Type::k_fragment:
+      case Shader::Type::FRAGMENT:
         shader_type = "fragment";
         break;
-      case Shader::Type::k_vertex:
+      case Shader::Type::VERTEX:
         shader_type = "vertex";
         break;
       }

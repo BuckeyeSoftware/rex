@@ -5,7 +5,7 @@
 namespace Rx::Render::Frontend {
 
 struct FrameTimer {
-  static constexpr Float64 k_frame_history_seconds{2.0};
+  static constexpr Float64 HISTORY_SECONDS = 2.0;
 
   FrameTimer();
 

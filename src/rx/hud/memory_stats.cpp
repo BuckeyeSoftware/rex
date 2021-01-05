@@ -42,7 +42,7 @@ void MemoryStats::render() {
             Math::Vec2f{screen_size.x - 25.0f, y},
             *font_size,
             1.0f,
-            Render::Immediate2D::TextAlign::k_right,
+            Render::Immediate2D::TextAlign::RIGHT,
             _line,
             {1.0f, 1.0f, 1.0f, 1.0f});
     y += *font_size;

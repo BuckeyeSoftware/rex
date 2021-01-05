@@ -204,7 +204,7 @@ bool Importer::generate_tangents() {
 
     const Float32 det = uv0.s * uv1.t - uv1.s * uv0.t;
 
-    if (Math::abs(det) <= Math::k_epsilon<Float32>) {
+    if (Math::abs(det) <= Math::EPSILON<Float32>) {
       return false;
     }
 

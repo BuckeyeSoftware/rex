@@ -11,14 +11,14 @@ struct Resource {
   RX_MARK_NO_COPY(Resource);
 
   enum class Type {
-    k_buffer,
-    k_target,
-    k_program,
-    k_texture1D,
-    k_texture2D,
-    k_texture3D,
-    k_textureCM,
-    k_downloader
+    BUFFER,
+    TARGET,
+    PROGRAM,
+    TEXTURE1D,
+    TEXTURE2D,
+    TEXTURE3D,
+    TEXTURECM,
+    DOWNLOADER
   };
 
   static constexpr Size count();
@@ -44,7 +44,7 @@ private:
 };
 
 inline constexpr Size Resource::count() {
-  return static_cast<Size>(Type::k_downloader) + 1;
+  return static_cast<Size>(Type::DOWNLOADER) + 1;
 }
 
 inline bool Resource::release_reference() {

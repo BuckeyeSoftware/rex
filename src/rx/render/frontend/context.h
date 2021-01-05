@@ -175,7 +175,7 @@ struct Context {
     Downloader* downloader_);
 
   // Used by profile::gpu_sample to insert profile markers. The backend is
-  // supposed to consume the k_profile command and when a tag is specified,
+  // supposed to consume the |PROFILE| command and when a tag is specified,
   // begin timing some commands. When a tag is not specified, i.e nullptr is
   // passed, stop the timing.
   //

@@ -9,11 +9,11 @@ namespace Rx {
 namespace Rx::serialize {
 
 struct RX_API Buffer {
-  static inline constexpr Size k_size = 4096;
+  static inline constexpr Size SIZE = 4096;
 
   enum class Mode : Uint8 {
-    k_read,
-    k_write
+    READ,
+    WRITE
   };
 
   Buffer(Stream* _stream, Mode _mode);
@@ -25,14 +25,14 @@ struct RX_API Buffer {
   [[nodiscard]] bool read_byte(Byte* byte_);
   [[nodiscard]] bool read_bytes(Byte* bytes_, Size _size);
 
-  [[nodiscard]] bool read(Uint64 _at_most = k_size);
+  [[nodiscard]] bool read(Uint64 _at_most = SIZE);
   [[nodiscard]] bool flush();
 
 private:
   Stream* m_stream;
   Mode m_mode;
 
-  Byte m_buffer[k_size];
+  Byte m_buffer[SIZE];
   Size m_cursor;
   Size m_length;
 };

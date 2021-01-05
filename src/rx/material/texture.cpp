@@ -84,7 +84,7 @@ bool Texture::parse(const JSON& _definition) {
     return false;
   }
 
-  if (m_wrap.is_any(WrapType::k_clamp_to_border) && !m_border) {
+  if (m_wrap.is_any(WrapType::CLAMP_TO_BORDER) && !m_border) {
     return error("missing 'border' for \"clamp_to_border\"");
   }
 
@@ -117,7 +117,7 @@ bool Texture::parse_type(const JSON& _type) {
     return error("expected String");
   }
 
-  static constexpr const char* k_matches[]{
+  static constexpr const char* MATCHES[] = {
     "albedo",
     "normal",
     "metalness",
@@ -126,7 +126,7 @@ bool Texture::parse_type(const JSON& _type) {
     "emission"
   };
 
-  for (const auto& match : k_matches) {
+  for (const auto& match : MATCHES) {
     if (match == _type.as_string()) {
       m_type = match;
       return true;
@@ -141,14 +141,14 @@ bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
     return error("expected String");
   }
 
-  static constexpr const char* k_matches[] = {
+  static constexpr const char* MATCHES[] = {
     "bilinear",
     "trilinear",
     "nearest"
   };
 
   const auto& filter_string = _filter.as_string();
-  for (const auto& match : k_matches) {
+  for (const auto& match : MATCHES) {
     if (filter_string == match) {
       const bool trilinear = *match == 't';
       const bool bilinear = trilinear || *match == 'b'; // trilinear is an extension of bilinear
@@ -175,16 +175,16 @@ bool Texture::parse_wrap(const JSON& _wrap) {
   static constexpr const struct {
     const char* match;
     WrapType type;
-  } k_matches[]{
-    { "clamp_to_edge",        WrapType::k_clamp_to_edge        },
-    { "clamp_to_border",      WrapType::k_clamp_to_border      },
-    { "mirrored_repeat",      WrapType::k_mirrored_repeat      },
-    { "repeat",               WrapType::k_repeat               },
-    { "mirror_clamp_to_edge", WrapType::k_mirror_clamp_to_edge }
+  } MATCHES[] = {
+    { "clamp_to_edge",        WrapType::CLAMP_TO_EDGE        },
+    { "clamp_to_border",      WrapType::CLAMP_TO_BORDER      },
+    { "mirrored_repeat",      WrapType::MIRRORED_REPEAT      },
+    { "repeat",               WrapType::REPEAT               },
+    { "mirror_clamp_to_edge", WrapType::MIRROR_CLAMP_TO_EDGE }
   };
 
   const auto parse = [this](const String& _type) -> Optional<WrapType> {
-    for (const auto& match : k_matches) {
+    for (const auto& match : MATCHES) {
       if (_type == match.match) {
         return match.type;
       }

@@ -68,8 +68,8 @@ private:
   bool parse_transform(const JSON& _transform);
 
   enum {
-    k_constructed = 1 << 0,
-    k_animated    = 1 << 1
+    CONSTRUCTED = 1 << 0,
+    ANIMATED    = 1 << 1
   };
 
   Memory::Allocator& m_allocator;
@@ -106,7 +106,7 @@ void Loader::log(Log::Level _level, const char* _format,
 }
 
 inline bool Loader::is_animated() const {
-  return m_flags & k_animated;
+  return m_flags & ANIMATED;
 }
 
 inline Vector<Loader::Vertex>&& Loader::vertices() {

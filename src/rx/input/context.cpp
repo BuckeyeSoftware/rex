@@ -22,7 +22,7 @@ Context::Context(Memory::Allocator& _allocator)
 
 void Context::handle_event(const Event& _event) {
   switch (_event.type) {
-  case Event::Type::k_mouse_button:
+  case Event::Type::MOUSE_BUTTON:
     // Can only change layer when mouse isn't captured and button was pressed.
     if (!active_layer().is_mouse_captured() && _event.as_mouse_button.down) {
       const auto& position = _event.as_mouse_button.position.cast<Float32>();
@@ -43,11 +43,11 @@ void Context::handle_event(const Event& _event) {
     // Send the event to the active layer.
     active_layer().handle_event(_event);
     break;
-  case Event::Type::k_controller_notification:
+  case Event::Type::CONTROLLER_NOTIFICATION:
     // Controller notification events should be sent to every layer.
     m_layers.each_fwd([&](Layer* _layer) { _layer->handle_event(_event); });
     break;
-  case Event::Type::k_clipboard:
+  case Event::Type::CLIPBOARD:
     // The clipboard is context-global.
     m_clipboard = Utility::move(_event.as_clipboard.contents);
     break;

@@ -19,9 +19,9 @@ struct Target
   Target(Context* _frontend);
 
   struct Attachment {
-    enum class Type {
-      k_texture2D,
-      k_textureCM
+    enum class Type : Uint8 {
+      TEXTURE2D,
+      TEXTURECM
     };
 
     Type kind;
@@ -103,12 +103,12 @@ private:
   void update_resource_usage();
 
   enum /* m_flags */ {
-    k_has_depth    = 1 << 0,
-    k_has_stencil  = 1 << 1,
-    k_owns_stencil = 1 << 2,
-    k_owns_depth   = 1 << 3,
-    k_dimensions   = 1 << 4,
-    k_swapchain    = 1 << 5
+    HAS_DEPTH    = 1 << 0,
+    HAS_STENCIL  = 1 << 1,
+    OWNS_STENCIL = 1 << 2,
+    OWNS_DEPTH   = 1 << 3,
+    DIMENSIONS   = 1 << 4,
+    SWAPCHAIN    = 1 << 5
   };
 
   union {
@@ -127,9 +127,9 @@ private:
 // Target::Attachment
 inline bool Target::Attachment::texture_is(const Texture* _texture) const {
   switch (kind) {
-  case Type::k_texture2D:
+  case Type::TEXTURE2D:
     return as_texture2D.texture == _texture;
-  case Type::k_textureCM:
+  case Type::TEXTURECM:
     return as_textureCM.texture == _texture;
   }
   RX_HINT_UNREACHABLE();
@@ -137,12 +137,12 @@ inline bool Target::Attachment::texture_is(const Texture* _texture) const {
 
 // Target
 inline void Target::attach_texture(TextureCM* _texture, Size _level) {
-  attach_texture(_texture, TextureCM::Face::k_right, _level);  // +x
-  attach_texture(_texture, TextureCM::Face::k_left, _level);   // -x
-  attach_texture(_texture, TextureCM::Face::k_top, _level);    // +y
-  attach_texture(_texture, TextureCM::Face::k_bottom, _level); // -y
-  attach_texture(_texture, TextureCM::Face::k_front, _level);  // +z
-  attach_texture(_texture, TextureCM::Face::k_back, _level);   // -z
+  attach_texture(_texture, TextureCM::Face::RIGHT, _level);  // +x
+  attach_texture(_texture, TextureCM::Face::LEFT, _level);   // -x
+  attach_texture(_texture, TextureCM::Face::TOP, _level);    // +y
+  attach_texture(_texture, TextureCM::Face::BOTTOM, _level); // -y
+  attach_texture(_texture, TextureCM::Face::FRONT, _level);  // +z
+  attach_texture(_texture, TextureCM::Face::BACK, _level);   // -z
 }
 
 inline Texture2D* Target::depth() const {
@@ -162,15 +162,15 @@ inline const Vector<Target::Attachment> Target::attachments() const & {
 }
 
 inline bool Target::is_swapchain() const {
-  return m_flags & k_swapchain;
+  return m_flags & SWAPCHAIN;
 }
 
 inline bool Target::has_depth() const {
-  return m_flags & k_has_depth;
+  return m_flags & HAS_DEPTH;
 }
 
 inline bool Target::has_stencil() const {
-  return m_flags & k_has_stencil;
+  return m_flags & HAS_STENCIL;
 }
 
 inline bool Target::has_depth_stencil() const {
@@ -178,11 +178,11 @@ inline bool Target::has_depth_stencil() const {
 }
 
 inline bool Target::owns_depth() const {
-  return m_flags & k_owns_depth;
+  return m_flags & OWNS_DEPTH;
 }
 
 inline bool Target::owns_stencil() const {
-  return m_flags & k_owns_stencil;
+  return m_flags & OWNS_STENCIL;
 }
 
 inline bool Target::owns_depth_stencil() const {

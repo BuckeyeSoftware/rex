@@ -15,11 +15,11 @@ namespace Rx::Memory {
 
 Global<ElectricFenceAllocator> ElectricFenceAllocator::s_instance{"system", "electric_fence_allocator"};
 
-static constexpr const Size k_page_size = 4096;
+static constexpr const Size PAGE_SIZE = 4096;
 
 static inline Size pages_needed(Size _size) {
-  const auto rounded_size = (_size + (k_page_size - 1)) & ~(k_page_size - 1);
-  return 2 + rounded_size / k_page_size;
+  const auto rounded_size = (_size + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1);
+  return 2 + rounded_size / PAGE_SIZE;
 }
 
 ElectricFenceAllocator::ElectricFenceAllocator()
@@ -32,7 +32,7 @@ VMA* ElectricFenceAllocator::allocate_vma(Size _size) {
 
   // Create a new mapping with no permissions.
   VMA mapping;
-  if (RX_HINT_UNLIKELY(!mapping.allocate(k_page_size, pages))) {
+  if (RX_HINT_UNLIKELY(!mapping.allocate(PAGE_SIZE, pages))) {
     return nullptr;
   }
 
@@ -55,7 +55,7 @@ Byte* ElectricFenceAllocator::allocate(Size _size) {
 Byte* ElectricFenceAllocator::reallocate(void* _data, Size _size) {
   if (RX_HINT_LIKELY(_data)) {
     Concurrency::ScopeLock lock{m_lock};
-    const auto base = reinterpret_cast<Byte*>(_data) - k_page_size;
+    const auto base = reinterpret_cast<Byte*>(_data) - PAGE_SIZE;
     if (auto mapping = m_mappings.find(base)) {
       // No need to reallocate, allocation still fits inside.
       if (mapping->page_count() >= pages_needed(_size)) {
@@ -85,7 +85,7 @@ Byte* ElectricFenceAllocator::reallocate(void* _data, Size _size) {
 void ElectricFenceAllocator::deallocate(void* _data) {
   if (RX_HINT_LIKELY(_data)) {
     Concurrency::ScopeLock lock{m_lock};
-    const auto base = reinterpret_cast<Byte*>(_data) - k_page_size;
+    const auto base = reinterpret_cast<Byte*>(_data) - PAGE_SIZE;
     if (!m_mappings.erase(base)) {
       abort("invalid deallocate");
     }

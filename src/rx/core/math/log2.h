@@ -21,7 +21,7 @@ inline Uint64 log2(Uint64 _value) {
 }
 #else
 inline Uint32 log2(Uint32 _value) {
-  static constexpr const Byte k_table[]{
+  static constexpr const Byte TABLE[] = {
     0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30, 8, 12,
     20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
   };
@@ -30,11 +30,11 @@ inline Uint32 log2(Uint32 _value) {
   _value |= _value >> 4;
   _value |= _value >> 8;
   _value |= _value >> 16;
-  return k_table[Uint32(_value * 0x07c4acdd) >> 27];
+  return TABLE[Uint32(_value * 0x07c4acdd) >> 27];
 }
 
 inline Uint64 log2(Uint64 _value) {
-  static constexpr const Byte k_table[]{
+  static constexpr const Byte TABLE[] = {
     63, 0, 58, 1, 59, 47, 53, 2, 60, 39, 48, 27, 54, 33, 42, 3, 61, 51,
     37, 40, 49, 18, 28, 20, 55, 30, 34, 11, 43, 14, 22, 4, 62, 57, 46,
     52, 38, 26, 32, 41, 50, 36, 17, 19, 29, 10, 13, 21, 56, 45, 25, 31,
@@ -46,7 +46,7 @@ inline Uint64 log2(Uint64 _value) {
   _value |= _value >> 8;
   _value |= _value >> 16;
   _value |= _value >> 32;
-  return k_table[(Uint64((_value - (_value >> 1)) * 0x07EDD5E59A4E28C2)) >> 58];
+  return TABLE[(Uint64((_value - (_value >> 1)) * 0x07EDD5E59A4E28C2)) >> 58];
 }
 #endif
 

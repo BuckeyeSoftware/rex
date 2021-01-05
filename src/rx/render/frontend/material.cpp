@@ -10,16 +10,16 @@ static inline Texture2D::WrapOptions
 convert_material_wrap(const Rx::Material::Texture::Wrap& _wrap) {
   auto convert = [](auto _value) {
     switch (_value) {
-    case Rx::Material::Texture::WrapType::k_clamp_to_edge:
-      return Texture::WrapType::k_clamp_to_edge;
-    case Rx::Material::Texture::WrapType::k_clamp_to_border:
-      return Texture::WrapType::k_clamp_to_border;
-    case Rx::Material::Texture::WrapType::k_mirrored_repeat:
-      return Texture::WrapType::k_mirrored_repeat;
-    case Rx::Material::Texture::WrapType::k_mirror_clamp_to_edge:
-      return Texture::WrapType::k_mirror_clamp_to_edge;
-    case Rx::Material::Texture::WrapType::k_repeat:
-      return Texture::WrapType::k_repeat;
+    case Rx::Material::Texture::WrapType::CLAMP_TO_EDGE:
+      return Texture::WrapType::CLAMP_TO_EDGE;
+    case Rx::Material::Texture::WrapType::CLAMP_TO_BORDER:
+      return Texture::WrapType::CLAMP_TO_BORDER;
+    case Rx::Material::Texture::WrapType::MIRRORED_REPEAT:
+      return Texture::WrapType::MIRRORED_REPEAT;
+    case Rx::Material::Texture::WrapType::MIRROR_CLAMP_TO_EDGE:
+      return Texture::WrapType::MIRROR_CLAMP_TO_EDGE;
+    case Rx::Material::Texture::WrapType::REPEAT:
+      return Texture::WrapType::REPEAT;
     }
     RX_HINT_UNREACHABLE();
   };
@@ -108,19 +108,19 @@ bool Material::load(Rx::Material::Loader&& loader_) {
 
     switch (chain.format()) {
     case Rx::Texture::PixelFormat::RGBA_U8:
-      texture->record_format(Texture::DataFormat::k_rgba_u8);
+      texture->record_format(Texture::DataFormat::RGBA_U8);
       break;
     case Rx::Texture::PixelFormat::BGRA_U8:
-      texture->record_format(Texture::DataFormat::k_bgra_u8);
+      texture->record_format(Texture::DataFormat::BGRA_U8);
       break;
     case Rx::Texture::PixelFormat::RGB_U8:
-      texture->record_format(Texture::DataFormat::k_rgb_u8);
+      texture->record_format(Texture::DataFormat::RGB_U8);
       break;
     case Rx::Texture::PixelFormat::BGR_U8:
-      texture->record_format(Texture::DataFormat::k_bgr_u8);
+      texture->record_format(Texture::DataFormat::BGR_U8);
       break;
     case Rx::Texture::PixelFormat::R_U8:
-      texture->record_format(Texture::DataFormat::k_r_u8);
+      texture->record_format(Texture::DataFormat::R_U8);
       break;
     }
 

@@ -28,8 +28,8 @@ FrameTimer::FrameTimer()
 }
 
 void FrameTimer::cap_fps(Float32 _max_fps) {
-  static constexpr const Float32 k_dampen{0.00001f};
-  m_max_frame_ticks = _max_fps <= 0.0f ? -1.0f : (m_frequency / _max_fps) - k_dampen;
+  static constexpr const Float32 DAMPEN = 0.00001f;
+  m_max_frame_ticks = _max_fps <= 0.0f ? -1.0f : (m_frequency / _max_fps) - DAMPEN;
 }
 
 void FrameTimer::reset() {
@@ -53,10 +53,10 @@ bool FrameTimer::update() {
   const Float64 frame_time{(life_time - (m_last_frame_ticks * m_resolution)) * 1000.0};
   m_frame_times.emplace_back(life_time, frame_time);
 
-  // Erase old frame times. We only want a window that is |k_frame_history_seconds|
+  // Erase old frame times. We only want a window that is |HISTORY_SECONDS|
   // in size.
   for (Size i{0}; i < m_frame_times.size(); i++) {
-    if (m_frame_times[i].life >= life_time - k_frame_history_seconds) {
+    if (m_frame_times[i].life >= life_time - HISTORY_SECONDS) {
       if (i != 0) {
         m_frame_times.erase(0, i);
       }

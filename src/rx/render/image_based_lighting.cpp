@@ -20,14 +20,13 @@ ImageBasedLighting::ImageBasedLighting(Frontend::Context* _frontend)
   , m_scale_bias_texture{nullptr}
 {
   m_scale_bias_texture = m_frontend->create_texture2D(RX_RENDER_TAG("ibl: scale bias"));
-  m_scale_bias_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
+  m_scale_bias_texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
   m_scale_bias_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   m_scale_bias_texture->record_levels(1);
   m_scale_bias_texture->record_dimensions({256, 256});
   m_scale_bias_texture->record_filter({true, false, false});
-  m_scale_bias_texture->record_wrap({
-                                            Frontend::Texture::WrapType::k_clamp_to_edge,
-                                            Frontend::Texture::WrapType::k_clamp_to_edge});
+  m_scale_bias_texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+                                     Frontend::Texture::WrapType::CLAMP_TO_EDGE});
   m_frontend->initialize_texture(RX_RENDER_TAG("ibl: scale bias"), m_scale_bias_texture);
 
   // Render scale bias texture
@@ -79,28 +78,26 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
   m_frontend->destroy_texture(RX_RENDER_TAG("ibl: prefilter"), m_prefilter_texture);
 
   m_irradiance_texture = m_frontend->create_textureCM(RX_RENDER_TAG("ibl: irradiance"));
-  m_irradiance_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
+  m_irradiance_texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
   m_irradiance_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   m_irradiance_texture->record_levels(1);
   m_irradiance_texture->record_dimensions({_irradiance_map_size, _irradiance_map_size});
   m_irradiance_texture->record_filter({true, false, false});
-  m_irradiance_texture->record_wrap({
-                                            Frontend::Texture::WrapType::k_clamp_to_edge,
-                                            Frontend::Texture::WrapType::k_clamp_to_edge,
-                                            Frontend::Texture::WrapType::k_clamp_to_edge});
+  m_irradiance_texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+                                     Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+                                     Frontend::Texture::WrapType::CLAMP_TO_EDGE});
   m_frontend->initialize_texture(RX_RENDER_TAG("ibl: irradiance"), m_irradiance_texture);
 
-  static constexpr const Size k_max_prefilter_levels{5};
+  static constexpr const auto MAX_PREFILTER_LEVELS = 5_z;
   m_prefilter_texture = m_frontend->create_textureCM(RX_RENDER_TAG("ibl: prefilter"));
-  m_prefilter_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
+  m_prefilter_texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
   m_prefilter_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
-  m_prefilter_texture->record_levels(k_max_prefilter_levels + 1);
+  m_prefilter_texture->record_levels(MAX_PREFILTER_LEVELS + 1);
   m_prefilter_texture->record_dimensions(_environment->dimensions());
   m_prefilter_texture->record_filter({true, false, true});
-  m_prefilter_texture->record_wrap({
-                                           Frontend::Texture::WrapType::k_clamp_to_edge,
-                                           Frontend::Texture::WrapType::k_clamp_to_edge,
-                                           Frontend::Texture::WrapType::k_clamp_to_edge});
+  m_prefilter_texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+                                    Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+                                    Frontend::Texture::WrapType::CLAMP_TO_EDGE});
   m_frontend->initialize_texture(RX_RENDER_TAG("irradiance map"), m_prefilter_texture);
 
   // Render irradiance map.
@@ -152,7 +149,7 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
   {
     Frontend::Program* program = prefilter_technique->permute(_grading ? 1 << 0 : 0);
 
-    for (Size i{0}; i <= k_max_prefilter_levels; i++) {
+    for (Size i{0}; i <= MAX_PREFILTER_LEVELS; i++) {
       Frontend::Target* target{m_frontend->create_target(RX_RENDER_TAG("ibl: prefilter"))};
       target->attach_texture(m_prefilter_texture, i);
       m_frontend->initialize_target(RX_RENDER_TAG("ibl: prefilter"), target);
@@ -161,7 +158,7 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
       draw_textures.add(_environment);
 
       program->uniforms()[0].record_sampler(draw_textures.add(_environment));
-      const Float32 roughness{static_cast<Float32>(i) / k_max_prefilter_levels};
+      const Float32 roughness{static_cast<Float32>(i) / MAX_PREFILTER_LEVELS};
       program->uniforms()[1].record_float(roughness);
       if (_grading) {
         program->uniforms()[2].record_sampler(draw_textures.add(_grading->atlas()->texture()));

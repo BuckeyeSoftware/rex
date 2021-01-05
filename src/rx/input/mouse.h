@@ -9,7 +9,7 @@ namespace Rx::Input {
 struct Mouse {
   Mouse();
 
-  static constexpr const auto k_buttons{32};
+  static inline constexpr const auto BUTTONS = 32;
 
   void update(Float32 _delta_time);
   void update_button(bool _down, int _button);
@@ -25,13 +25,13 @@ struct Mouse {
   bool is_released(int _button) const;
 
 private:
-  enum {
-    k_pressed  = 1 << 0,
-    k_released = 1 << 1,
-    k_held     = 1 << 2
+  enum : Uint8 {
+    PRESSED  = 1 << 0,
+    RELEASED = 1 << 1,
+    HELD     = 1 << 2
   };
 
-  int m_buttons[k_buttons];
+  int m_buttons[BUTTONS];
 
   Math::Vec2i m_position;
   Math::Vec2i m_movement;
@@ -53,18 +53,18 @@ inline const Math::Vec2i& Mouse::scroll() const {
 }
 
 inline bool Mouse::is_pressed(int _button) const {
-  RX_ASSERT(_button && _button < k_buttons, "out of range");
-  return m_buttons[_button] & k_pressed;
+  RX_ASSERT(_button && _button < BUTTONS, "out of range");
+  return m_buttons[_button] & PRESSED;
 }
 
 inline bool Mouse::is_held(int _button) const {
-  RX_ASSERT(_button && _button < k_buttons, "out of range");
-  return m_buttons[_button] & k_held;
+  RX_ASSERT(_button && _button < BUTTONS, "out of range");
+  return m_buttons[_button] & HELD;
 }
 
 inline bool Mouse::is_released(int _button) const {
-  RX_ASSERT(_button && _button < k_buttons, "out of range");
-  return m_buttons[_button] & k_released;
+  RX_ASSERT(_button && _button < BUTTONS, "out of range");
+  return m_buttons[_button] & RELEASED;
 }
 
 } // namspace rx::input

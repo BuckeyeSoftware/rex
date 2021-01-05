@@ -23,8 +23,8 @@ struct Set {
   template<typename Kt, Size E>
   using Initializers = Array<Kt[E]>;
 
-  static inline constexpr Size k_initial_size{256};
-  static inline constexpr Size k_load_factor{90};
+  static inline constexpr const Size INITIAL_SIZE = 256;
+  static inline constexpr const Size LOAD_FACTOR = 90;
 
   Set();
   Set(Memory::Allocator& _allocator);
@@ -110,7 +110,7 @@ Set<K>::Set(Memory::Allocator& _allocator)
   , m_keys{nullptr}
   , m_hashes{nullptr}
   , m_size{0}
-  , m_capacity{k_initial_size}
+  , m_capacity{INITIAL_SIZE}
   , m_resize_threshold{0}
   , m_mask{0}
 {
@@ -123,7 +123,7 @@ Set<K>::Set(Set&& set_)
   , m_keys{Utility::exchange(set_.m_keys, nullptr)}
   , m_hashes{Utility::exchange(set_.m_hashes, nullptr)}
   , m_size{Utility::exchange(set_.m_size, 0)}
-  , m_capacity{Utility::exchange(set_.m_capacity, k_initial_size)}
+  , m_capacity{Utility::exchange(set_.m_capacity, INITIAL_SIZE)}
   , m_resize_threshold{Utility::exchange(set_.m_resize_threshold, 0)}
   , m_mask{Utility::exchange(set_.m_mask, 0)}
 {
@@ -344,7 +344,7 @@ bool Set<K>::allocate() {
     element_hash(i) = 0;
   }
 
-  m_resize_threshold = (m_capacity * k_load_factor) / 100;
+  m_resize_threshold = (m_capacity * LOAD_FACTOR) / 100;
   m_mask = m_capacity - 1;
 
   return true;

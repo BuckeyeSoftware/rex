@@ -20,47 +20,47 @@ Layer::~Layer() {
 
 void Layer::handle_event(const Event& _event) {
   switch (_event.type) {
-  case Event::Type::k_none:
+  case Event::Type::NONE:
     break;
-  case Event::Type::k_keyboard:
+  case Event::Type::KEYBOARD:
     m_keyboard.update_key(_event.as_keyboard.down, _event.as_keyboard.scan_code,
       _event.as_keyboard.symbol);
     break;
-  case Event::Type::k_controller_notification:
+  case Event::Type::CONTROLLER_NOTIFICATION:
     switch (_event.as_controller_notification.kind) {
-    case ControllerNotificationEvent::Type::k_connected:
+    case ControllerNotificationEvent::Type::CONNECTED:
       m_controllers.resize(_event.as_controller_notification.index);
       break;
-    case ControllerNotificationEvent::Type::k_disconnected:
+    case ControllerNotificationEvent::Type::DISCONNECTED:
       m_controllers.erase(_event.as_controller_notification.index,
         _event.as_controller_notification.index + 1);
       break;
     }
     break;
-  case Event::Type::k_controller_button:
+  case Event::Type::CONTROLLER_BUTTON:
     m_controllers[_event.as_controller_button.index].update_button(
       _event.as_controller_button.down, _event.as_controller_button.button);
     break;
-  case Event::Type::k_controller_motion:
+  case Event::Type::CONTROLLER_MOTION:
     m_controllers[_event.as_controller_motion.index].update_axis(
       _event.as_controller_motion.axis, _event.as_controller_motion.value);
     break;
-  case Event::Type::k_mouse_button:
+  case Event::Type::MOUSE_BUTTON:
     m_mouse.update_button(_event.as_mouse_button.down,
       _event.as_mouse_button.button);
     break;
-  case Event::Type::k_mouse_scroll:
+  case Event::Type::MOUSE_SCROLL:
     m_mouse.update_scroll(_event.as_mouse_scroll.value);
     break;
-  case Event::Type::k_mouse_motion:
+  case Event::Type::MOUSE_MOTION:
     m_mouse.update_motion(_event.as_mouse_motion.value);
     break;
-  case Event::Type::k_text_input:
+  case Event::Type::TEXT_INPUT:
     if (m_text) {
       m_text->paste(_event.as_text_input.contents);
     }
     break;
-  case Event::Type::k_clipboard:
+  case Event::Type::CLIPBOARD:
     // Should not be possible. The context handles clipboard events globally.
     RX_HINT_UNREACHABLE();
     break;
@@ -73,11 +73,11 @@ void Layer::capture_mouse(bool _capture) {
 
 void Layer::capture_text(Text* text_) {
   if (m_text) {
-    m_text->m_flags &= ~Text::k_active;
+    m_text->m_flags &= ~Text::ACTIVE;
   }
 
   if (text_) {
-    text_->m_flags |= Text::k_active;
+    text_->m_flags |= Text::ACTIVE;
     text_->clear();
   }
 
@@ -95,34 +95,34 @@ bool Layer::is_active() const {
 void Layer::update(Float32 _delta_time) {
   // Handle line editing features for the active text.
   if (m_text) {
-    if (m_keyboard.is_held(ScanCode::k_left_control)
-      || m_keyboard.is_held(ScanCode::k_right_control))
+    if (m_keyboard.is_held(ScanCode::LEFT_CONTROL)
+      || m_keyboard.is_held(ScanCode::RIGHT_CONTROL))
     {
-      if (m_keyboard.is_pressed(ScanCode::k_a)) {
+      if (m_keyboard.is_pressed(ScanCode::A)) {
         // Control+A = Select All
         m_text->select_all();
-      } else if (m_keyboard.is_pressed(ScanCode::k_c)) {
+      } else if (m_keyboard.is_pressed(ScanCode::C)) {
         // Control+C = Copy
         m_context->update_clipboard(m_text->copy());
-      } else if (m_keyboard.is_pressed(ScanCode::k_v)) {
+      } else if (m_keyboard.is_pressed(ScanCode::V)) {
         // Control+V = Paste
         m_text->paste(m_context->clipboard());
-      } else if (m_keyboard.is_pressed(ScanCode::k_x)) {
+      } else if (m_keyboard.is_pressed(ScanCode::X)) {
         // Control+X = Cut
         m_context->update_clipboard(m_text->cut());
-      } else if (m_keyboard.is_pressed(ScanCode::k_insert)) {
+      } else if (m_keyboard.is_pressed(ScanCode::INSERT)) {
         // Control+Insert = Copy
         m_context->update_clipboard(m_text->copy());
       }
     }
 
-    if (m_keyboard.is_held(ScanCode::k_left_shift)
-      || m_keyboard.is_held(ScanCode::k_right_shift))
+    if (m_keyboard.is_held(ScanCode::LEFT_SHIFT)
+      || m_keyboard.is_held(ScanCode::RIGHT_SHIFT))
     {
-      if (m_keyboard.is_pressed(ScanCode::k_delete)) {
+      if (m_keyboard.is_pressed(ScanCode::DELETE)) {
         // Shift+Delete = Cut
         m_context->update_clipboard(m_text->cut());
-      } else if (m_keyboard.is_pressed(ScanCode::k_insert)) {
+      } else if (m_keyboard.is_pressed(ScanCode::INSERT)) {
         // Shift+Insert = Paste
         m_text->paste(m_context->clipboard());
       } else {
@@ -133,17 +133,17 @@ void Layer::update(Float32 _delta_time) {
       m_text->select(false);
     }
 
-    if (m_keyboard.is_pressed(ScanCode::k_left)) {
-      m_text->move_cursor(Text::Position::k_left);
-    } else if (m_keyboard.is_pressed(ScanCode::k_right)) {
-      m_text->move_cursor(Text::Position::k_right);
-    } else if (m_keyboard.is_pressed(ScanCode::k_home)) {
-      m_text->move_cursor(Text::Position::k_home);
-    } else if (m_keyboard.is_pressed(ScanCode::k_end)) {
-      m_text->move_cursor(Text::Position::k_end);
+    if (m_keyboard.is_pressed(ScanCode::LEFT)) {
+      m_text->move_cursor(Text::Position::LEFT);
+    } else if (m_keyboard.is_pressed(ScanCode::RIGHT)) {
+      m_text->move_cursor(Text::Position::RIGHT);
+    } else if (m_keyboard.is_pressed(ScanCode::HOME)) {
+      m_text->move_cursor(Text::Position::HOME);
+    } else if (m_keyboard.is_pressed(ScanCode::END)) {
+      m_text->move_cursor(Text::Position::END);
     }
 
-    if (m_keyboard.is_pressed(ScanCode::k_backspace)) {
+    if (m_keyboard.is_pressed(ScanCode::BACKSPACE)) {
       m_text->erase();
     }
   }

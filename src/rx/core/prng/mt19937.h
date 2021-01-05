@@ -17,16 +17,16 @@ struct RX_API MT19937 {
   Float64 f64();
 
 private:
-  static inline constexpr const auto k_size = 624_z;
-  static inline constexpr const auto k_period = 397_z;
-  static inline constexpr const auto k_difference = k_size - k_period;
-  static inline constexpr const auto k_max = 0xffffffff_u32;
+  static inline constexpr const auto SIZE = 624_z;
+  static inline constexpr const auto PERIOD = 397_z;
+  static inline constexpr const auto DIFFERENCE = SIZE - PERIOD;
+  static inline constexpr const auto MAX = 0xffffffff_u32;
 
   void generate();
 
   union {
     Utility::Nat m_nat;
-    Uint32 m_state[k_size];
+    Uint32 m_state[SIZE];
   };
   Size m_index;
 };
@@ -42,11 +42,11 @@ inline Uint64 MT19937::u64() {
 }
 
 inline Float32 MT19937::f32() {
-  return static_cast<Float32>(u32()) / Float64(k_max);
+  return static_cast<Float32>(u32()) / Float64(MAX);
 }
 
 inline Float64 MT19937::f64() {
-  return static_cast<Float64>(u32()) / Float64(k_max);
+  return static_cast<Float64>(u32()) / Float64(MAX);
 }
 
 }

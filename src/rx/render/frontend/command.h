@@ -83,7 +83,7 @@ private:
 struct Buffers {
   constexpr Buffers();
 
-  static constexpr Size k_max_buffers{8};
+  static constexpr Size MAX_BUFFERS = 8;
 
   void add(int _buffer);
 
@@ -104,13 +104,13 @@ struct Buffers {
 private:
   union {
     Utility::Nat m_nat;
-    int m_elements[k_max_buffers];
+    int m_elements[MAX_BUFFERS];
   };
   Size m_index;
 };
 
 struct Textures {
-  static constexpr const Size k_max_textures{8};
+  static constexpr const Size MAX_TEXTURES = 8;
 
   constexpr Textures();
 
@@ -127,7 +127,7 @@ struct Textures {
 private:
   union {
     Utility::Nat m_nat;
-    Texture* m_handles[k_max_textures];
+    Texture* m_handles[MAX_TEXTURES];
   };
   Size m_index;
 };
@@ -161,7 +161,7 @@ struct ClearCommand {
   Uint32 clear_colors;
   Uint8 stencil_value;
   Float32 depth_value;
-  Math::Vec4f color_values[Buffers::k_max_buffers];
+  Math::Vec4f color_values[Buffers::MAX_BUFFERS];
 };
 
 struct BlitCommand {
@@ -271,7 +271,7 @@ inline constexpr Textures::Textures()
 }
 
 inline int Textures::add(Texture* _texture) {
-  RX_ASSERT(m_index < k_max_textures, "too many draw textures");
+  RX_ASSERT(m_index < MAX_TEXTURES, "too many draw textures");
   m_handles[m_index] = _texture;
   return static_cast<int>(m_index++);
 }
@@ -289,7 +289,7 @@ inline void Textures::clear() {
 }
 
 inline Texture *Textures::operator[](Size _index) const {
-  RX_ASSERT(_index < k_max_textures, "out of bounds");
+  RX_ASSERT(_index < MAX_TEXTURES, "out of bounds");
   return reinterpret_cast<Texture *>(m_handles[_index]);
 }
 
@@ -301,7 +301,7 @@ inline constexpr Buffers::Buffers()
 }
 
 inline void Buffers::add(int _buffer) {
-  RX_ASSERT(m_index < k_max_buffers, "too many draw buffers");
+  RX_ASSERT(m_index < MAX_BUFFERS, "too many draw buffers");
   m_elements[m_index++] = _buffer;
 }
 
@@ -333,7 +333,7 @@ inline bool Buffers::is_empty() const {
 }
 
 inline int Buffers::operator[](Size _index) const {
-  RX_ASSERT(_index < k_max_buffers, "out of bounds");
+  RX_ASSERT(_index < MAX_BUFFERS, "out of bounds");
   return m_elements[_index];
 }
 

@@ -31,11 +31,11 @@ void FrameGraph::render() {
     0,
     {0.0f, 0.0f, 0.0f, 0.5f});
 
-  const auto k_frame_scale{16.667 * 2.0f};
+  static constexpr const auto FRAME_SCALE = 16.667f * 2.0f;
   Vector<Math::Vec2f> points;
   _timer.frame_times().each_fwd([&](const Render::Frontend::FrameTimer::FrameTime &_time) {
-    const auto delta_x{Float32((_timer.ticks() * _timer.resolution() - _time.life) / Render::Frontend::FrameTimer::k_frame_history_seconds)};
-    const auto delta_y{Float32(Algorithm::min(_time.frame / k_frame_scale, 1.0))};
+    const auto delta_x{Float32((_timer.ticks() * _timer.resolution() - _time.life) / Render::Frontend::FrameTimer::HISTORY_SECONDS)};
+    const auto delta_y{Float32(Algorithm::min(_time.frame / FRAME_SCALE, 1.0))};
     const Math::Vec2f point{box_right - delta_x * box_size.w, box_top - delta_y * box_size.h};
     points.push_back(point);
   });
@@ -56,10 +56,10 @@ void FrameGraph::render() {
   m_immediate->frame_queue().record_line({box_left,   box_bottom}, {box_right,  box_bottom}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
   m_immediate->frame_queue().record_line({box_left,   box_middle}, {box_right,  box_middle}, 0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
   m_immediate->frame_queue().record_line({box_left,   box_top},    {box_right,  box_top},    0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
-  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_center,       box_top    + 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::k_center, "Frame Time", {1.0f, 1.0f, 1.0f, 1.0f});
-  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_top    - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::k_left, "0.0", {1.0f, 1.0f, 1.0f, 1.0f});
-  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_middle - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::k_left, String::format("%.1f", k_frame_scale * .5), {1.0f, 1.0f, 1.0f, 1.0f});
-  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_bottom - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::k_left, String::format("%.1f", k_frame_scale), {1.0f, 1.0f, 1.0f, 1.0f});
+  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_center,       box_top    + 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::CENTER, "Frame Time", {1.0f, 1.0f, 1.0f, 1.0f});
+  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_top    - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, "0.0", {1.0f, 1.0f, 1.0f, 1.0f});
+  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_middle - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format("%.1f", FRAME_SCALE * .5), {1.0f, 1.0f, 1.0f, 1.0f});
+  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_bottom - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format("%.1f", FRAME_SCALE), {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
 } // namespace rx::hud

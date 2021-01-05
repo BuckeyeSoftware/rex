@@ -24,8 +24,8 @@ struct Map {
   template<typename Kt, typename Vt, Size E>
   using Initializers = Array<Pair<Kt, Vt>[E]>;
 
-  static inline constexpr Size k_initial_size{256};
-  static inline constexpr Size k_load_factor{90};
+  static inline constexpr const Size INITIAL_SIZE = 256;
+  static inline constexpr const Size LOAD_FACTOR = 90;
 
   Map();
   Map(Memory::Allocator& _allocator);
@@ -125,7 +125,7 @@ Map<K, V>::Map(Memory::Allocator& _allocator)
   , m_values{nullptr}
   , m_hashes{nullptr}
   , m_size{0}
-  , m_capacity{k_initial_size}
+  , m_capacity{INITIAL_SIZE}
   , m_resize_threshold{0}
   , m_mask{0}
 {
@@ -378,7 +378,7 @@ bool Map<K, V>::allocate() {
     element_hash(i) = 0;
   }
 
-  m_resize_threshold = (m_capacity * k_load_factor) / 100;
+  m_resize_threshold = (m_capacity * LOAD_FACTOR) / 100;
   m_mask = m_capacity - 1;
 
   return true;

@@ -5,9 +5,9 @@
 
 namespace Rx::Math {
 
-static constexpr const Uint32 k_magic = 113 << 23;
-static constexpr const Uint32 k_shift_exp = 0x7C00 << 13; // exp mask after shift
-static constexpr Shape<Float32> k_magic_bits = k_magic;
+static constexpr const Uint32 MAGIC = 113 << 23;
+static constexpr const Uint32 SHIFT_EXP = 0x7C00 << 13; // exp mask after shift
+static constexpr Shape<Float32> MAGIC_BITS = MAGIC;
 
 struct HalfTable {
   HalfTable() {
@@ -56,13 +56,13 @@ Half Half::to_half(Float32 _f) {
 
 Float32 Half::to_f32() const {
   Shape out{static_cast<Uint32>((m_bits & 0x7FFF) << 13)}; // exp/mantissa
-  const auto exp{k_shift_exp & out.as_u32}; // exp
+  const auto exp = SHIFT_EXP & out.as_u32; // exp
   out.as_u32 += (127 - 15) << 23; // adjust exp
-  if (exp == k_shift_exp) {
+  if (exp == SHIFT_EXP) {
     out.as_u32 += (128 - 16) << 23; // adjust for inf/nan
   } else if (exp == 0) {
     out.as_u32 += 1 << 23; // adjust for zero/denorm
-    out.as_f32 -= k_magic_bits.as_f32; // renormalize
+    out.as_f32 -= MAGIC_BITS.as_f32; // renormalize
   }
   out.as_u32 |= (m_bits & 0x8000) << 16; // sign bit
   return out.as_f32;

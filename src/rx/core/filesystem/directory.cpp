@@ -129,10 +129,10 @@ void Directory::each(Function<void(Item&&)>&& _function) {
       // Only accept regular files and directories, symbolic links are not allowed.
       switch (next->d_type) {
       case DT_DIR:
-        _function({this, {allocator(), next->d_name}, Item::Type::k_directory});
+        _function({this, {allocator(), next->d_name}, Item::Type::DIRECTORY});
         break;
       case DT_REG:
-        _function({this, {allocator(), next->d_name}, Item::Type::k_file});
+        _function({this, {allocator(), next->d_name}, Item::Type::FILE});
         break;
       }
 
@@ -176,8 +176,8 @@ void Directory::each(Function<void(Item&&)>&& _function) {
 
     const WideString utf16_name = reinterpret_cast<Uint16*>(&context->find_data.cFileName);
     const Item::Type kind = context->find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
-      ? Item::Type::k_directory
-      : Item::Type::k_file;
+      ? Item::Type::DIRECTORY
+      : Item::Type::FILE;
 
     _function({this, utf16_name.to_utf8(), kind});
 

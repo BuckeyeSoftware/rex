@@ -25,7 +25,7 @@ RX_CONSOLE_IVAR(
   0);
 
 // 16MiB buffer slab size for unspecified buffer sizes
-static constexpr const Size k_buffer_slab_size{16 << 20};
+static constexpr const Size BUFFER_SLAB_SIZE = 16 << 20;
 
 // buffers
 static void (GLAPIENTRYP pglCreateBuffers)(GLsizei, GLuint*);
@@ -439,10 +439,10 @@ namespace detail_gl4 {
         if (enabled) {
           if (this->cull.front_face() != front_face) {
             switch (front_face) {
-            case Frontend::CullState::FrontFaceType::k_clock_wise:
+            case Frontend::CullState::FrontFaceType::CLOCK_WISE:
               pglFrontFace(GL_CW);
               break;
-            case Frontend::CullState::FrontFaceType::k_counter_clock_wise:
+            case Frontend::CullState::FrontFaceType::COUNTER_CLOCK_WISE:
               pglFrontFace(GL_CCW);
               break;
             }
@@ -451,10 +451,10 @@ namespace detail_gl4 {
 
           if (this->cull.cull_face() != cull_face) {
             switch (cull_face) {
-            case Frontend::CullState::CullFaceType::k_front:
+            case Frontend::CullState::CullFaceType::FRONT:
               pglCullFace(GL_FRONT);
               break;
-            case Frontend::CullState::CullFaceType::k_back:
+            case Frontend::CullState::CullFaceType::BACK:
               pglCullFace(GL_BACK);
               break;
             }
@@ -676,7 +676,7 @@ namespace detail_gl4 {
     GLuint m_bound_program;
 
     GLuint m_swap_chain_fbo;
-    texture_unit m_texture_units[Frontend::Textures::k_max_textures];
+    texture_unit m_texture_units[Frontend::Textures::MAX_TEXTURES];
 
     SDL_GLContext m_context;
   };
@@ -684,25 +684,25 @@ namespace detail_gl4 {
 
 static constexpr const char* inout_to_string(Frontend::Shader::InOutType _type) {
   switch (_type) {
-  case Frontend::Shader::InOutType::k_mat4x4f:
+  case Frontend::Shader::InOutType::MAT4X4F:
     return "mat4";
-  case Frontend::Shader::InOutType::k_mat3x3f:
+  case Frontend::Shader::InOutType::MAT3X3F:
     return "mat3";
-  case Frontend::Shader::InOutType::k_vec2f:
+  case Frontend::Shader::InOutType::VEC2F:
     return "vec2f";
-  case Frontend::Shader::InOutType::k_vec3f:
+  case Frontend::Shader::InOutType::VEC3F:
     return "vec3f";
-  case Frontend::Shader::InOutType::k_vec4f:
+  case Frontend::Shader::InOutType::VEC4F:
     return "vec4f";
-  case Frontend::Shader::InOutType::k_vec2i:
+  case Frontend::Shader::InOutType::VEC2I:
     return "vec2i";
-  case Frontend::Shader::InOutType::k_vec3i:
+  case Frontend::Shader::InOutType::VEC3I:
     return "vec3i";
-  case Frontend::Shader::InOutType::k_vec4i:
+  case Frontend::Shader::InOutType::VEC4I:
     return "vec4i";
-  case Frontend::Shader::InOutType::k_vec4b:
+  case Frontend::Shader::InOutType::VEC4B:
     return "vec4b";
-  case Frontend::Shader::InOutType::k_float:
+  case Frontend::Shader::InOutType::FLOAT:
     return "float";
   }
   return nullptr;
@@ -710,37 +710,37 @@ static constexpr const char* inout_to_string(Frontend::Shader::InOutType _type) 
 
 static constexpr const char* uniform_to_string(Frontend::Uniform::Type _type) {
   switch (_type) {
-  case Frontend::Uniform::Type::k_sampler1D:
+  case Frontend::Uniform::Type::SAMPLER1D:
     return "rx_sampler1D";
-  case Frontend::Uniform::Type::k_sampler2D:
+  case Frontend::Uniform::Type::SAMPLER2D:
     return "rx_sampler2D";
-  case Frontend::Uniform::Type::k_sampler3D:
+  case Frontend::Uniform::Type::SAMPLER3D:
     return "rx_sampler3D";
-  case Frontend::Uniform::Type::k_samplerCM:
+  case Frontend::Uniform::Type::SAMPLERCM:
     return "rx_samplerCM";
-  case Frontend::Uniform::Type::k_bool:
+  case Frontend::Uniform::Type::BOOL:
     return "bool";
-  case Frontend::Uniform::Type::k_int:
+  case Frontend::Uniform::Type::INT:
     return "int";
-  case Frontend::Uniform::Type::k_float:
+  case Frontend::Uniform::Type::FLOAT:
     return "float";
-  case Frontend::Uniform::Type::k_vec2i:
+  case Frontend::Uniform::Type::VEC2I:
     return "vec2i";
-  case Frontend::Uniform::Type::k_vec3i:
+  case Frontend::Uniform::Type::VEC3I:
     return "vec3i";
-  case Frontend::Uniform::Type::k_vec4i:
+  case Frontend::Uniform::Type::VEC4I:
     return "vec4i";
-  case Frontend::Uniform::Type::k_vec2f:
+  case Frontend::Uniform::Type::VEC2F:
     return "vec2f";
-  case Frontend::Uniform::Type::k_vec3f:
+  case Frontend::Uniform::Type::VEC3F:
     return "vec3f";
-  case Frontend::Uniform::Type::k_vec4f:
+  case Frontend::Uniform::Type::VEC4F:
     return "vec4f";
-  case Frontend::Uniform::Type::k_mat4x4f:
+  case Frontend::Uniform::Type::MAT4X4F:
     return "mat4x4f";
-  case Frontend::Uniform::Type::k_mat3x3f:
+  case Frontend::Uniform::Type::MAT3X3F:
     return "mat3x3f";
-  case Frontend::Uniform::Type::k_bonesf:
+  case Frontend::Uniform::Type::BONES:
     return "bonesf";
   }
   return nullptr;
@@ -750,7 +750,7 @@ static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
   const Frontend::Shader& _shader)
 {
   // emit prelude to every shader
-  static constexpr const char* k_prelude =
+  static constexpr const char* PRELUDE =
     "#version 450 core\n"
     "#define vec2f vec2\n"
     "#define vec3f vec3\n"
@@ -780,11 +780,11 @@ static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
     "#define rx_point_size gl_PointSize\n"
     "#define rx_point_coord gl_PointCoord\n";
 
-  String contents{k_prelude};
+  String contents = PRELUDE;
 
   GLenum type = 0;
   switch (_shader.kind) {
-  case Frontend::Shader::Type::k_vertex:
+  case Frontend::Shader::Type::VERTEX:
     type = GL_VERTEX_SHADER;
     // emit vertex attributes inputs
     _shader.inputs.each_pair([&](const String& _name, const Frontend::Shader::InOut& _inout) {
@@ -795,7 +795,7 @@ static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
       contents.append(String::format("out %s %s;\n", inout_to_string(_inout.kind), _name));
     });
     break;
-  case Frontend::Shader::Type::k_fragment:
+  case Frontend::Shader::Type::FRAGMENT:
     type = GL_FRAGMENT_SHADER;
     // emit fragment inputs
     _shader.inputs.each_pair([&](const String& _name, const Frontend::Shader::InOut& _inout) {
@@ -1156,8 +1156,8 @@ void GL4::process(Byte* _command) {
           if (format.is_indexed()) {
             const auto& elements = render_buffer->elements();
             if (elements.is_empty()) {
-              pglNamedBufferData(buffer->bo[0], k_buffer_slab_size, nullptr, type);
-              buffer->elements_size = k_buffer_slab_size;
+              pglNamedBufferData(buffer->bo[0], BUFFER_SLAB_SIZE, nullptr, type);
+              buffer->elements_size = BUFFER_SLAB_SIZE;
             } else {
               pglNamedBufferData(buffer->bo[0], elements.size(), elements.data(), type);
               buffer->elements_size = elements.size();
@@ -1168,8 +1168,8 @@ void GL4::process(Byte* _command) {
           // Setup vertex buffer and attributes.
           const auto& vertices = render_buffer->vertices();
           if (vertices.is_empty()) {
-            pglNamedBufferData(buffer->bo[1], k_buffer_slab_size, nullptr, type);
-            buffer->vertices_size = k_buffer_slab_size;
+            pglNamedBufferData(buffer->bo[1], BUFFER_SLAB_SIZE, nullptr, type);
+            buffer->vertices_size = BUFFER_SLAB_SIZE;
           } else {
             pglNamedBufferData(buffer->bo[1], vertices.size(), vertices.data(), type);
             buffer->vertices_size = vertices.size();
@@ -1190,8 +1190,8 @@ void GL4::process(Byte* _command) {
           if (format.is_instanced()) {
             const auto& instances = render_buffer->instances();
             if (instances.is_empty()) {
-              pglNamedBufferData(buffer->bo[2], k_buffer_slab_size, nullptr, type);
-              buffer->instances_size = k_buffer_slab_size;
+              pglNamedBufferData(buffer->bo[2], BUFFER_SLAB_SIZE, nullptr, type);
+              buffer->instances_size = BUFFER_SLAB_SIZE;
             } else {
               pglNamedBufferData(buffer->bo[2], instances.size(), instances.data(), type);
               buffer->instances_size = instances.size();
@@ -1242,14 +1242,14 @@ void GL4::process(Byte* _command) {
             const auto& attachment{attachments[i]};
             const auto attachment_enum{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
             switch (attachment.kind) {
-            case Frontend::Target::Attachment::Type::k_texture2D:
+            case Frontend::Target::Attachment::Type::TEXTURE2D:
               pglNamedFramebufferTexture(
                 target->fbo,
                 attachment_enum,
                 reinterpret_cast<detail_gl4::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
                 static_cast<GLint>(attachment.level));
               break;
-            case Frontend::Target::Attachment::Type::k_textureCM:
+            case Frontend::Target::Attachment::Type::TEXTURECM:
               pglNamedFramebufferTextureLayer(
                 target->fbo,
                 attachment_enum,
@@ -1786,61 +1786,61 @@ void GL4::process(Byte* _command) {
             }
 
             switch (uniform.type()) {
-            case Frontend::Uniform::Type::k_sampler1D:
+            case Frontend::Uniform::Type::SAMPLER1D:
               [[fallthrough]];
-            case Frontend::Uniform::Type::k_sampler2D:
+            case Frontend::Uniform::Type::SAMPLER2D:
               [[fallthrough]];
-            case Frontend::Uniform::Type::k_sampler3D:
+            case Frontend::Uniform::Type::SAMPLER3D:
               [[fallthrough]];
-            case Frontend::Uniform::Type::k_samplerCM:
+            case Frontend::Uniform::Type::SAMPLERCM:
               pglProgramUniform1i(this_program->handle, location,
                 *reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::k_bool:
+            case Frontend::Uniform::Type::BOOL:
               pglProgramUniform1i(this_program->handle, location,
                 *reinterpret_cast<const bool*>(draw_uniforms) ? 1 : 0);
               break;
-            case Frontend::Uniform::Type::k_int:
+            case Frontend::Uniform::Type::INT:
               pglProgramUniform1i(this_program->handle, location,
                 *reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::k_float:
+            case Frontend::Uniform::Type::FLOAT:
               pglProgramUniform1fv(this_program->handle, location, 1,
                 reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::k_vec2i:
+            case Frontend::Uniform::Type::VEC2I:
               pglProgramUniform2iv(this_program->handle, location, 1,
                 reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::k_vec3i:
+            case Frontend::Uniform::Type::VEC3I:
               pglProgramUniform3iv(this_program->handle, location, 1,
                 reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::k_vec4i:
+            case Frontend::Uniform::Type::VEC4I:
               pglProgramUniform4iv(this_program->handle, location, 1,
                 reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::k_vec2f:
+            case Frontend::Uniform::Type::VEC2F:
               pglProgramUniform2fv(this_program->handle, location, 1,
                 reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::k_vec3f:
+            case Frontend::Uniform::Type::VEC3F:
               pglProgramUniform3fv(this_program->handle, location, 1,
                 reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::k_vec4f:
+            case Frontend::Uniform::Type::VEC4F:
               pglProgramUniform4fv(this_program->handle, location, 1,
                 reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::k_mat3x3f:
+            case Frontend::Uniform::Type::MAT3X3F:
               pglProgramUniformMatrix3fv(this_program->handle, location, 1,
                 GL_FALSE, reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::k_mat4x4f:
+            case Frontend::Uniform::Type::MAT4X4F:
               pglProgramUniformMatrix4fv(this_program->handle, location, 1,
                 GL_FALSE, reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::k_bonesf:
+            case Frontend::Uniform::Type::BONES:
               pglProgramUniformMatrix3x4fv(this_program->handle, location,
                 static_cast<GLsizei>(uniform.size() / sizeof(Math::Mat3x4f)),
                 GL_FALSE, reinterpret_cast<const Float32*>(draw_uniforms));
@@ -1855,16 +1855,16 @@ void GL4::process(Byte* _command) {
       for (Size i = 0; i < command->draw_textures.size(); i++) {
         Frontend::Texture* texture = command->draw_textures[i];
         switch (texture->resource_type()) {
-          case Frontend::Resource::Type::k_texture1D:
+          case Frontend::Resource::Type::TEXTURE1D:
             state->use_texture(static_cast<Frontend::Texture1D*>(texture), i);
             break;
-          case Frontend::Resource::Type::k_texture2D:
+          case Frontend::Resource::Type::TEXTURE2D:
             state->use_texture(static_cast<Frontend::Texture2D*>(texture), i);
             break;
-          case Frontend::Resource::Type::k_texture3D:
+          case Frontend::Resource::Type::TEXTURE3D:
             state->use_texture(static_cast<Frontend::Texture3D*>(texture), i);
             break;
-          case Frontend::Resource::Type::k_textureCM:
+          case Frontend::Resource::Type::TEXTURECM:
             state->use_texture(static_cast<Frontend::TextureCM*>(texture), i);
             break;
           default:

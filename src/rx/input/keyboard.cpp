@@ -10,28 +10,28 @@ Keyboard::Keyboard() {
 }
 
 void Keyboard::update(Float32) {
-  for (Size i{0}; i < k_keys; i++) {
-    m_scan_codes[i] &= ~(k_pressed | k_released);
-    m_symbols[i] &= ~(k_pressed | k_released);
+  for (Size i = 0; i < KEYS; i++) {
+    m_scan_codes[i] &= ~(PRESSED | RELEASED);
+    m_symbols[i] &= ~(PRESSED | RELEASED);
   }
 }
 
 void Keyboard::update_key(bool down, int scan_code, int symbol) {
-  if (scan_code < k_keys) {
+  if (scan_code < KEYS) {
     if (down) {
-      m_scan_codes[scan_code] |= (k_pressed | k_held);
+      m_scan_codes[scan_code] |= (PRESSED | HELD);
     } else {
-      m_scan_codes[scan_code] |= k_released;
-      m_scan_codes[scan_code] &= ~k_held;
+      m_scan_codes[scan_code] |= RELEASED;
+      m_scan_codes[scan_code] &= ~HELD;
     }
   }
 
-  if (symbol < k_keys) {
+  if (symbol < KEYS) {
     if (down) {
-      m_symbols[symbol] |= (k_pressed | k_held);
+      m_symbols[symbol] |= (PRESSED | HELD);
     } else {
-      m_symbols[symbol] |= k_released;
-      m_symbols[symbol] &= ~k_held;
+      m_symbols[symbol] |= RELEASED;
+      m_symbols[symbol] &= ~HELD;
     }
   }
 }

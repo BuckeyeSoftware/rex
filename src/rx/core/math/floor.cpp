@@ -9,9 +9,9 @@
 namespace Rx::Math {
 
 #if RX_FLOAT_EVAL_METHOD == 0 || RX_FLOAT_EVAL_METHOD == 1
-static constexpr const Float64Eval k_to_int = 1 / DBL_EPSILON;
+static constexpr const Float64Eval TO_INT = 1 / DBL_EPSILON;
 #else
-static constexpr const Float64Eval k_to_int = 1 / LDBL_EPSILON;
+static constexpr const Float64Eval TO_INT = 1 / LDBL_EPSILON;
 #endif
 
 Float64 floor(Float64 _x) {
@@ -26,9 +26,9 @@ Float64 floor(Float64 _x) {
   // y = int(x) - x, where int(x) is an integer neighbor of x
   Float64Eval y;
   if (u.as_u64 >> 63) {
-    y = _x - k_to_int + k_to_int - _x;
+    y = _x - TO_INT + TO_INT - _x;
   } else {
-    y = _x + k_to_int - k_to_int - _x;
+    y = _x + TO_INT - TO_INT - _x;
   }
 
   // special case because of non-nearest rounding modes

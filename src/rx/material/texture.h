@@ -24,11 +24,11 @@ struct Texture {
   };
 
   enum class WrapType : Byte {
-    k_clamp_to_edge,
-    k_clamp_to_border,
-    k_mirrored_repeat,
-    k_repeat,
-    k_mirror_clamp_to_edge
+    CLAMP_TO_EDGE,
+    CLAMP_TO_BORDER,
+    MIRRORED_REPEAT,
+    REPEAT,
+    MIRROR_CLAMP_TO_EDGE
   };
 
   using Wrap = Math::Vec2<WrapType>;

@@ -7,18 +7,19 @@
 #include "rx/core/algorithm/min.h"
 
 namespace Rx::Render::Frontend {
-static constexpr const Size k_max_bones{80};
+
+static constexpr const Size MAX_BONES = 80;
 
 // checks if |_type| is a sampler Type
 static bool is_sampler(Uniform::Type _type) {
   switch (_type) {
-  case Uniform::Type::k_sampler1D:
+  case Uniform::Type::SAMPLER1D:
     [[fallthrough]];
-  case Uniform::Type::k_sampler2D:
+  case Uniform::Type::SAMPLER2D:
     [[fallthrough]];
-  case Uniform::Type::k_sampler3D:
+  case Uniform::Type::SAMPLER3D:
     [[fallthrough]];
-  case Uniform::Type::k_samplerCM:
+  case Uniform::Type::SAMPLERCM:
     return true;
   default:
     return false;
@@ -63,38 +64,38 @@ void Uniform::flush(Byte* _flush) {
 
 Size Uniform::size_for_type(Type _type) {
   switch (_type) {
-  case Uniform::Type::k_sampler1D:
+  case Uniform::Type::SAMPLER1D:
     [[fallthrough]];
-  case Uniform::Type::k_sampler2D:
+  case Uniform::Type::SAMPLER2D:
     [[fallthrough]];
-  case Uniform::Type::k_sampler3D:
+  case Uniform::Type::SAMPLER3D:
     [[fallthrough]];
-  case Uniform::Type::k_samplerCM:
+  case Uniform::Type::SAMPLERCM:
     return sizeof(int);
-  case Uniform::Type::k_bool:
+  case Uniform::Type::BOOL:
     return sizeof(bool);
-  case Uniform::Type::k_int:
+  case Uniform::Type::INT:
     return sizeof(Sint32);
-  case Uniform::Type::k_float:
+  case Uniform::Type::FLOAT:
     return sizeof(Float32);
-  case Uniform::Type::k_vec2i:
+  case Uniform::Type::VEC2I:
     return sizeof(Math::Vec2i);
-  case Uniform::Type::k_vec3i:
+  case Uniform::Type::VEC3I:
     return sizeof(Math::Vec3i);
-  case Uniform::Type::k_vec4i:
+  case Uniform::Type::VEC4I:
     return sizeof(Math::Vec4i);
-  case Uniform::Type::k_vec2f:
+  case Uniform::Type::VEC2F:
     return sizeof(Math::Vec2f);
-  case Uniform::Type::k_vec3f:
+  case Uniform::Type::VEC3F:
     return sizeof(Math::Vec3f);
-  case Uniform::Type::k_vec4f:
+  case Uniform::Type::VEC4F:
     return sizeof(Math::Vec4f);
-  case Uniform::Type::k_mat3x3f:
+  case Uniform::Type::MAT3X3F:
     return sizeof(Math::Mat3x3f);
-  case Uniform::Type::k_mat4x4f:
+  case Uniform::Type::MAT4X4F:
     return sizeof(Math::Mat4x4f);
-  case Uniform::Type::k_bonesf:
-    return sizeof(Math::Mat3x4f) * k_max_bones;
+  case Uniform::Type::BONES:
+    return sizeof(Math::Mat3x4f) * MAX_BONES;
   }
 
   RX_HINT_UNREACHABLE();
@@ -109,7 +110,7 @@ void Uniform::record_sampler(int _sampler) {
 }
 
 void Uniform::record_int(int _value) {
-  RX_ASSERT(m_type == Type::k_int, "not an int");
+  RX_ASSERT(m_type == Type::INT, "not an int");
   if (*as_int != _value) {
     *as_int = _value;
     m_program->mark_uniform_dirty(m_bit);
@@ -117,7 +118,7 @@ void Uniform::record_int(int _value) {
 }
 
 void Uniform::record_vec2i(const Math::Vec2i& _value) {
-  RX_ASSERT(m_type == Type::k_vec2i, "not a vec2i");
+  RX_ASSERT(m_type == Type::VEC2I, "not a vec2i");
   if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
     memcpy(as_int, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -125,7 +126,7 @@ void Uniform::record_vec2i(const Math::Vec2i& _value) {
 }
 
 void Uniform::record_vec3i(const Math::Vec3i& _value) {
-  RX_ASSERT(m_type == Type::k_vec3i, "not a vec3i");
+  RX_ASSERT(m_type == Type::VEC3I, "not a vec3i");
   if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
     memcpy(as_int, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -133,7 +134,7 @@ void Uniform::record_vec3i(const Math::Vec3i& _value) {
 }
 
 void Uniform::record_vec4i(const Math::Vec4i& _value) {
-  RX_ASSERT(m_type == Type::k_vec4i, "not a vec4i");
+  RX_ASSERT(m_type == Type::VEC4I, "not a vec4i");
   if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
     memcpy(as_int, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -141,7 +142,7 @@ void Uniform::record_vec4i(const Math::Vec4i& _value) {
 }
 
 void Uniform::record_bool(bool _value) {
-  RX_ASSERT(m_type == Type::k_bool, "not a bool");
+  RX_ASSERT(m_type == Type::BOOL, "not a bool");
   if (*as_boolean != _value) {
     *as_boolean = _value;
     m_program->mark_uniform_dirty(m_bit);
@@ -149,7 +150,7 @@ void Uniform::record_bool(bool _value) {
 }
 
 void Uniform::record_float(Float32 _value) {
-  RX_ASSERT(m_type == Type::k_float, "not a float");
+  RX_ASSERT(m_type == Type::FLOAT, "not a float");
   if (*as_float != _value) {
     *as_float = _value;
     m_program->mark_uniform_dirty(m_bit);
@@ -157,7 +158,7 @@ void Uniform::record_float(Float32 _value) {
 }
 
 void Uniform::record_vec2f(const Math::Vec2f& _value) {
-  RX_ASSERT(m_type == Type::k_vec2f, "not a vec2f");
+  RX_ASSERT(m_type == Type::VEC2F, "not a vec2f");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -165,7 +166,7 @@ void Uniform::record_vec2f(const Math::Vec2f& _value) {
 }
 
 void Uniform::record_vec3f(const Math::Vec3f& _value) {
-  RX_ASSERT(m_type == Type::k_vec3f, "not a vec3f");
+  RX_ASSERT(m_type == Type::VEC3F, "not a vec3f");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -173,7 +174,7 @@ void Uniform::record_vec3f(const Math::Vec3f& _value) {
 }
 
 void Uniform::record_vec4f(const Math::Vec4f& _value) {
-  RX_ASSERT(m_type == Type::k_vec4f, "not a vec4f");
+  RX_ASSERT(m_type == Type::VEC4F, "not a vec4f");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -181,7 +182,7 @@ void Uniform::record_vec4f(const Math::Vec4f& _value) {
 }
 
 void Uniform::record_mat3x3f(const Math::Mat3x3f& _value) {
-  RX_ASSERT(m_type == Type::k_mat3x3f, "not a mat3x3f");
+  RX_ASSERT(m_type == Type::MAT3X3F, "not a mat3x3f");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -189,7 +190,7 @@ void Uniform::record_mat3x3f(const Math::Mat3x3f& _value) {
 }
 
 void Uniform::record_mat4x4f(const Math::Mat4x4f& _value) {
-  RX_ASSERT(m_type == Type::k_mat4x4f, "not a mat4x4f");
+  RX_ASSERT(m_type == Type::MAT4X4F, "not a mat4x4f");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -197,8 +198,8 @@ void Uniform::record_mat4x4f(const Math::Mat4x4f& _value) {
 }
 
 void Uniform::record_bones(const Vector<Math::Mat3x4f>& _frames, Size _joints) {
-  RX_ASSERT(m_type == Type::k_bonesf, "not bones");
-  const Size size{sizeof(Math::Mat3x4f) * Algorithm::min(_joints, k_max_bones)};
+  RX_ASSERT(m_type == Type::BONES, "not bones");
+  const Size size{sizeof(Math::Mat3x4f) * Algorithm::min(_joints, MAX_BONES)};
   if (memcmp(as_float, _frames.data(), size) != 0) {
     memcpy(as_float, _frames.data(), size);
     m_program->mark_uniform_dirty(m_bit);
@@ -212,7 +213,7 @@ void Uniform::record_raw(const Byte* _data, Size _size) {
 }
 
 Program::Program(Context* _frontend)
-  : Resource{_frontend, Resource::Type::k_program}
+  : Resource{_frontend, Resource::Type::PROGRAM}
   , m_uniforms{m_frontend->allocator()}
   , m_dirty_uniforms{0}
   , m_padding_uniforms{0}

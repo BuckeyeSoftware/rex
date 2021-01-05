@@ -5,7 +5,7 @@
 namespace Rx::Render::Frontend {
 
 Target::Target(Context* _frontend)
-  : Resource{_frontend, Resource::Type::k_target}
+  : Resource{_frontend, Resource::Type::TARGET}
   , m_depth_texture{nullptr}
   , m_stencil_texture{nullptr}
   , m_attachments{_frontend->allocator()}
@@ -14,15 +14,13 @@ Target::Target(Context* _frontend)
 }
 
 void Target::destroy() {
-  const bool owns_depth{!!(m_flags & k_owns_depth)};
-  const bool owns_stencil{!!(m_flags & k_owns_stencil)};
-  if (owns_depth && owns_stencil) {
+  if (owns_depth() && owns_stencil()) {
     m_frontend->destroy_texture_unlocked(RX_RENDER_TAG("target depth stencil"),
       m_depth_stencil_texture);
-  } else if (owns_depth) {
+  } else if (owns_depth()) {
     m_frontend->destroy_texture_unlocked(RX_RENDER_TAG("target depth"),
       m_depth_texture);
-  } else if (owns_stencil) {
+  } else if (owns_stencil()) {
     m_frontend->destroy_texture_unlocked(RX_RENDER_TAG("target stencil"),
       m_stencil_texture);
   }
@@ -30,15 +28,15 @@ void Target::destroy() {
 
 void Target::request_depth(Texture::DataFormat _format, const Math::Vec2z& _dimensions) {
   RX_ASSERT(!is_swapchain(), "request on swapchain");
-  RX_ASSERT(!(m_flags & k_has_depth), "already has depth attachment");
-  RX_ASSERT(!(m_flags & k_has_stencil), "use combined depth stencil");
+  RX_ASSERT(!(m_flags & HAS_DEPTH), "already has depth attachment");
+  RX_ASSERT(!(m_flags & HAS_STENCIL), "use combined depth stencil");
   RX_ASSERT(Texture::is_depth_format(_format), "not a valid depth format");
 
-  if (m_flags & k_dimensions) {
+  if (m_flags & DIMENSIONS) {
     RX_ASSERT(_dimensions == m_dimensions, "invalid dimensions");
   } else {
     m_dimensions = _dimensions;
-    m_flags |= k_dimensions;
+    m_flags |= DIMENSIONS;
   }
 
   m_depth_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target depth"));
@@ -46,24 +44,23 @@ void Target::request_depth(Texture::DataFormat _format, const Math::Vec2z& _dime
   m_depth_texture->record_type(Texture::Type::ATTACHMENT);
   m_depth_texture->record_filter({false, false, false});
   m_depth_texture->record_dimensions(_dimensions);
-  m_depth_texture->record_wrap({
-                                       Texture::WrapType::k_clamp_to_edge,
-                                       Texture::WrapType::k_clamp_to_edge});
+  m_depth_texture->record_wrap({Texture::WrapType::CLAMP_TO_EDGE,
+                                Texture::WrapType::CLAMP_TO_EDGE});
   m_frontend->initialize_texture(RX_RENDER_TAG("target depth"), m_depth_texture);
 
-  m_flags |= k_owns_depth;
-  m_flags |= k_has_depth;
+  m_flags |= OWNS_DEPTH;
+  m_flags |= HAS_DEPTH;
 
   update_resource_usage();
 }
 
 void Target::request_stencil(Texture::DataFormat _format, const Math::Vec2z& _dimensions) {
   RX_ASSERT(!is_swapchain(), "request on swapchain");
-  RX_ASSERT(!(m_flags & k_has_stencil), "already has stencil attachment");
-  RX_ASSERT(!(m_flags & k_has_depth), "use combined depth stencil");
+  RX_ASSERT(!(m_flags & HAS_STENCIL), "already has stencil attachment");
+  RX_ASSERT(!(m_flags & HAS_DEPTH), "use combined depth stencil");
   RX_ASSERT(Texture::is_stencil_format(_format), "not a valid stencil format");
 
-  if (m_flags & k_dimensions) {
+  if (m_flags & DIMENSIONS) {
     RX_ASSERT(_dimensions == m_dimensions, "invalid dimensions");
   }
 
@@ -72,28 +69,27 @@ void Target::request_stencil(Texture::DataFormat _format, const Math::Vec2z& _di
   m_stencil_texture->record_type(Texture::Type::ATTACHMENT);
   m_stencil_texture->record_filter({false, false, false});
   m_stencil_texture->record_dimensions(_dimensions);
-  m_stencil_texture->record_wrap({
-                                         Texture::WrapType::k_clamp_to_edge,
-                                         Texture::WrapType::k_clamp_to_edge});
+  m_stencil_texture->record_wrap({Texture::WrapType::CLAMP_TO_EDGE,
+                                  Texture::WrapType::CLAMP_TO_EDGE});
   m_frontend->initialize_texture(RX_RENDER_TAG("target stencil"), m_stencil_texture);
 
-  m_flags |= k_owns_stencil;
-  m_flags |= k_has_stencil;
+  m_flags |= OWNS_STENCIL;
+  m_flags |= HAS_STENCIL;
 
   update_resource_usage();
 }
 
 void Target::request_depth_stencil(Texture::DataFormat _format, const Math::Vec2z& _dimensions) {
   RX_ASSERT(!is_swapchain(), "request on swapchain");
-  RX_ASSERT(!(m_flags & k_has_depth), "already has depth attachment");
-  RX_ASSERT(!(m_flags & k_has_stencil), "already had stencil attachment");
+  RX_ASSERT(!(m_flags & HAS_DEPTH), "already has depth attachment");
+  RX_ASSERT(!(m_flags & HAS_STENCIL), "already had stencil attachment");
   RX_ASSERT(Texture::is_depth_stencil_format(_format), "not a valid depth stencil format");
 
-  if (m_flags & k_dimensions) {
+  if (m_flags & DIMENSIONS) {
     RX_ASSERT(_dimensions == m_dimensions, "invalid dimensions");
   } else {
     m_dimensions = _dimensions;
-    m_flags |= k_dimensions;
+    m_flags |= DIMENSIONS;
   }
 
   m_depth_stencil_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target depth stencil"));
@@ -102,78 +98,77 @@ void Target::request_depth_stencil(Texture::DataFormat _format, const Math::Vec2
   m_depth_stencil_texture->record_filter({false, false, false});
   m_depth_stencil_texture->record_levels(1);
   m_depth_stencil_texture->record_dimensions(_dimensions);
-  m_depth_stencil_texture->record_wrap({
-                                               Texture::WrapType::k_clamp_to_edge,
-                                               Texture::WrapType::k_clamp_to_edge});
+  m_depth_stencil_texture->record_wrap({Texture::WrapType::CLAMP_TO_EDGE,
+                                        Texture::WrapType::CLAMP_TO_EDGE});
   m_frontend->initialize_texture(RX_RENDER_TAG("target depth stencil"), m_depth_stencil_texture);
 
-  m_flags |= k_owns_depth;
-  m_flags |= k_owns_stencil;
+  m_flags |= OWNS_DEPTH;
+  m_flags |= OWNS_STENCIL;
 
-  m_flags |= k_has_depth;
-  m_flags |= k_has_stencil;
+  m_flags |= HAS_DEPTH;
+  m_flags |= HAS_STENCIL;
 
   update_resource_usage();
 }
 
 void Target::attach_depth(Texture2D* _depth) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
-  RX_ASSERT(!(m_flags & k_has_depth), "depth already attached");
-  RX_ASSERT(!(m_flags & k_has_stencil), "use combined depth stencil");
+  RX_ASSERT(!(m_flags & HAS_DEPTH), "depth already attached");
+  RX_ASSERT(!(m_flags & HAS_STENCIL), "use combined depth stencil");
   RX_ASSERT(_depth->is_depth_format(), "not a depth format texture");
   RX_ASSERT(_depth->type() == Texture::Type::ATTACHMENT, "not attachable texture");
 
-  if (m_flags & k_dimensions) {
+  if (m_flags & DIMENSIONS) {
     RX_ASSERT(_depth->dimensions() == m_dimensions, "invalid dimensions");
   } else {
     m_dimensions = _depth->dimensions();
-    m_flags |= k_dimensions;
+    m_flags |= DIMENSIONS;
   }
 
   m_depth_texture = _depth;
-  m_flags |= k_has_depth;
+  m_flags |= HAS_DEPTH;
 
   update_resource_usage();
 }
 
 void Target::attach_stencil(Texture2D* _stencil) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
-  RX_ASSERT(!(m_flags & k_has_stencil), "stencil already attached");
-  RX_ASSERT(!(m_flags & k_has_depth), "use combined depth stencil");
+  RX_ASSERT(!(m_flags & HAS_STENCIL), "stencil already attached");
+  RX_ASSERT(!(m_flags & HAS_DEPTH), "use combined depth stencil");
   RX_ASSERT(_stencil->is_stencil_format(), "not a stencil format texture");
   RX_ASSERT(_stencil->type() == Texture::Type::ATTACHMENT, "not attachable texture");
 
-  if (m_flags & k_dimensions) {
+  if (m_flags & DIMENSIONS) {
     RX_ASSERT(_stencil->dimensions() == m_dimensions, "invalid dimensions");
   } else {
     m_dimensions = _stencil->dimensions();
-    m_flags |= k_dimensions;
+    m_flags |= DIMENSIONS;
   }
 
   m_stencil_texture = _stencil;
-  m_flags |= k_has_stencil;
+  m_flags |= HAS_STENCIL;
 
   update_resource_usage();
 }
 
 void Target::attach_depth_stencil(Texture2D* _depth_stencil) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
-  RX_ASSERT(!(m_flags & k_has_depth), "depth aleady attached");
-  RX_ASSERT(!(m_flags & k_has_stencil), "stencil already attached");
+  RX_ASSERT(!(m_flags & HAS_DEPTH), "depth aleady attached");
+  RX_ASSERT(!(m_flags & HAS_STENCIL), "stencil already attached");
   RX_ASSERT(_depth_stencil->is_depth_stencil_format(), "not a depth stencil format texture");
   RX_ASSERT(_depth_stencil->type() == Texture::Type::ATTACHMENT, "not attachable texture");
 
-  if (m_flags & k_dimensions) {
+  if (m_flags & DIMENSIONS) {
     RX_ASSERT(_depth_stencil->dimensions() == m_dimensions, "invalid dimensions");
   } else {
     m_dimensions = _depth_stencil->dimensions();
-    m_flags |= k_dimensions;
+    m_flags |= DIMENSIONS;
   }
 
   m_depth_stencil_texture = _depth_stencil;
 
-  m_flags |= k_has_depth;
-  m_flags |= k_has_stencil;
+  m_flags |= HAS_DEPTH;
+  m_flags |= HAS_STENCIL;
 
   update_resource_usage();
 }
@@ -186,19 +181,19 @@ void Target::attach_texture(Texture2D* _texture, Size _level) {
 
   const auto& dimensions{_texture->info_for_level(_level).dimensions};
 
-  if (m_flags & k_dimensions) {
+  if (m_flags & DIMENSIONS) {
     RX_ASSERT(dimensions == m_dimensions, "invalid dimensions");
   }
 
   RX_ASSERT(!has_texture(_texture), "texture already attached");
 
-  if (!(m_flags & k_dimensions)) {
+  if (!(m_flags & DIMENSIONS)) {
     m_dimensions = dimensions;
-    m_flags |= k_dimensions;
+    m_flags |= DIMENSIONS;
   }
 
   Attachment new_attachment;
-  new_attachment.kind = Attachment::Type::k_texture2D;
+  new_attachment.kind = Attachment::Type::TEXTURE2D;
   new_attachment.level = _level;
   new_attachment.as_texture2D.texture = _texture;
   m_attachments.push_back(new_attachment);
@@ -212,22 +207,22 @@ void Target::attach_texture(TextureCM* _texture, TextureCM::Face _face, Size _le
     "not attachable texture");
   RX_ASSERT(_texture->is_level_in_range(_level), "level out of bounds");
 
-  const auto& dimensions{_texture->info_for_level(_level).dimensions};
+  const auto& dimensions = _texture->info_for_level(_level).dimensions;
 
-  if (m_flags & k_dimensions) {
+  if (m_flags & DIMENSIONS) {
     RX_ASSERT(dimensions == m_dimensions, "invalid dimensions");
   }
 
   // Don't allow attaching the same cubemap face multiple times.
   RX_ASSERT(!has_cubemap_face(_texture, _face), "texture already attached");
 
-  if (!(m_flags & k_dimensions)) {
+  if (!(m_flags & DIMENSIONS)) {
     m_dimensions = dimensions;
-    m_flags |= k_dimensions;
+    m_flags |= DIMENSIONS;
   }
 
   Attachment new_attachment;
-  new_attachment.kind = Attachment::Type::k_textureCM;
+  new_attachment.kind = Attachment::Type::TEXTURECM;
   new_attachment.level = _level;
   new_attachment.as_textureCM.texture = _texture;
   new_attachment.as_textureCM.face = _face;
@@ -237,9 +232,9 @@ void Target::attach_texture(TextureCM* _texture, TextureCM::Face _face, Size _le
 }
 
 void Target::validate() const {
-  RX_ASSERT(m_flags & k_dimensions, "dimensions not recorded");
+  RX_ASSERT(m_flags & DIMENSIONS, "dimensions not recorded");
 
-  if (m_flags & k_swapchain) {
+  if (m_flags & SWAPCHAIN) {
     // There is one attachment given to the swapchain target by |interface|.
     RX_ASSERT(m_attachments.size() == 1,
       "swapchain cannot have attachments");
@@ -257,10 +252,10 @@ void Target::update_resource_usage() {
   Float32 usage{0};
   m_attachments.each_fwd([&](const Attachment& _attachment) {
     switch (_attachment.kind) {
-    case Attachment::Type::k_texture2D:
+    case Attachment::Type::TEXTURE2D:
       usage += rt_usage(_attachment.as_texture2D.texture);
       break;
-    case Attachment::Type::k_textureCM:
+    case Attachment::Type::TEXTURECM:
       usage += rt_usage(_attachment.as_textureCM.texture);
       break;
     }

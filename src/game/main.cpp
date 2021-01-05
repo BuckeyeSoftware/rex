@@ -221,34 +221,34 @@ struct TestGame
       Math::Vec3f move{static_cast<Float32>(delta.y) * sens, static_cast<Float32>(delta.x) * sens, 0.0f};
       m_camera.rotate = m_camera.rotate + move;
 
-      if (input.root_layer().keyboard().is_held(Input::ScanCode::k_left_control)) {
+      if (input.root_layer().keyboard().is_held(Input::ScanCode::LEFT_CONTROL)) {
         move_speed = 10.0f;
       } else {
         move_speed = 5.0f;
       }
 
-      if (input.root_layer().keyboard().is_held(Input::ScanCode::k_w)) {
+      if (input.root_layer().keyboard().is_held(Input::ScanCode::W)) {
         const auto f{m_camera.as_mat4().z};
         m_camera.translate += Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (input.root_layer().keyboard().is_held(Input::ScanCode::k_s)) {
+      if (input.root_layer().keyboard().is_held(Input::ScanCode::S)) {
         const auto f{m_camera.as_mat4().z};
         m_camera.translate -= Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (input.root_layer().keyboard().is_held(Input::ScanCode::k_d)) {
+      if (input.root_layer().keyboard().is_held(Input::ScanCode::D)) {
         const auto l{m_camera.as_mat4().x};
         m_camera.translate += Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (input.root_layer().keyboard().is_held(Input::ScanCode::k_a)) {
+      if (input.root_layer().keyboard().is_held(Input::ScanCode::A)) {
         const auto l{m_camera.as_mat4().x};
         m_camera.translate -= Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
       }
-      if (input.root_layer().keyboard().is_released(Input::ScanCode::k_t)) {
+      if (input.root_layer().keyboard().is_released(Input::ScanCode::T)) {
         m_models.pop_back();
       }
     }
 
-    if (input.root_layer().keyboard().is_released(Input::ScanCode::k_f1)) {
+    if (input.root_layer().keyboard().is_released(Input::ScanCode::F1)) {
       switch (display_swap_interval->get()) {
       case -1:
         display_swap_interval->set(0);
@@ -262,19 +262,19 @@ struct TestGame
       }
     }
 
-    if (input.root_layer().keyboard().is_pressed(Input::ScanCode::k_grave)) {
+    if (input.root_layer().keyboard().is_pressed(Input::ScanCode::GRAVE)) {
       m_console.raise();
     }
 
-    if (input.root_layer().keyboard().is_released(Input::ScanCode::k_escape)) {
+    if (input.root_layer().keyboard().is_released(Input::ScanCode::ESCAPE)) {
       return false;
     }
 
-    if (input.root_layer().keyboard().is_released(Input::ScanCode::k_f12)) {
+    if (input.root_layer().keyboard().is_released(Input::ScanCode::F12)) {
       display_fullscreen->set((display_fullscreen->get() + 1) % 3);
     }
 
-    if (input.root_layer().keyboard().is_released(Input::ScanCode::k_1)) {
+    if (input.root_layer().keyboard().is_released(Input::ScanCode::N1)) {
       m_lut_index = (m_lut_index + 1) % 35;
     }
 

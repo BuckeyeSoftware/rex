@@ -19,23 +19,23 @@ struct Program;
 struct Uniform {
   RX_MARK_NO_COPY(Uniform);
 
-  enum class Type {
-    k_sampler1D,
-    k_sampler2D,
-    k_sampler3D,
-    k_samplerCM,
-    k_bool,
-    k_int,
-    k_float,
-    k_vec2i,
-    k_vec3i,
-    k_vec4i,
-    k_vec2f,
-    k_vec3f,
-    k_vec4f,
-    k_mat4x4f,
-    k_mat3x3f,
-    k_bonesf
+  enum class Type : Uint8 {
+    SAMPLER1D,
+    SAMPLER2D,
+    SAMPLER3D,
+    SAMPLERCM,
+    BOOL,
+    INT,
+    FLOAT,
+    VEC2I,
+    VEC3I,
+    VEC4I,
+    VEC2F,
+    VEC3F,
+    VEC4F,
+    MAT4X4F,
+    MAT3X3F,
+    BONES
   };
 
   Uniform();
@@ -82,22 +82,22 @@ private:
 };
 
 struct Shader {
-  enum class Type {
-    k_vertex,
-    k_fragment
+  enum class Type : Uint8 {
+    VERTEX,
+    FRAGMENT
   };
 
-  enum class InOutType {
-    k_mat4x4f,
-    k_mat3x3f,
-    k_vec2i,
-    k_vec3i,
-    k_vec4i,
-    k_vec2f,
-    k_vec3f,
-    k_vec4f,
-    k_vec4b,
-    k_float
+  enum class InOutType : Uint8 {
+    MAT4X4F,
+    MAT3X3F,
+    VEC2I,
+    VEC3I,
+    VEC4I,
+    VEC2F,
+    VEC3F,
+    VEC4F,
+    VEC4B,
+    FLOAT
   };
 
   Type kind;

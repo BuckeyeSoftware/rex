@@ -17,9 +17,9 @@ struct KeyboardEvent {
 };
 
 struct ControllerNotificationEvent {
-  enum class Type {
-    k_connected,
-    k_disconnected
+  enum class Type : Uint8 {
+    CONNECTED,
+    DISCONNECTED
   };
 
   Size index;
@@ -64,17 +64,17 @@ struct Event {
   constexpr Event();
   ~Event();
 
-  enum class Type {
-    k_none,
-    k_keyboard,
-    k_controller_notification,
-    k_controller_button,
-    k_controller_motion,
-    k_mouse_button,
-    k_mouse_scroll,
-    k_mouse_motion,
-    k_text_input,
-    k_clipboard
+  enum class Type : Uint8 {
+    NONE,
+    KEYBOARD,
+    CONTROLLER_NOTIFICATION,
+    CONTROLLER_BUTTON,
+    CONTROLLER_MOTION,
+    MOUSE_BUTTON,
+    MOUSE_SCROLL,
+    MOUSE_MOTION,
+    TEXT_INPUT,
+    CLIPBOARD
   };
 
   Type type;
@@ -94,13 +94,13 @@ struct Event {
 };
 
 inline constexpr Event::Event()
-  : type{Type::k_none}
+  : type{Type::NONE}
   , as_nat{}
 {
 }
 
 inline Event::~Event() {
-  if (type == Type::k_clipboard) {
+  if (type == Type::CLIPBOARD) {
     Utility::destruct<String>(&as_clipboard.contents);
   }
 }

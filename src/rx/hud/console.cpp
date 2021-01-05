@@ -97,19 +97,19 @@ void Console::update(Rx::Console::Context& console_) {
   m_lines = console_.lines();
 
   bool made_selection = false;
-  if (m_input_layer.keyboard().is_pressed(Input::ScanCode::k_grave)) {
+  if (m_input_layer.keyboard().is_pressed(Input::ScanCode::GRAVE)) {
     // The grave character will be given during text events. Just erase it.
     m_text.erase();
     m_input_context.root_layer().raise();
-  } else if (m_input_layer.keyboard().is_pressed(Input::ScanCode::k_down)) {
+  } else if (m_input_layer.keyboard().is_pressed(Input::ScanCode::DOWN)) {
     m_selection++;
-  } else if (m_input_layer.keyboard().is_pressed(Input::ScanCode::k_up)) {
+  } else if (m_input_layer.keyboard().is_pressed(Input::ScanCode::UP)) {
     if (m_selection) {
       m_selection--;
     }
-  } else if (m_input_layer.keyboard().is_pressed(Input::ScanCode::k_tab)) {
+  } else if (m_input_layer.keyboard().is_pressed(Input::ScanCode::TAB)) {
     made_selection = true;
-  } else if (m_input_layer.keyboard().is_pressed(Input::ScanCode::k_return)) {
+  } else if (m_input_layer.keyboard().is_pressed(Input::ScanCode::RETURN)) {
     console_.execute(m_text.contents());
     m_text.clear();
   }
@@ -183,7 +183,7 @@ void Console::render() {
       {padding, resolution.h - text_y},
       static_cast<Sint32>(font_size),
       1.0f,
-      Render::Immediate2D::TextAlign::k_left,
+      Render::Immediate2D::TextAlign::LEFT,
       _line,
       {1.0f, 1.0f, 1.0f, 1.0f});
     text_y += font_size;
@@ -231,7 +231,7 @@ void Console::render() {
     {padding, resolution.h - textbox_y - font_size * 0.75f},
     static_cast<Sint32>(font_size),
     1.0f,
-    Render::Immediate2D::TextAlign::k_left,
+    Render::Immediate2D::TextAlign::LEFT,
     m_text.contents(),
     {1.0f, 1.0f, 1.0f, 1.0f});
 
@@ -320,7 +320,7 @@ void Console::render() {
       {padding, resolution.h - suggestion_y + font_size*0.15f},
       static_cast<Sint32>(font_size),
       1.0f,
-      Render::Immediate2D::TextAlign::k_left,
+      Render::Immediate2D::TextAlign::LEFT,
       _suggestion,
       {1.0f, 1.0f, 1.0f, 1.0f});
     suggestion_y += font_size;

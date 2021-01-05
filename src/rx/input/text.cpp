@@ -6,7 +6,7 @@ namespace Rx::Input {
 
 Text::Text()
   : m_cursor{0}
-  , m_cursor_visible_time{k_cursor_visible_time}
+  , m_cursor_visible_time{CURSOR_VISIBLE_TIME}
   , m_flags{0}
 {
   m_selection[0] = 0;
@@ -16,13 +16,13 @@ Text::Text()
 void Text::update(Float32 _delta_time) {
   m_cursor_visible_time -= _delta_time;
   if (m_cursor_visible_time <= 0.0f) {
-    m_cursor_visible_time = k_cursor_visible_time;
-    m_flags ^= k_cursor_visible;
+    m_cursor_visible_time = CURSOR_VISIBLE_TIME;
+    m_flags ^= CURSOR_VISIBLE;
   }
 }
 
 String Text::copy() const {
-  return m_flags & k_selected
+  return m_flags & SELECTED
     ? m_contents.substring(m_selection[0], m_selection[1] - m_selection[0])
     : m_contents;
 }
@@ -30,7 +30,7 @@ String Text::copy() const {
 String Text::cut() {
   String contents;
 
-  if (m_flags & k_selected) {
+  if (m_flags & SELECTED) {
     // Take the substring defined by the selection region and remove that
     // substring from the contents.
     contents = m_contents.substring(m_selection[0],
@@ -55,7 +55,7 @@ String Text::cut() {
 
 void Text::paste(const String& _contents) {
   // Pasting when you have selected text replaces the selected text.
-  if ((m_flags & k_selected) && !m_contents.is_empty()) {
+  if ((m_flags & SELECTED) && !m_contents.is_empty()) {
     // Remove the selected text and move the cursor to the beginning of
     // the selection for inserting the new text.
     m_contents.erase(m_selection[0], m_selection[1]);
@@ -74,7 +74,7 @@ void Text::paste(const String& _contents) {
 }
 
 void Text::erase() {
-  if (m_flags & k_selected) {
+  if (m_flags & SELECTED) {
     // Remove the text defined by the selection and move the cursor to the
     // beginning of the selection.
     m_contents.erase(m_selection[0], m_selection[1]);
@@ -92,15 +92,15 @@ void Text::erase() {
 }
 
 void Text::select(bool _select) {
-  if (_select && !(m_flags & k_selecting)) {
+  if (_select && !(m_flags & SELECTING)) {
     // Start a new selection starting from the cursor only when a selection
     // hasn't already been started.
-    m_flags |= k_selecting;
+    m_flags |= SELECTING;
     m_selection[0] = m_cursor;
     m_selection[1] = m_cursor;
   } else if (!_select) {
     // No longer in a selecting state but there can still be selected text.
-    m_flags &= ~k_selecting;
+    m_flags &= ~SELECTING;
   }
 }
 
@@ -110,8 +110,8 @@ void Text::select_all() {
   // events that would modify a selection should start a new selection.
   m_selection[0] = 0;
   m_selection[1] = m_contents.size();
-  m_flags |= k_selected;
-  m_flags &= ~(k_selecting | k_select_left | k_select_right);
+  m_flags |= SELECTED;
+  m_flags &= ~(SELECTING | SELECT_LEFT | SELECT_RIGHT);
 
   // When you select everything, the cursor is moved to the end of the
   // selection. You can't tell though because the cursor isn't typically
@@ -128,50 +128,50 @@ void Text::move_cursor(Position _position) {
 
   // When selecting, any cursor movement should form a selection.
   // When not selecting, any cursor movement should reset any selection.
-  if (m_flags & k_selecting) {
-    m_flags |= k_selected;
+  if (m_flags & SELECTING) {
+    m_flags |= SELECTED;
   } else {
     reset_selection();
   }
 
   switch (_position)
   {
-  case Position::k_home:
-    if (m_flags & k_selecting) {
+  case Position::HOME:
+    if (m_flags & SELECTING) {
       m_selection[0] = 0;
     }
     m_cursor = 0;
     break;
-  case Position::k_end:
-    if (m_flags & k_selecting) {
+  case Position::END:
+    if (m_flags & SELECTING) {
       m_selection[1] = m_contents.size();
     }
     m_cursor = m_contents.size();
     break;
-  case Position::k_left:
+  case Position::LEFT:
     if (m_cursor) {
       m_cursor--;
     }
     break;
-  case Position::k_right:
+  case Position::RIGHT:
     if (m_cursor < m_contents.size()) {
       m_cursor++;
     }
     break;
   }
 
-  if (m_flags & k_selecting) {
+  if (m_flags & SELECTING) {
     // The direction of the selection hasn't been recorded yet.
-    if (!(m_flags & k_select_left) && !(m_flags & k_select_right)) {
+    if (!(m_flags & SELECT_LEFT) && !(m_flags & SELECT_RIGHT)) {
       // When going left and the start of the selection can go left further,
       // or when going right and the end of the selection can go right further,
       // record the direction of the selection and move the selection left or
       // right respectively.
-      if (_position == Position::k_left && m_selection[0]) {
-        m_flags |= k_select_left;
+      if (_position == Position::LEFT && m_selection[0]) {
+        m_flags |= SELECT_LEFT;
         m_selection[0]--;
-      } else if (_position == Position::k_right && m_selection[1] < m_contents.size()) {
-        m_flags |= k_select_right;
+      } else if (_position == Position::RIGHT && m_selection[1] < m_contents.size()) {
+        m_flags |= SELECT_RIGHT;
         m_selection[1]++;
       }
     } else {
@@ -181,16 +181,16 @@ void Text::move_cursor(Position _position) {
       // the start of the selection and [1] is always the end of the selection.
       //
       // This maintains the invariant |m_selection[0] <= m_selection[1]|.
-      if (m_flags & k_select_left) {
-        if (_position == Position::k_left && m_selection[0]) {
+      if (m_flags & SELECT_LEFT) {
+        if (_position == Position::LEFT && m_selection[0]) {
           m_selection[0]--;
-        } else if (_position == Position::k_right && m_selection[0] < m_contents.size()) {
+        } else if (_position == Position::RIGHT && m_selection[0] < m_contents.size()) {
           m_selection[0]++;
         }
-      } else if (m_flags & k_select_right) {
-        if (_position == Position::k_left && m_selection[1]) {
+      } else if (m_flags & SELECT_RIGHT) {
+        if (_position == Position::LEFT && m_selection[1]) {
           m_selection[1]--;
-        } else if (_position == Position::k_right && m_selection[1] < m_contents.size()) {
+        } else if (_position == Position::RIGHT && m_selection[1] < m_contents.size()) {
           m_selection[1]++;
         }
       }
@@ -223,14 +223,14 @@ void Text::clear() {
 }
 
 void Text::reset_selection() {
-  m_flags &= ~(k_selecting | k_selected | k_select_left | k_select_right);
+  m_flags &= ~(SELECTING | SELECTED | SELECT_LEFT | SELECT_RIGHT);
   m_selection[0] = m_cursor;
   m_selection[1] = m_cursor;
 }
 
 void Text::reset_cursor() {
-  m_flags |= k_cursor_visible;
-  m_cursor_visible_time = k_cursor_visible_time;
+  m_flags |= CURSOR_VISIBLE;
+  m_cursor_visible_time = CURSOR_VISIBLE_TIME;
 }
 
 } // namespace Rx::Input

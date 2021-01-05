@@ -18,26 +18,26 @@ struct IQMMesh {
 };
 
 enum class VertexAttribute {
-  k_position,
-  k_coordinate,
-  k_normal,
-  k_tangent,
-  k_blend_indexes,
-  k_blend_weights,
-  k_color,
-  k_custom = 0x10
+  POSITION,
+  COORDINATE,
+  NORMAL,
+  TANGENT,
+  BLEND_INDEXES,
+  BLEND_WEIGHTS,
+  COLOR,
+  CUSTOM = 0x10
 };
 
 enum class VertexFormat {
-  k_s8,
-  k_u8,
-  k_s16,
-  k_u16,
-  k_s32,
-  k_u32,
-  k_f16,
-  k_f32,
-  k_f64
+  S8,
+  U8,
+  S16,
+  U16,
+  S32,
+  U32,
+  F16,
+  F32,
+  F64
 };
 
 struct IQMTriangle {
@@ -181,8 +181,8 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
     const Size offset{array.offset};
 
     switch (attribute) {
-    case VertexAttribute::k_position:
-      if (format != VertexFormat::k_f32) {
+    case VertexAttribute::POSITION:
+      if (format != VertexFormat::F32) {
         return error("unsupported format for position");
       }
       if (size != 3) {
@@ -190,8 +190,8 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
       }
       in_position = reinterpret_cast<const Float32*>(_data.data() + offset);
       break;
-    case VertexAttribute::k_normal:
-      if (format != VertexFormat::k_f32) {
+    case VertexAttribute::NORMAL:
+      if (format != VertexFormat::F32) {
         return error("unsupported format for normal");
       }
       if (size != 3) {
@@ -199,8 +199,8 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
       }
       in_normal = reinterpret_cast<const Float32*>(_data.data() + offset);
       break;
-    case VertexAttribute::k_tangent:
-      if (format != VertexFormat::k_f32) {
+    case VertexAttribute::TANGENT:
+      if (format != VertexFormat::F32) {
         return error("unsupported format for tangent");
       }
       if (size != 4) {
@@ -208,8 +208,8 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
       }
       in_tangent = reinterpret_cast<const Float32*>(_data.data() + offset);
       break;
-    case VertexAttribute::k_coordinate:
-      if (format != VertexFormat::k_f32) {
+    case VertexAttribute::COORDINATE:
+      if (format != VertexFormat::F32) {
         return error("unsupported format for coordinate");
       }
       if (size != 2) {
@@ -217,8 +217,8 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
       }
       in_coordinate = reinterpret_cast<const Float32*>(_data.data() + offset);
       break;
-    case VertexAttribute::k_blend_weights:
-      if (format != VertexFormat::k_u8) {
+    case VertexAttribute::BLEND_WEIGHTS:
+      if (format != VertexFormat::U8) {
         return error("unsupported format for blend weights");
       }
       if (size != 4) {
@@ -226,8 +226,8 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
       }
       in_blend_weight = _data.data() + offset;
       break;
-    case VertexAttribute::k_blend_indexes:
-      if (format != VertexFormat::k_u8) {
+    case VertexAttribute::BLEND_INDEXES:
+      if (format != VertexFormat::U8) {
         return error("unsupported format for blend indices");
       }
       if (size != 4) {

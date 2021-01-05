@@ -12,10 +12,10 @@ Buffer::Buffer(Stream* _stream, Mode _mode)
   , m_cursor{0}
 {
   switch (_mode) {
-  case Mode::k_read:
+  case Mode::READ:
     RX_ASSERT(_stream->can_read(), "buffer requires readable stream");
     break;
-  case Mode::k_write:
+  case Mode::WRITE:
     RX_ASSERT(_stream->can_write(), "buffer requires writable stream");
     break;
   }
@@ -23,17 +23,17 @@ Buffer::Buffer(Stream* _stream, Mode _mode)
 
 Buffer::~Buffer() {
   switch (m_mode) {
-  case Mode::k_read:
+  case Mode::READ:
     RX_ASSERT(m_cursor == m_length, "data left in buffer");
     break;
-  case Mode::k_write:
+  case Mode::WRITE:
     RX_ASSERT(flush(), "flush failed");
     break;
   }
 }
 
 bool Buffer::write_byte(Byte _byte) {
-  if (m_cursor == k_size && !flush()) {
+  if (m_cursor == SIZE && !flush()) {
     return false;
   }
   m_buffer[m_cursor++] = _byte;
@@ -50,10 +50,10 @@ bool Buffer::read_byte(Byte* byte_) {
 
 bool Buffer::write_bytes(const Byte* _bytes, Size _size) {
   while (_size) {
-    if (m_cursor == k_size && !flush()) {
+    if (m_cursor == SIZE && !flush()) {
       return false;
     }
-    const auto max = Algorithm::min(_size, k_size - m_cursor);
+    const auto max = Algorithm::min(_size, SIZE - m_cursor);
     memcpy(m_buffer + m_cursor, _bytes, max);
     m_cursor += max;
     _bytes += max;
@@ -84,7 +84,7 @@ bool Buffer::flush() {
 }
 
 bool Buffer::read(Uint64 _max_bytes) {
-  _max_bytes = Algorithm::min(k_size, static_cast<Size>(_max_bytes));
+  _max_bytes = Algorithm::min(SIZE, static_cast<Size>(_max_bytes));
   const auto bytes = m_stream->read(m_buffer, _max_bytes);
   m_cursor = 0;
   m_length = bytes;

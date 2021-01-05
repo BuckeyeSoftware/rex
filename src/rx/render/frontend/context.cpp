@@ -41,8 +41,8 @@ RX_CONSOLE_V2IVAR(
 
 RX_LOG("render", logger);
 
-static constexpr const char* k_technique_path = "base/renderer/techniques";
-static constexpr const char* k_module_path = "base/renderer/modules";
+static constexpr const char* TECHNIQUES_PATH = "base/renderer/techniques";
+static constexpr const char* MODULES_PATH = "base/renderer/modules";
 
 namespace Rx::Render::Frontend {
 
@@ -109,11 +109,11 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
   m_device_info.version = info.version;
 
   // load all modules
-  if (Filesystem::Directory directory{k_module_path}) {
+  if (Filesystem::Directory directory{MODULES_PATH}) {
     directory.each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
         Module new_module{allocator()};
-        const auto path{String::format("%s/%s", k_module_path,
+        const auto path{String::format("%s/%s", MODULES_PATH,
                                        Utility::move(item_.name()))};
         if (new_module.load(path)) {
           m_modules.insert(new_module.name(), Utility::move(new_module));
@@ -123,11 +123,11 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
   }
 
   // Load all the techniques.
-  if (Filesystem::Directory directory{k_technique_path}) {
+  if (Filesystem::Directory directory{TECHNIQUES_PATH}) {
     directory.each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
         Technique new_technique{this};
-        const auto path{String::format("%s/%s", k_technique_path,
+        const auto path{String::format("%s/%s", TECHNIQUES_PATH,
                                        Utility::move(item_.name()))};
         if (new_technique.load(path) && new_technique.compile(m_modules)) {
           m_techniques.insert(new_technique.name(),
@@ -139,20 +139,19 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
 
   // Generate swapchain target.
   m_swapchain_texture = create_texture2D(RX_RENDER_TAG("swapchain"));
-  m_swapchain_texture->record_format(_hdr ? Texture::DataFormat::k_rgba_f16 : Texture::DataFormat::k_rgba_u8);
+  m_swapchain_texture->record_format(_hdr ? Texture::DataFormat::RGBA_F16 : Texture::DataFormat::RGBA_U8);
   m_swapchain_texture->record_type(Texture::Type::ATTACHMENT);
   m_swapchain_texture->record_levels(1);
   m_swapchain_texture->record_dimensions(_dimensions);
   m_swapchain_texture->record_filter({false, false, false});
-  m_swapchain_texture->record_wrap({
-                                           Texture::WrapType::k_clamp_to_edge,
-                                           Texture::WrapType::k_clamp_to_edge});
-  m_swapchain_texture->m_flags |= Texture::k_swapchain;
+  m_swapchain_texture->record_wrap({Texture::WrapType::CLAMP_TO_EDGE,
+                                    Texture::WrapType::CLAMP_TO_EDGE});
+  m_swapchain_texture->m_flags |= Texture::SWAPCHAIN;
   initialize_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 
   m_swapchain_target = create_target(RX_RENDER_TAG("swapchain"));
   m_swapchain_target->attach_texture(m_swapchain_texture, 0);
-  m_swapchain_target->m_flags |= Target::k_swapchain;
+  m_swapchain_target->m_flags |= Target::SWAPCHAIN;
   initialize_target(RX_RENDER_TAG("swapchain"), m_swapchain_target);
 }
 
@@ -770,7 +769,7 @@ void Context::clear(const CommandHeader::Info& _info, const State& _state,
       command->stencil_value = va_arg(va, Sint32);
     }
 
-    for (Uint32 i{0}; i < Buffers::k_max_buffers; i++) {
+    for (Uint32 i{0}; i < Buffers::MAX_BUFFERS; i++) {
       if (_clear_mask & (1 << i)) {
         const Float32* color{va_arg(va, Float32*)};
         command->color_values[i].r = color[0];
@@ -811,9 +810,9 @@ void Context::blit(
     "destination attachment out of bounds");
 
   using Attachment = Target::Attachment::Type;
-  RX_ASSERT(src_attachments[_src_attachment].kind == Attachment::k_texture2D,
+  RX_ASSERT(src_attachments[_src_attachment].kind == Attachment::TEXTURE2D,
     "source attachment not a 2D texture");
-  RX_ASSERT(dst_attachments[_dst_attachment].kind == Attachment::k_texture2D,
+  RX_ASSERT(dst_attachments[_dst_attachment].kind == Attachment::TEXTURE2D,
     "destination attachment not a 2D texture");
 
   Texture2D* src_attachment{src_attachments[_src_attachment].as_texture2D.texture};
@@ -831,8 +830,8 @@ void Context::blit(
     "cannot blit with non-color destination attachment");
 
   const auto is_float_color = [](Texture::DataFormat _format) {
-    return _format == Texture::DataFormat::k_bgra_f16 ||
-           _format == Texture::DataFormat::k_rgba_f16;
+    return _format == Texture::DataFormat::BGRA_F16 ||
+           _format == Texture::DataFormat::RGBA_F16;
   };
 
   // A blit from one target to another is only valid if the source and
@@ -971,21 +970,21 @@ Context::Statistics Context::stats(Resource::Type _type) const {
 
   const auto index{static_cast<Size>(_type)};
   switch (_type) {
-  case Resource::Type::k_buffer:
+  case Resource::Type::BUFFER:
     return {m_buffer_pool.capacity(), m_buffer_pool.size(), m_cached_buffers.size(), m_resource_usage[index]};
-  case Resource::Type::k_program:
+  case Resource::Type::PROGRAM:
     return {m_program_pool.capacity(), m_program_pool.size(), 0, m_resource_usage[index]};
-  case Resource::Type::k_target:
+  case Resource::Type::TARGET:
     return {m_target_pool.capacity(), m_target_pool.size(), m_cached_targets.size(), m_resource_usage[index]};
-  case Resource::Type::k_texture1D:
+  case Resource::Type::TEXTURE1D:
     return {m_texture1D_pool.capacity(), m_texture1D_pool.size(), m_cached_textures1D.size(), m_resource_usage[index]};
-  case Resource::Type::k_texture2D:
+  case Resource::Type::TEXTURE2D:
     return {m_texture2D_pool.capacity(), m_texture2D_pool.size(), m_cached_textures2D.size(), m_resource_usage[index]};
-  case Resource::Type::k_texture3D:
+  case Resource::Type::TEXTURE3D:
     return {m_texture3D_pool.capacity(), m_texture3D_pool.size(), m_cached_textures3D.size(), m_resource_usage[index]};
-  case Resource::Type::k_textureCM:
+  case Resource::Type::TEXTURECM:
     return {m_textureCM_pool.capacity(), m_textureCM_pool.size(), m_cached_texturesCM.size(), m_resource_usage[index]};
-  case Resource::Type::k_downloader:
+  case Resource::Type::DOWNLOADER:
     return {m_downloader_pool.capacity(), m_downloader_pool.size(), 0, m_resource_usage[index]};
   }
 

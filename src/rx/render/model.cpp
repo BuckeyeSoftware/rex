@@ -193,10 +193,10 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
   state.blend.record_enable(false);
 
   // FrontFace(CW)
-  state.cull.record_front_face(Frontend::CullState::FrontFaceType::k_clock_wise);
+  state.cull.record_front_face(Frontend::CullState::FrontFaceType::CLOCK_WISE);
 
   // CullFace(BACK)
-  state.cull.record_cull_face(Frontend::CullState::CullFaceType::k_back);
+  state.cull.record_cull_face(Frontend::CullState::CullFaceType::BACK);
 
   // DepthMask(TRUE)
   state.depth.record_write(true);
@@ -290,8 +290,8 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
 /*
   state.blend.record_enable(true);
   state.blend.record_blend_factors(
-    Render::Frontend::BlendState::FactorType::k_src_alpha,
-    Render::Frontend::BlendState::FactorType::k_one_minus_src_alpha);*/
+    Render::Frontend::BlendState::FactorType::SRC_ALPHA,
+    Render::Frontend::BlendState::FactorType::ONE_MINUS_SRC_ALPHA);*/
   m_transparent_meshes.each_fwd([&](const Mesh& _mesh) { draw(_mesh, false); });
 }
 
@@ -329,13 +329,13 @@ void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _im
                 Math::Mat4x4f::transform_point(point_a, mat * _world),
                 Math::Mat4x4f::transform_point(point_b, mat * _world),
                 {color.r, color.g, color.b, 1.0f},
-                Immediate3D::k_depth_test | Immediate3D::k_depth_write);
+                Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
       } else {
         _immediate->frame_queue().record_line(
                 Math::Mat4x4f::transform_point(point_a, _world),
                 Math::Mat4x4f::transform_point(point_b, _world),
                 {color.r, color.g, color.b, 1.0f},
-                Immediate3D::k_depth_test | Immediate3D::k_depth_write);
+                Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
       }
     });
   } else {
@@ -349,7 +349,7 @@ void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _im
               Math::Mat4x4f::transform_point(point_a, _world),
               Math::Mat4x4f::transform_point(point_b, _world),
               {color.r, color.g, color.b, 1.0f},
-              Immediate3D::k_depth_test | Immediate3D::k_depth_write);
+              Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
     });
   }
 }

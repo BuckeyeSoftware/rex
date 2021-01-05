@@ -65,13 +65,13 @@ void IndirectLightingPass::render(const Math::Camera& _camera, const GBuffer* _g
 void IndirectLightingPass::create(const Math::Vec2z& _dimensions) {
   m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("indirect lighting pass"));
   m_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
-  m_texture->record_format(Frontend::Texture::DataFormat::k_rgba_u8);
+  m_texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
   m_texture->record_filter({false, false, false});
   m_texture->record_levels(1);
   m_texture->record_dimensions(_dimensions);
   m_texture->record_wrap({
-    Frontend::Texture::WrapType::k_clamp_to_edge,
-    Frontend::Texture::WrapType::k_clamp_to_edge});
+    Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+    Frontend::Texture::WrapType::CLAMP_TO_EDGE});
   m_frontend->initialize_texture(RX_RENDER_TAG("indirect lighting pass"), m_texture);
 
   m_target = m_frontend->create_target(RX_RENDER_TAG("indirect lighting pass"));

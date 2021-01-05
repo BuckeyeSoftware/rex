@@ -4,7 +4,7 @@
 namespace Rx::Render::Frontend {
 
 Downloader::Downloader(Context* _context)
-  : Resource{_context, Resource::Type::k_downloader}
+  : Resource{_context, Resource::Type::DOWNLOADER}
   , m_flags{0}
   , m_buffers{0}
   , m_pixels{_context->allocator()}

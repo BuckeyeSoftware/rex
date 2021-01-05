@@ -18,7 +18,7 @@ static inline constexpr bool odd(Uint32 _x) {
 void MT19937::seed(Uint32 _seed) {
   m_index = 0;
   m_state[0] = _seed;
-  for (Size i{1}; i < k_size; i++) {
+  for (Size i = 1; i < SIZE; i++) {
     m_state[i] = 0x6c078965 * (m_state[i - 1] ^ m_state[i - 1] >> 30) + i;
   }
 }
@@ -35,7 +35,7 @@ Uint32 MT19937::u32() {
   value ^= value << 15 & 0xefc60000;
   value ^= value >> 18;
 
-  if (RX_HINT_UNLIKELY(++m_index == k_size)) {
+  if (RX_HINT_UNLIKELY(++m_index == SIZE)) {
     m_index = 0;
   }
 
@@ -53,32 +53,32 @@ void MT19937::generate() {
   };
 
   // i = [0, 226]
-  while (i < k_difference - 1) {
-    unroll(i + k_period);
-    unroll(i + k_period);
+  while (i < DIFFERENCE - 1) {
+    unroll(i + PERIOD);
+    unroll(i + PERIOD);
   }
 
   // i = 256
-  unroll((i + k_period) % k_size);
+  unroll((i + PERIOD) % SIZE);
 
   // i = [227, 622]
-  while (i < k_size - 1) {
-    unroll(i - k_difference);
-    unroll(i - k_difference);
-    unroll(i - k_difference);
-    unroll(i - k_difference);
-    unroll(i - k_difference);
-    unroll(i - k_difference);
-    unroll(i - k_difference);
-    unroll(i - k_difference);
-    unroll(i - k_difference);
-    unroll(i - k_difference);
-    unroll(i - k_difference);
+  while (i < SIZE - 1) {
+    unroll(i - DIFFERENCE);
+    unroll(i - DIFFERENCE);
+    unroll(i - DIFFERENCE);
+    unroll(i - DIFFERENCE);
+    unroll(i - DIFFERENCE);
+    unroll(i - DIFFERENCE);
+    unroll(i - DIFFERENCE);
+    unroll(i - DIFFERENCE);
+    unroll(i - DIFFERENCE);
+    unroll(i - DIFFERENCE);
+    unroll(i - DIFFERENCE);
   }
 
   // i = 623
-  y = m32(m_state[k_size - 1]) | l31(m_state[0]);
-  m_state[k_size - 1] = m_state[k_period - 1] ^ (y >> 1) ^ (0x9908b0df * odd(y));
+  y = m32(m_state[SIZE - 1]) | l31(m_state[0]);
+  m_state[SIZE - 1] = m_state[PERIOD - 1] ^ (y >> 1) ^ (0x9908b0df * odd(y));
 }
 
 } // namespace Rx::PRNG

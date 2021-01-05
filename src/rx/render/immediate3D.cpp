@@ -45,15 +45,15 @@ bool Immediate3D::Queue::Command::operator!=(const Command& _command) const {
   }
 
   switch (kind) {
-  case Command::Type::k_uninitialized:
+  case Command::Type::UNINITIALIZED:
     return false;
-  case Command::Type::k_point:
+  case Command::Type::POINT:
     return _command.as_point != as_point;
-  case Command::Type::k_line:
+  case Command::Type::LINE:
     return _command.as_line != as_line;
-  case Command::Type::k_solid_sphere:
+  case Command::Type::SOLID_SPHERE:
     return _command.as_solid_sphere != as_solid_sphere;
-  case Command::Type::k_solid_cube:
+  case Command::Type::SOLID_CUBE:
     return _command.as_solid_cube != as_solid_cube;
   }
 
@@ -64,7 +64,7 @@ bool Immediate3D::Queue::record_point(const Math::Vec3f& _point,
                                       const Math::Vec4f& _color, Float32 _size, Uint8 _flags)
 {
   Command next_command;
-  next_command.kind = Command::Type::k_point;
+  next_command.kind = Command::Type::POINT;
   next_command.flags = _flags;
   next_command.color = _color;
   next_command.as_point.position = _point;
@@ -83,7 +83,7 @@ bool Immediate3D::Queue::record_line(const Math::Vec3f& _point_a,
                                      const Math::Vec3f& _point_b, const Math::Vec4f& _color, Uint8 _flags)
 {
   Command next_command;
-  next_command.kind = Command::Type::k_line;
+  next_command.kind = Command::Type::LINE;
   next_command.flags = _flags;
   next_command.color = _color;
   next_command.as_line.point_a = _point_a;
@@ -102,7 +102,7 @@ bool Immediate3D::Queue::record_solid_sphere(const Math::Vec2f& _slices_and_stac
                                              const Math::Vec4f& _color, const Math::Mat4x4f& _transform, Uint8 _flags)
 {
   Command next_command;
-  next_command.kind = Command::Type::k_solid_sphere;
+  next_command.kind = Command::Type::SOLID_SPHERE;
   next_command.flags = _flags;
   next_command.color = _color;
   next_command.as_solid_sphere.slices_and_stacks = _slices_and_stacks;
@@ -121,7 +121,7 @@ bool Immediate3D::Queue::record_solid_cube(const Math::Vec4f& _color,
                                            const Math::Mat4x4f& _transform, Uint8 _flags)
 {
   Command next_command;
-  next_command.kind = Command::Type::k_solid_cube;
+  next_command.kind = Command::Type::SOLID_CUBE;
   next_command.flags = _flags;
   next_command.color = _color;
   next_command.as_solid_cube.transform = _transform;
@@ -164,7 +164,7 @@ Immediate3D::Immediate3D(Frontend::Context* _frontend)
   , m_rd_index{1}
   , m_wr_index{0}
 {
-  for (Size i{0}; i < k_buffers; i++) {
+  for (Size i{0}; i < BUFFERS; i++) {
     m_render_batches[i] = {m_frontend->allocator()};
     m_render_queue[i] = {m_frontend->allocator()};
   }
@@ -178,7 +178,7 @@ Immediate3D::Immediate3D(Frontend::Context* _frontend)
   format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, color)});
   format.finalize();
 
-  for (Size i{0}; i < k_buffers; i++) {
+  for (Size i{0}; i < BUFFERS; i++) {
     m_buffers[i] = m_frontend->create_buffer(RX_RENDER_TAG("immediate3D"));
     m_buffers[i]->record_format(format);
     m_frontend->initialize_buffer(RX_RENDER_TAG("immediate3D"), m_buffers[i]);
@@ -186,7 +186,7 @@ Immediate3D::Immediate3D(Frontend::Context* _frontend)
 }
 
 Immediate3D::~Immediate3D() {
-  for(Size i{0}; i < k_buffers; i++) {
+  for(Size i{0}; i < BUFFERS; i++) {
     m_frontend->destroy_buffer(RX_RENDER_TAG("immediate3D"), m_buffers[i]);
   }
 }
@@ -210,19 +210,19 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     Size n_elements = 0;
     m_queue.m_commands.each_fwd([&](const Queue::Command& _command) {
       switch (_command.kind) {
-      case Queue::Command::Type::k_point:
+      case Queue::Command::Type::POINT:
         size_point(n_vertices, n_elements);
         break;
-      case Queue::Command::Type::k_line:
+      case Queue::Command::Type::LINE:
         size_line(n_vertices, n_elements);
         break;
-      case Queue::Command::Type::k_solid_sphere:
+      case Queue::Command::Type::SOLID_SPHERE:
         size_solid_sphere(
           _command.as_solid_sphere.slices_and_stacks,
           n_vertices,
           n_elements);
         break;
-      case Queue::Command::Type::k_solid_cube:
+      case Queue::Command::Type::SOLID_CUBE:
         size_solid_cube(n_vertices, n_elements);
         break;
       default:
@@ -242,28 +242,28 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     // generate geometry for a future frame
     m_queue.m_commands.each_fwd([this](const Queue::Command& _command) {
       switch (_command.kind) {
-      case Queue::Command::Type::k_point:
+      case Queue::Command::Type::POINT:
         generate_point(
           _command.as_point.position,
           _command.as_point.size,
           _command.color,
           _command.flags);
         break;
-      case Queue::Command::Type::k_line:
+      case Queue::Command::Type::LINE:
         generate_line(
           _command.as_line.point_a,
           _command.as_line.point_b,
           _command.color,
           _command.flags);
         break;
-      case Queue::Command::Type::k_solid_sphere:
+      case Queue::Command::Type::SOLID_SPHERE:
         generate_solid_sphere(
           _command.as_solid_sphere.slices_and_stacks,
           _command.as_solid_sphere.transform,
           _command.color,
           _command.flags);
         break;
-      case Queue::Command::Type::k_solid_cube:
+      case Queue::Command::Type::SOLID_CUBE:
         generate_solid_cube(
           _command.as_solid_cube.transform,
           _command.color,
@@ -290,7 +290,7 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     m_render_batches[m_wr_index] = Utility::move(m_batches);
     m_render_queue[m_wr_index] = Utility::move(m_queue);
 
-    m_wr_index = (m_wr_index + 1) % k_buffers;
+    m_wr_index = (m_wr_index + 1) % BUFFERS;
   }
 
   // if the last queue has any draw commands, render them now
@@ -308,10 +308,10 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
       draw_buffers.add(0);
 
       switch (_batch.type) {
-      case Queue::Command::Type::k_uninitialized:
+      case Queue::Command::Type::UNINITIALIZED:
         RX_HINT_UNREACHABLE();
         break;
-      case Queue::Command::Type::k_point:
+      case Queue::Command::Type::POINT:
         m_frontend->draw(
           RX_RENDER_TAG("immediate3D points"),
           _batch.render_state,
@@ -327,7 +327,7 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
           Frontend::PrimitiveType::POINTS,
           {});
         break;
-      case Queue::Command::Type::k_line:
+      case Queue::Command::Type::LINE:
         m_frontend->draw(
           RX_RENDER_TAG("immediate3D lines"),
           _batch.render_state,
@@ -343,9 +343,9 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
           Frontend::PrimitiveType::LINES,
           {});
         break;
-      case Queue::Command::Type::k_solid_sphere:
+      case Queue::Command::Type::SOLID_SPHERE:
         [[fallthrough]];
-      case Queue::Command::Type::k_solid_cube:
+      case Queue::Command::Type::SOLID_CUBE:
         m_frontend->draw(
           RX_RENDER_TAG("immediate3D triangles"),
           _batch.render_state,
@@ -363,7 +363,7 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
         break;
       }
     });
-    m_rd_index = (m_rd_index + 1) % k_buffers;
+    m_rd_index = (m_rd_index + 1) % BUFFERS;
   }
 
   // clear the queue for the next frame
@@ -379,7 +379,7 @@ void Immediate3D::generate_point(const Math::Vec3f& _position, Float32 _size,
   add_element(element);
   add_vertex({_position, _size, _color});
 
-  add_batch(offset, Queue::Command::Type::k_point, _flags, _color.a < 1.0f);
+  add_batch(offset, Queue::Command::Type::POINT, _flags, _color.a < 1.0f);
 }
 
 void Immediate3D::generate_line(const Math::Vec3f& _point_a,
@@ -394,7 +394,7 @@ void Immediate3D::generate_line(const Math::Vec3f& _point_a,
   add_vertex({_point_a, 0.0f, _color});
   add_vertex({_point_b, 0.0f, _color});
 
-  add_batch(offset, Queue::Command::Type::k_line, _flags, _color.a < 1.0f);
+  add_batch(offset, Queue::Command::Type::LINE, _flags, _color.a < 1.0f);
 }
 
 void Immediate3D::generate_solid_sphere(const Math::Vec2f& _slices_and_stacks,
@@ -442,7 +442,7 @@ void Immediate3D::generate_solid_sphere(const Math::Vec2f& _slices_and_stacks,
     }
   }
 
-  add_batch(offset, Queue::Command::Type::k_solid_sphere, _flags, _color.a < 1.0f);
+  add_batch(offset, Queue::Command::Type::SOLID_SPHERE, _flags, _color.a < 1.0f);
 }
 
 void Immediate3D::generate_solid_cube(const Math::Mat4x4f& _transform,
@@ -514,7 +514,7 @@ void Immediate3D::generate_solid_cube(const Math::Mat4x4f& _transform,
   const Math::Vec3f r4{Math::Mat4x4f::transform_point({max[0], min[1], max[2]}, _transform)};
   face(r1, r2, r3, r4);
 
-  add_batch(offset, Queue::Command::Type::k_solid_cube, _flags, _color.a < 1.0f);
+  add_batch(offset, Queue::Command::Type::SOLID_CUBE, _flags, _color.a < 1.0f);
 }
 
 void Immediate3D::size_point(Size& n_vertices_, Size& n_elements_) {
@@ -553,15 +553,15 @@ bool Immediate3D::add_batch(Size _offset, Queue::Command::Type _type,
   if (_blend) {
     render_state.blend.record_enable(true);
     render_state.blend.record_blend_factors(
-            Frontend::BlendState::FactorType::k_src_alpha,
-            Frontend::BlendState::FactorType::k_one_minus_src_alpha);
+      Frontend::BlendState::FactorType::SRC_ALPHA,
+      Frontend::BlendState::FactorType::ONE_MINUS_SRC_ALPHA);
   } else {
     render_state.blend.record_enable(false);
   }
 
   // determing depth state from flags
-  render_state.depth.record_test(!!(_flags & k_depth_test));
-  render_state.depth.record_write(!!(_flags & k_depth_write));
+  render_state.depth.record_test(!!(_flags & DEPTH_TEST));
+  render_state.depth.record_write(!!(_flags & DEPTH_WRITE));
 
   // backface culling
   render_state.cull.record_enable(true);

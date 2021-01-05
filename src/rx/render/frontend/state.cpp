@@ -4,15 +4,15 @@ namespace Rx::Render::Frontend {
 
 // scissor_state
 ScissorState::ScissorState()
-  : m_hash{k_dirty_bit}
+  : m_hash{DIRTY_BIT}
   , m_enabled{false}
 {
   flush();
 }
 
 bool ScissorState::operator==(const ScissorState& _other) const {
-  RX_ASSERT(!(m_hash & k_dirty_bit), "not flushed");
-  RX_ASSERT(!(_other.m_hash & k_dirty_bit), "not flushed");
+  RX_ASSERT(!(m_hash & DIRTY_BIT), "not flushed");
+  RX_ASSERT(!(_other.m_hash & DIRTY_BIT), "not flushed");
 
   if (m_hash != _other.m_hash) {
     return false;
@@ -34,31 +34,31 @@ bool ScissorState::operator==(const ScissorState& _other) const {
 }
 
 Size ScissorState::flush() {
-  if (m_hash & k_dirty_bit) {
+  if (m_hash & DIRTY_BIT) {
     m_hash = Hash<bool>{}(m_enabled);
     m_hash = hash_combine(m_hash, Hash<Math::Vec2i>{}(m_offset));
     m_hash = hash_combine(m_hash, Hash<Math::Vec2i>{}(m_size));
-    m_hash &= ~k_dirty_bit;
+    m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
 }
 
 // blend_state
 BlendState::BlendState()
-  : m_hash{k_dirty_bit}
-  , m_color_src_factor{FactorType::k_one}
-  , m_color_dst_factor{FactorType::k_zero}
-  , m_alpha_src_factor{FactorType::k_one}
-  , m_alpha_dst_factor{FactorType::k_zero}
-  , m_write_mask{k_mask_all}
+  : m_hash{DIRTY_BIT}
+  , m_color_src_factor{FactorType::ONE}
+  , m_color_dst_factor{FactorType::ZERO}
+  , m_alpha_src_factor{FactorType::ONE}
+  , m_alpha_dst_factor{FactorType::ZERO}
+  , m_write_mask{MASK_ALL}
   , m_enabled{false}
 {
   flush();
 }
 
 bool BlendState::operator==(const BlendState& _other) const {
-  RX_ASSERT(!(m_hash & k_dirty_bit), "not flushed");
-  RX_ASSERT(!(_other.m_hash & k_dirty_bit), "not flushed");
+  RX_ASSERT(!(m_hash & DIRTY_BIT), "not flushed");
+  RX_ASSERT(!(_other.m_hash & DIRTY_BIT), "not flushed");
 
   if (m_hash != _other.m_hash) {
     return false;
@@ -88,29 +88,29 @@ bool BlendState::operator==(const BlendState& _other) const {
 }
 
 Size BlendState::flush() {
-  if (m_hash & k_dirty_bit) {
+  if (m_hash & DIRTY_BIT) {
     m_hash = Hash<bool>{}(m_enabled);
     m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_color_src_factor)));
     m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_color_dst_factor)));
     m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_alpha_src_factor)));
     m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_alpha_dst_factor)));
     m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_write_mask)));
-    m_hash &= ~k_dirty_bit;
+    m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
 }
 
 // depth_state
 DepthState::DepthState()
-  : m_hash{k_dirty_bit}
+  : m_hash{DIRTY_BIT}
   , m_flags{0}
 {
   flush();
 }
 
 bool DepthState::operator==(const DepthState& _other) const {
-  RX_ASSERT(!(m_hash & k_dirty_bit), "not flushed");
-  RX_ASSERT(!(_other.m_hash & k_dirty_bit), "not flushed");
+  RX_ASSERT(!(m_hash & DIRTY_BIT), "not flushed");
+  RX_ASSERT(!(_other.m_hash & DIRTY_BIT), "not flushed");
 
   if (m_hash != _other.m_hash) {
     return false;
@@ -124,27 +124,27 @@ bool DepthState::operator==(const DepthState& _other) const {
 }
 
 Size DepthState::flush() {
-  if (m_hash & k_dirty_bit) {
-    m_hash = Hash<bool>{}(m_flags & k_test);
-    m_hash = hash_combine(m_hash, Hash<bool>{}(m_flags & k_write));
-    m_hash &= ~k_dirty_bit;
+  if (m_hash & DIRTY_BIT) {
+    m_hash = Hash<bool>{}(m_flags & TEST);
+    m_hash = hash_combine(m_hash, Hash<bool>{}(m_flags & WRITE));
+    m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
 }
 
 // cull_state
 CullState::CullState()
-  : m_hash{k_dirty_bit}
-  , m_front_face{FrontFaceType::k_clock_wise}
-  , m_cull_face{CullFaceType::k_back}
+  : m_hash{DIRTY_BIT}
+  , m_front_face{FrontFaceType::CLOCK_WISE}
+  , m_cull_face{CullFaceType::BACK}
   , m_enabled{true}
 {
   flush();
 }
 
 bool CullState::operator==(const CullState& _other) const {
-  RX_ASSERT(!(m_hash & k_dirty_bit), "not flushed");
-  RX_ASSERT(!(_other.m_hash & k_dirty_bit), "not flushed");
+  RX_ASSERT(!(m_hash & DIRTY_BIT), "not flushed");
+  RX_ASSERT(!(_other.m_hash & DIRTY_BIT), "not flushed");
 
   if (m_hash != _other.m_hash) {
     return false;
@@ -166,28 +166,28 @@ bool CullState::operator==(const CullState& _other) const {
 }
 
 Size CullState::flush() {
-  if (m_hash & k_dirty_bit) {
+  if (m_hash & DIRTY_BIT) {
     m_hash = Hash<bool>{}(m_enabled);
     m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_front_face)));
     m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_cull_face)));
-    m_hash &= ~k_dirty_bit;
+    m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
 }
 
 // stencil_state
 StencilState::StencilState()
-  : m_hash{k_dirty_bit}
+  : m_hash{DIRTY_BIT}
   , m_write_mask{0xff}
-  , m_function{FunctionType::k_always}
+  , m_function{FunctionType::ALWAYS}
   , m_reference{0x00}
   , m_mask{0xff}
-  , m_front_fail_action{OperationType::k_keep}
-  , m_front_depth_fail_action{OperationType::k_keep}
-  , m_front_depth_pass_action{OperationType::k_keep}
-  , m_back_fail_action{OperationType::k_keep}
-  , m_back_depth_fail_action{OperationType::k_keep}
-  , m_back_depth_pass_action{OperationType::k_keep}
+  , m_front_fail_action{OperationType::KEEP}
+  , m_front_depth_fail_action{OperationType::KEEP}
+  , m_front_depth_pass_action{OperationType::KEEP}
+  , m_back_fail_action{OperationType::KEEP}
+  , m_back_depth_fail_action{OperationType::KEEP}
+  , m_back_depth_pass_action{OperationType::KEEP}
   , m_enabled{false}
 {
   flush();
@@ -242,7 +242,7 @@ bool StencilState::operator==(const StencilState& _other) const {
 }
 
 Size StencilState::flush() {
-  if (m_hash & k_dirty_bit) {
+  if (m_hash & DIRTY_BIT) {
     m_hash = Hash<bool>{}(m_enabled);
     m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_write_mask)));
     m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_function)));
@@ -254,15 +254,15 @@ Size StencilState::flush() {
     m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_back_fail_action)));
     m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_back_depth_fail_action)));
     m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_back_depth_pass_action)));
-    m_hash &= ~k_dirty_bit;
+    m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
 }
 
 // polygon_state
 PolygonState::PolygonState()
-  : m_hash{k_dirty_bit}
-  , m_mode{ModeType::k_fill}
+  : m_hash{DIRTY_BIT}
+  , m_mode{ModeType::FILL}
 {
   flush();
 }
@@ -280,25 +280,25 @@ bool PolygonState::operator==(const PolygonState& _other) const {
 }
 
 Size PolygonState::flush() {
-  if (m_hash & k_dirty_bit) {
+  if (m_hash & DIRTY_BIT) {
     m_hash = Hash<Uint32>{}(static_cast<Uint32>(m_mode));
-    m_hash &= ~k_dirty_bit;
+    m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
 }
 
 // viewport_state
 ViewportState::ViewportState()
-  : m_hash{k_dirty_bit}
+  : m_hash{DIRTY_BIT}
 {
   flush();
 }
 
 Size ViewportState::flush() {
-  if (m_hash & k_dirty_bit) {
+  if (m_hash & DIRTY_BIT) {
     m_hash = hash_combine(m_hash, Hash<Math::Vec2i>{}(m_offset));
     m_hash = hash_combine(m_hash, Hash<Math::Vec2z>{}(m_dimensions));
-    m_hash &= ~k_dirty_bit;
+    m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
 }

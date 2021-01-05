@@ -37,32 +37,32 @@ struct Texture
   };
 
   enum class WrapType : Uint8 {
-    k_clamp_to_edge,
-    k_clamp_to_border,
-    k_mirrored_repeat,
-    k_mirror_clamp_to_edge,
-    k_repeat
+    CLAMP_TO_EDGE,
+    CLAMP_TO_BORDER,
+    MIRRORED_REPEAT,
+    MIRROR_CLAMP_TO_EDGE,
+    REPEAT
   };
 
   enum class DataFormat : Uint8 {
-    k_r_u8,
-    k_rgb_u8,
-    k_rgba_u8,
-    k_bgr_u8,
-    k_bgra_u8,
-    k_rgba_f16,
-    k_bgra_f16,
-    k_d16,
-    k_d24,
-    k_d32,
-    k_d32f,
-    k_d24_s8,
-    k_d32f_s8,
-    k_s8,
-    k_dxt1,
-    k_dxt5,
-    k_srgb_u8,
-    k_srgba_u8
+    R_U8,
+    RGB_U8,
+    RGBA_U8,
+    BGR_U8,
+    BGRA_U8,
+    RGBA_F16,
+    BGRA_F16,
+    D16,
+    D24,
+    D32,
+    D32F,
+    D24_S8,
+    D32F_S8,
+    S8,
+    DXT1,
+    DXT5,
+    SRGB_U8,
+    SRGBA_U8
   };
 
   enum class Type : Uint8 {
@@ -123,14 +123,14 @@ struct Texture
 
 protected:
   enum : Uint8 {
-    k_format     = 1 << 0,
-    k_type       = 1 << 1,
-    k_filter     = 1 << 2,
-    k_wrap       = 1 << 3,
-    k_dimensions = 1 << 4,
-    k_swapchain  = 1 << 5,
-    k_levels     = 1 << 6,
-    k_border     = 1 << 7
+    FORMAT     = 1 << 0,
+    TYPE       = 1 << 1,
+    FILTER     = 1 << 2,
+    WRAP       = 1 << 3,
+    DIMENSIONS = 1 << 4,
+    SWAPCHAIN  = 1 << 5,
+    LEVELS     = 1 << 6,
+    BORDER     = 1 << 7
   };
 
   friend struct Context;
@@ -270,12 +270,12 @@ struct TextureCM : Texture {
   using LevelInfoType = LevelInfo<DimensionType>;
 
   enum class Face : Uint8 {
-    k_right,  // +x
-    k_left,   // -x
-    k_top,    // +y
-    k_bottom, // -y
-    k_front,  // +z
-    k_back    // -z
+    RIGHT,  // +x
+    LEFT,   // -x
+    TOP,    // +y
+    BOTTOM, // -y
+    FRONT,  // +z
+    BACK    // -z
   };
 
   TextureCM(Context* _frontend);
@@ -306,12 +306,12 @@ inline const LinearBuffer& Texture::data() const & {
 }
 
 inline Texture::DataFormat Texture::format() const {
-  RX_ASSERT(m_flags & k_format, "format not recorded");
+  RX_ASSERT(m_flags & FORMAT, "format not recorded");
   return m_format;
 }
 
 inline Texture::FilterOptions Texture::filter() const {
-  RX_ASSERT(m_flags & k_filter, "filter not recorded");
+  RX_ASSERT(m_flags & FILTER, "filter not recorded");
   return m_filter;
 }
 
@@ -337,48 +337,48 @@ inline Size Texture::bytes_per_pixel() const {
 
 inline const Math::Vec4f& Texture::border() const & {
   // TODO(dweiler): Better method for texture borders...
-  // RX_ASSERT(m_flags & k_border, "border not recorded");
+  // RX_ASSERT(m_flags & BORDER, "border not recorded");
   return m_border;
 }
 
 inline bool Texture::is_color_format(DataFormat _format) {
-  return _format == DataFormat::k_r_u8
-      || _format == DataFormat::k_rgb_u8
-      || _format == DataFormat::k_rgba_u8
-      || _format == DataFormat::k_bgr_u8
-      || _format == DataFormat::k_bgra_u8
-      || _format == DataFormat::k_rgba_f16
-      || _format == DataFormat::k_bgra_f16
-      || _format == DataFormat::k_dxt1
-      || _format == DataFormat::k_dxt5
-      || _format == DataFormat::k_srgb_u8
-      || _format == DataFormat::k_srgba_u8;
+  return _format == DataFormat::R_U8
+      || _format == DataFormat::RGB_U8
+      || _format == DataFormat::RGBA_U8
+      || _format == DataFormat::BGR_U8
+      || _format == DataFormat::BGRA_U8
+      || _format == DataFormat::RGBA_F16
+      || _format == DataFormat::BGRA_F16
+      || _format == DataFormat::DXT1
+      || _format == DataFormat::DXT5
+      || _format == DataFormat::SRGB_U8
+      || _format == DataFormat::SRGBA_U8;
 }
 
 inline bool Texture::is_depth_format(DataFormat _format) {
-  return _format == DataFormat::k_d16
-      || _format == DataFormat::k_d24
-      || _format == DataFormat::k_d32
-      || _format == DataFormat::k_d32f;
+  return _format == DataFormat::D16
+      || _format == DataFormat::D24
+      || _format == DataFormat::D32
+      || _format == DataFormat::D32F;
 }
 
 inline bool Texture::is_stencil_format(DataFormat _format) {
-  return _format == DataFormat::k_s8;
+  return _format == DataFormat::S8;
 }
 
 inline bool Texture::is_depth_stencil_format(DataFormat _format) {
-  return _format == DataFormat::k_d24_s8
-      || _format == DataFormat::k_d32f_s8;
+  return _format == DataFormat::D24_S8
+      || _format == DataFormat::D32F_S8;
 }
 
 inline bool Texture::is_compressed_format(DataFormat _format) {
-  return _format == DataFormat::k_dxt1
-      || _format == DataFormat::k_dxt5;
+  return _format == DataFormat::DXT1
+      || _format == DataFormat::DXT5;
 }
 
 inline bool Texture::is_srgb_color_format(DataFormat _format) {
-  return _format == DataFormat::k_srgb_u8
-      || _format == DataFormat::k_srgba_u8;
+  return _format == DataFormat::SRGB_U8
+      || _format == DataFormat::SRGBA_U8;
 }
 
 inline bool Texture::is_compressed_format() const {
@@ -406,7 +406,7 @@ inline bool Texture::is_srgb_color_format() const {
 }
 
 inline bool Texture::is_swapchain() const {
-  return m_flags & k_swapchain;
+  return m_flags & SWAPCHAIN;
 }
 
 inline bool Texture::is_level_in_range(Size _level) const {
@@ -415,41 +415,41 @@ inline bool Texture::is_level_in_range(Size _level) const {
 
 inline Size Texture::bits_per_pixel(DataFormat _format) {
   switch (_format) {
-  case DataFormat::k_rgba_u8:
+  case DataFormat::RGBA_U8:
     return 4 * 8;
-  case DataFormat::k_rgb_u8:
+  case DataFormat::RGB_U8:
     return 3 * 8;
-  case DataFormat::k_bgra_u8:
+  case DataFormat::BGRA_U8:
     return 4 * 8;
-  case DataFormat::k_bgr_u8:
+  case DataFormat::BGR_U8:
     return 3 * 8;
-  case DataFormat::k_rgba_f16:
+  case DataFormat::RGBA_F16:
     return 4 * 16;
-  case DataFormat::k_bgra_f16:
+  case DataFormat::BGRA_F16:
     return 4 * 16;
-  case DataFormat::k_d16:
+  case DataFormat::D16:
     return 16;
-  case DataFormat::k_d24:
+  case DataFormat::D24:
     return 24;
-  case DataFormat::k_d32:
+  case DataFormat::D32:
     return 32;
-  case DataFormat::k_d32f:
+  case DataFormat::D32F:
     return 32;
-  case DataFormat::k_d24_s8:
+  case DataFormat::D24_S8:
     return 32;
-  case DataFormat::k_d32f_s8:
+  case DataFormat::D32F_S8:
     return 40;
-  case DataFormat::k_s8:
+  case DataFormat::S8:
     return 8;
-  case DataFormat::k_r_u8:
+  case DataFormat::R_U8:
     return 8;
-  case DataFormat::k_dxt1:
+  case DataFormat::DXT1:
     return 4;
-  case DataFormat::k_dxt5:
+  case DataFormat::DXT5:
     return 8;
-  case DataFormat::k_srgb_u8:
+  case DataFormat::SRGB_U8:
     return 24;
-  case DataFormat::k_srgba_u8:
+  case DataFormat::SRGBA_U8:
     return 32;
   }
   return 0;
@@ -457,41 +457,41 @@ inline Size Texture::bits_per_pixel(DataFormat _format) {
 
 inline Size Texture::channel_count_of_format(DataFormat _format) {
   switch (_format) {
-  case DataFormat::k_rgba_u8:
+  case DataFormat::RGBA_U8:
     return 4;
-  case DataFormat::k_rgb_u8:
+  case DataFormat::RGB_U8:
     return 3;
-  case DataFormat::k_bgra_u8:
+  case DataFormat::BGRA_U8:
     return 4;
-  case DataFormat::k_bgr_u8:
+  case DataFormat::BGR_U8:
     return 3;
-  case DataFormat::k_rgba_f16:
+  case DataFormat::RGBA_F16:
     return 4;
-  case DataFormat::k_bgra_f16:
+  case DataFormat::BGRA_F16:
     return 4;
-  case DataFormat::k_d16:
+  case DataFormat::D16:
     return 1;
-  case DataFormat::k_d24:
+  case DataFormat::D24:
     return 1;
-  case DataFormat::k_d32:
+  case DataFormat::D32:
     return 1;
-  case DataFormat::k_d32f:
+  case DataFormat::D32F:
     return 1;
-  case DataFormat::k_d24_s8:
+  case DataFormat::D24_S8:
     return 2;
-  case DataFormat::k_d32f_s8:
+  case DataFormat::D32F_S8:
     return 2;
-  case DataFormat::k_s8:
+  case DataFormat::S8:
     return 1;
-  case DataFormat::k_r_u8:
+  case DataFormat::R_U8:
     return 1;
-  case DataFormat::k_dxt1:
+  case DataFormat::DXT1:
     return 3;
-  case DataFormat::k_dxt5:
+  case DataFormat::DXT5:
     return 4;
-  case DataFormat::k_srgb_u8:
+  case DataFormat::SRGB_U8:
     return 3;
-  case DataFormat::k_srgba_u8:
+  case DataFormat::SRGBA_U8:
     return 4;
   }
   return 0;

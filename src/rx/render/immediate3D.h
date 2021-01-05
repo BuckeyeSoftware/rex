@@ -18,8 +18,8 @@ namespace Frontend {
 
 struct Immediate3D {
   enum : Uint32 {
-    k_depth_test  = 1 << 0,
-    k_depth_write = 1 << 1
+    DEPTH_TEST  = 1 << 0,
+    DEPTH_WRITE = 1 << 1
   };
 
   struct Queue {
@@ -60,12 +60,12 @@ struct Immediate3D {
     struct Command {
       constexpr Command();
 
-      enum class Type {
-        k_uninitialized,
-        k_point,
-        k_line,
-        k_solid_sphere,
-        k_solid_cube
+      enum class Type : Uint8 {
+        UNINITIALIZED,
+        POINT,
+        LINE,
+        SOLID_SPHERE,
+        SOLID_CUBE
       };
 
       bool operator!=(const Command& _command) const;
@@ -150,7 +150,7 @@ private:
   void add_element(Uint32 _element);
   void add_vertex(Vertex&& vertex_);
 
-  static constexpr const Size k_buffers{2};
+  static constexpr const Size BUFFERS = 2;
 
   Frontend::Context* m_frontend;
   Frontend::Technique* m_technique;
@@ -165,9 +165,9 @@ private:
 
   Size m_rd_index;
   Size m_wr_index;
-  Vector<Batch> m_render_batches[k_buffers];
-  Frontend::Buffer* m_buffers[k_buffers];
-  Queue m_render_queue[k_buffers];
+  Vector<Batch> m_render_batches[BUFFERS];
+  Frontend::Buffer* m_buffers[BUFFERS];
+  Queue m_render_queue[BUFFERS];
 };
 
 inline bool Immediate3D::Queue::Point::operator!=(const Point& _point) const {
@@ -187,7 +187,7 @@ inline bool Immediate3D::Queue::SolidCube::operator!=(const SolidCube& _solid_cu
 }
 
 inline constexpr Immediate3D::Queue::Command::Command()
-  : kind{Queue::Command::Type::k_uninitialized}
+  : kind{Queue::Command::Type::UNINITIALIZED}
   , flags{0}
   , hash{0}
   , color{}

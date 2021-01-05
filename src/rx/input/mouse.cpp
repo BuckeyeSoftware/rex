@@ -12,17 +12,17 @@ void Mouse::update(Float32) {
   m_movement = {};
   m_scrolled = false;
 
-  for (Size i = 0; i < k_buttons; i++) {
-    m_buttons[i] &= ~(k_pressed | k_released);
+  for (Size i = 0; i < BUTTONS; i++) {
+    m_buttons[i] &= ~(PRESSED | RELEASED);
   }
 }
 
 void Mouse::update_button(bool _down, int _button) {
   if (_down) {
-    m_buttons[_button] |= (k_pressed | k_held);
+    m_buttons[_button] |= (PRESSED | HELD);
   } else {
-    m_buttons[_button] |= k_released;
-    m_buttons[_button] &= ~k_held;
+    m_buttons[_button] |= RELEASED;
+    m_buttons[_button] &= ~HELD;
   }
 }
 

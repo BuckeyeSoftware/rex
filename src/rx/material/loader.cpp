@@ -92,7 +92,7 @@ bool Loader::parse(const JSON& _definition) {
   }
 
   if (alpha_test && alpha_test.as_boolean()) {
-    m_flags |= k_alpha_test;
+    m_flags |= ALPHA_TEST;
   }
 
   if (const auto& roughness = _definition["roughness"]) {
@@ -140,7 +140,7 @@ bool Loader::parse(const JSON& _definition) {
   }
 
   if (no_compress && no_compress.as_boolean()) {
-    m_flags |= k_no_compress;
+    m_flags |= NO_COMPRESS;
   }
 
   if (const auto& transform{_definition["transform"]}) {
@@ -192,10 +192,10 @@ bool Loader::parse(const JSON& _definition) {
     }
 
     if (_texture.chain().bpp() == 4) {
-      m_flags |= k_has_alpha;
-    } else if (m_flags & k_alpha_test) {
+      m_flags |= HAS_ALPHA;
+    } else if (m_flags & ALPHA_TEST) {
       logger->warning("'alpha_test' disabled (\"albedo\" has no alpha channel)");
-      m_flags &= ~k_alpha_test;
+      m_flags &= ~ALPHA_TEST;
     }
     return false;
   });

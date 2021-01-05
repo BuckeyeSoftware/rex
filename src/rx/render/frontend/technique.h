@@ -26,10 +26,10 @@ struct Technique {
   Technique(Technique&& technique_);
   Technique& operator=(Technique&& technique_);
 
-  enum class Type {
-    k_basic,
-    k_variant,
-    k_permute
+  enum class Type : Uint8 {
+    BASIC,
+    VARIANT,
+    PERMUTE
   };
 
   Type type() const;

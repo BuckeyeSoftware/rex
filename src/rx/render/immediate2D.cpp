@@ -63,17 +63,17 @@ bool Immediate2D::Queue::Command::operator!=(const Command& _command) const {
   }
 
   switch (type) {
-  case Command::Type::k_uninitialized:
+  case Command::Type::UNINITIALIZED:
     return false;
-  case Command::Type::k_line:
+  case Command::Type::LINE:
     return _command.as_line != as_line;
-  case Command::Type::k_rectangle:
+  case Command::Type::RECTANGLE:
     return _command.as_rectangle != as_rectangle;
-  case Command::Type::k_scissor:
+  case Command::Type::SCISSOR:
     return _command.as_scissor != as_scissor;
-  case Command::Type::k_text:
+  case Command::Type::TEXT:
     return _command.as_text != as_text;
-  case Command::Type::k_triangle:
+  case Command::Type::TRIANGLE:
     return _command.as_triangle != as_triangle;
   }
 
@@ -92,7 +92,7 @@ bool Immediate2D::Queue::record_scissor(const Math::Vec2f& _position,
   }
 
   Command next_command;
-  next_command.type = Command::Type::k_scissor;
+  next_command.type = Command::Type::SCISSOR;
   next_command.flags = _position.x < 0.0f ? 0 : 1;
   next_command.color = {};
   next_command.as_scissor.position = _position;
@@ -112,7 +112,7 @@ bool Immediate2D::Queue::record_rectangle(const Math::Vec2f& _position,
   RX_PROFILE_CPU("immediate2D::queue::record_rectangle");
 
   Command next_command;
-  next_command.type = Command::Type::k_rectangle;
+  next_command.type = Command::Type::RECTANGLE;
   next_command.flags = 0;
   next_command.color = _color;
   next_command.as_rectangle.position = _position;
@@ -136,7 +136,7 @@ bool Immediate2D::Queue::record_line(const Math::Vec2f& _point_a,
   RX_PROFILE_CPU("immediate2D::queue::record_line");
 
   Command next_command;
-  next_command.type = Command::Type::k_line;
+  next_command.type = Command::Type::LINE;
   next_command.flags = 0;
   next_command.color = _color;
   next_command.as_line.points[0] = _point_a;
@@ -155,7 +155,7 @@ bool Immediate2D::Queue::record_triangle(const Math::Vec2f& _position,
   RX_PROFILE_CPU("immediate2D::queue::record_triangle");
 
   Command next_command;
-  next_command.type = Command::Type::k_triangle;
+  next_command.type = Command::Type::TRIANGLE;
   next_command.flags = _flags;
   next_command.color = _color;
   next_command.as_triangle.position = _position;
@@ -193,14 +193,14 @@ bool Immediate2D::Queue::record_text(const char* _font, Size _font_length,
     }
 
     // Text is outside the right edge of the scissor while not right aligned.
-    if (_align != TextAlign::k_right
+    if (_align != TextAlign::RIGHT
       && _position.x > m_scissor->position.x + m_scissor->size.w) {
       return false;
     }
   }
 
   Command next_command;
-  next_command.type = Command::Type::k_text;
+  next_command.type = Command::Type::TEXT;
   next_command.flags = static_cast<Uint32>(_align);
   next_command.color = _color;
   next_command.as_text.position = _position;
@@ -273,26 +273,26 @@ void Immediate2D::Queue::clear() {
 Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
   : m_frontend{_frontend}
   , m_size{_key.size}
-  , m_resolution{k_default_resolution}
+  , m_resolution{DEFAULT_RESOLUTION}
   , m_texture{nullptr}
   , m_glyphs{m_frontend->allocator()}
 {
   const auto data{Filesystem::read_binary_file(String::format("base/fonts/%s.ttf", _key.name))};
   if (data) {
-    static const int k_glyphs{96}; // all of ascii
+    static constexpr const int GLYPHS = 96; // all of ascii
 
     // figure out the atlas size needed
     for (;;) {
-      Vector<stbtt_bakedchar> baked_glyphs(m_frontend->allocator(), k_glyphs);
+      Vector<stbtt_bakedchar> baked_glyphs(m_frontend->allocator(), GLYPHS);
       LinearBuffer baked_atlas{m_frontend->allocator()};
       RX_ASSERT(baked_atlas.resize(m_resolution * m_resolution), "out of memory");
 
       const int result{stbtt_BakeFontBitmap(data->data(), 0,
         static_cast<Float32>(m_size), baked_atlas.data(),
         static_cast<int>(m_resolution), static_cast<int>(m_resolution), 32,
-        k_glyphs, baked_glyphs.data())};
+        GLYPHS, baked_glyphs.data())};
 
-      if (result == -k_glyphs || result > 0) {
+      if (result == -GLYPHS || result > 0) {
         // create a texture chain from this baked font bitmap
         Rx::Texture::Chain chain{m_frontend->allocator()};
         chain.generate(
@@ -304,14 +304,13 @@ Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
 
         // create and upload baked atlas
         m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("font"));
-        m_texture->record_format(Frontend::Texture::DataFormat::k_r_u8);
+        m_texture->record_format(Frontend::Texture::DataFormat::R_U8);
         m_texture->record_type(Frontend::Texture::Type::STATIC);
         m_texture->record_levels(chain.levels().size());
         m_texture->record_dimensions({m_resolution, m_resolution});
         m_texture->record_filter({true, false, true});
-        m_texture->record_wrap({
-                                       Frontend::Texture::WrapType::k_clamp_to_edge,
-                                       Frontend::Texture::WrapType::k_clamp_to_edge});
+        m_texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+                                Frontend::Texture::WrapType::CLAMP_TO_EDGE});
 
         const auto& levels{chain.levels()};
         for (Size i{0}; i < levels.size(); i++) {
@@ -322,8 +321,8 @@ Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
         m_frontend->initialize_texture(RX_RENDER_TAG("font"), m_texture);
 
         // copy glyph information
-        m_glyphs.resize(k_glyphs);
-        for (int i{0}; i < k_glyphs; i++) {
+        m_glyphs.resize(GLYPHS);
+        for (int i{0}; i < GLYPHS; i++) {
           const auto& baked_glyph{baked_glyphs[i]};
           auto& glyph{m_glyphs[i]};
 
@@ -346,7 +345,7 @@ Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
 Immediate2D::Font::Font(Font&& font_)
   : m_frontend{font_.m_frontend}
   , m_size{Utility::exchange(font_.m_size, 0)}
-  , m_resolution{Utility::exchange(font_.m_resolution, k_default_resolution)}
+  , m_resolution{Utility::exchange(font_.m_resolution, DEFAULT_RESOLUTION)}
   , m_texture{Utility::exchange(font_.m_texture, nullptr)}
   , m_glyphs{Utility::move(font_.m_glyphs)}
 {
@@ -400,14 +399,14 @@ Immediate2D::Immediate2D(Frontend::Context* _frontend)
   , m_rd_index{1}
   , m_wr_index{0}
 {
-  for (Size i{0}; i < k_buffers; i++) {
+  for (Size i{0}; i < BUFFERS; i++) {
     m_render_batches[i] = {m_frontend->allocator()};
     m_render_queue[i] = {m_frontend->allocator()};
   }
 
   // Generate circle geometry.
-  for (Size i{0}; i < k_circle_vertices; i++) {
-    const auto phi = Float32(i) / Float32(k_circle_vertices) * Math::PI<Float32> * 2.0f;
+  for (Size i{0}; i < CIRCLE_VERTICES; i++) {
+    const auto phi = Float32(i) / Float32(CIRCLE_VERTICES) * Math::PI<Float32> * 2.0f;
     m_circle_vertices[i] = {Math::cos(phi), Math::sin(phi)};
   }
 
@@ -421,7 +420,7 @@ Immediate2D::Immediate2D(Frontend::Context* _frontend)
   format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC4F, offsetof(Vertex, color)});
   format.finalize();
 
-  for (Size i{0}; i < k_buffers; i++) {
+  for (Size i{0}; i < BUFFERS; i++) {
     m_buffers[i] = m_frontend->create_buffer(RX_RENDER_TAG("immediate2D"));
     m_buffers[i]->record_format(format);
     m_frontend->initialize_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[i]);
@@ -429,7 +428,7 @@ Immediate2D::Immediate2D(Frontend::Context* _frontend)
 }
 
 Immediate2D::~Immediate2D() {
-  for (Size i{0}; i < k_buffers; i++) {
+  for (Size i{0}; i < BUFFERS; i++) {
     m_frontend->destroy_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[i]);
   }
 }
@@ -451,19 +450,19 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
     Size n_elements{0};
     m_queue.m_commands.each_fwd([&](const Queue::Command& _command) {
       switch (_command.type) {
-      case Queue::Command::Type::k_rectangle:
+      case Queue::Command::Type::RECTANGLE:
         size_rectangle(
           _command.as_rectangle.roundness,
           n_vertices,
           n_elements);
           break;
-      case Queue::Command::Type::k_line:
+      case Queue::Command::Type::LINE:
         size_line(_command.as_line.roundness, n_vertices, n_elements);
         break;
-      case Queue::Command::Type::k_triangle:
+      case Queue::Command::Type::TRIANGLE:
         size_triangle(n_vertices, n_elements);
         break;
-      case Queue::Command::Type::k_text:
+      case Queue::Command::Type::TEXT:
         size_text(
           m_queue.m_string_table[_command.as_text.text_index],
           _command.as_text.text_length,
@@ -487,14 +486,14 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
     // generate geometry for a future frame
     m_queue.m_commands.each_fwd([this](const Queue::Command& _command) {
       switch (_command.type) {
-      case Queue::Command::Type::k_rectangle:
+      case Queue::Command::Type::RECTANGLE:
         generate_rectangle(
           _command.as_rectangle.position.cast<Float32>(),
           _command.as_rectangle.size.cast<Float32>(),
           static_cast<Float32>(_command.as_rectangle.roundness),
           _command.color);
         break;
-      case Queue::Command::Type::k_line:
+      case Queue::Command::Type::LINE:
         generate_line(
           _command.as_line.points[0].cast<Float32>(),
           _command.as_line.points[1].cast<Float32>(),
@@ -502,13 +501,13 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           static_cast<Float32>(_command.as_line.roundness),
           _command.color);
         break;
-      case Queue::Command::Type::k_triangle:
+      case Queue::Command::Type::TRIANGLE:
         generate_triangle(
           _command.as_triangle.position.cast<Float32>(),
           _command.as_triangle.size.cast<Float32>(),
           _command.color);
         break;
-      case Queue::Command::Type::k_text:
+      case Queue::Command::Type::TEXT:
         generate_text(
           _command.as_text.size,
           m_queue.m_string_table[_command.as_text.font_index],
@@ -520,7 +519,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           static_cast<TextAlign>(_command.flags),
           _command.color);
         break;
-      case Queue::Command::Type::k_scissor:
+      case Queue::Command::Type::SCISSOR:
         m_scissor_position = _command.as_scissor.position.cast<Sint32>();
         m_scissor_size = _command.as_scissor.size.cast<Sint32>();
         break;
@@ -544,7 +543,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
     m_render_batches[m_wr_index] = Utility::move(m_batches);
     m_render_queue[m_wr_index] = Utility::move(m_queue);
 
-    m_wr_index = (m_wr_index + 1) % k_buffers;
+    m_wr_index = (m_wr_index + 1) % BUFFERS;
   }
 
   // if the last queue has any draw commands, render them now
@@ -563,7 +562,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
       Frontend::Textures draw_textures;
 
       switch (_batch.type) {
-      case Batch::Type::k_triangles:
+      case Batch::Type::TRIANGLES:
         m_frontend->draw(
           RX_RENDER_TAG("immediate2D triangles"),
           _batch.render_state,
@@ -579,7 +578,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           Frontend::PrimitiveType::TRIANGLES,
           {});
           break;
-      case Batch::Type::k_lines:
+      case Batch::Type::LINES:
         m_frontend->draw(
           RX_RENDER_TAG("immediate2D lines"),
           _batch.render_state,
@@ -595,7 +594,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           Frontend::PrimitiveType::LINES,
           {});
           break;
-      case Batch::Type::k_text:
+      case Batch::Type::TEXT:
         draw_textures.clear();
         draw_textures.add(_batch.texture);
 
@@ -619,7 +618,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
       }
     });
 
-    m_rd_index = (m_rd_index + 1) % k_buffers;
+    m_rd_index = (m_rd_index + 1) % BUFFERS;
   }
 
   m_queue.clear();
@@ -681,7 +680,7 @@ void Immediate2D::generate_polygon(const Math::Vec2f (&_coordinates)[E],
     add_vertex({_coordinates[i], {}, _color});
   }
 
-  add_batch(offset, Batch::Type::k_triangles, _color.a < 1.0f);
+  add_batch(offset, Batch::Type::TRIANGLES, _color.a < 1.0f);
 }
 
 void Immediate2D::generate_rectangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
@@ -690,23 +689,23 @@ void Immediate2D::generate_rectangle(const Math::Vec2f& _position, const Math::V
   RX_PROFILE_CPU("immediate2D::generate_rectangle");
 
   if (_roundness > 0.0f) {
-    static constexpr const Size k_round{k_circle_vertices / 4};
-    Math::Vec2f vertices[(k_round + 1) * 4];
+    static constexpr const auto ROUND = CIRCLE_VERTICES / 4;
+    Math::Vec2f vertices[(ROUND + 1) * 4];
 
     Size j{0};
-    for (Size i{0}; i <= k_round; i++) {
+    for (Size i{0}; i <= ROUND; i++) {
       vertices[j++] = _position + _size - _roundness + m_circle_vertices[i] * _roundness;
     }
 
-    for (Size i{k_round}; i <= k_round * 2; i++) {
+    for (Size i = ROUND; i <= ROUND * 2; i++) {
       vertices[j++] = _position + Math::Vec2f{_roundness, _size.h - _roundness} + m_circle_vertices[i] * _roundness;
     }
 
-    for (Size i{k_round * 2}; i <= k_round * 3; i++) {
+    for (Size i = ROUND * 2; i <= ROUND * 3; i++) {
       vertices[j++] = _position + _roundness + m_circle_vertices[i] * _roundness;
     }
 
-    for (Size i{k_round * 3}; i < k_round * 4; i++) {
+    for (Size i = ROUND * 3; i < ROUND * 4; i++) {
       vertices[j++] = _position + Math::Vec2f{_size.w - _roundness, _roundness} + m_circle_vertices[i] * _roundness;
     }
 
@@ -759,7 +758,7 @@ void Immediate2D::generate_line(const Math::Vec2f& _point_a,
     add_vertex({_point_a, {}, _color});
     add_vertex({_point_b, {}, _color});
 
-    add_batch(offset, Batch::Type::k_lines, _color.a < 1.0f);
+    add_batch(offset, Batch::Type::LINES, _color.a < 1.0f);
   }
 }
 
@@ -855,13 +854,13 @@ void Immediate2D::generate_text(Sint32 _size, const char* _font,
   Math::Vec4f color{_color};
 
   switch (_align) {
-  case TextAlign::k_center:
+  case TextAlign::CENTER:
     position.x -= calculate_text_length(font_map, _scale, _contents, _contents_length) * .5f;
     break;
-  case TextAlign::k_right:
+  case TextAlign::RIGHT:
     position.x -= calculate_text_length(font_map, _scale, _contents, _contents_length);
     break;
-  case TextAlign::k_left:
+  case TextAlign::LEFT:
     break;
   }
 
@@ -898,7 +897,7 @@ void Immediate2D::generate_text(Sint32 _size, const char* _font,
     add_vertex({{quad.position[0].x, quad.position[1].y}, {quad.coordinate[0].s, quad.coordinate[1].t}, color});
   }
 
-  add_batch(offset, Batch::Type::k_text, true, font_map->texture());
+  add_batch(offset, Batch::Type::TEXT, true, font_map->texture());
 }
 
 void Immediate2D::generate_triangle(const Math::Vec2f& _position,
@@ -920,8 +919,8 @@ void Immediate2D::size_polygon(Size& n_vertices_, Size& n_elements_) {
 
 void Immediate2D::size_rectangle(Float32 _roundness, Size& n_vertices_, Size& n_elements_) {
   if (_roundness > 0.0f) {
-    static constexpr const Size k_round{k_circle_vertices / 4};
-    size_polygon<(k_round + 1) * 4>(n_vertices_, n_elements_);
+    static constexpr const auto ROUND = CIRCLE_VERTICES / 4;
+    size_polygon<(ROUND + 1) * 4>(n_vertices_, n_elements_);
   } else {
     size_polygon<4>(n_vertices_, n_elements_);
   }
@@ -975,8 +974,8 @@ bool Immediate2D::add_batch(Size _offset, Batch::Type _type, bool _blend,
   if (_blend) {
     render_state.blend.record_enable(true);
     render_state.blend.record_blend_factors(
-            Frontend::BlendState::FactorType::k_src_alpha,
-            Frontend::BlendState::FactorType::k_one_minus_src_alpha);
+      Frontend::BlendState::FactorType::SRC_ALPHA,
+      Frontend::BlendState::FactorType::ONE_MINUS_SRC_ALPHA);
   } else {
     render_state.blend.record_enable(false);
   }

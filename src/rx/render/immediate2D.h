@@ -23,9 +23,9 @@ namespace Frontend {
 
 struct Immediate2D {
   enum class TextAlign {
-    k_left,
-    k_center,
-    k_right
+    LEFT,
+    CENTER,
+    RIGHT
   };
 
   struct Queue {
@@ -72,13 +72,13 @@ struct Immediate2D {
     struct Command {
       constexpr Command();
 
-      enum class Type {
-        k_uninitialized,
-        k_rectangle,
-        k_triangle,
-        k_line,
-        k_text,
-        k_scissor
+      enum class Type : Uint8 {
+        UNINITIALIZED,
+        RECTANGLE,
+        TRIANGLE,
+        LINE,
+        TEXT,
+        SCISSOR
       };
 
       bool operator!=(const Command& _command) const;
@@ -143,7 +143,7 @@ struct Immediate2D {
     Size _text_length, Sint32 _size, Float32 _scale);
 
   struct Font {
-    static constexpr const Size k_default_resolution{128};
+    static inline constexpr const Size DEFAULT_RESOLUTION = 128;
 
     struct Quad {
       Math::Vec2f position[2];
@@ -190,10 +190,10 @@ private:
   };
 
   struct Batch {
-    enum Type {
-      k_text,
-      k_triangles,
-      k_lines,
+    enum Type : Uint8 {
+      TEXT,
+      TRIANGLES,
+      LINES,
     };
 
     Size offset;
@@ -203,8 +203,8 @@ private:
     Frontend::Texture2D* texture;
   };
 
-  static constexpr const Size k_buffers{2};
-  static constexpr const Size k_circle_vertices{16 * 4};
+  static constexpr const Size BUFFERS = 2;
+  static constexpr const Size CIRCLE_VERTICES = 16 * 4;
 
   template<Size E>
   void generate_polygon(const Math::Vec2f (&coordinates)[E],
@@ -246,7 +246,7 @@ private:
   Math::Vec2i m_scissor_size;
 
   // precomputed circle vertices
-  Math::Vec2f m_circle_vertices[k_circle_vertices];
+  Math::Vec2f m_circle_vertices[CIRCLE_VERTICES];
 
   // generated commands, vertices, elements and batches
   Queue m_queue;
@@ -262,9 +262,9 @@ private:
   // buffering of batched immediates
   Size m_rd_index;
   Size m_wr_index;
-  Vector<Batch> m_render_batches[k_buffers];
-  Frontend::Buffer* m_buffers[k_buffers];
-  Queue m_render_queue[k_buffers];
+  Vector<Batch> m_render_batches[BUFFERS];
+  Frontend::Buffer* m_buffers[BUFFERS];
+  Queue m_render_queue[BUFFERS];
 };
 
 inline bool Immediate2D::Queue::Box::operator!=(const Box& _box) const {
@@ -287,7 +287,7 @@ inline bool Immediate2D::Queue::Text::operator!=(const Text& _text) const {
 }
 
 inline constexpr Immediate2D::Queue::Command::Command()
-  : type{Queue::Command::Type::k_uninitialized}
+  : type{Queue::Command::Type::UNINITIALIZED}
   , flags{0}
   , hash{0}
   , color{}

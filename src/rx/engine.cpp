@@ -405,14 +405,14 @@ Engine::Status Engine::run() {
       return Status::SHUTDOWN;
     case SDL_KEYDOWN:
     case SDL_KEYUP:
-      input.type = Input::Event::Type::k_keyboard;
+      input.type = Input::Event::Type::KEYBOARD;
       input.as_keyboard.down = event.type == SDL_KEYDOWN;
       input.as_keyboard.scan_code = event.key.keysym.scancode;
       input.as_keyboard.symbol = event.key.keysym.sym;
       break;
     case SDL_MOUSEBUTTONDOWN:
     case SDL_MOUSEBUTTONUP:
-      input.type = Input::Event::Type::k_mouse_button;
+      input.type = Input::Event::Type::MOUSE_BUTTON;
       input.as_mouse_button.down = event.type == SDL_MOUSEBUTTONDOWN;
       input.as_mouse_button.button = event.button.button;
       // Translate SDL's top-left coordinates to bottom-left coordinates.
@@ -421,7 +421,7 @@ Engine::Status Engine::run() {
         display_resolution->get().h - event.button.y};
       break;
     case SDL_MOUSEMOTION:
-      input.type = Input::Event::Type::k_mouse_motion;
+      input.type = Input::Event::Type::MOUSE_MOTION;
       // Translate SDL's top-left coordinates to bottom-left coordinates.
       input.as_mouse_motion.value = {
         event.motion.x,
@@ -430,7 +430,7 @@ Engine::Status Engine::run() {
         event.motion.yrel};
       break;
     case SDL_MOUSEWHEEL:
-      input.type = Input::Event::Type::k_mouse_scroll;
+      input.type = Input::Event::Type::MOUSE_SCROLL;
       input.as_mouse_scroll.value = {event.wheel.x, event.wheel.y};
       break;
     case SDL_WINDOWEVENT:
@@ -467,12 +467,12 @@ Engine::Status Engine::run() {
       }
       break;
     case SDL_TEXTINPUT:
-      input.type = Input::Event::Type::k_text_input;
+      input.type = Input::Event::Type::TEXT_INPUT;
       strcpy(input.as_text_input.contents, event.text.text);
       break;
     case SDL_CLIPBOARDUPDATE:
       if (char* text = SDL_GetClipboardText()) {
-        input.type = Input::Event::Type::k_clipboard;
+        input.type = Input::Event::Type::CLIPBOARD;
         Utility::construct<String>(&input.as_clipboard.contents, text);
         SDL_free(text);
       }

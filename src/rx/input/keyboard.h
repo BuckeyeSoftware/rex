@@ -5,127 +5,127 @@
 namespace Rx::Input {
 
 enum class ScanCode : Sint32 {
-  k_unknown        = 0,
+  UNKNOWN        = 0,
 
-  k_a              = 4,
-  k_b              = 5,
-  k_c              = 6,
-  k_d              = 7,
-  k_e              = 8,
-  k_f              = 9,
-  k_g              = 10,
-  k_h              = 11,
-  k_i              = 12,
-  k_j              = 13,
-  k_k              = 14,
-  k_l              = 15,
-  k_m              = 16,
-  k_n              = 17,
-  k_o              = 18,
-  k_p              = 19,
-  k_q              = 20,
-  k_r              = 21,
-  k_s              = 22,
-  k_t              = 23,
-  k_u              = 24,
-  k_v              = 25,
-  k_w              = 26,
-  k_x              = 27,
-  k_y              = 28,
-  k_z              = 29,
+  A              = 4,
+  B              = 5,
+  C              = 6,
+  D              = 7,
+  E              = 8,
+  F              = 9,
+  G              = 10,
+  H              = 11,
+  I              = 12,
+  J              = 13,
+  K              = 14,
+  L              = 15,
+  M              = 16,
+  N              = 17,
+  O              = 18,
+  P              = 19,
+  Q              = 20,
+  R              = 21,
+  S              = 22,
+  T              = 23,
+  U              = 24,
+  V              = 25,
+  W              = 26,
+  X              = 27,
+  Y              = 28,
+  Z              = 29,
 
-  k_1              = 30,
-  k_2              = 31,
-  k_3              = 32,
-  k_4              = 33,
-  k_5              = 34,
-  k_6              = 35,
-  k_7              = 36,
-  k_8              = 37,
-  k_9              = 38,
-  k_0              = 39,
+  N1             = 30,
+  N2             = 31,
+  N3             = 32,
+  N4             = 33,
+  N5             = 34,
+  N6             = 35,
+  N7             = 36,
+  N8             = 37,
+  N9             = 38,
+  N0             = 39,
 
-  k_return         = 40,
-  k_escape         = 41,
-  k_backspace      = 42,
-  k_tab            = 43,
-  k_space          = 44,
+  RETURN         = 40,
+  ESCAPE         = 41,
+  BACKSPACE      = 42,
+  TAB            = 43,
+  SPACE          = 44,
 
-  k_minus          = 45,
-  k_equals         = 46,
-  k_left_bracket   = 47,
-  k_right_bracket  = 48,
-  k_backslash      = 49,
+  MINUS          = 45,
+  EQUALS         = 46,
+  LEFT_BRACKET   = 47,
+  RIGHT_BRACKET  = 48,
+  BACKSLASH      = 49,
 
-  k_semicolon      = 51,
-  k_apostrophe     = 52,
-  k_grave          = 53,
+  SEMICOLON      = 51,
+  APOSTROPHE     = 52,
+  GRAVE          = 53,
 
-  k_comma          = 54,
-  k_period         = 55,
-  k_slash          = 56,
+  COMMA          = 54,
+  PERIOD         = 55,
+  SLASH          = 56,
 
-  k_capslock       = 57,
+  CAPSLOCK       = 57,
 
-  k_f1             = 58,
-  k_f2             = 59,
-  k_f3             = 60,
-  k_f4             = 61,
-  k_f5             = 62,
-  k_f6             = 63,
-  k_f7             = 64,
-  k_f8             = 65,
-  k_f9             = 66,
-  k_f10            = 67,
-  k_f11            = 68,
-  k_f12            = 69,
+  F1             = 58,
+  F2             = 59,
+  F3             = 60,
+  F4             = 61,
+  F5             = 62,
+  F6             = 63,
+  F7             = 64,
+  F8             = 65,
+  F9             = 66,
+  F10            = 67,
+  F11            = 68,
+  F12            = 69,
 
-  k_print_screen   = 70,
-  k_scroll_lock    = 71,
-  k_pause          = 72,
-  k_insert         = 73,
+  PRINT_SCREEN   = 70,
+  SCROLL_LOCK    = 71,
+  PAUSE          = 72,
+  INSERT         = 73,
 
-  k_home           = 74,
-  k_page_up        = 75,
-  k_delete         = 76,
-  k_end            = 77,
-  k_page_down      = 78,
-  k_right          = 79,
-  k_left           = 80,
-  k_down           = 81,
-  k_up             = 82,
+  HOME           = 74,
+  PAGE_UP        = 75,
+  DELETE         = 76,
+  END            = 77,
+  PAGE_DOWN      = 78,
+  RIGHT          = 79,
+  LEFT           = 80,
+  DOWN           = 81,
+  UP             = 82,
 
-  k_kp_divide      = 84,
-  k_kp_multiply    = 85,
-  k_kp_minus       = 86,
-  k_kp_plus        = 87,
-  k_kp_enter       = 88,
-  k_kp_1           = 89,
-  k_kp_2           = 90,
-  k_kp_3           = 91,
-  k_kp_4           = 92,
-  k_kp_5           = 93,
-  k_kp_6           = 94,
-  k_kp_7           = 95,
-  k_kp_8           = 96,
-  k_kp_9           = 97,
-  k_kp_0           = 98,
-  k_kp_period      = 99,
+  KP_DIVIDE      = 84,
+  KP_MULTIPLY    = 85,
+  KP_MINUS       = 86,
+  KP_PLUS        = 87,
+  KP_ENTER       = 88,
+  KP_1           = 89,
+  KP_2           = 90,
+  KP_3           = 91,
+  KP_4           = 92,
+  KP_5           = 93,
+  KP_6           = 94,
+  KP_7           = 95,
+  KP_8           = 96,
+  KP_9           = 97,
+  KP_0           = 98,
+  KP_PERIOD      = 99,
 
-  k_left_control   = 224,
-  k_left_shift     = 225,
-  k_left_alt       = 226,
-  k_left_gui       = 227,
-  k_right_control  = 228,
-  k_right_shift    = 229,
-  k_right_alt      = 230,
-  k_right_gui      = 231
+  LEFT_CONTROL   = 224,
+  LEFT_SHIFT     = 225,
+  LEFT_ALT       = 226,
+  LEFT_GUI       = 227,
+  RIGHT_CONTROL  = 228,
+  RIGHT_SHIFT    = 229,
+  RIGHT_ALT      = 230,
+  RIGHT_GUI      = 231
 };
 
 struct Keyboard {
   Keyboard();
 
-  static constexpr const auto k_keys = 384;
+  static inline constexpr const auto KEYS = 384;
 
   void update(Float32 _delta_time);
   void update_key(bool _down, int _scan_code, int _symbol);
@@ -135,24 +135,24 @@ struct Keyboard {
   bool is_held(ScanCode _scan_code) const;
 
 private:
-  enum {
-    k_pressed  = 1 << 0,
-    k_released = 1 << 1,
-    k_held     = 1 << 2
+  enum : Uint8 {
+    PRESSED  = 1 << 0,
+    RELEASED = 1 << 1,
+    HELD     = 1 << 2
   };
 
-  int m_symbols[k_keys];
-  int m_scan_codes[k_keys];
+  int m_symbols[KEYS];
+  int m_scan_codes[KEYS];
 };
 
 inline bool Keyboard::is_pressed(ScanCode _scan_code) const {
-  return m_scan_codes[static_cast<Size>(_scan_code)] & k_pressed;
+  return m_scan_codes[static_cast<Size>(_scan_code)] & PRESSED;
 }
 inline bool Keyboard::is_released(ScanCode _scan_code) const {
-  return m_scan_codes[static_cast<Size>(_scan_code)] & k_released;
+  return m_scan_codes[static_cast<Size>(_scan_code)] & RELEASED;
 }
 inline bool Keyboard::is_held(ScanCode _scan_code) const {
-  return m_scan_codes[static_cast<Size>(_scan_code)] & k_held;
+  return m_scan_codes[static_cast<Size>(_scan_code)] & HELD;
 }
 
 } // namespace Rx::Input

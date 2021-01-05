@@ -6,10 +6,10 @@
 namespace Rx::Math {
 
 template<typename T>
-inline constexpr const T k_epsilon = T(0.0001);
+inline constexpr const T EPSILON = T(0.0001);
 
 inline bool epsilon_compare(Float32 _x, Float32 _y) {
-  return abs(_x - _y) <= k_epsilon<Float32> * Algorithm::max(1.0f, _x, _y);
+  return abs(_x - _y) <= EPSILON<Float32> * Algorithm::max(1.0f, _x, _y);
 }
 
 } // namespace Rx::Math

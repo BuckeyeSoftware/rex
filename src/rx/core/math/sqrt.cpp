@@ -7,7 +7,7 @@
 
 namespace Rx::Math {
 
-static constexpr const Float32 k_tiny{1.0e-30};
+static constexpr const Float32 TINY = 1.0e-30;
 
 Float32 sqrt(Float32 _x) {
   const auto sign{static_cast<Sint32>(0x80000000)};
@@ -77,11 +77,11 @@ Float32 sqrt(Float32 _x) {
   // use floating-point add to find rounding direction
   if (ix != 0) {
     // raise inexact flag
-    Float32 z{1.0f - k_tiny};
+    Float32 z = 1.0f - TINY;
 
     // search for direction
     if (z >= 1.0f) {
-      z = 1.0f + k_tiny;
+      z = 1.0f + TINY;
       if (z > 1.0f) {
         q += 2;
       } else {

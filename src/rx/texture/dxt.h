@@ -5,8 +5,8 @@
 namespace Rx::Texture {
 
 enum class DXTType {
-  k_dxt1,
-  k_dxt5
+  DXT1,
+  DXT5
 };
 
 template<DXTType T>

@@ -7,14 +7,14 @@
 namespace Rx::Math {
 
 #if RX_FLOAT_EVAL_METHOD == 0
-static constexpr const auto k_eps{FLT_EPSILON};
+static constexpr const auto EPS = FLT_EPSILON;
 #elif RX_FLOAT_EVAL_METHOD == 1
-static constexpr const auto k_eps{DBL_EPSILON};
+static constexpr const auto EPS = DBL_EPSILON;
 #elif RX_FLOAT_EVAL_METHOD == 2
-static constexpr const auto k_eps{LDBL_EPSILON};
+static constexpr const auto EPS = LDBL_EPSILON;
 #endif
 
-static constexpr const Float32Eval k_to_int{1 / k_eps};
+static constexpr const Float32Eval TO_INT = 1 / EPS;
 
 Float32 round(Float32 _x) {
   const Shape u{_x};
@@ -29,11 +29,11 @@ Float32 round(Float32 _x) {
   }
 
   if (e < 0x7f-1) {
-    force_eval_f32(_x + k_to_int);
+    force_eval_f32(_x + TO_INT);
     return 0 * u.as_f32;
   }
 
-  Float32Eval y{_x + k_to_int - k_to_int - _x};
+  Float32Eval y = _x + TO_INT - TO_INT - _x;
   if (y > 0.5f) {
     y = y + _x - 1;
   } else if (y <= -0.5f) {

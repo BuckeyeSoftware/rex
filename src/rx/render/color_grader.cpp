@@ -252,12 +252,12 @@ Optional<ColorGrader> ColorGrader::create(Frontend::Context* _context, Size _siz
   texture->record_type(Frontend::Texture::Type::DYNAMIC);
   texture->record_levels(1);
   texture->record_filter({true, false, false});
-  texture->record_format(Frontend::Texture::DataFormat::k_rgba_f16);
+  texture->record_format(Frontend::Texture::DataFormat::RGBA_F16);
   texture->record_dimensions({_size, _size, MAX_DEPTH});
   texture->record_wrap({
-    Render::Frontend::Texture::WrapType::k_clamp_to_edge,
-    Render::Frontend::Texture::WrapType::k_clamp_to_edge,
-    Render::Frontend::Texture::WrapType::k_clamp_to_edge});
+    Render::Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+    Render::Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+    Render::Frontend::Texture::WrapType::CLAMP_TO_EDGE});
 
   _context->initialize_texture(RX_RENDER_TAG("Atlas"), texture);
 

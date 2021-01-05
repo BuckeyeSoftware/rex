@@ -10,31 +10,31 @@ struct Controller {
   static inline constexpr const Size BUTTONS = 15;
   static inline constexpr const Size AXII = 6;
 
-  enum class Button {
-    k_a,
-    k_b,
-    k_x,
-    k_y,
-    k_back,
-    k_guide,
-    k_start,
-    k_left_stick,
-    k_right_stick,
-    k_left_shoulder,
-    k_right_shoulder,
-    k_dpad_up,
-    k_dpad_down,
-    k_dpad_left,
-    k_dpad_right
+  enum class Button : Uint8 {
+    A,
+    B,
+    X,
+    Y,
+    BACKK,
+    GUIDE,
+    START,
+    LEFT_STICK,
+    RIGHT_STICK,
+    LEFT_SHOULDER,
+    RIGHT_SHOULDER,
+    DPAD_UP,
+    DPAD_DOWN,
+    DPAD_LEFT,
+    DPAD_RIGHT
   };
 
-  enum class Axis {
-    k_left_x,       // in range [-1, 1]
-    k_left_y,       // in range [-1, 1]
-    k_right_x,      // in range [-1, 1]
-    k_right_y,      // in range [-1, 1]
-    k_trigger_left, // in range [0, 1]
-    k_trigger_right // in range [0, 1]
+  enum class Axis : Uint8 {
+    LEFT_X,       // in range [-1, 1]
+    LEFT_Y,       // in range [-1, 1]
+    RIGHT_X,      // in range [-1, 1]
+    RIGHT_Y,      // in range [-1, 1]
+    TRIGGER_LEFT, // in range [0, 1]
+    TRIGGER_RIGHT // in range [0, 1]
   };
 
   void update_button(bool _down, Button _button);

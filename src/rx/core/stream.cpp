@@ -182,36 +182,36 @@ Optional<LinearBuffer> read_text_stream(Memory::Allocator& _allocator, Stream* _
 #if defined(RX_PLATFORM_WINDOWS)
     // Quickly scan through word at a time |_src| for CR.
     auto scan = [](const void* _src, Size _size) {
-      static constexpr auto k_ss = sizeof(Size);
-      static constexpr auto k_align = k_ss - 1;
-      static constexpr auto k_ones = -1_z / UCHAR_MAX; // All bits set.
-      static constexpr auto k_highs = k_ones * (UCHAR_MAX / 2 + 1); // All high bits set.
-      static constexpr auto k_c = static_cast<const Byte>('\r');
-      static constexpr auto k_k = k_ones * k_c;
+      static constexpr auto SS = sizeof(Size);
+      static constexpr auto ALIGN = SS - 1;
+      static constexpr auto ONES = -1_z / UCHAR_MAX; // All bits set.
+      static constexpr auto HIGHS = ONES * (UCHAR_MAX / 2 + 1); // All high bits set.
+      static constexpr auto C = static_cast<const Byte>('\r');
+      static constexpr auto K = ONES * K;
 
       auto has_zero = [&](Size _value) {
-        return _value - k_ones & (~_value) & k_highs;
+        return _value - ONES & (~_value) & HIGHS;
       };
 
-      // Search for CR until |s| is aligned on |k_align| alignment.
+      // Search for CR until |s| is aligned on |ALIGN| alignment.
       auto s = reinterpret_cast<const Byte*>(_src);
       auto n = _size;
-      for (; (reinterpret_cast<UintPtr>(s) & k_align) && n && *s != k_c; s++, n--);
+      for (; (reinterpret_cast<UintPtr>(s) & ALIGN) && n && *s != C; s++, n--);
 
       // Do checks for CR word at a time, stopping at word containing CR.
-      if (n && *s != k_c) {
+      if (n && *s != C) {
         // Need to typedef with an alias type since we're breaking strict
         // aliasing, let the compiler know.
         typedef Size RX_HINT_MAY_ALIAS WordType;
 
-        // Scan word at a time, stopping at word containing first |k_c|.
+        // Scan word at a time, stopping at word containing first |C|.
         auto w = reinterpret_cast<const WordType*>(s);
-        for (; n >= k_ss && !has_zero(*w ^ k_k); w++, n -= k_ss);
+        for (; n >= SS && !has_zero(*w ^ K); w++, n -= SS);
         s = reinterpret_cast<const Byte*>(w);
       }
 
-      // Handle trailing bytes to determine where in word |k_c| is.
-      for (; n && *s != k_c; s++, n--);
+      // Handle trailing bytes to determine where in word |C| is.
+      for (; n && *s != C; s++, n--);
 
       return n ? s : nullptr;
     };

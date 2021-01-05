@@ -43,9 +43,9 @@ struct Function<R(Ts...)> {
   constexpr Memory::Allocator& allocator() const;
 
 private:
-  enum class Lifetime {
-    k_construct,
-    k_destruct
+  enum class Lifetime : Uint8 {
+    CONSTRUCT,
+    DESTRUCT
   };
 
   using InvokeFn = R (*)(const Byte*, Ts&&...);
@@ -63,10 +63,10 @@ private:
   template<typename F>
   static void modify_lifetime(Lifetime _lifetime, Byte* _dst, const Byte* _src) {
     switch (_lifetime) {
-    case Lifetime::k_construct:
+    case Lifetime::CONSTRUCT:
       Utility::construct<F>(_dst, *reinterpret_cast<const F*>(_src));
       break;
-    case Lifetime::k_destruct:
+    case Lifetime::DESTRUCT:
       Utility::destruct<F>(_dst);
       break;
     }
@@ -141,7 +141,7 @@ Function<R(Ts...)>::Function(Memory::Allocator& _allocator, const Function& _fun
 
     // Copy construct the control block and the function.
     Utility::construct<ControlBlock>(m_data, *_function.control());
-    control()->modify_lifetime(Lifetime::k_construct, storage(), _function.storage());
+    control()->modify_lifetime(Lifetime::CONSTRUCT, storage(), _function.storage());
   }
 }
 
@@ -164,7 +164,7 @@ Function<R(Ts...)>& Function<R(Ts...)>::operator=(const Function& _function) {
   RX_ASSERT(&_function != this, "self assignment");
 
   if (m_data) {
-    control()->modify_lifetime(Lifetime::k_destruct, storage(), nullptr);
+    control()->modify_lifetime(Lifetime::DESTRUCT, storage(), nullptr);
   }
 
   if (_function.m_data) {
@@ -176,7 +176,7 @@ Function<R(Ts...)>& Function<R(Ts...)>::operator=(const Function& _function) {
     }
     // Copy construct the control block and the function.
     Utility::construct<ControlBlock>(m_data, *_function.control());
-    control()->modify_lifetime(Lifetime::k_construct, storage(), _function.storage());
+    control()->modify_lifetime(Lifetime::CONSTRUCT, storage(), _function.storage());
   } else {
     destroy();
   }
@@ -189,7 +189,7 @@ Function<R(Ts...)>& Function<R(Ts...)>::operator=(Function&& function_) {
   RX_ASSERT(&function_ != this, "self assignment");
 
   if (m_data) {
-    control()->modify_lifetime(Lifetime::k_destruct, storage(), nullptr);
+    control()->modify_lifetime(Lifetime::DESTRUCT, storage(), nullptr);
   }
 
   m_allocator = function_.m_allocator;
@@ -202,7 +202,7 @@ Function<R(Ts...)>& Function<R(Ts...)>::operator=(Function&& function_) {
 template<typename R, typename... Ts>
 Function<R(Ts...)>& Function<R(Ts...)>::operator=(NullPointer) {
   if (m_data) {
-    control()->modify_lifetime(Lifetime::k_destruct, storage(), nullptr);
+    control()->modify_lifetime(Lifetime::DESTRUCT, storage(), nullptr);
     destroy();
   }
   return *this;
@@ -211,7 +211,7 @@ Function<R(Ts...)>& Function<R(Ts...)>::operator=(NullPointer) {
 template<typename R, typename... Ts>
 Function<R(Ts...)>::~Function() {
   if (m_data) {
-    control()->modify_lifetime(Lifetime::k_destruct, storage(), nullptr);
+    control()->modify_lifetime(Lifetime::DESTRUCT, storage(), nullptr);
     destroy();
   }
 }

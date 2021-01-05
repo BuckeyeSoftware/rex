@@ -84,7 +84,7 @@ void Buffer::Format::finalize() {
 
 // [Buffer]
 Buffer::Buffer(Context* _frontend)
-  : Resource{_frontend, Resource::Type::k_buffer}
+  : Resource{_frontend, Resource::Type::BUFFER}
   , m_vertices_store{m_frontend->allocator()}
   , m_elements_store{m_frontend->allocator()}
   , m_instances_store{m_frontend->allocator()}

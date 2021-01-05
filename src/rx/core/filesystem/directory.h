@@ -24,11 +24,6 @@ struct RX_API Directory {
     RX_MARK_NO_COPY(Item);
     RX_MARK_NO_MOVE(Item);
 
-    enum class Type : Uint8 {
-      k_file,
-      k_directory
-    };
-
     bool is_file() const;
     bool is_directory() const;
     const String& name() const;
@@ -40,6 +35,11 @@ struct RX_API Directory {
 
   private:
     friend struct Directory;
+
+    enum class Type : Uint8 {
+      FILE,
+      DIRECTORY
+    };
 
     Item(const Directory* _directory, String&& name_, Type _type);
 
@@ -107,11 +107,11 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Directory::allocator() const {
 }
 
 RX_HINT_FORCE_INLINE bool Directory::Item::is_file() const {
-  return m_type == Type::k_file;
+  return m_type == Type::FILE;
 }
 
 RX_HINT_FORCE_INLINE bool Directory::Item::is_directory() const {
-  return m_type == Type::k_directory;
+  return m_type == Type::DIRECTORY;
 }
 
 RX_HINT_FORCE_INLINE const Directory& Directory::Item::directory() const & {

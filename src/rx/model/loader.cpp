@@ -38,8 +38,8 @@ Loader::~Loader() {
 }
 
 void Loader::destroy() {
-  if (m_flags & k_constructed) {
-    if (m_flags & k_animated) {
+  if (m_flags & CONSTRUCTED) {
+    if (m_flags & ANIMATED) {
       Utility::destruct<Vector<AnimatedVertex>>(&as_animated_vertices);
     } else {
       Utility::destruct<Vector<Vertex>>(&as_vertices);
@@ -182,10 +182,10 @@ bool Loader::import(const String& _file_name) {
 
   if (m_animations.is_empty()) {
     Utility::construct<Vector<Vertex>>(&as_vertices, allocator(), n_vertices);
-    m_flags = k_constructed;
+    m_flags = CONSTRUCTED;
   } else {
     Utility::construct<Vector<AnimatedVertex>>(&as_animated_vertices, allocator(), n_vertices);
-    m_flags = k_constructed | k_animated;
+    m_flags = CONSTRUCTED | ANIMATED;
   }
 
   // Hoist the transform check outside the for loops for faster model loading.

@@ -52,9 +52,9 @@ private:
   bool parse_textures(const JSON& _textures);
 
   enum {
-    k_alpha_test  = 1 << 0,
-    k_has_alpha   = 1 << 1,
-    k_no_compress = 1 << 2
+    ALPHA_TEST  = 1 << 0,
+    HAS_ALPHA   = 1 << 1,
+    NO_COMPRESS = 1 << 2
   };
 
   Memory::Allocator* m_allocator;
@@ -82,15 +82,15 @@ inline String&& Loader::name() {
 }
 
 inline bool Loader::alpha_test() const {
-  return m_flags & k_alpha_test;
+  return m_flags & ALPHA_TEST;
 }
 
 inline bool Loader::has_alpha() const {
-  return m_flags & k_has_alpha;
+  return m_flags & HAS_ALPHA;
 }
 
 inline bool Loader::no_compress() const {
-  return m_flags & k_no_compress;
+  return m_flags & NO_COMPRESS;
 }
 
 inline Float32 Loader::roughness() const {
