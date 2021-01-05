@@ -22,12 +22,12 @@
 #include "rx/console/variable.h"
 
 RX_CONSOLE_IVAR(max_buffers, "render.max_buffers","maximum buffers", 16, 128, 64);
-RX_CONSOLE_IVAR(max_targets, "render.max_targets", "maximum targets", 16, 128, 16);
+RX_CONSOLE_IVAR(max_targets, "render.max_targets", "maximum targets", 16, 1024, 512);
 RX_CONSOLE_IVAR(max_programs, "render.max_programs", "maximum programs", 128, 4096, 512);
 RX_CONSOLE_IVAR(max_texture1D, "render.max_texture1D", "maximum 1D textures", 16, 128, 16);
 RX_CONSOLE_IVAR(max_texture2D, "render.max_texture2D", "maximum 2D textures", 16, 4096, 1024);
 RX_CONSOLE_IVAR(max_texture3D, "render.max_texture3D", "maximum 3D textures", 16, 128, 16);
-RX_CONSOLE_IVAR(max_textureCM, "render.max_textureCM", "maximum CM textures", 16, 128, 16);
+RX_CONSOLE_IVAR(max_textureCM, "render.max_textureCM", "maximum CM textures", 16, 256, 128);
 RX_CONSOLE_IVAR(max_downloaders, "render.max_downloaders", "maximum downloaders", 2, 16, 8);
 RX_CONSOLE_IVAR(command_memory, "render.command_memory", "memory for command buffer in MiB", 1, 4, 2);
 
@@ -485,7 +485,7 @@ void Context::update_texture(const CommandHeader::Info& _info, Texture3D* _textu
 
     // Optimize the edits. Any overlapping, redundant, or superfluous edits
     // will be coalesced or removed at this point.
-    _texture->optimize_edits();
+    // _texture->optimize_edits();
 
     // Keep track of frame footprint.
     m_footprint[0] += _texture->bytes_for_edits();
