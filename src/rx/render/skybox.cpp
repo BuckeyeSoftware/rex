@@ -116,7 +116,7 @@ bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
   }
 
   const auto& faces{description["faces"]};
-  if (!faces || !faces.is_array_of(JSON::Type::k_string) || faces.size() != 6) {
+  if (!faces || !faces.is_array_of(JSON::Type::STRING, 6)) {
     return false;
   }
 

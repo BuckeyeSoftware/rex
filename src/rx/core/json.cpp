@@ -114,19 +114,19 @@ Optional<String> JSON::error() const {
 
 bool JSON::is_type(Type _type) const {
   switch (_type) {
-  case Type::k_array:
+  case Type::ARRAY:
     return m_value->type == json_type_array;
-  case Type::k_boolean:
+  case Type::BOOLEAN:
     return m_value->type == json_type_true || m_value->type == json_type_false;
-  case Type::k_integer:
+  case Type::INTEGER:
     return m_value->type == json_type_number && Math::floor(as_number()) == as_number();
-  case Type::k_null:
+  case Type::NIL:
     return !m_value || m_value->type == json_type_null;
-  case Type::k_number:
+  case Type::NUMBER:
     return m_value->type == json_type_number;
-  case Type::k_object:
+  case Type::OBJECT:
     return m_value->type == json_type_object;
-  case Type::k_string:
+  case Type::STRING:
     return m_value->type == json_type_string;
   }
 

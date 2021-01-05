@@ -528,6 +528,7 @@ Program* Technique::variant(Size _index) const {
 }
 
 bool Technique::load(Stream* _stream) {
+  m_name = _stream->name();
   auto& allocator = m_frontend->allocator();
   if (auto data = read_text_stream(allocator, _stream)) {
     if (auto disown = data->disown()) {
@@ -556,7 +557,7 @@ bool Technique::parse(const JSON& _description) {
   if (!_description) {
     const auto json_error{_description.error()};
     if (json_error) {
-      return error("%s", *json_error);
+      return error("%s: %s", m_name, *json_error);
     } else {
       return error("empty description");
     }
@@ -620,7 +621,7 @@ void Technique::write_log(Log::Level _level, String&& message_) const {
 }
 
 bool Technique::parse_uniforms(const JSON& _uniforms) {
-  if (!_uniforms.is_array_of(JSON::Type::k_object)) {
+  if (!_uniforms.is_array_of(JSON::Type::OBJECT)) {
     return error("expected Array[Object] for 'uniforms'");
   }
 
@@ -630,7 +631,7 @@ bool Technique::parse_uniforms(const JSON& _uniforms) {
 }
 
 bool Technique::parse_shaders(const JSON& _shaders) {
-  if (!_shaders.is_array_of(JSON::Type::k_object)) {
+  if (!_shaders.is_array_of(JSON::Type::OBJECT)) {
     return error("expected Array[Object] for 'shaders'");
   }
 
@@ -719,7 +720,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
 
     case Uniform::Type::k_vec2i:
-      if (!value.is_array_of(JSON::Type::k_integer, 2)) {
+      if (!value.is_array_of(JSON::Type::INTEGER, 2)) {
         return error("expected Array[Integer, 2] for %s", name_string);
       }
       constant.as_vec2i = {
@@ -729,7 +730,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
 
     case Uniform::Type::k_vec3i:
-      if (!value.is_array_of(JSON::Type::k_integer, 3)) {
+      if (!value.is_array_of(JSON::Type::INTEGER, 3)) {
         return error("expected Array[Integer, 3] for %s", name_string);
       }
       constant.as_vec3i = {
@@ -740,7 +741,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
 
     case Uniform::Type::k_vec4i:
-      if (!value.is_array_of(JSON::Type::k_integer, 4)) {
+      if (!value.is_array_of(JSON::Type::INTEGER, 4)) {
         return error("expected Array[Integer, 4] for %s", name_string);
       }
       constant.as_vec4i = {
@@ -752,7 +753,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
 
     case Uniform::Type::k_vec2f:
-      if (!value.is_array_of(JSON::Type::k_number, 2)) {
+      if (!value.is_array_of(JSON::Type::NUMBER, 2)) {
         return error("expected Array[Number, 2] for %s", name_string);
       }
       constant.as_vec2f = {
@@ -762,7 +763,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
 
     case Uniform::Type::k_vec3f:
-      if (!value.is_array_of(JSON::Type::k_number, 3)) {
+      if (!value.is_array_of(JSON::Type::NUMBER, 3)) {
         return error("expected Array[Number, 3] for %s", name_string);
       }
       constant.as_vec3f = {
@@ -773,7 +774,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
 
     case Uniform::Type::k_vec4f:
-      if (!value.is_array_of(JSON::Type::k_number, 4)) {
+      if (!value.is_array_of(JSON::Type::NUMBER, 4)) {
         return error("expected Array[Number, 4] for %s", name_string);
       }
       constant.as_vec4f = {
@@ -785,8 +786,8 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
 
     case Uniform::Type::k_mat4x4f:
-      if (!value.is_array_of(JSON::Type::k_array, 4)
-        ||!value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::k_number, 4); }))
+      if (!value.is_array_of(JSON::Type::ARRAY, 4) ||
+          !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 4); }))
       {
         return error("expected Array[Array[Number, 4], 4] for %s", name_string);
       }
@@ -820,8 +821,8 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
 
     case Uniform::Type::k_mat3x3f:
-      if (!value.is_array_of(JSON::Type::k_array, 3)
-      || !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::k_number, 3); }))
+      if (!value.is_array_of(JSON::Type::ARRAY, 3) ||
+          !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 3); }))
       {
         return error("expected Array[Array[Number, 3], 3] for %s", name_string);
       }
@@ -883,7 +884,7 @@ bool Technique::parse_shader(const JSON& _shader) {
     return error("expected String for 'when'");
   }
 
-  if (imports && !imports.is_array_of(JSON::Type::k_string)) {
+  if (imports && !imports.is_array_of(JSON::Type::STRING)) {
     return error("expected Array[String] for 'imports'");
   }
 
@@ -938,7 +939,7 @@ bool Technique::parse_shader(const JSON& _shader) {
 bool Technique::parse_inouts(const JSON& _inouts, const char* _type,
                              Map<String, ShaderDefinition::InOut>& inouts_)
 {
-  if (!_inouts.is_array_of(JSON::Type::k_object)) {
+  if (!_inouts.is_array_of(JSON::Type::OBJECT)) {
     return error("expected Array[Object] in %ss", _type);
   }
 
@@ -1010,7 +1011,7 @@ bool Technique::parse_inout(const JSON& _inout, const char* _type,
 bool Technique::parse_specializations(const JSON& _specializations,
                                       const char* _type)
 {
-  if (!_specializations.is_array_of(JSON::Type::k_string)) {
+  if (!_specializations.is_array_of(JSON::Type::STRING)) {
     return error("expected Array[String] for '%ss'", _type);
   }
 

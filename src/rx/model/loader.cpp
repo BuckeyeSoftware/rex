@@ -106,7 +106,7 @@ bool Loader::parse(const JSON& _definition) {
     return error("missing 'materials'");
   }
 
-  if (!materials.is_array_of(JSON::Type::k_object) && !materials.is_array_of(JSON::Type::k_string)) {
+  if (!materials.is_array_of(JSON::Type::OBJECT) && !materials.is_array_of(JSON::Type::STRING)) {
     return error("expected Array[Object] or Array[String] for 'materials'");
   }
 
@@ -279,7 +279,7 @@ bool Loader::parse_transform(const JSON& _transform) {
   const auto& translate = _transform["translate"];
 
   auto parse_vec3 = [&](const JSON& _array, const char* _tag, Math::Vec3f& result_) {
-    if (!_array.is_array_of(JSON::Type::k_number) || _array.size() != 3) {
+    if (!_array.is_array_of(JSON::Type::NUMBER, 3)) {
       return error("expected Array[Number, 3] for '%s'", _tag);
     }
     result_.x = Algorithm::clamp(_array[0_z].as_number(), 0.0, 360.0);

@@ -34,13 +34,13 @@ struct RX_API JSON {
   JSON& operator=(JSON&& json_);
 
   enum class Type {
-    k_array,
-    k_boolean,
-    k_null,
-    k_number,
-    k_object,
-    k_string,
-    k_integer
+    ARRAY,
+    BOOLEAN,
+    NIL,
+    NUMBER,
+    OBJECT,
+    STRING,
+    INTEGER
   };
 
   operator bool() const;
@@ -169,7 +169,7 @@ inline JSON::operator bool() const {
 }
 
 inline bool JSON::is_array() const {
-  return is_type(Type::k_array);
+  return is_type(Type::ARRAY);
 }
 
 inline bool JSON::is_array_of(Type _type) const {
@@ -197,27 +197,27 @@ inline bool JSON::is_array_of(Type _type, Size _size) const {
 }
 
 inline bool JSON::is_boolean() const {
-  return is_type(Type::k_boolean);
+  return is_type(Type::BOOLEAN);
 }
 
 inline bool JSON::is_null() const {
-  return is_type(Type::k_null);
+  return is_type(Type::NIL);
 }
 
 inline bool JSON::is_number() const {
-  return is_type(Type::k_number);
+  return is_type(Type::NUMBER);
 }
 
 inline bool JSON::is_object() const {
-  return is_type(Type::k_object);
+  return is_type(Type::OBJECT);
 }
 
 inline bool JSON::is_string() const {
-  return is_type(Type::k_string);
+  return is_type(Type::STRING);
 }
 
 inline bool JSON::is_integer() const {
-  return is_type(Type::k_integer);
+  return is_type(Type::INTEGER);
 }
 
 inline bool JSON::is_empty() const {

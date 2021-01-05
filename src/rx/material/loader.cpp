@@ -117,7 +117,7 @@ bool Loader::parse(const JSON& _definition) {
   }
 
   if (const auto& emission = _definition["emission"]) {
-    if (!emission.is_array_of(JSON::Type::k_number, 3)) {
+    if (!emission.is_array_of(JSON::Type::NUMBER, 3)) {
       return error("expected Array[Number, 3] for 'emission'");
     }
     m_emission.r = Algorithm::clamp(emission[0_z].as_float(), 0.0f, 1.0f);
@@ -126,7 +126,7 @@ bool Loader::parse(const JSON& _definition) {
   }
 
   if (const auto& albedo = _definition["albedo"]) {
-    if (!albedo.is_array_of(JSON::Type::k_number, 3)) {
+    if (!albedo.is_array_of(JSON::Type::NUMBER, 3)) {
       return error("expected Array[Number, 3] for 'emission'");
     }
     m_albedo.r = Algorithm::clamp(albedo[0_z].as_float(), 0.0f, 1.0f);
@@ -149,7 +149,7 @@ bool Loader::parse(const JSON& _definition) {
     const auto& translate{transform["translate"]};
 
     auto parse{[&](const auto& _vec, const char* _tag, Math::Vec3f& result_) {
-      if (!_vec.is_array_of(JSON::Type::k_number) || _vec.size() != 2) {
+      if (!_vec.is_array_of(JSON::Type::NUMBER, 2)) {
         return error("expected Array[Number, 2] for '%s'", _tag);
       }
       result_.x = _vec[0_z].as_float();
@@ -176,7 +176,7 @@ bool Loader::parse(const JSON& _definition) {
   }
 
   if (const auto& textures = _definition["textures"]) {
-    if (!textures.is_array_of(JSON::Type::k_object)) {
+    if (!textures.is_array_of(JSON::Type::OBJECT)) {
       return error("expected Array[Object] for 'textures'");
     }
 

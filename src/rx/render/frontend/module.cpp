@@ -87,7 +87,7 @@ bool Module::parse(const JSON& _description) {
     return true;
   }
 
-  if (!imports.is_array_of(JSON::Type::k_string)) {
+  if (!imports.is_array_of(JSON::Type::STRING)) {
     return error("expected Array[String] for 'imports'");
   }
 

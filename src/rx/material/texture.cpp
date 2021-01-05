@@ -168,7 +168,7 @@ bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
 }
 
 bool Texture::parse_wrap(const JSON& _wrap) {
-  if (!_wrap.is_array_of(JSON::Type::k_string) || _wrap.size() != 2) {
+  if (!_wrap.is_array_of(JSON::Type::STRING, 2)) {
     return error("expected Array[String, 2]");
   }
 
@@ -206,7 +206,7 @@ bool Texture::parse_wrap(const JSON& _wrap) {
 }
 
 bool Texture::parse_border(const JSON& _border) {
-  if (!_border.is_array_of(JSON::Type::k_number) || _border.size() != 4) {
+  if (!_border.is_array_of(JSON::Type::NUMBER, 4)) {
     return error("expected Array[Number, 4]");
   }
 
