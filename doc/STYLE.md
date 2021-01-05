@@ -224,7 +224,7 @@ int&&... args; // valid
 ```
 
 ## Bracing
-Rex the one true brace style [1TBS](https://en.wikipedia.org/wiki/Indentation_style#Variant:_1TBS_(OTBS)). It looks something like the following.
+Rex uses the one true brace style [1TBS](https://en.wikipedia.org/wiki/Indentation_style#Variant:_1TBS_(OTBS)). It looks something like the following.
 ```c
 if (x) {
   <code>
