@@ -8,17 +8,17 @@ namespace Rx::Concurrency::detail {
 
 static inline constexpr std::memory_order convert_memory_order(MemoryOrder _order) {
   switch (_order) {
-  case MemoryOrder::k_relaxed:
+  case MemoryOrder::RELAXED:
     return std::memory_order_relaxed;
-  case MemoryOrder::k_consume: // load-consume
+  case MemoryOrder::CONSUME: // load-consume
     return std::memory_order_consume;
-  case MemoryOrder::k_acquire: // load-acquire
+  case MemoryOrder::ACQUIRE: // load-acquire
     return std::memory_order_acquire;
-  case MemoryOrder::k_release: // store-release
+  case MemoryOrder::RELEASE: // store-release
     return std::memory_order_release;
-  case MemoryOrder::k_acq_rel: // store-release load-acquire
+  case MemoryOrder::ACQ_REL: // store-release load-acquire
     return std::memory_order_acq_rel;
-  case MemoryOrder::k_seq_cst: // store-release load-acquire
+  case MemoryOrder::SEQ_CST: // store-release load-acquire
     return std::memory_order_seq_cst;
   }
   RX_HINT_UNREACHABLE();

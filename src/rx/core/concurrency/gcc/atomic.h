@@ -8,20 +8,20 @@
 namespace Rx::Concurrency::detail {
 
 static constexpr int to_success_order(MemoryOrder _order) {
-  return _order == MemoryOrder::k_relaxed ? __ATOMIC_RELAXED :
-          (_order == MemoryOrder::k_acquire ? __ATOMIC_ACQUIRE :
-            (_order == MemoryOrder::k_release ? __ATOMIC_RELEASE :
-              (_order == MemoryOrder::k_seq_cst ? __ATOMIC_SEQ_CST :
-                (_order == MemoryOrder::k_acq_rel ? __ATOMIC_ACQ_REL :
+  return _order == MemoryOrder::RELAXED ? __ATOMIC_RELAXED :
+          (_order == MemoryOrder::ACQUIRE ? __ATOMIC_ACQUIRE :
+            (_order == MemoryOrder::RELEASE ? __ATOMIC_RELEASE :
+              (_order == MemoryOrder::SEQ_CST ? __ATOMIC_SEQ_CST :
+                (_order == MemoryOrder::ACQ_REL ? __ATOMIC_ACQ_REL :
                   __ATOMIC_CONSUME))));
 }
 
 static constexpr int to_failure_order(MemoryOrder _order) {
-  return _order == MemoryOrder::k_relaxed ? __ATOMIC_RELAXED :
-          (_order == MemoryOrder::k_acquire ? __ATOMIC_ACQUIRE :
-            (_order == MemoryOrder::k_release ? __ATOMIC_RELAXED :
-              (_order == MemoryOrder::k_seq_cst ? __ATOMIC_SEQ_CST :
-                (_order == MemoryOrder::k_acq_rel ? __ATOMIC_ACQUIRE :
+  return _order == MemoryOrder::RELAXED ? __ATOMIC_RELAXED :
+          (_order == MemoryOrder::ACQUIRE ? __ATOMIC_ACQUIRE :
+            (_order == MemoryOrder::RELEASE ? __ATOMIC_RELAXED :
+              (_order == MemoryOrder::SEQ_CST ? __ATOMIC_SEQ_CST :
+                (_order == MemoryOrder::ACQ_REL ? __ATOMIC_ACQUIRE :
                   __ATOMIC_CONSUME))));
 }
 

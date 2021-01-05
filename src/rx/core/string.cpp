@@ -401,16 +401,16 @@ void String::erase(Size _begin, Size _end) {
 }
 
 String String::human_size_format(Size _size) {
-  static constexpr const char* k_suffixes[] = {
+  static constexpr const char* SUFFIXES[] = {
     "B", "KiB", "MiB", "GiB", "TiB"
   };
 
   Float64 bytes = static_cast<Float64>(_size);
   Size i = 0;
-  for (; bytes >= 1024.0 && i < sizeof k_suffixes / sizeof *k_suffixes; i++) {
+  for (; bytes >= 1024.0 && i < sizeof SUFFIXES / sizeof *SUFFIXES; i++) {
     bytes /= 1024.0;
   }
-  RX_ASSERT(i != sizeof k_suffixes / sizeof *k_suffixes, "out of bounds");
+  RX_ASSERT(i != sizeof SUFFIXES / sizeof *SUFFIXES, "out of bounds");
 
   char buffer[2*(DBL_MANT_DIG + DBL_MAX_EXP)];
 
@@ -428,7 +428,7 @@ String String::human_size_format(Size _size) {
   char* period = strchr(buffer, '.');
   RX_ASSERT(period, "failed to format");
   period[3] = '\0';
-  return format("%s %s", buffer, k_suffixes[i]);
+  return format("%s %s", buffer, SUFFIXES[i]);
 }
 
 bool String::begins_with(const char* _prefix) const {

@@ -21,26 +21,26 @@ void SpinLock::lock() {
   tsan_acquire(&m_lock);
 
   // fast path, always succeeds within a single thread
-  if (!m_lock.test_and_set(MemoryOrder::k_acquire)) {
+  if (!m_lock.test_and_set(MemoryOrder::ACQUIRE)) {
     return;
   }
 
   // fixed busy loop
   int count{100};
   while (count--) {
-    if (!m_lock.test_and_set(MemoryOrder::k_acquire)) {
+    if (!m_lock.test_and_set(MemoryOrder::ACQUIRE)) {
       return;
     }
   }
 
   // blocking loop
-  while (m_lock.test_and_set(MemoryOrder::k_acquire)) {
+  while (m_lock.test_and_set(MemoryOrder::ACQUIRE)) {
     yield();
   }
 }
 
 void SpinLock::unlock() {
-  m_lock.clear(MemoryOrder::k_release);
+  m_lock.clear(MemoryOrder::RELEASE);
   tsan_release(&m_lock);
 }
 

@@ -10,12 +10,12 @@
 namespace Rx::Concurrency {
 
 enum class MemoryOrder {
-  k_relaxed,
-  k_consume, // load-consume
-  k_acquire, // load-acquire
-  k_release, // store-release
-  k_acq_rel, // store-release load-acquire
-  k_seq_cst  // store-release load-acquire
+  RELAXED,
+  CONSUME, // load-consume
+  ACQUIRE, // load-acquire
+  RELEASE, // store-release
+  ACQ_REL, // store-release load-acquire
+  SEQ_CST  // store-release load-acquire
 };
 
 } // namespace Rx::Concurrency
@@ -45,19 +45,19 @@ namespace detail {
     Atomic() = default;
     constexpr Atomic(T _value) : m_value{_value} {}
 
-    void store(T _value, MemoryOrder _order = MemoryOrder::k_seq_cst) volatile {
+    void store(T _value, MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
       atomic_store(&m_value, _value, _order);
     }
 
-    void store(T _value, MemoryOrder _order = MemoryOrder::k_seq_cst) {
+    void store(T _value, MemoryOrder _order = MemoryOrder::SEQ_CST) {
       atomic_store(&m_value, _value, _order);
     }
 
-    T load(MemoryOrder _order = MemoryOrder::k_seq_cst) const volatile {
+    T load(MemoryOrder _order = MemoryOrder::SEQ_CST) const volatile {
       return atomic_load(&m_value, _order);
     }
 
-    T load(MemoryOrder _order = MemoryOrder::k_seq_cst) const {
+    T load(MemoryOrder _order = MemoryOrder::SEQ_CST) const {
       return atomic_load(&m_value, _order);
     }
 
@@ -69,11 +69,11 @@ namespace detail {
       return load();
     }
 
-    T exchange(T _value, MemoryOrder _order = MemoryOrder::k_seq_cst) volatile {
+    T exchange(T _value, MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
       return atomic_exchange(&m_value, _value, _order);
     }
 
-    T exchange(T _value, MemoryOrder _order = MemoryOrder::k_seq_cst) {
+    T exchange(T _value, MemoryOrder _order = MemoryOrder::SEQ_CST) {
       return atomic_exchange(&m_value, _value, _order);
     }
 
@@ -101,11 +101,11 @@ namespace detail {
       return atomic_compare_exchange_strong(&m_value, expected_, _value, _success, _failure);
     }
 
-    bool compare_exchange_weak(T& expected_, T _value, MemoryOrder _order = MemoryOrder::k_seq_cst) volatile {
+    bool compare_exchange_weak(T& expected_, T _value, MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
       return atomic_compare_exchange_weak(&m_value, expected_, _value, _order, _order);
     }
 
-    bool compare_exchange_weak(T& expected_, T _value, MemoryOrder _order = MemoryOrder::k_seq_cst) {
+    bool compare_exchange_weak(T& expected_, T _value, MemoryOrder _order = MemoryOrder::SEQ_CST) {
       return atomic_compare_exchange_weak(&m_value, expected_, _value, _order, _order);
     }
 
@@ -129,43 +129,43 @@ namespace detail {
     Atomic() = default;
     constexpr Atomic(T _value) : Base{_value} {}
 
-    T fetch_add(T _delta, MemoryOrder _order = MemoryOrder::k_seq_cst) volatile {
+    T fetch_add(T _delta, MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
       return atomic_fetch_add(&this->m_value, _delta, _order);
     }
 
-    T fetch_add(T _delta, MemoryOrder _order = MemoryOrder::k_seq_cst) {
+    T fetch_add(T _delta, MemoryOrder _order = MemoryOrder::SEQ_CST) {
       return atomic_fetch_add(&this->m_value, _delta, _order);
     }
 
-    T fetch_sub(T _delta, MemoryOrder _order = MemoryOrder::k_seq_cst) volatile {
+    T fetch_sub(T _delta, MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
       return atomic_fetch_sub(&this->m_value, _delta, _order);
     }
 
-    T fetch_sub(T _delta, MemoryOrder _order = MemoryOrder::k_seq_cst) {
+    T fetch_sub(T _delta, MemoryOrder _order = MemoryOrder::SEQ_CST) {
       return atomic_fetch_sub(&this->m_value, _delta, _order);
     }
 
-    T fetch_and(T _pattern, MemoryOrder _order = MemoryOrder::k_seq_cst) volatile {
+    T fetch_and(T _pattern, MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
       return atomic_fetch_and(&this->m_value, _pattern, _order);
     }
 
-    T fetch_and(T _pattern, MemoryOrder _order = MemoryOrder::k_seq_cst) {
+    T fetch_and(T _pattern, MemoryOrder _order = MemoryOrder::SEQ_CST) {
       return atomic_fetch_sub(&this->m_value, _pattern, _order);
     }
 
-    T fetch_or(T _pattern, MemoryOrder _order = MemoryOrder::k_seq_cst) volatile {
+    T fetch_or(T _pattern, MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
       return atomic_fetch_or(&this->m_value, _pattern, _order);
     }
 
-    T fetch_or(T _pattern, MemoryOrder _order = MemoryOrder::k_seq_cst) {
+    T fetch_or(T _pattern, MemoryOrder _order = MemoryOrder::SEQ_CST) {
       return atomic_fetch_or(&this->m_value, _pattern, _order);
     }
 
-    T fetch_xor(T _pattern, MemoryOrder _order = MemoryOrder::k_seq_cst) volatile {
+    T fetch_xor(T _pattern, MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
       return atomic_fetch_xor(&this->m_value, _pattern, _order);
     }
 
-    T fetch_xor(T _pattern, MemoryOrder _order = MemoryOrder::k_seq_cst) {
+    T fetch_xor(T _pattern, MemoryOrder _order = MemoryOrder::SEQ_CST) {
       return atomic_fetch_xor(&this->m_value, _pattern, _order);
     }
 
@@ -280,19 +280,19 @@ struct Atomic<T*> : detail::Atomic<T*> {
     return _value;
   }
 
-  T* fetch_add(PtrDiff _delta, MemoryOrder _order = MemoryOrder::k_seq_cst) volatile {
+  T* fetch_add(PtrDiff _delta, MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
     return detail::atomic_fetch_add(&this->m_value, _delta, _order);
   }
 
-  T* fetch_add(PtrDiff _delta, MemoryOrder _order = MemoryOrder::k_seq_cst) {
+  T* fetch_add(PtrDiff _delta, MemoryOrder _order = MemoryOrder::SEQ_CST) {
     return detail::atomic_fetch_add(&this->m_value, _delta, _order);
   }
 
-  T* fetch_sub(PtrDiff _delta, MemoryOrder _order = MemoryOrder::k_seq_cst) volatile {
+  T* fetch_sub(PtrDiff _delta, MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
     return detail::atomic_fetch_sub(&this->m_value, _delta, _order);
   }
 
-  T* fetch_sub(PtrDiff _delta, MemoryOrder _order = MemoryOrder::k_seq_cst) {
+  T* fetch_sub(PtrDiff _delta, MemoryOrder _order = MemoryOrder::SEQ_CST) {
     return detail::atomic_fetch_sub(&this->m_value, _delta, _order);
   }
 
@@ -351,19 +351,19 @@ struct AtomicFlag {
   AtomicFlag() = default;
   constexpr AtomicFlag(bool _value) : m_value{_value} {}
 
-  bool test_and_set(MemoryOrder _order = MemoryOrder::k_seq_cst) volatile {
+  bool test_and_set(MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
     return detail::atomic_exchange(&m_value, true, _order);
   }
 
-  bool test_and_set(MemoryOrder _order = MemoryOrder::k_seq_cst)  {
+  bool test_and_set(MemoryOrder _order = MemoryOrder::SEQ_CST)  {
     return detail::atomic_exchange(&m_value, true, _order);
   }
 
-  void clear(MemoryOrder _order = MemoryOrder::k_seq_cst) volatile {
+  void clear(MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
     detail::atomic_store(&m_value, false, _order);
   }
 
-  void clear(MemoryOrder _order = MemoryOrder::k_seq_cst) {
+  void clear(MemoryOrder _order = MemoryOrder::SEQ_CST) {
     detail::atomic_store(&m_value, false, _order);
   }
 
