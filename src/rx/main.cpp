@@ -105,7 +105,7 @@ int main([[maybe_unused]] int _argc, [[maybe_unused]] char** argv) {
       break;
     }
 
-    Rx::Engine::Status status;
+    Rx::Engine::Status status = Rx::Engine::Status::SHUTDOWN;
     while (g_running) {
       status = engine.run();
       if (status != Rx::Engine::Status::RUNNING) {
