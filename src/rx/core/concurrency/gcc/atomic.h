@@ -144,16 +144,16 @@ bool atomic_compare_exchange_weak(AtomicBase<T>* base_,
 }
 
 template<typename T>
-inline constexpr const auto k_fetch_skip{1};
+inline constexpr const auto FETCH_SKIP = 1_z;
 
 template<typename T>
-inline constexpr const auto k_fetch_skip<T*>{sizeof(T)};
+inline constexpr const auto FETCH_SKIP<T*> = sizeof(T);
 
 template<typename Tp, typename Td>
 Tp atomic_fetch_add(volatile AtomicBase<Tp>* base_, Td _delta,
   MemoryOrder _order)
 {
-  return __atomic_fetch_add(&base_->value, _delta * k_fetch_skip<Tp>,
+  return __atomic_fetch_add(&base_->value, _delta * FETCH_SKIP<Tp>,
     to_success_order(_order));
 }
 
@@ -161,7 +161,7 @@ template<typename Tp, typename Td>
 Tp atomic_fetch_add(AtomicBase<Tp>* base_, Td _delta,
   MemoryOrder _order)
 {
-  return __atomic_fetch_add(&base_->value, _delta * k_fetch_skip<Tp>,
+  return __atomic_fetch_add(&base_->value, _delta * FETCH_SKIP<Tp>,
     to_success_order(_order));
 }
 
@@ -169,7 +169,7 @@ template<typename Tp, typename Td>
 Tp atomic_fetch_sub(volatile AtomicBase<Tp>* base_, Td _delta,
   MemoryOrder _order)
 {
-  return __atomic_fetch_sub(&base_->value, _delta * k_fetch_skip<Tp>,
+  return __atomic_fetch_sub(&base_->value, _delta * FETCH_SKIP<Tp>,
     to_success_order(_order));
 }
 
@@ -177,7 +177,7 @@ template<typename Tp, typename Td>
 Tp atomic_fetch_sub(AtomicBase<Tp>* base_, Td _delta,
   MemoryOrder _order)
 {
-  return __atomic_fetch_sub(&base_->value, _delta * k_fetch_skip<Tp>,
+  return __atomic_fetch_sub(&base_->value, _delta * FETCH_SKIP<Tp>,
     to_success_order(_order));
 }
 
