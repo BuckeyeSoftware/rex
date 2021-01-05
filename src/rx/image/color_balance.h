@@ -11,10 +11,10 @@ struct Matrix;
 
 struct ColorBalance {
   struct Options {
-    Float64 cr[3]; // {SHADOWS, MIDTONES, HIGHLIGHTS}.
-    Float64 mg[3]; // {SHADOWS, MIDTONES, HIGHLIGHTS}.
-    Float64 yb[3]; // {SHADOWS, MIDTONES, HIGHLIGHTS}.
-    bool preserve_luminosity;
+    Float64 cr[3] = {0.0f, 0.0f, 0.0f}; // {SHADOWS, MIDTONES, HIGHLIGHTS}.
+    Float64 mg[3] = {0.0f, 0.0f, 0.0f}; // {SHADOWS, MIDTONES, HIGHLIGHTS}.
+    Float64 yb[3] = {0.0f, 0.0f, 0.0f}; // {SHADOWS, MIDTONES, HIGHLIGHTS}.
+    bool preserve_luminosity = true;
   };
 
   void configure(const Options& _options);

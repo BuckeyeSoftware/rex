@@ -13,9 +13,9 @@ struct Colorize
   : Operation
 {
   struct Options {
-    Float64 hue;        // (in [0, 1])
-    Float64 saturation; // (in [0, 1])
-    Float64 lightness;  // (in [-1, 1])
+    Float64 hue        = 0.5f; // (in [0, 1])
+    Float64 saturation = 0.5f; // (in [0, 1])
+    Float64 lightness  = 0.0f; // (in [-1, 1])
   };
 
   void configure(const Options& _options);

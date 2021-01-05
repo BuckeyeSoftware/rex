@@ -11,8 +11,8 @@ struct BrightnessContrast
   : Operation
 {
   struct Options {
-    Float64 brightness; // (in [-1, 1])
-    Float64 contrast;   // (in [-1, 1])
+    Float64 brightness = 0.0f; // (in [-1, 1])
+    Float64 contrast   = 0.0f; // (in [-1, 1])
   };
 
   void configure(const Options& _options);
