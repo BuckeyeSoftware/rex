@@ -28,7 +28,7 @@ struct RX_API Stream {
 
   virtual ~Stream();
 
-  enum class Whence {
+  enum class Whence : Uint8 {
     SET,     // Beginning of stream.
     CURRENT, // Current position
     END      // End of stream.

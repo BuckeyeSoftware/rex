@@ -22,7 +22,7 @@ namespace Frontend {
 }
 
 struct Immediate2D {
-  enum class TextAlign {
+  enum class TextAlign : Uint8 {
     LEFT,
     CENTER,
     RIGHT

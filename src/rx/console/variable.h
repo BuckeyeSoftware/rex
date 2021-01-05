@@ -28,7 +28,7 @@ using ::Rx::Math::Vec4i;
 template<typename T>
 struct Variable;
 
-enum class VariableType {
+enum class VariableType : Uint8 {
   BOOLEAN,
   STRING,
   INT,
@@ -41,7 +41,7 @@ enum class VariableType {
   VEC2I,
 };
 
-enum class VariableStatus {
+enum class VariableStatus : Uint8 {
   SUCCESS,
   OUT_OF_RANGE,
   TYPE_MISMATCH

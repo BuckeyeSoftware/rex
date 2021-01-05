@@ -16,7 +16,7 @@ namespace Rx::Console {
 struct Token {
   RX_MARK_NO_COPY(Token);
 
-  enum class Type {
+  enum class Type : Uint8 {
     ATOM,
     STRING,
     BOOLEAN,

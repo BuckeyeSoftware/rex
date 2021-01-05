@@ -4,7 +4,7 @@
 
 namespace Rx::Texture {
 
-enum class DXTType {
+enum class DXTType : Uint8 {
   DXT1,
   DXT5
 };

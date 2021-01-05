@@ -97,7 +97,7 @@ private:
   }
 
   // Compression technique. Only need to store a single function pointer.
-  enum class StorageMode {
+  enum class StorageMode : Uint8 {
     INIT,
     FINI,
     TRAITS

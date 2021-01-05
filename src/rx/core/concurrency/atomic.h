@@ -9,7 +9,7 @@
 
 namespace Rx::Concurrency {
 
-enum class MemoryOrder {
+enum class MemoryOrder : Uint8 {
   RELAXED,
   CONSUME, // load-consume
   ACQUIRE, // load-acquire

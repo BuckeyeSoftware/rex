@@ -25,7 +25,7 @@ struct Engine {
 
   bool init();
 
-  enum class Status {
+  enum class Status : Uint8 {
     RUNNING,
     RESTART,
     SHUTDOWN

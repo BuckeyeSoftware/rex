@@ -33,7 +33,7 @@ struct RX_API JSON {
   JSON& operator=(const JSON& _json);
   JSON& operator=(JSON&& json_);
 
-  enum class Type {
+  enum class Type : Uint8 {
     ARRAY,
     BOOLEAN,
     NIL,

@@ -13,7 +13,7 @@ namespace Rx {
 
 namespace Rx::Texture {
 
-enum class PixelFormat {
+enum class PixelFormat : Uint8 {
   RGBA_U8,
   BGRA_U8,
   RGB_U8,

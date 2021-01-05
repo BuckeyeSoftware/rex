@@ -17,7 +17,7 @@ struct IQMMesh {
   Uint32 num_triangles;
 };
 
-enum class VertexAttribute {
+enum class VertexAttribute : Uint8 {
   POSITION,
   COORDINATE,
   NORMAL,
@@ -28,7 +28,7 @@ enum class VertexAttribute {
   CUSTOM = 0x10
 };
 
-enum class VertexFormat {
+enum class VertexFormat : Uint8 {
   S8,
   U8,
   S16,

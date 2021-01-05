@@ -9,7 +9,7 @@ namespace Rx {
 struct Stream;
 
 struct RX_API Log {
-  enum class Level {
+  enum class Level : Uint8 {
     WARNING,
     INFO,
     VERBOSE,
