@@ -10,7 +10,7 @@ struct Context;
 struct Resource {
   RX_MARK_NO_COPY(Resource);
 
-  enum class Type {
+  enum class Type : Uint8 {
     BUFFER,
     TARGET,
     PROGRAM,
