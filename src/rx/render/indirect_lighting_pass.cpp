@@ -10,19 +10,15 @@
 
 namespace Rx::Render {
 
-IndirectLightingPass::IndirectLightingPass(Frontend::Context* _frontend,
-                                           const GBuffer* _gbuffer,
-                                           const ImageBasedLighting* _ibl)
+IndirectLightingPass::IndirectLightingPass(Frontend::Context* _frontend)
   : m_frontend{_frontend}
-  , m_technique{m_frontend->find_technique_by_name("deferred_indirect")}
+  , m_technique{m_frontend ? m_frontend->find_technique_by_name("deferred_indirect") : nullptr}
   , m_texture{nullptr}
   , m_target{nullptr}
-  , m_gbuffer{_gbuffer}
-  , m_ibl{_ibl}
 {
 }
 
-void IndirectLightingPass::render(const Math::Camera& _camera) {
+void IndirectLightingPass::render(const Math::Camera& _camera, const GBuffer* _gbuffer, const ImageBasedLighting* _ibl) {
   Frontend::State state;
   state.viewport.record_dimensions(m_target->dimensions());
   state.cull.record_enable(false);
@@ -41,12 +37,12 @@ void IndirectLightingPass::render(const Math::Camera& _camera) {
     Math::Vec4f{0.0f, 0.0f, 0.0f, 1.0f}.data());
 
   Frontend::Textures draw_textures;
-  program->uniforms()[0].record_sampler(draw_textures.add(m_gbuffer->albedo()));
-  program->uniforms()[1].record_sampler(draw_textures.add(m_gbuffer->normal()));
-  program->uniforms()[2].record_sampler(draw_textures.add(m_gbuffer->depth_stencil()));
-  program->uniforms()[3].record_sampler(draw_textures.add(m_ibl->irradiance()));
-  program->uniforms()[4].record_sampler(draw_textures.add(m_ibl->prefilter()));
-  program->uniforms()[5].record_sampler(draw_textures.add(m_ibl->scale_bias()));
+  program->uniforms()[0].record_sampler(draw_textures.add(_gbuffer->albedo()));
+  program->uniforms()[1].record_sampler(draw_textures.add(_gbuffer->normal()));
+  program->uniforms()[2].record_sampler(draw_textures.add(_gbuffer->depth_stencil()));
+  program->uniforms()[3].record_sampler(draw_textures.add(_ibl->irradiance()));
+  program->uniforms()[4].record_sampler(draw_textures.add(_ibl->prefilter()));
+  program->uniforms()[5].record_sampler(draw_textures.add(_ibl->scale_bias()));
   program->uniforms()[6].record_mat4x4f(Math::Mat4x4f::invert(_camera.view() * _camera.projection));
   program->uniforms()[7].record_vec3f(_camera.translate);
 

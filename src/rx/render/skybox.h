@@ -5,6 +5,8 @@
 
 #include "rx/core/string.h"
 
+#include "rx/render/color_grader.h"
+
 namespace Rx {
   struct Stream;
 }
@@ -23,7 +25,8 @@ struct Skybox {
   ~Skybox();
 
   void render(Frontend::Target* _target, const Math::Mat4x4f& _view,
-              const Math::Mat4x4f& _projection);
+    const Math::Mat4x4f& _projection,
+    const ColorGrader::Entry* _grading = nullptr);
 
   bool load(Stream* _stream, const Math::Vec2z& _max_face_dimensions);
   bool load(const String& _file_name, const Math::Vec2z& _max_face_dimensions);

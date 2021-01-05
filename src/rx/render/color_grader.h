@@ -4,6 +4,7 @@
 #include "rx/core/string.h"
 
 #include "rx/math/vec2.h"
+#include "rx/math/vec4.h"
 
 namespace Rx::Render {
 
@@ -15,143 +16,140 @@ namespace Frontend {
 struct ColorGrader {
   RX_MARK_NO_COPY(ColorGrader);
 
-  // Each LUT is w=SIZE, h=SIZE, d=SIZE.
-  static inline constexpr const Size SIZE = 16;
-
-  // The maximum depth size of the 3D texture.
-  // The full 3D texture is w=SIZE, h=SIZE, d=MAX_DEPTH.
+  // The maximum Z depth of an atlas.
   static inline constexpr const Size MAX_DEPTH = 4096;
 
-  // The number of LUTs that can be stored along Z, since d=SIZE.
-  static inline constexpr const Size MAX_LUTS = MAX_DEPTH / SIZE;
+  // An entry in the atlas.
+  struct Entry {
+    RX_MARK_NO_COPY(Entry);
 
-  // Single lookup table. When allocated it always contains a neutral table.
-  struct LUT {
-    RX_MARK_NO_COPY(LUT);
+    constexpr Entry();
+    constexpr Entry(ColorGrader* _atlas, Uint16 _handle);
+    Entry(Entry&&);
+    ~Entry();
+    Entry& operator=(Entry&& entry_);
 
-    constexpr LUT();
-    LUT(LUT&& lut_);
-    ~LUT();
+    // Write |_samples| into the entry.
+    void write(const Math::Vec4f* _samples); // Linear single-precision float.
+    void write(const Math::Vec4h* _samples); // Linear half-precision float.
+    void write(const Math::Vec4b* _samples); // 8-bit sRGB.
 
-    LUT& operator=(LUT&& lut_);
-
-    // Write |SIZE * SIZE * SIZE * sizeof(Math::Vec4h)| bytes to the LUT,
-    // replacing the contents.
-    //
-    // These LUTs can be authored externally.
-    void write(const Byte* _data);
-
-    // Read a color grading LUT from a file directly. These can be authored
-    // in w=SIZE*SIZE, h=SIZE format like those accepted by UE4.
-    //
-    // TODO(dweiler):
-    //  Support .cube files for color grading grading, like those used by
-    //  professional studio cameras and Adobe Premiere.
-    bool read(const String& _file_name);
-
-    // The scale and offset of the LUT in the atlas in texel units.
+    // The offset and scale of this entry in the atlas in texel units.
     Math::Vec2f properties() const;
 
-    // The atlas this LUT belongs to.
-    Frontend::Texture3D* atlas() const;
+    // The atlas this entry is part of.
+    const ColorGrader* atlas() const;
 
   private:
-    friend struct ColorGrader;
-
-    constexpr LUT(ColorGrader* _grader, Uint32 _handle);
-
     void release();
 
-    ColorGrader* m_grader;
-    Uint32 m_handle;
+    ColorGrader* m_atlas;
+    Uint16 m_handle;
   };
 
-  ColorGrader(Frontend::Context* _frontend);
+  ColorGrader();
+  ColorGrader(ColorGrader&& atlas_);
   ~ColorGrader();
+  ColorGrader& operator=(ColorGrader&& atlas_);
 
-  void create();
+  static Optional<ColorGrader> create(Frontend::Context* _context, Size _size);
 
-  // Must be called to update dirty LUTs.
+  Optional<Entry> allocate();
+  Optional<Entry> load(const String& _file_name);
+
+  // Update the atlas. This needs to be called when entries are written to.
   void update();
-
-  // Allocate a LUT. Keep the LUT object around for as long as it's used.
-  Optional<LUT> allocate();
 
   Frontend::Texture3D* texture() const;
 
 private:
-  friend struct LUT;
+  friend struct Entry;
 
-  void write(Uint32 _handle, const Byte* _data);
+  void release();
+
+  Optional<Entry> allocate_uninitialized();
 
   Frontend::Context* m_frontend;
   Frontend::Texture3D* m_texture;
 
-  // List of allocated and dirty LUTs.
   Bitset m_allocated;
   Bitset m_dirty;
+
+  // The neutral table samples.
+  Vector<Math::Vec4h> m_neutral;
+
+  // Scratch space for performing LUT conversions to avoid allocations.
+  Concurrency::SpinLock m_scratch_lock;
+  Vector<Math::Vec4h> m_scratch RX_HINT_GUARDED_BY(m_scratch_lock);
 };
 
-// [ColorGrader::LUT]
-inline constexpr ColorGrader::LUT::LUT()
-  : LUT{nullptr, 0}
-{
-}
-
-inline ColorGrader::LUT::LUT(LUT&& lut_)
-  : m_grader{Utility::exchange(lut_.m_grader, nullptr)}
-  , m_handle{Utility::exchange(lut_.m_handle, 0)}
-{
-}
-
-inline ColorGrader::LUT::~LUT() {
+// [ColorGrader]
+inline ColorGrader::~ColorGrader() {
   release();
 }
 
-inline ColorGrader::LUT& ColorGrader::LUT::operator=(LUT&& lut_) {
+inline ColorGrader& ColorGrader::operator=(ColorGrader&& atlas_) {
   release();
-  m_grader = Utility::exchange(lut_.m_grader, nullptr);
-  m_handle = Utility::exchange(lut_.m_handle, 0);
+  m_frontend = Utility::exchange(atlas_.m_frontend, nullptr);
+  m_texture = Utility::exchange(atlas_.m_texture, nullptr);
+  m_allocated = Utility::move(atlas_.m_allocated);
+  m_dirty = Utility::move(atlas_.m_dirty);
+  m_neutral = Utility::move(atlas_.m_neutral);
+  m_scratch = Utility::move(atlas_.m_scratch);
   return *this;
 }
 
-inline constexpr ColorGrader::LUT::LUT(ColorGrader* _grader, Uint32 _handle)
-  : m_grader{_grader}
+inline ColorGrader::ColorGrader(ColorGrader&& atlas_)
+  : m_frontend{Utility::exchange(atlas_.m_frontend, nullptr)}
+  , m_texture{Utility::exchange(atlas_.m_texture, nullptr)}
+  , m_allocated{Utility::move(atlas_.m_allocated)}
+  , m_dirty{Utility::move(atlas_.m_dirty)}
+  , m_neutral{Utility::move(atlas_.m_neutral)}
+  , m_scratch{Utility::move(atlas_.m_scratch)}
+{
+}
+
+inline Frontend::Texture3D* ColorGrader::texture() const {
+  return m_texture;
+}
+
+// [ColorGrader::Entry]
+inline constexpr ColorGrader::Entry::Entry()
+  : Entry{nullptr, 0}
+{
+}
+
+inline constexpr ColorGrader::Entry::Entry(ColorGrader* _atlas, Uint16 _handle)
+  : m_atlas{_atlas}
   , m_handle{_handle}
 {
 }
 
-inline void ColorGrader::LUT::release() {
-  if (m_grader) {
-    m_grader->m_allocated.clear(m_handle);
+inline ColorGrader::Entry::Entry(Entry&& entry_)
+  : m_atlas{Utility::exchange(entry_.m_atlas, nullptr)}
+  , m_handle{Utility::exchange(entry_.m_handle, 0)}
+{
+}
+
+inline ColorGrader::Entry::~Entry() {
+  release();
+}
+
+inline ColorGrader::Entry& ColorGrader::Entry::operator=(Entry&& entry_) {
+  release();
+  m_atlas = Utility::exchange(entry_.m_atlas, nullptr);
+  m_handle = Utility::exchange(entry_.m_handle, 0);
+  return *this;
+}
+
+inline void ColorGrader::Entry::release() {
+  if (m_atlas) {
+    m_atlas->m_allocated.clear(m_handle);
   }
 }
 
-inline void ColorGrader::LUT::write(const Byte* _data) {
-  m_grader->write(m_handle, _data);
-}
-
-inline Math::Vec2f ColorGrader::LUT::properties() const {
-  RX_ASSERT(m_grader, "invalid");
-
-  // Calculate the scale and offset in the atlas for this LUT. This clamps the
-  // UVs in such a way to stay on pixel centers to avoid sampling adjacent
-  // slices when at the boundary of the LUT.
-  const auto uvs_per_slice = 1.0f / ColorGrader::MAX_DEPTH;
-  const auto uvs_per_lut = (uvs_per_slice * ColorGrader::SIZE);
-  const auto scale = (ColorGrader::SIZE - 1.0f) / ColorGrader::MAX_DEPTH;
-  const auto offset = uvs_per_slice * 0.5f + uvs_per_lut * m_handle;
-  return {scale, offset};
-}
-
-inline Frontend::Texture3D* ColorGrader::LUT::atlas() const {
-  RX_ASSERT(m_grader, "invalid");
-  return m_grader->texture();
-}
-
-// [ColorGrader]
-inline Frontend::Texture3D* ColorGrader::texture() const {
-  return m_texture;
+inline const ColorGrader* ColorGrader::Entry::atlas() const {
+  return m_atlas;
 }
 
 } // namespace Rx::Render

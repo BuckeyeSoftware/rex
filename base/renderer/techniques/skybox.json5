@@ -3,7 +3,12 @@
   uniforms: [
     { name: "u_inverse_projection", type: "mat4x4f" },
     { name: "u_inverse_view",       type: "mat4x4f" },
-    { name: "u_sampler",            type: "samplerCM", value: 0 }
+    { name: "u_sampler",            type: "samplerCM", value: 0 },
+    { name: "u_grading_lut",        type: "sampler3D", when: "HAS_GRADING_LUT" },
+    { name: "u_grading_properties", type: "vec2f",     when: "HAS_GRADING_LUT" }
+  ],
+  permutes: [
+    "HAS_GRADING_LUT"
   ],
   shaders: [
     {
@@ -33,7 +38,13 @@
       ],
       source: "
         void main() {
-          fs_color = rx_textureCM(u_sampler, vs_coordinate);
+          vec4f color = rx_textureCM(u_sampler, vs_coordinate);
+        #if defined(HAS_GRADING_LUT)
+          float z = color.z * u_grading_properties.x + u_grading_properties.y;
+          fs_color = rx_texture3D(u_grading_lut, vec3f(color.xy, z));
+        #else
+          fs_color = color;
+        #endif
         }
       "
     }

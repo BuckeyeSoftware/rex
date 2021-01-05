@@ -17,6 +17,7 @@
 #include "rx/render/indirect_lighting_pass.h"
 #include "rx/render/lens_distortion_pass.h"
 #include "rx/render/copy_pass.h"
+#include "rx/render/color_grader.h"
 
 #include "rx/hud/console.h"
 #include "rx/hud/frame_graph.h"
@@ -76,27 +77,91 @@ struct TestGame
     , m_render_stats{&m_immediate2D}
     , m_gbuffer{&m_frontend}
     , m_skybox{&m_frontend}
-    , m_ibl{&m_frontend}
-    , m_indirect_lighting_pass{&m_frontend, &m_gbuffer, &m_ibl}
+    , m_indirect_lighting_pass{&m_frontend}
     , m_lens_distortion_pass{&m_frontend}
     , m_copy_pass{&m_frontend}
+    , m_lut_index{0}
+    , m_lut_count{0}
   {
     engine()->input().root_layer().raise();
   }
 
   ~TestGame() {
+    for (Size i = 0; i < m_lut_count; i++) {
+      m_ibl[i].fini();
+    }
   }
 
   virtual bool on_init() {
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
-    m_skybox.load("base/skyboxes/yokohama/yokohama.json5", {1024, 1024});
-    m_ibl.render(m_skybox.cubemap(), 256);
+    m_skybox.load("base/skyboxes/miramar/miramar.json5", {1024, 1024});
 
     m_indirect_lighting_pass.create(m_frontend.swapchain()->dimensions());
     m_lens_distortion_pass.create(m_frontend.swapchain()->dimensions());
     m_copy_pass.attach_depth_stencil(m_gbuffer.depth_stencil());
     m_copy_pass.create(m_frontend.swapchain()->dimensions());
 
+    const char* LUTS[] = {
+      "base/colorgrading/Arabica 12.CUBE",
+      "base/colorgrading/Ava 614.CUBE",
+      "base/colorgrading/Azrael 93.CUBE",
+      "base/colorgrading/Bourbon 64.CUBE",
+      "base/colorgrading/Byers 11.CUBE",
+      "base/colorgrading/Chemical 168.CUBE",
+      "base/colorgrading/Clayton 33.CUBE",
+      "base/colorgrading/Clouseau 54.CUBE",
+      "base/colorgrading/Cobi 3.CUBE",
+      "base/colorgrading/Contrail 35.CUBE",
+      "base/colorgrading/Cubicle 99.CUBE",
+      "base/colorgrading/Django 25.CUBE",
+      "base/colorgrading/Domingo 145.CUBE",
+      "base/colorgrading/Faded 47.CUBE",
+      "base/colorgrading/Folger 50.CUBE",
+      "base/colorgrading/Fusion 88.CUBE",
+      "base/colorgrading/Hyla 68.CUBE",
+      "base/colorgrading/Korben 214.CUBE",
+      "base/colorgrading/Lenox 340.CUBE",
+      "base/colorgrading/Lucky 64.CUBE",
+      "base/colorgrading/McKinnon 75.CUBE",
+      "base/colorgrading/Milo 5.CUBE",
+      "base/colorgrading/Neon 770.CUBE",
+      "base/colorgrading/Paladin 1875.CUBE",
+      "base/colorgrading/Pasadena 21.CUBE",
+      "base/colorgrading/Pitaya 15.CUBE",
+      "base/colorgrading/Reeve 38.CUBE",
+      "base/colorgrading/Remy 24.CUBE",
+      "base/colorgrading/Sprocket 231.CUBE",
+      "base/colorgrading/Teigen 28.CUBE",
+      "base/colorgrading/Trent 18.CUBE",
+      "base/colorgrading/Tweed 71.CUBE",
+      "base/colorgrading/Vireo 37.CUBE",
+      "base/colorgrading/Zed 32.CUBE",
+      "base/colorgrading/Zeke 39.CUBE"
+    };
+
+    auto grader = Render::ColorGrader::create(&m_frontend, 32);
+    if (!grader) {
+      return false;
+    }
+
+    m_color_grader = Utility::move(*grader);
+
+    // Load in all the LUTS.
+    for (Size i = 0; i < sizeof LUTS / sizeof* LUTS; i++) {
+      if (auto lut = m_color_grader.load(LUTS[i])) {
+        m_luts[m_lut_count++] = Utility::move(*lut);
+      }
+    }
+    // Update the atlas.
+    m_color_grader.update();
+
+    // Render each and every IBL probe with the appropriate LUT.
+    for (Size i = 0; i < m_lut_count; i++) {
+      m_ibl[i].init(&m_frontend);
+      m_ibl[i].data()->render(m_skybox.cubemap(), 256, &m_luts[i]);
+    }
+
+/*
     if (Filesystem::Directory dir{"base/models/light_unit"}) {
       printf("opened light_unit\n");
       dir.each([&](Filesystem::Directory::Item&& item_) {
@@ -110,9 +175,8 @@ struct TestGame
       });
     } else {
       return false;
-    }
+    }*/
 
-    /*
     Render::Model model1{&m_frontend};
     Render::Model model2{&m_frontend};
     if (model1.load("base/models/mrfixit/mrfixit.json5")) {
@@ -125,7 +189,7 @@ struct TestGame
       if (!m_models.push_back(Utility::move(model2))) {
         return false;
       }
-    }*/
+    }
 
     m_models.each_fwd([](Render::Model& _model) {
       _model.animate(0, true);
@@ -210,14 +274,8 @@ struct TestGame
       display_fullscreen->set((display_fullscreen->get() + 1) % 3);
     }
 
-    if (input.root_layer().keyboard().is_released(Input::ScanCode::k_f11)) {
-      const auto &name{m_skybox.name()};
-      const char* next{nullptr};
-      /**/ if (name == "miramar")  next = "base/skyboxes/nebula/nebula.json5";
-      else if (name == "nebula")   next = "base/skyboxes/yokohama/yokohama.json5";
-      else if (name == "yokohama") next = "base/skyboxes/miramar/miramar.json5";
-      m_skybox.load(next, {1024, 1024});
-      m_ibl.render(m_skybox.cubemap(), 256);
+    if (input.root_layer().keyboard().is_released(Input::ScanCode::k_1)) {
+      m_lut_index = (m_lut_index + 1) % 35;
     }
 
     m_console.update(console);
@@ -228,6 +286,8 @@ struct TestGame
   virtual bool on_render() {
     auto& input = engine()->input();
     auto& console = engine()->console();
+
+    m_color_grader.update();
 
     static auto display_resolution =
       console.find_variable_by_name("display.resolution")->cast<Math::Vec2i>();
@@ -257,19 +317,20 @@ struct TestGame
       Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data());
 
     m_models.each_fwd([&](Render::Model& model_) {
-      model_.update(m_frontend.timer().delta_time() * 0.25f);
-      model_.render(m_gbuffer.target(), Math::Mat4x4f::scale({50, 50, 50}), m_camera.view(), m_camera.projection);
-      //model_.render_skeleton({}, &m_immediate3D);
+      model_.update(m_frontend.timer().delta_time());
+      model_.render(m_gbuffer.target(), Math::Mat4x4f::scale({1, 1, 1}), m_camera.view(), m_camera.projection);
+      model_.render_skeleton({}, &m_immediate3D);
     });
 
     // Render indirect lighting pass.
-    m_indirect_lighting_pass.render(m_camera);
+    m_indirect_lighting_pass.render(m_camera, &m_gbuffer, m_ibl[m_lut_index].data());
 
     // Copy the indirect result.
     m_copy_pass.render(m_indirect_lighting_pass.texture());
 
     // Render the skybox absolutely last into the copy pass target.
-    m_skybox.render(m_copy_pass.target(), m_camera.view(), m_camera.projection);
+    m_skybox.render(m_copy_pass.target(), m_camera.view(), m_camera.projection,
+      &m_luts[m_lut_index]);
 
     // Then 3D immediates.
     m_immediate3D.render(m_copy_pass.target(), m_camera.view(), m_camera.projection);
@@ -326,11 +387,16 @@ struct TestGame
   Render::Skybox m_skybox;
   Vector<Render::Model> m_models;
 
-  Render::ImageBasedLighting m_ibl;
+  Uninitialized<Render::ImageBasedLighting> m_ibl[128];
 
   Render::IndirectLightingPass m_indirect_lighting_pass;
   Render::LensDistortionPass m_lens_distortion_pass;
   Render::CopyPass m_copy_pass;
+  Render::ColorGrader m_color_grader;
+  Render::ColorGrader::Entry m_luts[128];
+  Size m_lut_index;
+  Size m_lut_count;
+
 
   Math::Camera m_camera;
 };

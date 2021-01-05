@@ -1,8 +1,13 @@
 {
   name: "irradiance_map",
   uniforms: [
-    { name: "u_sampler",      type: "samplerCM", value: 0  },
-    { name: "u_texture_size", type: "int" }
+    { name: "u_sampler",            type: "samplerCM", value: 0  },
+    { name: "u_texture_size",       type: "int" },
+    { name: "u_grading_lut",        type: "sampler3D", when: "HAS_GRADING_LUT" },
+    { name: "u_grading_properties", type: "vec2f",     when: "HAS_GRADING_LUT" }
+  ],
+  permutes: [
+    "HAS_GRADING_LUT"
   ],
   shaders: [
     {
@@ -63,7 +68,13 @@
                   vec2f coordinate = vec2f(float(x) / float(u_texture_size), float(y) / float(u_texture_size));
                   vec3f direction = rotation * normalize(vec3f(coordinate * 2.0 - 1.0, -1.0));
                   float mul = max(dot(normal, direction), 0.0);
-                  color += vec4f(rx_textureCM(u_sampler, direction).rgb * mul, mul);
+                  vec3f sampled = rx_textureCM(u_sampler, direction).rgb;
+                  #if defined(HAS_GRADING_LUT)
+                    float z = sampled.z * u_grading_properties.x + u_grading_properties.y;
+                    color += vec4f(rx_texture3D(u_grading_lut, vec3f(sampled.xy, z)).rgb * mul, mul);
+                  #else
+                    color += vec4f(sampled * mul, mul);
+                  #endif
                 }
               }
             }

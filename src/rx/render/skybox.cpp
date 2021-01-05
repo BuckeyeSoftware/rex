@@ -28,7 +28,7 @@ Skybox::~Skybox() {
 }
 
 void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
-                    const Math::Mat4x4f& _projection)
+  const Math::Mat4x4f& _projection, const ColorGrader::Entry* _grading)
 {
   RX_PROFILE_CPU("skybox::render");
 
@@ -36,11 +36,11 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     return;
   }
 
-  // eliminate translation from the view matrix
+  // Eliminate translation from the view matrix.
   Math::Mat4x4f view{_view};
   view.w = {0.0f, 0.0f, 0.0f, 1.0f};
 
-  Frontend::Program* program = *m_technique;
+  Frontend::Program* program = m_technique->permute(_grading ? 1 << 0 : 0);
 
   Frontend::State state;
   state.depth.record_test(true);
@@ -51,11 +51,15 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
 
   state.viewport.record_dimensions(_target->dimensions());
 
-  // Record all textures.
+  // Record all uniforms and textures.
   Frontend::Textures draw_textures;
   program->uniforms()[0].record_mat4x4f(Math::Mat4x4f::invert(_projection));
   program->uniforms()[1].record_mat4x4f(Math::Mat4x4f::invert(view));
   program->uniforms()[2].record_sampler(draw_textures.add(m_texture));
+  if (_grading) {
+    program->uniforms()[3].record_sampler(draw_textures.add(_grading->atlas()->texture()));
+    program->uniforms()[4].record_vec2f(_grading->properties());
+  }
 
   // Record all draw buffers.
   Frontend::Buffers draw_buffers;

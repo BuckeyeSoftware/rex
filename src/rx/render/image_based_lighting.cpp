@@ -67,7 +67,7 @@ ImageBasedLighting::~ImageBasedLighting() {
   m_frontend->destroy_texture(RX_RENDER_TAG("ibl: scale bias"), m_scale_bias_texture);
 }
 
-void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradiance_map_size) {
+void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradiance_map_size, ColorGrader::Entry* _grading) {
   // NOTE(dweiler): Artifically limit the maximum size of IRM to avoid TDR.
   _irradiance_map_size = Algorithm::min(_irradiance_map_size, 32_z);
 
@@ -109,8 +109,14 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
     target->attach_texture(m_irradiance_texture, 0);
     m_frontend->initialize_target(RX_RENDER_TAG("ibl: irradiance"), target);
 
-    Frontend::Program* program{*irradiance_technique};
+    Frontend::Textures draw_textures;
+    Frontend::Program* program = irradiance_technique->permute(_grading ? 1 << 0 : 0);
+    program->uniforms()[0].record_sampler(draw_textures.add(_environment));
     program->uniforms()[1].record_int(static_cast<int>(_irradiance_map_size));
+    if (_grading) {
+      program->uniforms()[2].record_sampler(draw_textures.add(_grading->atlas()->texture()));
+      program->uniforms()[3].record_vec2f(_grading->properties());
+    }
 
     Frontend::State state;
     state.viewport.record_dimensions(target->dimensions());
@@ -123,9 +129,6 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
     draw_buffers.add(3);
     draw_buffers.add(4);
     draw_buffers.add(5);
-
-    Frontend::Textures draw_textures;
-    draw_textures.add(_environment);
 
     m_frontend->draw(
       RX_RENDER_TAG("irradiance map"),
@@ -147,14 +150,23 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
 
   // Render prefilter environment map.
   {
+    Frontend::Program* program = prefilter_technique->permute(_grading ? 1 << 0 : 0);
+
     for (Size i{0}; i <= k_max_prefilter_levels; i++) {
       Frontend::Target* target{m_frontend->create_target(RX_RENDER_TAG("ibl: prefilter"))};
       target->attach_texture(m_prefilter_texture, i);
       m_frontend->initialize_target(RX_RENDER_TAG("ibl: prefilter"), target);
 
+      Frontend::Textures draw_textures;
+      draw_textures.add(_environment);
+
+      program->uniforms()[0].record_sampler(draw_textures.add(_environment));
       const Float32 roughness{static_cast<Float32>(i) / k_max_prefilter_levels};
-      Frontend::Program* program{*prefilter_technique};
       program->uniforms()[1].record_float(roughness);
+      if (_grading) {
+        program->uniforms()[2].record_sampler(draw_textures.add(_grading->atlas()->texture()));
+        program->uniforms()[3].record_vec2f(_grading->properties());
+      }
 
       Frontend::State state;
       state.viewport.record_dimensions(target->dimensions());
@@ -167,9 +179,6 @@ void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradia
       draw_buffers.add(3);
       draw_buffers.add(4);
       draw_buffers.add(5);
-
-      Frontend::Textures draw_textures;
-      draw_textures.add(_environment);
 
       m_frontend->draw(
         RX_RENDER_TAG("ibl: prefilter"),

@@ -18,10 +18,11 @@ struct GBuffer;
 struct ImageBasedLighting;
 
 struct IndirectLightingPass {
-  IndirectLightingPass(Frontend::Context* _frontend, const GBuffer* _gbuffer, const ImageBasedLighting* _ibl);
+  IndirectLightingPass() : IndirectLightingPass{nullptr} {}
+  IndirectLightingPass(Frontend::Context* _frontend);
   ~IndirectLightingPass();
 
-  void render(const Math::Camera& _camera);
+  void render(const Math::Camera& _camera, const GBuffer* _gbuffer, const ImageBasedLighting* _ibl);
 
   void create(const Math::Vec2z& _resolution);
   void resize(const Math::Vec2z& _resolution);
@@ -36,9 +37,6 @@ private:
   Frontend::Technique* m_technique;
   Frontend::Texture2D* m_texture;
   Frontend::Target* m_target;
-
-  const GBuffer* m_gbuffer;
-  const ImageBasedLighting* m_ibl;
 };
 
 inline IndirectLightingPass::~IndirectLightingPass() {

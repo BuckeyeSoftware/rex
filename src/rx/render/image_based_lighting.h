@@ -1,6 +1,7 @@
 #ifndef RX_RENDER_IBL_H
 #define RX_RENDER_IBL_H
 #include "rx/core/array.h"
+#include "rx/render/color_grader.h"
 
 namespace Rx::Render {
 
@@ -16,7 +17,7 @@ struct ImageBasedLighting {
   ImageBasedLighting(Frontend::Context* _interface);
   ~ImageBasedLighting();
 
-  void render(Frontend::TextureCM* _environment, Size _irradiance_map_size);
+  void render(Frontend::TextureCM* _environment, Size _irradiance_map_size, ColorGrader::Entry* _grading = nullptr);
 
   Frontend::TextureCM* irradiance() const;
   Frontend::TextureCM* prefilter() const;

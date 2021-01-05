@@ -1,8 +1,13 @@
 {
   name: "prefilter_environment_map",
   uniforms: [
-    { name: "u_sampler",   type: "samplerCM", value: 0 },
-    { name: "u_roughness", type: "float" }
+    { name: "u_sampler",            type: "samplerCM", value: 0 },
+    { name: "u_roughness",          type: "float" },
+    { name: "u_grading_lut",        type: "samplerCM", when: "HAS_GRADING_LUT" },
+    { name: "u_grading_properties", type: "vec2f",     when: "HAS_GRADING_LUT" }
+  ],
+  permutes: [
+    "HAS_GRADING_LUT"
   ],
   shaders: [
     {
@@ -54,7 +59,13 @@
             float n_dot_l = max(0.0, dot(n, l));
 
             if (n_dot_l > 0.0) {
-              color += rx_textureCM(u_sampler, l).rgb * n_dot_l;
+              vec3f sampled = rx_textureCM(u_sampler, l).rgb;
+              #if defined(HAS_GRADING_LUT)
+                float z = sampled.z * u_grading_properties.x + u_grading_properties.y;
+                color += rx_texture3D(u_grading_lut, vec3f(sampled.xy, z)).rgb * n_dot_l;
+              #else
+                color += sampled * n_dot_l;
+              #endif
               total_weight += n_dot_l;
             }
           }

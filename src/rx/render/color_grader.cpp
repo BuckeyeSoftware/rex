@@ -1,4 +1,6 @@
 #include <string.h> // memcpy
+#include <stdlib.h> // strtol
+#include <stdio.h> // sscanf
 
 #include "rx/render/color_grader.h"
 
@@ -8,98 +10,311 @@
 #include "rx/core/global.h"
 
 #include "rx/core/math/fract.h"
+#include "rx/core/math/half.h"
+
+#include "rx/core/concurrency/scope_lock.h"
+
+#include "rx/core/filesystem/file.h"
 
 #include "rx/texture/loader.h"
 
 namespace Rx::Render {
 
-using Pixel = Math::Vec4h;
+struct Cube {
+  Cube(Memory::Allocator& _allocator) : data{_allocator}, size{0} {}
 
-// Generates a Neutral LUT.
-struct NeutralLUT {
-  static inline constexpr const auto SIZE = ColorGrader::SIZE;
+  Size samples() const { return size * size * size; }
 
-  NeutralLUT() {
-    const Math::Vec2z dimensions{SIZE * SIZE, SIZE};
-    for (Size y = 0; y < dimensions.h; y++) {
-      for (Size x = 0; x < dimensions.w; x++) {
-        auto u = Float32(x) / (dimensions.w - 1) * ((dimensions.w - 1.0f) / dimensions.w);
-        auto v = Float32(y) / (dimensions.h - 1) * ((dimensions.h - 1.0f) / dimensions.h);
+  bool resize(Size _size) {
+    size = _size;
+    return data.resize(samples());
+  }
 
-        Math::Vec4f uvw;
-        uvw.x = Math::fract(u * SIZE);
+  Vector<Math::Vec4h> data;
+  Size size;
+};
 
-        uvw.y = v;
-        uvw.z = u - uvw[0] / SIZE;
-        uvw.w = 1.0f;
+// Remap |_x| with input range [|_in_min|, |_in_max|] to output in range [|_out_min|, |_out_max|].
+static Math::Half remap(Float32 _x, Float32 _in_min, Float32 _in_max, Float32 _out_min, Float32 _out_max) {
+  return (_x - _in_min) * (_out_max - _out_min) / (_in_max - _in_min) + _out_min;
+}
 
-        uvw.x *= SIZE / Float32(SIZE - 1);
-        uvw.y *= SIZE / Float32(SIZE - 1);
-        uvw.z *= SIZE / Float32(SIZE - 1);
+// Remap the triplet |_value| into half-float [0, 1] range based on the domain |_min| and |max|.
+static Math::Vec3h remap(const Math::Vec3f& _value, const Math::Vec3f& _min, const Math::Vec3f& _max) {
+  return {
+    remap(_value.x, _min.x, _max.x, 0.0f, 1.0f),
+    remap(_value.y, _min.y, _max.y, 0.0f, 1.0f),
+    remap(_value.z, _min.z, _max.z, 0.0f, 1.0f)
+  };
+};
 
-        data[dimensions.w * y + x] = uvw.cast<Math::Half>();
+// Loads an Adobe Cube file.
+static Optional<Cube> load_cube(Memory::Allocator& _allocator, const String& _file_name) {
+  Cube cube{_allocator};
+
+  auto data = Filesystem::read_text_file(_allocator, _file_name);
+  if (!data) {
+    return nullopt;
+  }
+
+  // Read each line of the file.
+  auto next_line = [&](char*& line_) -> char* {
+    if (!line_ || !*line_) {
+      return nullptr;
+    }
+    char* line = line_;
+    line_ += strcspn(line_, "\n");
+    *line_++ = '\0';
+    return line;
+  };
+
+  // When no domain is specified, the default domain is [{0, 0, 0}, {1, 1, 1}].
+  Math::Vec3f min{0.0f, 0.0f, 0.0f};
+  Math::Vec3f max{1.0f, 1.0f, 1.0f};
+
+  Vector<Math::Vec3h> samples{_allocator};
+  auto token = reinterpret_cast<char*>(data->data());
+  while (auto line = next_line(token)) {
+    // Skip empty and comment lines.
+    if (!*line || *line == '#') {
+      continue;
+    }
+
+    // Skip "TITLE" line.
+    if (!strncmp(line, "TITLE", 5)) {
+      continue;
+    }
+
+    // Read domain min and max extents. We'll be remapping samples to [0, 1].
+    if (sscanf(line, "DOMAIN_MIN %f %f %f", &min.x, &min.y, &min.z) == 3) {
+      continue;
+    }
+    if (sscanf(line, "DOMAIN_MAX %f %f %f", &max.x, &max.y, &max.z) == 3) {
+      continue;
+    }
+
+    // Read the 3D LUT size.
+    if (Size size; sscanf(line, "LUT_3D_SIZE %zu", &size) == 1) {
+      if (!cube.resize(size)) {
+        return nullopt;
+      }
+      continue;
+    }
+
+    // Cannot read any RGB triplets if LUT_3D_SIZE was not seen or we have too
+    // many samples in the file than what was defined by LUT_3D_SIZE.
+    if (cube.size == 0 || samples.size() == cube.samples()) {
+      return nullopt;
+    }
+
+    // Read a sample, remap it, and append.
+    Math::Vec3f sample{0.0f, 0.0f, 0.0f};
+    if (sscanf(line, "%f %f %f", &sample.r, &sample.g, &sample.b) != 3) {
+      return nullopt;
+    }
+
+    const auto value = remap(sample, min, max);
+    if (!samples.emplace_back(value.r, value.g, value.b)) {
+      return nullopt;
+    }
+  }
+
+  // Swizzle it from vertical to horizontal.
+  const auto size = cube.size;
+  for (Size y = 0; y < size; y++) {
+    for (Size z = 0; z < size; z++) {
+      for (Size x = 0; x < size; x++) {
+        const auto& src = samples[z * size * size + (y * size + x)];
+        cube.data[y * size * size + (z * size + x)] = {src.r, src.g, src.b, 1.0f};
       }
     }
   }
-  Pixel data[SIZE * SIZE * SIZE];
-  static Global<NeutralLUT> s_instance;
-};
 
-Global<NeutralLUT> NeutralLUT::s_instance{"system", "neutral_color_grading_lut"};
+  return cube;
+}
 
-// [ColorGrader::LUT]
-bool ColorGrader::LUT::read(const String& _file_name) {
-  auto& allocator = m_grader->m_frontend->allocator();
-  Texture::Loader loader{allocator};
+// [ColorGrader::Entry]
+void ColorGrader::Entry::write(const Math::Vec4f* _samples) {
+  // Convert |_samples| to half-precision float.
+  Concurrency::ScopeLock lock{m_atlas->m_scratch_lock};
+  auto& samples = m_atlas->m_scratch;
+  const auto n_samples = m_atlas->m_texture->dimensions().area();
+  for (Size i = 0; i < n_samples; i++) {
+    samples[i] = _samples[i].cast<Math::Half>();
+  }
+  return write(samples.data());
+}
 
-  if (!loader.load(_file_name, Texture::PixelFormat::RGBA_U8, {SIZE * SIZE, SIZE})) {
-    return false;
+void ColorGrader::Entry::write(const Math::Vec4h* _samples) {
+  const auto texture = m_atlas->m_texture;
+  const auto size = texture->dimensions().w;
+
+  // Need to swizzle Z and Y here.
+  const auto src = _samples;
+  const auto dst = reinterpret_cast<Math::Vec4h*>(texture->map(0));
+  for (Size z = 0; z < size; z++) {
+    for (Size y = 0; y < size; y++) {
+      memcpy(dst + (z + size * m_handle) * size * size + y * size,
+        src + z * size + y * size * size, sizeof(Math::Vec4h) * size);
+    }
   }
 
-  // Convert to RGBAF16
-  Vector<Pixel> data{allocator};
-  if (!data.resize(SIZE * SIZE * SIZE)) {
-    return false;
+  // This code is what would be used if we didn't need to swizzle incoming.
+  //
+  // auto src = _samples;
+  // auto dst = m_texture->map(0) + (size * _handle * size * size) * sizeof(Math::Vec4h);
+  // auto len = size * size * sizeof(Math::Vec4h);
+  // for (Size z = 0; z < size; z++) {
+  //   memcpy(dst, src, len);
+  //   src += len;
+  //   dst += len;
+  // }
+
+  // Mark the entry as dirty in the atlas.
+  m_atlas->m_dirty.set(m_handle);
+}
+
+void ColorGrader::Entry::write(const Math::Vec4b* _samples) {
+  // Convert |_samples| to half-precision float.
+  Concurrency::ScopeLock lock{m_atlas->m_scratch_lock};
+  auto& samples = m_atlas->m_scratch;
+  const auto n_samples = m_atlas->m_texture->dimensions().area();
+  for (Size i = 0; i < n_samples; i++) {
+    samples[i] = (_samples[i].cast<Float32>() * (1.0f / 255.0f)).cast<Math::Half>();
   }
+  return write(samples.data());
+}
 
-  auto src = reinterpret_cast<const Math::Vec4b*>(loader.data().data());
-  for (Size i = 0; i < SIZE * SIZE * SIZE; i++) {
-    data[i] = (src[i].cast<Float32>() * (1.0f / 255.0f)).cast<Math::Half>();
-  }
-
-  // Write the LUT into the atlas.
-  write(reinterpret_cast<const Byte*>(data.data()));
-
-  return true;
+Math::Vec2f ColorGrader::Entry::properties() const {
+  const auto size = m_atlas->m_texture->dimensions().w;
+  // Calculate the scale and offset in the atlas for this entry. This clamps the
+  // UVs in such a way to stay on pixel centers to avoid sampling adjacent slices
+  // when at the boundary slice of the entry.
+  const auto uvs_per_slice = 1.0f / MAX_DEPTH;
+  const auto uvs_per_lut = (uvs_per_slice * size);
+  const auto scale = (size - 1.0f) / MAX_DEPTH;
+  const auto offset = uvs_per_slice * 0.5f + uvs_per_lut * m_handle;
+  return {scale, offset};
 }
 
 // [ColorGrader]
-ColorGrader::ColorGrader(Frontend::Context* _frontend)
-  : m_frontend{_frontend}
+ColorGrader::ColorGrader()
+  : m_frontend{nullptr}
   , m_texture{nullptr}
-  , m_allocated{Utility::move(*Bitset::create(m_frontend->allocator(), MAX_LUTS))}
-  , m_dirty{Utility::move(*Bitset::create(m_frontend->allocator(), MAX_LUTS))}
 {
 }
 
-ColorGrader::~ColorGrader() {
-  RX_ASSERT(m_allocated.count_set_bits() == 0, "leaked LUTs");
-  m_frontend->destroy_texture(RX_RENDER_TAG("ColorGrader"), m_texture);
-}
+Optional<ColorGrader> ColorGrader::create(Frontend::Context* _context, Size _size) {
+  auto& allocator = _context->allocator();
 
-void ColorGrader::create() {
-  m_texture = m_frontend->create_texture3D(RX_RENDER_TAG("ColorGrader"));
-  m_texture->record_type(Frontend::Texture::Type::DYNAMIC);
-  m_texture->record_levels(1);
-  m_texture->record_filter({true, false, false});
-  m_texture->record_format(Frontend::Texture::DataFormat::k_rgba_f16);
-  m_texture->record_dimensions({SIZE, SIZE, MAX_DEPTH});
-  m_texture->record_wrap({
+  // Create the neutral table.
+  Vector<Math::Vec4h> neutral{allocator};
+  if (!neutral.resize(_size * _size * _size)) {
+    return nullopt;
+  }
+
+  const Math::Vec2z dimensions{_size * _size, _size};
+  for (Size y = 0; y < dimensions.h; y++) {
+    for (Size x = 0; x < dimensions.w; x++) {
+      auto u = Float32(x) / (dimensions.w - 1) * ((dimensions.w - 1.0f) / dimensions.w);
+      auto v = Float32(y) / (dimensions.h - 1) * ((dimensions.h - 1.0f) / dimensions.h);
+
+      Math::Vec4f uvw;
+      uvw.x = Math::fract(u * _size);
+
+      uvw.y = v;
+      uvw.z = u - uvw[0] / _size;
+      uvw.w = 1.0f;
+
+      uvw.x *= _size / Float32(_size - 1);
+      uvw.y *= _size / Float32(_size - 1);
+      uvw.z *= _size / Float32(_size - 1);
+
+      neutral[dimensions.w * y + x] = uvw.cast<Math::Half>();
+    }
+  }
+
+  auto allocated = Bitset::create(allocator, {MAX_DEPTH / _size});
+  if (!allocated) {
+    return nullopt;
+  }
+
+  auto dirty = Bitset::create(allocator, {MAX_DEPTH / _size});
+  if (!dirty) {
+    return nullopt;
+  }
+
+  auto texture = _context->create_texture3D(RX_RENDER_TAG("Atlas"));
+  if (!texture) {
+    return nullopt;
+  }
+
+  texture->record_type(Frontend::Texture::Type::DYNAMIC);
+  texture->record_levels(1);
+  texture->record_filter({true, false, false});
+  texture->record_format(Frontend::Texture::DataFormat::k_rgba_f16);
+  texture->record_dimensions({_size, _size, MAX_DEPTH});
+  texture->record_wrap({
     Render::Frontend::Texture::WrapType::k_clamp_to_edge,
     Render::Frontend::Texture::WrapType::k_clamp_to_edge,
     Render::Frontend::Texture::WrapType::k_clamp_to_edge});
 
-  m_frontend->initialize_texture(RX_RENDER_TAG("ColorGrader"), m_texture);
+  _context->initialize_texture(RX_RENDER_TAG("Atlas"), texture);
+
+  ColorGrader atlas;
+  atlas.m_frontend = _context;
+  atlas.m_texture = texture;
+  atlas.m_allocated = Utility::move(*allocated);
+  atlas.m_dirty = Utility::move(*dirty);
+  atlas.m_neutral = Utility::move(neutral);
+  atlas.m_scratch = {allocator};
+
+  return atlas;
+}
+
+Optional<ColorGrader::Entry> ColorGrader::allocate() {
+  auto entry = allocate_uninitialized();
+  if (!entry) {
+    return nullopt;
+  }
+
+  entry->write(m_neutral.data());
+
+  return entry;
+}
+
+Optional<ColorGrader::Entry> ColorGrader::load(const String& _file_name) {
+  auto& allocator = m_frontend->allocator();
+
+  auto entry = allocate_uninitialized();
+  if (!entry) {
+    return nullopt;
+  }
+
+  // Handle Adobe .CUBE files.
+  if (_file_name.ends_with(".cube") || _file_name.ends_with(".CUBE")) {
+    auto data = load_cube(allocator, _file_name);
+    if (!data) {
+      return nullopt;
+    }
+    entry->write(data->data.data());
+    return entry;
+  }
+
+  Texture::Loader loader{m_frontend->allocator()};
+  const auto& dimensions = m_texture->dimensions();
+
+  // Limit textures to W=w*w, H=h as |write| execpts horizontal layout.
+  const Math::Vec2z max_dimensions{dimensions.w * dimensions.w, dimensions.h};
+  if (!loader.load(_file_name, Texture::PixelFormat::RGBA_U8, max_dimensions)) {
+    return nullopt;
+  }
+
+  // Write the data into the entry.
+  auto data = reinterpret_cast<const Math::Vec4b*>(loader.data().data());
+  entry->write(data);
+
+  return entry;
 }
 
 void ColorGrader::update() {
@@ -108,53 +323,33 @@ void ColorGrader::update() {
     return;
   }
 
-  // Record edits on the frontend and update.
-  m_dirty.each_set([&](Bitset::BitType _texture) {
-    m_texture->record_edit(0, {0, 0, SIZE * _texture}, {SIZE, SIZE, SIZE});
-  });
-  m_frontend->update_texture(RX_RENDER_TAG("ColorGrader"), m_texture);
+  const auto size = m_texture->dimensions().w;
 
-  // No more dirty LUTs.
+  // Record all the edits to the atlas and update the texture.
+  m_dirty.each_set([&](Bitset::BitType _texture) {
+    m_texture->record_edit(0, {0, 0, size * _texture}, {size, size, size});
+  });
+
+  m_frontend->update_texture(RX_RENDER_TAG("Atlas"), m_texture);
+
   m_dirty.clear();
 }
 
-Optional<ColorGrader::LUT> ColorGrader::allocate() {
-  auto find = m_allocated.find_first_unset();
-  if (!find) {
+void ColorGrader::release() {
+  if (m_frontend) {
+    m_frontend->destroy_texture(RX_RENDER_TAG("Atlas"), m_texture);
+  }
+}
+
+Optional<ColorGrader::Entry> ColorGrader::allocate_uninitialized() {
+  auto index = m_allocated.find_first_unset();
+  if (!index) {
     return nullopt;
   }
 
-  m_allocated.set(*find);
+  m_allocated.set(*index);
 
-  // Set the neutral data on the LUT.
-  write(*find, reinterpret_cast<const Byte*>(NeutralLUT::s_instance->data));
-
-  return LUT{this, Uint32(*find)};
-}
-
-// Write |_data| to the LUT given by |_handle|.
-void ColorGrader::write(Uint32 _handle, const Byte* _data) {
-  // Need to swizzle Z and Y because 3D textures are vertical rather than horizontal.
-  auto src = reinterpret_cast<const Pixel*>(_data);
-  auto dst = reinterpret_cast<Pixel*>(m_texture->map(0));
-  for (Size z = 0; z < SIZE; z++) {
-    for (Size y = 0; y < SIZE; y++) {
-      memcpy(dst + (z + SIZE * _handle) * SIZE * SIZE + y * SIZE, src + z * SIZE + y * SIZE * SIZE, sizeof(Pixel) * SIZE);
-    }
-  }
-
-  // This code is what would be used if we didn't need to swizzle incoming.
-  //
-  // auto src = _data;
-  // auto dst = m_texture->map(0) + (SIZE * _handle * SIZE * SIZE) * sizeof(Pixel);
-  // auto len = SIZE * SIZE * sizeof(Pixel);
-  // for (Size z = 0; z < SIZE; z++) {
-  //   memcpy(dst, src, len);
-  //   src += len;
-  //   dst += len;
-  // }
-
-  m_dirty.set(_handle);
+  return Entry{this, Uint16(*index)};
 }
 
 } // namespace Rx::Render
