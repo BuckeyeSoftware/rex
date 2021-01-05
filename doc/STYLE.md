@@ -26,6 +26,7 @@
 * [Classes](#classes)
 * [Const](#const)
   + [Placement](#placement)
+* [Enums](#enums)
 * [Globals](#globals)
 * [Thread local storage](#thread-local-storage)
 * [Structure alignment and packing](#structure-alignment-and-packing)
@@ -309,6 +310,15 @@ The placement of `const` is west-const, not east-const.
 ```c
 int const x; // invalid
 const int x; // valid
+```
+
+## Enums
+All enums should be of the `enum class` variant, unless nested in a function or
+class. All enums should have their numeric type explicitly specified.
+```cpp
+enum Foo { ... }; // invalid
+enum class Foo { ... }; // invalid
+enum class Foo : Uint8 { ... }; // valid
 ```
 
 ## Globals
