@@ -8,6 +8,7 @@
 #include "rx/core/math/sqrt.h"
 #include "rx/core/math/sign.h"
 #include "rx/core/math/abs.h"
+#include "rx/core/math/half.h"
 
 #include "rx/core/algorithm/min.h"
 #include "rx/core/algorithm/max.h"
@@ -59,6 +60,7 @@ struct Vec3 {
 };
 
 using Vec3f = Vec3<Float32>;
+using Vec3h = Vec3<Half>;
 using Vec3i = Vec3<Sint32>;
 using Vec3z = Vec3<Size>;
 
