@@ -87,7 +87,7 @@ struct TestGame
   }
 
   ~TestGame() {
-    for (Size i = 0; i < m_lut_count; i++) {
+    for (Size i = 0; i < m_lut_count + 1; i++) {
       m_ibl[i].fini();
     }
   }
@@ -155,10 +155,14 @@ struct TestGame
     // Update the atlas.
     m_color_grader.update();
 
+    // 0 is the base...
+    m_ibl[0].init(&m_frontend);
+    m_ibl[0].data()->render(m_skybox.cubemap(), 256, nullptr);
+
     // Render each and every IBL probe with the appropriate LUT.
     for (Size i = 0; i < m_lut_count; i++) {
-      m_ibl[i].init(&m_frontend);
-      m_ibl[i].data()->render(m_skybox.cubemap(), 256, &m_luts[i]);
+      m_ibl[i+1].init(&m_frontend);
+      m_ibl[i+1].data()->render(m_skybox.cubemap(), 256, &m_luts[i]);
     }
 
 /*
@@ -185,7 +189,7 @@ struct TestGame
       }
     }
 
-    if (model2.load("base/models/roach/roach.json5")) {
+    if (model2.load("base/models/fire_hydrant/fire_hydrant.json5")) {
       if (!m_models.push_back(Utility::move(model2))) {
         return false;
       }
@@ -322,7 +326,6 @@ struct TestGame
       model_.render_skeleton({}, &m_immediate3D);
     });
 
-    // Render indirect lighting pass.
     m_indirect_lighting_pass.render(m_camera, &m_gbuffer, m_ibl[m_lut_index].data());
 
     // Copy the indirect result.
@@ -330,7 +333,7 @@ struct TestGame
 
     // Render the skybox absolutely last into the copy pass target.
     m_skybox.render(m_copy_pass.target(), m_camera.view(), m_camera.projection,
-      &m_luts[m_lut_index]);
+      m_lut_index ? &m_luts[m_lut_index] : nullptr);
 
     // Then 3D immediates.
     m_immediate3D.render(m_copy_pass.target(), m_camera.view(), m_camera.projection);
@@ -396,7 +399,6 @@ struct TestGame
   Render::ColorGrader::Entry m_luts[128];
   Size m_lut_index;
   Size m_lut_count;
-
 
   Math::Camera m_camera;
 };
