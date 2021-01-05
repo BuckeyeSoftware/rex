@@ -1,7 +1,8 @@
 #include "rx/math/plane.h"
 #include "rx/math/line.h"
 #include "rx/math/ray.h"
-#include "rx/math/compare.h"
+
+#include "rx/core/math/constants.h" // EPSILON
 
 namespace Rx::Math {
 
@@ -18,7 +19,7 @@ Optional<Vec3f> Plane::line_intersect(const Line& _line) const {
   }
 
   const auto delta = start_distance - end_distance;
-  const auto fraction = abs(delta) >= EPSILON<Float32>
+  const auto fraction = abs(delta) >= Math::EPSILON<Float32>
     ? (start_distance - m_distance) / delta : 0.0f;
 
   return _line.start + (_line.end - _line.start) * fraction;
@@ -27,7 +28,7 @@ Optional<Vec3f> Plane::line_intersect(const Line& _line) const {
 Optional<Vec3f> Plane::ray_intersect(const Ray& _ray) const {
   const auto denom = dot(m_normal, _ray.direction());
 
-  if (denom > -EPSILON<Float32> && denom < EPSILON<Float32>) {
+  if (denom > -Math::EPSILON<Float32> && denom < Math::EPSILON<Float32>) {
     return nullopt;
   }
 

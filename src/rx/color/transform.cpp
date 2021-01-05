@@ -4,17 +4,17 @@
 #include "rx/color/hsv.h"
 #include "rx/color/rgb.h"
 
+#include "rx/core/math/constants.h"
+
 namespace Rx::Color {
 
 void rgb_to_hsv(const RGB& _rgb, HSV& hsv_) {
-  static constexpr const auto EPSILON = 0.0001;
-
   const auto min = _rgb.min();
   const auto max = _rgb.max();
 
   hsv_.v = max;
 
-  if (const auto delta = max - min; delta > EPSILON) {
+  if (const auto delta = max - min; delta > Math::EPSILON<Float64>) {
     hsv_.s = delta / max;
     if (_rgb.r == max) {
       hsv_.h = (_rgb.g - _rgb.b) / delta;

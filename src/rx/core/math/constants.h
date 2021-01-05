@@ -13,6 +13,9 @@ inline constexpr const T PI_2 = T(1.57079632679489661923132169163975144209858469
 template<typename T>
 inline constexpr const T PI_4 = T(0.78539816339744830961566084581987572104929234984378);
 
+template<typename T>
+inline constexpr const T EPSILON = T(0.0001);
+
 } // namespace Rx::Math
 
 #endif // RX_CORE_MATH_CONSTANTS_H
