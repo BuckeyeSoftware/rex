@@ -14,20 +14,18 @@ namespace Rx {
 // 32-bit: 12 bytes
 // 64-bit: 24 bytes
 struct RX_API Bitset {
-  Bitset() = default;
-
   using BitType = Uint64;
 
   static constexpr const BitType BIT_ONE = 1;
   static constexpr const Size WORD_BITS = 8 * sizeof(BitType);
 
-  static Optional<Bitset> create(Memory::Allocator& _allocator, Size _size);
-  static Optional<Bitset> copy(Memory::Allocator& _allocator, const Bitset& _bitset);
-
+  constexpr Bitset();
   Bitset(Bitset&& bitset_);
   ~Bitset();
-
   Bitset& operator=(Bitset&& bitset_);
+
+  static Optional<Bitset> create(Memory::Allocator& _allocator, Size _size);
+  static Optional<Bitset> copy(Memory::Allocator& _allocator, const Bitset& _bitset);
 
   // Clear all set bits.
   void clear();
@@ -67,22 +65,26 @@ struct RX_API Bitset {
   constexpr Memory::Allocator& allocator() const;
 
 private:
+  static Optional<Bitset> create_uninitialized(Memory::Allocator& _allocator, Size _size);
+
   static Size bytes_for_size(Size _size);
 
   static Size index(Size bit);
   static Size offset(Size bit);
 
-  constexpr Bitset(Memory::Allocator& _allocator, Size _size, BitType* _data)
-    : m_allocator{&_allocator}
-    , m_size{_size}
-    , m_data{_data}
-  {
-  }
+  void release();
 
   Memory::Allocator* m_allocator;
   Size m_size;
   BitType* m_data;
 };
+
+inline constexpr Bitset::Bitset()
+  : m_allocator{nullptr}
+  , m_size{0}
+  , m_data{0}
+{
+}
 
 inline Bitset::Bitset(Bitset&& bitset_)
   : m_allocator{bitset_.m_allocator}
@@ -91,8 +93,14 @@ inline Bitset::Bitset(Bitset&& bitset_)
 {
 }
 
+inline Bitset& Bitset::operator=(Bitset&& bitset_) {
+  release();
+  Utility::construct<Bitset>(this, Utility::move(bitset_));
+  return *this;
+}
+
 inline Bitset::~Bitset() {
-  m_allocator->deallocate(m_data);
+  release();
 }
 
 inline void Bitset::set(Size _bit) {

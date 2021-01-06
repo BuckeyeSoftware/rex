@@ -7,33 +7,38 @@
 
 namespace Rx {
 
-Optional<Bitset> Bitset::create(Memory::Allocator& _allocator, Size _size) {
+Optional<Bitset> Bitset::create_uninitialized(Memory::Allocator& _allocator, Size _size) {
   auto bytes = bytes_for_size(_size);
   if (auto data = _allocator.allocate(bytes)) {
-    memset(data, 0, bytes);
-    return Bitset{_allocator, _size, reinterpret_cast<BitType*>(data)};
+    Bitset bitset;
+    bitset.m_allocator = &_allocator;
+    bitset.m_size = _size;
+    bitset.m_data = reinterpret_cast<BitType*>(data);
+    return bitset;
+  }
+  return nullopt;
+}
+
+Optional<Bitset> Bitset::create(Memory::Allocator& _allocator, Size _size) {
+  if (auto bitset = create_uninitialized(_allocator, _size)) {
+    bitset->clear();
+    return bitset;
   }
   return nullopt;
 }
 
 Optional<Bitset> Bitset::copy(Memory::Allocator& _allocator, const Bitset& _bitset) {
-  auto size = _bitset.m_size;
-  auto bytes = bytes_for_size(size);
-  if (auto data = _allocator.allocate(bytes_for_size(bytes))) {
-    memcpy(data, _bitset.m_data, bytes);
-    return Bitset{_allocator, size, reinterpret_cast<BitType*>(data)};
+  if (auto bitset = create_uninitialized(_allocator, _bitset.m_size)) {
+    memcpy(bitset->m_data, _bitset.m_data, bytes_for_size(_bitset.m_size));
+    return bitset;
   }
   return nullopt;
 }
 
-Bitset& Bitset::operator=(Bitset&& bitset_) {
-  RX_ASSERT(&bitset_ != this, "self assignment");
-
-  m_allocator = &bitset_.allocator();
-  m_size = Utility::exchange(bitset_.m_size, 0);
-  m_data = Utility::exchange(bitset_.m_data, nullptr);
-
-  return *this;
+void Bitset::release() {
+  if (m_allocator) {
+    m_allocator->deallocate(m_data);
+  }
 }
 
 void Bitset::clear() {

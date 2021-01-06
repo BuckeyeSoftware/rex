@@ -218,13 +218,13 @@ struct Parser {
   constexpr Memory::Allocator& allocator() const;
 
 private:
-  bool parse_int(const char*& contents_, Sint32& value_);
-  bool parse_float(const char*& contents_, Float32& value_);
+  [[nodiscard]] bool parse_int(const char*& contents_, Sint32& value_);
+  [[nodiscard]] bool parse_float(const char*& contents_, Float32& value_);
   void consume_spaces();
   void record_span();
 
   template<typename... Ts>
-  bool error(bool _caret, const char* _format, Ts&&... _arguments);
+  [[nodiscard]] bool error(bool _caret, const char* _format, Ts&&... _arguments);
 
   Memory::Allocator& m_allocator;
   Vector<Token> m_tokens;

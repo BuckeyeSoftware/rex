@@ -32,6 +32,7 @@ struct Context {
   template<typename... Ts>
   bool print(const char* _format, Ts&&... _arguments);
   bool write(const String& _message);
+
   void clear();
   const Vector<String>& lines();
 
