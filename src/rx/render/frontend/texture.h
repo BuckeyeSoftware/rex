@@ -71,13 +71,6 @@ struct Texture
     DYNAMIC
   };
 
-  // get byte size for one pixel of |_format|
-  // NOTE: can be fractional for compressed block formats
-  static Size bits_per_pixel(DataFormat _format);
-
-  // get channel count of |_format|
-  static Size channel_count_of_format(DataFormat _format);
-
   void record_format(DataFormat _format);
   void record_type(Type _type);
   void record_filter(const FilterOptions& _options);
@@ -94,7 +87,6 @@ struct Texture
   Size levels() const;
 
   Size bits_per_pixel() const;
-  Size bytes_per_pixel() const;
   const Math::Vec4f& border() const &;
 
   static bool is_compressed_format(DataFormat _format);
@@ -316,7 +308,45 @@ inline Texture::FilterOptions Texture::filter() const {
 }
 
 inline Size Texture::channels() const {
-  return channel_count_of_format(m_format);
+  switch (m_format) {
+  case DataFormat::RGBA_U8:
+    return 4;
+  case DataFormat::RGB_U8:
+    return 3;
+  case DataFormat::BGRA_U8:
+    return 4;
+  case DataFormat::BGR_U8:
+    return 3;
+  case DataFormat::RGBA_F16:
+    return 4;
+  case DataFormat::BGRA_F16:
+    return 4;
+  case DataFormat::D16:
+    return 1;
+  case DataFormat::D24:
+    return 1;
+  case DataFormat::D32:
+    return 1;
+  case DataFormat::D32F:
+    return 1;
+  case DataFormat::D24_S8:
+    return 2;
+  case DataFormat::D32F_S8:
+    return 2;
+  case DataFormat::S8:
+    return 1;
+  case DataFormat::R_U8:
+    return 1;
+  case DataFormat::DXT1:
+    return 3;
+  case DataFormat::DXT5:
+    return 4;
+  case DataFormat::SRGB_U8:
+    return 3;
+  case DataFormat::SRGBA_U8:
+    return 4;
+  }
+  return 0;
 }
 
 inline Texture::Type Texture::type() const {
@@ -328,11 +358,45 @@ inline Size Texture::levels() const {
 }
 
 inline Size Texture::bits_per_pixel() const {
-  return bits_per_pixel(m_format);
-}
-
-inline Size Texture::bytes_per_pixel() const {
-  return bits_per_pixel() / 8;
+  switch (m_format) {
+  case DataFormat::RGBA_U8:
+    return 4 * 8;
+  case DataFormat::RGB_U8:
+    return 3 * 8;
+  case DataFormat::BGRA_U8:
+    return 4 * 8;
+  case DataFormat::BGR_U8:
+    return 3 * 8;
+  case DataFormat::RGBA_F16:
+    return 4 * 16;
+  case DataFormat::BGRA_F16:
+    return 4 * 16;
+  case DataFormat::D16:
+    return 16;
+  case DataFormat::D24:
+    return 24;
+  case DataFormat::D32:
+    return 32;
+  case DataFormat::D32F:
+    return 32;
+  case DataFormat::D24_S8:
+    return 32;
+  case DataFormat::D32F_S8:
+    return 40;
+  case DataFormat::S8:
+    return 8;
+  case DataFormat::R_U8:
+    return 8;
+  case DataFormat::DXT1:
+    return 4;
+  case DataFormat::DXT5:
+    return 8;
+  case DataFormat::SRGB_U8:
+    return 24;
+  case DataFormat::SRGBA_U8:
+    return 32;
+  }
+  return 0;
 }
 
 inline const Math::Vec4f& Texture::border() const & {
@@ -411,90 +475,6 @@ inline bool Texture::is_swapchain() const {
 
 inline bool Texture::is_level_in_range(Size _level) const {
   return _level < m_levels;
-}
-
-inline Size Texture::bits_per_pixel(DataFormat _format) {
-  switch (_format) {
-  case DataFormat::RGBA_U8:
-    return 4 * 8;
-  case DataFormat::RGB_U8:
-    return 3 * 8;
-  case DataFormat::BGRA_U8:
-    return 4 * 8;
-  case DataFormat::BGR_U8:
-    return 3 * 8;
-  case DataFormat::RGBA_F16:
-    return 4 * 16;
-  case DataFormat::BGRA_F16:
-    return 4 * 16;
-  case DataFormat::D16:
-    return 16;
-  case DataFormat::D24:
-    return 24;
-  case DataFormat::D32:
-    return 32;
-  case DataFormat::D32F:
-    return 32;
-  case DataFormat::D24_S8:
-    return 32;
-  case DataFormat::D32F_S8:
-    return 40;
-  case DataFormat::S8:
-    return 8;
-  case DataFormat::R_U8:
-    return 8;
-  case DataFormat::DXT1:
-    return 4;
-  case DataFormat::DXT5:
-    return 8;
-  case DataFormat::SRGB_U8:
-    return 24;
-  case DataFormat::SRGBA_U8:
-    return 32;
-  }
-  return 0;
-}
-
-inline Size Texture::channel_count_of_format(DataFormat _format) {
-  switch (_format) {
-  case DataFormat::RGBA_U8:
-    return 4;
-  case DataFormat::RGB_U8:
-    return 3;
-  case DataFormat::BGRA_U8:
-    return 4;
-  case DataFormat::BGR_U8:
-    return 3;
-  case DataFormat::RGBA_F16:
-    return 4;
-  case DataFormat::BGRA_F16:
-    return 4;
-  case DataFormat::D16:
-    return 1;
-  case DataFormat::D24:
-    return 1;
-  case DataFormat::D32:
-    return 1;
-  case DataFormat::D32F:
-    return 1;
-  case DataFormat::D24_S8:
-    return 2;
-  case DataFormat::D32F_S8:
-    return 2;
-  case DataFormat::S8:
-    return 1;
-  case DataFormat::R_U8:
-    return 1;
-  case DataFormat::DXT1:
-    return 3;
-  case DataFormat::DXT5:
-    return 4;
-  case DataFormat::SRGB_U8:
-    return 3;
-  case DataFormat::SRGBA_U8:
-    return 4;
-  }
-  return 0;
 }
 
 // Texture1D
