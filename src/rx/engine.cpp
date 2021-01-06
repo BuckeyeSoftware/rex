@@ -117,8 +117,8 @@ Engine::~Engine() {
   // Force application to deinitialize now.
   m_application = nullptr;
 
-  // Save the console configuration
-  m_console.save(CONFIG);
+  // Save the console configuration.
+  RX_ASSERT(m_console.save(CONFIG), "failed to save config");
 
   auto& allocator = Memory::SystemAllocator::instance();
   allocator.destroy<Render::Frontend::Context>(m_render_frontend);
@@ -132,8 +132,8 @@ bool Engine::init() {
   Globals::find("console")->init();
 
   // Early initialization may need values loaded from the configuration file.
-  if (!m_console.load(CONFIG)) {
-    m_console.save(CONFIG);
+  if (!m_console.load(CONFIG) && !m_console.save(CONFIG)) {
+    return false;
   }
 
   const Size static_pool_size = *thread_pool_static_pool_size;

@@ -77,9 +77,7 @@ struct TestGame
     , m_render_stats{&m_immediate2D}
     , m_gbuffer{&m_frontend}
     , m_skybox{&m_frontend}
-    , m_indirect_lighting_pass{&m_frontend}
     , m_lens_distortion_pass{&m_frontend}
-    , m_copy_pass{&m_frontend}
     , m_lut_index{0}
     , m_lut_count{0}
   {
@@ -87,19 +85,29 @@ struct TestGame
   }
 
   ~TestGame() {
-    for (Size i = 0; i < m_lut_count + 1; i++) {
-      m_ibl[i].fini();
-    }
   }
 
   virtual bool on_init() {
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
     m_skybox.load("base/skyboxes/miramar/miramar.json5", {1024, 1024});
 
-    m_indirect_lighting_pass.create(m_frontend.swapchain()->dimensions());
+    auto indirect_lighting_pass = Render::IndirectLightingPass::create(&m_frontend, m_frontend.swapchain()->dimensions());
+    if (!indirect_lighting_pass) {
+      return false;
+    }
+
+    m_indirect_lighting_pass = Utility::move(*indirect_lighting_pass);
+
+    // m_indirect_lighting_pass.create(m_frontend.swapchain()->dimensions());
     m_lens_distortion_pass.create(m_frontend.swapchain()->dimensions());
-    m_copy_pass.attach_depth_stencil(m_gbuffer.depth_stencil());
-    m_copy_pass.create(m_frontend.swapchain()->dimensions());
+
+    auto copy_pass = Render::CopyPass::create(&m_frontend,
+      m_frontend.swapchain()->dimensions(), m_gbuffer.depth_stencil());
+    if (!copy_pass) {
+      return false;
+    }
+
+    m_copy_pass = Utility::move(*copy_pass);
 
     const char* LUTS[] = {
       "base/colorgrading/Arabica 12.CUBE",
@@ -156,13 +164,13 @@ struct TestGame
     m_color_grader.update();
 
     // 0 is the base...
-    m_ibl[0].init(&m_frontend);
-    m_ibl[0].data()->render(m_skybox.cubemap(), 256, nullptr);
+    m_ibl[0] = Utility::move(*Render::ImageBasedLighting::create(&m_frontend));
+    m_ibl[0].render(m_skybox.cubemap(), 256, nullptr);
 
     // Render each and every IBL probe with the appropriate LUT.
     for (Size i = 0; i < m_lut_count; i++) {
-      m_ibl[i+1].init(&m_frontend);
-      m_ibl[i+1].data()->render(m_skybox.cubemap(), 256, &m_luts[i]);
+      m_ibl[i+1] = Utility::move(*Render::ImageBasedLighting::create(&m_frontend));
+      m_ibl[i+1].render(m_skybox.cubemap(), 256, &m_luts[i]);
     }
 
 /*
@@ -326,7 +334,7 @@ struct TestGame
       model_.render_skeleton({}, &m_immediate3D);
     });
 
-    m_indirect_lighting_pass.render(m_camera, &m_gbuffer, m_ibl[m_lut_index].data());
+    m_indirect_lighting_pass.render(m_camera, &m_gbuffer, &m_ibl[m_lut_index]);
 
     // Copy the indirect result.
     m_copy_pass.render(m_indirect_lighting_pass.texture());
@@ -390,7 +398,7 @@ struct TestGame
   Render::Skybox m_skybox;
   Vector<Render::Model> m_models;
 
-  Uninitialized<Render::ImageBasedLighting> m_ibl[128];
+  Render::ImageBasedLighting m_ibl[128];
 
   Render::IndirectLightingPass m_indirect_lighting_pass;
   Render::LensDistortionPass m_lens_distortion_pass;

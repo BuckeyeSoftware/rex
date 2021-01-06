@@ -210,7 +210,7 @@ struct Parser {
 
   Parser(Memory::Allocator& _allocator);
 
-  bool parse(const String& _contents);
+  [[nodiscard]] bool parse(const String& _contents);
 
   const Diagnostic& error() const &;
   Vector<Token>&& tokens();

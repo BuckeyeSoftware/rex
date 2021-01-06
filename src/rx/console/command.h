@@ -64,9 +64,9 @@ struct Command {
   Command& operator=(Command&& command_);
 
   template<typename... Ts>
-  bool execute_arguments(Context& console_, Ts&&... _arguments);
+  [[nodiscard]] bool execute_arguments(Context& console_, Ts&&... _arguments);
 
-  bool execute_tokens(Context& console_, const Vector<Token>& _tokens);
+  [[nodiscard]] bool execute_tokens(Context& console_, const Vector<Token>& _tokens);
 
   const String& name() const &;
 

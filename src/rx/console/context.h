@@ -15,8 +15,8 @@ struct Context {
   RX_MARK_NO_COPY(Context);
   RX_MARK_NO_MOVE(Context);
 
-  bool load(const char* _file_name);
-  bool save(const char* _file_name);
+  [[nodiscard]] bool load(const char* _file_name);
+  [[nodiscard]] bool save(const char* _file_name);
 
   // TODO(dweiler): Figure out how to do multiple Console Context for variables...
   static VariableReference* add_variable(VariableReference* _reference);

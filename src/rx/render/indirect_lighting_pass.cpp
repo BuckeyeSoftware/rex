@@ -10,11 +10,11 @@
 
 namespace Rx::Render {
 
-IndirectLightingPass::IndirectLightingPass(Frontend::Context* _frontend)
-  : m_frontend{_frontend}
-  , m_technique{m_frontend ? m_frontend->find_technique_by_name("deferred_indirect") : nullptr}
-  , m_texture{nullptr}
-  , m_target{nullptr}
+IndirectLightingPass::IndirectLightingPass(IndirectLightingPass&& indirect_lighting_pass_)
+  : m_frontend{Utility::exchange(indirect_lighting_pass_.m_frontend, nullptr)}
+  , m_technique{Utility::exchange(indirect_lighting_pass_.m_technique, nullptr)}
+  , m_texture{Utility::exchange(indirect_lighting_pass_.m_texture, nullptr)}
+  , m_target{Utility::exchange(indirect_lighting_pass_.m_target, nullptr)}
 {
 }
 
@@ -62,26 +62,52 @@ void IndirectLightingPass::render(const Math::Camera& _camera, const GBuffer* _g
     draw_textures);
 }
 
-void IndirectLightingPass::create(const Math::Vec2z& _dimensions) {
-  m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("indirect lighting pass"));
-  m_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
-  m_texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
-  m_texture->record_filter({false, false, false});
-  m_texture->record_levels(1);
-  m_texture->record_dimensions(_dimensions);
-  m_texture->record_wrap({
+Optional<IndirectLightingPass> IndirectLightingPass::create(
+  Frontend::Context* _frontend, const Math::Vec2z& _dimensions)
+{
+  auto technique = _frontend->find_technique_by_name("deferred_indirect");
+  if (!technique) {
+    return nullopt;
+  }
+
+  auto texture = _frontend->create_texture2D(RX_RENDER_TAG("indirect lighting pass"));
+  if (!texture) {
+    return nullopt;
+  }
+
+  texture->record_type(Frontend::Texture::Type::ATTACHMENT);
+  texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
+  texture->record_filter({false, false, false});
+  texture->record_levels(1);
+  texture->record_dimensions(_dimensions);
+  texture->record_wrap({
     Frontend::Texture::WrapType::CLAMP_TO_EDGE,
     Frontend::Texture::WrapType::CLAMP_TO_EDGE});
-  m_frontend->initialize_texture(RX_RENDER_TAG("indirect lighting pass"), m_texture);
+  _frontend->initialize_texture(RX_RENDER_TAG("indirect lighting pass"), texture);
 
-  m_target = m_frontend->create_target(RX_RENDER_TAG("indirect lighting pass"));
-  m_target->attach_texture(m_texture, 0);
-  m_frontend->initialize_target(RX_RENDER_TAG("indirect lighting pass"), m_target);
+  auto target = _frontend->create_target(RX_RENDER_TAG("indirect lighting pass"));
+  if (!target) {
+    _frontend->destroy_texture(RX_RENDER_TAG("indirect lighting pass"), texture);
+    return nullopt;
+  }
+
+  target->attach_texture(texture, 0);
+  _frontend->initialize_target(RX_RENDER_TAG("indirect lighting pass"), target);
+
+  IndirectLightingPass indirect_lighting_pass;
+  indirect_lighting_pass.m_frontend = _frontend;
+  indirect_lighting_pass.m_target = target;
+  indirect_lighting_pass.m_technique = technique;
+  indirect_lighting_pass.m_texture = texture;
+
+  return indirect_lighting_pass;
 }
 
-void IndirectLightingPass::destroy() {
-  m_frontend->destroy_texture(RX_RENDER_TAG("indirect lighting pass"), m_texture);
-  m_frontend->destroy_target(RX_RENDER_TAG("indirect lighting pass"), m_target);
+void IndirectLightingPass::release() {
+  if (m_frontend) {
+    m_frontend->destroy_texture(RX_RENDER_TAG("indirect lighting pass"), m_texture);
+    m_frontend->destroy_target(RX_RENDER_TAG("indirect lighting pass"), m_target);
+  }
 }
 
 } // namespace Rx::Render

@@ -410,7 +410,6 @@ Immediate2D::Immediate2D(Frontend::Context* _frontend)
     m_circle_vertices[i] = {Math::cos(phi), Math::sin(phi)};
   }
 
-
   Frontend::Buffer::Format format;
   format.record_type(Frontend::Buffer::Type::DYNAMIC);
   format.record_element_type(Frontend::Buffer::ElementType::U32);

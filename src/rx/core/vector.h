@@ -59,9 +59,9 @@ struct Vector {
   bool resize(Size _size, const T& _value = {});
 
   // reserve |size| elements
-  bool reserve(Size _size);
+  [[nodiscard]] bool reserve(Size _size);
 
-  bool append(const Vector& _other);
+  [[nodiscard]] bool append(const Vector& _other);
 
   void clear();
 

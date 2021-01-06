@@ -13,28 +13,48 @@
 
 namespace Rx::Render {
 
-ImageBasedLighting::ImageBasedLighting(Frontend::Context* _frontend)
-  : m_frontend{_frontend}
-  , m_irradiance_texture{nullptr}
-  , m_prefilter_texture{nullptr}
-  , m_scale_bias_texture{nullptr}
+ImageBasedLighting::ImageBasedLighting(ImageBasedLighting&& ibl_)
+  : m_frontend{Utility::exchange(ibl_.m_frontend, nullptr)}
+  , m_irradiance_texture{Utility::exchange(ibl_.m_irradiance_texture, nullptr)}
+  , m_prefilter_texture{Utility::exchange(ibl_.m_prefilter_texture, nullptr)}
+  , m_scale_bias_texture{Utility::exchange(ibl_.m_scale_bias_texture, nullptr)}
 {
-  m_scale_bias_texture = m_frontend->create_texture2D(RX_RENDER_TAG("ibl: scale bias"));
-  m_scale_bias_texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
-  m_scale_bias_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
-  m_scale_bias_texture->record_levels(1);
-  m_scale_bias_texture->record_dimensions({256, 256});
-  m_scale_bias_texture->record_filter({true, false, false});
-  m_scale_bias_texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-                                     Frontend::Texture::WrapType::CLAMP_TO_EDGE});
-  m_frontend->initialize_texture(RX_RENDER_TAG("ibl: scale bias"), m_scale_bias_texture);
+}
 
-  // Render scale bias texture
-  Frontend::Technique* scale_bias_technique{m_frontend->find_technique_by_name("brdf_integration")};
-  Frontend::Target* target{m_frontend->create_target(RX_RENDER_TAG("ibl: scale bias"))};
-  target->attach_texture(m_scale_bias_texture, 0);
-  m_frontend->initialize_target(RX_RENDER_TAG("ibl: scale bias"), target);
+Optional<ImageBasedLighting> ImageBasedLighting::create(Frontend::Context* _frontend) {
+  auto scale_bias_technique =
+    _frontend->find_technique_by_name("brdf_integration");
 
+  if (!scale_bias_technique) {
+    return nullopt;
+  }
+
+  // Create scale & bias texture.
+  auto texture = _frontend->create_texture2D(RX_RENDER_TAG("scale / bias"));
+  if (!texture) {
+    return nullopt;
+  }
+
+  texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
+  texture->record_type(Frontend::Texture::Type::ATTACHMENT);
+  texture->record_levels(1);
+  texture->record_dimensions({256, 256});
+  texture->record_filter({true, false, false});
+  texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+                        Frontend::Texture::WrapType::CLAMP_TO_EDGE});
+  _frontend->initialize_texture(RX_RENDER_TAG("scale / bias"), texture);
+
+  // Create render target.
+  auto target = _frontend->create_target(RX_RENDER_TAG("scale / bias"));
+  if (!target) {
+    _frontend->destroy_texture(RX_RENDER_TAG("scale / bias"), texture);
+    return nullopt;
+  }
+
+  target->attach_texture(texture, 0);
+  _frontend->initialize_target(RX_RENDER_TAG("scale / bias"), target);
+
+  // Render the scale bias texture.
   Frontend::State state;
   state.viewport.record_dimensions(target->dimensions());
   state.cull.record_enable(false);
@@ -42,7 +62,7 @@ ImageBasedLighting::ImageBasedLighting(Frontend::Context* _frontend)
   Frontend::Buffers draw_buffers;
   draw_buffers.add(0);
 
-  m_frontend->draw(
+  _frontend->draw(
     RX_RENDER_TAG("ibl: scale bias"),
     state,
     target,
@@ -57,13 +77,23 @@ ImageBasedLighting::ImageBasedLighting(Frontend::Context* _frontend)
     Frontend::PrimitiveType::TRIANGLES,
     {});
 
-  m_frontend->destroy_target(RX_RENDER_TAG("ibl: scale bias"), target);
+  _frontend->destroy_target(RX_RENDER_TAG("scale / bias"), target);
+
+  ImageBasedLighting ibl;
+  ibl.m_frontend = _frontend;
+  ibl.m_irradiance_texture = nullptr;
+  ibl.m_prefilter_texture = nullptr;
+  ibl.m_scale_bias_texture = texture;
+
+  return ibl;
 }
 
-ImageBasedLighting::~ImageBasedLighting() {
-  m_frontend->destroy_texture(RX_RENDER_TAG("ibl: irradiance"), m_irradiance_texture);
-  m_frontend->destroy_texture(RX_RENDER_TAG("ibl: prefilter"), m_prefilter_texture);
-  m_frontend->destroy_texture(RX_RENDER_TAG("ibl: scale bias"), m_scale_bias_texture);
+void ImageBasedLighting::release() {
+  if (m_frontend) {
+    m_frontend->destroy_texture(RX_RENDER_TAG("ibl: irradiance"), m_irradiance_texture);
+    m_frontend->destroy_texture(RX_RENDER_TAG("ibl: prefilter"), m_prefilter_texture);
+    m_frontend->destroy_texture(RX_RENDER_TAG("ibl: scale bias"), m_scale_bias_texture);
+  }
 }
 
 void ImageBasedLighting::render(Frontend::TextureCM* _environment, Size _irradiance_map_size, ColorGrader::Entry* _grading) {

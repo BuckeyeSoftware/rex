@@ -1,5 +1,7 @@
 #ifndef RX_RENDER_INDIRECT_LIGHTING_PASS_H
 #define RX_RENDER_INDIRECT_LIGHTING_PASS_H
+#include "rx/core/optional.h"
+
 #include "rx/math/vec2.h"
 #include "rx/math/camera.h"
 
@@ -18,20 +20,23 @@ struct GBuffer;
 struct ImageBasedLighting;
 
 struct IndirectLightingPass {
-  IndirectLightingPass() : IndirectLightingPass{nullptr} {}
-  IndirectLightingPass(Frontend::Context* _frontend);
+  RX_MARK_NO_COPY(IndirectLightingPass);
+
+  constexpr IndirectLightingPass();
+  IndirectLightingPass(IndirectLightingPass&& indirect_lighting_pass_);
   ~IndirectLightingPass();
+  IndirectLightingPass& operator=(IndirectLightingPass&& indirect_lighting_pass_);
+
+  static Optional<IndirectLightingPass> create(Frontend::Context* _frontend, const Math::Vec2z& _dimensions);
 
   void render(const Math::Camera& _camera, const GBuffer* _gbuffer, const ImageBasedLighting* _ibl);
-
-  void create(const Math::Vec2z& _resolution);
-  void resize(const Math::Vec2z& _resolution);
+  bool resize(const Math::Vec2z& _resolution);
 
   Frontend::Texture2D* texture() const;
   Frontend::Target* target() const;
 
 private:
-  void destroy();
+  void release();
 
   Frontend::Context* m_frontend;
   Frontend::Technique* m_technique;
@@ -39,13 +44,30 @@ private:
   Frontend::Target* m_target;
 };
 
-inline IndirectLightingPass::~IndirectLightingPass() {
-  destroy();
+inline constexpr IndirectLightingPass::IndirectLightingPass()
+  : m_frontend{nullptr}
+  , m_technique{nullptr}
+  , m_texture{nullptr}
+  , m_target{nullptr}
+{
 }
 
-inline void IndirectLightingPass::resize(const Math::Vec2z& _dimensions) {
-  destroy();
-  create(_dimensions);
+inline IndirectLightingPass& IndirectLightingPass::operator=(IndirectLightingPass&& indirect_lighting_pass_) {
+  release();
+  Utility::construct<IndirectLightingPass>(this, Utility::move(indirect_lighting_pass_));
+  return *this;
+}
+
+inline IndirectLightingPass::~IndirectLightingPass() {
+  release();
+}
+
+inline bool IndirectLightingPass::resize(const Math::Vec2z& _dimensions) {
+  if (auto recreate = create(m_frontend, _dimensions)) {
+    *this = Utility::move(*recreate);
+    return true;
+  }
+  return false;
 }
 
 inline Frontend::Texture2D* IndirectLightingPass::texture() const {

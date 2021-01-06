@@ -132,7 +132,9 @@ bool Context::execute(const String& _contents) {
     }
   } else if (auto* command = m_commands.find(atom)) {
     tokens.erase(0, 1);
-    command->execute_tokens(*this, tokens);
+    if (!command->execute_tokens(*this, tokens)) {
+      return false;
+    }
   } else {
     print("^rerror: ^wCommand or variable \"%s\", not found", atom);
   }

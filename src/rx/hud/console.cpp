@@ -125,7 +125,9 @@ void Console::update(Rx::Console::Context& console_) {
   }
 
   m_suggestions = Utility::move(*complete_variables);
-  m_suggestions.append(*complete_commands);
+  if (!m_suggestions.append(*complete_commands)) {
+    return;
+  }
 
   if (m_suggestions.is_empty()) {
     m_selection = 0;

@@ -35,7 +35,7 @@ ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _stati
   timer.start();
 
   logger->info("starting pool with %zu threads", _threads);
-  m_threads.reserve(_threads);
+  RX_ASSERT(m_threads.reserve(_threads), "out of memory");
 
   WaitGroup group{_threads};
   for (Size i{0}; i < _threads; i++) {
