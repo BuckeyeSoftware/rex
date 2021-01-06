@@ -28,7 +28,7 @@ struct Resource {
 
   void update_resource_usage(Size _bytes);
 
-  bool release_reference();
+  [[nodiscard]] bool release_reference();
   void acquire_reference();
 
   Type resource_type() const;
