@@ -10,10 +10,10 @@ namespace Rx::Console {
 struct Token;
 
 struct Context {
-  Context() = default;
-
   RX_MARK_NO_COPY(Context);
   RX_MARK_NO_MOVE(Context);
+
+  Context() = default;
 
   [[nodiscard]] bool load(const char* _file_name);
   [[nodiscard]] bool save(const char* _file_name);

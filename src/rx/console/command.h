@@ -73,7 +73,7 @@ struct Command {
   constexpr Memory::Allocator& allocator() const;
 
 private:
-  bool execute(Context& console_);
+  [[nodiscard]] bool execute(Context& console_);
 
   Memory::Allocator* m_allocator;
   Delegate m_delegate;

@@ -33,12 +33,6 @@ struct Matrix {
   constexpr Memory::Allocator& allocator() const;
 
 private:
-  Matrix(LinearBuffer&& data_, const Math::Vec2z& _dimensions)
-    : m_data{Utility::move(data_)}
-    , m_dimensions{_dimensions}
-  {
-  }
-
   LinearBuffer m_data;
   Math::Vec2z m_dimensions;
 };
