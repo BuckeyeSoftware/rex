@@ -232,7 +232,8 @@ RX_HINT_FORCE_INLINE Size Arena::Block::base_vertex() const {
 RX_HINT_FORCE_INLINE Size Arena::Block::base_element() const {
   const auto& format = m_arena->m_buffer->format();
   const auto& range = range_for(Buffer::Sink::ELEMENTS);
-  return range.offset != -1_u32 ? range.offset / format.element_size() : 0;
+  const auto element_size = format.element_size();
+  return range.offset != -1_u32 && element_size ? range.offset / element_size : 0;
 }
 
 RX_HINT_FORCE_INLINE Size Arena::Block::base_instance() const {
