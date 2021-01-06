@@ -293,12 +293,13 @@ Byte* Arena::Block::map_sink_data(Buffer::Sink _sink, Uint32 _size) {
           return nullptr;
         }
 
+        // Record an edit on the range of data in the |buffer| we're going to replace.
+        if (!buffer->record_sink_edit(_sink, new_offset, old_size)) {
+          return nullptr;
+        }
+
         // Move the data since the reallocation could've moved it.
         memmove(result + new_offset, result + old_offset, old_size);
-
-        // When the contents of the data are moved, we need to record an edit
-        // on the range of data in the |buffer| we replaced.
-        buffer->record_sink_edit(_sink, new_offset, old_size);
       }
     } else {
       // Ran out of memory in |list| data structure.

@@ -71,7 +71,6 @@ struct CommandBuffer {
   void reset();
 
   Size used() const;
-
   Size size() const;
 
 private:
@@ -88,17 +87,13 @@ struct Buffers {
   void add(int _buffer);
 
   bool operator==(const Buffers &_buffers) const;
-
   bool operator!=(const Buffers &_buffers) const;
 
   Size size() const;
 
   bool is_empty() const;
-
   int operator[](Size _index) const;
-
   int last() const;
-
   const int *data() const;
 
 private:

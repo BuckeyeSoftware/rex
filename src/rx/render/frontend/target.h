@@ -102,7 +102,7 @@ private:
 
   void update_resource_usage();
 
-  enum /* m_flags */ {
+  enum : Uint8 {
     HAS_DEPTH    = 1 << 0,
     HAS_STENCIL  = 1 << 1,
     OWNS_STENCIL = 1 << 2,
@@ -121,7 +121,7 @@ private:
 
   Vector<Attachment> m_attachments;
   Math::Vec2z m_dimensions;
-  int m_flags;
+  Uint8 m_flags;
 };
 
 // Target::Attachment

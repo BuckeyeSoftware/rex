@@ -245,7 +245,7 @@ void Target::validate() const {
 
 void Target::update_resource_usage() {
   const auto rt_usage{[](const auto* _texture) {
-    return _texture->dimensions().area() * Texture::bits_per_pixel(_texture->format()) / 8;
+    return _texture->dimensions().area() * _texture->bits_per_pixel() / 8;
   }};
 
   // Calculate memory usage for each attachment texture.

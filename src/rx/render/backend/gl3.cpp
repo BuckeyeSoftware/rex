@@ -1732,7 +1732,7 @@ void GL3::process(Byte* _command) {
             const auto x_offset = edit[1];
             const auto y_offset = edit[2];
             const auto z_offset = edit[3];
-            const auto bpp = render_texture->bytes_per_pixel();
+            const auto bpp = render_texture->bits_per_pixel() / 2;
             const auto pitch = render_texture->dimensions().w * bpp;
             const auto ptr = render_texture->data().data()
               + z_offset * pitch * render_texture->dimensions().h

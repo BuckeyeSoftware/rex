@@ -149,7 +149,7 @@ void Texture1D::record_dimensions(const DimensionType& _dimensions) {
 
   DimensionType dimensions{m_dimensions};
   Size offset{0};
-  const auto bpp{bits_per_pixel(m_format)};
+  const auto bpp = bits_per_pixel();
   for (Size i{0}; i < m_levels; i++) {
     const auto size{static_cast<Size>(dimensions * bpp / 8)};
     m_level_info.emplace_back(offset, size, dimensions);
@@ -180,7 +180,7 @@ void Texture1D::record_edit(Size _level, const DimensionType& _offset,
 Size Texture1D::bytes_for_edits() const {
   Size bytes = 0;
   m_edits.each_fwd([&](const EditType& _edit) { bytes += _edit.size; });
-  return bytes * bits_per_pixel(format()) / 8;
+  return bytes * bits_per_pixel() / 8;
 }
 
 void Texture1D::optimize_edits() {
@@ -232,7 +232,7 @@ void Texture2D::record_dimensions(const Math::Vec2z& _dimensions) {
 
   DimensionType dimensions{m_dimensions};
   Size offset{0};
-  const auto bpp{bits_per_pixel(m_format)};
+  const auto bpp = bits_per_pixel();
   for (Size i{0}; i < m_levels; i++) {
     const auto size{static_cast<Size>(dimensions.area() * bpp / 8)};
     m_level_info.emplace_back(offset, size, dimensions);
@@ -265,7 +265,7 @@ void Texture2D::record_edit(Size _level, const DimensionType& _offset,
 Size Texture2D::bytes_for_edits() const {
   Size bytes = 0;
   m_edits.each_fwd([&](const EditType& _edit) { bytes += _edit.size.area(); });
-  return bytes * bits_per_pixel(format()) / 8;
+  return bytes * bits_per_pixel() / 8;
 }
 
 void Texture2D::optimize_edits() {
@@ -314,7 +314,7 @@ void Texture3D::record_dimensions(const Math::Vec3z& _dimensions) {
 
   DimensionType dimensions{m_dimensions};
   Size offset{0};
-  const auto bpp{bits_per_pixel(m_format)};
+  const auto bpp = bits_per_pixel();
   for (Size i{0}; i < m_levels; i++) {
     const auto size{static_cast<Size>(dimensions.area() * bpp / 8)};
     m_level_info.emplace_back(offset, size, dimensions);
@@ -347,7 +347,7 @@ void Texture3D::record_edit(Size _level, const DimensionType& _offset,
 Size Texture3D::bytes_for_edits() const {
   Size bytes = 0;
   m_edits.each_fwd([&](const EditType& _edit) { bytes += _edit.size.area(); });
-  return bytes * bits_per_pixel(format()) / 8;
+  return bytes * bits_per_pixel() / 8;
 }
 
 void Texture3D::optimize_edits() {
@@ -400,7 +400,7 @@ void TextureCM::record_dimensions(const Math::Vec2z& _dimensions) {
 
   DimensionType dimensions{m_dimensions};
   Size offset{0};
-  const auto bpp{bits_per_pixel(m_format)};
+  const auto bpp = bits_per_pixel();
   for (Size i{0}; i < m_levels; i++) {
     const auto size{static_cast<Size>(dimensions.area() * bpp / 8 * 6)};
     m_level_info.emplace_back(offset, size, dimensions);

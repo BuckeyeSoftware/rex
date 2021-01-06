@@ -158,13 +158,13 @@ struct Buffer
 
 private:
   // Map |_size| bytes of sink |_sink|.
-  Byte* map_sink_data(Sink _sink, Size _size);
+  [[nodiscard]] Byte* map_sink_data(Sink _sink, Size _size);
 
   // Write |_size| bytes from |_data| into sink |_sink|.
-  bool write_sink_data(Sink _sink, const Byte* _data, Size _size);
+  [[nodiscard]] bool write_sink_data(Sink _sink, const Byte* _data, Size _size);
 
   // Record edit to sinkk |_sink| at offset |_offset| of size |_size|.
-  bool record_sink_edit(Sink _sink, Size _offset, Size _size);
+  [[nodiscard]] bool record_sink_edit(Sink _sink, Size _offset, Size _size);
 
   friend struct Arena;
 
