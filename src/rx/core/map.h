@@ -466,7 +466,7 @@ V* Map<K, V>::inserter(Size _hash, K&& key_, V&& value_) {
 template<typename K, typename V>
 V* Map<K, V>::inserter(Size _hash, const K& _key, V&& value_) {
   K key{_key};
-  return inserter(_hash, Utility::move(key), Utility::forward<V>(value_));
+  return inserter(_hash, Utility::move(key), Utility::move(value_));
 }
 
 template<typename K, typename V>
