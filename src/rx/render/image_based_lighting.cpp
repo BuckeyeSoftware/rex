@@ -109,15 +109,13 @@ Optional<PrefilteredEnvironmentMap> PrefilteredEnvironmentMap::create(Frontend::
     return nullopt;
   }
 
-  auto target = _frontend->create_target(RX_RENDER_TAG(tag));
   auto texture = _frontend->create_textureCM(RX_RENDER_TAG(tag));
-  if (!target || !texture) {
+  if (!texture) {
     _frontend->destroy_texture(RX_RENDER_TAG(tag), texture);
-    _frontend->destroy_target(RX_RENDER_TAG(tag), target);
     return nullopt;
   }
 
-  texture->record_levels(5 + 1);
+  texture->record_levels(MAX_PREFILTER_LEVELS);
   texture->record_format(Frontend::Texture::DataFormat::RGBA_F16);
   texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   texture->record_dimensions({_resolution, _resolution});
@@ -127,12 +125,24 @@ Optional<PrefilteredEnvironmentMap> PrefilteredEnvironmentMap::create(Frontend::
                         Frontend::Texture::WrapType::REPEAT});
   _frontend->initialize_texture(RX_RENDER_TAG(tag), texture);
 
-  target->attach_texture(texture, 0);
-  _frontend->initialize_target(RX_RENDER_TAG(tag), target);
+  Array<Frontend::Target*[MAX_PREFILTER_LEVELS]> targets;
+  for (Size i = 0; i < MAX_PREFILTER_LEVELS; i++) {
+    if (auto target = _frontend->create_target(RX_RENDER_TAG(tag))) {
+      target->attach_texture(texture, i);
+      _frontend->initialize_target(RX_RENDER_TAG(tag), target);
+      targets[i] = target;
+    } else {
+      for (Size j = 0; j < i; j++) {
+        _frontend->destroy_target(RX_RENDER_TAG(tag), targets[j]);
+      }
+      _frontend->destroy_texture(RX_RENDER_TAG(tag), texture);
+      return nullopt;
+    }
+  }
 
   PrefilteredEnvironmentMap result;
   result.m_frontend = _frontend;
-  result.m_target = target;
+  result.m_targets = targets;
   result.m_texture = texture;
   result.m_program = *technique;
   result.m_resolution = _resolution;
@@ -144,7 +154,11 @@ void PrefilteredEnvironmentMap::release() {
   if (!m_frontend) {
     return;
   }
-  m_frontend->destroy_target(RX_RENDER_TAG("prefiltered encironment map"), m_target);
+
+  for (Size i = 0; i < MAX_PREFILTER_LEVELS; i++) {
+    m_frontend->destroy_target(RX_RENDER_TAG("prefiltered encironment map"), m_targets[i]);
+  }
+
   m_frontend->destroy_texture(RX_RENDER_TAG("prefiltered environment map"), m_texture);
 }
 
@@ -172,16 +186,16 @@ void PrefilteredEnvironmentMap::render_next_face() {
   Frontend::State state;
   state.cull.record_enable(false);
 
-  for (Size i = 0; i <= 5; i++) {
+  for (Size i = 0; i < MAX_PREFILTER_LEVELS; i++) {
     auto mipmap_size = m_resolution >> i;
-    auto roughness = Float32(i) / 5;
+    auto roughness = Float32(i) / MAX_PREFILTER_LEVELS;
     state.viewport.record_dimensions({mipmap_size, mipmap_size});
     m_program->uniforms()[2].record_float(roughness);
 
     m_frontend->draw(
       RX_RENDER_TAG("prefiltered environment map"),
       state,
-      m_target,
+      m_targets[i],
       buffers,
       nullptr,
       m_program,

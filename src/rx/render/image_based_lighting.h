@@ -1,6 +1,7 @@
 #ifndef RX_RENDER_IBL_H
 #define RX_RENDER_IBL_H
 #include "rx/core/optional.h"
+#include "rx/core/array.h"
 #include "rx/core/utility/exchange.h"
 
 namespace Rx::Render {
@@ -81,6 +82,8 @@ inline Frontend::TextureCM* IrradianceMap::texture() const {
 }
 
 struct PrefilteredEnvironmentMap {
+  static inline constexpr const auto MAX_PREFILTER_LEVELS = 6;
+
   RX_MARK_NO_COPY(PrefilteredEnvironmentMap);
 
   constexpr PrefilteredEnvironmentMap();
@@ -100,7 +103,7 @@ private:
 
   Frontend::Context* m_frontend;
   Frontend::TextureCM* m_environment_map;
-  Frontend::Target* m_target;
+  Array<Frontend::Target*[MAX_PREFILTER_LEVELS]> m_targets;
   Frontend::TextureCM* m_texture;
   Frontend::Program* m_program;
   Size m_resolution;
@@ -110,7 +113,7 @@ private:
 inline constexpr PrefilteredEnvironmentMap::PrefilteredEnvironmentMap()
   : m_frontend{nullptr}
   , m_environment_map{nullptr}
-  , m_target{nullptr}
+  , m_targets{}
   , m_texture{nullptr}
   , m_program{nullptr}
   , m_resolution{0}
@@ -125,7 +128,7 @@ inline PrefilteredEnvironmentMap::~PrefilteredEnvironmentMap() {
 inline PrefilteredEnvironmentMap::PrefilteredEnvironmentMap(PrefilteredEnvironmentMap&& move_)
   : m_frontend{Utility::exchange(move_.m_frontend, nullptr)}
   , m_environment_map{Utility::exchange(move_.m_environment_map, nullptr)}
-  , m_target{Utility::exchange(move_.m_target, nullptr)}
+  , m_targets{Utility::exchange(move_.m_targets, {})}
   , m_texture{Utility::exchange(move_.m_texture, nullptr)}
   , m_program{Utility::exchange(move_.m_program, nullptr)}
   , m_resolution{Utility::exchange(move_.m_resolution, 0)}
