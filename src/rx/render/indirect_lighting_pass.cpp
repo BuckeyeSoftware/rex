@@ -40,7 +40,7 @@ void IndirectLightingPass::render(const Math::Camera& _camera, const GBuffer* _g
   program->uniforms()[0].record_sampler(draw_textures.add(_gbuffer->albedo()));
   program->uniforms()[1].record_sampler(draw_textures.add(_gbuffer->normal()));
   program->uniforms()[2].record_sampler(draw_textures.add(_gbuffer->depth_stencil()));
-  program->uniforms()[3].record_sampler(draw_textures.add(_ibl->irradiance()));
+  program->uniforms()[3].record_sampler(draw_textures.add(_ibl->irradiance_map()));
   program->uniforms()[4].record_sampler(draw_textures.add(_ibl->prefilter()));
   program->uniforms()[5].record_sampler(draw_textures.add(_ibl->scale_bias()));
   program->uniforms()[6].record_mat4x4f(Math::Mat4x4f::invert(_camera.view() * _camera.projection));

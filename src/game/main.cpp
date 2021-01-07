@@ -152,26 +152,22 @@ struct TestGame
       return false;
     }
 
+    auto ibl = Render::ImageBasedLighting::create(&m_frontend);
+    if (!ibl) {
+      return false;
+    }
+
+    m_ibl = Utility::move(*ibl);
     m_color_grader = Utility::move(*grader);
 
-    // Load in all the LUTS.
+    // Load in all the grading LUTs and update the atlas.
     for (Size i = 0; i < sizeof LUTS / sizeof* LUTS; i++) {
       if (auto lut = m_color_grader.load(LUTS[i])) {
         m_luts[m_lut_count++] = Utility::move(*lut);
       }
     }
-    // Update the atlas.
     m_color_grader.update();
 
-    // 0 is the base...
-    m_ibl[0] = Utility::move(*Render::ImageBasedLighting::create(&m_frontend));
-    m_ibl[0].render(m_skybox.cubemap(), 256, nullptr);
-
-    // Render each and every IBL probe with the appropriate LUT.
-    for (Size i = 0; i < m_lut_count; i++) {
-      m_ibl[i+1] = Utility::move(*Render::ImageBasedLighting::create(&m_frontend));
-      m_ibl[i+1].render(m_skybox.cubemap(), 256, &m_luts[i]);
-    }
 
 /*
     if (Filesystem::Directory dir{"base/models/light_unit"}) {
@@ -299,6 +295,7 @@ struct TestGame
     auto& input = engine()->input();
     auto& console = engine()->console();
 
+    m_ibl.render(m_skybox.cubemap());
     m_color_grader.update();
 
     static auto display_resolution =
@@ -334,7 +331,7 @@ struct TestGame
       model_.render_skeleton({}, &m_immediate3D);
     });
 
-    m_indirect_lighting_pass.render(m_camera, &m_gbuffer, &m_ibl[m_lut_index]);
+    m_indirect_lighting_pass.render(m_camera, &m_gbuffer, &m_ibl);
 
     // Copy the indirect result.
     m_copy_pass.render(m_indirect_lighting_pass.texture());
@@ -398,7 +395,7 @@ struct TestGame
   Render::Skybox m_skybox;
   Vector<Render::Model> m_models;
 
-  Render::ImageBasedLighting m_ibl[128];
+  Render::ImageBasedLighting m_ibl;
 
   Render::IndirectLightingPass m_indirect_lighting_pass;
   Render::LensDistortionPass m_lens_distortion_pass;

@@ -1,13 +1,9 @@
 {
   name: "prefilter_environment_map",
   uniforms: [
-    { name: "u_sampler",            type: "samplerCM", value: 0 },
-    { name: "u_roughness",          type: "float" },
-    { name: "u_grading_lut",        type: "samplerCM", when: "HAS_GRADING_LUT" },
-    { name: "u_grading_properties", type: "vec2f",     when: "HAS_GRADING_LUT" }
-  ],
-  permutes: [
-    "HAS_GRADING_LUT"
+    { name: "u_sampler",   type: "samplerCM", value: 0 },
+    { name: "u_face",      type: "int" },
+    { name: "u_roughness", type: "float" }
   ],
   shaders: [
     {
@@ -35,12 +31,7 @@
         "importance_sample_ggx"
       ],
       outputs: [
-        { name: "fs_color_px", type: "vec4f" },
-        { name: "fs_color_nx", type: "vec4f" },
-        { name: "fs_color_py", type: "vec4f" },
-        { name: "fs_color_ny", type: "vec4f" },
-        { name: "fs_color_pz", type: "vec4f" },
-        { name: "fs_color_nz", type: "vec4f" }
+        { name: "fs_color", type: "vec4f" }
       ],
       source: "
         vec3f prefilter(float roughness, vec3f r) {
@@ -59,13 +50,7 @@
             float n_dot_l = max(0.0, dot(n, l));
 
             if (n_dot_l > 0.0) {
-              vec3f sampled = rx_textureCM(u_sampler, l).rgb;
-              #if defined(HAS_GRADING_LUT)
-                float z = sampled.z * u_grading_properties.x + u_grading_properties.y;
-                color += rx_texture3D(u_grading_lut, vec3f(sampled.xy, z)).rgb * n_dot_l;
-              #else
-                color += sampled * n_dot_l;
-              #endif
+              color += rx_textureCM(u_sampler, l).rgb * n_dot_l;
               total_weight += n_dot_l;
             }
           }
@@ -74,7 +59,7 @@
         }
 
         void main() {
-          const mat3x3f rotations[6] = mat3x3f[](
+          const mat3x3f ROTATIONS[6] = mat3x3f[](
             mat3x3f(vec3f( 0.0, 0.0, -1.0), vec3f(0.0, -1.0,  0.0), vec3f(-1.0,  0.0,  0.0)),  // right
             mat3x3f(vec3f( 0.0, 0.0,  1.0), vec3f(0.0, -1.0,  0.0), vec3f( 1.0,  0.0,  0.0)),  // left
             mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0,  0.0,  1.0), vec3f( 0.0, -1.0,  0.0)),  // top
@@ -84,12 +69,7 @@
 
           vec3f direction = normalize(vec3f(vs_coordinate * 2.0 - 1.0, -1.0));
 
-          fs_color_px = vec4f(prefilter(u_roughness, rotations[0] * direction), 1.0);
-          fs_color_nx = vec4f(prefilter(u_roughness, rotations[1] * direction), 1.0);
-          fs_color_py = vec4f(prefilter(u_roughness, rotations[2] * direction), 1.0);
-          fs_color_ny = vec4f(prefilter(u_roughness, rotations[3] * direction), 1.0);
-          fs_color_pz = vec4f(prefilter(u_roughness, rotations[4] * direction), 1.0);
-          fs_color_nz = vec4f(prefilter(u_roughness, rotations[5] * direction), 1.0);
+          fs_color = vec4f(prefilter(u_roughness, ROTATIONS[u_face] * direction), 1.0);
         }
       "
     }

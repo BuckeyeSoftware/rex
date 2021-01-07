@@ -1,13 +1,9 @@
 {
   name: "irradiance_map",
   uniforms: [
-    { name: "u_sampler",            type: "samplerCM", value: 0  },
-    { name: "u_texture_size",       type: "int" },
-    { name: "u_grading_lut",        type: "sampler3D", when: "HAS_GRADING_LUT" },
-    { name: "u_grading_properties", type: "vec2f",     when: "HAS_GRADING_LUT" }
-  ],
-  permutes: [
-    "HAS_GRADING_LUT"
+    { name: "u_sampler",      type: "samplerCM", value: 0  },
+    { name: "u_face",         type: "int" },
+    { name: "u_texture_size", type: "int" }
   ],
   shaders: [
     {
@@ -31,16 +27,11 @@
         { name: "vs_coordinate", type: "vec2f" }
       ],
       outputs: [
-        { name: "fs_color_px", type: "vec4f" },
-        { name: "fs_color_nx", type: "vec4f" },
-        { name: "fs_color_py", type: "vec4f" },
-        { name: "fs_color_ny", type: "vec4f" },
-        { name: "fs_color_pz", type: "vec4f" },
-        { name: "fs_color_nz", type: "vec4f" }
+        { name: "fs_color",      type: "vec4f" }
       ],
       source: "
         void main() {
-          const mat3x3f rotations[6] = mat3x3f[](
+          const mat3x3f ROTATIONS[6] = mat3x3f[](
             mat3x3f(vec3f( 0.0, 0.0, -1.0), vec3f(0.0, -1.0,  0.0), vec3f(-1.0,  0.0,  0.0)),  // right
             mat3x3f(vec3f( 0.0, 0.0,  1.0), vec3f(0.0, -1.0,  0.0), vec3f( 1.0,  0.0,  0.0)),  // left
             mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0,  0.0,  1.0), vec3f( 0.0, -1.0,  0.0)),  // top
@@ -48,45 +39,29 @@
             mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, -1.0,  0.0), vec3f( 0.0,  0.0, -1.0)),  // front
             mat3x3f(vec3f(-1.0, 0.0,  0.0), vec3f(0.0, -1.0,  0.0), vec3f( 0.0,  0.0,  1.0))); // back
 
-          vec3f base_normal = normalize(vec3f(vs_coordinate * 2.0 - 1.0, -1.0));
+          // Starting in the direction of |u_face|.
+          vec3f n = ROTATIONS[u_face] * normalize(vec3f(vs_coordinate * 2.0 - 1.0, -1.0));
 
-          vec4f colors[6] = vec4f[](
-            vec4f(0.0),
-            vec4f(0.0),
-            vec4f(0.0),
-            vec4f(0.0),
-            vec4f(0.0),
-            vec4f(0.0));
+          vec3f color = vec3f(0.0);
+          float total_weight = 0.0;
 
-          for (int face = 0; face < 6; face++) {
-            vec3f normal = rotations[face] * base_normal;
-            vec4f color = vec4f(0.0);
-            for (int i = 0; i < 6; i++) {
-              mat3x3f rotation = rotations[i];
-              for (int x = 0; x < u_texture_size; x++) {
-                for (int y = 0; y < u_texture_size; y++) {
-                  vec2f coordinate = vec2f(float(x) / float(u_texture_size), float(y) / float(u_texture_size));
-                  vec3f direction = rotation * normalize(vec3f(coordinate * 2.0 - 1.0, -1.0));
-                  float mul = max(dot(normal, direction), 0.0);
-                  vec3f sampled = rx_textureCM(u_sampler, direction).rgb;
-                  #if defined(HAS_GRADING_LUT)
-                    float z = sampled.z * u_grading_properties.x + u_grading_properties.y;
-                    color += vec4f(rx_texture3D(u_grading_lut, vec3f(sampled.xy, z)).rgb * mul, mul);
-                  #else
-                    color += vec4f(sampled * mul, mul);
-                  #endif
-                }
+          for (int i = 0; i < 6; i++) {
+            mat3x3f rotation = ROTATIONS[i];
+            for (int x = 0; x < u_texture_size; x++) {
+              for (int y = 0; y < u_texture_size; y++) {
+                vec2f coordinate = vec2f(x, y) / u_texture_size;
+                vec3f direction = rotation * normalize(vec3f(coordinate * 2.0 - 1.0, -1.0));
+                float weight = max(dot(n, direction), 0.0);
+                vec3f sampled = rx_textureCM(u_sampler, direction).rgb;
+                color += sampled * weight;
+                total_weight += weight;
               }
             }
-            colors[face] = vec4f(color.rgb / color.a, 1.0);
           }
 
-          fs_color_px = colors[0];
-          fs_color_nx = colors[1];
-          fs_color_py = colors[2];
-          fs_color_ny = colors[3];
-          fs_color_pz = colors[4];
-          fs_color_nz = colors[5];
+          color /= total_weight;
+
+          fs_color = vec4f(color, 1.0);
         }
       "
     }
