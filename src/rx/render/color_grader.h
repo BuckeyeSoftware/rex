@@ -2,6 +2,7 @@
 #define RX_RENDER_COLOR_GRADER_H
 #include "rx/core/bitset.h"
 #include "rx/core/string.h"
+#include "rx/core/map.h"
 
 #include "rx/math/vec2.h"
 #include "rx/math/vec4.h"
@@ -13,18 +14,25 @@ namespace Frontend {
   struct Texture3D;
 } // namespace Frontend
 
+struct ColorGrader;
+
 struct ColorGrader {
   RX_MARK_NO_COPY(ColorGrader);
+  RX_MARK_NO_MOVE(ColorGrader);
+
+  ColorGrader(Frontend::Context* _frontend);
 
   // The maximum Z depth of an atlas.
   static inline constexpr const Size MAX_DEPTH = 4096;
+
+  struct Atlas;
 
   // An entry in the atlas.
   struct Entry {
     RX_MARK_NO_COPY(Entry);
 
     constexpr Entry();
-    constexpr Entry(ColorGrader* _atlas, Uint16 _handle);
+    constexpr Entry(Atlas* _atlas, Uint16 _handle);
     Entry(Entry&&);
     ~Entry();
     Entry& operator=(Entry&& entry_);
@@ -38,79 +46,73 @@ struct ColorGrader {
     Math::Vec2f properties() const;
 
     // The atlas this entry is part of.
-    const ColorGrader* atlas() const;
+    const Atlas* atlas() const;
 
   private:
     void release();
 
-    ColorGrader* m_atlas;
+    Atlas* m_atlas;
     Uint16 m_handle;
   };
 
-  ColorGrader();
-  ColorGrader(ColorGrader&& atlas_);
-  ~ColorGrader();
-  ColorGrader& operator=(ColorGrader&& atlas_);
+  struct Atlas {
+    RX_MARK_NO_COPY(Atlas);
 
-  static Optional<ColorGrader> create(Frontend::Context* _context, Size _size);
+    Atlas();
+    ~Atlas();
+    Atlas(Atlas&& atlas_);
+    Atlas& operator=(Atlas&& atlas_);
 
-  Optional<Entry> allocate();
+    static Optional<Atlas> create(ColorGrader* _color_grader, Size _size);
+
+    Optional<Entry> allocate();
+
+    // Update the atlas. This needs to be called when entries are written to.
+    void update();
+
+    Frontend::Texture3D* texture() const;
+
+  private:
+    void release();
+
+    friend struct Entry;
+    friend struct ColorGrader;
+
+    Optional<Entry> allocate_uninitialized();
+
+    ColorGrader* m_color_grader;
+
+    Frontend::Texture3D* m_texture;
+    Size m_size;
+
+    Bitset m_allocated;
+    Bitset m_dirty;
+
+    // The neutral table samples.
+    Vector<Math::Vec4h> m_neutral;
+
+    // Scratch space for performing LUT conversions to avoid allocations.
+    Concurrency::SpinLock m_scratch_lock;
+    Vector<Math::Vec4h> m_scratch RX_HINT_GUARDED_BY(m_scratch_lock);
+  };
+
+  static Optional<ColorGrader> create(Frontend::Context* _context);
+
   Optional<Entry> load(const String& _file_name);
 
-  // Update the atlas. This needs to be called when entries are written to.
   void update();
 
-  Frontend::Texture3D* texture() const;
-
 private:
-  friend struct Entry;
-
-  void release();
-
-  Optional<Entry> allocate_uninitialized();
-
   Frontend::Context* m_frontend;
-  Frontend::Texture3D* m_texture;
 
-  Bitset m_allocated;
-  Bitset m_dirty;
-
-  // The neutral table samples.
-  Vector<Math::Vec4h> m_neutral;
-
-  // Scratch space for performing LUT conversions to avoid allocations.
-  Concurrency::SpinLock m_scratch_lock;
-  Vector<Math::Vec4h> m_scratch RX_HINT_GUARDED_BY(m_scratch_lock);
+  Concurrency::SpinLock m_atlases_lock;
+  Map<Size, Atlas> m_atlases RX_HINT_GUARDED_BY(m_atlases_lock);
 };
 
 // [ColorGrader]
-inline ColorGrader::~ColorGrader() {
-  release();
-}
-
-inline ColorGrader& ColorGrader::operator=(ColorGrader&& atlas_) {
-  release();
-  m_frontend = Utility::exchange(atlas_.m_frontend, nullptr);
-  m_texture = Utility::exchange(atlas_.m_texture, nullptr);
-  m_allocated = Utility::move(atlas_.m_allocated);
-  m_dirty = Utility::move(atlas_.m_dirty);
-  m_neutral = Utility::move(atlas_.m_neutral);
-  m_scratch = Utility::move(atlas_.m_scratch);
-  return *this;
-}
-
-inline ColorGrader::ColorGrader(ColorGrader&& atlas_)
-  : m_frontend{Utility::exchange(atlas_.m_frontend, nullptr)}
-  , m_texture{Utility::exchange(atlas_.m_texture, nullptr)}
-  , m_allocated{Utility::move(atlas_.m_allocated)}
-  , m_dirty{Utility::move(atlas_.m_dirty)}
-  , m_neutral{Utility::move(atlas_.m_neutral)}
-  , m_scratch{Utility::move(atlas_.m_scratch)}
+inline ColorGrader::ColorGrader(Frontend::Context* _frontend)
+  : m_frontend{_frontend}
 {
-}
-
-inline Frontend::Texture3D* ColorGrader::texture() const {
-  return m_texture;
 }
 
 // [ColorGrader::Entry]
@@ -119,7 +121,7 @@ inline constexpr ColorGrader::Entry::Entry()
 {
 }
 
-inline constexpr ColorGrader::Entry::Entry(ColorGrader* _atlas, Uint16 _handle)
+inline constexpr ColorGrader::Entry::Entry(Atlas* _atlas, Uint16 _handle)
   : m_atlas{_atlas}
   , m_handle{_handle}
 {
@@ -148,8 +150,41 @@ inline void ColorGrader::Entry::release() {
   }
 }
 
-inline const ColorGrader* ColorGrader::Entry::atlas() const {
+inline const ColorGrader::Atlas* ColorGrader::Entry::atlas() const {
   return m_atlas;
+}
+
+// [ColorGrader::Atlas]
+inline ColorGrader::Atlas::Atlas()
+  : m_color_grader{nullptr}
+  , m_texture{nullptr}
+  , m_size{0}
+{
+}
+
+inline ColorGrader::Atlas::Atlas(Atlas&& atlas_)
+  : m_color_grader{Utility::exchange(atlas_.m_color_grader, nullptr)}
+  , m_texture{Utility::exchange(atlas_.m_texture, nullptr)}
+  , m_size{Utility::exchange(atlas_.m_size, 0)}
+  , m_allocated{Utility::move(atlas_.m_allocated)}
+  , m_dirty{Utility::move(atlas_.m_dirty)}
+  , m_neutral{Utility::move(atlas_.m_neutral)}
+  , m_scratch{Utility::move(atlas_.m_scratch)}
+{
+}
+
+inline ColorGrader::Atlas::~Atlas() {
+  release();
+}
+
+inline ColorGrader::Atlas& ColorGrader::Atlas::operator=(Atlas&& atlas_) {
+  release();
+  Utility::construct<Atlas>(this, Utility::move(atlas_));
+  return *this;
+}
+
+inline Frontend::Texture3D* ColorGrader::Atlas::texture() const {
+  return m_texture;
 }
 
 } // namespace Rx::Render

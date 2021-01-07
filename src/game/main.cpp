@@ -78,6 +78,7 @@ struct TestGame
     , m_gbuffer{&m_frontend}
     , m_skybox{&m_frontend}
     , m_lens_distortion_pass{&m_frontend}
+    , m_color_grader{&m_frontend}
     , m_lut_index{0}
     , m_lut_count{0}
   {
@@ -91,7 +92,8 @@ struct TestGame
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
     m_skybox.load("base/skyboxes/miramar/miramar.json5", {1024, 1024});
 
-    auto indirect_lighting_pass = Render::IndirectLightingPass::create(&m_frontend, m_frontend.swapchain()->dimensions());
+    auto indirect_lighting_pass
+      = Render::IndirectLightingPass::create(&m_frontend, m_frontend.swapchain()->dimensions());
     if (!indirect_lighting_pass) {
       return false;
     }
@@ -147,18 +149,12 @@ struct TestGame
       "base/colorgrading/Zeke 39.CUBE"
     };
 
-    auto grader = Render::ColorGrader::create(&m_frontend, 32);
-    if (!grader) {
-      return false;
-    }
-
-    auto ibl = Render::ImageBasedLighting::create(&m_frontend);
+    auto ibl = Render::ImageBasedLighting::create(&m_frontend, 16, 64);
     if (!ibl) {
       return false;
     }
 
     m_ibl = Utility::move(*ibl);
-    m_color_grader = Utility::move(*grader);
 
     // Load in all the grading LUTs and update the atlas.
     for (Size i = 0; i < sizeof LUTS / sizeof* LUTS; i++) {

@@ -23,11 +23,9 @@ namespace Rx::Render {
 struct Cube {
   Cube(Memory::Allocator& _allocator) : data{_allocator}, size{0} {}
 
-  Size samples() const { return size * size * size; }
-
   bool resize(Size _size) {
     size = _size;
-    return data.resize(samples());
+    return data.resize(size * size * size);
   }
 
   Vector<Math::Vec4h> data;
@@ -101,9 +99,8 @@ static Optional<Cube> load_cube(Memory::Allocator& _allocator, const String& _fi
       continue;
     }
 
-    // Cannot read any RGB triplets if LUT_3D_SIZE was not seen or we have too
-    // many samples in the file than what was defined by LUT_3D_SIZE.
-    if (cube.size == 0 || samples.size() == cube.samples()) {
+    // Cannot read any RGB triplets if LUT_3D_SIZE was not seen.
+    if (!cube.size) {
       break;
     }
 
@@ -133,12 +130,80 @@ static Optional<Cube> load_cube(Memory::Allocator& _allocator, const String& _fi
   return cube;
 }
 
+// [ColorGrader]
+Optional<ColorGrader::Entry> ColorGrader::load(const String& _file_name) {
+  auto& allocator = m_frontend->allocator();
+
+  auto find_or_create_atlas = [&](Size _size) -> Atlas* {
+    Concurrency::ScopeLock lock{m_atlases_lock};
+    // Check if an atlas already exists for |_size|.
+    if (auto atlas = m_atlases.find(_size)) {
+      return atlas;
+    }
+    // Create a new atlas.
+    if (auto atlas = Atlas::create(this, _size)) {
+      return m_atlases.insert(_size, Utility::move(*atlas));
+    }
+    return nullptr;
+  };
+
+  // Check if Adobe .CUBE first.
+  if (_file_name.ends_with(".cube") || _file_name.ends_with(".CUBE")) {
+    auto data = load_cube(allocator, _file_name);
+    if (!data) {
+      return nullopt;
+    }
+    auto atlas = find_or_create_atlas(data->size);
+    if (!atlas) {
+      return nullopt;
+    }
+
+    auto entry = atlas->allocate_uninitialized();
+    if (!entry) {
+      return nullopt;
+    }
+
+    entry->write(data->data.data());
+
+    return entry;
+  }
+
+  // Use regular texture loader.
+  Texture::Loader loader{allocator};
+  if (!loader.load(_file_name, Texture::PixelFormat::RGBA_U8, {4096, 4096})) {
+    return nullopt;
+  }
+
+  auto atlas = find_or_create_atlas(loader.dimensions().h);
+  if (!atlas) {
+    return nullopt;
+  }
+
+  auto entry = atlas->allocate_uninitialized();
+  if (!entry) {
+    return nullopt;
+  }
+
+  // Write the data into the entry.
+  auto data = reinterpret_cast<const Math::Vec4b*>(loader.data().data());
+  entry->write(data);
+
+  return entry;
+}
+
+void ColorGrader::update() {
+  Concurrency::ScopeLock lock{m_atlases_lock};
+  m_atlases.each_value([](Atlas& _atlas) {
+    _atlas.update();
+  });
+}
+
 // [ColorGrader::Entry]
 void ColorGrader::Entry::write(const Math::Vec4f* _samples) {
   // Convert |_samples| to half-precision float.
   Concurrency::ScopeLock lock{m_atlas->m_scratch_lock};
   auto& samples = m_atlas->m_scratch;
-  const auto n_samples = m_atlas->m_texture->dimensions().area();
+  const auto n_samples = m_atlas->m_size * m_atlas->m_size * m_atlas->m_size;
   for (Size i = 0; i < n_samples; i++) {
     samples[i] = _samples[i].cast<Math::Half>();
   }
@@ -147,7 +212,7 @@ void ColorGrader::Entry::write(const Math::Vec4f* _samples) {
 
 void ColorGrader::Entry::write(const Math::Vec4h* _samples) {
   const auto texture = m_atlas->m_texture;
-  const auto size = texture->dimensions().w;
+  const auto size = m_atlas->m_size;
 
   // Need to swizzle Z and Y here.
   const auto src = _samples;
@@ -197,15 +262,10 @@ Math::Vec2f ColorGrader::Entry::properties() const {
   return {scale, offset};
 }
 
-// [ColorGrader]
-ColorGrader::ColorGrader()
-  : m_frontend{nullptr}
-  , m_texture{nullptr}
-{
-}
-
-Optional<ColorGrader> ColorGrader::create(Frontend::Context* _context, Size _size) {
-  auto& allocator = _context->allocator();
+// [ColorGrader::Atlas]
+Optional<ColorGrader::Atlas> ColorGrader::Atlas::create(ColorGrader* _context, Size _size) {
+  auto frontend = _context->m_frontend;
+  auto& allocator = frontend->allocator();
 
   // Create the neutral table.
   Vector<Math::Vec4h> neutral{allocator};
@@ -235,16 +295,12 @@ Optional<ColorGrader> ColorGrader::create(Frontend::Context* _context, Size _siz
   }
 
   auto allocated = Bitset::create(allocator, {MAX_DEPTH / _size});
-  if (!allocated) {
-    return nullopt;
-  }
-
   auto dirty = Bitset::create(allocator, {MAX_DEPTH / _size});
-  if (!dirty) {
+  if (!allocated || !dirty) {
     return nullopt;
   }
 
-  auto texture = _context->create_texture3D(RX_RENDER_TAG("Atlas"));
+  auto texture = frontend->create_texture3D(RX_RENDER_TAG("Atlas"));
   if (!texture) {
     return nullopt;
   }
@@ -259,65 +315,35 @@ Optional<ColorGrader> ColorGrader::create(Frontend::Context* _context, Size _siz
     Render::Frontend::Texture::WrapType::CLAMP_TO_EDGE,
     Render::Frontend::Texture::WrapType::CLAMP_TO_EDGE});
 
-  _context->initialize_texture(RX_RENDER_TAG("Atlas"), texture);
+  frontend->initialize_texture(RX_RENDER_TAG("Atlas"), texture);
 
-  ColorGrader atlas;
-  atlas.m_frontend = _context;
+  Atlas atlas;
+  atlas.m_color_grader = _context;
   atlas.m_texture = texture;
   atlas.m_allocated = Utility::move(*allocated);
   atlas.m_dirty = Utility::move(*dirty);
   atlas.m_neutral = Utility::move(neutral);
-  atlas.m_scratch = {allocator};
+  atlas.m_size = _size;
 
   return atlas;
 }
 
-Optional<ColorGrader::Entry> ColorGrader::allocate() {
+void ColorGrader::Atlas::release() {
+  if (m_color_grader) {
+    m_color_grader->m_frontend->destroy_texture(RX_RENDER_TAG("Atlas"), m_texture);
+  }
+}
+
+Optional<ColorGrader::Entry> ColorGrader::Atlas::allocate() {
   auto entry = allocate_uninitialized();
   if (!entry) {
     return nullopt;
   }
-
   entry->write(m_neutral.data());
-
   return entry;
 }
 
-Optional<ColorGrader::Entry> ColorGrader::load(const String& _file_name) {
-  auto& allocator = m_frontend->allocator();
-
-  auto entry = allocate_uninitialized();
-  if (!entry) {
-    return nullopt;
-  }
-
-  // Handle Adobe .CUBE files.
-  if (_file_name.ends_with(".cube") || _file_name.ends_with(".CUBE")) {
-    auto data = load_cube(allocator, _file_name);
-    if (!data) {
-      return nullopt;
-    }
-    entry->write(data->data.data());
-    return entry;
-  }
-
-  Texture::Loader loader{m_frontend->allocator()};
-  const auto& dimensions = m_texture->dimensions();
-
-  // Limit textures to W=w*w, H=h as |write| execpts horizontal layout.
-  const Math::Vec2z max_dimensions{dimensions.w * dimensions.w, dimensions.h};
-  if (!loader.load(_file_name, Texture::PixelFormat::RGBA_U8, max_dimensions)) {
-    return nullopt;
-  }
-
-  // Write the data into the entry.
-  auto data = reinterpret_cast<const Math::Vec4b*>(loader.data().data());
-  entry->write(data);
-
-  return entry;
-}
-
-void ColorGrader::update() {
+void ColorGrader::Atlas::update() {
   // Nothing to update.
   if (m_dirty.count_set_bits() == 0) {
     return;
@@ -330,25 +356,17 @@ void ColorGrader::update() {
     m_texture->record_edit(0, {0, 0, size * _texture}, {size, size, size});
   });
 
-  m_frontend->update_texture(RX_RENDER_TAG("Atlas"), m_texture);
+  m_color_grader->m_frontend->update_texture(RX_RENDER_TAG("Atlas"), m_texture);
 
   m_dirty.clear();
 }
 
-void ColorGrader::release() {
-  if (m_frontend) {
-    m_frontend->destroy_texture(RX_RENDER_TAG("Atlas"), m_texture);
-  }
-}
-
-Optional<ColorGrader::Entry> ColorGrader::allocate_uninitialized() {
+Optional<ColorGrader::Entry> ColorGrader::Atlas::allocate_uninitialized() {
   auto index = m_allocated.find_first_unset();
   if (!index) {
     return nullopt;
   }
-
   m_allocated.set(*index);
-
   return Entry{this, Uint16(*index)};
 }
 
