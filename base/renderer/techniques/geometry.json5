@@ -148,7 +148,7 @@
 
           fs_albedo   = vec4f(albedo.rgb,            ambient);
           fs_normal   = vec4f(normal_encode(normal), roughness, metalness);
-          fs_emission = vec4f(emission,              0.0);
+          fs_emission = vec4f(emission,              1.0);
         }
       "
     }
