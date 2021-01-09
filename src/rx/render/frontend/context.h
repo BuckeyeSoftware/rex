@@ -324,7 +324,7 @@ private:
 
   Uint64 m_frame;
 
-  Size m_resource_usage[Resource::count()];
+  Concurrency::Atomic<Size> m_resource_usage[Resource::count()];
 
   DeviceInfo m_device_info;
   FrameTimer m_timer;

@@ -100,7 +100,9 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
 {
   RX_ASSERT(_backend, "expected valid backend");
 
-  memset(m_resource_usage, 0, sizeof m_resource_usage);
+  for (Size i = 0; i < sizeof m_resource_usage / sizeof *m_resource_usage; i++) {
+    m_resource_usage[i] = 0;
+  }
 
   // Cache the device information from the backend.
   const auto& info{m_backend->query_device_info()};
