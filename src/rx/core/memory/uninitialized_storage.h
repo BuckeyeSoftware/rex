@@ -25,6 +25,8 @@ struct UninitializedStorage {
   constexpr Byte* data();
   constexpr const Byte* data() const;
 
+  constexpr Size size() const;
+
 private:
   union {
     Utility::Nat m_as_nat;
@@ -46,6 +48,11 @@ RX_HINT_FORCE_INLINE constexpr Byte* UninitializedStorage<S, A>::data() {
 template<Size S, Size A>
 RX_HINT_FORCE_INLINE constexpr const Byte* UninitializedStorage<S, A>::data() const {
   return m_as_bytes;
+}
+
+template<Size S, Size A>
+constexpr Size UninitializedStorage<S, A>::size() const {
+  return S;
 }
 
 } // namespace Rx::Memory

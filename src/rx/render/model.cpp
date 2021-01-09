@@ -28,7 +28,6 @@ Model::Model(Frontend::Context* _frontend)
 {
 }
 
-
 Model::Model(Model&& model_)
   : m_frontend{model_.m_frontend}
   , m_technique{Utility::exchange(model_.m_technique, nullptr)}

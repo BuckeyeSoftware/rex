@@ -18,7 +18,7 @@ namespace Frontend {
   struct Technique;
   struct TextureCM;
   struct Target;
-}
+} // namespace Frontend
 
 struct Skybox {
   Skybox(Frontend::Context* _frontend);

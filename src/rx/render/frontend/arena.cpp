@@ -277,33 +277,35 @@ Byte* Arena::Block::map_sink_data(Buffer::Sink _sink, Uint32 _size) {
   Uint32 new_size = _size;
 
   Byte* result = nullptr;
+
   // Already allocated, try to resize the range.
   if (range.offset != -1_u32) {
     const auto old_offset = range.offset;
     const auto old_size = range.size;
-    if (list.reallocate(old_offset, new_size, new_offset)) {
-      if (new_offset != old_offset) {
-        const Size total_size = new_offset + new_size;
-        if (!(result = buffer->map_sink_data(_sink, total_size))) {
-          // Undo the reallocation on |list|.
-          //
-          // This should never fail. Assert anyways because if it does fail it
-          // means the |list| data structure is in an inconsistent state.
-          RX_ASSERT(list.reallocate(new_offset, old_size, new_offset), "consistency error");
-          return nullptr;
-        }
 
-        // Record an edit on the range of data in the |buffer| we're going to replace.
-        if (!buffer->record_sink_edit(_sink, new_offset, old_size)) {
-          return nullptr;
-        }
-
-        // Move the data since the reallocation could've moved it.
-        memmove(result + new_offset, result + old_offset, old_size);
-      }
-    } else {
+    if (!list.reallocate(old_offset, new_size, new_offset)) {
       // Ran out of memory in |list| data structure.
       return nullptr;
+    }
+
+    if (new_offset != old_offset) {
+      const Size total_size = new_offset + new_size;
+      if (!(result = buffer->map_sink_data(_sink, total_size))) {
+        // Undo the reallocation on |list|.
+        //
+        // This should never fail. Assert anyways because if it does fail it
+        // means the |list| data structure is in an inconsistent state.
+        RX_ASSERT(list.reallocate(new_offset, old_size, new_offset), "consistency error");
+        return nullptr;
+      }
+
+      // Record an edit on the range of data in the |buffer| we're going to replace.
+      if (!buffer->record_sink_edit(_sink, new_offset, old_size)) {
+        return nullptr;
+      }
+
+      // Move the data since the reallocation could've moved it.
+      memmove(result + new_offset, result + old_offset, old_size);
     }
   }
 
