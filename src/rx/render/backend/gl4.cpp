@@ -286,6 +286,7 @@ namespace detail_gl4 {
 
       pglEnable(GL_CULL_FACE);
       pglEnable(GL_PROGRAM_POINT_SIZE);
+      pglEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
       pglCullFace(GL_BACK);
       pglFrontFace(GL_CW);
 
