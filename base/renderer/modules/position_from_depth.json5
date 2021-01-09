@@ -2,7 +2,8 @@
   name: "position_from_depth",
   source: "
     vec3f position_from_depth(vec2f coordinate, mat4x4f inverse_view_projection, float depth_sample) {
-      vec4f position = inverse_view_projection * vec4f(coordinate, depth_sample, 1.0);
+      vec4f clip_space_position = vec4f(coordinate * 2.0 - 1.0, depth_sample * 2.0 - 1.0, 1.0);
+      vec4f position = inverse_view_projection * clip_space_position;
       return position.xyz / position.w;
     }
   "
