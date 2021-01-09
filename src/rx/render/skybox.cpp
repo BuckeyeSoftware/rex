@@ -10,6 +10,7 @@
 #include "rx/core/filesystem/file.h"
 #include "rx/core/json.h"
 #include "rx/core/profiler.h"
+#include "rx/core/concurrency/thread_pool.h"
 
 #include "rx/texture/loader.h"
 #include "rx/texture/convert.h"
@@ -81,6 +82,12 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     draw_textures);
 }
 
+void Skybox::load_async(const String& _file_name, const Math::Vec2z& _max_face_dimensions) {
+  Concurrency::ThreadPool::instance().add([=](int) {
+    load(_file_name, _max_face_dimensions);
+  });
+}
+
 bool Skybox::load(const String& _file_name, const Math::Vec2z& _max_face_dimensions) {
   if (Filesystem::File file{_file_name, "rb"}) {
     return load(&file, _max_face_dimensions);
@@ -120,56 +127,64 @@ bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
     return false;
   }
 
-  m_name = name.as_string();
+  auto texture = m_frontend->create_textureCM(RX_RENDER_TAG("skybox"));
+  if (!texture) {
+    return false;
+  }
 
-  m_frontend->destroy_texture(RX_RENDER_TAG("skybox"), m_texture);
-  m_texture = m_frontend->create_textureCM(RX_RENDER_TAG("skybox"));
-  m_texture->record_type(Frontend::Texture::Type::STATIC);
-  m_texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
-  m_texture->record_levels(1);
-  m_texture->record_filter({false, false, false});
-  m_texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-                          Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-                          Frontend::Texture::WrapType::CLAMP_TO_EDGE});
+  texture->record_type(Frontend::Texture::Type::STATIC);
+  texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
+  texture->record_levels(1);
+  texture->record_filter({false, false, false});
+  texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+                        Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+                        Frontend::Texture::WrapType::CLAMP_TO_EDGE});
 
   Math::Vec2z dimensions;
   Frontend::TextureCM::Face face{Frontend::TextureCM::Face::RIGHT};
-  bool result{faces.each([&](const JSON& file_name) {
-    Texture::Loader texture{m_frontend->allocator()};
-    if (!texture.load(file_name.as_string(), Texture::PixelFormat::RGBA_U8, _max_face_dimensions)) {
+  bool result = faces.each([&](const JSON& file_name) {
+    Texture::Loader loader{m_frontend->allocator()};
+    if (!loader.load(file_name.as_string(), Texture::PixelFormat::RGBA_U8, _max_face_dimensions)) {
       return false;
     }
 
     if (dimensions.is_all(0)) {
-      dimensions = texture.dimensions();
-      m_texture->record_dimensions(dimensions);
-    } else if (dimensions != texture.dimensions()) {
+      dimensions = loader.dimensions();
+      texture->record_dimensions(dimensions);
+    } else if (dimensions != loader.dimensions()) {
       return false;
     }
 
-    if (texture.format() != Texture::PixelFormat::RGBA_U8) {
+    if (loader.format() != Texture::PixelFormat::RGBA_U8) {
       // Convert everything to RGB8 if not already.
       auto data = Texture::convert(
         m_frontend->allocator(),
-        texture.data().data(),
-        texture.dimensions().area(),
-        texture.format(),
+        loader.data().data(),
+        loader.dimensions().area(),
+        loader.format(),
         Texture::PixelFormat::RGBA_U8);
       if (!data) {
         return false;
       }
-      m_texture->write(data->data(), face, 0);
+      texture->write(data->data(), face, 0);
     } else {
-      m_texture->write(texture.data().data(), face, 0);
+      texture->write(loader.data().data(), face, 0);
     }
     face = static_cast<Frontend::TextureCM::Face>(static_cast<Size>(face) + 1);
     return true;
-  })};
+  });
 
-  if (result) {
-    m_frontend->initialize_texture(RX_RENDER_TAG("skybox"), m_texture);
-    return true;
+  if (!result) {
+    return false;
   }
+
+  m_frontend->initialize_texture(RX_RENDER_TAG("skybox"), texture);
+
+  m_lock.lock();
+  m_frontend->destroy_texture(RX_RENDER_TAG("skybox"), m_texture);
+  m_texture = texture;
+  m_name = name.as_string();
+  m_lock.unlock();
 
   return false;
 }
