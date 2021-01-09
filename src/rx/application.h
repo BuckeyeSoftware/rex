@@ -24,8 +24,10 @@ struct Application {
   //
   // This is not necessarily called at the same rate as |on_render|.
   //
+  // The |_delta_time| is constant.
+  //
   // This should return true if the application should continue running.
-  virtual bool on_update() = 0;
+  virtual bool on_update(Float32 _delta_time) = 0;
 
   // Called when application is rendered.
   //

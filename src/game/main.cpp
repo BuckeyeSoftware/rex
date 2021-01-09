@@ -202,7 +202,7 @@ struct TestGame
     return true;
   }
 
-  virtual bool on_update() {
+  virtual bool on_update(Float32 _delta_time) {
     auto& input = engine()->input();
     auto& console = engine()->console();
 
@@ -233,19 +233,19 @@ struct TestGame
 
       if (input.root_layer().keyboard().is_held(Input::ScanCode::W)) {
         const auto f{m_camera.as_mat4().z};
-        m_camera.translate += Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
+        m_camera.translate += Math::Vec3f(f.x, f.y, f.z) * (move_speed * _delta_time);
       }
       if (input.root_layer().keyboard().is_held(Input::ScanCode::S)) {
         const auto f{m_camera.as_mat4().z};
-        m_camera.translate -= Math::Vec3f(f.x, f.y, f.z) * (move_speed * m_frontend.timer().delta_time());
+        m_camera.translate -= Math::Vec3f(f.x, f.y, f.z) * (move_speed * _delta_time);
       }
       if (input.root_layer().keyboard().is_held(Input::ScanCode::D)) {
         const auto l{m_camera.as_mat4().x};
-        m_camera.translate += Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
+        m_camera.translate += Math::Vec3f(l.x, l.y, l.z) * (move_speed * _delta_time);
       }
       if (input.root_layer().keyboard().is_held(Input::ScanCode::A)) {
         const auto l{m_camera.as_mat4().x};
-        m_camera.translate -= Math::Vec3f(l.x, l.y, l.z) * (move_speed * m_frontend.timer().delta_time());
+        m_camera.translate -= Math::Vec3f(l.x, l.y, l.z) * (move_speed * _delta_time);
       }
       if (input.root_layer().keyboard().is_released(Input::ScanCode::T)) {
         m_models.pop_back();
@@ -282,7 +282,22 @@ struct TestGame
       m_lut_index = (m_lut_index + 1) % 35;
     }
 
+    if (input.root_layer().keyboard().is_released(Input::ScanCode::M)) {
+      static int sky = 0;
+      static constexpr const char* SKYBOXES[] = {
+        "base/skyboxes/nebula/nebula.json5",
+        "base/skyboxes/yokohama/yokohama.json5",
+        "base/skyboxes/miramar/miramar.json5"
+      };
+      m_skybox.load_async(SKYBOXES[sky], {512, 512});
+      sky = (sky + 1) % (sizeof SKYBOXES / sizeof *SKYBOXES);
+    }
+
     m_console.update(console);
+
+    m_models.each_fwd([&](Render::Model& model_) {
+      model_.update(_delta_time);
+    });
 
     return true;
   }
@@ -292,6 +307,7 @@ struct TestGame
     auto& console = engine()->console();
 
     m_ibl.render(m_skybox.cubemap());
+
     m_color_grader.update();
 
     static auto display_resolution =
@@ -322,7 +338,6 @@ struct TestGame
       Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data());
 
     m_models.each_fwd([&](Render::Model& model_) {
-      model_.update(m_frontend.timer().delta_time());
       model_.render(m_gbuffer.target(), Math::Mat4x4f::scale({1, 1, 1}), m_camera.view(), m_camera.projection);
       model_.render_skeleton({}, &m_immediate3D);
     });

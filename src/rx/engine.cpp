@@ -6,11 +6,14 @@
 #include "rx/render/backend/null.h"
 
 #include "rx/render/frontend/context.h"
+#include "rx/render/frontend/timer.h"
 
 #include "rx/engine.h"
 #include "rx/display.h"
 
 extern Rx::Ptr<Rx::Application> create(Rx::Engine* _engine);
+
+static inline constexpr auto UPDATE_RATE = 1.0f / 60.0f;
 
 namespace Rx {
 
@@ -110,6 +113,7 @@ Engine::Engine()
   : m_render_backend{nullptr}
   , m_render_frontend{nullptr}
   , m_status{Status::RUNNING}
+  , m_accumulator{0.0f}
 {
 }
 
@@ -395,7 +399,7 @@ bool Engine::init() {
   return true;
 }
 
-Engine::Status Engine::run() {
+Engine::Status Engine::integrate() {
   // Process all events from SDL.
   for (SDL_Event event; SDL_PollEvent(&event);) {
     Input::Event input;
@@ -482,19 +486,31 @@ Engine::Status Engine::run() {
     m_input.handle_event(input);
   }
 
-  // This can be rate limited (e.g lock 60fps).
-  if (!m_application->on_update()) {
-    m_status = Status::SHUTDOWN;
+  if (!m_application->on_update(UPDATE_RATE)) {
+    return Status::SHUTDOWN;
   }
 
   // Update the input system.
-  const int updated = m_input.on_update(m_render_frontend->timer().delta_time());
+  const int updated = m_input.on_update(UPDATE_RATE);
   if (updated & Input::Context::CLIPBOARD) {
     SDL_SetClipboardText(m_input.clipboard().data());
   }
 
   if (updated & Input::Context::MOUSE_CAPTURE) {
     SDL_SetRelativeMouseMode(m_input.active_layer().is_mouse_captured() ? SDL_TRUE : SDL_FALSE);
+  }
+
+  return Status::RUNNING;
+}
+
+Engine::Status Engine::run() {
+  m_accumulator += m_render_frontend->timer().delta_time();
+  while (m_accumulator >= UPDATE_RATE) {
+    auto status = integrate();
+    if (status != Status::RUNNING) {
+      m_status = status;
+    }
+    m_accumulator -= UPDATE_RATE;
   }
 
   m_application->on_render();

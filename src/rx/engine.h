@@ -44,6 +44,8 @@ struct Engine {
   Render::Frontend::Context* renderer();
 
 protected:
+  Status integrate();
+
   Console::Context m_console;
   Input::Context m_input;
 
@@ -62,6 +64,8 @@ protected:
 
   // The application.
   Ptr<Application> m_application;
+
+  Float64 m_accumulator;
 };
 
 inline Console::Context& Engine::console() {
