@@ -264,6 +264,10 @@ Math::Vec2f ColorGrader::Entry::properties() const {
 
 // [ColorGrader::Atlas]
 Optional<ColorGrader::Atlas> ColorGrader::Atlas::create(ColorGrader* _context, Size _size) {
+  if (_size == 0) {
+    return nullopt;
+  }
+
   auto frontend = _context->m_frontend;
   auto& allocator = frontend->allocator();
 
