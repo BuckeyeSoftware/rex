@@ -61,6 +61,7 @@ protected:
   Event<void(Console::Variable<Sint32>&)>::Handle m_on_display_fullscreen_change;
   Event<void(Console::Variable<Sint32>&)>::Handle m_on_display_swap_interval_change;
   Event<void(Console::Variable<Math::Vec2i>&)>::Handle m_on_display_resolution_change;
+  Event<void(Console::Variable<Sint32>&)>::Handle m_on_app_update_hz_change;
 
   // The application.
   Ptr<Application> m_application;

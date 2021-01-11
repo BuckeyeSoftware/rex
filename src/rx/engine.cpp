@@ -8,12 +8,12 @@
 #include "rx/render/frontend/context.h"
 #include "rx/render/frontend/timer.h"
 
+#include "rx/texture/loader.h"
+
 #include "rx/engine.h"
 #include "rx/display.h"
 
 extern Rx::Ptr<Rx::Application> create(Rx::Engine* _engine);
-
-static inline constexpr auto UPDATE_RATE = 1.0f / 60.0f;
 
 namespace Rx {
 
@@ -106,6 +106,26 @@ RX_CONSOLE_IVAR(
   32,
   4096,
   1024);
+
+RX_CONSOLE_IVAR(
+  app_update_hz,
+  "app.update_hz",
+  "the rate at which the app is updated (independent from framerate) [restarts the engine]",
+  30,
+  360,
+  60);
+
+RX_CONSOLE_SVAR(
+  app_name,
+  "app.name",
+  "the name of the application",
+  "");
+
+RX_CONSOLE_SVAR(
+  app_icon,
+  "app.icon",
+  "path to the application icon",
+  "base/icon.png");
 
 static constexpr const char* CONFIG = "config.cfg";
 
@@ -282,7 +302,9 @@ bool Engine::init() {
     }
 
     window = SDL_CreateWindow(
-      "Rex",
+      app_name->get().is_empty()
+        ? "Rex"
+        : String::format("Rex: %s", app_name->get()).data(),
       SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
       SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
       display_resolution->get().w,
@@ -291,6 +313,26 @@ bool Engine::init() {
 
     if (window) {
       break;
+    }
+  }
+
+  if (!app_icon->get().is_empty()) {
+    Texture::Loader loader;
+    if (loader.load(app_icon->get(), Texture::PixelFormat::RGBA_U8, {64, 64})) {
+      auto surface = SDL_CreateRGBSurfaceFrom(
+        loader.data().data(),
+        Sint32(loader.dimensions().w),
+        Sint32(loader.dimensions().h),
+        loader.bpp() * 8,
+        loader.dimensions().w * loader.bpp(),
+        0xFF000000,
+        0x00FF0000,
+        0x0000FF00,
+        0x000000FF);
+      if (surface) {
+        SDL_SetWindowIcon(window, surface);
+        SDL_FreeSurface(surface);
+      }
     }
   }
 
@@ -359,7 +401,7 @@ bool Engine::init() {
     return false;
   }
 
-  auto on_display_fullscreen_change = display_fullscreen->on_change([&](Sint32 _value) {
+  auto on_display_fullscreen_change = display_fullscreen->on_change([=, this](Sint32 _value) {
     if (_value == 0) {
       SDL_SetWindowFullscreen(window, 0);
     } else if (_value == 1) {
@@ -382,24 +424,31 @@ bool Engine::init() {
     }
   });
 
-  auto on_display_resolution_change = display_resolution->on_change([&](const Math::Vec2i& _resolution) {
+  auto on_display_resolution_change = display_resolution->on_change([=, this](const Math::Vec2i& _resolution) {
     m_application->on_resize(_resolution.cast<Size>());
     m_input.on_resize(_resolution.cast<Size>());
     SDL_SetWindowSize(window, _resolution.w, _resolution.h);
   });
 
-  if (!on_display_fullscreen_change || !on_display_swap_interval_change || !on_display_resolution_change) {
+  auto on_app_update_hz_change = app_update_hz->on_change([&](Sint32) {
+    m_status = Status::RESTART;
+  });
+
+  if (!on_display_fullscreen_change || !on_display_swap_interval_change || !on_display_resolution_change || !on_app_update_hz_change) {
     return false;
   }
 
   m_on_display_fullscreen_change = Utility::move(*on_display_fullscreen_change);
   m_on_display_swap_interval_change = Utility::move(*on_display_swap_interval_change);
   m_on_display_resolution_change = Utility::move(*on_display_resolution_change);
+  m_on_app_update_hz_change = Utility::move(*on_app_update_hz_change);
 
   return true;
 }
 
 Engine::Status Engine::integrate() {
+  const auto update_rate = 1.0 / Float64(app_update_hz->get());
+
   // Process all events from SDL.
   for (SDL_Event event; SDL_PollEvent(&event);) {
     Input::Event input;
@@ -486,12 +535,12 @@ Engine::Status Engine::integrate() {
     m_input.handle_event(input);
   }
 
-  if (!m_application->on_update(UPDATE_RATE)) {
+  if (!m_application->on_update(update_rate)) {
     return Status::SHUTDOWN;
   }
 
   // Update the input system.
-  const int updated = m_input.on_update(UPDATE_RATE);
+  const int updated = m_input.on_update(update_rate);
   if (updated & Input::Context::CLIPBOARD) {
     SDL_SetClipboardText(m_input.clipboard().data());
   }
@@ -504,13 +553,14 @@ Engine::Status Engine::integrate() {
 }
 
 Engine::Status Engine::run() {
+  const auto update_rate = 1.0 / Float64(app_update_hz->get());
   m_accumulator += m_render_frontend->timer().delta_time();
-  while (m_accumulator >= UPDATE_RATE) {
+  while (m_accumulator >= update_rate) {
     auto status = integrate();
     if (status != Status::RUNNING) {
       m_status = status;
     }
-    m_accumulator -= UPDATE_RATE;
+    m_accumulator -= update_rate;
   }
 
   m_application->on_render();
