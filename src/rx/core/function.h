@@ -3,6 +3,8 @@
 #include "rx/core/utility/exchange.h"
 #include "rx/core/utility/declval.h"
 
+#include "rx/core/concepts/invocable.h"
+
 #include "rx/core/memory/system_allocator.h"
 
 namespace Rx {
@@ -12,18 +14,17 @@ namespace Rx {
 template<typename T>
 struct Function;
 
-template<typename T, typename... Ts>
-concept Callable = requires(T v) { v(Utility::declval<Ts>()...); };
-
 template<typename R, typename... Ts>
 struct Function<R(Ts...)> {
   constexpr Function(Memory::Allocator& _allocator);
   constexpr Function();
 
-  template<Callable<Ts...> F>
+  template<typename F>
+    requires Concepts::Invocable<F, Ts...>
   Function(Memory::Allocator& _allocator, F&& _function);
 
-  template<Callable<Ts...> F>
+  template<typename F>
+    requires Concepts::Invocable<F, Ts...>
   Function(F&& _function);
 
   Function(Memory::Allocator& _allocator, const Function& _function);
@@ -112,14 +113,16 @@ constexpr Function<R(Ts...)>::Function()
 }
 
 template<typename R, typename... Ts>
-template<Callable<Ts...> F>
+template<typename F>
+  requires Concepts::Invocable<F, Ts...>
 Function<R(Ts...)>::Function(F&& _function)
   : Function{Memory::SystemAllocator::instance(), Utility::forward<F>(_function)}
 {
 }
 
 template<typename R, typename... Ts>
-template<Callable<Ts...> F>
+template<typename F>
+  requires Concepts::Invocable<F, Ts...>
 Function<R(Ts...)>::Function(Memory::Allocator& _allocator, F&& _function)
   : Function{_allocator}
 {

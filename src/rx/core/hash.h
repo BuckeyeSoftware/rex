@@ -2,15 +2,10 @@
 #define RX_CORE_HASH_H
 #include "rx/core/types.h"
 #include "rx/core/utility/declval.h"
-#include "rx/core/hints/unreachable.h"
+#include "rx/core/concepts/enum.h"
+#include "rx/core/traits/underlying_type.h"
 
 namespace Rx {
-
-template<typename T>
-concept Enum = __is_enum(T);
-
-template<Enum T>
-using UnderlyingType = __underlying_type(T);
 
 template<typename T>
 concept Hashable = requires {
@@ -18,19 +13,20 @@ concept Hashable = requires {
 };
 
 template<typename T>
-struct Hash {
+struct Hash;
+
+template<Hashable T>
+struct Hash<T> {
   Size operator()(const T& _value) const {
-    if constexpr (Hashable<T>) {
-      // The type has a hash member function we can use.
-      return _value.hash();
-    } else if constexpr (Enum<T>) {
-      // Convert the enum to the underlying type and forward.
-      using Type = UnderlyingType<T>;
-      return Hash<Type>{}(static_cast<Type>(_value));
-    } else {
-      static_assert("implement size_t T::hash()");
-    }
-    RX_HINT_UNREACHABLE();
+    return _value.hash();
+  }
+};
+
+template<Concepts::Enum T>
+struct Hash<T> {
+  constexpr Size operator()(const T& _value) const {
+    using Type = Traits::UnderlyingType<T>;
+    return Hash<Type>{}(static_cast<Type>(_value));
   }
 };
 

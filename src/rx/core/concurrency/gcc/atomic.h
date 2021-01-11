@@ -3,13 +3,9 @@
 #if defined(RX_COMPILER_GCC)
 
 #include "rx/core/utility/declval.h"
+#include "rx/core/concepts/assignable.h"
 
 namespace Rx::Concurrency::detail {
-
-template<typename T, typename U>
-concept Assignable = requires {
-  Utility::declval<T>() = Utility::declval<U>();
-};
 
 static constexpr int to_success_order(MemoryOrder _order) {
   return _order == MemoryOrder::RELAXED ? __ATOMIC_RELAXED :
@@ -30,13 +26,13 @@ static constexpr int to_failure_order(MemoryOrder _order) {
 }
 
 template<typename Tp, typename Tv>
-  requires Assignable<Tp&, Tv>
+  requires Concepts::Assignable<Tp&, Tv>
 void atomic_assign_volatile(Tp& value_, const Tv& _value) {
   value_ = _value;
 }
 
 template<typename Tp, typename Tv>
-  requires Assignable<Tp&, Tv>
+  requires Concepts::Assignable<Tp&, Tv>
 void atomic_assign_volatile(volatile Tp& value_, const volatile Tv& _value) {
   volatile char* to{reinterpret_cast<volatile char*>(&value_)};
   volatile char* end{to + sizeof(Tp)};

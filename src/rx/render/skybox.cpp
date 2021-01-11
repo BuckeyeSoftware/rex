@@ -83,7 +83,7 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
 }
 
 void Skybox::load_async(const String& _file_name, const Math::Vec2z& _max_face_dimensions) {
-  Concurrency::ThreadPool::instance().add([=](int) {
+  Concurrency::ThreadPool::instance().add([=, this](int) {
     load(_file_name, _max_face_dimensions);
   });
 }

@@ -195,9 +195,12 @@ struct TestGame
       }
     }
 
-    m_models.each_fwd([](Render::Model& _model) {
+    /*m_models.each_fwd([](Render::Model& _model) {
       _model.animate(0, true);
-    });
+    });*/
+
+    auto animate = [](Render::Model& _model) { _model.animate(0, true); };
+    m_models.each_fwd(animate);
 
     return true;
   }
