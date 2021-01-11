@@ -170,7 +170,7 @@ CCFLAGS += -std=c11 -D_DEFAULT_SOURCE
 # C++ compilation flags.
 #
 CXXFLAGS := $(CFLAGS)
-CXXFLAGS += -std=c++17
+CXXFLAGS += -std=c++20
 
 # Disable some unneeded features.
 CXXFLAGS += -fno-exceptions

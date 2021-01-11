@@ -3,8 +3,7 @@
 #include "rx/core/serialize/header.h"
 #include "rx/core/serialize/buffer.h"
 
-#include "rx/core/traits/is_signed.h"
-#include "rx/core/traits/is_unsigned.h"
+#include "rx/core/concepts/integral.h"
 
 #include "rx/core/string.h"
 #include "rx/core/string_table.h"
@@ -33,10 +32,10 @@ struct RX_API Encoder {
   [[nodiscard]] bool write_float_array(const Float32* _value, Size _count);
   [[nodiscard]] bool write_byte_array(const Byte* _data, Size _size);
 
-  template<typename T>
+  template<Concepts::UnsignedIntegral T>
   [[nodiscard]] bool write_uint_array(const T* _data, Size _count);
 
-  template<typename T>
+  template<Concepts::SignedIntegral T>
   [[nodiscard]] bool write_sint_array(const T* _data, Size _count);
 
   const String& message() const &;
@@ -67,10 +66,8 @@ inline bool Encoder::write_string(const String& _string) {
   return write_string(_string.data(), _string.size());
 }
 
-template<typename T>
+template<Concepts::UnsignedIntegral T>
 bool Encoder::write_uint_array(const T* _data, Size _count) {
-  static_assert(traits::is_unsigned<T>, "T isn't unsigned integer Type");
-
   if (!write_uint(_count)) {
     return false;
   }
@@ -84,10 +81,8 @@ bool Encoder::write_uint_array(const T* _data, Size _count) {
   return true;
 }
 
-template<typename T>
+template<Concepts::SignedIntegral T>
 bool Encoder::write_sint_array(const T* _data, Size _count) {
-  static_assert(traits::is_signed<T>, "T isn't signed integer Type");
-
   if (!write_uint(_count)) {
     return false;
   }

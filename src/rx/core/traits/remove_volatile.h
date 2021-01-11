@@ -1,20 +1,18 @@
 #ifndef RX_CORE_TRAITS_REMOVE_VOLATILE_H
 #define RX_CORE_TRAITS_REMOVE_VOLATILE_H
-#include "rx/core/traits/type_identity.h"
 
-namespace Rx::traits {
+namespace Rx::Traits {
 
-namespace detail {
+namespace _ {
   template<typename T>
-  struct remove_volatile : traits::type_identity<T> {};
-
+  struct RemoveVolatile { using Type = T; };
   template<typename T>
-  struct remove_volatile<volatile T> : traits::type_identity<T> {};
-} // namespace detail
+  struct RemoveVolatile<volatile T> { using Type = T; };
+}
 
 template<typename T>
-using remove_volatile = typename detail::remove_volatile<T>::type;
+using RemoveVolatile = typename _::RemoveVolatile<T>::Type;
 
-} // namespace rx::traits
+} // namespace Rx::Traits
 
 #endif // RX_CORE_TRAITS_REMOVE_VOLATILE_H

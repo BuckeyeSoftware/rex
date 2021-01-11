@@ -1,30 +1,32 @@
 #ifndef RX_CORE_HASH_H
 #define RX_CORE_HASH_H
 #include "rx/core/types.h"
-
-#include "rx/core/traits/detect.h"
-#include "rx/core/traits/underlying_type.h"
-
 #include "rx/core/utility/declval.h"
-
 #include "rx/core/hints/unreachable.h"
 
 namespace Rx {
 
 template<typename T>
-struct Hash {
-  template<typename U>
-  using HasHash = decltype(Utility::declval<U>().hash());
+concept Enum = __is_enum(T);
 
+template<Enum T>
+using UnderlyingType = __underlying_type(T);
+
+template<typename T>
+concept Hashable = requires {
+  Utility::declval<T>().hash();
+};
+
+template<typename T>
+struct Hash {
   Size operator()(const T& _value) const {
-    if constexpr (traits::detect<T, HasHash>) {
-      // The Type has a hash member function we can use.
+    if constexpr (Hashable<T>) {
+      // The type has a hash member function we can use.
       return _value.hash();
-    } else if constexpr (traits::is_enum<T>) {
-      // We can convert the enum to the underlying Type and forward to existing
-      // integer hash specialization.
-      using underlying_type = traits::underlying_type<T>;
-      return Hash<underlying_type>{}(static_cast<underlying_type>(_value));
+    } else if constexpr (Enum<T>) {
+      // Convert the enum to the underlying type and forward.
+      using Type = UnderlyingType<T>;
+      return Hash<Type>{}(static_cast<Type>(_value));
     } else {
       static_assert("implement size_t T::hash()");
     }

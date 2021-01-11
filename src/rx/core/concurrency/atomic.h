@@ -4,7 +4,7 @@
 #include "rx/core/types.h"
 #include "rx/core/markers.h"
 
-#include "rx/core/traits/is_integral.h"
+#include "rx/core/concepts/integral.h"
 #include "rx/core/traits/is_same.h"
 
 namespace Rx::Concurrency {
@@ -38,7 +38,7 @@ namespace detail {
     constexpr explicit AtomicValue(T _value) : AtomicBase<T>{_value} {}
   };
 
-  template<typename T, bool = traits::is_integral<T> && !traits::is_same<T, bool>>
+  template<typename T, bool = Concepts::Integral<T> && !Traits::IS_SAME<T, bool>>
   struct Atomic {
     RX_MARK_NO_COPY(Atomic);
 

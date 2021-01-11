@@ -1,21 +1,15 @@
 #ifndef RX_CORE_TRAITS_IS_RESTRICT_H
 #define RX_CORE_TRAITS_IS_RESTRICT_H
-#include "rx/core/traits/remove_cv.h"
 #include "rx/core/hints/restrict.h"
 
-namespace Rx::traits {
-
-namespace detail {
-  template<typename T>
-  inline constexpr const bool is_restrict{false};
-
-  template<typename T>
-  inline constexpr const bool is_restrict<T *RX_HINT_RESTRICT>{true};
-} // namespace detail
+namespace Rx::Traits {
 
 template<typename T>
-inline constexpr const bool is_restrict{detail::is_restrict<remove_cv<T>>};
+inline constexpr const bool IS_RESTRICT = false;
 
-} // namespace rx::traits
+template<typename T>
+inline constexpr const bool IS_RESTRICT<T *RX_HINT_RESTRICT> = true;
+
+} // namespace Rx::Traits
 
 #endif // RX_CORE_TRAITS_IS_RESTRICT_H

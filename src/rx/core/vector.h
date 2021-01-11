@@ -4,9 +4,10 @@
 #include "rx/core/optional.h"
 
 #include "rx/core/traits/is_same.h"
-#include "rx/core/traits/is_trivially_copyable.h"
-#include "rx/core/traits/is_trivially_destructible.h"
-#include "rx/core/traits/return_type.h"
+#include "rx/core/traits/invoke_result.h"
+
+#include "rx/core/concepts/trivially_copyable.h"
+#include "rx/core/concepts/trivially_destructible.h"
 
 #include "rx/core/utility/exchange.h"
 
@@ -87,15 +88,10 @@ struct Vector {
   bool in_range(Size _index) const;
   bool is_empty() const;
 
-  // enumerate collection either forward or reverse
   template<typename F>
   bool each_fwd(F&& _func);
   template<typename F>
-  bool each_rev(F&& _func);
-  template<typename F>
   bool each_fwd(F&& _func) const;
-  template<typename F>
-  bool each_rev(F&& _func) const;
 
   void erase(Size _from, Size _to);
 
@@ -152,7 +148,7 @@ Vector<T>::Vector(Memory::Allocator& _allocator, Initializers<U, E>&& _initializ
   : Vector{_allocator}
 {
   grow_or_shrink_to(E);
-  if constexpr(traits::is_trivially_copyable<T>) {
+  if constexpr (Concepts::TriviallyCopyable<T>) {
     detail::copy(m_data, _initializers.data(), sizeof(T) * E);
   } else for (Size i = 0; i < E; i++) {
     Utility::construct<T>(m_data + i, Utility::move(_initializers[i]));
@@ -194,7 +190,7 @@ Vector<T>::Vector(Memory::Allocator& _allocator, const Vector& _other)
   RX_ASSERT(m_data, "out of memory");
 
   if (m_size) {
-    if constexpr(traits::is_trivially_copyable<T>) {
+    if constexpr (Concepts::TriviallyCopyable<T>) {
       detail::copy(m_data, _other.m_data, _other.m_size * sizeof *m_data);
     } else for (Size i = 0; i < m_size; i++) {
       Utility::construct<T>(m_data + i, _other.m_data[i]);
@@ -243,7 +239,7 @@ Vector<T>& Vector<T>::operator=(const Vector& _other) {
   RX_ASSERT(m_data, "out of memory");
 
   if (m_size) {
-    if constexpr(traits::is_trivially_copyable<T>) {
+    if constexpr (Concepts::TriviallyCopyable<T>) {
       detail::copy(m_data, _other.m_data, _other.m_size * sizeof *m_data);
     } else for (Size i = 0; i < m_size; i++) {
       Utility::construct<T>(m_data + i, _other.m_data[i]);
@@ -286,7 +282,7 @@ bool Vector<T>::grow_or_shrink_to(Size _size) {
     return false;
   }
 
-  if constexpr (!traits::is_trivially_destructible<T>) {
+  if constexpr (!Concepts::TriviallyDestructible<T>) {
     for (Size i = m_size; i > _size; --i) {
       Utility::destruct<T>(m_data + (i - 1));
     }
@@ -303,7 +299,7 @@ bool Vector<T>::resize(Size _size, const T& _value) {
 
   // Copy construct the objects.
   for (Size i{m_size}; i < _size; i++) {
-    if constexpr(traits::is_trivially_copyable<T>) {
+    if constexpr (Concepts::TriviallyCopyable<T>) {
       m_data[i] = _value;
     } else {
       Utility::construct<T>(m_data + i, _value);
@@ -327,7 +323,7 @@ bool Vector<T>::reserve(Size _size) {
   }
 
   T* resize = nullptr;
-  if constexpr (traits::is_trivially_copyable<T>) {
+  if constexpr (Concepts::TriviallyCopyable<T>) {
     resize = reinterpret_cast<T*>(allocator().reallocate(m_data, capacity * sizeof *m_data));
   } else {
     resize = reinterpret_cast<T*>(allocator().allocate(sizeof(T), capacity));
@@ -338,7 +334,7 @@ bool Vector<T>::reserve(Size _size) {
   }
 
   if (m_data) {
-    if constexpr (!traits::is_trivially_copyable<T>) {
+    if constexpr (!Concepts::TriviallyCopyable<T>) {
       for (Size i = 0; i < m_size; i++) {
         Utility::construct<T>(resize + i, Utility::move(*(m_data + i)));
         Utility::destruct<T>(m_data + i);
@@ -358,7 +354,7 @@ bool Vector<T>::append(const Vector& _other) {
   const auto new_size = m_size + _other.m_size;
 
   // Slight optimization for trivially copyable |T|.
-  if constexpr (traits::is_trivially_copyable<T>) {
+  if constexpr (Concepts::TriviallyCopyable<T>) {
     const auto old_size = m_size;
     if (!resize(new_size)) {
       return false;
@@ -384,7 +380,7 @@ bool Vector<T>::append(const Vector& _other) {
 template<typename T>
 void Vector<T>::clear() {
   if (m_size) {
-    if constexpr (!traits::is_trivially_destructible<T>) {
+    if constexpr (!Concepts::TriviallyDestructible<T>) {
       RX_ASSERT(m_data, "m_data == nullptr when m_size != 0");
       for (Size i = m_size - 1; i < m_size; i--) {
         Utility::destruct<T>(m_data + i);
@@ -486,8 +482,9 @@ RX_HINT_FORCE_INLINE bool Vector<T>::in_range(Size _index) const {
 template<typename T>
 template<typename F>
 bool Vector<T>::each_fwd(F&& _func) {
+  using ReturnType = Traits::InvokeResult<F, T&>;
   for (Size i{0}; i < m_size; i++) {
-    if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+    if constexpr (Traits::IS_SAME<ReturnType, bool>) {
       if (!_func(m_data[i])) {
         return false;
       }
@@ -501,23 +498,9 @@ bool Vector<T>::each_fwd(F&& _func) {
 template<typename T>
 template<typename F>
 bool Vector<T>::each_fwd(F&& _func) const {
+  using ReturnType = Traits::InvokeResult<F, const T&>;
   for (Size i{0}; i < m_size; i++) {
-    if constexpr (traits::is_same<traits::return_type<F>, bool>) {
-      if (!_func(m_data[i])) {
-        return false;
-      }
-    } else {
-      _func(m_data[i]);
-    }
-  }
-  return true;
-}
-
-template<typename T>
-template<typename F>
-bool Vector<T>::each_rev(F&& _func) {
-  for (Size i{m_size - 1}; i < m_size; i--) {
-    if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+    if constexpr (Traits::IS_SAME<ReturnType, bool>) {
       if (!_func(m_data[i])) {
         return false;
       }
@@ -540,28 +523,13 @@ void Vector<T>::erase(Size _from, Size _to) {
     *dest = Utility::move(*value);
   }
 
-  if constexpr (!traits::is_trivially_destructible<T>) {
+  if constexpr (!Concepts::TriviallyDestructible<T>) {
     for (T* value{end-range}; value < end; ++value) {
       Utility::destruct<T>(value);
     }
   }
 
   m_size -= range;
-}
-
-template<typename T>
-template<typename F>
-bool Vector<T>::each_rev(F&& _func) const {
-  for (Size i{m_size - 1}; i < m_size; i--) {
-    if constexpr (traits::is_same<traits::return_type<F>, bool>) {
-      if (!_func(m_data[i])) {
-        return false;
-      }
-    } else {
-      _func(m_data[i]);
-    }
-  }
-  return true;
 }
 
 template<typename T>

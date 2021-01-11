@@ -3,9 +3,10 @@
 #include "rx/core/array.h"
 #include "rx/core/hash.h"
 
-#include "rx/core/traits/is_trivially_destructible.h"
-#include "rx/core/traits/return_type.h"
+#include "rx/core/traits/invoke_result.h"
 #include "rx/core/traits/is_same.h"
+
+#include "rx/core/concepts/trivially_destructible.h"
 
 #include "rx/core/utility/swap.h"
 #include "rx/core/utility/pair.h"
@@ -195,10 +196,10 @@ void Map<K, V>::clear() {
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash = element_hash(i);
     if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (!traits::is_trivially_destructible<K>) {
+      if constexpr (!Concepts::TriviallyDestructible<K>) {
         Utility::destruct<K>(m_keys + i);
       }
-      if constexpr (!traits::is_trivially_destructible<V>) {
+      if constexpr (!Concepts::TriviallyDestructible<V>) {
         Utility::destruct<V>(m_values + i);
       }
       element_hash(i) = 0;
@@ -286,10 +287,10 @@ const V* Map<K, V>::find(const K& _key) const {
 template<typename K, typename V>
 bool Map<K, V>::erase(const K& _key) {
   if (Size index; lookup_index(_key, index)) {
-    if constexpr (!traits::is_trivially_destructible<K>) {
+    if constexpr (!Concepts::TriviallyDestructible<K>) {
       Utility::destruct<K>(m_keys + index);
     }
-    if constexpr (!traits::is_trivially_destructible<V>) {
+    if constexpr (!Concepts::TriviallyDestructible<V>) {
       Utility::destruct<V>(m_values + index);
     }
 
@@ -404,10 +405,10 @@ bool Map<K, V>::grow() {
     const auto hash{hashes_data[i]};
     if (hash != 0 && !is_deleted(hash)) {
       inserter(hash, Utility::move(keys_data[i]), Utility::move(values_data[i]));
-      if constexpr (!traits::is_trivially_destructible<K>) {
+      if constexpr (!Concepts::TriviallyDestructible<K>) {
         Utility::destruct<K>(keys_data + i);
       }
-      if constexpr (!traits::is_trivially_destructible<V>) {
+      if constexpr (!Concepts::TriviallyDestructible<V>) {
         Utility::destruct<V>(values_data + i);
       }
     }
@@ -501,10 +502,11 @@ bool Map<K, V>::lookup_index(const K& _key, Size& _index) const {
 template<typename K, typename V>
 template<typename F>
 bool Map<K, V>::each_key(F&& _function) {
- for (Size i{0}; i < m_capacity; i++) {
+  using ReturnType = Traits::InvokeResult<F, const K&>;
+  for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+      if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_keys[i])) {
           return false;
         }
@@ -519,10 +521,11 @@ bool Map<K, V>::each_key(F&& _function) {
 template<typename K, typename V>
 template<typename F>
 bool Map<K, V>::each_key(F&& _function) const {
- for (Size i{0}; i < m_capacity; i++) {
+  using ReturnType = Traits::InvokeResult<F, const K&>;
+  for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+      if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_keys[i])) {
           return false;
         }
@@ -537,10 +540,11 @@ bool Map<K, V>::each_key(F&& _function) const {
 template<typename K, typename V>
 template<typename F>
 bool Map<K, V>::each_value(F&& _function) {
- for (Size i{0}; i < m_capacity; i++) {
+  using ReturnType = Traits::InvokeResult<F, V&>;
+  for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+      if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_values[i])) {
           return false;
         }
@@ -555,10 +559,11 @@ bool Map<K, V>::each_value(F&& _function) {
 template<typename K, typename V>
 template<typename F>
 bool Map<K, V>::each_value(F&& _function) const {
- for (Size i{0}; i < m_capacity; i++) {
+  using ReturnType = Traits::InvokeResult<F, const V&>;
+  for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+      if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_values[i])) {
           return false;
         }
@@ -573,10 +578,11 @@ bool Map<K, V>::each_value(F&& _function) const {
 template<typename K, typename V>
 template<typename F>
 bool Map<K, V>::each_pair(F&& _function) {
+  using ReturnType = Traits::InvokeResult<F, const K&, V&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+      if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_keys[i], m_values[i])) {
           return false;
         }
@@ -591,10 +597,11 @@ bool Map<K, V>::each_pair(F&& _function) {
 template<typename K, typename V>
 template<typename F>
 bool Map<K, V>::each_pair(F&& _function) const {
+  using ReturnType = Traits::InvokeResult<F, const K&, const V&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+      if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_keys[i], m_values[i])) {
           return false;
         }

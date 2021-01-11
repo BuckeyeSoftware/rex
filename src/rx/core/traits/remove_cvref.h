@@ -3,12 +3,11 @@
 #include "rx/core/traits/remove_cv.h"
 #include "rx/core/traits/remove_reference.h"
 
-namespace Rx::traits {
+namespace Rx::Traits {
 
 template<typename T>
-using remove_cvref = remove_cv<remove_reference<T>>;
+using RemoveCVRef = RemoveCV<RemoveReference<T>>;
 
-} // namespace rx::traits
-
+} // namespace Rx::Traits
 
 #endif // RX_CORE_TRAITS_REMOVE_CVREF_H

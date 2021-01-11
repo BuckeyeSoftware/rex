@@ -1,20 +1,18 @@
 #ifndef RX_CORE_TRAITS_CONDITIONAL_H
 #define RX_CORE_TRAITS_CONDITIONAL_H
-#include "rx/core/traits/type_identity.h"
 
-namespace Rx::traits {
+namespace Rx::Traits {
 
-namespace detail {
+namespace _ {
   template<bool B, typename T, typename F>
-  struct conditional : traits::type_identity<T> {};
-
+  struct Conditional { using Type = T; };
   template<typename T, typename F>
-  struct conditional<false, T, F> : traits::type_identity<F> {};
-} // namespace detail
+  struct Conditional<false, T, F> { using Type = F; };
+}
 
 template<bool B, typename T, typename F>
-using conditional = typename detail::conditional<B, T, F>::type;
+using Conditional = typename _::Conditional<B, T, F>::Type;
 
-} // namespace rx::traits
+} // namespace Rx::Traits
 
 #endif // RX_CORE_TRAITS_CONDITIONAL_H

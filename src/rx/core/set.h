@@ -3,9 +3,10 @@
 #include "rx/core/hash.h"
 #include "rx/core/array.h"
 
-#include "rx/core/traits/is_trivially_destructible.h"
-#include "rx/core/traits/return_type.h"
+#include "rx/core/traits/invoke_result.h"
 #include "rx/core/traits/is_same.h"
+
+#include "rx/core/concepts/trivially_destructible.h"
 
 #include "rx/core/utility/swap.h"
 
@@ -178,7 +179,7 @@ void Set<K>::clear() {
   for (Size i{0}; i < m_capacity; i++) {
     const Size hash = element_hash(i);
     if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (!traits::is_trivially_destructible<K>) {
+      if constexpr (!Concepts::TriviallyDestructible<K>) {
         Utility::destruct<K>(m_keys + i);
       }
       element_hash(i) = 0;
@@ -257,7 +258,7 @@ K* Set<K>::find(const K& _key) const {
 template<typename K>
 bool Set<K>::erase(const K& _key) {
   if (Size index; lookup_index(_key, index)) {
-    if constexpr (!traits::is_trivially_destructible<K>) {
+    if constexpr (!Concepts::TriviallyDestructible<K>) {
       Utility::destruct<K>(m_keys + index);
     }
 
@@ -369,7 +370,7 @@ bool Set<K>::grow() {
     const auto hash{hashes_data[i]};
     if (hash != 0 && !is_deleted(hash)) {
       RX_ASSERT(inserter(hash, Utility::move(keys_data[i])), "insertion failed");
-      if constexpr (!traits::is_trivially_destructible<K>) {
+      if constexpr (!Concepts::TriviallyDestructible<K>) {
         Utility::destruct<K>(keys_data + i);
       }
     }
@@ -454,10 +455,11 @@ bool Set<K>::lookup_index(const K& _key, Size& _index) const {
 template<typename K>
 template<typename F>
 bool Set<K>::each(F&& _function) {
+  using ReturnType = Traits::InvokeResult<F, const K&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+      if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_keys[i])) {
           return false;
         }
@@ -472,10 +474,11 @@ bool Set<K>::each(F&& _function) {
 template<typename K>
 template<typename F>
 bool Set<K>::each(F&& _function) const {
+  using ReturnType = Traits::InvokeResult<F, const K&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (traits::is_same<traits::return_type<F>, bool>) {
+      if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_keys[i])) {
           return false;
         }

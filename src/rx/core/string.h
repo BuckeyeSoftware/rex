@@ -194,7 +194,7 @@ struct FormatNormalize<String> {
 // String
 template<typename... Ts>
 String String::format(Memory::Allocator& _allocator, const char* _format, Ts&&... _arguments) {
-  return formatter(_allocator, _format, FormatNormalize<traits::remove_cvref<Ts>>{}(Utility::forward<Ts>(_arguments))...);
+  return formatter(_allocator, _format, FormatNormalize<Traits::RemoveCVRef<Ts>>{}(Utility::forward<Ts>(_arguments))...);
 }
 
 template<typename... Ts>

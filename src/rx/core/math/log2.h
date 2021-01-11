@@ -8,12 +8,12 @@ namespace Rx::Math {
 // Use compiler intrinsics if available.
 #if defined(RX_COMPILER_CLANG) || defined(RX_COMPILER_GCC)
 inline Uint32 log2(Uint32 _value) {
-  static_assert(traits::is_same<Uint32, unsigned int>, "Uint32 not unsigned int");
+  static_assert(Traits::IS_SAME<Uint32, unsigned int>, "Uint32 not unsigned int");
   return sizeof _value * 8 - __builtin_clz(_value) - 1;
 }
 
 inline Uint64 log2(Uint64 _value) {
-  if constexpr (traits::is_same<Uint64, unsigned long>) {
+  if constexpr (Traits::IS_SAME<Uint64, unsigned long>) {
     return sizeof _value * 8 - __builtin_clzl(_value) - 1;
   } else {
     return sizeof _value * 8 - __builtin_clzll(_value) - 1;

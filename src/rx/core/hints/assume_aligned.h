@@ -23,7 +23,7 @@
 // to take the address of the pointer as an lvalue and cast to void**, which
 // is then dereferenced to assign the pointer the result of the intrinsic.
 #define RX_HINT_ASSUME_ALIGNED(_pointer, _alignment) \
-    *(Rx::traits::conditional<Rx::traits::is_restrict<decltype(_pointer)>, \
+    *(Rx::Traits::Conditional<Rx::Traits::IS_RESTRICT<decltype(_pointer)>, \
        void *RX_HINT_RESTRICT *, void**>)(&(_pointer)) \
       = __builtin_assume_aligned((_pointer), (_alignment))
 #elif defined(RX_COMPILER_MSVC)

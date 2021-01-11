@@ -6,13 +6,13 @@
 namespace Rx::Utility {
 
 template<typename T>
-constexpr T&& forward(traits::remove_reference<T>& _value) {
+constexpr T&& forward(Traits::RemoveReference<T>& _value) {
   return static_cast<T&&>(_value);
 }
 
 template<typename T>
-constexpr T&& forward(traits::remove_reference<T>&& _value) {
-  static_assert(!traits::is_lvalue_reference<T>,
+constexpr T&& forward(Traits::RemoveReference<T>&& _value) {
+  static_assert(!Traits::IS_LVALUE_REFERENCE<T>,
     "cannot forward an rvalue as an lvalue");
   return static_cast<T&&>(_value);
 }

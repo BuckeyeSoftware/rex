@@ -1,20 +1,18 @@
 #ifndef RX_CORE_TRAITS_REMOVE_CONST_H
 #define RX_CORE_TRAITS_REMOVE_CONST_H
-#include "rx/core/traits/type_identity.h"
 
-namespace Rx::traits {
+namespace Rx::Traits {
 
-namespace detail {
+namespace _ {
   template<typename T>
-  struct remove_const : traits::type_identity<T> {};
-
+  struct RemoveConst { using Type = T; };
   template<typename T>
-  struct remove_const<const T> : traits::type_identity<T> {};
-} // namespace detail
+  struct RemoveConst<const T> { using Type = T; };
+}
 
 template<typename T>
-using remove_const = typename detail::remove_const<T>::type;
+using RemoveConst = typename _::RemoveConst<T>::Type;
 
-} // namespace rx::traits
+} // namespace Rx::Traits
 
 #endif // RX_CORE_TRAITS_REMOVE_CONST_H

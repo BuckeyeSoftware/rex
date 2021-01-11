@@ -58,7 +58,7 @@ Size format_buffer(char* buffer_, Size _length, const char* _format,
   Ts&&... _arguments)
 {
   return format_buffer_va_args(buffer_, _length, _format,
-    FormatNormalize<traits::remove_cvref<Ts>>{}(Utility::forward<Ts>(_arguments))...);
+    FormatNormalize<Traits::RemoveCVRef<Ts>>{}(Utility::forward<Ts>(_arguments))...);
 }
 
 } // namespace Rx

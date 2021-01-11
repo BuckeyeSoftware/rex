@@ -31,3 +31,8 @@ base/models/san-miguel
 base/models/elemental
 base/models/fellord
 base/models/cerberus
+base/models/roach
+base/models/light_unit
+
+# ignore videos
+videos/

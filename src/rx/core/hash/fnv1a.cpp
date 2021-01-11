@@ -5,14 +5,14 @@ namespace Rx::Hash {
 
 template<typename T>
 T fnv1a(const Byte* _data, Size _size) {
-  if constexpr (traits::is_same<T, Uint32>) {
+  if constexpr (Traits::IS_SAME<T, Uint32>) {
     static constexpr const Uint32 PRIME = 0x1000193_u32;
     Uint32 hash = 0x811c9dc5_u32;
     for (Size i = 0; i < _size; i++) {
       hash = hash ^ _data[i];
       hash *= PRIME;
     }
-  } else if constexpr (traits::is_same<T, Uint64>) {
+  } else if constexpr (Traits::IS_SAME<T, Uint64>) {
     static constexpr const Uint64 PRIME = 0x100000001b3_u64;
     Uint64 hash = 0xcbf29ce484222325_u64;
     for (Size i = 0; i < _size; i++) {

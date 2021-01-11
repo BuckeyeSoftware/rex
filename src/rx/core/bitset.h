@@ -3,7 +3,7 @@
 #include "rx/core/optional.h"
 
 #include "rx/core/traits/is_same.h"
-#include "rx/core/traits/return_type.h"
+#include "rx/core/traits/invoke_result.h"
 
 #include "rx/core/memory/system_allocator.h"
 
@@ -136,9 +136,10 @@ inline Size Bitset::offset(Size _bit) {
 
 template<typename F>
 void Bitset::each_set(F&& _function) const {
-  for (Size i{0}; i < m_size; i++) {
+  using ReturnType = Traits::InvokeResult<F, Size>;
+  for (Size i = 0; i < m_size; i++) {
     if (test(i)) {
-      if constexpr (traits::is_same<bool, traits::return_type<F>>) {
+      if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(i)) {
           return;
         }
@@ -151,9 +152,10 @@ void Bitset::each_set(F&& _function) const {
 
 template<typename F>
 void Bitset::each_unset(F&& _function) const {
+  using ReturnType = Traits::InvokeResult<F, Size>;
   for (Size i{0}; i < m_size; i++) {
     if (!test(i)) {
-      if constexpr (traits::is_same<bool, traits::return_type<F>>) {
+      if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(i)) {
           return;
         }

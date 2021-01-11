@@ -5,8 +5,8 @@
 namespace Rx::Utility {
 
 template<typename T>
-constexpr traits::remove_reference<T>&& move(T&& _value) {
-  return static_cast<traits::remove_reference<T>&&>(_value);
+constexpr Traits::RemoveReference<T>&& move(T&& _value) {
+  return static_cast<Traits::RemoveReference<T>&&>(_value);
 }
 
 } // namespace Rx::Utility

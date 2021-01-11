@@ -1,23 +1,20 @@
 #ifndef RX_CORE_TRAITS_REMOVE_REFERENCE_H
 #define RX_CORE_TRAITS_REMOVE_REFERENCE_H
-#include "rx/core/traits/type_identity.h"
 
-namespace Rx::traits {
+namespace Rx::Traits {
 
-namespace detail {
+namespace _ {
   template<typename T>
-  struct remove_reference : traits::type_identity<T> {};
-
+  struct RemoveReference { using Type = T; };
   template<typename T>
-  struct remove_reference<T&> : traits::type_identity<T> {};
-
+  struct RemoveReference<T&> { using Type = T; };
   template<typename T>
-  struct remove_reference<T&&> : traits::type_identity<T> {};
-} // namespace detail
+  struct RemoveReference<T&&> { using Type = T; };
+}
 
 template<typename T>
-using remove_reference = typename detail::remove_reference<T>::type;
+using RemoveReference = typename _::RemoveReference<T>::Type;
 
-} // namespace rx::traits
+} // namespace Rx::Traits
 
 #endif // RX_CORE_TRAITS_REMOVE_REFERENCE_H

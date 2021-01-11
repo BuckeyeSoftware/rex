@@ -1,9 +1,7 @@
 #ifndef RX_CORE_FUNCTION_H
 #define RX_CORE_FUNCTION_H
-#include "rx/core/traits/is_callable.h"
-#include "rx/core/traits/enable_if.h"
-
 #include "rx/core/utility/exchange.h"
+#include "rx/core/utility/declval.h"
 
 #include "rx/core/memory/system_allocator.h"
 
@@ -14,15 +12,18 @@ namespace Rx {
 template<typename T>
 struct Function;
 
+template<typename T, typename... Ts>
+concept Callable = requires(T v) { v(Utility::declval<Ts>()...); };
+
 template<typename R, typename... Ts>
 struct Function<R(Ts...)> {
   constexpr Function(Memory::Allocator& _allocator);
   constexpr Function();
 
-  template<typename F, typename = traits::enable_if<traits::is_callable<F, Ts...>>>
+  template<Callable<Ts...> F>
   Function(Memory::Allocator& _allocator, F&& _function);
 
-  template<typename F, typename = traits::enable_if<traits::is_callable<F, Ts...>>>
+  template<Callable<Ts...> F>
   Function(F&& _function);
 
   Function(Memory::Allocator& _allocator, const Function& _function);
@@ -53,7 +54,7 @@ private:
 
   template<typename F>
   static R invoke(const Byte* _function, Ts&&... _arguments) {
-    if constexpr(traits::is_same<R, void>) {
+    if constexpr(Traits::IS_SAME<R, void>) {
       (*reinterpret_cast<const F*>(_function))(Utility::forward<Ts>(_arguments)...);
     } else {
       return (*reinterpret_cast<const F*>(_function))(Utility::forward<Ts>(_arguments)...);
@@ -111,14 +112,14 @@ constexpr Function<R(Ts...)>::Function()
 }
 
 template<typename R, typename... Ts>
-template<typename F, typename>
+template<Callable<Ts...> F>
 Function<R(Ts...)>::Function(F&& _function)
   : Function{Memory::SystemAllocator::instance(), Utility::forward<F>(_function)}
 {
 }
 
 template<typename R, typename... Ts>
-template<typename F, typename>
+template<Callable<Ts...> F>
 Function<R(Ts...)>::Function(Memory::Allocator& _allocator, F&& _function)
   : Function{_allocator}
 {
@@ -218,7 +219,7 @@ Function<R(Ts...)>::~Function() {
 
 template<typename R, typename... Ts>
 R Function<R(Ts...)>::operator()(Ts... _arguments) const {
-  if constexpr(traits::is_same<R, void>) {
+  if constexpr(Traits::IS_SAME<R, void>) {
     control()->invoke(storage(), Utility::forward<Ts>(_arguments)...);
   } else {
     return control()->invoke(storage(), Utility::forward<Ts>(_arguments)...);

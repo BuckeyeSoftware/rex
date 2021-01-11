@@ -3,8 +3,7 @@
 #include "rx/core/serialize/buffer.h"
 #include "rx/core/serialize/header.h"
 
-#include "rx/core/traits/is_signed.h"
-#include "rx/core/traits/is_unsigned.h"
+#include "rx/core/concepts/integral.h"
 
 #include "rx/core/string.h"
 #include "rx/core/string_table.h"
@@ -32,10 +31,10 @@ struct RX_API Decoder {
   [[nodiscard]] bool read_float_array(Float32* result_, Size _count);
   [[nodiscard]] bool read_byte_array(Byte* result_, Size _count);
 
-  template<typename T>
+  template<Concepts::UnsignedIntegral T>
   [[nodiscard]] bool read_uint_array(T* result_, Size _count);
 
-  template<typename T>
+  template<Concepts::SignedIntegral T>
   [[nodiscard]] bool read_sint_array(T* result_, Size _count);
 
   const String& message() const &;
@@ -63,10 +62,8 @@ inline Decoder::Decoder(Stream* _stream)
 {
 }
 
-template<typename T>
+template<Concepts::UnsignedIntegral T>
 bool Decoder::read_uint_array(T* result_, Size _count) {
-  static_assert(traits::is_unsigned<T>, "T must be unsigned integer");
-
   Uint64 count = 0;
   if (!read_uint(count)) {
     return false;
@@ -85,10 +82,8 @@ bool Decoder::read_uint_array(T* result_, Size _count) {
   return true;
 }
 
-template<typename T>
+template<Concepts::SignedIntegral T>
 bool Decoder::read_sint_array(T* result_, Size _count) {
-  static_assert(traits::is_signed<T>, "T must be signed integer");
-
   Uint64 count = 0;
   if (!read_uint(count)) {
     return false;

@@ -47,14 +47,14 @@ template<typename T>
 T atomic_load(const volatile AtomicBase<T>* base_,
 MemoryOrder _order)
 {
-  using ptr_type = traits::remove_const<decltype(base_->value)>*;
+  using ptr_type = Traits::RemoveConst<decltype(base_->value)>*;
   return __c11_atomic_load(const_cast<ptr_type>(&base_->value),
     static_cast<int>(_order));
 }
 
 template<typename T>
 T atomic_load(const AtomicBase<T>* base_, MemoryOrder _order) {
-  using ptr_type = traits::remove_const<decltype(base_->value)>*;
+  using ptr_type = Traits::RemoveConst<decltype(base_->value)>*;
   return __c11_atomic_load(const_cast<ptr_type>(&base_->value),
     static_cast<int>(_order));
 }
