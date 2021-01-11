@@ -5,7 +5,7 @@
 #include "rx/core/utility/declval.h"
 #include "rx/core/concepts/assignable.h"
 
-namespace Rx::Concurrency::detail {
+namespace Rx::Concurrency::_ {
 
 static constexpr int to_success_order(MemoryOrder _order) {
   return _order == MemoryOrder::RELAXED ? __ATOMIC_RELAXED :

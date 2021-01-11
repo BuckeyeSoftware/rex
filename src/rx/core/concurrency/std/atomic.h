@@ -4,7 +4,7 @@
 
 #include "rx/core/hints/unreachable.h"
 
-namespace Rx::Concurrency::detail {
+namespace Rx::Concurrency::_ {
 
 static inline constexpr std::memory_order convert_memory_order(MemoryOrder _order) {
   switch (_order) {

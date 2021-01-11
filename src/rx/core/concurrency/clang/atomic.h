@@ -4,7 +4,7 @@
 
 #include "rx/core/traits/remove_const.h"
 
-namespace Rx::Concurrency::detail {
+namespace Rx::Concurrency::_ {
 
 template<typename T>
 struct AtomicBase {
