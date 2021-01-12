@@ -1,6 +1,5 @@
 #ifndef RX_CORE_SET_H
 #define RX_CORE_SET_H
-#include "rx/core/hash.h"
 #include "rx/core/array.h"
 
 #include "rx/core/traits/invoke_result.h"
@@ -286,7 +285,7 @@ bool Set<K>::is_empty() const {
 
 template<typename K>
 Size Set<K>::hash_key(const K& _key) {
-  auto hash_value{Hash<K>{}(_key)};
+  auto hash_value = Hash::Hasher<K>{}(_key);
 
   // MSB is used to indicate deleted elements
   if constexpr(sizeof hash_value == 8) {

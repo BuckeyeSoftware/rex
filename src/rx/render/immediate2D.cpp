@@ -98,10 +98,10 @@ bool Immediate2D::Queue::record_scissor(const Math::Vec2f& _position,
   next_command.as_scissor.position = _position;
   next_command.as_scissor.size = _size;
 
-  next_command.hash = Hash<Uint32>{}(static_cast<Uint32>(next_command.type));
-  next_command.hash = hash_combine(next_command.hash, Hash<Uint32>{}(next_command.flags));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec2f>{}(next_command.as_scissor.position));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec2f>{}(next_command.as_scissor.size));
+  next_command.hash = Hash::mix_enum(next_command.type);
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.flags));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_scissor.position));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_scissor.size));
 
   return m_commands.push_back(Utility::move(next_command));
 }
@@ -119,12 +119,12 @@ bool Immediate2D::Queue::record_rectangle(const Math::Vec2f& _position,
   next_command.as_rectangle.size = _size;
   next_command.as_rectangle.roundness = _roundness;
 
-  next_command.hash = Hash<Uint32>{}(static_cast<Uint32>(next_command.type));
-  next_command.hash = hash_combine(next_command.hash, Hash<Uint32>{}(next_command.flags));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec4f>{}(next_command.color));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec2f>{}(next_command.as_rectangle.position));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec2f>{}(next_command.as_rectangle.size));
-  next_command.hash = hash_combine(next_command.hash, Hash<Float32>{}(next_command.as_rectangle.roundness));
+  next_command.hash = Hash::mix_enum(next_command.type);
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.flags));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec4f>{}(next_command.color));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_rectangle.position));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_rectangle.size));
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_float(next_command.as_rectangle.roundness));
 
   return m_commands.push_back(Utility::move(next_command));
 }
@@ -144,7 +144,7 @@ bool Immediate2D::Queue::record_line(const Math::Vec2f& _point_a,
   next_command.as_line.roundness = _roundness;
   next_command.as_line.thickness = _thickness;
 
-  next_command.hash = Hash<Uint32>{}(static_cast<Uint32>(next_command.type));
+  next_command.hash = Hash::mix_enum(next_command.type);
 
   return m_commands.push_back(Utility::move(next_command));
 }
@@ -161,11 +161,11 @@ bool Immediate2D::Queue::record_triangle(const Math::Vec2f& _position,
   next_command.as_triangle.position = _position;
   next_command.as_triangle.size = _size;
 
-  next_command.hash = Hash<Uint32>{}(static_cast<Uint32>(next_command.type));
-  next_command.hash = hash_combine(next_command.hash, Hash<Uint32>{}(next_command.flags));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec4f>{}(next_command.color));
-  next_command.hash = Hash<Math::Vec2f>{}(next_command.as_triangle.position);
-  next_command.hash = Hash<Math::Vec2f>{}(next_command.as_triangle.size);
+  next_command.hash = Hash::mix_enum(next_command.type);
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.flags));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec4f>{}(next_command.color));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_triangle.position));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_triangle.size));
 
   return m_commands.push_back(Utility::move(next_command));
 }
@@ -219,16 +219,16 @@ bool Immediate2D::Queue::record_text(const char* _font, Size _font_length,
   next_command.as_text.font_index = *font_index;
   next_command.as_text.text_index = *text_index;
 
-  next_command.hash = Hash<Uint32>{}(static_cast<Uint32>(next_command.type));
-  next_command.hash = hash_combine(next_command.hash, Hash<Uint32>{}(next_command.flags));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec4f>{}(next_command.color));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec2f>{}(next_command.as_text.position));
-  next_command.hash = hash_combine(next_command.hash, Hash<Sint32>{}(next_command.as_text.size));
-  next_command.hash = hash_combine(next_command.hash, Hash<Float32>{}(next_command.as_text.scale));
-  next_command.hash = hash_combine(next_command.hash, Hash<Size>{}(next_command.as_text.font_index));
-  next_command.hash = hash_combine(next_command.hash, Hash<Size>{}(next_command.as_text.font_length));
-  next_command.hash = hash_combine(next_command.hash, Hash<Size>{}(next_command.as_text.text_index));
-  next_command.hash = hash_combine(next_command.hash, Hash<Size>{}(next_command.as_text.text_length));
+  next_command.hash = Hash::mix_enum(next_command.type);
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.flags));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec4f>{}(next_command.color));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_text.position));
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.as_text.size));
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_float(next_command.as_text.scale));
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.as_text.font_index));
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.as_text.font_length));
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.as_text.text_index));
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.as_text.text_length));
 
   return m_commands.push_back(Utility::move(next_command));
 }

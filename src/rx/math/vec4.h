@@ -2,8 +2,10 @@
 #define RX_MATH_VEC4_H
 #include "rx/core/types.h" // Size
 #include "rx/core/format.h" // format
-#include "rx/core/hash.h" // hash, hash_combine
 #include "rx/core/assert.h" // RX_ASSERT
+
+#include "rx/core/hash/hasher.h"
+#include "rx/core/hash/combine.h"
 
 #include "rx/core/math/sqrt.h"
 #include "rx/core/math/half.h"
@@ -214,39 +216,43 @@ inline Vec4f normalize(const Vec4f& _v) {
 } // namespace Rx::Math
 
 namespace Rx {
-  template<>
-  struct FormatNormalize<Math::Vec4f> {
-    char scratch[FormatSize<Float32>::size * 4 + sizeof "{,,,   }" - 1];
-    const char* operator()(const Math::Vec4f& _value);
-  };
 
-  template<>
-  struct FormatNormalize<Math::Vec4i> {
-    char scratch[FormatSize<Sint32>::size * 4 + sizeof "{,,,   }" - 1];
-    const char* operator()(const Math::Vec4i& _value);
-  };
+template<>
+struct FormatNormalize<Math::Vec4f> {
+  char scratch[FormatSize<Float32>::size * 4 + sizeof "{,,,   }" - 1];
+  const char* operator()(const Math::Vec4f& _value);
+};
 
+template<>
+struct FormatNormalize<Math::Vec4i> {
+  char scratch[FormatSize<Sint32>::size * 4 + sizeof "{,,,   }" - 1];
+  const char* operator()(const Math::Vec4i& _value);
+};
+
+namespace Hash {
   template<>
-  struct Hash<Math::Vec4f> {
-    Size operator()(const Math::Vec4f& _value) {
-      const auto x{Hash<Float32>{}(_value.x)};
-      const auto y{Hash<Float32>{}(_value.y)};
-      const auto z{Hash<Float32>{}(_value.z)};
-      const auto w{Hash<Float32>{}(_value.w)};
-      return hash_combine(hash_combine(x, y), hash_combine(z, w));
+  struct Hasher<Math::Vec4f> {
+    constexpr Size operator()(const Math::Vec4f& _value) const {
+      const auto x = Hash::mix_float(_value.x);
+      const auto y = Hash::mix_float(_value.y);
+      const auto z = Hash::mix_float(_value.z);
+      const auto w = Hash::mix_float(_value.w);
+      return Hash::combine(Hash::combine(x, y), Hash::combine(z, w));
     }
   };
 
   template<>
-  struct Hash<Math::Vec4i> {
-    Size operator()(const Math::Vec4i& _value) {
-      const auto x{Hash<Sint32>{}(_value.x)};
-      const auto y{Hash<Sint32>{}(_value.y)};
-      const auto z{Hash<Sint32>{}(_value.z)};
-      const auto w{Hash<Sint32>{}(_value.w)};
-      return hash_combine(hash_combine(x, y), hash_combine(z, w));
+  struct Hasher<Math::Vec4i> {
+    constexpr Size operator()(const Math::Vec4i& _value) const {
+      const auto x = Hash::mix_int(_value.x);
+      const auto y = Hash::mix_int(_value.y);
+      const auto z = Hash::mix_int(_value.z);
+      const auto w = Hash::mix_int(_value.w);
+      return Hash::combine(Hash::combine(x, y), Hash::combine(z, w));
     }
   };
+} // namespace Hash
+
 } // namespace Rx
 
 #endif // RX_MATH_VEC4_H

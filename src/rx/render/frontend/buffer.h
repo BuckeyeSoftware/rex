@@ -2,7 +2,9 @@
 #define RX_RENDER_FRONTEND_BUFFER_H
 #include "rx/core/linear_buffer.h"
 #include "rx/core/vector.h"
-#include "rx/core/hash.h"
+
+#include "rx/core/hash/combine.h"
+#include "rx/core/hash/mix_enum.h"
 
 #include "rx/render/frontend/resource.h"
 
@@ -188,7 +190,7 @@ inline bool Buffer::Attribute::operator!=(const Attribute& _other) const {
 }
 
 inline Size Buffer::Attribute::hash() const {
-  return hash_combine(Hash<Size>{}(offset), Hash<Type>{}(type));
+  return Hash::combine(Hash::mix_int(offset), Hash::mix_enum(type));
 }
 
 // [Buffer::Format]

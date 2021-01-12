@@ -1,5 +1,8 @@
 #include "rx/render/frontend/state.h"
 
+#include "rx/core/hash/hasher.h"
+#include "rx/core/hash/combine.h"
+
 namespace Rx::Render::Frontend {
 
 // scissor_state
@@ -35,9 +38,9 @@ bool ScissorState::operator==(const ScissorState& _other) const {
 
 Size ScissorState::flush() {
   if (m_hash & DIRTY_BIT) {
-    m_hash = Hash<bool>{}(m_enabled);
-    m_hash = hash_combine(m_hash, Hash<Math::Vec2i>{}(m_offset));
-    m_hash = hash_combine(m_hash, Hash<Math::Vec2i>{}(m_size));
+    m_hash = Hash::mix_bool(m_enabled);
+    m_hash = Hash::combine(m_hash, Hash::Hasher<Math::Vec2i>{}(m_offset));
+    m_hash = Hash::combine(m_hash, Hash::Hasher<Math::Vec2i>{}(m_size));
     m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
@@ -89,12 +92,12 @@ bool BlendState::operator==(const BlendState& _other) const {
 
 Size BlendState::flush() {
   if (m_hash & DIRTY_BIT) {
-    m_hash = Hash<bool>{}(m_enabled);
-    m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_color_src_factor)));
-    m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_color_dst_factor)));
-    m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_alpha_src_factor)));
-    m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_alpha_dst_factor)));
-    m_hash = hash_combine(m_hash, Hash<Sint32>{}(static_cast<Sint32>(m_write_mask)));
+    m_hash = Hash::mix_bool(m_enabled);
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_color_src_factor));
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_color_dst_factor));
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_alpha_src_factor));
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_alpha_dst_factor));
+    m_hash = Hash::combine(m_hash, Hash::mix_int(m_write_mask));
     m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
@@ -125,8 +128,8 @@ bool DepthState::operator==(const DepthState& _other) const {
 
 Size DepthState::flush() {
   if (m_hash & DIRTY_BIT) {
-    m_hash = Hash<bool>{}(m_flags & TEST);
-    m_hash = hash_combine(m_hash, Hash<bool>{}(m_flags & WRITE));
+    m_hash = Hash::mix_bool(m_flags & TEST);
+    m_hash = Hash::combine(m_hash, Hash::mix_bool(m_flags & WRITE));
     m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
@@ -167,9 +170,9 @@ bool CullState::operator==(const CullState& _other) const {
 
 Size CullState::flush() {
   if (m_hash & DIRTY_BIT) {
-    m_hash = Hash<bool>{}(m_enabled);
-    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_front_face)));
-    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_cull_face)));
+    m_hash = Hash::mix_bool(m_enabled);
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_front_face));
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_cull_face));
     m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
@@ -243,17 +246,17 @@ bool StencilState::operator==(const StencilState& _other) const {
 
 Size StencilState::flush() {
   if (m_hash & DIRTY_BIT) {
-    m_hash = Hash<bool>{}(m_enabled);
-    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_write_mask)));
-    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_function)));
-    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_reference)));
-    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_mask)));
-    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_front_fail_action)));
-    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_front_depth_fail_action)));
-    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_front_depth_pass_action)));
-    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_back_fail_action)));
-    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_back_depth_fail_action)));
-    m_hash = hash_combine(m_hash, Hash<Uint32>{}(static_cast<Uint32>(m_back_depth_pass_action)));
+    m_hash = Hash::mix_bool(m_enabled);
+    m_hash = Hash::combine(m_hash, Hash::mix_int(m_write_mask));
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_function));
+    m_hash = Hash::combine(m_hash, Hash::mix_int(m_reference));
+    m_hash = Hash::combine(m_hash, Hash::mix_int(m_mask));
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_front_fail_action));
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_front_depth_fail_action));
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_front_depth_pass_action));
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_back_fail_action));
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_back_depth_fail_action));
+    m_hash = Hash::combine(m_hash, Hash::mix_enum(m_back_depth_pass_action));
     m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
@@ -281,7 +284,7 @@ bool PolygonState::operator==(const PolygonState& _other) const {
 
 Size PolygonState::flush() {
   if (m_hash & DIRTY_BIT) {
-    m_hash = Hash<Uint32>{}(static_cast<Uint32>(m_mode));
+    m_hash = Hash::mix_enum(m_mode);
     m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
@@ -296,8 +299,8 @@ ViewportState::ViewportState()
 
 Size ViewportState::flush() {
   if (m_hash & DIRTY_BIT) {
-    m_hash = hash_combine(m_hash, Hash<Math::Vec2i>{}(m_offset));
-    m_hash = hash_combine(m_hash, Hash<Math::Vec2z>{}(m_dimensions));
+    m_hash = Hash::Hasher<Math::Vec2i>{}(m_offset);
+    m_hash = Hash::combine(m_hash, Hash::Hasher<Math::Vec2z>{}(m_dimensions));
     m_hash &= ~DIRTY_BIT;
   }
   return m_hash;
@@ -306,12 +309,12 @@ Size ViewportState::flush() {
 // state
 void State::flush() {
   m_hash = scissor.flush();
-  m_hash = hash_combine(m_hash, blend.flush());
-  m_hash = hash_combine(m_hash, depth.flush());
-  m_hash = hash_combine(m_hash, cull.flush());
-  m_hash = hash_combine(m_hash, stencil.flush());
-  m_hash = hash_combine(m_hash, polygon.flush());
-  m_hash = hash_combine(m_hash, viewport.flush());
+  m_hash = Hash::combine(m_hash, blend.flush());
+  m_hash = Hash::combine(m_hash, depth.flush());
+  m_hash = Hash::combine(m_hash, cull.flush());
+  m_hash = Hash::combine(m_hash, stencil.flush());
+  m_hash = Hash::combine(m_hash, polygon.flush());
+  m_hash = Hash::combine(m_hash, viewport.flush());
 }
 
 bool State::operator==(const State& _state) const {

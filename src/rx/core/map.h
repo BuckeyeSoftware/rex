@@ -1,7 +1,6 @@
 #ifndef RX_CORE_MAP_H
 #define RX_CORE_MAP_H
 #include "rx/core/array.h"
-#include "rx/core/hash.h"
 
 #include "rx/core/traits/invoke_result.h"
 #include "rx/core/traits/is_same.h"
@@ -15,6 +14,8 @@
 
 #include "rx/core/memory/system_allocator.h"
 #include "rx/core/memory/aggregate.h"
+
+#include "rx/core/hash/hasher.h"
 
 namespace Rx {
 
@@ -318,7 +319,7 @@ bool Map<K, V>::is_empty() const {
 
 template<typename K, typename V>
 Size Map<K, V>::hash_key(const K& _key) {
-  auto hash_value{Hash<K>{}(_key)};
+  auto hash_value = Hash::Hasher<K>{}(_key);
 
   // MSB is used to indicate deleted elements
   if constexpr(sizeof hash_value == 8) {

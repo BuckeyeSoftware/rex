@@ -2,8 +2,10 @@
 #define RX_MATH_VEC2_H
 #include "rx/core/types.h" // Size
 #include "rx/core/format.h" // format
-#include "rx/core/hash.h" // hash, hash_combine
 #include "rx/core/assert.h" // RX_ASSERT
+
+#include "rx/core/hash/combine.h"
+#include "rx/core/hash/hasher.h"
 
 #include "rx/core/algorithm/min.h" // algorithm::min
 #include "rx/core/algorithm/max.h" // algorithm::max
@@ -280,44 +282,45 @@ inline Vec2f normalize(const Vec2f& _v) {
 } // namespace Rx::Math
 
 namespace Rx {
-  template<>
-  struct FormatNormalize<Math::Vec2f> {
-    char scratch[FormatSize<Float32>::size * 2 + sizeof "{, }" - 1];
-    const char* operator()(const Math::Vec2f& _value);
-  };
 
-  template<>
-  struct FormatNormalize<Math::Vec2i> {
-    char scratch[FormatSize<Sint32>::size * 2 + sizeof "{, }" - 1];
-    const char* operator()(const Math::Vec2i& _value);
-  };
+template<>
+struct FormatNormalize<Math::Vec2f> {
+  char scratch[FormatSize<Float32>::size * 2 + sizeof "{, }" - 1];
+  const char* operator()(const Math::Vec2f& _value);
+};
 
-  template<>
-  struct Hash<Math::Vec2f> {
-    Size operator()(const Math::Vec2f& _value) {
-      const auto x{Hash<Float32>{}(_value.x)};
-      const auto y{Hash<Float32>{}(_value.y)};
-      return hash_combine(x, y);
-    }
-  };
+template<>
+struct FormatNormalize<Math::Vec2i> {
+  char scratch[FormatSize<Sint32>::size * 2 + sizeof "{, }" - 1];
+  const char* operator()(const Math::Vec2i& _value);
+};
 
-  template<>
-  struct Hash<Math::Vec2i> {
-    Size operator()(const Math::Vec2i& _value) {
-      const auto x{Hash<Sint32>{}(_value.x)};
-      const auto y{Hash<Sint32>{}(_value.y)};
-      return hash_combine(x, y);
-    }
-  };
+namespace Hash {
 
-  template<>
-  struct Hash<Math::Vec2z> {
-    Size operator()(const Math::Vec2z& _value) {
-      const auto x{Hash<Size>{}(_value.x)};
-      const auto y{Hash<Size>{}(_value.y)};
-      return hash_combine(x, y);
-    }
-  };
+template<>
+struct Hasher<Math::Vec2f> {
+  constexpr Size operator()(const Math::Vec2f& _value) const {
+    return Hash::combine(Hash::mix_float(_value.x), Hash::mix_float(_value.y));
+  }
+};
+
+template<>
+struct Hasher<Math::Vec2i> {
+  constexpr Size operator()(const Math::Vec2i& _value) const {
+    return Hash::combine(Hash::mix_int(_value.x), Hash::mix_int(_value.y));
+  }
+};
+
+template<>
+struct Hasher<Math::Vec2z> {
+  constexpr Size operator()(const Math::Vec2z& _value) const {
+    return Hash::combine(Hash::mix_int(_value.x), Hash::mix_int(_value.y));
+  }
+};
+
+} // namespace Hash
+
 } // namespace Rx
+
 
 #endif // RX_MATH_VEC2_H

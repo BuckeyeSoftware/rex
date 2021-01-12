@@ -464,7 +464,7 @@ bool String::contains(const String& _needle) const {
 }
 
 Size String::hash() const {
-  const Byte* data = reinterpret_cast<const Byte*>(m_data);
+  const auto data = reinterpret_cast<const Byte*>(m_data);
   if constexpr (sizeof(Size) == 8) {
     return Hash::fnv1a<Uint64>(data, size());
   } else {

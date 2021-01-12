@@ -288,18 +288,17 @@ constexpr Vec3<T> Mat4x4<T>::reduce_rotation_angles(const Vec3<T>& _rotate) {
 }
 
 } // namespace Rx::Math
+namespace Rx::Hash {
+template<>
+struct Hasher<Math::Mat4x4f> {
+  constexpr Size operator()(const Math::Mat4x4f& _value) const {
+    const auto x = Hasher<Math::Vec4f>{}(_value.x);
+    const auto y = Hasher<Math::Vec4f>{}(_value.y);
+    const auto z = Hasher<Math::Vec4f>{}(_value.z);
+    const auto w = Hasher<Math::Vec4f>{}(_value.w);
+    return Hash::combine(Hash::combine(x, Hash::combine(y, z)), w);
+  }
+};
 
-namespace Rx {
-  template<>
-  struct Hash<Math::Mat4x4f> {
-    Size operator()(const Math::Mat4x4f& _value) {
-      const auto x{Hash<Math::Vec4f>{}(_value.x)};
-      const auto y{Hash<Math::Vec4f>{}(_value.y)};
-      const auto z{Hash<Math::Vec4f>{}(_value.z)};
-      const auto w{Hash<Math::Vec4f>{}(_value.w)};
-      return hash_combine(hash_combine(x, hash_combine(y, z)), w);
-    }
-  };
-}
-
+} // namespace Rx::Hash
 #endif // RX_MATH_MAT4X4_H

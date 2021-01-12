@@ -70,11 +70,11 @@ bool Immediate3D::Queue::record_point(const Math::Vec3f& _point,
   next_command.as_point.position = _point;
   next_command.as_point.size = _size;
 
-  next_command.hash = Hash<Uint32>{}(static_cast<Uint32>(next_command.kind));
-  next_command.hash = Hash<Uint32>{}(next_command.flags);
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec4f>{}(next_command.color));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec3f>{}(next_command.as_point.position));
-  next_command.hash = hash_combine(next_command.hash, Hash<Float32>{}(next_command.as_point.size));
+  next_command.hash = Hash::mix_enum(next_command.kind);
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.flags));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec4f>{}(next_command.color));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec3f>{}(next_command.as_point.position));
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_float(next_command.as_point.size));
 
   return m_commands.push_back(Utility::move(next_command));
 }
@@ -89,11 +89,11 @@ bool Immediate3D::Queue::record_line(const Math::Vec3f& _point_a,
   next_command.as_line.point_a = _point_a;
   next_command.as_line.point_b = _point_b;
 
-  next_command.hash = Hash<Uint32>{}(static_cast<Uint32>(next_command.kind));
-  next_command.hash = Hash<Uint32>{}(next_command.flags);
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec4f>{}(next_command.color));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec3f>{}(next_command.as_line.point_a));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec3f>{}(next_command.as_line.point_b));
+  next_command.hash = Hash::mix_enum(next_command.kind);
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.flags));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec4f>{}(next_command.color));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec3f>{}(next_command.as_line.point_a));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec3f>{}(next_command.as_line.point_b));
 
   return m_commands.push_back(Utility::move(next_command));
 }
@@ -108,11 +108,11 @@ bool Immediate3D::Queue::record_solid_sphere(const Math::Vec2f& _slices_and_stac
   next_command.as_solid_sphere.slices_and_stacks = _slices_and_stacks;
   next_command.as_solid_sphere.transform = _transform;
 
-  next_command.hash = Hash<Uint32>{}(static_cast<Uint32>(next_command.kind));
-  next_command.hash = Hash<Uint32>{}(next_command.flags);
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec4f>{}(next_command.color));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec2f>{}(next_command.as_solid_sphere.slices_and_stacks));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Mat4x4f>{}(next_command.as_solid_sphere.transform));
+  next_command.hash = Hash::mix_enum(next_command.kind);
+  next_command.hash = Hash::mix_int(next_command.flags);
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec4f>{}(next_command.color));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_solid_sphere.slices_and_stacks));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Mat4x4f>{}(next_command.as_solid_sphere.transform));
 
   return m_commands.push_back(Utility::move(next_command));
 }
@@ -126,10 +126,10 @@ bool Immediate3D::Queue::record_solid_cube(const Math::Vec4f& _color,
   next_command.color = _color;
   next_command.as_solid_cube.transform = _transform;
 
-  next_command.hash = Hash<Uint32>{}(static_cast<Uint32>(next_command.kind));
-  next_command.hash = Hash<Uint32>{}(next_command.flags);
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Vec4f>{}(next_command.color));
-  next_command.hash = hash_combine(next_command.hash, Hash<Math::Mat4x4f>{}(next_command.as_solid_cube.transform));
+  next_command.hash = Hash::mix_enum(next_command.kind);
+  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.flags));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec4f>{}(next_command.color));
+  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Mat4x4f>{}(next_command.as_solid_cube.transform));
 
   return m_commands.push_back(Utility::move(next_command));
 }

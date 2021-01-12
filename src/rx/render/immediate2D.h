@@ -308,7 +308,7 @@ inline bool Immediate2D::Queue::is_empty() const {
 }
 
 inline Size Immediate2D::Font::Key::hash() const {
-  return hash_combine(name.hash(), Rx::Hash<Sint32>{}(size));
+  return Hash::combine(name.hash(), Hash::mix_int(size));
 }
 
 inline Immediate2D::Queue& Immediate2D::frame_queue() {

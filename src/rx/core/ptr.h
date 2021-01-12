@@ -2,7 +2,8 @@
 #define RX_CORE_PTR_H
 #include "rx/core/markers.h"
 #include "rx/core/assert.h"
-#include "rx/core/hash.h"
+
+#include "rx/core/hash/mix_pointer.h"
 
 #include "rx/core/memory/system_allocator.h"
 
@@ -169,7 +170,7 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Ptr<T>::allocator() const {
 
 template<typename T>
 constexpr Size Ptr<T>::hash() const {
-  return Rx::Hash<T*>{}(m_data);
+  return Rx::Hash::mix_pointer(m_data);
 }
 
 template<typename T>

@@ -69,16 +69,16 @@ void Buffer::Format::finalize() {
   }
 
   // Calculate the final hash value.
-  m_hash = Hash<Uint32>{}(m_flags);
-  m_hash = hash_combine(m_hash, Hash<ElementType>{}(m_element_type));
-  m_hash = hash_combine(m_hash, m_vertex_stride);
-  m_hash = hash_combine(m_hash, m_instance_stride);
+  m_hash = Hash::mix_int(m_flags);
+  m_hash = Hash::combine(m_hash, Hash::mix_enum(m_element_type));
+  m_hash = Hash::combine(m_hash, Hash::mix_int(m_vertex_stride));
+  m_hash = Hash::combine(m_hash, Hash::mix_int(m_instance_stride));
   m_vertex_attributes.each_fwd([&](const Attribute& _attribute) {
-    m_hash = hash_combine(m_hash, _attribute.hash());
+    m_hash = Hash::combine(m_hash, _attribute.hash());
   });
 
   m_instance_attributes.each_fwd([&](const Attribute& _attribute) {
-    m_hash = hash_combine(m_hash, _attribute.hash());
+    m_hash = Hash::combine(m_hash, _attribute.hash());
   });
 }
 
