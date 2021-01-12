@@ -6,8 +6,8 @@
 
 namespace Rx::Hash {
 
-template<typename T>
-RX_API T fnv1a(const Byte* _data, Size _size);
+Uint32 fnv1a_32(const Byte* _data, Size _size);
+Uint64 fnv1a_64(const Byte* _data, Size _size);
 
 } // namespace Rx::Hash
 
