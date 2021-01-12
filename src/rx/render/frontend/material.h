@@ -37,6 +37,11 @@ struct Material {
   const Math::Vec3f& emission_color() const &;
 
 private:
+  enum : Uint8 {
+    ALPHA_TEST = 1 << 0,
+    HAS_ALPHA  = 1 << 1
+  };
+
   Context* m_frontend;
   Texture2D* m_albedo;
   Texture2D* m_normal;
@@ -44,8 +49,7 @@ private:
   Texture2D* m_metalness;
   Texture2D* m_ambient;
   Texture2D* m_emissive;
-  bool m_alpha_test;
-  bool m_has_alpha;
+  Uint8 m_flags;
   Float32 m_roughness_value;
   Float32 m_metalness_value;
   Float32 m_occlusion_value;
@@ -63,8 +67,7 @@ inline Material::Material(Material&& material_)
   , m_metalness{Utility::exchange(material_.m_metalness, nullptr)}
   , m_ambient{Utility::exchange(material_.m_ambient, nullptr)}
   , m_emissive{Utility::exchange(material_.m_emissive, nullptr)}
-  , m_alpha_test{Utility::exchange(material_.m_alpha_test, false)}
-  , m_has_alpha{Utility::exchange(material_.m_has_alpha, false)}
+  , m_flags{Utility::exchange(material_.m_flags, 0)}
   , m_roughness_value{Utility::exchange(material_.m_roughness_value, 1.0f)}
   , m_metalness_value{Utility::exchange(material_.m_metalness_value, 0.0f)}
   , m_occlusion_value{Utility::exchange(material_.m_occlusion_value, 0.0f)}
@@ -87,8 +90,7 @@ inline Material& Material::operator=(Material&& material_) {
   m_metalness = Utility::exchange(material_.m_metalness, nullptr);
   m_ambient = Utility::exchange(material_.m_ambient, nullptr);
   m_emissive = Utility::exchange(material_.m_emissive, nullptr);
-  m_alpha_test = Utility::exchange(material_.m_alpha_test, false);
-  m_has_alpha = Utility::exchange(material_.m_has_alpha, false);
+  m_flags = Utility::exchange(material_.m_flags, 0);
   m_roughness_value = Utility::exchange(material_.m_roughness_value, 1.0f);
   m_metalness_value = Utility::exchange(material_.m_metalness_value, 0.0f);
   m_occlusion_value = Utility::exchange(material_.m_occlusion_value, 0.0f);
@@ -105,11 +107,11 @@ inline const String& Material::name() const & {
 }
 
 inline bool Material::alpha_test() const {
-  return m_alpha_test;
+  return m_flags & ALPHA_TEST;
 }
 
 inline bool Material::has_alpha() const {
-  return m_has_alpha;
+  return m_flags & HAS_ALPHA;
 }
 
 inline const Optional<Math::Transform>& Material::transform() const & {

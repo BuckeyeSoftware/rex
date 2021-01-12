@@ -1,6 +1,8 @@
 #include "rx/core/filesystem/file.h"
+
 #include "rx/core/algorithm/clamp.h"
-#include "rx/core/math/log2.h"
+
+#include "rx/core/hash/djbx33a.h"
 #include "rx/core/json.h"
 
 #include "rx/math/transform.h"
@@ -8,7 +10,6 @@
 #include "rx/material/texture.h"
 
 #include "rx/texture/loader.h"
-#include "rx/texture/chain.h"
 
 namespace Rx::Material {
 
@@ -109,7 +110,14 @@ bool Texture::load_texture_file(const Math::Vec2z& _max_dimensions) {
     return false;
   }
 
-  return m_chain.generate(Utility::move(loader), false, m_filter.mipmaps);
+  auto data = Utility::move(loader.data());
+
+  m_bitmap.format = loader.format();
+  m_bitmap.dimensions = loader.dimensions();
+  m_bitmap.hash = Hash::djbx33a(data.data(), data.size());
+  m_bitmap.data = Utility::move(data);
+
+  return true;
 }
 
 bool Texture::parse_type(const JSON& _type) {

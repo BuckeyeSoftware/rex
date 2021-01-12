@@ -35,6 +35,7 @@ Loader::Loader(Loader&& loader_)
   , m_emission{Utility::exchange(loader_.m_emission, {0.0f, 0.0f, 0.0f})}
 {
 }
+
 void Loader::operator=(Loader&& loader_) {
   RX_ASSERT(&loader_ != this, "self assignment");
 
@@ -184,21 +185,6 @@ bool Loader::parse(const JSON& _definition) {
       return false;
     }
   }
-
-  // Determine if the diffuse texture has an alpha channel.
-  m_textures.each_fwd([this](const Texture& _texture) {
-    if (_texture.type() != "albedo") {
-      return true;
-    }
-
-    if (_texture.chain().bpp() == 4) {
-      m_flags |= HAS_ALPHA;
-    } else if (m_flags & ALPHA_TEST) {
-      logger->warning("'alpha_test' disabled (\"albedo\" has no alpha channel)");
-      m_flags &= ~ALPHA_TEST;
-    }
-    return false;
-  });
 
   return true;
 }

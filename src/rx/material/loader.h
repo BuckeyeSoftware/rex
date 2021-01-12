@@ -31,7 +31,6 @@ struct Loader {
   Vector<Texture>&& textures();
   String&& name();
   bool alpha_test() const;
-  bool has_alpha() const;
   bool no_compress() const;
   Float32 roughness() const;
   Float32 metalness() const;
@@ -53,8 +52,7 @@ private:
 
   enum {
     ALPHA_TEST  = 1 << 0,
-    HAS_ALPHA   = 1 << 1,
-    NO_COMPRESS = 1 << 2
+    NO_COMPRESS = 1 << 1
   };
 
   Memory::Allocator* m_allocator;
@@ -83,10 +81,6 @@ inline String&& Loader::name() {
 
 inline bool Loader::alpha_test() const {
   return m_flags & ALPHA_TEST;
-}
-
-inline bool Loader::has_alpha() const {
-  return m_flags & HAS_ALPHA;
 }
 
 inline bool Loader::no_compress() const {

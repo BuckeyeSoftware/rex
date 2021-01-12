@@ -33,6 +33,13 @@ struct Texture {
 
   using Wrap = Math::Vec2<WrapType>;
 
+  struct Bitmap {
+    LinearBuffer data;
+    Array<Byte[16]> hash;
+    Rx::Texture::PixelFormat format;
+    Math::Vec2z dimensions;
+  };
+
   Texture(Memory::Allocator& _allocator);
   Texture(Texture&& texture_);
 
@@ -49,8 +56,7 @@ struct Texture {
   const String& file() const &;
   const Optional<Math::Vec4f>& border() const &;
 
-  const Rx::Texture::Chain& chain() const;
-  Rx::Texture::Chain&& chain();
+  Bitmap& bitmap();
 
   constexpr Memory::Allocator& allocator() const;
 
@@ -71,7 +77,7 @@ private:
   void write_log(Log::Level _level, String&& message_) const;
 
   Memory::Allocator* m_allocator;
-  Rx::Texture::Chain m_chain;
+  Bitmap m_bitmap;
   Filter m_filter;
   Wrap m_wrap;
   String m_type;
@@ -92,7 +98,6 @@ void Texture::log(Log::Level _level, const char* _format, Ts&&... _arguments) co
 
 inline Texture::Texture(Memory::Allocator& _allocator)
   : m_allocator{&_allocator}
-  , m_chain{allocator()}
   , m_type{allocator()}
   , m_file{allocator()}
 {
@@ -100,7 +105,7 @@ inline Texture::Texture(Memory::Allocator& _allocator)
 
 inline Texture::Texture(Texture&& texture_)
   : m_allocator{texture_.m_allocator}
-  , m_chain{Utility::move(texture_.m_chain)}
+  , m_bitmap{Utility::move(texture_.m_bitmap)}
   , m_filter{texture_.m_filter}
   , m_wrap{texture_.m_wrap}
   , m_type{Utility::move(texture_.m_type)}
@@ -111,15 +116,13 @@ inline Texture::Texture(Texture&& texture_)
 
 inline Texture& Texture::operator=(Texture&& texture_) {
   RX_ASSERT(&texture_ != this, "self assignment");
-
   m_allocator = texture_.m_allocator;
-  m_chain = Utility::move(texture_.m_chain);
+  m_bitmap = Utility::move(texture_.m_bitmap);
   m_filter = texture_.m_filter;
   m_wrap = texture_.m_wrap;
   m_type = Utility::move(texture_.m_type);
   m_file = Utility::move(texture_.m_file);
   m_border = Utility::move(texture_.m_border);
-
   return *this;
 }
 
@@ -143,12 +146,8 @@ inline const Optional<Math::Vec4f>& Texture::border() const & {
   return m_border;
 }
 
-inline const Rx::Texture::Chain& Texture::chain() const {
-  return m_chain;
-}
-
-inline Rx::Texture::Chain&& Texture::chain() {
-  return Utility::move(m_chain);
+inline Texture::Bitmap& Texture::bitmap() {
+  return m_bitmap;
 }
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Texture::allocator() const {
