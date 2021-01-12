@@ -2,6 +2,7 @@
 #define RX_CORE_HASH_MIX_FLOAT_H
 #include "rx/core/math/shape.h"
 #include "rx/core/hash/mix_int.h"
+#include "rx/core/concepts/floating_point.h"
 
 namespace Rx::Hash {
 
@@ -13,8 +14,7 @@ inline constexpr Size mix_float64(Float64 _value) {
   return mix_uint64(Math::Shape{_value}.as_u64);
 }
 
-// TODO(dweiler): constrain with FloatingPoint concept.
-template<typename T>
+template<Concepts::FloatingPoint T>
 inline constexpr Size mix_float(T _value) {
   if constexpr (Traits::IS_SAME<T, Float32>) {
     return mix_float32(_value);
