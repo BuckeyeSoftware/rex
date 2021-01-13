@@ -6,6 +6,7 @@
 #include "rx/core/linear_buffer.h"
 #include "rx/core/algorithm/max.h"
 #include "rx/core/math/log2.h"
+#include "rx/core/hints/unreachable.h"
 
 #include "rx/math/vec2.h"
 #include "rx/math/vec3.h"
@@ -102,6 +103,8 @@ struct Texture
   bool is_stencil_format() const;
   bool is_depth_stencil_format() const;
   bool is_srgb_color_format() const;
+
+  bool has_alpha() const;
 
   bool is_swapchain() const;
   bool is_level_in_range(Size _level) const;
@@ -346,7 +349,7 @@ inline Size Texture::channels() const {
   case DataFormat::SRGBA_U8:
     return 4;
   }
-  return 0;
+  RX_HINT_UNREACHABLE();
 }
 
 inline Texture::Type Texture::type() const {
@@ -396,7 +399,49 @@ inline Size Texture::bits_per_pixel() const {
   case DataFormat::SRGBA_U8:
     return 32;
   }
-  return 0;
+  RX_HINT_UNREACHABLE();
+}
+
+inline bool Texture::has_alpha() const {
+  switch (m_format) {
+  case DataFormat::R_U8:
+    return false;
+  case DataFormat::RGB_U8:
+    return false;
+  case DataFormat::RGBA_U8:
+    return true;
+  case DataFormat::BGR_U8:
+    return false;
+  case DataFormat::BGRA_U8:
+    return true;
+  case DataFormat::RGBA_F16:
+    return true;
+  case DataFormat::BGRA_F16:
+    return true;
+  case DataFormat::D16:
+    return false;
+  case DataFormat::D24:
+    return false;
+  case DataFormat::D32:
+    return false;
+  case DataFormat::D32F:
+    return false;
+  case DataFormat::D24_S8:
+    return false;
+  case DataFormat::D32F_S8:
+    return false;
+  case DataFormat::S8:
+    return false;
+  case DataFormat::DXT1:
+    return false;
+  case DataFormat::DXT5:
+    return false;
+  case DataFormat::SRGB_U8:
+    return false;
+  case DataFormat::SRGBA_U8:
+    return true;
+  }
+  RX_HINT_UNREACHABLE();
 }
 
 inline const Math::Vec4f& Texture::border() const & {

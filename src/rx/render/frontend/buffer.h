@@ -8,6 +8,8 @@
 
 #include "rx/render/frontend/resource.h"
 
+#include "rx/core/hints/unreachable.h"
+
 namespace Rx::Render::Frontend {
 
 struct Context;

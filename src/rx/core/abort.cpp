@@ -1,5 +1,7 @@
 #include "rx/core/log.h"
 
+#include "rx/core/hints/unreachable.h"
+
 #if defined(RX_PLATFORM_POSIX)
 #include <signal.h> // raise, SIGABRT
 #elif defined(RX_PLATFORM_WINDOWS)

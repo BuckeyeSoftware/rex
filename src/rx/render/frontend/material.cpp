@@ -184,8 +184,8 @@ bool Material::load(Rx::Material::Loader&& loader_) {
 
     if (type == "albedo") {
       const auto& level = texture->info_for_level(texture->levels() - 1);
-      const auto has_alpha = texture->bits_per_pixel() == 32;
-      const auto use_alpha = has_alpha && uses_alpha(texture->data().data() + level.offset, level.size);
+      const auto use_alpha = texture->has_alpha()
+        && uses_alpha(texture->data().data() + level.offset, level.size);
       if (use_alpha) {
         m_flags |= HAS_ALPHA;
       } else if (m_flags & ALPHA_TEST) {
