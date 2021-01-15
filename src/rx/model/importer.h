@@ -18,7 +18,10 @@ struct Mesh {
   Size offset;
   Size count;
   String material;
-  Math::AABB bounds;
+
+  // Contains the per frame bounds for mesh. When the mesh contains no
+  // animations, bounds[0][0] contains the bounds for the static mesh.
+  Vector<Vector<Math::AABB>> bounds; // bounds[animation][frame]
 };
 
 struct Importer {
@@ -40,7 +43,6 @@ struct Importer {
     Size frame_offset;
     Size frame_count;
     String name;
-    Vector<Math::AABB> bounds;
   };
 
   struct Joint {

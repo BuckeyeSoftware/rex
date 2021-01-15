@@ -145,15 +145,16 @@ bool Model::upload() {
   }
 
   // Resolve all the meshes of the loaded model.
-  return m_model->meshes().each_fwd([this, &material_indices](const Rx::Model::Mesh& _mesh) {
+  return m_model->meshes().each_fwd([this, &material_indices](Rx::Model::Mesh& _mesh) {
     if (auto* find = material_indices.find(_mesh.material)) {
       if (m_materials[*find].has_alpha()) {
-        return m_transparent_meshes.emplace_back(_mesh.offset, _mesh.count, *find, _mesh.bounds);
+        return m_transparent_meshes.emplace_back(_mesh.offset, _mesh.count,
+          *find, Utility::move(_mesh.bounds));
       } else {
-        return m_opaque_meshes.emplace_back(_mesh.offset, _mesh.count, *find, _mesh.bounds);
+        return m_opaque_meshes.emplace_back(_mesh.offset, _mesh.count, *find,
+          Utility::move(_mesh.bounds));
       }
     }
-    m_aabb.expand(_mesh.bounds);
     return true;
   });
 }
@@ -170,11 +171,39 @@ void Model::update(Float32 _delta_time) {
   if (m_animation) {
     m_animation->update(_delta_time, true);
   }
+
+  Math::AABB aabb;
+  auto expand = [&, this](const Mesh& _mesh) {
+    aabb.expand(mesh_bounds(_mesh));
+  };
+
+  m_opaque_meshes.each_fwd(expand);
+  m_transparent_meshes.each_fwd(expand);
+
+  m_aabb = aabb;
+}
+
+Math::AABB Model::mesh_bounds(const Mesh& _mesh) const {
+  if (m_animation) {
+    // Interpolate between the two frames.
+    const auto& interpolant = m_animation->interpolant();
+    const auto& bounds = _mesh.bounds[m_animation->index()];
+    const auto& aabb1 = bounds[interpolant.frame1];
+    const auto& aabb2 = bounds[interpolant.frame2];
+    return {
+      aabb1.min() * (1.0f - interpolant.offset) + aabb2.min() * interpolant.offset,
+      aabb1.max() * (1.0f - interpolant.offset) + aabb2.max() * interpolant.offset
+    };
+  } else {
+    return _mesh.bounds[0][0];
+  }
 }
 
 void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
                    const Math::Mat4x4f& _view, const Math::Mat4x4f& _projection)
 {
+  m_visible = false;
+
   Math::Frustum frustum{_view * _projection};
 
   RX_PROFILE_CPU("model::render");
@@ -204,10 +233,11 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
   state.viewport.record_dimensions(_target->dimensions());
 
   auto draw = [&](const Mesh& _mesh, bool _allow_cull) {
-    const auto& bounds = m_animation ? m_animation->bounds() : _mesh.bounds;
-    if (!frustum.is_aabb_inside(bounds.transform(_model))) {
+    if (!frustum.is_aabb_inside(mesh_bounds(_mesh).transform(_model))) {
       return true;
     }
+
+    m_visible = true;
 
     RX_PROFILE_CPU("batch");
     RX_PROFILE_GPU("batch");
@@ -354,26 +384,22 @@ void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _im
 }
 
 void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {
-  if (!m_animation) {
+  if (!m_animation || !m_visible) {
     return;
   }
 
   const auto& joints = m_model->joints();
 
+  // This is EXPENSIVE... revisit?
 #if 0
   // Render all the joints.
   for (Size i{0}; i < joints.size(); i++) {
     const Math::Mat3x4f& frame = m_animation->frames()[i] * joints[i].frame;
 
-    const Math::Vec3f& x = Math::normalize({frame.x.x, frame.y.x, frame.z.x});
-    const Math::Vec3f& y = Math::normalize({frame.x.y, frame.y.y, frame.z.y});
-    const Math::Vec3f& z = Math::normalize({frame.x.z, frame.y.z, frame.z.z});
-    const Math::Vec3f& w{frame.x.w, frame.y.w, frame.z.w};
-
-    const Math::Mat4x4f& joint{{x.x, x.y, x.z, 0.0f},
-                               {y.x, y.y, y.z, 0.0f},
-                               {z.x, z.y, z.z, 0.0f},
-                               {w.x, w.y, w.z, 1.0f}};
+    const Math::Mat4x4f& joint{{frame.x.x, frame.y.x, frame.z.x, 0.0f},
+                               {frame.x.y, frame.y.y, frame.z.y, 0.0f},
+                               {frame.x.z, frame.y.z, frame.z.z, 0.0f},
+                               {frame.x.w, frame.y.w, frame.z.w, 1.0f}};
 
     const auto scale = m_aabb.scale().max_element() * 0.01f;
 
@@ -403,6 +429,25 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
         0);
     }
   }
+}
+
+void Model::render_bounds(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {
+  if (!m_visible) return;
+
+  auto do_bounds = [&, this](const Mesh& _mesh) {
+    _immediate->frame_queue().record_wire_box(
+      {1.0f, 0.0f, 0.0f, 1.0f},
+      mesh_bounds(_mesh).transform(_world),
+      Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
+  };
+
+  m_opaque_meshes.each_fwd(do_bounds);
+  m_transparent_meshes.each_fwd(do_bounds);
+
+  _immediate->frame_queue().record_wire_box(
+    {0.0f, 0.0f, 1.0f, 1.0f},
+    m_aabb.transform(_world),
+    Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
 }
 
 } // namespace Rx::Render

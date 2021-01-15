@@ -97,7 +97,11 @@ Buffer::~Buffer() {
 }
 
 Byte* Buffer::map_sink_data(Sink _sink, Size _size) {
-  RX_ASSERT(_size != 0, "_size is zero");
+  // Ignore zero-sized mappings.
+  if (_size == 0) {
+    return nullptr;
+  }
+
   Byte* result = nullptr;
   switch (_sink) {
   case Sink::VERTICES:
@@ -143,6 +147,11 @@ bool Buffer::write_sink_data(Sink _sink, const Byte* _data, Size _size) {
 }
 
 bool Buffer::record_sink_edit(Sink _sink, Size _offset, Size _size) {
+  // Ignore zero-sized edits.
+  if (_size == 0) {
+    return true;
+  }
+
   if (_sink == Sink::ELEMENTS) {
     auto check = m_format.element_type() != ElementType::NONE;
     RX_ASSERT(check, "cannot record edit to elements");

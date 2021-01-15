@@ -2,7 +2,8 @@
   name: "immediate3D",
   variants: [
     "USE_POINTS",
-    "USE_STANDARD"
+    "USE_STANDARD",
+    "USE_INSTANCED"
   ],
   uniforms: [
     { name: "u_view",       type: "mat4x4f" },
@@ -11,23 +12,26 @@
   shaders: [
     {
       type: "vertex",
-      inputs: [
-        { name: "a_position",    type: "vec3f" },
-        { name: "a_size",        type: "float", when: "USE_POINTS" },
-        { name: "a_color",       type: "vec4f" }
-      ],
-      outputs: [
-        { name: "vs_color",      type: "vec4f" },
-        { name: "vs_view",       type: "vec3f", when: "USE_STANDARD" }
-      ],
+        inputs: [
+          { name: "a_position",    type: "vec3f" },
+          { name: "a_normal",      type: "vec3f" },
+          { name: "a_vcolor",      type: "vec4f",   when: "!USE_INSTANCED" },
+          { name: "a_icolor",      type: "vec4f",   when: "USE_INSTANCED" },
+          { name: "a_transform",   type: "mat4x4f", when: "USE_INSTANCED" }
+        ],
+        outputs: [
+          { name: "vs_color",      type: "vec4f" },
+          { name: "vs_normal",     type: "vec3f", when: "!USE_POINTS" },
+          { name: "vs_view",       type: "vec3f", when: "USE_STANDARD || USE_INSTANCED" }
+        ],
       source: "
         void main() {
-          vs_color = a_color;
-
         #if defined(USE_INSTANCED)
           vec4f position = a_transform * vec4f(a_position, 1.0);
+          vs_color = a_icolor;
         #else
           vec4f position = vec4f(a_position, 1.0);
+          vs_color = a_vcolor;
         #endif
 
           vec4f eye_position = u_view * position;
@@ -37,17 +41,20 @@
         #if defined(USE_POINTS)
           float distance = length(eye_position.xyz);
           float attenuation = inversesqrt(0.1 * distance);
-          rx_point_size = a_size * attenuation;
+          // The immediate3D packs the point size in normal.x
+          rx_point_size = a_normal.x * attenuation;
         #else
           vs_view = (inverse(u_view) * eye_position).xyz;
+          vs_normal = a_normal;
         #endif
         }
       "
     },{
       type: "fragment",
       inputs: [
-        { name: "vs_color", type: "vec4f" },
-        { name: "vs_view",  type: "vec3f", when: "USE_STANDARD" }
+        { name: "vs_color",  type: "vec4f" },
+        { name: "vs_view",   type: "vec3f", when: "USE_STANDARD || USE_INSTANCED" },
+        { name: "vs_normal", type: "vec3f", when: "!USE_POINTS" }
       ],
       outputs: [
         { name: "fs_color", type: "vec4f" }
@@ -57,11 +64,7 @@
         #if defined(USE_POINTS)
           fs_color = vs_color;
         #else
-          // Calculate facet normals using partial derivatives
-          vec3f x_tangent = dFdx(vs_view);
-          vec3f y_tangent = dFdy(vs_view);
-
-          vec3f normal = normalize(cross(x_tangent, y_tangent));
+          vec3f normal = vs_normal;
 
           const vec3f La = vec3f(0.5);
           const vec3f Ld = vec3f(0.5);

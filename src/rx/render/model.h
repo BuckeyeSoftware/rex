@@ -34,7 +34,7 @@ struct Model {
     Size offset;
     Size count;
     Size material;
-    Math::AABB bounds;
+    Vector<Vector<Math::AABB>> bounds;
   };
 
   void animate(Size _index, bool _loop);
@@ -46,6 +46,7 @@ struct Model {
 
   void render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate);
   void render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate);
+  void render_bounds(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate);
 
   bool load(Stream* _stream);
   bool load(const String& _file_name);
@@ -56,6 +57,9 @@ struct Model {
 private:
   bool upload();
 
+  // Obtains the bounds for a given mesh |_mesh| even if currently animated.
+  Math::AABB mesh_bounds(const Mesh& _mesh) const;
+
   Frontend::Context* m_frontend;
   Frontend::Technique* m_technique;
   Frontend::Arena* m_arena;
@@ -65,7 +69,7 @@ private:
   Vector<Mesh> m_transparent_meshes;
   Rx::Model::Loader* m_model;
   Optional<Rx::Model::Animation> m_animation;
-  Math::AABB m_aabb;
+  bool m_visible = false;
 };
 
 inline bool Model::load(Stream* _stream) {

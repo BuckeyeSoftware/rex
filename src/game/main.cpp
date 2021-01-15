@@ -181,19 +181,20 @@ struct TestGame
       return false;
     }*/
 
-    Render::Model model1{&m_frontend};
-    Render::Model model2{&m_frontend};
-    if (model1.load("base/models/mrfixit/mrfixit.json5")) {
-      if (!m_models.push_back(Utility::move(model1))) {
-        return false;
+    for (Size i = 0; i < 8 * 8; i++) {
+     Render::Model model{&m_frontend};
+      if (model.load("base/models/mrfixit/mrfixit.json5")) {
+        if (!m_models.push_back(Utility::move(model))) {
+          return false;
+        }
       }
     }
 
-    if (model2.load("base/models/fire_hydrant/fire_hydrant.json5")) {
-      if (!m_models.push_back(Utility::move(model2))) {
-        return false;
-      }
-    }
+    // if (model2.load("base/models/elemental/elemental.json5")) {
+    //   if (!m_models.push_back(Utility::move(model2))) {
+    //     return false;
+    //   }
+    // }
 
     /*m_models.each_fwd([](Render::Model& _model) {
       _model.animate(0, true);
@@ -298,8 +299,10 @@ struct TestGame
 
     m_console.update(console);
 
+    Float32 bias = 0.0f;
     m_models.each_fwd([&](Render::Model& model_) {
-      model_.update(_delta_time);
+      model_.update(_delta_time + bias);
+      bias += (1.0f / 60.0f) * 0.15f;
     });
 
     return true;
@@ -340,9 +343,18 @@ struct TestGame
       Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
       Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data());
 
+    const Float32 spacing = 5.0f;
+    Math::Transform transform;
     m_models.each_fwd([&](Render::Model& model_) {
-      model_.render(m_gbuffer.target(), Math::Mat4x4f::scale({1, 1, 1}), m_camera.view(), m_camera.projection);
-      model_.render_skeleton({}, &m_immediate3D);
+      model_.render(m_gbuffer.target(), transform.as_mat4(), m_camera.view(), m_camera.projection);
+      model_.render_skeleton(transform.as_mat4(), &m_immediate3D);
+      // model_.render_normals(transform.as_mat4(), &m_immediate3D);
+      model_.render_bounds(transform.as_mat4(), &m_immediate3D);
+      transform.translate.x += spacing;
+      if (transform.translate.x >= 8.0f * spacing) {
+        transform.translate.x = 0.0f;
+        transform.translate.z += spacing;
+      }
     });
 
     m_indirect_lighting_pass.render(m_camera, &m_gbuffer, &m_ibl);

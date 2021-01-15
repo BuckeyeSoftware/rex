@@ -105,20 +105,15 @@ bool Importer::load(Stream* _stream) {
   struct Batch {
     Size offset;
     Size count;
-    Math::AABB bounds;
   };
 
   Map<String, Vector<Batch>> batches{allocator()};
   m_meshes.each_fwd([&](const Mesh& _mesh) {
-    Math::AABB bounds;
-    for (Size i{0}; i < _mesh.count; i++) {
-      bounds.expand(m_positions[m_elements[_mesh.offset + i]]);
-    }
     if (auto* find = batches.find(_mesh.material)) {
-      find->emplace_back(_mesh.offset, _mesh.count, bounds);
+      find->emplace_back(_mesh.offset, _mesh.count);
     } else {
       Vector<Batch> result{allocator()};
-      result.emplace_back(_mesh.offset, _mesh.count, bounds);
+      result.emplace_back(_mesh.offset, _mesh.count);
       batches.insert(_mesh.material, Utility::move(result));
     }
   });
@@ -126,17 +121,16 @@ bool Importer::load(Stream* _stream) {
   Vector<Mesh> optimized_meshes{allocator()};
   Vector<Uint32> optimized_elements{allocator()};
   batches.each_pair([&](const String& _material_name, const Vector<Batch>& _batches) {
-    Math::AABB bounds;
-    const Size elements{optimized_elements.size()};
+    const Size elements = optimized_elements.size();
     _batches.each_fwd([&](const Batch& _batch) {
-      const Size count{optimized_elements.size()};
+      const Size count = optimized_elements.size();
       optimized_elements.resize(count + _batch.count);
       memcpy(optimized_elements.data() + count,
         m_elements.data() + _batch.offset, sizeof(Uint32) * _batch.count);
-      bounds.expand(_batch.bounds);
     });
     const Size count = optimized_elements.size() - elements;
-    optimized_meshes.emplace_back(elements, count, _material_name, bounds);
+    optimized_meshes.emplace_back(elements, count, _material_name,
+      Vector<Vector<Math::AABB>>{allocator()});
   });
 
   if (optimized_meshes.size() < m_meshes.size()) {
@@ -146,6 +140,64 @@ bool Importer::load(Stream* _stream) {
 
   m_meshes = Utility::move(optimized_meshes);
   m_elements = Utility::move(optimized_elements);
+
+  // Calculate per frame AABBs for each mesh.
+  const auto n_animations = m_animations.size();
+  const auto n_meshes = m_meshes.size();
+  const auto n_joints = m_joints.size();
+
+  const auto animated = n_animations > 0;
+
+  for (Size i = 0; i < n_meshes; i++) {
+    auto& mesh = m_meshes[i];
+    if (!mesh.bounds.resize(animated ? n_animations : 1)) {
+      return false;
+    }
+    if (animated) {
+      for (Size j = 0; j < n_animations; j++) {
+        const auto& animation = m_animations[j];
+        for (Size k = 0; k < mesh.count; k++) {
+          const auto element = m_elements[mesh.offset + k];
+          const auto& position = m_positions[element];
+          const auto& blend_indices = m_blend_indices[element];
+          const auto& blend_weights = m_blend_weights[element];
+          if (!mesh.bounds[j].resize(animation.frame_count)) {
+            return false;
+          }
+          for (Size l = 0; l < animation.frame_count; l++) {
+            const auto index = (animation.frame_offset + l) * n_joints;
+            Math::Mat3x4f transform;
+            transform  = m_frames[index + blend_indices.x] * (blend_weights.x / 255.0f);
+            transform += m_frames[index + blend_indices.y] * (blend_weights.y / 255.0f);
+            transform += m_frames[index + blend_indices.z] * (blend_weights.z / 255.0f);
+            transform += m_frames[index + blend_indices.w] * (blend_weights.w / 255.0f);
+            const Math::Vec3f x = {transform.x.x, transform.y.x, transform.z.x};
+            const Math::Vec3f y = {transform.x.y, transform.y.y, transform.z.y};
+            const Math::Vec3f z = {transform.x.z, transform.y.z, transform.z.z};
+            const Math::Vec3f w = {transform.x.w, transform.y.w, transform.z.w};
+            const Math::Mat4x4f m = {
+              {x.x, x.y, x.z, 0.0f},
+              {y.x, y.y, y.z, 0.0f},
+              {z.x, z.y, z.z, 0.0f},
+              {w.x, w.y, w.z, 1.0f}
+            };
+            mesh.bounds[j][l].expand(Math::Mat4x4f::transform_point(position, m));
+          }
+        }
+      }
+    } else {
+      // Calculate the bounds for this mesh.
+      Math::AABB aabb;
+      for (Size k = 0; k < mesh.count; k++) {
+        const auto element = m_elements[mesh.offset + k];
+        const auto& position = m_positions[element];
+        aabb.expand(position);
+      }
+      if (!mesh.bounds[0].push_back(aabb)) {
+        return false;
+      }
+    }
+  }
 
   return true;
 }

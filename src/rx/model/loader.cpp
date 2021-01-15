@@ -227,12 +227,6 @@ bool Loader::import(const String& _file_name) {
     m_joints.each_fwd([&](Importer::Joint& joint_) {
       joint_.frame = xform * joint_.frame * inv_xform;
     });
-
-    m_animations.each_fwd([&](Importer::Animation& animation_) {
-      animation_.bounds.each_fwd([&](Math::AABB& aabb_) {
-        aabb_ = aabb_.transform(transform); // TODO(dweiler): verify?
-      });
-    });
   } else {
     if (m_animations.is_empty()) {
       for (Size i{0}; i < n_vertices; i++) {
@@ -255,18 +249,15 @@ bool Loader::import(const String& _file_name) {
     }
   }
 
-  // Bounds need to be recalculated if there was a transform
+  // Bounds need to be transformed when we have a transform.
   if (m_transform) {
+    const auto& xform = m_transform->as_mat4();
     m_meshes.each_fwd([&](Mesh& _mesh) {
-      Math::AABB bounds;
-      for (Size i{0}; i < _mesh.count; i++) {
-        if (m_animations.is_empty()) {
-          bounds.expand(as_vertices[m_elements[_mesh.offset + i]].position);
-        } else {
-          bounds.expand(as_animated_vertices[m_elements[_mesh.offset + i]].position);
-        }
-      }
-      _mesh.bounds = bounds;
+      _mesh.bounds.each_fwd([&](Vector<Math::AABB>& aabbs_) {
+        aabbs_.each_fwd([&](Math::AABB& aabb_) {
+          aabb_ = aabb_.transform(xform);
+        });
+      });
     });
   }
 

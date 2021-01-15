@@ -17,16 +17,26 @@ struct Animation {
   void update(Float32 _delta_time, bool _loop);
 
   const Vector<Math::Mat3x4f>& frames() const &;
-  const Math::AABB& bounds() const &;
 
   Size joints() const;
+
+  Size index() const;
+
+  // The two frame indices and the linear offset between them for interpolation.
+  struct Interpolant {
+    Size frame1;
+    Size frame2;
+    Float32 offset;
+  };
+
+  Interpolant interpolant() const;
 
 private:
   Loader* m_model;
   Vector<Math::Mat3x4f> m_frames;
   Size m_animation;
   Float32 m_current_frame;
-  Math::AABB m_current_aabb;
+  Interpolant m_interpolant;
   bool m_completed;
 };
 
@@ -34,8 +44,12 @@ inline const Vector<Math::Mat3x4f>& Animation::frames() const & {
   return m_frames;
 }
 
-inline const Math::AABB& Animation::bounds() const & {
-  return m_current_aabb;
+inline Size Animation::index() const {
+  return m_animation;
+}
+
+inline Animation::Interpolant Animation::interpolant() const {
+  return m_interpolant;
 }
 
 } // namespace Rx::Model
