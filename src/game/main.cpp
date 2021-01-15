@@ -346,10 +346,10 @@ struct TestGame
     const Float32 spacing = 5.0f;
     Math::Transform transform;
     m_models.each_fwd([&](Render::Model& model_) {
-      model_.render(m_gbuffer.target(), transform.as_mat4(), m_camera.view(), m_camera.projection);
-      model_.render_skeleton(transform.as_mat4(), &m_immediate3D);
-      // model_.render_normals(transform.as_mat4(), &m_immediate3D);
-      model_.render_bounds(transform.as_mat4(), &m_immediate3D);
+      model_.render(m_gbuffer.target(), transform.as_mat4(), m_camera.view(),
+        m_camera.projection,
+          Render::Model::SKELETON | Render::Model::BOUNDS,
+          &m_immediate3D);
       transform.translate.x += spacing;
       if (transform.translate.x >= 8.0f * spacing) {
         transform.translate.x = 0.0f;

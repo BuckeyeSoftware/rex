@@ -200,10 +200,9 @@ Math::AABB Model::mesh_bounds(const Mesh& _mesh) const {
 }
 
 void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
-                   const Math::Mat4x4f& _view, const Math::Mat4x4f& _projection)
+                   const Math::Mat4x4f& _view, const Math::Mat4x4f& _projection,
+                   Uint32 _flags, Immediate3D* _immediate)
 {
-  m_visible = false;
-
   Math::Frustum frustum{_view * _projection};
 
   RX_PROFILE_CPU("model::render");
@@ -232,12 +231,10 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
   // Viewport(0, 0, w, h)
   state.viewport.record_dimensions(_target->dimensions());
 
-  auto draw = [&](const Mesh& _mesh, bool _allow_cull) {
+  auto draw = [&](const Mesh& _mesh, bool _transparent) {
     if (!frustum.is_aabb_inside(mesh_bounds(_mesh).transform(_model))) {
-      return true;
+      return false;
     }
-
-    m_visible = true;
 
     RX_PROFILE_CPU("batch");
     RX_PROFILE_GPU("batch");
@@ -289,12 +286,11 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     draw_buffers.add(1); // gbuffer normal    (normal.r,   normal.g,   roughness,  metalness)
     draw_buffers.add(2); // gbuffer emission  (emission.r, emission.g, emission.b, 0.0)
 
-    // Disable backface culling for alpha-tested geometry.
-    if (_allow_cull) {
-      state.cull.record_enable(!material.alpha_test());
-    } else {
-      state.cull.record_enable(false);
-    }
+    // Only backface cull when neither alpha-testing or transparent.
+    state.cull.record_enable(!material.alpha_test() && !_transparent);
+
+    // Only blend when transparent.
+    state.blend.record_enable(_transparent);
 
     m_frontend->draw(
       RX_RENDER_TAG("model mesh"),
@@ -311,17 +307,39 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
       Render::Frontend::PrimitiveType::TRIANGLES,
       draw_textures);
 
+    if (_flags & BOUNDS) {
+      _immediate->frame_queue().record_wire_box(
+        {1.0f, 0.0f, 0.0f, 1.0f},
+        mesh_bounds(_mesh).transform(_model),
+        Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
+    }
+
     return true;
   };
 
-  m_opaque_meshes.each_fwd([&](const Mesh& _mesh) { draw(_mesh, true); });
+  bool visible = false;
+  m_opaque_meshes.each_fwd([&](const Mesh& _mesh) {
+    visible |= draw(_mesh, true);
+  });
 
-/*
-  state.blend.record_enable(true);
-  state.blend.record_blend_factors(
-    Render::Frontend::BlendState::FactorType::SRC_ALPHA,
-    Render::Frontend::BlendState::FactorType::ONE_MINUS_SRC_ALPHA);*/
-  m_transparent_meshes.each_fwd([&](const Mesh& _mesh) { draw(_mesh, false); });
+  m_transparent_meshes.each_fwd([&](const Mesh& _mesh) {
+    visible |= draw(_mesh, false);
+  });
+
+  if (_flags & BOUNDS) {
+    _immediate->frame_queue().record_wire_box(
+      {0.0f, 0.0f, 1.0f, 1.0f},
+      m_aabb.transform(_model),
+      Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
+  }
+
+  if (_flags & SKELETON) {
+    render_skeleton(_model, _immediate);
+  }
+
+  if (_flags & NORMALS) {
+    render_normals(_model, _immediate);
+  }
 }
 
 void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {
@@ -384,13 +402,13 @@ void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _im
 }
 
 void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {
-  if (!m_animation || !m_visible) {
+  if (!m_animation) {
     return;
   }
 
   const auto& joints = m_model->joints();
 
-  // This is EXPENSIVE... revisit?
+  // TODO(dweiler): This is expensive. Revisit this later.
 #if 0
   // Render all the joints.
   for (Size i{0}; i < joints.size(); i++) {
@@ -412,42 +430,27 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
 #endif
 
   // Render the skeleton.
-  for (Size i{0}; i < joints.size(); i++) {
-    const Math::Mat3x4f& frame{m_animation->frames()[i] * joints[i].frame};
-    const Math::Vec3f& w{frame.x.w, frame.y.w, frame.z.w};
-    const Sint32 parent{joints[i].parent};
+  const auto n_joints = joints.size();
+  for (Size i = 0; i < n_joints; i++) {
+    const auto frame = m_animation->frames()[i] * joints[i].frame;
+    const auto parent = joints[i].parent;
 
-    if (parent >= 0) {
-      const Math::Mat3x4f& parent_joint{joints[parent].frame};
-      const Math::Mat3x4f& parent_frame{m_animation->frames()[parent] * parent_joint};
-      const Math::Vec3f& parent_position{parent_frame.x.w, parent_frame.y.w, parent_frame.z.w};
-
-      _immediate->frame_queue().record_line(
-        Math::Mat4x4f::transform_point(w, _world),
-        Math::Mat4x4f::transform_point(parent_position, _world),
-        {0.5f, 0.5f, 1.0f, 1.0f},
-        0);
+    if (parent < 0) {
+      continue;
     }
+
+    const Math::Mat3x4f& parent_joint{joints[parent].frame};
+    const Math::Mat3x4f& parent_frame{m_animation->frames()[parent] * parent_joint};
+    const Math::Vec3f& parent_position{parent_frame.x.w, parent_frame.y.w, parent_frame.z.w};
+    const Math::Vec3f& w{frame.x.w, frame.y.w, frame.z.w};
+
+    _immediate->frame_queue().record_line(
+      Math::Mat4x4f::transform_point(w, _world),
+      Math::Mat4x4f::transform_point(parent_position, _world),
+      {0.5f, 0.5f, 1.0f, 1.0f},
+      0);
   }
 }
 
-void Model::render_bounds(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {
-  if (!m_visible) return;
-
-  auto do_bounds = [&, this](const Mesh& _mesh) {
-    _immediate->frame_queue().record_wire_box(
-      {1.0f, 0.0f, 0.0f, 1.0f},
-      mesh_bounds(_mesh).transform(_world),
-      Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
-  };
-
-  m_opaque_meshes.each_fwd(do_bounds);
-  m_transparent_meshes.each_fwd(do_bounds);
-
-  _immediate->frame_queue().record_wire_box(
-    {0.0f, 0.0f, 1.0f, 1.0f},
-    m_aabb.transform(_world),
-    Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
-}
 
 } // namespace Rx::Render
