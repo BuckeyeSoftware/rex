@@ -298,7 +298,7 @@ Optional<Size> String::find_last_of(const char* _contents) const {
   return nullopt;
 }
 
-bool String::append(const char* _first, const char *_last) {
+bool String::append(const char* _first, const char* _last) {
   const auto new_size = static_cast<Size>(m_last - m_data + _last - _first + 1);
   if (m_data + new_size > m_capacity && !reserve((new_size * 3) / 2)) {
     return false;
@@ -337,22 +337,22 @@ bool String::insert_at(Size _position, const char* _contents) {
 }
 
 String String::lstrip(const char* _set) const {
-  const char* ch{m_data};
-  for (; strchr(_set, *ch); ch++);
+  const char* ch = m_data;
+  for (; *ch && strchr(_set, *ch); ch++);
   return {allocator(), ch};
 }
 
 String String::rstrip(const char* _set) const {
-  const char* ch{m_data + size()};
-  for (; strchr(_set, *ch); ch--);
+  const char* ch = m_last - 1;
+  for (; ch > m_data && strchr(_set, *ch); ch--);
   return {allocator(), m_data, ch + 1};
 }
 
 String String::strip(const char* _set) const {
   const char* beg = m_data;
-  const char* end = m_data + size();
-  for (; strchr(_set, *beg); beg++);
-  for (; strchr(_set, *end); end--);
+  const char* end = m_last - 1;
+  for (; *beg && strchr(_set, *beg); beg++);
+  for (; end > beg && strchr(_set, *end); end--);
   return {allocator(), beg, end + 1};
 }
 
