@@ -826,7 +826,7 @@ static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
     "#define mat3x3f mat3\n"
     "#define mat4x4f mat4\n"
     "#define mat3x4f mat3x4\n"
-    "#define bonesf mat3x4f[80]\n"
+    "#define bonesf mat3x4f[64]\n"
     "#define rx_sampler1D sampler1D\n"
     "#define rx_sampler2D sampler2D\n"
     "#define rx_sampler3D sampler3D\n"

@@ -8,7 +8,7 @@
 
 namespace Rx::Render::Frontend {
 
-static constexpr const Size MAX_BONES = 80;
+static constexpr const Size MAX_BONES = 64;
 
 // checks if |_type| is a sampler Type
 static bool is_sampler(Uniform::Type _type) {

@@ -763,7 +763,7 @@ static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
     "#define mat3x3f mat3\n"
     "#define mat4x4f mat4\n"
     "#define mat3x4f mat3x4\n"
-    "#define bonesf mat3x4f[80]\n"
+    "#define bonesf mat3x4f[64]\n"
     "#define rx_sampler1D sampler1D\n"
     "#define rx_sampler2D sampler2D\n"
     "#define rx_sampler3D sampler3D\n"
@@ -1673,7 +1673,34 @@ void GL4::process(Byte* _command) {
         // TODO(dweiler): Implement.
         break;
       case Frontend::UpdateCommand::Type::TEXTURE2D:
-        // TODO(dweiler): Implement.
+        {
+          const auto render_texture = resource->as_texture2D;
+          const auto texture = reinterpret_cast<detail_gl4::texture2D*>(render_texture + 1);
+          const Size* edit = resource->edit();
+
+          for (Size i = 0; i < resource->edits; i++) {
+            const auto x_offset = edit[1];
+            const auto y_offset = edit[2];
+            const auto bpp = render_texture->bits_per_pixel() / 8;
+            const auto pitch = render_texture->dimensions().w * bpp;
+            const auto ptr = render_texture->data().data()
+              + y_offset * pitch
+              + x_offset * bpp;
+
+            pglTextureSubImage2D(
+              texture->tex,
+              edit[0],
+              x_offset,
+              y_offset,
+              edit[3], // width
+              edit[4], // height
+              convert_texture_format(render_texture->format()),
+              convert_texture_data_type(render_texture->format()),
+              ptr);
+
+            edit += 5;
+          }
+        }
         break;
       case Frontend::UpdateCommand::Type::TEXTURE3D:
         {
