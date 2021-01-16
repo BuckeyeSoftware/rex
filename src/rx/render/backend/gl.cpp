@@ -114,6 +114,8 @@ GLenum convert_texture_data_format(Frontend::Texture::DataFormat _data_format) {
     return GL_RGBA16F;
   case Frontend::Texture::DataFormat::BGRA_F16:
     return GL_RGBA16F; // not a bug
+  case Frontend::Texture::DataFormat::RGBA_F32:
+    return GL_RGBA32F;
   case Frontend::Texture::DataFormat::D16:
     return GL_DEPTH_COMPONENT16;
   case Frontend::Texture::DataFormat::D24:
@@ -157,6 +159,8 @@ GLenum convert_texture_data_type(Frontend::Texture::DataFormat _data_format) {
     [[fallthrough]];
   case Frontend::Texture::DataFormat::BGRA_F16:
     return GL_HALF_FLOAT;
+  case Frontend::Texture::DataFormat::RGBA_F32:
+    return GL_FLOAT;
   case Frontend::Texture::DataFormat::D24_S8:
     return GL_UNSIGNED_INT_24_8;
   case Frontend::Texture::DataFormat::D32F_S8:
@@ -179,6 +183,8 @@ GLenum convert_texture_format(Frontend::Texture::DataFormat _data_format) {
   case Frontend::Texture::DataFormat::BGR_U8:
     return GL_BGR;
   case Frontend::Texture::DataFormat::RGBA_F16:
+    [[fallthrough]];
+  case Frontend::Texture::DataFormat::RGBA_F32:
     return GL_RGBA;
   case Frontend::Texture::DataFormat::BGRA_F16:
     return GL_BGRA;

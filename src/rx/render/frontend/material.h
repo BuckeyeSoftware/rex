@@ -16,7 +16,7 @@ struct Material {
   Material(Material&& material_);
   Material& operator=(Material&& material_);
 
-  bool load(Rx::Material::Loader&& loader_);
+  bool load(const Rx::Material::Loader& _loader);
 
   bool alpha_test() const;
   bool has_alpha() const;

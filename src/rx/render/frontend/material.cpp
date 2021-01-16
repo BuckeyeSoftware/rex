@@ -79,16 +79,16 @@ Material::~Material() {
   m_frontend->destroy_texture(tag, m_emissive);
 }
 
-bool Material::load(Rx::Material::Loader&& loader_) {
-  m_name = Utility::move(loader_.name());
-  m_roughness_value = loader_.roughness();
-  m_metalness_value = loader_.metalness();
-  m_occlusion_value = loader_.occlusion();
-  m_albedo_color = loader_.albedo();
-  m_emission_color = loader_.emission();
-  m_transform = loader_.transform();
+bool Material::load(const Rx::Material::Loader& _loader) {
+  m_name = _loader.name();
+  m_roughness_value = _loader.roughness();
+  m_metalness_value = _loader.metalness();
+  m_occlusion_value = _loader.occlusion();
+  m_albedo_color = _loader.albedo();
+  m_emission_color = _loader.emission();
+  m_transform = _loader.transform();
 
-  if (loader_.alpha_test()) {
+  if (_loader.alpha_test()) {
     m_flags |= ALPHA_TEST;
   }
 
@@ -106,8 +106,8 @@ bool Material::load(Rx::Material::Loader&& loader_) {
     { &m_emissive,   "emissive",  false }
   };
 
-  return loader_.textures().each_fwd([this, &table](Rx::Material::Texture& texture_) {
-    const auto& type = texture_.type();
+  return _loader.textures().each_fwd([this, &table](const Rx::Material::Texture& _texture) {
+    const auto& type = _texture.type();
 
     // Search for the texture in the table.
     const Entry* find = nullptr;
@@ -123,18 +123,18 @@ bool Material::load(Rx::Material::Loader&& loader_) {
       return false;
     }
 
-    auto& bitmap = texture_.bitmap();
+    const auto& bitmap = _texture.bitmap();
 
     const auto& hash = hash_as_string(bitmap.hash);
 
     // Check if cached.
     auto texture = m_frontend->cached_texture2D(hash);
     if (!texture) {
-      const auto& filter = texture_.filter();
+      const auto& filter = _texture.filter();
 
       // Create a mipmap chain of the texture.
       Rx::Texture::Chain chain;
-      if (!chain.generate(Utility::move(bitmap.data), bitmap.format,
+      if (!chain.generate(bitmap.data.data(), bitmap.format,
         bitmap.format, bitmap.dimensions, false, filter.mipmaps))
       {
         return false;
@@ -165,9 +165,9 @@ bool Material::load(Rx::Material::Loader&& loader_) {
       texture->record_levels(chain.levels().size());
       texture->record_dimensions(chain.dimensions());
       texture->record_filter({filter.bilinear, filter.trilinear, filter.mipmaps});
-      texture->record_wrap(convert_material_wrap(texture_.wrap()));
+      texture->record_wrap(convert_material_wrap(_texture.wrap()));
 
-      if (const auto border = texture_.border()) {
+      if (const auto border = _texture.border()) {
         texture->record_border(*border);
       }
 

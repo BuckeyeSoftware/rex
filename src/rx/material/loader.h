@@ -20,7 +20,7 @@ struct Loader {
   Loader(Memory::Allocator& _allocator);
   Loader(Loader&& loader_);
 
-  void operator=(Loader&& loader_);
+  Loader& operator=(Loader&& loader_);
 
   bool load(Stream* _stream);
   bool load(const String& _file_name);
@@ -28,8 +28,8 @@ struct Loader {
   bool parse(const JSON& _definition);
 
   constexpr Memory::Allocator& allocator() const;
-  Vector<Texture>&& textures();
-  String&& name();
+  const Vector<Texture>& textures() const;
+  const String& name() const;
   bool alpha_test() const;
   bool no_compress() const;
   Float32 roughness() const;
@@ -71,12 +71,12 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Loader::allocator() const {
   return *m_allocator;
 }
 
-inline Vector<Texture>&& Loader::textures() {
-  return Utility::move(m_textures);
+inline const Vector<Texture>& Loader::textures() const {
+  return m_textures;
 }
 
-inline String&& Loader::name() {
-  return Utility::move(m_name);
+inline const String& Loader::name() const {
+  return m_name;
 }
 
 inline bool Loader::alpha_test() const {

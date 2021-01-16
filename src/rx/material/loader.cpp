@@ -36,7 +36,7 @@ Loader::Loader(Loader&& loader_)
 {
 }
 
-void Loader::operator=(Loader&& loader_) {
+Loader& Loader::operator=(Loader&& loader_) {
   RX_ASSERT(&loader_ != this, "self assignment");
 
   m_allocator = &loader_.allocator();
@@ -48,6 +48,8 @@ void Loader::operator=(Loader&& loader_) {
   m_occlusion = Utility::exchange(loader_.m_occlusion, 1.0f);
   m_albedo = Utility::exchange(loader_.m_albedo, {1.0f, 1.0f, 1.0f});
   m_emission = Utility::exchange(loader_.m_emission, {0.0f, 0.0f, 0.0f});
+
+  return *this;
 }
 
 bool Loader::load(Stream* _stream) {

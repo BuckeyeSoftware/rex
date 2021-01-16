@@ -54,9 +54,9 @@ struct Texture {
   const Wrap& wrap() const &;
   const String& type() const &;
   const String& file() const &;
-  const Optional<Math::Vec4f>& border() const &;
+  const Optional<Math::Vec4f>& border() const;
 
-  Bitmap& bitmap();
+  const Bitmap& bitmap() const;
 
   constexpr Memory::Allocator& allocator() const;
 
@@ -142,11 +142,11 @@ inline const String& Texture::file() const & {
   return m_file;
 }
 
-inline const Optional<Math::Vec4f>& Texture::border() const & {
+inline const Optional<Math::Vec4f>& Texture::border() const {
   return m_border;
 }
 
-inline Texture::Bitmap& Texture::bitmap() {
+inline const Texture::Bitmap& Texture::bitmap() const {
   return m_bitmap;
 }
 

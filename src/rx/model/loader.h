@@ -36,17 +36,17 @@ struct Loader {
 
   bool is_animated() const;
 
-  Vector<Vertex>&& vertices();
-  Vector<Mesh>&& meshes();
-  Vector<Uint32>&& elements();
-  Map<String, Material::Loader>&& materials();
+  const Vector<Vertex>& vertices() const;
+  const Vector<Mesh>& meshes() const;
+  const Vector<Uint32>& elements() const;
+  const Map<String, Material::Loader>& materials() const;
 
   // Only valid for animated models.
-  Vector<AnimatedVertex>&& animated_vertices();
-  Vector<Importer::Joint>&& joints();
-  const Vector<Importer::Animation>& animations() const &;
+  const Vector<AnimatedVertex>& animated_vertices() const;
+  const Vector<Importer::Joint>& joints() const;
+  const Vector<Importer::Animation>& animations() const;
 
-  const String& name() const &;
+  const String& name() const;
 
   constexpr Memory::Allocator& allocator() const;
 
@@ -109,38 +109,38 @@ inline bool Loader::is_animated() const {
   return m_flags & ANIMATED;
 }
 
-inline Vector<Loader::Vertex>&& Loader::vertices() {
+inline const Vector<Loader::Vertex>& Loader::vertices() const {
   RX_ASSERT(!is_animated(), "not a static model");
-  return Utility::move(as_vertices);
+  return as_vertices;
 }
 
-inline Vector<Mesh>&& Loader::meshes() {
-  return Utility::move(m_meshes);
+inline const Vector<Mesh>& Loader::meshes() const {
+  return m_meshes;
 }
 
-inline Vector<Uint32>&& Loader::elements() {
-  return Utility::move(m_elements);
+inline const Vector<Uint32>& Loader::elements() const {
+  return m_elements;
 }
 
-inline Map<String, Material::Loader>&& Loader::materials() {
-  return Utility::move(m_materials);
+inline const Map<String, Material::Loader>& Loader::materials() const {
+  return m_materials;
 }
 
-inline Vector<Loader::AnimatedVertex>&& Loader::animated_vertices() {
+inline const Vector<Loader::AnimatedVertex>& Loader::animated_vertices() const {
   RX_ASSERT(is_animated(), "not a animated model");
-  return Utility::move(as_animated_vertices);
+  return as_animated_vertices;
 }
 
-inline Vector<Importer::Joint>&& Loader::joints() {
+inline const Vector<Importer::Joint>& Loader::joints() const {
   RX_ASSERT(is_animated(), "not a animated model");
   return Utility::move(m_joints);
 }
 
-inline const Vector<Importer::Animation>& Loader::animations() const & {
+inline const Vector<Importer::Animation>& Loader::animations() const {
   return m_animations;
 }
 
-inline const String& Loader::name() const & {
+inline const String& Loader::name() const {
   return m_name;
 }
 

@@ -12,7 +12,7 @@ namespace Rx::Model {
 struct Loader;
 
 struct Animation {
-  Animation(Loader* _model, Size _index);
+  Animation(const Loader* _model, Size _index);
 
   void update(Float32 _delta_time, bool _loop);
 
@@ -32,7 +32,7 @@ struct Animation {
   Interpolant interpolant() const;
 
 private:
-  Loader* m_model;
+  const Loader* m_model;
   Vector<Math::Mat3x4f> m_frames;
   Size m_animation;
   Float32 m_current_frame;

@@ -8,7 +8,7 @@
 
 namespace Rx::Model {
 
-Animation::Animation(Loader* _model, Size _index)
+Animation::Animation(const Loader* _model, Size _index)
   : m_model{_model}
   , m_frames{m_model->m_frames}
   , m_animation{_index}
