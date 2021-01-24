@@ -63,11 +63,11 @@ struct RX_API String {
 
   void clear();
 
-  /*[[nodiscard]]*/ bool append(const char* _first, const char* _last);
-  /*[[nodiscard]]*/ bool append(const char* _contents, Size _size);
-  /*[[nodiscard]]*/ bool append(const char* _contents);
-  /*[[nodiscard]]*/ bool append(const String& _contents);
-  /*[[nodiscard]]*/ bool append(char _ch);
+  [[nodiscard]] bool append(const char* _first, const char* _last);
+  [[nodiscard]] bool append(const char* _contents, Size _size);
+  [[nodiscard]] bool append(const char* _contents);
+  [[nodiscard]] bool append(const String& _contents);
+  [[nodiscard]] bool append(char _ch);
 
   bool insert_at(Size _position, const char* _contents, Size _size);
   bool insert_at(Size _position, const char* _contents);

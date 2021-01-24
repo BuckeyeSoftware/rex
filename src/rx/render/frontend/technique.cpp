@@ -476,12 +476,14 @@ bool Technique::compile(const Map<String, Module>& _modules) {
         Shader specialized_shader;
         specialized_shader.kind = _shader_definition.kind;
 
-        // emit #defines
+        // Emit #defines
         const Size specializations{m_specializations.size()};
         for (Size i{0}; i < specializations; i++) {
           const String& specialication{m_specializations[i]};
           if (_flags & (1_u64 << i)) {
-            specialized_shader.source.append(String::format("#define %s\n", specialication));
+            if (!specialized_shader.source.append(String::format("#define %s\n", specialication))) {
+              return false;
+            }
           }
         }
 
@@ -491,19 +493,29 @@ bool Technique::compile(const Map<String, Module>& _modules) {
           return false;
         }
 
-        // emit inputs
-        _shader_definition.inputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout) {
+        auto emit_input = [&](const String& _name, const ShaderDefinition::InOut& _inout) -> bool {
           if (evaluate_when(values, _inout.when)) {
-            specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
+            return specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
           }
-        });
+          return true;
+        };
 
-        // emit outputs
-        _shader_definition.outputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout) {
+        auto emit_output = [&](const String& _name, const ShaderDefinition::InOut& _inout) -> bool {
           if (evaluate_when(values, _inout.when)) {
-            specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
+            return specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
           }
-        });
+          return true;
+        };
+
+        // Emit inputs.
+        if (!_shader_definition.inputs.each_pair(emit_input)) {
+          return false;
+        }
+
+        // Emit outputs.
+        if (!_shader_definition.outputs.each_pair(emit_output)) {
+          return false;
+        }
 
         return program->add_shader(Utility::move(specialized_shader));
       });
@@ -548,36 +560,49 @@ bool Technique::compile(const Map<String, Module>& _modules) {
         Shader specialized_shader;
         specialized_shader.kind = _shader_definition.kind;
 
-        // emit #defines
-        specialized_shader.source.append(String::format("#define %s\n", specialization));
+        // Emit specialization #define
+        if (!specialized_shader.source.append(String::format("#define %s\n", specialization))) {
+          return false;
+        }
 
-        // append shader source
+        // Append shader source.
         auto source = resolve_source(_shader_definition, values, _modules);
         if (!source || !specialized_shader.source.append(*source)) {
           return false;
         }
 
-        // emit inputs
-        _shader_definition.inputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout) {
+        auto emit_input = [&](const String& _name, const ShaderDefinition::InOut& _inout) -> bool {
           if (evaluate_when(values, _inout.when)) {
-            specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
+            return specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
           }
-        });
+          return true;
+        };
 
-        // emit outputs
-        _shader_definition.outputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout){
+        auto emit_output = [&](const String& _name, const ShaderDefinition::InOut& _inout) -> bool {
           if (evaluate_when(values, _inout.when)) {
-            specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
+            return specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
           }
-        });
+          return true;
+        };
+
+        // Emit inputs.
+        if (!_shader_definition.inputs.each_pair(emit_input)) {
+          return false;
+        }
+
+        // Emit outputs.
+        if (!_shader_definition.outputs.each_pair(emit_output)) {
+          return false;
+        }
 
         return program->add_shader(Utility::move(specialized_shader));
       });
 
-      // emit uniforms
+      // Emit uniforms.
       m_uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
-        auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind,
-          !evaluate_when(values, _uniform_definition.when))};
+        auto& uniform = program->add_uniform(_uniform_definition.name,
+          _uniform_definition.kind, !evaluate_when(values, _uniform_definition.when));
+
         if (_uniform_definition.has_value) {
           const auto* data{reinterpret_cast<const Byte*>(&_uniform_definition.value)};
           uniform.record_raw(data, uniform.size());

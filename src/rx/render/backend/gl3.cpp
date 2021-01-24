@@ -763,51 +763,12 @@ namespace detail_gl3 {
 static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
   const Frontend::Shader& _shader)
 {
-  // Emit prelude to every shader.
-  String contents{"#version 330 core\n"};
-  contents.append(GLSL_PRELUDE);
+  auto contents = generate_glsl(_uniforms, _shader, 330, false);
 
-  GLenum type = 0;
-  switch (_shader.kind) {
-  case Frontend::Shader::Type::VERTEX:
-    type = GL_VERTEX_SHADER;
-    // emit vertex attributes inputs
-    _shader.inputs.each_pair([&](const String& _name, const Frontend::Shader::InOut& _inout) {
-      contents.append(String::format("layout(location = %zu) in %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
-    });
-    // emit vertex outputs
-    _shader.outputs.each_pair([&](const String& _name, const Frontend::Shader::InOut& _inout) {
-      contents.append(String::format("out %s %s;\n", inout_to_string(_inout.kind), _name));
-    });
-    break;
-  case Frontend::Shader::Type::FRAGMENT:
-    type = GL_FRAGMENT_SHADER;
-    // emit fragment inputs
-    _shader.inputs.each_pair([&](const String& _name, const Frontend::Shader::InOut& _inout) {
-      contents.append(String::format("in %s %s;\n", inout_to_string(_inout.kind), _name));
-    });
-    // emit fragment outputs
-    _shader.outputs.each_pair([&](const String& _name, const Frontend::Shader::InOut& _inout) {
-      contents.append(String::format("layout(location = %d) out %s %s;\n", _inout.index, inout_to_string(_inout.kind), _name));
-    });
-    break;
-  }
+  auto data = static_cast<const GLchar*>(contents->data());
+  auto size = static_cast<GLint>(contents->size());
 
-  // emit uniforms
-  _uniforms.each_fwd([&](const Frontend::Uniform& _uniform) {
-    // Don't emit padding uniforms.
-    if (!_uniform.is_padding()) {
-      contents.append(String::format("uniform %s %s;\n", uniform_to_string(_uniform.type()), _uniform.name()));
-    }
-  });
-
-  // append the user shader source now
-  contents.append(_shader.source);
-
-  const GLchar* data{static_cast<const GLchar*>(contents.data())};
-  const GLint size{static_cast<GLint>(contents.size())};
-
-  GLuint handle{pglCreateShader(type)};
+  GLuint handle = pglCreateShader(convert_shader_type(_shader.kind));
   pglShaderSource(handle, 1, &data, &size);
   pglCompileShader(handle);
 

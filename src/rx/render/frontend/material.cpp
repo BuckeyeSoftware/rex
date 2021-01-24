@@ -13,8 +13,9 @@ static String hash_as_string(const Array<Byte[16]>& _hash) {
   static constexpr const auto HEX = "0123456789abcdef";
   String result;
   for (Size i = 0; i < 16; i++) {
-    result.append(HEX[(_hash[i] >> 4) & 0x0f]);
-    result.append(HEX[_hash[i] & 0x0f]);
+    // NOTE(dweiler): These appends will never fail.
+    (void)result.append(HEX[(_hash[i] >> 4) & 0x0f]);
+    (void)result.append(HEX[_hash[i] & 0x0f]);
   }
   return result;
 }

@@ -4,6 +4,80 @@
 
 namespace Rx::Render {
 
+static inline constexpr const char *GLSL_PRELUDE = R"(
+#define RX_MAX_BONES 128
+
+// GLSL does not have typedef. Just #define our types.
+#define f32 float
+#define s32 int
+#define u32 uint
+#define f32x2 vec2
+#define f32x3 vec3
+#define f32x4 vec4
+#define s32x2 ivec2
+#define s32x3 ivec3
+#define s32x4 ivec4
+#define u32x2 uvec2
+#define u32x3 uvec3
+#define u32x4 uvec4
+#define f32x3x3 mat3x3
+#define f32x2x4 mat2x4
+#define f32x3x4 mat3x4
+#define f32x4x4 mat4x4
+#define lb_bones f32x3x4[RX_MAX_BONES]
+#define dq_bones f32x2x4[RX_MAX_BONES]
+
+// Sampler types.
+#define rx_sampler1D sampler1D
+#define rx_sampler2D sampler2D
+#define rx_sampler3D sampler3D
+#define rx_samplerCM samplerCube
+
+// Functions to sample textures.
+#define rx_texture1D texture
+#define rx_texture2D texture
+#define rx_texture3D texture
+#define rx_textureCM texture
+#define rx_texture1DLod textureLod
+#define rx_texture2DLod textureLod
+#define rx_texture3DLod textureLod
+#define rx_textureCMLod textureLod
+
+// Builtin variables.
+#define rx_position gl_Position
+#define rx_vertex_id gl_VertexID
+#define rx_point_size gl_PointSize
+#define rx_point_coord gl_PointCoord
+
+// Casting functions.
+s32   as_s32(f32 x)     { return s32(x); }
+s32x2 as_s32x2(f32x2 x) { return s32x2(s32(x.x), s32(x.y)); }
+s32x3 as_s32x3(f32x3 x) { return s32x3(s32(x.x), s32(x.y), s32(x.z)); }
+s32x4 as_s32x4(f32x4 x) { return s32x4(s32(x.x), s32(x.y), s32(x.z), s32(x.w)); }
+s32   as_s32(u32 x)     { return s32(x); }
+s32x2 as_s32x2(u32x2 x) { return s32x2(s32(x.x), s32(x.y)); }
+s32x3 as_s32x3(u32x3 x) { return s32x3(s32(x.x), s32(x.y), s32(x.z)); }
+s32x4 as_s32x4(u32x4 x) { return s32x4(s32(x.x), s32(x.y), s32(x.z), s32(x.w)); }
+u32   as_u32(f32 x)     { return u32(x); }
+u32x2 as_u32x2(f32x2 x) { return u32x2(u32(x.x), u32(x.y)); }
+u32x3 as_u32x3(f32x3 x) { return u32x3(u32(x.x), u32(x.y), u32(x.z)); }
+u32x4 as_u32x4(f32x4 x) { return u32x4(u32(x.x), u32(x.y), u32(x.z), u32(x.w)); }
+u32   as_u32(s32 x)     { return u32(x); }
+u32x2 as_u32x2(s32x2 x) { return u32x2(u32(x.x), u32(x.y)); }
+u32x3 as_u32x3(s32x3 x) { return u32x3(u32(x.x), u32(x.y), u32(x.z)); }
+u32x4 as_u32x4(s32x4 x) { return u32x4(u32(x.x), u32(x.y), u32(x.z), u32(x.w)); }
+f32   as_f32(s32 x)     { return f32(x); }
+f32x2 as_f32x2(s32x2 x) { return f32x2(f32(x.x), f32(x.y)); }
+f32x3 as_f32x3(s32x3 x) { return f32x3(f32(x.x), f32(x.y), f32(x.z)); }
+f32x4 as_f32x4(s32x4 x) { return f32x4(f32(x.x), f32(x.y), f32(x.z), f32(x.w)); }
+f32   as_f32(u32 x)     { return f32(x); }
+f32x2 as_f32x2(u32x2 x) { return f32x2(f32(x.x), f32(x.y)); }
+f32x3 as_f32x3(u32x3 x) { return f32x3(f32(x.x), f32(x.y), f32(x.z)); }
+f32x4 as_f32x4(u32x4 x) { return f32x4(f32(x.x), f32(x.y), f32(x.z), f32(x.w)); }
+)";
+
+
+
 GLenum convert_blend_factor(Frontend::BlendState::FactorType _factor_type) {
   switch (_factor_type) {
   case Frontend::BlendState::FactorType::CONSTANT_ALPHA:
@@ -264,6 +338,16 @@ GLenum convert_element_type(Frontend::Buffer::ElementType _element_type) {
   RX_HINT_UNREACHABLE();
 }
 
+GLenum convert_shader_type(Frontend::Shader::Type _type) {
+  switch (_type) {
+  case Frontend::Shader::Type::FRAGMENT:
+    return GL_FRAGMENT_SHADER;
+  case Frontend::Shader::Type::VERTEX:
+    return GL_VERTEX_SHADER;
+  }
+  RX_HINT_UNREACHABLE();
+}
+
 Filter convert_texture_filter(const Frontend::Texture::FilterOptions& _filter_options) {
   static constexpr const GLenum MIN_TABLE[] = {
     GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_NEAREST,
@@ -317,6 +401,88 @@ Attribute convert_attribute(const Frontend::Buffer::Attribute& _attribute) {
   }
 
   RX_HINT_UNREACHABLE();
+}
+
+Optional<String> generate_glsl(const Vector<Frontend::Uniform>& _uniforms,
+  const Frontend::Shader& _shader, int _version, bool _es)
+{
+  String contents;
+  auto version = String::format("#version %d %s\n", _version, _es ? "es" : "core");
+  if (!contents.append(version)) {
+    return nullopt;
+  }
+
+  // When ES force highp.
+  if (_es) {
+    static constexpr const char* PRECISION_PRELUDE =
+      "precision highp float;\n"
+      "precision highp int;\n"
+      "precision highp sampler1D;\n"
+      "precision highp sampler2D;\n"
+      "precision highp sampler3D;\n"
+      "precision highp samplerCube;\n";
+
+    if (!contents.append(PRECISION_PRELUDE)) {
+      return nullopt;
+    }
+  }
+
+  if (!contents.append(GLSL_PRELUDE)) {
+    return nullopt;
+  }
+
+  auto emit_vs_input = [&](const String& _name, const Frontend::Shader::InOut& _inout) {
+    return contents.append(String::format("layout(location = %zu) in %s %s;\n",
+      _inout.index, inout_to_string(_inout.kind), _name));
+  };
+
+  auto emit_vs_output = [&](const String& _name, const Frontend::Shader::InOut& _inout) {
+    return contents.append(String::format("out %s %s;\n",
+      inout_to_string(_inout.kind), _name));
+  };
+
+  auto emit_fs_input = [&](const String& _name, const Frontend::Shader::InOut& _inout) {
+    return contents.append(String::format("in %s %s;\n", inout_to_string(_inout.kind), _name));
+  };
+
+  auto emit_fs_output = [&](const String& _name, const Frontend::Shader::InOut& _inout) {
+    return contents.append(String::format("layout(location = %zu) out %s %s;\n",
+      _inout.index, inout_to_string(_inout.kind), _name));
+  };
+
+  switch (_shader.kind) {
+  case Frontend::Shader::Type::VERTEX:
+    if (!_shader.inputs.each_pair(emit_vs_input) || !_shader.outputs.each_pair(emit_vs_output)) {
+      return nullopt;
+    }
+    break;
+  case Frontend::Shader::Type::FRAGMENT:
+    if (!_shader.inputs.each_pair(emit_fs_input) || !_shader.outputs.each_pair(emit_fs_output)) {
+      return nullopt;
+    }
+    break;
+  }
+
+  // Emit uniforms.
+  auto emit_uniform = [&](const Frontend::Uniform& _uniform) {
+    // Don't emit padding uniforms.
+    if (_uniform.is_padding()) {
+      return true;
+    }
+    return contents.append(String::format("uniform %s %s;\n",
+      uniform_to_string(_uniform.type()), _uniform.name()));
+  };
+
+  if (!_uniforms.each_fwd(emit_uniform)) {
+    return nullopt;
+  }
+
+  // Emit the shader source now.
+  if (!contents.append(_shader.source)) {
+    return nullopt;
+  }
+
+  return contents;
 }
 
 } // namespace Rx::Render
