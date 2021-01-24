@@ -33,11 +33,8 @@ struct Technique {
   };
 
   Type type() const;
-  bool has_variants() const;
-  bool has_permutes() const;
 
-  operator Program*() const;
-
+  Program* basic() const;
   Program* permute(Uint64 _flags) const;
   Program* variant(Size _index) const;
 
@@ -62,7 +59,6 @@ private:
       Utility::Nat as_nat;
       Sint32 as_int;
       Float32 as_float;
-      bool as_bool;
       Math::Vec2i as_vec2i;
       Math::Vec3i as_vec3i;
       Math::Vec4i as_vec4i;
@@ -87,9 +83,14 @@ private:
       String when;
     };
 
+    struct Dependency {
+      String name;
+      String when;
+    };
+
     Shader::Type kind;
     String source;
-    Vector<String> dependencies;
+    Vector<Dependency> dependencies;
     Map<String, InOut> inputs;
     Map<String, InOut> outputs;
     String when;

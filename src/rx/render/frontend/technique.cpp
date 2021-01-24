@@ -514,7 +514,7 @@ bool Technique::compile(const Map<String, Module>& _modules) {
   return true;
 }
 
-Technique::operator Program*() const {
+Program* Technique::basic() const {
   RX_ASSERT(m_type == Type::BASIC, "not a basic technique");
   return m_programs[0];
 }
@@ -876,8 +876,8 @@ bool Technique::parse_shader(const JSON& _shader) {
     return error("expected String for 'when'");
   }
 
-  if (imports && !imports.is_array_of(JSON::Type::STRING)) {
-    return error("expected Array[String] for 'imports'");
+  if (imports && !imports.is_array()) {
+    return error("expected Array[String | Object] for 'imports'");
   }
 
   const auto type_string{type.as_string()};
@@ -890,7 +890,7 @@ bool Technique::parse_shader(const JSON& _shader) {
     return error("unknown Type '%s' for shader", type_string);
   }
 
-  // ensure we don't have multiple definitions of the same shader
+  // Ensure we don't have multiple definitions of the same shader.
   if (!m_shader_definitions.each_fwd([shader_type](const ShaderDefinition& _shader_definition)
     { return _shader_definition.kind != shader_type; }))
   {
@@ -904,10 +904,26 @@ bool Technique::parse_shader(const JSON& _shader) {
 
   if (imports) {
     const auto result{imports.each([this, &definition](const JSON& _import) {
-      if (!_import.is_string()) {
-        return error("expected String for import");
+      if (_import.is_string()) {
+        return definition.dependencies.emplace_back(_import.as_string(), "");
+      } else if (_import.is_object()) {
+        const auto& name = _import["name"];
+        const auto& when = _import["when"];
+        if (!name) {
+          return error("expected 'name' for import");
+        }
+        if (!when) {
+          return error("expected 'when' for import");
+        }
+        if (!name.is_string()) {
+          return error("expected String for 'name' in import");
+        }
+        if (!when.is_string()) {
+          return error("expected String for 'when' in import");
+        }
+        return definition.dependencies.emplace_back(name.as_string(), when.as_string());
       }
-      return definition.dependencies.push_back(_import.as_string());
+      return error("expected String or Object for import");
     })};
 
     if (!result) {
@@ -1031,8 +1047,8 @@ bool Technique::resolve_dependencies(const Map<String, Module>& _modules) {
     Set<String> visited{allocator};
 
     // For every dependency in the shader.
-    const bool result = _shader.dependencies.each_fwd([&](const String& _dependency) {
-      if (auto find = _modules.find(_dependency)) {
+    const bool result = _shader.dependencies.each_fwd([&](const ShaderDefinition::Dependency& _dependency) {
+      if (auto find = _modules.find(_dependency.name)) {
         return resolve_module_dependencies(_modules, *find, visited, sorter);
       }
       return false;

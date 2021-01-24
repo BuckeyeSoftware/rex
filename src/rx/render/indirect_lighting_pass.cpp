@@ -23,7 +23,7 @@ void IndirectLightingPass::render(const Math::Camera& _camera, const GBuffer* _g
   state.viewport.record_dimensions(m_target->dimensions());
   state.cull.record_enable(false);
 
-  Frontend::Program* program{*m_technique};
+  Frontend::Program* program = m_technique->basic();
 
   Frontend::Buffers draw_buffers;
   draw_buffers.add(0);

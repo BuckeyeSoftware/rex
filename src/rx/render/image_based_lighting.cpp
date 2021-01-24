@@ -43,7 +43,7 @@ Optional<IrradianceMap> IrradianceMap::create(Frontend::Context* _frontend, Size
   result.m_frontend = _frontend;
   result.m_target = target;
   result.m_texture = texture;
-  result.m_program = *technique;
+  result.m_program = technique->basic();
   result.m_resolution = _resolution;
 
   return result;
@@ -144,7 +144,7 @@ Optional<PrefilteredEnvironmentMap> PrefilteredEnvironmentMap::create(Frontend::
   result.m_frontend = _frontend;
   result.m_targets = targets;
   result.m_texture = texture;
-  result.m_program = *technique;
+  result.m_program = technique->basic();
   result.m_resolution = _resolution;
 
   return result;
@@ -253,7 +253,7 @@ Optional<ImageBasedLighting> ImageBasedLighting::create(
     scale_bias_target,
     buffers,
     nullptr,
-    *scale_bias_technique,
+    scale_bias_technique->basic(),
     3,
     0,
     0,
