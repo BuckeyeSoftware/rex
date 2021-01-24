@@ -86,6 +86,19 @@ There's a few algorithm implementations:
   * `quick_sort`
   * `topological_sort`
 
+## Concepts
+It's encouraged to prefer concepts to traits.
+
+The following concepts exist:
+  * `Assignable`
+  * `Enum`
+  * `FloatingPoint`
+  * `Integral`
+  * `Invocable`
+  * `Referenceable`
+  * `TriviallyCopyable`
+  * `TriviallyDestructible`
+
 ## Concurrency
 
 None of the concurrency primitives are safe out-of-process.
@@ -115,6 +128,19 @@ The following filesystem functions are implements:
   * `read_text_stream`
   * `read_binary_stream`
 
+## Hash
+
+Hashing functions and utilities:
+
+  * `combine` TEA algorithm for combining hashes.
+  * `djbx33a` Interleave DJB hash four times for 128-bit hash.
+  * `fnv1a` The fnv1a hash function.
+  * `hasher` Type generic hash template that can be specialized.
+  * `mix_enum` Mix the bits of an enumerator to use in hashes.
+  * `mix_float` Mix the bits of a floating point value to use in hashes.
+  * `mix_int` Mix the bits of an integer value to use in hashes.
+  * `mix_pointer` Mix the representation of a pointer value to use in hashes.
+
 ## Hints
 
 Many hints for the compiler:
@@ -140,11 +166,15 @@ The following math kernel functions have been implemented:
   * `cos` Cosine.
   * `floor` Floor.
   * `force_eval` Force the evaluation of something even in presense of compiler optimizations.
+  * `fract` Compute the fractional part.
   * `half` Half precision floating point type.
   * `isnan` Check if something is NaN.
+  * `ldexp` Generate value from significand and exponent.
   * `log2` Log base 2.
   * `mod` Modulo.
   * `pow` Power.
+  * `round` Rounding of values.
+  * `scalbnf` Multiplies a number by an integral power of float radix.
   * `shape` Shape the bits of floats and integers.
   * `sign` Extract the sign.
   * `sin` Sine.
@@ -204,37 +234,16 @@ Unlike the standard library, the core library in Rex tries to keep each type tra
 There's also a few additional traits.
 
 The following traits exist:
-  * `add_pointer`
-  * `add_rvalue_reference`
   * `conditional`
-  * `decay`
-  * `enable_if`
-  * `is_array`
-  * `is_assignable`
-  * `is_callable`
-  * `is_enum`
-  * `is_function`
-  * `is_integral`
+  * `invoke_result`
   * `is_lvalue_reference`
-  * `is_referenceable`
-  * `is_pointer`
   * `is_restrict`
-  * `is_reference`
-  * `is_rvalue_reference`
   * `is_same`
-  * `is_signed`
-  * `is_trivially_copyable`
-  * `is_trivially_destructible`
-  * `is_unsigned`
   * `remove_const`
   * `remove_cv`
   * `remove_cvref`
-  * `remove_extent`
-  * `remove_pointer`
   * `remove_reference`
   * `remove_volatile`
-  * `return_type`
-  * `type_identity`
   * `underlying_type`
 
 ## Utility
@@ -291,7 +300,6 @@ Other things not easily documented:
   * `assert` Runtime assertions for `RX_DEBUG` builds. With optional messages.
   * `config` Feature test macros.
   * `format` Type safe formatting of types for printing.
-  * `hash` Hash functions for various types and generalized hash combiner.
   * `log` Generalized, thread-safe, concurrent logging framework.
   * `markers` Helper macros for marking types as no-copy, no-move, etc.
   * `pp` Preprocessor macros for standard token manipulation.
