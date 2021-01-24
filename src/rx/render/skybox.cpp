@@ -25,7 +25,7 @@ Skybox::Skybox(Frontend::Context* _frontend)
 }
 
 Skybox::~Skybox() {
-  m_frontend->destroy_texture(RX_RENDER_TAG("skybox"), m_texture);
+  release();
 }
 
 void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
@@ -108,28 +108,63 @@ bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
 
   const JSON description{*disown};
   if (!description) {
-    // could not parse json
+    // Could not parse json.
     return false;
   }
 
   if (!description.is_object()) {
-    // expected object
+    // Expected object.
     return false;
   }
 
-  const auto& name{description["name"]};
+  const auto& name = description["name"];
   if (!name || !name.is_string()) {
     return false;
   }
 
-  const auto& faces{description["faces"]};
-  if (!faces || !faces.is_array_of(JSON::Type::STRING, 6)) {
+  const auto& faces = description["faces"];
+  const auto& hdri = description["hdri"];
+  // Can only be one of these.
+  if (faces && hdri) {
     return false;
   }
 
+  Frontend::Texture* new_texture = nullptr;
+  if (faces) {
+    if (!faces.is_array_of(JSON::Type::STRING, 6)) {
+      return false;
+    }
+    new_texture = create_cubemap(faces, _max_face_dimensions);
+  } else if (hdri) {
+    if (!hdri.is_string()) {
+      return false;
+    }
+    new_texture = create_hdri(hdri);
+  } else {
+    return false;
+  }
+
+  if (!new_texture) {
+    return false;
+  }
+
+  // While locked.
+  {
+    Concurrency::ScopeLock lock{m_lock};
+    release();
+    m_texture = new_texture;
+    m_name = name.as_string();
+  }
+
+  return true;
+}
+
+Frontend::TextureCM* Skybox::create_cubemap(const JSON& _faces,
+  const Math::Vec2z& _max_face_dimensions) const
+{
   auto texture = m_frontend->create_textureCM(RX_RENDER_TAG("skybox"));
   if (!texture) {
-    return false;
+    return nullptr;
   }
 
   texture->record_type(Frontend::Texture::Type::STATIC);
@@ -142,51 +177,76 @@ bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
 
   Math::Vec2z dimensions;
   Frontend::TextureCM::Face face{Frontend::TextureCM::Face::RIGHT};
-  bool result = faces.each([&](const JSON& file_name) {
+  bool result = _faces.each([&](const JSON& file_name) {
     Texture::Loader loader{m_frontend->allocator()};
     if (!loader.load(file_name.as_string(), Texture::PixelFormat::RGBA_U8, _max_face_dimensions)) {
       return false;
     }
-
     if (dimensions.is_all(0)) {
       dimensions = loader.dimensions();
       texture->record_dimensions(dimensions);
     } else if (dimensions != loader.dimensions()) {
       return false;
     }
-
-    if (loader.format() != Texture::PixelFormat::RGBA_U8) {
-      // Convert everything to RGB8 if not already.
-      auto data = Texture::convert(
-        m_frontend->allocator(),
-        loader.data().data(),
-        loader.dimensions().area(),
-        loader.format(),
-        Texture::PixelFormat::RGBA_U8);
-      if (!data) {
-        return false;
-      }
-      texture->write(data->data(), face, 0);
-    } else {
-      texture->write(loader.data().data(), face, 0);
-    }
+    texture->write(loader.data().data(), face, 0);
     face = static_cast<Frontend::TextureCM::Face>(static_cast<Size>(face) + 1);
     return true;
   });
 
   if (!result) {
-    return false;
+    return nullptr;
   }
 
   m_frontend->initialize_texture(RX_RENDER_TAG("skybox"), texture);
 
-  m_lock.lock();
-  m_frontend->destroy_texture(RX_RENDER_TAG("skybox"), m_texture);
-  m_texture = texture;
-  m_name = name.as_string();
-  m_lock.unlock();
+  return texture;
+}
 
-  return false;
+Frontend::Texture2D* Skybox::create_hdri(const JSON& _json) const {
+  auto texture = m_frontend->create_texture2D(RX_RENDER_TAG("skybox"));
+  if (!texture) {
+    return nullptr;
+  }
+
+  texture->record_type(Frontend::Texture::Type::STATIC);
+  texture->record_format(Frontend::Texture::DataFormat::RGBA_F32);
+  texture->record_levels(1);
+  texture->record_filter({false, false, false});
+  texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+                        Frontend::Texture::WrapType::CLAMP_TO_EDGE});
+
+  Texture::Loader loader{m_frontend->allocator()};
+  if (!loader.load(_json.as_string(), Texture::PixelFormat::RGBA_F32, {4096, 4096})) {
+    return nullptr;
+  }
+
+  texture->record_dimensions(loader.dimensions());
+  texture->write(loader.data().data(), 0);
+
+  m_frontend->initialize_texture(RX_RENDER_TAG("skybox"), texture);
+
+  return texture;
+}
+
+void Skybox::release() {
+  if (!m_texture) {
+    return;
+  }
+
+  auto texture = m_texture.load();
+
+  switch (texture->resource_type()) {
+  default:
+    break;
+  case Frontend::Resource::Type::TEXTURE2D:
+    m_frontend->destroy_texture(RX_RENDER_TAG("skybox"),
+      static_cast<Frontend::Texture2D*>(texture));
+    break;
+  case Frontend::Resource::Type::TEXTURECM:
+    m_frontend->destroy_texture(RX_RENDER_TAG("skybox"),
+      static_cast<Frontend::TextureCM*>(texture));
+    break;
+  }
 }
 
 } // namespace Rx::Render

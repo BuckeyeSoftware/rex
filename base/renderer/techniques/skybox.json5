@@ -3,7 +3,7 @@
   uniforms: [
     { name: "u_inverse_projection", type: "f32x4x4" },
     { name: "u_inverse_view",       type: "f32x4x4" },
-    { name: "u_sampler",            type: "samplerCM", value: 0 },
+    { name: "u_sampler",            type: "sampler2D", value: 0 },
     { name: "u_grading_lut",        type: "sampler3D", when: "HAS_GRADING_LUT" },
     { name: "u_grading_properties", type: "f32x2",     when: "HAS_GRADING_LUT" }
   ],
@@ -36,9 +36,12 @@
       outputs: [
         { name: "fs_color",      type: "f32x4" }
       ],
+      imports: [
+        "sample_hdri"
+      ],
       source: "
         void main() {
-          f32x4 color = rx_textureCM(u_sampler, vs_coordinate);
+          f32x4 color = sample_hdri(u_sampler, vs_coordinate);
         #if defined(HAS_GRADING_LUT)
           f32 z = color.z * u_grading_properties.x + u_grading_properties.y;
           fs_color = rx_texture3D(u_grading_lut, f32x3(color.xy, z));

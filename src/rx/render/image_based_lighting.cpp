@@ -10,6 +10,10 @@
 
 namespace Rx::Render {
 
+static inline bool is_hdri(const Frontend::Texture* _texture) {
+  return _texture->resource_type() == Frontend::Resource::Type::TEXTURE2D;
+}
+
 // [IrradianceMap]
 Optional<IrradianceMap> IrradianceMap::create(Frontend::Context* _frontend, Size _resolution) {
   auto tag = "irradiance map";
@@ -43,7 +47,7 @@ Optional<IrradianceMap> IrradianceMap::create(Frontend::Context* _frontend, Size
   result.m_frontend = _frontend;
   result.m_target = target;
   result.m_texture = texture;
-  result.m_program = technique->basic();
+  result.m_technique = technique;
   result.m_resolution = _resolution;
 
   return result;
@@ -57,7 +61,7 @@ void IrradianceMap::release() {
   m_frontend->destroy_texture(RX_RENDER_TAG("irradiance map"), m_texture);
 }
 
-void IrradianceMap::render(Frontend::TextureCM* _env_map) {
+void IrradianceMap::render(Frontend::Texture* _env_map) {
   if (m_environment_map != _env_map) {
     m_current_face = 0;
     m_environment_map = _env_map;
@@ -71,10 +75,13 @@ void IrradianceMap::render_next_face() {
     return;
   }
 
+  auto program = m_technique->variant(is_hdri(m_environment_map) ? 1 : 0);
+
   Frontend::Textures textures;
-  m_program->uniforms()[0].record_sampler(textures.add(m_environment_map));
-  m_program->uniforms()[1].record_int(m_current_face);
-  m_program->uniforms()[2].record_int(Sint32(m_resolution) * 4);
+  textures.add(m_environment_map);
+
+  program->uniforms()[2].record_int(m_current_face);
+  program->uniforms()[3].record_int(Sint32(m_resolution) * 4);
 
   Frontend::Buffers buffers;
   buffers.add(m_current_face);
@@ -89,7 +96,7 @@ void IrradianceMap::render_next_face() {
     m_target,
     buffers,
     nullptr,
-    m_program,
+    program,
     3,
     0,
     0,
@@ -144,7 +151,7 @@ Optional<PrefilteredEnvironmentMap> PrefilteredEnvironmentMap::create(Frontend::
   result.m_frontend = _frontend;
   result.m_targets = targets;
   result.m_texture = texture;
-  result.m_program = technique->basic();
+  result.m_technique = technique;
   result.m_resolution = _resolution;
 
   return result;
@@ -162,7 +169,7 @@ void PrefilteredEnvironmentMap::release() {
   m_frontend->destroy_texture(RX_RENDER_TAG("prefiltered environment map"), m_texture);
 }
 
-void PrefilteredEnvironmentMap::render(Frontend::TextureCM* _env_map) {
+void PrefilteredEnvironmentMap::render(Frontend::Texture* _env_map) {
   if (m_environment_map != _env_map) {
     m_current_face = 0;
     m_environment_map = _env_map;
@@ -176,9 +183,12 @@ void PrefilteredEnvironmentMap::render_next_face() {
     return;
   }
 
+  auto program = m_technique->variant(is_hdri(m_environment_map) ? 1 : 0);
+
   Frontend::Textures textures;
-  m_program->uniforms()[0].record_sampler(textures.add(m_environment_map));
-  m_program->uniforms()[1].record_int(m_current_face);
+  textures.add(m_environment_map);
+
+  program->uniforms()[2].record_int(m_current_face);
 
   Frontend::Buffers buffers;
   buffers.add(m_current_face);
@@ -190,7 +200,7 @@ void PrefilteredEnvironmentMap::render_next_face() {
     auto mipmap_size = m_resolution >> i;
     auto roughness = Float32(i) / MAX_PREFILTER_LEVELS;
     state.viewport.record_dimensions({mipmap_size, mipmap_size});
-    m_program->uniforms()[2].record_float(roughness);
+    program->uniforms()[3].record_float(roughness);
 
     m_frontend->draw(
       RX_RENDER_TAG("prefiltered environment map"),
@@ -198,7 +208,7 @@ void PrefilteredEnvironmentMap::render_next_face() {
       m_targets[i],
       buffers,
       nullptr,
-      m_program,
+      program,
       3,
       0,
       0,
@@ -287,7 +297,7 @@ void ImageBasedLighting::release() {
   m_frontend->destroy_texture(RX_RENDER_TAG("scale bias"), m_scale_bias_texture);
 }
 
-void ImageBasedLighting::render(Frontend::TextureCM* _env_map) {
+void ImageBasedLighting::render(Frontend::Texture* _env_map) {
   m_irradiance_map.render(_env_map);
   m_prefiltered_environment_map.render(_env_map);
 }

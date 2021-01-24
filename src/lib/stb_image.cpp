@@ -1,5 +1,8 @@
 #include "rx/core/config.h"
 
+#include "rx/core/math/pow.h"
+#include "rx/core/math/ldexp.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 
 #define STBI_NO_BMP
@@ -9,10 +12,10 @@
 #define STBI_NO_PNM
 #define STBI_NO_STDIO
 
-#define STBI_NO_HDR
-#define STBI_NO_LINEAR
-
 #define STBI_ASSERT(x) ((void)(x))
+
+#define pow(x, y) Rx::Math::pow((x), (y))
+#define ldexp(x, n) Rx::Math::ldexp((x), (n))
 
 #if defined(RX_COMPILER_GCC)
 #pragma GCC diagnostic push

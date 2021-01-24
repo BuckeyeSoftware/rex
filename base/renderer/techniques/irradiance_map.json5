@@ -1,9 +1,14 @@
 {
   name: "irradiance_map",
   uniforms: [
-    { name: "u_sampler",      type: "samplerCM", value: 0  },
+    { name: "u_cubemap",      type: "samplerCM", value: 0, when: "USE_CUBEMAP" },
+    { name: "u_hdri",         type: "sampler2D", value: 0, when: "USE_HDRI" },
     { name: "u_face",         type: "s32" },
     { name: "u_texture_size", type: "s32" }
+  ],
+  variants: [
+    "USE_CUBEMAP",
+    "USE_HDRI"
   ],
   shaders: [
     {
@@ -30,7 +35,8 @@
         { name: "fs_color",      type: "f32x4" }
       ],
       imports: [
-        "cubemap_rotations"
+        "cubemap_rotations",
+        "sample_hdri"
       ],
       source: "
         void main() {
@@ -47,7 +53,11 @@
                 f32x2 coordinate = f32x2(x, y) / as_f32(u_texture_size);
                 f32x3 direction = rotation * normalize(f32x3(coordinate * 2.0 - 1.0, -1.0));
                 f32 weight = max(dot(n, direction), 0.0);
-                f32x3 sampled = rx_textureCM(u_sampler, direction).rgb;
+        #if defined(USE_CUBEMAP)
+                f32x3 sampled = rx_textureCM(u_cubemap, direction).rgb;
+        #elif defined(USE_HDRI)
+                f32x3 sampled = sample_hdri(u_hdri, direction).rgb;
+        #endif
                 color += sampled * weight;
                 total_weight += weight;
               }

@@ -7,6 +7,7 @@
 namespace Rx::Render {
 
 namespace Frontend {
+  struct Texture;
   struct Texture2D;
   struct TextureCM;
   struct Target;
@@ -27,7 +28,7 @@ struct IrradianceMap {
 
   static Optional<IrradianceMap> create(Frontend::Context* _frontend, Size _resolution);
 
-  void render(Frontend::TextureCM* _env_map);
+  void render(Frontend::Texture* _env_map);
 
   Frontend::TextureCM* texture() const;
 
@@ -36,10 +37,10 @@ private:
   void render_next_face();
 
   Frontend::Context* m_frontend;
-  Frontend::TextureCM* m_environment_map;
+  Frontend::Texture* m_environment_map;
   Frontend::Target* m_target;
   Frontend::TextureCM* m_texture;
-  Frontend::Program* m_program;
+  Frontend::Technique* m_technique;
   Size m_resolution;
   Sint32 m_current_face;
 };
@@ -50,7 +51,7 @@ inline constexpr IrradianceMap::IrradianceMap()
   , m_environment_map{nullptr}
   , m_target{nullptr}
   , m_texture{nullptr}
-  , m_program{nullptr}
+  , m_technique{nullptr}
   , m_resolution{0}
   , m_current_face{0}
 {
@@ -65,7 +66,7 @@ inline IrradianceMap::IrradianceMap(IrradianceMap&& move_)
   , m_environment_map{Utility::exchange(move_.m_environment_map, nullptr)}
   , m_target{Utility::exchange(move_.m_target, nullptr)}
   , m_texture{Utility::exchange(move_.m_texture, nullptr)}
-  , m_program{Utility::exchange(move_.m_program, nullptr)}
+  , m_technique{Utility::exchange(move_.m_technique, nullptr)}
   , m_resolution{Utility::exchange(move_.m_resolution, 0)}
   , m_current_face{Utility::exchange(move_.m_current_face, 0)}
 {
@@ -93,7 +94,7 @@ struct PrefilteredEnvironmentMap {
 
   static Optional<PrefilteredEnvironmentMap> create(Frontend::Context* _frontend, Size _resolution);
 
-  void render(Frontend::TextureCM* _env_map);
+  void render(Frontend::Texture* _env_map);
 
   Frontend::TextureCM* texture() const;
 
@@ -102,10 +103,10 @@ private:
   void render_next_face();
 
   Frontend::Context* m_frontend;
-  Frontend::TextureCM* m_environment_map;
+  Frontend::Texture* m_environment_map;
   Array<Frontend::Target*[MAX_PREFILTER_LEVELS]> m_targets;
   Frontend::TextureCM* m_texture;
-  Frontend::Program* m_program;
+  Frontend::Technique* m_technique;
   Size m_resolution;
   Sint32 m_current_face;
 };
@@ -115,7 +116,7 @@ inline constexpr PrefilteredEnvironmentMap::PrefilteredEnvironmentMap()
   , m_environment_map{nullptr}
   , m_targets{}
   , m_texture{nullptr}
-  , m_program{nullptr}
+  , m_technique{nullptr}
   , m_resolution{0}
   , m_current_face{0}
 {
@@ -130,7 +131,7 @@ inline PrefilteredEnvironmentMap::PrefilteredEnvironmentMap(PrefilteredEnvironme
   , m_environment_map{Utility::exchange(move_.m_environment_map, nullptr)}
   , m_targets{Utility::exchange(move_.m_targets, {})}
   , m_texture{Utility::exchange(move_.m_texture, nullptr)}
-  , m_program{Utility::exchange(move_.m_program, nullptr)}
+  , m_technique{Utility::exchange(move_.m_technique, nullptr)}
   , m_resolution{Utility::exchange(move_.m_resolution, 0)}
   , m_current_face{Utility::exchange(move_.m_current_face, 0)}
 {
@@ -157,7 +158,7 @@ struct ImageBasedLighting {
   static Optional<ImageBasedLighting> create(Frontend::Context* _frontend,
     Size _irradiance_size = 32, Size _prefilter_size = 256);
 
-  void render(Frontend::TextureCM* _env_map);
+  void render(Frontend::Texture* _env_map);
 
   Frontend::Texture2D* scale_bias() const;
   Frontend::TextureCM* irradiance_map() const;

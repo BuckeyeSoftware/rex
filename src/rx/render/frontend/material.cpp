@@ -102,7 +102,7 @@ bool Material::load(const Rx::Material::Loader& _loader) {
     { &m_normal,     "normal",    false },
     { &m_metalness,  "metalness", false },
     { &m_roughness,  "roughness", false },
-    { &m_ambient,    "ambient",   false },
+    { &m_ambient,    "occlusion", false },
     { &m_emissive,   "emissive",  false }
   };
 
@@ -158,6 +158,9 @@ bool Material::load(const Rx::Material::Loader& _loader) {
         break;
       case Rx::Texture::PixelFormat::R_U8:
         texture->record_format(Texture::DataFormat::R_U8);
+        break;
+      case Rx::Texture::PixelFormat::RGBA_F32:
+        texture->record_format(Texture::DataFormat::RGBA_F32);
         break;
       }
 

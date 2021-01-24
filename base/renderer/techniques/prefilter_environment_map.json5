@@ -1,9 +1,14 @@
 {
   name: "prefilter_environment_map",
   uniforms: [
-    { name: "u_sampler",   type: "samplerCM", value: 0 },
+    { name: "u_cubemap",   type: "samplerCM", value: 0, when: "USE_CUBEMAP" },
+    { name: "u_hdri",      type: "sampler2D", value: 0, when: "USE_HDRI" },
     { name: "u_face",      type: "s32" },
     { name: "u_roughness", type: "f32" }
+  ],
+  variants: [
+    "USE_CUBEMAP",
+    "USE_HDRI"
   ],
   shaders: [
     {
@@ -32,7 +37,8 @@
       imports: [
         "hammersley",
         "importance_sample_ggx",
-        "cubemap_rotations"
+        "cubemap_rotations",
+        "sample_hdri"
       ],
       source: "
         f32x3 prefilter(f32 roughness, f32x3 r) {
@@ -51,7 +57,11 @@
             f32 n_dot_l = max(0.0, dot(n, l));
 
             if (n_dot_l > 0.0) {
-              color += rx_textureCM(u_sampler, l).rgb * n_dot_l;
+        #if defined(USE_CUBEMAP)
+              color += rx_textureCM(u_cubemap, l).rgb * n_dot_l;
+        #elif defined(USE_HDRI)
+              color += sample_hdri(u_hdri, l).rgb * n_dot_l;
+        #endif
               total_weight += n_dot_l;
             }
           }

@@ -131,7 +131,7 @@ bool Texture::parse_type(const JSON& _type) {
     "metalness",
     "roughness",
     "occlusion",
-    "emission"
+    "emissive"
   };
 
   for (const auto& match : MATCHES) {

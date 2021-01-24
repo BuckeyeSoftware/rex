@@ -7,6 +7,13 @@
 #include "rx/core/log.h"
 #include "rx/core/stream.h"
 
+#define STBI_NO_BMP
+#define STBI_NO_PSD
+#define STBI_NO_GIF
+#define STBI_NO_PIC
+#define STBI_NO_PNM
+#define STBI_NO_STDIO
+
 #include "lib/stb_image.h"
 
 RX_LOG("texture/loader", logger);
@@ -23,7 +30,7 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
 
   Math::Vec2<int> dimensions;
 
-  int want_channels{0};
+  int want_channels = 0;
   switch (_want_format) {
   case PixelFormat::R_U8:
     want_channels = 1;
@@ -38,16 +45,31 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
   case PixelFormat::BGRA_U8:
     want_channels = 4;
     break;
+  case PixelFormat::RGBA_F32:
+    want_channels = 4;
+    break;
   }
 
-  int channels;
-  Byte* decoded_image = stbi_load_from_memory(
-    data->data(),
-    static_cast<int>(data->size()),
-    &dimensions.w,
-    &dimensions.h,
-    &channels,
-    want_channels);
+  int decoded_channels = 0;
+  Byte* decoded_image = nullptr;
+  if (_want_format == PixelFormat::RGBA_F32) {
+    decoded_image = reinterpret_cast<Byte*>(
+      stbi_loadf_from_memory(
+        data->data(),
+        static_cast<int>(data->size()),
+        &dimensions.w,
+        &dimensions.h,
+        &decoded_channels,
+        want_channels));
+  } else {
+    decoded_image = stbi_load_from_memory(
+      data->data(),
+      static_cast<int>(data->size()),
+      &dimensions.w,
+      &dimensions.h,
+      &decoded_channels,
+      want_channels);
+  }
 
   if (!decoded_image) {
     logger->error("%s failed %s", _stream->name(), stbi_failure_reason());
@@ -55,14 +77,14 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
     return false;
   }
 
+  m_format = _want_format;
   m_channels = want_channels;
-  m_bpp = want_channels;
   m_dimensions = dimensions.cast<Size>();
 
   // Scale the texture down if it exceeds the max dimensions.
   if (m_dimensions > _max_dimensions) {
     m_dimensions = _max_dimensions;
-    if (!m_data.resize(m_dimensions.area() * m_bpp)) {
+    if (!m_data.resize(m_dimensions.area() * bits_per_pixel() / 8)) {
       stbi_image_free(decoded_image);
       return false;
     }
@@ -71,7 +93,7 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
       _max_dimensions.h);
   } else {
     // Otherwise just copy the decoded image data directly.
-    if (!m_data.resize(m_dimensions.area() * m_bpp)) {
+    if (!m_data.resize(m_dimensions.area() * bits_per_pixel() / 8)) {
       stbi_image_free(decoded_image);
       return false;
     }
@@ -87,8 +109,8 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
     || _want_format == PixelFormat::BGRA_U8)
   {
     const Size samples =
-      m_dimensions.area() * static_cast<Size>(channels);
-    for (Size i = 0; i < samples; i += channels) {
+      m_dimensions.area() * static_cast<Size>(m_channels);
+    for (Size i = 0; i < samples; i += m_channels) {
       const auto r = m_data[0];
       const auto b = m_data[2];
       m_data[0] = b;
@@ -97,7 +119,7 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
   }
 
   logger->verbose("%s loaded %zux%zu @ %zu bpp", _stream->name(),
-    m_dimensions.w, m_dimensions.h, m_bpp);
+    m_dimensions.w, m_dimensions.h, bits_per_pixel());
 
   return true;
 }
@@ -109,6 +131,24 @@ bool Loader::load(const String& _file_name, PixelFormat _want_format,
     return load(&file, _want_format, _max_dimensions);
   }
   return false;
+}
+
+Size Loader::bits_per_pixel() const {
+  switch (m_format) {
+  case PixelFormat::R_U8:
+    return 8;
+  case PixelFormat::BGR_U8:
+    [[fallthrough]];
+  case PixelFormat::RGB_U8:
+    return 8 * 3;
+  case PixelFormat::BGRA_U8:
+    [[fallthrough]];
+  case PixelFormat::RGBA_U8:
+    return 8 * 4;
+  case PixelFormat::RGBA_F32:
+    return 32 * 4;
+  }
+  RX_HINT_UNREACHABLE();
 }
 
 } // namespace Rx::Texture

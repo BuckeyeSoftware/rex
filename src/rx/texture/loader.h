@@ -18,7 +18,8 @@ enum class PixelFormat : Uint8 {
   BGRA_U8,
   RGB_U8,
   BGR_U8,
-  R_U8
+  R_U8,
+  RGBA_F32
 };
 
 struct Loader {
@@ -34,7 +35,7 @@ struct Loader {
   bool load(const String& _file_name, PixelFormat _want_format,
     const Math::Vec2z& _max_dimensions);
 
-  Size bpp() const;
+  Size bits_per_pixel() const;
   Size channels() const;
   const Math::Vec2z& dimensions() const &;
   LinearBuffer&& data();
@@ -45,8 +46,8 @@ struct Loader {
 private:
   Memory::Allocator& m_allocator;
   LinearBuffer m_data;
-  Size m_bpp;
   Size m_channels;
+  PixelFormat m_format;
   Math::Vec2z m_dimensions;
 };
 
@@ -58,14 +59,9 @@ inline constexpr Loader::Loader()
 inline constexpr Loader::Loader(Memory::Allocator& _allocator)
   : m_allocator{_allocator}
   , m_data{allocator()}
-  , m_bpp{0}
   , m_channels{0}
   , m_dimensions{}
 {
-}
-
-inline Size Loader::bpp() const {
-  return m_bpp;
 }
 
 inline Size Loader::channels() const {
@@ -81,15 +77,7 @@ inline LinearBuffer&& Loader::data() {
 }
 
 inline PixelFormat Loader::format() const {
-  switch (m_bpp) {
-  case 4:
-    return PixelFormat::RGBA_U8;
-  case 3:
-    return PixelFormat::RGB_U8;
-  case 1:
-    return PixelFormat::R_U8;
-  }
-  RX_HINT_UNREACHABLE();
+  return m_format;
 }
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Loader::allocator() const {
