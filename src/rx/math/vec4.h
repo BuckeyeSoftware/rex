@@ -19,6 +19,8 @@ template<typename T>
 struct Vec4 {
   constexpr Vec4();
   constexpr Vec4(T _x, T _y, T _z, T _w);
+  constexpr Vec4(const T (&_values)[2], T _z, T _w);
+  constexpr Vec4(const T (&_values)[3], T _w);
   constexpr Vec4(const T (&_values)[4]);
 
   T& operator[](Size _i);
@@ -71,6 +73,24 @@ constexpr Vec4<T>::Vec4(T _x, T _y, T _z, T _w)
   : x{_x}
   , y{_y}
   , z{_z}
+  , w{_w}
+{
+}
+
+template<typename T>
+constexpr Vec4<T>::Vec4(const T (&_values)[2], T _z, T _w)
+  : x{_values[0]}
+  , y{_values[1]}
+  , z{_z}
+  , w{_w}
+{
+}
+
+template<typename T>
+constexpr Vec4<T>::Vec4(const T (&_values)[3], T _w)
+  : x{_values[0]}
+  , y{_values[1]}
+  , z{_values[2]}
   , w{_w}
 {
 }
