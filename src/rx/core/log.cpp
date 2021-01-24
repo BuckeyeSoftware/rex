@@ -206,7 +206,13 @@ bool Logger::enqueue(Log* _owner, Log::Level _level, String&& message_) {
   this_queue.messages.push_back(&m_messages.last()->link);
 
   // Wakeup logging thread when we have a few messages.
-  if (m_streams.size() && m_messages.size() >= 1000) {
+#if defined(RX_DEBUG)
+  static constexpr const auto FLUSH_THRESHOLD = 1_z;
+#else
+  static constexpr const auto FLUSH_THRESHOLD = 1000_z;
+#endif
+
+  if (m_streams.size() && m_messages.size() >= FLUSH_THRESHOLD) {
     m_wakeup_cond.signal();
   }
 

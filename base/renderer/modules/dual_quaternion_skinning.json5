@@ -1,0 +1,35 @@
+{
+  name: "dual_quaternion_skinning",
+  source: "
+    f32x2x4 dqs(f32x2x4 bones[RX_MAX_BONES], f32x4 weights, u32x4 indices) {
+      f32x2x4 dq0 = bones[indices.x];
+      f32x2x4 dq1 = bones[indices.y];
+      f32x2x4 dq2 = bones[indices.z];
+      f32x2x4 dq3 = bones[indices.w];
+
+      // Correct for antipodals.
+      dq1 *= sign(dot(dq0[0], dq1[0]));
+      dq2 *= sign(dot(dq0[0], dq2[0]));
+      dq3 *= sign(dot(dq0[0], dq3[0]));
+
+      f32x2x4 blend  = dq0 * weights.x;
+              blend += dq1 * weights.y;
+              blend += dq2 * weights.z;
+              blend += dq3 * weights.w;
+
+      return blend / length(blend[0]);
+    }
+
+    f32x3 dq_transform_point(f32x2x4 blend, f32x3 point) {
+      f32x4 real = blend[0];
+      f32x4 dual = blend[1];
+      return (cross(real.xyz, cross(real.xyz, point) + point * real.w + dual.xyz) + dual.xyz * real.w - real.xyz * dual.w) * 2.0 + point;
+    }
+
+    f32x3 dq_transform_normal(f32x2x4 blend, f32x3 normal) {
+      f32x4 real = blend[0];
+      f32x4 dual = blend[1];
+      return cross(real.xyz, cross(real.xyz, normal) + normal * real.w) * 2.0 + normal;
+    }
+  "
+}

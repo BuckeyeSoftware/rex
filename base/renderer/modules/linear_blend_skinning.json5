@@ -1,0 +1,20 @@
+{
+  name: "linear_blend_skinning",
+  source: "
+    f32x3x4 lbs(f32x3x4 bones[RX_MAX_BONES], f32x4 weights, u32x4 indices) {
+      f32x3x4 blend  = bones[indices.x] * weights.x;
+              blend += bones[indices.y] * weights.y;
+              blend += bones[indices.z] * weights.z;
+              blend += bones[indices.w] * weights.w;
+      return blend;
+    }
+
+    f32x3 lbs_transform_point(f32x3x4 blend, f32x3 point) {
+      return f32x4(point, 1.0) * blend;
+    }
+
+    f32x3 lbs_transform_normal(f32x3x4 blend, f32x3 normal) {
+      return f32x4(normal, 0.0) * blend;
+    }
+  "
+}

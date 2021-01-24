@@ -760,105 +760,12 @@ namespace detail_gl3 {
   };
 };
 
-static constexpr const char* inout_to_string(Frontend::Shader::InOutType _type) {
-  switch (_type) {
-  case Frontend::Shader::InOutType::MAT4X4F:
-    return "mat4";
-  case Frontend::Shader::InOutType::MAT3X3F:
-    return "mat3";
-  case Frontend::Shader::InOutType::VEC2F:
-    return "vec2f";
-  case Frontend::Shader::InOutType::VEC3F:
-    return "vec3f";
-  case Frontend::Shader::InOutType::VEC4F:
-    return "vec4f";
-  case Frontend::Shader::InOutType::VEC2I:
-    return "vec2i";
-  case Frontend::Shader::InOutType::VEC3I:
-    return "vec3i";
-  case Frontend::Shader::InOutType::VEC4I:
-    return "vec4i";
-  case Frontend::Shader::InOutType::VEC4B:
-    return "vec4b";
-  case Frontend::Shader::InOutType::FLOAT:
-    return "float";
-  }
-  return nullptr;
-}
-
-static constexpr const char* uniform_to_string(Frontend::Uniform::Type _type) {
-  switch (_type) {
-  case Frontend::Uniform::Type::SAMPLER1D:
-    return "rx_sampler1D";
-  case Frontend::Uniform::Type::SAMPLER2D:
-    return "rx_sampler2D";
-  case Frontend::Uniform::Type::SAMPLER3D:
-    return "rx_sampler3D";
-  case Frontend::Uniform::Type::SAMPLERCM:
-    return "rx_samplerCM";
-  case Frontend::Uniform::Type::BOOL:
-    return "bool";
-  case Frontend::Uniform::Type::INT:
-    return "int";
-  case Frontend::Uniform::Type::FLOAT:
-    return "float";
-  case Frontend::Uniform::Type::VEC2I:
-    return "vec2i";
-  case Frontend::Uniform::Type::VEC3I:
-    return "vec3i";
-  case Frontend::Uniform::Type::VEC4I:
-    return "vec4i";
-  case Frontend::Uniform::Type::VEC2F:
-    return "vec2f";
-  case Frontend::Uniform::Type::VEC3F:
-    return "vec3f";
-  case Frontend::Uniform::Type::VEC4F:
-    return "vec4f";
-  case Frontend::Uniform::Type::MAT4X4F:
-    return "mat4x4f";
-  case Frontend::Uniform::Type::MAT3X3F:
-    return "mat3x3f";
-  case Frontend::Uniform::Type::BONES:
-    return "bonesf";
-  }
-  return nullptr;
-}
-
 static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
   const Frontend::Shader& _shader)
 {
-  // emit prelude to every shader
-  static constexpr const char* PRELUDE =
-    "#version 330 core\n"
-    "#define vec2f vec2\n"
-    "#define vec3f vec3\n"
-    "#define vec4f vec4\n"
-    "#define vec2i ivec2\n"
-    "#define vec3i ivec3\n"
-    "#define vec4i ivec4\n"
-    "#define vec4b vec4\n"
-    "#define mat3x3f mat3\n"
-    "#define mat4x4f mat4\n"
-    "#define mat3x4f mat3x4\n"
-    "#define bonesf mat3x4f[64]\n"
-    "#define rx_sampler1D sampler1D\n"
-    "#define rx_sampler2D sampler2D\n"
-    "#define rx_sampler3D sampler3D\n"
-    "#define rx_samplerCM samplerCube\n"
-    "#define rx_texture1D texture\n"
-    "#define rx_texture2D texture\n"
-    "#define rx_texture3D texture\n"
-    "#define rx_textureCM texture\n"
-    "#define rx_texture1DLod textureLod\n"
-    "#define rx_texture2DLod textureLod\n"
-    "#define rx_texture3DLod textureLod\n"
-    "#define rx_textureCMLod textureLod\n"
-    "#define rx_position gl_Position\n"
-    "#define rx_vertex_id gl_VertexID\n"
-    "#define rx_point_size gl_PointSize\n"
-    "#define rx_point_coord gl_PointCoord\n";
-
-  String contents = PRELUDE;
+  // Emit prelude to every shader.
+  String contents{"#version 330 core\n"};
+  contents.append(GLSL_PRELUDE);
 
   GLenum type = 0;
   switch (_shader.kind) {
@@ -1836,51 +1743,48 @@ void GL3::process(Byte* _command) {
               pglUniform1i(location,
                 *reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::BOOL:
-              pglUniform1i(location,
-                *reinterpret_cast<const bool*>(draw_uniforms) ? 1 : 0);
-              break;
-            case Frontend::Uniform::Type::INT:
+            case Frontend::Uniform::Type::S32:
               pglUniform1i(location,
                 *reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::FLOAT:
+              break;
+            case Frontend::Uniform::Type::F32:
               pglUniform1fv(location, 1,
                 reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::VEC2I:
+            case Frontend::Uniform::Type::S32x2:
               pglUniform2iv(location, 1,
                 reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::VEC3I:
+            case Frontend::Uniform::Type::S32x3:
               pglUniform3iv(location, 1,
                 reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::VEC4I:
+            case Frontend::Uniform::Type::S32x4:
               pglUniform4iv(location, 1,
                 reinterpret_cast<const Sint32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::VEC2F:
+            case Frontend::Uniform::Type::F32x2:
               pglUniform2fv(location, 1,
                 reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::VEC3F:
+            case Frontend::Uniform::Type::F32x3:
               pglUniform3fv(location, 1,
                 reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::VEC4F:
+            case Frontend::Uniform::Type::F32x4:
               pglUniform4fv(location, 1,
                 reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::MAT3X3F:
+            case Frontend::Uniform::Type::F32x3x3:
               pglUniformMatrix3fv(location, 1, GL_FALSE,
                 reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::MAT4X4F:
+            case Frontend::Uniform::Type::F32x4x4:
               pglUniformMatrix4fv(location, 1, GL_FALSE,
                 reinterpret_cast<const Float32*>(draw_uniforms));
               break;
-            case Frontend::Uniform::Type::BONES:
+            case Frontend::Uniform::Type::LB_BONES:
               pglUniformMatrix3x4fv(location,
                 static_cast<GLsizei>(uniform.size() / sizeof(Math::Mat3x4f)),
                 GL_FALSE, reinterpret_cast<const Float32*>(draw_uniforms));

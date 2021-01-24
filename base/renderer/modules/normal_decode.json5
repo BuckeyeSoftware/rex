@@ -4,11 +4,11 @@
     "sign_not_zero"
   ],
   source: "
-    vec3f normal_decode(vec2f normal) {
+    f32x3 normal_decode(f32x2 normal) {
       // Remap [0, 1] to [-1, 1]
       normal = normal * 2.0 - 1.0;
 
-      vec3f v = vec3f(normal.xy, 1.0 - abs(normal.x) - abs(normal.y));
+      f32x3 v = f32x3(normal.xy, 1.0 - abs(normal.x) - abs(normal.y));
       if (v.z < 0.0) {
         v.xy = (1.0 - abs(v.yx)) * sign_not_zero(v.xy);
       }

@@ -6,41 +6,41 @@
     "USE_INSTANCED"
   ],
   uniforms: [
-    { name: "u_view",       type: "mat4x4f" },
-    { name: "u_projection", type: "mat4x4f" }
+    { name: "u_view",       type: "f32x4x4" },
+    { name: "u_projection", type: "f32x4x4" }
   ],
   shaders: [
     {
       type: "vertex",
         inputs: [
-          { name: "a_position",    type: "vec3f" },
-          { name: "a_normal",      type: "vec3f" },
-          { name: "a_vcolor",      type: "vec4f",   when: "!USE_INSTANCED" },
-          { name: "a_icolor",      type: "vec4f",   when: "USE_INSTANCED" },
-          { name: "a_transform",   type: "mat4x4f", when: "USE_INSTANCED" }
+          { name: "a_position",    type: "f32x3" },
+          { name: "a_normal",      type: "f32x3" },
+          { name: "a_vcolor",      type: "f32x4",   when: "!USE_INSTANCED" },
+          { name: "a_icolor",      type: "f32x4",   when: "USE_INSTANCED" },
+          { name: "a_transform",   type: "f32x4x4", when: "USE_INSTANCED" }
         ],
         outputs: [
-          { name: "vs_color",      type: "vec4f" },
-          { name: "vs_normal",     type: "vec3f", when: "!USE_POINTS" },
-          { name: "vs_view",       type: "vec3f", when: "USE_STANDARD || USE_INSTANCED" }
+          { name: "vs_color",      type: "f32x4" },
+          { name: "vs_normal",     type: "f32x3", when: "!USE_POINTS" },
+          { name: "vs_view",       type: "f32x3", when: "USE_STANDARD || USE_INSTANCED" }
         ],
       source: "
         void main() {
         #if defined(USE_INSTANCED)
-          vec4f position = a_transform * vec4f(a_position, 1.0);
+          f32x4 position = a_transform * f32x4(a_position, 1.0);
           vs_color = a_icolor;
         #else
-          vec4f position = vec4f(a_position, 1.0);
+          f32x4 position = f32x4(a_position, 1.0);
           vs_color = a_vcolor;
         #endif
 
-          vec4f eye_position = u_view * position;
+          f32x4 eye_position = u_view * position;
 
           rx_position = u_projection * eye_position;
 
         #if defined(USE_POINTS)
-          float distance = length(eye_position.xyz);
-          float attenuation = inversesqrt(0.1 * distance);
+          f32 distance = length(eye_position.xyz);
+          f32 attenuation = inversesqrt(0.1 * distance);
           // The immediate3D packs the point size in normal.x
           rx_point_size = a_normal.x * attenuation;
         #else
@@ -52,31 +52,31 @@
     },{
       type: "fragment",
       inputs: [
-        { name: "vs_color",  type: "vec4f" },
-        { name: "vs_view",   type: "vec3f", when: "USE_STANDARD || USE_INSTANCED" },
-        { name: "vs_normal", type: "vec3f", when: "!USE_POINTS" }
+        { name: "vs_color",  type: "f32x4" },
+        { name: "vs_view",   type: "f32x3", when: "USE_STANDARD || USE_INSTANCED" },
+        { name: "vs_normal", type: "f32x3", when: "!USE_POINTS" }
       ],
       outputs: [
-        { name: "fs_color", type: "vec4f" }
+        { name: "fs_color", type: "f32x4" }
       ],
       source: "
         void main() {
         #if defined(USE_POINTS)
           fs_color = vs_color;
         #else
-          vec3f normal = vs_normal;
+          f32x3 normal = vs_normal;
 
-          const vec3f La = vec3f(0.5);
-          const vec3f Ld = vec3f(0.5);
-          vec3f L = normalize(vec3f(0.0, -1.0, 0.0));
+          const f32x3 La = f32x3(0.5);
+          const f32x3 Ld = f32x3(0.5);
+          f32x3 L = normalize(f32x3(0.0, -1.0, 0.0));
 
-          vec3f Ma = vs_color.xyz;
-          vec3f Md = vs_color.xyz;
+          f32x3 Ma = vs_color.xyz;
+          f32x3 Md = vs_color.xyz;
 
-          vec3f va = La * Ma;
-          vec3f vd = max(dot(normal, L), 0.0) * Ld * Md;
+          f32x3 va = La * Ma;
+          f32x3 vd = max(dot(normal, L), 0.0) * Ld * Md;
 
-          fs_color = vec4(va + vd, vs_color.a);
+          fs_color = f32x4(va + vd, vs_color.a);
         #endif
         }
       "

@@ -156,22 +156,29 @@ static Optional<Uniform::Type> uniform_type_from_string(const String& _type) {
     const char* match;
     Uniform::Type kind;
   } TABLE[] = {
+    // Samplers.
     {"sampler1D", Uniform::Type::SAMPLER1D},
     {"sampler2D", Uniform::Type::SAMPLER2D},
     {"sampler3D", Uniform::Type::SAMPLER3D},
     {"samplerCM", Uniform::Type::SAMPLERCM},
-    {"bool",      Uniform::Type::BOOL},
-    {"int",       Uniform::Type::INT},
-    {"float",     Uniform::Type::FLOAT},
-    {"vec2i",     Uniform::Type::VEC2I},
-    {"vec3i",     Uniform::Type::VEC3I},
-    {"vec4i",     Uniform::Type::VEC4I},
-    {"vec2f",     Uniform::Type::VEC2F},
-    {"vec3f",     Uniform::Type::VEC3F},
-    {"vec4f",     Uniform::Type::VEC4F},
-    {"mat4x4f",   Uniform::Type::MAT4X4F},
-    {"mat3x3f",   Uniform::Type::MAT3X3F},
-    {"bonesf",    Uniform::Type::BONES}
+
+    // Scalars.
+    {"s32",       Uniform::Type::S32},
+    {"f32",       Uniform::Type::F32},
+
+    // Vectors.
+    {"s32x2",     Uniform::Type::S32x2},
+    {"s32x3",     Uniform::Type::S32x3},
+    {"s32x4",     Uniform::Type::S32x4},
+    {"f32x2",     Uniform::Type::F32x2},
+    {"f32x3",     Uniform::Type::F32x3},
+    {"f32x4",     Uniform::Type::F32x4},
+
+    // Matrices.
+    {"f32x4x4",   Uniform::Type::F32x4x4},
+    {"f32x3x3",   Uniform::Type::F32x3x3},
+    {"lb_bones",  Uniform::Type::LB_BONES},
+    {"dq_bones",  Uniform::Type::DQ_BONES}
   };
 
   for (const auto& element : TABLE) {
@@ -188,16 +195,20 @@ static Optional<Shader::InOutType> inout_type_from_string(const String& _type) {
     const char* match;
     Shader::InOutType kind;
   } TABLE[] = {
-    {"mat4x4f", Shader::InOutType::MAT4X4F},
-    {"mat3x3f", Shader::InOutType::MAT3X3F},
-    {"vec2i",   Shader::InOutType::VEC2I},
-    {"vec3i",   Shader::InOutType::VEC3I},
-    {"vec4i",   Shader::InOutType::VEC4I},
-    {"vec2f",   Shader::InOutType::VEC2F},
-    {"vec3f",   Shader::InOutType::VEC3F},
-    {"vec4f",   Shader::InOutType::VEC4F},
-    {"vec4b",   Shader::InOutType::VEC4B},
-    {"float",   Shader::InOutType::FLOAT}
+    // Scalars.
+    {"f32",     Shader::InOutType::F32},
+
+    // Vectors.
+    {"s32x2",   Shader::InOutType::S32x2},
+    {"s32x3",   Shader::InOutType::S32x3},
+    {"s32x4",   Shader::InOutType::S32x4},
+    {"f32x2",   Shader::InOutType::F32x2},
+    {"f32x3",   Shader::InOutType::F32x3},
+    {"f32x4",   Shader::InOutType::F32x4},
+
+    // Matrices.
+    {"f32x3x3", Shader::InOutType::F32x3X3},
+    {"f32x4x4", Shader::InOutType::F32x4X4}
   };
 
   for (const auto& element : TABLE) {
@@ -695,28 +706,19 @@ bool Technique::parse_uniform(const JSON& _uniform) {
     case Uniform::Type::SAMPLER3D: [[fallthrough]];
     case Uniform::Type::SAMPLERCM:
       [[fallthrough]];
-    case Uniform::Type::INT:
+    case Uniform::Type::S32:
       if (!value.is_integer()) {
         return error("expected Integer for %s", name_string);
       }
       constant.as_int = value.as_integer();
       break;
-
-    case Uniform::Type::BOOL:
-      if (!value.is_boolean()) {
-        return error("expected Boolean for %s", name_string);
-      }
-      constant.as_bool = value.as_boolean();
-      break;
-
-    case Uniform::Type::FLOAT:
+    case Uniform::Type::F32:
       if (!value.is_number()) {
         return error("expected Number for %s", name_string);
       }
       constant.as_float = value.as_float();
       break;
-
-    case Uniform::Type::VEC2I:
+    case Uniform::Type::S32x2:
       if (!value.is_array_of(JSON::Type::INTEGER, 2)) {
         return error("expected Array[Integer, 2] for %s", name_string);
       }
@@ -725,8 +727,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
         value[1_z].as_integer()
       };
       break;
-
-    case Uniform::Type::VEC3I:
+    case Uniform::Type::S32x3:
       if (!value.is_array_of(JSON::Type::INTEGER, 3)) {
         return error("expected Array[Integer, 3] for %s", name_string);
       }
@@ -736,8 +737,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
         value[2_z].as_integer()
       };
       break;
-
-    case Uniform::Type::VEC4I:
+    case Uniform::Type::S32x4:
       if (!value.is_array_of(JSON::Type::INTEGER, 4)) {
         return error("expected Array[Integer, 4] for %s", name_string);
       }
@@ -748,8 +748,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
         value[3_z].as_integer()
       };
       break;
-
-    case Uniform::Type::VEC2F:
+    case Uniform::Type::F32x2:
       if (!value.is_array_of(JSON::Type::NUMBER, 2)) {
         return error("expected Array[Number, 2] for %s", name_string);
       }
@@ -758,8 +757,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
         value[1_z].as_float()
       };
       break;
-
-    case Uniform::Type::VEC3F:
+    case Uniform::Type::F32x3:
       if (!value.is_array_of(JSON::Type::NUMBER, 3)) {
         return error("expected Array[Number, 3] for %s", name_string);
       }
@@ -770,7 +768,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
 
-    case Uniform::Type::VEC4F:
+    case Uniform::Type::F32x4:
       if (!value.is_array_of(JSON::Type::NUMBER, 4)) {
         return error("expected Array[Number, 4] for %s", name_string);
       }
@@ -781,14 +779,12 @@ bool Technique::parse_uniform(const JSON& _uniform) {
         value[3_z].as_float()
       };
       break;
-
-    case Uniform::Type::MAT4X4F:
+    case Uniform::Type::F32x4x4:
       if (!value.is_array_of(JSON::Type::ARRAY, 4) ||
           !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 4); }))
       {
         return error("expected Array[Array[Number, 4], 4] for %s", name_string);
       }
-
       constant.as_mat4x4f = {
         {
           value[0_z][0_z].as_float(),
@@ -816,15 +812,13 @@ bool Technique::parse_uniform(const JSON& _uniform) {
         }
       };
       break;
-
-    case Uniform::Type::MAT3X3F:
+    case Uniform::Type::F32x3x3:
       if (!value.is_array_of(JSON::Type::ARRAY, 3) ||
           !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 3); }))
       {
         return error("expected Array[Array[Number, 3], 3] for %s", name_string);
       }
-
-    constant.as_mat3x3f = {
+      constant.as_mat3x3f = {
         {
           value[0_z][0_z].as_float(),
           value[0_z][1_z].as_float(),
@@ -842,8 +836,9 @@ bool Technique::parse_uniform(const JSON& _uniform) {
         }
       };
       break;
-
-    case Uniform::Type::BONES:
+    case Uniform::Type::LB_BONES:
+      [[fallthrough]];
+    case Uniform::Type::DQ_BONES:
       return error("cannot give value for bones");
     }
   }
@@ -991,10 +986,10 @@ bool Technique::parse_inout(const JSON& _inout, const char* _type,
   inout.when = when ? when.as_string() : "";
 
   switch (*kind) {
-  case Shader::InOutType::MAT3X3F:
+  case Shader::InOutType::F32x3X3:
     index_ += 3; // One for each vector.
     break;
-  case Shader::InOutType::MAT4X4F:
+  case Shader::InOutType::F32x4X4:
     index_ += 4; // One for each vector.
     break;
   default:

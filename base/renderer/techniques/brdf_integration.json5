@@ -4,25 +4,25 @@
     {
       type: "vertex",
       outputs: [
-        { name: "vs_coordinate", type: "vec2f" }
+        { name: "vs_coordinate", type: "f32x2" }
       ],
       imports: [
         "fullscreen_triangle"
       ],
       source: "
         void main() {
-          vec4f triangle = fullscreen_triangle();
-          rx_position = vec4f(triangle.xy, 0.0, 1.0);
+          f32x4 triangle = fullscreen_triangle();
+          rx_position = f32x4(triangle.xy, 0.0, 1.0);
           vs_coordinate = triangle.zw;
         }
       "
     },{
       type: "fragment",
       inputs: [
-        { name: "vs_coordinate", type: "vec2f" }
+        { name: "vs_coordinate", type: "f32x2" }
       ],
       outputs: [
-        { name: "fs_color", type: "vec4f" }
+        { name: "fs_color",      type: "f32x4" }
       ],
       imports: [
         "hammersley",
@@ -30,38 +30,38 @@
         "schlick"
       ],
       source: "
-        vec2f integrate_brdf(float roughness, float n_dot_v) {
-          vec3f v = vec3f(sqrt(1.0 - n_dot_v * n_dot_v), 0, n_dot_v);
+        f32x2 integrate_brdf(f32 roughness, f32 n_dot_v) {
+          f32x3 v = f32x3(sqrt(1.0 - n_dot_v * n_dot_v), 0, n_dot_v);
 
-          float a = 0.0;
-          float b = 0.0;
+          f32 a = 0.0;
+          f32 b = 0.0;
 
-          uint samples = 1024u;
-          for (uint i = 0u; i < samples; i++) {
-            vec2f Xi = hammersley(i, samples);
-            vec3f h = importance_sample_ggx(Xi, roughness, vec3f(0.0, 0.0, 1.0));
-            vec3f l = reflect(-v, h);
+          u32 samples = 1024u;
+          for (u32 i = 0u; i < samples; i++) {
+            f32x2 Xi = hammersley(i, samples);
+            f32x3 h = importance_sample_ggx(Xi, roughness, f32x3(0.0, 0.0, 1.0));
+            f32x3 l = reflect(-v, h);
 
-            float n_dot_l = clamp(l.z, 0.0, 1.0);
-            float n_dot_h = clamp(h.z, 0.0, 1.0);
-            float v_dot_h = clamp(dot(v, h), 0.0, 1.0);
+            f32 n_dot_l = clamp(l.z, 0.0, 1.0);
+            f32 n_dot_h = clamp(h.z, 0.0, 1.0);
+            f32 v_dot_h = clamp(dot(v, h), 0.0, 1.0);
 
             if (n_dot_l > 0.0) {
-              float g = schlick(n_dot_l, n_dot_v, roughness);
-              float v = g * v_dot_h / (n_dot_h * n_dot_v);
-              float f = pow(1.0 - v_dot_h, 5.0);
+              f32 g = schlick(n_dot_l, n_dot_v, roughness);
+              f32 v = g * v_dot_h / (n_dot_h * n_dot_v);
+              f32 f = pow(1.0 - v_dot_h, 5.0);
 
               a += (1.0 - f) * v;
               b += f * v;
             }
           }
 
-          return vec2f(a, b) / float(samples);
+          return f32x2(a, b) / as_f32(samples);
         }
 
         void main() {
-          vec2f scale_bias = integrate_brdf(vs_coordinate.x, vs_coordinate.y);
-          fs_color = vec4f(scale_bias, 0.0, 1.0);
+          f32x2 scale_bias = integrate_brdf(vs_coordinate.x, vs_coordinate.y);
+          fs_color = f32x4(scale_bias, 0.0, 1.0);
         }
       "
     }

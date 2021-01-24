@@ -8,6 +8,7 @@
 #include "rx/math/mat3x3.h"
 #include "rx/math/mat3x4.h"
 #include "rx/math/mat4x4.h"
+#include "rx/math/dual_quat.h"
 
 #include "rx/render/frontend/resource.h"
 
@@ -20,22 +21,29 @@ struct Uniform {
   RX_MARK_NO_COPY(Uniform);
 
   enum class Type : Uint8 {
+    // Samplers.
     SAMPLER1D,
     SAMPLER2D,
     SAMPLER3D,
     SAMPLERCM,
-    BOOL,
-    INT,
-    FLOAT,
-    VEC2I,
-    VEC3I,
-    VEC4I,
-    VEC2F,
-    VEC3F,
-    VEC4F,
-    MAT4X4F,
-    MAT3X3F,
-    BONES
+
+    // Scalars.
+    S32,
+    F32,
+
+    // Vectors.
+    S32x2,
+    S32x3,
+    S32x4,
+    F32x2,
+    F32x3,
+    F32x4,
+
+    // Matrices.
+    F32x4x4,
+    F32x3x3,
+    LB_BONES,
+    DQ_BONES
   };
 
   Uniform();
@@ -48,14 +56,14 @@ struct Uniform {
   void record_vec2i(const Math::Vec2i& _value);
   void record_vec3i(const Math::Vec3i& _value);
   void record_vec4i(const Math::Vec4i& _value);
-  void record_bool(bool _value);
   void record_float(Float32 _value);
   void record_vec2f(const Math::Vec2f& _value);
   void record_vec3f(const Math::Vec3f& _value);
   void record_vec4f(const Math::Vec4f& _value);
   void record_mat3x3f(const Math::Mat3x3f& _value);
   void record_mat4x4f(const Math::Mat4x4f& _value);
-  void record_bones(const Vector<Math::Mat3x4f>& _frames, Size _joints);
+  void record_lb_bones(const Vector<Math::Mat3x4f>& _frames, Size _joints);
+  void record_dq_bones(const Vector<Math::DualQuatf>& _frames, Size _joints);
   void record_raw(const Byte* _data, Size _size);
 
   Type type() const;
@@ -88,16 +96,20 @@ struct Shader {
   };
 
   enum class InOutType : Uint8 {
-    MAT4X4F,
-    MAT3X3F,
-    VEC2I,
-    VEC3I,
-    VEC4I,
-    VEC2F,
-    VEC3F,
-    VEC4F,
-    VEC4B,
-    FLOAT
+    // Scalars.
+    F32,
+
+    // Vectors.
+    S32x2,
+    S32x3,
+    S32x4,
+    F32x2,
+    F32x3,
+    F32x4,
+
+    // Matrices.
+    F32x3X3,
+    F32x4X4
   };
 
   Type kind;

@@ -11,11 +11,17 @@ template<typename T>
 struct Mat3x4;
 
 template<typename T>
+struct Vec3;
+
+template<typename T>
 struct Quat {
+  constexpr Quat();
   constexpr Quat(T _x, T _y, T _z, T _w);
 
   explicit Quat(const Mat3x3<T>& _rotation);
   explicit Quat(const Mat3x4<T>& _rotation);
+
+  Quat(const Vec3<T>& _axis, T _angle);
 
   constexpr Quat operator-() const;
 
@@ -39,6 +45,12 @@ struct Quat {
 };
 
 using Quatf = Quat<Float32>;
+
+template<typename T>
+constexpr Quat<T>::Quat()
+  : Quat{0, 0, 0, 1}
+{
+}
 
 template<typename T>
 constexpr Quat<T>::Quat(T _x, T _y, T _z, T _w)

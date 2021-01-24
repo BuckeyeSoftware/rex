@@ -1,0 +1,15 @@
+// Rotation matrices for each face of a cubemap in our coordinate system. The
+// face order is also the order in which faces are attached to a target and the
+// order in which faces are updated for cubemap renderables.
+{
+  name: "cubemap_rotations",
+  source: "
+    const f32x3x3 CUBEMAP_ROTATIONS[6] = f32x3x3[6](
+      f32x3x3(f32x3( 0.0, 0.0, -1.0), f32x3(0.0, -1.0,  0.0), f32x3(-1.0,  0.0,  0.0)),  // right
+      f32x3x3(f32x3( 0.0, 0.0,  1.0), f32x3(0.0, -1.0,  0.0), f32x3( 1.0,  0.0,  0.0)),  // left
+      f32x3x3(f32x3( 1.0, 0.0,  0.0), f32x3(0.0,  0.0,  1.0), f32x3( 0.0, -1.0,  0.0)),  // top
+      f32x3x3(f32x3( 1.0, 0.0,  0.0), f32x3(0.0,  0.0, -1.0), f32x3( 0.0,  1.0,  0.0)),  // bottom
+      f32x3x3(f32x3( 1.0, 0.0,  0.0), f32x3(0.0, -1.0,  0.0), f32x3( 0.0,  0.0, -1.0)),  // front
+      f32x3x3(f32x3(-1.0, 0.0,  0.0), f32x3(0.0, -1.0,  0.0), f32x3( 0.0,  0.0,  1.0))); // back
+  "
+}

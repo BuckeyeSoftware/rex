@@ -1,11 +1,11 @@
 {
   name: "skybox",
   uniforms: [
-    { name: "u_inverse_projection", type: "mat4x4f" },
-    { name: "u_inverse_view",       type: "mat4x4f" },
+    { name: "u_inverse_projection", type: "f32x4x4" },
+    { name: "u_inverse_view",       type: "f32x4x4" },
     { name: "u_sampler",            type: "samplerCM", value: 0 },
     { name: "u_grading_lut",        type: "sampler3D", when: "HAS_GRADING_LUT" },
-    { name: "u_grading_properties", type: "vec2f",     when: "HAS_GRADING_LUT" }
+    { name: "u_grading_properties", type: "f32x2",     when: "HAS_GRADING_LUT" }
   ],
   permutes: [
     "HAS_GRADING_LUT"
@@ -17,13 +17,13 @@
         "fullscreen_triangle"
       ],
       outputs: [
-        { name: "vs_coordinate", type: "vec3f" }
+        { name: "vs_coordinate", type: "f32x3" }
       ],
       source: "
         void main() {
-          vec4f triangle = fullscreen_triangle();
-          vec4f position = vec4f(triangle.xy, 0.0, 1.0);
-          vec4f unprojected = u_inverse_projection * position;
+          f32x4 triangle = fullscreen_triangle();
+          f32x4 position = f32x4(triangle.xy, 0.0, 1.0);
+          f32x4 unprojected = u_inverse_projection * position;
           vs_coordinate = (u_inverse_view * unprojected).xyz;
           rx_position = position.xyww;
         }
@@ -31,17 +31,17 @@
     },{
       type: "fragment",
       inputs: [
-        { name: "vs_coordinate", type: "vec3f" }
+        { name: "vs_coordinate", type: "f32x3" }
       ],
       outputs: [
-        { name: "fs_color",      type: "vec4f" }
+        { name: "fs_color",      type: "f32x4" }
       ],
       source: "
         void main() {
-          vec4f color = rx_textureCM(u_sampler, vs_coordinate);
+          f32x4 color = rx_textureCM(u_sampler, vs_coordinate);
         #if defined(HAS_GRADING_LUT)
-          float z = color.z * u_grading_properties.x + u_grading_properties.y;
-          fs_color = rx_texture3D(u_grading_lut, vec3f(color.xy, z));
+          f32 z = color.z * u_grading_properties.x + u_grading_properties.y;
+          fs_color = rx_texture3D(u_grading_lut, f32x3(color.xy, z));
         #else
           fs_color = color;
         #endif

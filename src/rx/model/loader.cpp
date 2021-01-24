@@ -261,6 +261,17 @@ bool Loader::import(const String& _file_name) {
     });
   }
 
+  // Create DQ frames
+  auto n_frames = m_frames.size();
+  if (!m_dq_frames.resize(n_frames)) {
+    return false;
+  }
+
+  for (Size i = 0; i < n_frames; i++) {
+    m_dq_frames[i] = m_frames[i];
+    m_dq_frames[i].real = Math::normalize(m_dq_frames[i].real);
+  }
+
   return true;
 }
 

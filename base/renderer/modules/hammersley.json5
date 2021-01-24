@@ -4,8 +4,8 @@
     "radical_inverse"
   ],
   source: "
-    vec2f hammersley(uint i, uint samples) {
-      return vec2f(float(i) / float(samples), radical_inverse(i));
+    f32x2 hammersley(u32 i, u32 samples) {
+      return f32x2(as_f32(i) / as_f32(samples), radical_inverse(i));
     }
   "
 }

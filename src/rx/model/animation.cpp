@@ -11,6 +11,7 @@ namespace Rx::Model {
 Animation::Animation(const Loader* _model, Size _index)
   : m_model{_model}
   , m_frames{m_model->m_frames}
+  , m_dq_frames{m_model->m_dq_frames}
   , m_animation{_index}
   , m_current_frame{0.0f}
   , m_completed{false}
@@ -56,9 +57,18 @@ void Animation::update(Float32 _delta_time, bool _loop) {
   const Math::Mat3x4f* mat1{&m_model->m_frames[frame_indices[0] * joints]};
   const Math::Mat3x4f* mat2{&m_model->m_frames[frame_indices[1] * joints]};
 
+  const auto* dq1{&m_model->m_dq_frames[frame_indices[0] * joints]};
+  const auto* dq2{&m_model->m_dq_frames[frame_indices[1] * joints]};
+
   // Interpolate matrices between the two closest frames.
   for (Size i = 0; i < joints; i++) {
     m_frames[i] = mat1[i] * (1.0f - offset) + mat2[i] * offset;
+  }
+
+  // Interpolate DQs between the two closest frames.
+  for (Size i = 0; i < joints; i++) {
+    m_dq_frames[i] = dq1[i].lerp(dq2[i], offset);
+    m_dq_frames[i].real = Math::normalize(m_dq_frames[i].real);
   }
 
   if (completes) {

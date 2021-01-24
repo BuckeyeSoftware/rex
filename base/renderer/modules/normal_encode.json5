@@ -10,14 +10,14 @@
     "sign_not_zero"
   ],
   source: "
-    vec2f normal_encode(vec3f normal) {
+    f32x2 normal_encode(f32x3 normal) {
       // Project the sphere onto the octahedron and then onto the XY plane.
-      vec2f p = normal.xy * (1.0 / (abs(normal.x) + abs(normal.y) + abs(normal.z)));
+      f32x2 p = normal.xy * (1.0 / (abs(normal.x) + abs(normal.y) + abs(normal.z)));
 
       // Reflect the folds of the lower hemisphere over the diagonals.
-      vec2f folds = normal.z <= 0.0 ? (1.0 - abs(p.yx)) * sign_not_zero(p) : p;
+      f32x2 folds = normal.z <= 0.0 ? (1.0 - abs(p.yx)) * sign_not_zero(p) : p;
 
-      // Remap [-1, 1] to [0, 1]
+      // Remap [-1, 1] to [0, 1].
       return folds * 0.5 + 0.5;
     }
   "

@@ -22,17 +22,24 @@ struct Buffer
 
   struct Attribute {
     enum class Type : Uint8 {
-      // Scalars
-      F32,    // 1 x Float32
+      // Scalars.
+      F32,
+      S32,
+      U32,
 
-      // Vectors
-      VEC2F,  // 2 x Float32
-      VEC3F,  // 3 x Float32
-      VEC4F,  // 4 x Float32
-      VEC4B,  // 4 x Byte
+      // Vectors.
+      F32x2,
+      F32x3,
+      F32x4,
+      S32x2,
+      S32x3,
+      S32x4,
+      U32x2,
+      U32x3,
+      U32x4,
 
       // Matrices
-      MAT4X4F // 4x4 x Float32
+      F32x4x4
     };
 
     bool operator!=(const Attribute& _other) const;

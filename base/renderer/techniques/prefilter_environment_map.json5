@@ -2,52 +2,53 @@
   name: "prefilter_environment_map",
   uniforms: [
     { name: "u_sampler",   type: "samplerCM", value: 0 },
-    { name: "u_face",      type: "int" },
-    { name: "u_roughness", type: "float" }
+    { name: "u_face",      type: "s32" },
+    { name: "u_roughness", type: "f32" }
   ],
   shaders: [
     {
       type: "vertex",
       outputs: [
-        { name: "vs_coordinate", type: "vec2f" }
+        { name: "vs_coordinate", type: "f32x2" }
       ],
       imports: [
         "fullscreen_triangle"
       ],
       source: "
         void main() {
-          vec4f triangle = fullscreen_triangle();
-          rx_position = vec4f(triangle.xy, 0.0, 1.0);
+          f32x4 triangle = fullscreen_triangle();
+          rx_position = f32x4(triangle.xy, 0.0, 1.0);
           vs_coordinate = triangle.zw;
         }
       "
     },{
       type: "fragment",
       inputs: [
-        { name: "vs_coordinate", type: "vec2f" }
+        { name: "vs_coordinate", type: "f32x2" }
+      ],
+      outputs: [
+        { name: "fs_color",      type: "f32x4" }
       ],
       imports: [
         "hammersley",
-        "importance_sample_ggx"
-      ],
-      outputs: [
-        { name: "fs_color", type: "vec4f" }
+        "importance_sample_ggx",
+        "cubemap_rotations"
       ],
       source: "
-        vec3f prefilter(float roughness, vec3f r) {
-          vec3f n = r;
-          vec3f v = r;
+        f32x3 prefilter(f32 roughness, f32x3 r) {
+          f32x3 n = r;
+          f32x3 v = r;
 
-          vec3f color = vec3f(0.0);
-          float total_weight = 0.0;
+          f32x3 color = f32x3(0.0);
+          f32 total_weight = 0.0;
 
-          uint samples = 512u;
-          for (uint i = 0u; i < samples; i++) {
-            vec2f Xi = hammersley(i, samples);
-            vec3f h = importance_sample_ggx(Xi, roughness, n);
-            vec3f l = 2.0 * dot(v, h) * h - v;
+          u32 samples = 512u;
+          for (u32 i = 0u; i < samples; i++) {
+            f32x2 Xi = hammersley(i, samples);
+            f32x3 h = importance_sample_ggx(Xi, roughness, n);
+            f32x3 l = 2.0 * dot(v, h) * h - v;
 
-            float n_dot_l = max(0.0, dot(n, l));
+            f32 n_dot_l = max(0.0, dot(n, l));
 
             if (n_dot_l > 0.0) {
               color += rx_textureCM(u_sampler, l).rgb * n_dot_l;
@@ -59,17 +60,8 @@
         }
 
         void main() {
-          const mat3x3f ROTATIONS[6] = mat3x3f[](
-            mat3x3f(vec3f( 0.0, 0.0, -1.0), vec3f(0.0, -1.0,  0.0), vec3f(-1.0,  0.0,  0.0)),  // right
-            mat3x3f(vec3f( 0.0, 0.0,  1.0), vec3f(0.0, -1.0,  0.0), vec3f( 1.0,  0.0,  0.0)),  // left
-            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0,  0.0,  1.0), vec3f( 0.0, -1.0,  0.0)),  // top
-            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0,  0.0, -1.0), vec3f( 0.0,  1.0,  0.0)),  // bottom
-            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, -1.0,  0.0), vec3f( 0.0,  0.0, -1.0)),  // front
-            mat3x3f(vec3f(-1.0, 0.0,  0.0), vec3f(0.0, -1.0,  0.0), vec3f( 0.0,  0.0,  1.0))); // back
-
-          vec3f direction = normalize(vec3f(vs_coordinate * 2.0 - 1.0, -1.0));
-
-          fs_color = vec4f(prefilter(u_roughness, ROTATIONS[u_face] * direction), 1.0);
+          f32x3 direction = normalize(f32x3(vs_coordinate * 2.0 - 1.0, -1.0));
+          fs_color = f32x4(prefilter(u_roughness, CUBEMAP_ROTATIONS[u_face] * direction), 1.0);
         }
       "
     }

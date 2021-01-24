@@ -5,41 +5,42 @@
     "USE_FONT"
   ],
   uniforms: [
-    { type: "vec2i",     name: "u_window" },
-    { type: "sampler2D", name: "u_font",  when: "USE_FONT" }
+    { name: "u_window", type: "s32x2" },
+    { name: "u_font",   type: "sampler2D", when: "USE_FONT" }
   ],
   shaders: [
     {
       type: "vertex",
       inputs: [
-        { name: "a_position",    type: "vec2f" },
-        { name: "a_coordinate",  type: "vec2f" },
-        { name: "a_color",       type: "vec4f" }
+        { name: "a_position",    type: "f32x2" },
+        { name: "a_coordinate",  type: "f32x2" },
+        { name: "a_color",       type: "f32x4" }
       ],
       outputs: [
-        { name: "vs_color",      type: "vec4f" },
-        { name: "vs_coordinate", type: "vec2f" }
+        { name: "vs_color",      type: "f32x4" },
+        { name: "vs_coordinate", type: "f32x2" }
       ],
       source: "
         void main() {
           vs_color = a_color;
           vs_coordinate = a_coordinate;
-          rx_position = vec4f(a_position * 2.0 / vec2f(u_window) - 1.0, 0.0, 1.0);
+          rx_position = f32x4(a_position * 2.0 / f32x2(u_window) - 1.0, 0.0, 1.0);
         }
       "
     },{
       type: "fragment",
       inputs: [
-        { name: "vs_color",      type: "vec4f" },
-        { name: "vs_coordinate", type: "vec2f" }
+        { name: "vs_color",      type: "f32x4" },
+        { name: "vs_coordinate", type: "f32x2" }
       ],
       outputs: [
-        { name: "fs_color",      type: "vec4f" }
+        { name: "fs_color",      type: "f32x4" }
       ],
       source: "
         void main() {
         #if defined(USE_FONT)
-          fs_color = vec4f(vs_color.rgb, vs_color.a * texture(u_font, vs_coordinate).r);
+          f32 font_sample = rx_texture2D(u_font, vs_coordinate).r;
+          fs_color = f32x4(vs_color.rgb, vs_color.a * font_sample);
         #elif defined(USE_SIMPLE)
           fs_color = vs_color;
         #endif

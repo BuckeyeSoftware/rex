@@ -4,6 +4,8 @@
 
 #include "rx/material/loader.h"
 
+#include "rx/math/dual_quat.h"
+
 namespace Rx::Model {
 
 struct Loader {
@@ -30,8 +32,8 @@ struct Loader {
     Math::Vec3f normal;
     Math::Vec4f tangent;
     Math::Vec2f coordinate;
-    Math::Vec4b blend_weights;
-    Math::Vec4b blend_indices;
+    Math::Vec4f blend_weights;
+    Math::Vec4i blend_indices;
   };
 
   bool is_animated() const;
@@ -86,6 +88,7 @@ private:
   Vector<Importer::Joint> m_joints;
   Vector<Math::Vec3f> m_positions;
   Vector<Math::Mat3x4f> m_frames;
+  Vector<Math::DualQuatf> m_dq_frames;
   Optional<Math::Transform> m_transform;
   Map<String, Material::Loader> m_materials;
   String m_name;

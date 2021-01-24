@@ -1,55 +1,55 @@
 {
   name: "lens_distortion",
   uniforms: [
-    { name: "u_parameters", type: "vec3f" },
+    { name: "u_parameters", type: "f32x3" },
     { name: "u_color",      type: "sampler2D", value: 0 }
   ],
   shaders: [
     {
       type: "vertex",
       outputs: [
-        { name: "vs_coordinate", type: "vec2f" }
+        { name: "vs_coordinate", type: "f32x2" }
       ],
       imports: [
         "fullscreen_triangle"
       ],
       source: "
         void main() {
-          vec4f triangle = fullscreen_triangle();
-          rx_position = vec4f(triangle.xy, 0.0, 1.0);
-          vs_coordinate = triangle.zw - vec2f(0.5);
+          f32x4 triangle = fullscreen_triangle();
+          rx_position = f32x4(triangle.xy, 0.0, 1.0);
+          vs_coordinate = triangle.zw - f32x2(0.5);
         }
       "
     },
     {
       type: "fragment",
       inputs: [
-        { name: "vs_coordinate", type: "vec2f" }
+        { name: "vs_coordinate", type: "f32x2" }
       ],
       outputs: [
-        { name: "fs_color",      type: "vec4f" }
+        { name: "fs_color",      type: "f32x4" }
       ],
       source: "
         void main() {
-          float scale = u_parameters.x;
-          float dispersion = u_parameters.y;
-          float distortion = u_parameters.z;
+          f32 scale = u_parameters.x;
+          f32 dispersion = u_parameters.y;
+          f32 distortion = u_parameters.z;
 
           // Index of refraction of each color channel causing chromatic dispersion.
-          vec3f eta = vec3f(1.0 + dispersion * 0.9, 1.0 + dispersion * 0.6, 1.0 + dispersion * 0.3);
+          f32x3 eta = f32x3(1.0 + dispersion * 0.9, 1.0 + dispersion * 0.6, 1.0 + dispersion * 0.3);
 
-          float f = 1.0 + dot(vs_coordinate, vs_coordinate) * distortion;
+          f32 f = 1.0 + dot(vs_coordinate, vs_coordinate) * distortion;
 
-          vec2f r = (f * eta.r) * scale * vs_coordinate + 0.5;
-          vec2f g = (f * eta.g) * scale * vs_coordinate + 0.5;
-          vec2f b = (f * eta.b) * scale * vs_coordinate + 0.5;
+          f32x2 r = (f * eta.r) * scale * vs_coordinate + 0.5;
+          f32x2 g = (f * eta.g) * scale * vs_coordinate + 0.5;
+          f32x2 b = (f * eta.b) * scale * vs_coordinate + 0.5;
 
-          vec3f distort = vec3f(0.0);
+          f32x3 distort = f32x3(0.0);
           distort.r = rx_texture2D(u_color, r).r;
           distort.g = rx_texture2D(u_color, g).g;
           distort.b = rx_texture2D(u_color, b).b;
 
-          fs_color = vec4f(distort, 1.0);
+          fs_color = f32x4(distort, 1.0);
         }
       "
     }

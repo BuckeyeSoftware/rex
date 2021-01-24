@@ -1,8 +1,8 @@
 {
   name: "sign_not_zero",
   source: "
-    vec2f sign_not_zero(vec2f v) {
-      return vec2f(v.x >= 0.0 ? 1.0 : -1.0, v.y >= 0.0 ? 1.0 : -1.0);
+    f32x2 sign_not_zero(f32x2 v) {
+      return f32x2(v.x >= 0.0 ? 1.0 : -1.0, v.y >= 0.0 ? 1.0 : -1.0);
     }
   "
 }

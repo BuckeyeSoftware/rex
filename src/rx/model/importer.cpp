@@ -167,10 +167,10 @@ bool Importer::load(Stream* _stream) {
           for (Size l = 0; l < animation.frame_count; l++) {
             const auto index = (animation.frame_offset + l) * n_joints;
             Math::Mat3x4f transform;
-            transform  = m_frames[index + blend_indices.x] * (blend_weights.x / 255.0f);
-            transform += m_frames[index + blend_indices.y] * (blend_weights.y / 255.0f);
-            transform += m_frames[index + blend_indices.z] * (blend_weights.z / 255.0f);
-            transform += m_frames[index + blend_indices.w] * (blend_weights.w / 255.0f);
+            transform  = m_frames[index + blend_indices.x] * blend_weights.x;
+            transform += m_frames[index + blend_indices.y] * blend_weights.y;
+            transform += m_frames[index + blend_indices.z] * blend_weights.z;
+            transform += m_frames[index + blend_indices.w] * blend_weights.w;
             const Math::Vec3f x = {transform.x.x, transform.y.x, transform.z.x};
             const Math::Vec3f y = {transform.x.y, transform.y.y, transform.z.y};
             const Math::Vec3f z = {transform.x.z, transform.y.z, transform.z.z};

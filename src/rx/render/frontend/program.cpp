@@ -8,7 +8,7 @@
 
 namespace Rx::Render::Frontend {
 
-static constexpr const Size MAX_BONES = 64;
+static constexpr const Size MAX_BONES = 128;
 
 // checks if |_type| is a sampler Type
 static bool is_sampler(Uniform::Type _type) {
@@ -72,30 +72,30 @@ Size Uniform::size_for_type(Type _type) {
     [[fallthrough]];
   case Uniform::Type::SAMPLERCM:
     return sizeof(int);
-  case Uniform::Type::BOOL:
-    return sizeof(bool);
-  case Uniform::Type::INT:
+  case Uniform::Type::S32:
     return sizeof(Sint32);
-  case Uniform::Type::FLOAT:
+  case Uniform::Type::F32:
     return sizeof(Float32);
-  case Uniform::Type::VEC2I:
+  case Uniform::Type::S32x2:
     return sizeof(Math::Vec2i);
-  case Uniform::Type::VEC3I:
+  case Uniform::Type::S32x3:
     return sizeof(Math::Vec3i);
-  case Uniform::Type::VEC4I:
+  case Uniform::Type::S32x4:
     return sizeof(Math::Vec4i);
-  case Uniform::Type::VEC2F:
+  case Uniform::Type::F32x2:
     return sizeof(Math::Vec2f);
-  case Uniform::Type::VEC3F:
+  case Uniform::Type::F32x3:
     return sizeof(Math::Vec3f);
-  case Uniform::Type::VEC4F:
+  case Uniform::Type::F32x4:
     return sizeof(Math::Vec4f);
-  case Uniform::Type::MAT3X3F:
+  case Uniform::Type::F32x3x3:
     return sizeof(Math::Mat3x3f);
-  case Uniform::Type::MAT4X4F:
+  case Uniform::Type::F32x4x4:
     return sizeof(Math::Mat4x4f);
-  case Uniform::Type::BONES:
+  case Uniform::Type::LB_BONES:
     return sizeof(Math::Mat3x4f) * MAX_BONES;
+  case Uniform::Type::DQ_BONES:
+    return sizeof(Math::DualQuatf) * MAX_BONES;
   }
 
   RX_HINT_UNREACHABLE();
@@ -110,7 +110,7 @@ void Uniform::record_sampler(int _sampler) {
 }
 
 void Uniform::record_int(int _value) {
-  RX_ASSERT(m_type == Type::INT, "not an int");
+  RX_ASSERT(m_type == Type::S32, "not S32");
   if (*as_int != _value) {
     *as_int = _value;
     m_program->mark_uniform_dirty(m_bit);
@@ -118,7 +118,7 @@ void Uniform::record_int(int _value) {
 }
 
 void Uniform::record_vec2i(const Math::Vec2i& _value) {
-  RX_ASSERT(m_type == Type::VEC2I, "not a vec2i");
+  RX_ASSERT(m_type == Type::S32x2, "not S32x2");
   if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
     memcpy(as_int, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -126,7 +126,7 @@ void Uniform::record_vec2i(const Math::Vec2i& _value) {
 }
 
 void Uniform::record_vec3i(const Math::Vec3i& _value) {
-  RX_ASSERT(m_type == Type::VEC3I, "not a vec3i");
+  RX_ASSERT(m_type == Type::S32x3, "not S32x3");
   if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
     memcpy(as_int, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -134,23 +134,15 @@ void Uniform::record_vec3i(const Math::Vec3i& _value) {
 }
 
 void Uniform::record_vec4i(const Math::Vec4i& _value) {
-  RX_ASSERT(m_type == Type::VEC4I, "not a vec4i");
+  RX_ASSERT(m_type == Type::S32x4, "not S32x4");
   if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
     memcpy(as_int, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
   }
 }
 
-void Uniform::record_bool(bool _value) {
-  RX_ASSERT(m_type == Type::BOOL, "not a bool");
-  if (*as_boolean != _value) {
-    *as_boolean = _value;
-    m_program->mark_uniform_dirty(m_bit);
-  }
-}
-
 void Uniform::record_float(Float32 _value) {
-  RX_ASSERT(m_type == Type::FLOAT, "not a float");
+  RX_ASSERT(m_type == Type::F32, "not F32");
   if (*as_float != _value) {
     *as_float = _value;
     m_program->mark_uniform_dirty(m_bit);
@@ -158,7 +150,7 @@ void Uniform::record_float(Float32 _value) {
 }
 
 void Uniform::record_vec2f(const Math::Vec2f& _value) {
-  RX_ASSERT(m_type == Type::VEC2F, "not a vec2f");
+  RX_ASSERT(m_type == Type::F32x2, "not F32x2");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -166,7 +158,7 @@ void Uniform::record_vec2f(const Math::Vec2f& _value) {
 }
 
 void Uniform::record_vec3f(const Math::Vec3f& _value) {
-  RX_ASSERT(m_type == Type::VEC3F, "not a vec3f");
+  RX_ASSERT(m_type == Type::F32x3, "not F32x3");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -174,7 +166,7 @@ void Uniform::record_vec3f(const Math::Vec3f& _value) {
 }
 
 void Uniform::record_vec4f(const Math::Vec4f& _value) {
-  RX_ASSERT(m_type == Type::VEC4F, "not a vec4f");
+  RX_ASSERT(m_type == Type::F32x4, "not a F32x4");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -182,7 +174,7 @@ void Uniform::record_vec4f(const Math::Vec4f& _value) {
 }
 
 void Uniform::record_mat3x3f(const Math::Mat3x3f& _value) {
-  RX_ASSERT(m_type == Type::MAT3X3F, "not a mat3x3f");
+  RX_ASSERT(m_type == Type::F32x3x3, "not F32x3x3");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
@@ -190,16 +182,25 @@ void Uniform::record_mat3x3f(const Math::Mat3x3f& _value) {
 }
 
 void Uniform::record_mat4x4f(const Math::Mat4x4f& _value) {
-  RX_ASSERT(m_type == Type::MAT4X4F, "not a mat4x4f");
+  RX_ASSERT(m_type == Type::F32x4x4, "not F32x4x4");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);
   }
 }
 
-void Uniform::record_bones(const Vector<Math::Mat3x4f>& _frames, Size _joints) {
-  RX_ASSERT(m_type == Type::BONES, "not bones");
+void Uniform::record_lb_bones(const Vector<Math::Mat3x4f>& _frames, Size _joints) {
+  RX_ASSERT(m_type == Type::LB_BONES, "not linear-blend bones");
   const Size size{sizeof(Math::Mat3x4f) * Algorithm::min(_joints, MAX_BONES)};
+  if (memcmp(as_float, _frames.data(), size) != 0) {
+    memcpy(as_float, _frames.data(), size);
+    m_program->mark_uniform_dirty(m_bit);
+  }
+}
+
+void Uniform::record_dq_bones(const Vector<Math::DualQuatf>& _frames, Size _joints) {
+  RX_ASSERT(m_type == Type::DQ_BONES, "not dual-quaternion bones");
+  const Size size{sizeof(Math::DualQuatf) * Algorithm::min(_joints, MAX_BONES)};
   if (memcmp(as_float, _frames.data(), size) != 0) {
     memcpy(as_float, _frames.data(), size);
     m_program->mark_uniform_dirty(m_bit);

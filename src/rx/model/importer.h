@@ -62,8 +62,8 @@ struct Importer {
   // for skeletally animated models
   Vector<Math::Mat3x4f>&& frames();
   Vector<Animation>&& animations();
-  const Vector<Math::Vec4b>& blend_indices() const &;
-  const Vector<Math::Vec4b>& blend_weights() const &;
+  const Vector<Math::Vec4i>& blend_indices() const &;
+  const Vector<Math::Vec4f>& blend_weights() const &;
 
   constexpr Memory::Allocator& allocator() const;
 
@@ -87,8 +87,8 @@ protected:
   Vector<Math::Vec2f> m_coordinates;
   Vector<Math::Vec3f> m_normals;
   Vector<Math::Vec4f> m_tangents; // w = bitangent sign
-  Vector<Math::Vec4b> m_blend_indices;
-  Vector<Math::Vec4b> m_blend_weights;
+  Vector<Math::Vec4i> m_blend_indices;
+  Vector<Math::Vec4f> m_blend_weights;
   Vector<Math::Mat3x4f> m_frames;
   Vector<Animation> m_animations;
   Vector<Joint> m_joints;
@@ -144,11 +144,11 @@ inline Vector<Importer::Animation>&& Importer::animations() {
   return Utility::move(m_animations);
 }
 
-inline const Vector<Math::Vec4b>& Importer::blend_indices() const & {
+inline const Vector<Math::Vec4i>& Importer::blend_indices() const & {
   return Utility::move(m_blend_indices);
 }
 
-inline const Vector<Math::Vec4b>& Importer::blend_weights() const & {
+inline const Vector<Math::Vec4f>& Importer::blend_weights() const & {
   return Utility::move(m_blend_weights);
 }
 

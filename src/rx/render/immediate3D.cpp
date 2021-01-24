@@ -117,12 +117,12 @@ Immediate3D::Immediate3D(Frontend::Context* _frontend)
   format.record_type(Frontend::Buffer::Type::DYNAMIC);
   format.record_element_type(Frontend::Buffer::ElementType::U32);
   format.record_vertex_stride(sizeof(Vertex));
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, position)});
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, normal)});
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, color)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, position)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, normal)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, color)});
   format.record_instance_stride(sizeof(Instance));
-  format.record_instance_attribute({Frontend::Buffer::Attribute::Type::VEC4F, offsetof(Instance, color)});
-  format.record_instance_attribute({Frontend::Buffer::Attribute::Type::MAT4X4F, offsetof(Instance, transform)});
+  format.record_instance_attribute({Frontend::Buffer::Attribute::Type::F32x4, offsetof(Instance, color)});
+  format.record_instance_attribute({Frontend::Buffer::Attribute::Type::F32x4x4, offsetof(Instance, transform)});
   format.finalize();
 
   for (Size i{0}; i < BUFFERS; i++) {

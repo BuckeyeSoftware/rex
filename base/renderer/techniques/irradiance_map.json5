@@ -2,57 +2,52 @@
   name: "irradiance_map",
   uniforms: [
     { name: "u_sampler",      type: "samplerCM", value: 0  },
-    { name: "u_face",         type: "int" },
-    { name: "u_texture_size", type: "int" }
+    { name: "u_face",         type: "s32" },
+    { name: "u_texture_size", type: "s32" }
   ],
   shaders: [
     {
       type: "vertex",
       outputs: [
-        { name: "vs_coordinate", type: "vec2f" }
+        { name: "vs_coordinate", type: "f32x2" }
       ],
       imports: [
         "fullscreen_triangle"
       ],
       source: "
         void main() {
-          vec4f triangle = fullscreen_triangle();
-          rx_position = vec4f(triangle.xy, 0.0, 1.0);
+          f32x4 triangle = fullscreen_triangle();
+          rx_position = f32x4(triangle.xy, 0.0, 1.0);
           vs_coordinate = triangle.zw;
         }
       "
     },{
       type: "fragment",
       inputs: [
-        { name: "vs_coordinate", type: "vec2f" }
+        { name: "vs_coordinate", type: "f32x2" }
       ],
       outputs: [
-        { name: "fs_color",      type: "vec4f" }
+        { name: "fs_color",      type: "f32x4" }
+      ],
+      imports: [
+        "cubemap_rotations"
       ],
       source: "
         void main() {
-          const mat3x3f ROTATIONS[6] = mat3x3f[](
-            mat3x3f(vec3f( 0.0, 0.0, -1.0), vec3f(0.0, -1.0,  0.0), vec3f(-1.0,  0.0,  0.0)),  // right
-            mat3x3f(vec3f( 0.0, 0.0,  1.0), vec3f(0.0, -1.0,  0.0), vec3f( 1.0,  0.0,  0.0)),  // left
-            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0,  0.0,  1.0), vec3f( 0.0, -1.0,  0.0)),  // top
-            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0,  0.0, -1.0), vec3f( 0.0,  1.0,  0.0)),  // bottom
-            mat3x3f(vec3f( 1.0, 0.0,  0.0), vec3f(0.0, -1.0,  0.0), vec3f( 0.0,  0.0, -1.0)),  // front
-            mat3x3f(vec3f(-1.0, 0.0,  0.0), vec3f(0.0, -1.0,  0.0), vec3f( 0.0,  0.0,  1.0))); // back
-
           // Starting in the direction of |u_face|.
-          vec3f n = ROTATIONS[u_face] * normalize(vec3f(vs_coordinate * 2.0 - 1.0, -1.0));
+          f32x3 n = CUBEMAP_ROTATIONS[u_face] * normalize(f32x3(vs_coordinate * 2.0 - 1.0, -1.0));
 
-          vec3f color = vec3f(0.0);
-          float total_weight = 0.0;
+          f32x3 color = f32x3(0.0);
+          f32 total_weight = 0.0;
 
-          for (int i = 0; i < 6; i++) {
-            mat3x3f rotation = ROTATIONS[i];
-            for (int x = 0; x < u_texture_size; x++) {
-              for (int y = 0; y < u_texture_size; y++) {
-                vec2f coordinate = vec2f(x, y) / float(u_texture_size);
-                vec3f direction = rotation * normalize(vec3f(coordinate * 2.0 - 1.0, -1.0));
-                float weight = max(dot(n, direction), 0.0);
-                vec3f sampled = rx_textureCM(u_sampler, direction).rgb;
+          for (u32 i = 0; i < 6; i++) {
+            f32x3x3 rotation = CUBEMAP_ROTATIONS[i];
+            for (s32 x = 0; x < u_texture_size; x++) {
+              for (s32 y = 0; y < u_texture_size; y++) {
+                f32x2 coordinate = f32x2(x, y) / as_f32(u_texture_size);
+                f32x3 direction = rotation * normalize(f32x3(coordinate * 2.0 - 1.0, -1.0));
+                f32 weight = max(dot(n, direction), 0.0);
+                f32x3 sampled = rx_textureCM(u_sampler, direction).rgb;
                 color += sampled * weight;
                 total_weight += weight;
               }
@@ -61,7 +56,7 @@
 
           color /= total_weight;
 
-          fs_color = vec4f(color, 1.0);
+          fs_color = f32x4(color, 1.0);
         }
       "
     }

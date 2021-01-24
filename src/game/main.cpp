@@ -181,12 +181,10 @@ struct TestGame
       return false;
     }*/
 
-    for (Size i = 0; i < 8 * 8; i++) {
-     Render::Model model{&m_frontend};
-      if (model.load("base/models/mrfixit/mrfixit.json5")) {
-        if (!m_models.push_back(Utility::move(model))) {
-          return false;
-        }
+    Render::Model model{&m_frontend};
+    if (model.load("base/models/mrfixit/mrfixit.json5")) {
+      if (!m_models.push_back(Utility::move(model))) {
+        return false;
       }
     }
 
@@ -301,8 +299,7 @@ struct TestGame
 
     Float32 bias = 0.0f;
     m_models.each_fwd([&](Render::Model& model_) {
-      model_.update(_delta_time + bias);
-      bias += (1.0f / 60.0f) * 0.15f;
+      model_.update(_delta_time * 0.85f);
     });
 
     return true;

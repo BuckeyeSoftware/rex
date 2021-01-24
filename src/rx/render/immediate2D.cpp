@@ -414,9 +414,9 @@ Immediate2D::Immediate2D(Frontend::Context* _frontend)
   format.record_type(Frontend::Buffer::Type::DYNAMIC);
   format.record_element_type(Frontend::Buffer::ElementType::U32);
   format.record_vertex_stride(sizeof(Vertex));
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC2F, offsetof(Vertex, position)});
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC2F, offsetof(Vertex, coordinate)});
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC4F, offsetof(Vertex, color)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x2, offsetof(Vertex, position)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x2, offsetof(Vertex, coordinate)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x4, offsetof(Vertex, color)});
   format.finalize();
 
   for (Size i{0}; i < BUFFERS; i++) {

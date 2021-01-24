@@ -80,12 +80,12 @@ bool Model::upload() {
     format.record_type(Frontend::Buffer::Type::STATIC);
     format.record_element_type(Frontend::Buffer::ElementType::U32);
     format.record_vertex_stride(sizeof(Vertex));
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, position)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, normal)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC4F, offsetof(Vertex, tangent)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC2F, offsetof(Vertex, coordinate)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC4B, offsetof(Vertex, blend_weights)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC4B, offsetof(Vertex, blend_indices)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, position)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, normal)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x4, offsetof(Vertex, tangent)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x2, offsetof(Vertex, coordinate)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x4, offsetof(Vertex, blend_weights)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::S32x4, offsetof(Vertex, blend_indices)});
     format.finalize();
 
     m_arena = m_frontend->arena(format);
@@ -103,10 +103,10 @@ bool Model::upload() {
     format.record_type(Frontend::Buffer::Type::STATIC);
     format.record_element_type(Frontend::Buffer::ElementType::U32);
     format.record_vertex_stride(sizeof(Vertex));
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, position)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC3F, offsetof(Vertex, normal)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC4F, offsetof(Vertex, tangent)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::VEC2F, offsetof(Vertex, coordinate)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, position)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, normal)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x4, offsetof(Vertex, tangent)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x2, offsetof(Vertex, coordinate)});
     format.finalize();
 
     m_arena = m_frontend->arena(format);
@@ -131,9 +131,9 @@ bool Model::upload() {
   // using indices to refer to them rather than strings.
   Map<String, Size> material_indices{m_frontend->allocator()};
   const bool material_load_result =
-    m_model->materials().each_pair([this, &material_indices](const String& _name, Material::Loader& material_) {
+    m_model->materials().each_pair([this, &material_indices](const String& _name, const Material::Loader& _material) {
       Frontend::Material material{m_frontend};
-      if (material.load(Utility::move(material_))) {
+      if (material.load(_material)) {
         const Size material_index{m_materials.size()};
         return material_indices.insert(_name, material_index) && m_materials.push_back(Utility::move(material));
       }
@@ -145,14 +145,14 @@ bool Model::upload() {
   }
 
   // Resolve all the meshes of the loaded model.
-  return m_model->meshes().each_fwd([this, &material_indices](Rx::Model::Mesh& _mesh) {
+  return m_model->meshes().each_fwd([this, &material_indices](const Rx::Model::Mesh& _mesh) {
     if (auto* find = material_indices.find(_mesh.material)) {
       if (m_materials[*find].has_alpha()) {
         return m_transparent_meshes.emplace_back(_mesh.offset, _mesh.count,
-          *find, Utility::move(_mesh.bounds));
+          *find, _mesh.bounds);
       } else {
         return m_opaque_meshes.emplace_back(_mesh.offset, _mesh.count, *find,
-          Utility::move(_mesh.bounds));
+          _mesh.bounds);
       }
     }
     return true;
@@ -262,7 +262,8 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     }
 
     if (m_animation) {
-      uniforms[4].record_bones(m_animation->frames(), m_animation->joints());
+      uniforms[4].record_lb_bones(m_animation->frames(), m_animation->joints());
+      uniforms[16].record_dq_bones(m_animation->dq_frames(), m_animation->joints());
     }
 
     uniforms[5].record_float(material.roughness_value());
@@ -319,11 +320,11 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
 
   bool visible = false;
   m_opaque_meshes.each_fwd([&](const Mesh& _mesh) {
-    visible |= draw(_mesh, true);
+    visible |= draw(_mesh, false);
   });
 
   m_transparent_meshes.each_fwd([&](const Mesh& _mesh) {
-    visible |= draw(_mesh, false);
+    visible |= draw(_mesh, true);
   });
 
   if (_flags & BOUNDS) {
@@ -357,10 +358,10 @@ void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _im
         const auto& frames{m_animation->frames()};
 
         Math::Mat3x4f transform;
-        transform  = frames[_vertex.blend_indices.x] * (_vertex.blend_weights.x / 255.0f);
-        transform += frames[_vertex.blend_indices.y] * (_vertex.blend_weights.y / 255.0f);
-        transform += frames[_vertex.blend_indices.z] * (_vertex.blend_weights.z / 255.0f);
-        transform += frames[_vertex.blend_indices.w] * (_vertex.blend_weights.w / 255.0f);
+        transform  = frames[_vertex.blend_indices.x] * _vertex.blend_weights.x;
+        transform += frames[_vertex.blend_indices.y] * _vertex.blend_weights.y;
+        transform += frames[_vertex.blend_indices.z] * _vertex.blend_weights.z;
+        transform += frames[_vertex.blend_indices.w] * _vertex.blend_weights.w;
 
         const Math::Vec3f& x{transform.x.x, transform.y.x, transform.z.x};
         const Math::Vec3f& y{transform.x.y, transform.y.y, transform.z.y};

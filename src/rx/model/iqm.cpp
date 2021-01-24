@@ -298,10 +298,10 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
     }
 
     if (in_blend_weight) {
-      m_blend_weights[i].x = in_blend_weight[i * 4 + 0];
-      m_blend_weights[i].y = in_blend_weight[i * 4 + 1];
-      m_blend_weights[i].z = in_blend_weight[i * 4 + 2];
-      m_blend_weights[i].w = in_blend_weight[i * 4 + 3];
+      m_blend_weights[i].x = in_blend_weight[i * 4 + 0] / 255.0f;
+      m_blend_weights[i].y = in_blend_weight[i * 4 + 1] / 255.0f;
+      m_blend_weights[i].z = in_blend_weight[i * 4 + 2] / 255.0f;
+      m_blend_weights[i].w = in_blend_weight[i * 4 + 3] / 255.0f;
     }
   }
 

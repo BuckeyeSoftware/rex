@@ -4,22 +4,15 @@
 namespace Rx::Math {
 
 template<typename T>
-static Mat3x3<T> quat_to_mat3x3(const Quat<T>& _quat) {
-  return {
-    {
-      T{1} - T{2}*_quat.y*_quat.y - T{2}*_quat.z*_quat.z,
-             T{2}*_quat.x*_quat.y - T{2}*_quat.z*_quat.w,
-             T{2}*_quat.x*_quat.z + T{2}*_quat.y*_quat.w
-    },{
-             T{2}*_quat.x*_quat.y + T{2}*_quat.z*_quat.w,
-      T{1} - T{2}*_quat.x*_quat.x - T{2}*_quat.z*_quat.z,
-             T{2}*_quat.y*_quat.z - T{2}*_quat.x*_quat.w
-    },{
-             T{2}*_quat.x*_quat.z - T{2}*_quat.y*_quat.w,
-             T{2}*_quat.y*_quat.z + T{2}*_quat.x*_quat.w,
-      T{1} - T{2}*_quat.x*_quat.x - T{2}*_quat.y*_quat.y
-    }
-  };
+static Mat3x3<T> quat_to_mat3x3(const Quat<T>& q) {
+  T x = q.x, y = q.y, z = q.z, w = q.w,
+        tx = 2*x, ty = 2*y, tz = 2*z,
+        txx = tx*x, tyy = ty*y, tzz = tz*z,
+        txy = tx*y, txz = tx*z, tyz = ty*z,
+        twx = w*tx, twy = w*ty, twz = w*tz;
+  return {{1 - (tyy + tzz), txy - twz, txz + twy},
+          {txy + twz, 1 - (txx + tzz), tyz - twx},
+          {txz - twy, tyz + twx, 1 - (txx + tyy)}};
 }
 
 template<typename T>

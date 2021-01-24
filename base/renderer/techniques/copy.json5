@@ -7,15 +7,15 @@
     {
       type: "vertex",
       outputs: [
-        { name: "vs_coordinate", type: "vec2f" }
+        { name: "vs_coordinate", type: "f32x2" }
       ],
       imports: [
         "fullscreen_triangle"
       ],
       source: "
         void main() {
-          vec4f triangle = fullscreen_triangle();
-          rx_position = vec4f(triangle.xy, 0.0, 1.0);
+          f32x4 triangle = fullscreen_triangle();
+          rx_position = f32x4(triangle.xy, 0.0, 1.0);
           vs_coordinate = triangle.zw;
         }
       "
@@ -23,14 +23,14 @@
     {
       type: "fragment",
       inputs: [
-        { name: "vs_coordinate", type: "vec2f" }
+        { name: "vs_coordinate", type: "f32x2" }
       ],
       outputs: [
-        { name: "fs_color",      type: "vec4f" }
+        { name: "fs_color",      type: "f32x4" }
       ],
       source: "
         void main() {
-          fs_color = vec4f(rx_texture2D(u_color, vs_coordinate).rgb, 1.0);
+          fs_color = f32x4(rx_texture2D(u_color, vs_coordinate).rgb, 1.0);
         }
       "
     }

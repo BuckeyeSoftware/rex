@@ -11,60 +11,67 @@
     "HAS_EMISSIVE"
   ],
   uniforms: [
-    { name: "u_model",           type: "mat4x4f" },
-    { name: "u_view",            type: "mat4x4f" },
-    { name: "u_projection",      type: "mat4x4f" },
-    { name: "u_transform",       type: "mat3x3f", value: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]},
-    { name: "u_bones",           type: "bonesf", when: "HAS_SKELETON" },
-    { name: "u_roughness_value", type: "float", value: 1.0},
-    { name: "u_metalness_value", type: "float", value: 1.0},
-    { name: "u_occlusion_value", type: "float", value: 1.0},
-    { name: "u_albedo_color",    type: "vec3f", value: [1.0, 1.0, 1.0] },
-    { name: "u_emissive_color",  type: "vec3f", value: [1.0, 1.0, 1.0] },
+    { name: "u_model",           type: "f32x4x4" },
+    { name: "u_view",            type: "f32x4x4" },
+    { name: "u_projection",      type: "f32x4x4" },
+    { name: "u_transform",       type: "f32x3x3", value: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]},
+    { name: "u_bones",           type: "lb_bones", when: "HAS_SKELETON" },
+    { name: "u_roughness_value", type: "f32", value: 1.0},
+    { name: "u_metalness_value", type: "f32", value: 1.0},
+    { name: "u_occlusion_value", type: "f32", value: 1.0},
+    { name: "u_albedo_color",    type: "f32x3", value: [1.0, 1.0, 1.0] },
+    { name: "u_emissive_color",  type: "f32x3", value: [1.0, 1.0, 1.0] },
     { name: "u_albedo",          type: "sampler2D", value: 0, when: "HAS_ALBEDO" },
     { name: "u_normal",          type: "sampler2D", value: 1, when: "HAS_NORMAL" },
     { name: "u_metalness",       type: "sampler2D", value: 2, when: "HAS_METALNESS" },
     { name: "u_roughness",       type: "sampler2D", value: 3, when: "HAS_ROUGHNESS" },
     { name: "u_ambient",         type: "sampler2D", value: 4, when: "HAS_AMBIENT" },
-    { name: "u_emissive",        type: "sampler2D", value: 5, when: "HAS_EMISSIVE" }
+    { name: "u_emissive",        type: "sampler2D", value: 5, when: "HAS_EMISSIVE" },
+    { name: "u_dqbones",         type: "dq_bones", when: "HAS_SKELETON" }
   ],
   shaders: [
     {
       type: "vertex",
       inputs: [
-        { name: "a_position",      type: "vec3f" },
-        { name: "a_normal",        type: "vec3f" },
-        { name: "a_tangent",       type: "vec4f" },
-        { name: "a_coordinate",    type: "vec2f" },
-        { name: "a_blend_weights", type: "vec4b", when: "HAS_SKELETON" },
-        { name: "a_blend_indices", type: "vec4b", when: "HAS_SKELETON" }
+        { name: "a_position",      type: "f32x3" },
+        { name: "a_normal",        type: "f32x3" },
+        { name: "a_tangent",       type: "f32x4" },
+        { name: "a_coordinate",    type: "f32x2" },
+        { name: "a_blend_weights", type: "f32x4", when: "HAS_SKELETON" },
+        { name: "a_blend_indices", type: "s32x4", when: "HAS_SKELETON" }
       ],
       outputs: [
-        { name: "vs_normal",       type: "vec3f" },
-        { name: "vs_tangent",      type: "vec4f" },
-        { name: "vs_coordinate",   type: "vec2f" }
+        { name: "vs_normal",       type: "f32x3" },
+        { name: "vs_tangent",      type: "f32x4" },
+        { name: "vs_coordinate",   type: "f32x2" }
+      ],
+      imports: [
+        "dual_quaternion_skinning",
+        "linear_blend_skinning"
       ],
       source: "
         void main() {
         #if defined(HAS_SKELETON)
-          // Calculate transform from bone influences and weights.
-          mat3x4f transform  = u_bones[int(a_blend_indices.x)] * a_blend_weights.x / 255.0;
-                  transform += u_bones[int(a_blend_indices.y)] * a_blend_weights.y / 255.0;
-                  transform += u_bones[int(a_blend_indices.z)] * a_blend_weights.z / 255.0;
-                  transform += u_bones[int(a_blend_indices.w)] * a_blend_weights.w / 255.0;
+          // Dual quaternion skinning.
+          // f32x2x4 blend    = dqs(u_dqbones, a_blend_weights, a_blend_indices);
+          // f32x3   position = dq_transform_point(blend, a_position);
+          // f32x3   normal   = dq_transform_normal(blend, a_normal);
 
-          // Transform position by skeletal transform.
-          vec4f position = vec4f(vec4f(a_position, 1.0) * transform, 1.0);
+          // Linear blend skinning.
+          f32x3x4 blend    = lbs(u_bones, a_blend_weights, a_blend_indices);
+          f32x3   position = lbs_transform_point(blend, a_position);
+          f32x3   normal   = lbs_transform_normal(blend, a_normal);
         #else
-          vec4f position = vec4f(a_position, 1.0);
+          f32x3 position = a_position;
+          f32x3 normal   = a_normal;
         #endif
 
           // Transform position into clip space.
-          vec4f clip_position = u_projection * u_view * u_model * position;
+          f32x4 clip_position = u_projection * u_view * u_model * f32x4(position, 1.0);
 
-          vs_normal     = a_normal;
+          vs_normal     = normal;
           vs_tangent    = a_tangent;
-          vs_coordinate = (u_transform * vec3f(a_coordinate, 1.0)).xy;
+          vs_coordinate = (u_transform * f32x3(a_coordinate, 1.0)).xy;
 
           rx_position   = clip_position;
         }
@@ -72,14 +79,14 @@
     },{
       type: "fragment",
       inputs: [
-        { name: "vs_normal",       type: "vec3f" },
-        { name: "vs_tangent",      type: "vec4f" },
-        { name: "vs_coordinate",   type: "vec2f" }
+        { name: "vs_normal",       type: "f32x3" },
+        { name: "vs_tangent",      type: "f32x4" },
+        { name: "vs_coordinate",   type: "f32x2" }
       ],
       outputs: [
-        { name: "fs_albedo",       type: "vec4f" },
-        { name: "fs_normal",       type: "vec4f" },
-        { name: "fs_emission",     type: "vec4f" }
+        { name: "fs_albedo",       type: "f32x4" },
+        { name: "fs_normal",       type: "f32x4" },
+        { name: "fs_emission",     type: "f32x4" }
       ],
       imports: [
         "normal_encode"
@@ -87,7 +94,7 @@
       source: "
         void main() {
           // Calculate albedo factor from material if present.
-          vec4f albedo = vec4f(u_albedo_color, 1.0);
+          f32x4 albedo = f32x4(u_albedo_color, 1.0);
         #if defined(HAS_ALBEDO)
           albedo *= rx_texture2D(u_albedo, vs_coordinate);
         #endif
@@ -100,25 +107,25 @@
         #endif
 
           // Calculate roughness factor from material if present.
-          float roughness = u_roughness_value;
+          f32 roughness = u_roughness_value;
         #if defined(HAS_ROUGHNESS)
           roughness *= rx_texture2D(u_roughness, vs_coordinate).r;
         #endif
 
           // Calculate metalness facor from material if present.
-          float metalness = u_metalness_value;
+          f32 metalness = u_metalness_value;
         #if defined(HAS_METALNESS)
           metalness = (1.0 - metalness) * rx_texture2D(u_metalness, vs_coordinate).r;
         #endif
 
           // Calculate ambient factor from material if present.
-          float ambient = u_occlusion_value;
+          f32 ambient = u_occlusion_value;
         #if defined(HAS_AMBIENT)
           ambient *= rx_texture2D(u_ambient, vs_coordinate).r;
         #endif
 
           // Calculate emissiveness from material if present.
-          vec3f emission = vec3f(0.0f);
+          f32x3 emission = f32x3(0.0f);
         #if defined(HAS_EMISSIVE)
           emission += rx_texture2D(u_emissive, vs_coordinate).rgb;
         #endif
@@ -126,29 +133,29 @@
           // Calculate normal.
         #if defined(HAS_NORMAL)
           // Fetch tangent space normal sample from normal map texture.
-          vec3f normal_map_sample = rx_texture2D(u_normal, vs_coordinate).rgb;
+          f32x3 normal_map_sample = rx_texture2D(u_normal, vs_coordinate).rgb;
 
           // Transform normal map sample to range [-1, 1].
-          vec3f normal_map = normal_map_sample * 2.0 - 1.0;
+          f32x3 normal_map = normal_map_sample * 2.0 - 1.0;
 
           // Construct bitangent from tangent and normal and apply the bitangent
           // sign which is stored in vs_tangent.w.
-          vec3f bitangent = cross(vs_normal, vs_tangent.xyz) * vs_tangent.w;
+          f32x3 bitangent = cross(vs_normal, vs_tangent.xyz) * vs_tangent.w;
 
           // Construct TBN matrix from tangent, bitangent and normal.
-          mat3x3f tbn = mat3x3f(vs_tangent.xyz, bitangent, vs_normal);
+          f32x3x3 tbn = f32x3x3(vs_tangent.xyz, bitangent, vs_normal);
 
           // Transform tangent space normal map with TBN matrix and normalize.
-          vec3f normal = normalize(tbn * normal_map);
+          f32x3 normal = normalize(tbn * normal_map);
         #else
-          vec3f normal = normalize(vs_normal);
+          f32x3 normal = normalize(vs_normal);
         #endif
           // Transform normal into model space.
-          normal = normalize(u_model * vec4f(normal, 0.0)).xyz;
+          normal = normalize(u_model * f32x4(normal, 0.0)).xyz;
 
-          fs_albedo   = vec4f(albedo.rgb,            ambient);
-          fs_normal   = vec4f(normal_encode(normal), roughness, metalness);
-          fs_emission = vec4f(emission,              1.0);
+          fs_albedo   = f32x4(albedo.rgb,            ambient);
+          fs_normal   = f32x4(normal_encode(normal), roughness, metalness);
+          fs_emission = f32x4(emission,              1.0);
         }
       "
     }
