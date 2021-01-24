@@ -1,0 +1,4 @@
+{
+	name: "fireplace",
+	hdri: "base/skyboxes/fireplace/fireplace.hdr"
+}
