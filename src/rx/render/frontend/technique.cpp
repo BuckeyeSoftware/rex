@@ -263,42 +263,91 @@ Technique& Technique::operator=(Technique&& technique_) {
   return *this;
 }
 
-bool Technique::evaluate_when_for_permute(const String& _when, Uint64 _flags) const {
-  Map<String, bool> values{m_frontend->allocator()};
-  for (Size i = 0; i < m_specializations.size(); i++) {
-    values.insert(m_specializations[i], _flags & (1_u64 << i));
-  }
-  const int result{binexp_evaluate(_when.data(), values)};
-  if (result < 0) {
+bool Technique::evaluate_when(const Map<String, bool>& _values, const String& _when) const {
+  if (const auto result = binexp_evaluate(_when.data(), _values); result < 0) {
     return error("when expression evaluation failed: %s for \"%s\"",
       binexp_result_to_string(result), _when);
   }
-  return result;
+  return true;
 }
 
-bool Technique::evaluate_when_for_variant(const String& _when, Size _index) const {
-  Map<String, bool> values{m_frontend->allocator()};
-  for (Size i = 0; i < m_specializations.size(); i++) {
-    values.insert(m_specializations[i], i == _index);
-  }
-  const int result{binexp_evaluate(_when.data(), values)};
-  if (result < 0) {
-    return error("when expression evaluation failed: %s for \"%s\"",
-      binexp_result_to_string(result), _when);
-  }
-  return result;
-}
+Optional<String> Technique::resolve_source(
+  const ShaderDefinition& _definition,
+  const Map<String, bool>& _values,
+  const Map<String, Module>& _modules) const
+{
+  auto& allocator = m_frontend->allocator();
 
-bool Technique::evaluate_when_for_basic(const String& _when) const {
-  return _when.is_empty();
+  Algorithm::TopologicalSort<String> sorter{allocator};
+  Set<String> visited{allocator};
+
+  // For each dependency in shader definition.
+  const auto result = _definition.dependencies.each_fwd([&](const ShaderDefinition::Dependency& _dependency) {
+    const auto evaluate = binexp_evaluate(_dependency.when.data(), _values);
+    if (evaluate < 0) {
+      return error("when expression evaluation failed: %s for \"%s\"",
+        binexp_result_to_string(evaluate), _dependency.when);
+    }
+
+    // Recursively resolve dependencies.
+    if (auto find = _modules.find(_dependency.name)) {
+      return resolve_module_dependencies(_modules, *find, visited, sorter);
+    }
+
+    return false;
+  });
+
+  if (!result) {
+    error("could not satisfy all dependencies");
+    return nullopt;
+  }
+
+  // Sort the dependencies in topological order.
+  auto dependencies = sorter.sort();
+  if (!dependencies) {
+    error("out of memory");
+    return nullopt;
+  }
+
+  // When cycles are formed in the resolution we cannot satisfy.
+  if (dependencies->cycled.size()) {
+    // Write an error for each dependency that forms a cycle.
+    dependencies->cycled.each_fwd([&](const String& _module) {
+      error("dependency '%s' forms a cycle", _module);
+    });
+    return nullopt;
+  }
+
+  String source{allocator};
+  auto append_module = dependencies->sorted.each_fwd([&](const String& _module) {
+    const auto find = _modules.find(_module);
+    if (!find) {
+      return error("module '%s' not found", _module);
+    }
+
+    logger->verbose("'%s': shader requires module '%s'",
+      m_name, _module);
+
+    return source.append("// Module ")
+        && source.append(_module)
+        && source.append("\n// {\n")
+        && source.append(find->source())
+        && source.append("\n// }\n");
+  });
+
+  if (!append_module) {
+    return nullopt;
+  }
+
+  if (!source.append(_definition.source)) {
+    error("out of memory");
+    return nullopt;
+  }
+
+  return source;
 }
 
 bool Technique::compile(const Map<String, Module>& _modules) {
-  // Resolve each shaders dependencies.
-  if (!resolve_dependencies(_modules)) {
-    return false;
-  }
-
   ShaderDefinition* vertex{nullptr};
   ShaderDefinition* fragment{nullptr};
   m_shader_definitions.each_fwd([&](ShaderDefinition& _shader) {
@@ -364,32 +413,38 @@ bool Technique::compile(const Map<String, Module>& _modules) {
     auto program{m_frontend->create_program(RX_RENDER_TAG("technique"))};
 
     m_shader_definitions.each_fwd([&](const ShaderDefinition& _shader_definition) {
-      if (evaluate_when_for_basic(_shader_definition.when)) {
-        Shader specialized_shader;
-        specialized_shader.kind = _shader_definition.kind;
-        specialized_shader.source = _shader_definition.source;
-
-        // emit inputs
-        _shader_definition.inputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout) {
-          if (evaluate_when_for_basic(_inout.when)) {
-            specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
-          }
-        });
-
-        // emit outputs
-        _shader_definition.outputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout){
-          if (evaluate_when_for_basic(_inout.when)) {
-            specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
-          }
-        });
-
-        program->add_shader(Utility::move(specialized_shader));
+      if (!evaluate_when({}, _shader_definition.when)) {
+        return true;
       }
+
+      Shader specialized_shader;
+      specialized_shader.kind = _shader_definition.kind;
+
+      auto source = resolve_source(_shader_definition, {}, _modules);
+      if (!source || !specialized_shader.source.append(*source)) {
+        return false;
+      }
+
+      // emit inputs
+      _shader_definition.inputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout) {
+        if (evaluate_when({}, _inout.when)) {
+          specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
+        }
+      });
+
+      // emit outputs
+      _shader_definition.outputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout){
+        if (evaluate_when({}, _inout.when)) {
+          specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
+        }
+      });
+
+      return program->add_shader(Utility::move(specialized_shader));
     });
 
     m_uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
       auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind,
-        !evaluate_when_for_basic(_uniform_definition.when))};
+        !evaluate_when({}, _uniform_definition.when))};
       if (_uniform_definition.has_value) {
         const auto* data{reinterpret_cast<const Byte*>(&_uniform_definition.value)};
         uniform.record_raw(data, uniform.size());
@@ -400,51 +455,63 @@ bool Technique::compile(const Map<String, Module>& _modules) {
 
     m_programs.push_back(program);
   } else if (m_type == Type::PERMUTE) {
-    const Uint64 mask{(1_u64 << m_specializations.size()) - 1};
-    auto generate{[&](Uint64 _flags) {
+    const auto mask = (1_u64 << m_specializations.size()) - 1;
+
+    auto generate = [&](Uint64 _flags) {
+      // Create specialization values for evaluator.
+      Map<String, bool> values{m_frontend->allocator()};
+      for (Size i = 0; i < m_specializations.size(); i++) {
+        values.insert(m_specializations[i], _flags & (1_u64 << i));
+      }
+
       m_permute_flags.push_back(_flags);
 
-      auto program{m_frontend->create_program(RX_RENDER_TAG("technique"))};
+      auto program = m_frontend->create_program(RX_RENDER_TAG("technique"));
 
       m_shader_definitions.each_fwd([&](const ShaderDefinition& _shader_definition) {
-        if (evaluate_when_for_permute(_shader_definition.when, _flags)) {
-          Shader specialized_shader;
-          specialized_shader.kind = _shader_definition.kind;
-
-          // emit #defines
-          const Size specializations{m_specializations.size()};
-          for (Size i{0}; i < specializations; i++) {
-            const String& specialication{m_specializations[i]};
-            if (_flags & (1_u64 << i)) {
-              specialized_shader.source.append(String::format("#define %s\n", specialication));
-            }
-          }
-
-          // append shader source
-          specialized_shader.source.append(_shader_definition.source);
-
-          // emit inputs
-          _shader_definition.inputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout) {
-            if (evaluate_when_for_permute(_inout.when, _flags)) {
-              specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
-            }
-          });
-
-          // emit outputs
-          _shader_definition.outputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout) {
-            if (evaluate_when_for_permute(_inout.when, _flags)) {
-              specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
-            }
-          });
-
-          program->add_shader(Utility::move(specialized_shader));
+        if (!evaluate_when(values, _shader_definition.when)) {
+          return true;
         }
+
+        Shader specialized_shader;
+        specialized_shader.kind = _shader_definition.kind;
+
+        // emit #defines
+        const Size specializations{m_specializations.size()};
+        for (Size i{0}; i < specializations; i++) {
+          const String& specialication{m_specializations[i]};
+          if (_flags & (1_u64 << i)) {
+            specialized_shader.source.append(String::format("#define %s\n", specialication));
+          }
+        }
+
+        // Append shader source.
+        auto source = resolve_source(_shader_definition, values, _modules);
+        if (!source || !specialized_shader.source.append(*source)) {
+          return false;
+        }
+
+        // emit inputs
+        _shader_definition.inputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout) {
+          if (evaluate_when(values, _inout.when)) {
+            specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
+          }
+        });
+
+        // emit outputs
+        _shader_definition.outputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout) {
+          if (evaluate_when(values, _inout.when)) {
+            specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
+          }
+        });
+
+        return program->add_shader(Utility::move(specialized_shader));
       });
 
       // emit uniforms
       m_uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
         auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind,
-          !evaluate_when_for_permute(_uniform_definition.when, _flags))};
+          !evaluate_when(values, _uniform_definition.when))};
         if (_uniform_definition.has_value) {
           const auto* data{reinterpret_cast<const Byte*>(&_uniform_definition.value)};
           uniform.record_raw(data, uniform.size());
@@ -454,51 +521,63 @@ bool Technique::compile(const Map<String, Module>& _modules) {
       // initialize and track
       m_frontend->initialize_program(RX_RENDER_TAG("technique"), program);
       m_programs.push_back(program);
-    }};
+    };
 
-    for (Uint64 flags{0}; flags != mask; flags = ((flags | ~mask) + 1_u64) & mask) {
+    for (Uint64 flags = 0; flags != mask; flags = ((flags | ~mask) + 1_u64) & mask) {
       generate(flags);
     }
 
     generate(mask);
   } else if (m_type == Type::VARIANT) {
-    const Size specializations{m_specializations.size()};
-    for (Size i{0}; i < specializations; i++) {
-      const auto& specialization{m_specializations[i]};
-      auto program{m_frontend->create_program(RX_RENDER_TAG("technique"))};
+    const auto specializations = m_specializations.size();
+    for (Size i = 0; i < specializations; i++) {
+      const auto& specialization = m_specializations[i];
+
+      Map<String, bool> values{m_frontend->allocator()};
+      for (Size j = 0; j < specializations; j++) {
+        values.insert(m_specializations[j], i == j);
+      }
+
+      auto program = m_frontend->create_program(RX_RENDER_TAG("technique"));
+
       m_shader_definitions.each_fwd([&](const ShaderDefinition& _shader_definition) {
-        if (evaluate_when_for_variant(_shader_definition.when, i)) {
-          Shader specialized_shader;
-          specialized_shader.kind = _shader_definition.kind;
-
-          // emit #defines
-          specialized_shader.source.append(String::format("#define %s\n", specialization));
-
-          // append shader source
-          specialized_shader.source.append(_shader_definition.source);
-
-          // emit inputs
-          _shader_definition.inputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout) {
-            if (evaluate_when_for_variant(_inout.when, i)) {
-              specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
-            }
-          });
-
-          // emit outputs
-          _shader_definition.outputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout){
-            if (evaluate_when_for_variant(_inout.when, i)) {
-              specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
-            }
-          });
-
-          program->add_shader(Utility::move(specialized_shader));
+        if (!evaluate_when(values, _shader_definition.when)) {
+          return true;
         }
+
+        Shader specialized_shader;
+        specialized_shader.kind = _shader_definition.kind;
+
+        // emit #defines
+        specialized_shader.source.append(String::format("#define %s\n", specialization));
+
+        // append shader source
+        auto source = resolve_source(_shader_definition, values, _modules);
+        if (!source || !specialized_shader.source.append(*source)) {
+          return false;
+        }
+
+        // emit inputs
+        _shader_definition.inputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout) {
+          if (evaluate_when(values, _inout.when)) {
+            specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
+          }
+        });
+
+        // emit outputs
+        _shader_definition.outputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout){
+          if (evaluate_when(values, _inout.when)) {
+            specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
+          }
+        });
+
+        return program->add_shader(Utility::move(specialized_shader));
       });
 
       // emit uniforms
       m_uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
         auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind,
-          !evaluate_when_for_variant(_uniform_definition.when, i))};
+          !evaluate_when(values, _uniform_definition.when))};
         if (_uniform_definition.has_value) {
           const auto* data{reinterpret_cast<const Byte*>(&_uniform_definition.value)};
           uniform.record_raw(data, uniform.size());
@@ -1036,88 +1115,6 @@ bool Technique::parse_specialization(const JSON& _specialization,
   }
 
   return m_specializations.push_back(_specialization.as_string());
-}
-
-bool Technique::resolve_dependencies(const Map<String, Module>& _modules) {
-  auto& allocator = m_frontend->allocator();
-
-  // For every shader in technique.
-  return m_shader_definitions.each_fwd([&](ShaderDefinition& _shader) {
-    Algorithm::TopologicalSort<String> sorter{allocator};
-    Set<String> visited{allocator};
-
-    // For every dependency in the shader.
-    const bool result = _shader.dependencies.each_fwd([&](const ShaderDefinition::Dependency& _dependency) {
-      if (auto find = _modules.find(_dependency.name)) {
-        return resolve_module_dependencies(_modules, *find, visited, sorter);
-      }
-      return false;
-    });
-
-    if (!result) {
-      return error("could not satisfy all dependencies");
-    }
-
-    auto dependencies = sorter.sort();
-    if (!dependencies) {
-      return error("out of memory");
-    }
-
-    // When cycles are formed in the resolution we cannot satisfy.
-    if (dependencies->cycled.size()) {
-      auto has_cycles = !dependencies->cycled.each_fwd([&](const String& _module) {
-        return error("dependency '%s' forms a cycle", _module);
-      });
-      if (has_cycles) {
-        return false;
-      }
-    }
-
-    // Fill out the source with all the modules in sorted order.
-    String source{allocator};
-    if (dependencies->sorted.size()) {
-      const char* shader_type{""};
-      switch (_shader.kind) {
-      case Shader::Type::FRAGMENT:
-        shader_type = "fragment";
-        break;
-      case Shader::Type::VERTEX:
-        shader_type = "vertex";
-        break;
-      }
-
-      logger->verbose("'%s': %s shader has %zu dependencies",
-        m_name, shader_type, dependencies->sorted.size());
-
-      auto append_module = dependencies->sorted.each_fwd([&](const String& _module) {
-        const auto find = _modules.find(_module);
-        if (!find) {
-          return error("module '%s' not found", _module);
-        }
-
-        logger->verbose("'%s': %s shader requires module '%s'",
-          m_name, shader_type, _module);
-
-        return source.append(String::format("// Module %s\n", _module))
-            && source.append("// {\n")
-            && source.append(find->source())
-            && source.append("// }\n");
-      });
-
-      if (!append_module) {
-        return false;
-      }
-
-      if (!source.append(_shader.source)) {
-        return false;
-      }
-
-      // Replace the shader source with the new injected modules
-      _shader.source = Utility::move(source);
-    }
-
-    return true;
-  });
 }
 
 } // namespace Rx::Render::Frontend

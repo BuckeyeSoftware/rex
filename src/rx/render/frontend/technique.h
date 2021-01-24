@@ -96,9 +96,13 @@ private:
     String when;
   };
 
-  bool evaluate_when_for_permute(const String& _when, Uint64 _flags) const;
-  bool evaluate_when_for_variant(const String& _when, Size _index) const;
-  bool evaluate_when_for_basic(const String& _when) const;
+
+  Optional<String> resolve_source(
+    const ShaderDefinition& _definition,
+    const Map<String, bool>& _values,
+    const Map<String, Module>& _modules) const;
+
+  bool evaluate_when(const Map<String, bool>& _values, const String& _when) const;
 
   bool parse_uniforms(const JSON& _uniforms);
   bool parse_shaders(const JSON& _shaders);
@@ -115,8 +119,6 @@ private:
 
   bool parse_specializations(const JSON& _specializations, const char* _type);
   bool parse_specialization(const JSON& _specialization, const char* _type);
-
-  bool resolve_dependencies(const Map<String, Module>& _modules);
 
   template<typename... Ts>
   bool error(const char* _format, Ts&&... _arguments) const;
