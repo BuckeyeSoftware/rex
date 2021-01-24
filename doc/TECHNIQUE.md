@@ -28,7 +28,7 @@ There cannot be both `variants` and `permutes`
   inputs:   required Array[#InOut]
   outputs:  required Array[#InOut]
   source:   required #ShaderSource
-  imports:  optional Array[String]
+  imports:  optional Array[#Import]
 }
 ```
 
@@ -46,8 +46,18 @@ There cannot be both `variants` and `permutes`
 }
 ```
 
-`#ShaderSource` is a `String` that is a subset of GLSL with some modifications
-outlined [here](SHADER.md)
+`#ShaderSource` is a `String` that is Rex shading source code. The shading
+language is outlined [here](SHADER.md)
+
+`#Import` is a `String` of the module name or `#ImportObject`
+
+`#ImportObject` schema looks like:
+```
+{
+  name: required String
+  when: #When
+}
+```
 
 The inputs of a vertex shader describe the vertex attributes. The outputs of
 a vertex shader are values passed to the fragment shader; as such, the outputs
@@ -59,13 +69,12 @@ multiple attachments. The types must match the attachment types for the render
 target.
 
 `#InOutType` is a `String` that is one of
-  * `"vec2i"`
-  * `"vec3i"`
-  * `"vec4i"`
-  * `"vec2f"`
-  * `"vec3f"`
-  * `"vec4f"`
-  * `"vec4b"`
+  * `"s32x2"`
+  * `"s32x3"`
+  * `"s32x4"`
+  * `"s32x2"`
+  * `"s32x3"`
+  * `"s32x4"`
 
 `#Uniform` schema looks like:
 ```
@@ -82,37 +91,36 @@ target.
   * `"sampler2D"`
   * `"sampler3D"`
   * `"samplerCM"`
-  * `"bool"`
-  * `"int"`
-  * `"float"`
-  * `"vec2i"`
-  * `"vec3i"`
-  * `"vec4i"`
-  * `"vec2f"`
-  * `"vec3f"`
-  * `"vec4f"`
-  * `"mat4x4f"`
-  * `"mat3x3f"`
-  * `"bonesf"`
+  * `"s32"`
+  * `"f32"`
+  * `"s32x2"`
+  * `"s32x3"`
+  * `"s32x4"`
+  * `"f32x2"`
+  * `"f32x3"`
+  * `"f32x4"`
+  * `"f32x4x4"`
+  * `"f32x3x3"`
+  * `"lb_bones"`
+  * `"dq_bones"`
 
 `#UniformValue` can be many types depending on the associated `#UniformType`
   * `"sampler1D" => @Integer`
   * `"sampler2D" => @Integer`
   * `"sampler3D" => @Integer`
   * `"samplerCM" => @Integer`
-  * `"bool"      => Boolean`
-  * `"int"       => @Integer`
-  * `"float"     => @Float`
-  * `"vec2i"     => Array[@Integer, 2]`
-  * `"vec3i"     => Array[@Integer, 3]`
-  * `"vec4i"     => Array[@Integer, 4]`
-  * `"vec2f"     => Array[@Float, 2]`
-  * `"vec3f"     => Array[@Float, 3]`
-  * `"vec4f"     => Array[@Float, 4]`
-  * `"mat4x4f"   => Array[Array[@Float, 4], 4]`
-  * `"mat3x3f"   => Array[Array[@Float, 3], 3]`
+  * `"s32"       => @Integer`
+  * `"f32"       => @Float`
+  * `"s32x2"     => Array[@Integer, 2]`
+  * `"s32x3"     => Array[@Integer, 3]`
+  * `"s32x4"     => Array[@Integer, 4]`
+  * `"f32x2"     => Array[@Float, 2]`
+  * `"f32x3"     => Array[@Float, 3]`
+  * `"f32x4"     => Array[@Float, 4]`
+  * `"f32x4x4"   => Array[Array[@Float, 4], 4]`
+  * `"f32x3x3"   => Array[Array[@Float, 3], 3]`
 
-A `value` cannot be specified for `bonesf`
+A `value` cannot be specified for `lb_bones` or `dq_bones`.
 
 `#When` is a `String` that can only be present if `variants` or `permutes`
 exists. It encodes a binary expression that is evaluated to conditionally
