@@ -90,7 +90,7 @@ struct TestGame
 
   virtual bool on_init() {
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
-    m_skybox.load("base/skyboxes/miramar/miramar.json5", {1024, 1024});
+    m_skybox.load("base/skyboxes/fireplace/fireplace.json5", {1024, 1024});
 
     auto indirect_lighting_pass
       = Render::IndirectLightingPass::create(&m_frontend, m_frontend.swapchain()->dimensions());
@@ -297,10 +297,12 @@ struct TestGame
 
     m_console.update(console);
 
-    Float32 bias = 0.0f;
+    // Float32 bias = 0.0f;
     m_models.each_fwd([&](Render::Model& model_) {
-      model_.update(_delta_time * 0.85f);
+      model_.update(_delta_time);
     });
+
+    m_transform.rotate.y += 50.0f * _delta_time;
 
     return true;
   }
@@ -309,7 +311,8 @@ struct TestGame
     auto& input = engine()->input();
     auto& console = engine()->console();
 
-    m_ibl.render(m_skybox.cubemap());
+    // When calculating
+    m_ibl.render(m_skybox.texture());
 
     m_color_grader.update();
 
@@ -343,6 +346,7 @@ struct TestGame
     const Float32 spacing = 5.0f;
     Math::Transform transform;
     m_models.each_fwd([&](Render::Model& model_) {
+      transform.rotate = m_transform.rotate;
       model_.render(m_gbuffer.target(), transform.as_mat4(), m_camera.view(),
         m_camera.projection,
           Render::Model::SKELETON | Render::Model::BOUNDS,
@@ -417,6 +421,7 @@ struct TestGame
   Render::GBuffer m_gbuffer;
   Render::Skybox m_skybox;
   Vector<Render::Model> m_models;
+  Math::Transform m_transform;
 
   Render::ImageBasedLighting m_ibl;
 
