@@ -46,8 +46,8 @@
         { name: "vs_coordinate",   type: "f32x2" }
       ],
       imports: [
-        "dual_quaternion_skinning",
-        "linear_blend_skinning"
+        { name: "dual_quaternion_skinning", when: "HAS_SKELETON" },
+        { name: "linear_blend_skinning",    when: "HAS_SKELETON" }
       ],
       source: "
         void main() {
