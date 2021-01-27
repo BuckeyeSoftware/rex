@@ -135,8 +135,21 @@ bool Material::load(const Rx::Material::Loader& _loader) {
 
       // Create a mipmap chain of the texture.
       Rx::Texture::Chain chain;
+
+      // Determine the pixel format we want for the chain.
+      Rx::Texture::PixelFormat want_format;
+      if (find->srgb) {
+        if (Rx::Texture::has_alpha_channel(bitmap.format)) {
+          want_format = Rx::Texture::PixelFormat::SRGBA_U8;
+        } else {
+          want_format = Rx::Texture::PixelFormat::SRGB_U8;
+        }
+      } else {
+        want_format = bitmap.format;
+      }
+
       if (!chain.generate(bitmap.data.data(), bitmap.format,
-        bitmap.format, bitmap.dimensions, false, filter.mipmaps))
+        want_format, bitmap.dimensions, false, filter.mipmaps))
       {
         return false;
       }
@@ -144,6 +157,7 @@ bool Material::load(const Rx::Material::Loader& _loader) {
       // Create the texture.
       texture = m_frontend->create_texture2D(RX_RENDER_TAG("material"));
 
+      // Map the Rx::Texture::PixelFormat to a Rx::Render::Frontend::Texture::DataFormat.
       switch (chain.format()) {
       case Rx::Texture::PixelFormat::RGBA_U8:
         texture->record_format(Texture::DataFormat::RGBA_U8);

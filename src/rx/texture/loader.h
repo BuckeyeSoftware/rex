@@ -34,6 +34,14 @@ enum class PixelFormat : Uint8 {
   RGBA_F32
 };
 
+// Checks if the PixelFormat |_format| has an alpha channel.
+inline bool has_alpha_channel(PixelFormat _format) {
+  return _format == PixelFormat::RGBA_U8 ||
+         _format == PixelFormat::BGRA_U8 ||
+         _format == PixelFormat::SRGBA_U8 ||
+         _format == PixelFormat::RGBA_F32;
+}
+
 struct Loader {
   RX_MARK_NO_COPY(Loader);
   RX_MARK_NO_MOVE(Loader);

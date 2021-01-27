@@ -97,6 +97,7 @@ struct Texture
   static bool is_stencil_format(DataFormat _format);
   static bool is_depth_stencil_format(DataFormat _format);
   static bool is_srgb_color_format(DataFormat _format);
+  static bool has_alpha(DataFormat _format);
 
   bool is_compressed_format() const;
   bool is_color_format() const;
@@ -412,47 +413,7 @@ inline Size Texture::bits_per_pixel() const {
 }
 
 inline bool Texture::has_alpha() const {
-  switch (m_format) {
-  case DataFormat::R_U8:
-    return false;
-  case DataFormat::RGB_U8:
-    return false;
-  case DataFormat::RGBA_U8:
-    return true;
-  case DataFormat::BGR_U8:
-    return false;
-  case DataFormat::BGRA_U8:
-    return true;
-  case DataFormat::RGBA_F16:
-    return true;
-  case DataFormat::BGRA_F16:
-    return true;
-  case DataFormat::RGBA_F32:
-    return true;
-  case DataFormat::D16:
-    return false;
-  case DataFormat::D24:
-    return false;
-  case DataFormat::D32:
-    return false;
-  case DataFormat::D32F:
-    return false;
-  case DataFormat::D24_S8:
-    return false;
-  case DataFormat::D32F_S8:
-    return false;
-  case DataFormat::S8:
-    return false;
-  case DataFormat::DXT1:
-    return false;
-  case DataFormat::DXT5:
-    return false;
-  case DataFormat::SRGB_U8:
-    return false;
-  case DataFormat::SRGBA_U8:
-    return true;
-  }
-  RX_HINT_UNREACHABLE();
+  return has_alpha(m_format);
 }
 
 inline const Math::Vec4f& Texture::border() const & {
@@ -500,6 +461,50 @@ inline bool Texture::is_compressed_format(DataFormat _format) {
 inline bool Texture::is_srgb_color_format(DataFormat _format) {
   return _format == DataFormat::SRGB_U8
       || _format == DataFormat::SRGBA_U8;
+}
+
+inline bool Texture::has_alpha(DataFormat _format) {
+  switch (_format) {
+  case DataFormat::R_U8:
+    return false;
+  case DataFormat::RGB_U8:
+    return false;
+  case DataFormat::RGBA_U8:
+    return true;
+  case DataFormat::BGR_U8:
+    return false;
+  case DataFormat::BGRA_U8:
+    return true;
+  case DataFormat::RGBA_F16:
+    return true;
+  case DataFormat::BGRA_F16:
+    return true;
+  case DataFormat::RGBA_F32:
+    return true;
+  case DataFormat::D16:
+    return false;
+  case DataFormat::D24:
+    return false;
+  case DataFormat::D32:
+    return false;
+  case DataFormat::D32F:
+    return false;
+  case DataFormat::D24_S8:
+    return false;
+  case DataFormat::D32F_S8:
+    return false;
+  case DataFormat::S8:
+    return false;
+  case DataFormat::DXT1:
+    return false;
+  case DataFormat::DXT5:
+    return false;
+  case DataFormat::SRGB_U8:
+    return false;
+  case DataFormat::SRGBA_U8:
+    return true;
+  }
+  RX_HINT_UNREACHABLE();
 }
 
 inline bool Texture::is_compressed_format() const {
