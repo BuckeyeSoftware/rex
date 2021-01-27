@@ -97,12 +97,18 @@ bool Texture::parse(const JSON& _definition) {
 
 bool Texture::load_texture_file(const Math::Vec2z& _max_dimensions) {
   Rx::Texture::PixelFormat want_format;
-  if (m_type == "albedo") {
-    want_format = Rx::Texture::PixelFormat::RGBA_U8;
-  } else if (m_type == "metalness" || m_type == "roughness") {
+  switch (m_type) {
+  case Type::ALBEDO:
+    want_format = Rx::Texture::PixelFormat::SRGBA_U8;
+    break;
+  case Type::METALNESS:
+    [[fallthrough]];
+  case Type::ROUGHNESS:
     want_format = Rx::Texture::PixelFormat::R_U8;
-  } else {
+    break;
+  default:
     want_format = Rx::Texture::PixelFormat::RGB_U8;
+    break;
   }
 
   Rx::Texture::Loader loader{allocator()};
@@ -125,23 +131,27 @@ bool Texture::parse_type(const JSON& _type) {
     return error("expected String");
   }
 
-  static constexpr const char* MATCHES[] = {
-    "albedo",
-    "normal",
-    "metalness",
-    "roughness",
-    "occlusion",
-    "emissive"
+  static constexpr struct {
+    const char* name;
+    Type type;
+  } MATCHES[] = {
+    { "albedo",    Type::ALBEDO    },
+    { "normal",    Type::NORMAL    },
+    { "metalness", Type::METALNESS },
+    { "roughness", Type::ROUGHNESS },
+    { "occlusion", Type::OCCLUSION },
+    { "emissive",  Type::EMISSIVE  },
+    { "custom",    Type::CUSTOM    }
   };
 
   for (const auto& match : MATCHES) {
-    if (match == _type.as_string()) {
-      m_type = match;
+    if (match.name == _type.as_string()) {
+      m_type = match.type;
       return true;
     }
   }
 
-  return error("unknown Type '%s'", _type.as_string());
+  return error("unknown type '%s'", _type.as_string());
 }
 
 bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
@@ -228,12 +238,30 @@ bool Texture::parse_border(const JSON& _border) {
   return true;
 }
 
+
 void Texture::write_log(Log::Level _level, String&& message_) const {
-  if (m_type.is_empty()) {
-    logger->write(_level, "%s", Utility::move(message_));
-  } else {
-    logger->write(_level, "%s: %s", m_type, Utility::move(message_));
+  static constexpr const struct {
+    Type type;
+    const char* name;
+  } MATCHES[] = {
+    { Type::ALBEDO,    "albedo"    },
+    { Type::NORMAL,    "normal"    },
+    { Type::METALNESS, "metalness" },
+    { Type::ROUGHNESS, "roughness" },
+    { Type::OCCLUSION, "occlusion" },
+    { Type::EMISSIVE,  "emissive"  },
+    { Type::CUSTOM,    "custom"    }
+  };
+
+  const char* type = nullptr;
+  for (const auto& match : MATCHES) {
+    if (match.type == m_type) {
+      type = match.name;
+      break;
+    }
   }
+
+  logger->write(_level, "%s: %s", type, Utility::move(message_));
 }
 
 } // namespace Rx::Material

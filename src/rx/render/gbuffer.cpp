@@ -28,7 +28,7 @@ void GBuffer::destroy() {
 
 void GBuffer::create(const Math::Vec2z& _resolution) {
   m_albedo_texture = m_frontend->create_texture2D(RX_RENDER_TAG("gbuffer albedo"));
-  m_albedo_texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
+  m_albedo_texture->record_format(Frontend::Texture::DataFormat::SRGBA_U8);
   m_albedo_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   m_albedo_texture->record_levels(1);
   m_albedo_texture->record_dimensions(_resolution);

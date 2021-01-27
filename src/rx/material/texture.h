@@ -31,6 +31,16 @@ struct Texture {
     MIRROR_CLAMP_TO_EDGE
   };
 
+  enum class Type : Byte {
+    ALBEDO,
+    NORMAL,
+    METALNESS,
+    ROUGHNESS,
+    OCCLUSION,
+    EMISSIVE,
+    CUSTOM
+  };
+
   using Wrap = Math::Vec2<WrapType>;
 
   struct Bitmap {
@@ -52,7 +62,7 @@ struct Texture {
 
   const Filter& filter() const &;
   const Wrap& wrap() const &;
-  const String& type() const &;
+  Type type() const;
   const String& file() const &;
   const Optional<Math::Vec4f>& border() const;
 
@@ -80,7 +90,7 @@ private:
   Bitmap m_bitmap;
   Filter m_filter;
   Wrap m_wrap;
-  String m_type;
+  Type m_type;
   String m_file;
   Optional<Math::Vec4f> m_border;
 };
@@ -98,7 +108,6 @@ void Texture::log(Log::Level _level, const char* _format, Ts&&... _arguments) co
 
 inline Texture::Texture(Memory::Allocator& _allocator)
   : m_allocator{&_allocator}
-  , m_type{allocator()}
   , m_file{allocator()}
 {
 }
@@ -108,7 +117,7 @@ inline Texture::Texture(Texture&& texture_)
   , m_bitmap{Utility::move(texture_.m_bitmap)}
   , m_filter{texture_.m_filter}
   , m_wrap{texture_.m_wrap}
-  , m_type{Utility::move(texture_.m_type)}
+  , m_type{texture_.m_type}
   , m_file{Utility::move(texture_.m_file)}
   , m_border{Utility::move(texture_.m_border)}
 {
@@ -120,7 +129,7 @@ inline Texture& Texture::operator=(Texture&& texture_) {
   m_bitmap = Utility::move(texture_.m_bitmap);
   m_filter = texture_.m_filter;
   m_wrap = texture_.m_wrap;
-  m_type = Utility::move(texture_.m_type);
+  m_type = texture_.m_type;
   m_file = Utility::move(texture_.m_file);
   m_border = Utility::move(texture_.m_border);
   return *this;
@@ -134,7 +143,7 @@ inline const Texture::Wrap& Texture::wrap() const & {
   return m_wrap;
 }
 
-inline const String& Texture::type() const & {
+inline Texture::Type Texture::type() const {
   return m_type;
 }
 

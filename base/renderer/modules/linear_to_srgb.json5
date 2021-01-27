@@ -1,0 +1,24 @@
+{
+  name: "linear_to_srgb",
+  source: "
+    f32 linear_to_srgb(f32 x) {
+      if (x <= 0.0) {
+        return 0.0;
+      } else if (x >= 1.0) {
+        return 1.0;
+      } else if (x < 0.0031398) {
+        return x * 12.92;
+      } else {
+        return pow(x, 1.0 / 2.4) * 1.055 - 0.055;
+      }
+    }
+
+    f32x3 linear_to_srgb(f32x3 color) {
+      return f32x3(linear_to_srgb(color.r), linear_to_srgb(color.g), linear_to_srgb(color.b));
+    }
+
+    f32x4 linear_to_srgb(f32x4 color) {
+      return f32x4(linear_to_srgb(color.rgb), color.a);
+    }
+  "
+}

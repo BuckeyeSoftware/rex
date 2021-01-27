@@ -86,21 +86,23 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
   m_dimensions = dimensions.cast<Size>();
 
   // Scale the texture down if it exceeds the max dimensions.
-  if (m_dimensions > _max_dimensions) {
+  // TODO(dweiler): This only works for non-float formats.
+  bool resize = false;
+  if (m_dimensions > _max_dimensions && !is_float_format(_want_format)) {
     m_dimensions = _max_dimensions;
-    if (!m_data.resize(m_dimensions.area() * bits_per_pixel() / 8)) {
-      stbi_image_free(decoded_image);
-      return false;
-    }
+    resize = true;
+  }
+
+  if (!m_data.resize(m_dimensions.area() * bits_per_pixel() / 8)) {
+    stbi_image_free(decoded_image);
+    return false;
+  }
+
+  if (resize) {
     scale(decoded_image, dimensions.w, dimensions.h, want_channels,
       dimensions.w * want_channels, m_data.data(), _max_dimensions.w,
       _max_dimensions.h);
   } else {
-    // Otherwise just copy the decoded image data directly.
-    if (!m_data.resize(m_dimensions.area() * bits_per_pixel() / 8)) {
-      stbi_image_free(decoded_image);
-      return false;
-    }
     memcpy(m_data.data(), decoded_image, m_data.size());
   }
 
@@ -114,6 +116,7 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
   {
     const Size samples =
       m_dimensions.area() * static_cast<Size>(m_channels);
+
     for (Size i = 0; i < samples; i += m_channels) {
       const auto r = m_data[0];
       const auto b = m_data[2];

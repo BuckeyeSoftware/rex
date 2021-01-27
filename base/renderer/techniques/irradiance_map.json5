@@ -46,7 +46,7 @@
           f32x3 color = f32x3(0.0);
           f32 total_weight = 0.0;
 
-          for (u32 i = 0; i < 6; i++) {
+          for (u32 i = 0u; i < 6u; i++) {
             f32x3x3 rotation = CUBEMAP_ROTATIONS[i];
             for (s32 x = 0; x < u_texture_size; x++) {
               for (s32 y = 0; y < u_texture_size; y++) {

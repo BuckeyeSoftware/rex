@@ -248,7 +248,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     if (material.metalness())  flags |= 1 << 3;
     if (material.roughness())  flags |= 1 << 4;
     if (material.alpha_test()) flags |= 1 << 5;
-    if (material.ambient())    flags |= 1 << 6;
+    if (material.occlusion())  flags |= 1 << 6;
     if (material.emissive())   flags |= 1 << 7;
 
     Frontend::Program* program{m_technique->permute(flags)};
@@ -278,7 +278,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     if (material.normal())    uniforms[11].record_sampler(draw_textures.add(material.normal()));
     if (material.metalness()) uniforms[12].record_sampler(draw_textures.add(material.metalness()));
     if (material.roughness()) uniforms[13].record_sampler(draw_textures.add(material.roughness()));
-    if (material.ambient())   uniforms[14].record_sampler(draw_textures.add(material.ambient()));
+    if (material.occlusion()) uniforms[14].record_sampler(draw_textures.add(material.occlusion()));
     if (material.emissive())  uniforms[15].record_sampler(draw_textures.add(material.emissive()));
 
     // Record all the draw buffers.

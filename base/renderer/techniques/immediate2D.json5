@@ -20,9 +20,12 @@
         { name: "vs_color",      type: "f32x4" },
         { name: "vs_coordinate", type: "f32x2" }
       ],
+      imports: [
+        "srgb_to_linear"
+      ],
       source: "
         void main() {
-          vs_color = a_color;
+          vs_color = srgb_to_linear(a_color);
           vs_coordinate = a_coordinate;
           rx_position = f32x4(a_position * 2.0 / f32x2(u_window) - 1.0, 0.0, 1.0);
         }

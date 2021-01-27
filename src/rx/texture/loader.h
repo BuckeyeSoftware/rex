@@ -42,6 +42,17 @@ inline bool has_alpha_channel(PixelFormat _format) {
          _format == PixelFormat::RGBA_F32;
 }
 
+// Checks if the PixelFormat is an sRGB format.
+inline bool is_srgb_format(PixelFormat _format) {
+  return _format == PixelFormat::SRGB_U8 ||
+         _format == PixelFormat::SRGBA_U8;
+}
+
+// Checks if the PixelFormat is a float format.
+inline bool is_float_format(PixelFormat _format) {
+  return _format == PixelFormat::RGBA_F32;
+}
+
 struct Loader {
   RX_MARK_NO_COPY(Loader);
   RX_MARK_NO_MOVE(Loader);

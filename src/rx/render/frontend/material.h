@@ -27,7 +27,7 @@ struct Material {
   Texture2D* normal() const;
   Texture2D* roughness() const;
   Texture2D* metalness() const;
-  Texture2D* ambient() const;
+  Texture2D* occlusion() const;
   Texture2D* emissive() const;
 
   Float32 roughness_value() const;
@@ -47,7 +47,7 @@ private:
   Texture2D* m_normal;
   Texture2D* m_roughness;
   Texture2D* m_metalness;
-  Texture2D* m_ambient;
+  Texture2D* m_occlusion;
   Texture2D* m_emissive;
   Uint8 m_flags;
   Float32 m_roughness_value;
@@ -65,7 +65,7 @@ inline Material::Material(Material&& material_)
   , m_normal{Utility::exchange(material_.m_normal, nullptr)}
   , m_roughness{Utility::exchange(material_.m_roughness, nullptr)}
   , m_metalness{Utility::exchange(material_.m_metalness, nullptr)}
-  , m_ambient{Utility::exchange(material_.m_ambient, nullptr)}
+  , m_occlusion{Utility::exchange(material_.m_occlusion, nullptr)}
   , m_emissive{Utility::exchange(material_.m_emissive, nullptr)}
   , m_flags{Utility::exchange(material_.m_flags, 0)}
   , m_roughness_value{Utility::exchange(material_.m_roughness_value, 1.0f)}
@@ -88,7 +88,7 @@ inline Material& Material::operator=(Material&& material_) {
   m_normal = Utility::exchange(material_.m_normal, nullptr);
   m_roughness = Utility::exchange(material_.m_roughness, nullptr);
   m_metalness = Utility::exchange(material_.m_metalness, nullptr);
-  m_ambient = Utility::exchange(material_.m_ambient, nullptr);
+  m_occlusion = Utility::exchange(material_.m_occlusion, nullptr);
   m_emissive = Utility::exchange(material_.m_emissive, nullptr);
   m_flags = Utility::exchange(material_.m_flags, 0);
   m_roughness_value = Utility::exchange(material_.m_roughness_value, 1.0f);
@@ -134,8 +134,8 @@ inline Texture2D* Material::metalness() const {
   return m_metalness;
 }
 
-inline Texture2D* Material::ambient() const {
-  return m_ambient;
+inline Texture2D* Material::occlusion() const {
+  return m_occlusion;
 }
 
 inline Texture2D* Material::emissive() const {

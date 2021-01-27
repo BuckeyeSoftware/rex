@@ -270,6 +270,8 @@ namespace detail_es3 {
 
       pglEnable(GL_CULL_FACE);
       pglEnable(GL_PROGRAM_POINT_SIZE);
+      // This is default in ES 3.0.
+      // pglEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
       pglCullFace(GL_BACK);
       pglFrontFace(GL_CW);
 
@@ -762,7 +764,7 @@ static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
     if (log_size) {
       Vector<char> error_log{Memory::SystemAllocator::instance(), static_cast<Size>(log_size)};
       pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
-      logger->error("\n%s\n%s", error_log.data(), contents);
+      logger->error("\n%s\n%s", error_log.data(), contents->data());
     }
 
     pglDeleteShader(handle);

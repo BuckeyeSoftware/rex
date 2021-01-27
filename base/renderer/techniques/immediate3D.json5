@@ -12,26 +12,29 @@
   shaders: [
     {
       type: "vertex",
-        inputs: [
-          { name: "a_position",    type: "f32x3" },
-          { name: "a_normal",      type: "f32x3" },
-          { name: "a_vcolor",      type: "f32x4",   when: "!USE_INSTANCED" },
-          { name: "a_icolor",      type: "f32x4",   when: "USE_INSTANCED" },
-          { name: "a_transform",   type: "f32x4x4", when: "USE_INSTANCED" }
-        ],
-        outputs: [
-          { name: "vs_color",      type: "f32x4" },
-          { name: "vs_normal",     type: "f32x3", when: "!USE_POINTS" },
-          { name: "vs_view",       type: "f32x3", when: "USE_STANDARD || USE_INSTANCED" }
-        ],
+      inputs: [
+        { name: "a_position",    type: "f32x3" },
+        { name: "a_normal",      type: "f32x3" },
+        { name: "a_vcolor",      type: "f32x4",   when: "!USE_INSTANCED" },
+        { name: "a_icolor",      type: "f32x4",   when: "USE_INSTANCED" },
+        { name: "a_transform",   type: "f32x4x4", when: "USE_INSTANCED" }
+      ],
+      outputs: [
+        { name: "vs_color",      type: "f32x4" },
+        { name: "vs_normal",     type: "f32x3", when: "!USE_POINTS" },
+        { name: "vs_view",       type: "f32x3", when: "USE_STANDARD || USE_INSTANCED" }
+      ],
+      imports: [
+        "srgb_to_linear"
+      ],
       source: "
         void main() {
         #if defined(USE_INSTANCED)
           f32x4 position = a_transform * f32x4(a_position, 1.0);
-          vs_color = a_icolor;
+          vs_color = srgb_to_linear(a_icolor);
         #else
           f32x4 position = f32x4(a_position, 1.0);
-          vs_color = a_vcolor;
+          vs_color = srgb_to_linear(a_vcolor);
         #endif
 
           f32x4 eye_position = u_view * position;

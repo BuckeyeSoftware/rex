@@ -90,7 +90,7 @@ struct TestGame
 
   virtual bool on_init() {
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
-    m_skybox.load("base/skyboxes/fireplace/fireplace.json5", {1024, 1024});
+    m_skybox.load("base/skyboxes/sky_cloudy/sky_cloudy.json5", {1024, 1024});
 
     auto indirect_lighting_pass
       = Render::IndirectLightingPass::create(&m_frontend, m_frontend.swapchain()->dimensions());
@@ -182,7 +182,7 @@ struct TestGame
     }*/
 
     Render::Model model{&m_frontend};
-    if (model.load("base/models/mrfixit/mrfixit.json5")) {
+    if (model.load("base/models/elemental/elemental.json5")) {
       if (!m_models.push_back(Utility::move(model))) {
         return false;
       }
@@ -302,7 +302,7 @@ struct TestGame
       model_.update(_delta_time);
     });
 
-    m_transform.rotate.y += 50.0f * _delta_time;
+    m_transform.rotate.y += 15.0f * _delta_time;
 
     return true;
   }
@@ -384,7 +384,7 @@ struct TestGame
       0,
       m_frontend.swapchain(),
       0);
-
+   
     m_frame_graph.render();
     m_render_stats.render();
     m_memory_stats.render();

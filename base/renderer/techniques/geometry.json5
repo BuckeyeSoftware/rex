@@ -53,12 +53,12 @@
         void main() {
         #if defined(HAS_SKELETON)
           // Dual quaternion skinning.
-          // f32x2x4 blend    = dqs(u_dqbones, a_blend_weights, a_blend_indices);
+          // f32x2x4 blend    = dqs(u_dqbones, a_blend_weights, as_u32x4(a_blend_indices));
           // f32x3   position = dq_transform_point(blend, a_position);
           // f32x3   normal   = dq_transform_normal(blend, a_normal);
 
           // Linear blend skinning.
-          f32x3x4 blend    = lbs(u_bones, a_blend_weights, a_blend_indices);
+          f32x3x4 blend    = lbs(u_bones, a_blend_weights, as_u32x4(a_blend_indices));
           f32x3   position = lbs_transform_point(blend, a_position);
           f32x3   normal   = lbs_transform_normal(blend, a_normal);
         #else

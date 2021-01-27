@@ -57,7 +57,7 @@ Material::Material(Context* _frontend)
   , m_normal{nullptr}
   , m_roughness{nullptr}
   , m_metalness{nullptr}
-  , m_ambient{nullptr}
+  , m_occlusion{nullptr}
   , m_emissive{nullptr}
   , m_flags{0}
   , m_roughness_value{1.0f}
@@ -76,7 +76,7 @@ Material::~Material() {
   m_frontend->destroy_texture(tag, m_normal);
   m_frontend->destroy_texture(tag, m_roughness);
   m_frontend->destroy_texture(tag, m_metalness);
-  m_frontend->destroy_texture(tag, m_ambient);
+  m_frontend->destroy_texture(tag, m_occlusion);
   m_frontend->destroy_texture(tag, m_emissive);
 }
 
@@ -93,18 +93,19 @@ bool Material::load(const Rx::Material::Loader& _loader) {
     m_flags |= ALPHA_TEST;
   }
 
+  using Type = Rx::Material::Texture::Type;
+
   // Simple table to map Type strings to texture2D destinations in this object.
   struct Entry {
     Texture2D** texture;
-    const char* match;
-    bool        srgb;
+    Type type;
   } table[] {
-    { &m_albedo,     "albedo",    true  },
-    { &m_normal,     "normal",    false },
-    { &m_metalness,  "metalness", false },
-    { &m_roughness,  "roughness", false },
-    { &m_ambient,    "occlusion", false },
-    { &m_emissive,   "emissive",  false }
+    { &m_albedo,     Type::ALBEDO    },
+    { &m_normal,     Type::NORMAL    },
+    { &m_metalness,  Type::METALNESS },
+    { &m_roughness,  Type::ROUGHNESS },
+    { &m_occlusion,  Type::OCCLUSION },
+    { &m_emissive,   Type::EMISSIVE  }
   };
 
   return _loader.textures().each_fwd([this, &table](const Rx::Material::Texture& _texture) {
@@ -113,7 +114,7 @@ bool Material::load(const Rx::Material::Loader& _loader) {
     // Search for the texture in the table.
     const Entry* find = nullptr;
     for (const auto& item : table) {
-      if (item.match == type) {
+      if (item.type == type) {
         find = &item;
       }
     }
@@ -135,21 +136,8 @@ bool Material::load(const Rx::Material::Loader& _loader) {
 
       // Create a mipmap chain of the texture.
       Rx::Texture::Chain chain;
-
-      // Determine the pixel format we want for the chain.
-      Rx::Texture::PixelFormat want_format;
-      if (find->srgb) {
-        if (Rx::Texture::has_alpha_channel(bitmap.format)) {
-          want_format = Rx::Texture::PixelFormat::SRGBA_U8;
-        } else {
-          want_format = Rx::Texture::PixelFormat::SRGB_U8;
-        }
-      } else {
-        want_format = bitmap.format;
-      }
-
       if (!chain.generate(bitmap.data.data(), bitmap.format,
-        want_format, bitmap.dimensions, false, filter.mipmaps))
+        bitmap.format, bitmap.dimensions, false, filter.mipmaps))
       {
         return false;
       }
@@ -206,7 +194,7 @@ bool Material::load(const Rx::Material::Loader& _loader) {
       m_frontend->cache_texture(texture, hash);
     }
 
-    if (type == "albedo") {
+    if (type == Type::ALBEDO) {
       const auto& level = texture->info_for_level(texture->levels() - 1);
       const auto use_alpha = texture->has_alpha()
         && uses_alpha(texture->data().data() + level.offset, level.size);
