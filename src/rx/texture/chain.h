@@ -149,6 +149,10 @@ inline Size Chain::bpp() const {
   case PixelFormat::RGBA_F32:
     // TODO(dweiler): Support floating point formats in chain.
     break;
+  case PixelFormat::SRGB_U8:
+    return 3;
+  case PixelFormat::SRGBA_U8:
+    return 4;
   }
 
   return 0;

@@ -13,12 +13,24 @@ namespace Rx {
 
 namespace Rx::Texture {
 
+// The sorting order of PixelFormat enum is important for good conversion code.
+//
+// Maintain the following key:
+//  data format   => smallest to largest
+//  data scale    => linear to non-linear
+//  channel order => rgba? to bgra?
+//  channel count => smallest to largest
 enum class PixelFormat : Uint8 {
-  RGBA_U8,
-  BGRA_U8,
-  RGB_U8,
-  BGR_U8,
+  // Linear byte formats.
   R_U8,
+  RGB_U8,
+  RGBA_U8,
+  BGR_U8,
+  BGRA_U8,
+  // sRGB byte formats.
+  SRGB_U8,
+  SRGBA_U8,
+  // Linear float formats.
   RGBA_F32
 };
 

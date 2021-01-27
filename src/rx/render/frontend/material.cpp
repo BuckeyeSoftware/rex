@@ -157,6 +157,12 @@ bool Material::load(const Rx::Material::Loader& _loader) {
       case Rx::Texture::PixelFormat::BGR_U8:
         texture->record_format(Texture::DataFormat::BGR_U8);
         break;
+      case Rx::Texture::PixelFormat::SRGBA_U8:
+        texture->record_format(Texture::DataFormat::SRGBA_U8);
+        break;
+      case Rx::Texture::PixelFormat::SRGB_U8:
+        texture->record_format(Texture::DataFormat::SRGB_U8);
+        break;
       case Rx::Texture::PixelFormat::R_U8:
         texture->record_format(Texture::DataFormat::R_U8);
         break;
