@@ -264,11 +264,12 @@ Technique& Technique::operator=(Technique&& technique_) {
 }
 
 bool Technique::evaluate_when(const Map<String, bool>& _values, const String& _when) const {
-  if (const auto result = binexp_evaluate(_when.data(), _values); result < 0) {
+  const auto result = binexp_evaluate(_when.data(), _values);
+  if (result < 0) {
     return error("when expression evaluation failed: %s for \"%s\"",
       binexp_result_to_string(result), _when);
   }
-  return true;
+  return result;
 }
 
 Optional<String> Technique::resolve_source(
@@ -287,6 +288,11 @@ Optional<String> Technique::resolve_source(
     if (evaluate < 0) {
       return error("when expression evaluation failed: %s for \"%s\"",
         binexp_result_to_string(evaluate), _dependency.when);
+    }
+
+    // Do not need this dependency.
+    if (evaluate == 0) {
+      return true;
     }
 
     // Recursively resolve dependencies.
@@ -318,16 +324,42 @@ Optional<String> Technique::resolve_source(
     return nullopt;
   }
 
+  String special{allocator};
+  String modules{allocator};
+  auto append = [](String& out_, const String& _next) {
+    if (!out_.is_empty() && !out_.append(", ")) {
+      return false;
+    }
+    return out_.append(_next);
+  };
+
+  auto append_value = [&](const String& _name, bool _value) {
+    return _value ? append(special, _name) : true;
+  }; 
+
+  auto append_module = [&](const String& _module) {
+    return append(modules, _module);
+  };
+
+  if (!_values.each_pair(append_value)) {
+    return nullopt; // OOM.
+  }
+
+  if (!dependencies->sorted.each_fwd(append_module)) {
+    return nullopt;
+  };
+
+  logger->verbose("%s: %s shader [%s] requires [%s]",
+    m_name, _definition.kind == Shader::Type::FRAGMENT ?
+      "fragment" : "vertex", special, modules);
+
   String source{allocator};
-  auto append_module = dependencies->sorted.each_fwd([&](const String& _module) {
+  auto append_modules = dependencies->sorted.each_fwd([&](const String& _module) {
     const auto find = _modules.find(_module);
     if (!find) {
       return error("module '%s' not found", _module);
     }
-
-    logger->verbose("'%s': shader requires module '%s'",
-      m_name, _module);
-
+  
     return source.append("// Module ")
         && source.append(_module)
         && source.append("\n// {\n")
@@ -335,7 +367,7 @@ Optional<String> Technique::resolve_source(
         && source.append("\n// }\n");
   });
 
-  if (!append_module) {
+  if (!append_modules) {
     return nullopt;
   }
 
@@ -542,13 +574,22 @@ bool Technique::compile(const Map<String, Module>& _modules) {
     generate(mask);
   } else if (m_type == Type::VARIANT) {
     const auto specializations = m_specializations.size();
+
+    // Set all the values to false. On each iteration temporarily mark the
+    // specialization as true, this avoids needing to construct a map each
+    // iteration.
+    Map<String, bool> values{m_frontend->allocator()};
+    for (Size j = 0; j < specializations; j++) {
+      values.insert(m_specializations[j], false);
+    }
+
     for (Size i = 0; i < specializations; i++) {
       const auto& specialization = m_specializations[i];
 
-      Map<String, bool> values{m_frontend->allocator()};
-      for (Size j = 0; j < specializations; j++) {
-        values.insert(m_specializations[j], i == j);
-      }
+      // This can never fail.
+      auto value = values.find(m_specializations[i]);
+
+      *value = true;
 
       auto program = m_frontend->create_program(RX_RENDER_TAG("technique"));
 
@@ -612,6 +653,8 @@ bool Technique::compile(const Map<String, Module>& _modules) {
       // initialize and track
       m_frontend->initialize_program(RX_RENDER_TAG("technique"), program);
       m_programs.push_back(program);
+
+      *value = false;
     };
   }
 
