@@ -184,18 +184,28 @@ constexpr Vec4<T> operator+(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
 }
 
 template<typename T>
+constexpr Vec4<T> operator+(const Vec4<T>& _lhs, T _rhs) {
+  return {_lhs.x + _rhs, _lhs.y + _rhs, _lhs.z + _rhs, _lhs.w + _rhs};
+}
+
+template<typename T>
 constexpr Vec4<T> operator-(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
   return {_lhs.x - _rhs.x, _lhs.y - _rhs.y, _lhs.z - _rhs.z, _lhs.w - _rhs.w};
 }
 
 template<typename T>
-constexpr Vec4<T> operator*(T _scalar, const Vec4<T>& _v) {
-  return {_scalar * _v.x, _scalar * _v.y, _scalar * _v.z, _scalar * _v.w};
+constexpr Vec4<T> operator-(const Vec4<T>& _lhs, T _rhs) {
+  return {_lhs.x - _rhs, _lhs.y - _rhs, _lhs.z - _rhs, _lhs.w - _rhs};
 }
 
 template<typename T>
-constexpr Vec4<T> operator*(const Vec4<T>& _v, T _scalar) {
-  return _scalar * _v;
+constexpr Vec4<T> operator*(const Vec4<T>& _lhs, const Vec4<T>& _rhs) {
+  return {_lhs.x * _rhs.x, _lhs.y * _rhs.y, _lhs.z * _rhs.z, _lhs.w * _rhs.w};
+}
+
+template<typename T>
+constexpr Vec4<T> operator*(const Vec4<T>& _lhs, T _rhs) {
+  return {_lhs.x * _rhs, _lhs.y * _rhs, _lhs.z * _rhs, _lhs.w * _rhs};
 }
 
 template<typename T>
@@ -230,7 +240,7 @@ inline Float32 length(const Vec4f& _v) {
 }
 
 inline Vec4f normalize(const Vec4f& _v) {
-  return (1.0f / length(_v)) * _v;
+  return _v * (1.0f / length(_v));
 }
 
 } // namespace Rx::Math
