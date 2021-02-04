@@ -163,9 +163,7 @@ struct TestGame
       }
     }
     m_color_grader.update();
-
-
-/*
+    /*
     if (Filesystem::Directory dir{"base/models/light_unit"}) {
       printf("opened light_unit\n");
       dir.each([&](Filesystem::Directory::Item&& item_) {
@@ -182,21 +180,11 @@ struct TestGame
     }*/
 
     Render::Model model{&m_frontend};
-    if (model.load("base/models/elemental/elemental.json5")) {
+    if (model.load("base/models/mrfixit/mrfixit.json5")) {
       if (!m_models.push_back(Utility::move(model))) {
         return false;
       }
     }
-
-    // if (model2.load("base/models/elemental/elemental.json5")) {
-    //   if (!m_models.push_back(Utility::move(model2))) {
-    //     return false;
-    //   }
-    // }
-
-    /*m_models.each_fwd([](Render::Model& _model) {
-      _model.animate(0, true);
-    });*/
 
     auto animate = [](Render::Model& _model) { _model.animate(0, true); };
     m_models.each_fwd(animate);
@@ -384,7 +372,7 @@ struct TestGame
       0,
       m_frontend.swapchain(),
       0);
-   
+
     m_frame_graph.render();
     m_render_stats.render();
     m_memory_stats.render();

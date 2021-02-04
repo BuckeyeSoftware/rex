@@ -53,7 +53,6 @@ VM::Result VM::execute(const Parameters& _parameters,
       }
       break;
     case Instruction::Sink::PARAMETER:
-      //printf("scalar load param %d\n", Sint32(_operand.i));
       return _parameters[_operand.i];
     case Instruction::Sink::REGISTER:
       return rd_s(_operand.i);

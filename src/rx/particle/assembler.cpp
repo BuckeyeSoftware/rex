@@ -8,8 +8,6 @@
 
 #include "rx/core/hints/unreachable.h"
 
-#include <stdio.h> // printf
-
 namespace Rx::Particle {
 
 using Sink = VM::Instruction::Sink;
