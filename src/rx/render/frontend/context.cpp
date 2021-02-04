@@ -680,7 +680,7 @@ void Context::draw(
     m_lines[0] += (_count / 2) * instances;
     break;
   case PrimitiveType::POINTS:
-    m_points[0] += _count * _instances;
+    m_points[0] += _count * instances;
     break;
   case PrimitiveType::TRIANGLE_STRIP:
     m_triangles[0] += (_count - 2) * instances;
