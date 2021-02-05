@@ -10,7 +10,6 @@ struct State;
 struct Emitter {
   RX_MARK_NO_COPY(Emitter);
 
-
   static Optional<Emitter> create(const Program& _program, Float32 _rate);
 
   Emitter(Emitter&& emitter_);
