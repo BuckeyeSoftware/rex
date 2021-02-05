@@ -265,7 +265,7 @@ VM::Result VM::execute(const Parameters& _parameters, const Program& _program) {
       wr_s(instruction.a.i, Math::tan(rd_s(instruction.b.i)));
       break;
     case Instruction::OpCode::ASIN:
-      // TODO(dweiler): Need to implement Math::asin first.
+      wr_s(instruction.a.i, Math::asin(rd_s(instruction.b.i)));
       break;
     case Instruction::OpCode::ACOS:
       wr_s(instruction.a.i, Math::acos(rd_s(instruction.b.i)));
