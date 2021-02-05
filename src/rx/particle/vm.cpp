@@ -96,7 +96,12 @@ VM::Result VM::execute(const Parameters& _parameters, const Program& _program) {
       }
       break;
     case Instruction::Sink::PARAMETER:
-      return reinterpret_cast<const Float32 (&)[4]>(_parameters[_operand.i * 4]);
+      return {
+        _parameters[_operand.i * 4 + 0],
+        _parameters[_operand.i * 4 + 1],
+        _parameters[_operand.i * 4 + 2],
+        _parameters[_operand.i * 4 + 3]
+      };
     case Instruction::Sink::REGISTER:
       return rd_v(_operand.i);
     }

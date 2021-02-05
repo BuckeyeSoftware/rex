@@ -103,14 +103,11 @@ struct TestGame
       return false;
     }
 
-    if (Filesystem::File file{"point.bin", "wb"}) {
-      auto emitter = Particle::Emitter::create(assembler.program(), 1000.0f);
-      if (emitter) {
-        printf("added emitter!\n");
-        m_particle_system.add_emitter(Utility::move(*emitter));
-        m_particle_system.resize(100'000);
-      }
+    if (!m_particle_system.resize(500'000)) {
+      return false;
     }
+
+    m_particle_program = assembler.program();
 
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
     m_skybox.load("base/skyboxes/sky_cloudy/sky_cloudy.json5", {1024, 1024});
@@ -262,6 +259,20 @@ struct TestGame
       }
       if (input.root_layer().keyboard().is_released(Input::ScanCode::T)) {
         m_models.pop_back();
+      }
+      if (input.root_layer().keyboard().is_released(Input::ScanCode::Y)) {
+        auto emitter = Particle::Emitter::create(m_particle_program, 100.0f);
+        if (emitter) {
+          const auto f{m_camera.as_mat4().z};
+          (*emitter)[0] = m_camera.translate.x;
+          (*emitter)[1] = m_camera.translate.y;
+          (*emitter)[2] = m_camera.translate.z + 1.0f;
+          (*emitter)[3] = 0.0f;
+          m_particle_system.add_emitter(Utility::move(*emitter));
+        }
+      }
+      if (input.root_layer().keyboard().is_released(Input::ScanCode::U)) {
+        m_particle_system.remove_emitter(0);
       }
     }
 
@@ -451,6 +462,7 @@ struct TestGame
 
   Render::ParticleSystem m_particle_system_render;
   Particle::System m_particle_system;
+  Particle::Program m_particle_program;
 
   Math::Camera m_camera;
 };

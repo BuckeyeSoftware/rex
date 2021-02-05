@@ -215,7 +215,7 @@ private:
 
   Token read_immediate() {
     int ch = next_ch();
-    if (ch != '{' && !is_digit(ch)) {
+    if (ch != '{' && !is_digit(ch) && ch != '-') {
       return error("malformed immediate '%c'", ch);
     }
 
@@ -238,7 +238,7 @@ private:
         return {imm};
       }
     } else {
-      while (is_digit(ch) || ch == '.') {
+      while (is_digit(ch) || ch == '.' || ch == '-') {
         buffer.put(ch);
         ch = next_ch();
       }
