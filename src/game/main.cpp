@@ -18,6 +18,7 @@
 #include "rx/render/lens_distortion_pass.h"
 #include "rx/render/copy_pass.h"
 #include "rx/render/color_grader.h"
+#include "rx/render/particle_system.h"
 
 #include "rx/hud/console.h"
 #include "rx/hud/frame_graph.h"
@@ -30,6 +31,11 @@
 #include "rx/math/camera.h"
 
 #include "rx/core/filesystem/directory.h"
+#include "rx/core/filesystem/file.h"
+
+#include "rx/particle/assembler.h"
+#include "rx/particle/system.h"
+#include "rx/particle/emitter.h"
 
 using namespace Rx;
 
@@ -81,6 +87,8 @@ struct TestGame
     , m_color_grader{&m_frontend}
     , m_lut_index{0}
     , m_lut_count{0}
+    , m_particle_system_render{&m_frontend}
+    , m_particle_system{m_frontend.allocator()}
   {
     engine()->input().root_layer().raise();
   }
@@ -89,6 +97,21 @@ struct TestGame
   }
 
   virtual bool on_init() {
+    Particle::Assembler assembler;
+    if (!assembler.assemble("base/particles/point.asm")) {
+      printf("%s\n", assembler.error().data());
+      return false;
+    }
+
+    if (Filesystem::File file{"point.bin", "wb"}) {
+      auto emitter = Particle::Emitter::create(assembler.program(), 1000.0f);
+      if (emitter) {
+        printf("added emitter!\n");
+        m_particle_system.add_emitter(Utility::move(*emitter));
+        m_particle_system.resize(100'000);
+      }
+    }
+
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
     m_skybox.load("base/skyboxes/sky_cloudy/sky_cloudy.json5", {1024, 1024});
 
@@ -292,6 +315,9 @@ struct TestGame
 
     m_transform.rotate.y += 15.0f * _delta_time;
 
+    m_particle_system.update(_delta_time);
+    m_particle_system_render.update(&m_particle_system);
+
     return true;
   }
 
@@ -358,6 +384,8 @@ struct TestGame
     // Then 3D immediates.
     m_immediate3D.render(m_copy_pass.target(), m_camera.view(), m_camera.projection);
 
+    m_particle_system_render.render(m_copy_pass.target(), {}, m_camera.view(), m_camera.projection);
+
     // Lens distortion pass.
     m_lens_distortion_pass.distortion = *lens_distortion;
     m_lens_distortion_pass.dispersion = *lens_dispersion;
@@ -420,6 +448,9 @@ struct TestGame
   Render::ColorGrader::Entry m_luts[128];
   Size m_lut_index;
   Size m_lut_count;
+
+  Render::ParticleSystem m_particle_system_render;
+  Particle::System m_particle_system;
 
   Math::Camera m_camera;
 };
