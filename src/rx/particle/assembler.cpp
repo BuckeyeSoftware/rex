@@ -1,5 +1,5 @@
 #include <string.h> // strcpn
-#include <stdlib.h> // atoi
+#include <stdio.h> // sscanf
 
 #include "rx/particle/assembler.h"
 #include "rx/particle/vm.h"
@@ -19,6 +19,7 @@ static constexpr const struct {
   OpCode      opcode;
   Sint32      operands;
 } MNEMONICS[] = {
+  { "li",   OpCode::LI,   2 },
   { "mov",  OpCode::MOV,  2 },
   { "add",  OpCode::ADD,  3 },
   { "sub",  OpCode::SUB,  3 },
@@ -68,7 +69,8 @@ struct Lexer {
 
   struct Token {
     enum class Type {
-      IDENTIFIER,
+      IMM_SCALAR,
+      IMM_VECTOR,
       MNEMONIC,
       REGISTER,
       PARAMTER,
@@ -94,6 +96,8 @@ struct Lexer {
     constexpr Token(Type _type) : type{_type}, as_nat{} {}
     constexpr Token(Type _type, Buffer _buffer) : type{_type}, as_error{_buffer} {}
     constexpr Token(Sink _sink, Width _width, Sint32 _id) : type{sink_to_type(_sink)}, as_sink{_width, _id} {}
+    constexpr Token(const Math::Vec4f& _vector) : type{Type::IMM_VECTOR}, as_imm_vector{_vector} {}
+    constexpr Token(Float32 _scalar) : type{Type::IMM_SCALAR}, as_imm_scalar{_scalar} {}
 
     Type type;
 
@@ -102,6 +106,8 @@ struct Lexer {
       Buffer as_error;
       Buffer as_mnemonic;
       Buffer as_identifier;
+      Math::Vec4f as_imm_vector;
+      Float32 as_imm_scalar;
       struct {
         Width width;
         Sint32 id;
@@ -142,7 +148,7 @@ struct Lexer {
       next_ch(); // Skip ','.
       return {Token::Type::COMMA};
     case '$':
-      return read_identifier();
+      return read_immediate();
     default:
       if (is_ident(ch)) {
         // Read mnemonic contents into buffer.
@@ -207,18 +213,42 @@ private:
     return {sink, width, id};
   };
 
-  Token read_identifier() {
-    Buffer buffer;
+  Token read_immediate() {
     int ch = next_ch();
-    if (!is_ident(ch)) {
-      return error("unexpected character '%c' in identifier", ch);
+    if (ch != '{' && !is_digit(ch)) {
+      return error("malformed immediate '%c'", ch);
     }
-    while (is_ident(ch)) {
-      buffer.put(ch);
-      ch = next_ch();
+
+    Math::Vec4f imm;
+    Buffer buffer;
+    if (ch == '{') {
+      ch = next_ch(); // Skip '{'.
+      while (ch && ch != '}') {
+        if (ch != ' ') {
+          buffer.put(ch);
+        }
+        ch = next_ch();
+      }
+      buffer.put('\0');
+      if (ch != '}') {
+        return error("expected closing '}' for vector immediate");
+      }
+      ch = next_ch(); // Skip '}'.
+      if (sscanf(buffer.data, "%f,%f,%f,%f", &imm.x, &imm.y, &imm.z, &imm.w) == 4) {
+        return {imm};
+      }
+    } else {
+      while (is_digit(ch) || ch == '.') {
+        buffer.put(ch);
+        ch = next_ch();
+      }
+      buffer.put('\0');
+      if (sscanf(buffer.data, "%f", &imm.x) == 1) {
+        return {imm.x};
+      }
     }
-    buffer.put('\0');
-    return {Token::Type::IDENTIFIER, buffer};
+
+    return error("malformed immediate");
   }
 
   template<typename... Ts>
@@ -275,8 +305,7 @@ struct Parser {
         return false;
       }
     }
-
-    return true;
+    return m_token.type != Token::Type::ERROR;
   }
 
 private:
@@ -333,7 +362,45 @@ private:
   bool parse_instruction(OpCode _opcode, Sint32 _operands) {
     VM::Instruction instruction{};
     instruction.opcode = _opcode;
-    for (Sint32 i = 0; i < _operands; i++) {
+
+    // Special handling of "load immediate".
+    if (_opcode == OpCode::LI) {
+      auto operand = parse_operand();
+      if (!operand) {
+        return false;
+      }
+
+      const auto index = m_data.size();
+      if (index >= 0xffff) {
+        return error("too much data");
+      }
+
+      // Read immediate.
+      if (!next() || !expect_and_skip_comma()) {
+        return false;
+      }
+
+      instruction.a = *operand;
+      instruction.b.u8 = Uint8(index >> 8);
+      instruction.c.u8 = Uint8(index);
+
+      switch (m_token.type) {
+      case Token::Type::IMM_VECTOR:
+        for (Sint32 i = 0; i < 4; i++) {
+          if (!m_data.push_back(m_token.as_imm_vector[i])) {
+            return false;
+          }
+        }
+        break;
+      case Token::Type::IMM_SCALAR:
+        if (!m_data.push_back(m_token.as_imm_scalar)) {
+          return false;
+        }
+        break;
+      default:
+        return error("expected immediate");
+      }
+    } else for (Sint32 i = 0; i < _operands; i++) {
       if (i && (!next() || !expect_and_skip_comma())) {
         return false;
       }
@@ -359,6 +426,8 @@ private:
   friend struct Assembler;
 
   Vector<VM::Instruction> m_instructions;
+  Vector<Float32> m_data;
+
   String m_error;
 };
 
@@ -373,7 +442,8 @@ bool Assembler::assemble(const String& _file_name) {
 
   Parser parser{{name, contents}};
   if (parser.parse()) {
-    m_instructions = parser.m_instructions.disown();
+    m_program.instructions = parser.m_instructions.disown();
+    m_program.data = parser.m_data.disown();
     return true;
   }
 

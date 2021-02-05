@@ -38,9 +38,9 @@ void System::update(Float32 _delta_time) {
     position_x[i] = position_x[i] + velocity_x[i] * _delta_time;
     position_y[i] = position_y[i] + velocity_y[i] * _delta_time;
     position_z[i] = position_z[i] + velocity_z[i] * _delta_time;
-    velocity_x[i] = acceleration_x[i] * _delta_time;
-    velocity_y[i] = acceleration_y[i] * _delta_time;
-    velocity_z[i] = acceleration_z[i] * _delta_time;
+    // velocity_x[i] = acceleration_x[i] * _delta_time;
+    // velocity_y[i] = acceleration_y[i] * _delta_time;
+    // velocity_z[i] = acceleration_z[i] * _delta_time;
     life[i] = life[i] - delta_time;
   }
 
@@ -50,9 +50,9 @@ void System::update(Float32 _delta_time) {
     m_position_x[index] = m_position_x[index] + m_velocity_x[index] * _delta_time;
     m_position_y[index] = m_position_y[index] + m_velocity_y[index] * _delta_time;
     m_position_z[index] = m_position_z[index] + m_velocity_z[index] * _delta_time;
-    m_velocity_x[index] = m_acceleration_x[index] * _delta_time;
-    m_velocity_y[index] = m_acceleration_y[index] * _delta_time;
-    m_velocity_z[index] = m_acceleration_z[index] * _delta_time;
+    // m_velocity_x[index] = m_acceleration_x[index] * _delta_time;
+    // m_velocity_y[index] = m_acceleration_y[index] * _delta_time;
+    // m_velocity_z[index] = m_acceleration_z[index] * _delta_time;
     m_life[index] = m_life[index] - _delta_time;
   }
 

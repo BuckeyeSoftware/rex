@@ -1,6 +1,9 @@
 #include <stdlib.h> // rand, RAND_MAX.
 #include <stdio.h>
+#include <string.h> // memcpy
+
 #include "rx/particle/vm.h"
+#include "rx/particle/program.h"
 
 #include "rx/core/math/sin.h"
 #include "rx/core/math/cos.h"
@@ -16,9 +19,7 @@ static inline Float32 rnd(Float32 _min, Float32 _max) {
   return ((Float32(rand()) / Float32(RAND_MAX)) * (_max - _min)) + _min;
 }
 
-VM::Result VM::execute(const Parameters& _parameters,
-  const Instruction* _instructions, Size _n_instructions)
-{
+VM::Result VM::execute(const Parameters& _parameters, const Program& _program) {
   Result result;
 
   auto rd_s = [this](Uint8 _i) {
@@ -153,9 +154,36 @@ VM::Result VM::execute(const Parameters& _parameters,
       break; \
     }
 
-  for (Size i = 0; i < _n_instructions; i++) {
-    const Instruction& instruction = _instructions[i];
+  auto read_imm_scalar = [&](Uint8 _lo, Uint8 _hi) {
+    const auto index = Uint16(_lo) << 8 | Uint16(_hi);
+    return _program.data[index];
+  };
+
+  auto read_imm_vector = [&](Uint8 _lo, Uint8 _hi) {
+    const auto index = Uint16(_lo) << 8 | Uint16(_hi);
+    return Math::Vec4f {
+      _program.data[index + 0],
+      _program.data[index + 1],
+      _program.data[index + 2],
+      _program.data[index + 3]
+    };
+  };
+
+  const auto& instructions = reinterpret_cast<const Instruction*>(_program.instructions.data());
+  const auto n_instructions = _program.instructions.size();
+  for (Size i = 0; i < n_instructions; i++) {
+    const Instruction& instruction = instructions[i];
     switch (instruction.opcode) {
+    case Instruction::OpCode::LI:
+      switch (instruction.a.w) {
+      case Instruction::Width::SCALAR:
+        wr_s(instruction.a.i, read_imm_scalar(instruction.b.u8, instruction.c.u8));
+        break;
+      case Instruction::Width::VECTOR:
+        wr_v(instruction.a.i, read_imm_vector(instruction.b.u8, instruction.c.u8));
+        break;
+      }
+      break;
     // MOV dst:SCALAR, src:SCALAR - Copies src to dst.
     // MOV dst:SCALAR, src:VECTOR - Copies src's component c.i to dst.
     // MOV dst:VECTOR, src:SCALAR - Splats src to all lanes of dst.

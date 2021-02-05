@@ -1,9 +1,18 @@
 #include "rx/particle/emitter.h"
 #include "rx/particle/state.h"
+#include "rx/particle/vm.h"
 
 #include "rx/core/math/mod.h"
 
+#include <stdio.h>
+
 namespace Rx::Particle {
+
+Optional<Emitter> Emitter::create(const Program& _program, Float32 _rate) {
+  // Copy program.
+  auto program = _program; // TODO(dweiler): can fail1?
+  return Emitter{Utility::move(program), _rate};
+}
 
 void Emitter::emit(Float32 _delta_time, State* state_) {
   using Channel = VM::Channel;
@@ -21,8 +30,7 @@ void Emitter::emit(Float32 _delta_time, State* state_) {
   for (Size i = beg; i < end; i++) {
     state_->spawn(i);
 
-    const auto result = vm.execute(m_parameters, m_instructions.data(),
-       m_instructions.size());
+    const auto result = vm.execute(m_parameters, m_program);
 
     // Check the execution mask to know which channels to update.
     if (result.mask & (1 << Channel::VELOCITY)) {

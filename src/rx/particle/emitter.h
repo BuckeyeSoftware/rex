@@ -1,7 +1,6 @@
 #ifndef RX_PARTICLE_EMITTER_H
 #define RX_PARTICLE_EMITTER_H
-#include "rx/core/vector.h"
-#include "rx/particle/vm.h"
+#include "rx/particle/program.h"
 
 namespace Rx::Particle {
 
@@ -11,9 +10,9 @@ struct State;
 struct Emitter {
   RX_MARK_NO_COPY(Emitter);
 
-  using Instruction = VM::Instruction;
 
-  Emitter(Vector<Instruction>&& instructions_, Float32 _rate);
+  static Optional<Emitter> create(const Program& _program, Float32 _rate);
+
   Emitter(Emitter&& emitter_);
   Emitter& operator=(Emitter&& emitter_);
 
@@ -24,14 +23,16 @@ struct Emitter {
   constexpr Float32& operator[](Size _index);
 
 private:
-  Vector<Instruction> m_instructions;
+  Emitter(Program&& program_, Float32 _rate);
+
+  Program m_program;
   Array<Float32[32]> m_parameters;
   Float32 m_accumulator;
   Float32 m_rate;
 };
 
 inline Emitter::Emitter(Emitter&& emitter_)
-  : m_instructions{Utility::move(emitter_.m_instructions)}
+  : m_program{Utility::move(emitter_.m_program)}
   , m_parameters{Utility::move(emitter_.m_parameters)}
   , m_accumulator{Utility::exchange(emitter_.m_accumulator, 0.0f)}
   , m_rate{Utility::exchange(emitter_.m_rate, 0.0f)}
@@ -39,7 +40,7 @@ inline Emitter::Emitter(Emitter&& emitter_)
 }
 
 inline Emitter& Emitter::operator=(Emitter&& emitter_) {
-  m_instructions = Utility::move(emitter_.m_instructions);
+  m_program = Utility::move(emitter_.m_program);
   m_parameters = Utility::move(emitter_.m_parameters);
   m_accumulator = Utility::exchange(emitter_.m_accumulator, 0.0f);
   m_rate = Utility::exchange(emitter_.m_rate, 0.0f);
@@ -54,8 +55,8 @@ inline constexpr Float32& Emitter::operator[](Size _index) {
   return m_parameters[_index];
 }
 
-inline Emitter::Emitter(Vector<Instruction>&& instructions_, Float32 _rate)
-  : m_instructions{Utility::move(instructions_)}
+inline Emitter::Emitter(Program&& program_, Float32 _rate)
+  : m_program{Utility::move(program_)}
   , m_accumulator{0.0f}
   , m_rate{_rate}
 {

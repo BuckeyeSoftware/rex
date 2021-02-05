@@ -7,6 +7,8 @@
 
 namespace Rx::Particle {
 
+struct Program;
+
 // Bytecode interpreter for particle engine
 //
 // # Registers
@@ -74,6 +76,7 @@ struct VM {
 
   struct Instruction {
     enum class OpCode : Uint8 {
+      LI, // load immediate, next instruction is the immediate value.
       MOV,
       ADD,
       SUB,
@@ -101,10 +104,13 @@ struct VM {
 
     OpCode opcode;
 
-    struct Operand {
-      Sink s : 2;
-      Width w : 1;
-      Uint8 i : 5;
+    union Operand {
+      struct {
+        Sink s : 2;
+        Width w : 1;
+        Uint8 i : 5;
+      };
+      Uint8 u8;
     };
 
     union {
@@ -116,7 +122,8 @@ struct VM {
       Operand ops[3];
     };
   };
-  static_assert(sizeof(Instruction) == 4);
+
+  static_assert(sizeof(Instruction) == 4, "instruction larger than 32-bit");
 
   struct Result {
     // Keep these in the same order as Channel enum.
@@ -129,8 +136,7 @@ struct VM {
     Uint8 mask;
   };
 
-  Result execute(const Parameters& _parameters,
-    const Instruction* _instructions, Size _n_instructions);
+  Result execute(const Parameters& _parameters, const Program& _program);
 
 private:
   union {
