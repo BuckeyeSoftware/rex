@@ -1,7 +1,6 @@
 #ifndef RX_CORE_MEMORY_AGGREGATE_H
 #define RX_CORE_MEMORY_AGGREGATE_H
 #include "rx/core/assert.h"
-#include "rx/core/utility/nat.h"
 
 namespace Rx::Memory {
 
@@ -24,7 +23,7 @@ private:
   };
 
   union {
-    Utility::Nat m_nat;
+    struct {} m_nat;
     Entry m_entries[64];
   };
 

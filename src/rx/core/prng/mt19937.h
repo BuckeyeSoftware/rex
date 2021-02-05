@@ -1,7 +1,6 @@
 #ifndef RX_CORE_PRNG_MT19937_H
 #define RX_CORE_PRNG_MT19937_H
 #include "rx/core/types.h"
-#include "rx/core/utility/nat.h"
 
 namespace Rx::PRNG {
 
@@ -25,7 +24,7 @@ private:
   void generate();
 
   union {
-    Utility::Nat m_nat;
+    struct {} m_nat;
     Uint32 m_state[SIZE];
   };
   Size m_index;

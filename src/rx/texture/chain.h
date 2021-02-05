@@ -56,7 +56,7 @@ private:
   Vector<Level> m_levels;
   Math::Vec2z m_dimensions;
   union {
-    Utility::Nat m_nat;
+    struct {} m_nat;
     PixelFormat m_pixel_format;
   };
 };

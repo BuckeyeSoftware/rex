@@ -4,7 +4,6 @@
 #include "rx/math/vec4.h"
 
 #include "rx/core/string.h"
-#include "rx/core/utility/nat.h"
 
 #include "rx/input/controller.h"
 
@@ -80,7 +79,7 @@ struct Event {
   Type type;
 
   union {
-    Utility::Nat as_nat;
+    struct {} as_nat;
     KeyboardEvent as_keyboard;
     ControllerNotificationEvent as_controller_notification;
     ControllerButtonEvent as_controller_button;

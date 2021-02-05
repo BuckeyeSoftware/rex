@@ -77,7 +77,7 @@ private:
   Memory::Allocator& m_allocator;
 
   union {
-    Utility::Nat as_nat;
+    struct {} as_nat;
     Vector<Vertex> as_vertices;
     Vector<AnimatedVertex> as_animated_vertices;
   };

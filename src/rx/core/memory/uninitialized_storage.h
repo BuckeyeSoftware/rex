@@ -3,8 +3,6 @@
 #include "rx/core/types.h"
 #include "rx/core/markers.h"
 
-#include "rx/core/utility/nat.h"
-
 #include "rx/core/hints/force_inline.h"
 
 namespace Rx::Memory {
@@ -29,7 +27,7 @@ struct UninitializedStorage {
 
 private:
   union {
-    Utility::Nat m_as_nat;
+    struct {} m_as_nat;
     alignas(A) Byte m_as_bytes[S];
   };
 };

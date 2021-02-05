@@ -36,7 +36,7 @@ private:
     static void* wrap(void* _data);
 
     union {
-      Utility::Nat m_nat;
+      struct {} m_nat;
       // Fixed-capacity storage for any OS thread Type, adjust if necessary.
       alignas(16) Byte m_thread[16];
     };

@@ -56,7 +56,7 @@ private:
       {
       }
 
-      Utility::Nat as_nat;
+      struct {} as_nat;
       Sint32 as_int;
       Float32 as_float;
       Math::Vec2i as_vec2i;

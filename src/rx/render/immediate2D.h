@@ -89,7 +89,7 @@ struct Immediate2D {
       Math::Vec4f color;
 
       union {
-        Utility::Nat as_nat;
+        struct {} as_nat;
         Line as_line;
         Text as_text;
         Rectangle as_rectangle;

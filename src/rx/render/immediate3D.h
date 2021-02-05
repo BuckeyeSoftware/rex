@@ -74,7 +74,7 @@ struct Immediate3D {
       Math::Vec4f color;
 
       union {
-        Utility::Nat as_nat;
+        struct {} as_nat;
         Point as_point;
         Line as_line;
         SolidSphere as_solid_sphere;

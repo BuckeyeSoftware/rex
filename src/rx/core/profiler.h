@@ -31,7 +31,7 @@ struct RX_API Profiler {
     mutable void (*m_enframing_destruct)(void* _enframing);
     union {
       alignas(16) mutable Byte m_enframing[64];
-      Utility::Nat m_nat;
+      struct {} m_nat;
     };
   };
 

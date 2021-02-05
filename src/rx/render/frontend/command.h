@@ -3,7 +3,6 @@
 
 #include "rx/core/source_location.h"
 #include "rx/core/memory/bump_point_allocator.h"
-#include "rx/core/utility/nat.h"
 #include "rx/math/vec4.h"
 #include "rx/render/frontend/state.h"
 
@@ -98,7 +97,7 @@ struct Buffers {
 
 private:
   union {
-    Utility::Nat m_nat;
+    struct {} m_nat;
     int m_elements[MAX_BUFFERS];
   };
   Size m_index;
@@ -121,7 +120,7 @@ struct Textures {
 
 private:
   union {
-    Utility::Nat m_nat;
+    struct {} m_nat;
     Texture* m_handles[MAX_TEXTURES];
   };
   Size m_index;
