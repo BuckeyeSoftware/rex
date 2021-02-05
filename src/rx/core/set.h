@@ -1,7 +1,5 @@
 #ifndef RX_CORE_SET_H
 #define RX_CORE_SET_H
-#include "rx/core/array.h"
-
 #include "rx/core/traits/invoke_result.h"
 #include "rx/core/traits/is_same.h"
 
@@ -20,24 +18,13 @@ namespace Rx {
 // 64-bit: 56 bytes
 template<typename K>
 struct Set {
-  template<typename Kt, Size E>
-  using Initializers = Array<Kt[E]>;
-
   static inline constexpr const Size INITIAL_SIZE = 256;
   static inline constexpr const Size LOAD_FACTOR = 90;
 
   Set();
   Set(Memory::Allocator& _allocator);
-  Set(Memory::Allocator& _allocator, const Set& _set);
   Set(Set&& set_);
   Set(const Set& _set);
-
-  template<typename Kt, Size E>
-  Set(Memory::Allocator& _allocator, Initializers<Kt, E>&& initializers_);
-
-  template<typename Kt, Size E>
-  Set(Initializers<Kt, E>&& initializers_);
-
   ~Set();
 
   Set& operator=(Set&& set_);
@@ -73,7 +60,7 @@ private:
   Size& element_hash(Size index);
   Size element_hash(Size index) const;
 
-  [[nodiscard]] bool allocate();
+  [[nodiscard]] bool allocate(Size _capacity);
   [[nodiscard]] bool grow();
 
   // move and non-move construction functions
@@ -110,11 +97,10 @@ Set<K>::Set(Memory::Allocator& _allocator)
   , m_keys{nullptr}
   , m_hashes{nullptr}
   , m_size{0}
-  , m_capacity{INITIAL_SIZE}
+  , m_capacity{0}
   , m_resize_threshold{0}
   , m_mask{0}
 {
-  RX_ASSERT(allocate(), "out of memory");
 }
 
 template<typename K>
@@ -123,45 +109,17 @@ Set<K>::Set(Set&& set_)
   , m_keys{Utility::exchange(set_.m_keys, nullptr)}
   , m_hashes{Utility::exchange(set_.m_hashes, nullptr)}
   , m_size{Utility::exchange(set_.m_size, 0)}
-  , m_capacity{Utility::exchange(set_.m_capacity, INITIAL_SIZE)}
+  , m_capacity{Utility::exchange(set_.m_capacity, 0)}
   , m_resize_threshold{Utility::exchange(set_.m_resize_threshold, 0)}
   , m_mask{Utility::exchange(set_.m_mask, 0)}
 {
 }
 
 template<typename K>
-Set<K>::Set(Memory::Allocator& _allocator, const Set& _set)
-  : Set{_allocator}
-{
-  for (Size i{0}; i < _set.m_capacity; i++) {
-    const auto hash = _set.element_hash(i);
-    if (hash != 0 && !_set.is_deleted(hash)) {
-      insert(_set.m_keys[i]);
-    }
-  }
-}
-
-template<typename K>
 Set<K>::Set(const Set& _set)
-  : Set{_set.allocator(), _set}
+  : Set{}
 {
-}
-
-template<typename K>
-template<typename Kt, Size E>
-Set<K>::Set(Memory::Allocator& _allocator, Initializers<Kt, E>&& initializers_)
-  : Set{_allocator}
-{
-  for (Size i = 0; i < E; i++) {
-    insert(Utility::move(initializers_[i]));
-  }
-}
-
-template<typename K>
-template<typename Kt, Size E>
-Set<K>::Set(Initializers<Kt, E>&& initializers_)
-  : Set{Memory::SystemAllocator::instance(), Utility::move(initializers_)}
-{
+  _set.each([this](const K& _key) { insert(_key); });
 }
 
 template<typename K>
@@ -175,14 +133,17 @@ void Set<K>::clear() {
     return;
   }
 
-  for (Size i{0}; i < m_capacity; i++) {
+  for (Size i = 0; i < m_capacity; i++) {
     const Size hash = element_hash(i);
-    if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (!Concepts::TriviallyDestructible<K>) {
-        Utility::destruct<K>(m_keys + i);
-      }
-      element_hash(i) = 0;
+    if (hash == 0 || is_deleted(hash)) {
+      continue;
     }
+
+    if constexpr (!Concepts::TriviallyDestructible<K>) {
+      Utility::destruct<K>(m_keys + i);
+    }
+
+    element_hash(i) = 0;
   }
 
   m_size = 0;
@@ -214,19 +175,8 @@ Set<K>& Set<K>::operator=(Set<K>&& set_) {
 template<typename K>
 Set<K>& Set<K>::operator=(const Set<K>& _set) {
   RX_ASSERT(&_set != this, "self assignment");
-
   clear_and_deallocate();
-
-  m_capacity = _set.m_capacity;
-  RX_ASSERT(allocate(), "out of memory");
-
-  for (Size i{0}; i < _set.m_capacity; i++) {
-    const auto hash = _set.element_hash(i);
-    if (hash != 0 && !_set.is_deleted(hash)) {
-      insert(_set.m_keys[i]);
-    }
-  }
-
+  _set.each([](const K& _key) { insert(_key); });
   return *this;
 }
 
@@ -327,23 +277,28 @@ Size Set<K>::element_hash(Size _index) const {
 }
 
 template<typename K>
-bool Set<K>::allocate() {
+bool Set<K>::allocate(Size _capacity) {
   Memory::Aggregate aggregate;
-  aggregate.add<K>(m_capacity);
-  aggregate.add<Size>(m_capacity);
-  aggregate.finalize();
-
-  if (!(m_data = allocator().allocate(aggregate.bytes()))) {
+  aggregate.add<K>(_capacity);
+  aggregate.add<Size>(_capacity);
+  if (!aggregate.finalize()) {
     return false;
   }
 
-  m_keys = reinterpret_cast<K*>(m_data + aggregate[0]);
-  m_hashes = reinterpret_cast<Size*>(m_data + aggregate[1]);
+  auto data = m_allocator->allocate(aggregate.bytes());
+  if (!data) {
+    return false;
+  }
 
-  for (Size i{0}; i < m_capacity; i++) {
+  m_data = data;
+  m_keys = reinterpret_cast<K*>(data + aggregate[0]);
+  m_hashes = reinterpret_cast<Size*>(data + aggregate[1]);
+
+  for (Size i = 0; i < _capacity; i++) {
     element_hash(i) = 0;
   }
 
+  m_capacity = _capacity;
   m_resize_threshold = (m_capacity * LOAD_FACTOR) / 100;
   m_mask = m_capacity - 1;
 
@@ -352,30 +307,31 @@ bool Set<K>::allocate() {
 
 template<typename K>
 bool Set<K>::grow() {
-  const auto old_capacity{m_capacity};
+  const auto old_capacity = m_capacity;
+  const auto new_capacity = m_capacity ? m_capacity * 2 : INITIAL_SIZE;
 
   auto data = m_data;
-  RX_ASSERT(data, "unallocated");
+  auto keys = m_keys;
+  auto hashes = m_hashes;
 
-  auto keys_data = m_keys;
-  auto hashes_data = m_hashes;
-
-  m_capacity *= 2;
-  if (!allocate()) {
+  if (!allocate(new_capacity)) {
     return false;
   }
 
-  for (Size i{0}; i < old_capacity; i++) {
-    const auto hash{hashes_data[i]};
-    if (hash != 0 && !is_deleted(hash)) {
-      RX_ASSERT(inserter(hash, Utility::move(keys_data[i])), "insertion failed");
-      if constexpr (!Concepts::TriviallyDestructible<K>) {
-        Utility::destruct<K>(keys_data + i);
-      }
+  for (Size i = 0; i < old_capacity; i++) {
+    const auto hash = hashes[i];
+    if (hash == 0 || is_deleted(hash)) {
+      continue;
+    }
+
+    RX_ASSERT(inserter(hash, Utility::move(keys[i])), "insertion failed");
+
+    if constexpr (!Concepts::TriviallyDestructible<K>) {
+      Utility::destruct<K>(keys + i);
     }
   }
 
-  allocator().deallocate(data);
+  m_allocator->deallocate(data);
 
   return true;
 }
@@ -431,6 +387,10 @@ K* Set<K>::inserter(Size _hash, const K& _key) {
 
 template<typename K>
 bool Set<K>::lookup_index(const K& _key, Size& _index) const {
+  if (RX_HINT_UNLIKELY(m_size == 0)) {
+    return false;
+  }
+
   const Size hash{hash_key(_key)};
   Size position{desired_position(hash)};
   Size distance{0};

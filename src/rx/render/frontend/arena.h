@@ -1,6 +1,7 @@
 #ifndef RX_RENDER_FRONTEND_ARENA_H
 #define RX_RENDER_FRONTEND_ARENA_H
 #include "rx/render/frontend/buffer.h"
+#include "rx/core/array.h"
 
 namespace Rx::Render::Frontend {
 

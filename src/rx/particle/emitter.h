@@ -1,6 +1,7 @@
 #ifndef RX_PARTICLE_EMITTER_H
 #define RX_PARTICLE_EMITTER_H
 #include "rx/particle/program.h"
+#include "rx/core/array.h"
 
 namespace Rx::Particle {
 

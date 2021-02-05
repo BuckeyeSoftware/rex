@@ -1,7 +1,5 @@
 #ifndef RX_CORE_MAP_H
 #define RX_CORE_MAP_H
-#include "rx/core/array.h"
-
 #include "rx/core/traits/invoke_result.h"
 #include "rx/core/traits/is_same.h"
 
@@ -11,6 +9,7 @@
 #include "rx/core/utility/pair.h"
 
 #include "rx/core/hints/unreachable.h"
+#include "rx/core/hints/unlikely.h"
 
 #include "rx/core/memory/system_allocator.h"
 #include "rx/core/memory/aggregate.h"
@@ -23,9 +22,6 @@ namespace Rx {
 // 64-bit: 56 bytes
 template<typename K, typename V>
 struct Map {
-  template<typename Kt, typename Vt, Size E>
-  using Initializers = Array<Pair<Kt, Vt>[E]>;
-
   static inline constexpr const Size INITIAL_SIZE = 256;
   static inline constexpr const Size LOAD_FACTOR = 90;
 
@@ -34,13 +30,6 @@ struct Map {
   Map(Memory::Allocator& _allocator, const Map& _map);
   Map(Map&& map_);
   Map(const Map& _map);
-
-  template<typename Kt, typename Vt, Size E>
-  Map(Memory::Allocator& _allocator, Initializers<Kt, Vt, E>&& initializers_);
-
-  template<typename Kt, typename Vt, Size E>
-  Map(Initializers<Kt, Vt, E>&& initializers_);
-
   ~Map();
 
   Map& operator=(Map&& map_);
@@ -87,7 +76,7 @@ private:
   Size& element_hash(Size index);
   Size element_hash(Size index) const;
 
-  [[nodiscard]] bool allocate();
+  [[nodiscard]] bool allocate(Size _capacity);
   [[nodiscard]] bool grow();
 
   // move and non-move construction functions
@@ -127,11 +116,10 @@ Map<K, V>::Map(Memory::Allocator& _allocator)
   , m_values{nullptr}
   , m_hashes{nullptr}
   , m_size{0}
-  , m_capacity{INITIAL_SIZE}
+  , m_capacity{0}
   , m_resize_threshold{0}
   , m_mask{0}
 {
-  RX_ASSERT(allocate(), "out of memory");
 }
 
 template<typename K, typename V>
@@ -151,35 +139,12 @@ template<typename K, typename V>
 Map<K, V>::Map(Memory::Allocator& _allocator, const Map& _map)
   : Map{_allocator}
 {
-  for (Size i{0}; i < _map.m_capacity; i++) {
-    const auto hash = _map.element_hash(i);
-    if (hash != 0 && !_map.is_deleted(hash)) {
-      insert(_map.m_keys[i], _map.m_values[i]);
-    }
-  }
+  _map.each_pair([this](const K& _key, const V& _value) { insert(_key, _value); });
 }
 
 template<typename K, typename V>
 Map<K, V>::Map(const Map& _map)
   : Map{_map.allocator(), _map}
-{
-}
-
-template<typename K, typename V>
-template<typename Kt, typename Vt, Size E>
-Map<K, V>::Map(Memory::Allocator& _allocator, Initializers<Kt, Vt, E>&& initializers_)
-  : Map{_allocator}
-{
-  for (Size i = 0; i < E; i++) {
-    auto& item = initializers_[i];
-    insert(Utility::move(item.first), Utility::move(item.second));
-  }
-}
-
-template<typename K, typename V>
-template<typename Kt, typename Vt, Size E>
-Map<K, V>::Map(Initializers<Kt, Vt, E>&& initializers_)
-  : Map{Memory::SystemAllocator::instance(), Utility::move(initializers_)}
 {
 }
 
@@ -194,17 +159,21 @@ void Map<K, V>::clear() {
     return;
   }
 
-  for (Size i{0}; i < m_capacity; i++) {
+  for (Size i = 0; i < m_capacity; i++) {
     const auto hash = element_hash(i);
-    if (hash != 0 && !is_deleted(hash)) {
-      if constexpr (!Concepts::TriviallyDestructible<K>) {
-        Utility::destruct<K>(m_keys + i);
-      }
-      if constexpr (!Concepts::TriviallyDestructible<V>) {
-        Utility::destruct<V>(m_values + i);
-      }
-      element_hash(i) = 0;
+    if (hash == 0 || is_deleted(hash)) {
+      continue;
     }
+
+    if constexpr (!Concepts::TriviallyDestructible<K>) {
+      Utility::destruct<K>(m_keys + i);
+    }
+
+    if constexpr (!Concepts::TriviallyDestructible<V>) {
+      Utility::destruct<V>(m_values + i);
+    }
+
+    element_hash(i) = 0;
   }
 
   m_size = 0;
@@ -237,19 +206,8 @@ Map<K, V>& Map<K, V>::operator=(Map<K, V>&& map_) {
 template<typename K, typename V>
 Map<K, V>& Map<K, V>::operator=(const Map<K, V>& _map) {
   RX_ASSERT(&_map != this, "self assignment");
-
   clear_and_deallocate();
-
-  m_capacity = _map.m_capacity;
-  RX_ASSERT(allocate(), "out of memory");
-
-  for (Size i{0}; i < _map.m_capacity; i++) {
-    const auto hash = _map.element_hash(i);
-    if (hash != 0 && !_map.is_deleted(hash)) {
-      insert(_map.m_keys[i], _map.m_values[i]);
-    }
-  }
-
+  _map.each_pair([](const K& _key, const V& _value) { insert(_key, _value); });
   return *this;
 }
 
@@ -361,25 +319,29 @@ Size Map<K, V>::element_hash(Size _index) const {
 }
 
 template<typename K, typename V>
-bool Map<K, V>::allocate() {
+bool Map<K, V>::allocate(Size _capacity) {
   Memory::Aggregate aggregate;
-  aggregate.add<K>(m_capacity);
-  aggregate.add<V>(m_capacity);
-  aggregate.add<Size>(m_capacity);
-  aggregate.finalize();
-
-  if (!(m_data = allocator().allocate(aggregate.bytes()))) {
+  aggregate.add<K>(_capacity);
+  aggregate.add<V>(_capacity);
+  aggregate.add<Size>(_capacity);
+  if (!aggregate.finalize()) {
     return false;
   }
 
-  m_keys = reinterpret_cast<K*>(m_data + aggregate[0]);
-  m_values = reinterpret_cast<V*>(m_data + aggregate[1]);
-  m_hashes = reinterpret_cast<Size*>(m_data + aggregate[2]);
+  auto data = m_allocator->allocate(aggregate.bytes());
+  if (!data) {
+    return false;
+  }
 
-  for (Size i{0}; i < m_capacity; i++) {
+  m_keys = reinterpret_cast<K*>(data + aggregate[0]);
+  m_values = reinterpret_cast<V*>(data + aggregate[1]);
+  m_hashes = reinterpret_cast<Size*>(data + aggregate[2]);
+
+  for (Size i = 0; i < _capacity; i++) {
     element_hash(i) = 0;
   }
 
+  m_capacity = _capacity;
   m_resize_threshold = (m_capacity * LOAD_FACTOR) / 100;
   m_mask = m_capacity - 1;
 
@@ -388,34 +350,36 @@ bool Map<K, V>::allocate() {
 
 template<typename K, typename V>
 bool Map<K, V>::grow() {
-  const auto old_capacity{m_capacity};
+  const auto old_capacity = m_capacity;
+  const auto new_capacity = m_capacity ? m_capacity * 2 : INITIAL_SIZE;
 
   auto data = m_data;
-  RX_ASSERT(data, "unallocated");
+  auto keys = m_keys;
+  auto values = m_values;
+  auto hashes = m_hashes;
 
-  auto keys_data = m_keys;
-  auto values_data = m_values;
-  auto hashes_data = m_hashes;
-
-  m_capacity *= 2;
-  if (!allocate()) {
+  if (!allocate(new_capacity)) {
     return false;
   }
 
-  for (Size i{0}; i < old_capacity; i++) {
-    const auto hash{hashes_data[i]};
-    if (hash != 0 && !is_deleted(hash)) {
-      inserter(hash, Utility::move(keys_data[i]), Utility::move(values_data[i]));
-      if constexpr (!Concepts::TriviallyDestructible<K>) {
-        Utility::destruct<K>(keys_data + i);
-      }
-      if constexpr (!Concepts::TriviallyDestructible<V>) {
-        Utility::destruct<V>(values_data + i);
-      }
+  for (Size i = 0; i < old_capacity; i++) {
+    const auto hash = hashes[i];
+    if (hash == 0 || is_deleted(hash)) {
+      continue;
+    }
+
+    RX_ASSERT(inserter(hash, Utility::move(keys[i]), Utility::move(values[i])), "insertion failed");
+
+    if constexpr (!Concepts::TriviallyDestructible<K>) {
+      Utility::destruct<K>(keys + i);
+    }
+
+    if constexpr (!Concepts::TriviallyDestructible<V>) {
+      Utility::destruct<V>(values + i);
     }
   }
 
-  allocator().deallocate(data);
+  m_allocator->deallocate(data);
 
   return true;
 }
@@ -480,6 +444,10 @@ V* Map<K, V>::inserter(Size _hash, const K& _key, const V& _value) {
 
 template<typename K, typename V>
 bool Map<K, V>::lookup_index(const K& _key, Size& _index) const {
+  if (RX_HINT_UNLIKELY(m_size == 0)) {
+    return false;
+  }
+
   const Size hash{hash_key(_key)};
   Size position{desired_position(hash)};
   Size distance{0};

@@ -1,5 +1,6 @@
 #ifndef RX_MATERIAL_TEXTURE_H
 #define RX_MATERIAL_TEXTURE_H
+#include "rx/core/array.h"
 #include "rx/core/log.h"
 #include "rx/core/optional.h"
 

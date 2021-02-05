@@ -1,6 +1,5 @@
 #ifndef RX_CORE_VECTOR_H
 #define RX_CORE_VECTOR_H
-#include "rx/core/array.h"
 #include "rx/core/optional.h"
 
 #include "rx/core/concepts/trivially_copyable.h"
@@ -23,20 +22,9 @@ namespace detail {
 // 64-bit: 32 bytes
 template<typename T>
 struct Vector {
-  template<typename U, Size E>
-  using Initializers = Array<U[E]>;
-
   constexpr Vector();
   constexpr Vector(Memory::Allocator& _allocator);
   constexpr Vector(Memory::View _view);
-
-  // Construct a vector from an array of initializers. This is similar to
-  // how initializer_list works in C++11 except it requires no compiler proxy
-  // and is actually faster since the initializer Type can be moved.
-  template<typename U, Size E>
-  Vector(Memory::Allocator& _allocator, Initializers<U, E>&& _initializers);
-  template<typename U, Size E>
-  Vector(Initializers<U, E>&& _initializers);
 
   Vector(Memory::Allocator& _allocator, Size _size);
   Vector(Memory::Allocator& _allocator, const Vector& _other);
@@ -135,27 +123,6 @@ constexpr Vector<T>::Vector(Memory::View _view)
   , m_data{reinterpret_cast<T*>(_view.data)}
   , m_size{_view.size / sizeof(T)}
   , m_capacity{_view.capacity / sizeof(T)}
-{
-}
-
-template<typename T>
-template<typename U, Size E>
-Vector<T>::Vector(Memory::Allocator& _allocator, Initializers<U, E>&& _initializers)
-  : Vector{_allocator}
-{
-  grow_or_shrink_to(E);
-  if constexpr (Concepts::TriviallyCopyable<T>) {
-    detail::copy(m_data, _initializers.data(), sizeof(T) * E);
-  } else for (Size i = 0; i < E; i++) {
-    Utility::construct<T>(m_data + i, Utility::move(_initializers[i]));
-  }
-  m_size = E;
-}
-
-template<typename T>
-template<typename U, Size E>
-Vector<T>::Vector(Initializers<U, E>&& _initializers)
-  : Vector{Memory::SystemAllocator::instance(), Utility::move(_initializers)}
 {
 }
 
