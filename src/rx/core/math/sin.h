@@ -5,6 +5,7 @@
 namespace Rx::Math {
 
 RX_API Float32 sin(Float32 _x);
+RX_API Float32 asin(Float32 _x);
 
 } // namespace Rx::Math
 

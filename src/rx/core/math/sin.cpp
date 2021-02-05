@@ -1,7 +1,9 @@
 #define _USE_MATH_DEFINES
 #include <float.h> // {DBL,LDBL}_EPSILON
 
+#include "rx/core/math/abs.h"
 #include "rx/core/math/sin.h"
+#include "rx/core/math/sqrt.h"
 #include "rx/core/math/shape.h"
 #include "rx/core/math/force_eval.h"
 #include "rx/core/math/constants.h"
@@ -127,6 +129,53 @@ Float32 sin(Float32 _x) {
   }
 
   RX_HINT_UNREACHABLE();
+}
+
+// Coefficients for R(x^2).
+static constexpr Float64 PS0 =  1.6666586697e-01;
+static constexpr Float64 PS1 = -4.2743422091e-02;
+static constexpr Float64 PS2 = -8.6563630030e-03;
+static constexpr Float64 QS1 = -7.0662963390e-01;
+
+static Float32 R(Float32 _z) {
+  const Float32Eval p = _z * (PS0 + _z * (PS1 + _z * PS2));
+  const Float32Eval q = 1.0f + _z * QS1;
+  return p / q;
+}
+
+static constexpr const Float64 PIO2 = 1.570796326794896558e+00;
+
+Float32 asin(Float32 _x) {
+  auto hx = Shape{_x}.as_u32;
+  auto ix = hx & 0x7fffffff;
+
+  // |_x| >= 1
+  if (ix >= 0x3f800000) {
+    // |_x| == 1|
+    if (ix == 0x3f800000) {
+      // asin(+-1) = +-pi/2 with inexact.
+      return _x * PIO2 + 0x1p-120f;
+    }
+    // asin(|x|>1) is NaN
+    return 0/(_x - _x);
+  }
+
+  // |_x| < 0.5
+  if (ix < 0x3f000000) {
+    // if 0x1p-126 <= |_x| < 0x1p-12, avoid raising underflow.
+    if (ix < 0x39800000 && ix >= 0x00800000) {
+      return _x;
+    }
+
+    return _x + _x * R(_x * _x);
+  }
+
+  // 1 > |x| >= 0.5
+  const Float32 z = (1.0f - abs(_x)) * 0.5f;
+  const Float32 s = sqrt(z);
+  const Float32 x = PIO2 - 2.0 * (s + s * R(z));
+
+  return hx >> 31 ? -x : x;
 }
 
 } // namespace Rx::Math
