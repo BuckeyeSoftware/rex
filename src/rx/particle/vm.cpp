@@ -142,22 +142,19 @@ VM::Result VM::execute(const Parameters& _parameters, const Program& _program) {
   };
 
   // SCALAR <op> VECTOR is undefined.
-  #define BINOP(_op) \
-    switch (instruction.a.w) { \
-    case Instruction::Width::SCALAR: \
-      wr_s(instruction.a.i, rd_s(instruction.b.i) _op rd_s(instruction.c.i)); \
-      break; \
-    case Instruction::Width::VECTOR: \
-      switch (instruction.c.w) { \
-      case Instruction::Width::SCALAR: \
-        wr_v(instruction.a.i, rd_v(instruction.b.i) _op rd_s(instruction.c.i)); \
-        break; \
-      case Instruction::Width::VECTOR: \
-        wr_v(instruction.a.i, rd_v(instruction.b.i) _op rd_v(instruction.c.i)); \
-        break; \
-      } \
-      break; \
+  auto binop = [&](const Instruction& _instruction, auto&& _f) {
+    switch (_instruction.a.w) {
+    case Instruction::Width::SCALAR:
+      return wr_s(_instruction.a.i, _f(rd_s(_instruction.b.i), rd_s(_instruction.c.i)));
+    case Instruction::Width::VECTOR:
+      switch (_instruction.c.w) {
+      case Instruction::Width::SCALAR:
+        return wr_v(_instruction.a.i,_f(rd_v(_instruction.b.i), rd_s(_instruction.c.i)));
+      case Instruction::Width::VECTOR:
+        return wr_v(_instruction.a.i, _f(rd_v(_instruction.b.i), rd_v(_instruction.c.i)));
+      }
     }
+  };
 
   auto read_imm_scalar = [&](Uint8 _lo, Uint8 _hi) {
     const auto index = Uint16(_lo) << 8 | Uint16(_hi);
@@ -226,13 +223,13 @@ VM::Result VM::execute(const Parameters& _parameters, const Program& _program) {
     //  Vector <op> Scalar => Vector
     //  Vector <op> Vector => Vector
     case Instruction::OpCode::ADD:
-      BINOP(+);
+      binop(instruction, [](auto a, auto b) { return a + b; });
       break;
     case Instruction::OpCode::SUB:
-      BINOP(-);
+      binop(instruction, [](auto a, auto b) { return a - b; });
       break;
     case Instruction::OpCode::MUL:
-      BINOP(*);
+      binop(instruction, [](auto a, auto b) { return a * b; });
       break;
     case Instruction::OpCode::MIX:
       // Only valid for a.Width == b.Width && c.Width = SCALAR.
@@ -243,6 +240,7 @@ VM::Result VM::execute(const Parameters& _parameters, const Program& _program) {
         break;
       case Instruction::Width::VECTOR:
         wr_v(0, mix(rd_v(instruction.a.i), rd_v(instruction.b.i), rd_s(instruction.c.i)));
+        break;
       }
       break;
     case Instruction::OpCode::RND:
