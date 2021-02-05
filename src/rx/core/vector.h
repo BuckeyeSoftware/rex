@@ -572,8 +572,8 @@ Memory::View Vector<T>::disown() {
   return {
     m_allocator,
     reinterpret_cast<Byte*>(Utility::exchange(m_data, nullptr)),
-    Utility::exchange(m_size, 0),
-    Utility::exchange(m_capacity, 0)
+    Utility::exchange(m_size, 0) * sizeof(T),
+    Utility::exchange(m_capacity, 0) * sizeof(T)
   };
 }
 
