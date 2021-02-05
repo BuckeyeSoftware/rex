@@ -133,7 +133,7 @@ Vector<T>::Vector(Memory::Allocator& _allocator, Size _size)
   , m_size{_size}
   , m_capacity{_size}
 {
-  m_data = reinterpret_cast<T*>(allocator().allocate(sizeof(T), m_size));
+  m_data = reinterpret_cast<T*>(m_allocator->allocate(sizeof(T), m_size));
   RX_ASSERT(m_data, "out of memory");
 
   // TODO(dweiler): is_trivial trait so we can memset this.
@@ -149,7 +149,7 @@ Vector<T>::Vector(Memory::Allocator& _allocator, const Vector& _other)
   , m_size{_other.m_size}
   , m_capacity{_other.m_capacity}
 {
-  m_data = reinterpret_cast<T*>(allocator().allocate(sizeof(T), _other.m_capacity));
+  m_data = reinterpret_cast<T*>(m_allocator->allocate(sizeof(T), _other.m_capacity));
   RX_ASSERT(m_data, "out of memory");
 
   if (m_size) {
@@ -185,7 +185,7 @@ Vector<T>::Vector(Vector&& other_)
 template<typename T>
 Vector<T>::~Vector() {
   clear();
-  allocator().deallocate(m_data);
+  m_allocator->deallocate(m_data);
 }
 
 template<typename T>
@@ -193,12 +193,12 @@ Vector<T>& Vector<T>::operator=(const Vector& _other) {
   RX_ASSERT(&_other != this, "self assignment");
 
   clear();
-  allocator().deallocate(m_data);
+  m_allocator->deallocate(m_data);
 
   m_size = _other.m_size;
   m_capacity = _other.m_capacity;
 
-  m_data = reinterpret_cast<T*>(allocator().allocate(sizeof(T), _other.m_capacity));
+  m_data = reinterpret_cast<T*>(m_allocator->allocate(sizeof(T), _other.m_capacity));
   RX_ASSERT(m_data, "out of memory");
 
   if (m_size) {
@@ -217,7 +217,7 @@ Vector<T>& Vector<T>::operator=(Vector&& other_) {
   RX_ASSERT(&other_ != this, "self assignment");
 
   clear();
-  allocator().deallocate(m_data);
+  m_allocator->deallocate(m_data);
 
   m_allocator = other_.m_allocator;
   m_data = Utility::exchange(other_.m_data, nullptr);
@@ -287,9 +287,9 @@ bool Vector<T>::reserve(Size _size) {
 
   T* resize = nullptr;
   if constexpr (Concepts::TriviallyCopyable<T>) {
-    resize = reinterpret_cast<T*>(allocator().reallocate(m_data, capacity * sizeof *m_data));
+    resize = reinterpret_cast<T*>(m_allocator->reallocate(m_data, capacity * sizeof *m_data));
   } else {
-    resize = reinterpret_cast<T*>(allocator().allocate(sizeof(T), capacity));
+    resize = reinterpret_cast<T*>(m_allocator->allocate(sizeof(T), capacity));
   }
 
   if (RX_HINT_UNLIKELY(!resize)) {
@@ -302,7 +302,7 @@ bool Vector<T>::reserve(Size _size) {
         Utility::construct<T>(resize + i, Utility::move(*(m_data + i)));
         Utility::destruct<T>(m_data + i);
       }
-      allocator().deallocate(m_data);
+      m_allocator->deallocate(m_data);
     }
   }
 

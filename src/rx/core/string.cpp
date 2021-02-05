@@ -185,7 +185,7 @@ String::String(Memory::View _view)
 
 String::~String() {
   if (m_data != m_buffer) {
-    allocator().deallocate(m_data);
+    m_allocator->deallocate(m_data);
   }
 }
 
@@ -215,14 +215,14 @@ bool String::reserve(Size _capacity) {
   char* data = nullptr;
   const auto size = static_cast<Size>(m_last - m_data);
   if (m_data == m_buffer) {
-    data = reinterpret_cast<char*>(allocator().allocate(_capacity + 1));
+    data = reinterpret_cast<char*>(m_allocator->allocate(_capacity + 1));
     if (RX_HINT_UNLIKELY(!data)) {
       return false;
     }
     // Copy data out of |m_buffer| to |data|.
     memcpy(data, m_buffer, size + 1);
   } else {
-    data = reinterpret_cast<char*>(allocator().reallocate(m_data, _capacity + 1));
+    data = reinterpret_cast<char*>(m_allocator->reallocate(m_data, _capacity + 1));
     if (RX_HINT_UNLIKELY(!data)) {
       return false;
     }
@@ -483,7 +483,7 @@ Optional<Memory::View> String::disown() {
     // Cannot disown the memory of small string optimization. Make copy.
     n_size = size() + 1;
     n_capacity = n_size;
-    data = allocator().allocate(n_capacity);
+    data = m_allocator->allocate(n_capacity);
     if (!data) {
       return nullopt;
     }
@@ -627,7 +627,7 @@ bool operator>(const char* _lhs, const String& _rhs) {
 }
 
 bool WideString::resize(Size _size) {
-  Uint16* resize = reinterpret_cast<Uint16*>(allocator().reallocate(m_data, (_size + 1) * sizeof *m_data));
+  Uint16* resize = reinterpret_cast<Uint16*>(m_allocator->reallocate(m_data, (_size + 1) * sizeof *m_data));
   if (!RX_HINT_UNLIKELY(resize)) {
     return false;
   }
@@ -677,7 +677,7 @@ WideString::WideString(Memory::Allocator& _allocator, const Uint16* _contents,
   : m_allocator{&_allocator}
   , m_size{_size}
 {
-  m_data = reinterpret_cast<Uint16*>(allocator().allocate(sizeof(Uint16), _size + 1));
+  m_data = reinterpret_cast<Uint16*>(m_allocator->allocate(sizeof(Uint16), _size + 1));
   RX_ASSERT(m_data, "out of memory");
 
   memcpy(m_data, _contents, sizeof(Uint16) * (_size + 1));
@@ -691,7 +691,7 @@ WideString::WideString(WideString&& other_)
 }
 
 WideString::~WideString() {
-  allocator().deallocate(m_data);
+  m_allocator->deallocate(m_data);
 }
 
 } // namespace Rx

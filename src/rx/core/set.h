@@ -152,7 +152,7 @@ void Set<K>::clear() {
 template<typename K>
 void Set<K>::clear_and_deallocate() {
   clear();
-  allocator().deallocate(m_data);
+  m_allocator->deallocate(m_data);
 }
 
 template<typename K>

@@ -127,7 +127,7 @@ Function<R(Ts...)>::Function(Memory::Allocator& _allocator, F&& _function)
   : Function{_allocator}
 {
   m_size = sizeof(ControlBlock) + sizeof _function;
-  m_data = allocator().allocate(m_size);
+  m_data = m_allocator->allocate(m_size);
   RX_ASSERT(m_data, "out of memory");
 
   Utility::construct<ControlBlock>(m_data, &modify_lifetime<F>, &invoke<F>);
@@ -140,7 +140,7 @@ Function<R(Ts...)>::Function(Memory::Allocator& _allocator, const Function& _fun
 {
   if (_function.m_data) {
     m_size = _function.m_size;
-    m_data = allocator().allocate(m_size);
+    m_data = m_allocator->allocate(m_size);
     RX_ASSERT(m_data, "out of memory");
 
     // Copy construct the control block and the function.
@@ -175,7 +175,7 @@ Function<R(Ts...)>& Function<R(Ts...)>::operator=(const Function& _function) {
     // Reallocate storage to make function fit.
     if (_function.m_size > m_size) {
       m_size = _function.m_size;
-      m_data = allocator().reallocate(m_data, m_size);
+      m_data = m_allocator->reallocate(m_data, m_size);
       RX_ASSERT(m_data, "out of memory");
     }
     // Copy construct the control block and the function.
@@ -241,7 +241,7 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Function<R(Ts...)>::allocator(
 
 template<typename R, typename... Ts>
 void Function<R(Ts...)>::destroy() {
-  allocator().deallocate(m_data);
+  m_allocator->deallocate(m_data);
   m_data = nullptr;
   m_size = 0;
 }

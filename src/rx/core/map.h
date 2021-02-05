@@ -182,7 +182,7 @@ void Map<K, V>::clear() {
 template<typename K, typename V>
 void Map<K, V>::clear_and_deallocate() {
   clear();
-  allocator().deallocate(m_data);
+  m_allocator->deallocate(m_data);
 }
 
 template<typename K, typename V>
@@ -191,7 +191,7 @@ Map<K, V>& Map<K, V>::operator=(Map<K, V>&& map_) {
 
   clear_and_deallocate();
 
-  m_allocator = &map_.allocator();
+  m_allocator = map_.m_allocator;
   m_keys = Utility::exchange(map_.m_keys, nullptr);
   m_values = Utility::exchange(map_.m_values, nullptr);
   m_hashes = Utility::exchange(map_.m_hashes, nullptr);

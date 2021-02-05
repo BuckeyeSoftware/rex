@@ -63,7 +63,7 @@ private:
 
 inline StaticPool::~StaticPool() {
   RX_ASSERT(m_bitset.count_set_bits() == 0, "leaked objects");
-  allocator().deallocate(m_data);
+  m_allocator->deallocate(m_data);
 }
 
 inline Byte* StaticPool::operator[](Size _index) const {
