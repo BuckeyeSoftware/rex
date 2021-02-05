@@ -4,6 +4,8 @@
 #include "rx/core/utility/move.h"
 #include "rx/core/uninitialized.h"
 
+#include "rx/core/concepts/trivially_destructible.h"
+
 namespace Rx {
 
 constexpr const struct {} nullopt;
@@ -17,7 +19,8 @@ struct Optional {
   constexpr Optional(Optional&& other_);
   constexpr Optional(const Optional& _other);
 
-  ~Optional();
+  ~Optional() requires Concepts::TriviallyDestructible<T> = default;
+  ~Optional() requires (!Concepts::TriviallyDestructible<T>);
 
   Optional& operator=(T&& data_);
   Optional& operator=(const T& _data);
@@ -152,7 +155,7 @@ Optional<T>& Optional<T>::operator=(const Optional& _other) {
 }
 
 template<typename T>
-Optional<T>::~Optional() {
+Optional<T>::~Optional() requires (!Concepts::TriviallyDestructible<T>) {
   if (m_init) {
     m_data.fini();
   }
