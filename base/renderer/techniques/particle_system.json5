@@ -1,0 +1,44 @@
+{
+  name: "particle_system",
+  uniforms: [
+    { name: "u_model_view", type: "f32x4x4" },
+    { name: "u_projection", type: "f32x4x4" }
+  ],
+  shaders: [
+    {
+      type: "vertex",
+      inputs: [
+        { name: "a_size",          type: "f32" },
+        { name: "a_position",      type: "f32x3" },
+        { name: "a_color",         type: "f32x4" }
+      ],
+      outputs: [
+        { name: "vs_color",        type: "f32x4" }
+      ],
+      source: "
+        void main() {
+          f32x4 eye = u_model_view * f32x4(a_position, 1.0);
+          f32 distance = length(eye.xyz);
+          f32 attenuation = inversesqrt(0.1 * distance);
+          rx_point_size = attenuation * a_size;
+          rx_position = u_projection * eye;
+          vs_color = a_color;
+        }
+      "
+    },
+    {
+      type: "fragment",
+      inputs: [
+        { name: "vs_color", type: "f32x4" }
+      ],
+      outputs: [
+        { name: "fs_color", type: "f32x4" }
+      ],
+      source: "
+        void main() {
+          fs_color = vs_color;
+        }
+      "
+    }
+  ]
+}
