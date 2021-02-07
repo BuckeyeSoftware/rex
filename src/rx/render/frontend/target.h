@@ -77,7 +77,7 @@ struct Target
   Texture2D* depth() const;
   Texture2D* stencil() const;
   Texture2D* depth_stencil() const;
-  const Vector<Attachment> attachments() const &;
+  const Vector<Attachment>& attachments() const &;
   bool is_swapchain() const;
 
   bool has_depth() const;
@@ -159,7 +159,7 @@ inline Texture2D* Target::depth_stencil() const {
   return m_depth_stencil_texture;
 }
 
-inline const Vector<Target::Attachment> Target::attachments() const & {
+inline const Vector<Target::Attachment>& Target::attachments() const & {
   return m_attachments;
 }
 
