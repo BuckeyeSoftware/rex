@@ -5,15 +5,12 @@
 #include "rx/core/uninitialized.h"
 
 #include "rx/core/concepts/trivially_destructible.h"
+#include "rx/core/concepts/trivially_copyable.h"
+#include "rx/core/concepts/copyable.h"
 
 namespace Rx {
 
 constexpr const struct {} nullopt;
-
-template<typename T>
-concept HasCopy = requires(const T& _value) {
-  { T::copy() };
-};
 
 template<typename T>
 struct Optional {
@@ -22,7 +19,9 @@ struct Optional {
   constexpr Optional(T&& data_);
   constexpr Optional(const T& _data);
   constexpr Optional(Optional&& other_);
-  constexpr Optional(const Optional& _other);
+
+  constexpr Optional(const Optional& _other)
+    requires Concepts::TriviallyCopyable<T>;
 
   ~Optional() requires Concepts::TriviallyDestructible<T> = default;
   ~Optional() requires (!Concepts::TriviallyDestructible<T>);
@@ -30,7 +29,9 @@ struct Optional {
   Optional& operator=(T&& data_);
   Optional& operator=(const T& _data);
   Optional& operator=(Optional&& other_);
-  Optional& operator=(const Optional& _other);
+
+  Optional& operator=(const Optional& _other)
+    requires Concepts::TriviallyCopyable<T>;
 
   operator bool() const;
 
@@ -74,7 +75,7 @@ constexpr Optional<T>::Optional(const T& _data)
   : m_data{}
   , m_init{true}
 {
-  if constexpr (HasCopy<T>) {
+  if constexpr (Concepts::Copyable<T>) {
     if (auto copy = T::copy(_data)) {
       m_data.init(Utility::move(*copy));
     } else {
@@ -100,6 +101,7 @@ constexpr Optional<T>::Optional(Optional&& other_)
 
 template<typename T>
 constexpr Optional<T>::Optional(const Optional& _other)
+  requires Concepts::TriviallyCopyable<T>
   : m_data{}
   , m_init{_other.m_init}
 {
@@ -151,7 +153,9 @@ Optional<T>& Optional<T>::operator=(Optional&& other_) {
 }
 
 template<typename T>
-Optional<T>& Optional<T>::operator=(const Optional& _other) {
+Optional<T>& Optional<T>::operator=(const Optional& _other)
+  requires Concepts::TriviallyCopyable<T>
+{
   RX_ASSERT(&_other != this, "self assignment");
 
   if (m_init) {
