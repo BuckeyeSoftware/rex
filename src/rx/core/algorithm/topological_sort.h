@@ -25,8 +25,8 @@ struct TopologicalSort {
     Vector<K> cycled; // problem nodes that form cycles
   };
 
-  bool add(const K& _key);
-  bool add(const K& _key, const K& _dependency);
+  [[nodiscard]] bool add(const K& _key);
+  [[nodiscard]] bool add(const K& _key, const K& _dependency);
 
   Optional<Result> sort();
 
@@ -36,7 +36,15 @@ struct TopologicalSort {
 
 protected:
   struct Relations {
+    RX_MARK_NO_COPY(Relations);
+
+    Relations();
     Relations(Memory::Allocator& _allocator);
+    Relations(Relations&& relations_);
+    Relations& operator=(Relations&& relations_);
+
+    static Optional<Relations> copy(const Relations& _relations);
+
     Size dependencies;
     Set<K> dependents;
   };
@@ -60,10 +68,7 @@ TopologicalSort<K>::TopologicalSort(Memory::Allocator& _allocator)
 
 template<typename K>
 bool TopologicalSort<K>::add(const K& _key) {
-  if (m_map.find(_key)) {
-    return false;
-  }
-  return m_map.insert(_key, {allocator()}) != nullptr;
+  return m_map.find(_key) || m_map.insert(_key, {allocator()}) != nullptr;
 }
 
 template<typename K>
@@ -111,13 +116,16 @@ bool TopologicalSort<K>::add(const K& _key, const K& _dependency) {
 template<typename K>
 Optional<typename TopologicalSort<K>::Result> TopologicalSort<K>::sort() {
   // Make a copy of the map because the sorting is destructive.
-  auto map = m_map;
+  auto map = Utility::copy(m_map);
+  if (!map) {
+    return nullopt;
+  }
 
   Vector<K> sorted{allocator()};
   Vector<K> cycled{allocator()};
 
   // Each key that has no dependencies can be put in right away.
-  auto try_put_key = map.each_pair([&](const K& _key, const Relations& _relations) {
+  auto try_put_key = map->each_pair([&](const K& _key, const Relations& _relations) {
     if (!_relations.dependencies) {
       return sorted.push_back(_key);
     }
@@ -131,8 +139,8 @@ Optional<typename TopologicalSort<K>::Result> TopologicalSort<K>::sort() {
   // Check dependents of the ones with no dependencies and store for each
   // resolved dependency.
   auto try_put_dependents = sorted.each_fwd([&](const K& _root_key) {
-    map.find(_root_key)->dependents.each([&](const K& _key) {
-      if (!--map.find(_key)->dependencies) {
+    map->find(_root_key)->dependents.each([&](const K& _key) {
+      if (!--map->find(_key)->dependencies) {
         return sorted.push_back(_key);
       }
       return true;
@@ -144,7 +152,7 @@ Optional<typename TopologicalSort<K>::Result> TopologicalSort<K>::sort() {
   }
 
   // When there's remaining dependencies of a relation then we've formed a cycle.
-  auto try_put_relations = map.each_pair([&](const K& _key, const Relations& _relations) {
+  auto try_put_relations = map->each_pair([&](const K& _key, const Relations& _relations) {
     if (_relations.dependencies) {
       return cycled.push_back(_key);
     }
@@ -168,11 +176,43 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& TopologicalSort<T>::allocator(
   return *m_allocator;
 }
 
+// [TopologicalSorter<T>::Relations]
 template<typename T>
-RX_HINT_FORCE_INLINE TopologicalSort<T>::Relations::Relations(Memory::Allocator& _allocator)
+TopologicalSort<T>::Relations::Relations()
+  : Relations{Memory::SystemAllocator::instance()}
+{
+}
+
+template<typename T>
+TopologicalSort<T>::Relations::Relations(Memory::Allocator& _allocator)
   : dependencies{0}
   , dependents{_allocator}
 {
+}
+
+template<typename T>
+TopologicalSort<T>::Relations::Relations(Relations&& relations_)
+  : dependencies{Utility::exchange(relations_.dependencies, 0)}
+  , dependents{Utility::move(relations_.dependents)}
+{
+}
+
+template<typename T>
+typename TopologicalSort<T>::Relations& TopologicalSort<T>::Relations::operator=(Relations&& relations_) {
+  dependencies = Utility::exchange(relations_.dependencies, 0);
+  dependents = Utility::move(relations_.dependents);
+  return *this;
+}
+
+template<typename T>
+Optional<typename TopologicalSort<T>::Relations> TopologicalSort<T>::Relations::copy(const Relations& _relations) {
+  if (auto dependents = Utility::copy(_relations.dependents)) {
+    Relations relations;
+    relations.dependencies = _relations.dependencies;
+    relations.dependents = Utility::move(*dependents);
+    return relations;
+  }
+  return nullopt;
 }
 
 } // namespace Rx::Algorithm

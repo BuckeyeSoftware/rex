@@ -18,17 +18,19 @@ namespace Rx {
 // 64-bit: 56 bytes
 template<typename K>
 struct Set {
+  RX_MARK_NO_COPY(Set);
+
   static inline constexpr const Size INITIAL_SIZE = 256;
   static inline constexpr const Size LOAD_FACTOR = 90;
 
   Set();
   Set(Memory::Allocator& _allocator);
   Set(Set&& set_);
-  Set(const Set& _set);
   ~Set();
 
+  static Optional<Set> copy(const Set& _set);
+
   Set& operator=(Set&& set_);
-  Set& operator=(const Set& _set);
 
   K* insert(K&& _key);
   K* insert(const K& _key);
@@ -116,15 +118,23 @@ Set<K>::Set(Set&& set_)
 }
 
 template<typename K>
-Set<K>::Set(const Set& _set)
-  : Set{}
-{
-  _set.each([this](const K& _key) { insert(_key); });
+Set<K>::~Set() {
+  clear_and_deallocate();
 }
 
 template<typename K>
-Set<K>::~Set() {
-  clear_and_deallocate();
+Optional<Set<K>> Set<K>::copy(const Set& _set) {
+  Set<K> result;
+
+  auto insert = [&result](const K& _key) {
+    return result.insert(_key) != nullptr;
+  };
+
+  if (!_set.each(insert)) {
+    return nullopt;
+  }
+
+  return result;
 }
 
 template<typename K>
@@ -169,14 +179,6 @@ Set<K>& Set<K>::operator=(Set<K>&& set_) {
   m_resize_threshold = Utility::exchange(set_.m_resize_threshold, 0);
   m_mask = Utility::exchange(set_.m_mask, 0);
 
-  return *this;
-}
-
-template<typename K>
-Set<K>& Set<K>::operator=(const Set<K>& _set) {
-  RX_ASSERT(&_set != this, "self assignment");
-  clear_and_deallocate();
-  _set.each([](const K& _key) { insert(_key); });
   return *this;
 }
 

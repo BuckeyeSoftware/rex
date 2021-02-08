@@ -102,7 +102,9 @@ bool resolve_module_dependencies(
   Set<String>& visited_,
   Algorithm::TopologicalSort<String>& sorter_)
 {
-  sorter_.add(_current_module.name());
+  if (!sorter_.add(_current_module.name())) {
+    return false;
+  }
 
   // For each dependency of this module.
   return _current_module.dependencies().each_fwd([&](const String& _dependency) {

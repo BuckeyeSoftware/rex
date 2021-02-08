@@ -23,18 +23,19 @@ namespace Rx {
 // 64-bit: 56 bytes
 template<typename K, typename V>
 struct Map {
+  RX_MARK_NO_COPY(Map);
+
   static inline constexpr const Size INITIAL_SIZE = 256;
   static inline constexpr const Size LOAD_FACTOR = 90;
 
   Map();
   Map(Memory::Allocator& _allocator);
-  Map(Memory::Allocator& _allocator, const Map& _map);
   Map(Map&& map_);
-  Map(const Map& _map);
   ~Map();
 
+  static Optional<Map> copy(const Map& _map);
+
   Map& operator=(Map&& map_);
-  Map& operator=(const Map& _map);
 
   V* insert(const K& _key, V&& value_);
   V* insert(const K& _key, const V& _value);
@@ -136,22 +137,32 @@ Map<K, V>::Map(Map&& map_)
 {
 }
 
-template<typename K, typename V>
-Map<K, V>::Map(Memory::Allocator& _allocator, const Map& _map)
-  : Map{_allocator}
-{
-  _map.each_pair([this](const K& _key, const V& _value) { insert(_key, _value); });
-}
-
+/*
 template<typename K, typename V>
 Map<K, V>::Map(const Map& _map)
-  : Map{_map.allocator(), _map}
+  : Map{_map.allocator()}
 {
-}
+  _map.each_pair([this](const K& _key, const V& _value) { insert(_key, _value); });
+}*/
 
 template<typename K, typename V>
 Map<K, V>::~Map() {
   clear_and_deallocate();
+}
+
+template<typename K, typename V>
+Optional<Map<K, V>> Map<K, V>::copy(const Map& _map) {
+  Map<K, V> result;
+
+  auto insert = [&result](const K& _key, const V& _value) {
+    return result.insert(_key, _value) != nullptr;
+  };
+
+  if (!_map.each_pair(insert)) {
+    return nullopt;
+  }
+
+  return result;
 }
 
 template<typename K, typename V>
@@ -201,14 +212,6 @@ Map<K, V>& Map<K, V>::operator=(Map<K, V>&& map_) {
   m_resize_threshold = Utility::exchange(map_.m_resize_threshold, 0);
   m_mask = Utility::exchange(map_.m_mask, 0);
 
-  return *this;
-}
-
-template<typename K, typename V>
-Map<K, V>& Map<K, V>::operator=(const Map<K, V>& _map) {
-  RX_ASSERT(&_map != this, "self assignment");
-  clear_and_deallocate();
-  _map.each_pair([](const K& _key, const V& _value) { insert(_key, _value); });
   return *this;
 }
 

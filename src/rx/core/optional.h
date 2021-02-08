@@ -11,6 +11,11 @@ namespace Rx {
 constexpr const struct {} nullopt;
 
 template<typename T>
+concept HasCopy = requires(const T& _value) {
+  { T::copy() };
+};
+
+template<typename T>
 struct Optional {
   constexpr Optional(decltype(nullopt));
   constexpr Optional();
@@ -63,12 +68,21 @@ constexpr Optional<T>::Optional(T&& data_)
   m_data.init(Utility::forward<T>(data_));
 }
 
+
 template<typename T>
 constexpr Optional<T>::Optional(const T& _data)
   : m_data{}
   , m_init{true}
 {
-  m_data.init(_data);
+  if constexpr (HasCopy<T>) {
+    if (auto copy = T::copy(_data)) {
+      m_data.init(Utility::move(*copy));
+    } else {
+      m_init = false;
+    }
+  } else {
+    m_data.init(_data);
+  }
 }
 
 template<typename T>
