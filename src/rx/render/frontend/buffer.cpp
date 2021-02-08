@@ -198,36 +198,4 @@ Size Buffer::bytes_for_edits() const {
   return bytes;
 }
 
-void Buffer::optimize_edits() {
-  // Determines if |_lhs| is fully inside |_rhs|.
-  auto inside = [](const Edit& _lhs, const Edit& _rhs) {
-    return !(_lhs.offset < _rhs.offset || _lhs.offset + _lhs.size > _rhs.offset + _rhs.size);
-  };
-
-  // When an edit is inside a larger edit, that larger edit will include the
-  // nested edit. Remove such edits (duplicate and fully overlapping) to
-  // produce a minimal and coalesced edit list for the backend.
-
-  // WARN(dweiler): This behaves O(n^2), except n should be small.
-  for (Size i = 0; i < m_edits.size(); i++) {
-    for (Size j = 0; j < m_edits.size(); j++) {
-      if (i == j) {
-        continue;
-      }
-
-      // The edits need to be to the same sink.
-      const auto& e1 = m_edits[i];
-      const auto& e2 = m_edits[j];
-      if (e1.sink != e2.sink) {
-        continue;
-      }
-
-      // Edit exists fully inside another, remove it.
-      if (inside(e1, e2)) {
-        m_edits.erase(i, i + 1);
-      }
-    }
-  }
-}
-
 } // namespace Rx::Render::Frontend

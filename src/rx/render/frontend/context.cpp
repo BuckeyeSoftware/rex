@@ -381,10 +381,6 @@ void Context::update_buffer(const CommandHeader::Info& _info, Buffer* _buffer) {
   if (_buffer) {
     Concurrency::ScopeLock lock{m_mutex};
 
-    // Optimize the edits. Any overlapping, redundant, or superfluous edits
-    // will be coalesced or removed at this point.
-    _buffer->optimize_edits();
-
     // Keep track of frame footprint.
     m_footprint[0] += _buffer->bytes_for_edits();
 
@@ -407,18 +403,13 @@ void Context::update_buffer(const CommandHeader::Info& _info, Buffer* _buffer) {
     m_commands.push_back(command_base);
 
     // So we can clear edit list after processing.
-    // m_edit_buffers.push_back(_buffer);
-    _buffer->clear_edits();
+    m_edit_buffers.push_back(_buffer);
   }
 }
 
 void Context::update_texture(const CommandHeader::Info& _info, Texture1D* _texture) {
   if (_texture) {
     Concurrency::ScopeLock lock{m_mutex};
-
-    // Optimize the edits. Any overlapping, redundant, or superfluous edits
-    // will be coalesced or removed at this point.
-    _texture->optimize_edits();
 
     // Keep track of frame footprint.
     m_footprint[0] += _texture->bytes_for_edits();
@@ -450,10 +441,6 @@ void Context::update_texture(const CommandHeader::Info& _info, Texture2D* _textu
   if (_texture) {
     Concurrency::ScopeLock lock{m_mutex};
 
-    // Optimize the edits. Any overlapping, redundant, or superfluous edits
-    // will be coalesced or removed at this point.
-    _texture->optimize_edits();
-
     // Keep track of frame footprint.
     m_footprint[0] += _texture->bytes_for_edits();
 
@@ -483,10 +470,6 @@ void Context::update_texture(const CommandHeader::Info& _info, Texture2D* _textu
 void Context::update_texture(const CommandHeader::Info& _info, Texture3D* _texture) {
   if (_texture) {
     Concurrency::ScopeLock lock{m_mutex};
-
-    // Optimize the edits. Any overlapping, redundant, or superfluous edits
-    // will be coalesced or removed at this point.
-    // _texture->optimize_edits();
 
     // Keep track of frame footprint.
     m_footprint[0] += _texture->bytes_for_edits();

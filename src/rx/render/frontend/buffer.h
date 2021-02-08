@@ -162,7 +162,6 @@ struct Buffer
 
   const Vector<Edit>& edits() const;
   Size bytes_for_edits() const;
-  void optimize_edits();
   void clear_edits();
 
   void validate() const;

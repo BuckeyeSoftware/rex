@@ -9,44 +9,6 @@
 
 namespace Rx::Render::Frontend {
 
-// When an edit is inside a larger edit, that larger edit will include the
-// nested edit. Remove such edits (duplicate and fully overlapping) to produce a
-// minimal and coalesced edit list for the backend.
-template<typename T>
-static void coalesce_edits(Vector<T>& edits_) {
-  // Determines if |_lhs| is fully inside |_rhs|.
-  auto inside = [](const T& _lhs, const T& _rhs) {
-    return !(_lhs.offset < _rhs.offset || _lhs.offset + _lhs.size > _rhs.offset + _rhs.size);
-  };
-
-  // WARN(dweiler): This behaves O(n^2), except n should be small.
-  for (Size i = 0; i < edits_.size(); i++) {
-    for (Size j = 0; j < edits_.size(); j++) {
-      if (i == j) {
-        continue;
-      }
-
-      // Only when the edits are to the same level of the texture.
-      const auto& e1 = edits_[i];
-      const auto& e2 = edits_[j];
-      if (e1.level != e2.level) {
-        continue;
-      }
-
-      // Edit exists fully inside another, remove it.
-      if (inside(e1, e2)) {
-        edits_.erase(i, i + 1);
-      }
-    }
-  }
-
-  // Sort the edits by texture level so largest levels come first.
-  Algorithm::quick_sort(&edits_.first(), &edits_.last(),
-    [](const T& _lhs, const T& _rhs) {
-      return _lhs.level > _rhs.level;
-    });
-}
-
 Texture::Texture(Context* _frontend, Resource::Type _type)
   : Resource{_frontend, _type}
   , m_data{_frontend->allocator()}
@@ -183,10 +145,6 @@ Size Texture1D::bytes_for_edits() const {
   return bytes * bits_per_pixel() / 8;
 }
 
-void Texture1D::optimize_edits() {
-  coalesce_edits(m_edits);
-}
-
 // Texture2D
 Texture2D::Texture2D(Context* _frontend)
   : Texture{_frontend, Resource::Type::TEXTURE2D}
@@ -268,10 +226,6 @@ Size Texture2D::bytes_for_edits() const {
   return bytes * bits_per_pixel() / 8;
 }
 
-void Texture2D::optimize_edits() {
-  coalesce_edits(m_edits);
-}
-
 // Texture3D
 Texture3D::Texture3D(Context* _frontend)
   : Texture{_frontend, Resource::Type::TEXTURE3D}
@@ -348,10 +302,6 @@ Size Texture3D::bytes_for_edits() const {
   Size bytes = 0;
   m_edits.each_fwd([&](const EditType& _edit) { bytes += _edit.size.area(); });
   return bytes * bits_per_pixel() / 8;
-}
-
-void Texture3D::optimize_edits() {
-  coalesce_edits(m_edits);
 }
 
 // TextureCM

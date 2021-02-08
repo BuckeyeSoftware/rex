@@ -171,7 +171,6 @@ struct Texture1D : Texture {
 
   const Vector<EditType>& edits() const;
   Size bytes_for_edits() const;
-  void optimize_edits();
   void clear_edits();
 
 private:
@@ -211,7 +210,6 @@ struct Texture2D : Texture {
 
   const Vector<EditType>& edits() const;
   Size bytes_for_edits() const;
-  void optimize_edits();
   void clear_edits();
 
 private:
@@ -254,7 +252,6 @@ struct Texture3D : Texture {
   // The number of bytes of texture data needed for edits.
   const Vector<EditType>& edits() const;
   Size bytes_for_edits() const;
-  void optimize_edits();
   void clear_edits();
 
 private:
