@@ -7,6 +7,7 @@
 
 #include "rx/core/utility/swap.h"
 #include "rx/core/utility/pair.h"
+#include "rx/core/utility/copy.h"
 
 #include "rx/core/hints/unreachable.h"
 #include "rx/core/hints/unlikely.h"
@@ -431,15 +432,20 @@ V* Map<K, V>::inserter(Size _hash, K&& key_, V&& value_) {
 
 template<typename K, typename V>
 V* Map<K, V>::inserter(Size _hash, const K& _key, V&& value_) {
-  K key{_key};
-  return inserter(_hash, Utility::move(key), Utility::move(value_));
+  if (auto key = Utility::copy(_key)) {
+    return inserter(_hash, Utility::move(*key), Utility::move(value_));
+  }
+  return nullptr;
 }
 
 template<typename K, typename V>
 V* Map<K, V>::inserter(Size _hash, const K& _key, const V& _value) {
-  K key{_key};
-  V value{_value};
-  return inserter(_hash, Utility::move(key), Utility::move(value));
+  auto key = Utility::copy(_key);
+  auto value = Utility::copy(_value);
+  if (key && value) {
+    return inserter(_hash, Utility::move(*key), Utility::move(*value));
+  }
+  return nullptr;
 }
 
 template<typename K, typename V>

@@ -65,6 +65,8 @@ struct Buffer
   struct Format {
     Format();
 
+    static Optional<Format> copy(const Format& _other);
+
     void record_type(Type _type);
 
     void record_element_type(ElementType _type);
@@ -129,7 +131,7 @@ struct Buffer
   ~Buffer();
 
   // Record buffer format.
-  void record_format(const Format& _format);
+  bool record_format(const Format& _format);
 
   // Map |_size| bytes for vertices.
   Byte* map_vertices(Size _size);
@@ -348,10 +350,14 @@ inline bool Buffer::record_instances_edit(Size _offset, Size _size) {
   return record_sink_edit(Sink::INSTANCES, _offset, _size);
 }
 
-inline void Buffer::record_format(const Format& _format) {
+inline bool Buffer::record_format(const Format& _format) {
   RX_ASSERT(!(m_recorded & FORMAT), "already recorded");
-  m_format = _format;
-  m_recorded |= FORMAT;
+  if (auto format = Utility::copy(_format)) {
+    m_format = Utility::move(*format);
+    m_recorded |= FORMAT;
+    return true;
+  }
+  return false;
 }
 
 inline const LinearBuffer& Buffer::vertices() const & {

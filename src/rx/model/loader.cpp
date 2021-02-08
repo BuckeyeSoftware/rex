@@ -181,11 +181,17 @@ bool Loader::import(const String& _file_name) {
   const Size n_vertices{m_positions.size()};
 
   if (m_animations.is_empty()) {
-    Utility::construct<Vector<Vertex>>(&as_vertices, allocator(), n_vertices);
+    Utility::construct<Vector<Vertex>>(&as_vertices, allocator());
     m_flags = CONSTRUCTED;
+    if (!as_vertices.resize(n_vertices)) {
+      return error("out of memory");
+    }
   } else {
-    Utility::construct<Vector<AnimatedVertex>>(&as_animated_vertices, allocator(), n_vertices);
+    Utility::construct<Vector<AnimatedVertex>>(&as_animated_vertices, allocator());
     m_flags = CONSTRUCTED | ANIMATED;
+    if (!as_animated_vertices.resize(n_vertices)) {
+      return error("out of memory");
+    }
   }
 
   // Hoist the transform check outside the for loops for faster model loading.

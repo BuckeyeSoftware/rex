@@ -5,6 +5,8 @@
 namespace Rx::Particle {
 
 struct Program {
+  static Optional<Program> copy(const Program& _program);
+
   Vector<Uint32> instructions;
   Vector<Float32> data;
 };

@@ -107,7 +107,7 @@ struct TestGame
       return false;
     }
 
-    m_particle_program = assembler.program();
+    m_particle_program = Utility::move(*Utility::copy(assembler.program()));
 
     m_gbuffer.create(m_frontend.swapchain()->dimensions());
     m_skybox.load("base/skyboxes/sky_cloudy/sky_cloudy.json5", {1024, 1024});
@@ -183,15 +183,20 @@ struct TestGame
       }
     }
     m_color_grader.update();
-    /*
+
+/*
+    Sint32 i = 0;
+
     if (Filesystem::Directory dir{"base/models/light_unit"}) {
       printf("opened light_unit\n");
       dir.each([&](Filesystem::Directory::Item&& item_) {
+        //if (i > 10) return;
         if (item_.is_file() && item_.name().ends_with(".json5")) {
           printf("found %s\n", item_.name().data());
           Render::Model model{&m_frontend};
           if (model.load("base/models/light_unit/" + item_.name())) {
             m_models.push_back(Utility::move(model));
+            i++;
           }
         }
       });
@@ -199,12 +204,14 @@ struct TestGame
       return false;
     }*/
 
+    #if 1
     Render::Model model{&m_frontend};
     if (model.load("base/models/mrfixit/mrfixit.json5")) {
       if (!m_models.push_back(Utility::move(model))) {
         return false;
       }
     }
+    #endif
 
     auto animate = [](Render::Model& _model) { _model.animate(0, true); };
     m_models.each_fwd(animate);
@@ -268,11 +275,11 @@ struct TestGame
           (*emitter)[1] = m_camera.translate.y;
           (*emitter)[2] = m_camera.translate.z + 1.0f;
           (*emitter)[3] = 0.0f;
-          m_particle_system.add_emitter(Utility::move(*emitter));
+          (void)m_particle_system.add_emitter(Utility::move(*emitter));
         }
       }
       if (input.root_layer().keyboard().is_released(Input::ScanCode::U)) {
-        m_particle_system.remove_emitter(0);
+        (void)m_particle_system.remove_emitter(0);
       }
     }
 
@@ -324,7 +331,7 @@ struct TestGame
       model_.update(_delta_time);
     });
 
-    m_transform.rotate.y += 15.0f * _delta_time;
+    // m_transform.rotate.y += 15.0f * _delta_time;
 
     m_particle_system.update(_delta_time);
     m_particle_system_render.update(&m_particle_system);
@@ -368,20 +375,22 @@ struct TestGame
       Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
       Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data());
 
-    const Float32 spacing = 5.0f;
+#if 1
+    //const Float32 spacing = 5.0f;
     Math::Transform transform;
     m_models.each_fwd([&](Render::Model& model_) {
-      transform.rotate = m_transform.rotate;
+      //transform.rotate = m_transform.rotate;
       model_.render(m_gbuffer.target(), transform.as_mat4(), m_camera.view(),
         m_camera.projection,
           Render::Model::SKELETON | Render::Model::BOUNDS,
           &m_immediate3D);
-      transform.translate.x += spacing;
-      if (transform.translate.x >= 8.0f * spacing) {
-        transform.translate.x = 0.0f;
-        transform.translate.z += spacing;
-      }
+      // transform.translate.x += spacing;
+      // if (transform.translate.x >= 8.0f * spacing) {
+      //   transform.translate.x = 0.0f;
+      //   transform.translate.z += spacing;
+      // }
     });
+#endif
 
     m_indirect_lighting_pass.render(m_camera, &m_gbuffer, &m_ibl);
 
@@ -413,10 +422,11 @@ struct TestGame
       0);
 
     m_frame_graph.render();
-    m_render_stats.render();
     m_memory_stats.render();
 
     m_console.render();
+
+    m_render_stats.render();
 
     if (*input_debug_layers) {
       input.render_regions(&m_immediate2D);

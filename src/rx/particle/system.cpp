@@ -29,9 +29,9 @@ void System::update(Float32 _delta_time) {
   auto velocity_x = reinterpret_cast<Math::Vec4f*>(m_velocity_x);
   auto velocity_y = reinterpret_cast<Math::Vec4f*>(m_velocity_y);
   auto velocity_z = reinterpret_cast<Math::Vec4f*>(m_velocity_z);
-  auto acceleration_x = reinterpret_cast<Math::Vec4f*>(m_acceleration_x);
-  auto acceleration_y = reinterpret_cast<Math::Vec4f*>(m_acceleration_y);
-  auto acceleration_z = reinterpret_cast<Math::Vec4f*>(m_acceleration_z);
+  // auto acceleration_x = reinterpret_cast<Math::Vec4f*>(m_acceleration_x);
+  // auto acceleration_y = reinterpret_cast<Math::Vec4f*>(m_acceleration_y);
+  // auto acceleration_z = reinterpret_cast<Math::Vec4f*>(m_acceleration_z);
   auto life = reinterpret_cast<Math::Vec4f*>(m_life);
   const Math::Vec4f delta_time{_delta_time, _delta_time, _delta_time, _delta_time};
   for (Size i = 0; i < n_vectors; i++) {

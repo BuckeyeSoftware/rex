@@ -92,7 +92,7 @@ bool PathResolver::push(int _ch) {
         return false;
       }
       // This resize cannot fail because it only makes |m_data| smaller.
-      m_data.resize(m_stack.pop());
+      RX_ASSERT(m_data.resize(m_stack.pop()), "should not fail");
       break;
     }
     m_dots = 0;

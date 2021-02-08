@@ -76,8 +76,8 @@ protected:
 
   void write_log(Log::Level _level, String&& message_) const;
 
-  void generate_normals();
-  bool generate_tangents();
+  [[nodiscard]] bool generate_normals();
+  [[nodiscard]] bool generate_tangents();
 
   Memory::Allocator& m_allocator;
 

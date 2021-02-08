@@ -783,9 +783,13 @@ static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
     logger->error("failed compiling shader");
 
     if (log_size) {
-      Vector<char> error_log{Memory::SystemAllocator::instance(), static_cast<Size>(log_size)};
-      pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
-      logger->error("\n%s\n%s", error_log.data(), contents->data());
+      Vector<char> error_log{Memory::SystemAllocator::instance()};
+      if (!error_log.resize(log_size)) {
+        logger->error("out of memory");
+      } else {
+        pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
+        logger->error("\n%s\n%s", error_log.data(), contents->data());
+      }
     }
 
     pglDeleteShader(handle);
@@ -1243,9 +1247,13 @@ void GL3::process(Byte* _command) {
             logger->error("failed linking program");
 
             if (log_size) {
-              Vector<char> error_log{Memory::SystemAllocator::instance(), static_cast<Size>(log_size)};
-              pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
-              logger->error("\n%s", error_log.data());
+              Vector<char> error_log{Memory::SystemAllocator::instance()};
+              if (!error_log.resize(log_size)) {
+                logger->error("out of memory");
+              } else {
+                pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
+                logger->error("\n%s", error_log.data());
+              }
             }
           }
 
@@ -1488,7 +1496,7 @@ void GL3::process(Byte* _command) {
           auto n_buffers = render_downloader->buffers();
 
           // Ensure we have all the buffers.
-          downloader->buffers.resize(n_buffers);
+          (void)downloader->buffers.resize(n_buffers);
           pglGenBuffers(downloader->buffers.size(), downloader->buffers.data());
           for (Size i = 0; i < n_buffers; i++) {
             pglBindBuffer(GL_PIXEL_PACK_BUFFER, downloader->buffers[i]);

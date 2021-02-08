@@ -706,9 +706,13 @@ static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
     logger->error("failed compiling shader");
 
     if (log_size) {
-      Vector<char> error_log{Memory::SystemAllocator::instance(), static_cast<Size>(log_size)};
-      pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
-      logger->error("\n%s\n%s", error_log.data(), contents->data());
+      Vector<char> error_log{Memory::SystemAllocator::instance()};
+      if (!error_log.resize(log_size)) {
+        logger->error("out of memory");
+      } else {
+        pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
+        logger->error("\n%s\n%s", error_log.data(), contents->data());
+      }
     }
 
     pglDeleteShader(handle);
@@ -1171,9 +1175,13 @@ void GL4::process(Byte* _command) {
             logger->error("failed linking program");
 
             if (log_size) {
-              Vector<char> error_log{Memory::SystemAllocator::instance(), static_cast<Size>(log_size)};
-              pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
-              logger->error("\n%s", error_log.data());
+              Vector<char> error_log{Memory::SystemAllocator::instance()};
+              if (!error_log.resize(log_size)) {
+                logger->error("out of memory");
+              } else {
+                pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
+                logger->error("\n%s", error_log.data());
+              }
             }
           }
 

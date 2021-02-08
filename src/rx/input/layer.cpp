@@ -18,7 +18,7 @@ Layer::~Layer() {
   m_context->remove_layer(this);
 }
 
-void Layer::handle_event(const Event& _event) {
+bool Layer::handle_event(const Event& _event) {
   switch (_event.type) {
   case Event::Type::NONE:
     break;
@@ -29,7 +29,9 @@ void Layer::handle_event(const Event& _event) {
   case Event::Type::CONTROLLER_NOTIFICATION:
     switch (_event.as_controller_notification.kind) {
     case ControllerNotificationEvent::Type::CONNECTED:
-      m_controllers.resize(_event.as_controller_notification.index);
+      if (!m_controllers.resize(_event.as_controller_notification.index)) {
+        return false;
+      }
       break;
     case ControllerNotificationEvent::Type::DISCONNECTED:
       m_controllers.erase(_event.as_controller_notification.index,
@@ -65,6 +67,8 @@ void Layer::handle_event(const Event& _event) {
     RX_HINT_UNREACHABLE();
     break;
   }
+
+  return true;
 }
 
 void Layer::capture_mouse(bool _capture) {

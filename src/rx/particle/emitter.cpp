@@ -4,14 +4,18 @@
 
 #include "rx/core/math/mod.h"
 
+#include "rx/core/utility/copy.h"
+
 #include <stdio.h>
 
 namespace Rx::Particle {
 
 Optional<Emitter> Emitter::create(const Program& _program, Float32 _rate) {
-  // Copy program.
-  auto program = _program; // TODO(dweiler): can fail1?
-  return Emitter{Utility::move(program), _rate};
+  auto program = Utility::copy(_program);
+  if (!program) {
+    return nullopt;
+  }
+  return Emitter{Utility::move(*program), _rate};
 }
 
 void Emitter::emit(Float32 _delta_time, State* state_) {

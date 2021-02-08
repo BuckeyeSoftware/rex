@@ -94,7 +94,10 @@ void Console::update(Rx::Console::Context& console_) {
   m_input_layer.move({0.0f, dimensions.h - height});
 
   // Make a copy of the console line output for rendering.
-  m_lines = console_.lines();
+  auto lines = Utility::copy(console_.lines());
+  if (lines) {
+    m_lines = Utility::move(*lines);
+  }
 
   bool made_selection = false;
   if (m_input_layer.keyboard().is_pressed(Input::ScanCode::GRAVE)) {

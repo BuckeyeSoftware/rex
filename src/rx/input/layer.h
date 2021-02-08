@@ -54,7 +54,7 @@ struct Layer {
 private:
   friend struct Context;
 
-  void handle_event(const Event& _event);
+  [[nodiscard]] bool handle_event(const Event& _event);
   void update(Float32 _delta_time);
 
   Context* m_context;

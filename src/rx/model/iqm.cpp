@@ -172,13 +172,15 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
   const Byte* in_blend_index{nullptr};
   const Byte* in_blend_weight{nullptr};
 
-  const auto vertex_arrays{reinterpret_cast<const IQMVertexArray*>(_data.data() + _header.vertex_arrays_offset)};
-  for (Uint32 i{0}; i < _header.vertex_arrays; i++) {
-    const IQMVertexArray& array{vertex_arrays[i]};
-    const auto attribute{static_cast<VertexAttribute>(array.type)};
-    const auto format{static_cast<VertexFormat>(array.format)};
-    const Size size{array.size};
-    const Size offset{array.offset};
+  const auto* vertex_arrays =
+    reinterpret_cast<const IQMVertexArray*>(_data.data() + _header.vertex_arrays_offset);
+
+  for (Uint32 i = 0; i < _header.vertex_arrays; i++) {
+    const auto& array = vertex_arrays[i];
+    const auto attribute = static_cast<VertexAttribute>(array.type);
+    const auto format = static_cast<VertexFormat>(array.format);
+    const Size size = array.size;
+    const Size offset = array.offset;
 
     switch (attribute) {
     case VertexAttribute::POSITION:
@@ -239,33 +241,44 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
     }
   }
 
-  const Size vertices{_header.vertexes};
+    if (!m_elements.resize(_header.triangles * 3)) {
+    return false;
+  }
+
+  const Size vertices = _header.vertexes;
+  const Size elements = _header.triangles * 3;
+
+  bool result = m_elements.resize(elements);
 
   if (in_position) {
-    m_positions.resize(vertices);
+    result &= m_positions.resize(vertices);
   }
 
   if (in_normal) {
-    m_normals.resize(vertices);
+    result &= m_normals.resize(vertices);
   }
 
   if (in_tangent) {
-    m_tangents.resize(vertices);
+    result &= m_tangents.resize(vertices);
   }
 
   if (in_coordinate) {
-    m_coordinates.resize(vertices);
+    result &= m_coordinates.resize(vertices);
   }
 
   if (in_blend_index) {
-    m_blend_indices.resize(vertices);
+    result &= m_blend_indices.resize(vertices);
   }
 
   if (in_blend_weight) {
-    m_blend_weights.resize(vertices);
+    result &= m_blend_weights.resize(vertices);
   }
 
-  for (Size i{0}; i < vertices; i++) {
+  if (!result) {
+    return error("out of memory");
+  }
+
+  for (Size i = 0; i < vertices; i++) {
     if (in_position) {
       m_positions[i].x = in_position[i * 3 + 0];
       m_positions[i].y = in_position[i * 3 + 2];
@@ -305,37 +318,49 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
     }
   }
 
-  const auto meshes{reinterpret_cast<const IQMMesh *>(_data.data() + _header.meshes_offset)};
-  for (Uint32 i{0}; i < _header.meshes; i++) {
-    const auto& this_mesh{meshes[i]};
-    const char* material_name{string_table + this_mesh.material};
-    m_meshes.emplace_back(this_mesh.first_triangle * 3, this_mesh.num_triangles * 3, material_name,
-      Vector<Vector<Math::AABB>>{});
+  const auto* meshes =
+    reinterpret_cast<const IQMMesh *>(_data.data() + _header.meshes_offset);
+
+  for (Uint32 i = 0; i < _header.meshes; i++) {
+    const auto& mesh = meshes[i];
+    const auto* material_name = string_table + mesh.material;
+    if (!m_meshes.emplace_back(mesh.first_triangle * 3, mesh.num_triangles * 3, material_name, Vector<Vector<Math::AABB>>{})) {
+      return error("out of memory");
+    }
   }
 
-  m_elements.resize(_header.triangles * 3);
-  for (Uint32 i{0}; i < _header.triangles; i++) {
-    const auto* this_triangle{reinterpret_cast<const IQMTriangle*>(_data.data() + _header.triangles_offset) + i};
-    m_elements[i * 3 + 0] = this_triangle->vertex[0];
-    m_elements[i * 3 + 1] = this_triangle->vertex[1];
-    m_elements[i * 3 + 2] = this_triangle->vertex[2];
+  for (Uint32 i = 0; i < _header.triangles; i++) {
+    const auto* triangle =
+      reinterpret_cast<const IQMTriangle*>(_data.data() + _header.triangles_offset) + i;
+
+    m_elements[i * 3 + 0] = triangle->vertex[0];
+    m_elements[i * 3 + 1] = triangle->vertex[1];
+    m_elements[i * 3 + 2] = triangle->vertex[2];
   }
 
   return true;
 }
 
 bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
-  const auto n_joints{static_cast<Size>(_header.joints)};
+  const auto n_joints = static_cast<Size>(_header.joints);
 
-  Vector<Math::Mat3x4f> generic_base_frame{allocator(), n_joints};
-  Vector<Math::Mat3x4f> inverse_base_frame{allocator(), n_joints};
+  Vector<Math::Mat3x4f> generic_base_frame{allocator()};
+  Vector<Math::Mat3x4f> inverse_base_frame{allocator()};
 
-  m_joints.resize(n_joints);
+  bool result = true;
+  result &= generic_base_frame.resize(n_joints);
+  result &= inverse_base_frame.resize(n_joints);
+  result &= m_joints.resize(n_joints);
+  result &= m_frames.resize(n_joints * _header.frames);
+  if (!result) {
+    return error("out of memory");
+  }
 
-  const auto joints{reinterpret_cast<const IQMJoint*>(_data.data() + _header.joints_offset)};
+  const auto joints =
+    reinterpret_cast<const IQMJoint*>(_data.data() + _header.joints_offset);
 
   // Read base bind pose.
-  for (Size i{0}; i < n_joints; i++) {
+  for (Size i = 0; i < n_joints; i++) {
     const auto& this_joint{joints[i]};
 
     // Convert IQM's Z-up coordinate system to Y-up since that's what we use.
@@ -354,23 +379,30 @@ bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
     m_joints[i] = {generic_base_frame[i], this_joint.parent};
   }
 
-  const char* string_table{reinterpret_cast<const char *>(_data.data() + _header.text_offset)};
-  const IQMAnimation* animations{reinterpret_cast<const IQMAnimation*>(_data.data() + _header.animations_offset)};
-  for (Uint32 i{0}; i < _header.animations; i++) {
-    const IQMAnimation& this_animation{animations[i]};
-    m_animations.emplace_back(this_animation.frame_rate, this_animation.first_frame,
-      this_animation.num_frames, string_table + this_animation.name);
+  const auto* string_table =
+    reinterpret_cast<const char *>(_data.data() + _header.text_offset);
+
+  const auto* animations =
+    reinterpret_cast<const IQMAnimation*>(_data.data() + _header.animations_offset);
+
+  for (Uint32 i = 0; i < _header.animations; i++) {
+    const auto& animation = animations[i];
+    if (!m_animations.emplace_back(animation.frame_rate, animation.first_frame, animation.num_frames, string_table + animation.name)) {
+      return error("out of memory");
+    }
   }
 
-  m_frames.resize(n_joints * _header.frames);
-  const auto* poses{reinterpret_cast<const IQMPose*>(_data.data() + _header.poses_offset)};
-  const Uint16* frame_data{reinterpret_cast<const Uint16*>(_data.data() + _header.frames_offset)};
+  const auto* poses =
+    reinterpret_cast<const IQMPose*>(_data.data() + _header.poses_offset);
 
-  for (Uint32 i{0}; i < _header.frames; i++) {
-    for (Uint32 j{0}; j < _header.poses; j++) {
-      const IQMPose& this_pose{poses[j]};
+  const auto* frame_data =
+    reinterpret_cast<const Uint16*>(_data.data() + _header.frames_offset);
+
+  for (Uint32 i = 0; i < _header.frames; i++) {
+    for (Uint32 j = 0; j < _header.poses; j++) {
+      const auto& this_pose = poses[j];
       Float32 channel_data[10];
-      for (Size k{0}; k < 10; k++) {
+      for (Size k = 0; k < 10; k++) {
         channel_data[k] = this_pose.channel_offset[k];
         if (this_pose.mask & (1 << k)) {
           channel_data[k] += (*frame_data++) * this_pose.channel_scale[k];

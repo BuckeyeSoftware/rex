@@ -283,7 +283,8 @@ Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
 
     // figure out the atlas size needed
     for (;;) {
-      Vector<stbtt_bakedchar> baked_glyphs(m_frontend->allocator(), GLYPHS);
+      Vector<stbtt_bakedchar> baked_glyphs(m_frontend->allocator());
+      RX_ASSERT(baked_glyphs.resize(GLYPHS), "out of memory");
       LinearBuffer baked_atlas{m_frontend->allocator()};
       RX_ASSERT(baked_atlas.resize(m_resolution * m_resolution), "out of memory");
 
@@ -321,7 +322,8 @@ Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
         m_frontend->initialize_texture(RX_RENDER_TAG("font"), m_texture);
 
         // copy glyph information
-        m_glyphs.resize(GLYPHS);
+        RX_ASSERT(m_glyphs.resize(GLYPHS), "out of memory");
+
         for (int i{0}; i < GLYPHS; i++) {
           const auto& baked_glyph{baked_glyphs[i]};
           auto& glyph{m_glyphs[i]};

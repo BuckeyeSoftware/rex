@@ -20,7 +20,7 @@ Context::Context(Memory::Allocator& _allocator)
   m_root.capture_mouse(true);
 }
 
-void Context::handle_event(const Event& _event) {
+bool Context::handle_event(const Event& _event) {
   switch (_event.type) {
   case Event::Type::MOUSE_BUTTON:
     // Can only change layer when mouse isn't captured and button was pressed.
@@ -41,17 +41,16 @@ void Context::handle_event(const Event& _event) {
     [[fallthrough]];
   default:
     // Send the event to the active layer.
-    active_layer().handle_event(_event);
-    break;
+    return active_layer().handle_event(_event);
   case Event::Type::CONTROLLER_NOTIFICATION:
     // Controller notification events should be sent to every layer.
-    m_layers.each_fwd([&](Layer* _layer) { _layer->handle_event(_event); });
-    break;
+    return m_layers.each_fwd([&](Layer* _layer) { return _layer->handle_event(_event); });
   case Event::Type::CLIPBOARD:
     // The clipboard is context-global.
     m_clipboard = Utility::move(_event.as_clipboard.contents);
-    break;
+    return true;
   }
+  return false;
 }
 
 int Context::on_update(Float32 _delta_time) {

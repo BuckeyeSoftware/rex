@@ -64,7 +64,9 @@ bool Importer::load(Stream* _stream) {
   // Check for normals.
   if (m_normals.is_empty()) {
     logger->warning("missing normals");
-    generate_normals();
+    if (!generate_normals()) {
+      return false;
+    }
   }
 
   // Check for tangents.
@@ -76,7 +78,7 @@ bool Importer::load(Stream* _stream) {
     } else {
       logger->warning("missing tangents, generating them");
       if (!generate_tangents()) {
-        return error("'could not generate tangents, degenerate tangents formed");
+        return false;
       }
     }
   }
@@ -86,19 +88,25 @@ bool Importer::load(Stream* _stream) {
   if (m_normals.size() != vertices) {
     logger->warning("too %s normals",
       m_normals.size() > vertices ? "many" : "few");
-    m_normals.resize(vertices);
+    if (!m_normals.resize(vertices)) {
+      return error("out of memory");
+    }
   }
 
   if (m_tangents.size() != vertices) {
     logger->warning("too %s tangents",
       m_tangents.size() > vertices ? "many" : "few");
-    m_tangents.resize(vertices);
+    if (!m_tangents.resize(vertices)) {
+      return error("out of memory");
+    }
   }
 
   if (!m_coordinates.is_empty() && m_coordinates.size() != vertices) {
     logger->warning("too %s coordinates",
       m_coordinates.size() > vertices ? "many" : "few");
-    m_coordinates.resize(vertices);
+    if (!m_coordinates.resize(vertices)) {
+      return error("out of memory");
+    }
   }
 
   // Coalesce batches that share the same material.
@@ -108,30 +116,51 @@ bool Importer::load(Stream* _stream) {
   };
 
   Map<String, Vector<Batch>> batches{allocator()};
-  m_meshes.each_fwd([&](const Mesh& _mesh) {
+  auto batch = [&](const Mesh& _mesh) {
     if (auto* find = batches.find(_mesh.material)) {
-      find->emplace_back(_mesh.offset, _mesh.count);
+      return find->emplace_back(_mesh.offset, _mesh.count);
     } else {
-      Vector<Batch> result{allocator()};
-      result.emplace_back(_mesh.offset, _mesh.count);
-      batches.insert(_mesh.material, Utility::move(result));
+      Vector<Batch> batch{allocator()};
+      if (!batch.emplace_back(_mesh.offset, _mesh.count)) {
+        return false;
+      }
+      return batches.insert(_mesh.material, Utility::move(batch)) != nullptr;
     }
-  });
+  };
+
+  if (!m_meshes.each_fwd(batch)) {
+    return error("out of memory");
+  }
+
 
   Vector<Mesh> optimized_meshes{allocator()};
   Vector<Uint32> optimized_elements{allocator()};
-  batches.each_pair([&](const String& _material_name, const Vector<Batch>& _batches) {
-    const Size elements = optimized_elements.size();
-    _batches.each_fwd([&](const Batch& _batch) {
-      const Size count = optimized_elements.size();
-      optimized_elements.resize(count + _batch.count);
-      memcpy(optimized_elements.data() + count,
-        m_elements.data() + _batch.offset, sizeof(Uint32) * _batch.count);
-    });
-    const Size count = optimized_elements.size() - elements;
-    optimized_meshes.emplace_back(elements, count, _material_name,
+
+  auto coalesce_batch = [&](const String& _material_name, const Vector<Batch>& _batches) {
+    const auto n_elements = optimized_elements.size();
+
+    auto append_batch = [&](const Batch& _batch) {
+      const auto count = optimized_elements.size();
+      if (!optimized_elements.resize(count + _batch.count)) {
+        return false;
+      }
+      memcpy(optimized_elements.data() + count, m_elements.data() + _batch.offset,
+        sizeof(Uint32) * _batch.count);
+      return true;
+    };
+
+    if (!_batches.each_fwd(append_batch)) {
+      return false;
+    }
+
+    const auto count = optimized_elements.size() - n_elements;
+    return optimized_meshes.emplace_back(n_elements, count, _material_name,
       Vector<Vector<Math::AABB>>{allocator()});
-  });
+  };
+
+  if (!batches.each_pair(coalesce_batch)) {
+    return error("out of memory");
+  }
 
   if (optimized_meshes.size() < m_meshes.size()) {
     logger->info("reduced %zu meshes to %zu", m_meshes.size(),
@@ -209,16 +238,18 @@ bool Importer::load(const String& _file_name) {
   return false;
 }
 
-void Importer::generate_normals() {
-  const Size vertices{m_positions.size()};
-  const Size elements{m_elements.size()};
+bool Importer::generate_normals() {
+  const auto n_vertices = m_positions.size();
+  const auto n_elements = m_elements.size();
 
-  m_normals.resize(vertices);
+  if (!m_normals.resize(n_vertices)) {
+    return error("out of memory");
+  }
 
-  for (Size i{0}; i < elements; i += 3) {
-    const Uint32 index0{m_elements[i + 0]};
-    const Uint32 index1{m_elements[i + 1]};
-    const Uint32 index2{m_elements[i + 2]};
+  for (Size i = 0; i < n_elements; i += 3) {
+    const Uint32 index0 = m_elements[i + 0];
+    const Uint32 index1 = m_elements[i + 1];
+    const Uint32 index2 = m_elements[i + 2];
 
     const Math::Vec3f p1p0{m_positions[index1] - m_positions[index0]};
     const Math::Vec3f p2p0{m_positions[index2] - m_positions[index0]};
@@ -230,18 +261,29 @@ void Importer::generate_normals() {
     m_normals[index2] += normal;
   }
 
-  for (Size i{0}; i < vertices; i++) {
+  for (Size i{0}; i < n_vertices; i++) {
     m_normals[i] = Math::normalize(m_normals[i]);
   }
+
+  return true;
 }
 
 bool Importer::generate_tangents() {
-  const Size vertex_count{m_positions.size()};
+  const auto n_vertices = m_positions.size();
+  const auto n_elements = m_elements.size();
 
-  Vector<Math::Vec3f> tangents{allocator(), vertex_count};
-  Vector<Math::Vec3f> bitangents{allocator(), vertex_count};
+  Vector<Math::Vec3f> tangents{allocator()};
+  Vector<Math::Vec3f> bitangents{allocator()};
 
-  for (Size i{0}; i < m_elements.size(); i += 3) {
+  bool result = true;
+  result &= tangents.resize(n_vertices);
+  result &= bitangents.resize(n_vertices);
+  result &= m_tangents.resize(n_vertices);
+  if (!result) {
+    return error("out of memory");
+  }
+
+  for (Size i = 0; i < n_elements; i += 3) {
     const Uint32 index0 = m_elements[i + 0];
     const Uint32 index1 = m_elements[i + 1];
     const Uint32 index2 = m_elements[i + 2];
@@ -283,17 +325,16 @@ bool Importer::generate_tangents() {
     bitangents[index2] += bitangent;
   }
 
-  m_tangents.resize(vertex_count);
-
-  for (Size i{0}; i < vertex_count; i++) {
-    const Math::Vec3f& normal = m_normals[i];
-    const Math::Vec3f& tangent = tangents[i];
-    const Math::Vec3f& bitangent = bitangents[i];
+  for (Size i = 0; i < n_vertices; i++) {
+    const auto& normal = m_normals[i];
+    const auto& tangent = tangents[i];
+    const auto& bitangent = bitangents[i];
 
     const auto real_tangent =
       Math::normalize(tangent - normal * Math::dot(normal, tangent));
+
     const auto real_bitangent =
-            Math::dot(Math::cross(normal, tangent), bitangent) < 0.0f ? -1.0f : 1.0f;
+      Math::dot(Math::cross(normal, tangent), bitangent) < 0.0f ? -1.0f : 1.0f;
 
     m_tangents[i] = {real_tangent.x, real_tangent.y, real_tangent.z, real_bitangent};
   }

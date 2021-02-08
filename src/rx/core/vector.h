@@ -1,6 +1,6 @@
 #ifndef RX_CORE_VECTOR_H
 #define RX_CORE_VECTOR_H
-#include "rx/core/optional.h"
+#include "rx/core/utility/copy.h"
 
 #include "rx/core/concepts/trivially_copyable.h"
 #include "rx/core/concepts/trivially_destructible.h"
@@ -22,26 +22,23 @@ namespace detail {
 // 64-bit: 32 bytes
 template<typename T>
 struct Vector {
+  RX_MARK_NO_COPY(Vector);
+
   constexpr Vector();
   constexpr Vector(Memory::Allocator& _allocator);
   constexpr Vector(Memory::View _view);
-
-  Vector(Memory::Allocator& _allocator, Size _size);
-  Vector(Memory::Allocator& _allocator, const Vector& _other);
-  Vector(Size _size);
-  Vector(const Vector& _other);
   Vector(Vector&& other_);
-
   ~Vector();
 
-  Vector& operator=(const Vector& _other);
+  static Optional<Vector<T>> copy(const Vector& _other);
+
   Vector& operator=(Vector&& other_);
 
   T& operator[](Size _index);
   const T& operator[](Size _index) const;
 
   // resize to |size| with |value| for new objects
-  bool resize(Size _size, const T& _value = {});
+  [[nodiscard]] bool resize(Size _size, const T& _value = {});
 
   // reserve |size| elements
   [[nodiscard]] bool reserve(Size _size);
@@ -127,53 +124,6 @@ constexpr Vector<T>::Vector(Memory::View _view)
 }
 
 template<typename T>
-Vector<T>::Vector(Memory::Allocator& _allocator, Size _size)
-  : m_allocator{&_allocator}
-  , m_data{nullptr}
-  , m_size{_size}
-  , m_capacity{_size}
-{
-  m_data = reinterpret_cast<T*>(m_allocator->allocate(sizeof(T), m_size));
-  RX_ASSERT(m_data, "out of memory");
-
-  // TODO(dweiler): is_trivial trait so we can memset this.
-  for (Size i = 0; i < m_size; i++) {
-    Utility::construct<T>(m_data + i);
-  }
-}
-
-template<typename T>
-Vector<T>::Vector(Memory::Allocator& _allocator, const Vector& _other)
-  : m_allocator{&_allocator}
-  , m_data{nullptr}
-  , m_size{_other.m_size}
-  , m_capacity{_other.m_capacity}
-{
-  m_data = reinterpret_cast<T*>(m_allocator->allocate(sizeof(T), _other.m_capacity));
-  RX_ASSERT(m_data, "out of memory");
-
-  if (m_size) {
-    if constexpr (Concepts::TriviallyCopyable<T>) {
-      detail::copy(m_data, _other.m_data, _other.m_size * sizeof *m_data);
-    } else for (Size i = 0; i < m_size; i++) {
-      Utility::construct<T>(m_data + i, _other.m_data[i]);
-    }
-  }
-}
-
-template<typename T>
-Vector<T>::Vector(Size _size)
-  : Vector{Memory::SystemAllocator::instance(), _size}
-{
-}
-
-template<typename T>
-Vector<T>::Vector(const Vector& _other)
-  : Vector{*_other.m_allocator, _other}
-{
-}
-
-template<typename T>
 Vector<T>::Vector(Vector&& other_)
   : m_allocator{other_.m_allocator}
   , m_data{Utility::exchange(other_.m_data, nullptr)}
@@ -189,27 +139,25 @@ Vector<T>::~Vector() {
 }
 
 template<typename T>
-Vector<T>& Vector<T>::operator=(const Vector& _other) {
-  RX_ASSERT(&_other != this, "self assignment");
+Optional<Vector<T>> Vector<T>::copy(const Vector& _other) {
+  Vector<T> result{_other.allocator()};
 
-  clear();
-  m_allocator->deallocate(m_data);
+  const auto size = _other.size();
 
-  m_size = _other.m_size;
-  m_capacity = _other.m_capacity;
+  if (!result.resize(size)) {
+    return nullopt;
+  }
 
-  m_data = reinterpret_cast<T*>(m_allocator->allocate(sizeof(T), _other.m_capacity));
-  RX_ASSERT(m_data, "out of memory");
-
-  if (m_size) {
-    if constexpr (Concepts::TriviallyCopyable<T>) {
-      detail::copy(m_data, _other.m_data, _other.m_size * sizeof *m_data);
-    } else for (Size i = 0; i < m_size; i++) {
-      Utility::construct<T>(m_data + i, _other.m_data[i]);
+  for (Size i = 0; i < size; i++) {
+    // Copying the element can also fail.
+    if (auto element = Utility::copy(_other[i])) {
+      result[i] = Utility::move(*element);
+    } else {
+      return nullopt;
     }
   }
 
-  return *this;
+  return result;
 }
 
 template<typename T>
@@ -260,16 +208,26 @@ bool Vector<T>::resize(Size _size, const T& _value) {
     return false;
   }
 
-  // Copy construct the objects.
-  for (Size i{m_size}; i < _size; i++) {
+  // Copy construct any new objects.
+  for (Size i = m_size; i < _size; i++) {
     if constexpr (Concepts::TriviallyCopyable<T>) {
       m_data[i] = _value;
     } else {
-      Utility::construct<T>(m_data + i, _value);
+      auto copy = Utility::copy(_value);
+      if (copy) {
+        Utility::construct<T>(m_data + i, Utility::move(*copy));
+      } else {
+        // Copy failed, undo what was created and fail the resize.
+        for (Size j = m_size; j < i; j++) {
+          Utility::destruct<T>(m_data + j);
+        }
+        return false;
+      }
     }
   }
 
   m_size = _size;
+
   return true;
 }
 

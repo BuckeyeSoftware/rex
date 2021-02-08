@@ -6,6 +6,32 @@
 namespace Rx::Render::Frontend {
 
 // [Buffer::Format]
+Optional<Buffer::Format> Buffer::Format::copy(const Format& _other) {
+  Buffer::Format result;
+
+  result.m_flags = _other.m_flags;
+  result.m_type = _other.m_type;
+  result.m_element_type = _other.m_element_type;
+  result.m_vertex_stride = _other.m_vertex_stride;
+  result.m_instance_stride = _other.m_instance_stride;
+
+  auto vertex_attributes = Utility::copy(_other.m_vertex_attributes);
+  if (!vertex_attributes) {
+    return nullopt;
+  }
+
+  auto instance_attributes = Utility::copy(_other.m_instance_attributes);
+  if (!instance_attributes) {
+    return nullopt;
+  }
+
+  result.m_vertex_attributes = Utility::move(*vertex_attributes);
+  result.m_instance_attributes = Utility::move(*instance_attributes);
+  result.m_hash = _other.m_hash;
+
+  return result;
+}
+
 bool Buffer::Format::operator!=(const Format& _format) const {
   if (_format.m_hash != m_hash) {
     return true;

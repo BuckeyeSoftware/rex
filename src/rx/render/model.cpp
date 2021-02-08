@@ -147,12 +147,17 @@ bool Model::upload() {
   // Resolve all the meshes of the loaded model.
   return m_model->meshes().each_fwd([this, &material_indices](const Rx::Model::Mesh& _mesh) {
     if (auto* find = material_indices.find(_mesh.material)) {
+      auto bounds = Utility::copy(_mesh.bounds);
+      if (!bounds) {
+        // Out of memory.
+        return false;
+      }
       if (m_materials[*find].has_alpha()) {
         return m_transparent_meshes.emplace_back(_mesh.offset, _mesh.count,
-          *find, _mesh.bounds);
+          *find, Utility::move(*bounds));
       } else {
-        return m_opaque_meshes.emplace_back(_mesh.offset, _mesh.count, *find,
-          _mesh.bounds);
+        return m_opaque_meshes.emplace_back(_mesh.offset, _mesh.count,
+          *find, Utility::move(*bounds));
       }
     }
     return true;

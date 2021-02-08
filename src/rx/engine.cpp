@@ -533,7 +533,9 @@ Engine::Status Engine::integrate() {
       break;
     }
 
-    m_input.handle_event(input);
+    if (!m_input.handle_event(input)) {
+      return Status::SHUTDOWN;
+    }
   }
 
   if (!m_application->on_update(update_rate)) {

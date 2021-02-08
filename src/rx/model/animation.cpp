@@ -10,8 +10,8 @@ namespace Rx::Model {
 
 Animation::Animation(const Loader* _model, Size _index)
   : m_model{_model}
-  , m_frames{m_model->m_frames}
-  , m_dq_frames{m_model->m_dq_frames}
+  , m_frames{Utility::move(*Utility::copy(m_model->m_frames))}
+  , m_dq_frames{Utility::move(*Utility::copy(m_model->m_dq_frames))}
   , m_animation{_index}
   , m_current_frame{0.0f}
   , m_completed{false}
