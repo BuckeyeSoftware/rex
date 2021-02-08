@@ -229,7 +229,12 @@ bool Engine::init() {
   }
 
   // Fetch all the displays
-  m_displays = Display::displays(Memory::SystemAllocator::instance());
+  auto displays = Display::displays(Memory::SystemAllocator::instance());
+  if (!displays) {
+    return false;
+  }
+
+  m_displays = Utility::move(*displays);
 
   // Search for the given display in the display list.
   const auto found_display_index =

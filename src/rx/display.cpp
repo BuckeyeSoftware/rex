@@ -6,7 +6,7 @@
 
 namespace Rx {
 
-Vector<Display> Display::displays(Memory::Allocator& _allocator) {
+Optional<Vector<Display>> Display::displays(Memory::Allocator& _allocator) {
   Vector<Display> displays{_allocator};
 
   for (int i = 0, n = SDL_GetNumVideoDisplays(); i < n; i++) {
@@ -15,7 +15,9 @@ Vector<Display> Display::displays(Memory::Allocator& _allocator) {
       // Copy the contents of the name for manipulation.
       auto name_size = strlen(name) + 1;
       auto name_data = reinterpret_cast<char*>(_allocator.allocate(name_size));
-      RX_ASSERT(name_data, "out of memory");
+      if (!name_data) {
+        return nullopt;
+      }
       memcpy(name_data, name, name_size);
 
       // SDL2 introduces the physical size of the display in inches as a suffix

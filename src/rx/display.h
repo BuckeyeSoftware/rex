@@ -21,7 +21,7 @@ struct Display {
 
   using Extents = Math::Rectangle<Sint32>;
 
-  static Vector<Display> displays(Memory::Allocator& _allocator);
+  static Optional<Vector<Display>> displays(Memory::Allocator& _allocator);
 
   // The display modes are sorted by the given priority:
   //  mode::resolution.w => largest to smallest
