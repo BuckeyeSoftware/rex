@@ -14,14 +14,13 @@ CommandBuffer::~CommandBuffer() {
 }
 
 Byte* CommandBuffer::allocate(Size _size, CommandType _command, const CommandHeader::Info& _info) {
-  Byte* data = m_allocator.allocate(sizeof(CommandHeader) + _size);
-  RX_ASSERT(data, "Out of memory");
-
-  auto* header = reinterpret_cast<CommandHeader*>(data);
-  header->type = _command;
-  header->tag = _info;
-
-  return data;
+  if (Byte* data = m_allocator.allocate(sizeof(CommandHeader) + _size)) {
+    auto* header = reinterpret_cast<CommandHeader*>(data);
+    header->type = _command;
+    header->tag = _info;
+    return data;
+  }
+  return nullptr;
 }
 
 void CommandBuffer::reset() {
