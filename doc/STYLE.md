@@ -34,12 +34,11 @@
   + [Loop in reverse complaint](#loop-in-reverse-complaint)
 * [Use explicitly sized types](#use-explicitly-sized-types)
 * [Size](#size)
-* [Organization](#organization)
 
 Note that most of this can be enforced with the `.clang-format` in the root of
 the source tree.
 
-Rex uses C++17.
+Rex uses C++20.
 
 ## Hard no's
 The following are a list of hard no's that are not tolerated in the code base
@@ -68,7 +67,8 @@ class definitions need to be available in all translation units. Class inheriten
 is about "is-a" relationships between type, it's non-trivial to describe "is-a"
 relationships in a consistent manner for single-level inheritence, never mind
 multiple-level inheritence. Similarly, "is-a" relationships are mental models
-that map poorly and violate [Data Oriented Design](https://en.wikipedia.org/wiki/Data-oriented_design).
+that map poorly and violate [Data Oriented Design](https://en.wikipedia.org/wiki/Data-oriented_design),
+which is encouraged for system design.
 
 ### No `dynamic_cast`
 Polymorphism has its uses but they should be limited. When multiple-inheritence
@@ -83,7 +83,8 @@ This allows backing everything with custom allocators with different lifetime
 requirements without having to introduce separate types that are incompatible
 with one another at interface boundaries. The use of traditional memory
 management in C++ does not enable any of this behavior and is outright disabled
-in Rex (calls `abort`). Memory management in Rex is part of the problem domain.
+in Rex (calls `Rx::abort`). Memory management in Rex is part of the problem
+domain.
 
 ### No multi-dimensional arrays.
 The use of multi-dimensional arrays shows a misunderstanding of memory layout.
@@ -100,7 +101,7 @@ The standard library is ill-suited for Rex.
     disabled in Rex. With exceptions disabled, the standard library's handling
     of errors result in a call to `std::terminate` which terminates the
     application. This behavior is not desired as errors cannot be handled and
-    unexpected termination is not very stable.
+    unexpected termination is not tolerated.
   * All standard library functionaliy that makes use of heap allocation does so
     through the use of the global system allocator. The added constraints of how
     Rex handles memory management makes this incompatible.
@@ -115,12 +116,13 @@ a substitute for the standard library. Additional information is available
 
 ### No `<math.h>`
 Rex implements its own math kernels and functions in software or with the help
-of compiler intrinsics that are focused primarily around game development. In
+of compiler intrinsics that are focus on our specific problem domain. In
 particular they operate on the assumption that inputs are not pathological,
 values will not contain `NaNs` and the rounding mode does not change from the
-default ("round to nearest"). This enables a much wider array of optimization possibilities than `<math.h>` permits. Additionally, Rex's math is designed
+default ("round to nearest"). This enables a much wider array of optimization
+possibilities than `<math.h>` permits. Additionally, Rex's math is designed
 to be bit-identical across implementations enabling a level of consistency that
-makes debugging and networking easier.
+makes debugging and networking of calculations easier.
 
 ## Indentation
 * Two spaces for indentation.
@@ -148,7 +150,7 @@ the code too far right.
 
 ### 80 column soft limit
 This is a reasonable line-length as many tools operate on the assumption of 80
-columns.
+columns still.
 
 ## Spacing
 
@@ -295,11 +297,13 @@ void foo(int* x_); // valid
 ## Classes
 * Prefer the `struct` keyword over `class`.
 * Non-public class members should be prefixed with `m_`.
-* Non-public static class members should be prefixed with `s_`.
+* Static class members should be prefixed with `s_`.
 * **Do not** use multiple-inheritence.
-* Avoid inheritence; if needed inheritence should be public and can only be one-level deep.
+* Avoid inheritence; if needed - inheritence should be public and can only be one-level deep.
 * **Do not** implement method bodies inline the class, put them _outside_.
   This is faster for compilers to parse and it's easier to read the class definition as a synopsis of the functionality it provides when it doesn't have inline code in it.
+* Class constructors **cannot fail**.
+* Use `static Optional<T> T::copy(const T&)` for class copies that can fail.
 
 ## Const
 * Try to use `const` as much as possible.
@@ -406,15 +410,3 @@ the index exceeds `UINT32_MAX`. Similarly, the use of other types may require
 expensive modular arithmetic on some platforms.
 
 **NEVER** use `Size` to represent the size or offsets inside files, use `Uint64`.
-
-## Organization
-Rex has a 1:1 organizational code structure where the filesystem layout of
-source files, matches the namespace layout, which matches the class name layout.
-
-For instance, a `Color` type for a `Particle` may exist in a file named `color.h`
-and optional `color.cpp`, placed in a directory named `particle`. The `Color`
-type would be in the `Particle` namespace.
-
-This structure makes navigating code across platforms, text editors, and IDEs
-more managable as there's a direct 1:1 association between all organizational
-hierarchies.
