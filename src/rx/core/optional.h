@@ -23,8 +23,11 @@ struct Optional {
   constexpr Optional(const Optional& _other)
     requires Concepts::TriviallyCopyable<T>;
 
+/*
   ~Optional() requires Concepts::TriviallyDestructible<T> = default;
   ~Optional() requires (!Concepts::TriviallyDestructible<T>);
+*/
+  ~Optional();
 
   Optional& operator=(T&& data_);
   Optional& operator=(const T& _data);
@@ -172,8 +175,16 @@ Optional<T>& Optional<T>::operator=(const Optional& _other)
   return *this;
 }
 
+/*
 template<typename T>
 Optional<T>::~Optional() requires (!Concepts::TriviallyDestructible<T>) {
+  if (m_init) {
+    m_data.fini();
+  }
+}*/
+
+template<typename T>
+Optional<T>::~Optional() {
   if (m_init) {
     m_data.fini();
   }
