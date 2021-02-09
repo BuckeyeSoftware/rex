@@ -10,7 +10,7 @@ namespace _ {
   struct RemoveReference<T&> { using Type = T; };
   template<typename T>
   struct RemoveReference<T&&> { using Type = T; };
-}
+} // namespace _
 
 template<typename T>
 using RemoveReference = typename _::RemoveReference<T>::Type;
