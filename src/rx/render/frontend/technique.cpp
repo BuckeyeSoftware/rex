@@ -335,7 +335,7 @@ Optional<String> Technique::resolve_source(
 
   auto append_value = [&](const String& _name, bool _value) {
     return _value ? append(special, _name) : true;
-  }; 
+  };
 
   auto append_module = [&](const String& _module) {
     return append(modules, _module);
@@ -359,7 +359,7 @@ Optional<String> Technique::resolve_source(
     if (!find) {
       return error("module '%s' not found", _module);
     }
-  
+
     return source.append("// Module ")
         && source.append(_module)
         && source.append("\n// {\n")
@@ -406,7 +406,7 @@ bool Technique::compile(const Map<String, Module>& _modules) {
           return error("could not find fragment input for vertex output '%s'", _name);
         }
         if (check->kind != _inout_definition.kind) {
-          return error("Type mismatch for fragment input '%s'", _name);
+          return error("type mismatch for fragment input '%s'", _name);
         }
         if (check->when != _inout_definition.when) {
           return error("when mismatch for fragment input '%s'", _name);
@@ -421,7 +421,7 @@ bool Technique::compile(const Map<String, Module>& _modules) {
           return error("could not find vertex output for fragment input '%s'", _name);
         }
         if (check->kind != _inout_definition.kind) {
-          return error("Type mismatch for vertex output '%s'", _name);
+          return error("type mismatch for vertex output '%s'", _name);
         }
         if (check->when != _inout_definition.when) {
           return error("when mismatch for vertex output '%s'", _name);
