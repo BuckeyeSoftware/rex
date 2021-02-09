@@ -164,7 +164,9 @@ String::String(String&& contents_)
   contents_.m_data = contents_.m_buffer;
   contents_.m_last = contents_.m_buffer;
   contents_.m_capacity = contents_.m_buffer + INSITU_SIZE;
-  contents_.resize(0);
+
+  // NOTE(dweiler): This cannot fail. Use (void) to suppress [[nodiscard]].
+  (void)contents_.resize(0);
 }
 
 // NOTE(dweiler): The subtraction of one is to account for the null-terminator.
@@ -641,7 +643,7 @@ bool WideString::resize(Size _size) {
 String WideString::to_utf8() const {
   Size size{utf16_to_utf8(m_data, m_size, nullptr)};
   String contents{allocator()};
-  contents.resize(size);
+  (void)contents.resize(size);
   utf16_to_utf8(m_data, m_size, contents.data());
   return contents;
 }

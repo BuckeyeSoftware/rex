@@ -23,7 +23,7 @@ namespace Rx::Render {
 struct Cube {
   Cube(Memory::Allocator& _allocator) : data{_allocator}, size{0} {}
 
-  bool resize(Size _size) {
+  [[nodiscard]] bool resize(Size _size) {
     size = _size;
     return data.resize(size * size * size);
   }

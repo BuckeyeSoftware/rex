@@ -45,7 +45,7 @@ struct RX_API String {
   String& operator=(String&& contents_);
 
   [[nodiscard]] bool reserve(Size _size);
-  /*[[nodiscard]]*/ bool resize(Size _size);
+  [[nodiscard]] bool resize(Size _size);
 
   Optional<Size> find_first_of(int _ch) const;
   Optional<Size> find_first_of(const char* _contents) const;
