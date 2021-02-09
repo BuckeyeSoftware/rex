@@ -9,6 +9,66 @@
 
 namespace Rx::Render::Frontend {
 
+template<typename T>
+struct ChainInfo {
+  RX_MARK_NO_COPY(ChainInfo);
+
+  constexpr ChainInfo()
+    : size{0}
+  {
+  }
+
+  ChainInfo(ChainInfo&& chain_info_)
+    : levels{Utility::move(chain_info_.levels)}
+    , size{Utility::exchange(chain_info_.size, 0)}
+  {
+  }
+
+  Vector<Texture::LevelInfo<T>> levels;
+  Size size;
+};
+
+template<Resource::Type KIND, typename T>
+static Optional<ChainInfo<T>>
+calculate_levels(Size _bits_per_pixel, Size _levels, const T& _dimensions) {
+  ChainInfo<T> result;
+
+  if (!result.levels.reserve(_levels)) {
+    return nullopt;
+  }
+
+  auto dimensions = _dimensions;
+  Size offset = 0;
+  for (Size i = 0; i < _levels; i++) {
+    Size size = 0;
+    if constexpr (KIND == Texture::Resource::Type::TEXTURE1D) {
+      size = (dimensions * _bits_per_pixel) / 8;
+    } else if constexpr (KIND == Texture::Resource::Type::TEXTURECM) {
+      size = (dimensions.area() * _bits_per_pixel * 6) / 8;
+    } else {
+      size = (dimensions.area() * _bits_per_pixel) / 8;
+    }
+
+    if (!result.levels.emplace_back(offset, size, dimensions)) {
+      return nullopt;
+    }
+
+    offset += size;
+
+    if constexpr (KIND == Texture::Resource::Type::TEXTURE1D) {
+      dimensions = Algorithm::max(dimensions / 2, 1_z);
+    } else {
+      dimensions = dimensions.map([](Size _dim) {
+        return Algorithm::max(_dim / 2, 1_z);
+      });
+    }
+  }
+
+  result.size = offset;
+
+  return result;
+}
+
 Texture::Texture(Context* _frontend, Resource::Type _type)
   : Resource{_frontend, _type}
   , m_data{_frontend->allocator()}
@@ -23,7 +83,7 @@ void Texture::record_format(DataFormat _format) {
 }
 
 void Texture::record_type(Type _type) {
-  RX_ASSERT(!(m_flags & TYPE), "Type already recorded");
+  RX_ASSERT(!(m_flags & TYPE), "type already recorded");
   m_type = _type;
   m_flags |= TYPE;
 }
@@ -52,7 +112,7 @@ void Texture::record_border(const Math::Vec4f& _border) {
 
 void Texture::validate() const {
   RX_ASSERT(m_flags & FORMAT, "format not recorded");
-  RX_ASSERT(m_flags & TYPE, "Type not recorded");
+  RX_ASSERT(m_flags & TYPE, "type not recorded");
   RX_ASSERT(m_flags & FILTER, "filter not recorded");
   RX_ASSERT(m_flags & WRAP, "wrap not recorded");
   RX_ASSERT(m_flags & DIMENSIONS, "dimensions not recorded");
@@ -97,7 +157,7 @@ Byte* Texture1D::map(Size _level) {
   return m_data.data() + info.offset;
 }
 
-void Texture1D::record_dimensions(const DimensionType& _dimensions) {
+bool Texture1D::record_dimensions(const DimensionType& _dimensions) {
   RX_ASSERT(!(m_flags & DIMENSIONS), "dimensions already recorded");
 
   RX_ASSERT(m_flags & TYPE, "type not recorded");
@@ -106,23 +166,23 @@ void Texture1D::record_dimensions(const DimensionType& _dimensions) {
 
   RX_ASSERT(!is_compressed_format(), "1D textures cannot be compressed");
 
-  m_dimensions = _dimensions;
-  m_flags |= DIMENSIONS;
-
-  DimensionType dimensions{m_dimensions};
-  Size offset{0};
-  const auto bpp = bits_per_pixel();
-  for (Size i{0}; i < m_levels; i++) {
-    const auto size{static_cast<Size>(dimensions * bpp / 8)};
-    m_level_info.emplace_back(offset, size, dimensions);
-    offset += size;
-    dimensions = Algorithm::max(dimensions / 2, 1_z);
+  auto levels = calculate_levels<Resource::Type::TEXTURE1D>(bits_per_pixel(), m_levels, _dimensions);
+  if (!levels) {
+    return false;
   }
 
   if (m_type != Type::ATTACHMENT) {
-    m_data.resize(offset);
-    update_resource_usage(m_data.size());
+    if (!m_data.resize(levels->size)) {
+      return false;
+    }
+    update_resource_usage(levels->size);
   }
+
+  m_dimensions = _dimensions;
+  m_flags |= DIMENSIONS;
+  m_level_info = Utility::move(levels->levels);
+
+  return true;
 }
 
 void Texture1D::record_wrap(const WrapOptions& _wrap) {
@@ -173,7 +233,7 @@ Byte* Texture2D::map(Size _level) {
   return m_data.data() + info.offset;
 }
 
-void Texture2D::record_dimensions(const Math::Vec2z& _dimensions) {
+bool Texture2D::record_dimensions(const Math::Vec2z& _dimensions) {
   RX_ASSERT(!(m_flags & DIMENSIONS), "dimensions already recorded");
 
   RX_ASSERT(m_flags & TYPE, "type not recorded");
@@ -185,25 +245,23 @@ void Texture2D::record_dimensions(const Math::Vec2z& _dimensions) {
       "too small for compression");
   }
 
-  m_dimensions = _dimensions;
-  m_flags |= DIMENSIONS;
-
-  DimensionType dimensions{m_dimensions};
-  Size offset{0};
-  const auto bpp = bits_per_pixel();
-  for (Size i{0}; i < m_levels; i++) {
-    const auto size{static_cast<Size>(dimensions.area() * bpp / 8)};
-    m_level_info.emplace_back(offset, size, dimensions);
-    offset += size;
-    dimensions = dimensions.map([](Size _dim) {
-      return Algorithm::max(_dim / 2, 1_z);
-    });
+  auto levels = calculate_levels<Resource::Type::TEXTURE2D>(bits_per_pixel(), m_levels, _dimensions);
+  if (!levels) {
+    return false;
   }
 
   if (m_type != Type::ATTACHMENT) {
-    m_data.resize(offset);
-    update_resource_usage(m_data.size());
+    if (!m_data.resize(levels->size)) {
+      return false;
+    }
+    update_resource_usage(levels->size);
   }
+
+  m_dimensions = _dimensions;
+  m_flags |= DIMENSIONS;
+  m_level_info = Utility::move(levels->levels);
+
+  return true;
 }
 
 void Texture2D::record_wrap(const WrapOptions& _wrap) {
@@ -254,7 +312,7 @@ Byte* Texture3D::map(Size _level) {
   return m_data.data() + info.offset;
 }
 
-void Texture3D::record_dimensions(const Math::Vec3z& _dimensions) {
+bool Texture3D::record_dimensions(const Math::Vec3z& _dimensions) {
   RX_ASSERT(!(m_flags & DIMENSIONS), "dimensions already recorded");
 
   RX_ASSERT(m_flags & TYPE, "type not recorded");
@@ -263,25 +321,23 @@ void Texture3D::record_dimensions(const Math::Vec3z& _dimensions) {
 
   RX_ASSERT(!is_compressed_format(), "3D textures cannot be compressed");
 
-  m_dimensions = _dimensions;
-  m_flags |= DIMENSIONS;
-
-  DimensionType dimensions{m_dimensions};
-  Size offset{0};
-  const auto bpp = bits_per_pixel();
-  for (Size i{0}; i < m_levels; i++) {
-    const auto size{static_cast<Size>(dimensions.area() * bpp / 8)};
-    m_level_info.emplace_back(offset, size, dimensions);
-    offset += size;
-    dimensions = dimensions.map([](Size _dim) {
-      return Algorithm::max(_dim / 2, 1_z);
-    });
+  auto levels = calculate_levels<Resource::Type::TEXTURE3D>(bits_per_pixel(), m_levels, _dimensions);
+  if (!levels) {
+    return false;
   }
 
   if (m_type != Type::ATTACHMENT) {
-    m_data.resize(offset);
-    update_resource_usage(m_data.size());
+    if (!m_data.resize(levels->size)) {
+      return false;
+    }
+    update_resource_usage(levels->size);
   }
+
+  m_dimensions = _dimensions;
+  m_flags |= DIMENSIONS;
+  m_level_info = Utility::move(levels->levels);
+
+  return true;
 }
 
 void Texture3D::record_wrap(const WrapOptions& _wrap) {
@@ -333,7 +389,7 @@ Byte* TextureCM::map(Size _level, Face _face) {
   return m_data.data() + info.offset + face_offset;
 }
 
-void TextureCM::record_dimensions(const Math::Vec2z& _dimensions) {
+bool TextureCM::record_dimensions(const Math::Vec2z& _dimensions) {
   RX_ASSERT(!(m_flags & DIMENSIONS), "dimensions already recorded");
 
   RX_ASSERT(m_flags & TYPE, "type not recorded");
@@ -345,25 +401,23 @@ void TextureCM::record_dimensions(const Math::Vec2z& _dimensions) {
       "too small for compression");
   }
 
-  m_dimensions = _dimensions;
-  m_flags |= DIMENSIONS;
-
-  DimensionType dimensions{m_dimensions};
-  Size offset{0};
-  const auto bpp = bits_per_pixel();
-  for (Size i{0}; i < m_levels; i++) {
-    const auto size{static_cast<Size>(dimensions.area() * bpp / 8 * 6)};
-    m_level_info.emplace_back(offset, size, dimensions);
-    offset += size;
-    dimensions = dimensions.map([](Size _dim) {
-      return Algorithm::max(_dim / 2, 1_z);
-    });
+  auto levels = calculate_levels<Resource::Type::TEXTURECM>(bits_per_pixel(), m_levels, _dimensions);
+  if (!levels) {
+    return false;
   }
 
   if (m_type != Type::ATTACHMENT) {
-    m_data.resize(offset);
-    update_resource_usage(m_data.size());
+    if (!m_data.resize(levels->size)) {
+      return false;
+    }
+    update_resource_usage(levels->size);
   }
+
+  m_dimensions = _dimensions;
+  m_flags |= DIMENSIONS;
+  m_level_info = Utility::move(levels->levels);
+
+  return true;
 }
 
 void TextureCM::record_wrap(const WrapOptions& _wrap) {

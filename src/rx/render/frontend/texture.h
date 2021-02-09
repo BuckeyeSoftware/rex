@@ -156,7 +156,7 @@ struct Texture1D : Texture {
   // map data for miplevel |_level|
   Byte* map(Size _level);
 
-  void record_dimensions(const DimensionType& _dimensions);
+  bool record_dimensions(const DimensionType& _dimensions);
   void record_wrap(const WrapOptions& _wrap);
 
   const DimensionType& dimensions() const &;
@@ -195,7 +195,7 @@ struct Texture2D : Texture {
   // map data for miplevel |_level|
   Byte* map(Size _level);
 
-  void record_dimensions(const DimensionType& _dimensions);
+  bool record_dimensions(const DimensionType& _dimensions);
   void record_wrap(const WrapOptions& _wrap);
 
   const DimensionType& dimensions() const &;
@@ -236,7 +236,7 @@ struct Texture3D : Texture {
   // map data for miplevel |_level|
   Byte* map(Size _level);
 
-  void record_dimensions(const DimensionType& _dimensions);
+  bool record_dimensions(const DimensionType& _dimensions);
   void record_wrap(const WrapOptions& _wrap);
 
   const DimensionType& dimensions() const &;
@@ -284,7 +284,7 @@ struct TextureCM : Texture {
   // map data for face |_face| for miplevel |_level|
   Byte* map(Size _level, Face _face);
 
-  void record_dimensions(const DimensionType& _dimensions);
+  bool record_dimensions(const DimensionType& _dimensions);
   void record_wrap(const WrapOptions& _wrap);
 
   const DimensionType& dimensions() const &;

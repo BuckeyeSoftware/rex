@@ -47,7 +47,7 @@ struct LinearBuffer {
 
   [[nodiscard]] bool push_back(Byte _value);
   [[nodiscard]] bool reserve(Size _size);
-  /*[[nodiscard]]*/ bool resize(Size _size);
+  [[nodiscard]] bool resize(Size _size);
 
   Optional<Memory::View> disown();
 
