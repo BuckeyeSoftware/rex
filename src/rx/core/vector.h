@@ -289,7 +289,16 @@ bool Vector<T>::append(const Vector& _other) {
 
     // Copy construct the objects.
     for (Size i = 0; i < _other.m_size; i++) {
-      Utility::construct<T>(m_data + m_size + i, _other[i]);
+      auto copy = Utility::copy(_other[i]);
+      if (copy) {
+        Utility::construct<T>(m_data + m_size + i, Utility::move(*copy));
+      } else {
+        // Undo what was constructed if copy fails.
+        for (Size j = 0; j < i; j++) {
+          Utility::destruct<T>(m_data + m_size + j);
+        }
+        return false;
+      }
     }
 
     m_size = new_size;
