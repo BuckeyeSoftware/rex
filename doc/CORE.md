@@ -50,7 +50,7 @@ We make several large optimizations in the name of better runtime performance, t
 Every container can be given a custom allocator. Small, on-stack containers with short life-times can be constructed by instantiating an allocator over some stack memory and giving it to the container in place of the system allocator.
 
 ### Robin-hood hash containers
-One unfortunute consequence of C++'s hash containers, `unordered_{mapm,set}` is their interface must talk in `pair` which means they're often stored together. This has awful cache characteristics for when you only need the keys or values. Similarly, all implementations use a bucketing strategy that leads to cache-inefficieny. We use a fully flat implementation of these containers with Robin-hood hashing.
+One unfortunute consequence of C++'s hash containers, `unordered_{map,set}` is their interface must talk in `pair` which means they're often stored together. This has awful cache characteristics for when you only need the keys or values. Similarly, all implementations use a bucketing strategy that leads to cache-inefficieny. We use a fully flat implementation of these containers with Robin-hood hashing.
 
 ### Disowning memory
 Any container that manages a single, contiguous allocation can have it's memory stolen from it through a `disown` method, returning an untyped, owning view. This view can be given to anything that can reasonably make sense of the contents. This allows copy-free transmuations like the following:
@@ -115,7 +115,7 @@ The following concurrency types are implemented:
   * `Thread` A kernel thread.
   * `WaitGroup` Helper primitive to wait for a group of work to complete.
 
-The following concurrency primtiives are implements:
+The following concurrency primtiives are implemented:
   * `yield` Relinquish the thread to the OS.
 
 ## Filesystem
@@ -124,7 +124,7 @@ The following filesystem types are implemented:
   * `Directory` Open and manipulate a directory.
   * `File` Open and manipulate files.
 
-The following filesystem functions are implements:
+The following filesystem functions are implemented:
   * `read_text_stream`
   * `read_binary_stream`
 
@@ -149,9 +149,9 @@ Many hints for the compiler:
   * `force_inline` Used to force a function to inline.
   * `format` Used to indicate function takes format string-literal.
   * `likely` To mark a branch as likely happening for better scheduling.
-  * `may_alias` Disable alias-analysis to aovid strict-aliasing optimizations from breaking code that requires undefined behavior.
+  * `may_alias` Disable alias-analysis to avoid strict-aliasing optimizations from breaking code that requires undefined behavior.
   * `no_inline` Used to force a function to __not__ inline.
-  * `restrict` Indicate that local variables to a function do not overlap in memory to avoid spills and loads.
+  * `restrict` Indicate that local variables to a function do not overlap in memory to avoid redundant spills and loads.
   * `thread` Thread sanitizer annotations.
   * `unlikely` To mark a branch as being unlikely for better scheduling.
   * `unreachable` To mark an area of code as being unreachable.
@@ -183,7 +183,7 @@ The following math kernel functions have been implemented:
 
 ## Memory
 
-Everything that allocates memory in the core library, including the containers, depend on a polymorphic allocator interface provided by `allocator`. As a result, many types of allocators can be used virtually anywhere.
+Everything that allocates memory in the core library, including the containers, depend on a polymorphic allocator interface provided by `Allocator`. As a result, many types of allocators can be used virtually anywhere.
 
 The following allocator types exist:
   * `BuddyAllocator` Implementation of a Buddy allocator.
@@ -251,7 +251,6 @@ The following traits exist:
 A very small subset of the functionality found by `<utility>` exists here.
 
 The following types exist:
-  * `Nat` Not-a-type, used to enable `constexpr` initialization of unions.
   * `Pair` Similar to `std::pair`.
 
 The following functions exist:

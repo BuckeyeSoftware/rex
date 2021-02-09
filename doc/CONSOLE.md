@@ -22,7 +22,7 @@ The placeholder values `-inf` and `+inf` represent the smallest and largest poss
 
 All variables persist between engine invocations and are stored in the engine configuration file, `config.cfg`.
 
-Specifying a value for a variable with a different type than the variable will result in a `"Type mismatch"` error.
+Specifying a value for a variable with a different type than the variable will result in a `"type mismatch"` error.
 
 # Commands
 
@@ -51,7 +51,7 @@ As an example, the following command specification string `"bsfv2fi"` would desc
   * `vec2f`
   * `int`
 
-Failure to match the types will result in a `"Type mismatch"` error. Failure to provide the correct number of arguments will result in a `"Arity violation"` error.
+Failure to match the types will result in a `"type mismatch"` error. Failure to provide the correct number of arguments will result in a `"Arity violation"` error.
 
 # Parsing
 
