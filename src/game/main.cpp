@@ -270,7 +270,6 @@ struct TestGame
       if (input.root_layer().keyboard().is_released(Input::ScanCode::Y)) {
         auto emitter = Particle::Emitter::create(m_particle_program, 100.0f);
         if (emitter) {
-          const auto f{m_camera.as_mat4().z};
           (*emitter)[0] = m_camera.translate.x;
           (*emitter)[1] = m_camera.translate.y;
           (*emitter)[2] = m_camera.translate.z + 1.0f;
