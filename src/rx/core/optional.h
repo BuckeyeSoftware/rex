@@ -136,22 +136,18 @@ Optional<T>& Optional<T>::operator=(const T& _data) {
 
 template<typename T>
 Optional<T>& Optional<T>::operator=(Optional&& other_) {
-  RX_ASSERT(&other_ != this, "self assignment");
-
-  if (m_init) {
-    m_data.fini();
+  if (&other_ != this) {
+    if (m_init) {
+      m_data.fini();
+    }
+    m_init = other_.m_init;
+    if (m_init) {
+      auto& data = other_.m_data;
+      m_data.init(Utility::move(*data.data()));
+      data.fini();
+    }
+    other_.m_init = false;
   }
-
-  m_init = other_.m_init;
-
-  if (m_init) {
-    auto& data{other_.m_data};
-    m_data.init(Utility::move(*data.data()));
-    data.fini();
-  }
-
-  other_.m_init = false;
-
   return *this;
 }
 
@@ -159,19 +155,16 @@ template<typename T>
 Optional<T>& Optional<T>::operator=(const Optional& _other)
   requires Concepts::TriviallyCopyable<T>
 {
-  RX_ASSERT(&_other != this, "self assignment");
-
-  if (m_init) {
-    m_data.fini();
+  if (&_other != this) {
+    if (m_init) {
+      m_data.fini();
+    }
+    m_init = _other.m_init;
+    if (m_init) {
+      const auto& data = _other.m_data;
+      m_data.init(*data.data());
+    }
   }
-
-  m_init = _other.m_init;
-
-  if (m_init) {
-    const auto& data{_other.m_data};
-    m_data.init(*data.data());
-  }
-
   return *this;
 }
 

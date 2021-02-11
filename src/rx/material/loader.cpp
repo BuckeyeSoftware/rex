@@ -37,18 +37,17 @@ Loader::Loader(Loader&& loader_)
 }
 
 Loader& Loader::operator=(Loader&& loader_) {
-  RX_ASSERT(&loader_ != this, "self assignment");
-
-  m_allocator = &loader_.allocator();
-  m_textures = Utility::move(loader_.m_textures);
-  m_name = Utility::move(loader_.m_name);
-  m_flags = Utility::exchange(loader_.m_flags, 0);
-  m_roughness = Utility::exchange(loader_.m_roughness, 1.0f);
-  m_metalness = Utility::exchange(loader_.m_metalness, 0.0f);
-  m_occlusion = Utility::exchange(loader_.m_occlusion, 1.0f);
-  m_albedo = Utility::exchange(loader_.m_albedo, {1.0f, 1.0f, 1.0f});
-  m_emission = Utility::exchange(loader_.m_emission, {0.0f, 0.0f, 0.0f});
-
+  if (&loader_ != this) {
+    m_allocator = &loader_.allocator();
+    m_textures = Utility::move(loader_.m_textures);
+    m_name = Utility::move(loader_.m_name);
+    m_flags = Utility::exchange(loader_.m_flags, 0);
+    m_roughness = Utility::exchange(loader_.m_roughness, 1.0f);
+    m_metalness = Utility::exchange(loader_.m_metalness, 0.0f);
+    m_occlusion = Utility::exchange(loader_.m_occlusion, 1.0f);
+    m_albedo = Utility::exchange(loader_.m_albedo, {1.0f, 1.0f, 1.0f});
+    m_emission = Utility::exchange(loader_.m_emission, {0.0f, 0.0f, 0.0f});
+  }
   return *this;
 }
 

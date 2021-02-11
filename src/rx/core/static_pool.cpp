@@ -33,14 +33,13 @@ StaticPool::StaticPool(StaticPool&& pool_)
 }
 
 StaticPool& StaticPool::operator=(StaticPool&& pool_) {
-  RX_ASSERT(&pool_ != this, "self assignment");
-
-  m_allocator = pool_.m_allocator;
-  m_object_size = Utility::exchange(pool_.m_object_size, 0);
-  m_object_count = Utility::exchange(pool_.m_object_count, 0);
-  m_data = Utility::exchange(pool_.m_data, nullptr);
-  m_bitset = Utility::move(pool_.m_bitset);
-
+  if (&pool_ != this) {
+    m_allocator = pool_.m_allocator;
+    m_object_size = Utility::exchange(pool_.m_object_size, 0);
+    m_object_count = Utility::exchange(pool_.m_object_count, 0);
+    m_data = Utility::exchange(pool_.m_data, nullptr);
+    m_bitset = Utility::move(pool_.m_bitset);
+  }
   return *this;
 }
 

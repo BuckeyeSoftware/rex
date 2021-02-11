@@ -135,24 +135,21 @@ inline JSON::~JSON() {
 }
 
 inline JSON& JSON::operator=(const JSON& _json) {
-  RX_ASSERT(&_json != this, "self assignment");
-
-  if (m_shared) {
-    m_shared->release();
+  if (&_json != this) {
+    if (m_shared) {
+      m_shared->release();
+    }
+    m_shared = _json.m_shared->acquire();
+    m_value = _json.m_value;
   }
-
-  m_shared = _json.m_shared->acquire();
-  m_value = _json.m_value;
-
   return *this;
 }
 
 inline JSON& JSON::operator=(JSON&& json_) {
-  RX_ASSERT(&json_ != this, "self assignment");
-
-  m_shared = Utility::exchange(json_.m_shared, nullptr);
-  m_value = Utility::exchange(json_.m_value, nullptr);
-
+  if (&json_ != this) {
+    m_shared = Utility::exchange(json_.m_shared, nullptr);
+    m_value = Utility::exchange(json_.m_value, nullptr);
+  }
   return *this;
 }
 

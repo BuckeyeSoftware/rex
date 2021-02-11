@@ -9,6 +9,9 @@ namespace Rx {
 struct Stream;
 
 struct RX_API Log {
+  RX_MARK_NO_COPY(Log);
+  RX_MARK_NO_MOVE(Log);
+
   enum class Level : Uint8 {
     WARNING,
     INFO,

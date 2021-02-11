@@ -10,6 +10,9 @@ namespace Rx {
 // 32-bit: 32 bytes
 // 64-bit: 64 bytes
 struct RX_API alignas(Memory::Allocator::ALIGNMENT) GlobalNode {
+  RX_MARK_NO_COPY(GlobalNode);
+  RX_MARK_NO_MOVE(GlobalNode);
+
   template<typename T, typename... Ts>
   GlobalNode(const char* _group, const char* _name, Uninitialized<T>& _storage, Ts&&... _arguments);
 
@@ -155,6 +158,9 @@ private:
 // 64-bit: 64 + sizeof(T) bytes
 template<typename T>
 struct Global {
+  RX_MARK_NO_COPY(Global);
+  RX_MARK_NO_MOVE(Global);
+
   template<typename... Ts>
   Global(const char* _group, const char* _name, Ts&&... _arguments);
 

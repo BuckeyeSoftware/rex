@@ -162,15 +162,15 @@ Optional<Vector<T>> Vector<T>::copy(const Vector& _other) {
 
 template<typename T>
 Vector<T>& Vector<T>::operator=(Vector&& other_) {
-  RX_ASSERT(&other_ != this, "self assignment");
+  if (&other_ != this) {
+    clear();
+    m_allocator->deallocate(m_data);
 
-  clear();
-  m_allocator->deallocate(m_data);
-
-  m_allocator = other_.m_allocator;
-  m_data = Utility::exchange(other_.m_data, nullptr);
-  m_size = Utility::exchange(other_.m_size, 0);
-  m_capacity = Utility::exchange(other_.m_capacity, 0);
+    m_allocator = other_.m_allocator;
+    m_data = Utility::exchange(other_.m_data, nullptr);
+    m_size = Utility::exchange(other_.m_size, 0);
+    m_capacity = Utility::exchange(other_.m_capacity, 0);
+  }
 
   return *this;
 }

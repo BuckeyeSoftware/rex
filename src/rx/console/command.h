@@ -5,8 +5,6 @@
 
 #include "rx/core/markers.h"
 
-#include "rx/core/utility/exchange.h"
-
 namespace Rx::Console {
 
 struct Context;
@@ -161,16 +159,15 @@ inline Command::Command(Command&& command_)
 }
 
 inline Command& Command::operator=(Command&& command_) {
-  RX_ASSERT(&command_ != this, "self assignment");
-
-  m_allocator = command_.m_allocator;
-  m_delegate = Utility::move(command_.m_delegate);
-  m_arguments = Utility::move(command_.m_arguments);
-  m_declaration = Utility::move(command_.m_declaration);
-  m_name = Utility::move(command_.m_name);
-  m_signature = Utility::exchange(command_.m_signature, nullptr);
-  m_argument_count = Utility::exchange(command_.m_argument_count, 0);
-
+  if (&command_ != this) {
+    m_allocator = command_.m_allocator;
+    m_delegate = Utility::move(command_.m_delegate);
+    m_arguments = Utility::move(command_.m_arguments);
+    m_declaration = Utility::move(command_.m_declaration);
+    m_name = Utility::move(command_.m_name);
+    m_signature = Utility::exchange(command_.m_signature, nullptr);
+    m_argument_count = Utility::exchange(command_.m_argument_count, 0);
+  }
   return *this;
 }
 

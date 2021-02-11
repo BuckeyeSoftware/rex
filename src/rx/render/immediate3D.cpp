@@ -24,7 +24,6 @@ Immediate3D::Queue::Queue(Queue&& queue_)
 }
 
 Immediate3D::Queue& Immediate3D::Queue::operator=(Queue&& queue_) {
-  RX_ASSERT(&queue_ != this, "self assignment");
   m_commands = Utility::move(queue_.m_commands);
   return *this;
 }

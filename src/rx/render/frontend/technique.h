@@ -47,7 +47,7 @@ struct Technique {
   const String& name() const;
 
 private:
-  void fini();
+  void release();
 
   struct UniformDefinition {
     union Variant {

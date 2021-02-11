@@ -199,19 +199,17 @@ void Map<K, V>::clear_and_deallocate() {
 
 template<typename K, typename V>
 Map<K, V>& Map<K, V>::operator=(Map<K, V>&& map_) {
-  RX_ASSERT(&map_ != this, "self assignment");
-
-  clear_and_deallocate();
-
-  m_allocator = map_.m_allocator;
-  m_keys = Utility::exchange(map_.m_keys, nullptr);
-  m_values = Utility::exchange(map_.m_values, nullptr);
-  m_hashes = Utility::exchange(map_.m_hashes, nullptr);
-  m_size = Utility::exchange(map_.m_size, 0);
-  m_capacity = Utility::exchange(map_.m_capacity, 0);
-  m_resize_threshold = Utility::exchange(map_.m_resize_threshold, 0);
-  m_mask = Utility::exchange(map_.m_mask, 0);
-
+  if (&map_ != this) {
+    clear_and_deallocate();
+    m_allocator = map_.m_allocator;
+    m_keys = Utility::exchange(map_.m_keys, nullptr);
+    m_values = Utility::exchange(map_.m_values, nullptr);
+    m_hashes = Utility::exchange(map_.m_hashes, nullptr);
+    m_size = Utility::exchange(map_.m_size, 0);
+    m_capacity = Utility::exchange(map_.m_capacity, 0);
+    m_resize_threshold = Utility::exchange(map_.m_resize_threshold, 0);
+    m_mask = Utility::exchange(map_.m_mask, 0);
+  }
   return *this;
 }
 

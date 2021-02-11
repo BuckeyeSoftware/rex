@@ -273,10 +273,10 @@ bool File::close() {
 }
 
 File& File::operator=(File&& file_) {
-  RX_ASSERT(&file_ != this, "self assignment");
-
-  close();
-  m_impl = Utility::exchange(file_.m_impl, nullptr);
+  if (&file_ != this) {
+    close();
+    m_impl = Utility::exchange(file_.m_impl, nullptr);
+  }
   return *this;
 }
 

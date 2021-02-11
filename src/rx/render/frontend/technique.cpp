@@ -232,7 +232,7 @@ Technique::Technique(Context* _frontend)
 }
 
 Technique::~Technique() {
-  fini();
+  release();
 }
 
 Technique::Technique(Technique&& technique_)
@@ -248,18 +248,16 @@ Technique::Technique(Technique&& technique_)
 }
 
 Technique& Technique::operator=(Technique&& technique_) {
-  RX_ASSERT(&technique_ != this, "self assignment");
-
-  fini();
-
-  m_frontend = Utility::exchange(technique_.m_frontend, nullptr);
-  m_type = technique_.m_type;
-  m_programs = Utility::move(technique_.m_programs);
-  m_name = Utility::move(technique_.m_name);
-  m_shader_definitions = Utility::move(technique_.m_shader_definitions);
-  m_uniform_definitions = Utility::move(technique_.m_uniform_definitions);
-  m_specializations = Utility::move(technique_.m_specializations);
-
+  if (&technique_ != this) {
+    release();
+    m_frontend = Utility::exchange(technique_.m_frontend, nullptr);
+    m_type = technique_.m_type;
+    m_programs = Utility::move(technique_.m_programs);
+    m_name = Utility::move(technique_.m_name);
+    m_shader_definitions = Utility::move(technique_.m_shader_definitions);
+    m_uniform_definitions = Utility::move(technique_.m_uniform_definitions);
+    m_specializations = Utility::move(technique_.m_specializations);
+  }
   return *this;
 }
 
@@ -319,7 +317,7 @@ Optional<String> Technique::resolve_source(
   if (dependencies->cycled.size()) {
     // Write an error for each dependency that forms a cycle.
     dependencies->cycled.each_fwd([&](const String& _module) {
-      error("dependency '%s' forms a cycle", _module);
+      (void)error("dependency '%s' forms a cycle", _module);
     });
     return nullopt;
   }
@@ -703,11 +701,10 @@ bool Technique::load(const String& _file_name) {
   return false;
 }
 
-void Technique::fini() {
+void Technique::release() {
   m_programs.each_fwd([this](Program* _program) {
     m_frontend->destroy_program(RX_RENDER_TAG("technique"), _program);
   });
-
   m_programs.clear();
 }
 

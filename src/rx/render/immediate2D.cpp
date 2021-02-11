@@ -37,11 +37,8 @@ Immediate2D::Queue::Queue(Queue&& queue_)
 }
 
 Immediate2D::Queue& Immediate2D::Queue::operator=(Queue&& queue_) {
-  RX_ASSERT(&queue_ != this, "self assignment");
-
   m_commands = Utility::move(queue_.m_commands);
   m_string_table = Utility::move(queue_.m_string_table);
-
   return *this;
 }
 

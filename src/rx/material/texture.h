@@ -127,14 +127,15 @@ inline Texture::Texture(Texture&& texture_)
 }
 
 inline Texture& Texture::operator=(Texture&& texture_) {
-  RX_ASSERT(&texture_ != this, "self assignment");
-  m_allocator = texture_.m_allocator;
-  m_bitmap = Utility::move(texture_.m_bitmap);
-  m_filter = texture_.m_filter;
-  m_wrap = texture_.m_wrap;
-  m_type = texture_.m_type;
-  m_file = Utility::move(texture_.m_file);
-  m_border = Utility::move(texture_.m_border);
+  if (&texture_ != this) {
+    m_allocator = texture_.m_allocator;
+    m_bitmap = Utility::move(texture_.m_bitmap);
+    m_filter = texture_.m_filter;
+    m_wrap = texture_.m_wrap;
+    m_type = texture_.m_type;
+    m_file = Utility::move(texture_.m_file);
+    m_border = Utility::move(texture_.m_border);
+  }
   return *this;
 }
 

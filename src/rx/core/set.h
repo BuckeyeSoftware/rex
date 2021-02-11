@@ -167,17 +167,17 @@ void Set<K>::clear_and_deallocate() {
 
 template<typename K>
 Set<K>& Set<K>::operator=(Set<K>&& set_) {
-  RX_ASSERT(&set_ != this, "self assignment");
+  if (&set_ != this) {
+    clear_and_deallocate();
 
-  clear_and_deallocate();
-
-  m_allocator = set_.m_allocator;
-  m_keys = Utility::exchange(set_.m_keys, nullptr);
-  m_hashes = Utility::exchange(set_.m_hashes, nullptr);
-  m_size = Utility::exchange(set_.m_size, 0);
-  m_capacity = Utility::exchange(set_.m_capacity, 0);
-  m_resize_threshold = Utility::exchange(set_.m_resize_threshold, 0);
-  m_mask = Utility::exchange(set_.m_mask, 0);
+    m_allocator = set_.m_allocator;
+    m_keys = Utility::exchange(set_.m_keys, nullptr);
+    m_hashes = Utility::exchange(set_.m_hashes, nullptr);
+    m_size = Utility::exchange(set_.m_size, 0);
+    m_capacity = Utility::exchange(set_.m_capacity, 0);
+    m_resize_threshold = Utility::exchange(set_.m_resize_threshold, 0);
+    m_mask = Utility::exchange(set_.m_mask, 0);
+  }
 
   return *this;
 }

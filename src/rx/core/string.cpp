@@ -190,8 +190,9 @@ String::~String() {
 }
 
 String& String::operator=(const String& _contents) {
-  RX_ASSERT(&_contents != this, "self assignment");
-  String(_contents).swap(*this);
+  if (&_contents != this) {
+    String(_contents).swap(*this);
+  }
   return *this;
 }
 
@@ -202,8 +203,9 @@ String& String::operator=(const char* _contents) {
 }
 
 String& String::operator=(String&& contents_) {
-  RX_ASSERT(&contents_ != this, "self assignment");
-  String(Utility::move(contents_)).swap(*this);
+  if (&contents_ != this) {
+    String(Utility::move(contents_)).swap(*this);
+  }
   return *this;
 }
 
@@ -511,7 +513,10 @@ WideString String::to_utf16() const {
 
 // Complicated because of small string optimization.
 void String::swap(String& other_) {
-  RX_ASSERT(&other_ != this, "self swap");
+  // Swapping with self is a no-op.
+  if (&other_ == this) {
+    return;
+  }
 
   Utility::swap(m_data, other_.m_data);
   Utility::swap(m_last, other_.m_last);

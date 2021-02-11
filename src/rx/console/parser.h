@@ -1,6 +1,5 @@
 #ifndef RX_CONSOLE_PARSER_H
 #define RX_CONSOLE_PARSER_H
-
 #include "rx/math/vec2.h"
 #include "rx/math/vec3.h"
 #include "rx/math/vec4.h"
