@@ -50,12 +50,12 @@ struct FormatNormalize<char[E]> {
 };
 
 // Low-level format functions.
-RX_API Size format_buffer_va_list(char* buffer_, Size _length, const char* _format, va_list _list);
-RX_API Size format_buffer_va_args(char* buffer_, Size _length, const char* _format, ...) RX_HINT_FORMAT(3, 4);
+RX_API Size format_buffer_va_list(char* buffer_, Size _length, const char* _format, va_list _list) RX_HINT_FORMAT(3, 0);
+RX_API Size format_buffer_va_args(char* buffer_, Size _length, const char* _format, ...); /*RX_HINT_FORMAT(3, 4);*/
 
 template<typename... Ts>
-Size format_buffer(char* buffer_, Size _length, const char* _format,
-  Ts&&... _arguments)
+RX_HINT_FORMAT(3, 0) Size format_buffer(char* buffer_, Size _length,
+  const char* _format, Ts&&... _arguments)
 {
   return format_buffer_va_args(buffer_, _length, _format,
     FormatNormalize<Traits::RemoveCVRef<Ts>>{}(Utility::forward<Ts>(_arguments))...);

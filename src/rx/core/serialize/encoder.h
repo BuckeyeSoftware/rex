@@ -43,6 +43,7 @@ struct RX_API Encoder {
 
 private:
   template<typename... Ts>
+  [[nodiscard]] RX_HINT_FORMAT(2, 0)
   bool error(const char* _format, Ts&&... _arguments);
 
   [[nodiscard]] bool write_header();

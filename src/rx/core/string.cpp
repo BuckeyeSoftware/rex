@@ -108,9 +108,7 @@ Size utf16_to_utf8(const Uint16* _utf16_contents, Size _length,
   return elements;
 }
 
-String String::formatter(Memory::Allocator& _allocator,
-                         const char* _format, ...)
-{
+String String::formatter(Memory::Allocator& _allocator, const char* _format, ...) {
   String result{_allocator};
 
   va_list va;

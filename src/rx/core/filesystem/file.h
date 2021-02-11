@@ -26,15 +26,18 @@ struct RX_API File
   // Print |_fmt| with |_args| to file using |_allocator| for formatting.
   // NOTE: asserts if the file isn't a text file.
   template<typename... Ts>
-  bool print(Memory::Allocator& _allocator, const char* _fmt, Ts&&... _args);
+  [[nodiscard]] RX_HINT_FORMAT(3, 0)
+  bool print(Memory::Allocator& _allocator, const char* _format, Ts&&... _args);
 
   // Print |_fmt| with |_args| to file using system allocator for formatting.
   // NOTE: asserts if the file isn't a text file.
   template<typename... Ts>
-  bool print(const char* _fmt, Ts&&... _args);
+  [[nodiscard]] RX_HINT_FORMAT(2, 0)
+  bool print(const char* _format, Ts&&... _args);
 
   // Print a string into the file. This is only valid for text files.
   // NOTE: asserts if the file isn't a text file.
+  [[nodiscard]]
   bool print(String&& contents_);
 
   // Query if the file handle is valid, will be false if the file has been

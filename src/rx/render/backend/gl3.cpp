@@ -138,7 +138,7 @@ static void (GLAPIENTRYP pglDrawElementsInstancedBaseVertexBaseInstance)(GLenum,
 template<typename F>
 static void fetch(const char* _name, F& function_) {
   auto address = SDL_GL_GetProcAddress(_name);
-  logger->verbose("loaded %08p '%s'", address, _name);
+  logger->verbose("loaded %p '%s'", address, _name);
   *reinterpret_cast<void**>(&function_) = address;
 }
 

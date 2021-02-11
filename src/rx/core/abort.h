@@ -7,7 +7,7 @@ namespace Rx {
 [[noreturn]] RX_API void abort_message(const char* _message, bool _truncated);
 
 template<typename... Ts>
-[[noreturn]]
+[[noreturn]] RX_HINT_FORMAT(1, 0)
 void abort(const char* _format, Ts&&... _arguments) {
   // When we have format arguments use an on-stack format buffer.
   if constexpr(sizeof...(Ts) > 0) {

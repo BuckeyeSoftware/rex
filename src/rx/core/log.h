@@ -37,6 +37,7 @@ struct RX_API Log {
   //
   // This function is thread-safe.
   template<typename... Ts>
+  RX_HINT_FORMAT(3, 0)
   bool write(Level _level, const char* _format, Ts&&... _arguments);
 
   // Write a message given by |message_|.
@@ -47,12 +48,19 @@ struct RX_API Log {
   //
   // All of these functions are thread-safe.
   template<typename... Ts>
+  RX_HINT_FORMAT(2, 0)
   bool warning(const char* _format, Ts&&... _arguments);
+
   template<typename... Ts>
+  RX_HINT_FORMAT(2, 0)
   bool info(const char* _format, Ts&&... _arguments);
+
   template<typename... Ts>
+  RX_HINT_FORMAT(2, 0)
   bool verbose(const char* _format, Ts&&... _arguments);
+
   template<typename... Ts>
+  RX_HINT_FORMAT(2, 0)
   bool error(const char* _format, Ts&&... _arguments);
 
   // When a message is queued, all delegates associated by this function are

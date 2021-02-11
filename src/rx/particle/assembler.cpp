@@ -252,6 +252,7 @@ private:
   }
 
   template<typename... Ts>
+  [[nodiscard]] RX_HINT_FORMAT(2, 0)
   Token error(const char* _format, Ts&&... _arguments) const {
     Token result{Token::Type::ERROR};
     result.as_error.size = format_buffer(
@@ -310,6 +311,7 @@ struct Parser {
 
 private:
   template<typename... Ts>
+  [[nodiscard]] RX_HINT_FORMAT(2, 0)
   bool error(const char* _format, Ts&&... _arguments) {
     const auto& source = m_lexer.source();
     const auto& location = m_lexer.location();
@@ -354,7 +356,7 @@ private:
       result.w = m_token.as_sink.width;
       return result;
     default:
-      error("expected sink operand");
+      (void)error("expected sink operand");
     }
     return nullopt;
   }

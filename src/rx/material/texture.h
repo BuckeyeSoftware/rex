@@ -80,9 +80,11 @@ private:
   bool parse_border(const JSON& _border);
 
   template<typename... Ts>
+  [[nodiscard]] RX_HINT_FORMAT(2, 0)
   bool error(const char* _format, Ts&&... _arguments) const;
 
   template<typename... Ts>
+  RX_HINT_FORMAT(3, 0)
   void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
 
   void write_log(Log::Level _level, String&& message_) const;

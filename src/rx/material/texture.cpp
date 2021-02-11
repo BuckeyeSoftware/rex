@@ -207,7 +207,7 @@ bool Texture::parse_wrap(const JSON& _wrap) {
         return match.type;
       }
     }
-    error("invalid wrap Type '%s'", _type);
+    (void)error("invalid wrap type '%s'", _type);
     return nullopt;
   };
 

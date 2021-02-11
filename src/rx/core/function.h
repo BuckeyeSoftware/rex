@@ -81,7 +81,7 @@ private:
   // Like sizeof but includes the size of the control block used to store the
   // type-erased dispatch functions.
   template<typename F>
-  static inline constexpr const auto SIZE_OF = sizeof(Control) + sizeof(F);
+  static inline constexpr const Size SIZE_OF = sizeof(Control) + sizeof(F);
 
   static_assert(alignof(Control) == 16,
     "Control block has invalid alignment");

@@ -224,7 +224,8 @@ private:
   void record_span();
 
   template<typename... Ts>
-  [[nodiscard]] bool error(bool _caret, const char* _format, Ts&&... _arguments);
+  [[nodiscard]] RX_HINT_FORMAT(3, 0)
+  bool error(bool _caret, const char* _format, Ts&&... _arguments);
 
   Memory::Allocator& m_allocator;
   Vector<Token> m_tokens;

@@ -304,14 +304,14 @@ Optional<String> Technique::resolve_source(
   });
 
   if (!result) {
-    error("could not satisfy all dependencies");
+    (void)error("could not satisfy all dependencies");
     return nullopt;
   }
 
   // Sort the dependencies in topological order.
   auto dependencies = sorter.sort();
   if (!dependencies) {
-    error("out of memory");
+    (void)error("out of memory");
     return nullopt;
   }
 
@@ -372,7 +372,7 @@ Optional<String> Technique::resolve_source(
   }
 
   if (!source.append(_definition.source)) {
-    error("out of memory");
+    (void)error("out of memory");
     return nullopt;
   }
 

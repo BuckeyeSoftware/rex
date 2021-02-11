@@ -34,10 +34,12 @@ struct RX_API String {
   ~String();
 
   template<typename... Ts>
+  RX_HINT_FORMAT(2, 0)
   static String format(Memory::Allocator& _allocator,
                        const char* _format, Ts&&... _arguments);
 
   template<typename... Ts>
+  RX_HINT_FORMAT(1, 0)
   static String format(const char* _format, Ts&&... _arguments);
 
   String& operator=(const String& _contents);

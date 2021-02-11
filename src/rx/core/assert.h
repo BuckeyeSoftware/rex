@@ -9,10 +9,9 @@ namespace Rx {
   const SourceLocation& _source_location, const char* _message, bool _truncated);
 
 template<typename... Ts>
-[[noreturn]]
-void assert_fail(const char* _expression,
-  const SourceLocation& _source_location, const char* _format,
-  Ts&&... _arguments)
+[[noreturn]] RX_HINT_FORMAT(3, 0)
+void assert_fail(const char* _expression, const SourceLocation& _source_location,
+  const char* _format, Ts&&... _arguments)
 {
   // When we have format arguments use an on-stack format buffer.
   if constexpr(sizeof...(Ts) > 0) {

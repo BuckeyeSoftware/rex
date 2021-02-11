@@ -31,7 +31,9 @@ struct Context {
   bool execute(const String& _contents);
 
   template<typename... Ts>
+  RX_HINT_FORMAT(2, 0)
   bool print(const char* _format, Ts&&... _arguments);
+
   bool write(const String& _message);
 
   void clear();
