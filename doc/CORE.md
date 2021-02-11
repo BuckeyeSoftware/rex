@@ -1,6 +1,6 @@
 # Core
 
-Rex does not make use of the C++ standard library. Instead it implements it's own core library in `src/rx/core`. with an emphasis on simplicity, performance and robustness.
+Rex does not make use of the C++ standard library. Instead it implements its own core library in `src/rx/core`. with an emphasis on simplicity, performance and robustness.
 
 ## Differences
 There's many differences between our core library and the standard. They're outlined here.
@@ -34,7 +34,7 @@ Similarly, Rex does not support concurrent initialization of static globals, ins
 Pure virtual function calls just forward to `Rx::abort`.
 
 ## Performance
-The core library was designed with performance in mind in all areas performance matters. Most library implementations in C++ do not concern themselves with good debug or compile-time performans, only release.
+The core library was designed with performance in mind in all areas performance matters. Most library implementations in C++ do not concern themselves with good debug performance, only release. Similarly, compile-time performance is never considered.
 
 Careful design choices were made to avoid excessive build times, such as avoiding large headers (this is why each trait is in it's own individual file in `core/traits`.) in addition to other things.
 
@@ -65,16 +65,18 @@ This is used extensively almost everywhere.
 Most standard libraries implement this for `std::string` and `std::function`. We do this as well, virtually everywhere. The `LinearBuffer` type contains an adjustable in-situ buffer which is the basis of most systems, enabling small `String`, `Vector`, `Map`, `Set`, and `Function` optimizations.
 
 ### Hints
-We implement and utilize a wide variety of compiler hints to get proper code generation where the compiler cannopt deduce things about branches, memory aliasing, alignment, etc.
+We implement and utilize a wide variety of compiler hints to get proper code generation where the compiler cannot deduce things about branches, memory aliasing, alignment, etc.
 
 ### Exception free code
 Avoiding the use of exceptions and outright disabling it means everything is `noexcept`.
 
 ### No implicit copies and always guranteed moves
-There's no copy constructors or assignment operators for any types that are non-trivial. Instead all types that support copy operations do so throuh a static copy member function returning an `Optional` type. This is done for two purposes. The first purpose is to make it so surprsing, inefficient copies cannot happen. The second reason is because copies can fail. In C++, when a copy construction or assignment fails, the only way to handle errors is through the use of exception handling. In an exceptionless environment, such errors would lead to calls to `std::terminate` which would violate robustness requirements.
+There's no copy constructors or assignment operators for any types that are non-trivial. Instead all types that support copy operations do so through a static `copy` member function returning an `Optional` type. This is done for two purposes. The first purpose is to make it so surprsing, inefficient copies cannot happen. The second reason is because copies can fail. In C++, when a copy construction or assignment fails, the only way to handle errors is through the use of exception handling. In an exceptionless environment, such errors would lead to calls to `std::terminate` which would violate robustness requirements.
 
 To make copies of data the use of global `copy(const T&)` function is used, returning `Optional<T>`.
 To make moves of data the use of global `move(T&&)` function is used, returning `T&&`. This is the same as `std::move`, with the minor difference in that it _always moves_.
+
+> This approach makes it impossible to have implicit copies.
 
 ## Algorithm
 
