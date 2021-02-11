@@ -30,6 +30,7 @@ static void (GLAPIENTRYP pglGenVertexArrays)(GLsizei, GLuint*);
 static void (GLAPIENTRYP pglDeleteVertexArrays)(GLsizei, const GLuint*);
 static void (GLAPIENTRYP pglEnableVertexAttribArray)(GLuint);
 static void (GLAPIENTRYP pglVertexAttribPointer)(GLuint, GLuint, GLenum, GLboolean, GLsizei, const GLvoid*);
+static void (GLAPIENTRYP pglVertexAttribIPointer)(GLuint, GLuint, GLenum, GLsizei, const GLvoid*);
 static void (GLAPIENTRYP pglBindVertexArray)(GLuint);
 static void (GLAPIENTRYP pglVertexAttribDivisor)(GLuint, GLuint);
 
@@ -827,6 +828,7 @@ bool ES3::init() {
   fetch("glDeleteVertexArrays", pglDeleteVertexArrays);
   fetch("glEnableVertexAttribArray", pglEnableVertexAttribArray);
   fetch("glVertexAttribPointer", pglVertexAttribPointer);
+  fetch("glVertexAttribIPointer", pglVertexAttribIPointer);
   fetch("glBindVertexArray", pglBindVertexArray);
   fetch("glVertexAttribDivisor", pglVertexAttribDivisor);
 
@@ -1059,6 +1061,10 @@ void ES3::process(Byte* _command) {
                                      Size _index_offset,
                                      bool _instanced)
           {
+            auto is_int_format = [](GLenum _type) {
+              return _type == GL_SHORT || _type == GL_INT || _type == GL_UNSIGNED_INT;
+            };
+
             const auto n_attributes = attributes.size();
 
             Size count = 0;
@@ -1070,13 +1076,22 @@ void ES3::process(Byte* _command) {
               Size offset = attribute.offset;
               for (GLsizei j = 0; j < result.instances; j++) {
                 pglEnableVertexAttribArray(index + j);
-                pglVertexAttribPointer(
-                  index + j,
-                  result.components,
-                  result.type_enum,
-                  GL_FALSE,
-                  _stride,
-                  reinterpret_cast<const GLvoid*>(offset));
+                if (is_int_format(result.type_enum)) {
+                  pglVertexAttribIPointer(
+                    index + j,
+                    result.components,
+                    result.type_enum,
+                    _stride,
+                    reinterpret_cast<const GLvoid*>(offset));
+                } else {
+                  pglVertexAttribPointer(
+                    index + j,
+                    result.components,
+                    result.type_enum,
+                    GL_FALSE,
+                    _stride,
+                    reinterpret_cast<const GLvoid*>(offset));
+                }
                 if (_instanced) {
                   pglVertexAttribDivisor(index + j, 1);
                 }
