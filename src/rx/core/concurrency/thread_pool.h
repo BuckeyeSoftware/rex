@@ -18,15 +18,17 @@ struct RX_API ThreadPool {
   ThreadPool(Size _threads, Size _job_pool_size);
   ~ThreadPool();
 
-  // insert |_task| into the thread pool to be executed, the integer passed
-  // to |_task| is the thread id of the calling thread in the pool
-  void add(Function<void(int)>&& task_);
+  template<typename F>
+  bool add(F&& function_);
 
   constexpr Memory::Allocator& allocator() const;
 
   static constexpr ThreadPool& instance();
 
 private:
+  using Task = Function<void(int)>;
+  [[nodiscard]] bool insert(Task&& task_);
+
   Memory::Allocator& m_allocator;
 
   Mutex m_mutex;
@@ -44,6 +46,14 @@ private:
 inline ThreadPool::ThreadPool(Size _threads, Size _static_pool_size)
   : ThreadPool{Memory::SystemAllocator::instance(), _threads, _static_pool_size}
 {
+}
+
+template<typename F>
+bool ThreadPool::add(F&& function_) {
+  if (auto fun = Task::create(Utility::move(function_))) {
+    return insert(Utility::move(*fun));
+  }
+  return false;
 }
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& ThreadPool::allocator() const {

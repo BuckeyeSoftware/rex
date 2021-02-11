@@ -27,8 +27,8 @@ struct LinearBuffer {
 
   void erase(Size _from, Size _to);
 
-  Byte* data();
-  const Byte* data() const;
+  constexpr Byte* data();
+  constexpr const Byte* data() const;
 
   Byte& operator[](Size _index);
   const Byte& operator[](Size _index) const;
@@ -83,11 +83,11 @@ inline void LinearBuffer::clear() {
   m_size = 0;
 }
 
-inline Byte* LinearBuffer::data() {
+inline constexpr Byte* LinearBuffer::data() {
   return m_data;
 }
 
-inline const Byte* LinearBuffer::data() const {
+inline constexpr const Byte* LinearBuffer::data() const {
   return m_data;
 }
 

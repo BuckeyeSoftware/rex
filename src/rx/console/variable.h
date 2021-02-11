@@ -161,7 +161,8 @@ struct Variable {
   void reset();
   VariableStatus set(const T& value, bool _signal_change = true);
 
-  Optional<typename OnChangeEvent::Handle> on_change(typename OnChangeEvent::Delegate&& _on_change);
+  template<typename F>
+  Optional<typename OnChangeEvent::Handle> on_change(F&& _on_change);
 
 private:
   VariableReference m_reference;
@@ -191,7 +192,8 @@ struct Variable<Bool> {
 
   void toggle();
 
-  Optional<typename OnChangeEvent::Handle> on_change(typename OnChangeEvent::Delegate&& _on_change);
+  template<typename F>
+  Optional<typename OnChangeEvent::Handle> on_change(F&& on_change_);
 
 private:
   VariableReference m_reference;
@@ -218,7 +220,8 @@ struct Variable<String> {
   VariableStatus set(const char* _value, bool _signal_change = true);
   VariableStatus set(const String& _value, bool _signal_change = true);
 
-  Optional<typename OnChangeEvent::Handle> on_change(typename OnChangeEvent::Delegate&& _on_change);
+  template<typename F>
+  Optional<typename OnChangeEvent::Handle> on_change(F&& on_change_);
 
 private:
   VariableReference m_reference;
@@ -247,7 +250,8 @@ struct Variable<Vec2<T>> {
   void reset();
   VariableStatus set(const Vec2<T>& _value, bool _signal_change = true);
 
-  Optional<typename OnChangeEvent::Handle> on_change(typename OnChangeEvent::Delegate&& _on_change);
+  template<typename F>
+  Optional<typename OnChangeEvent::Handle> on_change(F&& on_change_);
 
 private:
   VariableReference m_reference;
@@ -277,7 +281,8 @@ struct Variable<Vec3<T>> {
   void reset();
   VariableStatus set(const Vec3<T>& value, bool _signal_change = true);
 
-  Optional<typename OnChangeEvent::Handle> on_change(typename OnChangeEvent::Delegate&& _on_change);
+  template<typename F>
+  Optional<typename OnChangeEvent::Handle> on_change(F&& on_change_);
 
 private:
   VariableReference m_reference;
@@ -307,7 +312,8 @@ struct Variable<Vec4<T>> {
   void reset();
   VariableStatus set(const Vec4<T>& value, bool _signal_change = true);
 
-  Optional<typename OnChangeEvent::Handle> on_change(typename OnChangeEvent::Delegate&& _on_change);
+  template<typename F>
+  Optional<typename OnChangeEvent::Handle> on_change(F&& on_change_);
 
 private:
   VariableReference m_reference;
@@ -387,8 +393,12 @@ VariableStatus Variable<T>::set(const T& _value, bool _signal_change) {
 }
 
 template<typename T>
-Optional<typename Variable<T>::OnChangeEvent::Handle> Variable<T>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
-  return m_on_change.connect(Utility::move(on_change_));
+template<typename F>
+Optional<typename Variable<T>::OnChangeEvent::Handle> Variable<T>::on_change(F&& on_change_) {
+  if (auto fun = OnChangeEvent::Delegate::create(Utility::move(on_change_))) {
+    return m_on_change.connect(Utility::move(*fun));
+  }
+  return nullopt;
 }
 
 // Variable<Bool>
@@ -439,8 +449,12 @@ inline void Variable<Bool>::toggle() {
   m_on_change.signal(*this);
 }
 
-inline Optional<typename Variable<Bool>::OnChangeEvent::Handle> Variable<Bool>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
-  return m_on_change.connect(Utility::move(on_change_));
+template<typename F>
+inline Optional<typename Variable<Bool>::OnChangeEvent::Handle> Variable<Bool>::on_change(F&& on_change_) {
+  if (auto fun = OnChangeEvent::Delegate::create(Utility::move(on_change_))) {
+    return m_on_change.connect(Utility::move(*fun));
+  }
+  return nullopt;
 }
 
 // Variable<String>
@@ -497,8 +511,12 @@ inline VariableStatus Variable<String>::set(const String& _value, bool _signal_c
   return VariableStatus::SUCCESS;
 }
 
-inline Optional<typename Variable<String>::OnChangeEvent::Handle> Variable<String>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
-  return m_on_change.connect(Utility::move(on_change_));
+template<typename F>
+inline Optional<typename Variable<String>::OnChangeEvent::Handle> Variable<String>::on_change(F&& on_change_) {
+  if (auto fun = OnChangeEvent::Delegate::create(Utility::move(on_change_))) {
+    return m_on_change.connect(Utility::move(*fun));
+  }
+  return nullopt;
 }
 
 // Variable<vec2<T>>
@@ -572,8 +590,12 @@ VariableStatus Variable<Vec2<T>>::set(const Vec2<T>& _value, bool _signal_change
 }
 
 template<typename T>
-Optional<typename Variable<Vec2<T>>::OnChangeEvent::Handle> Variable<Vec2<T>>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
-  return m_on_change.connect(Utility::move(on_change_));
+template<typename F>
+Optional<typename Variable<Vec2<T>>::OnChangeEvent::Handle> Variable<Vec2<T>>::on_change(F&& on_change_) {
+  if (auto fun = OnChangeEvent::Delegate::create(Utility::move(on_change_))) {
+    return m_on_change.connect(Utility::move(*fun));
+  }
+  return nullopt;
 }
 
 // Variable<vec3<T>>
@@ -647,8 +669,12 @@ VariableStatus Variable<Vec3<T>>::set(const Vec3<T>& _value, bool _signal_change
 }
 
 template<typename T>
-Optional<typename Variable<Vec3<T>>::OnChangeEvent::Handle> Variable<Vec3<T>>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
-  return m_on_change.connect(Utility::move(on_change_));
+template<typename F>
+Optional<typename Variable<Vec3<T>>::OnChangeEvent::Handle> Variable<Vec3<T>>::on_change(F&& on_change_) {
+  if (auto fun = OnChangeEvent::Delegate::create(Utility::move(on_change_))) {
+    return m_on_change.connect(Utility::move(on_change_));
+  }
+  return nullopt;
 }
 
 // Variable<vec4<T>>
@@ -722,8 +748,12 @@ VariableStatus Variable<Vec4<T>>::set(const Vec4<T>& _value, bool _signal_change
 }
 
 template<typename T>
-Optional<typename Variable<Vec4<T>>::OnChangeEvent::Handle> Variable<Vec4<T>>::on_change(typename OnChangeEvent::Delegate&& on_change_) {
-  return m_on_change.connect(Utility::move(on_change_));
+template<typename F>
+Optional<typename Variable<Vec4<T>>::OnChangeEvent::Handle> Variable<Vec4<T>>::on_change(F&& on_change_) {
+  if (auto fun = OnChangeEvent::Delegate::create(Utility::move(on_change_))) {
+    return m_on_change.connect(Utility::move(*fun));
+  }
+  return nullopt;
 }
 
 const char* VariableType_as_string(VariableType _type);

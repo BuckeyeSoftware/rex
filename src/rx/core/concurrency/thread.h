@@ -54,7 +54,7 @@ template<typename F>
 Thread::State::State(Memory::Allocator& _allocator, const char* _name, F&& _function)
   : m_nat{}
   , m_allocator{_allocator}
-  , m_function{m_allocator, Utility::forward<F>(_function)}
+  , m_function{Utility::move(*Function<void(int)>::create(Utility::forward<F>(_function)))}
   , m_name{_name}
   , m_joined{false}
 {

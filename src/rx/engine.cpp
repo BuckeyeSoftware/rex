@@ -194,34 +194,54 @@ bool Engine::init() {
   // Initialize any other globals not already initialized.
   Globals::init();
 
-  // Bind some useful console commands early.
-  m_console.add_command("reset", "s", [](Console::Context& console_, const Vector<Console::Command::Argument>& _arguments) {
-    if (auto* variable = console_.find_variable_by_name(_arguments[0].as_string)) {
-      variable->reset();
+  auto cmd_reset = Console::Command::Delegate::create(
+    [](Console::Context& console_, const Vector<Console::Command::Argument>& _arguments) {
+      if (auto* variable = console_.find_variable_by_name(_arguments[0].as_string)) {
+        variable->reset();
+        return true;
+      }
+      return false;
+    }
+  );
+
+  auto cmd_clear = Console::Command::Delegate::create(
+    [](Console::Context& console_, const Vector<Console::Command::Argument>&) {
+      console_.clear();
       return true;
     }
+  );
+
+  auto cmd_exit = Console::Command::Delegate::create(
+    [this](Console::Context&, const Vector<Console::Command::Argument>&) {
+      m_status = Status::SHUTDOWN;
+      return true;
+    }
+  );
+
+  auto cmd_quit = Console::Command::Delegate::create(
+    [this](Console::Context&, const Vector<Console::Command::Argument>&) {
+      m_status = Status::SHUTDOWN;
+      return true;
+    }
+  );
+
+  auto cmd_restart = Console::Command::Delegate::create(
+    [this](Console::Context&, const Vector<Console::Command::Argument>&) {
+      m_status = Status::RESTART;
+      return true;
+    }
+  );
+
+  if (!cmd_reset || !cmd_clear || !cmd_exit || !cmd_quit || !cmd_restart) {
     return false;
-  });
+  }
 
-  m_console.add_command("clear", "", [](Console::Context& console_, const Vector<Console::Command::Argument>&) {
-    console_.clear();
-    return true;
-  });
-
-  m_console.add_command("exit", "", [this](Console::Context&, const Vector<Console::Command::Argument>&) {
-    m_status = Status::SHUTDOWN;
-    return true;
-  });
-
-  m_console.add_command("quit", "", [this](Console::Context&, const Vector<Console::Command::Argument>&) {
-    m_status = Status::SHUTDOWN;
-    return true;
-  });
-
-  m_console.add_command("restart", "", [this](Console::Context&, const Vector<Console::Command::Argument>&) {
-    m_status = Status::RESTART;
-    return true;
-  });
+  // Bind some useful console commands early.
+  if (!m_console.add_command("reset", "s", Utility::move(*cmd_reset))) return false;
+  if (!m_console.add_command("clear", "", Utility::move(*cmd_clear))) return false;
+  if (!m_console.add_command("exit", "", Utility::move(*cmd_exit))) return false;
+  if (!m_console.add_command("quit", "", Utility::move(*cmd_quit))) return false;
+  if (!m_console.add_command("restart", "", Utility::move(*cmd_restart))) return false;
 
   // Try this as early as possible.
   if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {

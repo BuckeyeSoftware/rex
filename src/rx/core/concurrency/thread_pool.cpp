@@ -39,7 +39,7 @@ ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _stati
 
   WaitGroup group{_threads};
   for (Size i{0}; i < _threads; i++) {
-    m_threads.emplace_back("thread pool", [this, &group](int _thread_id) {
+    auto thread_func = Task::create([this, &group](int _thread_id) {
       logger->info("starting thread %d", _thread_id);
 
       group.signal();
@@ -73,6 +73,10 @@ ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _stati
           _thread_id, timer.elapsed());
       }
     });
+
+    if (!thread_func || !m_threads.emplace_back("thread pool", Utility::move(*thread_func))) {
+      break;
+    }
   }
 
   // wait for all threads to start
@@ -101,13 +105,19 @@ ThreadPool::~ThreadPool() {
     m_threads.size(), timer.elapsed());
 }
 
-void ThreadPool::add(Function<void(int)>&& task_) {
+bool ThreadPool::insert(Function<void(int)>&& task_) {
   {
     ScopeLock lock{m_mutex};
     auto item = m_job_memory.create<Work>(Utility::move(task_));
+    if (!item) {
+      return false;
+    }
     m_queue.push_back(&item->link);
   }
+
   m_task_cond.signal();
+
+  return true;
 }
 
 } // namespace Rx::Concurrency

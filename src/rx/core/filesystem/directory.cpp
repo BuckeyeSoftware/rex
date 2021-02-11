@@ -106,8 +106,12 @@ Directory::~Directory() {
 #endif
 }
 
-void Directory::each(Function<void(Item&&)>&& _function) {
-  RX_ASSERT(m_impl, "directory not opened");
+bool Directory::enumerate(Function<bool(Item&&)>&& _function) {
+  if (!m_impl) {
+    return false;
+  }
+
+  bool result = true;
 
 #if defined(RX_PLATFORM_POSIX)
   auto dir = reinterpret_cast<DIR*>(m_impl);
@@ -127,16 +131,17 @@ void Directory::each(Function<void(Item&&)>&& _function) {
     }
 
     if (next) {
-      // Only accept regular files and directories, symbolic links are not allowed.
-      switch (next->d_type) {
-      case DT_DIR:
-        _function({this, {allocator(), next->d_name}, Item::Type::DIRECTORY});
-        break;
-      case DT_REG:
-        _function({this, {allocator(), next->d_name}, Item::Type::FILE});
-        break;
+      if (next->d_type == DT_DIR) {
+        if (!_function({this, {allocator(), next->d_name}, Item::Type::DIRECTORY})) {
+          result = false;
+          break;
+        }
+      } else if (next->d_type == DT_REG) {
+        if (!_function({this, {allocator(), next->d_name}, Item::Type::FILE})) {
+          result = false;
+          break;
+        }
       }
-
       next = readdir(dir);
     } else {
       break;
@@ -159,7 +164,7 @@ void Directory::each(Function<void(Item&&)>&& _function) {
       // Destroy the Context and clear |m_impl| out so operator bool reflects this.
       allocator().destroy<FindContext>(context);
       m_impl = nullptr;
-      return;
+      return false;
     }
   }
 
@@ -180,7 +185,10 @@ void Directory::each(Function<void(Item&&)>&& _function) {
       ? Item::Type::DIRECTORY
       : Item::Type::FILE;
 
-    _function({this, utf16_name.to_utf8(), kind});
+    if (!_function({this, utf16_name.to_utf8(), kind})) {
+      result = false;
+      break;
+    }
 
     if (!FindNextFileW(context->handle, &context->find_data)) {
       break;
@@ -193,6 +201,8 @@ void Directory::each(Function<void(Item&&)>&& _function) {
   FindClose(context->handle);
   context->handle = INVALID_HANDLE_VALUE;
 #endif
+
+  return result;
 }
 
 bool create_directory(const String& _path) {

@@ -332,6 +332,10 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     visible |= draw(_mesh, true);
   });
 
+  if (!visible) {
+    return;
+  }
+
   if (_flags & BOUNDS) {
     _immediate->frame_queue().record_wire_box(
       {0.0f, 0.0f, 1.0f, 1.0f},
@@ -413,11 +417,9 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
   }
 
   const auto& joints = m_model->joints();
-
-  // TODO(dweiler): This is expensive. Revisit this later.
-#if 0
+  const auto n_joints = joints.size();
   // Render all the joints.
-  for (Size i{0}; i < joints.size(); i++) {
+  for (Size i = 0; i < n_joints; i++) {
     const Math::Mat3x4f& frame = m_animation->frames()[i] * joints[i].frame;
 
     const Math::Mat4x4f& joint{{frame.x.x, frame.y.x, frame.z.x, 0.0f},
@@ -433,10 +435,8 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
       Math::Mat4x4f::scale({scale, scale, scale}) * joint * _world,
       0);
   }
-#endif
 
   // Render the skeleton.
-  const auto n_joints = joints.size();
   for (Size i = 0; i < n_joints; i++) {
     const auto frame = m_animation->frames()[i] * joints[i].frame;
     const auto parent = joints[i].parent;

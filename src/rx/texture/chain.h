@@ -35,7 +35,7 @@ struct Chain {
     PixelFormat _want_format, const Math::Vec2z& _dimensions,
     bool _has_mipchain, bool _want_mipchain);
 
-  bool resize(const Math::Vec2z& _dimensions);
+  [[nodiscard]] bool resize(const Math::Vec2z& _dimensions);
 
   LinearBuffer&& data();
   const LinearBuffer& data() const;

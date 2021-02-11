@@ -20,6 +20,9 @@ struct RX_API Directory {
 
   operator bool() const;
 
+  template<typename F>
+  bool each(F&& function_);
+
   struct Item {
     RX_MARK_NO_COPY(Item);
     RX_MARK_NO_MOVE(Item);
@@ -48,15 +51,17 @@ struct RX_API Directory {
     Type m_type;
   };
 
-  // enumerate directory with |_function| being called for each item
-  // NOTE: does not consider hidden files, symbolic links, block devices, or ..
-  void each(Function<void(Item&&)>&& _function);
-
   const String& path() const &;
 
   constexpr Memory::Allocator& allocator() const;
 
 private:
+  using Enumerator = Function<bool(Item&&)>;
+
+  // enumerate directory with |_function| being called for each item
+  // NOTE: does not consider hidden files, symbolic links, block devices, or ..
+  bool enumerate(Enumerator&& _function);
+
   Memory::Allocator* m_allocator;
   String m_path;
   void* m_impl;
@@ -96,6 +101,25 @@ inline Directory::Directory(Directory&& directory_)
 
 RX_HINT_FORCE_INLINE Directory::operator bool() const {
   return m_impl;
+}
+
+template<typename F>
+bool Directory::each(F&& function_) {
+  // When |function_| doesn't return boolean result.
+  if constexpr (!Traits::IS_SAME<Traits::InvokeResult<F, Item&&>, bool>) {
+    // Wrap the function dispatch since |enumerate| expects something that
+    // returns boolean to indicate continued enumeration.
+    auto wrap = [function = Utility::move(function_)](Item&& item_) {
+      function(Utility::move(item_));
+      return true;
+    };
+    if (auto fun = Enumerator::create(Utility::move(wrap))) {
+      return enumerate(Utility::move(*fun));
+    }
+  } else if (auto fun = Enumerator::create(Utility::move(function_))) {
+    return enumerate(Utility::move(*fun));
+  }
+  return false;
 }
 
 RX_HINT_FORCE_INLINE const String& Directory::path() const & {

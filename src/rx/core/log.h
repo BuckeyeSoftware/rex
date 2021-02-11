@@ -65,7 +65,8 @@ struct RX_API Log {
   // for such event.
   //
   // This function is thread-safe.
-  Optional<QueueEvent::Handle> on_queue(QueueEvent::Delegate&& callback_);
+  template<typename F>
+  Optional<QueueEvent::Handle> on_queue(F&& callback_);
 
   // When a message is written, all delegates associated by this function are
   // called. This is different from |on_queue| in that |callback_| is called
@@ -76,7 +77,8 @@ struct RX_API Log {
   // for such event.
   //
   // This function is thread-safe.
-  Optional<WriteEvent::Handle> on_write(WriteEvent::Delegate&& callback_);
+  template<typename F>
+  Optional<WriteEvent::Handle> on_write(F&& callback_);
 
   // When all messages queued for this log are actually written, all delegates
   // associated by this function are called.
@@ -86,7 +88,8 @@ struct RX_API Log {
   // such event.
   //
   // This function is thread-safe.
-  Optional<FlushEvent::Handle> on_flush(FlushEvent::Delegate&& callback_);
+  template<typename F>
+  Optional<FlushEvent::Handle> on_flush(F&& callback_);
 
   // Query the name of the logger, which is the name given to the |RX_LOG| macro.
   const char* name() const;
@@ -157,16 +160,28 @@ inline const SourceLocation& Log::source_info() const & {
   return m_source_location;
 }
 
-inline Optional<Log::QueueEvent::Handle> Log::on_queue(QueueEvent::Delegate&& callback_) {
-  return m_queue_event.connect(Utility::move(callback_));
+template<typename F>
+inline Optional<Log::QueueEvent::Handle> Log::on_queue(F&& callback_) {
+  if (auto fun = QueueEvent::Delegate::create(Utility::move(callback_))) {
+    return m_queue_event.connect(Utility::move(*fun));
+  }
+  return nullopt;
 }
 
-inline Optional<Log::WriteEvent::Handle> Log::on_write(WriteEvent::Delegate&& callback_) {
-  return m_write_event.connect(Utility::move(callback_));
+template<typename F>
+inline Optional<Log::WriteEvent::Handle> Log::on_write(F&& callback_) {
+  if (auto fun = WriteEvent::Delegate::create(Utility::move(callback_))) {
+    return m_write_event.connect(Utility::move(*fun));
+  }
+  return nullopt;
 }
 
-inline Optional<Log::FlushEvent::Handle> Log::on_flush(FlushEvent::Delegate&& callback_) {
-  return m_flush_event.connect(Utility::move(callback_));
+template<typename F>
+inline Optional<Log::FlushEvent::Handle> Log::on_flush(F&& callback_) {
+  if (auto fun = FlushEvent::Delegate::create(Utility::move(callback_))) {
+    return m_flush_event.connect(Utility::move(*fun));
+  }
+  return nullopt;
 }
 
 #define RX_LOG(_name, _identifier) \

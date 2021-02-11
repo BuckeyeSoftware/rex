@@ -21,8 +21,9 @@ struct Context {
   // TODO(dweiler): Figure out how to do multiple Console Context for variables...
   static VariableReference* add_variable(VariableReference* _reference);
 
+  [[nodiscard]]
   Command* add_command(const String& _name, const char* _signature,
-    Function<bool(Context& console_, const Vector<Command::Argument>&)>&& _function);
+    Function<bool(Context& console_, const Vector<Command::Argument>&)>&& function_);
 
   VariableReference* find_variable_by_name(const String& _name);
   VariableReference* find_variable_by_name(const char* _name);
