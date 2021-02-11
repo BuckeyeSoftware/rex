@@ -298,8 +298,8 @@ Optional<ColorGrader::Atlas> ColorGrader::Atlas::create(ColorGrader* _context, S
     }
   }
 
-  auto allocated = Bitset::create(allocator, {MAX_DEPTH / _size});
-  auto dirty = Bitset::create(allocator, {MAX_DEPTH / _size});
+  auto allocated = Bitset::create(allocator, MAX_DEPTH / _size);
+  auto dirty = Bitset::create(allocator, MAX_DEPTH / _size);
   if (!allocated || !dirty) {
     return nullopt;
   }
