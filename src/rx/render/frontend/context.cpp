@@ -660,15 +660,25 @@ void Context::draw(
 
   switch (_primitive_type) {
   case PrimitiveType::LINES:
+    // Each two vertices forms a single line.
     m_lines[0] += (_count / 2) * instances;
     break;
   case PrimitiveType::POINTS:
+    // Each vertex forms a point.
     m_points[0] += _count * instances;
     break;
   case PrimitiveType::TRIANGLE_STRIP:
+    // One triangle is defined for each vertex presented after the first two
+    // vertices, thus N - 2 triangles are formed.
+    m_triangles[0] += (_count - 2) * instances;
+    break;
+  case PrimitiveType::TRIANGLE_FAN:
+    // One triangle is defined for each pair of vertices presented after the
+    // first vertex, thus N - 2 triangles are formed.
     m_triangles[0] += (_count - 2) * instances;
     break;
   case PrimitiveType::TRIANGLES:
+    // Each three vertices form a triangle.
     m_triangles[0] += (_count / 3) * instances;
     break;
   }

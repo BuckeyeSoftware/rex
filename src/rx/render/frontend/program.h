@@ -41,6 +41,7 @@ struct Uniform {
 
     // Matrices.
     F32x4x4,
+    F32x3x4,
     F32x3x3,
     LB_BONES,
     DQ_BONES
@@ -61,6 +62,7 @@ struct Uniform {
   void record_vec3f(const Math::Vec3f& _value);
   void record_vec4f(const Math::Vec4f& _value);
   void record_mat3x3f(const Math::Mat3x3f& _value);
+  void record_mat3x4f(const Math::Mat3x4f& _value);
   void record_mat4x4f(const Math::Mat4x4f& _value);
   void record_lb_bones(const Vector<Math::Mat3x4f>& _frames, Size _joints);
   void record_dq_bones(const Vector<Math::DualQuatf>& _frames, Size _joints);

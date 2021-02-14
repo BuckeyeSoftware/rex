@@ -90,6 +90,8 @@ Size Uniform::size_for_type(Type _type) {
     return sizeof(Math::Vec4f);
   case Uniform::Type::F32x3x3:
     return sizeof(Math::Mat3x3f);
+  case Uniform::Type::F32x3x4:
+    return sizeof(Math::Mat3x4f);
   case Uniform::Type::F32x4x4:
     return sizeof(Math::Mat4x4f);
   case Uniform::Type::LB_BONES:
@@ -175,6 +177,14 @@ void Uniform::record_vec4f(const Math::Vec4f& _value) {
 
 void Uniform::record_mat3x3f(const Math::Mat3x3f& _value) {
   RX_ASSERT(m_type == Type::F32x3x3, "not F32x3x3");
+  if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
+    memcpy(as_float, _value.data(), sizeof _value);
+    m_program->mark_uniform_dirty(m_bit);
+  }
+}
+
+void Uniform::record_mat3x4f(const Math::Mat3x4f& _value) {
+  RX_ASSERT(m_type == Type::F32x3x4, "not F32x3x4");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
     memcpy(as_float, _value.data(), sizeof _value);
     m_program->mark_uniform_dirty(m_bit);

@@ -42,7 +42,9 @@ struct Event<R(Ts...)> {
         , m_index{Utility::exchange(handle_.m_index, 0)}
     {
     }
+
     ~Handle();
+
   private:
     Event* m_event;
     Size m_index;

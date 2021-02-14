@@ -100,6 +100,8 @@ constexpr const char* uniform_to_string(Frontend::Uniform::Type _type) {
     return "f32x4x4";
   case Frontend::Uniform::Type::F32x3x3:
     return "f32x3x3";
+  case Frontend::Uniform::Type::F32x3x4:
+    return "f32x3x4";
   case Frontend::Uniform::Type::LB_BONES:
     return "lb_bones";
   case Frontend::Uniform::Type::DQ_BONES:

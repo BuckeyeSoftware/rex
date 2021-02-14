@@ -980,6 +980,8 @@ bool Technique::parse_uniform(const JSON& _uniform) {
         }
       };
       break;
+    case Uniform::Type::F32x3x4:
+      return error("cannot specify value for non-square matrices");
     case Uniform::Type::LB_BONES:
       [[fallthrough]];
     case Uniform::Type::DQ_BONES:

@@ -295,6 +295,8 @@ GLenum convert_primitive_type(Frontend::PrimitiveType _primitive_type) {
   switch (_primitive_type) {
   case Frontend::PrimitiveType::TRIANGLES:
     return GL_TRIANGLES;
+  case Frontend::PrimitiveType::TRIANGLE_FAN:
+    return GL_TRIANGLE_FAN;
   case Frontend::PrimitiveType::TRIANGLE_STRIP:
     return GL_TRIANGLE_STRIP;
   case Frontend::PrimitiveType::POINTS:

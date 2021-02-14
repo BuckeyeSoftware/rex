@@ -1766,6 +1766,10 @@ void GL3::process(Byte* _command) {
               pglUniformMatrix3fv(location, 1, GL_FALSE,
                 reinterpret_cast<const Float32*>(draw_uniforms));
               break;
+            case Frontend::Uniform::Type::F32x3x4:
+              pglUniformMatrix3x4fv(location, 1, GL_FALSE,
+                reinterpret_cast<const Float32*>(draw_uniforms));
+              break;
             case Frontend::Uniform::Type::F32x4x4:
               pglUniformMatrix4fv(location, 1, GL_FALSE,
                 reinterpret_cast<const Float32*>(draw_uniforms));

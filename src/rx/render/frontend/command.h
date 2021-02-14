@@ -25,6 +25,7 @@ struct Downloader;
 enum class PrimitiveType : Uint8 {
   TRIANGLES,
   TRIANGLE_STRIP,
+  TRIANGLE_FAN,
   POINTS,
   LINES
 };

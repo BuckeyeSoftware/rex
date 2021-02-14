@@ -266,8 +266,12 @@ constexpr T dot(const Vec2<T>& _lhs, const Vec2<T>& _rhs) {
 }
 
 // Only defined for floating point
+inline Float32 squared_length(const Vec2f& _value) {
+  return dot(_value, _value);
+}
+
 inline Float32 length(const Vec2f& _value) {
-  return sqrt(dot(_value, _value));
+  return sqrt(squared_length(_value));
 }
 
 template<typename T>
