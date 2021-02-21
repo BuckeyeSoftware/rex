@@ -31,13 +31,11 @@
 #define floorf(x) Rx::Math::floor(x)
 
 #include "nanovg.h"
+
 #define FONTSTASH_IMPLEMENTATION
-// #define FONTSTASH_FLOOR
 #include "fontstash.h"
-//#define STB_IMAGE_IMPLEMENTATION
-extern "C" {
+
 #include "stb_image.h"
-}
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4100)  // unreferenced formal parameter
