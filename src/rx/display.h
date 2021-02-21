@@ -64,12 +64,11 @@ inline Display::Display(Display&& display_)
   : m_allocator{display_.m_allocator}
   , m_modes{Utility::move(display_.m_modes)}
   , m_name{Utility::move(display_.m_name)}
-  , m_bounds{display_.m_bounds}
+  , m_bounds{Utility::exchange(display_.m_bounds, Extents{})}
   , m_diagonal_dpi{Utility::exchange(display_.m_diagonal_dpi, 0.0f)}
   , m_horizontal_dpi{Utility::exchange(display_.m_horizontal_dpi, 0.0f)}
   , m_vertical_dpi{Utility::exchange(display_.m_vertical_dpi, 0.0f)}
 {
-  display_.m_bounds = {};
 }
 
 inline const Vector<Display::Mode>& Display::modes() const & {
