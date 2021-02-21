@@ -177,6 +177,7 @@ static Optional<Uniform::Type> uniform_type_from_string(const String& _type) {
     // Matrices.
     {"f32x4x4",   Uniform::Type::F32x4x4},
     {"f32x3x3",   Uniform::Type::F32x3x3},
+    {"f32x3x4",   Uniform::Type::F32x3x4},
     {"lb_bones",  Uniform::Type::LB_BONES},
     {"dq_bones",  Uniform::Type::DQ_BONES}
   };
@@ -838,7 +839,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
 
   const auto kind = uniform_type_from_string(type_string);
   if (!kind) {
-    return error("unknown Type '%s' for '%s'", type_string, name_string);
+    return error("unknown type '%s' for '%s'", type_string, name_string);
   }
 
   UniformDefinition::Variant constant;
@@ -1033,7 +1034,7 @@ bool Technique::parse_shader(const JSON& _shader) {
   } else if (type_string == "fragment") {
     shader_type = Shader::Type::FRAGMENT;
   } else {
-    return error("unknown Type '%s' for shader", type_string);
+    return error("unknown type '%s' for shader", type_string);
   }
 
   // Ensure we don't have multiple definitions of the same shader.
