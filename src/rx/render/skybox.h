@@ -42,8 +42,8 @@ struct Skybox {
   void load_async(const String& _file_name,
     const Math::Vec2z& _max_face_dimensions);
 
-  bool load(Stream* _stream, const Math::Vec2z& _max_face_dimensions);
-  bool load(const String& _file_name, const Math::Vec2z& _max_face_dimensions);
+  [[nodiscard]] bool load(Stream* _stream, const Math::Vec2z& _max_face_dimensions);
+  [[nodiscard]] bool load(const String& _file_name, const Math::Vec2z& _max_face_dimensions);
 
   Frontend::Texture* texture() const;
 

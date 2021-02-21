@@ -61,9 +61,9 @@ struct Loader {
   constexpr Loader(Memory::Allocator& _allocator);
   ~Loader() = default;
 
-  bool load(Stream* _stream, PixelFormat _want_format,
+  [[nodiscard]] bool load(Stream* _stream, PixelFormat _want_format,
     const Math::Vec2z& _max_dimensions);
-  bool load(const String& _file_name, PixelFormat _want_format,
+  [[nodiscard]] bool load(const String& _file_name, PixelFormat _want_format,
     const Math::Vec2z& _max_dimensions);
 
   Size bits_per_pixel() const;

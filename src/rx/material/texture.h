@@ -56,10 +56,10 @@ struct Texture {
 
   Texture& operator=(Texture&& texture_);
 
-  bool load(Stream* _stream);
-  bool load(const String& _file_name);
+  [[nodiscard]] bool load(Stream* _stream);
+  [[nodiscard]] bool load(const String& _file_name);
 
-  bool parse(const JSON& _definition);
+  [[nodiscard]] bool parse(const JSON& _definition);
 
   const Filter& filter() const &;
   const Wrap& wrap() const &;

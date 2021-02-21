@@ -22,10 +22,10 @@ struct Loader {
 
   Loader& operator=(Loader&& loader_);
 
-  bool load(Stream* _stream);
-  bool load(const String& _file_name);
+  [[nodiscard]] bool load(Stream* _stream);
+  [[nodiscard]] bool load(const String& _file_name);
 
-  bool parse(const JSON& _definition);
+  [[nodiscard]] bool parse(const JSON& _definition);
 
   constexpr Memory::Allocator& allocator() const;
   const Vector<Texture>& textures() const;

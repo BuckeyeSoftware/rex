@@ -38,11 +38,11 @@ struct Technique {
   Program* permute(Uint64 _flags) const;
   Program* variant(Size _index) const;
 
-  bool load(Stream* _stream);
-  bool load(const String& _file_name);
+  [[nodiscard]] bool load(Stream* _stream);
+  [[nodiscard]] bool load(const String& _file_name);
 
-  bool parse(const JSON& _description);
-  bool compile(const Map<String, Module>& _modules);
+  [[nodiscard]] bool parse(const JSON& _description);
+  [[nodiscard]] bool compile(const Map<String, Module>& _modules);
 
   const String& name() const;
 

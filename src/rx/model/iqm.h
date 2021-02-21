@@ -13,7 +13,7 @@ struct IQM
 
   struct Header;
 
-  virtual bool read(Stream* _stream);
+  [[nodiscard]] virtual bool read(Stream* _stream);
 
 private:
   bool read_meshes(const Header& _header, const LinearBuffer& _data);

@@ -32,11 +32,11 @@ struct Importer {
 
   Importer(Memory::Allocator& _allocator);
 
-  bool load(Stream* _stream);
-  bool load(const String& _file_name);
+  [[nodiscard]] bool load(Stream* _stream);
+  [[nodiscard]] bool load(const String& _file_name);
 
   // implemented by each model loader
-  virtual bool read(Stream* _stream) = 0;
+  [[nodiscard]] virtual bool read(Stream* _stream) = 0;
 
   struct Animation {
     Float32 frame_rate;

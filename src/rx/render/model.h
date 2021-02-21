@@ -51,14 +51,14 @@ struct Model {
               const Math::Mat4x4f& _view, const Math::Mat4x4f& _projection,
               Uint32 _flags, Render::Immediate3D* _immediate = nullptr);
 
-  bool load(Stream* _stream);
-  bool load(const String& _file_name);
+  [[nodiscard]] bool load(Stream* _stream);
+  [[nodiscard]] bool load(const String& _file_name);
 
 private:
   void render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate);
   void render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate);
 
-  bool upload();
+  [[nodiscard]] bool upload();
 
   // Obtains the bounds for a given mesh |_mesh| even if currently animated.
   Math::AABB mesh_bounds(const Mesh& _mesh) const;

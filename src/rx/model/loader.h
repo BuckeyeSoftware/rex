@@ -15,10 +15,10 @@ struct Loader {
   Loader(Memory::Allocator& _allocator);
   ~Loader();
 
-  bool load(Stream* _stream);
-  bool load(const String& _file_name);
+  [[nodiscard]] bool load(Stream* _stream);
+  [[nodiscard]] bool load(const String& _file_name);
 
-  bool parse(const JSON& _json);
+  [[nodiscard]] bool parse(const JSON& _json);
 
   struct Vertex {
     Math::Vec3f position;

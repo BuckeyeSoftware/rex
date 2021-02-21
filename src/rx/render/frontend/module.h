@@ -21,10 +21,10 @@ struct Module {
 
   Module& operator=(Module&& module_);
 
-  bool load(Stream* _stream);
-  bool load(const String& _file_name);
+  [[nodiscard]] bool load(Stream* _stream);
+  [[nodiscard]] bool load(const String& _file_name);
 
-  bool parse(const JSON& _description);
+  [[nodiscard]] bool parse(const JSON& _description);
 
   const String& source() const &;
   const String& name() const &;
