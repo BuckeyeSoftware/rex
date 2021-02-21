@@ -75,8 +75,6 @@ struct TestGame
   TestGame(Engine* _engine)
     : Application(_engine)
     , m_frontend{*engine()->renderer()}
-    , m_immediate2D{&m_frontend}
-    , m_immediate3D{&m_frontend}
     , m_console{&m_immediate2D, engine()->input()}
     , m_frame_graph{&m_immediate2D}
     , m_memory_stats{&m_immediate2D}
@@ -113,6 +111,18 @@ struct TestGame
 
     if (auto renderable = Render::ParticleSystem::create(&m_frontend)) {
       m_particle_system_render = Utility::move(*renderable);
+    } else {
+      return false;
+    }
+
+    if (auto renderable = Render::Immediate3D::create(&m_frontend)) {
+      m_immediate3D = Utility::move(*renderable);
+    } else {
+      return false;
+    }
+
+    if (auto renderable = Render::Immediate2D::create(&m_frontend)) {
+      m_immediate2D = Utility::move(*renderable);
     } else {
       return false;
     }

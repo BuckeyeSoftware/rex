@@ -1,6 +1,7 @@
 #ifndef RX_RENDER_IMMEDIATE2D_H
 #define RX_RENDER_IMMEDIATE2D_H
 #include "rx/core/string.h"
+#include "rx/core/array.h"
 #include "rx/core/string_table.h"
 #include "rx/core/optional.h"
 #include "rx/core/map.h"
@@ -22,6 +23,8 @@ namespace Frontend {
 }
 
 struct Immediate2D {
+  RX_MARK_NO_COPY(Immediate2D);
+
   enum class TextAlign : Uint8 {
     LEFT,
     CENTER,
@@ -40,12 +43,10 @@ struct Immediate2D {
     struct Box {
       Math::Vec2f position;
       Math::Vec2f size;
-      bool operator!=(const Box& _box) const;
     };
 
     struct Rectangle : Box {
       Float32 roundness;
-      bool operator!=(const Rectangle& _rectangle) const;
     };
 
     struct Triangle : Box {};
@@ -55,7 +56,6 @@ struct Immediate2D {
       Math::Vec2f points[2];
       Float32 roundness;
       Float32 thickness;
-      bool operator!=(const Line& _line) const;
     };
 
     struct Text {
@@ -66,7 +66,6 @@ struct Immediate2D {
       Size font_length;
       Size text_index;
       Size text_length;
-      bool operator!=(const Text& _text) const;
     };
 
     struct Command {
@@ -81,11 +80,8 @@ struct Immediate2D {
         SCISSOR
       };
 
-      bool operator!=(const Command& _command) const;
-
       Type type;
       Uint32 flags;
-      Size hash;
       Math::Vec4f color;
 
       union {
@@ -118,8 +114,8 @@ struct Immediate2D {
                      Sint32 _size, Float32 _scale, TextAlign _align, const String& _contents,
                      const Math::Vec4f& _color);
 
-    bool operator!=(const Queue& _queue) const;
     void clear();
+
     bool is_empty() const;
 
   private:
@@ -130,8 +126,13 @@ struct Immediate2D {
     Optional<Box> m_scissor;
   };
 
-  Immediate2D(Frontend::Context* _frontend);
+  Immediate2D();
+  Immediate2D(Immediate2D&& immediate2D_);
   ~Immediate2D();
+
+  static Optional<Immediate2D> create(Frontend::Context* _frontend);
+
+  Immediate2D& operator=(Immediate2D&& immediate2D_);
 
   void render(Frontend::Target* _target);
   Queue& frame_queue();
@@ -235,6 +236,11 @@ private:
 
   Ptr<Font>& access_font(const Font::Key& _key);
 
+  void release();
+
+  Immediate2D(Frontend::Context* _frontend, Frontend::Technique* _technique,
+    Array<Frontend::Buffer*[BUFFERS]>&& buffers_);
+
   Frontend::Context* m_frontend;
   Frontend::Technique* m_technique;
 
@@ -246,7 +252,7 @@ private:
   Math::Vec2i m_scissor_size;
 
   // precomputed circle vertices
-  Math::Vec2f m_circle_vertices[CIRCLE_VERTICES];
+  Array<Math::Vec2f[CIRCLE_VERTICES]> m_circle_vertices;
 
   // generated commands, vertices, elements and batches
   Queue m_queue;
@@ -262,42 +268,24 @@ private:
   // buffering of batched immediates
   Size m_rd_index;
   Size m_wr_index;
-  Vector<Batch> m_render_batches[BUFFERS];
-  Frontend::Buffer* m_buffers[BUFFERS];
-  Queue m_render_queue[BUFFERS];
+  Array<Vector<Batch>[BUFFERS]> m_render_batches;
+  Array<Queue[BUFFERS]> m_render_queues;
+  Array<Frontend::Buffer*[BUFFERS]> m_buffers;
 };
 
-inline bool Immediate2D::Queue::Box::operator!=(const Box& _box) const {
-  return _box.position != position || _box.size != size;
-}
-
-inline bool Immediate2D::Queue::Rectangle::operator!=(const Rectangle& _rectangle) const {
-  return Box::operator!=(_rectangle) || _rectangle.roundness != roundness;
-}
-
-inline bool Immediate2D::Queue::Line::operator!=(const Line& _line) const {
-  return _line.points[0] != points[0] || _line.points[1] != points[1] ||
-    _line.roundness != roundness || _line.thickness != thickness;
-}
-
-inline bool Immediate2D::Queue::Text::operator!=(const Text& _text) const {
-  return _text.position != position || _text.size != size || _text.scale != scale
-    || _text.font_index != font_index || _text.font_length != font_length
-    || _text.text_index != text_index || _text.text_length != text_length;
-}
-
+// [Immediate2D::Queue]
 inline constexpr Immediate2D::Queue::Command::Command()
   : type{Queue::Command::Type::UNINITIALIZED}
   , flags{0}
-  , hash{0}
   , color{}
   , as_nat{}
 {
 }
 
-inline bool Immediate2D::Queue::record_text(const String& _font,
-                                            const Math::Vec2f& _position, Sint32 _size, Float32 _scale, TextAlign _align,
-                                            const String& _contents, const Math::Vec4f& _color)
+inline bool Immediate2D::Queue::record_text(
+  const String& _font, const Math::Vec2f& _position, Sint32 _size,
+  Float32 _scale, TextAlign _align, const String& _contents,
+  const Math::Vec4f& _color)
 {
   return record_text(_font.data(), _font.size(), _position, _size, _scale, _align,
     _contents.data(), _contents.size(), _color);
@@ -320,11 +308,12 @@ inline Frontend::Context* Immediate2D::frontend() const {
 }
 
 inline Float32 Immediate2D::measure_text_length(const String& _font,
-                                               const char* _text, Size _text_length, Sint32 _size, Float32 _scale)
+  const char* _text, Size _text_length, Sint32 _size, Float32 _scale)
 {
   return measure_text_length(_font.data(), _text, _text_length, _size, _scale);
 }
 
+// [Immediate2D::Font]
 inline bool Immediate2D::Font::Key::operator==(const Key& _key) const {
   return name == _key.name && size == _key.size;
 }
@@ -343,6 +332,61 @@ inline Frontend::Texture2D* Immediate2D::Font::texture() const {
 
 inline Frontend::Context* Immediate2D::Font::frontend() const {
   return m_frontend;
+}
+
+// [Immediate2D]
+inline Immediate2D::Immediate2D()
+  : Immediate2D{nullptr, nullptr, {}}
+{
+}
+
+inline Immediate2D::Immediate2D(Immediate2D&& immediate2D_)
+  : m_frontend{Utility::exchange(immediate2D_.m_frontend, nullptr)}
+  , m_technique{Utility::exchange(immediate2D_.m_technique, nullptr)}
+  , m_fonts{Utility::move(immediate2D_.m_fonts)}
+  , m_scissor_position{Utility::exchange(immediate2D_.m_scissor_position, Math::Vec2i{})}
+  , m_scissor_size{Utility::exchange(immediate2D_.m_scissor_size, Math::Vec2i{})}
+  , m_circle_vertices{Utility::move(m_circle_vertices)}
+  , m_queue{Utility::move(immediate2D_.m_queue)}
+  , m_vertices{Utility::exchange(immediate2D_.m_vertices, nullptr)}
+  , m_elements{Utility::exchange(immediate2D_.m_elements, nullptr)}
+  , m_batches{Utility::move(immediate2D_.m_batches)}
+  , m_vertex_index{Utility::exchange(immediate2D_.m_vertex_index, 0)}
+  , m_element_index{Utility::exchange(immediate2D_.m_element_index, 0)}
+  , m_rd_index{Utility::exchange(immediate2D_.m_rd_index, 0)}
+  , m_wr_index{Utility::exchange(immediate2D_.m_wr_index, 0)}
+  , m_render_batches{Utility::move(immediate2D_.m_render_batches)}
+  , m_render_queues{Utility::move(immediate2D_.m_render_queues)}
+  , m_buffers{Utility::move(immediate2D_.m_buffers)}
+{
+}
+
+inline Immediate2D::~Immediate2D() {
+  release();
+}
+
+inline Immediate2D& Immediate2D::operator=(Immediate2D&& immediate2D_) {
+  if (this != &immediate2D_) {
+    release();
+    m_frontend = Utility::exchange(immediate2D_.m_frontend, nullptr);
+    m_technique = Utility::exchange(immediate2D_.m_technique, nullptr);
+    m_fonts = Utility::move(immediate2D_.m_fonts);
+    m_scissor_position = Utility::exchange(immediate2D_.m_scissor_position, Math::Vec2i{});
+    m_scissor_size = Utility::exchange(immediate2D_.m_scissor_size, Math::Vec2i{});
+    m_circle_vertices = Utility::move(m_circle_vertices);
+    m_queue = Utility::move(immediate2D_.m_queue);
+    m_vertices = Utility::exchange(immediate2D_.m_vertices, nullptr);
+    m_elements = Utility::exchange(immediate2D_.m_elements, nullptr);
+    m_batches = Utility::move(immediate2D_.m_batches);
+    m_vertex_index = Utility::exchange(immediate2D_.m_vertex_index, 0);
+    m_element_index = Utility::exchange(immediate2D_.m_element_index, 0);
+    m_rd_index = Utility::exchange(immediate2D_.m_rd_index, 0);
+    m_wr_index = Utility::exchange(immediate2D_.m_wr_index, 0);
+    m_render_batches = Utility::move(immediate2D_.m_render_batches);
+    m_render_queues = Utility::move(immediate2D_.m_render_queues);
+    m_buffers = Utility::move(immediate2D_.m_buffers);
+  }
+  return *this;
 }
 
 } // namespace Rx::Render

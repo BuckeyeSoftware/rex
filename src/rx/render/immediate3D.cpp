@@ -13,6 +13,7 @@
 
 namespace Rx::Render {
 
+// [Immediate3D::Queue]
 Immediate3D::Queue::Queue(Memory::Allocator& _allocator)
   : m_commands{_allocator}
 {
@@ -93,24 +94,18 @@ void Immediate3D::Queue::clear() {
   m_commands.clear();
 }
 
-Immediate3D::Immediate3D(Frontend::Context* _frontend)
-  : m_frontend{_frontend}
-  , m_technique{m_frontend->find_technique_by_name("immediate3D")}
-  , m_queue{m_frontend->allocator()}
-  , m_vertices{nullptr}
-  , m_elements{nullptr}
-  , m_instances{nullptr}
-  , m_batches{m_frontend->allocator()}
-  , m_vertex_index{0}
-  , m_element_index{0}
-  , m_instance_index{0}
-  , m_rd_index{1}
-  , m_wr_index{0}
-{
-  for (Size i{0}; i < BUFFERS; i++) {
-    m_render_batches[i] = {m_frontend->allocator()};
-    m_render_queue[i] = {m_frontend->allocator()};
+// [Immediate3D]
+Optional<Immediate3D> Immediate3D::create(Frontend::Context* _frontend) {
+  auto technique = _frontend->find_technique_by_name("immediate3D");
+  if (!technique) {
+    return nullopt;
   }
+
+
+  //for (Size i{0}; i < BUFFERS; i++) {
+  //  m_render_batches[i] = {m_frontend->allocator()};
+  //  m_render_queue[i] = {m_frontend->allocator()};
+  //}
 
   Frontend::Buffer::Format format;
   format.record_type(Frontend::Buffer::Type::DYNAMIC);
@@ -124,27 +119,68 @@ Immediate3D::Immediate3D(Frontend::Context* _frontend)
   format.record_instance_attribute({Frontend::Buffer::Attribute::Type::F32x4x4, offsetof(Instance, transform)});
   format.finalize();
 
-  for (Size i{0}; i < BUFFERS; i++) {
-    m_buffers[i] = m_frontend->create_buffer(RX_RENDER_TAG("immediate3D"));
-    m_buffers[i]->record_format(format);
-    m_frontend->initialize_buffer(RX_RENDER_TAG("immediate3D"), m_buffers[i]);
+  Array<Frontend::Buffer*[BUFFERS]> buffers;
+  for (Size i = 0; i < BUFFERS; i++) {
+    auto buffer = _frontend->create_buffer(RX_RENDER_TAG("immediate3D"));
+    if (buffer) {
+      buffer->record_format(format);
+      _frontend->initialize_buffer(RX_RENDER_TAG("immediate3D"), buffer);
+      buffers[i] = buffer;
+    } else {
+      for (Size j = 0; j < i; j++) {
+        _frontend->destroy_buffer(RX_RENDER_TAG("immediate3D"), buffer);
+      }
+      return nullopt;
+    }
+  }
+
+  return Immediate3D{_frontend, technique, Utility::move(buffers)};
+}
+
+Immediate3D::Immediate3D(Frontend::Context* _frontend,
+  Frontend::Technique* _technique, Array<Frontend::Buffer*[BUFFERS]>&& buffers_)
+  : m_frontend{_frontend}
+  , m_technique{_technique}
+  , m_vertices{nullptr}
+  , m_elements{nullptr}
+  , m_instances{nullptr}
+  , m_vertex_index{0}
+  , m_element_index{0}
+  , m_instance_index{0}
+  , m_rd_index{1}
+  , m_wr_index{0}
+  , m_buffers{Utility::move(buffers_)}
+{
+  if (m_frontend) {
+    // Wire up allocators.
+    auto& allocator = m_frontend->allocator();
+
+    m_queue = {allocator};
+    m_batches = {allocator};
+
+    for (Size i = 0; i < BUFFERS; i++) {
+      m_render_batches[i] = {allocator};
+      m_render_queues[i] = {allocator};
+    }
   }
 }
 
-Immediate3D::~Immediate3D() {
-  for(Size i{0}; i < BUFFERS; i++) {
-    m_frontend->destroy_buffer(RX_RENDER_TAG("immediate3D"), m_buffers[i]);
+void Immediate3D::release() {
+  if (m_frontend) {
+    for (Size i = 0; i < BUFFERS; i++) {
+      m_frontend->destroy_buffer(RX_RENDER_TAG("immediate3D"), m_buffers[i]);
+    }
   }
 }
 
 void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
-                         const Math::Mat4x4f& _projection)
+  const Math::Mat4x4f& _projection)
 {
   RX_PROFILE_CPU("immediate3D::render");
 
   // Avoid rendering if the last update did not produce any draw commands and
   // this iteration has no updates either.
-  const bool last_empty = m_render_queue[m_rd_index].is_empty();
+  const bool last_empty = m_render_queues[m_rd_index].is_empty();
   if (last_empty && m_queue.is_empty()) {
     return;
   }
@@ -224,7 +260,7 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
 
   // Write buffer will be processed some time in the future
   m_render_batches[m_wr_index] = Utility::move(m_batches);
-  m_render_queue[m_wr_index] = Utility::move(m_queue);
+  m_render_queues[m_wr_index] = Utility::move(m_queue);
 
   m_wr_index = (m_wr_index + 1) % BUFFERS;
 

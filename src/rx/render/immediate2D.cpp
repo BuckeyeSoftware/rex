@@ -24,6 +24,7 @@
 
 namespace Rx::Render {
 
+// [Immediate2D::Queue]
 Immediate2D::Queue::Queue(Memory::Allocator& _allocator)
   : m_commands{_allocator}
   , m_string_table{_allocator}
@@ -42,43 +43,8 @@ Immediate2D::Queue& Immediate2D::Queue::operator=(Queue&& queue_) {
   return *this;
 }
 
-bool Immediate2D::Queue::Command::operator!=(const Command& _command) const {
-  if (_command.hash != hash) {
-    return true;
-  }
-
-  if (_command.type != type) {
-    return true;
-  }
-
-  if (_command.flags != flags) {
-    return true;
-  }
-
-  if (_command.color != color) {
-    return true;
-  }
-
-  switch (type) {
-  case Command::Type::UNINITIALIZED:
-    return false;
-  case Command::Type::LINE:
-    return _command.as_line != as_line;
-  case Command::Type::RECTANGLE:
-    return _command.as_rectangle != as_rectangle;
-  case Command::Type::SCISSOR:
-    return _command.as_scissor != as_scissor;
-  case Command::Type::TEXT:
-    return _command.as_text != as_text;
-  case Command::Type::TRIANGLE:
-    return _command.as_triangle != as_triangle;
-  }
-
-  return false;
-}
-
 bool Immediate2D::Queue::record_scissor(const Math::Vec2f& _position,
-                                        const Math::Vec2f& _size)
+  const Math::Vec2f& _size)
 {
   RX_PROFILE_CPU("immediate2D::queue::record_scissor");
 
@@ -94,17 +60,12 @@ bool Immediate2D::Queue::record_scissor(const Math::Vec2f& _position,
   next_command.color = {};
   next_command.as_scissor.position = _position;
   next_command.as_scissor.size = _size;
-
-  next_command.hash = Hash::mix_enum(next_command.type);
-  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.flags));
-  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_scissor.position));
-  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_scissor.size));
-
   return m_commands.push_back(Utility::move(next_command));
 }
 
-bool Immediate2D::Queue::record_rectangle(const Math::Vec2f& _position,
-                                          const Math::Vec2f& _size, Float32 _roundness, const Math::Vec4f& _color)
+bool Immediate2D::Queue::record_rectangle(
+  const Math::Vec2f& _position, const Math::Vec2f& _size, Float32 _roundness,
+  const Math::Vec4f& _color)
 {
   RX_PROFILE_CPU("immediate2D::queue::record_rectangle");
 
@@ -116,19 +77,12 @@ bool Immediate2D::Queue::record_rectangle(const Math::Vec2f& _position,
   next_command.as_rectangle.size = _size;
   next_command.as_rectangle.roundness = _roundness;
 
-  next_command.hash = Hash::mix_enum(next_command.type);
-  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.flags));
-  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec4f>{}(next_command.color));
-  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_rectangle.position));
-  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_rectangle.size));
-  next_command.hash = Hash::combine(next_command.hash, Hash::mix_float(next_command.as_rectangle.roundness));
-
   return m_commands.push_back(Utility::move(next_command));
 }
 
-bool Immediate2D::Queue::record_line(const Math::Vec2f& _point_a,
-                                     const Math::Vec2f& _point_b, Float32 _roundness, Float32 _thickness,
-                                     const Math::Vec4f& _color)
+bool Immediate2D::Queue::record_line(
+  const Math::Vec2f& _point_a, const Math::Vec2f& _point_b, Float32 _roundness,
+  Float32 _thickness, const Math::Vec4f& _color)
 {
   RX_PROFILE_CPU("immediate2D::queue::record_line");
 
@@ -141,13 +95,12 @@ bool Immediate2D::Queue::record_line(const Math::Vec2f& _point_a,
   next_command.as_line.roundness = _roundness;
   next_command.as_line.thickness = _thickness;
 
-  next_command.hash = Hash::mix_enum(next_command.type);
-
   return m_commands.push_back(Utility::move(next_command));
 }
 
-bool Immediate2D::Queue::record_triangle(const Math::Vec2f& _position,
-                                         const Math::Vec2f& _size, Uint32 _flags, const Math::Vec4f& _color)
+bool Immediate2D::Queue::record_triangle(
+  const Math::Vec2f& _position, const Math::Vec2f& _size, Uint32 _flags,
+  const Math::Vec4f& _color)
 {
   RX_PROFILE_CPU("immediate2D::queue::record_triangle");
 
@@ -158,18 +111,13 @@ bool Immediate2D::Queue::record_triangle(const Math::Vec2f& _position,
   next_command.as_triangle.position = _position;
   next_command.as_triangle.size = _size;
 
-  next_command.hash = Hash::mix_enum(next_command.type);
-  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.flags));
-  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec4f>{}(next_command.color));
-  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_triangle.position));
-  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_triangle.size));
-
   return m_commands.push_back(Utility::move(next_command));
 }
 
-bool Immediate2D::Queue::record_text(const char* _font, Size _font_length,
-                                     const Math::Vec2f& _position, Sint32 _size, Float32 _scale, TextAlign _align,
-                                     const char* _text, Size _text_length, const Math::Vec4f& _color)
+bool Immediate2D::Queue::record_text(
+  const char* _font, Size _font_length, const Math::Vec2f& _position,
+  Sint32 _size, Float32 _scale, TextAlign _align, const char* _text,
+  Size _text_length, const Math::Vec4f& _color)
 {
   RX_PROFILE_CPU("immediate2D::queue::record_text");
 
@@ -216,50 +164,15 @@ bool Immediate2D::Queue::record_text(const char* _font, Size _font_length,
   next_command.as_text.font_index = *font_index;
   next_command.as_text.text_index = *text_index;
 
-  next_command.hash = Hash::mix_enum(next_command.type);
-  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.flags));
-  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec4f>{}(next_command.color));
-  next_command.hash = Hash::combine(next_command.hash, Hash::Hasher<Math::Vec2f>{}(next_command.as_text.position));
-  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.as_text.size));
-  next_command.hash = Hash::combine(next_command.hash, Hash::mix_float(next_command.as_text.scale));
-  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.as_text.font_index));
-  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.as_text.font_length));
-  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.as_text.text_index));
-  next_command.hash = Hash::combine(next_command.hash, Hash::mix_int(next_command.as_text.text_length));
-
   return m_commands.push_back(Utility::move(next_command));
 }
 
-bool Immediate2D::Queue::record_text(const char* _font,
-                                     const Math::Vec2f& _position, Sint32 _size, Float32 _scale, TextAlign _align,
-                                     const char* _contents, const Math::Vec4f& _color)
+bool Immediate2D::Queue::record_text(
+  const char* _font, const Math::Vec2f& _position, Sint32 _size, Float32 _scale,
+  TextAlign _align, const char* _contents, const Math::Vec4f& _color)
 {
   return record_text(_font, strlen(_font), _position, _size, _scale, _align,
     _contents, strlen(_contents), _color);
-}
-
-bool Immediate2D::Queue::operator!=(const Queue& _queue) const {
-  if (_queue.m_commands.size() != m_commands.size()) {
-    return true;
-  }
-
-  if (_queue.m_string_table.size() != m_string_table.size()) {
-    return true;
-  }
-
-  for (Size i{0}; i < m_commands.size(); i++) {
-    if (_queue.m_commands[i] != m_commands[i]) {
-      return true;
-    }
-  }
-
-  if (memcmp(_queue.m_string_table.data(), m_string_table.data(),
-    m_string_table.size()) != 0)
-  {
-    return true;
-  }
-
-  return false;
 }
 
 void Immediate2D::Queue::clear() {
@@ -267,6 +180,7 @@ void Immediate2D::Queue::clear() {
   m_string_table.clear();
 }
 
+// [Immediate2D::Font]
 Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
   : m_frontend{_frontend}
   , m_size{_key.size}
@@ -355,7 +269,7 @@ Immediate2D::Font::~Font() {
 }
 
 Immediate2D::Font::Quad Immediate2D::Font::quad_for_glyph(Size _glyph,
-                                                          Float32 _scale, Math::Vec2f& position_) const
+  Float32 _scale, Math::Vec2f& position_) const
 {
   const auto& glyph{m_glyphs[_glyph]};
 
@@ -386,27 +300,11 @@ Immediate2D::Font::Quad Immediate2D::Font::quad_for_glyph(Size _glyph,
   return result;
 }
 
-Immediate2D::Immediate2D(Frontend::Context* _frontend)
-  : m_frontend{_frontend}
-  , m_technique{m_frontend->find_technique_by_name("immediate2D")}
-  , m_queue{m_frontend->allocator()}
-  , m_vertices{nullptr}
-  , m_elements{nullptr}
-  , m_batches{m_frontend->allocator()}
-  , m_vertex_index{0}
-  , m_element_index{0}
-  , m_rd_index{1}
-  , m_wr_index{0}
-{
-  for (Size i{0}; i < BUFFERS; i++) {
-    m_render_batches[i] = {m_frontend->allocator()};
-    m_render_queue[i] = {m_frontend->allocator()};
-  }
-
-  // Generate circle geometry.
-  for (Size i{0}; i < CIRCLE_VERTICES; i++) {
-    const auto phi = Float32(i) / Float32(CIRCLE_VERTICES) * Math::PI<Float32> * 2.0f;
-    m_circle_vertices[i] = {Math::cos(phi), Math::sin(phi)};
+// [Immediate2D]
+Optional<Immediate2D> Immediate2D::create(Frontend::Context* _frontend) {
+  auto technique = _frontend->find_technique_by_name("immediate2D");
+  if (!technique) {
+    return nullopt;
   }
 
   Frontend::Buffer::Format format;
@@ -418,16 +316,61 @@ Immediate2D::Immediate2D(Frontend::Context* _frontend)
   format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x4, offsetof(Vertex, color)});
   format.finalize();
 
-  for (Size i{0}; i < BUFFERS; i++) {
-    m_buffers[i] = m_frontend->create_buffer(RX_RENDER_TAG("immediate2D"));
-    m_buffers[i]->record_format(format);
-    m_frontend->initialize_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[i]);
+  Array<Frontend::Buffer*[BUFFERS]> buffers;
+  for (Size i = 0; i < BUFFERS; i++) {
+    auto buffer = _frontend->create_buffer(RX_RENDER_TAG("immediate2D"));
+    if (buffer) {
+      buffer->record_format(format);
+      _frontend->initialize_buffer(RX_RENDER_TAG("immediate2D"), buffer);
+      buffers[i] = buffer;
+    } else {
+      for (Size j = 0; j < i; j++) {
+        _frontend->destroy_buffer(RX_RENDER_TAG("immediate2D"), buffer);
+      }
+      return nullopt;
+    }
+  }
+
+  return Immediate2D{_frontend, technique, Utility::move(buffers)};
+}
+
+Immediate2D::Immediate2D(Frontend::Context* _frontend,
+  Frontend::Technique* _technique, Array<Frontend::Buffer*[BUFFERS]>&& buffers_)
+  : m_frontend{_frontend}
+  , m_technique{_technique}
+  , m_vertices{nullptr}
+  , m_elements{nullptr}
+  , m_vertex_index{0}
+  , m_element_index{0}
+  , m_rd_index{1}
+  , m_wr_index{0}
+  , m_buffers{Utility::move(buffers_)}
+{
+  if (m_frontend) {
+    // Wire up allocators.
+    auto& allocator = m_frontend->allocator();
+
+    m_queue = {allocator};
+    m_batches = {allocator};
+
+    for (Size i = 0; i < BUFFERS; i++) {
+      m_render_batches[i] = {allocator};
+      m_render_queues[i] = {allocator};
+    }
+  }
+
+  // Generate circle geometry.
+  for (Size i = 0; i < CIRCLE_VERTICES; i++) {
+    const auto phi = Float32(i) / Float32(CIRCLE_VERTICES) * Math::PI<Float32> * 2.0f;
+    m_circle_vertices[i] = {Math::cos(phi), Math::sin(phi)};
   }
 }
 
-Immediate2D::~Immediate2D() {
-  for (Size i{0}; i < BUFFERS; i++) {
-    m_frontend->destroy_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[i]);
+void Immediate2D::release() {
+  if (m_frontend) {
+    for (Size i = 0; i < BUFFERS; i++) {
+      m_frontend->destroy_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[i]);
+    }
   }
 }
 
@@ -436,113 +379,111 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
 
   // avoid rendering if the last update did not produce any draw commands and
   // this iteration has no updates either
-  const bool last_empty{m_render_queue[m_rd_index].is_empty()};
+  const bool last_empty{m_render_queues[m_rd_index].is_empty()};
   if (last_empty && m_queue.is_empty()) {
     return;
   }
 
-  // avoid generating geomtry and uploading if the contents didn't change
-  if (m_queue != m_render_queue[m_rd_index]) {
-    // calculate storage needed
-    Size n_vertices{0};
-    Size n_elements{0};
-    m_queue.m_commands.each_fwd([&](const Queue::Command& _command) {
-      switch (_command.type) {
-      case Queue::Command::Type::RECTANGLE:
-        size_rectangle(
-          _command.as_rectangle.roundness,
-          n_vertices,
-          n_elements);
-          break;
-      case Queue::Command::Type::LINE:
-        size_line(_command.as_line.roundness, n_vertices, n_elements);
+  // calculate storage needed
+  Size n_vertices{0};
+  Size n_elements{0};
+  m_queue.m_commands.each_fwd([&](const Queue::Command& _command) {
+    switch (_command.type) {
+    case Queue::Command::Type::RECTANGLE:
+      size_rectangle(
+        _command.as_rectangle.roundness,
+        n_vertices,
+        n_elements);
         break;
-      case Queue::Command::Type::TRIANGLE:
-        size_triangle(n_vertices, n_elements);
-        break;
-      case Queue::Command::Type::TEXT:
-        size_text(
-          m_queue.m_string_table[_command.as_text.text_index],
-          _command.as_text.text_length,
-          n_vertices,
-          n_elements);
-        break;
-      default:
-        break;
-      }
-    });
-
-    // The commands generated did not produce any primitives.
-    if (n_elements == 0) {
-      return;
+    case Queue::Command::Type::LINE:
+      size_line(_command.as_line.roundness, n_vertices, n_elements);
+      break;
+    case Queue::Command::Type::TRIANGLE:
+      size_triangle(n_vertices, n_elements);
+      break;
+    case Queue::Command::Type::TEXT:
+      size_text(
+        m_queue.m_string_table[_command.as_text.text_index],
+        _command.as_text.text_length,
+        n_vertices,
+        n_elements);
+      break;
+    default:
+      break;
     }
+  });
 
-    // allocate storage
-    m_vertices = (Vertex*)m_buffers[m_wr_index]->map_vertices(n_vertices * sizeof(Vertex));
-    m_elements = (Uint32*)m_buffers[m_wr_index]->map_elements(n_elements * sizeof(Uint32));
-
-    // generate geometry for a future frame
-    m_queue.m_commands.each_fwd([this](const Queue::Command& _command) {
-      switch (_command.type) {
-      case Queue::Command::Type::RECTANGLE:
-        generate_rectangle(
-          _command.as_rectangle.position.cast<Float32>(),
-          _command.as_rectangle.size.cast<Float32>(),
-          static_cast<Float32>(_command.as_rectangle.roundness),
-          _command.color);
-        break;
-      case Queue::Command::Type::LINE:
-        generate_line(
-          _command.as_line.points[0].cast<Float32>(),
-          _command.as_line.points[1].cast<Float32>(),
-          static_cast<Float32>(_command.as_line.thickness),
-          static_cast<Float32>(_command.as_line.roundness),
-          _command.color);
-        break;
-      case Queue::Command::Type::TRIANGLE:
-        generate_triangle(
-          _command.as_triangle.position.cast<Float32>(),
-          _command.as_triangle.size.cast<Float32>(),
-          _command.color);
-        break;
-      case Queue::Command::Type::TEXT:
-        generate_text(
-          _command.as_text.size,
-          m_queue.m_string_table[_command.as_text.font_index],
-          _command.as_text.font_length,
-          m_queue.m_string_table[_command.as_text.text_index],
-          _command.as_text.text_length,
-          _command.as_text.scale,
-          _command.as_text.position.cast<Float32>(),
-          static_cast<TextAlign>(_command.flags),
-          _command.color);
-        break;
-      case Queue::Command::Type::SCISSOR:
-        m_scissor_position = _command.as_scissor.position.cast<Sint32>();
-        m_scissor_size = _command.as_scissor.size.cast<Sint32>();
-        break;
-      default:
-        break;
-      }
-    });
-    // record the edit
-    m_buffers[m_wr_index]->record_vertices_edit(0, n_vertices * sizeof(Vertex));
-    m_buffers[m_wr_index]->record_elements_edit(0, n_elements * sizeof(Uint32));
-    m_frontend->update_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[m_wr_index]);
-
-    // clear staging buffers
-    m_vertices = nullptr;
-    m_elements = nullptr;
-
-    m_vertex_index = 0;
-    m_element_index = 0;
-
-    // write buffer will be processed some time in the future
-    m_render_batches[m_wr_index] = Utility::move(m_batches);
-    m_render_queue[m_wr_index] = Utility::move(m_queue);
-
-    m_wr_index = (m_wr_index + 1) % BUFFERS;
+  // The commands generated did not produce any primitives.
+  if (n_elements == 0) {
+    return;
   }
+
+  // allocate storage
+  m_vertices = (Vertex*)m_buffers[m_wr_index]->map_vertices(n_vertices * sizeof(Vertex));
+  m_elements = (Uint32*)m_buffers[m_wr_index]->map_elements(n_elements * sizeof(Uint32));
+
+  // generate geometry for a future frame
+  m_queue.m_commands.each_fwd([this](const Queue::Command& _command) {
+    switch (_command.type) {
+    case Queue::Command::Type::RECTANGLE:
+      generate_rectangle(
+        _command.as_rectangle.position.cast<Float32>(),
+        _command.as_rectangle.size.cast<Float32>(),
+        static_cast<Float32>(_command.as_rectangle.roundness),
+        _command.color);
+      break;
+    case Queue::Command::Type::LINE:
+      generate_line(
+        _command.as_line.points[0].cast<Float32>(),
+        _command.as_line.points[1].cast<Float32>(),
+        static_cast<Float32>(_command.as_line.thickness),
+        static_cast<Float32>(_command.as_line.roundness),
+        _command.color);
+      break;
+    case Queue::Command::Type::TRIANGLE:
+      generate_triangle(
+        _command.as_triangle.position.cast<Float32>(),
+        _command.as_triangle.size.cast<Float32>(),
+        _command.color);
+      break;
+    case Queue::Command::Type::TEXT:
+      generate_text(
+        _command.as_text.size,
+        m_queue.m_string_table[_command.as_text.font_index],
+        _command.as_text.font_length,
+        m_queue.m_string_table[_command.as_text.text_index],
+        _command.as_text.text_length,
+        _command.as_text.scale,
+        _command.as_text.position.cast<Float32>(),
+        static_cast<TextAlign>(_command.flags),
+        _command.color);
+      break;
+    case Queue::Command::Type::SCISSOR:
+      m_scissor_position = _command.as_scissor.position.cast<Sint32>();
+      m_scissor_size = _command.as_scissor.size.cast<Sint32>();
+      break;
+    default:
+      break;
+    }
+  });
+
+  // record the edit
+  m_buffers[m_wr_index]->record_vertices_edit(0, n_vertices * sizeof(Vertex));
+  m_buffers[m_wr_index]->record_elements_edit(0, n_elements * sizeof(Uint32));
+  m_frontend->update_buffer(RX_RENDER_TAG("immediate2D"), m_buffers[m_wr_index]);
+
+  // clear staging buffers
+  m_vertices = nullptr;
+  m_elements = nullptr;
+
+  m_vertex_index = 0;
+  m_element_index = 0;
+
+  // write buffer will be processed some time in the future
+  m_render_batches[m_wr_index] = Utility::move(m_batches);
+  m_render_queues[m_wr_index] = Utility::move(m_queue);
+
+  m_wr_index = (m_wr_index + 1) % BUFFERS;
 
   // if the last queue has any draw commands, render them now
   const auto& dimensions{_target->dimensions().cast<Sint32>()};
@@ -551,7 +492,6 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
 
   if (!last_empty) {
     m_render_batches[m_rd_index].each_fwd([&](Batch& _batch) {
-
       _batch.render_state.viewport.record_dimensions(_target->dimensions());
 
       Frontend::Buffers draw_buffers;
