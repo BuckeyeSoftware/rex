@@ -6,13 +6,18 @@
 
 namespace Rx {
 
-const char* FormatNormalize<Math::Vec2f>::operator()(const Math::Vec2f& value) {
-  snprintf(scratch, sizeof scratch, "{%f, %f}", value.x, value.y);
+const char* FormatNormalize<Math::Vec2f>::operator()(const Math::Vec2f& _value) {
+  snprintf(scratch, sizeof scratch, "{%f, %f}", _value.x, _value.y);
   return scratch;
 }
 
-const char* FormatNormalize<Math::Vec2i>::operator()(const Math::Vec2i& value) {
-  snprintf(scratch, sizeof scratch, "{%d, %d}", value.x, value.y);
+const char* FormatNormalize<Math::Vec2i>::operator()(const Math::Vec2i& _value) {
+  snprintf(scratch, sizeof scratch, "{%d, %d}", _value.x, _value.y);
+  return scratch;
+}
+
+const char* FormatNormalize<Math::Vec2z>::operator()(const Math::Vec2z& _value) {
+  snprintf(scratch, sizeof scratch, "{%zu, %zu}", _value.x, _value.y);
   return scratch;
 }
 

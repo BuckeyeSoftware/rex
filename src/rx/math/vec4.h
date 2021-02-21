@@ -249,38 +249,57 @@ namespace Rx {
 
 template<>
 struct FormatNormalize<Math::Vec4f> {
-  char scratch[FormatSize<Float32>::size * 4 + sizeof "{,,,   }" - 1];
+  char scratch[FormatSize<Float32>::SIZE * 4 + sizeof "{,,,   }"];
   const char* operator()(const Math::Vec4f& _value);
 };
 
 template<>
 struct FormatNormalize<Math::Vec4i> {
-  char scratch[FormatSize<Sint32>::size * 4 + sizeof "{,,,   }" - 1];
+  char scratch[FormatSize<Sint32>::SIZE * 4 + sizeof "{,,,   }"];
   const char* operator()(const Math::Vec4i& _value);
 };
 
-namespace Hash {
-  template<>
-  struct Hasher<Math::Vec4f> {
-    constexpr Size operator()(const Math::Vec4f& _value) const {
-      const auto x = Hash::mix_float(_value.x);
-      const auto y = Hash::mix_float(_value.y);
-      const auto z = Hash::mix_float(_value.z);
-      const auto w = Hash::mix_float(_value.w);
-      return Hash::combine(Hash::combine(x, y), Hash::combine(z, w));
-    }
-  };
+template<>
+struct FormatNormalize<Math::Vec4z> {
+  char scratch[FormatSize<Size>::SIZE * 4 + sizeof "{,,,   }"];
+  const char* operator()(const Math::Vec4z& _value);
+};
 
-  template<>
-  struct Hasher<Math::Vec4i> {
-    constexpr Size operator()(const Math::Vec4i& _value) const {
-      const auto x = Hash::mix_int(_value.x);
-      const auto y = Hash::mix_int(_value.y);
-      const auto z = Hash::mix_int(_value.z);
-      const auto w = Hash::mix_int(_value.w);
-      return Hash::combine(Hash::combine(x, y), Hash::combine(z, w));
-    }
-  };
+namespace Hash {
+
+template<>
+struct Hasher<Math::Vec4f> {
+  constexpr Size operator()(const Math::Vec4f& _value) const {
+    const auto x = Hash::mix_float(_value.x);
+    const auto y = Hash::mix_float(_value.y);
+    const auto z = Hash::mix_float(_value.z);
+    const auto w = Hash::mix_float(_value.w);
+    return Hash::combine(Hash::combine(x, y), Hash::combine(z, w));
+  }
+};
+
+template<>
+struct Hasher<Math::Vec4i> {
+  constexpr Size operator()(const Math::Vec4i& _value) const {
+    const auto x = Hash::mix_int(_value.x);
+    const auto y = Hash::mix_int(_value.y);
+    const auto z = Hash::mix_int(_value.z);
+    const auto w = Hash::mix_int(_value.w);
+    return Hash::combine(Hash::combine(x, y), Hash::combine(z, w));
+  }
+};
+
+template<>
+struct Hasher<Math::Vec4z> {
+  constexpr Size operator()(const Math::Vec4z& _value) const {
+    const auto x = Hash::mix_int(_value.x);
+    const auto y = Hash::mix_int(_value.y);
+    const auto z = Hash::mix_int(_value.z);
+    const auto w = Hash::mix_int(_value.w);
+    return Hash::combine(Hash::combine(x, y), Hash::combine(z, w));
+  }
+};
+
 } // namespace Hash
 
 } // namespace Rx

@@ -289,14 +289,20 @@ namespace Rx {
 
 template<>
 struct FormatNormalize<Math::Vec2f> {
-  char scratch[FormatSize<Float32>::size * 2 + sizeof "{, }" - 1];
+  char scratch[FormatSize<Float32>::SIZE * 2 + sizeof "{, }"];
   const char* operator()(const Math::Vec2f& _value);
 };
 
 template<>
 struct FormatNormalize<Math::Vec2i> {
-  char scratch[FormatSize<Sint32>::size * 2 + sizeof "{, }" - 1];
+  char scratch[FormatSize<Sint32>::SIZE * 2 + sizeof "{, }"];
   const char* operator()(const Math::Vec2i& _value);
+};
+
+template<>
+struct FormatNormalize<Math::Vec2z> {
+  char scratch[FormatSize<Size>::SIZE * 2 + sizeof "{, }"];
+  const char* operator()(const Math::Vec2z& _value);
 };
 
 namespace Hash {

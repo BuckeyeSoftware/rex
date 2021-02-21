@@ -66,9 +66,9 @@ namespace Rx {
   struct FormatNormalize<Time::Span> {
     // Largest possible string is:
     // "%dd:%02dh:%02dm:%02ds:%.2fms"
-    char scratch[FormatSize<Sint64>::size + sizeof ":  :  :  :    ms"];
+    char scratch[FormatSize<Sint64>::SIZE + sizeof ":  :  :  :    ms"];
     const char* operator()(const Time::Span& _value);
   };
-}
+} // namespace Rx
 
 #endif // RX_CORE_TIME_SPAN_H

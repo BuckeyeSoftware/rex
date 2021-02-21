@@ -7,31 +7,37 @@
 #include "rx/core/traits/remove_cvref.h"
 #include "rx/core/hints/format.h"
 #include "rx/core/types.h" // Size
+#include "rx/core/concepts/integral.h"
 
 namespace Rx {
 
-// FormatSize holds maximum size needed to format a value of that Type
+// FormatSize holds maximum size needed to format a value of that type
 template<typename T>
 struct FormatSize;
 
 template<>
 struct FormatSize<Float32> {
-  static constexpr const Size size = 3 + FLT_MANT_DIG - FLT_MIN_EXP;
+  static constexpr const Size SIZE = 3 + FLT_MANT_DIG - FLT_MIN_EXP;
 };
 
 template<>
 struct FormatSize<Float64> {
-  static constexpr const Size size = 3 + DBL_MANT_DIG - DBL_MIN_EXP;
+  static constexpr const Size SIZE = 3 + DBL_MANT_DIG - DBL_MIN_EXP;
 };
 
-template<>
-struct FormatSize<Sint32> {
-  static constexpr const Size size = 3 + (8 * sizeof(Sint32) / 3);
+// General rule is n binary digits require ceil(n*ln(2)/ln(10)) = ceil(n * 0.301)
+// bytes to format, not including null-terminator.
+//
+// Okay to waste some space here approximating ln(2)/ln(10). Signed requires
+// more for a possible sign character.
+template<Concepts::SignedIntegral T>
+struct FormatSize<T> {
+  static constexpr const Size SIZE = 3 + (8 * sizeof(T) / 3);
 };
 
-template<>
-struct FormatSize<Sint64> {
-  static constexpr const Size size = 3 + (8 * sizeof(Sint64) / 3);
+template<Concepts::UnsignedIntegral T>
+struct FormatSize<T> {
+  static constexpr const Size SIZE = (8 * sizeof(T) + 5) / 3;
 };
 
 // FormatNormalize is used to convert non-trivial |T| into |...| compatible types.

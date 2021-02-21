@@ -384,36 +384,54 @@ namespace Rx {
 
 template<>
 struct FormatNormalize<Math::Vec3f> {
-  char scratch[FormatSize<Float32>::size * 3 + sizeof "{,,  }" - 1];
+  char scratch[FormatSize<Float32>::SIZE * 3 + sizeof "{,,  }"];
   const char* operator()(const Math::Vec3f& _value);
 };
 
 template<>
-struct FormatNormalize<::Rx::Math::Vec3i> {
-  char scratch[FormatSize<Sint32>::size * 3 + sizeof "{,,  }" - 1];
+struct FormatNormalize<Math::Vec3i> {
+  char scratch[FormatSize<Sint32>::SIZE * 3 + sizeof "{,,  }"];
   const char* operator()(const Math::Vec3i& _value);
 };
 
-namespace Hash {
-  template<>
-  struct Hasher<Math::Vec3f> {
-    constexpr Size operator()(const Math::Vec3f& _value) const {
-      const auto x = Hash::mix_float(_value.x);
-      const auto y = Hash::mix_float(_value.y);
-      const auto z = Hash::mix_float(_value.z);
-      return Hash::combine(Hash::combine(x, y), z);
-    }
-  };
+template<>
+struct FormatNormalize<Math::Vec3z> {
+  char scratch[FormatSize<Size>::SIZE * 2 + sizeof "{,, }"];
+  const char* operator()(const Math::Vec3z& _value);
+};
 
-  template<>
-  struct Hasher<Math::Vec3i> {
-    constexpr Size operator()(const Math::Vec3i& _value) const {
-      const auto x = Hash::mix_int(_value.x);
-      const auto y = Hash::mix_int(_value.y);
-      const auto z = Hash::mix_int(_value.z);
-      return Hash::combine(Hash::combine(x, y), z);
-    }
-  };
+namespace Hash {
+
+template<>
+struct Hasher<Math::Vec3f> {
+  constexpr Size operator()(const Math::Vec3f& _value) const {
+    const auto x = Hash::mix_float(_value.x);
+    const auto y = Hash::mix_float(_value.y);
+    const auto z = Hash::mix_float(_value.z);
+    return Hash::combine(Hash::combine(x, y), z);
+  }
+};
+
+template<>
+struct Hasher<Math::Vec3i> {
+  constexpr Size operator()(const Math::Vec3i& _value) const {
+    const auto x = Hash::mix_int(_value.x);
+    const auto y = Hash::mix_int(_value.y);
+    const auto z = Hash::mix_int(_value.z);
+    return Hash::combine(Hash::combine(x, y), z);
+  }
+};
+
+template<>
+struct Hasher<Math::Vec3z> {
+  constexpr Size operator()(const Math::Vec3z& _value) const {
+    const auto x = Hash::mix_int(_value.x);
+    const auto y = Hash::mix_int(_value.y);
+    const auto z = Hash::mix_int(_value.z);
+    return Hash::combine(Hash::combine(x, y), z);
+  }
+};
+
 } // namespace Hash
 
 } // namespace Rx
