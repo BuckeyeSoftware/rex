@@ -93,6 +93,7 @@ static void (GLAPIENTRYP pglUniform4fv)(GLint, GLsizei, const GLfloat*);
 static void (GLAPIENTRYP pglUniformMatrix3fv)(GLint, GLsizei, GLboolean, const GLfloat*);
 static void (GLAPIENTRYP pglUniformMatrix4fv)(GLint, GLsizei, GLboolean, const GLfloat*);
 static void (GLAPIENTRYP pglUniformMatrix3x4fv)(GLint, GLsizei, GLboolean, const GLfloat*);
+static void (GLAPIENTRYP pglUniformMatrix2x4fv)(GLint, GLsizei, GLboolean, const GLfloat*);
 
 // state
 static void (GLAPIENTRYP pglEnable)(GLenum);
@@ -914,6 +915,7 @@ bool GL3::init() {
   fetch("glUniformMatrix3fv", pglUniformMatrix3fv);
   fetch("glUniformMatrix4fv", pglUniformMatrix4fv);
   fetch("glUniformMatrix3x4fv", pglUniformMatrix3x4fv);
+  fetch("glUniformMatrix2x4fv", pglUniformMatrix2x4fv);
 
   // state
   fetch("glEnable", pglEnable);
@@ -1779,6 +1781,12 @@ void GL3::process(Byte* _command) {
               pglUniformMatrix3x4fv(location,
                 static_cast<GLsizei>(uniform.size() / sizeof(Math::Mat3x4f)),
                 GL_FALSE, reinterpret_cast<const Float32*>(draw_uniforms));
+              break;
+            case Frontend::Uniform::Type::DQ_BONES:
+              pglUniformMatrix2x4fv(location,
+                static_cast<GLsizei>(uniform.size() / sizeof(Math::DualQuatf)),
+                GL_FALSE, reinterpret_cast<const Float32*>(draw_uniforms));
+              break;
             }
 
             draw_uniforms += uniform.size();
