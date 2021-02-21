@@ -290,7 +290,7 @@ Byte* Arena::Block::map_sink_data(Buffer::Sink _sink, Uint32 _size) {
 
     if (new_offset != old_offset) {
       const Size total_size = new_offset + new_size;
-      if (!(result = buffer->map_sink_data(_sink, total_size))) {
+      if (!(result = buffer->map_sink(_sink, total_size))) {
         // Undo the reallocation on |list|.
         //
         // This should never fail. Assert anyways because if it does fail it
@@ -312,7 +312,7 @@ Byte* Arena::Block::map_sink_data(Buffer::Sink _sink, Uint32 _size) {
   // This is a fresh allocation.
   if (list.allocate(_size, new_offset)) {
     const auto total_size = new_offset + new_size;
-    if (!(result = buffer->map_sink_data(_sink, total_size))) {
+    if (!(result = buffer->map_sink(_sink, total_size))) {
       // Undo the allocation on |list|.
       //
       // This should never fail. Assert anyways because if it does fail it

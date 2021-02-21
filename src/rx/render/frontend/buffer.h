@@ -133,6 +133,9 @@ struct Buffer
   // Record buffer format.
   bool record_format(const Format& _format);
 
+  // Map |_size| bytes of sink |_sink|.
+  [[nodiscard]] Byte* map_sink(Sink _sink, Size _size);
+
   // Map |_size| bytes for vertices.
   Byte* map_vertices(Size _size);
   // Map |_size| bytes for elements.
@@ -169,9 +172,6 @@ struct Buffer
   const Format& format() const &;
 
 private:
-  // Map |_size| bytes of sink |_sink|.
-  [[nodiscard]] Byte* map_sink_data(Sink _sink, Size _size);
-
   // Write |_size| bytes from |_data| into sink |_sink|.
   [[nodiscard]] bool write_sink_data(Sink _sink, const Byte* _data, Size _size);
 
@@ -193,6 +193,41 @@ private:
   Uint32 m_recorded;
 };
 
+// Memory allocator over a Buffer to avoid copies. |allocate| may only be called
+// once, subsequent allocations should only reallocate the original allocation.
+// This allocator is really only useful for types like Vector<T>, LinearBuffer,
+// and anything that manages a single contiguous allocation which it reallocates.
+struct BufferAllocator
+  : Memory::Allocator
+{
+  BufferAllocator() = default;
+  BufferAllocator(Buffer::Sink _sink, Buffer* _buffer);
+
+  BufferAllocator& operator=(const BufferAllocator& _allocator);
+
+  virtual Byte* allocate(Size _size);
+  virtual Byte* reallocate(void*, Size _size);
+  virtual void deallocate(void*);
+
+private:
+  Buffer::Sink m_sink;
+
+  // When tagged an allocation is managed by the allocator.
+  TaggedPtr<Buffer> m_buffer;
+};
+
+// [BufferAllocator]
+inline BufferAllocator::BufferAllocator(Buffer::Sink _sink, Buffer* _buffer)
+  : m_sink{_sink}
+  , m_buffer{_buffer, 0}
+{
+}
+
+inline BufferAllocator& BufferAllocator::operator=(const BufferAllocator& _allocator) {
+  m_sink = _allocator.m_sink;
+  m_buffer = _allocator.m_buffer;
+  return *this;
+}
 
 // [Buffer::Attribute]
 inline bool Buffer::Attribute::operator!=(const Attribute& _other) const {
@@ -311,15 +346,15 @@ inline Size Buffer::Format::hash() const {
 
 // [Buffer]
 inline Byte* Buffer::map_vertices(Size _size) {
-  return map_sink_data(Sink::VERTICES, _size);
+  return map_sink(Sink::VERTICES, _size);
 }
 
 inline Byte* Buffer::map_elements(Size _size) {
-  return map_sink_data(Sink::ELEMENTS, _size);
+  return map_sink(Sink::ELEMENTS, _size);
 }
 
 inline Byte* Buffer::map_instances(Size _size) {
-  return map_sink_data(Sink::INSTANCES, _size);
+  return map_sink(Sink::INSTANCES, _size);
 }
 
 template<typename T>

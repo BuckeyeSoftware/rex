@@ -120,9 +120,10 @@ Buffer::Buffer(Context* _frontend)
 }
 
 Buffer::~Buffer() {
+  // Do nothing.
 }
 
-Byte* Buffer::map_sink_data(Sink _sink, Size _size) {
+Byte* Buffer::map_sink(Sink _sink, Size _size) {
   // Ignore zero-sized mappings.
   if (_size == 0) {
     return nullptr;
@@ -165,7 +166,7 @@ Byte* Buffer::map_sink_data(Sink _sink, Size _size) {
 
 bool Buffer::write_sink_data(Sink _sink, const Byte* _data, Size _size) {
   RX_ASSERT(_data, "null data");
-  if (auto data = map_sink_data(_sink, _size)) {
+  if (auto data = map_sink(_sink, _size)) {
     memcpy(data, _data, _size);
     return true;
   }
@@ -196,6 +197,23 @@ Size Buffer::bytes_for_edits() const {
   Size bytes = 0;
   m_edits.each_fwd([&](const Edit& _edit) { bytes += _edit.size; });
   return bytes;
+}
+
+// [BufferAllocator]
+Byte* BufferAllocator::allocate(Size _size) {
+  return m_buffer.as_tag() ? nullptr : reallocate(nullptr, _size);
+}
+
+Byte* BufferAllocator::reallocate(void*, Size _size) {
+  if (auto data = m_buffer.as_ptr()->map_sink(m_sink, _size)) {
+    m_buffer.retag(1);
+    return data;
+  }
+  return nullptr;
+}
+
+void BufferAllocator::deallocate(void*) {
+  RX_ASSERT(m_buffer.as_tag(), "not allocated");
 }
 
 } // namespace Rx::Render::Frontend
