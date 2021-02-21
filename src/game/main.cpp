@@ -95,17 +95,21 @@ struct TestGame
   virtual bool on_init() {
     const auto& dimensions = m_frontend.swapchain()->dimensions();
 
+    if (!m_particle_system.resize(500'000)) {
+      return false;
+    }
+
     Particle::Assembler assembler;
     if (!assembler.assemble("base/particles/point.asm")) {
       printf("%s\n", assembler.error().data());
       return false;
     }
 
-    if (!m_particle_system.resize(500'000)) {
+    if (auto program = Utility::copy(assembler.program())) {
+      m_particle_program = Utility::move(*program);
+    } else {
       return false;
     }
-
-    m_particle_program = Utility::move(*Utility::copy(assembler.program()));
 
     if (auto renderable = Render::ParticleSystem::create(&m_frontend)) {
       m_particle_system_render = Utility::move(*renderable);
@@ -140,13 +144,11 @@ struct TestGame
       return false;
     }
 
-    auto copy_pass = Render::CopyPass::create(&m_frontend,
-      m_frontend.swapchain()->dimensions(), m_gbuffer.depth_stencil());
-    if (!copy_pass) {
+    if (auto pass = Render::CopyPass::create(&m_frontend, dimensions, m_gbuffer.depth_stencil())) {
+      m_copy_pass = Utility::move(*pass);
+    } else {
       return false;
     }
-
-    m_copy_pass = Utility::move(*copy_pass);
 
     const char* LUTS[] = {
       "base/colorgrading/Arabica 12.CUBE",
@@ -186,12 +188,11 @@ struct TestGame
       "base/colorgrading/Zeke 39.CUBE"
     };
 
-    auto ibl = Render::ImageBasedLighting::create(&m_frontend, 16, 64);
-    if (!ibl) {
+    if (auto ibl = Render::ImageBasedLighting::create(&m_frontend, 16, 64)) {
+      m_ibl = Utility::move(*ibl);
+    } else {
       return false;
     }
-
-    m_ibl = Utility::move(*ibl);
 
     // Load in all the grading LUTs and update the atlas.
     for (Size i = 0; i < sizeof LUTS / sizeof* LUTS; i++) {
