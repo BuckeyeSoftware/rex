@@ -43,6 +43,7 @@ void Target::request_depth(Texture::DataFormat _format, const Math::Vec2z& _dime
   m_depth_texture->record_format(_format);
   m_depth_texture->record_type(Texture::Type::ATTACHMENT);
   m_depth_texture->record_filter({false, false, false});
+  m_depth_texture->record_levels(1);
   m_depth_texture->record_dimensions(_dimensions);
   m_depth_texture->record_wrap({Texture::WrapType::CLAMP_TO_EDGE,
                                 Texture::WrapType::CLAMP_TO_EDGE});
@@ -68,6 +69,7 @@ void Target::request_stencil(Texture::DataFormat _format, const Math::Vec2z& _di
   m_stencil_texture->record_format(_format);
   m_stencil_texture->record_type(Texture::Type::ATTACHMENT);
   m_stencil_texture->record_filter({false, false, false});
+  m_stencil_texture->record_levels(1);
   m_stencil_texture->record_dimensions(_dimensions);
   m_stencil_texture->record_wrap({Texture::WrapType::CLAMP_TO_EDGE,
                                   Texture::WrapType::CLAMP_TO_EDGE});
