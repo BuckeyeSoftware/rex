@@ -1,0 +1,119 @@
+{
+  name: "canvas",
+  uniforms: [
+    { name: "u_texture",           "type": "sampler2D", value: 0 },
+    { name: "u_texture_type",      "type": "s32"     },
+    { name: "u_resolution",        "type": "f32x2"   },
+    { name: "u_scissor_transform", "type": "f32x3x3" },
+    { name: "u_paint_transform",   "type": "f32x3x3" },
+    { name: "u_inner_color",       "type": "f32x4"   },
+    { name: "u_outer_color",       "type": "f32x4"   },
+    { name: "u_scissor_extent",    "type": "f32x2"   },
+    { name: "u_scissor_scale",     "type": "f32x2"   },
+    { name: "u_extent",            "type": "f32x2"   },
+    { name: "u_radius",            "type": "f32"     },
+    { name: "u_feather",           "type": "f32"     },
+    { name: "u_stroke_multiplier", "type": "f32"     },
+    { name: "u_stroke_threshold",  "type": "f32"     }
+  ],
+  variants: [
+    "USE_FILL_GRADIENT",
+    "USE_FILL_IMAGE",
+    "USE_FILL_STENCIL",
+    "USE_IMAGE"
+  ],
+  shaders: [
+    {
+      type: "vertex",
+      inputs: [
+        { name: "a_position",    type: "f32x2" },
+        { name: "a_coordinate",  type: "f32x2" }
+      ],
+      outputs: [
+        { name: "vs_position",   type: "f32x2" },
+        { name: "vs_coordinate", type: "f32x2" }
+      ],
+      source: "
+        void main() {
+          vs_position = a_position;
+          vs_coordinate = a_coordinate;
+          rx_position = f32x4(
+                  2.0 * a_position.x / u_resolution.x - 1.0,
+            1.0 - 2.0 * a_position.y / u_resolution.y,
+            0.0,
+            1.0);
+        }
+      "
+    },
+    {
+      type: "fragment",
+      inputs: [
+        { name: "vs_position",   type: "f32x2" },
+        { name: "vs_coordinate", type: "f32x2" }
+      ],
+      outputs: [
+        { name: "fs_color",      type: "f32x4" }
+      ],
+      source: "
+        f32 sdf_rounded_rectangle(f32x2 position, f32x2 extent, f32 radius) {
+          f32x2 ext = extent - f32x2(radius, radius);
+          f32x2 dist = abs(position) - ext;
+          return min(max(dist.x, dist.y), 0.0) + length(max(dist, 0.0)) - radius;
+        }
+
+        f32 scissor_mask(f32x2 position) {
+          f32x2 scissor = (abs((u_scissor_transform * f32x3(position, 1.0)).xy) - u_scissor_extent);
+          scissor = f32x2(0.5, 0.5) - scissor * u_scissor_scale;
+          return clamp(scissor.x, 0.0, 1.0) * clamp(scissor.y, 0.0, 1.0);
+        }
+
+        f32 stroke_mask() {
+          return min(1.0, (1.0 - abs(vs_coordinate.x * 2.0 - 1.0)) * u_stroke_multiplier) * min(1.0, vs_coordinate.y);
+        }
+
+        void main() {
+          f32 scissor = scissor_mask(vs_position);
+          f32 stroke_alpha = stroke_mask();
+          if (stroke_alpha < u_stroke_threshold) {
+            discard;
+          }
+        #if defined(USE_FILL_GRADIENT)
+          // Calculate gradient color using box gradient.
+          f32x2 position = (u_paint_transform * f32x3(vs_position, 1.0)).xy;
+          f32 dist = clamp((sdf_rounded_rectangle(position, u_extent, u_radius) + u_feather * 0.5) / u_feather, 0.0, 1.0);
+          f32x4 color = mix(u_inner_color, u_outer_color, dist);
+          // Combine alpha.
+          color *= stroke_alpha * scissor;
+          fs_color = color;
+        #elif defined(USE_FILL_IMAGE)
+          // Calculate color from texture.
+          f32x2 position = (u_paint_transform * f32x3(vs_position, 1.0)).xy / u_extent;
+          f32x4 color = rx_texture2D(u_texture, position);
+          if (u_texture_type == 1) {
+             color = f32x4(color.rgb * color.a, color.a);
+          } else if (u_texture_type == 2) {
+             color = f32x4(color.r);
+          }
+          // Apply color tint and alpha.
+          color *= u_inner_color;
+          // Combine alpha.
+          color *= stroke_alpha * scissor;
+          fs_color = color;
+        #elif defined(USE_FILL_STENCIL)
+          fs_color = f32x4(1.0, 1.0, 1.0, 1.0);
+        #elif defined(USE_IMAGE)
+          f32x4 color = rx_texture2D(u_texture, vs_coordinate);
+          if (u_texture_type == 1) {
+            color = f32x4(color.rgb * color.a, color.a);
+          } else if (u_texture_type == 2) {
+            color = f32x4(color.r);
+          }
+          // Apply color.
+          color *= scissor;
+          fs_color = color * u_inner_color;
+        #endif
+        }
+      "
+    }
+  ]
+}
