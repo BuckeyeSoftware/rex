@@ -64,8 +64,9 @@ void Text::paste(const String& _contents) {
 
   // Insert the new text at the cursor position and advance the cursor by the
   // length of the new text.
-  m_contents.insert_at(m_cursor, _contents);
-  m_cursor += _contents.size();
+  if (m_contents.insert_at(m_cursor, _contents)) {
+    m_cursor += _contents.size();
+  }
 
   // When you paste any text, the selection is cancelled and the timer for
   // the blinking cursor is reset.

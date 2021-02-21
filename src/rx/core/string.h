@@ -71,9 +71,9 @@ struct RX_API String {
   [[nodiscard]] bool append(const String& _contents);
   [[nodiscard]] bool append(char _ch);
 
-  bool insert_at(Size _position, const char* _contents, Size _size);
-  bool insert_at(Size _position, const char* _contents);
-  bool insert_at(Size _position, const String& _contents);
+  [[nodiscard]] bool insert_at(Size _position, const char* _contents, Size _size);
+  [[nodiscard]] bool insert_at(Size _position, const char* _contents);
+  [[nodiscard]] bool insert_at(Size _position, const String& _contents);
 
   // returns copy of string with leading characters in set removed
   String lstrip(const char* _set) const;
