@@ -379,19 +379,20 @@ namespace detail_gl3 {
           this->blend.record_enable(enabled);
         }
 
-        if (enabled) {
-          if (this->blend.write_mask() != write_mask) {
-            if (write_mask != m_color_mask) {
-              const bool r{!!(write_mask & (1 << 0))};
-              const bool g{!!(write_mask & (1 << 1))};
-              const bool b{!!(write_mask & (1 << 2))};
-              const bool a{!!(write_mask & (1 << 3))};
-              pglColorMask(r, g, b, a);
-              m_color_mask = write_mask;
-              this->blend.record_write_mask(write_mask);
-            }
+        // Write mask can be changed regardless if GL_BLEND is enabled.
+        if (this->blend.write_mask() != write_mask) {
+          if (write_mask != m_color_mask) {
+            const bool r{!!(write_mask & (1 << 0))};
+            const bool g{!!(write_mask & (1 << 1))};
+            const bool b{!!(write_mask & (1 << 2))};
+            const bool a{!!(write_mask & (1 << 3))};
+            pglColorMask(r, g, b, a);
+            m_color_mask = write_mask;
+            this->blend.record_write_mask(write_mask);
           }
+        }
 
+        if (enabled) {
           if (this->blend.color_src_factor() != color_src_factor ||
               this->blend.color_dst_factor() != color_dst_factor ||
               this->blend.alpha_src_factor() != alpha_src_factor ||
