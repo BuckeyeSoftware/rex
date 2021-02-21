@@ -17,7 +17,7 @@
 //
 
 #include <stdlib.h>
-#include <stdio.h> // TODO(dweiler): remove
+#include <stdio.h>
 #include <string.h> // strlen
 
 #include "rx/core/math/mod.h"
