@@ -10,7 +10,7 @@
 #define STBI_NO_GIF
 #define STBI_NO_PIC
 #define STBI_NO_PNM
-#define STBI_NO_STDIO
+// #define STBI_NO_STDIO
 
 #define STBI_ASSERT(x) ((void)(x))
 
