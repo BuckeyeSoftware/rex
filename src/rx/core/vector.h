@@ -6,9 +6,12 @@
 #include "rx/core/concepts/trivially_destructible.h"
 
 #include "rx/core/traits/invoke_result.h"
+#include "rx/core/traits/is_same.h"
 
 #include "rx/core/hints/unlikely.h"
 #include "rx/core/hints/restrict.h"
+
+#include "rx/core/assert.h"
 
 #include "rx/core/memory/system_allocator.h"
 
