@@ -13,14 +13,16 @@
         { name: "a_color",         type: "f32x4" }
       ],
       outputs: [
-        { name: "vs_color",        type: "f32x4" }
+        { name: "vs_color",        type: "f32x4" },
+        { name: "vs_size",         type: "f32" }
       ],
       source: "
         void main() {
           f32x4 eye = u_model_view * f32x4(a_position, 1.0);
           f32 distance = length(eye.xyz);
           f32 attenuation = inversesqrt(0.1 * distance);
-          rx_point_size = attenuation * a_size;
+          vs_size = attenuation * a_size;
+          rx_point_size = vs_size;
           rx_position = u_projection * eye;
           vs_color = a_color;
         }
@@ -29,13 +31,18 @@
     {
       type: "fragment",
       inputs: [
-        { name: "vs_color", type: "f32x4" }
+        { name: "vs_color", type: "f32x4" },
+        { name: "vs_size",  type: "f32" }
       ],
       outputs: [
         { name: "fs_color", type: "f32x4" }
       ],
       source: "
         void main() {
+          if (vs_size < 1.0) {
+            discard;
+          }
+
           fs_color = vs_color;
         }
       "
