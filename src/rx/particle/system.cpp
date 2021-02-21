@@ -44,9 +44,11 @@ void System::update(Float32 _delta_time) {
     life[i] = life[i] - delta_time;
   }
 
-  // TODO(dweiler): Unroll this as it can only be 1, 2, or 3.
-  for (Size i = 0; i < n_scalars; i++) {
-    const auto index = n_vectors * 4 + i;
+  // Unrolled for remainder.
+  Size index = 0;
+  switch (n_scalars) {
+  case 3:
+    index = n_vectors * 4 + 2;
     m_position_x[index] = m_position_x[index] + m_velocity_x[index] * _delta_time;
     m_position_y[index] = m_position_y[index] + m_velocity_y[index] * _delta_time;
     m_position_z[index] = m_position_z[index] + m_velocity_z[index] * _delta_time;
@@ -54,6 +56,27 @@ void System::update(Float32 _delta_time) {
     // m_velocity_y[index] = m_acceleration_y[index] * _delta_time;
     // m_velocity_z[index] = m_acceleration_z[index] * _delta_time;
     m_life[index] = m_life[index] - _delta_time;
+    [[fallthrough]];
+  case 2:
+    index = n_vectors * 4 + 1;
+    m_position_x[index] = m_position_x[index] + m_velocity_x[index] * _delta_time;
+    m_position_y[index] = m_position_y[index] + m_velocity_y[index] * _delta_time;
+    m_position_z[index] = m_position_z[index] + m_velocity_z[index] * _delta_time;
+    // m_velocity_x[index] = m_acceleration_x[index] * _delta_time;
+    // m_velocity_y[index] = m_acceleration_y[index] * _delta_time;
+    // m_velocity_z[index] = m_acceleration_z[index] * _delta_time;
+    m_life[index] = m_life[index] - _delta_time;
+    [[fallthrough]];
+  case 1:
+    index = n_vectors * 4;
+    m_position_x[index] = m_position_x[index] + m_velocity_x[index] * _delta_time;
+    m_position_y[index] = m_position_y[index] + m_velocity_y[index] * _delta_time;
+    m_position_z[index] = m_position_z[index] + m_velocity_z[index] * _delta_time;
+    // m_velocity_x[index] = m_acceleration_x[index] * _delta_time;
+    // m_velocity_y[index] = m_acceleration_y[index] * _delta_time;
+    // m_velocity_z[index] = m_acceleration_z[index] * _delta_time;
+    m_life[index] = m_life[index] - _delta_time;
+    break;
   }
 
   // Handle killing.
