@@ -101,12 +101,6 @@ Optional<Immediate3D> Immediate3D::create(Frontend::Context* _frontend) {
     return nullopt;
   }
 
-
-  //for (Size i{0}; i < BUFFERS; i++) {
-  //  m_render_batches[i] = {m_frontend->allocator()};
-  //  m_render_queue[i] = {m_frontend->allocator()};
-  //}
-
   Frontend::Buffer::Format format;
   format.record_type(Frontend::Buffer::Type::DYNAMIC);
   format.record_element_type(Frontend::Buffer::ElementType::U32);
