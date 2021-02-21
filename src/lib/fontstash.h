@@ -259,8 +259,8 @@ int fons__tt_getGlyphKernAdvance(FONSttFontImpl *font, int glyph1, int glyph2)
 // #define STB_TRUETYPE_IMPLEMENTATION
 // static void* fons__tmpalloc(size_t size, void* up);
 // static void fons__tmpfree(void* ptr, void* up);
-#define STBTT_malloc(x,u)    fons__tmpalloc(x,u)
-#define STBTT_free(x,u)      fons__tmpfree(x,u)
+#define STBTT_malloc(x,u)    ::Rx::Memory::SystemAllocator::allocate((x))
+#define STBTT_free(x,u)      ::Rx::Memory::SystemAllocator::deallocate((x))
 #include "stb_truetype.h"
 
 struct FONSttFontImpl {
