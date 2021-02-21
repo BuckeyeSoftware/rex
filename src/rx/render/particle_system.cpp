@@ -12,42 +12,39 @@
 
 namespace Rx::Render {
 
-ParticleSystem::ParticleSystem(Frontend::Context* _frontend)
-  : m_frontend{_frontend}
-  , m_buffer{nullptr}
-  , m_technique{nullptr}
-  , m_count{0}
-{
-  m_technique = _frontend->find_technique_by_name("particle_system");
+Optional<ParticleSystem> ParticleSystem::create(Frontend::Context* _frontend) {
+  auto technique = _frontend->find_technique_by_name("particle_system");
+  if (!technique) {
+    return nullopt;
+  }
+
+  Frontend::Buffer::Format format;
+  format.record_type(Frontend::Buffer::Type::DYNAMIC);
+  format.record_element_type(Frontend::Buffer::ElementType::NONE);
+  format.record_vertex_stride(sizeof(Vertex));
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32, offsetof(Vertex, size)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, position)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x4, offsetof(Vertex, color)});
+  format.finalize();
+
+  auto buffer = _frontend->create_buffer(RX_RENDER_TAG("ParticleSystem"));
+  if (!buffer) {
+    return nullopt;
+  }
+
+  buffer->record_format(format);
+  _frontend->initialize_buffer(RX_RENDER_TAG("ParticleSystem"), buffer);
+
+  return ParticleSystem{_frontend, buffer, technique};
 }
 
-ParticleSystem::~ParticleSystem() {
-  m_frontend->destroy_buffer(RX_RENDER_TAG("ParticleSystem"), m_buffer);
+void ParticleSystem::release() {
+  if (m_frontend) {
+    m_frontend->destroy_buffer(RX_RENDER_TAG("ParticleSystem"), m_buffer);
+  }
 }
 
 bool ParticleSystem::update(const Particle::System* _system) {
-  if (!m_buffer) {
-    Frontend::Buffer::Format format;
-    format.record_type(Frontend::Buffer::Type::DYNAMIC);
-    format.record_element_type(Frontend::Buffer::ElementType::NONE);
-    format.record_vertex_stride(sizeof(Vertex));
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32, offsetof(Vertex, size)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, position)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x4, offsetof(Vertex, color)});
-    format.finalize();
-
-    // Create a buffer.
-    auto buffer = m_frontend->create_buffer(RX_RENDER_TAG("ParticleSystem"));
-    if (!buffer) {
-      return false;
-    }
-
-    buffer->record_format(format);
-    m_frontend->initialize_buffer(RX_RENDER_TAG("ParticleSystem"), buffer);
-
-    m_buffer = buffer;
-  }
-
   m_count = _system->alive_count();
   if (m_count == 0) {
     return true;

@@ -17,15 +17,36 @@
 
 namespace Rx::Render {
 
-Skybox::Skybox(Frontend::Context* _frontend)
-  : m_frontend{_frontend}
-  , m_technique{m_frontend->find_technique_by_name("skybox")}
-  , m_texture{nullptr}
-{
+Skybox::Skybox(Skybox&& skybox_) {
+  Concurrency::ScopeLock lock{skybox_.m_lock};
+  m_frontend = Utility::exchange(skybox_.m_frontend, nullptr);
+  m_technique = Utility::exchange(skybox_.m_technique, nullptr);
+  m_texture.store(skybox_.m_texture.exchange(nullptr));
+  m_name = Utility::move(skybox_.m_name);
 }
 
-Skybox::~Skybox() {
-  release();
+Skybox& Skybox::operator=(Skybox&& skybox_) {
+  if (this != &skybox_) {
+    Concurrency::ScopeLock this_lock{m_lock};
+    Concurrency::ScopeLock that_lock{skybox_.m_lock};
+
+    release();
+
+    m_frontend = Utility::exchange(skybox_.m_frontend, nullptr);
+    m_technique = Utility::exchange(skybox_.m_technique, nullptr);
+    m_texture.store(skybox_.m_texture.exchange(nullptr));
+    m_name = Utility::move(skybox_.m_name);
+  }
+
+  return *this;
+}
+
+Optional<Skybox> Skybox::create(Frontend::Context* _frontend) {
+  auto technique = _frontend->find_technique_by_name("skybox");
+  if (!technique) {
+    return nullopt;
+  }
+  return Skybox{_frontend, technique};
 }
 
 void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,

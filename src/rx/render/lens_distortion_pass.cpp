@@ -9,34 +9,47 @@
 
 namespace Rx::Render {
 
-LensDistortionPass::LensDistortionPass(Frontend::Context* _frontend)
-  : m_frontend{_frontend}
-  , m_technique{m_frontend->find_technique_by_name("lens_distortion")}
-  , m_texture{nullptr}
-  , m_target{nullptr}
+Optional<LensDistortionPass> LensDistortionPass::create(
+  Frontend::Context* _frontend, const Math::Vec2z& _resolution)
 {
-}
+  auto technique = _frontend->find_technique_by_name("lens_distortion");
+  if (!technique) {
+    return nullopt;
+  }
 
-void LensDistortionPass::create(const Math::Vec2z& _resolution) {
-  m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("LensDistortionPass"));
-  m_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
-  m_texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
-  m_texture->record_filter({true, false, false});
-  m_texture->record_levels(1);
-  m_texture->record_dimensions(_resolution);
-  m_texture->record_wrap({
+  auto texture = _frontend->create_texture2D(RX_RENDER_TAG("LensDistortionPass"));
+  if (!texture) {
+    return nullopt;
+  }
+
+  auto target = _frontend->create_target(RX_RENDER_TAG("LensDistortionPass"));
+  if (!target) {
+    _frontend->destroy_texture(RX_RENDER_TAG("LensDistortionPass"), texture);
+    return nullopt;
+  }
+
+  texture->record_type(Frontend::Texture::Type::ATTACHMENT);
+  texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
+  texture->record_filter({true, false, false});
+  texture->record_levels(1);
+  texture->record_dimensions(_resolution);
+  texture->record_wrap({
     Frontend::Texture::WrapType::CLAMP_TO_EDGE,
     Frontend::Texture::WrapType::CLAMP_TO_EDGE});
-  m_frontend->initialize_texture(RX_RENDER_TAG("LensDistortionPass"), m_texture);
+  _frontend->initialize_texture(RX_RENDER_TAG("LensDistortionPass"), texture);
 
-  m_target = m_frontend->create_target(RX_RENDER_TAG("LensDistortionPass"));
-  m_target->attach_texture(m_texture, 0);
-  m_frontend->initialize_target(RX_RENDER_TAG("LensDistortionPass"), m_target);
+  target->attach_texture(texture, 0);
+
+  _frontend->initialize_target(RX_RENDER_TAG("LensDistortionPass"), target);
+
+  return LensDistortionPass{_frontend, technique, texture, target};
 }
 
-void LensDistortionPass::destroy() {
-  m_frontend->destroy_target(RX_RENDER_TAG("LensDistortionPass"), m_target);
-  m_frontend->destroy_texture(RX_RENDER_TAG("LensDistortionPass"), m_texture);
+void LensDistortionPass::release() {
+  if (m_frontend) {
+    m_frontend->destroy_target(RX_RENDER_TAG("LensDistortionPass"), m_target);
+    m_frontend->destroy_texture(RX_RENDER_TAG("LensDistortionPass"), m_texture);
+  }
 }
 
 void LensDistortionPass::render(Frontend::Texture2D* _source) {

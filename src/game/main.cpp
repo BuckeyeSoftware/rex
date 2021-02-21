@@ -81,13 +81,9 @@ struct TestGame
     , m_frame_graph{&m_immediate2D}
     , m_memory_stats{&m_immediate2D}
     , m_render_stats{&m_immediate2D}
-    , m_gbuffer{&m_frontend}
-    , m_skybox{&m_frontend}
-    , m_lens_distortion_pass{&m_frontend}
     , m_color_grader{&m_frontend}
     , m_lut_index{0}
     , m_lut_count{0}
-    , m_particle_system_render{&m_frontend}
     , m_particle_system{m_frontend.allocator()}
   {
     engine()->input().root_layer().raise();
@@ -97,6 +93,8 @@ struct TestGame
   }
 
   virtual bool on_init() {
+    const auto& dimensions = m_frontend.swapchain()->dimensions();
+
     Particle::Assembler assembler;
     if (!assembler.assemble("base/particles/point.asm")) {
       printf("%s\n", assembler.error().data());
@@ -109,19 +107,38 @@ struct TestGame
 
     m_particle_program = Utility::move(*Utility::copy(assembler.program()));
 
-    m_gbuffer.create(m_frontend.swapchain()->dimensions());
-    m_skybox.load("base/skyboxes/sky_cloudy/sky_cloudy.json5", {1024, 1024});
-
-    auto indirect_lighting_pass
-      = Render::IndirectLightingPass::create(&m_frontend, m_frontend.swapchain()->dimensions());
-    if (!indirect_lighting_pass) {
+    if (auto renderable = Render::ParticleSystem::create(&m_frontend)) {
+      m_particle_system_render = Utility::move(*renderable);
+    } else {
       return false;
     }
 
-    m_indirect_lighting_pass = Utility::move(*indirect_lighting_pass);
+    if (auto gbuffer = Render::GBuffer::create(&m_frontend, dimensions)) {
+      m_gbuffer = Utility::move(*gbuffer);
+    } else {
+      return false;
+    }
 
-    // m_indirect_lighting_pass.create(m_frontend.swapchain()->dimensions());
-    m_lens_distortion_pass.create(m_frontend.swapchain()->dimensions());
+    if (auto skybox = Render::Skybox::create(&m_frontend)) {
+      m_skybox = Utility::move(*skybox);
+      if (!m_skybox.load("base/skyboxes/sky_cloudy/sky_cloudy.json5", {1024, 1024})) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+
+    if (auto pass = Render::IndirectLightingPass::create(&m_frontend, dimensions)) {
+      m_indirect_lighting_pass = Utility::move(*pass);
+    } else {
+      return false;
+    }
+
+    if (auto pass = Render::LensDistortionPass::create(&m_frontend, dimensions)) {
+      m_lens_distortion_pass = Utility::move(*pass);
+    } else {
+      return false;
+    }
 
     auto copy_pass = Render::CopyPass::create(&m_frontend,
       m_frontend.swapchain()->dimensions(), m_gbuffer.depth_stencil());

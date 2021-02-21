@@ -25,8 +25,15 @@ namespace Frontend {
 } // namespace Frontend
 
 struct Skybox {
-  Skybox(Frontend::Context* _frontend);
+  RX_MARK_NO_COPY(Skybox);
+
+  Skybox() : Skybox(nullptr, nullptr) {}
+  Skybox(Skybox&& skybox_);
   ~Skybox();
+
+  Skybox& operator=(Skybox&& skybox_);
+
+  static Optional<Skybox> create(Frontend::Context* _frontend);
 
   void render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     const Math::Mat4x4f& _projection,
@@ -43,6 +50,8 @@ struct Skybox {
   const String& name() const &;
 
 private:
+  constexpr Skybox(Frontend::Context* _frontend, Frontend::Technique* _technique);
+
   void release();
 
   Frontend::Texture2D* create_hdri(const JSON& _json) const;
@@ -57,6 +66,17 @@ private:
 
   Concurrency::SpinLock m_lock;
 };
+
+inline constexpr Skybox::Skybox(Frontend::Context* _frontend, Frontend::Technique* _technique)
+  : m_frontend{_frontend}
+  , m_technique{_technique}
+  , m_texture{nullptr}
+{
+}
+
+inline Skybox::~Skybox() {
+  release();
+}
 
 inline Frontend::Texture* Skybox::texture() const {
   return m_texture;
