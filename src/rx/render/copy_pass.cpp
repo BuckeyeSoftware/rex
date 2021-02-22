@@ -54,15 +54,6 @@ Optional<CopyPass> CopyPass::create(Frontend::Context* _frontend,
   return copy_pass;
 }
 
-CopyPass::CopyPass(CopyPass&& copy_pass_)
-  : m_frontend{Utility::exchange(copy_pass_.m_frontend, nullptr)}
-  , m_target{Utility::exchange(copy_pass_.m_target, nullptr)}
-  , m_texture{Utility::exchange(copy_pass_.m_texture, nullptr)}
-  , m_technique{Utility::exchange(copy_pass_.m_technique, nullptr)}
-  , m_depth_stencil{Utility::exchange(copy_pass_.m_depth_stencil, nullptr)}
-{
-}
-
 void CopyPass::release() {
   if (m_frontend) {
     m_frontend->destroy_target(RX_RENDER_TAG("CopyPass"), m_target);

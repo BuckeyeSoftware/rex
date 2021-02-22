@@ -65,6 +65,8 @@ struct RX_API Bitset {
   constexpr Memory::Allocator& allocator() const;
 
 private:
+  static void move(Bitset* dst_, Bitset* src_);
+
   static Optional<Bitset> create_uninitialized(Memory::Allocator& _allocator, Size _size);
 
   static Size bytes_for_size(Size _size);
@@ -79,6 +81,12 @@ private:
   BitType* m_data;
 };
 
+inline void Bitset::move(Bitset* dst_, Bitset* src_) {
+  dst_->m_allocator = src_->m_allocator;
+  dst_->m_size = Utility::exchange(src_->m_size, 0);
+  dst_->m_data = Utility::exchange(src_->m_data, nullptr);
+}
+
 inline constexpr Bitset::Bitset()
   : m_allocator{nullptr}
   , m_size{0}
@@ -86,16 +94,15 @@ inline constexpr Bitset::Bitset()
 {
 }
 
-inline Bitset::Bitset(Bitset&& bitset_)
-  : m_allocator{bitset_.m_allocator}
-  , m_size{Utility::exchange(bitset_.m_size, 0)}
-  , m_data{Utility::exchange(bitset_.m_data, nullptr)}
-{
+inline Bitset::Bitset(Bitset&& bitset_) {
+  move(this, &bitset_);
 }
 
 inline Bitset& Bitset::operator=(Bitset&& bitset_) {
-  release();
-  Utility::construct<Bitset>(this, Utility::move(bitset_));
+  if (this != &bitset_) {
+    release();
+    move(this, &bitset_);
+  }
   return *this;
 }
 

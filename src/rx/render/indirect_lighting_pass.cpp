@@ -10,14 +10,6 @@
 
 namespace Rx::Render {
 
-IndirectLightingPass::IndirectLightingPass(IndirectLightingPass&& indirect_lighting_pass_)
-  : m_frontend{Utility::exchange(indirect_lighting_pass_.m_frontend, nullptr)}
-  , m_technique{Utility::exchange(indirect_lighting_pass_.m_technique, nullptr)}
-  , m_texture{Utility::exchange(indirect_lighting_pass_.m_texture, nullptr)}
-  , m_target{Utility::exchange(indirect_lighting_pass_.m_target, nullptr)}
-{
-}
-
 void IndirectLightingPass::render(const Math::Camera& _camera, const GBuffer* _gbuffer, const ImageBasedLighting* _ibl) {
   Frontend::State state;
   state.viewport.record_dimensions(m_target->dimensions());

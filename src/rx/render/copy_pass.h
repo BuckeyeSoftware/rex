@@ -1,6 +1,8 @@
 #ifndef RX_RENDER_COPY_PASS
 #define RX_RENDER_COPY_PASS
 #include "rx/core/optional.h"
+#include "rx/core/utility/exchange.h"
+
 #include "rx/math/vec2.h"
 
 namespace Rx::Render {
@@ -34,6 +36,8 @@ struct CopyPass {
   Frontend::Target* target() const;
 
 private:
+  static void move(CopyPass* dst_, CopyPass* src_);
+
   void release();
 
   Frontend::Context* m_frontend = nullptr;
@@ -43,13 +47,27 @@ private:
   Frontend::Texture2D* m_depth_stencil = nullptr;
 };
 
+inline void CopyPass::move(CopyPass* dst_, CopyPass* src_) {
+  dst_->m_frontend = Utility::exchange(src_->m_frontend, nullptr);
+  dst_->m_target = Utility::exchange(src_->m_target, nullptr);
+  dst_->m_texture = Utility::exchange(src_->m_texture, nullptr);
+  dst_->m_technique = Utility::exchange(src_->m_technique, nullptr);
+  dst_->m_depth_stencil = Utility::exchange(src_->m_depth_stencil, nullptr);
+}
+
+inline CopyPass::CopyPass(CopyPass&& copy_pass_) {
+  move(this, &copy_pass_);
+}
+
 inline CopyPass::~CopyPass() {
   release();
 }
 
 inline CopyPass& CopyPass::operator=(CopyPass&& copy_pass_) {
-  release();
-  Utility::construct<CopyPass>(this, Utility::move(copy_pass_));
+  if (this != &copy_pass_) {
+    release();
+    move(this, &copy_pass_);
+  }
   return *this;
 }
 

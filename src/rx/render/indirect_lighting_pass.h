@@ -5,6 +5,8 @@
 #include "rx/math/vec2.h"
 #include "rx/math/camera.h"
 
+#include "rx/core/utility/exchange.h"
+
 namespace Rx::Render {
 
 namespace Frontend {
@@ -36,6 +38,8 @@ struct IndirectLightingPass {
   Frontend::Target* target() const;
 
 private:
+  static void move(IndirectLightingPass* dst_, IndirectLightingPass* src_);
+
   void release();
 
   Frontend::Context* m_frontend;
@@ -43,6 +47,14 @@ private:
   Frontend::Texture2D* m_texture;
   Frontend::Target* m_target;
 };
+
+// [IndirectLightingPass]
+inline void IndirectLightingPass::move(IndirectLightingPass* dst_, IndirectLightingPass* src_) {
+  dst_->m_frontend = Utility::exchange(src_->m_frontend, nullptr);
+  dst_->m_technique = Utility::exchange(src_->m_technique, nullptr);
+  dst_->m_texture = Utility::exchange(src_->m_texture, nullptr);
+  dst_->m_target = Utility::exchange(src_->m_target, nullptr);
+}
 
 inline constexpr IndirectLightingPass::IndirectLightingPass()
   : m_frontend{nullptr}
@@ -52,9 +64,15 @@ inline constexpr IndirectLightingPass::IndirectLightingPass()
 {
 }
 
+inline IndirectLightingPass::IndirectLightingPass(IndirectLightingPass&& indirect_lighting_pass_) {
+  move(this, &indirect_lighting_pass_);
+}
+
 inline IndirectLightingPass& IndirectLightingPass::operator=(IndirectLightingPass&& indirect_lighting_pass_) {
-  release();
-  Utility::construct<IndirectLightingPass>(this, Utility::move(indirect_lighting_pass_));
+  if (this != &indirect_lighting_pass_) {
+    release();
+    move(this, &indirect_lighting_pass_);
+  }
   return *this;
 }
 

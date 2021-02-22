@@ -33,6 +33,8 @@ struct IrradianceMap {
   Frontend::TextureCM* texture() const;
 
 private:
+  static void move(IrradianceMap* dst_, IrradianceMap* src_);
+
   void release();
   void render_next_face();
 
@@ -46,6 +48,16 @@ private:
 };
 
 // [IrradianceMap]
+inline void IrradianceMap::move(IrradianceMap* dst_, IrradianceMap* src_) {
+  dst_->m_frontend = Utility::exchange(src_->m_frontend, nullptr);
+  dst_->m_environment_map = Utility::exchange(src_->m_environment_map, nullptr);
+  dst_->m_target = Utility::exchange(src_->m_target, nullptr);
+  dst_->m_texture = Utility::exchange(src_->m_texture, nullptr);
+  dst_->m_technique = Utility::exchange(src_->m_technique, nullptr);
+  dst_->m_resolution = Utility::exchange(src_->m_resolution, 0);
+  dst_->m_current_face = Utility::exchange(src_->m_current_face, 0);
+}
+
 inline constexpr IrradianceMap::IrradianceMap()
   : m_frontend{nullptr}
   , m_environment_map{nullptr}
@@ -57,24 +69,19 @@ inline constexpr IrradianceMap::IrradianceMap()
 {
 }
 
+inline IrradianceMap::IrradianceMap(IrradianceMap&& move_) {
+  move(this, &move_);
+}
+
 inline IrradianceMap::~IrradianceMap() {
   release();
 }
 
-inline IrradianceMap::IrradianceMap(IrradianceMap&& move_)
-  : m_frontend{Utility::exchange(move_.m_frontend, nullptr)}
-  , m_environment_map{Utility::exchange(move_.m_environment_map, nullptr)}
-  , m_target{Utility::exchange(move_.m_target, nullptr)}
-  , m_texture{Utility::exchange(move_.m_texture, nullptr)}
-  , m_technique{Utility::exchange(move_.m_technique, nullptr)}
-  , m_resolution{Utility::exchange(move_.m_resolution, 0)}
-  , m_current_face{Utility::exchange(move_.m_current_face, 0)}
-{
-}
-
 inline IrradianceMap& IrradianceMap::operator=(IrradianceMap&& move_) {
-  release();
-  Utility::construct<IrradianceMap>(this, Utility::move(move_));
+  if (this != &move_) {
+    release();
+    move(this, &move_);
+  }
   return *this;
 }
 
@@ -99,6 +106,8 @@ struct PrefilteredEnvironmentMap {
   Frontend::TextureCM* texture() const;
 
 private:
+  static void move(PrefilteredEnvironmentMap* dst_, PrefilteredEnvironmentMap* src_);
+
   void release();
   void render_next_face();
 
@@ -111,6 +120,17 @@ private:
   Sint32 m_current_face;
 };
 
+// [PrefilteredEnvironmentMap]
+inline void PrefilteredEnvironmentMap::move(PrefilteredEnvironmentMap* dst_, PrefilteredEnvironmentMap* src_) {
+  dst_->m_frontend = Utility::exchange(src_->m_frontend, nullptr);
+  dst_->m_environment_map = Utility::exchange(src_->m_environment_map, nullptr);
+  dst_->m_targets = Utility::exchange(src_->m_targets, {});
+  dst_->m_texture = Utility::exchange(src_->m_texture, nullptr);
+  dst_->m_technique = Utility::exchange(src_->m_technique, nullptr);
+  dst_->m_resolution = Utility::exchange(src_->m_resolution, 0);
+  dst_->m_current_face = Utility::exchange(src_->m_current_face, 0);
+}
+
 inline constexpr PrefilteredEnvironmentMap::PrefilteredEnvironmentMap()
   : m_frontend{nullptr}
   , m_environment_map{nullptr}
@@ -122,24 +142,19 @@ inline constexpr PrefilteredEnvironmentMap::PrefilteredEnvironmentMap()
 {
 }
 
+inline PrefilteredEnvironmentMap::PrefilteredEnvironmentMap(PrefilteredEnvironmentMap&& move_) {
+  move(this, &move_);
+}
+
 inline PrefilteredEnvironmentMap::~PrefilteredEnvironmentMap() {
   release();
 }
 
-inline PrefilteredEnvironmentMap::PrefilteredEnvironmentMap(PrefilteredEnvironmentMap&& move_)
-  : m_frontend{Utility::exchange(move_.m_frontend, nullptr)}
-  , m_environment_map{Utility::exchange(move_.m_environment_map, nullptr)}
-  , m_targets{Utility::exchange(move_.m_targets, {})}
-  , m_texture{Utility::exchange(move_.m_texture, nullptr)}
-  , m_technique{Utility::exchange(move_.m_technique, nullptr)}
-  , m_resolution{Utility::exchange(move_.m_resolution, 0)}
-  , m_current_face{Utility::exchange(move_.m_current_face, 0)}
-{
-}
-
 inline PrefilteredEnvironmentMap& PrefilteredEnvironmentMap::operator=(PrefilteredEnvironmentMap&& move_) {
-  release();
-  Utility::construct<PrefilteredEnvironmentMap>(this, Utility::move(move_));
+  if (this != &move_) {
+    release();
+    move(this, &move_);
+  }
   return *this;
 }
 
@@ -165,6 +180,8 @@ struct ImageBasedLighting {
   Frontend::TextureCM* prefilter() const;
 
 private:
+  static void move(ImageBasedLighting* dst_, ImageBasedLighting* src_);
+
   void release();
 
   Frontend::Context* m_frontend;
@@ -174,27 +191,33 @@ private:
   PrefilteredEnvironmentMap m_prefiltered_environment_map;
 };
 
+// [ImageBasedLighting]
+inline void ImageBasedLighting::move(ImageBasedLighting* dst_, ImageBasedLighting* src_) {
+  dst_->m_frontend = Utility::exchange(src_->m_frontend, nullptr);
+  dst_->m_scale_bias_texture = Utility::exchange(src_->m_scale_bias_texture, nullptr);
+  dst_->m_irradiance_map = Utility::move(src_->m_irradiance_map);
+  dst_->m_prefiltered_environment_map = Utility::move(src_->m_prefiltered_environment_map);
+}
+
 inline constexpr ImageBasedLighting::ImageBasedLighting()
   : m_frontend{nullptr}
   , m_scale_bias_texture{nullptr}
 {
 }
 
+inline ImageBasedLighting::ImageBasedLighting(ImageBasedLighting&& move_) {
+  move(this, &move_);
+}
+
 inline ImageBasedLighting::~ImageBasedLighting() {
   release();
 }
 
-inline ImageBasedLighting::ImageBasedLighting(ImageBasedLighting&& move_)
-  : m_frontend{Utility::exchange(move_.m_frontend, nullptr)}
-  , m_scale_bias_texture{Utility::exchange(move_.m_scale_bias_texture, nullptr)}
-  , m_irradiance_map{Utility::move(move_.m_irradiance_map)}
-  , m_prefiltered_environment_map{Utility::move(move_.m_prefiltered_environment_map)}
-{
-}
-
 inline ImageBasedLighting& ImageBasedLighting::operator=(ImageBasedLighting&& move_) {
-  release();
-  Utility::construct<ImageBasedLighting>(this, Utility::move(move_));
+  if (this != &move_) {
+    release();
+    move(this, &move_);
+  }
   return *this;
 }
 

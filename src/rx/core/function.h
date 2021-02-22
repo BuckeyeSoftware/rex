@@ -38,6 +38,31 @@ private:
     MOVE,
   };
 
+  static void move(Function* dst_, Function* src_) {
+    // Moving is tricky because if |function_| is in-situ, then any captured
+    // data that holds references to |this| will be invalidated with a regular
+    // move, as one cannot move in-situ data, it must be copied. Similarly we
+    // cannot just memcpy the contents, as the data may be non-trivial.
+    //
+    // The one time a move can be done is when |function_| is **not** in-situ,
+    // as the move just becomes a pointer exchange which won't invalidate
+    // anything.
+    if (src_->m_storage.in_situ()) {
+      // Cannot fail: if |function_| fits in-situ, it'll fit in-situ here too.
+      (void)dst_->m_storage.resize(src_->m_storage.size());
+
+      // Copy construct the control block, then move construct the function.
+      auto* control = dst_->control();
+      Utility::construct<Control>(control, *src_->control());
+      control->modify(Operation::MOVE, dst_->function(), src_->function());
+
+      // Reset the movee to initial in-situ state.
+      src_->m_storage.clear();
+    } else {
+      dst_->m_storage = Utility::move(src_->m_storage);
+    }
+  }
+
   void release() {
     if (is_valid()) {
       control()->modify(Operation::DESTRUCT, function(), nullptr);
@@ -125,27 +150,7 @@ constexpr Function<R(Ts...)>::Function(NullPointer) {
 
 template<typename R, typename... Ts>
 Function<R(Ts...)>::Function(Function&& function_) {
-  // Moving is tricky because if |function_| is in-situ, then any captured
-  // data that holds references to |this| will be invalidated with a regular
-  // move, as one cannot move in-situ data, it must be copied. Similarly we
-  // cannot just memcpy the contents, as the data may be non-trivial.
-  //
-  // The one time a move can be done is when |function_| is **not** in-situ,
-  // as the move just becomes a pointer exchange which won't invalidate
-  // anything.
-  if (function_.m_storage.in_situ()) {
-    // Cannot fail: if |function_| fits in-situ, it'll fit in-situ here too.
-    (void)m_storage.resize(function_.m_storage.size());
-
-    // Copy construct the control block, then move construct the function.
-    Utility::construct<Control>(control(), *function_.control());
-    control()->modify(Operation::MOVE, function(), function_.function());
-
-    // Reset the movee to initial in-situ state.
-    function_.m_storage.clear();
-  } else {
-    m_storage = Utility::move(function_.m_storage);
-  }
+  move(this, &function_);
 }
 
 template<typename R, typename... Ts>
@@ -157,7 +162,7 @@ template<typename R, typename... Ts>
 Function<R(Ts...)>& Function<R(Ts...)>::operator=(Function&& function_) {
   if (&function_ != this) {
     release();
-    Utility::construct<Function>(this, Utility::move(function_));
+    move(this, &function_);
   }
   return *this;
 }
