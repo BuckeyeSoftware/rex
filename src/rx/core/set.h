@@ -1,5 +1,7 @@
 #ifndef RX_CORE_SET_H
 #define RX_CORE_SET_H
+#include "rx/core/optional.h"
+
 #include "rx/core/traits/invoke_result.h"
 #include "rx/core/traits/is_same.h"
 
@@ -12,6 +14,8 @@
 #include "rx/core/memory/system_allocator.h"
 #include "rx/core/memory/aggregate.h"
 
+#include "rx/core/hash/hasher.h"
+
 namespace Rx {
 
 // 32-bit: 28 bytes
@@ -23,8 +27,8 @@ struct Set {
   static inline constexpr const Size INITIAL_SIZE = 256;
   static inline constexpr const Size LOAD_FACTOR = 90;
 
-  Set();
-  Set(Memory::Allocator& _allocator);
+  constexpr Set();
+  constexpr Set(Memory::Allocator& _allocator);
   Set(Set&& set_);
   ~Set();
 
@@ -33,9 +37,12 @@ struct Set {
   Set& operator=(Set&& set_);
 
   K* insert(K&& _key);
-  K* insert(const K& _key);
 
-  K* find(const K& _key) const;
+  template<typename L>
+  K* insert(const L& _key);
+
+  template<typename L>
+  K* find(const L& _key) const;
 
   bool erase(const K& _key);
   Size size() const;
@@ -53,7 +60,9 @@ struct Set {
 private:
   void clear_and_deallocate();
 
-  static Size hash_key(const K& _key);
+  template<typename L>
+  static Size hash_key(const L& _key);
+
   static bool is_deleted(Size _hash);
 
   Size desired_position(Size _hash) const;
@@ -71,7 +80,8 @@ private:
   K* inserter(Size _hash, K&& key_);
   K* inserter(Size _hash, const K& _key);
 
-  bool lookup_index(const K& _key, Size& _index) const;
+  template<typename L>
+  bool lookup_index(const L& _key, Size& _index) const;
 
   Memory::Allocator* m_allocator;
 
@@ -88,13 +98,13 @@ private:
 };
 
 template<typename K>
-Set<K>::Set()
+constexpr Set<K>::Set()
   : Set{Memory::SystemAllocator::instance()}
 {
 }
 
 template<typename K>
-Set<K>::Set(Memory::Allocator& _allocator)
+constexpr Set<K>::Set(Memory::Allocator& _allocator)
   : m_allocator{&_allocator}
   , m_keys{nullptr}
   , m_hashes{nullptr}
@@ -191,7 +201,8 @@ K* Set<K>::insert(K&& key_) {
 }
 
 template<typename K>
-K* Set<K>::insert(const K& _key) {
+template<typename L>
+K* Set<K>::insert(const L& _key) {
   if (++m_size >= m_resize_threshold && !grow()) {
     return nullptr;
   }
@@ -199,7 +210,8 @@ K* Set<K>::insert(const K& _key) {
 }
 
 template<typename K>
-K* Set<K>::find(const K& _key) const {
+template<typename L>
+K* Set<K>::find(const L& _key) const {
   if (Size index; lookup_index(_key, index)) {
     return m_keys + index;
   }
@@ -236,8 +248,9 @@ bool Set<K>::is_empty() const {
 }
 
 template<typename K>
-Size Set<K>::hash_key(const K& _key) {
-  auto hash_value = Hash::Hasher<K>{}(_key);
+template<typename L>
+Size Set<K>::hash_key(const L& _key) {
+  auto hash_value = Hash::Hasher<L>{}(_key);
 
   // MSB is used to indicate deleted elements
   if constexpr(sizeof hash_value == 8) {
@@ -388,7 +401,8 @@ K* Set<K>::inserter(Size _hash, const K& _key) {
 }
 
 template<typename K>
-bool Set<K>::lookup_index(const K& _key, Size& _index) const {
+template<typename L>
+bool Set<K>::lookup_index(const L& _key, Size& _index) const {
   if (RX_HINT_UNLIKELY(m_size == 0)) {
     return false;
   }
@@ -416,7 +430,7 @@ bool Set<K>::lookup_index(const K& _key, Size& _index) const {
 template<typename K>
 template<typename F>
 bool Set<K>::each(F&& _function) {
-  using ReturnType = Traits::InvokeResult<F, const K&>;
+  using ReturnType = Traits::InvokeResult<F, K&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {

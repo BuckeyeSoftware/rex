@@ -40,8 +40,11 @@ struct Map {
   V* insert(const K& _key, V&& value_);
   V* insert(const K& _key, const V& _value);
 
-  V* find(const K& _key);
-  const V* find(const K& _key) const;
+  template<typename L>
+  V* find(const L& _key);
+
+  template<typename L>
+  const V* find(const L& _key) const;
 
   bool erase(const K& _key);
   Size size() const;
@@ -69,7 +72,8 @@ struct Map {
 private:
   void clear_and_deallocate();
 
-  static Size hash_key(const K& _key);
+  template<typename L>
+  static Size hash_key(const L& _key);
   static bool is_deleted(Size _hash);
 
   Size desired_position(Size _hash) const;
@@ -88,7 +92,8 @@ private:
   V* inserter(Size _hash, const K& _key, const V& _value);
   V* inserter(Size _hash, const K& _key, V&& value_);
 
-  bool lookup_index(const K& _key, Size& _index) const;
+  template<typename L>
+  bool lookup_index(const L& _key, Size& _index) const;
 
   Memory::Allocator* m_allocator;
 
@@ -136,14 +141,6 @@ Map<K, V>::Map(Map&& map_)
   , m_mask{Utility::exchange(map_.m_mask, 0)}
 {
 }
-
-/*
-template<typename K, typename V>
-Map<K, V>::Map(const Map& _map)
-  : Map{_map.allocator()}
-{
-  _map.each_pair([this](const K& _key, const V& _value) { insert(_key, _value); });
-}*/
 
 template<typename K, typename V>
 Map<K, V>::~Map() {
@@ -230,7 +227,8 @@ V* Map<K, V>::insert(const K& _key, const V& _value) {
 }
 
 template<typename K, typename V>
-V* Map<K, V>::find(const K& _key) {
+template<typename L>
+V* Map<K, V>::find(const L& _key) {
   if (Size index; lookup_index(_key, index)) {
     return m_values + index;
   }
@@ -238,7 +236,8 @@ V* Map<K, V>::find(const K& _key) {
 }
 
 template<typename K, typename V>
-const V* Map<K, V>::find(const K& _key) const {
+template<typename L>
+const V* Map<K, V>::find(const L& _key) const {
   if (Size index; lookup_index(_key, index)) {
     return m_values + index;
   }
@@ -278,8 +277,9 @@ bool Map<K, V>::is_empty() const {
 }
 
 template<typename K, typename V>
-Size Map<K, V>::hash_key(const K& _key) {
-  auto hash_value = Hash::Hasher<K>{}(_key);
+template<typename L>
+Size Map<K, V>::hash_key(const L& _key) {
+  auto hash_value = Hash::Hasher<L>{}(_key);
 
   // MSB is used to indicate deleted elements
   if constexpr(sizeof hash_value == 8) {
@@ -450,7 +450,8 @@ V* Map<K, V>::inserter(Size _hash, const K& _key, const V& _value) {
 }
 
 template<typename K, typename V>
-bool Map<K, V>::lookup_index(const K& _key, Size& _index) const {
+template<typename L>
+bool Map<K, V>::lookup_index(const L& _key, Size& _index) const {
   if (RX_HINT_UNLIKELY(m_size == 0)) {
     return false;
   }
