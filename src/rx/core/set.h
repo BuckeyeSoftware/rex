@@ -10,6 +10,7 @@
 #include "rx/core/utility/swap.h"
 
 #include "rx/core/hints/unreachable.h"
+#include "rx/core/hints/unlikely.h"
 
 #include "rx/core/memory/system_allocator.h"
 #include "rx/core/memory/aggregate.h"
