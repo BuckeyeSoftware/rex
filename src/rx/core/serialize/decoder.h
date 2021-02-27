@@ -55,7 +55,7 @@ private:
   Header m_header;
   Buffer m_buffer;
   String m_message;
-  Uninitialized<StringTable> m_strings;
+  StringTable m_strings;
 };
 
 inline Decoder::Decoder(Stream* _stream)

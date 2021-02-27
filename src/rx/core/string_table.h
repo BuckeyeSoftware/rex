@@ -1,89 +1,113 @@
 #ifndef RX_CORE_STRING_TABLE_H
 #define RX_CORE_STRING_TABLE_H
 #include "rx/core/linear_buffer.h"
-#include "rx/core/optional.h"
+#include "rx/core/set.h"
+
+#include "rx/core/hash/string.h"
 
 namespace Rx {
 
 struct String;
 
-struct RX_API StringTable {
+struct StringTable {
+  RX_MARK_NO_COPY(StringTable);
+
   constexpr StringTable();
   constexpr StringTable(Memory::Allocator& _allocator);
-
-  // Construct a string table from raw string data.
-  StringTable(LinearBuffer&& data_);
-  StringTable(Memory::Allocator& _allocator, const char* _data, Size _size);
-
   StringTable(StringTable&& string_table_);
-  StringTable(const StringTable& _string_table);
+
+  static Optional<StringTable> create_from_linear_buffer(LinearBuffer&& linear_buffer_);
 
   StringTable& operator=(StringTable&& string_table_);
-  StringTable& operator=(const StringTable& _string_table);
 
-  Optional<Size> insert(const char* _string, Size _length);
-  Optional<Size> insert(const char* _string);
-  Optional<Size> insert(const String& _string);
+  Optional<Size> add(const char* _string);
+  Optional<Size> add(const char* _string, Size _length);
+
+  Optional<Size> find(const char* _string);
+
+  const LinearBuffer& data() const &;
 
   const char* operator[](Size _index) const;
 
-  const char* data() const;
-  Size size() const;
-
   void clear();
 
-  constexpr Memory::Allocator& allocator() const;
-
 private:
-  Optional<Size> find(const char* _string) const;
-  Optional<Size> add(const char* _string, Size _size);
+  void update_table_references();
 
-  LinearBuffer m_data;
+  Optional<Size> insert(const char* _string, Size _length);
+
+  struct SharedString {
+    Size offset;
+    StringTable* table;
+    const char* as_string() const;
+    static Optional<SharedString> create(StringTable* table_, const char* _string, Size _length);
+    bool operator==(const char* _string) const;
+    bool operator==(const SharedString& _string) const;
+    Size hash() const;
+  };
+
+  LinearBuffer m_string_data;
+  Set<SharedString> m_string_set;
 };
 
+// [StringTable]
 inline constexpr StringTable::StringTable()
   : StringTable{Memory::SystemAllocator::instance()}
 {
 }
 
 inline constexpr StringTable::StringTable(Memory::Allocator& _allocator)
-  : m_data{_allocator}
-{
-}
-
-inline StringTable::StringTable(LinearBuffer&& data_)
-  : m_data{Utility::move(data_)}
+  : m_string_data{_allocator}
+  , m_string_set{_allocator}
 {
 }
 
 inline StringTable::StringTable(StringTable&& string_table_)
-  : m_data{Utility::move(string_table_.m_data)}
+  : m_string_data{Utility::move(string_table_.m_string_data)}
+  , m_string_set{Utility::move(string_table_.m_string_set)}
 {
+  update_table_references();
 }
 
 inline StringTable& StringTable::operator=(StringTable&& string_table_) {
-  m_data = Utility::move(string_table_.m_data);
+  m_string_data = Utility::move(string_table_.m_string_data);
+  m_string_set = Utility::move(string_table_.m_string_set);
+  update_table_references();
   return *this;
 }
 
+inline Optional<Size> StringTable::find(const char* _string) {
+  if (auto search = m_string_set.find(_string)) {
+    return search->offset;
+  }
+  return nullopt;
+}
+
+inline const LinearBuffer& StringTable::data() const & {
+  return m_string_data;
+}
+
 inline const char* StringTable::operator[](Size _index) const {
-  return reinterpret_cast<const char*>(&m_data[_index]);
-}
-
-inline const char* StringTable::data() const {
-  return reinterpret_cast<const char*>(m_data.data());
-}
-
-inline Size StringTable::size() const {
-  return m_data.size();
+  RX_ASSERT(_index < m_string_data.size(), "out of bounds");
+  return reinterpret_cast<const char*>(m_string_data.data() + _index);
 }
 
 inline void StringTable::clear() {
-  m_data.clear();
+  m_string_data.clear();
+  m_string_set.clear();
 }
 
-RX_HINT_FORCE_INLINE constexpr Memory::Allocator& StringTable::allocator() const {
-  return m_data.allocator();
+inline void StringTable::update_table_references() {
+  m_string_set.each([this](SharedString& shared_string_) {
+    shared_string_.table = this;
+  });
+}
+
+inline Optional<Size> StringTable::insert(const char* _string, Size _length) {
+  if (auto shared = SharedString::create(this, _string, _length)) {
+    return shared->offset;
+  }
+  return nullopt;
 }
 
 } // namespace Rx

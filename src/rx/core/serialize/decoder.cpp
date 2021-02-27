@@ -12,6 +12,7 @@ Decoder::Decoder(Memory::Allocator& _allocator, Stream* _stream)
   , m_stream{_stream}
   , m_buffer{m_stream, Buffer::Mode::READ}
   , m_message{allocator()}
+  , m_strings{allocator()}
 {
   // Read header and strings.
   RX_ASSERT(read_header(), "failed to read header");
@@ -99,7 +100,8 @@ bool Decoder::read_string(String& result_) {
     return false;
   }
 
-  result_ = (*m_strings.data())[index];
+  result_ = m_strings[index];
+
   return true;
 }
 
@@ -136,9 +138,6 @@ bool Decoder::read_byte_array(Byte* result_, Size _count) {
 }
 
 bool Decoder::finalize() {
-  if (m_header.string_size) {
-    m_strings.fini();
-  }
   return true;
 }
 
@@ -184,7 +183,7 @@ bool Decoder::read_strings() {
     return error("out of memory");
   }
 
-  if (!m_stream->read(reinterpret_cast<Byte*>(strings.data()), strings.size())) {
+  if (!m_stream->read(strings.data(), strings.size())) {
     return error("read failed");
   }
 
@@ -193,7 +192,12 @@ bool Decoder::read_strings() {
     return error("malformed string table");
   }
 
-  m_strings.init(Utility::move(strings));
+  auto table = StringTable::create_from_linear_buffer(Utility::move(strings));
+  if (!table) {
+    return error("out of memory");
+  }
+
+  m_strings = Utility::move(*table);
 
   // Restore the stream to where we were before we seeked and read in the strings
   if (!m_stream->seek(cursor, Stream::Whence::SET)) {

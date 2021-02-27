@@ -155,8 +155,8 @@ bool Immediate2D::Queue::record_text(
   next_command.as_text.text_length = _text_length;
 
   // insert strings into string table
-  const auto font_index = m_string_table.insert(_font, _font_length);
-  const auto text_index = m_string_table.insert(_text, _text_length);
+  const auto font_index = m_string_table.add(_font, _font_length);
+  const auto text_index = m_string_table.add(_text, _text_length);
   if (!font_index || !text_index) {
     return false;
   }

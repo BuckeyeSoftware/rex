@@ -73,7 +73,7 @@ bool Encoder::write_string(const char* _string, Size _size) {
     return error("string isn't null-terminated");
   }
 
-  if (auto insert = m_strings.insert(_string, _size)) {
+  if (auto insert = m_strings.add(_string, _size)) {
     return write_uint(*insert);
   }
 
@@ -117,14 +117,14 @@ bool Encoder::finalize() {
     return error("flush failed");
   }
 
+  const auto& strings = m_strings.data();
+
   // Update header fields.
   m_header.data_size = m_stream->tell() - sizeof m_header;
-  m_header.string_size = m_strings.size();
+  m_header.string_size = strings.size();
 
   // Write out string table as the final thing in the stream.
-  const auto string_table_data = reinterpret_cast<const Byte*>(m_strings.data());
-  const auto string_table_size = m_strings.size();
-  if (m_stream->write(string_table_data, string_table_size) != string_table_size) {
+  if (m_stream->write(strings.data(), strings.size()) != strings.size()) {
     return error("write failed");
   }
 
