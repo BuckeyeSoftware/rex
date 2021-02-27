@@ -73,7 +73,7 @@
           f32x3 indirect_specular = approximate_specular_ibl(
             specular_color, roughness, normal, v);
 
-          fs_color = f32x4(sample_albedo.a * indirect_diffuse + indirect_specular, 1.0);
+          fs_color = f32x4(sample_albedo.a * (indirect_diffuse + indirect_specular), 1.0);
         }
       "
     }
