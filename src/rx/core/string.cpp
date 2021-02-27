@@ -6,7 +6,7 @@
 
 #include "rx/core/utility/swap.h"
 
-#include "rx/core/hash/fnv1a.h"
+#include "rx/core/hash/string.h"
 
 #include "rx/core/hints/unreachable.h"
 #include "rx/core/hints/unlikely.h"
@@ -466,13 +466,7 @@ bool String::contains(const String& _needle) const {
 }
 
 Size String::hash() const {
-  const auto data = reinterpret_cast<const Byte*>(m_data);
-  if constexpr (sizeof(Size) == 8) {
-    return Hash::fnv1a_64(data, size());
-  } else {
-    return Hash::fnv1a_32(data, size());
-  }
-  RX_HINT_UNREACHABLE();
+  return Hash::string(m_data, size());
 }
 
 Optional<Memory::View> String::disown() {

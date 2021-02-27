@@ -5,6 +5,8 @@
 #include "rx/core/hash/mix_enum.h"
 #include "rx/core/hash/mix_int.h"
 
+#include "rx/core/hash/string.h"
+
 namespace Rx::Hash {
 
 template<typename T>
@@ -132,6 +134,14 @@ template<typename T>
 struct Hasher<T*> {
   Size operator()(const T* _value) const {
     return mix_pointer(_value);
+  }
+};
+
+// Specialization for const char* as that is always a string.
+template<>
+struct Hasher<const char*> {
+  Size operator()(const char* _value) const {
+    return string(_value);
   }
 };
 
