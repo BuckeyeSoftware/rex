@@ -17,18 +17,27 @@
 
 namespace Rx::Render {
 
-Model::Model(Frontend::Context* _frontend)
+Model::Model(Frontend::Context* _frontend, Frontend::Technique* _technique)
   : m_frontend{_frontend}
-  , m_technique{m_frontend->find_technique_by_name("geometry")}
+  , m_technique{_technique}
   , m_arena{nullptr}
-  , m_materials{m_frontend->allocator()}
-  , m_opaque_meshes{m_frontend->allocator()}
-  , m_transparent_meshes{m_frontend->allocator()}
+  , m_materials{_frontend->allocator()}
+  , m_opaque_meshes{_frontend->allocator()}
+  , m_transparent_meshes{_frontend->allocator()}
+  , m_clips{_frontend->allocator()}
 {
 }
 
+Optional<Model> Model::create(Frontend::Context* _frontend) {
+  auto technique = _frontend->find_technique_by_name("geometry");
+  if (!technique) {
+    return nullopt;
+  }
+  return Model{_frontend, technique};
+}
+
 Model::Model(Model&& model_)
-  : m_frontend{model_.m_frontend}
+  : m_frontend{Utility::exchange(model_.m_frontend, nullptr)}
   , m_technique{Utility::exchange(model_.m_technique, nullptr)}
   , m_arena{Utility::exchange(model_.m_arena, nullptr)}
   , m_block{Utility::move(model_.m_block)}
@@ -43,7 +52,11 @@ Model::Model(Model&& model_)
 }
 
 Model& Model::operator=(Model&& model_) {
-  m_frontend = model_.m_frontend;
+  if (this == &model_) {
+    return *this;
+  }
+
+  m_frontend = Utility::exchange(model_.m_frontend, nullptr);
   m_technique = Utility::exchange(model_.m_technique, nullptr);
   m_arena = Utility::exchange(model_.m_arena, nullptr);
   m_block = Utility::move(model_.m_block);
@@ -54,6 +67,7 @@ Model& Model::operator=(Model&& model_) {
   m_animation = Utility::move(model_.m_animation);
   m_clips = Utility::move(model_.m_clips);
   m_aabb = Utility::move(model_.m_aabb);
+
   return *this;
 }
 

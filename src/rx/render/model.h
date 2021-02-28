@@ -26,23 +26,18 @@ struct Immediate3D;
 struct ImageBasedLighting;
 
 struct Model {
-  Model(Frontend::Context* _frontend);
-  Model(Model&& model_);
-  Model& operator=(Model&& model_);
-  ~Model();
-
-  struct Mesh {
-    Size offset;
-    Size count;
-    Size material;
-    Vector<Vector<Math::AABB>> bounds;
-  };
-
   enum {
     NORMALS  = 1 << 0,
     SKELETON = 1 << 1,
     BOUNDS   = 1 << 2
   };
+
+  Model();
+  Model(Model&& model_);
+  Model& operator=(Model&& model_);
+  ~Model();
+
+  static Optional<Model> create(Frontend::Context* _frontend);
 
   void animate(Size _index, bool _loop);
 
@@ -58,6 +53,15 @@ struct Model {
   const Optional<Rx::Model::Skeleton>& skeleton() const &;
 
 private:
+  Model(Frontend::Context* _frontend, Frontend::Technique* _technique);
+
+  struct Mesh {
+    Size offset;
+    Size count;
+    Size material;
+    Vector<Vector<Math::AABB>> bounds;
+  };
+
   void render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate);
   void render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate);
 
@@ -78,6 +82,11 @@ private:
   Vector<Rx::Model::Clip> m_clips;
   Math::AABB m_aabb;
 };
+
+inline Model::Model()
+  : Model{nullptr, nullptr}
+{
+}
 
 inline const Optional<Rx::Model::Skeleton>& Model::skeleton() const & {
   return m_skeleton;

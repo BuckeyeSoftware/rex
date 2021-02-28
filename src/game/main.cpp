@@ -212,19 +212,26 @@ struct TestGame
     }
     m_color_grader.update();
 
-/*
     Sint32 i = 0;
 
-    if (Filesystem::Directory dir{"base/models/light_unit"}) {
+/*
+    if (Filesystem::Directory dir{"./chess"}) {
       printf("opened light_unit\n");
       dir.each([&](Filesystem::Directory::Item&& item_) {
         //if (i > 10) return;
         if (item_.is_file() && item_.name().ends_with(".json5")) {
           printf("found %s\n", item_.name().data());
-          Render::Model model{&m_frontend};
-          if (model.load("base/models/light_unit/" + item_.name())) {
-            m_models.push_back(Utility::move(model));
-            i++;
+          if (auto model = Render::Model::create(&m_frontend)) {
+            if (model->load("./chess/" + item_.name())) {
+              if (item_.name().contains("board")) {
+                board = m_models.size();
+                // printf("%s\n", model.is_animated() ? "true" : "false");
+              }
+              m_models.push_back(Utility::move(*model));
+              i++;
+            } else {
+              printf("failed to load %s\n", item_.name().data());
+            }
           }
         }
       });
@@ -233,9 +240,10 @@ struct TestGame
     }*/
 
     #if 1
-    Render::Model model{&m_frontend};
-    if (model.load("base/models/mrfixit/mrfixit.json5")) {
-      if (!m_models.push_back(Utility::move(model))) {
+    auto model = Render::Model::create(&m_frontend);
+    if (!model) return false;
+    if (model->load("base/models/mrfixit/mrfixit.json5")) {
+      if (!m_models.push_back(Utility::move(*model))) {
         return false;
       }
     }
@@ -404,9 +412,17 @@ struct TestGame
 
 #if 1
     //const Float32 spacing = 5.0f;
-    Math::Transform transform;
+    Size i = 0;
     m_models.each_fwd([&](Render::Model& model_) {
       //transform.rotate = m_transform.rotate;
+      Math::Transform transform;
+      /*const auto& frame = m_models[board].skeleton()->joints()[offset + i].frame;
+      if (&model_ != &m_models[board]) {
+        transform.translate = {
+          frame.x.w, frame.y.w, frame.z.w
+        };
+        i++;
+      }*/
       model_.render(m_gbuffer.target(), transform.as_mat4(), m_camera.view(),
         m_camera.projection,
           Render::Model::SKELETON | Render::Model::BOUNDS,
