@@ -77,16 +77,17 @@ StringTable::SharedString::create(StringTable* table_, Span<const char> _span) {
 
   SharedString shared{offset, table_};
 
-  if (!string_set.insert(shared)) {
-    return nullopt;
-  }
-
   if (!string_data.resize(offset + _span.size())) {
-    string_set.erase(shared);
     return nullopt;
   }
 
   memcpy(string_data.data() + offset, _span.data(), _span.size());
+
+  if (!string_set.insert(shared)) {
+    // This cannot fail, only ever shrinks.
+    (void)string_data.resize(offset);
+    return nullopt;
+  }
 
   return shared;
 }
