@@ -69,7 +69,7 @@ constexpr Optional<T>::Optional(T&& data_)
   : m_data{}
   , m_init{true}
 {
-  m_data.init(Utility::forward<T>(data_));
+  m_data.init(Utility::move(data_));
 }
 
 
@@ -120,7 +120,7 @@ Optional<T>& Optional<T>::operator=(T&& data_) {
     m_data.fini();
   }
   m_init = true;
-  m_data.init(Utility::forward<T>(data_));
+  m_data.init(Utility::move(data_));
   return *this;
 }
 
@@ -128,9 +128,19 @@ template<typename T>
 Optional<T>& Optional<T>::operator=(const T& _data) {
   if (m_init) {
     m_data.fini();
+    m_init = false;
   }
-  m_init = true;
-  m_data.init(_data);
+
+  if constexpr (Concepts::Copyable<T>) {
+    if (auto copy = T::copy(_data)) {
+      m_data.init(Utility::move(*copy));
+      m_init = true;
+    }
+  } else {
+    m_data.init(_data);
+    m_init = true;
+  }
+
   return *this;
 }
 
