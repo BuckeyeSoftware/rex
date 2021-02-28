@@ -426,17 +426,30 @@ bool Technique::compile(const Map<String, Module>& _modules) {
     }
   }
 
+  // Create a map of all the configuration names with the value false,
+  // passing it into |Configuration::compile|. The compile method will search
+  // for the configuration name and mark it as true, using this map to drive
+  // the declarative predicate system.
+  Map<String, bool> values;
+  auto add_value = [&](const Configuration& _configuration) {
+    return values.insert(_configuration.name(), false);
+  };
+
+  if (!m_configurations.each_fwd(add_value)) {
+    return false;
+  }
+
   // Compile all configurations.
   return m_configurations.each_fwd([&](Configuration& configuration_) {
-    return configuration_.compile(_modules);
+    return configuration_.compile(_modules, values);
   });
 }
 
 // [Technique::Configuration]
-Technique::Configuration::Configuration(Technique* _technique, Type _type)
+Technique::Configuration::Configuration(Technique* _technique, Type _type, String&& name_)
   : m_technique{_technique}
   , m_type{_type}
-  , m_name{_technique->m_frontend->allocator()}
+  , m_name{Utility::move(name_)}
   , m_programs{_technique->m_frontend->allocator()}
   , m_permute_flags{_technique->m_frontend->allocator()}
   , m_specializations{_technique->m_frontend->allocator()}
@@ -478,11 +491,22 @@ bool Technique::load(Stream* _stream) {
   return false;
 }
 
-bool Technique::Configuration::compile(const Map<String, Module>& _modules) {
+bool Technique::Configuration::compile(const Map<String, Module>& _modules,
+  const Map<String, bool>& _values)
+{
   auto frontend = m_technique->m_frontend;
 
   const auto& shader_definitions = m_technique->m_shader_definitions;
   const auto& uniform_definitions = m_technique->m_uniform_definitions;
+
+  // Take a copy of the values and possibly append specializations to it.
+  auto values = Utility::copy(_values);
+  if (!values) {
+    return false;
+  }
+
+  // Mark the value inside as true for this configuration.
+  *values->find(m_name) = true;
 
   if (m_type == Type::BASIC) {
     // create and add just a single program to m_programs
@@ -496,21 +520,26 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules) {
       Shader specialized_shader;
       specialized_shader.kind = _shader_definition.kind;
 
-      auto source = m_technique->resolve_source(_shader_definition, {}, _modules);
+      // Emit #defines
+      values->each_pair([&](const String& _key, bool _value) {
+        return _value ? specialized_shader.source.append(String::format("#define %s\n", _key)) : true;
+      });
+
+      auto source = m_technique->resolve_source(_shader_definition, *values, _modules);
       if (!source || !specialized_shader.source.append(*source)) {
         return false;
       }
 
       // emit inputs
       _shader_definition.inputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout) {
-        if (m_technique->evaluate_when({}, _inout.when)) {
+        if (m_technique->evaluate_when(*values, _inout.when)) {
           specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
         }
       });
 
       // emit outputs
       _shader_definition.outputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout){
-        if (m_technique->evaluate_when({}, _inout.when)) {
+        if (m_technique->evaluate_when(*values, _inout.when)) {
           specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
         }
       });
@@ -519,10 +548,11 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules) {
     });
 
     uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
-      auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind,
-        !m_technique->evaluate_when({}, _uniform_definition.when))};
+      auto& uniform = program->add_uniform(_uniform_definition.name,
+        _uniform_definition.kind, !m_technique->evaluate_when(*values, _uniform_definition.when));
+
       if (_uniform_definition.has_value) {
-        const auto* data{reinterpret_cast<const Byte*>(&_uniform_definition.value)};
+        const auto* data = reinterpret_cast<const Byte*>(&_uniform_definition.value);
         uniform.record_raw(data, uniform.size());
       }
     });
@@ -536,10 +566,14 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules) {
     const auto mask = (1_u64 << m_specializations.size()) - 1;
 
     auto generate = [&](Uint64 _flags) {
-      // Create specialization values for evaluator.
-      Map<String, bool> values{frontend->allocator()};
+      // Insert or update specialization values for evaluator.
       for (Size i = 0; i < m_specializations.size(); i++) {
-        values.insert(m_specializations[i], _flags & (1_u64 << i));
+        const bool result = _flags & (1_u64 << i);
+        if (auto find = values->find(m_specializations[i])) {
+          *find = result;
+        } else {
+          values->insert(m_specializations[i], result);
+        }
       }
 
       m_permute_flags.push_back(_flags);
@@ -547,7 +581,7 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules) {
       auto program = frontend->create_program(RX_RENDER_TAG("technique"));
 
       shader_definitions.each_fwd([&](const ShaderDefinition& _shader_definition) {
-        if (!m_technique->evaluate_when(values, _shader_definition.when)) {
+        if (!m_technique->evaluate_when(*values, _shader_definition.when)) {
           return true;
         }
 
@@ -555,6 +589,11 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules) {
         specialized_shader.kind = _shader_definition.kind;
 
         // Emit #defines
+        values->each_pair([&](const String& _key, bool _value) {
+          return _value ? specialized_shader.source.append(String::format("#define %s\n", _key)) : true;
+        });
+
+        /*
         const Size specializations{m_specializations.size()};
         for (Size i{0}; i < specializations; i++) {
           const String& specialication{m_specializations[i]};
@@ -563,23 +602,23 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules) {
               return false;
             }
           }
-        }
+        }*/
 
         // Append shader source.
-        auto source = m_technique->resolve_source(_shader_definition, values, _modules);
+        auto source = m_technique->resolve_source(_shader_definition, *values, _modules);
         if (!source || !specialized_shader.source.append(*source)) {
           return false;
         }
 
         auto emit_input = [&](const String& _name, const ShaderDefinition::InOut& _inout) -> bool {
-          if (m_technique->evaluate_when(values, _inout.when)) {
+          if (m_technique->evaluate_when(*values, _inout.when)) {
             return specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
           }
           return true;
         };
 
         auto emit_output = [&](const String& _name, const ShaderDefinition::InOut& _inout) -> bool {
-          if (m_technique->evaluate_when(values, _inout.when)) {
+          if (m_technique->evaluate_when(*values, _inout.when)) {
             return specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
           }
           return true;
@@ -600,10 +639,11 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules) {
 
       // emit uniforms
       uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
-        auto& uniform{program->add_uniform(_uniform_definition.name, _uniform_definition.kind,
-          !m_technique->evaluate_when(values, _uniform_definition.when))};
+        auto& uniform = program->add_uniform(_uniform_definition.name,
+          _uniform_definition.kind, !m_technique->evaluate_when(*values, _uniform_definition.when));
+
         if (_uniform_definition.has_value) {
-          const auto* data{reinterpret_cast<const Byte*>(&_uniform_definition.value)};
+          const auto* data = reinterpret_cast<const Byte*>(&_uniform_definition.value);
           uniform.record_raw(data, uniform.size());
         }
       });
@@ -629,49 +669,53 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules) {
     // Set all the values to false. On each iteration temporarily mark the
     // specialization as true, this avoids needing to construct a map each
     // iteration.
-    Map<String, bool> values{frontend->allocator()};
     for (Size j = 0; j < specializations; j++) {
-      values.insert(m_specializations[j], false);
+      values->insert(m_specializations[j], false);
     }
 
     for (Size i = 0; i < specializations; i++) {
-      const auto& specialization = m_specializations[i];
+      // const auto& specialization = m_specializations[i];
 
       // This can never fail.
-      auto value = values.find(m_specializations[i]);
+      auto value = values->find(m_specializations[i]);
+      RX_ASSERT(value, "should never fail");
 
       *value = true;
 
       auto program = frontend->create_program(RX_RENDER_TAG("technique"));
 
       shader_definitions.each_fwd([&](const ShaderDefinition& _shader_definition) {
-        if (!m_technique->evaluate_when(values, _shader_definition.when)) {
+        if (!m_technique->evaluate_when(*values, _shader_definition.when)) {
           return true;
         }
 
         Shader specialized_shader;
         specialized_shader.kind = _shader_definition.kind;
 
+        values->each_pair([&](const String& _key, bool _value) {
+          return _value ? specialized_shader.source.append(String::format("#define %s\n", _key)) : true;
+        });
+
         // Emit specialization #define
-        if (!specialized_shader.source.append(String::format("#define %s\n", specialization))) {
-          return false;
-        }
+        // if (!specialized_shader.source.append(String::format("#define %s\n", specialization))) {
+        //   return false;
+        // }
 
         // Append shader source.
-        auto source = m_technique->resolve_source(_shader_definition, values, _modules);
+        auto source = m_technique->resolve_source(_shader_definition, *values, _modules);
         if (!source || !specialized_shader.source.append(*source)) {
           return false;
         }
 
         auto emit_input = [&](const String& _name, const ShaderDefinition::InOut& _inout) -> bool {
-          if (m_technique->evaluate_when(values, _inout.when)) {
+          if (m_technique->evaluate_when(*values, _inout.when)) {
             return specialized_shader.inputs.insert(_name, {_inout.index, _inout.kind});
           }
           return true;
         };
 
         auto emit_output = [&](const String& _name, const ShaderDefinition::InOut& _inout) -> bool {
-          if (m_technique->evaluate_when(values, _inout.when)) {
+          if (m_technique->evaluate_when(*values, _inout.when)) {
             return specialized_shader.outputs.insert(_name, {_inout.index, _inout.kind});
           }
           return true;
@@ -693,10 +737,10 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules) {
       // Emit uniforms.
       uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
         auto& uniform = program->add_uniform(_uniform_definition.name,
-          _uniform_definition.kind, !m_technique->evaluate_when(values, _uniform_definition.when));
+          _uniform_definition.kind, !m_technique->evaluate_when(*values, _uniform_definition.when));
 
         if (_uniform_definition.has_value) {
-          const auto* data{reinterpret_cast<const Byte*>(&_uniform_definition.value)};
+          const auto* data = reinterpret_cast<const Byte*>(&_uniform_definition.value);
           uniform.record_raw(data, uniform.size());
         }
       });
@@ -1146,25 +1190,29 @@ bool Technique::parse_configuration(const JSON& _configuration) {
     return error("expected name for configuration");
   }
 
+  if (!name.is_string()) {
+    return error("expected String for 'name' in configuration");
+  }
+
   if (permutes && variants) {
     return error("cannot define both permutes and variants");
   }
 
   if (permutes) {
-    if (!m_configurations.emplace_back(this, Configuration::Type::PERMUTE)) {
+    if (!m_configurations.emplace_back(this, Configuration::Type::PERMUTE, name.as_string())) {
       return false;
     }
     if (!m_configurations.last().parse_specializations(permutes, "permutes")) {
       return false;
     }
   } else if (variants) {
-    if (!m_configurations.emplace_back(this, Configuration::Type::VARIANT)) {
+    if (!m_configurations.emplace_back(this, Configuration::Type::VARIANT, name.as_string())) {
       return false;
     }
     if (!m_configurations.last().parse_specializations(variants, "variants")) {
       return false;
     }
-  } else if (!m_configurations.emplace_back(this, Configuration::Type::BASIC)) {
+  } else if (!m_configurations.emplace_back(this, Configuration::Type::BASIC, name.as_string())) {
     return false;
   }
 

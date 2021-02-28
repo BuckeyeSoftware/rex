@@ -253,17 +253,22 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     const auto& material{m_materials[_mesh.material]};
 
     Uint64 flags{0};
-    if (m_animation)           flags |= 1 << 0;
-    if (material.albedo())     flags |= 1 << 1;
-    if (material.normal())     flags |= 1 << 2;
-    if (material.metalness())  flags |= 1 << 3;
-    if (material.roughness())  flags |= 1 << 4;
-    if (material.alpha_test()) flags |= 1 << 5;
-    if (material.occlusion())  flags |= 1 << 6;
-    if (material.emissive())   flags |= 1 << 7;
+    if (material.albedo())     flags |= 1 << 0;
+    if (material.normal())     flags |= 1 << 1;
+    if (material.metalness())  flags |= 1 << 2;
+    if (material.roughness())  flags |= 1 << 3;
+    if (material.alpha_test()) flags |= 1 << 4;
+    if (material.occlusion())  flags |= 1 << 5;
+    if (material.emissive())   flags |= 1 << 6;
 
-    Frontend::Program* program{m_technique->configuration(0).permute(flags)};
-    auto& uniforms{program->uniforms()};
+    Size configuration = 0;
+    if (m_animation) {
+      configuration = 1;
+      // TODO(DQS)
+    }
+
+    Frontend::Program* program{m_technique->configuration(configuration).permute(flags)};
+    auto& uniforms = program->uniforms();
 
     uniforms[0].record_mat4x4f(_model);
     uniforms[1].record_mat4x4f(_view);
@@ -272,25 +277,28 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
       uniforms[3].record_mat3x3f(transform->as_mat3());
     }
 
-    if (m_animation) {
-      uniforms[4].record_lb_bones(m_animation->lb_frames(), m_skeleton->joints().size());
-      uniforms[16].record_dq_bones(m_animation->dq_frames(), m_skeleton->joints().size());
-    }
-
-    uniforms[5].record_float(material.roughness_value());
-    uniforms[6].record_float(material.metalness_value());
-    uniforms[7].record_float(material.occlusion_value());
-    uniforms[8].record_vec3f(material.albedo_color());
-    uniforms[9].record_vec3f(material.emission_color());
+    uniforms[4].record_float(material.roughness_value());
+    uniforms[5].record_float(material.metalness_value());
+    uniforms[6].record_float(material.occlusion_value());
+    uniforms[7].record_vec3f(material.albedo_color());
+    uniforms[8].record_vec3f(material.emission_color());
 
     // Record all the textures.
     Frontend::Textures draw_textures;
-    if (material.albedo())    uniforms[10].record_sampler(draw_textures.add(material.albedo()));
-    if (material.normal())    uniforms[11].record_sampler(draw_textures.add(material.normal()));
-    if (material.metalness()) uniforms[12].record_sampler(draw_textures.add(material.metalness()));
-    if (material.roughness()) uniforms[13].record_sampler(draw_textures.add(material.roughness()));
-    if (material.occlusion()) uniforms[14].record_sampler(draw_textures.add(material.occlusion()));
-    if (material.emissive())  uniforms[15].record_sampler(draw_textures.add(material.emissive()));
+    if (material.albedo())    uniforms[9].record_sampler(draw_textures.add(material.albedo()));
+    if (material.normal())    uniforms[10].record_sampler(draw_textures.add(material.normal()));
+    if (material.metalness()) uniforms[11].record_sampler(draw_textures.add(material.metalness()));
+    if (material.roughness()) uniforms[12].record_sampler(draw_textures.add(material.roughness()));
+    if (material.occlusion()) uniforms[13].record_sampler(draw_textures.add(material.occlusion()));
+    if (material.emissive())  uniforms[14].record_sampler(draw_textures.add(material.emissive()));
+
+    // For animation
+    if (m_animation) {
+      // LBS ...
+      uniforms[15].record_lb_bones(m_animation->lb_frames(), m_skeleton->joints().size());
+      // DQS ...
+      uniforms[16].record_dq_bones(m_animation->dq_frames(), m_skeleton->joints().size());
+    }
 
     // Record all the draw buffers.
     Frontend::Buffers draw_buffers;

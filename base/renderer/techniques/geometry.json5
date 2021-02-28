@@ -2,9 +2,32 @@
   name: "geometry",
   configurations: [
     {
-      name: "DEFAULT",
+      name: "FOR_RIGID",
       permutes: [
-        "HAS_SKELETON",
+        "HAS_ALBEDO",
+        "HAS_NORMAL",
+        "HAS_METALNESS",
+        "HAS_ROUGHNESS",
+        "HAS_ALPHATEST",
+        "HAS_AMBIENT",
+        "HAS_EMISSIVE"
+      ]
+    },
+    {
+      name: "FOR_LBS",
+      permutes: [
+        "HAS_ALBEDO",
+        "HAS_NORMAL",
+        "HAS_METALNESS",
+        "HAS_ROUGHNESS",
+        "HAS_ALPHATEST",
+        "HAS_AMBIENT",
+        "HAS_EMISSIVE"
+      ]
+    },
+    {
+      name: "FOR_DQS",
+      permutes: [
         "HAS_ALBEDO",
         "HAS_NORMAL",
         "HAS_METALNESS",
@@ -20,7 +43,6 @@
     { name: "u_view",            type: "f32x4x4" },
     { name: "u_projection",      type: "f32x4x4" },
     { name: "u_transform",       type: "f32x3x3", value: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]},
-    { name: "u_bones",           type: "lb_bones", when: "HAS_SKELETON" },
     { name: "u_roughness_value", type: "f32", value: 1.0},
     { name: "u_metalness_value", type: "f32", value: 1.0},
     { name: "u_occlusion_value", type: "f32", value: 1.0},
@@ -32,7 +54,8 @@
     { name: "u_roughness",       type: "sampler2D", value: 3, when: "HAS_ROUGHNESS" },
     { name: "u_ambient",         type: "sampler2D", value: 4, when: "HAS_AMBIENT" },
     { name: "u_emissive",        type: "sampler2D", value: 5, when: "HAS_EMISSIVE" },
-    { name: "u_dqbones",         type: "dq_bones", when: "HAS_SKELETON" }
+    { name: "u_lb_bones",        type: "lb_bones", when: "FOR_LBS" },
+    { name: "u_dq_bones",        type: "dq_bones", when: "FOR_DQS" }
   ],
   shaders: [
     {
@@ -42,8 +65,8 @@
         { name: "a_normal",        type: "f32x3" },
         { name: "a_tangent",       type: "f32x4" },
         { name: "a_coordinate",    type: "f32x2" },
-        { name: "a_blend_weights", type: "f32x4", when: "HAS_SKELETON" },
-        { name: "a_blend_indices", type: "s32x4", when: "HAS_SKELETON" }
+        { name: "a_blend_weights", type: "f32x4", when: "FOR_LBS || FOR_DQS" },
+        { name: "a_blend_indices", type: "s32x4", when: "FOR_LBS || FOR_DQS" }
       ],
       outputs: [
         { name: "vs_normal",       type: "f32x3" },
@@ -51,19 +74,19 @@
         { name: "vs_coordinate",   type: "f32x2" }
       ],
       imports: [
-        { name: "dual_quaternion_skinning", when: "HAS_SKELETON" },
-        { name: "linear_blend_skinning",    when: "HAS_SKELETON" }
+        { name: "dual_quaternion_skinning", when: "FOR_DQS" },
+        { name: "linear_blend_skinning",    when: "FOR_LBS" }
       ],
       source: "
         void main() {
-        #if defined(HAS_SKELETON)
+        #if defined(FOR_DQS)
           // Dual quaternion skinning.
-          // f32x2x4 blend    = dqs(u_dqbones, a_blend_weights, as_u32x4(a_blend_indices));
-          // f32x3   position = dq_transform_point(blend, a_position);
-          // f32x3   normal   = dq_transform_normal(blend, a_normal);
-
+          f32x2x4 blend    = dqs(u_dq_bones, a_blend_weights, as_u32x4(a_blend_indices));
+          f32x3   position = dq_transform_point(blend, a_position);
+          f32x3   normal   = dq_transform_normal(blend, a_normal);
+        #elif defined(FOR_LBS)
           // Linear blend skinning.
-          f32x3x4 blend    = lbs(u_bones, a_blend_weights, as_u32x4(a_blend_indices));
+          f32x3x4 blend    = lbs(u_lb_bones, a_blend_weights, as_u32x4(a_blend_indices));
           f32x3   position = lbs_transform_point(blend, a_position);
           f32x3   normal   = lbs_transform_normal(blend, a_normal);
         #else

@@ -35,7 +35,7 @@ struct Technique {
       PERMUTE
     };
 
-    Configuration(Technique* _technique, Type _type);
+    Configuration(Technique* _technique, Type _type, String&& name_);
     Configuration(Configuration&& configuration_);
     ~Configuration();
     Configuration& operator=(Configuration&& configguration_);
@@ -52,7 +52,8 @@ struct Technique {
     bool parse_specializations(const JSON& _specializations, const char* _type);
     bool parse_specialization(const JSON& _specialization, const char* _type);
 
-    bool compile(const Map<String, Module>& _modules);
+    bool compile(const Map<String, Module>& _modules,
+      const Map<String, bool>& _values);
 
     void release();
 
@@ -208,6 +209,7 @@ void Technique::log(Log::Level _level, const char* _format,  Ts&&... _arguments)
 inline Technique::Configuration::Configuration(Configuration&& configuration_)
   : m_technique{Utility::exchange(configuration_.m_technique, nullptr)}
   , m_type{Utility::exchange(configuration_.m_type, Type::BASIC)}
+  , m_name{Utility::move(configuration_.m_name)}
   , m_programs{Utility::move(configuration_.m_programs)}
   , m_permute_flags{Utility::move(configuration_.m_permute_flags)}
   , m_specializations{Utility::move(configuration_.m_specializations)}
@@ -223,6 +225,7 @@ inline Technique::Configuration& Technique::Configuration::operator=(Configurati
     release();
     m_technique = Utility::exchange(configuration_.m_technique, nullptr);
     m_type = Utility::exchange(configuration_.m_type, Type::BASIC);
+    m_name = Utility::move(configuration_.m_name);
     m_programs = Utility::move(configuration_.m_programs);
     m_permute_flags = Utility::move(configuration_.m_permute_flags);
     m_specializations = Utility::move(configuration_.m_specializations);

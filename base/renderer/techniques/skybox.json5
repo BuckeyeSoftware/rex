@@ -2,7 +2,13 @@
   name: "skybox",
   configurations: [
     {
-      name: "DEFAULT",
+      name: "FOR_CUBEMAP",
+      permutes: [
+        "HAS_GRADING_LUT"
+      ]
+    },
+    {
+      name: "FOR_HDRI",
       permutes: [
         "HAS_GRADING_LUT"
       ]
@@ -11,7 +17,8 @@
   uniforms: [
     { name: "u_inverse_projection", type: "f32x4x4" },
     { name: "u_inverse_view",       type: "f32x4x4" },
-    { name: "u_sampler",            type: "sampler2D", value: 0 },
+    { name: "u_sampler_cm",         type: "samplerCM", when: "FOR_CUBEMAP", value: 0 },
+    { name: "u_sampler_hdri",       type: "sampler2D", when: "FOR_HDRI",    value: 0 },
     { name: "u_grading_lut",        type: "sampler3D", when: "HAS_GRADING_LUT" },
     { name: "u_grading_properties", type: "f32x2",     when: "HAS_GRADING_LUT" }
   ],
@@ -46,7 +53,12 @@
       ],
       source: "
         void main() {
-          f32x4 color = sample_hdri(u_sampler, vs_coordinate);
+        #if defined(FOR_HDRI)
+          f32x4 color = sample_hdri(u_sampler_hdri, vs_coordinate);
+        #elif defined(FOR_CUBEMAP)
+          f32x4 color = rx_textureCM(u_sampler_cm, vs_coordinate);
+        #endif
+
         #if defined(HAS_GRADING_LUT)
           f32 z = color.z * u_grading_properties.x + u_grading_properties.y;
           fs_color = rx_texture3D(u_grading_lut, f32x3(color.xy, z));
