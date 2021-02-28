@@ -62,13 +62,12 @@
             vs_coordinate, u_inverse_projection, sample_depth);
 
           f32x3 v = normalize(u_camera_position - position);
-          f32x3 r = normalize(reflect(-v, normal));
 
           f32x3 base_color = sample_albedo.rgb;
           f32x3 diffuse_color = base_color * (1.0 - metalness);
           f32x3 specular_color = mix(f32x3(0.04), base_color, metalness);
 
-          f32x3 irradiance = rx_textureCM(u_irradiance, r).rgb;
+          f32x3 irradiance = rx_textureCM(u_irradiance, normal).rgb;
           f32x3 indirect_diffuse = diffuse_color * irradiance;
           f32x3 indirect_specular = approximate_specular_ibl(
             specular_color, roughness, normal, v);
