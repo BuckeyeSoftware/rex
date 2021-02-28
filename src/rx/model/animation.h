@@ -48,12 +48,8 @@ private:
 
   Vector<Math::Mat3x4f> m_rendered_lb_frames;
   Vector<Math::DualQuatf> m_rendered_dq_frames;
-
-  Size m_animation;
-
   Float32 m_current_frame;
   Interpolant m_interpolant;
-
   bool m_completed;
 };
 
