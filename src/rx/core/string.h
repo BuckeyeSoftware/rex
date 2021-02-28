@@ -125,6 +125,9 @@ struct RX_API String {
 
   Optional<Memory::View> disown();
 
+  // The span includes the null terminator.
+  Span<char> span();
+
 private:
   static RX_API String formatter(Memory::Allocator& _allocator, const char* _format, ...);
 
@@ -382,6 +385,10 @@ bool operator>(const char* _lhs, const String& _rhs);
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& String::allocator() const {
   return *m_allocator;
+}
+
+Span<char> String::span() {
+  return {m_data, size() + 1};
 }
 
 // WideString

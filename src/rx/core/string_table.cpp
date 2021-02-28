@@ -30,11 +30,17 @@ Optional<StringTable> StringTable::create_from_linear_buffer(LinearBuffer&& line
 }
 
 Optional<Size> StringTable::add(const char* _string) {
-  return add(_string, strlen(_string));
+  // Remember to always include the null-terminator on insertions.
+  return insert({_string, strlen(_string) + 1});
 }
 
 Optional<Size> StringTable::add(const char* _string, Size _length) {
-  if (auto search = find(_string)) {
+  // Remember to always include the null-terminator on insertions.
+  return insert({_string, _length + 1});
+}
+
+Optional<Size> StringTable::insert(Span<const char> _span) {
+  if (auto search = find(_span.data())) {
     return *search;
   }
 
@@ -43,15 +49,18 @@ Optional<Size> StringTable::add(const char* _string, Size _length) {
 
   // Search the contents with memmem for |_string| as it may be an overlapping
   // string which we can save on space in the StringTable for.
-  if (const auto search = memmem(base, m_string_data.size(), _string, _length)) {
+  if (const auto search = memmem(base, m_string_data.size(), _span.data(), _span.size())) {
     const auto cursor = reinterpret_cast<const Byte*>(search);
     if (!m_string_set.insert({Size(cursor - base), this})) {
       return nullopt;
     }
   }
 
-  // Remember to always include the null-terminator on insertions.
-  return insert(_string, _length + 1);
+  if (auto shared = SharedString::create(this, _span)) {
+    return shared->offset;
+  }
+
+  return nullopt;
 }
 
 // [StringTable::SharedString]
@@ -60,7 +69,7 @@ const char* StringTable::SharedString::as_string() const {
 }
 
 Optional<StringTable::SharedString>
-StringTable::SharedString::create(StringTable* table_, const char* _string, Size _length) {
+StringTable::SharedString::create(StringTable* table_, Span<const char> _span) {
   auto& string_data = table_->m_string_data;
   auto& string_set = table_->m_string_set;
 
@@ -72,12 +81,12 @@ StringTable::SharedString::create(StringTable* table_, const char* _string, Size
     return nullopt;
   }
 
-  if (!string_data.resize(offset + _length)) {
+  if (!string_data.resize(offset + _span.size())) {
     string_set.erase(shared);
     return nullopt;
   }
 
-  memcpy(string_data.data() + offset, _string, _length);
+  memcpy(string_data.data() + offset, _span.data(), _span.size());
 
   return shared;
 }

@@ -113,13 +113,13 @@ String String::formatter(Memory::Allocator& _allocator, const char* _format, ...
 
   va_list va;
   va_start(va, _format);
-  const Size need_length = format_buffer_va_list(nullptr, 0, _format, va);
+  const Size need_length = format_buffer_va_list({nullptr, 0}, _format, va);
   va_end(va);
 
   RX_ASSERT(result.resize(need_length), "out of memory");
 
   va_start(va, _format);
-  format_buffer_va_list(result.data(), result.size() + 1, _format, va);
+  format_buffer_va_list(result.span(), _format, va);
   va_end(va);
 
   return result;

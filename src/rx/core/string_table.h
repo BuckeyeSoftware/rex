@@ -34,13 +34,13 @@ struct StringTable {
 private:
   void update_table_references();
 
-  Optional<Size> insert(const char* _string, Size _length);
+  Optional<Size> insert(Span<const char> _span);
 
   struct SharedString {
     Size offset;
     StringTable* table;
     const char* as_string() const;
-    static Optional<SharedString> create(StringTable* table_, const char* _string, Size _length);
+    static Optional<SharedString> create(StringTable* table_, Span<const char> _span);
     bool operator==(const char* _string) const;
     bool operator==(const SharedString& _string) const;
     Size hash() const;
@@ -101,13 +101,6 @@ inline void StringTable::update_table_references() {
   m_string_set.each([this](SharedString& shared_string_) {
     shared_string_.table = this;
   });
-}
-
-inline Optional<Size> StringTable::insert(const char* _string, Size _length) {
-  if (auto shared = SharedString::create(this, _string, _length)) {
-    return shared->offset;
-  }
-  return nullopt;
 }
 
 } // namespace Rx

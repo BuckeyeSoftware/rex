@@ -3,10 +3,10 @@
 #include <float.h> // {DBL,FLT}_MAX_10_EXP
 #include <stdarg.h> // va_list, va_{start, copy, end}
 
+#include "rx/core/span.h"
 #include "rx/core/utility/forward.h"
 #include "rx/core/traits/remove_cvref.h"
 #include "rx/core/hints/format.h"
-#include "rx/core/types.h" // Size
 #include "rx/core/concepts/integral.h"
 
 namespace Rx {
@@ -56,14 +56,12 @@ struct FormatNormalize<char[E]> {
 };
 
 // Low-level format functions.
-RX_API Size format_buffer_va_list(char* buffer_, Size _length, const char* _format, va_list _list) RX_HINT_FORMAT(3, 0);
-RX_API Size format_buffer_va_args(char* buffer_, Size _length, const char* _format, ...); /*RX_HINT_FORMAT(3, 4);*/
+RX_API Size format_buffer_va_list(Span<char> buffer_, const char* _format, va_list _list) RX_HINT_FORMAT(2, 0);
+RX_API Size format_buffer_va_args(Span<char> buffer_, const char* _format, ...); /*RX_HINT_FORMAT(3, 4);*/
 
 template<typename... Ts>
-RX_HINT_FORMAT(3, 0) Size format_buffer(char* buffer_, Size _length,
-  const char* _format, Ts&&... _arguments)
-{
-  return format_buffer_va_args(buffer_, _length, _format,
+RX_HINT_FORMAT(2, 0) Size format_buffer(Span<char> buffer_, const char* _format, Ts&&... _arguments) {
+  return format_buffer_va_args(buffer_, _format,
     FormatNormalize<Traits::RemoveCVRef<Ts>>{}(Utility::forward<Ts>(_arguments))...);
 }
 

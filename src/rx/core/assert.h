@@ -16,7 +16,7 @@ void assert_fail(const char* _expression, const SourceLocation& _source_location
   // When we have format arguments use an on-stack format buffer.
   if constexpr(sizeof...(Ts) > 0) {
     char buffer[4096];
-    const Size length = format_buffer(buffer, sizeof buffer, _format,
+    const Size length = format_buffer({buffer, sizeof buffer}, _format,
       Utility::forward<Ts>(_arguments)...);
     assert_message(_expression, _source_location, buffer, length >= sizeof buffer);
   } else {

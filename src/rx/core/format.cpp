@@ -5,16 +5,16 @@
 
 namespace Rx {
 
-Size format_buffer_va_list(char* buffer_, Size _length, const char* _format, va_list _list) {
-  const int result = vsnprintf(buffer_, _length, _format, _list);
+Size format_buffer_va_list(Span<char> buffer_, const char* _format, va_list _list) {
+  const int result = vsnprintf(buffer_.data(), buffer_.size(), _format, _list);
   RX_ASSERT(result > 0, "encoding error");
   return static_cast<Size>(result);
 }
 
-Size format_buffer_va_args(char* buffer_, Size _length, const char* _format, ...) {
+Size format_buffer_va_args(Span<char> buffer_, const char* _format, ...) {
   va_list va;
   va_start(va, _format);
-  const Size result = format_buffer_va_list(buffer_, _length, _format, va);
+  const Size result = format_buffer_va_list(buffer_, _format, va);
   va_end(va);
   return result;
 }

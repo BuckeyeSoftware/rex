@@ -12,7 +12,7 @@ void abort(const char* _format, Ts&&... _arguments) {
   // When we have format arguments use an on-stack format buffer.
   if constexpr(sizeof...(Ts) > 0) {
     char buffer[4096];
-    const Size length = format_buffer(buffer, sizeof buffer, _format,
+    const Size length = format_buffer({buffer, sizeof buffer}, _format,
       Utility::forward<Ts>(_arguments)...);
     abort_message(buffer, length >= sizeof buffer);
   } else {
