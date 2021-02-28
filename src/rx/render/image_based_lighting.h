@@ -90,6 +90,7 @@ inline Frontend::TextureCM* IrradianceMap::texture() const {
 }
 
 struct PrefilteredEnvironmentMap {
+  // This includes the base level.
   static inline constexpr const auto MAX_PREFILTER_LEVELS = 6;
 
   RX_MARK_NO_COPY(PrefilteredEnvironmentMap);

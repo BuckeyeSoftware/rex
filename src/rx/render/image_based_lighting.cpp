@@ -126,7 +126,7 @@ Optional<PrefilteredEnvironmentMap> PrefilteredEnvironmentMap::create(Frontend::
   texture->record_format(Frontend::Texture::DataFormat::RGBA_F16);
   texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   texture->record_dimensions({_resolution, _resolution});
-  texture->record_filter({true, false, false}); // LINEAR
+  texture->record_filter({true, false, true}); // LINEAR
   texture->record_wrap({Frontend::Texture::WrapType::REPEAT,
                         Frontend::Texture::WrapType::REPEAT,
                         Frontend::Texture::WrapType::REPEAT});
@@ -198,7 +198,7 @@ void PrefilteredEnvironmentMap::render_next_face() {
 
   for (Size i = 0; i < MAX_PREFILTER_LEVELS; i++) {
     auto mipmap_size = m_resolution >> i;
-    auto roughness = Float32(i) / MAX_PREFILTER_LEVELS;
+    auto roughness = Float32(i) / (MAX_PREFILTER_LEVELS - 1);
     state.viewport.record_dimensions({mipmap_size, mipmap_size});
     program->uniforms()[3].record_float(roughness);
 
