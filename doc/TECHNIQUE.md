@@ -11,15 +11,38 @@ Information on how to read this schema is described [here](JSON5.md)
 The top level schema of a technique looks like
 ```
 {
-  name:     required String
-  shaders:  required Array[#Shader]
-  uniforms: optional Array[#Uniform]
+  name:           required String
+  configurations: required Array[#Configuration]
+  shaders:        required Array[#Shader]
+  uniforms:       optional Array[#Uniform]
+}
+```
+
+`#Configuration` schema looks like:
+```
+{
+  name: required String
   permutes: optional Array[String]
   variants: optional Array[String]
 }
 ```
-
 There cannot be both `variants` and `permutes`
+
+The purpose of `variants` is to describe a list of tokens used to control shader
+variants. A program is created for each variant. The token in the variants array
+can then be used to conditionally include or exclude bodies of code in the
+source through the use of the preprocerssor as well as through the use of the
+`#When` for `#InOut` and `#Uniform` entities.
+
+The purpose of `permutes` is to a describe a list of tokens used to control
+shader permutations. A program is created for every permutation of tokens in
+the permutes list. Tokens in the permutes array can then be used to
+conditionally include or exclude bodies of code in the source through the use of
+the preprocessor as well as through the use of the `#When` for `#InOut` and
+`#Uniform` entities.
+
+When a configuration lacks both `variants` and `permutes`, it is a "basic"
+configuration with no specialization.
 
 `#Shader` schema looks like:
 ```
@@ -145,16 +168,3 @@ value      = element
 element    = "(", expression, ")"
            | identifier ;
 ```
-
-The purpose of `variants` is to describe a list of tokens used to control shader
-variants. A program is created for each variant. The token in the variants array
-can then be used to conditionally include or exclude bodies of code in the
-source through the use of the preprocerssor as well as through the use of the
-`#When` for `#InOut` and `#Uniform` entities.
-
-The purpose of `permutes` is to a describe a list of tokens used to control
-shader permutations. A program is created for every permutation of tokens in
-the permutes list. Tokens in the permutes array can then be used to
-conditionally include or exclude bodies of code in the source through the use of
-the preprocessor as well as through the use of the `#When` for `#InOut` and
-`#Uniform` entities.
