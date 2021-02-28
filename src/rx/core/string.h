@@ -387,7 +387,7 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& String::allocator() const {
   return *m_allocator;
 }
 
-Span<char> String::span() {
+inline Span<char> String::span() {
   return {m_data, size() + 1};
 }
 

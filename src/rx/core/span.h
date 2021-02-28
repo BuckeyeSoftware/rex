@@ -25,7 +25,7 @@ private:
 };
 
 template<typename T>
-inline constexpr Span::Span(T* _data, Size _size)
+inline constexpr Span<T>::Span(T* _data, Size _size)
   : m_data{_data}
   , m_size{_size}
 {
@@ -33,13 +33,13 @@ inline constexpr Span::Span(T* _data, Size _size)
 
 template<typename T>
 template<Size N>
-inline constexpr Span::Span(T (&_data)[N])
+inline constexpr Span<T>::Span(T (&_data)[N])
   : Span{_data, N}
 {
 }
 
 template<typename T>
-inline constexpr T& Span::operator[](Size _index) const {
+inline constexpr T& Span<T>::operator[](Size _index) const {
   return m_data[_index];
 }
 
