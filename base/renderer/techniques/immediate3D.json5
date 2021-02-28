@@ -1,9 +1,14 @@
 {
   name: "immediate3D",
-  variants: [
-    "USE_POINTS",
-    "USE_STANDARD",
-    "USE_INSTANCED"
+  configurations: [
+    {
+      name: "DEFAULT",
+      variants: [
+        "USE_POINTS",
+        "USE_STANDARD",
+        "USE_INSTANCED"
+      ]
+    }
   ],
   uniforms: [
     { name: "u_view",       type: "f32x4x4" },

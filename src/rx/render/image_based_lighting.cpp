@@ -75,7 +75,7 @@ void IrradianceMap::render_next_face() {
     return;
   }
 
-  auto program = m_technique->variant(is_hdri(m_environment_map) ? 1 : 0);
+  auto program = m_technique->configuration(0).variant(is_hdri(m_environment_map) ? 1 : 0);
 
   Frontend::Textures textures;
   textures.add(m_environment_map);
@@ -183,7 +183,7 @@ void PrefilteredEnvironmentMap::render_next_face() {
     return;
   }
 
-  auto program = m_technique->variant(is_hdri(m_environment_map) ? 1 : 0);
+  auto program = m_technique->configuration(0).variant(is_hdri(m_environment_map) ? 1 : 0);
 
   Frontend::Textures textures;
   textures.add(m_environment_map);
@@ -263,7 +263,7 @@ Optional<ImageBasedLighting> ImageBasedLighting::create(
     scale_bias_target,
     buffers,
     nullptr,
-    scale_bias_technique->basic(),
+    scale_bias_technique->configuration(0).basic(),
     3,
     0,
     0,

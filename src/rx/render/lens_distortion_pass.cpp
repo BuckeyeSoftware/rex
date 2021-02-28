@@ -55,7 +55,7 @@ void LensDistortionPass::release() {
 void LensDistortionPass::render(Frontend::Texture2D* _source) {
   const auto& dimensions = m_texture->dimensions();
 
-  Frontend::Program* program = m_technique->basic();
+  Frontend::Program* program = m_technique->configuration(0).basic();
 
   program->uniforms()[0].record_vec3f({scale, dispersion, distortion});
 

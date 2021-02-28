@@ -1,5 +1,16 @@
 {
   name: "canvas",
+  configurations: [
+    {
+      name: "DEFAULT",
+      variants: [
+        "USE_FILL_GRADIENT",
+        "USE_FILL_IMAGE",
+        "USE_FILL_STENCIL",
+        "USE_IMAGE"
+      ]
+    }
+  ],
   uniforms: [
     { name: "u_texture",           "type": "sampler2D", value: 0 },
     { name: "u_texture_type",      "type": "s32"     },
@@ -15,12 +26,6 @@
     { name: "u_feather",           "type": "f32"     },
     { name: "u_stroke_multiplier", "type": "f32"     },
     { name: "u_stroke_threshold",  "type": "f32"     }
-  ],
-  variants: [
-    "USE_FILL_GRADIENT",
-    "USE_FILL_IMAGE",
-    "USE_FILL_STENCIL",
-    "USE_IMAGE"
   ],
   shaders: [
     {

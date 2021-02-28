@@ -487,8 +487,8 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
 
   // if the last queue has any draw commands, render them now
   const auto& dimensions{_target->dimensions().cast<Sint32>()};
-  m_technique->variant(0)->uniforms()[0].record_vec2i(dimensions);
-  m_technique->variant(1)->uniforms()[0].record_vec2i(dimensions);
+  m_technique->configuration(0).variant(0)->uniforms()[0].record_vec2i(dimensions);
+  m_technique->configuration(0).variant(1)->uniforms()[0].record_vec2i(dimensions);
 
   if (!last_empty) {
     m_render_batches[m_rd_index].each_fwd([&](Batch& _batch) {
@@ -507,7 +507,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           _target,
           draw_buffers,
           m_buffers[m_rd_index],
-          m_technique->variant(0),
+          m_technique->configuration(0).variant(0),
           _batch.count,
           _batch.offset,
           0,
@@ -523,7 +523,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           _target,
           draw_buffers,
           m_buffers[m_rd_index],
-          m_technique->variant(0),
+          m_technique->configuration(0).variant(0),
           _batch.count,
           _batch.offset,
           0,
@@ -542,7 +542,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           _target,
           draw_buffers,
           m_buffers[m_rd_index],
-          m_technique->variant(1),
+          m_technique->configuration(0).variant(1),
           _batch.count,
           _batch.offset,
           0,

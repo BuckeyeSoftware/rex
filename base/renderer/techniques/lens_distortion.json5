@@ -1,5 +1,10 @@
 {
   name: "lens_distortion",
+  configurations: [
+    {
+      name: "DEFAULT"
+    }
+  ],
   uniforms: [
     { name: "u_parameters", type: "f32x3" },
     { name: "u_color",      type: "sampler2D", value: 0 }

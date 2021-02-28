@@ -1,14 +1,19 @@
 {
   name: "irradiance_map",
+  configurations: [
+    {
+      name: "DEFAULT",
+      variants: [
+        "USE_CUBEMAP",
+        "USE_HDRI"
+      ]
+    }
+  ],
   uniforms: [
     { name: "u_cubemap",      type: "samplerCM", value: 0, when: "USE_CUBEMAP" },
     { name: "u_hdri",         type: "sampler2D", value: 0, when: "USE_HDRI" },
     { name: "u_face",         type: "s32" },
     { name: "u_texture_size", type: "s32" }
-  ],
-  variants: [
-    "USE_CUBEMAP",
-    "USE_HDRI"
   ],
   shaders: [
     {

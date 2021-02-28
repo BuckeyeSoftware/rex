@@ -1,5 +1,10 @@
 {
   name: "copy",
+  configurations: [
+    {
+      name: "DEFAULT"
+    }
+  ],
   uniforms: [
     { name: "u_color", type: "sampler2D", value: 0 }
   ],

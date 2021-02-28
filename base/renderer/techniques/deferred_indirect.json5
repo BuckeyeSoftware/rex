@@ -1,5 +1,10 @@
 {
   name: "deferred_indirect",
+  configurations: [
+    {
+      name: "DEFAULT"
+    }
+  ],
   uniforms: [
     { name: "u_albedo",             type: "sampler2D", value: 0 },
     { name: "u_normal",             type: "sampler2D", value: 1 },

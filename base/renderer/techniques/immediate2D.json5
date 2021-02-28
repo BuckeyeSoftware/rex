@@ -1,8 +1,13 @@
 {
   name: "immediate2D",
-  variants: [
-    "USE_SIMPLE",
-    "USE_FONT"
+  configurations: [
+    {
+      name: "DEFAULT",
+      variants: [
+        "USE_SIMPLE",
+        "USE_FONT"
+      ]
+    }
   ],
   uniforms: [
     { name: "u_window", type: "s32x2" },

@@ -1,14 +1,19 @@
 {
   name: "geometry",
-  permutes: [
-    "HAS_SKELETON",
-    "HAS_ALBEDO",
-    "HAS_NORMAL",
-    "HAS_METALNESS",
-    "HAS_ROUGHNESS",
-    "HAS_ALPHATEST",
-    "HAS_AMBIENT",
-    "HAS_EMISSIVE"
+  configurations: [
+    {
+      name: "DEFAULT",
+      permutes: [
+        "HAS_SKELETON",
+        "HAS_ALBEDO",
+        "HAS_NORMAL",
+        "HAS_METALNESS",
+        "HAS_ROUGHNESS",
+        "HAS_ALPHATEST",
+        "HAS_AMBIENT",
+        "HAS_EMISSIVE"
+      ]
+    }
   ],
   uniforms: [
     { name: "u_model",           type: "f32x4x4" },

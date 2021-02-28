@@ -1,5 +1,10 @@
 {
   name: "particle_system",
+  configurations: [
+    {
+      name: "DEFAULT"
+    }
+  ],
   uniforms: [
     { name: "u_model_view", type: "f32x4x4" },
     { name: "u_projection", type: "f32x4x4" }

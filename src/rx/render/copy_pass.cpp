@@ -64,7 +64,7 @@ void CopyPass::release() {
 void CopyPass::render(Frontend::Texture2D* _source) {
   const auto& dimensions = m_texture->dimensions();
 
-  Frontend::Program* program = m_technique->basic();
+  Frontend::Program* program = m_technique->configuration(0).basic();
 
   Frontend::Buffers draw_buffers;
   draw_buffers.add(0);

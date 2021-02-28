@@ -1,5 +1,10 @@
 {
   name: "brdf_integration",
+  configurations: [
+    {
+      name: "DEFAULT"
+    }
+  ],
   shaders: [
     {
       type: "vertex",
@@ -16,7 +21,8 @@
           vs_coordinate = triangle.zw;
         }
       "
-    },{
+    },
+    {
       type: "fragment",
       inputs: [
         { name: "vs_coordinate", type: "f32x2" }

@@ -1,14 +1,19 @@
 {
   name: "skybox",
+  configurations: [
+    {
+      name: "DEFAULT",
+      permutes: [
+        "HAS_GRADING_LUT"
+      ]
+    }
+  ],
   uniforms: [
     { name: "u_inverse_projection", type: "f32x4x4" },
     { name: "u_inverse_view",       type: "f32x4x4" },
     { name: "u_sampler",            type: "sampler2D", value: 0 },
     { name: "u_grading_lut",        type: "sampler3D", when: "HAS_GRADING_LUT" },
     { name: "u_grading_properties", type: "f32x2",     when: "HAS_GRADING_LUT" }
-  ],
-  permutes: [
-    "HAS_GRADING_LUT"
   ],
   shaders: [
     {

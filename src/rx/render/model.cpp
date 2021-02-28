@@ -262,7 +262,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     if (material.occlusion())  flags |= 1 << 6;
     if (material.emissive())   flags |= 1 << 7;
 
-    Frontend::Program* program{m_technique->permute(flags)};
+    Frontend::Program* program{m_technique->configuration(0).permute(flags)};
     auto& uniforms{program->uniforms()};
 
     uniforms[0].record_mat4x4f(_model);

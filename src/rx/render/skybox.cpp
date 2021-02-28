@@ -62,7 +62,7 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
   Math::Mat4x4f view{_view};
   view.w = {0.0f, 0.0f, 0.0f, 1.0f};
 
-  Frontend::Program* program = m_technique->permute(_grading ? 1 << 0 : 0);
+  Frontend::Program* program = m_technique->configuration(0).permute(_grading ? 1 << 0 : 0);
 
   Frontend::State state;
   state.depth.record_test(true);

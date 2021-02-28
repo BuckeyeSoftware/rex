@@ -1034,7 +1034,7 @@ static void prepare_draw(Renderer* _renderer, const Command& _command,
   const auto& paint = _renderer->paints[_paint_index];
   const auto& data = paint.data;
 
-  const auto program = _renderer->technique->variant(static_cast<Size>(paint.type));
+  const auto program = _renderer->technique->configuration(0).variant(static_cast<Size>(paint.type));
 
   // When there is an image, record the sampler, add the draw texture and
   // determine the sampling type to use in the technique.

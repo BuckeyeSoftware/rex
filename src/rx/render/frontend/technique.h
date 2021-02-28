@@ -26,17 +26,43 @@ struct Technique {
   Technique(Technique&& technique_);
   Technique& operator=(Technique&& technique_);
 
-  enum class Type : Uint8 {
-    BASIC,
-    VARIANT,
-    PERMUTE
+  struct Configuration {
+    RX_MARK_NO_COPY(Configuration);
+
+    enum class Type : Uint8 {
+      BASIC,
+      VARIANT,
+      PERMUTE
+    };
+
+    Configuration(Technique* _technique, Type _type);
+    Configuration(Configuration&& configuration_);
+    ~Configuration();
+    Configuration& operator=(Configuration&& configguration_);
+
+    const String& name() const &;
+
+    Program* basic() const;
+    Program* permute(Uint64 _flags) const;
+    Program* variant(Size _index) const;
+
+  private:
+    friend struct Technique;
+
+    bool parse_specializations(const JSON& _specializations, const char* _type);
+    bool parse_specialization(const JSON& _specialization, const char* _type);
+
+    bool compile(const Map<String, Module>& _modules);
+
+    void release();
+
+    Technique* m_technique;
+    Type m_type;
+    String m_name;
+    Vector<Program*> m_programs;
+    Vector<Uint64> m_permute_flags;
+    Vector<String> m_specializations;
   };
-
-  Type type() const;
-
-  Program* basic() const;
-  Program* permute(Uint64 _flags) const;
-  Program* variant(Size _index) const;
 
   [[nodiscard]] bool load(Stream* _stream);
   [[nodiscard]] bool load(const String& _file_name);
@@ -44,11 +70,11 @@ struct Technique {
   [[nodiscard]] bool parse(const JSON& _description);
   [[nodiscard]] bool compile(const Map<String, Module>& _modules);
 
+  const Configuration& configuration(Size _index) const;
+
   const String& name() const;
 
 private:
-  void release();
-
   struct UniformDefinition {
     union Variant {
       constexpr Variant()
@@ -96,7 +122,6 @@ private:
     String when;
   };
 
-
   Optional<String> resolve_source(
     const ShaderDefinition& _definition,
     const Map<String, bool>& _values,
@@ -106,9 +131,11 @@ private:
 
   bool parse_uniforms(const JSON& _uniforms);
   bool parse_shaders(const JSON& _shaders);
+  bool parse_configurations(const JSON& _configurations);
 
   bool parse_uniform(const JSON& _uniform);
   bool parse_shader(const JSON& _shader);
+  bool parse_configuration(const JSON& _configuration);
 
   bool parse_inouts(const JSON& _inouts, const char* _type,
                     Map<String, ShaderDefinition::InOut>& inouts_);
@@ -116,9 +143,6 @@ private:
   bool parse_inout(const JSON& _inout, const char* _type,
                    Map<String, ShaderDefinition::InOut>& inouts_,
                    Size& index_);
-
-  bool parse_specializations(const JSON& _specializations, const char* _type);
-  bool parse_specialization(const JSON& _specialization, const char* _type);
 
   template<typename... Ts>
   [[nodiscard]] RX_HINT_FORMAT(2, 0)
@@ -131,15 +155,35 @@ private:
   void write_log(Log::Level _level, String&& message_) const;
 
   Context* m_frontend;
-  Type m_type;
-  Vector<Program*> m_programs;
-  Vector<Uint64> m_permute_flags;
+
   String m_name;
 
+  Vector<Configuration> m_configurations;
   Vector<ShaderDefinition> m_shader_definitions;
   Vector<UniformDefinition> m_uniform_definitions;
-  Vector<String> m_specializations;
 };
+
+// [Technique]
+inline Technique::~Technique() {
+  m_configurations.clear();
+}
+
+inline Technique::Technique(Technique&& technique_)
+  : m_frontend{Utility::exchange(technique_.m_frontend, nullptr)}
+  , m_name{Utility::move(technique_.m_name)}
+  , m_configurations{Utility::move(technique_.m_configurations)}
+  , m_shader_definitions{Utility::move(technique_.m_shader_definitions)}
+  , m_uniform_definitions{Utility::move(technique_.m_uniform_definitions)}
+{
+  // Update |m_configuration| references to this Technique instance.
+  m_configurations.each_fwd([this](Configuration& configuration_) {
+    configuration_.m_technique = this;
+  });
+}
+
+inline const Technique::Configuration& Technique::configuration(Size _index) const {
+  return m_configurations[_index];
+}
 
 inline const String& Technique::name() const {
   return m_name;
@@ -158,6 +202,36 @@ void Technique::log(Log::Level _level, const char* _format,  Ts&&... _arguments)
   } else {
     write_log(_level, _format);
   }
+}
+
+// [Technique::Configuration]
+inline Technique::Configuration::Configuration(Configuration&& configuration_)
+  : m_technique{Utility::exchange(configuration_.m_technique, nullptr)}
+  , m_type{Utility::exchange(configuration_.m_type, Type::BASIC)}
+  , m_programs{Utility::move(configuration_.m_programs)}
+  , m_permute_flags{Utility::move(configuration_.m_permute_flags)}
+  , m_specializations{Utility::move(configuration_.m_specializations)}
+{
+}
+
+inline Technique::Configuration::~Configuration() {
+  release();
+}
+
+inline Technique::Configuration& Technique::Configuration::operator=(Configuration&& configuration_) {
+  if (this != &configuration_) {
+    release();
+    m_technique = Utility::exchange(configuration_.m_technique, nullptr);
+    m_type = Utility::exchange(configuration_.m_type, Type::BASIC);
+    m_programs = Utility::move(configuration_.m_programs);
+    m_permute_flags = Utility::move(configuration_.m_permute_flags);
+    m_specializations = Utility::move(configuration_.m_specializations);
+  }
+  return *this;
+}
+
+inline const String& Technique::Configuration::name() const & {
+  return m_name;
 }
 
 } // namespace Rx::Render::Frontend

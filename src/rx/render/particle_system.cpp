@@ -88,7 +88,7 @@ void ParticleSystem::render(Frontend::Target* _target,
   Frontend::Buffers draw_buffers;
   draw_buffers.add(0);
 
-  Frontend::Program* program = m_technique->basic();
+  Frontend::Program* program = m_technique->configuration(0).basic();
   program->uniforms()[0].record_mat4x4f(_model * _view);
   program->uniforms()[1].record_mat4x4f(_projection);
 

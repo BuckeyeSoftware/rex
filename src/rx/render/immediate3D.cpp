@@ -261,8 +261,8 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
   // if the last queue has any draw commands, render them now.
   if (!last_empty) {
     for (Size i = 0; i < 3; i++) {
-      m_technique->variant(i)->uniforms()[0].record_mat4x4f(_view);
-      m_technique->variant(i)->uniforms()[1].record_mat4x4f(_projection);
+      m_technique->configuration(0).variant(i)->uniforms()[0].record_mat4x4f(_view);
+      m_technique->configuration(0).variant(i)->uniforms()[1].record_mat4x4f(_projection);
     }
 
     // Process the batches.
@@ -283,7 +283,7 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
           _target,
           draw_buffers,
           m_buffers[m_rd_index],
-          m_technique->variant(0),
+          m_technique->configuration(0).variant(0),
           _batch.element_count,
           _batch.element_offset,
           0,
@@ -299,7 +299,7 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
           _target,
           draw_buffers,
           m_buffers[m_rd_index],
-          m_technique->variant(1),
+          m_technique->configuration(0).variant(1),
           _batch.element_count,
           _batch.element_offset,
           0,
@@ -317,7 +317,7 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
           _target,
           draw_buffers,
           m_buffers[m_rd_index],
-          m_technique->variant(2),
+          m_technique->configuration(0).variant(2),
           _batch.element_count,
           _batch.element_offset,
           _batch.instance_count,
@@ -333,7 +333,7 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
           _target,
           draw_buffers,
           m_buffers[m_rd_index],
-          m_technique->variant(2),
+          m_technique->configuration(0).variant(2),
           _batch.element_count,
           _batch.element_offset,
           _batch.instance_count,
