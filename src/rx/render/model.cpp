@@ -172,7 +172,7 @@ bool Model::upload(const Rx::Model::Loader& _loader) {
 
 void Model::animate(Size _index, [[maybe_unused]] bool _loop) {
   if (m_skeleton && m_clips.in_range(_index)) {
-    m_animation = {&*m_skeleton, &m_clips[_index]};
+    m_animation = Rx::Model::Animation::create(*m_skeleton, m_clips[_index]);
   } else {
     m_animation = nullopt;
   }
@@ -263,7 +263,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
 
     Size configuration = 0;
     if (m_animation) {
-      configuration = 1;
+      configuration = 2;
       // TODO(DQS)
     }
 

@@ -9,15 +9,21 @@
 
 namespace Rx::Model {
 
-Animation::Animation(const Skeleton* _skeleton, const Clip* _clip)
-  : m_skeleton{_skeleton}
-  , m_clip{_clip}
-  , m_current_frame{0.0f}
-  , m_completed{false}
-{
-  // TODO(dweiler): Optional<Animation> for the rendered frame resize here.
-  (void)m_rendered_lb_frames.resize(_skeleton->lb_frames().size());
-  (void)m_rendered_dq_frames.resize(_skeleton->dq_frames().size());
+Optional<Animation> Animation::create(const Skeleton& _skeleton, const Clip& _clip) {
+  Animation result;
+
+  result.m_skeleton = &_skeleton;
+  result.m_clip = &_clip;
+
+  if (!result.m_rendered_lb_frames.resize(_skeleton.lb_frames().size())) {
+    return nullopt;
+  }
+
+  if (!result.m_rendered_dq_frames.resize(_skeleton.dq_frames().size())) {
+    return nullopt;
+  }
+
+  return result;
 }
 
 void Animation::update(Float32 _delta_time, bool _loop) {

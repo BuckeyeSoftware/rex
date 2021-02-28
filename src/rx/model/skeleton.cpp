@@ -7,11 +7,17 @@ namespace Rx::Model {
 void Skeleton::transform(const Math::Mat3x4f& _transform) {
   const auto inverse = Math::Mat3x4f::invert(_transform);
 
+  const auto n_frames = m_lb_frames.size();
+
   m_lb_frames.each_fwd([&](Math::Mat3x4f& frame_) {
     frame_ = _transform * frame_ * inverse;
   });
 
-  // TODO(dweiler): Transform the DQ frames.
+  // TODO(dweiler): Transform the DQ frames instead of recreating them.
+  for (Size i = 0; i < n_frames; i++) {
+    m_dq_frames[i] = m_lb_frames[i];
+    m_dq_frames[i].real = Math::normalize(m_dq_frames[i].real);
+  }
 
   m_joints.each_fwd([&](Joint& joint_) {
     joint_.frame = _transform * joint_.frame * inverse;
