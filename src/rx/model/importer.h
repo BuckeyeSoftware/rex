@@ -8,6 +8,9 @@
 #include "rx/math/aabb.h"
 #include "rx/math/mat3x4.h"
 
+#include "rx/model/skeleton.h"
+#include "rx/model/animation.h"
+
 namespace Rx {
 struct Stream;
 } // namespace Rx
@@ -38,30 +41,17 @@ struct Importer {
   // implemented by each model loader
   [[nodiscard]] virtual bool read(Stream* _stream) = 0;
 
-  struct Animation {
-    Float32 frame_rate;
-    Size frame_offset;
-    Size frame_count;
-    String name;
-  };
-
-  struct Joint {
-    Math::Mat3x4f frame;
-    Sint32 parent;
-  };
-
   Vector<Mesh>&& meshes();
   Vector<Uint32>&& elements();
   Vector<Math::Vec3f>&& positions();
-  Vector<Joint>&& joints();
+  Optional<Skeleton>&& skeleton();
 
   const Vector<Math::Vec2f>& coordinates() const &;
   const Vector<Math::Vec3f>& normals() const &;
   const Vector<Math::Vec4f>& tangents() const &;
 
-  // for skeletally animated models
-  Vector<Math::Mat3x4f>&& frames();
-  Vector<Animation>&& animations();
+  // Only for skeletally animated models.
+  Vector<Clip>&& clips();
   const Vector<Math::Vec4i>& blend_indices() const &;
   const Vector<Math::Vec4f>& blend_weights() const &;
 
@@ -91,9 +81,8 @@ protected:
   Vector<Math::Vec4f> m_tangents; // w = bitangent sign
   Vector<Math::Vec4i> m_blend_indices;
   Vector<Math::Vec4f> m_blend_weights;
-  Vector<Math::Mat3x4f> m_frames;
-  Vector<Animation> m_animations;
-  Vector<Joint> m_joints;
+  Vector<Clip> m_clips;
+  Optional<Skeleton> m_skeleton;
   String m_name;
 };
 
@@ -122,10 +111,6 @@ inline Vector<Math::Vec3f>&& Importer::positions() {
   return Utility::move(m_positions);
 }
 
-inline Vector<Importer::Joint>&& Importer::joints() {
-  return Utility::move(m_joints);
-}
-
 inline const Vector<Math::Vec2f>& Importer::coordinates() const & {
   return m_coordinates;
 }
@@ -138,12 +123,12 @@ inline const Vector<Math::Vec4f>& Importer::tangents() const & {
   return m_tangents;
 }
 
-inline Vector<Math::Mat3x4f>&& Importer::frames() {
-  return Utility::move(m_frames);
+inline Optional<Skeleton>&& Importer::skeleton() {
+  return Utility::move(m_skeleton);
 }
 
-inline Vector<Importer::Animation>&& Importer::animations() {
-  return Utility::move(m_animations);
+inline Vector<Clip>&& Importer::clips() {
+  return Utility::move(m_clips);
 }
 
 inline const Vector<Math::Vec4i>& Importer::blend_indices() const & {

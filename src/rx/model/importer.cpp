@@ -25,9 +25,7 @@ Importer::Importer(Memory::Allocator& _allocator)
   , m_tangents{allocator()}
   , m_blend_indices{allocator()}
   , m_blend_weights{allocator()}
-  , m_frames{allocator()}
-  , m_animations{allocator()}
-  , m_joints{allocator()}
+  , m_clips{allocator()}
   , m_name{allocator()}
 {
 }
@@ -132,7 +130,6 @@ bool Importer::load(Stream* _stream) {
     return error("out of memory");
   }
 
-
   Vector<Mesh> optimized_meshes{allocator()};
   Vector<Uint32> optimized_elements{allocator()};
 
@@ -171,9 +168,8 @@ bool Importer::load(Stream* _stream) {
   m_elements = Utility::move(optimized_elements);
 
   // Calculate per frame AABBs for each mesh.
-  const auto n_animations = m_animations.size();
+  const auto n_animations = m_clips.size();
   const auto n_meshes = m_meshes.size();
-  const auto n_joints = m_joints.size();
 
   const auto animated = n_animations > 0;
 
@@ -183,8 +179,11 @@ bool Importer::load(Stream* _stream) {
       return false;
     }
     if (animated) {
+      const auto& frames = m_skeleton->lb_frames();
+      const auto& joints = m_skeleton->joints();
+
       for (Size j = 0; j < n_animations; j++) {
-        const auto& animation = m_animations[j];
+        const auto& animation = m_clips[j];
         for (Size k = 0; k < mesh.count; k++) {
           const auto element = m_elements[mesh.offset + k];
           const auto& position = m_positions[element];
@@ -194,12 +193,12 @@ bool Importer::load(Stream* _stream) {
             return false;
           }
           for (Size l = 0; l < animation.frame_count; l++) {
-            const auto index = (animation.frame_offset + l) * n_joints;
+            const auto index = (animation.frame_offset + l) * joints.size();
             Math::Mat3x4f transform;
-            transform  = m_frames[index + blend_indices.x] * blend_weights.x;
-            transform += m_frames[index + blend_indices.y] * blend_weights.y;
-            transform += m_frames[index + blend_indices.z] * blend_weights.z;
-            transform += m_frames[index + blend_indices.w] * blend_weights.w;
+            transform  = frames[index + blend_indices.x] * blend_weights.x;
+            transform += frames[index + blend_indices.y] * blend_weights.y;
+            transform += frames[index + blend_indices.z] * blend_weights.z;
+            transform += frames[index + blend_indices.w] * blend_weights.w;
             const Math::Vec3f x = {transform.x.x, transform.y.x, transform.z.x};
             const Math::Vec3f y = {transform.x.y, transform.y.y, transform.z.y};
             const Math::Vec3f z = {transform.x.z, transform.y.z, transform.z.z};

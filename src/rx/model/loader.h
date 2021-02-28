@@ -4,8 +4,6 @@
 
 #include "rx/material/loader.h"
 
-#include "rx/math/dual_quat.h"
-
 namespace Rx::Model {
 
 struct Loader {
@@ -42,11 +40,11 @@ struct Loader {
   const Vector<Mesh>& meshes() const;
   const Vector<Uint32>& elements() const;
   const Map<String, Material::Loader>& materials() const;
+  const Optional<Skeleton>& skeleton() const;
 
   // Only valid for animated models.
   const Vector<AnimatedVertex>& animated_vertices() const;
-  const Vector<Importer::Joint>& joints() const;
-  const Vector<Importer::Animation>& animations() const;
+  const Vector<Clip>& clips() const;
 
   const String& name() const;
 
@@ -56,8 +54,6 @@ struct Loader {
 
 private:
   void destroy();
-
-  friend struct Animation;
 
   template<typename... Ts>
   [[nodiscard]] RX_HINT_FORMAT(2, 0)
@@ -86,11 +82,9 @@ private:
 
   Vector<Uint32> m_elements;
   Vector<Mesh> m_meshes;
-  Vector<Importer::Animation> m_animations;
-  Vector<Importer::Joint> m_joints;
+  Vector<Clip> m_clips;
+  Optional<Skeleton> m_skeleton;
   Vector<Math::Vec3f> m_positions;
-  Vector<Math::Mat3x4f> m_frames;
-  Vector<Math::DualQuatf> m_dq_frames;
   Optional<Math::Transform> m_transform;
   Map<String, Material::Loader> m_materials;
   String m_name;
@@ -131,18 +125,17 @@ inline const Map<String, Material::Loader>& Loader::materials() const {
   return m_materials;
 }
 
+inline const Optional<Skeleton>& Loader::skeleton() const {
+  return m_skeleton;
+}
+
 inline const Vector<Loader::AnimatedVertex>& Loader::animated_vertices() const {
   RX_ASSERT(is_animated(), "not a animated model");
   return as_animated_vertices;
 }
 
-inline const Vector<Importer::Joint>& Loader::joints() const {
-  RX_ASSERT(is_animated(), "not a animated model");
-  return Utility::move(m_joints);
-}
-
-inline const Vector<Importer::Animation>& Loader::animations() const {
-  return m_animations;
+inline const Vector<Clip>& Loader::clips() const {
+  return m_clips;
 }
 
 inline const String& Loader::name() const {

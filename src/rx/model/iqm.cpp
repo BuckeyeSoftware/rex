@@ -155,7 +155,7 @@ bool IQM::read(Stream* _stream) {
     return false;
   }
 
-  if (read_header.animations && !read_animations(read_header, data)) {
+  if (!read_animations(read_header, data)) {
     return false;
   }
 
@@ -347,11 +347,15 @@ bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
   Vector<Math::Mat3x4f> generic_base_frame{allocator()};
   Vector<Math::Mat3x4f> inverse_base_frame{allocator()};
 
+  // Skeleton
+  Vector<Math::Mat3x4f> s_frames{allocator()};
+  Vector<Skeleton::Joint> s_joints{allocator()};
+
   bool result = true;
   result &= generic_base_frame.resize(n_joints);
   result &= inverse_base_frame.resize(n_joints);
-  result &= m_joints.resize(n_joints);
-  result &= m_frames.resize(n_joints * _header.frames);
+  result &= s_joints.resize(n_joints);
+  result &= s_frames.resize(n_joints * _header.frames);
   if (!result) {
     return error("out of memory");
   }
@@ -376,7 +380,7 @@ bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
       inverse_base_frame[i] *= inverse_base_frame[this_joint.parent];
     }
 
-    m_joints[i] = {generic_base_frame[i], this_joint.parent};
+    s_joints[i] = {generic_base_frame[i], this_joint.parent};
   }
 
   const auto* string_table =
@@ -387,7 +391,7 @@ bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
 
   for (Uint32 i = 0; i < _header.animations; i++) {
     const auto& animation = animations[i];
-    if (!m_animations.emplace_back(animation.frame_rate, animation.first_frame, animation.num_frames, string_table + animation.name)) {
+    if (!m_clips.emplace_back(i, animation.frame_rate, animation.first_frame, animation.num_frames, string_table + animation.name)) {
       return error("out of memory");
     }
   }
@@ -432,10 +436,17 @@ bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
       // The parent multiplication is done here to avoid having to do it at animation time too,
       // this will need to be moved to support more complicated animation blending.
       if (joints[j].parent >= 0) {
-        scale_rotate_translate = m_frames[i * _header.poses + joints[j].parent] * scale_rotate_translate;
+        scale_rotate_translate = s_frames[i * _header.poses + joints[j].parent] * scale_rotate_translate;
       }
 
-      m_frames[i * _header.poses + j] = scale_rotate_translate;
+      s_frames[i * _header.poses + j] = scale_rotate_translate;
+    }
+  }
+
+  if (_header.joints || _header.frames) {
+    m_skeleton =  Skeleton::create(Utility::move(s_joints), Utility::move(s_frames));
+    if (!m_skeleton) {
+      return false;
     }
   }
 

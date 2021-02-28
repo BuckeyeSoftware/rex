@@ -1,7 +1,9 @@
 #ifndef RX_RENDER_FRONTEND_ARENA_H
 #define RX_RENDER_FRONTEND_ARENA_H
 #include "rx/render/frontend/buffer.h"
+
 #include "rx/core/array.h"
+#include "rx/core/span.h"
 
 namespace Rx::Render::Frontend {
 
@@ -45,6 +47,10 @@ struct Arena {
     Size base_vertex() const;
     Size base_element() const;
     Size base_instance() const;
+
+    Span<const Byte> vertices() const;
+    Span<const Byte> elements() const;
+    Span<const Byte> instances() const;
 
   private:
     void destroy();
@@ -228,6 +234,21 @@ inline bool Arena::Block::record_sink_edit(Buffer::Sink _sink, Size _offset, Siz
 RX_HINT_FORCE_INLINE Size Arena::Block::base_vertex() const {
   const auto& format = m_arena->m_buffer->format();
   return range_for(Buffer::Sink::VERTICES).offset / format.vertex_stride();
+}
+
+RX_HINT_FORCE_INLINE Span<const Byte> Arena::Block::vertices() const {
+  const auto& range = range_for(Buffer::Sink::VERTICES);
+  return {m_arena->m_buffer->vertices().data() + range.offset, Size(range.size)};
+}
+
+RX_HINT_FORCE_INLINE Span<const Byte> Arena::Block::elements() const {
+  const auto& range = range_for(Buffer::Sink::ELEMENTS);
+  return {m_arena->m_buffer->elements().data() + range.offset, Size(range.size)};
+}
+
+RX_HINT_FORCE_INLINE Span<const Byte> Arena::Block::instances() const {
+  const auto& range = range_for(Buffer::Sink::INSTANCES);
+  return {m_arena->m_buffer->instances().data() + range.offset, Size(range.size)};
 }
 
 RX_HINT_FORCE_INLINE Size Arena::Block::base_element() const {

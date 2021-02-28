@@ -24,7 +24,6 @@ Model::Model(Frontend::Context* _frontend)
   , m_materials{m_frontend->allocator()}
   , m_opaque_meshes{m_frontend->allocator()}
   , m_transparent_meshes{m_frontend->allocator()}
-  , m_model{m_frontend->allocator().create<Rx::Model::Loader>(m_frontend->allocator())}
 {
 }
 
@@ -36,17 +35,14 @@ Model::Model(Model&& model_)
   , m_materials{Utility::move(model_.m_materials)}
   , m_opaque_meshes{Utility::move(model_.m_opaque_meshes)}
   , m_transparent_meshes{Utility::move(model_.m_transparent_meshes)}
-  , m_model{Utility::exchange(model_.m_model, nullptr)}
+  , m_skeleton{Utility::move(model_.m_skeleton)}
   , m_animation{Utility::move(model_.m_animation)}
+  , m_clips{Utility::move(model_.m_clips)}
   , m_aabb{Utility::move(model_.m_aabb)}
 {
 }
 
 Model& Model::operator=(Model&& model_) {
-  if (m_model) {
-    m_frontend->allocator().destroy<Rx::Model::Loader>(m_model);
-  }
-
   m_frontend = model_.m_frontend;
   m_technique = Utility::exchange(model_.m_technique, nullptr);
   m_arena = Utility::exchange(model_.m_arena, nullptr);
@@ -54,26 +50,36 @@ Model& Model::operator=(Model&& model_) {
   m_materials = Utility::move(model_.m_materials);
   m_opaque_meshes = Utility::move(model_.m_opaque_meshes);
   m_transparent_meshes = Utility::move(model_.m_transparent_meshes);
-  m_model = Utility::exchange(model_.m_model, nullptr);
+  m_skeleton = Utility::move(model_.m_skeleton);
   m_animation = Utility::move(model_.m_animation);
+  m_clips = Utility::move(model_.m_clips);
   m_aabb = Utility::move(model_.m_aabb);
-
   return *this;
 }
 
 Model::~Model() {
-  if (m_model) {
-    m_frontend->allocator().destroy<Rx::Model::Loader>(m_model);
-  }
 }
 
-bool Model::upload() {
+bool Model::upload(const Rx::Model::Loader& _loader) {
+  if (auto clips = Utility::copy(_loader.clips())) {
+    m_clips = Utility::move(*clips);
+  } else {
+    return false;
+  }
+
+  if (const auto& skeleton = _loader.skeleton()) {
+    if (auto copy = Utility::copy(*skeleton)) {
+      m_skeleton = Utility::move(*copy);
+    } else {
+      return false;
+    }
+  }
+
   // Clear incase being called multiple times for model changes.
-  m_materials.clear();
   m_opaque_meshes.clear();
   m_transparent_meshes.clear();
 
-  if (m_model->is_animated()) {
+  if (_loader.is_animated()) {
     using Vertex = Rx::Model::Loader::AnimatedVertex;
 
     Frontend::Buffer::Format format;
@@ -91,7 +97,7 @@ bool Model::upload() {
     m_arena = m_frontend->arena(format);
     m_block = m_arena;
 
-    const auto &vertices = m_model->animated_vertices();
+    const auto &vertices = _loader.animated_vertices();
     const auto size = vertices.size() * sizeof(Vertex);
 
     m_block.write_vertices(vertices.data(), size);
@@ -112,13 +118,13 @@ bool Model::upload() {
     m_arena = m_frontend->arena(format);
     m_block = m_arena;
 
-    const auto &vertices = m_model->vertices();
+    const auto &vertices = _loader.vertices();
     const auto size = vertices.size() * sizeof(Vertex);
     m_block.write_vertices(vertices.data(), size);
     m_block.record_vertices_edit(0, size);
   }
 
-  const auto &elements = m_model->elements();
+  const auto &elements = _loader.elements();
   const auto size = elements.size() * sizeof(Uint32);
   m_block.write_elements(elements.data(), size);
   m_block.record_elements_edit(0, size);
@@ -131,7 +137,7 @@ bool Model::upload() {
   // using indices to refer to them rather than strings.
   Map<String, Size> material_indices{m_frontend->allocator()};
   const bool material_load_result =
-    m_model->materials().each_pair([this, &material_indices](const String& _name, const Material::Loader& _material) {
+    _loader.materials().each_pair([this, &material_indices](const String& _name, const Material::Loader& _material) {
       Frontend::Material material{m_frontend};
       if (material.load(_material)) {
         const Size material_index{m_materials.size()};
@@ -145,7 +151,7 @@ bool Model::upload() {
   }
 
   // Resolve all the meshes of the loaded model.
-  return m_model->meshes().each_fwd([this, &material_indices](const Rx::Model::Mesh& _mesh) {
+  return _loader.meshes().each_fwd([this, &material_indices](const Rx::Model::Mesh& _mesh) {
     if (auto* find = material_indices.find(_mesh.material)) {
       auto bounds = Utility::copy(_mesh.bounds);
       if (!bounds) {
@@ -165,8 +171,8 @@ bool Model::upload() {
 }
 
 void Model::animate(Size _index, [[maybe_unused]] bool _loop) {
-  if (_index != -1_z && m_model->is_animated()) {
-    m_animation = {m_model, _index};
+  if (m_skeleton && m_clips.in_range(_index)) {
+    m_animation = {&*m_skeleton, &m_clips[_index]};
   } else {
     m_animation = nullopt;
   }
@@ -192,7 +198,7 @@ Math::AABB Model::mesh_bounds(const Mesh& _mesh) const {
   if (m_animation) {
     // Interpolate between the two frames.
     const auto& interpolant = m_animation->interpolant();
-    const auto& bounds = _mesh.bounds[m_animation->index()];
+    const auto& bounds = _mesh.bounds[m_animation->clip()->index];
     const auto& aabb1 = bounds[interpolant.frame1];
     const auto& aabb2 = bounds[interpolant.frame2];
     return {
@@ -267,8 +273,8 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     }
 
     if (m_animation) {
-      uniforms[4].record_lb_bones(m_animation->frames(), m_animation->joints());
-      uniforms[16].record_dq_bones(m_animation->dq_frames(), m_animation->joints());
+      uniforms[4].record_lb_bones(m_animation->lb_frames(), m_skeleton->joints().size());
+      uniforms[16].record_dq_bones(m_animation->dq_frames(), m_skeleton->joints().size());
     }
 
     uniforms[5].record_float(material.roughness_value());
@@ -355,72 +361,77 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
 void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {
   const auto scale = m_aabb.transform(_world).scale() * 0.25f;
 
-  if (m_model->is_animated()) {
-    m_model->animated_vertices().each_fwd([&](const Rx::Model::Loader::AnimatedVertex& _vertex) {
-      const Math::Vec3f point_a{_vertex.position};
-      const Math::Vec3f point_b{_vertex.position + _vertex.normal * scale};
+  if (m_animation) {
+    const auto& vertices = m_block.vertices().cast<const Rx::Model::Loader::AnimatedVertex>();
+    const auto n_vertices = vertices.size();
 
-      const Math::Vec3f color{_vertex.normal * 0.5f + 0.5f};
+    for (Size i = 0; i < n_vertices; i++) {
+      const auto& vertex = vertices[i];
 
-      if (m_animation) {
-        // CPU skeletal animation of the lines.
-        const auto& frames{m_animation->frames()};
+      const Math::Vec3f point_a = vertex.position;
+      const Math::Vec3f point_b = vertex.position + vertex.normal * scale;
 
-        Math::Mat3x4f transform;
-        transform  = frames[_vertex.blend_indices.x] * _vertex.blend_weights.x;
-        transform += frames[_vertex.blend_indices.y] * _vertex.blend_weights.y;
-        transform += frames[_vertex.blend_indices.z] * _vertex.blend_weights.z;
-        transform += frames[_vertex.blend_indices.w] * _vertex.blend_weights.w;
+      const Math::Vec3f color = vertex.normal * 0.5f + 0.5f;
 
-        const Math::Vec3f& x{transform.x.x, transform.y.x, transform.z.x};
-        const Math::Vec3f& y{transform.x.y, transform.y.y, transform.z.y};
-        const Math::Vec3f& z{transform.x.z, transform.y.z, transform.z.z};
-        const Math::Vec3f& w{transform.x.w, transform.y.w, transform.z.w};
+      // CPU skeletal animation of the lines.
+      const auto& frames = m_animation->lb_frames();
 
-        const Math::Mat4x4f& mat{{x.x, x.y, x.z, 0.0f},
-                                 {y.x, y.y, y.z, 0.0f},
-                                 {z.x, z.y, z.z, 0.0f},
-                                 {w.x, w.y, w.z, 1.0f}};
+      Math::Mat3x4f transform;
+      transform  = frames[vertex.blend_indices.x] * vertex.blend_weights.x;
+      transform += frames[vertex.blend_indices.y] * vertex.blend_weights.y;
+      transform += frames[vertex.blend_indices.z] * vertex.blend_weights.z;
+      transform += frames[vertex.blend_indices.w] * vertex.blend_weights.w;
 
-        _immediate->frame_queue().record_line(
-                Math::Mat4x4f::transform_point(point_a, mat * _world),
-                Math::Mat4x4f::transform_point(point_b, mat * _world),
-                {color.r, color.g, color.b, 1.0f},
-                Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
-      } else {
-        _immediate->frame_queue().record_line(
-                Math::Mat4x4f::transform_point(point_a, _world),
-                Math::Mat4x4f::transform_point(point_b, _world),
-                {color.r, color.g, color.b, 1.0f},
-                Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
-      }
-    });
+      const Math::Vec3f& x{transform.x.x, transform.y.x, transform.z.x};
+      const Math::Vec3f& y{transform.x.y, transform.y.y, transform.z.y};
+      const Math::Vec3f& z{transform.x.z, transform.y.z, transform.z.z};
+      const Math::Vec3f& w{transform.x.w, transform.y.w, transform.z.w};
+
+      const Math::Mat4x4f& mat{{x.x, x.y, x.z, 0.0f},
+                               {y.x, y.y, y.z, 0.0f},
+                               {z.x, z.y, z.z, 0.0f},
+                               {w.x, w.y, w.z, 1.0f}};
+
+      _immediate->frame_queue().record_line(
+              Math::Mat4x4f::transform_point(point_a, mat * _world),
+              Math::Mat4x4f::transform_point(point_b, mat * _world),
+              {color.r, color.g, color.b, 1.0f},
+              Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
+    };
   } else {
-    m_model->vertices().each_fwd([&](const Rx::Model::Loader::Vertex& _vertex) {
-      const Math::Vec3f point_a{_vertex.position};
-      const Math::Vec3f point_b{_vertex.position + _vertex.normal * scale};
+    const auto& vertices = m_block.vertices().cast<const Rx::Model::Loader::Vertex>();
+    const auto n_vertices = vertices.size();
 
-      const Math::Vec3f color{_vertex.normal * 0.5f + 0.5f};
+    for (Size i = 0; i < n_vertices; i++) {
+      const auto& vertex = vertices[i];
+
+      const Math::Vec3f point_a = vertex.position;
+      const Math::Vec3f point_b = vertex.position + vertex.normal * scale;
+
+      const Math::Vec3f color = vertex.normal * 0.5f + 0.5f;
 
       _immediate->frame_queue().record_line(
               Math::Mat4x4f::transform_point(point_a, _world),
               Math::Mat4x4f::transform_point(point_b, _world),
               {color.r, color.g, color.b, 1.0f},
               Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
-    });
+    };
   }
 }
 
 void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate) {
-  if (!m_animation) {
+  if (!m_skeleton) {
     return;
   }
 
-  const auto& joints = m_model->joints();
+  const auto& joints = m_skeleton->joints();
   const auto n_joints = joints.size();
+
   // Render all the joints.
   for (Size i = 0; i < n_joints; i++) {
-    const Math::Mat3x4f& frame = m_animation->frames()[i] * joints[i].frame;
+    const auto& frame =
+      m_animation
+        ? m_animation->lb_frames()[i] * joints[i].frame : joints[i].frame;
 
     const Math::Mat4x4f& joint{{frame.x.x, frame.y.x, frame.z.x, 0.0f},
                                {frame.x.y, frame.y.y, frame.z.y, 0.0f},
@@ -438,17 +449,30 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
 
   // Render the skeleton.
   for (Size i = 0; i < n_joints; i++) {
-    const auto frame = m_animation->frames()[i] * joints[i].frame;
+    const auto& frame =
+      m_animation ? m_animation->lb_frames()[i] * joints[i].frame : joints[i].frame;
+
     const auto parent = joints[i].parent;
 
     if (parent < 0) {
       continue;
     }
 
-    const Math::Mat3x4f& parent_joint{joints[parent].frame};
-    const Math::Mat3x4f& parent_frame{m_animation->frames()[parent] * parent_joint};
-    const Math::Vec3f& parent_position{parent_frame.x.w, parent_frame.y.w, parent_frame.z.w};
-    const Math::Vec3f& w{frame.x.w, frame.y.w, frame.z.w};
+    const auto& parent_joint = joints[parent].frame;
+    const auto& parent_frame =
+      m_animation ? m_animation->lb_frames()[parent] * parent_joint : parent_joint;
+
+    const Math::Vec3f parent_position = {
+      parent_frame.x.w,
+      parent_frame.y.w,
+      parent_frame.z.w
+    };
+
+    const Math::Vec3f w{
+      frame.x.w,
+      frame.y.w,
+      frame.z.w
+    };
 
     _immediate->frame_queue().record_line(
       Math::Mat4x4f::transform_point(w, _world),
@@ -458,5 +482,14 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
   }
 }
 
+bool Model::load(Stream* _stream) {
+  Rx::Model::Loader loader{m_frontend->allocator()};
+  return loader.load(_stream) && upload(loader);
+}
+
+bool Model::load(const String& _file_name) {
+  Rx::Model::Loader loader{m_frontend->allocator()};
+  return loader.load(_file_name) && upload(loader);
+}
 
 } // namespace Rx::Render

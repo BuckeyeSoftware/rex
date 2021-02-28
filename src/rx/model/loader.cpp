@@ -1,5 +1,6 @@
 #include "rx/model/loader.h"
 #include "rx/model/iqm.h"
+#include "rx/model/skeleton.h"
 
 #include "rx/core/map.h"
 #include "rx/core/ptr.h"
@@ -23,10 +24,8 @@ Loader::Loader(Memory::Allocator& _allocator)
   , as_nat{}
   , m_elements{allocator()}
   , m_meshes{allocator()}
-  , m_animations{allocator()}
-  , m_joints{allocator()}
+  , m_clips{allocator()}
   , m_positions{allocator()}
-  , m_frames{allocator()}
   , m_materials{allocator()}
   , m_name{allocator()}
   , m_flags{0}
@@ -62,7 +61,8 @@ bool Loader::load(const String& _file_name) {
   if (Filesystem::File file{_file_name, "rb"}) {
     return load(&file);
   }
-  return false;
+
+  return error("file '%s' not found", _file_name);
 }
 
 bool Loader::parse(const JSON& _definition) {
@@ -120,7 +120,6 @@ bool Loader::parse(const JSON& _definition) {
   }
 
   // Load all the materials across multiple threads.
-  // concurrency::thread_pool pool{m_allocator, 32};
 
   // Clear incase we're being run multiple times to change.
   m_materials.clear();
@@ -160,7 +159,7 @@ bool Loader::import(const String& _file_name) {
 
   const bool result = new_loader->load(_file_name);
   if (!result) {
-    return false;
+    return error("failed to import");
   }
 
   // We may possibly call import multiple times.
@@ -170,9 +169,8 @@ bool Loader::import(const String& _file_name) {
   m_positions = Utility::move(new_loader->positions());
   m_meshes = Utility::move(new_loader->meshes());
   m_elements = Utility::move(new_loader->elements());
-  m_animations = Utility::move(new_loader->animations());
-  m_frames = Utility::move(new_loader->frames());
-  m_joints = Utility::move(new_loader->joints());
+  m_clips = Utility::move(new_loader->clips());
+  m_skeleton = Utility::move(new_loader->skeleton());
 
   const auto& normals = new_loader->normals();
   const auto& tangents = new_loader->tangents();
@@ -180,7 +178,7 @@ bool Loader::import(const String& _file_name) {
 
   const Size n_vertices{m_positions.size()};
 
-  if (m_animations.is_empty()) {
+  if (m_clips.is_empty()) {
     Utility::construct<Vector<Vertex>>(&as_vertices, allocator());
     m_flags = CONSTRUCTED;
     if (!as_vertices.resize(n_vertices)) {
@@ -197,7 +195,7 @@ bool Loader::import(const String& _file_name) {
   // Hoist the transform check outside the for loops for faster model loading.
   if (m_transform) {
     const auto transform = m_transform->as_mat4();
-    if (m_animations.is_empty()) {
+    if (m_clips.is_empty()) {
       for (Size i{0}; i < n_vertices; i++) {
         const Math::Vec3f tangent{Math::Mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
         as_vertices[i].position = Math::Mat4x4f::transform_point(m_positions[i], transform);
@@ -224,18 +222,12 @@ bool Loader::import(const String& _file_name) {
       {transform.x.y, transform.y.y, transform.z.y, transform.w.y},
       {transform.x.z, transform.y.z, transform.z.z, transform.w.z}};
 
-    const Math::Mat3x4f& inv_xform{Math::Mat3x4f::invert(xform)};
-
-    m_frames.each_fwd([&](Math::Mat3x4f& frame_) {
-      frame_ = xform * frame_ * inv_xform;
-    });
-
-    m_joints.each_fwd([&](Importer::Joint& joint_) {
-      joint_.frame = xform * joint_.frame * inv_xform;
-    });
+    if (m_skeleton) {
+      m_skeleton->transform(xform);
+    }
   } else {
-    if (m_animations.is_empty()) {
-      for (Size i{0}; i < n_vertices; i++) {
+    if (m_clips.is_empty()) {
+      for (Size i = 0; i < n_vertices; i++) {
         as_vertices[i].position = m_positions[i];
         as_vertices[i].normal = normals[i];
         as_vertices[i].tangent = tangents[i];
@@ -244,7 +236,7 @@ bool Loader::import(const String& _file_name) {
     } else {
       const auto& blend_weights = new_loader->blend_weights();
       const auto& blend_indices = new_loader->blend_indices();
-      for (Size i{0}; i < n_vertices; i++) {
+      for (Size i = 0; i < n_vertices; i++) {
         as_animated_vertices[i].position = m_positions[i];
         as_animated_vertices[i].normal = normals[i];
         as_animated_vertices[i].tangent = tangents[i];
@@ -265,17 +257,6 @@ bool Loader::import(const String& _file_name) {
         });
       });
     });
-  }
-
-  // Create DQ frames
-  auto n_frames = m_frames.size();
-  if (!m_dq_frames.resize(n_frames)) {
-    return false;
-  }
-
-  for (Size i = 0; i < n_frames; i++) {
-    m_dq_frames[i] = m_frames[i];
-    m_dq_frames[i].real = Math::normalize(m_dq_frames[i].real);
   }
 
   return true;

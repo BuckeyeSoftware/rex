@@ -5,6 +5,7 @@
 
 #include "rx/model/loader.h"
 #include "rx/model/animation.h"
+#include "rx/model/skeleton.h"
 
 #include "rx/math/mat4x4.h"
 #include "rx/math/aabb.h"
@@ -54,11 +55,13 @@ struct Model {
   [[nodiscard]] bool load(Stream* _stream);
   [[nodiscard]] bool load(const String& _file_name);
 
+  const Optional<Rx::Model::Skeleton>& skeleton() const &;
+
 private:
   void render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate);
   void render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _immediate);
 
-  [[nodiscard]] bool upload();
+  [[nodiscard]] bool upload(const Rx::Model::Loader& _loader);
 
   // Obtains the bounds for a given mesh |_mesh| even if currently animated.
   Math::AABB mesh_bounds(const Mesh& _mesh) const;
@@ -70,18 +73,14 @@ private:
   Vector<Frontend::Material> m_materials;
   Vector<Mesh> m_opaque_meshes;
   Vector<Mesh> m_transparent_meshes;
-  Rx::Model::Loader* m_model;
+  Optional<Rx::Model::Skeleton> m_skeleton;
   Optional<Rx::Model::Animation> m_animation;
+  Vector<Rx::Model::Clip> m_clips;
   Math::AABB m_aabb;
 };
 
-inline bool Model::load(Stream* _stream) {
-  return m_model->load(_stream) && upload();
-}
-
-inline bool Model::load(const String& _file_name) {
-  m_animation = nullopt;
-  return m_model->load(_file_name) && upload();
+inline const Optional<Rx::Model::Skeleton>& Model::skeleton() const & {
+  return m_skeleton;
 }
 
 } // namespace Rx::Render

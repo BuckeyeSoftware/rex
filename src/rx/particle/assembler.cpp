@@ -256,8 +256,7 @@ private:
   Token error(const char* _format, Ts&&... _arguments) const {
     Token result{Token::Type::ERROR};
     result.as_error.size = format_buffer(
-      result.as_error.data,
-      sizeof result.as_error.data,
+      {result.as_error.data, sizeof result.as_error.data},
       _format,
       Utility::forward<Ts>(_arguments)...);
     return result;
