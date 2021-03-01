@@ -87,20 +87,13 @@ void System::update(Float32 _delta_time) {
   }
 }
 
-Optional<Size> System::add_emitter(Emitter&& emitter_) {
-  auto index = m_emitters.size();
+Optional<Size> System::insert(Emitter&& emitter_) {
+  const auto index = m_emitters.size();
   if (m_emitters.push_back(Utility::move(emitter_))) {
     return index;
   }
   return nullopt;
 }
 
-bool System::remove_emitter(Size _index) {
-  if (m_emitters.in_range(_index)) {
-    m_emitters.erase(_index, _index + 1);
-    return true;
-  }
-  return false;
-}
 
 } // namespace Rx::Particle

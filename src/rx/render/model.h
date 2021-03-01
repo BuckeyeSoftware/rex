@@ -51,6 +51,7 @@ struct Model {
   [[nodiscard]] bool load(const String& _file_name);
 
   const Optional<Rx::Model::Skeleton>& skeleton() const &;
+  const Optional<Rx::Model::Animation>& animation() const &;
 
 private:
   Model(Frontend::Context* _frontend, Frontend::Technique* _technique);
@@ -90,6 +91,10 @@ inline Model::Model()
 
 inline const Optional<Rx::Model::Skeleton>& Model::skeleton() const & {
   return m_skeleton;
+}
+
+inline const Optional<Rx::Model::Animation>& Model::animation() const & {
+  return m_animation;
 }
 
 } // namespace Rx::Render

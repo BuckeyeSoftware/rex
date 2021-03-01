@@ -13,8 +13,10 @@ struct System : State {
   void update(Float32 _delta_time);
 
   // Insert |emitter|.
-  [[nodiscard]] Optional<Size> add_emitter(Emitter&& emitter_);
-  [[nodiscard]] bool remove_emitter(Size _index);
+  [[nodiscard]] Optional<Size> insert(Emitter&& emitter_);
+
+  Emitter& operator[](Size _index) &;
+  const Emitter& operator[](Size _index) const &;
 
 private:
   Vector<Emitter> m_emitters;
@@ -23,6 +25,14 @@ private:
 inline constexpr System::System(Memory::Allocator& _allocator)
   : State{_allocator}
 {
+}
+
+inline Emitter& System::operator[](Size _index) & {
+  return m_emitters[_index];
+}
+
+inline const Emitter& System::operator[](Size _index) const & {
+  return m_emitters[_index];
 }
 
 } // namespace Rx::Particle
