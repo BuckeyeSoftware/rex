@@ -18,7 +18,9 @@ RX_LOG("material/texture", logger);
 bool Texture::load(Stream* _stream) {
   if (auto contents = read_text_stream(allocator(), _stream)) {
     if (auto disown = contents->disown()) {
-      return parse({*disown});
+      if (auto json = JSON::parse(allocator(), *disown)) {
+        return parse(*json);
+      }
     }
   }
   return false;

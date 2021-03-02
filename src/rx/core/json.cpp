@@ -73,27 +73,21 @@ JSON::Shared::~Shared() {
   m_allocator.deallocate(m_root);
 }
 
-JSON::JSON(Memory::Allocator& _allocator, const char* _contents, Size _length)
-  : m_shared{nullptr}
-  , m_value{nullptr}
-{
-  // Construct the shared state.
-  m_shared = _allocator.create<Shared>(_allocator, _contents, _length);
-  RX_ASSERT(m_shared, "out of memory");
+Optional<JSON> JSON::parse(Memory::Allocator& _allocator, const char* _contents, Size _length) {
+  auto shared = _allocator.create<Shared>(_allocator, _contents, _length);
+  if (!shared) {
+    return nullopt;
+  }
 
-  // We hold a reference to the shared state already. Just take the root JSON
-  // value as the base to begin.
-  m_value = m_shared->m_root;
+  JSON result;
+  result.m_value = shared->m_root;
+  result.m_shared = shared;
+
+  return result;
 }
 
-JSON::JSON(Memory::Allocator& _allocator, const char* _contents)
-  : JSON{_allocator, _contents, strlen(_contents)}
-{
-}
-
-JSON::JSON(const char* _contents)
-  : JSON{Memory::SystemAllocator::instance(), _contents, strlen(_contents)}
-{
+Optional<JSON> JSON::parse(Memory::Allocator& _allocator, const char* _contents) {
+  return parse(_allocator, _contents, strlen(_contents));
 }
 
 JSON::JSON(Shared* _shared, struct json_value_s* _value)

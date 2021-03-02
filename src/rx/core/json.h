@@ -19,15 +19,16 @@ namespace Rx {
 // 64-bit: 16 bytes
 struct RX_API JSON {
   constexpr JSON();
-  JSON(Memory::Allocator& _allocator, const char* _contents, Size _length);
-  JSON(Memory::Allocator& _allocator, const char* _contents);
-  JSON(Memory::Allocator& _allocator, const String& _contents);
-  JSON(const char* _contents, Size _length);
-  JSON(const char* _contents);
-  JSON(const String& _contents);
   JSON(const JSON& _json);
   JSON(JSON&& json_);
   ~JSON();
+
+  static Optional<JSON> parse(Memory::Allocator& _allocator, const char* _contents, Size _length);
+  static Optional<JSON> parse(Memory::Allocator& _allocator, const char* _contents);
+  static Optional<JSON> parse(Memory::Allocator& _allocator, const String& _contents);
+  static Optional<JSON> parse(const char* _contents, Size _length);
+  static Optional<JSON> parse(const char* _contents);
+  static Optional<JSON> parse(const String& _contents);
 
   JSON& operator=(const JSON& _json);
   JSON& operator=(JSON&& json_);
@@ -101,19 +102,20 @@ inline constexpr JSON::JSON()
 {
 }
 
-inline JSON::JSON(Memory::Allocator& _allocator, const String& _contents)
-  : JSON{_allocator, _contents.data(), _contents.size()}
-{
+inline Optional<JSON> JSON::parse(Memory::Allocator& _allocator, const String& _contents) {
+  return parse(_allocator, _contents.data(), _contents.size());
 }
 
-inline JSON::JSON(const char* _contents, Size _length)
-  : JSON{Memory::SystemAllocator::instance(), _contents, _length}
-{
+inline Optional<JSON> JSON::parse(const char* _contents, Size _length) {
+  return parse(Memory::SystemAllocator::instance(), _contents, _length);
 }
 
-inline JSON::JSON(const String& _contents)
-  : JSON{Memory::SystemAllocator::instance(), _contents.data(), _contents.size()}
-{
+inline Optional<JSON> JSON::parse(const char* _contents) {
+  return parse(Memory::SystemAllocator::instance(), _contents);
+}
+
+inline Optional<JSON> JSON::parse(const String& _contents) {
+  return parse(Memory::SystemAllocator::instance(), _contents);
 }
 
 inline JSON::JSON(const JSON& _json)

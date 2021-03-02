@@ -125,7 +125,9 @@ bool Skybox::load(const String& _file_name, const Math::Vec2z& _max_face_dimensi
 }
 
 bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
-  auto data = read_text_stream(Memory::SystemAllocator::instance(), _stream);
+  auto& allocator = m_frontend->allocator();
+
+  auto data = read_text_stream(allocator, _stream);
   if (!data) {
     return false;
   }
@@ -135,7 +137,14 @@ bool Skybox::load(Stream* _stream, const Math::Vec2z& _max_face_dimensions) {
     return false;
   }
 
-  const JSON description{*disown};
+  auto parse = JSON::parse(allocator, *disown);
+  if (!parse) {
+    // Out of memory.
+    return false;
+  }
+
+  auto& description = *parse;
+
   if (!description) {
     // Could not parse json.
     return false;
