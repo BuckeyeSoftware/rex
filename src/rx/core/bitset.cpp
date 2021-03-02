@@ -27,14 +27,6 @@ Optional<Bitset> Bitset::create(Memory::Allocator& _allocator, Size _size) {
   return nullopt;
 }
 
-Optional<Bitset> Bitset::copy(Memory::Allocator& _allocator, const Bitset& _bitset) {
-  if (auto bitset = create_uninitialized(_allocator, _bitset.m_size)) {
-    memcpy(bitset->m_data, _bitset.m_data, bytes_for_size(_bitset.m_size));
-    return bitset;
-  }
-  return nullopt;
-}
-
 void Bitset::release() {
   if (m_allocator) {
     m_allocator->deallocate(m_data);

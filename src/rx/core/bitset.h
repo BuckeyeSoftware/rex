@@ -14,6 +14,8 @@ namespace Rx {
 // 32-bit: 12 bytes
 // 64-bit: 24 bytes
 struct RX_API Bitset {
+  RX_MARK_NO_COPY(Bitset);
+
   using BitType = Uint64;
 
   static constexpr const BitType BIT_ONE = 1;
@@ -25,7 +27,6 @@ struct RX_API Bitset {
   Bitset& operator=(Bitset&& bitset_);
 
   static Optional<Bitset> create(Memory::Allocator& _allocator, Size _size);
-  static Optional<Bitset> copy(Memory::Allocator& _allocator, const Bitset& _bitset);
 
   // Clear all set bits.
   void clear();
