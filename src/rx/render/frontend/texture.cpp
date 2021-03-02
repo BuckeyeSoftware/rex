@@ -171,12 +171,11 @@ bool Texture1D::record_dimensions(const DimensionType& _dimensions) {
     return false;
   }
 
-  if (m_type != Type::ATTACHMENT) {
-    if (!m_data.resize(levels->size)) {
-      return false;
-    }
-    update_resource_usage(levels->size);
+  if (m_type != Type::ATTACHMENT && !m_data.resize(levels->size)) {
+    return false;
   }
+
+  update_resource_usage(levels->size);
 
   m_dimensions = _dimensions;
   m_flags |= DIMENSIONS;
@@ -250,12 +249,11 @@ bool Texture2D::record_dimensions(const Math::Vec2z& _dimensions) {
     return false;
   }
 
-  if (m_type != Type::ATTACHMENT) {
-    if (!m_data.resize(levels->size)) {
-      return false;
-    }
-    update_resource_usage(levels->size);
+  if (m_type != Type::ATTACHMENT && !m_data.resize(levels->size)) {
+    return false;
   }
+
+  update_resource_usage(levels->size);
 
   m_dimensions = _dimensions;
   m_flags |= DIMENSIONS;
@@ -326,12 +324,11 @@ bool Texture3D::record_dimensions(const Math::Vec3z& _dimensions) {
     return false;
   }
 
-  if (m_type != Type::ATTACHMENT) {
-    if (!m_data.resize(levels->size)) {
-      return false;
-    }
-    update_resource_usage(levels->size);
+  if (m_type != Type::ATTACHMENT && !m_data.resize(levels->size)) {
+    return false;
   }
+
+  update_resource_usage(levels->size);
 
   m_dimensions = _dimensions;
   m_flags |= DIMENSIONS;
@@ -406,12 +403,11 @@ bool TextureCM::record_dimensions(const Math::Vec2z& _dimensions) {
     return false;
   }
 
-  if (m_type != Type::ATTACHMENT) {
-    if (!m_data.resize(levels->size)) {
-      return false;
-    }
-    update_resource_usage(levels->size);
+  if (m_type != Type::ATTACHMENT && !m_data.resize(levels->size)) {
+    return false;
   }
+
+  update_resource_usage(levels->size);
 
   m_dimensions = _dimensions;
   m_flags |= DIMENSIONS;
