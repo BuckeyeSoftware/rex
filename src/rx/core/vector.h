@@ -41,7 +41,9 @@ struct Vector {
   const T& operator[](Size _index) const;
 
   // resize to |size| with |value| for new objects
-  [[nodiscard]] bool resize(Size _size, const T& _value = {});
+  [[nodiscard]] bool resize(Size _size, const T& _value);
+  // resize to |_size| with default construction.
+  [[nodiscard]] bool resize(Size _size);
 
   // reserve |size| elements
   [[nodiscard]] bool reserve(Size _size);
@@ -227,6 +229,21 @@ bool Vector<T>::resize(Size _size, const T& _value) {
         return false;
       }
     }
+  }
+
+  m_size = _size;
+
+  return true;
+}
+
+template<typename T>
+bool Vector<T>::resize(Size _size) {
+  if (!grow_or_shrink_to(_size)) {
+    return false;
+  }
+
+  for (Size i = m_size; i < _size; i++) {
+    Utility::construct<T>(m_data + i);
   }
 
   m_size = _size;
