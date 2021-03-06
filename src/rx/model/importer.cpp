@@ -8,6 +8,7 @@
 #include "rx/core/log.h"
 
 #include "rx/core/math/abs.h"
+#include "rx/core/math/constants.h"
 
 #include "rx/math/mat3x3.h"
 
@@ -209,7 +210,7 @@ bool Importer::load(Stream* _stream) {
               {z.x, z.y, z.z, 0.0f},
               {w.x, w.y, w.z, 1.0f}
             };
-            mesh.bounds[j][l].expand(Math::Mat4x4f::transform_point(position, m));
+            mesh.bounds[j][l].expand(Math::transform_point(position, m));
           }
         }
       }

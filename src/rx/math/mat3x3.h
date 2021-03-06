@@ -1,10 +1,6 @@
 #ifndef RX_MATH_MAT3X3_H
 #define RX_MATH_MAT3X3_H
-#include "rx/core/math/cos.h" // cos
-#include "rx/core/math/sin.h" // sin
-
 #include "rx/math/vec3.h" // vec3
-#include "rx/math/trig.h" // deg_to_rad
 
 namespace Rx::Math {
 
@@ -18,16 +14,14 @@ struct Mat3x3 {
   constexpr Mat3x3();
   constexpr Mat3x3(const Vec& _x, const Vec& _y, const Vec& _z);
 
-  explicit Mat3x3(const Quat<T>& _rotation);
-  explicit Mat3x3(const Vec3<T>& _scale, const Quat<T>& _rotation);
-
   T* data();
   const T* data() const;
 
-  static constexpr Mat3x3 scale(const Vec3<T>& _scale);
-  static constexpr Mat3x3 rotate(const Vec3<T>& _rotate);
-  static constexpr Mat3x3 translate(const Vec3<T>& _translate);
-  static constexpr Mat3x3 transpose(const Mat3x3& _mat);
+  static Mat3x3 scale(const Vec3<T>& _scale);
+  static Mat3x3 rotate(const Vec3<T>& _rotate);
+  static Mat3x3 rotate(const Quat<T>& _quat);
+  static Mat3x3 rotate(const Quat<T>& _quat, const Vec3<T>& _scale);
+  static Mat3x3 translate(const Vec3<T>& _translate);
 
   constexpr Mat3x3 operator*(const Mat3x3& _mat) const;
   constexpr Mat3x3 operator+(const Mat3x3& _mat) const;
@@ -50,9 +44,6 @@ struct Mat3x3 {
     };
     Vec a[3];
   };
-
-private:
-  static constexpr Vec3<T> reduce_rotation_angles(const Vec3<T>& _rotate);
 };
 
 using Mat3x3f = Mat3x3<float>;
@@ -84,38 +75,17 @@ const T* Mat3x3<T>::data() const {
 }
 
 template<typename T>
-constexpr Mat3x3<T> Mat3x3<T>::scale(const Vec3<T>& _scale) {
+Mat3x3<T> Mat3x3<T>::scale(const Vec3<T>& _scale) {
   return {{_scale.x, 0,       0},
           {0,       _scale.y, 0},
           {0,       0,       _scale.z}};
 }
 
 template<typename T>
-constexpr Mat3x3<T> Mat3x3<T>::rotate(const Vec3<T>& _rotate) {
-  const auto reduce{reduce_rotation_angles(_rotate)};
-  const auto sx{sin(deg_to_rad(-reduce.x))};
-  const auto cx{cos(deg_to_rad(-reduce.x))};
-  const auto sy{sin(deg_to_rad(-reduce.y))};
-  const auto cy{cos(deg_to_rad(-reduce.y))};
-  const auto sz{sin(deg_to_rad(-reduce.z))};
-  const auto cz{cos(deg_to_rad(-reduce.z))};
-  return {{ cy*cz,              cy*-sz,              sy   },
-          {-sx*-sy*cz + cx*sz, -sx*-sy*-sz + cx*cz, -sx*cy},
-          { cx*-sy*cz + sx*sz,  cx*-sy*-sz + sx*cz,  cx*cy}};
-}
-
-template<typename T>
-constexpr Mat3x3<T> Mat3x3<T>::translate(const Vec3<T>& _translate) {
+Mat3x3<T> Mat3x3<T>::translate(const Vec3<T>& _translate) {
   return {{1, 0, 0},
           {0, 1, 0},
           _translate};
-}
-
-template<typename T>
-constexpr Mat3x3<T> Mat3x3<T>::transpose(const Mat3x3& _mat) {
-  return {{_mat.x.x, _mat.y.x, _mat.z.x},
-          {_mat.x.y, _mat.y.y, _mat.z.y},
-          {_mat.x.z, _mat.y.z, _mat.z.z}};
 }
 
 template<typename T>
@@ -173,18 +143,10 @@ Vec3f& Mat3x3<T>::operator[](Size _index) {
 }
 
 template<typename T>
-constexpr Vec3<T> Mat3x3<T>::reduce_rotation_angles(const Vec3<T>& _rotate) {
-  return _rotate.map([](T _angle) {
-    while (_angle >  180) {
-      _angle -= 360;
-    }
-
-    while (_angle < -180) {
-      _angle += 360;
-    }
-
-    return _angle;
-  });
+constexpr Mat3x3<T> transpose(const Mat3x3<T>& _mat) {
+  return {{_mat.x.x, _mat.y.x, _mat.z.x},
+          {_mat.x.y, _mat.y.y, _mat.z.y},
+          {_mat.x.z, _mat.y.z, _mat.z.z}};
 }
 
 } // namespace Rx::Math

@@ -17,7 +17,7 @@ Sphere Sphere::transform(const Mat4x4f& _mat) const {
     radius = m_radius * sqrt(length_z);
   }
 
-  return {Math::Mat4x4f::transform_point(m_origin, _mat), radius};
+  return {transform_point(m_origin, _mat), radius};
 }
 
 } // namespace Rx::Math

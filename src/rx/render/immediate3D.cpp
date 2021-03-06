@@ -11,6 +11,10 @@
 
 #include "rx/math/transform.h"
 
+#include "rx/core/math/sin.h"
+#include "rx/core/math/cos.h"
+#include "rx/core/math/constants.h"
+
 namespace Rx::Render {
 
 // [Immediate3D::Queue]
@@ -87,6 +91,17 @@ bool Immediate3D::Queue::record_wire_box(const Math::Vec4f& _color,
   next_command.flags = _flags;
   next_command.color = _color;
   next_command.as_wire_box.aabb = _aabb;
+  return m_commands.push_back(Utility::move(next_command));
+}
+
+bool Immediate3D::Queue::record_solid_box(const Math::Vec4f& _color,
+  const Math::Mat4x4f& _transform, Uint8 _flags)
+{
+  Command next_command;
+  next_command.kind = Command::Type::SOLID_BOX;
+  next_command.flags = _flags;
+  next_command.color = _color;
+  next_command.as_solid_box.transform = _transform;
   return m_commands.push_back(Utility::move(next_command));
 }
 
@@ -231,6 +246,13 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
         _command.as_wire_box.aabb,
         _command.color,
         _command.flags);
+      break;
+    case Queue::Command::Type::SOLID_BOX:
+      generate_solid_box(
+        _command.as_solid_box.transform,
+        _command.color,
+        _command.flags);
+      break;
     default:
       break;
     }
@@ -326,6 +348,8 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
           Frontend::PrimitiveType::LINES,
           {});
         break;
+      case Queue::Command::Type::SOLID_BOX:
+        [[fallthrough]];
       case Queue::Command::Type::SOLID_SPHERE:
         m_frontend->draw(
           RX_RENDER_TAG("immediate3D triangles"),
@@ -523,6 +547,68 @@ void Immediate3D::generate_solid_sphere(const Math::Vec2f& _slices_and_stacks,
     _flags, _color);
 }
 
+void Immediate3D::generate_solid_box(const Math::Mat4x4f& _transform,
+  const Math::Vec4f& _color, Uint32 _flags)
+{
+  const auto instance_offset = m_instance_index;
+  const auto element_offset = m_element_index;
+
+  // Write the instance transform.
+  add_instance(_transform, _color);
+
+  // Check if the last batch was an instanced wire box.
+  auto render_state = calculate_state(_flags, _color.a < 1.0f);
+  if (!m_batches.is_empty()) {
+    auto& last = m_batches.last();
+    if (last.type == Queue::Command::Type::SOLID_BOX && last.render_state == render_state) {
+      // Extend that batch to include this instanced wire box.
+      last.instance_count++;
+      return;
+    }
+  }
+
+  // 4 vertices per face
+  // 6 elements per face
+  auto face = [&](int a, int b, int c, int d) {
+    static constexpr const Math::Vec3f POINTS[8] = {
+      {-0.5f, -0.5f,  0.5f},
+      {-0.5f,  0.5f,  0.5f},
+      { 0.5f,  0.5f,  0.5f},
+      { 0.5f, -0.5f,  0.5f},
+      {-0.5f, -0.5f, -0.5f},
+      {-0.5f,  0.5f, -0.5f},
+      { 0.5f,  0.5f, -0.5f},
+      { 0.5f, -0.5f, -0.5f}
+    };
+
+    Math::Vec3f normal = Math::normalize(Math::cross(POINTS[c] - POINTS[b], POINTS[a] - POINTS[b]));
+
+    const auto element = static_cast<Uint32>(m_vertex_index);
+
+    add_vertex(POINTS[a], normal, _color); // a
+    add_vertex(POINTS[b], normal, _color); // b
+    add_vertex(POINTS[c], normal, _color); // c
+    add_vertex(POINTS[d], normal, _color); // d
+
+    add_element(element + 0); // a
+    add_element(element + 1); // b
+    add_element(element + 2); // c
+    add_element(element + 0); // a
+    add_element(element + 2); // c
+    add_element(element + 3); // d
+  };
+
+  face(1, 0, 3, 2); //  z
+  face(2, 3, 7, 6); //  x
+  face(3, 0, 4, 7); // -y
+  face(6, 5, 1, 2); //  y
+  face(4, 5, 6, 7); // -z
+  face(5, 4, 0, 1); // -x
+
+  add_batch(element_offset, instance_offset, Queue::Command::Type::SOLID_BOX,
+    _flags, _color);
+}
+
 void Immediate3D::generate_wire_box(const Math::AABB& _aabb,
   const Math::Vec4f& _color, Uint32 _flags)
 {
@@ -534,6 +620,7 @@ void Immediate3D::generate_wire_box(const Math::AABB& _aabb,
   transform.scale = _aabb.scale();
   transform.translate = _aabb.origin();
   add_instance(transform.as_mat4(), _color);
+
 
   // Check if the last batch was an instanced wire box.
   auto render_state = calculate_state(_flags, _color.a < 1.0f);
@@ -591,17 +678,19 @@ Immediate3D::Storage Immediate3D::calculate_storage(const Queue::Command& _comma
     return {1, 1, 0};
   case Queue::Command::Type::WIRE_BOX:
     return {8, 24, 1};
-  case Queue::Command::Type::SOLID_SPHERE:
-    return {
-      4 * Size(_command.as_solid_sphere.slices_and_stacks.area()),
-      6 * Size(_command.as_solid_sphere.slices_and_stacks.area()),
-      1 // Need at least one instance...
-    };
+  case Queue::Command::Type::SOLID_BOX:
+    return {4*6, 6*6, 1};
   case Queue::Command::Type::WIRE_SPHERE:
     return {
       4 * Size(_command.as_wire_sphere.slices_and_stacks.area()),
       12 * Size(_command.as_wire_sphere.slices_and_stacks.area()),
       1
+    };
+  case Queue::Command::Type::SOLID_SPHERE:
+    return {
+      4 * Size(_command.as_solid_sphere.slices_and_stacks.area()),
+      6 * Size(_command.as_solid_sphere.slices_and_stacks.area()),
+      1 // Need at least one instance...
     };
   case Queue::Command::Type::UNINITIALIZED:
     break;

@@ -18,8 +18,8 @@ struct Quat {
   constexpr Quat();
   constexpr Quat(T _x, T _y, T _z, T _w);
 
-  explicit Quat(const Mat3x3<T>& _rotation);
-  explicit Quat(const Mat3x4<T>& _rotation);
+  Quat(const Mat3x3<T>& _rotation);
+  Quat(const Mat3x4<T>& _rotation);
 
   Quat(const Vec3<T>& _axis, T _angle);
 

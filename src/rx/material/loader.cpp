@@ -166,9 +166,12 @@ bool Loader::parse(const JSON& _definition) {
       return false;
     }
 
-    if (rotate && !parse(rotate, "rotate", xform.rotate)) {
+    Math::Vec3f euler;
+    if (rotate && !parse(rotate, "rotate", euler)) {
       return false;
     }
+
+    xform.rotation = Math::Mat3x3f::rotate(euler);
 
     if (translate && !parse(translate, "translate", xform.translate)) {
       return false;

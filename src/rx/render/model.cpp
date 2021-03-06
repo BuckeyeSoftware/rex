@@ -287,7 +287,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     uniforms[0].record_mat4x4f(_model);
     uniforms[1].record_mat4x4f(_view);
     uniforms[2].record_mat4x4f(_projection);
-    if (const auto transform{material.transform()}) {
+    if (const auto& transform = material.transform()) {
       uniforms[3].record_mat3x3f(transform->as_mat3());
     }
 
@@ -415,8 +415,8 @@ void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _im
                                {w.x, w.y, w.z, 1.0f}};
 
       _immediate->frame_queue().record_line(
-              Math::Mat4x4f::transform_point(point_a, mat * _world),
-              Math::Mat4x4f::transform_point(point_b, mat * _world),
+              Math::transform_point(point_a, mat * _world),
+              Math::transform_point(point_b, mat * _world),
               {color.r, color.g, color.b, 1.0f},
               Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
     };
@@ -433,8 +433,8 @@ void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _im
       const Math::Vec3f color = vertex.normal * 0.5f + 0.5f;
 
       _immediate->frame_queue().record_line(
-              Math::Mat4x4f::transform_point(point_a, _world),
-              Math::Mat4x4f::transform_point(point_b, _world),
+              Math::transform_point(point_a, _world),
+              Math::transform_point(point_b, _world),
               {color.r, color.g, color.b, 1.0f},
               Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
     };
@@ -497,8 +497,8 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
     };
 
     _immediate->frame_queue().record_line(
-      Math::Mat4x4f::transform_point(w, _world),
-      Math::Mat4x4f::transform_point(parent_position, _world),
+      Math::transform_point(w, _world),
+      Math::transform_point(parent_position, _world),
       {0.5f, 0.5f, 1.0f, 1.0f},
       0);
   }

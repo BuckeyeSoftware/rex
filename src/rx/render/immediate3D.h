@@ -51,6 +51,10 @@ struct Immediate3D {
       Math::Mat4x4f transform;
     };
 
+    struct SolidBox {
+      Math::Mat4x4f transform;
+    };
+
     struct WireSphere {
       Math::Vec2f slices_and_stacks;
       Math::Mat4x4f transform;
@@ -68,6 +72,7 @@ struct Immediate3D {
         POINT,
         LINE,
         SOLID_SPHERE,
+        SOLID_BOX,
         WIRE_SPHERE,
         WIRE_BOX
       };
@@ -81,6 +86,7 @@ struct Immediate3D {
         Point as_point;
         Line as_line;
         SolidSphere as_solid_sphere;
+        SolidBox as_solid_box;
         WireSphere as_wire_sphere;
         WireBox as_wire_box;
       };
@@ -95,6 +101,8 @@ struct Immediate3D {
     // Instanced primitives.
     bool record_solid_sphere(const Math::Vec2f& _slices_and_stacks,
       const Math::Vec4f& _color, const Math::Mat4x4f& _transform, Uint8 _flags);
+    bool record_solid_box(const Math::Vec4f& _color,
+      const Math::Mat4x4f& _transform, Uint8 _flags);
     bool record_wire_sphere(const Math::Vec2f& _slices_and_stack,
       const Math::Vec4f& _color, const Math::Mat4x4f& _transform, Uint8 _flags);
     bool record_wire_box(const Math::Vec4f& _color, const Math::AABB& _aabb,
@@ -153,6 +161,8 @@ private:
   void generate_solid_sphere(const Math::Vec2f& _slices_and_stacks,
                              const Math::Mat4x4f& _transform,
                              const Math::Vec4f& _color, Uint32 _flags);
+  void generate_solid_box(const Math::Mat4x4f& _transform,
+                          const Math::Vec4f& _color, Uint32 _flags);
   void generate_wire_sphere(const Math::Vec2f& _slices_and_stacks,
                             const Math::Mat4x4f& _transform,
                             const Math::Vec4f& _color, Uint32 _flags);

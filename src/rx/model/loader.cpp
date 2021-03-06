@@ -199,9 +199,9 @@ bool Loader::import(const String& _file_name) {
     const auto transform = m_transform->as_mat4();
     if (m_clips.is_empty()) {
       for (Size i{0}; i < n_vertices; i++) {
-        const Math::Vec3f tangent{Math::Mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
-        as_vertices[i].position = Math::Mat4x4f::transform_point(m_positions[i], transform);
-        as_vertices[i].normal = Math::Mat4x4f::transform_vector(normals[i], transform);
+        const Math::Vec3f tangent{Math::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
+        as_vertices[i].position = Math::transform_point(m_positions[i], transform);
+        as_vertices[i].normal = Math::transform_vector(normals[i], transform);
         as_vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangents[i].w};
         as_vertices[i].coordinate = coordinates[i];
       }
@@ -209,9 +209,9 @@ bool Loader::import(const String& _file_name) {
       const auto& blend_weights{new_loader->blend_weights()};
       const auto& blend_indices{new_loader->blend_indices()};
       for (Size i{0}; i < n_vertices; i++) {
-        const Math::Vec3f tangent{Math::Mat4x4f::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
-        as_animated_vertices[i].position = Math::Mat4x4f::transform_point(m_positions[i], transform);
-        as_animated_vertices[i].normal = Math::Mat4x4f::transform_vector(normals[i], transform);
+        const Math::Vec3f tangent{Math::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
+        as_animated_vertices[i].position = Math::transform_point(m_positions[i], transform);
+        as_animated_vertices[i].normal = Math::transform_vector(normals[i], transform);
         as_animated_vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangents[i].w};
         as_animated_vertices[i].coordinate = coordinates[i];
         as_animated_vertices[i].blend_weights = blend_weights[i];
@@ -284,9 +284,12 @@ bool Loader::parse_transform(const JSON& _transform) {
     return false;
   }
 
-  if (rotate && !parse_vec3(rotate, "rotate", transform.rotate)) {
+  Math::Vec3f euler;
+  if (rotate && !parse_vec3(rotate, "rotate", euler)) {
     return false;
   }
+
+  transform.rotation = Math::Mat3x3f::rotate(euler);
 
   if (translate && !parse_vec3(translate, "translate", transform.translate)) {
     return false;

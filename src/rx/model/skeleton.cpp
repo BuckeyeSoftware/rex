@@ -5,7 +5,7 @@
 namespace Rx::Model {
 
 void Skeleton::transform(const Math::Mat3x4f& _transform) {
-  const auto inverse = Math::Mat3x4f::invert(_transform);
+  const auto inverse = Math::invert(_transform);
 
   const auto n_frames = m_lb_frames.size();
 

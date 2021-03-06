@@ -373,7 +373,7 @@ bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
     const Math::Vec3f translate{this_joint.translate[0], this_joint.translate[2], this_joint.translate[1]};
 
     generic_base_frame[i] = Math::Mat3x4f{scale, Math::normalize(rotate), translate};
-    inverse_base_frame[i] = Math::Mat3x4f::invert(generic_base_frame[i]);
+    inverse_base_frame[i] = Math::invert(generic_base_frame[i]);
 
     if (this_joint.parent >= 0) {
       generic_base_frame[i] = generic_base_frame[this_joint.parent] * generic_base_frame[i];

@@ -81,8 +81,8 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
 
   // Record all uniforms and textures.
   Frontend::Textures draw_textures;
-  program->uniforms()[0].record_mat4x4f(Math::Mat4x4f::invert(_projection));
-  program->uniforms()[1].record_mat4x4f(Math::Mat4x4f::invert(view));
+  program->uniforms()[0].record_mat4x4f(Math::invert(_projection));
+  program->uniforms()[1].record_mat4x4f(Math::invert(view));
   program->uniforms()[is_hdri ? 2 : 3].record_sampler(draw_textures.add(m_texture));
   if (_grading) {
     program->uniforms()[4].record_sampler(draw_textures.add(_grading->atlas()->texture()));

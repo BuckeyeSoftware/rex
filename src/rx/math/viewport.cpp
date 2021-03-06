@@ -11,7 +11,7 @@ Optional<Vec3f> Viewport::screen_to_world(const Vec3f& _screen) const {
   };
 
   const Vec4f world_space =
-    Mat4x4f::transform_vector(screen_space, m_inverse_view_projection);
+    transform_vector(screen_space, m_inverse_view_projection);
 
   // Point is behind.
   if (world_space.w < 0.0f) {
@@ -31,7 +31,7 @@ Optional<Vec3f> Viewport::screen_to_world(const Vec3f& _screen) const {
 
 Optional<Vec3f> Viewport::world_to_screen(const Vec3f& _world) const {
   const Vec4f screen_space =
-    Mat4x4f::transform_vector({_world.x, _world.y, _world.z, 1.0f}, m_view_projection);
+    transform_vector({_world.x, _world.y, _world.z, 1.0f}, m_view_projection);
 
   // Check if behind.
   if (screen_space.w < 0.0f) {
