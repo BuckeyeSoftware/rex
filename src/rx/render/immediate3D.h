@@ -44,6 +44,17 @@ struct Immediate3D {
     struct Line {
       Math::Vec3f point_a;
       Math::Vec3f point_b;
+      Math::Vec4f color_a;
+      Math::Vec4f color_b;
+    };
+
+    struct WireTriangle {
+      Math::Vec3f point_a;
+      Math::Vec3f point_b;
+      Math::Vec3f point_c;
+      Math::Vec4f color_a;
+      Math::Vec4f color_b;
+      Math::Vec4f color_c;
     };
 
     struct SolidSphere {
@@ -73,6 +84,7 @@ struct Immediate3D {
         LINE,
         SOLID_SPHERE,
         SOLID_BOX,
+        WIRE_TRIANGLE,
         WIRE_SPHERE,
         WIRE_BOX
       };
@@ -87,6 +99,7 @@ struct Immediate3D {
         Line as_line;
         SolidSphere as_solid_sphere;
         SolidBox as_solid_box;
+        WireTriangle as_wire_triangle;
         WireSphere as_wire_sphere;
         WireBox as_wire_box;
       };
@@ -96,13 +109,17 @@ struct Immediate3D {
     bool record_point(const Math::Vec3f& _point, const Math::Vec4f& _color,
       Float32 _size, Uint8 _flags);
     bool record_line(const Math::Vec3f& _point_a, const Math::Vec3f& _point_b,
-      const Math::Vec4f& _color, Uint8 _flags);
+      const Math::Vec4f& _color_a, const Math::Vec4f& _color_b, Uint8 _flags);
 
     // Instanced primitives.
     bool record_solid_sphere(const Math::Vec2f& _slices_and_stacks,
       const Math::Vec4f& _color, const Math::Mat4x4f& _transform, Uint8 _flags);
     bool record_solid_box(const Math::Vec4f& _color,
       const Math::Mat4x4f& _transform, Uint8 _flags);
+    bool record_wire_triangle(const Math::Vec3f& _point_a,
+      const Math::Vec3f& _point_b, const Math::Vec3f& _point_c,
+      const Math::Vec4f& _color_a, const Math::Vec4f& _color_b,
+      const Math::Vec4f& _color_c, Uint8 _flags);
     bool record_wire_sphere(const Math::Vec2f& _slices_and_stack,
       const Math::Vec4f& _color, const Math::Mat4x4f& _transform, Uint8 _flags);
     bool record_wire_box(const Math::Vec4f& _color, const Math::AABB& _aabb,
@@ -155,7 +172,8 @@ private:
   void generate_point(const Math::Vec3f& _position, Float32 _size,
                       const Math::Vec4f& _color, Uint32 _flags);
   void generate_line(const Math::Vec3f& _point_a, const Math::Vec3f& _point_b,
-                     const Math::Vec4f& _color, Uint32 _flags);
+                     const Math::Vec4f& _color_a, const Math::Vec4f& _color_b,
+                     Uint32 _flags);
 
   // Instanced geometries.
   void generate_solid_sphere(const Math::Vec2f& _slices_and_stacks,
@@ -163,6 +181,10 @@ private:
                              const Math::Vec4f& _color, Uint32 _flags);
   void generate_solid_box(const Math::Mat4x4f& _transform,
                           const Math::Vec4f& _color, Uint32 _flags);
+  void generate_wire_triangle(const Math::Vec3f& _point_a,
+    const Math::Vec3f& _point_b, const Math::Vec3f& _point_c,
+    const Math::Vec4f& _color_a, const Math::Vec4f& _color_b,
+    const Math::Vec4f& _color_c, Uint32 _flags);
   void generate_wire_sphere(const Math::Vec2f& _slices_and_stacks,
                             const Math::Mat4x4f& _transform,
                             const Math::Vec4f& _color, Uint32 _flags);
@@ -186,7 +208,7 @@ private:
 
   bool add_batch(Size _element_offset, Size _instance_offset,
                  Queue::Command::Type _type, Uint32 _flags,
-                 const Math::Vec4f& _color);
+                 bool _alpha);
 
   void add_element(Uint32 _element);
   void add_vertex(const Math::Vec3f& _position,

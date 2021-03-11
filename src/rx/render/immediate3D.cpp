@@ -46,14 +46,16 @@ bool Immediate3D::Queue::record_point(const Math::Vec3f& _point,
 }
 
 bool Immediate3D::Queue::record_line(const Math::Vec3f& _point_a,
-                                     const Math::Vec3f& _point_b, const Math::Vec4f& _color, Uint8 _flags)
+  const Math::Vec3f& _point_b, const Math::Vec4f& _color_a,
+  const Math::Vec4f& _color_b, Uint8 _flags)
 {
   Command next_command;
   next_command.kind = Command::Type::LINE;
   next_command.flags = _flags;
-  next_command.color = _color;
   next_command.as_line.point_a = _point_a;
   next_command.as_line.point_b = _point_b;
+  next_command.as_line.color_a = _color_a;
+  next_command.as_line.color_b = _color_b;
   return m_commands.push_back(Utility::move(next_command));
 }
 
@@ -67,6 +69,23 @@ bool Immediate3D::Queue::record_solid_sphere(
   next_command.color = _color;
   next_command.as_solid_sphere.slices_and_stacks = _slices_and_stacks;
   next_command.as_solid_sphere.transform = _transform;
+  return m_commands.push_back(Utility::move(next_command));
+}
+
+bool Immediate3D::Queue::record_wire_triangle(const Math::Vec3f& _point_a,
+  const Math::Vec3f& _point_b, const Math::Vec3f& _point_c,
+  const Math::Vec4f& _color_a, const Math::Vec4f& _color_b,
+  const Math::Vec4f& _color_c, Uint8 _flags)
+{
+  Command next_command;
+  next_command.kind = Command::Type::WIRE_TRIANGLE;
+  next_command.flags = _flags;
+  next_command.as_wire_triangle.point_a = _point_a;
+  next_command.as_wire_triangle.point_b = _point_b;
+  next_command.as_wire_triangle.point_c = _point_c;
+  next_command.as_wire_triangle.color_a = _color_a;
+  next_command.as_wire_triangle.color_b = _color_b;
+  next_command.as_wire_triangle.color_c = _color_c;
   return m_commands.push_back(Utility::move(next_command));
 }
 
@@ -224,7 +243,8 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
       generate_line(
         _command.as_line.point_a,
         _command.as_line.point_b,
-        _command.color,
+        _command.as_line.color_a,
+        _command.as_line.color_b,
         _command.flags);
       break;
     case Queue::Command::Type::SOLID_SPHERE:
@@ -232,6 +252,16 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
         _command.as_solid_sphere.slices_and_stacks,
         _command.as_solid_sphere.transform,
         _command.color,
+        _command.flags);
+      break;
+    case Queue::Command::Type::WIRE_TRIANGLE:
+      generate_wire_triangle(
+        _command.as_wire_triangle.point_a,
+        _command.as_wire_triangle.point_b,
+        _command.as_wire_triangle.point_c,
+        _command.as_wire_triangle.color_a,
+        _command.as_wire_triangle.color_b,
+        _command.as_wire_triangle.color_c,
         _command.flags);
       break;
     case Queue::Command::Type::WIRE_SPHERE:
@@ -314,6 +344,8 @@ void Immediate3D::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
           Frontend::PrimitiveType::POINTS,
           {});
         break;
+      case Queue::Command::Type::WIRE_TRIANGLE:
+        [[fallthrough]];
       case Queue::Command::Type::LINE:
         m_frontend->draw(
           RX_RENDER_TAG("immediate3D lines"),
@@ -384,13 +416,17 @@ void Immediate3D::generate_point(const Math::Vec3f& _position, Float32 _size,
   add_element(element);
 
   // Repurpose normal.x for point size when rendering points.
-  add_vertex(_position, {_size, 0.0f, 0.0f},_color);
+  add_vertex(_position, {_size, 0.0f, 0.0f}, _color);
 
-  add_batch(offset, m_instance_index, Queue::Command::Type::POINT, _flags, _color);
+  add_batch(offset, m_instance_index, Queue::Command::Type::POINT, _flags,
+    _color.a < 1.0f);
 }
 
 void Immediate3D::generate_line(const Math::Vec3f& _point_a,
-                                const Math::Vec3f& _point_b, const Math::Vec4f& _color, Uint32 _flags)
+                                const Math::Vec3f& _point_b,
+                                const Math::Vec4f& _color_a,
+                                const Math::Vec4f& _color_b,
+                                Uint32 _flags)
 {
   const auto offset = m_element_index;
   const auto element = static_cast<Uint32>(m_vertex_index);
@@ -398,10 +434,11 @@ void Immediate3D::generate_line(const Math::Vec3f& _point_a,
   add_element(element + 0);
   add_element(element + 1);
 
-  add_vertex(_point_a, {}, _color);
-  add_vertex(_point_b, {}, _color);
+  add_vertex(_point_a, {}, _color_a);
+  add_vertex(_point_b, {}, _color_b);
 
-  add_batch(offset, m_instance_index, Queue::Command::Type::LINE, _flags, _color);
+  add_batch(offset, m_instance_index, Queue::Command::Type::LINE, _flags,
+    _color_a.a < 1.0f || _color_b.a < 1.0f);
 }
 
 void Immediate3D::generate_wire_sphere(const Math::Vec2f& _slices_and_stacks,
@@ -475,7 +512,7 @@ void Immediate3D::generate_wire_sphere(const Math::Vec2f& _slices_and_stacks,
   }
 
   add_batch(element_offset, instance_offset, Queue::Command::Type::WIRE_SPHERE,
-    _flags, _color);
+    _flags, _color.a < 1.0f);
 }
 
 void Immediate3D::generate_solid_sphere(const Math::Vec2f& _slices_and_stacks,
@@ -544,7 +581,7 @@ void Immediate3D::generate_solid_sphere(const Math::Vec2f& _slices_and_stacks,
   }
 
   add_batch(element_offset, instance_offset, Queue::Command::Type::SOLID_SPHERE,
-    _flags, _color);
+    _flags, _color.a < 1.0f);
 }
 
 void Immediate3D::generate_solid_box(const Math::Mat4x4f& _transform,
@@ -606,7 +643,27 @@ void Immediate3D::generate_solid_box(const Math::Mat4x4f& _transform,
   face(5, 4, 0, 1); // -x
 
   add_batch(element_offset, instance_offset, Queue::Command::Type::SOLID_BOX,
-    _flags, _color);
+    _flags, _color.a < 1.0f);
+}
+
+void Immediate3D::generate_wire_triangle(const Math::Vec3f& _point_a,
+  const Math::Vec3f& _point_b, const Math::Vec3f& _point_c,
+  const Math::Vec4f& _color_a, const Math::Vec4f& _color_b,
+  const Math::Vec4f& _color_c, Uint32 _flags)
+{
+  const auto offset = m_element_index;
+  const auto element = static_cast<Uint32>(m_vertex_index);
+
+  add_element(element + 0); add_element(element + 1); // a -> b
+  add_element(element + 1); add_element(element + 2); // b -> c
+  add_element(element + 2); add_element(element + 0); // c -> a
+
+  add_vertex(_point_a, {}, _color_a);
+  add_vertex(_point_b, {}, _color_b);
+  add_vertex(_point_c, {}, _color_c);
+
+  add_batch(offset, m_instance_index, Queue::Command::Type::WIRE_TRIANGLE,
+    _flags, _color_a.a < 1.0f || _color_b.a < 1.0f || _color_c.a < 1.0f);
 }
 
 void Immediate3D::generate_wire_box(const Math::AABB& _aabb,
@@ -620,7 +677,6 @@ void Immediate3D::generate_wire_box(const Math::AABB& _aabb,
   transform.scale = _aabb.scale();
   transform.translate = _aabb.origin();
   add_instance(transform.as_mat4(), _color);
-
 
   // Check if the last batch was an instanced wire box.
   auto render_state = calculate_state(_flags, _color.a < 1.0f);
@@ -667,7 +723,7 @@ void Immediate3D::generate_wire_box(const Math::AABB& _aabb,
   add_element(element + 4 - 1); add_element(element + 1 - 1);
 
   add_batch(element_offset, instance_offset, Queue::Command::Type::WIRE_BOX,
-    _flags, _color);
+    _flags, _color.a < 1.0f);
 }
 
 Immediate3D::Storage Immediate3D::calculate_storage(const Queue::Command& _command) const {
@@ -680,6 +736,9 @@ Immediate3D::Storage Immediate3D::calculate_storage(const Queue::Command& _comma
     return {8, 24, 1};
   case Queue::Command::Type::SOLID_BOX:
     return {4*6, 6*6, 1};
+  case Queue::Command::Type::WIRE_TRIANGLE:
+    // Three LINE.
+    return {3, 2*3, 0};
   case Queue::Command::Type::WIRE_SPHERE:
     return {
       4 * Size(_command.as_wire_sphere.slices_and_stacks.area()),
@@ -725,7 +784,7 @@ Frontend::State Immediate3D::calculate_state(Uint32 _flags, bool _blend) const {
 
 bool Immediate3D::add_batch(Size _element_offset, Size _instance_offset,
                             Queue::Command::Type _type, Uint32 _flags,
-                            const Math::Vec4f& _color)
+                            bool _blend)
 {
   const Size element_count = m_element_index - _element_offset;
   const Size instance_count = m_instance_index - _instance_offset;
@@ -735,7 +794,7 @@ bool Immediate3D::add_batch(Size _element_offset, Size _instance_offset,
      return true;
   }
 
-  auto render_state = calculate_state(_flags, _color.a < 1.0f);
+  auto render_state = calculate_state(_flags, _blend);
 
   // Coalesce this batch if at all possible.
   if (!m_batches.is_empty() && instance_count == 0) {
