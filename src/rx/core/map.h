@@ -51,6 +51,7 @@ struct Map {
   bool is_empty() const;
 
   void clear();
+  void reset();
 
   template<typename F>
   bool each_key(F&& _function);
@@ -149,7 +150,7 @@ Map<K, V>::~Map() {
 
 template<typename K, typename V>
 Optional<Map<K, V>> Map<K, V>::copy(const Map& _map) {
-  Map<K, V> result;
+  Map<K, V> result{_map.allocator()};
 
   auto insert = [&result](const K& _key, const V& _value) {
     return result.insert(_key, _value) != nullptr;
@@ -186,6 +187,18 @@ void Map<K, V>::clear() {
   }
 
   m_size = 0;
+}
+
+template<typename K, typename V>
+void Map<K, V>::reset() {
+  clear_and_deallocate();
+  m_keys = nullptr;
+  m_values = nullptr;
+  m_hashes = nullptr;
+  m_size = 0;
+  m_capacity = 0;
+  m_resize_threshold = 0;
+  m_mask = 0;
 }
 
 template<typename K, typename V>
@@ -261,8 +274,10 @@ bool Map<K, V>::erase(const K& _key) {
     }
 
     m_size--;
+
     return true;
   }
+
   return false;
 }
 

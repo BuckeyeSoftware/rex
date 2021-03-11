@@ -50,6 +50,7 @@ struct Set {
   bool is_empty() const;
 
   void clear();
+  void reset();
 
   template<typename F>
   bool each(F&& _function);
@@ -168,6 +169,17 @@ void Set<K>::clear() {
   }
 
   m_size = 0;
+}
+
+template<typename K>
+void Set<K>::reset() {
+  clear_and_deallocate();
+  m_keys = nullptr;
+  m_hashes = nullptr;
+  m_size = 0;
+  m_capacity = 0;
+  m_resize_threshold = 0;
+  m_mask = 0;
 }
 
 template<typename K>

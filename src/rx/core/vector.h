@@ -51,6 +51,7 @@ struct Vector {
   [[nodiscard]] bool append(const Vector& _other);
 
   void clear();
+  void reset();
 
   Optional<Size> find(const T& _value) const;
 
@@ -338,6 +339,14 @@ void Vector<T>::clear() {
     }
   }
   m_size = 0;
+}
+
+template<typename T>
+void Vector<T>::reset() {
+  clear(); // sets m_size to 0
+  m_capacity = 0;
+  m_allocator->deallocate(m_data);
+  m_data = nullptr;
 }
 
 template<typename T>
