@@ -2,6 +2,9 @@
 #define RX_CORE_UTILITY_PAIR_H
 #include "rx/core/utility/forward.h"
 
+#include "rx/core/hash/hasher.h"
+#include "rx/core/hash/combine.h"
+
 namespace Rx {
 
 template<typename T1, typename T2>
@@ -17,6 +20,11 @@ struct Pair {
 
   template<typename U1, typename U2>
   constexpr Pair(Pair<U1, U2>&& pair_);
+
+  Size hash() const;
+
+  constexpr bool operator==(const Pair<T1, T2>& _other) const;
+  constexpr bool operator!=(const Pair<T1, T2>& _other) const;
 
   T1 first;
   T2 second;
@@ -58,6 +66,23 @@ constexpr Pair<T1, T2>::Pair(Pair<U1, U2>&& pair_)
   : first{Utility::forward<U1>(pair_.first)}
   , second{Utility::forward<U2>(pair_.second)}
 {
+}
+
+template<typename T1, typename T2>
+Size Pair<T1, T2>::hash() const {
+  const auto h1 = Hash::Hasher<T1>{}(first);
+  const auto h2 = Hash::Hasher<T2>{}(second);
+  return Hash::combine(h1, h2);
+}
+
+template<typename T1, typename T2>
+constexpr bool Pair<T1, T2>::operator==(const Pair<T1, T2>& _other) const {
+  return first == _other.first && second == _other.second;
+}
+
+template<typename T1, typename T2>
+constexpr bool Pair<T1, T2>::operator!=(const Pair<T1, T2>& _other) const {
+  return first != _other.first || second != _other.second;
 }
 
 template<typename T1, typename T2>
