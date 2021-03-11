@@ -418,6 +418,7 @@ void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _im
               Math::transform_point(point_a, mat * _world),
               Math::transform_point(point_b, mat * _world),
               {color.r, color.g, color.b, 1.0f},
+              {color.r, color.g, color.b, 1.0f},
               Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
     };
   } else {
@@ -435,6 +436,7 @@ void Model::render_normals(const Math::Mat4x4f& _world, Render::Immediate3D* _im
       _immediate->frame_queue().record_line(
               Math::transform_point(point_a, _world),
               Math::transform_point(point_b, _world),
+              {color.r, color.g, color.b, 1.0f},
               {color.r, color.g, color.b, 1.0f},
               Immediate3D::DEPTH_TEST | Immediate3D::DEPTH_WRITE);
     };
@@ -499,6 +501,7 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
     _immediate->frame_queue().record_line(
       Math::transform_point(w, _world),
       Math::transform_point(parent_position, _world),
+      {0.5f, 0.5f, 1.0f, 1.0f},
       {0.5f, 0.5f, 1.0f, 1.0f},
       0);
   }
