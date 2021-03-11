@@ -17,7 +17,7 @@ template<typename T>
 inline constexpr const T PI_4 = T(0.78539816339744830961566084581987572104929234984378);
 
 template<typename T>
-inline constexpr const T EPSILON = T(1.19209290e-7F);
+inline constexpr const T EPSILON = T(1.19209290e-7f);
 
 } // namespace Rx::Math
 
