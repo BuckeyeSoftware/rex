@@ -35,16 +35,25 @@
       source: "
         void main() {
         #if defined(USE_INSTANCED)
-          f32x4 position = a_transform * f32x4(a_position, 1.0);
-          vs_color = srgb_to_linear(a_icolor);
+          f32x4x4 model = a_transform;
+          f32x4 color = srgb_to_linear(a_icolor);
         #else
-          f32x4 position = f32x4(a_position, 1.0);
-          vs_color = srgb_to_linear(a_vcolor);
+          f32x4x4 model = f32x4x4(1.0);
+          f32x4 color = srgb_to_linear(a_vcolor);
         #endif
 
-          f32x4 eye_position = u_view * position;
+          // Transform position into model space.
+          f32x4 model_position = model * f32x4(a_position, 1.0);
 
-          rx_position = u_projection * eye_position;
+          // Transform model position into eye space.
+          f32x4 eye_position = u_view * model_position;
+
+          // Transform eye position into clip space.
+          f32x4 clip_position = u_projection * eye_position;
+
+
+          rx_position = clip_position;
+          vs_color = color;
 
         #if defined(USE_POINTS)
           f32 distance = length(eye_position.xyz);
@@ -52,8 +61,10 @@
           // The immediate3D packs the point size in normal.x
           rx_point_size = a_normal.x * attenuation;
         #else
+          // Transform normal into model space.
+          vs_normal = (model * f32x4(a_normal, 0.0)).xyz;
+
           vs_view = (inverse(u_view) * eye_position).xyz;
-          vs_normal = a_normal;
         #endif
         }
       "
@@ -72,11 +83,11 @@
         #if defined(USE_POINTS)
           fs_color = vs_color;
         #else
-          f32x3 normal = vs_normal;
+          f32x3 normal = normalize(vs_normal);
 
-          const f32x3 La = f32x3(0.5);
+          const f32x3 La = f32x3(0.2);
           const f32x3 Ld = f32x3(0.5);
-          f32x3 L = normalize(f32x3(0.0, -1.0, 0.0));
+          f32x3 L = normalize(f32x3(0.0, 1.0, 0.0));
 
           f32x3 Ma = vs_color.xyz;
           f32x3 Md = vs_color.xyz;
