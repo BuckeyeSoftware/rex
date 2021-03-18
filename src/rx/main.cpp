@@ -22,6 +22,11 @@ int main([[maybe_unused]] int _argc, [[maybe_unused]] char** argv) {
   // Initialize logger as early as possible.
   Rx::Globals::find("system")->find("logger")->init();
 
+  Rx::Filesystem::File log{"log.log", "wb"};
+  if (!log || !Rx::Log::subscribe(&log)) {
+    return -1;
+  }
+
   // Emscripten does not allow us to block in main as that blocks the browser
   // and prevents worker threads from being posted. Instead let the browser
   // drive our main loop with RAF (Request Animation Frame).
@@ -93,11 +98,6 @@ int main([[maybe_unused]] int _argc, [[maybe_unused]] char** argv) {
   signal(SIGALRM, catch_signal);
   signal(SIGSTOP, catch_signal);
 #endif // !defined(RX_PLATFORM_WINDOWS)
-
-  Rx::Filesystem::File log{"log.log", "wb"};
-  if (!log || !Rx::Log::subscribe(&log)) {
-    return -1;
-  }
 
   for (;;) {
     Rx::Engine engine;
