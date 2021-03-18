@@ -293,6 +293,12 @@ bool Engine::init() {
   }
 
   if (is_gl || is_es) {
+#if defined(RX_PLATFORM_EMSCRIPTEN)
+    // When building for Emscripten assume ES 3.0 which is WebGL 3.0.
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#else
     if (is_gl) {
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
       if (driver_name == "gl4") {
@@ -309,6 +315,7 @@ bool Engine::init() {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
       }
     }
+#endif
 
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
