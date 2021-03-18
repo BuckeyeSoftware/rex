@@ -4,6 +4,8 @@
 #include "rx/core/concepts/integral.h"
 #include "rx/core/traits/is_same.h"
 
+#include "rx/core/hints/unreachable.h"
+
 namespace Rx::Hash {
 
 inline constexpr Size mix_bool(bool _value) {
@@ -90,6 +92,7 @@ inline constexpr Size mix_int(T _value) {
   } else if constexpr (Traits::IS_SAME<T, Sint64>) {
     return mix_sint64(static_cast<T>(_value));
   }
+  RX_HINT_UNREACHABLE();
 }
 
 } // namespace Rx::Hash
