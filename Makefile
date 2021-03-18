@@ -39,7 +39,7 @@ else
 	LD := $(CXX)
 endif
 
-# Determine build type
+# Determine build type.
 ifeq ($(DEBUG), 1)
 	TYPE := debug
 else ifeq ($(PROFILE),1)
@@ -48,7 +48,33 @@ else
 	TYPE := release
 endif
 
-# Build artifact directories
+# Determine if Emscripten is being used.
+ifneq (,$(findstring emcc,$(CC)))
+	EMSCRIPTEN := 1
+else
+	EMSCRIPTEN := 0
+endif
+
+# Determine the binary output file name.
+ifneq (,$(findstring mingw,$(CC)))
+	BIN := rex.exe
+else ifeq ($(EMSCRIPTEN), 1)
+	BIN := rex.html
+else
+	BIN := rex
+endif
+
+# Artifacts generated and what to remove on clean.
+ARTIFACTS := $(BIN)
+ifeq ($(EMSCRIPTEN), 1)
+	# Emscripten generates additional artifacts so list them here.
+	ARTIFACTS += rex.js
+	ARTIFACTS += rex.wasm
+	ARTIFACTS += rex.wasm.map
+	ARTIFACTS += rex.data
+endif
+
+# Build artifact directories.
 OBJDIR := .build/$(TYPE)/objs
 DEPDIR := .build/$(TYPE)/deps
 
@@ -101,11 +127,17 @@ ifeq ($(ESAN),1)
 endif
 
 ifeq ($(DEBUG),1)
-	CFLAGS += -g
+	# Generate source maps with Emscripten.
+	ifeq ($(EMSCRIPTEN),1)
+		CFLAGS += -g4
+	else
+		CFLAGS += -g
+	endif
+
 	CFLAGS += -DRX_DEBUG
 
-	# Disable all optimizations in debug builds.
-	CFLAGS += -O0
+	# Optimize for debugging.
+	CFLAGS += -O1
 
 	# Ensure there's a frame pointer in debug builds.
 	CFLAGS += -fno-omit-frame-pointer
@@ -183,6 +215,13 @@ DEPFLAGS := -MMD
 DEPFLAGS += -MP
 
 #
+# Output flags (the thing after -o bin)
+#
+ifeq ($(EMSCRIPTEN), 1)
+	OFLAGS := --preload-file ./base/
+endif
+
+#
 # Linker flags.
 #
 LDFLAGS := -lpthread
@@ -215,18 +254,63 @@ ifeq ($(UBSAN),1)
 	LDFLAGS += -fsanitize=undefined
 endif
 
+# Emscripten specific linker flags.
+ifeq ($(EMSCRIPTEN), 1)
+	# Emscripten ports.
+	LDFLAGS += -s USE_SDL=2
+
+	# Emulate full ES 3.0.
+	LDFLAGS += -s FULL_ES3=1
+
+	# Preinitialize a thread pool with four webworkers here to avoid blocking
+	# in main waiting for our builtin thread pool to initialize since we depend
+	# on synchronous thread construction of our thread pool.
+	LDFLAGS += -s PTHREAD_POOL_SIZE=4
+
+	# Allow the heap to grow when we run out of memory in the browser.
+	LDFLAGS += -s ALLOW_MEMORY_GROWTH=1
+
+	ifeq ($(DEBUG), 1)
+		# When building debug builds with Emscripten the -g flag must also be supplied
+		# to the linker. Similarly, a source map base must be given so that the
+		# browser can find it when debugging.
+		#
+		# Note that the port 6931 is the default port for emrun.
+		LDFLAGS += -g4 --source-map-base http://localhost:6931/
+
+		# Catch threading bugs.
+		LDFLAGS += -PTHREADS_DEBUG=1
+
+		# Catch heap corruption issues. These are typically caused by misalignments
+		# and pointer aliasing which tend to work on Desktop but won't on the Web.
+		LDFLAGS += -s SAFE_HEAP=1
+		LDFLAGS += -s SAFE_HEAP_LOG=1
+
+		# Additional assertions and loggging.
+		LDFLAGS += -s ASSERTIONS=2
+		LDFLAGS += -s RUNTIME_LOGGING=1
+
+		# OpenGL debug stuff.
+		#
+		# ES3 permits some things even FULL_ES3=1 does not support and we can catch
+		# these with some additional assertions and debugging flags here.
+		#
+		# Typical issues that come up include draw buffer misuse and feedback loops
+		# caused by render to texture.
+		LDFLAGS += -s GL_ASSERTIONS=1
+		LDFLAGS += -s GL_DEBUG=1
+	else
+		# Enable some potentially unsafe OpenGL optimizations for release builds.
+		LDFLAGS += -s GL_UNSAFE_OPTS=1
+		LDFLAGS += -s GL_TRACK_ERRORS=0
+	endif
+endif
+
 # Strip the binary when not a debug build.
 ifneq (,$(findstring RX_DEBUG,$(CFLAGS)))
 	STRIP := true
 else
 	STRIP := strip
-endif
-
-# Ensure we have the exe extension.
-ifneq (,$(findstring mingw,$(CC)))
-	BIN := rex.exe
-else
-	BIN := rex
 endif
 
 all: $(BIN)
@@ -251,11 +335,11 @@ $(OBJDIR)/%.o: %.S | $(OBJDIR)
 	@mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
 
 $(BIN): $(OBJS)
-	$(LD) $(OBJS) $(LDFLAGS) -o $@
+	$(LD) $(OBJS) $(LDFLAGS) -o $@ $(OFLAGS)
 	$(STRIP) $@
 
 clean:
-	rm -rf $(DEPDIR) $(OBJDIR) $(BIN)
+	rm -rf $(DEPDIR) $(OBJDIR) $(ARTIFACTS)
 
 .PHONY: clean $(DEPDIR) $(OBJDIR)
 
