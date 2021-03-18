@@ -50,16 +50,14 @@ One unfortunute consequence of C++'s hash containers: `std::unordered_{map,set}`
 Any container that manages a single, contiguous allocation can have it's memory stolen from it through a `disown` method, returning an untyped, owning view. The view contains a pointer to the allocator which owns the memory, a pointer to the memory, as well as the size of the allocation in bytes and the last owner's effective used capacity of that allocation in bytes. This view can be given to anything that can reasonably make sense of the contents. This allows copy-free transmuations like the following:
 
   * `String`       => `LinearBuffer`
-  * `String`       => `Vector<char>`
-  * `String`       => `Vector<Byte>`
+  * `String`       => `Vector<T>`
   * `Vector<T>`    => `LinearBuffer`
-  * `Vector<char>` => `String`
-  * `Vector<Byte>` => `String`
-  * `LinearBuffer` => `Vector<char>`
-  * `LinearBuffer` => `Vector<Byte>`
+  * `Vector<T>`    => `String`
+  * `LinearBuffer` => `Vector<T>`
   * `LinearBuffer` => `String`
+  * `RingBuffer`   => `Vector<T>`
 
-This is used extensively almost everywhere.
+Similarly, other types like `Map` and `Set` are implemented in terms of Robinhood hashing and maintain a single contiguous allocation for keys, values, and hash values. This means you can disown the keys of a `Set<T>` as an example into `Vector<T>`. There will be gaps of course since it is a hash set, but `Set<T>` and `Map<T>` have hash values that are zero in the same index for uninitialized slots.
 
 ### Small size optimization
 Most standard libraries implement this for `std::string` and `std::function`. We do this as well, virtually everywhere. The `LinearBuffer` type contains an adjustable in-situ buffer which is the basis of most systems, enabling small `String`, `Vector`, `Map`, `Set`, and `Function` optimizations.
