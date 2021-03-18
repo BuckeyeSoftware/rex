@@ -2,7 +2,7 @@
   name: "mrfixit",
   file: "base/models/mrfixit/mrfixit.iqm",
   transform: {
-    scale: [0.25, 0.25, 0.25],
+    scale: [0.50, 0.50, 0.50],
     rotate: [0, 90, 0],
     translate: [0, 0, 0]
   },
