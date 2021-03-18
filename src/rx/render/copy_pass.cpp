@@ -23,7 +23,7 @@ Optional<CopyPass> CopyPass::create(Frontend::Context* _frontend,
   }
 
   texture->record_type(Frontend::Texture::Type::ATTACHMENT);
-  texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
+  texture->record_format(Frontend::Texture::DataFormat::SRGB_U8);
   texture->record_filter({true, false, false});
   texture->record_levels(1);
   texture->record_dimensions(_dimensions);
