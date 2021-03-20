@@ -37,13 +37,10 @@ static void (GLAPIENTRYP pglVertexAttribDivisor)(GLuint, GLuint);
 // textures
 static void (GLAPIENTRYP pglGenTextures)(GLsizei, GLuint* );
 static void (GLAPIENTRYP pglDeleteTextures)(GLsizei, const GLuint*);
-static void (GLAPIENTRYP pglTexImage1D)(GLenum, GLint, GLint, GLsizei, GLint, GLenum, GLenum, const GLvoid*);
 static void (GLAPIENTRYP pglTexImage2D)(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid*);
 static void (GLAPIENTRYP pglTexImage3D)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid*);
-static void (GLAPIENTRYP pglTexSubImage1D)(GLenum, GLint, GLint, GLsizei, GLenum, GLenum, const GLvoid*);
 static void (GLAPIENTRYP pglTexSubImage2D)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const GLvoid*);
 static void (GLAPIENTRYP pglTexSubImage3D)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid*);
-static void (GLAPIENTRYP pglCompressedTexImage1D)(GLenum, GLint, GLenum, GLsizei, GLint, GLsizei, const GLvoid*);
 static void (GLAPIENTRYP pglCompressedTexImage2D)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid*);
 static void (GLAPIENTRYP pglCompressedTexImage3D)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, const GLvoid*);
 static void (GLAPIENTRYP pglTexParameteri)(GLenum, GLenum, GLint);
@@ -747,7 +744,7 @@ namespace detail_es3 {
 static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
   const Frontend::Shader& _shader)
 {
-  auto contents = generate_glsl(_uniforms, _shader, 310, true);
+  auto contents = generate_glsl(_uniforms, _shader, 300, true);
 
   auto data = static_cast<const GLchar*>(contents->data());
   auto size = static_cast<GLint>(contents->size());
@@ -837,13 +834,10 @@ bool ES3::init() {
   // textures
   fetch("glGenTextures", pglGenTextures);
   fetch("glDeleteTextures", pglDeleteTextures);
-  fetch("glTexImage1D", pglTexImage1D);
   fetch("glTexImage2D", pglTexImage2D);
   fetch("glTexImage3D", pglTexImage3D);
-  fetch("glTexSubImage1D", pglTexSubImage1D);
   fetch("glTexSubImage2D", pglTexSubImage2D);
   fetch("glTexSubImage3D", pglTexSubImage3D);
-  fetch("glCompressedTexImage1D", pglCompressedTexImage1D);
   fetch("glCompressedTexImage2D", pglCompressedTexImage2D);
   fetch("glCompressedTexImage3D", pglCompressedTexImage3D);
   fetch("glTexParameteri", pglTexParameteri);
@@ -1287,20 +1281,22 @@ void ES3::process(Byte* _command) {
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
             if (render_texture->is_compressed_format()) {
-              pglCompressedTexImage1D(
+              pglCompressedTexImage2D(
                 GL_TEXTURE_1D,
                 i,
                 convert_texture_data_format(format),
                 static_cast<GLsizei>(level_info.dimensions),
+                1,
                 0,
                 level_info.size,
                 data.is_empty() ? nullptr : data.data() + level_info.offset);
             } else {
-              pglTexImage1D(
+              pglTexImage2D(
                 GL_TEXTURE_1D,
                 i,
                 convert_texture_data_format(format),
                 static_cast<GLsizei>(level_info.dimensions),
+                1,
                 0,
                 convert_texture_format(format),
                 convert_texture_data_type(format),
