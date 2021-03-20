@@ -27,12 +27,6 @@ static inline constexpr const char *GLSL_PRELUDE = R"(
 #define lb_bones f32x3x4[RX_MAX_BONES]
 #define dq_bones f32x2x4[RX_MAX_BONES]
 
-// Sampler types.
-#define rx_sampler1D sampler1D
-#define rx_sampler2D sampler2D
-#define rx_sampler3D sampler3D
-#define rx_samplerCM samplerCube
-
 // Functions to sample textures.
 #define rx_texture1D texture
 #define rx_texture2D texture
@@ -75,8 +69,6 @@ f32x2 as_f32x2(u32x2 x) { return f32x2(f32(x.x), f32(x.y)); }
 f32x3 as_f32x3(u32x3 x) { return f32x3(f32(x.x), f32(x.y), f32(x.z)); }
 f32x4 as_f32x4(u32x4 x) { return f32x4(f32(x.x), f32(x.y), f32(x.z), f32(x.w)); }
 )";
-
-
 
 GLenum convert_blend_factor(Frontend::BlendState::FactorType _factor_type) {
   switch (_factor_type) {
@@ -416,15 +408,37 @@ Optional<String> generate_glsl(const Vector<Frontend::Uniform>& _uniforms,
 
   // When ES force highp.
   if (_es) {
+    // sampler1D is sampler2D in ES since ES does not support 1D samplers.
+    static constexpr const char* SAMPLER_TYPES =
+      "// Sampler types.\n"
+      "#define rx_sampler1D sampler2D\n"
+      "#define rx_sampler2D sampler2D\n"
+      "#define rx_sampler3D sampler3D\n"
+      "#define rx_samplerCM samplerCube\n";
+
     static constexpr const char* PRECISION_PRELUDE =
       "precision highp float;\n"
       "precision highp int;\n"
-      "precision highp sampler1D;\n"
       "precision highp sampler2D;\n"
       "precision highp sampler3D;\n"
       "precision highp samplerCube;\n";
 
+    if (!contents.append(SAMPLER_TYPES)) {
+      return nullopt;
+    }
+
     if (!contents.append(PRECISION_PRELUDE)) {
+      return nullopt;
+    }
+  } else {
+    static constexpr const char* SAMPLER_TYPES =
+      "// Sampler types.\n"
+      "#define rx_sampler1D sampler1D\n"
+      "#define rx_sampler2D sampler2D\n"
+      "#define rx_sampler3D sampler3D\n"
+      "#define rx_samplerCM samplerCube\n";
+
+    if (!contents.append(SAMPLER_TYPES)) {
       return nullopt;
     }
   }
@@ -471,6 +485,7 @@ Optional<String> generate_glsl(const Vector<Frontend::Uniform>& _uniforms,
     if (_uniform.is_padding()) {
       return true;
     }
+
     return contents.append(String::format("uniform %s %s;\n",
       uniform_to_string(_uniform.type()), _uniform.name()));
   };
