@@ -91,6 +91,19 @@ inline constexpr Size mix_int(T _value) {
     return mix_uint64(static_cast<T>(_value));
   } else if constexpr (Traits::IS_SAME<T, Sint64>) {
     return mix_sint64(static_cast<T>(_value));
+  } else if constexpr (Traits::IS_SAME<T, Size>) {
+    // Size may not have the same type as any of the previously listed
+    // sized integer types.
+    //
+    // Emscripten for instance will have:
+    //   Uint32 = unsigned int
+    //   Uint64 = unsigned long long
+    //   Size   = unsigned long
+    if constexpr (sizeof(Size) == 4) {
+      return mix_uint32(static_cast<Uint32>(_value));
+    } else {
+      return mix_uint64(static_cast<Uint64>(_value));
+    }
   }
   RX_HINT_UNREACHABLE();
 }
