@@ -13,6 +13,10 @@
 #include "rx/engine.h"
 #include "rx/display.h"
 
+#if defined(RX_PLATFORM_EMSCRIPTEN)
+#include <emscripten.h>
+#endif
+
 extern Rx::Ptr<Rx::Application> create(Rx::Engine* _engine);
 
 namespace Rx {
@@ -59,11 +63,19 @@ RX_CONSOLE_IVAR(
   1,
   -1);
 
+#if defined(RX_PLATFORM_EMSCRIPTEN)
+RX_CONSOLE_SVAR(
+  render_driver,
+  "render.driver",
+  "which driver to use for renderer (es3, null)",
+  "es3");
+#else
 RX_CONSOLE_SVAR(
   render_driver,
   "render.driver",
   "which driver to use for renderer (gl3, gl4, es3, null)",
   "gl4");
+#endif
 
 RX_CONSOLE_BVAR(
   profile_cpu,
@@ -161,7 +173,16 @@ bool Engine::init() {
   }
 
   const Size static_pool_size = *thread_pool_static_pool_size;
+
+  // Determine how many threads the Emscripten pool was preallocated with.
+
+#if defined(RX_PLATFORM_EMSCRIPTEN)
+  // We subtract 1 from PTHREAD_POOL_SIZE since the logger needs a thread.
+  const Size threads = emscripten_get_compiler_setting("PTHREAD_POOL_SIZE") - 1;
+#else
   const Size threads = *thread_pool_threads ? *thread_pool_threads : SDL_GetCPUCount();
+#endif
+
   Globals::find("system")->find("thread_pool")->init(threads, static_pool_size);
 
   // Setup all the loggers to emit to our console.
@@ -369,6 +390,10 @@ bool Engine::init() {
     }
   }
 
+  if (!window) {
+    return false;
+  }
+
   // Get the actual created window dimensions and update the display resolution.
   Math::Vec2i size;
   SDL_GetWindowSize(window, &size.w, &size.h);
@@ -376,11 +401,6 @@ bool Engine::init() {
 
   // Notify the input system of the possible resize.
   m_input.on_resize(size.cast<Size>());
-
-  if (!window) {
-    return false;
-    // abort("failed to create window");
-  }
 
   SDL_RaiseWindow(window);
   SDL_StartTextInput();
@@ -402,7 +422,6 @@ bool Engine::init() {
     m_render_backend = allocator.create<Render::Backend::Null>(allocator, reinterpret_cast<void*>(window));
   } else {
     return false;
-    // abort("invalid driver");
   }
 
   if (!m_render_backend || !m_render_backend->init()) {
