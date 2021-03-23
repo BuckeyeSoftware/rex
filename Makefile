@@ -72,6 +72,7 @@ ifeq ($(EMSCRIPTEN), 1)
 	ARTIFACTS += rex.wasm
 	ARTIFACTS += rex.wasm.map
 	ARTIFACTS += rex.data
+	ARTIFACTS += rex.worker.js
 endif
 
 # Build artifact directories.
@@ -97,9 +98,14 @@ CFLAGS := -Isrc
 CFLAGS += -Wall
 CFLAGS += -Wextra
 
-# When building with mingw ensure we use a platform toolset that requires
-# Windows Vista as a minimum target.
-ifneq (,$(findstring mingw,$(CC)))
+ifeq ($(EMSCRIPTEN), 1)
+	# When building with Emscripten ensure we are generating code that is compiled
+	# with support for atomics and bulk-memory features for threading support.
+	CFLAGS += -s USE_PTHREADS=1
+	CFLAGS += -s USE_SDL=2
+else ifneq (,$(findstring mingw,$(CC)))
+	# When building with mingw ensure we use a platform toolset that requires
+	# Windows Vista as a minimum target.
 	CFLAGS += -D_WIN32_WINNT=0x0600
 	CFLAGS += -I/usr/x86_64-w64-mingw32/include/SDL2
 else
@@ -114,6 +120,7 @@ ifeq ($(UNUSED), 1)
 endif
 
 # Disable some unneeded features.
+CFLAGS += -fno-unwind-tables
 CFLAGS += -fno-asynchronous-unwind-tables
 
 # Enable link-time optimizations if requested.
@@ -224,39 +231,13 @@ endif
 #
 # Linker flags.
 #
-LDFLAGS := -lpthread
-LDFLAGS += -ldl
-LDFLAGS += -lSDL2
-
-ifeq ($(UNUSED), 1)
-	LDFLAGS += -Wl,--gc-sections
-endif
-
-# Enable profiling if requested.
-ifeq ($(PROFILE),1)
-	LDFLAGS += -pg
-	LDFLAGS += -no-pie
-endif
-
-# Enable link-time optimizations if requested.
-ifeq ($(LTO),1)
-	LDFLAGS += -flto
-endif
-
-# Sanitizer selection.
-ifeq ($(ASAN),1)
-	LDFLAGS += -fsanitize=address
-endif
-ifeq ($(TSAN),1)
-	LDFLAGS += -fsanitize=thread
-endif
-ifeq ($(UBSAN),1)
-	LDFLAGS += -fsanitize=undefined
-endif
+LDFLAGS := -ldl
+LDFLAGS += -lm
 
 # Emscripten specific linker flags.
 ifeq ($(EMSCRIPTEN), 1)
 	# Emscripten ports.
+	LDFLAGS += -s USE_PTHREADS=1
 	LDFLAGS += -s USE_SDL=2
 
 	# Emulate full ES 3.0.
@@ -270,13 +251,19 @@ ifeq ($(EMSCRIPTEN), 1)
 	# Allow the heap to grow when we run out of memory in the browser.
 	LDFLAGS += -s ALLOW_MEMORY_GROWTH=1
 
+	# Record all the Emscripten flags in the build.
+	LDFLAGS += -s RETAIN_COMPILER_SETTINGS=1
+
+	# Allocate 1 GiB for Rex.
+	LDFLAGS += -s INITIAL_MEMORY=1073742000
+
 	ifeq ($(DEBUG), 1)
-		# When building debug builds with Emscripten the -g flag must also be supplied
+		# When building debug builds with Emscripten the -g flag must also be given
 		# to the linker. Similarly, a source map base must be given so that the
 		# browser can find it when debugging.
 		#
 		# Note that the port 6931 is the default port for emrun.
-		LDFLAGS += -g4 --source-map-base http://localhost:6931/
+		LDFLAGS += -g4 --source-map-base http://0.0.0.0:6931/
 
 		# Catch threading bugs.
 		LDFLAGS += -PTHREADS_DEBUG=1
@@ -304,6 +291,36 @@ ifeq ($(EMSCRIPTEN), 1)
 		LDFLAGS += -s GL_UNSAFE_OPTS=1
 		LDFLAGS += -s GL_TRACK_ERRORS=0
 	endif
+else
+	LDFLAGS += -lpthread
+	LDFLAGS += -lSDL2
+endif
+
+# Strip unused symbols if requested.
+ifeq ($(UNUSED), 1)
+	LDFLAGS += -Wl,--gc-sections
+endif
+
+# Enable profiling if requested.
+ifeq ($(PROFILE),1)
+	LDFLAGS += -pg
+	LDFLAGS += -no-pie
+endif
+
+# Enable link-time optimizations if requested.
+ifeq ($(LTO),1)
+	LDFLAGS += -flto
+endif
+
+# Sanitizer selection.
+ifeq ($(ASAN),1)
+	LDFLAGS += -fsanitize=address
+endif
+ifeq ($(TSAN),1)
+	LDFLAGS += -fsanitize=thread
+endif
+ifeq ($(UBSAN),1)
+	LDFLAGS += -fsanitize=undefined
 endif
 
 # Strip the binary when not a debug build.
