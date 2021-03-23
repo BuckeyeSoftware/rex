@@ -154,26 +154,26 @@ Optional<Stream::Stat> Stream::stat() const {
   return nullopt;
 }
 
-Optional<LinearBuffer> read_binary_stream(Memory::Allocator& _allocator, Stream* _stream) {
-  const auto size = _stream->size();
-  if (!size) {
+Optional<LinearBuffer> Stream::read_binary(Memory::Allocator& _allocator) {
+  auto n_bytes = size();
+  if (!n_bytes) {
     return nullopt;
   }
 
   LinearBuffer result{_allocator};
-  if (!result.resize(*size)) {
+  if (!result.resize(*n_bytes)) {
     return nullopt;
   }
 
-  if (_stream->read(result.data(), *size) == *size) {
+  if (read(result.data(), *n_bytes) == *n_bytes) {
     return result;
   }
 
   return nullopt;
 }
 
-Optional<LinearBuffer> read_text_stream(Memory::Allocator& _allocator, Stream* _stream) {
-  if (auto result = read_binary_stream(_allocator, _stream)) {
+Optional<LinearBuffer> Stream::read_text(Memory::Allocator& _allocator) {
+  if (auto result = read_binary(_allocator)) {
     // Convert the given byte stream into a compatible UTF-8 encoding. This will
     // introduce a null-terminator, strip Unicode BOMs and convert UTF-16
     // encodings to UTF-8.

@@ -32,8 +32,8 @@ Module& Module::operator=(Module&& module_) {
   return *this;
 }
 
-bool Module::load(Stream* _stream) {
-  if (auto data = read_text_stream(allocator(), _stream)) {
+bool Module::load(Stream& _stream) {
+  if (auto data = _stream.read_text(allocator())) {
     if (auto disown = data->disown()) {
       if (auto json = JSON::parse(allocator(), *disown)) {
         return parse(*json);
@@ -44,8 +44,8 @@ bool Module::load(Stream* _stream) {
 }
 
 bool Module::load(const String& _file_name) {
-  if (Filesystem::File file{_file_name, "rb"}) {
-    return load(&file);
+  if (auto file = Filesystem::File::open(_file_name, "r")) {
+    return load(*file);
   }
   return false;
 }

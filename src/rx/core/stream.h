@@ -9,7 +9,6 @@ struct String;
 
 struct RX_API Stream {
   RX_MARK_NO_COPY(Stream);
-  RX_MARK_NO_MOVE_ASSIGN(Stream);
 
   struct Stat {
     Uint64 size;
@@ -25,8 +24,8 @@ struct RX_API Stream {
 
   constexpr Stream(Uint32 _flags);
   Stream(Stream&& stream_);
-
   virtual ~Stream();
+  Stream& operator=(Stream&& stream_);
 
   enum class Whence : Uint8 {
     SET,     // Beginning of stream.
@@ -66,6 +65,9 @@ struct RX_API Stream {
   // The name of the stream. This must always be implemented.
   virtual const String& name() const & = 0;
 
+  Optional<LinearBuffer> read_binary(Memory::Allocator& _allocator);
+  Optional<LinearBuffer> read_text(Memory::Allocator& _allocator);
+
 protected:
   // Read |_size| bytes from stream at |_offset| into |_data|.
   virtual Uint64 on_read(Byte* _data, Uint64 _size, Uint64 _offset);
@@ -97,6 +99,14 @@ inline Stream::Stream(Stream&& stream_)
 
 inline Stream::~Stream() = default;
 
+inline Stream& Stream::operator=(Stream&& stream_) {
+  if (this != &stream_) {
+    m_flags = Utility::exchange(stream_.m_flags, 0);
+    m_offset = Utility::exchange(stream_.m_offset, 0);
+  }
+  return *this;
+}
+
 inline Uint64 Stream::tell() const {
   return m_offset;
 }
@@ -123,9 +133,6 @@ inline constexpr bool Stream::can_stat() const {
 inline constexpr bool Stream::is_eos() const {
   return m_flags & EOS;
 }
-
-RX_API Optional<LinearBuffer> read_binary_stream(Memory::Allocator& _allocator, Stream* _stream);
-RX_API Optional<LinearBuffer> read_text_stream(Memory::Allocator& _allocator, Stream* _stream);
 
 } // namespace Rx
 

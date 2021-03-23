@@ -113,8 +113,8 @@ struct IQM::Header {
   Uint32 extensions_offset;
 };
 
-bool IQM::read(Stream* _stream) {
-  const auto size = _stream->size();
+bool IQM::read(Stream& _stream) {
+  const auto size = _stream.size();
   if (!size) {
     return false;
   }
@@ -122,7 +122,7 @@ bool IQM::read(Stream* _stream) {
   // Don't read the contents entierly into memory until we know it looks like a
   // valid IQM.
   Header read_header;
-  if (_stream->read(reinterpret_cast<Byte*>(&read_header), sizeof read_header) != sizeof read_header) {
+  if (_stream.read(reinterpret_cast<Byte*>(&read_header), sizeof read_header) != sizeof read_header) {
     return error("could not read header");
   }
 
@@ -147,7 +147,7 @@ bool IQM::read(Stream* _stream) {
   }
 
   const auto size_no_header = data.size() - sizeof read_header;
-  if (_stream->read(data.data() + sizeof read_header, size_no_header) != size_no_header) {
+  if (_stream.read(data.data() + sizeof read_header, size_no_header) != size_no_header) {
     return error("unexpected end of file");
   }
 

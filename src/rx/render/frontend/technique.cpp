@@ -480,10 +480,10 @@ Program* Technique::Configuration::variant(Size _index) const {
   return m_programs[_index];
 }
 
-bool Technique::load(Stream* _stream) {
-  m_name = _stream->name();
+bool Technique::load(Stream& _stream) {
+  m_name = _stream.name();
   auto& allocator = m_frontend->allocator();
-  if (auto data = read_text_stream(allocator, _stream)) {
+  if (auto data = _stream.read_text(allocator)) {
     if (auto disown = data->disown()) {
       if (auto json = JSON::parse(allocator, *disown)) {
         return parse(*json);
@@ -796,8 +796,8 @@ bool Technique::Configuration::parse_specialization(
 }
 
 bool Technique::load(const String& _file_name) {
-  if (Filesystem::File file{_file_name, "rb"}) {
-    return load(&file);
+  if (auto file = Filesystem::File::open(_file_name, "r")) {
+    return load(*file);
   }
   return false;
 }

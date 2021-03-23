@@ -22,8 +22,8 @@ int main([[maybe_unused]] int _argc, [[maybe_unused]] char** argv) {
   // Initialize logger as early as possible.
   Rx::Globals::find("system")->find("logger")->init();
 
-  Rx::Filesystem::File log{"log.log", "wb"};
-  if (!log || !Rx::Log::subscribe(&log)) {
+  auto log = Rx::Filesystem::File::open("log.log", "w");
+  if (!log || !Rx::Log::subscribe(*log)) {
     return -1;
   }
 
@@ -119,7 +119,7 @@ int main([[maybe_unused]] int _argc, [[maybe_unused]] char** argv) {
   }
 #endif
 
-  if (!Rx::Log::unsubscribe(&log)) {
+  if (!Rx::Log::unsubscribe(*log)) {
     // Shouldn't fail but if it does, flush the logger.
     Rx::Log::flush();
   }

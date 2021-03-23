@@ -219,13 +219,11 @@ static bool stat_file(void* _impl, File::Stat& stat_) {
 }
 #endif
 
-File::File(Memory::Allocator& _allocator, const char* _file_name, const char* _mode)
-  : Stream{flags_from_mode(_mode)}
-  , m_allocator{_allocator}
-  , m_impl{open_file(m_allocator, _file_name, _mode)}
-  , m_name{allocator(), _file_name}
-  , m_mode{_mode}
-{
+Optional<File> File::open(Memory::Allocator& _allocator, const char* _file_name, const char* _mode) {
+  if (auto file = open_file(_allocator, _file_name, _mode)) {
+    return File{flags_from_mode(_mode), file, _mode};
+  }
+  return nullopt;
 }
 
 Uint64 File::on_read(Byte* _data, Uint64 _size, Uint64 _offset) {
@@ -273,9 +271,12 @@ bool File::close() {
 }
 
 File& File::operator=(File&& file_) {
-  if (&file_ != this) {
-    close();
+  if (this != &file_) {
+    (void)close();
+    Stream::operator=(Utility::move(file_));
     m_impl = Utility::exchange(file_.m_impl, nullptr);
+    m_name = Utility::move(file_.m_name);
+    m_mode = Utility::exchange(file_.m_mode, nullptr);
   }
   return *this;
 }
@@ -286,20 +287,22 @@ bool File::print(String&& contents_) {
 }
 
 Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator, const char* _file_name) {
-  if (File open_file{_file_name, "rb"}) {
-    return read_binary_stream(_allocator, &open_file);
+  if (auto file = File::open(_allocator, _file_name, "r")) {
+    return file->read_binary(_allocator);
   }
 
   logger->error("failed to open file '%s' [%s]", _file_name);
+
   return nullopt;
 }
 
 Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator, const char* _file_name) {
-  if (File open_file{_file_name, "rb"}) {
-    return read_text_stream(_allocator, &open_file);
+  if (auto file = File::open(_allocator, _file_name, "r")) {
+    return file->read_text(_allocator);
   }
 
   logger->error("failed to open file '%s'", _file_name);
+
   return nullopt;
 }
 

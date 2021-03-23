@@ -6,17 +6,17 @@
 
 namespace Rx::serialize {
 
-Buffer::Buffer(Stream* _stream, Mode _mode)
-  : m_stream{_stream}
+Buffer::Buffer(Stream& _stream, Mode _mode)
+  : m_stream{&_stream}
   , m_mode{_mode}
   , m_cursor{0}
 {
   switch (_mode) {
   case Mode::READ:
-    RX_ASSERT(_stream->can_read(), "buffer requires readable stream");
+    RX_ASSERT(_stream.can_read(), "buffer requires readable stream");
     break;
   case Mode::WRITE:
-    RX_ASSERT(_stream->can_write(), "buffer requires writable stream");
+    RX_ASSERT(_stream.can_write(), "buffer requires writable stream");
     break;
   }
 }

@@ -16,7 +16,7 @@ struct RX_API Buffer {
     WRITE
   };
 
-  Buffer(Stream* _stream, Mode _mode);
+  Buffer(Stream& _stream, Mode _mode);
   ~Buffer();
 
   [[nodiscard]] bool write_byte(Byte _byte);

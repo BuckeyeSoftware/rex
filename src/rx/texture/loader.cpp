@@ -20,10 +20,10 @@ RX_LOG("texture/loader", logger);
 
 namespace Rx::Texture {
 
-bool Loader::load(Stream* _stream, PixelFormat _want_format,
+bool Loader::load(Stream& _stream, PixelFormat _want_format,
   const Math::Vec2z& _max_dimensions)
 {
-  auto data = read_binary_stream(allocator(), _stream);
+  auto data = _stream.read_binary(allocator());
   if (!data) {
     return false;
   }
@@ -76,7 +76,7 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
   }
 
   if (!decoded_image) {
-    logger->error("%s failed %s", _stream->name(), stbi_failure_reason());
+    logger->error("%s failed %s", _stream.name(), stbi_failure_reason());
     stbi_image_free(decoded_image);
     return false;
   }
@@ -125,7 +125,7 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
     }
   }
 
-  logger->verbose("%s loaded %zux%zu @ %zu bpp", _stream->name(),
+  logger->verbose("%s loaded %zux%zu @ %zu bpp", _stream.name(),
     m_dimensions.w, m_dimensions.h, bits_per_pixel());
 
   return true;
@@ -134,8 +134,8 @@ bool Loader::load(Stream* _stream, PixelFormat _want_format,
 bool Loader::load(const String& _file_name, PixelFormat _want_format,
   const Math::Vec2z& _max_dimensions)
 {
-  if (Filesystem::File file{_file_name, "rb"}) {
-    return load(&file, _want_format, _max_dimensions);
+  if (auto file = Filesystem::File::open(_file_name, "r")) {
+    return load(*file, _want_format, _max_dimensions);
   }
   return false;
 }

@@ -17,8 +17,8 @@ struct Stream;
 namespace Rx::serialize {
 
 struct RX_API Encoder {
-  Encoder(Stream* _stream);
-  Encoder(Memory::Allocator& _allocator, Stream* _stream);
+  Encoder(Stream& _stream);
+  Encoder(Memory::Allocator& _allocator, Stream& _stream);
   ~Encoder();
 
   [[nodiscard]] bool write_uint(Uint64 _value);
@@ -58,7 +58,7 @@ private:
   StringTable m_strings;
 };
 
-inline Encoder::Encoder(Stream* _stream)
+inline Encoder::Encoder(Stream& _stream)
   : Encoder{Memory::SystemAllocator::instance(), _stream}
 {
 }

@@ -31,8 +31,8 @@ Importer::Importer(Memory::Allocator& _allocator)
 {
 }
 
-bool Importer::load(Stream* _stream) {
-  m_name = _stream->name();
+bool Importer::load(Stream& _stream) {
+  m_name = _stream.name();
 
   if (!read(_stream)) {
     return false;
@@ -232,8 +232,8 @@ bool Importer::load(Stream* _stream) {
 }
 
 bool Importer::load(const String& _file_name) {
-  if (Filesystem::File file{_file_name, "rb"}) {
-    return load(&file);
+  if (auto file = Filesystem::File::open(_file_name, "r")) {
+    return load(*file);
   }
   return false;
 }

@@ -17,8 +17,8 @@ struct Stream;
 namespace Rx::serialize {
 
 struct RX_API Decoder {
-  Decoder(Stream* _stream);
-  Decoder(Memory::Allocator& _allocator, Stream* _stream);
+  Decoder(Stream& _stream);
+  Decoder(Memory::Allocator& _allocator, Stream& _stream);
   ~Decoder();
 
   [[nodiscard]] bool read_uint(Uint64& result_);
@@ -58,7 +58,7 @@ private:
   StringTable m_strings;
 };
 
-inline Decoder::Decoder(Stream* _stream)
+inline Decoder::Decoder(Stream& _stream)
   : Decoder{Memory::SystemAllocator::instance(), _stream}
 {
 }

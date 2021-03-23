@@ -5,10 +5,10 @@
 
 namespace Rx::serialize {
 
-Encoder::Encoder(Memory::Allocator& _allocator, Stream* _stream)
+Encoder::Encoder(Memory::Allocator& _allocator, Stream& _stream)
   : m_allocator{_allocator}
-  , m_stream{_stream}
-  , m_buffer{m_stream, Buffer::Mode::WRITE}
+  , m_stream{&_stream}
+  , m_buffer{_stream, Buffer::Mode::WRITE}
   , m_message{allocator()}
   , m_strings{allocator()}
 {

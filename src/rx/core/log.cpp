@@ -22,8 +22,8 @@ struct Logger {
 
   static constexpr Logger& instance();
 
-  bool subscribe(Stream* _stream);
-  bool unsubscribe(Stream* _stream);
+  bool subscribe(Stream& _stream);
+  bool unsubscribe(Stream& _stream);
   bool enqueue(Log* _log, Log::Level _level, String&& _message);
   void flush();
 
@@ -154,24 +154,24 @@ inline constexpr Logger& Logger::instance() {
   return *s_instance;
 }
 
-bool Logger::subscribe(Stream* _stream) {
+bool Logger::subscribe(Stream& _stream) {
   // The stream needs to be writable.
-  if (!_stream->can_write()) {
+  if (!_stream.can_write()) {
     return false;
   }
 
   Concurrency::ScopeLock lock{m_mutex};
   // Don't allow subscribing the same stream more than once.
-  if (const auto find = m_streams.find(_stream)) {
+  if (const auto find = m_streams.find(&_stream)) {
     return false;
   }
 
-  return m_streams.push_back(_stream);
+  return m_streams.push_back(&_stream);
 }
 
-bool Logger::unsubscribe(Stream* _stream) {
+bool Logger::unsubscribe(Stream& _stream) {
   Concurrency::ScopeLock lock{m_mutex};
-  if (const auto find = m_streams.find(_stream)) {
+  if (const auto find = m_streams.find(&_stream)) {
     // Flush any contents when removing a stream from the logger.
     flush_unlocked();
     m_streams.erase(*find, *find + 1);
@@ -313,11 +313,11 @@ void Log::flush() {
   Logger::instance().flush();
 }
 
-bool Log::subscribe(Stream* _stream) {
+bool Log::subscribe(Stream& _stream) {
   return Logger::instance().subscribe(_stream);
 }
 
-bool Log::unsubscribe(Stream* _stream) {
+bool Log::unsubscribe(Stream& _stream) {
   return Logger::instance().unsubscribe(_stream);
 }
 

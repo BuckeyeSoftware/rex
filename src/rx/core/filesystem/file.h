@@ -10,45 +10,42 @@ namespace Rx::Filesystem {
 struct RX_API File
   final : Stream
 {
+  RX_MARK_NO_COPY(File);
+
   constexpr File();
-  constexpr File(Memory::Allocator& _allocator);
-  File(Memory::Allocator& _allocator, const char* _file_name, const char* _mode);
-  File(Memory::Allocator& _allocator, const String& _file_name, const char* _mode);
-  File(const char* _file_name, const char* _mode);
-  File(const String& _file_name, const char* _mode);
   File(File&& other_);
   ~File();
-
   File& operator=(File&& file_);
 
+  // Open a file with name |_file_name| in mode |_mode|.
+  //
+  // The valid modes for opening a file are "r", "w", "rw" and "a".
+  //
+  // This function returns nullopt if the file could not be opened.
+  static Optional<File> open(const char* _file_name, const char* _mode);
+  static Optional<File> open(const String& _file_name, const char* _mode);
+  static Optional<File> open(Memory::Allocator& _allocator, const char* _file_name, const char* _mode);
+  static Optional<File> open(Memory::Allocator& _allocator, const String& _file_name, const char* _mode);
+
+  // Close the file.
+  [[nodiscard]]
   bool close();
 
-  // Print |_fmt| with |_args| to file using |_allocator| for formatting.
-  // NOTE: asserts if the file isn't a text file.
+  // Print |_format| with |_args| to file using |_allocator| for formatting.
   template<typename... Ts>
   [[nodiscard]] RX_HINT_FORMAT(3, 0)
   bool print(Memory::Allocator& _allocator, const char* _format, Ts&&... _args);
 
-  // Print |_fmt| with |_args| to file using system allocator for formatting.
-  // NOTE: asserts if the file isn't a text file.
+  // Print |_format| with |_args| to file using system allocator for formatting.
   template<typename... Ts>
   [[nodiscard]] RX_HINT_FORMAT(2, 0)
   bool print(const char* _format, Ts&&... _args);
 
-  // Print a string into the file. This is only valid for text files.
-  // NOTE: asserts if the file isn't a text file.
+  // Print a string into the file.
   [[nodiscard]]
   bool print(String&& contents_);
 
-  // Query if the file handle is valid, will be false if the file has been
-  // closed with |close| or if the file failed to open.
-  bool is_valid() const;
-
-  operator bool() const;
-
   virtual const String& name() const &;
-
-  constexpr Memory::Allocator& allocator() const;
 
 protected:
   virtual Uint64 on_read(Byte* _data, Uint64 _size, Uint64 _offset);
@@ -56,46 +53,39 @@ protected:
   virtual bool on_stat(Stat& stat_) const;
 
 private:
-  File(void* _impl, const char* _file_name, const char* _mode);
+  constexpr File(Uint32 _flags, void* _impl, const char* _mode)
+    : Stream{_flags}
+    , m_impl{_impl}
+    , m_mode{_mode}
+  {
+  }
 
-  Memory::Allocator& m_allocator;
   void* m_impl;
   String m_name;
   const char* m_mode;
 };
 
 inline constexpr File::File()
-  : File{Memory::SystemAllocator::instance()}
-{
-}
-
-inline constexpr File::File(Memory::Allocator& _allocator)
   : Stream{0}
-  , m_allocator{_allocator}
   , m_impl{nullptr}
-  , m_name{allocator()}
   , m_mode{nullptr}
 {
 }
 
-inline File::File(Memory::Allocator& _allocator, const String& _file_name, const char* _mode)
-  : File{_allocator, _file_name.data(), _mode}
-{
+inline Optional<File> File::open(const char* _file_name, const char* _mode) {
+  return open(Memory::SystemAllocator::instance(), _file_name, _mode);
 }
 
-inline File::File(const char* _file_name, const char* _mode)
-  : File{Memory::SystemAllocator::instance(), _file_name, _mode}
-{
+inline Optional<File> File::open(const String& _file_name, const char* _mode) {
+  return open(Memory::SystemAllocator::instance(), _file_name.data(), _mode);
 }
 
-inline File::File(const String& _file_name, const char* _mode)
-  : File{Memory::SystemAllocator::instance(), _file_name, _mode}
-{
+inline Optional<File> File::open(Memory::Allocator& _allocator, const String& _file_name, const char* _mode) {
+  return open(_allocator, _file_name.data(), _mode);
 }
 
 inline File::File(File&& other_)
   : Stream{Utility::move(other_)}
-  , m_allocator{other_.m_allocator}
   , m_impl{Utility::exchange(other_.m_impl, nullptr)}
   , m_name{Utility::move(other_.m_name)}
   , m_mode{Utility::exchange(other_.m_mode, nullptr)}
@@ -103,23 +93,11 @@ inline File::File(File&& other_)
 }
 
 inline File::~File() {
-  close();
-}
-
-inline bool File::is_valid() const {
-  return m_impl != nullptr;
-}
-
-inline File::operator bool() const {
-  return is_valid();
+  (void)close();
 }
 
 inline const String& File::name() const & {
   return m_name;
-}
-
-RX_HINT_FORCE_INLINE constexpr Memory::Allocator& File::allocator() const {
-  return m_allocator;
 }
 
 template<typename... Ts>

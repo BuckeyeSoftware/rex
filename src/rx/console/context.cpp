@@ -231,8 +231,8 @@ bool Context::load(const char* _file_name) {
   return true;
 }
 
-bool Context::save(const char* file_name) {
-  Filesystem::File file{file_name, "w"};
+bool Context::save(const char* _file_name) {
+  auto file = Filesystem::File::open(_file_name, "w");
   if (!file) {
     return false;
   }
@@ -240,17 +240,17 @@ bool Context::save(const char* file_name) {
   #define attempt(_expr) \
     if (!(_expr)) return false
 
-  logger->info("saving '%s'", file_name);
+  logger->info("saving '%s'", _file_name);
   for (const VariableReference *head = g_head; head; head = head->m_next) {
     if (VariableType_is_ranged(head->type())) {
-      attempt(file.print("## %s (in range %s, defaults to %s)\n",
+      attempt(file->print("## %s (in range %s, defaults to %s)\n",
         head->description(), head->print_range(), head->print_initial()));
-      attempt(file.print(head->is_initial() ? ";%s %s\n" : "%s %s\n",
+      attempt(file->print(head->is_initial() ? ";%s %s\n" : "%s %s\n",
         head->name(), head->print_current()));
     } else {
-      attempt(file.print("## %s (defaults to %s)\n",
+      attempt(file->print("## %s (defaults to %s)\n",
         head->description(), head->print_initial()));
-      attempt(file.print(head->is_initial() ? ";%s %s\n" : "%s %s\n",
+      attempt(file->print(head->is_initial() ? ";%s %s\n" : "%s %s\n",
         head->name(), head->print_current()));
     }
   }

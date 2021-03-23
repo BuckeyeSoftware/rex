@@ -7,10 +7,10 @@
 
 namespace Rx::serialize {
 
-Decoder::Decoder(Memory::Allocator& _allocator, Stream* _stream)
+Decoder::Decoder(Memory::Allocator& _allocator, Stream& _stream)
   : m_allocator{_allocator}
-  , m_stream{_stream}
-  , m_buffer{m_stream, Buffer::Mode::READ}
+  , m_stream{&_stream}
+  , m_buffer{_stream, Buffer::Mode::READ}
   , m_message{allocator()}
   , m_strings{allocator()}
 {

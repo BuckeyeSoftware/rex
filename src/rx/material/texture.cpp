@@ -15,8 +15,8 @@ namespace Rx::Material {
 
 RX_LOG("material/texture", logger);
 
-bool Texture::load(Stream* _stream) {
-  if (auto contents = read_text_stream(allocator(), _stream)) {
+bool Texture::load(Stream& _stream) {
+  if (auto contents = _stream.read_text(allocator())) {
     if (auto disown = contents->disown()) {
       if (auto json = JSON::parse(allocator(), *disown)) {
         return parse(*json);
@@ -27,8 +27,8 @@ bool Texture::load(Stream* _stream) {
 }
 
 bool Texture::load(const String& _file_name) {
-  if (Filesystem::File file{_file_name, "rb"}) {
-    return load(&file);
+  if (auto file = Filesystem::File::open(_file_name, "r")) {
+    return load(*file);
   }
   return false;
 }

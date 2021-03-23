@@ -35,11 +35,11 @@ struct Importer {
 
   Importer(Memory::Allocator& _allocator);
 
-  [[nodiscard]] bool load(Stream* _stream);
+  [[nodiscard]] bool load(Stream& _stream);
   [[nodiscard]] bool load(const String& _file_name);
 
   // implemented by each model loader
-  [[nodiscard]] virtual bool read(Stream* _stream) = 0;
+  [[nodiscard]] virtual bool read(Stream& _stream) = 0;
 
   Vector<Mesh>&& meshes();
   Vector<Uint32>&& elements();
