@@ -13,7 +13,7 @@ struct Context {
   RX_MARK_NO_COPY(Context);
   RX_MARK_NO_MOVE(Context);
 
-  Context() = default;
+  constexpr Context(Memory::Allocator& _allocator);
 
   [[nodiscard]] bool load(const char* _file_name);
   [[nodiscard]] bool save(const char* _file_name);
@@ -56,14 +56,22 @@ private:
   static VariableReference* sort(VariableReference* _reference);
 
   // TODO(dweiler): limited line count queue for messages on the console.
+  Memory::Allocator& m_allocator;
   Vector<String> m_lines;
   Map<String, Command> m_commands;
 };
 
+inline constexpr Context::Context(Memory::Allocator& _allocator)
+  : m_allocator{_allocator}
+  , m_lines{_allocator}
+  , m_commands{_allocator}
+{
+}
+
 template<typename... Ts>
 bool Context::print(const char* _format, Ts&&... _arguments) {
   if constexpr(sizeof...(Ts) != 0) {
-    return write(String::format(_format, Utility::forward<Ts>(_arguments)...));
+    return write(String::format(m_allocator, _format, Utility::forward<Ts>(_arguments)...));
   } else {
     return write(_format);
   }

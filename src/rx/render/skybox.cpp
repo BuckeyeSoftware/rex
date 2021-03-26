@@ -118,7 +118,8 @@ void Skybox::load_async(const String& _file_name, const Math::Vec2z& _max_face_d
 }
 
 bool Skybox::load(const String& _file_name, const Math::Vec2z& _max_face_dimensions) {
-  if (auto file = Filesystem::File::open(_file_name, "r")) {
+  auto& allocator = m_frontend->allocator();
+  if (auto file = Filesystem::File::open(allocator, _file_name, "r")) {
     return load(*file, _max_face_dimensions);
   }
   return false;

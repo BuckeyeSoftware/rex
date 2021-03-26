@@ -10,7 +10,6 @@ struct RX_API DynamicPool {
   RX_MARK_NO_COPY(DynamicPool);
 
   constexpr DynamicPool(Memory::Allocator& _allocator, Size _object_size, Size _objects_per_pool);
-  constexpr DynamicPool(Size _object_size, Size _per_pool);
 
   DynamicPool(DynamicPool&& pool_);
   DynamicPool& operator=(DynamicPool&& pool_);
@@ -48,11 +47,6 @@ inline constexpr DynamicPool::DynamicPool(Memory::Allocator& _allocator, Size _o
   , m_object_size{_object_size}
   , m_objects_per_pool{_objects_per_pool}
   , m_pools{allocator()}
-{
-}
-
-inline constexpr DynamicPool::DynamicPool(Size _object_size, Size _per_pool)
-  : DynamicPool{Memory::SystemAllocator::instance(), _object_size, _per_pool}
 {
 }
 

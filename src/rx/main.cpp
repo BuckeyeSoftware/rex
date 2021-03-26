@@ -22,7 +22,7 @@ int main([[maybe_unused]] int _argc, [[maybe_unused]] char** argv) {
   // Initialize logger as early as possible.
   Rx::Globals::find("system")->find("logger")->init();
 
-  auto log = Rx::Filesystem::File::open("log.log", "w");
+  auto log = Rx::Filesystem::File::open(Rx::Memory::SystemAllocator::instance(), "log.log", "w");
   if (!log || !Rx::Log::subscribe(*log)) {
     return -1;
   }

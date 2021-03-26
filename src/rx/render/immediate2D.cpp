@@ -188,7 +188,9 @@ Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
   , m_texture{nullptr}
   , m_glyphs{m_frontend->allocator()}
 {
-  const auto data{Filesystem::read_binary_file(String::format("base/fonts/%s.ttf", _key.name))};
+  auto name = String::format("base/fonts/%s.ttf", _key.name);
+  auto data = Filesystem::read_binary_file(m_frontend->allocator(), name);
+
   if (data) {
     static constexpr const int GLYPHS = 96; // all of ascii
 

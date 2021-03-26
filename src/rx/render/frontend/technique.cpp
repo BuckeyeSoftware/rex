@@ -808,7 +808,8 @@ bool Technique::Configuration::parse_specialization(
 }
 
 bool Technique::load(const String& _file_name) {
-  if (auto file = Filesystem::File::open(_file_name, "r")) {
+  auto& allocator = m_frontend->allocator();
+  if (auto file = Filesystem::File::open(allocator, _file_name, "r")) {
     return load(*file);
   }
   return false;

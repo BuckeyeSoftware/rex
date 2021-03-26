@@ -134,7 +134,7 @@ bool Loader::load(Stream& _stream, PixelFormat _want_format,
 bool Loader::load(const String& _file_name, PixelFormat _want_format,
   const Math::Vec2z& _max_dimensions)
 {
-  if (auto file = Filesystem::File::open(_file_name, "r")) {
+  if (auto file = Filesystem::File::open(allocator(), _file_name, "r")) {
     return load(*file, _want_format, _max_dimensions);
   }
   return false;

@@ -10,7 +10,6 @@ struct Context {
     MOUSE_CAPTURE = 1 << 1
   };
 
-  Context();
   Context(Memory::Allocator& _allocator);
 
   [[nodiscard]] bool handle_event(const Event& _event);
@@ -46,11 +45,6 @@ private:
   Uint8 m_updated;
   bool m_mouse_captured;
 };
-
-inline Context::Context()
-  : Context{Memory::SystemAllocator::instance()}
-{
-}
 
 inline Layer& Context::root_layer() & {
   return m_root;

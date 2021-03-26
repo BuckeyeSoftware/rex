@@ -117,7 +117,7 @@ static bool stat_file(void* _impl, File::Stat& stat_) {
 }
 #elif defined(RX_PLATFORM_WINDOWS)
 static void* open_file([[maybe_unused]] Memory::Allocator& _allocator, const char* _file_name, const char* _mode) {
- WideString file_name = String::format(_allocator, "%s", _file_name).to_utf16();
+  WideString file_name = String::format(_allocator, "%s", _file_name).to_utf16();
 
   DWORD dwDesiredAccess = 0;
   DWORD dwShareMode = 0;

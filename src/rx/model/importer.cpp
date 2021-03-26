@@ -232,7 +232,7 @@ bool Importer::load(Stream& _stream) {
 }
 
 bool Importer::load(const String& _file_name) {
-  if (auto file = Filesystem::File::open(_file_name, "r")) {
+  if (auto file = Filesystem::File::open(allocator(), _file_name, "r")) {
     return load(*file);
   }
   return false;

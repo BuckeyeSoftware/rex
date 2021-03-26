@@ -433,7 +433,7 @@ private:
 };
 
 bool Assembler::assemble(const String& _file_name) {
-  auto file = Filesystem::read_text_file(_file_name);
+  auto file = Filesystem::read_text_file(Memory::SystemAllocator::instance(), _file_name);
   if (!file) {
     return false;
   }

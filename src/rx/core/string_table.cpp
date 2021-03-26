@@ -6,7 +6,7 @@ namespace Rx {
 
 // [StringTable]
 Optional<StringTable> StringTable::create_from_linear_buffer(LinearBuffer&& linear_buffer_) {
-  StringTable result;
+  StringTable result{linear_buffer_.allocator()};
 
   // Enumerate each string in |linear_buffer_| and append an entry to
   // |result.m_string_set|. The contents of the LinearBuffer is just a bunch

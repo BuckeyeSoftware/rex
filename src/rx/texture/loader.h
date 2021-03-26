@@ -57,7 +57,6 @@ struct Loader {
   RX_MARK_NO_COPY(Loader);
   RX_MARK_NO_MOVE(Loader);
 
-  constexpr Loader();
   constexpr Loader(Memory::Allocator& _allocator);
   ~Loader() = default;
 
@@ -81,11 +80,6 @@ private:
   PixelFormat m_format;
   Math::Vec2z m_dimensions;
 };
-
-inline constexpr Loader::Loader()
-  : Loader{Memory::SystemAllocator::instance()}
-{
-}
 
 inline constexpr Loader::Loader(Memory::Allocator& _allocator)
   : m_allocator{_allocator}

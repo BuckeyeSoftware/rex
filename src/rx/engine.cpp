@@ -142,7 +142,9 @@ RX_CONSOLE_SVAR(
 static constexpr const char* CONFIG = "config.cfg";
 
 Engine::Engine()
-  : m_render_backend{nullptr}
+  : m_console{Memory::SystemAllocator::instance()}
+  , m_input{Memory::SystemAllocator::instance()}
+  , m_render_backend{nullptr}
   , m_render_frontend{nullptr}
   , m_status{Status::RUNNING}
   , m_accumulator{0.0f}
@@ -371,7 +373,7 @@ bool Engine::init() {
   }
 
   if (!app_icon->get().is_empty()) {
-    Texture::Loader loader;
+    Texture::Loader loader{Memory::SystemAllocator::instance()};
     if (loader.load(app_icon->get(), Texture::PixelFormat::RGBA_U8, {64, 64})) {
       auto surface = SDL_CreateRGBSurfaceFrom(
         loader.data().data(),
