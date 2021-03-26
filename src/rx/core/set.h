@@ -28,7 +28,6 @@ struct Set {
   static inline constexpr const Size INITIAL_SIZE = 256;
   static inline constexpr const Size LOAD_FACTOR = 90;
 
-  constexpr Set();
   constexpr Set(Memory::Allocator& _allocator);
   Set(Set&& set_);
   ~Set();
@@ -100,12 +99,6 @@ private:
 };
 
 template<typename K>
-constexpr Set<K>::Set()
-  : Set{Memory::SystemAllocator::instance()}
-{
-}
-
-template<typename K>
 constexpr Set<K>::Set(Memory::Allocator& _allocator)
   : m_allocator{&_allocator}
   , m_keys{nullptr}
@@ -136,7 +129,7 @@ Set<K>::~Set() {
 
 template<typename K>
 Optional<Set<K>> Set<K>::copy(const Set& _set) {
-  Set<K> result;
+  Set<K> result{_set.allocator()};
 
   auto insert = [&result](const K& _key) {
     return result.insert(_key) != nullptr;

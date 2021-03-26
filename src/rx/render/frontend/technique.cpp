@@ -430,7 +430,7 @@ bool Technique::compile(const Map<String, Module>& _modules) {
   // passing it into |Configuration::compile|. The compile method will search
   // for the configuration name and mark it as true, using this map to drive
   // the declarative predicate system.
-  Map<String, bool> values;
+  Map<String, bool> values{m_frontend->allocator()};
   auto add_value = [&](const Configuration& _configuration) {
     return values.insert(_configuration.name(), false);
   };
@@ -515,11 +515,11 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
     auto program = frontend->create_program(RX_RENDER_TAG("technique"));
 
     shader_definitions.each_fwd([&](const ShaderDefinition& _shader_definition) {
-      if (!m_technique->evaluate_when({}, _shader_definition.when)) {
+      if (!m_technique->evaluate_when({frontend->allocator()}, _shader_definition.when)) {
         return true;
       }
 
-      Shader specialized_shader;
+      Shader specialized_shader{frontend->allocator()};
       specialized_shader.kind = _shader_definition.kind;
 
       // Emit #defines
@@ -591,7 +591,7 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
           return true;
         }
 
-        Shader specialized_shader;
+        Shader specialized_shader{frontend->allocator()};
         specialized_shader.kind = _shader_definition.kind;
 
         // Emit #defines
@@ -699,7 +699,7 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
           return true;
         }
 
-        Shader specialized_shader;
+        Shader specialized_shader{frontend->allocator()};
         specialized_shader.kind = _shader_definition.kind;
 
         values->each_pair([&](const String& _key, bool _value) {
@@ -1149,7 +1149,7 @@ bool Technique::parse_shader(const JSON& _shader) {
     return error("multiple %s shaders present", type_string);
   }
 
-  ShaderDefinition definition;
+  ShaderDefinition definition{m_frontend->allocator()};
   definition.kind = shader_type;
   definition.when = when ? when.as_string() : "";
   definition.source = source.as_string();

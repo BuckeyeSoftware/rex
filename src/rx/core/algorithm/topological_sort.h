@@ -17,7 +17,6 @@ namespace Rx::Algorithm {
 // Add dependencies with |add(_key, _dependency)|
 template<typename K>
 struct TopologicalSort {
-  TopologicalSort();
   TopologicalSort(Memory::Allocator& _allocator);
 
   struct Result {
@@ -38,10 +37,12 @@ protected:
   struct Relations {
     RX_MARK_NO_COPY(Relations);
 
-    Relations();
+    // Relations();
     Relations(Memory::Allocator& _allocator);
     Relations(Relations&& relations_);
     Relations& operator=(Relations&& relations_);
+
+    constexpr Memory::Allocator& allocator() const;
 
     static Optional<Relations> copy(const Relations& _relations);
 
@@ -52,12 +53,6 @@ protected:
   Memory::Allocator* m_allocator;
   Map<K, Relations> m_map;
 };
-
-template<typename K>
-TopologicalSort<K>::TopologicalSort()
-  : TopologicalSort{Memory::SystemAllocator::instance()}
-{
-}
 
 template<typename K>
 TopologicalSort<K>::TopologicalSort(Memory::Allocator& _allocator)
@@ -178,12 +173,6 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& TopologicalSort<T>::allocator(
 
 // [TopologicalSorter<T>::Relations]
 template<typename T>
-TopologicalSort<T>::Relations::Relations()
-  : Relations{Memory::SystemAllocator::instance()}
-{
-}
-
-template<typename T>
 TopologicalSort<T>::Relations::Relations(Memory::Allocator& _allocator)
   : dependencies{0}
   , dependents{_allocator}
@@ -205,9 +194,14 @@ typename TopologicalSort<T>::Relations& TopologicalSort<T>::Relations::operator=
 }
 
 template<typename T>
+constexpr typename Memory::Allocator& TopologicalSort<T>::Relations::allocator() const {
+  return dependents.allocator();
+}
+
+template<typename T>
 Optional<typename TopologicalSort<T>::Relations> TopologicalSort<T>::Relations::copy(const Relations& _relations) {
   if (auto dependents = Utility::copy(_relations.dependents)) {
-    Relations relations;
+    Relations relations{_relations.allocator()};
     relations.dependencies = _relations.dependencies;
     relations.dependents = Utility::move(*dependents);
     return relations;

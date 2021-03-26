@@ -131,6 +131,12 @@ static Optional<Cube> load_cube(Memory::Allocator& _allocator, const String& _fi
 }
 
 // [ColorGrader]
+ColorGrader::ColorGrader(Frontend::Context* _frontend)
+  : m_frontend{_frontend}
+  , m_atlases{_frontend->allocator()}
+{
+}
+
 Optional<ColorGrader::Entry> ColorGrader::load(const String& _file_name) {
   auto& allocator = m_frontend->allocator();
 

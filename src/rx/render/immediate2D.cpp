@@ -340,6 +340,7 @@ Immediate2D::Immediate2D(Frontend::Context* _frontend,
   Frontend::Technique* _technique, Array<Frontend::Buffer*[BUFFERS]>&& buffers_)
   : m_frontend{_frontend}
   , m_technique{_technique}
+  , m_fonts{_frontend->allocator()}
   , m_vertices{nullptr}
   , m_elements{nullptr}
   , m_vertex_index{0}

@@ -92,6 +92,12 @@ private:
 };
 
 struct Shader {
+  Shader(Memory::Allocator& _allocator)
+    : inputs{_allocator}
+    , outputs{_allocator}
+  {
+  }
+
   enum class Type : Uint8 {
     VERTEX,
     FRAGMENT

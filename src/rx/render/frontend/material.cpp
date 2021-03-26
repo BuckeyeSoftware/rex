@@ -135,7 +135,7 @@ bool Material::load(const Rx::Material::Loader& _loader) {
       const auto& filter = _texture.filter();
 
       // Create a mipmap chain of the texture.
-      Rx::Texture::Chain chain;
+      Rx::Texture::Chain chain{m_frontend->allocator()};
       if (!chain.generate(bitmap.data.data(), bitmap.format,
         bitmap.format, bitmap.dimensions, false, filter.mipmaps))
       {

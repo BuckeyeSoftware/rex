@@ -241,7 +241,7 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
     }
   }
 
-    if (!m_elements.resize(_header.triangles * 3)) {
+  if (!m_elements.resize(_header.triangles * 3)) {
     return false;
   }
 
@@ -444,7 +444,7 @@ bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
   }
 
   if (_header.joints || _header.frames) {
-    m_skeleton =  Skeleton::create(Utility::move(s_joints), Utility::move(s_frames));
+    m_skeleton = Skeleton::create(Utility::move(s_joints), Utility::move(s_frames));
     if (!m_skeleton) {
       return false;
     }

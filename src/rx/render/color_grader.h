@@ -111,12 +111,6 @@ private:
   Map<Size, Atlas> m_atlases RX_HINT_GUARDED_BY(m_atlases_lock);
 };
 
-// [ColorGrader]
-inline ColorGrader::ColorGrader(Frontend::Context* _frontend)
-  : m_frontend{_frontend}
-{
-}
-
 // [ColorGrader::Entry]
 inline constexpr ColorGrader::Entry::Entry()
   : Entry{nullptr, 0}

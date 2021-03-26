@@ -28,7 +28,6 @@ struct Map {
   static inline constexpr const Size INITIAL_SIZE = 256;
   static inline constexpr const Size LOAD_FACTOR = 90;
 
-  constexpr Map();
   constexpr Map(Memory::Allocator& _allocator);
   Map(Map&& map_);
   ~Map();
@@ -110,12 +109,6 @@ private:
   Size m_resize_threshold;
   Size m_mask;
 };
-
-template<typename K, typename V>
-constexpr Map<K, V>::Map()
-  : Map{Memory::SystemAllocator::instance()}
-{
-}
 
 template<typename K, typename V>
 constexpr Map<K, V>::Map(Memory::Allocator& _allocator)

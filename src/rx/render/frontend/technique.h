@@ -104,6 +104,15 @@ private:
   };
 
   struct ShaderDefinition {
+    ShaderDefinition(Memory::Allocator& _allocator)
+      : source{_allocator}
+      , dependencies{_allocator}
+      , inputs{_allocator}
+      , outputs{_allocator}
+      , when{_allocator}
+    {
+    }
+
     struct InOut {
       Shader::InOutType kind;
       Size index;

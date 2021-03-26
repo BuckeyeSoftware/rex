@@ -17,7 +17,6 @@ struct Chain {
     Math::Vec2z dimensions;
   };
 
-  constexpr Chain();
   constexpr Chain(Memory::Allocator& _allocator);
   Chain(Chain&& chain_);
 
@@ -60,11 +59,6 @@ private:
     PixelFormat m_pixel_format;
   };
 };
-
-inline constexpr Chain::Chain()
-  : Chain{Memory::SystemAllocator::instance()}
-{
-}
 
 inline constexpr Chain::Chain(Memory::Allocator& _allocator)
   : m_allocator{&_allocator}
