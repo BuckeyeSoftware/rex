@@ -77,157 +77,108 @@ Command::Argument::Argument(Argument&& _argument)
   }
 }
 
-Command::Command(Memory::Allocator& _allocator, const String& _name,
-                 const char* _signature, Delegate&& _function)
-  : m_allocator{&_allocator}
-  , m_delegate{Utility::move(_function)}
-  , m_arguments{allocator()}
-  , m_declaration{allocator()}
-  , m_name{allocator(), _name}
-  , m_signature{_signature}
-  , m_argument_count{0}
+// [Command]
+Command::Command(Delegate&& delegate_, Vector<Argument>&& arguments_,
+  Vector<VariableType>&& signature_, String&& name_)
+  : m_delegate{Utility::move(delegate_)}
+  , m_arguments{Utility::move(arguments_)}
+  , m_signature{Utility::move(signature_)}
+  , m_name{Utility::move(name_)}
 {
-  m_declaration += m_name;
-  m_declaration += '(';
-
-  for (const char* ch{m_signature}; *ch; ch++) {
-    switch (*ch) {
-    case 'b':
-      m_declaration += "bool";
-      m_argument_count++;
-      break;
-    case 'i':
-      m_declaration += "int";
-      m_argument_count++;
-      break;
-    case 'f':
-      m_declaration += "float";
-      m_argument_count++;
-      break;
-    case 's':
-      m_declaration += "string";
-      m_argument_count++;
-      break;
-    case 'v':
-      {
-        const int dims_ch{*++ch}; // skip 'v'
-        const int type_ch{*++ch}; // skip '2, 3, 4'
-        if (!strchr("234", dims_ch) || !strchr("if", type_ch)) {
-          goto invalid_signature;
-        }
-        m_declaration += String::format("vec%c%c", dims_ch, type_ch);
-        m_argument_count++;
-      }
-      break;
-    default:
-      goto invalid_signature;
-    }
-
-    if (ch[1] != '\0') {
-      m_declaration += ", ";
-    }
-  }
-
-  m_declaration += ')';
-
-  return;
-
-invalid_signature:
-  RX_ASSERT(0, "invalid signature");
 }
 
-bool Command::execute(Context& console_) {
-  // Check the signature of the arguments
-  if (m_arguments.size() != m_argument_count) {
-    logger->error(
-      "arity violation in call, expected %zu parameters, got %zu",
-      m_argument_count,
-      m_arguments.size());
-    return false;
+Optional<Command> Command::create(Memory::Allocator& _allocator,
+  const String& _name, const char* _signature, Delegate&& delegate_)
+{
+  auto name = Utility::copy(_name);
+  if (!name) {
+    return nullopt;
   }
 
-  const Argument* arg = m_arguments.data();
-  const char* expected = "";
-  for (const char* ch = m_signature; *ch; ch++, arg++) {
-    switch (*ch) {
-    case 'b':
-      if (arg->type != VariableType::BOOLEAN) {
-        expected = "bool";
-        goto error;
-      }
-      break;
-    case 's':
-      if (arg->type != VariableType::STRING) {
-        expected = "string";
-        goto error;
-      }
-      break;
-    case 'i':
-      if (arg->type != VariableType::INT) {
-        expected = "int";
-        goto error;
-      }
-      break;
-    case 'f':
-      if (arg->type != VariableType::FLOAT) {
-        expected = "float";
-        goto error;
-      }
-      break;
-    case 'v':
-      ch++; // Skip 'v'
-      switch (*ch) {
+  // Consume the signature specification for the command and generate the list.
+  Vector<VariableType> signature{_allocator};
+  for (const char* ch = _signature; *ch; ch++) switch (*ch) {
+  case 'b':
+    if (!signature.emplace_back(VariableType::BOOLEAN)) {
+      return nullopt;
+    }
+    break;
+  case 'i':
+    if (!signature.emplace_back(VariableType::INT)) {
+      return nullopt;
+    }
+    break;
+  case 'f':
+    if (!signature.emplace_back(VariableType::FLOAT)) {
+      return nullopt;
+    }
+    break;
+  case 's':
+    if (!signature.emplace_back(VariableType::STRING)) {
+      return nullopt;
+    }
+    break;
+  case 'v':
+    if (ch[1] >= '2' && ch[1] <= '4' && (ch[2] == 'i' || ch[2] == 'f')) {
+      switch (ch[1]) {
       case '2':
-        [[fallthrough]];
+        if (!signature.emplace_back(ch[2] == 'i' ? VariableType::VEC2I : VariableType::VEC2F)) {
+          return nullopt;
+        }
+        break;
       case '3':
-        [[fallthrough]];
+        if (!signature.emplace_back(ch[2] == 'i' ? VariableType::VEC3I : VariableType::VEC3F)) {
+          return nullopt;
+        }
+        break;
       case '4':
-        ch++; // Skip '2', '3' or '4'
-        switch (ch[-1]) {
-        case '2':
-          if (*ch == 'f' && arg->type != VariableType::VEC2F) {
-            expected = "vec2f";
-            goto error;
-          } else if (*ch == 'i' && arg->type != VariableType::VEC2I) {
-            expected = "vec2i";
-            goto error;
-          }
-          break;
-        case '3':
-          if (*ch == 'f' && arg->type != VariableType::VEC3F) {
-            expected = "vec3f";
-            goto error;
-          } else if (*ch == 'i' && arg->type != VariableType::VEC3I) {
-            expected = "vec3i";
-            goto error;
-          }
-          break;
-        case '4':
-          if (*ch == 'f' && arg->type != VariableType::VEC4F) {
-            expected = "vec4f";
-            goto error;
-          } else if (*ch == 'i' && arg->type != VariableType::VEC4I) {
-            expected = "vec4i";
-            goto error;
-          }
-          break;
+        if (!signature.emplace_back(ch[2] == 'i' ? VariableType::VEC4I : VariableType::VEC4F)) {
+          return nullopt;
         }
         break;
       }
+      ch += 2;
       break;
+    } else {
+      return nullopt;
+    }
+    break;
+  default:
+    return nullopt;
+  }
+
+  return Command {
+    Utility::move(delegate_),
+    { _allocator },
+    Utility::move(signature),
+    Utility::move(*name)
+  };
+}
+
+bool Command::execute(Context& console_) {
+  const auto n_arguments = m_arguments.size();
+
+  // Check the signature of the arguments
+  if (n_arguments != m_signature.size()) {
+    logger->error(
+      "arity violation in call, expected %zu parameters, got %zu",
+      m_signature.size(),
+      n_arguments);
+    return false;
+  }
+
+  for (Size i = 0; i < n_arguments; i++) {
+    if (m_arguments[i].type != m_signature[i]) {
+      logger->error(
+        "expected '%s' for argument %zu, got '%s' instead",
+        variable_type_string(m_signature[i]),
+        i + 1,
+        variable_type_string(m_arguments[i].type));
+      return false;
     }
   }
 
   return m_delegate(console_, m_arguments);
-
-error:
-  logger->error(
-    "%s: expected '%s' for argument %zu, got '%s' instead",
-    m_declaration,
-    expected,
-    static_cast<Size>((arg - &m_arguments.first()) + 1),
-    variable_type_string(arg->type));
-  return false;
 }
 
 bool Command::execute_tokens(Context& console_, const Vector<Token>& _tokens) {
@@ -236,38 +187,27 @@ bool Command::execute_tokens(Context& console_, const Vector<Token>& _tokens) {
   const auto result = _tokens.each_fwd([&](const Token& _token) {
     switch (_token.kind()) {
     case Token::Type::ATOM:
-      if (!m_arguments.emplace_back(_token.as_atom())) return false;
-      break;
+      return m_arguments.emplace_back(_token.as_atom());
     case Token::Type::STRING:
-      if (!m_arguments.emplace_back(_token.as_string())) return false;
-      break;
+      return m_arguments.emplace_back(_token.as_string());
     case Token::Type::BOOLEAN:
-      if (!m_arguments.emplace_back(_token.as_boolean())) return false;
-      break;
+      return m_arguments.emplace_back(_token.as_boolean());
     case Token::Type::INT:
-      if (!m_arguments.emplace_back(_token.as_int())) return false;
-      break;
+      return m_arguments.emplace_back(_token.as_int());
     case Token::Type::FLOAT:
-      if (!m_arguments.emplace_back(_token.as_float())) return false;
-      break;
+      return m_arguments.emplace_back(_token.as_float());
     case Token::Type::VEC4F:
-      if (!m_arguments.emplace_back(_token.as_vec4f())) return false;
-      break;
+      return m_arguments.emplace_back(_token.as_vec4f());
     case Token::Type::VEC4I:
-      if (!m_arguments.emplace_back(_token.as_vec4i())) return false;
-      break;
+      return m_arguments.emplace_back(_token.as_vec4i());
     case Token::Type::VEC3F:
-      if (!m_arguments.emplace_back(_token.as_vec3f())) return false;
-      break;
+      return m_arguments.emplace_back(_token.as_vec3f());
     case Token::Type::VEC3I:
-      if (!m_arguments.emplace_back(_token.as_vec3i())) return false;
-      break;
+      return m_arguments.emplace_back(_token.as_vec3i());
     case Token::Type::VEC2F:
-      if (!m_arguments.emplace_back(_token.as_vec2f())) return false;
-      break;
+      return m_arguments.emplace_back(_token.as_vec2f());
     case Token::Type::VEC2I:
-      if (!m_arguments.emplace_back(_token.as_vec2i())) return false;
-      break;
+      return m_arguments.emplace_back(_token.as_vec2i());
     }
     return false;
   });

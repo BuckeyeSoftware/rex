@@ -27,6 +27,7 @@ struct RX_API ThreadPool {
 
 private:
   using Task = Function<void(int)>;
+
   [[nodiscard]] bool insert(Task&& task_);
 
   Memory::Allocator& m_allocator;

@@ -54,11 +54,10 @@ struct Command {
 
   using Delegate = Function<bool(Context& console_, const Vector<Argument>& _arguments)>;
 
-  Command(Memory::Allocator& _allocator, const String& _name,
-          const char* _signature, Delegate&& _function);
-  Command(const String& _name, const char* _signature, Delegate&& _function);
-  Command(Command&& command_);
+  static Optional<Command> create(Memory::Allocator& _allocator,
+    const String& _name, const char* _signature, Delegate&& function_);
 
+  Command(Command&& command_);
   Command& operator=(Command&& command_);
 
   template<typename... Ts>
@@ -68,18 +67,16 @@ struct Command {
 
   const String& name() const &;
 
-  constexpr Memory::Allocator& allocator() const;
-
 private:
   [[nodiscard]] bool execute(Context& console_);
 
-  Memory::Allocator* m_allocator;
+  Command(Delegate&& delegate_, Vector<Argument>&& arguments_,
+    Vector<VariableType>&& signature_, String&& name_);
+
   Delegate m_delegate;
   Vector<Argument> m_arguments;
-  String m_declaration;
+  Vector<VariableType> m_signature;
   String m_name;
-  const char* m_signature;
-  Size m_argument_count;
 };
 
 inline Command::Argument::Argument(bool _value)
@@ -142,34 +139,8 @@ inline Command::Argument::Argument(const Math::Vec2i& _value)
   as_vec2i = _value;
 }
 
-inline Command::Command(const String& _name, const char* _signature, Delegate&& _function)
-  : Command{Memory::SystemAllocator::instance(), _name, _signature, Utility::move(_function)}
-{
-}
-
-inline Command::Command(Command&& command_)
-  : m_allocator{command_.m_allocator}
-  , m_delegate{Utility::move(command_.m_delegate)}
-  , m_arguments{Utility::move(command_.m_arguments)}
-  , m_declaration{Utility::move(command_.m_declaration)}
-  , m_name{Utility::move(command_.m_name)}
-  , m_signature{Utility::exchange(command_.m_signature, nullptr)}
-  , m_argument_count{Utility::exchange(command_.m_argument_count, 0)}
-{
-}
-
-inline Command& Command::operator=(Command&& command_) {
-  if (&command_ != this) {
-    m_allocator = command_.m_allocator;
-    m_delegate = Utility::move(command_.m_delegate);
-    m_arguments = Utility::move(command_.m_arguments);
-    m_declaration = Utility::move(command_.m_declaration);
-    m_name = Utility::move(command_.m_name);
-    m_signature = Utility::exchange(command_.m_signature, nullptr);
-    m_argument_count = Utility::exchange(command_.m_argument_count, 0);
-  }
-  return *this;
-}
+inline Command::Command(Command&&) = default;
+inline Command& Command::operator=(Command&&) = default;
 
 template<typename... Ts>
 bool Command::execute_arguments(Context& console_, Ts&&... _arguments) {
@@ -179,10 +150,6 @@ bool Command::execute_arguments(Context& console_, Ts&&... _arguments) {
 
 inline const String& Command::name() const & {
   return m_name;
-}
-
-RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Command::allocator() const {
-  return *m_allocator;
 }
 
 } // namespace Rx::Console

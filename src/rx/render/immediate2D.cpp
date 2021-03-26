@@ -333,35 +333,49 @@ Optional<Immediate2D> Immediate2D::create(Frontend::Context* _frontend) {
     }
   }
 
-  return Immediate2D{_frontend, technique, Utility::move(buffers)};
+  return Immediate2D {
+    _frontend,
+    technique,
+    FontMap {
+      _frontend->allocator()
+    },
+    Queue {
+      _frontend->allocator()
+    },
+    Vector<Batch> {
+      _frontend->allocator()
+    },
+    RenderBatches {
+      _frontend->allocator(),
+      _frontend->allocator()
+    },
+    RenderQueues {
+      _frontend->allocator(),
+      _frontend->allocator()
+    },
+    Utility::move(buffers)
+  };
 }
 
 Immediate2D::Immediate2D(Frontend::Context* _frontend,
-  Frontend::Technique* _technique, Array<Frontend::Buffer*[BUFFERS]>&& buffers_)
-  : m_frontend{_frontend}
-  , m_technique{_technique}
-  , m_fonts{_frontend->allocator()}
-  , m_vertices{nullptr}
-  , m_elements{nullptr}
-  , m_vertex_index{0}
-  , m_element_index{0}
-  , m_rd_index{1}
-  , m_wr_index{0}
-  , m_buffers{Utility::move(buffers_)}
+  Frontend::Technique* _technique, FontMap&& font_map_, Queue&& queue_,
+  Vector<Batch>&& batches_, RenderBatches&& render_batches_,
+  RenderQueues&& render_queues_, Buffers&& buffers_)
+    : m_frontend{_frontend}
+    , m_technique{_technique}
+    , m_fonts{Utility::move(font_map_)}
+    , m_queue{Utility::move(queue_)}
+    , m_vertices{nullptr}
+    , m_elements{nullptr}
+    , m_batches{Utility::move(batches_)}
+    , m_vertex_index{0}
+    , m_element_index{0}
+    , m_rd_index{1}
+    , m_wr_index{0}
+    , m_render_batches{Utility::move(render_batches_)}
+    , m_render_queues{Utility::move(render_queues_)}
+    , m_buffers{Utility::move(buffers_)}
 {
-  if (m_frontend) {
-    // Wire up allocators.
-    auto& allocator = m_frontend->allocator();
-
-    m_queue = {allocator};
-    m_batches = {allocator};
-
-    for (Size i = 0; i < BUFFERS; i++) {
-      m_render_batches[i] = {allocator};
-      m_render_queues[i] = {allocator};
-    }
-  }
-
   // Generate circle geometry.
   for (Size i = 0; i < CIRCLE_VERTICES; i++) {
     const auto phi = Float32(i) / Float32(CIRCLE_VERTICES) * Math::PI<Float32> * 2.0f;

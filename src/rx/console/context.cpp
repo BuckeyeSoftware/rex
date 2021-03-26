@@ -70,7 +70,12 @@ Command* Context::add_command(const String& _name, const char* _signature,
     return nullptr;
   }
 
-  return m_commands.insert(_name, {_name, _signature, Utility::move(_function)});
+  // Create the command and insert it into the Context.
+  if (auto command = Command::create(m_allocator, _name, _signature, Utility::move(_function))) {
+    return m_commands.insert(_name, Utility::move(*command));
+  }
+
+  return nullptr;
 }
 
 bool Context::execute(const String& _contents) {

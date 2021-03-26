@@ -12,7 +12,6 @@ struct String;
 struct StringTable {
   RX_MARK_NO_COPY(StringTable);
 
-  constexpr StringTable();
   constexpr StringTable(Memory::Allocator& _allocator);
   StringTable(StringTable&& string_table_);
 
@@ -51,11 +50,6 @@ private:
 };
 
 // [StringTable]
-inline constexpr StringTable::StringTable()
-  : StringTable{Memory::SystemAllocator::instance()}
-{
-}
-
 inline constexpr StringTable::StringTable(Memory::Allocator& _allocator)
   : m_string_data{_allocator}
   , m_string_set{_allocator}

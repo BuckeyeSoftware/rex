@@ -34,7 +34,6 @@ struct Immediate2D {
   struct Queue {
     RX_MARK_NO_COPY(Queue);
 
-    Queue() = default;
     Queue(Memory::Allocator& _allocator);
     Queue(Queue&& queue_);
 
@@ -126,7 +125,37 @@ struct Immediate2D {
     Optional<Box> m_scissor;
   };
 
-  Immediate2D();
+  // The downside to having to pass allocator instances to everything as a
+  // dependency cannot be understated here. This is not for the faint of heart.
+  Immediate2D()
+    : Immediate2D{
+      nullptr,
+      nullptr,
+      FontMap {
+        Memory::SystemAllocator::instance()
+      },
+      Queue {
+        Memory::SystemAllocator::instance()
+      },
+      Vector<Batch> {
+        Memory::SystemAllocator::instance()
+      },
+      RenderBatches {
+        Memory::SystemAllocator::instance(),
+        Memory::SystemAllocator::instance()
+      },
+      RenderQueues {
+        Memory::SystemAllocator::instance(),
+        Memory::SystemAllocator::instance()
+      },
+      Buffers {
+        nullptr,
+        nullptr
+      }
+    }
+  {
+  }
+
   Immediate2D(Immediate2D&& immediate2D_);
   ~Immediate2D();
 
@@ -238,14 +267,21 @@ private:
 
   void release();
 
+  using FontMap = Map<Font::Key, Ptr<Font>>;
+  using RenderBatches = Array<Vector<Batch>[BUFFERS]>;
+  using RenderQueues = Array<Queue[BUFFERS]>;
+  using Buffers = Array<Frontend::Buffer*[BUFFERS]>;
+
   Immediate2D(Frontend::Context* _frontend, Frontend::Technique* _technique,
-    Array<Frontend::Buffer*[BUFFERS]>&& buffers_);
+    FontMap&& font_map_, Queue&& queue_, Vector<Batch>&& batches_,
+    RenderBatches&& render_batches_, RenderQueues&& render_queues_,
+    Buffers&& buffers_);
 
   Frontend::Context* m_frontend;
   Frontend::Technique* m_technique;
 
   // loaded fonts
-  Map<Font::Key, Ptr<Font>> m_fonts;
+  FontMap m_fonts;
 
   // current scissor rectangle
   Math::Vec2i m_scissor_position;
@@ -268,9 +304,10 @@ private:
   // buffering of batched immediates
   Size m_rd_index;
   Size m_wr_index;
-  Array<Vector<Batch>[BUFFERS]> m_render_batches;
-  Array<Queue[BUFFERS]> m_render_queues;
-  Array<Frontend::Buffer*[BUFFERS]> m_buffers;
+
+  RenderBatches m_render_batches;
+  RenderQueues m_render_queues;
+  Buffers m_buffers;
 };
 
 // [Immediate2D::Queue]
@@ -335,11 +372,6 @@ inline Frontend::Context* Immediate2D::Font::frontend() const {
 }
 
 // [Immediate2D]
-inline Immediate2D::Immediate2D()
-  : Immediate2D{nullptr, nullptr, {}}
-{
-}
-
 inline Immediate2D::Immediate2D(Immediate2D&& immediate2D_)
   : m_frontend{Utility::exchange(immediate2D_.m_frontend, nullptr)}
   , m_technique{Utility::exchange(immediate2D_.m_technique, nullptr)}
