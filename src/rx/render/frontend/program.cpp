@@ -224,6 +224,7 @@ void Uniform::record_raw(const Byte* _data, Size _size) {
 Program::Program(Context* _frontend)
   : Resource{_frontend, Resource::Type::PROGRAM}
   , m_uniforms{m_frontend->allocator()}
+  , m_shaders{m_frontend->allocator()}
   , m_dirty_uniforms{0}
   , m_padding_uniforms{0}
 {

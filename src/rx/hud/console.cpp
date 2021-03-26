@@ -72,6 +72,8 @@ Console::Console(Render::Immediate2D* _immediate, Input::Context& input_)
   , m_input_context{input_}
   , m_input_layer{&m_input_context}
   , m_selection{0}
+  , m_suggestions{input_.allocator()}
+  , m_lines{input_.allocator()}
 {
   m_input_layer.capture_text(&m_text);
 }

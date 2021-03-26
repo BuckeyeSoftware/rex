@@ -32,11 +32,12 @@ struct Animation {
     Float32 offset = 0;
   };
 
-  constexpr Animation();
+  constexpr Animation(Memory::Allocator& _allocator);
   Animation(Animation&& animation_);
   Animation& operator=(Animation&& animation_);
 
-  static Optional<Animation> create(const Skeleton& _skeleton, const Clip& _clip);
+  static Optional<Animation> create(Memory::Allocator& _allocator,
+    Skeleton& _skeleton, const Clip& _clip);
 
   void update(Float32 _delta_time, bool _loop);
 
@@ -59,9 +60,11 @@ private:
   bool m_completed;
 };
 
-inline constexpr Animation::Animation()
+inline constexpr Animation::Animation(Memory::Allocator& _allocator)
   : m_skeleton{nullptr}
   , m_clip{nullptr}
+  , m_rendered_lb_frames{_allocator}
+  , m_rendered_dq_frames{_allocator}
   , m_current_frame{0.0f}
   , m_completed{false}
 {
@@ -79,18 +82,15 @@ inline Animation::Animation(Animation&& animation_)
 }
 
 inline Animation& Animation::operator=(Animation&& animation_) {
-  if (this == &animation_) {
-    return *this;
+  if (this != &animation_) {
+    m_skeleton = Utility::exchange(animation_.m_skeleton, nullptr);
+    m_clip = Utility::exchange(animation_.m_clip, nullptr);
+    m_rendered_lb_frames = Utility::move(animation_.m_rendered_lb_frames);
+    m_rendered_dq_frames = Utility::move(animation_.m_rendered_dq_frames);
+    m_current_frame = Utility::exchange(animation_.m_current_frame, 0);
+    m_interpolant = Utility::move(animation_.m_interpolant);
+    m_completed = Utility::exchange(animation_.m_completed, false);
   }
-
-  m_skeleton = Utility::exchange(animation_.m_skeleton, nullptr);
-  m_clip = Utility::exchange(animation_.m_clip, nullptr);
-  m_rendered_lb_frames = Utility::move(animation_.m_rendered_lb_frames);
-  m_rendered_dq_frames = Utility::move(animation_.m_rendered_dq_frames);
-  m_current_frame = Utility::exchange(animation_.m_current_frame, 0);
-  m_interpolant = Utility::move(animation_.m_interpolant);
-  m_completed = Utility::exchange(animation_.m_completed, false);
-
   return *this;
 }
 

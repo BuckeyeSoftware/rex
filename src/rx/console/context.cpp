@@ -157,7 +157,7 @@ bool Context::execute(const String& _contents) {
 }
 
 Optional<Vector<String>> Context::auto_complete_variables(const String& _prefix) {
-  Vector<String> results;
+  Vector<String> results{m_allocator};
   for (VariableReference* node = g_head; node; node = node->m_next) {
     if (!strncmp(node->name(), _prefix.data(), _prefix.size())) {
       if (!results.push_back(node->name())) {
@@ -169,7 +169,7 @@ Optional<Vector<String>> Context::auto_complete_variables(const String& _prefix)
 }
 
 Optional<Vector<String>> Context::auto_complete_commands(const String& _prefix) {
-  Vector<String> results;
+  Vector<String> results{m_allocator};
   auto result = m_commands.each_key([&](const String& _key) {
     if (!strncmp(_key.data(), _prefix.data(), _prefix.size())) {
       if (!results.push_back(_key)) {

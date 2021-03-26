@@ -176,7 +176,7 @@ bool Importer::load(Stream& _stream) {
 
   for (Size i = 0; i < n_meshes; i++) {
     auto& mesh = m_meshes[i];
-    if (!mesh.bounds.resize(animated ? n_animations : 1)) {
+    if (!mesh.bounds.resize(animated ? n_animations : 1, {allocator()})) {
       return false;
     }
     if (animated) {

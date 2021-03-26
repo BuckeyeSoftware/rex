@@ -6,6 +6,12 @@
 namespace Rx::Particle {
 
 struct Assembler {
+  Assembler(Memory::Allocator& _allocator)
+    : m_program{_allocator, _allocator}
+    , m_error{_allocator}
+  {
+  }
+
   // Assembles particle assembly source file |_src_file|.
   [[nodiscard]] bool assemble(const String& _src_file);
 

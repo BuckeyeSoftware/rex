@@ -73,7 +73,9 @@ struct ColorGrader {
     Frontend::Texture3D* texture() const;
 
   private:
-    static void move(Atlas* dst_, Atlas* src_);
+    Atlas(ColorGrader* _color_grader, Size _size, Bitset&& allocated_,
+      Bitset&& dirty_, Vector<Math::Vec4h>&& neutral_,
+      Vector<Math::Vec4h>&& scratch_);
 
     void release();
 
@@ -134,9 +136,11 @@ inline ColorGrader::Entry::~Entry() {
 }
 
 inline ColorGrader::Entry& ColorGrader::Entry::operator=(Entry&& entry_) {
-  release();
-  m_atlas = Utility::exchange(entry_.m_atlas, nullptr);
-  m_handle = Utility::exchange(entry_.m_handle, 0);
+  if (this != &entry_) {
+    release();
+    m_atlas = Utility::exchange(entry_.m_atlas, nullptr);
+    m_handle = Utility::exchange(entry_.m_handle, 0);
+  }
   return *this;
 }
 
@@ -151,25 +155,40 @@ inline const ColorGrader::Atlas* ColorGrader::Entry::atlas() const {
 }
 
 // [ColorGrader::Atlas]
-inline void ColorGrader::Atlas::move(Atlas* dst_, Atlas* src_) {
-  dst_->m_color_grader = Utility::exchange(src_->m_color_grader, nullptr);
-  dst_->m_texture = Utility::exchange(src_->m_texture, nullptr);
-  dst_->m_size = Utility::exchange(src_->m_size, 0);
-  dst_->m_allocated = Utility::move(src_->m_allocated);
-  dst_->m_dirty = Utility::move(src_->m_dirty);
-  dst_->m_neutral = Utility::move(src_->m_neutral);
-  dst_->m_scratch = Utility::move(src_->m_scratch);
-}
-
 inline ColorGrader::Atlas::Atlas()
-  : m_color_grader{nullptr}
-  , m_texture{nullptr}
-  , m_size{0}
+  : Atlas {
+    nullptr,
+    0,
+    { },
+    { },
+    { Memory::SystemAllocator::instance() },
+    { Memory::SystemAllocator::instance() }
+  }
 {
 }
 
-inline ColorGrader::Atlas::Atlas(Atlas&& atlas_) {
-  move(this, &atlas_);
+inline  ColorGrader::Atlas::Atlas(ColorGrader* _color_grader, Size _size,
+  Bitset&& allocated_, Bitset&& dirty_, Vector<Math::Vec4h>&& neutral_,
+  Vector<Math::Vec4h>&& scratch_)
+  : m_color_grader{_color_grader}
+  , m_texture{nullptr}
+  , m_size{_size}
+  , m_allocated{Utility::move(allocated_)}
+  , m_dirty{Utility::move(dirty_)}
+  , m_neutral{Utility::move(neutral_)}
+  , m_scratch{Utility::move(scratch_)}
+{
+}
+
+inline ColorGrader::Atlas::Atlas(Atlas&& atlas_)
+  : m_color_grader{Utility::exchange(atlas_.m_color_grader, nullptr)}
+  , m_texture{Utility::exchange(atlas_.m_texture, nullptr)}
+  , m_size{Utility::exchange(atlas_.m_size, 0)}
+  , m_allocated{Utility::move(atlas_.m_allocated)}
+  , m_dirty{Utility::move(atlas_.m_dirty)}
+  , m_neutral{Utility::move(atlas_.m_neutral)}
+  , m_scratch{Utility::move(atlas_.m_scratch)}
+{
 }
 
 inline ColorGrader::Atlas::~Atlas() {
@@ -179,7 +198,13 @@ inline ColorGrader::Atlas::~Atlas() {
 inline ColorGrader::Atlas& ColorGrader::Atlas::operator=(Atlas&& atlas_) {
   if (this != &atlas_) {
     release();
-    move(this, &atlas_);
+    m_color_grader = Utility::exchange(atlas_.m_color_grader, nullptr);
+    m_texture = Utility::exchange(atlas_.m_texture, nullptr);
+    m_size = Utility::exchange(atlas_.m_size, 0);
+    m_allocated = Utility::move(atlas_.m_allocated);
+    m_dirty = Utility::move(atlas_.m_dirty);
+    m_neutral = Utility::move(atlas_.m_neutral);
+    m_scratch = Utility::move(atlas_.m_scratch);
   }
   return *this;
 }

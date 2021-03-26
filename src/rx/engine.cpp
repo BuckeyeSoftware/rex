@@ -146,6 +146,8 @@ Engine::Engine()
   , m_input{Memory::SystemAllocator::instance()}
   , m_render_backend{nullptr}
   , m_render_frontend{nullptr}
+  , m_logging_event_handles{Memory::SystemAllocator::instance()}
+  , m_displays{Memory::SystemAllocator::instance()}
   , m_status{Status::RUNNING}
   , m_accumulator{0.0f}
 {

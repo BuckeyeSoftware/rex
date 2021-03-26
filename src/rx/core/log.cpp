@@ -99,7 +99,10 @@ static inline String string_for_time(time_t _time) {
 }
 
 Logger::Logger()
-  : m_status{RUNNING}
+  : m_streams{Memory::SystemAllocator::instance()}
+  , m_queues{Memory::SystemAllocator::instance()}
+  , m_messages{Memory::SystemAllocator::instance()}
+  , m_status{RUNNING}
   , m_padding{0}
   , m_thread{"logger", [this](int _thread_id) { process(_thread_id); }}
 {

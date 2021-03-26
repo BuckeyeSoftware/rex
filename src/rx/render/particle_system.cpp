@@ -18,7 +18,7 @@ Optional<ParticleSystem> ParticleSystem::create(Frontend::Context* _frontend) {
     return nullopt;
   }
 
-  Frontend::Buffer::Format format;
+  Frontend::Buffer::Format format{_frontend->allocator()};
   format.record_type(Frontend::Buffer::Type::DYNAMIC);
   format.record_element_type(Frontend::Buffer::ElementType::NONE);
   format.record_vertex_stride(sizeof(Vertex));

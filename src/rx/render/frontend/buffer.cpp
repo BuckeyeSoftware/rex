@@ -7,7 +7,7 @@ namespace Rx::Render::Frontend {
 
 // [Buffer::Format]
 Optional<Buffer::Format> Buffer::Format::copy(const Format& _other) {
-  Buffer::Format result;
+  Buffer::Format result{_other.allocator()};
 
   result.m_flags = _other.m_flags;
   result.m_type = _other.m_type;
@@ -114,6 +114,7 @@ Buffer::Buffer(Context* _frontend)
   , m_vertices_store{m_frontend->allocator()}
   , m_elements_store{m_frontend->allocator()}
   , m_instances_store{m_frontend->allocator()}
+  , m_format{m_frontend->allocator()}
   , m_edits{m_frontend->allocator()}
   , m_recorded{0}
 {

@@ -24,6 +24,7 @@ private:
 
 inline constexpr System::System(Memory::Allocator& _allocator)
   : State{_allocator}
+  , m_emitters{_allocator}
 {
 }
 

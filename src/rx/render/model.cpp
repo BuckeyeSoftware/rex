@@ -96,7 +96,7 @@ bool Model::upload(const Rx::Model::Loader& _loader) {
   if (_loader.is_animated()) {
     using Vertex = Rx::Model::Loader::AnimatedVertex;
 
-    Frontend::Buffer::Format format;
+    Frontend::Buffer::Format format{m_frontend->allocator()};
     format.record_type(Frontend::Buffer::Type::STATIC);
     format.record_element_type(Frontend::Buffer::ElementType::U32);
     format.record_vertex_stride(sizeof(Vertex));
@@ -119,7 +119,7 @@ bool Model::upload(const Rx::Model::Loader& _loader) {
   } else {
     using Vertex = Rx::Model::Loader::Vertex;
 
-    Frontend::Buffer::Format format;
+    Frontend::Buffer::Format format{m_frontend->allocator()};
     format.record_type(Frontend::Buffer::Type::STATIC);
     format.record_element_type(Frontend::Buffer::ElementType::U32);
     format.record_vertex_stride(sizeof(Vertex));
@@ -186,7 +186,7 @@ bool Model::upload(const Rx::Model::Loader& _loader) {
 
 void Model::animate(Size _index, [[maybe_unused]] bool _loop) {
   if (m_skeleton && m_clips.in_range(_index)) {
-    m_animation = Rx::Model::Animation::create(*m_skeleton, m_clips[_index]);
+    m_animation = Rx::Model::Animation::create(m_frontend->allocator(), *m_skeleton, m_clips[_index]);
   } else {
     m_animation = nullopt;
   }

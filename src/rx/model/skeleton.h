@@ -10,7 +10,6 @@ namespace Rx::Model {
 struct Skeleton {
   RX_MARK_NO_COPY(Skeleton);
 
-  constexpr Skeleton() = default;
   Skeleton(Skeleton&& skeleton_);
   Skeleton& operator=(Skeleton&& skeleton_);
 
@@ -29,6 +28,13 @@ struct Skeleton {
   const Vector<Math::DualQuatf>& dq_frames() const & { return m_dq_frames; }
 
 private:
+  Skeleton(Vector<Joint>&& joints_, Vector<Math::Mat3x4f>&& lb_frames_, Vector<Math::DualQuatf>&& dq_frames_)
+    : m_joints{Utility::move(joints_)}
+    , m_lb_frames{Utility::move(lb_frames_)}
+    , m_dq_frames{Utility::move(dq_frames_)}
+  {
+  }
+
   Vector<Joint> m_joints;
   Vector<Math::Mat3x4f> m_lb_frames;
   Vector<Math::DualQuatf> m_dq_frames;

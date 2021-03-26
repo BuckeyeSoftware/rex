@@ -27,7 +27,8 @@ void Skeleton::transform(const Math::Mat3x4f& _transform) {
 Optional<Skeleton> Skeleton::create(Vector<Joint>&& joints_, Vector<Math::Mat3x4f>&& frames_) {
   const auto n_frames = frames_.size();
 
-  Vector<Math::DualQuatf> dq_frames;
+  auto& allocator = frames_.allocator();
+  Vector<Math::DualQuatf> dq_frames{allocator};
   if (!dq_frames.resize(n_frames)) {
     return nullopt;
   }
@@ -37,27 +38,27 @@ Optional<Skeleton> Skeleton::create(Vector<Joint>&& joints_, Vector<Math::Mat3x4
     dq_frames[i].real = Math::normalize(dq_frames[i].real);
   }
 
-  Skeleton result;
-  result.m_dq_frames = Utility::move(dq_frames);
-  result.m_lb_frames = Utility::move(frames_);
-  result.m_joints = Utility::move(joints_);
-
-  return result;
+  return Skeleton {
+    Utility::move(joints_),
+    Utility::move(frames_),
+    Utility::move(dq_frames)
+  };
 }
 
 Optional<Skeleton> Skeleton::copy(const Skeleton& _skeleton) {
   auto joints = Utility::copy(_skeleton.m_joints);
   auto lb_frames = Utility::copy(_skeleton.m_lb_frames);
   auto dq_frames = Utility::copy(_skeleton.m_dq_frames);
+
   if (!joints || !lb_frames || !dq_frames) {
     return nullopt;
   }
 
-  Skeleton result;
-  result.m_joints = Utility::move(*joints);
-  result.m_lb_frames = Utility::move(*lb_frames);
-  result.m_dq_frames = Utility::move(*dq_frames);
-  return result;
+  return Skeleton {
+    Utility::move(*joints),
+    Utility::move(*lb_frames),
+    Utility::move(*dq_frames)
+  };
 }
 
 } // namespace Rx::Model

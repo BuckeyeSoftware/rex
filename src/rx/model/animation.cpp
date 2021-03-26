@@ -9,8 +9,10 @@
 
 namespace Rx::Model {
 
-Optional<Animation> Animation::create(const Skeleton& _skeleton, const Clip& _clip) {
-  Animation result;
+Optional<Animation> Animation::create(Memory::Allocator& _allocator,
+  Skeleton& _skeleton, const Clip& _clip)
+{
+  Animation result{_allocator};
 
   result.m_skeleton = &_skeleton;
   result.m_clip = &_clip;

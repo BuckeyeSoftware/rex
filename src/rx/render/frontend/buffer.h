@@ -63,7 +63,7 @@ struct Buffer
 
   // Type that describes the format.
   struct Format {
-    Format();
+    Format(Memory::Allocator& _allocator);
 
     static Optional<Format> copy(const Format& _other);
 
@@ -95,6 +95,8 @@ struct Buffer
 
     void finalize();
     Size hash() const;
+
+    Memory::Allocator& allocator() const;
 
   private:
     enum {
@@ -239,11 +241,13 @@ inline Size Buffer::Attribute::hash() const {
 }
 
 // [Buffer::Format]
-inline Buffer::Format::Format()
+inline Buffer::Format::Format(Memory::Allocator& _allocator)
   : m_flags{0}
   , m_element_type{ElementType::NONE}
   , m_vertex_stride{0}
   , m_instance_stride{0}
+  , m_vertex_attributes{_allocator}
+  , m_instance_attributes{_allocator}
   , m_hash{0}
 {
 }
@@ -342,6 +346,11 @@ inline bool Buffer::Format::operator==(const Format& _format) const {
 
 inline Size Buffer::Format::hash() const {
   return m_hash;
+}
+
+inline Memory::Allocator& Buffer::Format::allocator() const {
+  // TODO(dweiler): Put m_allocator in Format.
+  return m_vertex_attributes.allocator();
 }
 
 // [Buffer]

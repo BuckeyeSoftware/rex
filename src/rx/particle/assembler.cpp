@@ -288,8 +288,10 @@ struct Parser {
   using Instruction = VM::Instruction;
   using Token = Lexer::Token;
 
-  constexpr Parser(const Source& _source)
+  constexpr Parser(Memory::Allocator& _allocator, const Source& _source)
     : m_lexer{_source}
+    , m_instructions{_allocator}
+    , m_data{_allocator}
   {
   }
 
@@ -432,7 +434,8 @@ private:
 };
 
 bool Assembler::assemble(const String& _file_name) {
-  auto file = Filesystem::read_text_file(Memory::SystemAllocator::instance(), _file_name);
+  auto& allocator = Memory::SystemAllocator::instance();
+  auto file = Filesystem::read_text_file(allocator, _file_name);
   if (!file) {
     return false;
   }
@@ -440,7 +443,7 @@ bool Assembler::assemble(const String& _file_name) {
   auto name = _file_name.data();
   auto contents = reinterpret_cast<const char*>(file->data());
 
-  Parser parser{{name, contents}};
+  Parser parser{allocator, {name, contents}};
   if (parser.parse()) {
     m_program.instructions = parser.m_instructions.disown();
     m_program.data = parser.m_data.disown();

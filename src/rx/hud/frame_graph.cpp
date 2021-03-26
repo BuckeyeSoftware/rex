@@ -32,7 +32,7 @@ void FrameGraph::render() {
     {0.0f, 0.0f, 0.0f, 0.5f});
 
   static constexpr const auto FRAME_SCALE = 16.667f * 2.0f;
-  Vector<Math::Vec2f> points;
+  Vector<Math::Vec2f> points{m_immediate->frontend()->allocator()};
   _timer.frame_times().each_fwd([&](const Render::Frontend::FrameTimer::FrameTime &_time) {
     const auto delta_x{Float32((_timer.ticks() * _timer.resolution() - _time.life) / Render::Frontend::FrameTimer::HISTORY_SECONDS)};
     const auto delta_y{Float32(Algorithm::min(_time.frame / FRAME_SCALE, 1.0))};
