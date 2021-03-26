@@ -314,9 +314,8 @@ private:
   bool error(const char* _format, Ts&&... _arguments) {
     const auto& source = m_lexer.source();
     const auto& location = m_lexer.location();
-    m_error = String::format("%s:%zu:%zu: ", source.name, location.line, location.column)
-            + String::format(_format, Utility::forward<Ts>(_arguments)...);
-    return false;
+    return m_error.append(String::format("%s:%zu:%zu: ", source.name, location.line, location.column))
+       &&  m_error.append(String::format(_format, Utility::forward<Ts>(_arguments)...));
   }
 
   bool next() {

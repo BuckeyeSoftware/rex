@@ -81,11 +81,13 @@ Optional<Vector<Display>> Display::displays(Memory::Allocator& _allocator) {
       auto& rhs = displays[j];
       if (lhs.m_name == rhs.m_name) {
         count++;
-        rhs.m_name += String::format(" (%d)", count);
+        if (!rhs.m_name.append(String::format(" (%d)", count))) {
+          return nullopt;
+        }
       }
     }
-    if (count) {
-      lhs.m_name += " (0)";
+    if (count && !lhs.m_name.append(" (0)")) {
+      return nullopt;
     }
   }
 

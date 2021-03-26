@@ -330,42 +330,6 @@ RX_HINT_FORCE_INLINE const char* String::data() const {
   return m_data;
 }
 
-inline String operator+(const String& _lhs, const char* _rhs) {
-  String result;
-  (void)result.append(_lhs);
-  (void)result.append(_rhs);
-  return result;
-}
-
-inline String operator+(const String& _lhs, const String& _rhs) {
-  String result;
-  (void)result.append(_lhs);
-  (void)result.append(_rhs);
-  return result;
-}
-
-inline String operator+(const String& _lhs, const char _ch) {
-  String result;
-  (void)result.append(_lhs);
-  (void)result.append(_ch);
-  return result;
-}
-
-inline String& operator+=(String& lhs_, const char* rhs) {
-  (void)lhs_.append(rhs);
-  return lhs_;
-}
-
-inline String& operator+=(String& lhs_, char ch) {
-  (void)lhs_.append(ch);
-  return lhs_;
-}
-
-inline String& operator+=(String& lhs_, const String& _contents) {
-  (void)lhs_.append(_contents);
-  return lhs_;
-}
-
 // not inlined since it would explode code size
 bool operator==(const String& _lhs, const String& _rhs);
 bool operator==(const String& _lhs, const char* _rhs);

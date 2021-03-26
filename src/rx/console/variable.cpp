@@ -42,10 +42,16 @@ static Optional<String> escape(const String& _contents) {
     case '"':
       [[fallthrough]];
     case '\\':
-      result += '\\';
+      // These appends shouldn't fail due to the reserve above. Check anyways
+      // to silence nodiscard warnings with String::append.
+      if (!result.append('\\')) {
+        return nullopt;
+      }
       [[fallthrough]];
     default:
-      result += _contents[i];
+      if (!result.append(_contents[i])) {
+        return nullopt;
+      }
       break;
     }
   }

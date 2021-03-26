@@ -203,30 +203,42 @@ bool Parser::parse(const String& _contents) {
   while (*m_ch) {
     if (*m_ch == '\"') {
       m_ch++; // Skip '\"'
+
       record_span();
+
       String contents{allocator()};
       while (*m_ch && *m_ch != '\"') {
-        if (*m_ch == '\\' && (m_ch[1] == '\"' || m_ch[1] == '\'')) {
+        if (m_ch[0] == '\\' && (m_ch[1] == '\"' || m_ch[1] == '\'')) {
           // NOTE(dweiler): This should not be escaped.
-          contents += m_ch[1];
+          if (!contents.append(m_ch[1])) {
+            goto oom;
+          }
           m_ch += 2;
         } else {
-          contents += *m_ch++;
+          if (!contents.append(m_ch[0])) {
+            goto oom;
+          }
+          m_ch += 1;
         }
       }
+
       if (*m_ch != '\"') {
         return error(true, "expected closing '\"'");
       }
+
       m_ch++; // Skip '\"'
+
       if (!m_tokens.emplace_back(Token::Type::STRING, Utility::move(contents))) {
         return false;
       }
+
       record_span();
     } else if (*m_ch == '{') {
       m_ch++; // Skip '{'
+
       consume_spaces();
 
-      const bool is_float{float_like(m_ch)};
+      const bool is_float = float_like(m_ch);
 
       Float32 fs[4];
       Sint32 is[4];
@@ -343,7 +355,10 @@ bool Parser::parse(const String& _contents) {
       record_span();
       String contents{allocator()};
       while (is_identifier(*m_ch) || is_digit(*m_ch) || *m_ch == '.') {
-        contents += *m_ch++;
+        if (!contents.append(*m_ch)) {
+          goto oom;
+        }
+        m_ch++;
       }
       if (!m_tokens.emplace_back(Token::Type::ATOM, Utility::move(contents))) {
         goto oom;

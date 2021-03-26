@@ -79,7 +79,8 @@ Command* Context::add_command(const String& _name, const char* _signature,
 }
 
 bool Context::execute(const String& _contents) {
-  Parser parse{Memory::SystemAllocator::instance()};
+  auto& allocator = Memory::SystemAllocator::instance();
+  Parser parse{allocator};
 
   if (!parse.parse(_contents)) {
     const auto& diagnostic{parse.error()};
@@ -87,16 +88,24 @@ bool Context::execute(const String& _contents) {
     print("^rerror: ^w%s", diagnostic.message);
     print("%s", _contents);
 
-    String format;
-    format += String::format("%*s^r", static_cast<int>(diagnostic.offset), "");
+    String format{allocator};
+
+    if (!format.append(String::format("%*s^r", static_cast<int>(diagnostic.offset), ""))) {
+      return false;
+    }
+
     if (!diagnostic.inside) {
       for (Size i = 0; i < diagnostic.length; i++) {
-        format += '~';
+        if (!format.append('~')) {
+          return false;
+        }
       }
     }
 
     if (diagnostic.caret) {
-      format += "^^";
+      if (!format.append("^^")) {
+        return false;
+      }
     }
 
     print("%s", format);
