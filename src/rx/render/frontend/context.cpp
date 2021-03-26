@@ -110,9 +110,10 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
   m_device_info.renderer = info.renderer;
   m_device_info.version = info.version;
 
+
   // load all modules
-  if (Filesystem::Directory directory{MODULES_PATH}) {
-    directory.each([this](Filesystem::Directory::Item&& item_) {
+  if (auto directory = Filesystem::Directory::open(m_allocator, MODULES_PATH)) {
+    directory->each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
         Module new_module{allocator()};
         const auto path{String::format("%s/%s", MODULES_PATH,
@@ -125,8 +126,8 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
   }
 
   // Load all the techniques.
-  if (Filesystem::Directory directory{TECHNIQUES_PATH}) {
-    directory.each([this](Filesystem::Directory::Item&& item_) {
+  if (auto directory = Filesystem::Directory::open(m_allocator, TECHNIQUES_PATH)) {
+    directory->each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
         Technique new_technique{this};
         const auto path{String::format("%s/%s", TECHNIQUES_PATH,

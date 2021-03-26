@@ -97,7 +97,7 @@ ThreadPool::~ThreadPool() {
   m_task_cond.broadcast();
 
   m_threads.each_fwd([](Thread &_thread) {
-    _thread.join();
+    RX_ASSERT(_thread.join(), "failed to join thread");
   });
 
   timer.stop();

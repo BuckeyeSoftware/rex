@@ -124,10 +124,6 @@ The following filesystem types are implemented:
   * `Directory` Open and manipulate a directory.
   * `File` Open and manipulate files.
 
-The following filesystem functions are implemented:
-  * `read_text_stream` Read a stream representing text, normalizing line endings and converting contents to UTF.
-  * `read_binary_stream` Read a stream representing binary data.
-
 ## Hash
 
 Hashing functions and utilities:

@@ -550,13 +550,17 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
     });
 
     uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
-      auto& uniform = program->add_uniform(_uniform_definition.name,
+      auto* uniform = program->add_uniform(_uniform_definition.name,
         _uniform_definition.kind, !m_technique->evaluate_when(*values, _uniform_definition.when));
-
+      if (!uniform) {
+        // Out of memory.
+        return false;
+      }
       if (_uniform_definition.has_value) {
         const auto* data = reinterpret_cast<const Byte*>(&_uniform_definition.value);
-        uniform.record_raw(data, uniform.size());
+        uniform->record_raw(data, uniform->size());
       }
+      return true;
     });
 
     frontend->initialize_program(RX_RENDER_TAG("technique"), program);
@@ -641,13 +645,17 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
 
       // emit uniforms
       uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
-        auto& uniform = program->add_uniform(_uniform_definition.name,
+        auto* uniform = program->add_uniform(_uniform_definition.name,
           _uniform_definition.kind, !m_technique->evaluate_when(*values, _uniform_definition.when));
-
+        if (!uniform) {
+          // Out of memory.
+          return false;
+        }
         if (_uniform_definition.has_value) {
           const auto* data = reinterpret_cast<const Byte*>(&_uniform_definition.value);
-          uniform.record_raw(data, uniform.size());
+          uniform->record_raw(data, uniform->size());
         }
+        return true;
       });
 
       // initialize and track
@@ -738,13 +746,17 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
 
       // Emit uniforms.
       uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
-        auto& uniform = program->add_uniform(_uniform_definition.name,
+        auto* uniform = program->add_uniform(_uniform_definition.name,
           _uniform_definition.kind, !m_technique->evaluate_when(*values, _uniform_definition.when));
-
+        if (!uniform) {
+          // Out of memory.
+          return false;
+        }
         if (_uniform_definition.has_value) {
           const auto* data = reinterpret_cast<const Byte*>(&_uniform_definition.value);
-          uniform.record_raw(data, uniform.size());
+          uniform->record_raw(data, uniform->size());
         }
+        return true;
       });
 
       // initialize and track

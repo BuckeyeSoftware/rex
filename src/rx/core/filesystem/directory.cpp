@@ -41,7 +41,7 @@ Optional<Directory> Directory::Item::as_directory() const {
       // Copy filename with null-terminator to also terminate our string.
       memcpy(data + root.size() + 1, filename.data(), filename.size() + 1);
 
-      return Directory{allocator, Memory::View{&allocator, data, length, length}};
+      return Directory::open(allocator, Memory::View{&allocator, data, length, length});
     }
   }
 
@@ -56,24 +56,33 @@ struct FindContext {
 };
 #endif
 
-Directory::Directory(Memory::Allocator& _allocator, String&& path_)
-  : m_allocator{&_allocator}
-  , m_path{Utility::move(path_)}
-{
+Optional<Directory> Directory::open(Memory::Allocator& _allocator, const String& _path) {
 #if defined(RX_PLATFORM_POSIX)
-  m_impl = reinterpret_cast<void*>(opendir(m_path.data()));
+  // Make a copy of the path name to store in Directory.
+  auto path_copy = Utility::copy(_path);
+  if (!path_copy) {
+    return nullopt;
+  }
+
+  if (auto impl = opendir(_path.data())) {
+    return Directory{_allocator, Utility::move(*path_copy), reinterpret_cast<void*>(impl)};
+  }
 #elif defined(RX_PLATFORM_WINDOWS)
   // The only thing we can cache between reuses of a directory object is the
   // path conversion and the initial find handle on Windows. Subsequent reuses
   // will need to reopen the directory.
-  auto* context = allocator().create<FindContext>();
-  RX_ASSERT(context, "out of memory");
+  auto context = _allocator.create<FindContext>();
+  if (!context) {
+    return nullopt;
+  }
 
   // Convert |m_path| to UTF-16 for Windows.
   const auto path_utf16 = m_path.to_utf16();
   static constexpr const wchar_t PATH_EXTRA[] = L"\\*";
-  LinearBuffer path_data{allocator()};
-  RX_ASSERT(path_data.resize(path_utf16.size() * 2 + sizeof PATH_EXTRA), "out of memory");
+  LinearBuffer path_data{_allocator};
+  if (!path_data.resize(path_utf16.size() * 2 + sizeof PATH_EXTRA)) {
+    return nullopt;
+  }
 
   memcpy(path_data.data(), path_utf16.data(), path_utf16.size() * 2);
   memcpy(path_data.data() + path_utf16.size() * 2, PATH_EXTRA, sizeof PATH_EXTRA);
@@ -86,15 +95,15 @@ Directory::Directory(Memory::Allocator& _allocator, String&& path_)
     // conversion for |each|.
     context->handle = handle;
     context->path_data = Utility::move(path_data);
-    m_impl = reinterpret_cast<void*>(context);
+    return Directory{_allocator, Utility::move(*path_copy), reinterpret_cast<void*>(context)};
   } else {
-    allocator().destroy<FindContext>(context);
-    m_impl = nullptr;
+    _allocator.destroy<FindContext>(context);
   }
 #endif
+  return nullopt;
 }
 
-Directory::~Directory() {
+void Directory::release() {
 #if defined(RX_PLATFORM_POSIX)
   if (m_impl) {
     closedir(reinterpret_cast<DIR*>(m_impl));

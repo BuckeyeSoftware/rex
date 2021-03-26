@@ -20,7 +20,7 @@ struct RX_API Thread {
   Thread(Thread&& thread_);
   ~Thread();
 
-  void join();
+  [[nodiscard]] bool join();
 
   constexpr Memory::Allocator& allocator() const;
 
@@ -30,7 +30,7 @@ private:
     State(Memory::Allocator& _allocator, const char* _name, F&& _function);
 
     void spawn();
-    void join();
+    [[nodiscard]] bool join();
 
   private:
     static void* wrap(void* _data);

@@ -48,7 +48,7 @@ struct Uniform {
   };
 
   Uniform();
-  Uniform(Program* _program, Uint64 _bit, const String& _name, Type _type);
+  Uniform(Program* _program, Uint64 _bit, const String& _name, Type _type, Byte* _data);
   Uniform(Uniform&& uniform_);
   ~Uniform();
 
@@ -76,9 +76,9 @@ struct Uniform {
 
   void flush(Byte* _data);
 
-private:
   static Size size_for_type(Type _type);
 
+private:
   Program* m_program;
   Uint64 m_bit;
   Type m_type;
@@ -132,7 +132,7 @@ struct Program : Resource {
   void validate() const;
 
   bool add_shader(Shader&& shader_);
-  Uniform& add_uniform(const String& _name, Uniform::Type _type, bool _is_padding);
+  Uniform* add_uniform(const String& _name, Uniform::Type _type, bool _is_padding);
   Uint64 dirty_uniforms_bitset() const;
   Size dirty_uniforms_size() const;
 

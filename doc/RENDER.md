@@ -423,7 +423,7 @@ Shaders and uniforms are added to a constructed program before initialization wi
 void add_shader(Shader&& shader_);
 
 // Add a uniform with name |_name| and type |_type|.
-Uniform& add_uniform(const String& _name, Uniform::Type _type);
+Uniform* add_uniform(const String& _name, Uniform::Type _type);
 ```
 
 Assertions can be triggered in the following cases:

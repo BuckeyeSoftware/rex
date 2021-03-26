@@ -144,7 +144,7 @@ Logger::~Logger() {
   }
 
   // Join the |process| thread.
-  m_thread.join();
+  RX_ASSERT(m_thread.join(), "failed to join thread");
 
   // Finalize all loggers.
   g_group_loggers.fini();

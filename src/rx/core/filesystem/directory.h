@@ -9,15 +9,15 @@ namespace Rx::Filesystem {
 struct RX_API Directory {
   RX_MARK_NO_COPY(Directory);
 
-  Directory(Memory::Allocator& _allocator, const char* _path);
-  Directory(Memory::Allocator& _allocator, const String& _path);
-  Directory(Memory::Allocator& _allocator, String&& path_);
-  Directory(const char* _path);
-  Directory(const String& _path);
-  Directory(String&& path_);
+  constexpr Directory();
   Directory(Directory&& directory_);
   ~Directory();
 
+  Directory& operator=(Directory&& directory_);
+
+  static Optional<Directory> open(Memory::Allocator& _allocator, const String& _path);
+
+  bool is_valid() const;
   operator bool() const;
 
   template<typename F>
@@ -56,6 +56,15 @@ struct RX_API Directory {
   constexpr Memory::Allocator& allocator() const;
 
 private:
+  Directory(Memory::Allocator& _allocator, String&& path_, void* _impl)
+    : m_allocator{&_allocator}
+    , m_path{Utility::move(path_)}
+    , m_impl{_impl}
+  {
+  }
+
+  void release();
+
   using Enumerator = Function<bool(Item&&)>;
 
   // enumerate directory with |_function| being called for each item
@@ -67,40 +76,39 @@ private:
   void* m_impl;
 };
 
-inline Directory::Directory(Memory::Allocator& _allocator, const char* _path)
-  : Directory{_allocator, String{_allocator, _path}}
-{
-}
-
-inline Directory::Directory(Memory::Allocator& _allocator, const String& _path)
-  : Directory{_allocator, String{_allocator, _path}}
-{
-}
-
-inline Directory::Directory(const char* _path)
-  : Directory{Memory::SystemAllocator::instance(), _path}
-{
-}
-
-inline Directory::Directory(const String& _path)
-  : Directory{Memory::SystemAllocator::instance(), _path}
-{
-}
-
-inline Directory::Directory(String&& path_)
-  : Directory{Memory::SystemAllocator::instance(), Utility::move(path_)}
+inline constexpr Directory::Directory()
+  : m_allocator{nullptr}
+  , m_impl{nullptr}
 {
 }
 
 inline Directory::Directory(Directory&& directory_)
-  : m_allocator{directory_.m_allocator}
+  : m_allocator{Utility::exchange(directory_.m_allocator, nullptr)}
   , m_path{Utility::move(directory_.m_path)}
   , m_impl{Utility::exchange(directory_.m_impl, nullptr)}
 {
 }
 
+inline Directory::~Directory() {
+  release();
+}
+
+inline Directory& Directory::operator=(Directory&& directory_) {
+  if (this != &directory_) {
+    release();
+    m_allocator = Utility::exchange(directory_.m_allocator, nullptr);
+    m_path = Utility::move(directory_.m_path);
+    m_impl = Utility::exchange(directory_.m_impl, nullptr);
+  }
+  return *this;
+}
+
+RX_HINT_FORCE_INLINE bool Directory::is_valid() const {
+  return m_impl != nullptr;
+}
+
 RX_HINT_FORCE_INLINE Directory::operator bool() const {
-  return m_impl;
+  return is_valid();
 }
 
 template<typename F>

@@ -23,13 +23,12 @@ static Atomic<int> g_thread_id;
 
 Thread::~Thread() {
   if (m_state) {
-    join();
+    RX_ASSERT(join(), "failed to join thread");
   }
 }
 
-void Thread::join() {
-  RX_ASSERT(m_state, "join on empty thread");
-  m_state->join();
+bool Thread::join() {
+  return m_state && m_state->join();
 }
 
 // state
@@ -95,22 +94,22 @@ void Thread::State::spawn() {
 #endif
 }
 
-void Thread::State::join() {
+bool Thread::State::join() {
   if (m_joined) {
-    return;
+    return true;
   }
 
 #if defined(RX_PLATFORM_POSIX)
   auto handle = *reinterpret_cast<pthread_t*>(m_thread);
   if (pthread_join(handle, nullptr) != 0) {
-    RX_ASSERT(false, "join failed");
+    return false;
   }
 #elif defined(RX_PLATFORM_WINDOWS)
   auto handle = *reinterpret_cast<HANDLE*>(m_thread);
 
   // Wait for the thread to terminate.
   if (WaitForSingleObject(handle, INFINITE) != WAIT_OBJECT_0) {
-    RX_ASSERT(false, "join failed");
+    return false;
   }
 
   // Destroy the thread object itself.
@@ -118,6 +117,8 @@ void Thread::State::join() {
 #endif
 
   m_joined = true;
+
+  return true;
 }
 
 } // namespace Rx::Concurrency

@@ -31,15 +31,13 @@ Uniform::Uniform()
 {
 }
 
-Uniform::Uniform(Program* _program, Uint64 _bit, const String& _name, Type _type)
+Uniform::Uniform(Program* _program, Uint64 _bit, const String& _name, Type _type, Byte* _data)
   : m_program{_program}
   , m_bit{_bit}
   , m_type{_type}
   , m_name{_name}
 {
-  as_opaque = m_program->m_frontend->allocator().allocate(size());
-  RX_ASSERT(as_opaque, "out of memory");
-
+  as_opaque = _data;
   memset(as_opaque, 0, size());
 }
 
@@ -244,14 +242,17 @@ void Program::validate() const {
   RX_ASSERT(!m_shaders.is_empty(), "no shaders specified");
 }
 
-Uniform& Program::add_uniform(const String& _name, Uniform::Type _type, bool _is_padding) {
-  const Uint64 bit{1_u64 << m_uniforms.size()};
-  m_uniforms.emplace_back(this, bit, _name, _type);
-  if (_is_padding) {
-    m_padding_uniforms |= bit;
+Uniform* Program::add_uniform(const String& _name, Uniform::Type _type, bool _is_padding) {
+  const Uint64 bit = 1_u64 << m_uniforms.size();
+  if (auto data = m_frontend->allocator().allocate(Uniform::size_for_type(_type))) {
+    m_uniforms.emplace_back(this, bit, _name, _type, data);
+    if (_is_padding) {
+      m_padding_uniforms |= bit;
+    }
+    update_resource_usage();
+    return &m_uniforms.last();
   }
-  update_resource_usage();
-  return m_uniforms.last();
+  return nullptr;
 }
 
 Uint64 Program::dirty_uniforms_bitset() const {
