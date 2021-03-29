@@ -13,10 +13,10 @@ Buffer::Buffer(Stream& _stream, Mode _mode)
 {
   switch (_mode) {
   case Mode::READ:
-    RX_ASSERT(_stream.can_read(), "buffer requires readable stream");
+    RX_ASSERT(_stream.flags() & Stream::READ, "buffer requires readable stream");
     break;
   case Mode::WRITE:
-    RX_ASSERT(_stream.can_write(), "buffer requires writable stream");
+    RX_ASSERT(_stream.flags() & Stream::WRITE, "buffer requires writable stream");
     break;
   }
 }
