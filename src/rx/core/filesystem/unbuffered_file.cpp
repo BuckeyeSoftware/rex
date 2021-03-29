@@ -1,14 +1,7 @@
-#include <string.h> // strcmp, strerror
+#include <string.h>
 
+#include "rx/core/filesystem/unbuffered_file.h"
 #include "rx/core/log.h"
-#include "rx/core/assert.h"
-
-#include "rx/core/algorithm/min.h"
-
-#include "rx/core/filesystem/file.h"
-
-#include "rx/core/hints/unlikely.h"
-#include "rx/core/hints/unreachable.h"
 
 #if defined(RX_PLATFORM_POSIX)
 #include <sys/stat.h> // fstat, struct stat
@@ -20,9 +13,9 @@
 #include <windows.h>
 #endif
 
-RX_LOG("filesystem/file", logger);
-
 namespace Rx::Filesystem {
+
+RX_LOG("filesystem/file", logger);
 
 static inline Uint32 flags_from_mode(const char* _mode) {
   Uint32 flags = 0;
@@ -107,7 +100,7 @@ static bool write_file(void* _impl, const Byte* _data, Size _size, Uint64 _offse
   return true;
 }
 
-static bool stat_file(void* _impl, File::Stat& stat_) {
+static bool stat_file(void* _impl, UnbufferedFile::Stat& stat_) {
   struct stat buf;
   if (fstat(impl(_impl), &buf) != -1) {
     stat_.size = buf.st_size;
@@ -219,16 +212,41 @@ static bool stat_file(void* _impl, File::Stat& stat_) {
 }
 #endif
 
-Optional<File> File::open(Memory::Allocator& _allocator, const char* _file_name, const char* _mode) {
+UnbufferedFile::UnbufferedFile(UnbufferedFile&& other_)
+  : Stream{Utility::move(other_)}
+  , m_impl{Utility::exchange(other_.m_impl, nullptr)}
+  , m_name{Utility::move(other_.m_name)}
+  , m_mode{Utility::exchange(other_.m_mode, nullptr)}
+{
+}
+
+UnbufferedFile::UnbufferedFile(Uint32 _flags, void* _impl, String&& name_, const char* _mode)
+  : Stream{_flags}
+  , m_impl{_impl}
+  , m_name{Utility::move(name_)}
+  , m_mode{_mode}
+{
+}
+
+UnbufferedFile& UnbufferedFile::operator=(UnbufferedFile&& file_) {
+  if (this != &file_) {
+    (void)close();
+    Stream::operator=(Utility::move(file_));
+    m_impl = Utility::exchange(file_.m_impl, nullptr);
+    m_name = Utility::move(file_.m_name);
+    m_mode = Utility::exchange(file_.m_mode, nullptr);
+  }
+  return *this;
+}
+
+Optional<UnbufferedFile> UnbufferedFile::open(Memory::Allocator& _allocator, const char* _file_name, const char* _mode) {
   if (auto file = open_file(_allocator, _file_name, _mode)) {
-    return File{flags_from_mode(_mode), file, _mode};
+    return UnbufferedFile{flags_from_mode(_mode), file, _file_name, _mode};
   }
   return nullopt;
 }
 
-Uint64 File::on_read(Byte* _data, Uint64 _size, Uint64 _offset) {
-  RX_ASSERT(m_impl, "invalid");
-
+Uint64 UnbufferedFile::on_read(Byte* _data, Uint64 _size, Uint64 _offset) {
   // Process reads in loop since |read_file| can read less than requested.
   Uint64 bytes = 0;
   while (bytes < _size) {
@@ -241,9 +259,7 @@ Uint64 File::on_read(Byte* _data, Uint64 _size, Uint64 _offset) {
   return bytes;
 }
 
-Uint64 File::on_write(const Byte* _data, Uint64 _size, Uint64 _offset) {
-  RX_ASSERT(m_impl, "invalid");
-
+Uint64 UnbufferedFile::on_write(const Byte* _data, Uint64 _size, Uint64 _offset) {
   // Process writes in loop since |write_file| can write less than requested.
   Uint64 bytes = 0;
   while (bytes < _size) {
@@ -253,16 +269,14 @@ Uint64 File::on_write(const Byte* _data, Uint64 _size, Uint64 _offset) {
     }
     bytes += wrote;
   }
-
   return bytes;
 }
 
-bool File::on_stat(Stat& stat_) const {
-  RX_ASSERT(m_impl, "invalid");
+bool UnbufferedFile::on_stat(Stat& stat_) const {
   return stat_file(m_impl, stat_);
 }
 
-bool File::close() {
+bool UnbufferedFile::close() {
   if (m_impl && close_file(m_impl)) {
     m_impl = nullptr;
     return true;
@@ -270,24 +284,18 @@ bool File::close() {
   return false;
 }
 
-File& File::operator=(File&& file_) {
-  if (this != &file_) {
-    (void)close();
-    Stream::operator=(Utility::move(file_));
-    m_impl = Utility::exchange(file_.m_impl, nullptr);
-    m_name = Utility::move(file_.m_name);
-    m_mode = Utility::exchange(file_.m_mode, nullptr);
-  }
-  return *this;
-}
-
-bool File::print(String&& contents_) {
+bool UnbufferedFile::print(String&& contents_) {
   RX_ASSERT(m_impl, "invalid");
   return write(reinterpret_cast<const Byte*>(contents_.data()), contents_.size());
 }
 
+const String& UnbufferedFile::name() const & {
+  return m_name;
+}
+
+// When reading in the entire contents of a file use an UnbufferedFile.
 Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator, const char* _file_name) {
-  if (auto file = File::open(_allocator, _file_name, "r")) {
+  if (auto file = UnbufferedFile::open(_allocator, _file_name, "r")) {
     return file->read_binary(_allocator);
   }
 
@@ -297,7 +305,7 @@ Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator, const cha
 }
 
 Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator, const char* _file_name) {
-  if (auto file = File::open(_allocator, _file_name, "r")) {
+  if (auto file = UnbufferedFile::open(_allocator, _file_name, "r")) {
     return file->read_text(_allocator);
   }
 

@@ -1,33 +1,30 @@
-#ifndef RX_CORE_FILESYSTEM_FILE_H
-#define RX_CORE_FILESYSTEM_FILE_H
+#ifndef RX_CORE_FILESYSTEM_UNBUFFERED_FILE_H
+#define RX_CORE_FILESYSTEM_UNBUFFERED_FILE_H
 #include "rx/core/stream.h"
 #include "rx/core/string.h"
 
-#include "rx/core/utility/exchange.h"
-
 namespace Rx::Filesystem {
 
-struct RX_API File
-  final : Stream
+struct RX_API UnbufferedFile
+  : Stream
 {
-  RX_MARK_NO_COPY(File);
+  RX_MARK_NO_COPY(UnbufferedFile);
 
-  constexpr File();
-  File(File&& other_);
-  ~File();
-  File& operator=(File&& file_);
+  constexpr UnbufferedFile(Memory::Allocator& _allocator);
+  UnbufferedFile(UnbufferedFile&& other_);
+  ~UnbufferedFile();
+  UnbufferedFile& operator=(UnbufferedFile&& file_);
 
   // Open a file with name |_file_name| in mode |_mode|.
   //
   // The valid modes for opening a file are "r", "w", "rw" and "a".
   //
   // This function returns nullopt if the file could not be opened.
-  static Optional<File> open(Memory::Allocator& _allocator, const char* _file_name, const char* _mode);
-  static Optional<File> open(Memory::Allocator& _allocator, const String& _file_name, const char* _mode);
+  static Optional<UnbufferedFile> open(Memory::Allocator& _allocator, const char* _file_name, const char* _mode);
+  static Optional<UnbufferedFile> open(Memory::Allocator& _allocator, const String& _file_name, const char* _mode);
 
   // Close the file.
-  [[nodiscard]]
-  bool close();
+  [[nodiscard]] bool close();
 
   // Print |_format| with |_args| to file using |_allocator| for formatting.
   template<typename... Ts>
@@ -46,50 +43,35 @@ protected:
   virtual bool on_stat(Stat& stat_) const;
 
 private:
-  constexpr File(Uint32 _flags, void* _impl, const char* _mode)
-    : Stream{_flags}
-    , m_impl{_impl}
-    , m_mode{_mode}
-  {
-  }
+  UnbufferedFile(Uint32 _flags, void* _impl, String&& name_, const char* _mode);
 
   void* m_impl;
   String m_name;
   const char* m_mode;
 };
 
-inline constexpr File::File()
+inline constexpr UnbufferedFile::UnbufferedFile(Memory::Allocator& _allocator)
   : Stream{0}
   , m_impl{nullptr}
+  , m_name{_allocator}
   , m_mode{nullptr}
 {
 }
 
-inline Optional<File> File::open(Memory::Allocator& _allocator, const String& _file_name, const char* _mode) {
-  return open(_allocator, _file_name.data(), _mode);
-}
-
-inline File::File(File&& other_)
-  : Stream{Utility::move(other_)}
-  , m_impl{Utility::exchange(other_.m_impl, nullptr)}
-  , m_name{Utility::move(other_.m_name)}
-  , m_mode{Utility::exchange(other_.m_mode, nullptr)}
-{
-}
-
-inline File::~File() {
+inline UnbufferedFile::~UnbufferedFile() {
   (void)close();
 }
 
-inline const String& File::name() const & {
-  return m_name;
+inline Optional<UnbufferedFile> UnbufferedFile::open(Memory::Allocator& _allocator, const String& _file_name, const char* _mode) {
+  return open(_allocator, _file_name.data(), _mode);
 }
 
 template<typename... Ts>
-bool File::print(Memory::Allocator& _allocator, const char* _format, Ts&&... _arguments) {
+bool UnbufferedFile::print(Memory::Allocator& _allocator, const char* _format, Ts&&... _arguments) {
   return print(String::format(_allocator, _format, Utility::forward<Ts>(_arguments)...));
 }
 
+// Helper functions for whole-file reading.
 RX_API Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator, const char* _file_name);
 RX_API Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator, const char* _file_name);
 
@@ -103,4 +85,4 @@ inline Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator, cons
 
 } // namespace Rx::Filesystem
 
-#endif // RX_CORE_FILESYSTEM_FILE_H
+#endif // RX_CORE_FILESYSTEM_UNBUFFERED_FILE_H
