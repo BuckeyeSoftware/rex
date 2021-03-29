@@ -3,7 +3,7 @@
 #include "rx/texture/loader.h"
 #include "rx/texture/scale.h"
 
-#include "rx/core/filesystem/file.h"
+#include "rx/core/filesystem/unbuffered_file.h"
 #include "rx/core/log.h"
 #include "rx/core/stream.h"
 
@@ -134,7 +134,7 @@ bool Loader::load(Stream& _stream, PixelFormat _want_format,
 bool Loader::load(const String& _file_name, PixelFormat _want_format,
   const Math::Vec2z& _max_dimensions)
 {
-  if (auto file = Filesystem::File::open(allocator(), _file_name, "r")) {
+  if (auto file = Filesystem::UnbufferedFile::open(allocator(), _file_name, "r")) {
     return load(*file, _want_format, _max_dimensions);
   }
   return false;

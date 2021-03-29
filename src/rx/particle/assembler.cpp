@@ -4,7 +4,7 @@
 #include "rx/particle/assembler.h"
 #include "rx/particle/vm.h"
 
-#include "rx/core/filesystem/file.h"
+#include "rx/core/filesystem/unbuffered_file.h"
 
 #include "rx/core/hints/unreachable.h"
 

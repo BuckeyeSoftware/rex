@@ -10,7 +10,7 @@
 #include "rx/core/concurrency/spin_lock.h"
 #include "rx/core/concurrency/scope_lock.h"
 
-#include "rx/core/filesystem/file.h"
+#include "rx/core/filesystem/buffered_file.h"
 
 #include "rx/core/log.h" // RX_LOG
 
@@ -246,7 +246,7 @@ bool Context::load(const char* _file_name) {
 }
 
 bool Context::save(const char* _file_name) {
-  auto file = Filesystem::File::open(m_allocator, _file_name, "w");
+  auto file = Filesystem::BufferedFile::open(m_allocator, _file_name, "w");
   if (!file) {
     return false;
   }
@@ -255,6 +255,7 @@ bool Context::save(const char* _file_name) {
     if (!(_expr)) return false
 
   logger->info("saving '%s'", _file_name);
+  String s;
   for (const VariableReference *head = g_head; head; head = head->m_next) {
     if (VariableType_is_ranged(head->type())) {
       attempt(file->print(m_allocator, "## %s (in range %s, defaults to %s)\n",

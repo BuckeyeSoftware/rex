@@ -1,4 +1,4 @@
-#include "rx/core/filesystem/file.h"
+#include "rx/core/filesystem/unbuffered_file.h"
 #include "rx/core/concurrency/thread_pool.h"
 #include "rx/core/concurrency/wait_group.h"
 #include "rx/core/json.h"
@@ -63,7 +63,7 @@ bool Loader::load(Stream& _stream) {
 }
 
 bool Loader::load(const String& _file_name) {
-  if (auto file = Filesystem::File::open(allocator(), _file_name, "r")) {
+  if (auto file = Filesystem::UnbufferedFile::open(allocator(), _file_name, "r")) {
     return load(*file);
   }
   return false;

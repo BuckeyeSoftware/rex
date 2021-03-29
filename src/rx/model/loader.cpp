@@ -5,7 +5,7 @@
 #include "rx/core/map.h"
 #include "rx/core/ptr.h"
 #include "rx/core/json.h"
-#include "rx/core/filesystem/file.h"
+#include "rx/core/filesystem/unbuffered_file.h"
 #include "rx/core/algorithm/clamp.h"
 
 #include "rx/core/concurrency/thread_pool.h"
@@ -60,7 +60,7 @@ bool Loader::load(Stream& _stream) {
 }
 
 bool Loader::load(const String& _file_name) {
-  if (auto file = Filesystem::File::open(allocator(), _file_name, "r")) {
+  if (auto file = Filesystem::UnbufferedFile::open(allocator(), _file_name, "r")) {
     return load(*file);
   }
   return false;

@@ -6,7 +6,7 @@
 
 #include "rx/core/json.h"
 #include "rx/core/optional.h"
-#include "rx/core/filesystem/file.h"
+#include "rx/core/filesystem/unbuffered_file.h"
 #include "rx/core/algorithm/topological_sort.h"
 
 RX_LOG("render/technique", logger);
@@ -809,7 +809,7 @@ bool Technique::Configuration::parse_specialization(
 
 bool Technique::load(const String& _file_name) {
   auto& allocator = m_frontend->allocator();
-  if (auto file = Filesystem::File::open(allocator, _file_name, "r")) {
+  if (auto file = Filesystem::UnbufferedFile::open(allocator, _file_name, "r")) {
     return load(*file);
   }
   return false;

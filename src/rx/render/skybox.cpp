@@ -7,7 +7,7 @@
 
 #include "rx/math/vec3.h"
 
-#include "rx/core/filesystem/file.h"
+#include "rx/core/filesystem/unbuffered_file.h"
 #include "rx/core/json.h"
 #include "rx/core/profiler.h"
 #include "rx/core/concurrency/thread_pool.h"
@@ -119,7 +119,7 @@ void Skybox::load_async(const String& _file_name, const Math::Vec2z& _max_face_d
 
 bool Skybox::load(const String& _file_name, const Math::Vec2z& _max_face_dimensions) {
   auto& allocator = m_frontend->allocator();
-  if (auto file = Filesystem::File::open(allocator, _file_name, "r")) {
+  if (auto file = Filesystem::UnbufferedFile::open(allocator, _file_name, "r")) {
     return load(*file, _max_face_dimensions);
   }
   return false;

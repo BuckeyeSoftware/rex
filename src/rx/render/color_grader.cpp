@@ -14,7 +14,7 @@
 
 #include "rx/core/concurrency/scope_lock.h"
 
-#include "rx/core/filesystem/file.h"
+#include "rx/core/filesystem/buffered_file.h"
 
 #include "rx/texture/loader.h"
 
