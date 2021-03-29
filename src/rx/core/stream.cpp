@@ -63,8 +63,12 @@ bool Stream::on_stat(Stat&) const {
   abort("stream does not implement on_stat");
 }
 
+bool Stream::on_flush() {
+  abort("stream does not implement on_flush");
+}
+
 Uint64 Stream::read(Byte* _data, Uint64 _size) {
-  if (!can_read() || _size == 0) {
+  if (!(m_flags & READ) || _size == 0) {
     return 0;
   }
 
@@ -78,7 +82,7 @@ Uint64 Stream::read(Byte* _data, Uint64 _size) {
 }
 
 Uint64 Stream::write(const Byte* _data, Uint64 _size) {
-  if (!can_write() || _size == 0) {
+  if (!(m_flags & WRITE) || _size == 0) {
     return 0;
   }
 
@@ -148,15 +152,31 @@ void Stream::rewind() {
 }
 
 Optional<Stream::Stat> Stream::stat() const {
-  if (Stat s; can_stat() && on_stat(s)) {
+  // Stream does not support stating.
+  if (!(m_flags & STAT)) {
+    return nullopt;
+  }
+
+  if (Stat s; on_stat(s)) {
     return s;
   }
+
+  // Stream supports stating but |on_stat| failed for some reason.
   return nullopt;
+}
+
+bool Stream::flush() {
+  // Stream does not support flushing.
+  if (!(m_flags & FLUSH)) {
+    return false;
+  }
+
+  return on_flush();
 }
 
 Optional<LinearBuffer> Stream::read_binary(Memory::Allocator& _allocator) {
   auto n_bytes = size();
-  if (!n_bytes) {
+  if (!n_bytes || !*n_bytes) {
     return nullopt;
   }
 

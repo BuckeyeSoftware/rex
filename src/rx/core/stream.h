@@ -19,7 +19,8 @@ struct RX_API Stream {
   enum : Uint32 {
     READ  = 1 << 0,
     WRITE = 1 << 1,
-    STAT  = 1 << 3
+    STAT  = 1 << 3,
+    FLUSH = 1 << 4
   };
 
   constexpr Stream(Uint32 _flags);
@@ -39,14 +40,17 @@ struct RX_API Stream {
   // Write |_size| bytes from |_data|. Returns the amount of bytes written.
   [[nodiscard]] Uint64 write(const Byte* _data, Uint64 _size);
 
+  // Stat stream for info.
+  Optional<Stat> stat() const;
+
+  // Flush the stream.
+  [[nodiscard]] bool flush();
+
   // Seek stream |_where| bytes relative to |_whence|. Returns true on success.
   [[nodiscard]] bool seek(Sint64 _where, Whence _whence);
 
   // Rewind the stream. Convenience and prose alias for seek(0, SET).
   void rewind();
-
-  // Stat stream for info.
-  Optional<Stat> stat() const;
 
   // Where in the stream we are.
   Uint64 tell() const;
@@ -54,10 +58,8 @@ struct RX_API Stream {
   // The size of the stream.
   Optional<Uint64> size() const;
 
-  // Supported stream functions.
-  constexpr bool can_read() const;
-  constexpr bool can_write() const;
-  constexpr bool can_stat() const;
+  // Get flags of the stream.
+  constexpr Uint32 flags() const;
 
   // Check if end-of-stream.
   constexpr bool is_eos() const;
@@ -68,7 +70,7 @@ struct RX_API Stream {
   Optional<LinearBuffer> read_binary(Memory::Allocator& _allocator);
   Optional<LinearBuffer> read_text(Memory::Allocator& _allocator);
 
-protected:
+// protected:
   // Read |_size| bytes from stream at |_offset| into |_data|.
   virtual Uint64 on_read(Byte* _data, Uint64 _size, Uint64 _offset);
 
@@ -78,7 +80,10 @@ protected:
   // Stat the stream.
   virtual bool on_stat(Stat& stat_) const;
 
-private:
+  // Optional flushing of the stream.
+  virtual bool on_flush();
+
+protected:
   // End-of-stream flag. This is set when |on_read| returns a truncated result.
   static inline constexpr Uint32 EOS = 1 << 31;
   Uint32 m_flags;
@@ -118,20 +123,12 @@ inline Optional<Uint64> Stream::size() const {
   return nullopt;
 }
 
-inline constexpr bool Stream::can_read() const {
-  return m_flags & READ;
-}
-
-inline constexpr bool Stream::can_write() const {
-  return m_flags & WRITE;
-}
-
-inline constexpr bool Stream::can_stat() const {
-  return m_flags & STAT;
-}
-
 inline constexpr bool Stream::is_eos() const {
   return m_flags & EOS;
+}
+
+inline constexpr Uint32 Stream::flags() const {
+  return m_flags;
 }
 
 } // namespace Rx
