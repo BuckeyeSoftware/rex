@@ -159,7 +159,7 @@ inline constexpr Logger& Logger::instance() {
 
 bool Logger::subscribe(Stream& _stream) {
   // The stream needs to be writable.
-  if (!_stream.can_write()) {
+  if (!(_stream.flags() & Stream::WRITE)) {
     return false;
   }
 
@@ -247,6 +247,11 @@ void Logger::flush_unlocked() {
   // Flush all message entries.
   m_messages.each_fwd([this](Ptr<Message>& message_) { write(message_); });
   m_messages.clear();
+
+  // Flush all the streams.
+  m_streams.each_fwd([](Stream* _stream) {
+    (void)_stream->flush();
+  });
 }
 
 void Logger::write(Ptr<Message>& message_) {
