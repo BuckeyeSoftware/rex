@@ -7,8 +7,8 @@
 
 #include "rx/math/vec2.h"
 
-namespace Rx {
-  struct Stream;
+namespace Rx::Stream {
+  struct Context;
 }
 
 namespace Rx::Texture {
@@ -60,7 +60,7 @@ struct Loader {
   constexpr Loader(Memory::Allocator& _allocator);
   ~Loader() = default;
 
-  [[nodiscard]] bool load(Stream& _stream, PixelFormat _want_format,
+  [[nodiscard]] bool load(Stream::Context& _stream, PixelFormat _want_format,
     const Math::Vec2z& _max_dimensions);
   [[nodiscard]] bool load(const String& _file_name, PixelFormat _want_format,
     const Math::Vec2z& _max_dimensions);

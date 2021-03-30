@@ -6,8 +6,11 @@
 
 namespace Rx {
   struct JSON;
-  struct Stream;
-}
+} // namespace Rx
+
+namespace Rx::Stream {
+  struct Context;
+} // namespace Rx::Stream
 
 namespace Rx::Render::Frontend {
 
@@ -65,7 +68,7 @@ struct Technique {
     Vector<String> m_specializations;
   };
 
-  [[nodiscard]] bool load(Stream& _stream);
+  [[nodiscard]] bool load(Stream::Context& _stream);
   [[nodiscard]] bool load(const String& _file_name);
 
   [[nodiscard]] bool parse(const JSON& _description);

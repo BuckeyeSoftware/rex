@@ -100,7 +100,7 @@ static bool write_file(void* _impl, const Byte* _data, Size _size, Uint64 _offse
   return true;
 }
 
-static bool stat_file(void* _impl, UnbufferedFile::Stat& stat_) {
+static bool stat_file(void* _impl, Stream::Stat& stat_) {
   struct stat buf;
   if (fstat(impl(_impl), &buf) != -1) {
     stat_.size = buf.st_size;
@@ -213,7 +213,7 @@ static bool stat_file(void* _impl, File::Stat& stat_) {
 #endif
 
 UnbufferedFile::UnbufferedFile(UnbufferedFile&& other_)
-  : Stream{Utility::move(other_)}
+  : Context{Utility::move(other_)}
   , m_impl{Utility::exchange(other_.m_impl, nullptr)}
   , m_name{Utility::move(other_.m_name)}
   , m_mode{Utility::exchange(other_.m_mode, nullptr)}
@@ -221,7 +221,7 @@ UnbufferedFile::UnbufferedFile(UnbufferedFile&& other_)
 }
 
 UnbufferedFile::UnbufferedFile(Uint32 _flags, void* _impl, String&& name_, const char* _mode)
-  : Stream{_flags}
+  : Context{_flags}
   , m_impl{_impl}
   , m_name{Utility::move(name_)}
   , m_mode{_mode}
@@ -231,7 +231,7 @@ UnbufferedFile::UnbufferedFile(Uint32 _flags, void* _impl, String&& name_, const
 UnbufferedFile& UnbufferedFile::operator=(UnbufferedFile&& file_) {
   if (this != &file_) {
     (void)close();
-    Stream::operator=(Utility::move(file_));
+    Context::operator=(Utility::move(file_));
     m_impl = Utility::exchange(file_.m_impl, nullptr);
     m_name = Utility::move(file_.m_name);
     m_mode = Utility::exchange(file_.m_mode, nullptr);
@@ -272,7 +272,7 @@ Uint64 UnbufferedFile::on_write(const Byte* _data, Uint64 _size, Uint64 _offset)
   return bytes;
 }
 
-bool UnbufferedFile::on_stat(Stat& stat_) const {
+bool UnbufferedFile::on_stat(Stream::Stat& stat_) const {
   return stat_file(m_impl, stat_);
 }
 

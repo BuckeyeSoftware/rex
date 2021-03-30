@@ -2,9 +2,9 @@
 #define RX_CORE_SERIALIZE_BUFFER_H
 #include "rx/core/types.h"
 
-namespace Rx {
-  struct Stream;
-}
+namespace Rx::Stream {
+  struct Context;
+} // namespace Rx::Stream
 
 namespace Rx::serialize {
 
@@ -16,7 +16,7 @@ struct RX_API Buffer {
     WRITE
   };
 
-  Buffer(Stream& _stream, Mode _mode);
+  Buffer(Stream::Context& _stream, Mode _mode);
   ~Buffer();
 
   [[nodiscard]] bool write_byte(Byte _byte);
@@ -29,7 +29,7 @@ struct RX_API Buffer {
   [[nodiscard]] bool flush();
 
 private:
-  Stream* m_stream;
+  Stream::Context* m_stream;
   Mode m_mode;
 
   Byte m_buffer[SIZE];

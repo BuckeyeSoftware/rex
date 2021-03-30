@@ -1,38 +1,21 @@
-#ifndef RX_CORE_STREAM_H
-#define RX_CORE_STREAM_H
+#ifndef RX_CORE_STREAM_CONTEXT_H
+#define RX_CORE_STREAM_CONTEXT_H
 #include "rx/core/linear_buffer.h"
 #include "rx/core/optional.h"
 
+#include "rx/core/stream/operations.h"
+
 namespace Rx {
+  struct String;
+} // namespace Rx
 
-struct String;
+namespace Rx::Stream {
 
-struct RX_API Stream {
-  RX_MARK_NO_COPY(Stream);
-
-  struct Stat {
-    Uint64 size;
-    // Can extend with aditional stats.
-  };
-
-  // Stream flags.
-  enum : Uint32 {
-    READ  = 1 << 0,
-    WRITE = 1 << 1,
-    STAT  = 1 << 3,
-    FLUSH = 1 << 4
-  };
-
-  constexpr Stream(Uint32 _flags);
-  Stream(Stream&& stream_);
-  virtual ~Stream();
-  Stream& operator=(Stream&& stream_);
-
-  enum class Whence : Uint8 {
-    SET,     // Beginning of stream.
-    CURRENT, // Current position
-    END      // End of stream.
-  };
+struct RX_API Context {
+  constexpr Context(Uint32 _flags);
+  Context(Context&& stream_);
+  virtual ~Context();
+  Context& operator=(Context&& stream_);
 
   // Read |_size| bytes into |_data|. Returns the amount of bytes written.
   [[nodiscard]] Uint64 read(Byte* _data, Uint64 _size);
@@ -70,7 +53,6 @@ struct RX_API Stream {
   Optional<LinearBuffer> read_binary(Memory::Allocator& _allocator);
   Optional<LinearBuffer> read_text(Memory::Allocator& _allocator);
 
-// protected:
   // Read |_size| bytes from stream at |_offset| into |_data|.
   virtual Uint64 on_read(Byte* _data, Uint64 _size, Uint64 _offset);
 
@@ -90,47 +72,47 @@ protected:
   Uint64 m_offset;
 };
 
-inline constexpr Stream::Stream(Uint32 _flags)
+inline constexpr Context::Context(Uint32 _flags)
   : m_flags{_flags}
   , m_offset{0}
 {
 }
 
-inline Stream::Stream(Stream&& stream_)
-  : m_flags{Utility::exchange(stream_.m_flags, 0)}
-  , m_offset{Utility::exchange(stream_.m_offset, 0)}
+inline Context::Context(Context&& context_)
+  : m_flags{Utility::exchange(context_.m_flags, 0)}
+  , m_offset{Utility::exchange(context_.m_offset, 0)}
 {
 }
 
-inline Stream::~Stream() = default;
+inline Context::~Context() = default;
 
-inline Stream& Stream::operator=(Stream&& stream_) {
-  if (this != &stream_) {
-    m_flags = Utility::exchange(stream_.m_flags, 0);
-    m_offset = Utility::exchange(stream_.m_offset, 0);
+inline Context& Context::operator=(Context&& context_) {
+  if (this != &context_) {
+    m_flags = Utility::exchange(context_.m_flags, 0);
+    m_offset = Utility::exchange(context_.m_offset, 0);
   }
   return *this;
 }
 
-inline Uint64 Stream::tell() const {
+inline Uint64 Context::tell() const {
   return m_offset;
 }
 
-inline Optional<Uint64> Stream::size() const {
+inline Optional<Uint64> Context::size() const {
   if (auto s = stat()) {
     return s->size;
   }
   return nullopt;
 }
 
-inline constexpr bool Stream::is_eos() const {
+inline constexpr bool Context::is_eos() const {
   return m_flags & EOS;
 }
 
-inline constexpr Uint32 Stream::flags() const {
+inline constexpr Uint32 Context::flags() const {
   return m_flags;
 }
 
-} // namespace Rx
+} // namespace Rx::Stream
 
-#endif // RX_CORE_STREAM_H
+#endif // RX_CORE_STREAM_CONTEXT_H

@@ -1,15 +1,15 @@
 #include <string.h>
-#include "rx/core/buffered_stream.h"
+#include "rx/core/stream/buffered_stream.h"
 
 #include "rx/core/algorithm/min.h"
 #include "rx/core/algorithm/max.h"
 
-namespace Rx {
+namespace Rx::Stream {
 
 // [BufferedStream]
 BufferedStream::BufferedStream(BufferedStream&& buffered_stream_)
-  : Stream{Utility::move(buffered_stream_)}
-  , m_stream{Utility::exchange(buffered_stream_.m_stream, nullptr)}
+  : Context{Utility::move(buffered_stream_)}
+  , m_context{Utility::exchange(buffered_stream_.m_context, nullptr)}
   , m_buffer{Utility::move(buffered_stream_.m_buffer)}
   , m_pages{Utility::move(buffered_stream_.m_pages)}
   , m_page_size{Utility::exchange(buffered_stream_.m_page_size, 0)}
@@ -20,8 +20,8 @@ BufferedStream::BufferedStream(BufferedStream&& buffered_stream_)
 BufferedStream& BufferedStream::operator=(BufferedStream&& buffered_stream_) {
   if (this != &buffered_stream_) {
     on_flush();
-    Stream::operator=(Utility::move(buffered_stream_));
-    m_stream = Utility::exchange(buffered_stream_.m_stream, nullptr);
+    Context::operator=(Utility::move(buffered_stream_));
+    m_context = Utility::exchange(buffered_stream_.m_context, nullptr);
     m_buffer = Utility::move(buffered_stream_.m_buffer);
     m_pages = Utility::move(buffered_stream_.m_pages);
     m_page_size = Utility::exchange(buffered_stream_.m_page_size, 0);
@@ -46,7 +46,7 @@ bool BufferedStream::flush_page(Page& page_) {
   if (page_.dirty) {
     page_.dirty = 0;
     page_.hits = 0;
-    const auto bytes = m_stream->on_write(page_data(page_), page_.size, page_offset(page_));
+    const auto bytes = m_context->on_write(page_data(page_), page_.size, page_offset(page_));
     return bytes == page_.size;
   }
   return true;
@@ -135,7 +135,7 @@ BufferedStream::Page* BufferedStream::fill_page(Uint32 _page_no, Uint16 _allocat
     // stream. Here we need to store the actual amount of bytes this page
     // truelly represents, so that future flushing of the contents does not
     // over-flush the page and inflate the true size.
-    page.size = m_stream->on_read(page_data(page), m_page_size, page_offset(page));
+    page.size = m_context->on_read(page_data(page), m_page_size, page_offset(page));
   }
 
   return &page;
@@ -167,8 +167,8 @@ Uint16 BufferedStream::write_page(Uint32 _page_no, const Byte* _data, Uint16 _of
 
 // Flushes all pages in the cache that are dirty.
 bool BufferedStream::on_flush() {
-  // Nothing to flush if no stream.
-  if (!m_stream) {
+  // Nothing to flush if no context.
+  if (!m_context) {
     return true;
   }
 
@@ -178,6 +178,10 @@ bool BufferedStream::on_flush() {
   }
 
   return false;
+}
+
+const String& BufferedStream::name() const & {
+  return m_context->name();
 }
 
 BufferedStream::Iterator BufferedStream::page_iterate(Uint64 _size, Uint64 _offset) const {
@@ -205,7 +209,6 @@ BufferedStream::Iterator BufferedStream::page_iterate(Uint64 _size, Uint64 _offs
   return result;
 }
 
-
 bool BufferedStream::resize(Uint16 _page_size, Uint8 _page_count) {
   // Flush everything in cache.
   if (!on_flush()) {
@@ -225,9 +228,9 @@ bool BufferedStream::resize(Uint16 _page_size, Uint8 _page_count) {
   return false;
 }
 
-bool BufferedStream::attach(Stream* _stream) {
+bool BufferedStream::attach(Context* _context) {
   // Nothing to do when already attached.
-  if (m_stream == _stream) {
+  if (m_context == _context) {
     return true;
   }
 
@@ -236,11 +239,11 @@ bool BufferedStream::attach(Stream* _stream) {
     return false;
   }
 
-  // Change the stream.
-  m_stream = _stream;
+  // Change the context.
+  m_context = _context;
 
-  // Adopt the flags of that stream.
-  m_flags = _stream->flags() | FLUSH;
+  // Adopt the flags of the context.
+  m_flags = _context ? (_context->flags() | FLUSH) : 0;
 
   return true;
 }
@@ -272,7 +275,7 @@ Uint64 BufferedStream::on_write(const Byte* _data, Uint64 _size, Uint64 _offset)
 }
 
 bool BufferedStream::on_stat(Stat& stat_) const {
-  auto stat = m_stream->stat();
+  auto stat = m_context->stat();
   if (!stat) {
     return false;
   }

@@ -1,12 +1,13 @@
 #include <string.h> // memcpy
 
 #include "rx/core/serialize/buffer.h"
-#include "rx/core/stream.h"
 #include "rx/core/algorithm/min.h"
+
+#include "rx/core/stream/context.h"
 
 namespace Rx::serialize {
 
-Buffer::Buffer(Stream& _stream, Mode _mode)
+Buffer::Buffer(Stream::Context& _stream, Mode _mode)
   : m_stream{&_stream}
   , m_mode{_mode}
   , m_cursor{0}

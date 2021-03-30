@@ -2,12 +2,13 @@
 
 #include "rx/core/serialize/decoder.h"
 #include "rx/core/linear_buffer.h"
-#include "rx/core/stream.h"
 #include "rx/core/assert.h"
+
+#include "rx/core/stream/context.h"
 
 namespace Rx::serialize {
 
-Decoder::Decoder(Memory::Allocator& _allocator, Stream& _stream)
+Decoder::Decoder(Memory::Allocator& _allocator, Stream::Context& _stream)
   : m_allocator{_allocator}
   , m_stream{&_stream}
   , m_buffer{_stream, Buffer::Mode::READ}

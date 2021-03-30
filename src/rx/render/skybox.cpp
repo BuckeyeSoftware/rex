@@ -125,7 +125,7 @@ bool Skybox::load(const String& _file_name, const Math::Vec2z& _max_face_dimensi
   return false;
 }
 
-bool Skybox::load(Stream& _stream, const Math::Vec2z& _max_face_dimensions) {
+bool Skybox::load(Stream::Context& _stream, const Math::Vec2z& _max_face_dimensions) {
   auto& allocator = m_frontend->allocator();
 
   auto data = _stream.read_text(allocator);

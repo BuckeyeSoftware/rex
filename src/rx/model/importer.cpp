@@ -31,7 +31,7 @@ Importer::Importer(Memory::Allocator& _allocator)
 {
 }
 
-bool Importer::load(Stream& _stream) {
+bool Importer::load(Stream::Context& _stream) {
   m_name = _stream.name();
 
   if (!read(_stream)) {

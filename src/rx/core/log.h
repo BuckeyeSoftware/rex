@@ -6,7 +6,9 @@
 
 namespace Rx {
 
-struct Stream;
+namespace Stream {
+  struct Context;
+}
 
 struct RX_API Log {
   RX_MARK_NO_COPY(Log);
@@ -25,8 +27,8 @@ struct RX_API Log {
 
   constexpr Log(const char* _name, const SourceLocation& _source_location);
 
-  [[nodiscard]] static bool subscribe(Stream& _stream);
-  [[nodiscard]] static bool unsubscribe(Stream& _stream);
+  [[nodiscard]] static bool subscribe(Stream::Context& _stream);
+  [[nodiscard]] static bool unsubscribe(Stream::Context& _stream);
   [[nodiscard]] static bool enqueue(Log* _owner, Level _level, String&& _contents);
 
   static void flush();

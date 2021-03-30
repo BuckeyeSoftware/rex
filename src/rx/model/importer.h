@@ -11,9 +11,9 @@
 #include "rx/model/skeleton.h"
 #include "rx/model/animation.h"
 
-namespace Rx {
-struct Stream;
-} // namespace Rx
+namespace Rx::Stream {
+  struct Context;
+} // namespace Rx::Stream
 
 namespace Rx::Model {
 
@@ -35,11 +35,11 @@ struct Importer {
 
   Importer(Memory::Allocator& _allocator);
 
-  [[nodiscard]] bool load(Stream& _stream);
+  [[nodiscard]] bool load(Stream::Context& _stream);
   [[nodiscard]] bool load(const String& _file_name);
 
   // implemented by each model loader
-  [[nodiscard]] virtual bool read(Stream& _stream) = 0;
+  [[nodiscard]] virtual bool read(Stream::Context& _stream) = 0;
 
   Vector<Mesh>&& meshes();
   Vector<Uint32>&& elements();

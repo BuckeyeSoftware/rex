@@ -1,11 +1,11 @@
 #include <string.h> // memcpy
 
 #include "rx/core/serialize/encoder.h"
-#include "rx/core/stream.h"
+#include "rx/core/stream/context.h"
 
 namespace Rx::serialize {
 
-Encoder::Encoder(Memory::Allocator& _allocator, Stream& _stream)
+Encoder::Encoder(Memory::Allocator& _allocator, Stream::Context& _stream)
   : m_allocator{_allocator}
   , m_stream{&_stream}
   , m_buffer{_stream, Buffer::Mode::WRITE}

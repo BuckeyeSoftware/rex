@@ -1,14 +1,14 @@
 #include <limits.h> // UCHAR_MAX
 #include <string.h> // memmove
 
-#include "rx/core/stream.h"
+#include "rx/core/stream/context.h"
+
 #include "rx/core/string.h"
-#include "rx/core/linear_buffer.h"
 #include "rx/core/abort.h"
 
 #include "rx/core/hints/may_alias.h"
 
-namespace Rx {
+namespace Rx::Stream {
 
 static Optional<LinearBuffer> convert_text_encoding(LinearBuffer&& data_) {
   // Ensure the data contains a null-terminator.
@@ -51,23 +51,23 @@ static Optional<LinearBuffer> convert_text_encoding(LinearBuffer&& data_) {
   return Utility::move(data_);
 }
 
-Uint64 Stream::on_read(Byte*, Uint64, Uint64) {
+Uint64 Context::on_read(Byte*, Uint64, Uint64) {
   abort("stream does not implement on_read");
 }
 
-Uint64 Stream::on_write(const Byte*, Uint64, Uint64) {
+Uint64 Context::on_write(const Byte*, Uint64, Uint64) {
   abort("stream does not implement on_write");
 }
 
-bool Stream::on_stat(Stat&) const {
+bool Context::on_stat(Stat&) const {
   abort("stream does not implement on_stat");
 }
 
-bool Stream::on_flush() {
+bool Context::on_flush() {
   abort("stream does not implement on_flush");
 }
 
-Uint64 Stream::read(Byte* _data, Uint64 _size) {
+Uint64 Context::read(Byte* _data, Uint64 _size) {
   if (!(m_flags & READ) || _size == 0) {
     return 0;
   }
@@ -81,7 +81,7 @@ Uint64 Stream::read(Byte* _data, Uint64 _size) {
   return read;
 }
 
-Uint64 Stream::write(const Byte* _data, Uint64 _size) {
+Uint64 Context::write(const Byte* _data, Uint64 _size) {
   if (!(m_flags & WRITE) || _size == 0) {
     return 0;
   }
@@ -91,7 +91,7 @@ Uint64 Stream::write(const Byte* _data, Uint64 _size) {
   return write;
 }
 
-bool Stream::seek(Sint64 _where, Whence _whence) {
+bool Context::seek(Sint64 _where, Whence _whence) {
   // Calculate the new offset based on |_whence|.
   if (_whence == Whence::CURRENT) {
     if (m_flags & EOS) {
@@ -146,12 +146,12 @@ bool Stream::seek(Sint64 _where, Whence _whence) {
   return true;
 }
 
-void Stream::rewind() {
+void Context::rewind() {
   m_flags &= ~EOS;
   m_offset = 0;
 }
 
-Optional<Stream::Stat> Stream::stat() const {
+Optional<Stat> Context::stat() const {
   // Stream does not support stating.
   if (!(m_flags & STAT)) {
     return nullopt;
@@ -165,7 +165,7 @@ Optional<Stream::Stat> Stream::stat() const {
   return nullopt;
 }
 
-bool Stream::flush() {
+bool Context::flush() {
   // Stream does not support flushing.
   if (!(m_flags & FLUSH)) {
     return false;
@@ -174,7 +174,7 @@ bool Stream::flush() {
   return on_flush();
 }
 
-Optional<LinearBuffer> Stream::read_binary(Memory::Allocator& _allocator) {
+Optional<LinearBuffer> Context::read_binary(Memory::Allocator& _allocator) {
   auto n_bytes = size();
   if (!n_bytes || !*n_bytes) {
     return nullopt;
@@ -192,7 +192,7 @@ Optional<LinearBuffer> Stream::read_binary(Memory::Allocator& _allocator) {
   return nullopt;
 }
 
-Optional<LinearBuffer> Stream::read_text(Memory::Allocator& _allocator) {
+Optional<LinearBuffer> Context::read_text(Memory::Allocator& _allocator) {
   if (auto result = read_binary(_allocator)) {
     // Convert the given byte stream into a compatible UTF-8 encoding. This will
     // introduce a null-terminator, strip Unicode BOMs and convert UTF-16

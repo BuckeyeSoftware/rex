@@ -1,12 +1,12 @@
 #ifndef RX_CORE_FILESYSTEM_UNBUFFERED_FILE_H
 #define RX_CORE_FILESYSTEM_UNBUFFERED_FILE_H
-#include "rx/core/stream.h"
+#include "rx/core/stream/context.h"
 #include "rx/core/string.h"
 
 namespace Rx::Filesystem {
 
 struct RX_API UnbufferedFile
-  : Stream
+  : Stream::Context
 {
   RX_MARK_NO_COPY(UnbufferedFile);
 
@@ -40,7 +40,7 @@ struct RX_API UnbufferedFile
 protected:
   virtual Uint64 on_read(Byte* _data, Uint64 _size, Uint64 _offset);
   virtual Uint64 on_write(const Byte* _data, Uint64 _size, Uint64 _offset);
-  virtual bool on_stat(Stat& stat_) const;
+  virtual bool on_stat(Stream::Stat& stat_) const;
 
 private:
   UnbufferedFile(Uint32 _flags, void* _impl, String&& name_, const char* _mode);
@@ -51,7 +51,7 @@ private:
 };
 
 inline constexpr UnbufferedFile::UnbufferedFile(Memory::Allocator& _allocator)
-  : Stream{0}
+  : Stream::Context{0}
   , m_impl{nullptr}
   , m_name{_allocator}
   , m_mode{nullptr}

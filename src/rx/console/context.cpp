@@ -255,7 +255,6 @@ bool Context::save(const char* _file_name) {
     if (!(_expr)) return false
 
   logger->info("saving '%s'", _file_name);
-  String s;
   for (const VariableReference *head = g_head; head; head = head->m_next) {
     if (VariableType_is_ranged(head->type())) {
       attempt(file->print(m_allocator, "## %s (in range %s, defaults to %s)\n",

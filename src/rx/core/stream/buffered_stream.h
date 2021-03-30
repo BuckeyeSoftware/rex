@@ -1,12 +1,12 @@
-#ifndef RX_CORE_BUFFERED_STREAM_H
-#define RX_CORE_BUFFERED_STREAM_H
-#include "rx/core/stream.h"
+#ifndef RX_CORE_STREAM_BUFFERED_STREAM_H
+#define RX_CORE_STREAM_BUFFERED_STREAM_H
+#include "rx/core/stream/context.h"
 #include "rx/core/vector.h"
 
-namespace Rx {
+namespace Rx::Stream {
 
 struct RX_API BufferedStream
-  : Stream
+  : Context
 {
   static constexpr const auto BUFFER_PAGE_SIZE = 4096_u16;
   static constexpr const auto BUFFER_PAGE_COUNT = 64_u8;
@@ -31,8 +31,8 @@ struct RX_API BufferedStream
   // function was called.
   [[nodiscard]] bool resize(Uint16 _page_size, Uint8 _page_count);
 
-  // Attach stream to the buffer stream.
-  [[nodiscard]] bool attach(Stream* _stream);
+  // Attach context to this stream.
+  [[nodiscard]] bool attach(Context* _stream);
 
   virtual Uint64 on_read(Byte* data_, Uint64 _size, Uint64 _offset);
   virtual Uint64 on_write(const Byte* _data, Uint64 _size, Uint64 _offset);
@@ -40,7 +40,7 @@ struct RX_API BufferedStream
   virtual bool on_flush();
 
   // Cannot be called on an invalid stream.
-  virtual const String& name() const & { return m_stream->name(); }
+  virtual const String& name() const &;
 
 private:
   // sizeof(Page) = 8.
@@ -126,7 +126,7 @@ private:
 
   Iterator page_iterate(Uint64 _size, Uint64 _offset) const;
 
-  Stream* m_stream;
+  Context* m_context;
   LinearBuffer m_buffer;
   Vector<Page> m_pages;
   Uint16 m_page_size;
@@ -134,8 +134,8 @@ private:
 };
 
 inline constexpr BufferedStream::BufferedStream(Memory::Allocator& _allocator)
-  : Stream{0}
-  , m_stream{nullptr}
+  : Context{0}
+  , m_context{nullptr}
   , m_buffer{_allocator}
   , m_pages{_allocator}
   , m_page_size{0}
@@ -147,6 +147,6 @@ inline BufferedStream::~BufferedStream() {
   on_flush();
 }
 
-} // namespace Rx
+} // namespace Rx::Stream
 
-#endif // RX_CORE_BUFFERED_STREAM_H
+#endif // RX_CORE_STREAM_BUFFERED_STREAM_H

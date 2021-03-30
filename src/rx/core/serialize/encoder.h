@@ -8,17 +8,15 @@
 #include "rx/core/string.h"
 #include "rx/core/string_table.h"
 
-namespace Rx {
-
-struct Stream;
-
+namespace Rx::Stream {
+  struct Context;
 } // namespace Rx
 
 namespace Rx::serialize {
 
 struct RX_API Encoder {
-  Encoder(Stream& _stream);
-  Encoder(Memory::Allocator& _allocator, Stream& _stream);
+  Encoder(Stream::Context& _stream);
+  Encoder(Memory::Allocator& _allocator, Stream::Context& _stream);
   ~Encoder();
 
   [[nodiscard]] bool write_uint(Uint64 _value);
@@ -50,7 +48,7 @@ private:
   [[nodiscard]] bool finalize();
 
   Memory::Allocator& m_allocator;
-  Stream* m_stream;
+  Stream::Context* m_stream;
 
   Header m_header;
   Buffer m_buffer;
@@ -58,7 +56,7 @@ private:
   StringTable m_strings;
 };
 
-inline Encoder::Encoder(Stream& _stream)
+inline Encoder::Encoder(Stream::Context& _stream)
   : Encoder{Memory::SystemAllocator::instance(), _stream}
 {
 }

@@ -47,7 +47,7 @@ struct Model {
               const Math::Mat4x4f& _view, const Math::Mat4x4f& _projection,
               Uint32 _flags, Render::Immediate3D* _immediate = nullptr);
 
-  [[nodiscard]] bool load(Stream& _stream);
+  [[nodiscard]] bool load(Stream::Context& _stream);
   [[nodiscard]] bool load(const String& _file_name);
 
   const Optional<Rx::Model::Skeleton>& skeleton() const &;

@@ -4,7 +4,7 @@
 
 #include "rx/model/iqm.h"
 
-#include "rx/core/stream.h"
+#include "rx/core/stream/context.h"
 
 namespace Rx::Model {
 
@@ -113,7 +113,7 @@ struct IQM::Header {
   Uint32 extensions_offset;
 };
 
-bool IQM::read(Stream& _stream) {
+bool IQM::read(Stream::Context& _stream) {
   const auto size = _stream.size();
   if (!size) {
     return false;

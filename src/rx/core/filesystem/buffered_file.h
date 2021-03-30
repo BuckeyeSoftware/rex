@@ -1,13 +1,13 @@
 #ifndef RX_CORE_FILESYSTEM_BUFFERED_FILE_H
 #define RX_CORE_FILESYSTEM_BUFFERED_FILE_H
 #include "rx/core/filesystem/unbuffered_file.h"
-#include "rx/core/buffered_stream.h"
+#include "rx/core/stream/buffered_stream.h"
 
 namespace Rx::Filesystem {
 
 // Buffered file.
 struct BufferedFile
-  : Stream
+  : Stream::BufferedStream
 {
   // Default buffer page size and count values for a file buffer.
   static constexpr const auto BUFFER_PAGE_SIZE = 4096_u16;
@@ -15,6 +15,7 @@ struct BufferedFile
 
   constexpr BufferedFile(Memory::Allocator& _allocator);
   BufferedFile(BufferedFile&& other_);
+  ~BufferedFile();
   BufferedFile& operator=(BufferedFile&& file_);
 
   // Open a file with name |_file_name| in mode |_mode|.
@@ -43,24 +44,19 @@ struct BufferedFile
 
   virtual const String& name() const &;
 
-protected:
-  virtual Uint64 on_read(Byte* data_, Uint64 _size, Uint64 _offset);
-  virtual Uint64 on_write(const Byte* _data, Uint64 _size, Uint64 _offset);
-  virtual bool on_stat(Stat& stat_) const;
-  virtual bool on_flush();
-
 private:
   BufferedFile(BufferedStream&& buffered_stream_, UnbufferedFile&& unbuffered_file_);
-
   UnbufferedFile m_unbuffered_file;
-  BufferedStream m_buffered_stream;
 };
 
 inline constexpr BufferedFile::BufferedFile(Memory::Allocator& _allocator)
-  : Stream{0}
+  : BufferedStream{_allocator}
   , m_unbuffered_file{_allocator}
-  , m_buffered_stream{_allocator}
 {
+}
+
+inline BufferedFile::~BufferedFile() {
+  (void)close();
 }
 
 inline Optional<BufferedFile> BufferedFile::open(Memory::Allocator& _allocator,

@@ -507,7 +507,7 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
   }
 }
 
-bool Model::load(Stream& _stream) {
+bool Model::load(Stream::Context& _stream) {
   Rx::Model::Loader loader{m_frontend->allocator()};
   return loader.load(_stream) && upload(loader);
 }

@@ -4,19 +4,17 @@ namespace Rx::Filesystem {
 
 // [BufferedFile]
 BufferedFile::BufferedFile(BufferedFile&& other_)
-  : Stream{Utility::move(other_)}
+  : BufferedStream{Utility::move(other_)}
   , m_unbuffered_file{Utility::move(other_.m_unbuffered_file)}
-  , m_buffered_stream{Utility::move(other_.m_buffered_stream)}
 {
-  (void)m_buffered_stream.attach(&m_unbuffered_file);
+  (void)attach(&m_unbuffered_file);
 }
 
 BufferedFile& BufferedFile::operator=(BufferedFile&& file_) {
   if (this != &file_) {
     (void)close();
-    Stream::operator=(Utility::move(file_));
+    BufferedStream::operator=(Utility::move(file_));
     m_unbuffered_file = Utility::move(file_.m_unbuffered_file);
-    m_buffered_stream = Utility::move(file_.m_buffered_stream);
   }
   return *this;
 }
@@ -33,7 +31,7 @@ Optional<BufferedFile> BufferedFile::open(Memory::Allocator& _allocator,
 }
 
 bool BufferedFile::close() {
-  if (!m_buffered_stream.flush()) {
+  if (!flush()) {
     return false;
   }
 
@@ -41,7 +39,7 @@ bool BufferedFile::close() {
     return false;
   }
 
-  (void)m_buffered_stream.attach(nullptr);
+  (void)attach(nullptr);
 
   return true;
 }
@@ -49,35 +47,18 @@ bool BufferedFile::close() {
 bool BufferedFile::print(String&& contents_) {
   const auto data = reinterpret_cast<const Byte*>(contents_.data());
   const auto size = contents_.size();
-  return m_buffered_stream.write(data, size) == size;
+  return write(data, size) == size;
 }
 
 const String& BufferedFile::name() const & {
   return m_unbuffered_file.name();
 }
 
-Uint64 BufferedFile::on_read(Byte* data_, Uint64 _size, Uint64 _offset) {
-  return m_buffered_stream.on_read(data_, _size, _offset);
-}
-
-Uint64 BufferedFile::on_write(const Byte* _data, Uint64 _size, Uint64 _offset) {
-  return m_buffered_stream.on_write(_data, _size, _offset);
-}
-
-bool BufferedFile::on_stat(Stat& stat_) const {
-  return m_buffered_stream.on_stat(stat_);
-}
-
-bool BufferedFile::on_flush() {
-  return m_buffered_stream.on_flush();
-}
-
 BufferedFile::BufferedFile(BufferedStream&& buffered_stream_, UnbufferedFile&& unbuffered_file_)
-  : Stream{unbuffered_file_.flags() | FLUSH}
+  : BufferedStream{Utility::move(buffered_stream_)}
   , m_unbuffered_file{Utility::move(unbuffered_file_)}
-  , m_buffered_stream{Utility::move(buffered_stream_)}
 {
-  (void)m_buffered_stream.attach(&m_unbuffered_file);
+  (void)attach(&m_unbuffered_file);
 }
 
 } // namespace Rx::Filesystem
