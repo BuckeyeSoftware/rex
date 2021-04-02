@@ -72,7 +72,6 @@ constexpr Optional<T>::Optional(T&& data_)
   m_data.init(Utility::move(data_));
 }
 
-
 template<typename T>
 constexpr Optional<T>::Optional(const T& _data)
   : m_data{}

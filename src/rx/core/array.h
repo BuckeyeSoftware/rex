@@ -1,13 +1,6 @@
 #ifndef RX_CORE_ARRAY_H
 #define RX_CORE_ARRAY_H
-//#include "rx/core/types.h"
-//#include "rx/core/assert.h"
-
-//#include "rx/core/utility/forward.h"
-#include "rx/core/optional.h"
-
-#include "rx/core/utility/copy.h"
-#include "rx/core/utility/move.h"
+#include "rx/core/assert.h"
 
 namespace Rx {
 

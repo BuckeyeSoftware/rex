@@ -26,9 +26,6 @@ struct RX_API JSON {
   static Optional<JSON> parse(Memory::Allocator& _allocator, const char* _contents, Size _length);
   static Optional<JSON> parse(Memory::Allocator& _allocator, const char* _contents);
   static Optional<JSON> parse(Memory::Allocator& _allocator, const String& _contents);
-  static Optional<JSON> parse(const char* _contents, Size _length);
-  static Optional<JSON> parse(const char* _contents);
-  static Optional<JSON> parse(const String& _contents);
 
   JSON& operator=(const JSON& _json);
   JSON& operator=(JSON&& json_);
@@ -104,18 +101,6 @@ inline constexpr JSON::JSON()
 
 inline Optional<JSON> JSON::parse(Memory::Allocator& _allocator, const String& _contents) {
   return parse(_allocator, _contents.data(), _contents.size());
-}
-
-inline Optional<JSON> JSON::parse(const char* _contents, Size _length) {
-  return parse(Memory::SystemAllocator::instance(), _contents, _length);
-}
-
-inline Optional<JSON> JSON::parse(const char* _contents) {
-  return parse(Memory::SystemAllocator::instance(), _contents);
-}
-
-inline Optional<JSON> JSON::parse(const String& _contents) {
-  return parse(Memory::SystemAllocator::instance(), _contents);
 }
 
 inline JSON::JSON(const JSON& _json)

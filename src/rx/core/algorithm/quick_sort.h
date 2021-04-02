@@ -1,8 +1,6 @@
 #ifndef RX_CORE_ALGORITHM_QUICK_SORT_H
 #define RX_CORE_ALGORITHM_QUICK_SORT_H
 #include "rx/core/algorithm/insertion_sort.h"
-
-#include "rx/core/utility/forward.h"
 #include "rx/core/utility/swap.h"
 
 namespace Rx::Algorithm {
