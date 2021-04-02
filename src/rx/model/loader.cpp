@@ -128,7 +128,7 @@ bool Loader::parse(const JSON& _definition) {
   Concurrency::Mutex mutex;
   Concurrency::WaitGroup group{materials.size()};
   materials.each([&](const JSON& _material) {
-    Concurrency::ThreadPool::instance().add([&, _material](int) {
+    (void)Concurrency::ThreadPool::instance().add([&, _material](int) {
       Material::Loader loader{allocator()};
       if (_material.is_string() && loader.load(_material.as_string())) {
         Concurrency::ScopeLock lock{mutex};

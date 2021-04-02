@@ -8,28 +8,30 @@ namespace Rx::Concurrency {
 // NOTE: Thread names must have static-storage which lives as long as the thread.
 // NOTE: Cannot deliver signals to threads.
 struct RX_API Thread {
+  using Func = Function<void(Sint32)>;
+
   RX_MARK_NO_COPY(Thread);
-  RX_MARK_NO_MOVE_ASSIGN(Thread);
 
-  template<typename F>
-  Thread(Memory::Allocator& _allocator, const char* _name, F&& _function);
-
-  template<typename F>
-  Thread(const char* _name, F&& _function);
-
+  constexpr Thread();
   Thread(Thread&& thread_);
   ~Thread();
+  Thread& operator=(Thread&& thread_);
+
+  template<typename F>
+  static Optional<Thread> create(Memory::Allocator& _allocator, const char* _name, F&& function_);
+  // Called by above function.
+  static Optional<Thread> create(Memory::Allocator& _allocator, const char* _name, Func&& func_);
 
   [[nodiscard]] bool join();
 
-  constexpr Memory::Allocator& allocator() const;
-
 private:
   struct RX_API State {
-    template<typename F>
-    State(Memory::Allocator& _allocator, const char* _name, F&& _function);
+    RX_MARK_NO_COPY(State);
+    RX_MARK_NO_MOVE(State);
 
-    void spawn();
+    State(Memory::Allocator& _allocator, const char* _name, Func&& function_);
+
+    [[nodiscard]] bool spawn();
     [[nodiscard]] bool join();
 
   private:
@@ -42,44 +44,56 @@ private:
     };
 
     Memory::Allocator& m_allocator;
-    Function<void(int)> m_function;
+    Func m_function;
     const char* m_name;
     bool m_joined;
   };
 
+  // Called by non-templated |create|.
+  Thread(Ptr<State>&& state_);
+
   Ptr<State> m_state;
 };
 
-template<typename F>
-Thread::State::State(Memory::Allocator& _allocator, const char* _name, F&& _function)
-  : m_nat{}
-  , m_allocator{_allocator}
-  , m_function{Utility::move(*Function<void(int)>::create(Utility::forward<F>(_function)))}
+// [Thread::State]
+inline Thread::State::State(Memory::Allocator& _allocator, const char* _name, Func&& function_)
+  : m_allocator{_allocator}
+  , m_function{Utility::move(function_)}
   , m_name{_name}
   , m_joined{false}
 {
-  spawn();
+}
+
+// [Thread]
+inline constexpr Thread::Thread() = default;
+
+inline Thread::Thread(Thread&&) = default;
+
+inline Thread::Thread(Ptr<State>&& state_)
+  : m_state{Utility::move(state_)}
+{
+}
+
+inline Thread::~Thread() {
+  RX_ASSERT(join(), "thread not joined");
+}
+
+inline Thread& Thread::operator=(Thread&& thread_) {
+  if (this != &thread_) {
+    // This join can only fail if the thread crashed.
+    RX_ASSERT(join(), "failed to join");
+    m_state = Utility::move(thread_.m_state);
+  }
+  return *this;
 }
 
 template<typename F>
-Thread::Thread(Memory::Allocator& _allocator, const char* _name, F&& _function)
-  : m_state{make_ptr<State>(_allocator, _allocator, _name, Utility::forward<F>(_function))}
-{
-}
-
-template<typename F>
-Thread::Thread(const char* _name, F&& _function)
-  : Thread{Memory::SystemAllocator::instance(), _name, Utility::forward<F>(_function)}
-{
-}
-
-inline Thread::Thread(Thread&& thread_)
-  : m_state{Utility::move(thread_.m_state)}
-{
-}
-
-RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Thread::allocator() const {
-  return m_state.allocator();
+Optional<Thread> Thread::create(Memory::Allocator& _allocator, const char* _name, F&& function_) {
+  auto function = Func::create(Utility::forward<F>(function_));
+  if (!function) {
+    return nullopt;
+  }
+  return create(_allocator, _name, Utility::move(*function));
 }
 
 } // namespace Rx::Concurrency

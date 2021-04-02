@@ -109,10 +109,10 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     draw_textures);
 }
 
-void Skybox::load_async(Concurrency::Scheduler& _scheduler,
+bool Skybox::load_async(Concurrency::Scheduler& _scheduler,
   const String& _file_name, const Math::Vec2z& _max_face_dimensions)
 {
-  _scheduler.add([=, this](int) {
+  return _scheduler.add([=, this](int) {
     // TODO(dweiler): Promise<bool> for status.
     (void)load(_file_name, _max_face_dimensions);
   });

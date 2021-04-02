@@ -46,7 +46,7 @@ struct Skybox {
     const Math::Mat4x4f& _projection,
     const ColorGrader::Entry* _grading = nullptr);
 
-  void load_async(Concurrency::Scheduler& _scheduler, const String& _file_name,
+  bool load_async(Concurrency::Scheduler& _scheduler, const String& _file_name,
     const Math::Vec2z& _max_face_dimensions);
 
   [[nodiscard]] bool load(Stream::Context& _stream, const Math::Vec2z& _max_face_dimensions);

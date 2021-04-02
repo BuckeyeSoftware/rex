@@ -39,7 +39,7 @@ ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _stati
 
   WaitGroup group{_threads};
   for (Size i{0}; i < _threads; i++) {
-    auto thread_func = Task::create([this, &group](int _thread_id) {
+    auto func = Task::create([this, &group](int _thread_id) {
       logger->info("starting thread %d", _thread_id);
 
       group.signal();
@@ -74,7 +74,16 @@ ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _stati
       }
     });
 
-    if (!thread_func || !m_threads.emplace_back("thread pool", Utility::move(*thread_func))) {
+    if (!func) {
+      break;
+    }
+
+    auto thread = Thread::create(m_allocator, "thread pool", Utility::move(*func));
+    if (!thread) {
+      break;
+    }
+
+    if (!m_threads.push_back(Utility::move(*thread))) {
       break;
     }
   }

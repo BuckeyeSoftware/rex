@@ -21,17 +21,80 @@ namespace Rx::Concurrency {
 
 static Atomic<int> g_thread_id;
 
-Thread::~Thread() {
-  if (m_state) {
-    RX_ASSERT(join(), "failed to join thread");
+#if defined(RX_PLATFORM_WINDOWS)
+struct ThreadDescription {
+  ThreadDescription()
+    : m_set_thread_description{nullptr}
+  {
+    // Determine if Windows supports the new SetThreadDescription API.
+    auto kernel = GetModuleHandleA("kernel32.dll");
+    auto set_thread_description = GetProcAddress(kernel, "SetThreadDescription");
+    if (set_thread_description) {
+      *reinterpret_cast<void**>(&m_set_thread_description) = set_thread_description;
+    }
   }
+
+  void set(HANDLE _handle, const String& _name) {
+    // When we have the new SetThreadDescription API, use it.
+    if (m_set_thread_description) {
+      // Convert thread name to UTF-16.
+      const WideString name = _name.to_utf16();
+      m_set_thread_description(_handle, reinterpret_cast<PCWSTR>(name.data()));
+    } else if (IsDebuggerPresent()) {
+      // Fallback is only supported inside the debugger.
+      #pragma pack(push, 8)
+      typedef struct THREAD_NAME_INFO {
+        DWORD dwType;
+        LPCSTR szName;
+        DWORD dwThreadID;
+        DWORD dwFlags;
+      } THREAD_NAME_INFO;
+      #pragma pack(pop)
+
+      THREAD_NAME_INFO info;
+
+      info.dwType = 0x1000;
+      info.szName = _name.data();
+      info.dwThreadID = GetThreadId(_handle);
+      info.dwFlags = 0;
+
+      #pragma warning(push)
+      #pragma warning(disable: 6320 6322)
+        __try {
+          RaiseException(0x406D1388, 0, sizeof(THREAD_NAME_INFO) / sizeof(ULONG_PTR),
+            reinterpret_cast<ULONG_PTR*>(&info));
+        } __except (EXCEPTION_EXECUTE_HANDLER) {
+          // Do nothing.
+        }
+      #pragma warning(pop)
+    }
+  }
+
+private:
+  HANDLE (WINAPI* m_set_thread_description)(HANDLE, PCWSTR);
+};
+
+static Global<ThreadDescription> s_thread_description{"system"};
+#endif // !defined(RX_PLATFORM_WINDOWS)
+
+// [Thread]
+Optional<Thread> Thread::create(Memory::Allocator& _allocator, const char* _name, Func&& function_) {
+  auto state = make_ptr<State>(_allocator, _allocator, _name, Utility::move(function_));
+  if (state && state->spawn()) {
+    return Thread{Utility::move(state)};
+  }
+  return nullopt;
 }
 
 bool Thread::join() {
-  return m_state && m_state->join();
+  // When there is no state the join should always succeed.
+  if (m_state) {
+    return m_state->join();
+  }
+  return true;
 }
 
-// state
+// [Thread::State]
 void* Thread::State::wrap(void* _data) {
 #if defined(RX_PLATFORM_POSIX) && !defined(RX_PLATFORM_EMSCRIPTEN)
   // Don't permit any signal delivery to threads.
@@ -51,12 +114,12 @@ void* Thread::State::wrap(void* _data) {
   return nullptr;
 }
 
-void Thread::State::spawn() {
+bool Thread::State::spawn() {
 #if defined(RX_PLATFORM_POSIX)
   // Spawn the thread.
   auto handle = reinterpret_cast<pthread_t*>(m_thread);
   if (pthread_create(handle, nullptr, wrap, reinterpret_cast<void*>(this)) != 0) {
-    RX_ASSERT(false, "thread creation failed");
+    return false;
   }
 
 #if !defined(RX_PLATFORM_EMSCRIPTEN)
@@ -64,6 +127,7 @@ void Thread::State::spawn() {
   pthread_setname_np(*handle, m_name);
 #endif
 
+  return true;
 #elif defined(RX_PLATFORM_WINDOWS)
   // |_beginthreadex| is a bit non-standard in that it expects the __stdcall
   // calling convention and to return unsigned int status. Our |wrap| function
@@ -79,19 +143,22 @@ void Thread::State::spawn() {
   auto thread = _beginthreadex(nullptr, 0,
     wrap_win32, reinterpret_cast<void*>(this), 0, nullptr);
 
-  RX_ASSERT(thread, "thread construction failed");
+  if (!thread) {
+    return false;
+  }
 
-  auto thread_handle = reinterpret_cast<HANDLE>(thread);
+  auto handle = reinterpret_cast<HANDLE>(thread);
 
-  // Convert thread name to UTF-16 and set the thread's name with the new
-  // |SetThreadDescription| API.
-  const WideString converted_name = String(m_allocator, m_name).to_utf16();
-  SetThreadDescription(thread_handle, reinterpret_cast<PCWSTR>(converted_name.data()));
+  // Set the thread description.
+  s_thread_description.set(handle, m_name);
 
-  // Store the result of |_beginthreadex| into the HANDLE storage given by
-  // |m_thread|.
-  *reinterpret_cast<HANDLE*>(m_thread) = thread_handle;
+  // Store the handle.
+  *reinterpret_cast<HANDLE*>(m_thread) = handle;
+
+  return true;
+
 #endif
+  return false;
 }
 
 bool Thread::State::join() {

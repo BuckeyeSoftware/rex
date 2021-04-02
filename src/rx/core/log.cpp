@@ -105,8 +105,16 @@ Logger::Logger()
   , m_messages{Memory::SystemAllocator::instance()}
   , m_status{RUNNING}
   , m_padding{0}
-  , m_thread{"logger", [this](int _thread_id) { process(_thread_id); }}
+  , m_thread{}
 {
+  auto thread = Concurrency::Thread::create(
+    Memory::SystemAllocator::instance(),
+    "loggger", [this](int _tid) { process(_tid); });
+
+  RX_ASSERT(thread, "failed to create thread");
+
+  m_thread = Utility::move(*thread);
+
   // Calculate padding needed for formatting log level.
   int max_level = Algorithm::max(
     strlen(string_for_level(Log::Level::WARNING)),
