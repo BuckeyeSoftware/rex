@@ -8,12 +8,17 @@
 
 #include "rx/render/color_grader.h"
 
+namespace Rx::Stream {
+  struct Context;
+} // namespace Stream
+
+namespace Rx::Concurrency {
+  struct Scheduler;
+} // namespace Concurrency
+
 namespace Rx {
-  namespace Stream {
-    struct Context;
-  }
   struct JSON;
-}
+} // namespace Rx
 
 namespace Rx::Render {
 
@@ -41,7 +46,7 @@ struct Skybox {
     const Math::Mat4x4f& _projection,
     const ColorGrader::Entry* _grading = nullptr);
 
-  void load_async(const String& _file_name,
+  void load_async(Concurrency::Scheduler& _scheduler, const String& _file_name,
     const Math::Vec2z& _max_face_dimensions);
 
   [[nodiscard]] bool load(Stream::Context& _stream, const Math::Vec2z& _max_face_dimensions);

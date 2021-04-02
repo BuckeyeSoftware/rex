@@ -105,7 +105,7 @@ ThreadPool::~ThreadPool() {
     m_threads.size(), timer.elapsed());
 }
 
-bool ThreadPool::insert(Function<void(int)>&& task_) {
+bool ThreadPool::add_task(Function<void(int)>&& task_) {
   {
     ScopeLock lock{m_mutex};
     auto item = m_job_memory.create<Work>(Utility::move(task_));
