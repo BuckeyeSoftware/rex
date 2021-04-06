@@ -88,6 +88,7 @@ SRCS += $(call rwildcard, $(SRCDIR)/, *S)
 OBJS := $(filter %.o,$(SRCS:%.cpp=$(OBJDIR)/%.o))
 OBJS += $(filter %.o,$(SRCS:%.c=$(OBJDIR)/%.o))
 OBJS += $(filter %.o,$(SRCS:%.S=$(OBJDIR)/%.o))
+
 DEPS := $(filter %.d,$(SRCS:%.cpp=$(DEPDIR)/%.d))
 DEPS += $(filter %.d,$(SRCS:%.c=$(DEPDIR)/%.d))
 
@@ -358,7 +359,10 @@ $(BIN): $(OBJS)
 clean:
 	rm -rf $(DEPDIR) $(OBJDIR) $(ARTIFACTS)
 
-.PHONY: clean $(DEPDIR) $(OBJDIR)
+doc:
+	doxygen $(SRCDIR)/rx/Doxyfile
+
+.PHONY: clean doc $(DEPDIR) $(OBJDIR)
 
 $(DEPS):
 include $(wildcard $(DEPS))
