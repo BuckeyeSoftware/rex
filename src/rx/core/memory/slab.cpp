@@ -2,11 +2,8 @@
 #include "rx/core/memory/aggregate.h"
 
 #include "rx/core/bitset.h"
-#include "rx/core/log.h"
 
 namespace Rx::Memory {
-
-RX_LOG("slab", logger);
 
 Slab::Slab(Slab&& slab_)
   : m_caches{Utility::move(slab_.m_caches)}
@@ -98,8 +95,6 @@ Byte* Slab::data_of(Size _index) const {
   const auto cache_index = _index / m_objects_per_cache;
   const auto object_index = _index % m_objects_per_cache;
   const auto& cache = m_caches[cache_index];
-  logger->verbose("%p: read object %zu (cache = %zu, index = %zu)",
-    this, _index, cache_index, object_index);
   return cache.data + m_object_size * object_index;
 }
 
@@ -113,8 +108,6 @@ Optional<Size> Slab::allocate_unlocked() {
     if (auto index = cache.used.find_first_unset()) {
       // Mark it in use and return the index to it.
       cache.used.set(*index);
-      logger->verbose("%p: allocated object %zu (cache = %zu, index = %zu)",
-        this, *index + (m_objects_per_cache * i), i, *index);
       return *index + (m_objects_per_cache * i);
     }
   }
@@ -133,8 +126,6 @@ Optional<Size> Slab::allocate_unlocked() {
       if (auto index = cache.used.find_first_unset()) {
         // Mark it in use and return the index to it.
         cache.used.set(*index);
-        logger->verbose("%p: allocated object %zu (cache = %zu, index = %zu)",
-          this, *index + (m_objects_per_cache * i), i, *index);
         return *index + (m_objects_per_cache * i);
       }
     } else if (!freed_cache_index) {
@@ -149,7 +140,6 @@ Optional<Size> Slab::allocate_unlocked() {
   // bound on the number of caches this slab can have.
   if (!freed_cache_index && m_maximum_caches && n_caches == m_maximum_caches) {
     // Cannot make a new cache.
-    logger->error("%p: reached maximum caches", this);
     return nullopt;
   }
 
@@ -158,7 +148,6 @@ Optional<Size> Slab::allocate_unlocked() {
   auto data = allocator.allocate(m_object_size, m_objects_per_cache);
   if (!data) {
     // Out of memory.
-    logger->error("%p: out of memory", this);
     return nullopt;
   }
 
@@ -171,7 +160,6 @@ Optional<Size> Slab::allocate_unlocked() {
     if (!used || !m_caches.emplace_back(data, Utility::move(*used))) {
       // Out of memory.
       allocator.deallocate(data);
-      logger->error("%p: out of memory", this);
       return nullopt;
     }
   }
@@ -186,10 +174,6 @@ void Slab::deallocate_unlocked(Size _cache_index, Size _object_index) {
 
   cache.used.clear(_object_index);
 
-  logger->verbose("%p: deallocated object %zu (cache = %zu, index = %zu)",
-    this, _object_index + (m_objects_per_cache * _cache_index), _cache_index,
-    _object_index);
-
   // The entire cache is empty.
   //
   // When a cache entry is reused the bitset representing which objects are
@@ -202,8 +186,6 @@ void Slab::deallocate_unlocked(Size _cache_index, Size _object_index) {
   if (cache.used.count_set_bits() == 0 && _cache_index > m_minimum_caches) {
     m_caches.allocator().deallocate(cache.data);
 
-    logger->verbose("%p: emptied cache %zu", this, _cache_index);
-
     // Mark that the cache is freed.
     cache.data = nullptr;
 
@@ -212,7 +194,6 @@ void Slab::deallocate_unlocked(Size _cache_index, Size _object_index) {
     // in size for removing caches anywhere else in the list would make
     // indices no longer stable.
     if (_cache_index == m_caches.size() - 1) {
-      logger->verbose("%p: truncated optional cached", this);
       m_caches.pop_back();
     }
   }

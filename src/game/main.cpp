@@ -19,7 +19,6 @@
 #include "rx/render/copy_pass.h"
 #include "rx/render/color_grader.h"
 #include "rx/render/particle_system.h"
-#include "rx/render/post_pass.h"
 
 #include "rx/hud/console.h"
 #include "rx/hud/frame_graph.h"

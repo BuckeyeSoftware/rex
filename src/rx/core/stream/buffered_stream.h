@@ -21,12 +21,12 @@ namespace Rx::Stream {
 /// reads and writes will be of the size of a page.
 ///
 /// A BufferedStream models the sort of page caching that an operating system
-/// implements for files, except implemented in user-space. Rex's UnbufferedFile
-/// attempts to disable page caching otherwise two caches would exist doubling
-/// the memory usage of a BufferedFile.
+/// implements for files, except implemented in user-space. Rex's
+/// Filesystem::UnbufferedFile attempts to disable page caching otherwise two
+/// caches would exist doubling the memory usage of a Filesystem::BufferedFile.
 ///
 /// \note The maximum amount of memory a BufferedStream can buffer is given by
-/// the limits of 16 KiB for a page and 256 pages (16 MiB).
+/// the limits of 64 KiB for a page and 256 pages (16 MiB).
 struct RX_API BufferedStream
   : Context
 {
@@ -86,7 +86,7 @@ struct RX_API BufferedStream
   /// \param _page_count The number of pages for the cache.
   /// \returns On successful resize, \c true. Otherwise, \c false. When this
   /// function fails, the buffered stream retains the page size and count it
-  /// has before this function was called.
+  /// had before this function was called.
   ///
   /// \note This function can fail if flushing of existing cached pages failed
   /// to write completely to the underlying Context or the allocator passed
