@@ -1,7 +1,9 @@
 #ifndef RX_CORE_BUFFER_H
 #define RX_CORE_BUFFER_H
-#include "rx/core/memory/system_allocator.h"
+#include "rx/core/memory/null_allocator.h"
 #include "rx/core/memory/uninitialized_storage.h"
+
+#include "rx/core/utility/exchange.h"
 
 #include "rx/core/optional.h"
 #include "rx/core/assert.h"
@@ -62,7 +64,7 @@ private:
 };
 
 inline constexpr LinearBuffer::LinearBuffer()
-  : LinearBuffer{Memory::SystemAllocator::instance()}
+  : LinearBuffer{Memory::NullAllocator::instance()}
 {
 }
 

@@ -312,6 +312,15 @@ void Logger::write(Ptr<Message>& message_) {
 
 } // anon-namespace
 
+Log::Log(const char* _name, const SourceLocation& _source_location)
+  : m_name{_name}
+  , m_source_location{_source_location}
+  , m_queue_event{Memory::SystemAllocator::instance()}
+  , m_write_event{Memory::SystemAllocator::instance()}
+  , m_flush_event{Memory::SystemAllocator::instance()}
+{
+}
+
 void Log::signal_write(Level _level, String&& contents_) {
   // NOTE(dweiler): This is called by the logging thread.
   m_write_event.signal(_level, Utility::move(contents_));

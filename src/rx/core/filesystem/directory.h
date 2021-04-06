@@ -149,7 +149,7 @@ inline constexpr Directory::Directory()
 }
 
 inline Directory::Directory(Directory&& directory_)
-  : m_allocator{Utility::exchange(directory_.m_allocator, nullptr)}
+  : m_allocator{Utility::exchange(directory_.m_allocator, &Memory::NullAllocator::instance())}
   , m_path{Utility::move(directory_.m_path)}
   , m_impl{Utility::exchange(directory_.m_impl, nullptr)}
 {

@@ -12,6 +12,8 @@
 
 #include "rx/render/frontend/state.h"
 
+#include "rx/core/memory/null_allocator.h"
+
 namespace Rx::Render {
 
 namespace Frontend {
@@ -132,21 +134,21 @@ struct Immediate2D {
       nullptr,
       nullptr,
       FontMap {
-        Memory::SystemAllocator::instance()
+        Memory::NullAllocator::instance()
       },
       Queue {
-        Memory::SystemAllocator::instance()
+        Memory::NullAllocator::instance()
       },
       Vector<Batch> {
-        Memory::SystemAllocator::instance()
+        Memory::NullAllocator::instance()
       },
       RenderBatches {
-        Memory::SystemAllocator::instance(),
-        Memory::SystemAllocator::instance()
+        Memory::NullAllocator::instance(),
+        Memory::NullAllocator::instance()
       },
       RenderQueues {
-        Memory::SystemAllocator::instance(),
-        Memory::SystemAllocator::instance()
+        Memory::NullAllocator::instance(),
+        Memory::NullAllocator::instance()
       },
       Buffers {
         nullptr,
@@ -193,9 +195,11 @@ struct Immediate2D {
       bool operator==(const Key& _key) const;
     };
 
-    Font(const Key& _key, Frontend::Context* _frontend);
+    static Optional<Font> open(const Key& _key, Frontend::Context* _frontend);
     Font(Font&& font_);
     ~Font();
+
+    Font& operator=(Font&& font_);
 
     Quad quad_for_glyph(Size _glyph, Float32 _scale, Math::Vec2f& position_) const;
     Glyph glyph_for_code(Uint32 _code) const;
@@ -205,6 +209,9 @@ struct Immediate2D {
     Frontend::Context* frontend() const;
 
   private:
+    Font(Frontend::Context* _context, Sint32 _size, Size _resolution,
+      Frontend::Texture2D* _texture, Vector<Glyph>&& glyphs_);
+
     Frontend::Context* m_frontend;
     Sint32 m_size;
     Size m_resolution;
@@ -263,11 +270,11 @@ private:
   void add_element(Uint32 _element);
   void add_vertex(Vertex&& vertex_);
 
-  Ptr<Font>& access_font(const Font::Key& _key);
+  Font* access_font(const Font::Key& _key);
 
   void release();
 
-  using FontMap = Map<Font::Key, Ptr<Font>>;
+  using FontMap = Map<Font::Key, Font>;
   using RenderBatches = Array<Vector<Batch>[BUFFERS]>;
   using RenderQueues = Array<Queue[BUFFERS]>;
   using Buffers = Array<Frontend::Buffer*[BUFFERS]>;

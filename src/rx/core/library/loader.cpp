@@ -19,35 +19,41 @@ namespace Rx::library {
 // This will of course only work if every one agrees to use this interface.
 static Concurrency::SpinLock g_lock;
 
-Loader::Loader(Memory::Allocator& _allocator, const String& _file_name)
-  : m_allocator{&_allocator}
-  , m_handle{nullptr}
-{
+Optional<Loader> Loader::open(Memory::Allocator& _allocator, const String& _file_name) {
   // Discourage passing file extensions on the filename.
-  RX_ASSERT(!_file_name.ends_with(".dll") && !_file_name.ends_with(".so"),
-    "library filename should not contain file extension");
+  if (!_file_name.ends_with(".dll") && !_file_name.ends_with(".so")) {
+    return nullopt;
+  }
+
+  void* result = nullptr;
 
   Concurrency::ScopeLock lock{g_lock};
 #if defined(RX_PLATFORM_POSIX)
-  const auto path = String::format(*m_allocator, "%s.so", _file_name);
+  const auto path = String::format(_allocator, "%s.so", _file_name);
   const auto name = path.data();
   if (auto handle = dlopen(name, RTLD_NOW | RTLD_LOCAL)) {
-    m_handle = handle;
+    result = handle;
   } else if (!_file_name.begins_with("lib")) {
     // There's a non-enforced convention of using a "lib" prefix for naming
     // libraries, attempt this when the above fails and the library name
     // doesn't begin with such a prefix.
-    const auto path = String::format(*m_allocator, "lib%s.so", _file_name);
+    const auto path = String::format(_allocator, "lib%s.so", _file_name);
     const auto name = path.data();
-    m_handle = dlopen(name, RTLD_NOW | RTLD_LOCAL);
+    result = dlopen(name, RTLD_NOW | RTLD_LOCAL);
   }
 #elif defined(RX_PLATFORM_WINDOWS)
   const auto path_utf8 = String::format(_allocator, "%s.dll", _file_name);
   const auto path_utf16 = path_utf8.to_utf16();
   const auto name = reinterpret_cast<LPCWSTR>(path_utf16.data());
 
-  m_handle = static_cast<void*>(LoadLibraryW(name));
+  result = static_cast<void*>(LoadLibraryW(name));
 #endif
+
+  if (result) {
+    return Loader {_allocator, result};
+  }
+
+  return nullopt;
 }
 
 Loader::~Loader() {

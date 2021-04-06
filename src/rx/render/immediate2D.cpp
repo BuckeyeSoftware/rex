@@ -181,86 +181,108 @@ void Immediate2D::Queue::clear() {
 }
 
 // [Immediate2D::Font]
-Immediate2D::Font::Font(const Key& _key, Frontend::Context* _frontend)
-  : m_frontend{_frontend}
-  , m_size{_key.size}
-  , m_resolution{DEFAULT_RESOLUTION}
-  , m_texture{nullptr}
-  , m_glyphs{m_frontend->allocator()}
-{
+Optional<Immediate2D::Font>
+Immediate2D::Font::open(const Key& _key, Frontend::Context* _frontend) {
+  auto& allocator = _frontend->allocator();
   auto name = String::format("base/fonts/%s.ttf", _key.name);
-  auto data = Filesystem::read_binary_file(m_frontend->allocator(), name);
-
-  if (data) {
-    static constexpr const int GLYPHS = 96; // all of ascii
-
-    // figure out the atlas size needed
-    for (;;) {
-      Vector<stbtt_bakedchar> baked_glyphs(m_frontend->allocator());
-      RX_ASSERT(baked_glyphs.resize(GLYPHS), "out of memory");
-      LinearBuffer baked_atlas{m_frontend->allocator()};
-      RX_ASSERT(baked_atlas.resize(m_resolution * m_resolution), "out of memory");
-
-      const int result{stbtt_BakeFontBitmap(data->data(), 0,
-        static_cast<Float32>(m_size), baked_atlas.data(),
-        static_cast<int>(m_resolution), static_cast<int>(m_resolution), 32,
-        GLYPHS, baked_glyphs.data())};
-
-      if (result == -GLYPHS || result > 0) {
-        // create a texture chain from this baked font bitmap
-        Rx::Texture::Chain chain{m_frontend->allocator()};
-        chain.generate(
-                baked_atlas.data(),
-                Rx::Texture::PixelFormat::R_U8,
-                Rx::Texture::PixelFormat::R_U8,
-                {m_resolution, m_resolution},
-                false, true);
-
-        // create and upload baked atlas
-        m_texture = m_frontend->create_texture2D(RX_RENDER_TAG("font"));
-        m_texture->record_format(Frontend::Texture::DataFormat::R_U8);
-        m_texture->record_type(Frontend::Texture::Type::STATIC);
-        m_texture->record_levels(chain.levels().size());
-        m_texture->record_dimensions({m_resolution, m_resolution});
-        m_texture->record_filter({true, false, true});
-        m_texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-                                Frontend::Texture::WrapType::CLAMP_TO_EDGE});
-
-        const auto& levels{chain.levels()};
-        for (Size i{0}; i < levels.size(); i++) {
-          const auto& level{levels[i]};
-          m_texture->write(chain.data().data() + level.offset, i);
-        }
-
-        m_frontend->initialize_texture(RX_RENDER_TAG("font"), m_texture);
-
-        // copy glyph information
-        RX_ASSERT(m_glyphs.resize(GLYPHS), "out of memory");
-
-        for (int i{0}; i < GLYPHS; i++) {
-          const auto& baked_glyph{baked_glyphs[i]};
-          auto& glyph{m_glyphs[i]};
-
-          glyph.x_advance   = baked_glyph.xadvance;
-          glyph.offset      = {baked_glyph.xoff, baked_glyph.yoff};
-          glyph.position[0] = {baked_glyph.x0,   baked_glyph.y0};
-          glyph.position[1] = {baked_glyph.x1,   baked_glyph.y1};
-        }
-
-        break;
-      }
-
-      m_resolution *= 2;
-    }
+  auto data = Filesystem::read_binary_file(allocator, name);
+  if (!data) {
+    return nullopt;
   }
 
-  RX_ASSERT(m_texture, "could not create font texture");
+  static constexpr const auto GLYPHS = 96;
+  static constexpr const auto FORMAT = Rx::Texture::PixelFormat::R_U8;
+
+  auto resolution = DEFAULT_RESOLUTION;
+
+  // Figure out the atlas size needed.
+  for (;;) {
+    Vector<stbtt_bakedchar> baked_glyphs{allocator};
+    if (!baked_glyphs.resize(GLYPHS)) {
+      return nullopt;
+    }
+
+    LinearBuffer baked_atlas{allocator};
+    if (!baked_atlas.resize(resolution * resolution)) {
+      return nullopt;
+    }
+
+    const int result =
+      stbtt_BakeFontBitmap(
+        data->data(),
+        0,
+        static_cast<Float32>(_key.size),
+        baked_atlas.data(),
+        static_cast<int>(resolution),
+        static_cast<int>(resolution),
+        32,
+        GLYPHS,
+        baked_glyphs.data());
+
+    if (result == -GLYPHS || result > 0) {
+      // Copy glyph information.
+      Vector<Glyph> glyphs{allocator};
+      if (!glyphs.resize(GLYPHS)) {
+        return nullopt;
+      }
+
+      for (Sint32 i = 0; i < GLYPHS; i++) {
+        const auto& baked_glyph = baked_glyphs[i];
+        auto& glyph = glyphs[i];
+
+        glyph.x_advance   = baked_glyph.xadvance;
+        glyph.offset      = {baked_glyph.xoff, baked_glyph.yoff};
+        glyph.position[0] = {baked_glyph.x0,   baked_glyph.y0};
+        glyph.position[1] = {baked_glyph.x1,   baked_glyph.y1};
+      }
+
+      // Create a texture chain from this baked font bitmap.
+      Rx::Texture::Chain chain{allocator};
+      if (!chain.generate(baked_atlas.data(), FORMAT, FORMAT, {resolution, resolution}, false, true)) {
+        return nullopt;
+      }
+
+      // Create and upload baked atlas.
+      auto texture = _frontend->create_texture2D(RX_RENDER_TAG("font"));
+      if (!texture) {
+        return nullopt;
+      }
+
+      texture->record_format(Frontend::Texture::DataFormat::R_U8);
+      texture->record_type(Frontend::Texture::Type::STATIC);
+      texture->record_levels(chain.levels().size());
+      texture->record_dimensions({resolution, resolution});
+      texture->record_filter({true, false, true});
+      texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+                            Frontend::Texture::WrapType::CLAMP_TO_EDGE});
+
+      const auto& levels = chain.levels();
+      for (Size i = 0; i < levels.size(); i++) {
+        const auto& level = levels[i];
+        texture->write(chain.data().data() + level.offset, i);
+      }
+
+      _frontend->initialize_texture(RX_RENDER_TAG("font"), texture);
+
+      return Font {
+        _frontend,
+        _key.size,
+        resolution,
+        texture,
+        Utility::move(glyphs)
+      };
+    }
+
+    resolution *= 2;
+  }
+
+  RX_HINT_UNREACHABLE();
 }
 
 Immediate2D::Font::Font(Font&& font_)
   : m_frontend{font_.m_frontend}
   , m_size{Utility::exchange(font_.m_size, 0)}
-  , m_resolution{Utility::exchange(font_.m_resolution, DEFAULT_RESOLUTION)}
+  , m_resolution{Utility::exchange(font_.m_resolution, 0)}
   , m_texture{Utility::exchange(font_.m_texture, nullptr)}
   , m_glyphs{Utility::move(font_.m_glyphs)}
 {
@@ -268,6 +290,18 @@ Immediate2D::Font::Font(Font&& font_)
 
 Immediate2D::Font::~Font() {
   m_frontend->destroy_texture(RX_RENDER_TAG("font"), m_texture);
+}
+
+Immediate2D::Font& Immediate2D::Font::operator=(Font&& font_) {
+  if (this != &font_) {
+    m_frontend->destroy_texture(RX_RENDER_TAG("font"), m_texture);
+    m_frontend = font_.m_frontend;
+    m_size = Utility::exchange(font_.m_size, 0);
+    m_resolution = Utility::exchange(font_.m_resolution, 0);
+    m_texture = Utility::exchange(font_.m_texture, nullptr);
+    m_glyphs = Utility::move(font_.m_glyphs);
+  }
+  return *this;
 }
 
 Immediate2D::Font::Quad Immediate2D::Font::quad_for_glyph(Size _glyph,
@@ -300,6 +334,16 @@ Immediate2D::Font::Quad Immediate2D::Font::quad_for_glyph(Size _glyph,
   position_.x += glyph.x_advance * _scale;
 
   return result;
+}
+
+Immediate2D::Font::Font(Frontend::Context* _frontend, Sint32 _size,
+  Size _resolution, Frontend::Texture2D* _texture, Vector<Glyph>&& glyphs_)
+  : m_frontend{_frontend}
+  , m_size{_size}
+  , m_resolution{_resolution}
+  , m_texture{_texture}
+  , m_glyphs{Utility::move(glyphs_)}
+{
 }
 
 // [Immediate2D]
@@ -762,15 +806,15 @@ static Size calculate_text_color(const char* _contents, Math::Vec4f& color_) {
   return 0;
 }
 
-static Float32 calculate_text_length(Ptr<Immediate2D::Font>& _font, Float32 _scale,
-                                    const char* _text, Size _text_length)
+static Float32 calculate_text_length(Immediate2D::Font& _font, Float32 _scale,
+  const char* _text, Size _text_length)
 {
-  Float32 position{0.0f};
+  Float32 position = 0.0f;
 
-  for (Size i{0}; i < _text_length; i++) {
-    const int ch{_text[i]};
+  for (Size i = 0; i < _text_length; i++) {
+    const int ch = _text[i];
     if (ch == '^') {
-      const char* next{_text + i + 1};
+      const char* next = _text + i + 1;
       if (*next != '^') {
         Math::Vec4f ignore;
         i += calculate_text_color(next, ignore);
@@ -778,20 +822,20 @@ static Float32 calculate_text_length(Ptr<Immediate2D::Font>& _font, Float32 _sca
       }
     }
 
-    const auto glyph{_font->glyph_for_code(ch - 32)};
+    const auto glyph = _font.glyph_for_code(ch - 32);
     position += glyph.x_advance * _scale;
   }
 
   return position;
 }
 
-Float32 Immediate2D::measure_text_length(const char* _font,
-                                        const char* _text, Size _text_length, Sint32 _size, Float32 _scale)
+Float32 Immediate2D::measure_text_length(const char* _font, const char* _text,
+  Size _text_length, Sint32 _size, Float32 _scale)
 {
   RX_PROFILE_CPU("immediate2D::measure_text_length");
 
-  auto& font_map = access_font({_size, _font});
-  return calculate_text_length(font_map, _scale, _text, _text_length);
+  auto* font_map = access_font({_size, _font});
+  return font_map ? calculate_text_length(*font_map, _scale, _text, _text_length) : 0.0f;
 }
 
 void Immediate2D::generate_text(Sint32 _size, const char* _font,
@@ -803,17 +847,22 @@ void Immediate2D::generate_text(Sint32 _size, const char* _font,
 
   (void)_font_length;
 
-  auto& font_map = access_font({_size, _font});
+  auto* font_map = access_font({_size, _font});
+  if (!font_map) {
+    return;
+  }
 
-  Math::Vec2f position{_position};
-  Math::Vec4f color{_color};
+  Math::Vec2f position = _position;
+  Math::Vec4f color = _color;
 
   switch (_align) {
   case TextAlign::CENTER:
-    position.x -= calculate_text_length(font_map, _scale, _contents, _contents_length) * .5f;
+    position.x -= calculate_text_length(*font_map, _scale, _contents,
+      _contents_length) * .5f;
     break;
   case TextAlign::RIGHT:
-    position.x -= calculate_text_length(font_map, _scale, _contents, _contents_length);
+    position.x -= calculate_text_length(*font_map, _scale, _contents,
+      _contents_length);
     break;
   case TextAlign::LEFT:
     break;
@@ -965,17 +1014,20 @@ void Immediate2D::add_vertex(Vertex&& vertex_) {
   m_vertices[m_vertex_index++] = Utility::move(vertex_);
 }
 
-Ptr<Immediate2D::Font>& Immediate2D::access_font(const Font::Key& _key) {
+Immediate2D::Font* Immediate2D::access_font(const Font::Key& _key) {
+  // Search for an existing font.
   const auto find = m_fonts.find(_key);
   if (find) {
-    return *find;
+    return find;
   }
 
-  auto& allocator = m_frontend->allocator();
-  auto new_font = make_ptr<Font>(allocator, _key, m_frontend);
-  RX_ASSERT(new_font, "out of memory");
+  // Open a new one.
+  auto font = Font::open(_key, m_frontend);
+  if (!font) {
+    return nullptr;
+  }
 
-  return *m_fonts.insert(_key, Utility::move(new_font));
+  return m_fonts.insert(_key, Utility::move(*font));
 }
 
 } // namespace Rx::Render::Frontend

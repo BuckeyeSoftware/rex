@@ -1,22 +1,19 @@
 #ifndef RX_CORE_LIBRARY_LOADER_H
 #define RX_CORE_LIBRARY_LOADER_H
 #include "rx/core/string.h"
-#include "rx/core/optional.h"
 
 namespace Rx::library {
 
 struct RX_API Loader {
   RX_MARK_NO_COPY(Loader);
 
-  Loader(const String& _file_name);
-  Loader(Memory::Allocator& _allocator, const String& _file_name);
+  constexpr Loader();
   Loader(Loader&& _loader);
   ~Loader();
 
   Loader& operator=(Loader&& loader_);
 
-  operator bool() const;
-  bool is_valid() const;
+  static Optional<Loader> open(Memory::Allocator& _allocator, const String& _file_name);
 
   // Link the function pointer given by |function_| up with the symbol in
   // the library given by |_symbol_name|. Returns true on success, false on
@@ -28,6 +25,8 @@ struct RX_API Loader {
   bool link(F*& function_, const String& _symbol_name) const;
 
 private:
+  constexpr Loader(Memory::Allocator& _allocator, void* _handle);
+
   void close_unlocked();
 
   // Returns nullptr when |_symbol_name| isn't found.
@@ -37,8 +36,9 @@ private:
   void* m_handle;
 };
 
-inline Loader::Loader(const String& _file_name)
-  : Loader{Memory::SystemAllocator::instance(), _file_name}
+inline constexpr Loader::Loader()
+  : m_allocator{nullptr}
+  , m_handle{nullptr}
 {
 }
 
@@ -48,17 +48,14 @@ inline Loader::Loader(Loader&& loader_)
 {
 }
 
-inline Loader::operator bool() const {
-  return m_handle != nullptr;
-}
-
-inline bool Loader::is_valid() const {
-  return m_handle != nullptr;
+inline constexpr Loader::Loader(Memory::Allocator& _allocator, void* _handle)
+  : m_allocator{&_allocator}
+  , m_handle{_handle}
+{
 }
 
 template<typename F>
 bool Loader::link(F*& function_, const char* _symbol_name) const {
-  RX_ASSERT(m_handle, "no handle");
   if (const auto proc = address_of(_symbol_name)) {
     *reinterpret_cast<void**>(&function_) = proc;
     return true;

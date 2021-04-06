@@ -1,5 +1,7 @@
 #ifndef RX_RENDER_COLOR_GRADER_H
 #define RX_RENDER_COLOR_GRADER_H
+#include "rx/core/memory/null_allocator.h"
+
 #include "rx/core/bitset.h"
 #include "rx/core/string.h"
 #include "rx/core/map.h"
@@ -161,8 +163,8 @@ inline ColorGrader::Atlas::Atlas()
     0,
     { },
     { },
-    { Memory::SystemAllocator::instance() },
-    { Memory::SystemAllocator::instance() }
+    { Memory::NullAllocator::instance() },
+    { Memory::NullAllocator::instance() }
   }
 {
 }

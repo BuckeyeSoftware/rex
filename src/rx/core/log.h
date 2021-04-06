@@ -25,7 +25,7 @@ struct RX_API Log {
   using WriteEvent = Event<void(Level, String)>;
   using FlushEvent = Event<void()>;
 
-  constexpr Log(const char* _name, const SourceLocation& _source_location);
+  Log(const char* _name, const SourceLocation& _source_location);
 
   [[nodiscard]] static bool subscribe(Stream::Context& _stream);
   [[nodiscard]] static bool unsubscribe(Stream::Context& _stream);
@@ -121,12 +121,6 @@ private:
   WriteEvent m_write_event;
   FlushEvent m_flush_event;
 };
-
-inline constexpr Log::Log(const char* _name, const SourceLocation& _source_location)
-  : m_name{_name}
-  , m_source_location{_source_location}
-{
-}
 
 template<typename... Ts>
 bool Log::write(Level _level, const char* _format, Ts&&... _arguments) {

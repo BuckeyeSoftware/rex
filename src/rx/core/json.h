@@ -201,7 +201,7 @@ inline bool JSON::is_empty() const {
 }
 
 inline String JSON::as_string() const {
-  return as_string_with_allocator(Memory::SystemAllocator::instance());
+  return as_string_with_allocator(allocator());
 }
 
 template<typename F>
