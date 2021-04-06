@@ -3,25 +3,90 @@
 #include "rx/core/function.h"
 #include "rx/core/ptr.h"
 
+/// \file thread.h
+
 namespace Rx::Concurrency {
 
-// NOTE: Thread names must have static-storage which lives as long as the thread.
-// NOTE: Cannot deliver signals to threads.
+/// \brief Manages a separate thread.
+///
+/// Represents a single thread of execution. Threads allow multiple functions to
+/// execute concurrently.
+///
+/// Threads begin execution immediately upon creation by a successful call to
+/// create(), starting at the top-level function provided to create(). The
+/// return value of the top-level function is ignored.
+///
+/// Thread objects may be in the state that does not represent any thread (after
+/// default construction, moved from, or join()).
+///
+/// \note Names must have static-storage duration.
+/// \note On operating systems where signal-delivery is supported, all signals
+/// will be blocked, thus signals cannot be delivered.
 struct RX_API Thread {
   using Func = Function<void(Sint32)>;
 
   RX_MARK_NO_COPY(Thread);
 
+  /// Constructs a thread which does not represent a thread.
   constexpr Thread();
+
+  /// \brief Move constructor.
+  ///
+  /// Constructs the thread object to represent the thread of execution that was
+  /// represented by \p thread_. After this call \p thread_ no longer represents
+  /// a thread of execution.
+  ///
+  /// \param thread_ Another thread object to construct this thread object with.
   Thread(Thread&& thread_);
+
+  /// \brief Destroys the thread object.
+  ///
+  /// \note A thread object does not have an associated thread (and is safe to
+  /// destroy) after:
+  ///  * It was default constructed.
+  ///  * It was moved from.
+  ///  * join() has been called.
   ~Thread();
+
+  /// \brief Moves the thread object
+  ///
+  /// If \c *this still has an associated running thread, calls join().
+  /// Then, or otherwise, assigns the state of \p thread_ to \c *this and sets
+  /// \p thread_ to a default constructed state.
+  ///
+  /// \param thread_ Another thread object to assign this thread object.
+  /// \returns \c *this
   Thread& operator=(Thread&& thread_);
 
+  /// @{
+  /// \brief Create a thread.
+  ///
+  /// Creates a new thread and associates it with a thread of execution.
+  ///
+  /// \param _allocator The allocator to allocate thread state with.
+  /// \param _name The name to associate with this thread.
+  /// \param function_ The callable object to execute in the new thread.
+  /// \returns On successful construction, the Thread, otherwise nullopt.
+  ///
+  /// \note Any return value from \p function_ is ignored.
+  /// \note Thread construction can fail if out of resources.
+  /// \warning \p _name Must refer to a string that has static-storage duration,
+  /// such as a string-literal.
   template<typename F>
   static Optional<Thread> create(Memory::Allocator& _allocator, const char* _name, F&& function_);
-  // Called by above function.
-  static Optional<Thread> create(Memory::Allocator& _allocator, const char* _name, Func&& func_);
+  static Optional<Thread> create(Memory::Allocator& _allocator, const char* _name, Func&& function_);
+  /// @}
 
+  /// \brief Waits for the thread to finish its execution.
+  ///
+  /// Blocks the current thread until the thread identified by \c *this finishes
+  /// its execution.
+  ///
+  /// The completion of the thread identrified by \c *this _synchronizes_ with
+  /// the corresponding successful join().
+  ///
+  /// \warning No synchronization is performed on \c *this itself. Concurrently
+  /// calling join() on the same thread from multiple threads is a bug.
   [[nodiscard]] bool join();
 
 private:

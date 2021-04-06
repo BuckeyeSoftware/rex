@@ -4,36 +4,100 @@
 #include "rx/core/function.h"
 #include "rx/core/optional.h"
 
+/// \file directory.h
+
 namespace Rx::Filesystem {
 
+/// \brief Represents a directory.
 struct RX_API Directory {
   RX_MARK_NO_COPY(Directory);
 
+  /// Default construct a directory.
   constexpr Directory();
+
+  /// \brief Move constructor.
+  ///
+  /// Constructs the directory object to represent the directory that was
+  /// represented by \p directory_. After this call, \p directory_ no longer
+  /// represents a valid directory object (calls to is_valid() yield \c false .)
+  ///
+  /// \param directory_ Another directory object to construct this directory
+  /// object with.
   Directory(Directory&& directory_);
+
+  /// \brief Closes the directory.
   ~Directory();
 
+  /// \brief Moves the directory object.
+  ///
+  /// If \c *this still has valid directory, closes it. Then, or otherwise,
+  /// assigns the state of \p directory_ to \c *this and sets \p directory_
+  /// to a default constructed state.
+  ///
+  /// \param directory_ Another directory object to construct this directory
+  /// object with.
   Directory& operator=(Directory&& directory_);
 
+  /// \brief Open a directory.
+  ///
+  /// \param _allocator The allocator to use for directory operations.
+  /// \param _path The path to the directory to open.
+  /// \returns On success, the Directory. Otherwise, \c nullopt.
   static Optional<Directory> open(Memory::Allocator& _allocator, const String& _path);
 
+  /// @{
+  /// Check if the directory is valid.
   bool is_valid() const;
   operator bool() const;
+  /// @}
 
+  /// \brief Enumerate directory items.
+  ///
+  /// Enumerates the directory calling an invocable for each item. The invocable
+  /// should have one of the following signatures:
+  /// \code{.cpp}
+  /// void each(Item&& item_);
+  /// // Or
+  /// bool each(Item&& item_);
+  /// \endcode
+  ///
+  /// Where the \c bool specialication version should return \c true for
+  /// continued enumeration or \c false to stop enumeration.
+  ///
+  /// \param function_ The invocable.
+  /// \returns When the whole directory is enumerated (the invocable returns
+  /// \c void, or returns \c true always), this function returns \c true.
+  /// Otherwise, returns \c false.
   template<typename F>
   bool each(F&& function_);
 
+  /// \brief An item in a directory.
+  ///
+  /// Directory items may be files or other directories.
+  ///
+  /// \warning The Item has the same lifetime as the Directory. It's not valid
+  /// to refer to an Item after the Directory has gone out of scope.
   struct Item {
     RX_MARK_NO_COPY(Item);
     RX_MARK_NO_MOVE(Item);
 
+    /// Test if an item is a file.
     bool is_file() const;
+    /// Test if an item is a directory.
     bool is_directory() const;
-    const String& name() const;
-    String&& name();
 
+    /// Get the name of the item.
+    /// \note The name does not include the full path name.
+    const String& name() const;
+
+    /// Reference to the directory \c *this is associated with.
     const Directory& directory() const &;
 
+    /// \brief Attempt to open the item as a Directory itself.
+    /// \return On success, the Directory. Otherwise, \c nullopt.
+    /// \note This can fail if the Item is not a directory or was just deleted
+    /// between the time of recieving this item from enumerate() and the call to
+    /// as_directory().
     Optional<Directory> as_directory() const;
 
   private:
@@ -51,8 +115,10 @@ struct RX_API Directory {
     Type m_type;
   };
 
+  /// Recieve the path passed to open().
   const String& path() const &;
 
+  /// Recieve the allocator passed to open().
   constexpr Memory::Allocator& allocator() const;
 
 private:
@@ -152,10 +218,6 @@ RX_HINT_FORCE_INLINE const Directory& Directory::Item::directory() const & {
 
 RX_HINT_FORCE_INLINE const String& Directory::Item::name() const {
   return m_name;
-}
-
-RX_HINT_FORCE_INLINE String&& Directory::Item::name() {
-  return Utility::move(m_name);
 }
 
 RX_HINT_FORCE_INLINE Directory::Item::Item(const Directory* _directory, String&& name_, Type _type)

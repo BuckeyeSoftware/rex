@@ -2,11 +2,19 @@
 #define RX_CORE_HINTS_ASSUME_ALIGNED_H
 #include "rx/core/config.h" // RX_COMPILER_{GCC,CLANG,MSVC}
 
-// # Assume alignment
-//
-// Hint that a given pointer is guaranteed to be aligned on a certain alignment
-// to allow the compiler to make less-safe optimizations with regards to load
-// and store instructions.
+/// \file assume_aligned.h
+/// \brief Assume alignment.
+#if defined(RX_DOCUMENT)
+/// \brief Hint that a pointer is aligned
+///
+/// Hint that a given pointer is guaranteed to be aligned on a certain alignment
+/// to allow the compiler to make less-safe optimizations with regards to load
+/// and store instructions.
+///
+/// \param _pointer The pointer.
+/// \param _alignment The alignment.
+#define RX_HINT_ASSUME_ALIGNED(_pointer, _alignment)
+#else
 #if defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG)
 #include "rx/core/traits/conditional.h"
 #include "rx/core/traits/is_restrict.h"
@@ -19,7 +27,7 @@
 // meta-programming is required to cast it correctly so that the restrict
 // qualifier isn't lost in the hint.
 //
-// The return Type of |__builtin_assume_aligned| is always a void* so we opt
+// The return type of |__builtin_assume_aligned| is always a void* so we opt
 // to take the address of the pointer as an lvalue and cast to void**, which
 // is then dereferenced to assign the pointer the result of the intrinsic.
 #define RX_HINT_ASSUME_ALIGNED(_pointer, _alignment) \
@@ -35,6 +43,7 @@
 #define RX_HINT_ASSUME_ALIGNED(_pointer, _alignment) \
   RX_ASSERT(reinterpret_cast<::Rx::UintPtr>(_pointer) % (_alignment) == 0,
     "not aligned by %zu", (_alignment))
+#endif
 #endif
 
 #endif // RX_CORE_HINTS_ASSUME_ALIGNED_H

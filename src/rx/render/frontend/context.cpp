@@ -46,18 +46,25 @@ static constexpr const char* MODULES_PATH = "base/renderer/modules";
 
 namespace Rx::Render::Frontend {
 
+// Limit the caches for render frontend caches to a maximum of one, this
+// models a static pool with a fixed-capacity.
+static Optional<Memory::Slab>
+create_slab(Memory::Allocator& _allocator, Size _object_size, Size _object_count) {
+  return Memory::Slab::create(_allocator, _object_size, _object_count, 1, 1);
+}
+
 Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, const Math::Vec2z& _dimensions, bool _hdr)
   : m_allocator{_allocator}
   , m_backend{_backend}
   , m_allocation_info{m_backend->query_allocation_info()}
-  , m_buffer_pool{Utility::move(*StaticPool::create(allocator(), m_allocation_info.buffer_size + sizeof(Buffer), static_cast<Size>(*max_buffers)))}
-  , m_target_pool{Utility::move(*StaticPool::create(allocator(), m_allocation_info.target_size + sizeof(Target), static_cast<Size>(*max_targets)))}
-  , m_program_pool{Utility::move(*StaticPool::create(allocator(), m_allocation_info.program_size + sizeof(Program), static_cast<Size>(*max_programs)))}
-  , m_texture1D_pool{Utility::move(*StaticPool::create(allocator(), m_allocation_info.texture1D_size + sizeof(Texture1D), static_cast<Size>(*max_texture1D)))}
-  , m_texture2D_pool{Utility::move(*StaticPool::create(allocator(), m_allocation_info.texture2D_size + sizeof(Texture2D), static_cast<Size>(*max_texture2D)))}
-  , m_texture3D_pool{Utility::move(*StaticPool::create(allocator(), m_allocation_info.texture3D_size + sizeof(Texture3D), static_cast<Size>(*max_texture3D)))}
-  , m_textureCM_pool{Utility::move(*StaticPool::create(allocator(), m_allocation_info.textureCM_size + sizeof(TextureCM), static_cast<Size>(*max_textureCM)))}
-  , m_downloader_pool{Utility::move(*StaticPool::create(allocator(), m_allocation_info.downloader_size + sizeof(Downloader), static_cast<Size>(*max_downloaders)))}
+  , m_buffer_pool{Utility::move(*create_slab(allocator(), m_allocation_info.buffer_size + sizeof(Buffer), static_cast<Size>(*max_buffers)))}
+  , m_target_pool{Utility::move(*create_slab(allocator(), m_allocation_info.target_size + sizeof(Target), static_cast<Size>(*max_targets)))}
+  , m_program_pool{Utility::move(*create_slab(allocator(), m_allocation_info.program_size + sizeof(Program), static_cast<Size>(*max_programs)))}
+  , m_texture1D_pool{Utility::move(*create_slab(allocator(), m_allocation_info.texture1D_size + sizeof(Texture1D), static_cast<Size>(*max_texture1D)))}
+  , m_texture2D_pool{Utility::move(*create_slab(allocator(), m_allocation_info.texture2D_size + sizeof(Texture2D), static_cast<Size>(*max_texture2D)))}
+  , m_texture3D_pool{Utility::move(*create_slab(allocator(), m_allocation_info.texture3D_size + sizeof(Texture3D), static_cast<Size>(*max_texture3D)))}
+  , m_textureCM_pool{Utility::move(*create_slab(allocator(), m_allocation_info.textureCM_size + sizeof(TextureCM), static_cast<Size>(*max_textureCM)))}
+  , m_downloader_pool{Utility::move(*create_slab(allocator(), m_allocation_info.downloader_size + sizeof(Downloader), static_cast<Size>(*max_downloaders)))}
   , m_destroy_buffers{allocator()}
   , m_destroy_targets{allocator()}
   , m_destroy_textures1D{allocator()}

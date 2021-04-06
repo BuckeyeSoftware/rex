@@ -2,17 +2,42 @@
 #define RX_CORE_MEMORY_AGGREGATE_H
 #include "rx/core/assert.h"
 
+/// \file aggregate.h
+
 namespace Rx::Memory {
 
+/// \brief A memory aggregate.
+///
+/// A way to define an aggregate allocation from multiple separate, differently
+/// sized and aligned allocations of objects (or arrays of objects) as one
+/// contiguous allocation with appropriate offsets to derive pointers that
+/// maintain alignment and prevent overlap.
 struct RX_API Aggregate {
   constexpr Aggregate();
 
+  /// The number of bytes needed for this aggregate.
+  /// \note Asserts if finalize() hasn't been called.
   Size bytes() const;
+
+  /// The offset of an item.
+  /// \note Asserts if finalize() hasn't been called.
   Size operator[](Size _index) const;
 
+  /// \brief Add an object of type T to the aggregate.
+  /// \param _count The number of objects of type T.
+  /// \return On success, \c true. Otherwise, \c false.
   template<typename T>
   bool add(Size _count);
+
+  /// \brief Add an object of specific size and alignment.
+  /// \param _size The size of the object in bytes.
+  /// \param _alignment The alignment of the object in bytes.
+  /// \param _count The number of objects.
+  /// \return On success, \c true. Otherwise, \c false.
   bool add(Size _size, Size _alignment, Size _count);
+
+  /// \brief Finalize the aggregate for use.
+  /// \return On success, \c true. Otherwise, \c false.
   bool finalize();
 
 private:

@@ -9,10 +9,11 @@
 
 #include "rx/core/utility/exchange.h"
 
+/// \file bitset.h
+
 namespace Rx {
 
-// 32-bit: 12 bytes
-// 64-bit: 24 bytes
+/// Represents a fixed-capacity sequence of bits.
 struct RX_API Bitset {
   RX_MARK_NO_COPY(Bitset);
 
@@ -21,48 +22,78 @@ struct RX_API Bitset {
   static constexpr const BitType BIT_ONE = 1;
   static constexpr const Size WORD_BITS = 8 * sizeof(BitType);
 
+  /// Default construct a bitset.
   constexpr Bitset();
+
+  /// Move construct a bitset.
   Bitset(Bitset&& bitset_);
+
+  /// Destroy a bitset.
   ~Bitset();
+
   Bitset& operator=(Bitset&& bitset_);
 
+  /// \brief Create a bitset.
+  ///
+  /// \param _allocator The allocator to allocate bits.
+  /// \param _size The number of bits to allocate.
+  /// \return On success, the BitSet. Otherwise, \c nullopt.
   static Optional<Bitset> create(Memory::Allocator& _allocator, Size _size);
 
-  // Clear all set bits.
+  /// Clear all bits.
   void clear();
 
-  // set |_bit|
+  /// Set bit.
   void set(Size _bit);
 
-  // clear |_bit|
+  /// Clear bit.
   void clear(Size _bit);
 
-  // test if bit |_bit| is set
+  /// Test if bit is set.
   bool test(Size _bit) const;
 
-  // the amount of bits
+  /// Get the number of bits.
   Size size() const;
 
-  // count the # of set bits
+  /// Count the number of set bits.
   Size count_set_bits() const;
 
-  // count the # of unset bits
+  /// Count the number of unset bits.
   Size count_unset_bits() const;
 
-  // find the index of the first set bit
+  /// \brief Find the index of the first set bit.
+  /// \returns The index of the first set bit or \p nullopt if none found.
   Optional<Size> find_first_set() const;
 
-  // find the index of the first unset bit
+  /// \brief Find the index of the first unset bit.
+  /// \returns The index of the first unset bit or \p nullopt if none found.
   Optional<Size> find_first_unset() const;
 
-  // iterate bitset invoking |_function| with index of each set bit
+  /// \brief Enumerate bitset for each set bit.
+  ///
+  /// Enumerates the bitset and calls an invocable with the index of every set
+  /// bit.
+  ///
+  /// \param _function The invocable with the signature:
+  /// \code{.cpp}
+  ///   void function(Size _index);
+  /// \endcode
   template<typename F>
   void each_set(F&& _function) const;
 
-  // iterate bitset invoking |_function| with index of each unset bit
+  /// \brief Enumerate bitset for each unset bit.
+  ///
+  /// Enumerates the bitset and calls an invocable with the index of every set
+  /// unbit.
+  ///
+  /// \param _function The invocable with the signature:
+  /// \code{.cpp}
+  ///   void function(Size _index);
+  /// \endcode
   template<typename F>
   void each_unset(F&& _function) const;
 
+  /// The allocator used to allocate this bitset.
   constexpr Memory::Allocator& allocator() const;
 
 private:

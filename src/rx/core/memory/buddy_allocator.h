@@ -3,8 +3,13 @@
 #include "rx/core/memory/allocator.h"
 #include "rx/core/concurrency/spin_lock.h"
 
+/// \file buddy_allocator.h
 namespace Rx::Memory {
 
+/// \brief Buddy memory allocator
+///
+/// Implements the buddy memory allocation algorithm as described by
+/// https://en.wikipedia.org/wiki/Buddy_memory_allocation
 struct RX_API BuddyAllocator
   final : Allocator
 {

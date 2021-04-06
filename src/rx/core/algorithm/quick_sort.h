@@ -3,8 +3,15 @@
 #include "rx/core/algorithm/insertion_sort.h"
 #include "rx/core/utility/swap.h"
 
+/// \file quick_sort.h
 namespace Rx::Algorithm {
 
+/// Quick sort
+/// \param start_ RandomAccessIterator to start of sequence to sort
+/// \param end_ RandomAccessIterator to end of sequence to sort
+/// \param _compare Invocable comparator functor taking two values of template parameter type T.
+///
+/// \note This function has O(n log n) complexity
 template<typename T, typename F>
 void quick_sort(T* start_, T* end_, F&& _compare) {
   while (end_ - start_ > 10) {

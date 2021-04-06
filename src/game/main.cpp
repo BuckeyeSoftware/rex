@@ -19,6 +19,7 @@
 #include "rx/render/copy_pass.h"
 #include "rx/render/color_grader.h"
 #include "rx/render/particle_system.h"
+#include "rx/render/post_pass.h"
 
 #include "rx/hud/console.h"
 #include "rx/hud/frame_graph.h"
@@ -29,9 +30,12 @@
 #include "rx/console/variable.h"
 
 #include "rx/math/camera.h"
+#include "rx/math/range.h"
 
 #include "rx/core/filesystem/directory.h"
-#include "rx/core/filesystem/file.h"
+#include "rx/core/filesystem/unbuffered_file.h"
+
+#include "rx/core/concurrency/thread_pool.h"
 
 #include "rx/particle/assembler.h"
 #include "rx/particle/system.h"
@@ -79,10 +83,12 @@ struct TestGame
     , m_frame_graph{&m_immediate2D}
     , m_memory_stats{&m_immediate2D}
     , m_render_stats{&m_immediate2D}
+    , m_models{m_frontend.allocator()}
     , m_color_grader{&m_frontend}
     , m_lut_index{0}
     , m_lut_count{0}
     , m_particle_system{m_frontend.allocator()}
+    , m_particle_program{m_frontend.allocator(), m_frontend.allocator()}
   {
     engine()->input().root_layer().raise();
   }
@@ -91,13 +97,15 @@ struct TestGame
   }
 
   virtual bool on_init() {
+    m_camera.translate = {0.0f, 1.0f, -10.0f};
+
     const auto& dimensions = m_frontend.swapchain()->dimensions();
 
     if (!m_particle_system.resize(500'000)) {
       return false;
     }
 
-    Particle::Assembler assembler;
+    Particle::Assembler assembler{m_frontend.allocator()};
     if (!assembler.assemble("base/particles/point.asm")) {
       printf("%s\n", assembler.error().data());
       return false;
@@ -212,8 +220,6 @@ struct TestGame
     }
     m_color_grader.update();
 
-    Sint32 i = 0;
-
 /*
     if (Filesystem::Directory dir{"./chess"}) {
       printf("opened light_unit\n");
@@ -267,7 +273,7 @@ struct TestGame
       console.find_variable_by_name("display.fullscreen")->cast<Sint32>();
 
     const auto& dimensions{display_resolution->get().cast<Float32>()};
-    m_camera.projection = Math::Mat4x4f::perspective(90.0f, {0.01f, 2048.0f},
+    m_camera.projection = Math::perspective(90.0f, {0.01f, 2048.0f},
       dimensions.w / dimensions.h);
 
     if (input.root_layer().is_active()) {
@@ -276,7 +282,9 @@ struct TestGame
       const auto &delta = input.root_layer().mouse().movement();
 
       Math::Vec3f move{static_cast<Float32>(delta.y) * sens, static_cast<Float32>(delta.x) * sens, 0.0f};
-      m_camera.rotate = m_camera.rotate + move;
+      m_mouse += move;
+
+      m_camera.rotation = Math::Mat3x3f::rotate(m_mouse);
 
       if (input.root_layer().keyboard().is_held(Input::ScanCode::LEFT_CONTROL)) {
         move_speed = 10.0f;
@@ -300,6 +308,7 @@ struct TestGame
         const auto l{m_camera.as_mat4().x};
         m_camera.translate -= Math::Vec3f(l.x, l.y, l.z) * (move_speed * _delta_time);
       }
+
       if (input.root_layer().keyboard().is_released(Input::ScanCode::T)) {
         m_models.pop_back();
       }
@@ -310,11 +319,8 @@ struct TestGame
           (*emitter)[1] = m_camera.translate.y;
           (*emitter)[2] = m_camera.translate.z + 1.0f;
           (*emitter)[3] = 0.0f;
-          (void)m_particle_system.add_emitter(Utility::move(*emitter));
+          (void)m_particle_system.insert(Utility::move(*emitter));
         }
-      }
-      if (input.root_layer().keyboard().is_released(Input::ScanCode::U)) {
-        (void)m_particle_system.remove_emitter(0);
       }
     }
 
@@ -355,18 +361,15 @@ struct TestGame
         "base/skyboxes/yokohama/yokohama.json5",
         "base/skyboxes/miramar/miramar.json5"
       };
-      m_skybox.load_async(SKYBOXES[sky], {512, 512});
+      m_skybox.load_async(Concurrency::ThreadPool::instance(), SKYBOXES[sky], {512, 512});
       sky = (sky + 1) % (sizeof SKYBOXES / sizeof *SKYBOXES);
     }
 
     m_console.update(console);
 
-    // Float32 bias = 0.0f;
     m_models.each_fwd([&](Render::Model& model_) {
       model_.update(_delta_time);
     });
-
-    // m_transform.rotate.y += 15.0f * _delta_time;
 
     m_particle_system.update(_delta_time);
     m_particle_system_render.update(&m_particle_system);
@@ -411,27 +414,12 @@ struct TestGame
       Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data());
 
 #if 1
-    //const Float32 spacing = 5.0f;
-    Size i = 0;
     m_models.each_fwd([&](Render::Model& model_) {
-      //transform.rotate = m_transform.rotate;
       Math::Transform transform;
-      /*const auto& frame = m_models[board].skeleton()->joints()[offset + i].frame;
-      if (&model_ != &m_models[board]) {
-        transform.translate = {
-          frame.x.w, frame.y.w, frame.z.w
-        };
-        i++;
-      }*/
       model_.render(m_gbuffer.target(), transform.as_mat4(), m_camera.view(),
         m_camera.projection,
           Render::Model::SKELETON | Render::Model::BOUNDS,
           &m_immediate3D);
-      // transform.translate.x += spacing;
-      // if (transform.translate.x >= 8.0f * spacing) {
-      //   transform.translate.x = 0.0f;
-      //   transform.translate.z += spacing;
-      // }
     });
 #endif
 
@@ -518,6 +506,7 @@ struct TestGame
   Particle::Program m_particle_program;
 
   Math::Camera m_camera;
+  Math::Vec3f m_mouse;
 };
 
 Ptr<Application> create(Engine* _engine) {

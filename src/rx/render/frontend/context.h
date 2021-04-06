@@ -2,8 +2,9 @@
 #define RX_RENDER_FRONTEND_CONTEXT_H
 #include "rx/core/vector.h"
 #include "rx/core/string.h"
-#include "rx/core/static_pool.h"
 #include "rx/core/map.h"
+
+#include "rx/core/memory/slab.h"
 
 #include "rx/core/concurrency/mutex.h"
 #include "rx/core/concurrency/atomic.h"
@@ -265,14 +266,14 @@ private:
   // size of resources as reported by the backend
   Backend::AllocationInfo m_allocation_info;
 
-  StaticPool m_buffer_pool                     RX_HINT_GUARDED_BY(m_mutex);
-  StaticPool m_target_pool                     RX_HINT_GUARDED_BY(m_mutex);
-  StaticPool m_program_pool                    RX_HINT_GUARDED_BY(m_mutex);
-  StaticPool m_texture1D_pool                  RX_HINT_GUARDED_BY(m_mutex);
-  StaticPool m_texture2D_pool                  RX_HINT_GUARDED_BY(m_mutex);
-  StaticPool m_texture3D_pool                  RX_HINT_GUARDED_BY(m_mutex);
-  StaticPool m_textureCM_pool                  RX_HINT_GUARDED_BY(m_mutex);
-  StaticPool m_downloader_pool                 RX_HINT_GUARDED_BY(m_mutex);
+  Memory::Slab m_buffer_pool                   RX_HINT_GUARDED_BY(m_mutex);
+  Memory::Slab m_target_pool                   RX_HINT_GUARDED_BY(m_mutex);
+  Memory::Slab m_program_pool                  RX_HINT_GUARDED_BY(m_mutex);
+  Memory::Slab m_texture1D_pool                RX_HINT_GUARDED_BY(m_mutex);
+  Memory::Slab m_texture2D_pool                RX_HINT_GUARDED_BY(m_mutex);
+  Memory::Slab m_texture3D_pool                RX_HINT_GUARDED_BY(m_mutex);
+  Memory::Slab m_textureCM_pool                RX_HINT_GUARDED_BY(m_mutex);
+  Memory::Slab m_downloader_pool               RX_HINT_GUARDED_BY(m_mutex);
 
   // Resources that were destroyed are recorded into the following vectors
   // so that the destruction can be handled at the end of the frame.

@@ -5,32 +5,90 @@
 #include "rx/core/utility/copy.h"
 #include "rx/core/traits/decay.h"
 
+/// \file function.h
 namespace Rx {
 
 template<typename T>
 struct Function;
 
+/// \brief General-purpose polymorphic function wrapper.
+///
+/// Instances of Function can store and invoke functions, lambda expressions,
+/// or other functions objects.
+///
+/// The stored callable object is called the _target_ of Function. If a Function
+/// contains no target, it is called _empty_. Invoking the target of an _empty_
+/// Function results in an assertion.
+///
+/// \note Functions cannot be copied.
+/// \par Rationale for why functions cannot be copied.
+/// Copying of lambdas with captures is not possible unless those captures have
+/// copy constructors and / or assignment operators. Since copies can fail, an
+/// exceptionless environment cannot actually copy a lambda without introducing
+/// silent calls to \c terminate on failure. This codebase makes use of static
+/// T::copy functions that return \c Optional<T>, with \c nullopt when the copy
+/// fails. There is no way to generate these functions for lambdas or write
+/// them either, As such, it's not possible to provide copies for lambdas.
+/// Since the primary motivation of Function is for lambdas with captures,
+/// copies are simply not provided here even though function pointers are
+/// trivially copyable.
 template<typename R, typename... Ts>
 struct Function<R(Ts...)> {
   RX_MARK_NO_COPY(Function);
 
+  /// @{
+  /// Creates an _empty_ function.
+  constexpr Function();
+  constexpr Function(NullPointer);
+  /// @}
+
+  /// \brief Construct from move.
+  ///
+  /// Moves the _target_ of \p function_ to \c *this and empties the state of
+  /// \p function_.
+  ///
+  /// \param function_ The function to move.
+  Function(Function&& function_);
+
+  /// Destroys a Function instance.
+  ~Function();
+
+  /// \brief Creates a function
+  ///
+  /// Creates a Function with a Callable.
+  ///
+  /// \param _function The callable.
+  /// \returns On success, the Function. Otherwise, \c nullopt.
   template<typename F>
     requires Concepts::Invocable<F, Ts...>
   static Optional<Function<R(Ts...)>> create(F&& _function);
 
-  constexpr Function();
-  constexpr Function(NullPointer);
-  Function(Function&& function_);
-  ~Function();
-
+  /// \brief Moves the function.
+  ///
+  /// Moves the _target_ of \p function_ to \c *this, and empties the state of
+  /// \p function_.
+  ///
+  /// \param function_ The function to move.
+  /// \returns \c *this.
   Function& operator=(Function&& function_);
+
+  /// \brief Drops the current target.
   Function& operator=(NullPointer);
 
-  R operator()(Ts...) const;
+  /// \brief Invokes the target.
+  /// \param _arguments Parameters to pass to the stored callable function
+  /// target.
+  /// \returns None if R is \c void. Otherwise the return value of the
+  /// invocation of the stored callable object.
+  /// \warning Assertion if \c *this does not store a callable function target.
+  R operator()(Ts... _arguments) const;
 
+  /// @{
+  /// Checks if a valid target is contained.
   bool is_valid() const;
 
   operator bool() const;
+  /// @}
 
 private:
   enum class Operation {

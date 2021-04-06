@@ -6,8 +6,10 @@
 
 #include "rx/core/utility/exchange.h"
 
+/// \file vma.h
 namespace Rx::Memory {
 
+/// \brief Virtual memory allocation.
 struct RX_API VMA {
   RX_MARK_NO_COPY(VMA);
 

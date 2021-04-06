@@ -1,12 +1,13 @@
 #ifndef RX_CORE_CONCURRENCY_THREAD_POOL_H
 #define RX_CORE_CONCURRENCY_THREAD_POOL_H
 #include "rx/core/intrusive_list.h"
-#include "rx/core/dynamic_pool.h"
 
 #include "rx/core/concurrency/scheduler.h"
 #include "rx/core/concurrency/thread.h"
 #include "rx/core/concurrency/mutex.h"
 #include "rx/core/concurrency/condition_variable.h"
+
+#include "rx/core/memory/slab.h"
 
 namespace Rx::Concurrency {
 
@@ -35,7 +36,7 @@ private:
 
   IntrusiveList m_queue     RX_HINT_GUARDED_BY(m_mutex);
   Vector<Thread> m_threads  RX_HINT_GUARDED_BY(m_mutex);
-  DynamicPool m_job_memory  RX_HINT_GUARDED_BY(m_mutex);
+  Memory::Slab m_job_memory RX_HINT_GUARDED_BY(m_mutex);
   bool m_stop               RX_HINT_GUARDED_BY(m_mutex);
 
   static Global<ThreadPool> s_instance;

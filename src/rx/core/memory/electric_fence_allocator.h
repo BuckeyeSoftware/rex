@@ -10,13 +10,13 @@
 
 namespace Rx::Memory {
 
-// # Electric Fence
-//
-// Special Type of allocator which uses VMAs to construct allocations that are
-// surrounded by inacessible pages to help detect buffer under- and over- flows.
-//
-// This uses significant amounts of memory and should only be used for debugging
-// memory corruption issues.
+/// \brief Electric fence allocator.
+///
+/// Special type of allocator which uses VMAs to construct allocations that are
+/// surrounded by inacessible pages to help detect buffer under- & over- flows.
+///
+/// This uses significant amounts of memory and should only be used for
+/// debugging memory corruption issues.
 struct RX_API ElectricFenceAllocator
   final : Allocator
 {

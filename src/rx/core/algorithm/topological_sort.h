@@ -4,36 +4,49 @@
 #include "rx/core/set.h"
 #include "rx/core/vector.h"
 
+/// \file topological_sort.h
 namespace Rx::Algorithm {
 
-// # Topological Sort
-//
-// Really fast O(V+E), generic topological sorting using unordered hasing
-// data structures.
-//
-// K must satisfy hashing and comparison with operator== for this to be used.
-//
-// Add nodes with |add(_key)|
-// Add dependencies with |add(_key, _dependency)|
+/// \brief Topological sorter
+///
+/// O(V + E) generic topological sorter using unordered hashing data structures.
 template<typename K>
 struct TopologicalSort {
+  /// \param _allocator The allocator to use.
   TopologicalSort(Memory::Allocator& _allocator);
 
+  /// Sorted result
   struct Result {
-    Vector<K> sorted; // sorted order of nodes
-    Vector<K> cycled; // problem nodes that form cycles
+    Vector<K> sorted; ///< Sorted order of nodes.
+    Vector<K> cycled; ///< Problem nodes that form cycles.
   };
 
+  /// \brief Add a key to the sorter.
+  /// \param _key The key to add
+  /// \returns true on success, false otherwise
+  /// \note Fails when key has already been added or out of memory.
   [[nodiscard]] bool add(const K& _key);
+
+  /// \brief Add a dependency to the sorter for a given key.
+  /// \param _key The key to add a dependency to.
+  /// \param _depedency The dependency to add.
+  /// \return true on success, false otherwise
+  /// \note Fails when the key does not exist, the dependency already
+  /// exists for that key, or out of memory.
   [[nodiscard]] bool add(const K& _key, const K& _dependency);
 
+  /// \brief Sort the dependencies.
+  /// \return The possibly-sorted \ref Result on success, nullopt when out of memory.
+  /// \note The result may not be sorted, check \ref Result::cycled for cycles.
   Optional<Result> sort();
 
+  /// Clear all keys and dependencies for reuse.
   void clear();
 
+  /// The allocator used by the sorter.
   constexpr Memory::Allocator& allocator() const;
 
-protected:
+private:
   struct Relations {
     RX_MARK_NO_COPY(Relations);
 

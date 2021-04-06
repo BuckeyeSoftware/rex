@@ -4,14 +4,15 @@
 
 #include "rx/core/global.h"
 
+/// \file system_allocator.h
+
 namespace Rx::Memory {
 
-// # System Allocator
-//
-// The generalized system allocator. Built off a heap allocator and a stats
-// allocator to track global system allocations. When something isn't provided
-// an allocator, this is the allocator used. More specifically, the global
-// g_system_allocator is used.
+/// \brief System allocator.
+///
+/// The generalized system allocator. Built off a heap allocator and a stats
+/// allocator to track global system allocations. When something isn't provided
+/// an allocator, this is the allocator used.
 struct RX_API SystemAllocator
   final : Allocator
 {

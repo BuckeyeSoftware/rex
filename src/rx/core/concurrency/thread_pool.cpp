@@ -28,9 +28,12 @@ struct Work {
 ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _static_pool_size)
   : m_allocator{_allocator}
   , m_threads{allocator()}
-  , m_job_memory{allocator(), sizeof(Work), _static_pool_size}
   , m_stop{false}
 {
+  auto slab = Memory::Slab::create(allocator(), sizeof(Work), _static_pool_size, 1, 0);
+  RX_ASSERT(slab, "couldn't allocate work memory for thread pool");
+  m_job_memory = Utility::move(*slab);
+
   Time::StopWatch timer;
   timer.start();
 

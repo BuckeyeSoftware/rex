@@ -5,14 +5,19 @@
 
 #include "rx/core/hints/force_inline.h"
 
+/// \file uninitialized_storage.h
+
 namespace Rx::Memory {
 
-// # Uninitialized storage
-//
-// Uninitialized storage of size |S| and alignment |A|.
-//
-// This is a convenience type that allows the storage to be used in constexpr
-// contexts without actually initializing the contents of the storage.
+/// \brief Uninitialized storage.
+///
+/// Uninitialized for size \p S and alignment \p A.
+///
+/// This is a convenience type that allows the storage to be used in constexpr
+/// contexts without actually initializing the contents of the storage.
+///
+/// \tparam S The size in bytes.
+/// \tparam A The alignment in bytes.
 template<Size S, Size A>
 struct UninitializedStorage {
   RX_MARK_NO_COPY(UninitializedStorage);

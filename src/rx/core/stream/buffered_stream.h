@@ -3,44 +3,127 @@
 #include "rx/core/stream/context.h"
 #include "rx/core/vector.h"
 
+/// \file buffered_stream.h
+
 namespace Rx::Stream {
 
+/// \brief Buffered stream.
+///
+/// A BufferedStream has the same interface as a Context except stream
+/// operations are buffered with a page cache.
+///
+/// All stream operations have their offsets rounded to a page size granularity
+/// and count of pages. Such operations then go directly to the page cache.
+/// The page cache is not contiguous. Each time an operation hits the page cache
+/// directly, the page's hit count is incremented. The page with the fewest hits
+/// is reused when none of the pages in cache can service an operation. With
+/// exception to the first and last page of a stream, all underlying stream
+/// reads and writes will be of the size of a page.
+///
+/// A BufferedStream models the sort of page caching that an operating system
+/// implements for files, except implemented in user-space. Rex's UnbufferedFile
+/// attempts to disable page caching otherwise two caches would exist doubling
+/// the memory usage of a BufferedFile.
+///
+/// \note The maximum amount of memory a BufferedStream can buffer is given by
+/// the limits of 16 KiB for a page and 256 pages (16 MiB).
 struct RX_API BufferedStream
   : Context
 {
+  /// Default page size (in bytes) for the page cache.
   static constexpr const auto BUFFER_PAGE_SIZE = 4096_u16;
+  /// Default page count for the page cache.
   static constexpr const auto BUFFER_PAGE_COUNT = 64_u8;
 
+  /// \brief Construct a BufferedStream
+  /// \param _allocator The allocator to use for underlying stream operations.
   constexpr BufferedStream(Memory::Allocator& _allocator);
 
+  /// \brief Move construct a buffered stream.
+  /// \param buffered_stream_ The buffered stream to move from.
+  ///
+  /// Assigns the state of \p buffered_stream_ to \c *this and sets
+  /// \p buffered_stream_ to a default constructed state.
   BufferedStream(BufferedStream&& buffered_stream_);
+
+  /// \brief Destroy a buffered stream.
+  /// \note Will call on_flush(), asserting if the flush fails.
   ~BufferedStream();
 
+  /// \brief Moves the buffered stream.
+  ///
+  /// If \c *this still has buffered contents, calls on_flush(). Otherwise,
+  /// assigns the state of \p buffered_stream_ to \c *this and sets
+  /// \p buffered_stream_ to a default constructed state.
+  ///
+  /// \param buffered_stream_ Another buffered stream to assign this buffered
+  /// stream.
+  /// \returns \c *this.
   BufferedStream& operator=(BufferedStream&& buffered_stream_);
 
+  /// \brief Created a BufferedStream.
+  ///
+  /// \param _allocator The allocator to use for page cache.
+  /// \param _page_size The size of a page in bytes.
+  /// \param _page_count The number of pages for the cache.
+  /// \returns The BufferedStream on success, nullopt otherwise.
+  ///
+  /// \note The creation can fail if there's not enough memory in \p _allocator
+  /// to allocate the initial page cache.
+  ///
+  /// \note The cache can be resized later by a call to resize().
   static Optional<BufferedStream> create(Memory::Allocator& _allocator,
     Uint16 _page_size = BUFFER_PAGE_SIZE, Uint8 _page_count = BUFFER_PAGE_COUNT);
 
-  // Resize the buffer.
-  // Maximum of 256 pages in the page cache (Uint8 _page_count).
-  // Maximum of 64 KiB in a page (Uint16 _page_size).
-  // Maximum of 16 MiB of cached data (64 KiB * 256).
-  //
-  // Returns true on success, false otherwise. When this function fails, the
-  // buffered stream retains the page size and count it had before this
-  // function was called.
+  /// \brief Resize the buffer.
+  ///
+  /// The maximum size a buffer can be resized is given by:
+  ///  * 256 pages in the page cache \p _page_size.
+  ///  * 64 KiB in a page \p _page_count.
+  ///  * 16 MiB of cached data (64 KiB * 256).
+  ///
+  /// \param _page_size The size of a page in bytes.
+  /// \param _page_count The number of pages for the cache.
+  /// \returns On successful resize, \c true. Otherwise, \c false. When this
+  /// function fails, the buffered stream retains the page size and count it
+  /// has before this function was called.
+  ///
+  /// \note This function can fail if flushing of existing cached pages failed
+  /// to write completely to the underlying Context or the allocator passed
+  /// during construction ran out of memory to resize the internal page cache.
   [[nodiscard]] bool resize(Uint16 _page_size, Uint8 _page_count);
 
-  // Attach context to this stream.
+  /// \brief Attach context to this stream.
+  ///
+  /// Associates an underlying Context with the stream to provide buffering
+  /// ontop of.
+  ///
+  /// \param _stream The stream to attach or nullptr to detach a stream.
   [[nodiscard]] bool attach(Context* _stream);
 
-  virtual Uint64 on_read(Byte* data_, Uint64 _size, Uint64 _offset);
-  virtual Uint64 on_write(const Byte* _data, Uint64 _size, Uint64 _offset);
-  virtual bool on_stat(Stat& stat_) const;
-  virtual bool on_flush();
-
-  // Cannot be called on an invalid stream.
+  /// \brief The name of the stream.
+  /// \warning Cannot be called if no stream is attached.
   virtual const String& name() const &;
+
+  /// \brief Read data.
+  /// Reads \p _size bytes from the stream at \p _offset into \p data_.
+  /// \returns The number of bytes actually read from \p _offset into \p data_.
+  virtual Uint64 on_read(Byte* data_, Uint64 _size, Uint64 _offset);
+
+  /// \brief Write data.
+  /// Writes \p _size bytes from \p _data into the steam at \p _offset.
+  /// \returns The number of bytes actually written at \p _offset from \p _data.
+  virtual Uint64 on_write(const Byte* _data, Uint64 _size, Uint64 _offset);
+
+  /// \brief Stat the stream for information.
+  /// Updates the stat object referenced by \p stat_.
+  /// \returns On a successful stat, \c true. Otherwise, \c false.
+  virtual bool on_stat(Stat& stat_) const;
+
+  /// \brief Flush all dirty pages out to the underlying stream.
+  /// \returns On a successful flush, \c true. Otherwise, \c false.
+  /// \note A flush can fail if not all pages are written out successfully.
+  virtual bool on_flush();
 
 private:
   // sizeof(Page) = 8.
@@ -144,7 +227,7 @@ inline constexpr BufferedStream::BufferedStream(Memory::Allocator& _allocator)
 }
 
 inline BufferedStream::~BufferedStream() {
-  on_flush();
+  RX_ASSERT(on_flush(), "failed to flush");
 }
 
 } // namespace Rx::Stream

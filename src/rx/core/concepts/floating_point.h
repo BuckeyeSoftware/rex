@@ -2,6 +2,7 @@
 #define RX_CORE_CONCEPTS_FLOATING_POINT_H
 #include "rx/core/traits/is_same.h"
 #include "rx/core/types.h"
+
 namespace Rx::Concepts {
 
 template<typename T>
