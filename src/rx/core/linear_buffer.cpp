@@ -51,6 +51,17 @@ void LinearBuffer::erase(Size _begin, Size _end) {
   m_size -= _end - _begin;
 }
 
+bool LinearBuffer::append(const Byte* _data, Size _size) {
+  const auto old_size = m_size;
+  const auto new_size = m_size + _size;
+  if (!resize(new_size)) {
+    return false;
+  }
+
+  memcpy(m_data + old_size, _data, _size);
+  return true;
+}
+
 void LinearBuffer::release() {
   if (!in_situ()) {
     m_allocator->deallocate(m_data);
