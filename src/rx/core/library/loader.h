@@ -2,7 +2,7 @@
 #define RX_CORE_LIBRARY_LOADER_H
 #include "rx/core/string.h"
 
-namespace Rx::library {
+namespace Rx::Library {
 
 struct RX_API Loader {
   RX_MARK_NO_COPY(Loader);

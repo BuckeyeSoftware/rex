@@ -10,7 +10,7 @@
 #include <windows.h> // LoadLibraryW, FreeLibrary, GetProcAddress
 #endif
 
-namespace Rx::library {
+namespace Rx::Library {
 
 // The dynamic-linker is not thread-safe on most systems. To avoid potential
 // issues we maintain a single global lock on the dynamic-linker interfaces
@@ -21,33 +21,36 @@ static Concurrency::SpinLock g_lock;
 
 Optional<Loader> Loader::open(Memory::Allocator& _allocator, const String& _file_name) {
   // Discourage passing file extensions on the filename.
-  if (!_file_name.ends_with(".dll") && !_file_name.ends_with(".so")) {
+  if (_file_name.ends_with(".dll") || _file_name.ends_with(".so")) {
     return nullopt;
   }
 
   void* result = nullptr;
 
-  Concurrency::ScopeLock lock{g_lock};
+  // Don't allow the loader to be called from multiple threads concurrently.
+  {
+    Concurrency::ScopeLock lock{g_lock};
 #if defined(RX_PLATFORM_POSIX)
-  const auto path = String::format(_allocator, "%s.so", _file_name);
-  const auto name = path.data();
-  if (auto handle = dlopen(name, RTLD_NOW | RTLD_LOCAL)) {
-    result = handle;
-  } else if (!_file_name.begins_with("lib")) {
-    // There's a non-enforced convention of using a "lib" prefix for naming
-    // libraries, attempt this when the above fails and the library name
-    // doesn't begin with such a prefix.
-    const auto path = String::format(_allocator, "lib%s.so", _file_name);
+    const auto path = String::format(_allocator, "%s.so", _file_name);
     const auto name = path.data();
-    result = dlopen(name, RTLD_NOW | RTLD_LOCAL);
-  }
+    if (auto handle = dlopen(name, RTLD_NOW | RTLD_LOCAL)) {
+      result = handle;
+    } else if (!_file_name.begins_with("lib")) {
+      // There's a non-enforced convention of using a "lib" prefix for naming
+      // libraries, attempt this when the above fails and the library name
+      // doesn't begin with such a prefix.
+      const auto path = String::format(_allocator, "lib%s.so", _file_name);
+      const auto name = path.data();
+      result = dlopen(name, RTLD_NOW | RTLD_LOCAL);
+    }
 #elif defined(RX_PLATFORM_WINDOWS)
-  const auto path_utf8 = String::format(_allocator, "%s.dll", _file_name);
-  const auto path_utf16 = path_utf8.to_utf16();
-  const auto name = reinterpret_cast<LPCWSTR>(path_utf16.data());
+    const auto path_utf8 = String::format(_allocator, "%s.dll", _file_name);
+    const auto path_utf16 = path_utf8.to_utf16();
+    const auto name = reinterpret_cast<LPCWSTR>(path_utf16.data());
 
-  result = static_cast<void*>(LoadLibraryW(name));
+    result = static_cast<void*>(LoadLibraryW(name));
 #endif
+  }
 
   if (result) {
     return Loader {_allocator, result};
