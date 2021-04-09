@@ -544,7 +544,7 @@ Engine::Status Engine::integrate() {
       break;
     case SDL_WINDOWEVENT:
       switch (event.window.event) {
-      case SDL_WINDOWEVENT_SIZE_CHANGED:
+      case SDL_WINDOWEVENT_RESIZED:
         {
           const Math::Vec2i size{event.window.data1, event.window.data2};
           display_resolution->set(size, false);
