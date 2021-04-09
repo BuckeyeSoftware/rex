@@ -176,35 +176,41 @@ private:
   // for any operation. Since an operation may not consume a full page, the
   // boundaries need to report the right offsets and sizes within a page to
   // honor the request.
+
+  struct PageInfo {
+    Uint32 page;   ///< The page number.
+    Uint16 size;   ///< The size of the page operation.
+    Uint16 offset; ///< The offset inside the page to begin from.
+  };
+
   struct Iterator {
     constexpr Iterator(const BufferedStream& _buffered_stream,
-      Uint32 _last_page, Uint16 _last_size)
+      PageInfo _beg_page, PageInfo _end_page, Size _page_size)
       : m_buffered_stream{_buffered_stream}
-      , m_last_page{_last_page}
-      , m_last_size{_last_size}
+      , m_this_page{_beg_page}
+      , m_last_page{_end_page}
+      , m_page_size{_page_size}
     {
     }
 
-    Uint32 page;
-    Uint16 offset;
-    Uint16 size;
+    PageInfo info() const { return m_this_page; }
 
-    void next() {
-      page++;
-      offset = 0;
-      size = page == m_last_page
-        ? m_last_size
-        : m_buffered_stream.m_page_size;
-    }
+    bool next() {
+      if (m_this_page.page == m_last_page.page) {
+        return false;
+      }
 
-    operator bool() const {
-      return page != m_last_page + 1;
+      m_this_page.page++;
+      m_this_page.offset = 0;
+      m_this_page.size = m_this_page.page != m_last_page.page ? m_page_size : m_last_page.size;
+      return true;
     }
 
   private:
     const BufferedStream& m_buffered_stream;
-    Uint32 m_last_page;
-    Uint16 m_last_size;
+    PageInfo m_this_page;
+    PageInfo m_last_page;
+    Size m_page_size;
   };
 
   Iterator page_iterate(Uint64 _size, Uint64 _offset) const;

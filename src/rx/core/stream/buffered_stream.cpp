@@ -185,28 +185,13 @@ const String& BufferedStream::name() const & {
 }
 
 BufferedStream::Iterator BufferedStream::page_iterate(Uint64 _size, Uint64 _offset) const {
-  // The data requested will fall in the range:
-  // [_offset, _offset + _size)
-
-  // Here we need to figure out three things.
-  // 1) The start and end page numbers for that range.
-  // 2) The amount of bytes to offset the starting page.
-  // 3) The amount of bytes in the ending page.
-
-  const auto beg_offset = _offset;
-  const auto end_offset = _offset + _size;
-  const Uint32 beg_page = beg_offset / m_page_size;
-  const Uint32 end_page = end_offset / m_page_size;
-
-  const Uint16 end_size = Algorithm::min(_size, end_offset % m_page_size);
-
-  Iterator result{*this, end_page, end_size};
-
-  result.page = beg_page;
-  result.offset = beg_offset % m_page_size;
-  result.size = Algorithm::min(_size, Uint64(m_page_size - result.offset));
-
-  return result;
+  const auto beg_page = _offset / m_page_size;
+  const auto end_page = (_offset + _size - 1) / m_page_size;
+  const auto beg_offset = _offset % m_page_size;
+  const auto end_offset = 0;
+  const auto beg_size = Algorithm::min(m_page_size - beg_offset, _size);
+  const auto end_size = (_offset + _size) - end_page * m_page_size;
+  return Iterator{*this, {beg_page, beg_size, beg_offset}, {end_page, end_size, end_offset}, m_page_size};
 }
 
 bool BufferedStream::resize(Uint16 _page_size, Uint8 _page_count) {
@@ -251,26 +236,30 @@ bool BufferedStream::attach(Context* _context) {
 Uint64 BufferedStream::on_read(Byte* data_, Uint64 _size, Uint64 _offset) {
   // Enumerate in pages.
   Uint64 bytes = 0;
-  for (auto i = page_iterate(_size, _offset); i; i.next()) {
-    if (const auto result = read_page(i.page, data_ + bytes, i.offset, i.size)) {
+  auto i = page_iterate(_size, _offset);
+  do {
+    const auto& info = i.info();
+    if (const auto result = read_page(info.page, data_ + bytes, info.offset, info.size)) {
       bytes += result;
     } else {
       break;
     }
-  }
+  } while (i.next());
   return bytes;
 }
 
 Uint64 BufferedStream::on_write(const Byte* _data, Uint64 _size, Uint64 _offset) {
   // Enumerate in pages.
   Uint64 bytes = 0;
-  for (auto i = page_iterate(_size, _offset); i; i.next()) {
-    if (const auto result = write_page(i.page, _data + bytes, i.offset, i.size)) {
+  auto i = page_iterate(_size, _offset);
+  do {
+    const auto& info = i.info();
+    if (const auto result = write_page(info.page, _data + bytes, info.offset, info.size)) {
       bytes += result;
     } else {
       break;
     }
-  }
+  } while (i.next());
   return bytes;
 }
 
