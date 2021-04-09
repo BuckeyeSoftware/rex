@@ -68,6 +68,9 @@ static void* open_file([[maybe_unused]] Memory::Allocator& _allocator, const cha
     flags |= O_APPEND;
   }
 
+  // Don't ever duplicate FDs on fork.
+  flags |= O_CLOEXEC;
+
   int fd = open(_file_name, flags, 0666);
   if (fd < 0) {
     return nullptr;
@@ -251,7 +254,7 @@ Uint64 UnbufferedFile::on_read(Byte* _data, Uint64 _size, Uint64 _offset) {
   Uint64 bytes = 0;
   while (bytes < _size) {
     Size read = 0;
-    if (!read_file(m_impl, _data, _size - bytes, _offset + bytes, read) || !read) {
+    if (!read_file(m_impl, _data + bytes, _size - bytes, _offset + bytes, read) || !read) {
       break;
     }
     bytes += read;
@@ -264,7 +267,7 @@ Uint64 UnbufferedFile::on_write(const Byte* _data, Uint64 _size, Uint64 _offset)
   Uint64 bytes = 0;
   while (bytes < _size) {
     Size wrote = 0;
-    if (!write_file(m_impl, _data, _size - bytes, _offset + bytes, wrote) || !wrote) {
+    if (!write_file(m_impl, _data + bytes, _size - bytes, _offset + bytes, wrote) || !wrote) {
       break;
     }
     bytes += wrote;
