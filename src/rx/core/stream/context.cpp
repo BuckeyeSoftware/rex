@@ -175,21 +175,29 @@ bool Context::flush() {
 }
 
 Optional<LinearBuffer> Context::read_binary(Memory::Allocator& _allocator) {
-  auto n_bytes = size();
-  if (!n_bytes || !*n_bytes) {
-    return nullopt;
-  }
-
   LinearBuffer result{_allocator};
-  if (!result.resize(*n_bytes)) {
-    return nullopt;
+
+  auto n_bytes = size();
+  if (n_bytes && *n_bytes) {
+    if (!result.resize(*n_bytes)) {
+      return nullopt;
+    }
+
+    if (read(result.data(), *n_bytes) != *n_bytes) {
+      return nullopt;
+    }
+  } else {
+    // Stream does not support quering file size. Read in a loop until EOS.
+    while (!is_eos()) {
+      Byte data[4096];
+      auto bytes = read(data, sizeof data);
+      if (!result.append(data, bytes)) {
+        return nullopt;
+      }
+    }
   }
 
-  if (read(result.data(), *n_bytes) == *n_bytes) {
-    return result;
-  }
-
-  return nullopt;
+  return result;
 }
 
 Optional<LinearBuffer> Context::read_text(Memory::Allocator& _allocator) {
