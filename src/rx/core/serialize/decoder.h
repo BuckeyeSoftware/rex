@@ -111,7 +111,7 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Decoder::allocator() const {
 
 template<typename... Ts>
 bool Decoder::error(const char* _format, Ts&&... _arguments) {
-  m_message = String::format(_format, Utility::forward<Ts>(_arguments)...);
+  m_message = String::format(m_allocator, _format, Utility::forward<Ts>(_arguments)...);
   return false;
 }
 

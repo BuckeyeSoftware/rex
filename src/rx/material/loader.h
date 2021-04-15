@@ -126,7 +126,13 @@ template<typename... Ts>
 void Loader::log(Log::Level _level, const char* _format,
   Ts&&... _arguments) const
 {
-  write_log(_level, String::format(_format, Utility::forward<Ts>(_arguments)...));
+  if constexpr(sizeof...(Ts) > 0) {
+    auto format = String::format(allocator(), _format,
+      Utility::forward<Ts>(_arguments)...);
+    write_log(_level, Utility::move(format));
+  } else {
+    write_log(_level, _format);
+  }
 }
 
 } // namespace Rx::Material

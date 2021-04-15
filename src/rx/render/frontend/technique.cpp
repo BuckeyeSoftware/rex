@@ -60,6 +60,8 @@ static void binexp_skip_spaces(const char*& expression_) {
 
 static int binexp_parse_binary(const char*& expression_, int& parenthesis_, const Map<String, bool>& _values);
 static int binexp_parse_atom(const char*& expression_, int& parenthesis_, const Map<String, bool>& _values) {
+  auto& allocator = Memory::SystemAllocator::instance();
+
   binexp_skip_spaces(expression_);
 
   bool negated{false};
@@ -86,7 +88,7 @@ static int binexp_parse_atom(const char*& expression_, int& parenthesis_, const 
   String identifier;
   const char* end = strpbrk(expression_, " )"); // ' ' or ')' marks end of an identifier
   if (end) {
-    identifier = {expression_, end};
+    identifier = String { allocator, expression_, end };
   } else {
     // otherwise the identifier is at the end of the string
     identifier = expression_;
@@ -497,6 +499,7 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
   const Map<String, bool>& _values)
 {
   auto frontend = m_technique->m_frontend;
+  auto& allocator = frontend->allocator();
 
   const auto& shader_definitions = m_technique->m_shader_definitions;
   const auto& uniform_definitions = m_technique->m_uniform_definitions;
@@ -515,16 +518,16 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
     auto program = frontend->create_program(RX_RENDER_TAG("technique"));
 
     shader_definitions.each_fwd([&](const ShaderDefinition& _shader_definition) {
-      if (!m_technique->evaluate_when({frontend->allocator()}, _shader_definition.when)) {
+      if (!m_technique->evaluate_when({allocator}, _shader_definition.when)) {
         return true;
       }
 
-      Shader specialized_shader{frontend->allocator()};
+      Shader specialized_shader{allocator};
       specialized_shader.kind = _shader_definition.kind;
 
       // Emit #defines
       values->each_pair([&](const String& _key, bool _value) {
-        return _value ? specialized_shader.source.append(String::format("#define %s\n", _key)) : true;
+        return _value ? specialized_shader.source.formatted_append("#define %s\n", _key) : true;
       });
 
       auto source = m_technique->resolve_source(_shader_definition, *values, _modules);
@@ -591,24 +594,13 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
           return true;
         }
 
-        Shader specialized_shader{frontend->allocator()};
+        Shader specialized_shader{allocator};
         specialized_shader.kind = _shader_definition.kind;
 
         // Emit #defines
         values->each_pair([&](const String& _key, bool _value) {
-          return _value ? specialized_shader.source.append(String::format("#define %s\n", _key)) : true;
+          return _value ? specialized_shader.source.formatted_append("#define %s\n", _key) : true;
         });
-
-        /*
-        const Size specializations{m_specializations.size()};
-        for (Size i{0}; i < specializations; i++) {
-          const String& specialication{m_specializations[i]};
-          if (_flags & (1_u64 << i)) {
-            if (!specialized_shader.source.append(String::format("#define %s\n", specialication))) {
-              return false;
-            }
-          }
-        }*/
 
         // Append shader source.
         auto source = m_technique->resolve_source(_shader_definition, *values, _modules);
@@ -699,17 +691,13 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
           return true;
         }
 
-        Shader specialized_shader{frontend->allocator()};
+        Shader specialized_shader{allocator};
         specialized_shader.kind = _shader_definition.kind;
 
-        values->each_pair([&](const String& _key, bool _value) {
-          return _value ? specialized_shader.source.append(String::format("#define %s\n", _key)) : true;
-        });
-
         // Emit specialization #define
-        // if (!specialized_shader.source.append(String::format("#define %s\n", specialization))) {
-        //   return false;
-        // }
+        values->each_pair([&](const String& _key, bool _value) {
+          return _value ? specialized_shader.source.formatted_append("#define %s\n", _key) : true;
+        });
 
         // Append shader source.
         auto source = m_technique->resolve_source(_shader_definition, *values, _modules);

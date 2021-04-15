@@ -686,10 +686,10 @@ namespace detail_gl4 {
   };
 }
 
-static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
-  const Frontend::Shader& _shader)
+static GLuint compile_shader(Memory::Allocator& _allocator,
+  const Vector<Frontend::Uniform>& _uniforms, const Frontend::Shader& _shader)
 {
-  auto contents = generate_glsl(_uniforms, _shader, 440, false);
+  auto contents = generate_glsl(_allocator, _uniforms, _shader, 440, false);
 
   auto data = static_cast<const GLchar*>(contents->data());
   auto size = static_cast<GLint>(contents->size());
@@ -707,7 +707,7 @@ static GLuint compile_shader(const Vector<Frontend::Uniform>& _uniforms,
     logger->error("failed compiling shader");
 
     if (log_size) {
-      Vector<char> error_log{Memory::SystemAllocator::instance()};
+      Vector<char> error_log{_allocator};
       if (!error_log.resize(log_size)) {
         logger->error("out of memory");
       } else {
@@ -1156,9 +1156,9 @@ void GL4::process(Byte* _command) {
 
           const auto& shaders = render_program->shaders();
 
-          Vector<GLuint> shader_handles;
+          Vector<GLuint> shader_handles{m_allocator};
           shaders.each_fwd([&](const Frontend::Shader& _shader) {
-            GLuint shader_handle{compile_shader(render_program->uniforms(), _shader)};
+            GLuint shader_handle{compile_shader(m_allocator, render_program->uniforms(), _shader)};
             if (shader_handle != 0) {
               pglAttachShader(program->handle, shader_handle);
               shader_handles.push_back(shader_handle);

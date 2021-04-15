@@ -28,19 +28,13 @@ struct RX_API String {
   String(const String& _contents);
   String(String&& contents_);
   String(const char* _contents);
-  String(const char* _contents, Size _size);
-  String(const char* _first, const char* _last);
   String(Memory::View _view);
   ~String();
 
   template<typename... Ts>
   RX_HINT_FORMAT(2, 0)
-  static String format(Memory::Allocator& _allocator,
-                       const char* _format, Ts&&... _arguments);
-
-  template<typename... Ts>
-  RX_HINT_FORMAT(1, 0)
-  static String format(const char* _format, Ts&&... _arguments);
+  static String format(Memory::Allocator& _allocator, const char* _format,
+    Ts&&... _arguments);
 
   String& operator=(const String& _contents);
   String& operator=(const char* _contents);
@@ -70,6 +64,17 @@ struct RX_API String {
   [[nodiscard]] bool append(const char* _contents);
   [[nodiscard]] bool append(const String& _contents);
   [[nodiscard]] bool append(char _ch);
+
+  template<typename... Ts>
+  RX_HINT_FORMAT(2, 0)
+  [[nodiscard]] bool formatted_append(const char* _format, Ts&&... _arguments) {
+    if constexpr(sizeof...(Ts) > 0) {
+      auto contents = format(*m_allocator, _format, Utility::forward<Ts>(_arguments)...);
+      return append(contents);
+    } else {
+      return append(_format);
+    }
+  }
 
   [[nodiscard]] bool insert_at(Size _position, const char* _contents, Size _size);
   [[nodiscard]] bool insert_at(Size _position, const char* _contents);
@@ -127,6 +132,8 @@ struct RX_API String {
 
   // The span includes the null terminator.
   Span<char> span();
+
+  static char *read_line(char*& data_);
 
 private:
   static RX_API String formatter(Memory::Allocator& _allocator, const char* _format, ...);
@@ -202,11 +209,6 @@ String String::format(Memory::Allocator& _allocator, const char* _format, Ts&&..
   return formatter(_allocator, _format, FormatNormalize<Traits::RemoveCVRef<Ts>>{}(Utility::forward<Ts>(_arguments))...);
 }
 
-template<typename... Ts>
-String String::format(const char* _format, Ts&&... _arguments) {
-  return format(Memory::SystemAllocator::instance(), _format, Utility::forward<Ts>(_arguments)...);
-}
-
 inline String::String(Memory::Allocator& _allocator, const String& _contents)
   : String{_allocator, _contents.data(), _contents.size()}
 {
@@ -228,22 +230,12 @@ inline constexpr String::String()
 }
 
 inline String::String(const String& _contents)
-  : String{_contents.allocator(), _contents}
+  : String{_contents.allocator(), _contents.data(), _contents.size()}
 {
 }
 
 inline String::String(const char* _contents)
   : String{Memory::SystemAllocator::instance(), _contents}
-{
-}
-
-inline String::String(const char* _contents, Size _size)
-  : String{Memory::SystemAllocator::instance(), _contents, _size}
-{
-}
-
-inline String::String(const char* _first, const char* _last)
-  : String{Memory::SystemAllocator::instance(), _first, _last}
 {
 }
 

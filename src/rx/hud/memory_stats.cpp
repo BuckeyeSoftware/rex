@@ -29,8 +29,8 @@ MemoryStats::MemoryStats(Render::Immediate2D* _immediate)
 }
 
 void MemoryStats::render() {
-  const auto allocator = &Memory::SystemAllocator::instance();
-  const auto stats = static_cast<const Memory::SystemAllocator*>(allocator)->stats();
+  auto& allocator = Memory::SystemAllocator::instance();
+  const auto stats = static_cast<const Memory::SystemAllocator*>(&allocator)->stats();
 
   const Render::Frontend::Context& frontend = *m_immediate->frontend();
   const Math::Vec2f &screen_size = frontend.swapchain()->dimensions().cast<Float32>();
@@ -48,10 +48,10 @@ void MemoryStats::render() {
     y += *font_size;
   }};
 
-  line(String::format("used memory (requested): %s", String::human_size_format(stats.used_request_bytes)));
-  line(String::format("used memory (actual):    %s", String::human_size_format(stats.used_actual_bytes)));
-  line(String::format("peak memory (requested): %s", String::human_size_format(stats.peak_request_bytes)));
-  line(String::format("peak memory (actual):    %s", String::human_size_format(stats.peak_actual_bytes)));
+  line(String::format(allocator, "used memory (requested): %s", String::human_size_format(stats.used_request_bytes)));
+  line(String::format(allocator, "used memory (actual):    %s", String::human_size_format(stats.used_actual_bytes)));
+  line(String::format(allocator, "peak memory (requested): %s", String::human_size_format(stats.peak_request_bytes)));
+  line(String::format(allocator, "peak memory (actual):    %s", String::human_size_format(stats.peak_actual_bytes)));
 }
 
 } // namespace rx::hud

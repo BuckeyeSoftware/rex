@@ -53,7 +53,7 @@ struct Event<R(Ts...)> {
   constexpr Event(Memory::Allocator& _allocator);
   constexpr Event();
 
-  void signal(Ts... _arguments);
+  void signal(const Ts&... _arguments);
   Optional<Handle> connect(Delegate&& function_);
 
   Size size() const;
@@ -103,7 +103,7 @@ constexpr Event<R(Ts...)>::Event()
 }
 
 template<typename R, typename... Ts>
-void Event<R(Ts...)>::signal(Ts... _arguments) {
+void Event<R(Ts...)>::signal(const Ts&... _arguments) {
   Concurrency::ScopeLock lock{m_lock};
   m_delegates.each_fwd([&](Delegate& _delegate) {
     if (_delegate) {

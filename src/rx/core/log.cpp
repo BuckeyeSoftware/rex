@@ -280,6 +280,7 @@ void Logger::write(Ptr<Message>& message_) {
 #endif
 
   const auto contents = String::format(
+    Memory::SystemAllocator::instance(),
     format,
     string_for_time(message_->time),
     name,

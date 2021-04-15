@@ -184,7 +184,7 @@ void Immediate2D::Queue::clear() {
 Optional<Immediate2D::Font>
 Immediate2D::Font::open(const Key& _key, Frontend::Context* _frontend) {
   auto& allocator = _frontend->allocator();
-  auto name = String::format("base/fonts/%s.ttf", _key.name);
+  auto name = String::format(allocator, "base/fonts/%s.ttf", _key.name);
   auto data = Filesystem::read_binary_file(allocator, name);
   if (!data) {
     return nullopt;

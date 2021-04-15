@@ -123,7 +123,7 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
     directory->each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
         Module new_module{allocator()};
-        const auto path{String::format("%s/%s", MODULES_PATH,
+        const auto path{String::format(m_allocator, "%s/%s", MODULES_PATH,
                                        Utility::move(item_.name()))};
         if (new_module.load(path)) {
           m_modules.insert(new_module.name(), Utility::move(new_module));
@@ -137,7 +137,7 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
     directory->each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
         Technique new_technique{this};
-        const auto path{String::format("%s/%s", TECHNIQUES_PATH,
+        const auto path{String::format(m_allocator, "%s/%s", TECHNIQUES_PATH,
                                        Utility::move(item_.name()))};
         if (new_technique.load(path) && new_technique.compile(m_modules)) {
           m_techniques.insert(new_technique.name(),

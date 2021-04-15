@@ -111,8 +111,9 @@ constexpr const char* uniform_to_string(Frontend::Uniform::Type _type) {
 }
 
 // Generate the GLSL
-Optional<String> generate_glsl(const Vector<Frontend::Uniform>& _uniforms,
-  const Frontend::Shader& _shader, int _version, bool _es);
+Optional<String> generate_glsl(Memory::Allocator& _allocator,
+  const Vector<Frontend::Uniform>& _uniforms, const Frontend::Shader& _shader,
+  int _version, bool _es);
 
 } // namespace Rx::Render
 

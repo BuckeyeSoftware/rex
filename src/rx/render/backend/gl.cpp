@@ -397,11 +397,12 @@ Attribute convert_attribute(const Frontend::Buffer::Attribute& _attribute) {
   RX_HINT_UNREACHABLE();
 }
 
-Optional<String> generate_glsl(const Vector<Frontend::Uniform>& _uniforms,
-  const Frontend::Shader& _shader, int _version, bool _es)
+Optional<String> generate_glsl(Memory::Allocator& _allocator,
+  const Vector<Frontend::Uniform>& _uniforms, const Frontend::Shader& _shader,
+  int _version, bool _es)
 {
-  String contents;
-  auto version = String::format("#version %d %s\n", _version, _es ? "es" : "core");
+  String contents{_allocator};
+  auto version = String::format(_allocator, "#version %d %s\n", _version, _es ? "es" : "core");
   if (!contents.append(version)) {
     return nullopt;
   }
@@ -448,22 +449,27 @@ Optional<String> generate_glsl(const Vector<Frontend::Uniform>& _uniforms,
   }
 
   auto emit_vs_input = [&](const String& _name, const Frontend::Shader::InOut& _inout) {
-    return contents.append(String::format("layout(location = %zu) in %s %s;\n",
-      _inout.index, inout_to_string(_inout.kind), _name));
+    return contents.formatted_append(
+      "layout(location = %zu) in %s %s;\n",
+      _inout.index, inout_to_string(_inout.kind), _name);
   };
 
   auto emit_vs_output = [&](const String& _name, const Frontend::Shader::InOut& _inout) {
-    return contents.append(String::format("out %s %s;\n",
-      inout_to_string(_inout.kind), _name));
+    return contents.formatted_append(
+      "out %s %s;\n",
+      inout_to_string(_inout.kind),_name);
   };
 
   auto emit_fs_input = [&](const String& _name, const Frontend::Shader::InOut& _inout) {
-    return contents.append(String::format("in %s %s;\n", inout_to_string(_inout.kind), _name));
+    return contents.formatted_append(
+      "in %s %s;\n",
+      inout_to_string(_inout.kind), _name);
   };
 
   auto emit_fs_output = [&](const String& _name, const Frontend::Shader::InOut& _inout) {
-    return contents.append(String::format("layout(location = %zu) out %s %s;\n",
-      _inout.index, inout_to_string(_inout.kind), _name));
+    return contents.formatted_append(
+      "layout(location = %zu) out %s %s;\n",
+      _inout.index, inout_to_string(_inout.kind), _name);
   };
 
   switch (_shader.kind) {
@@ -486,8 +492,9 @@ Optional<String> generate_glsl(const Vector<Frontend::Uniform>& _uniforms,
       return true;
     }
 
-    return contents.append(String::format("uniform %s %s;\n",
-      uniform_to_string(_uniform.type()), _uniform.name()));
+    return contents.formatted_append(
+      "uniform %s %s;\n",
+      uniform_to_string(_uniform.type()), _uniform.name());
   };
 
   if (!_uniforms.each_fwd(emit_uniform)) {

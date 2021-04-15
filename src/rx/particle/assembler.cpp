@@ -316,8 +316,8 @@ private:
   bool error(const char* _format, Ts&&... _arguments) {
     const auto& source = m_lexer.source();
     const auto& location = m_lexer.location();
-    return m_error.append(String::format("%s:%zu:%zu: ", source.name, location.line, location.column))
-       &&  m_error.append(String::format(_format, Utility::forward<Ts>(_arguments)...));
+    return m_error.formatted_append("%s:%zu:%zu: ", source.name, location.line, location.column)
+       &&  m_error.formatted_append(_format, Utility::forward<Ts>(_arguments)...);
   }
 
   bool next() {

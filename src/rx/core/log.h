@@ -124,14 +124,16 @@ private:
 
 template<typename... Ts>
 bool Log::write(Level _level, const char* _format, Ts&&... _arguments) {
+  Optional<String> contents;
   if constexpr (sizeof...(Ts) > 0) {
-    auto format = String::format(_format, Utility::forward<Ts>(_arguments)...);
-    m_queue_event.signal(_level, {format.allocator(), format});
-    return enqueue(this, _level, Utility::move(format));
+    auto& allocator = Memory::SystemAllocator::instance();
+    contents = String::format(allocator, _format,
+      Utility::forward<Ts>(_arguments)...);
   } else {
-    m_queue_event.signal(_level, _format);
-    return enqueue(this, _level, {_format});
+    contents = String(_format);
   }
+  m_queue_event.signal(_level, *contents);
+  return enqueue(this, _level, Utility::move(*contents));
 }
 
 inline bool Log::write(Level _level, String&& message_) {

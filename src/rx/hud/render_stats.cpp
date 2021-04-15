@@ -29,6 +29,8 @@ RenderStats::RenderStats(Render::Immediate2D* _immediate)
 }
 
 void RenderStats::render() {
+  auto& allocator = Memory::SystemAllocator::instance();
+
   const Render::Frontend::Context& frontend = *m_immediate->frontend();
   const auto& buffer_stats = frontend.stats(Render::Frontend::Resource::Type::BUFFER);
   const auto& program_stats = frontend.stats(Render::Frontend::Resource::Type::PROGRAM);
@@ -55,6 +57,7 @@ void RenderStats::render() {
   auto render_stat = [&](const char *_label, const auto &_stats) {
     const auto format =
       String::format(
+        allocator,
         "^w%s: ^[%x]%zu ^wof ^m%zu ^g%s ^w(%zu cached)",
         _label,
         color_ratio(_stats.used, _stats.total),
@@ -85,6 +88,7 @@ void RenderStats::render() {
     1.0f,
     Render::Immediate2D::TextAlign::LEFT,
     String::format(
+      allocator,
       "commands: ^[%x]%s ^wof ^g%s ^w(%zu total)",
       color_ratio(commands_used, commands_total),
       String::human_size_format(commands_used),
@@ -110,7 +114,7 @@ void RenderStats::render() {
       *font_size,
       1.0f,
       Render::Immediate2D::TextAlign::LEFT,
-      String::format("%s: %zu", _name, _number),
+      String::format(allocator, "%s: %zu", _name, _number),
       {1.0f, 1.0f, 1.0f, 1.0f});
     offset.y += *font_size;
   };
@@ -128,7 +132,11 @@ void RenderStats::render() {
     *font_size,
     1.0f,
     Render::Immediate2D::TextAlign::LEFT,
-    String::format("draws: %zu (%zu instanced)", frontend.draw_calls(), frontend.instanced_draw_calls()),
+    String::format(
+      allocator,
+      "draws: %zu (%zu instanced)",
+      frontend.draw_calls(),
+      frontend.instanced_draw_calls()),
     {1.0f, 1.0f, 1.0f, 1.0f});
   offset.y += *font_size;
 
@@ -144,6 +152,7 @@ void RenderStats::render() {
     1.0f,
     Render::Immediate2D::TextAlign::RIGHT,
     String::format(
+      allocator,
       "MSPF: %.2f | FPS: %d",
       _timer.mspf(),
       _timer.fps()),

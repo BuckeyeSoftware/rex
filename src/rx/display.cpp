@@ -42,9 +42,14 @@ Optional<Vector<Display>> Display::displays(Memory::Allocator& _allocator) {
 
       // The string now owns the memory, avoids a copy.
       // The |name_size + 1| is correct, we want to include the null-terminator.
-      result.m_name = Memory::View{&_allocator, reinterpret_cast<Byte*>(name_data), strlen(name_data) + 1, name_size};
+      result.m_name = Memory::View{
+        &_allocator,
+        reinterpret_cast<Byte*>(name_data),
+        strlen(name_data) + 1,
+        name_size
+      };
     } else {
-      result.m_name = String::format("Unknown (%d)", i);
+      result.m_name = String::format(_allocator, "Unknown (%d)", i);
     }
 
     Float32 dpi[3];
@@ -81,7 +86,7 @@ Optional<Vector<Display>> Display::displays(Memory::Allocator& _allocator) {
       auto& rhs = displays[j];
       if (lhs.m_name == rhs.m_name) {
         count++;
-        if (!rhs.m_name.append(String::format(" (%d)", count))) {
+        if (!rhs.m_name.formatted_append(" (%d)", count)) {
           return nullopt;
         }
       }

@@ -100,9 +100,12 @@ Optional<String> JSON::error() const {
   if (m_shared) {
     const auto code =
       static_cast<enum json_parse_error_e>(m_shared->m_error.error);
-    return String::format("%zu:%zu %s", m_shared->m_error.error_line_no,
-      m_shared->m_error.error_row_no, json_parse_error_to_string(code));
+
+    return String::format(m_shared->m_allocator, "%zu:%zu %s",
+      m_shared->m_error.error_line_no, m_shared->m_error.error_row_no,
+      json_parse_error_to_string(code));
   }
+
   return nullopt;
 }
 

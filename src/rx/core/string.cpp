@@ -108,6 +108,16 @@ Size utf16_to_utf8(const Uint16* _utf16_contents, Size _length,
   return elements;
 }
 
+char* String::read_line(char*& line_) {
+  if (!line_ || !*line_) {
+    return nullptr;
+  }
+  char* line = line_;
+  line_ += strcspn(line_, "\n");
+  *line_++ = '\0';
+  return line;
+}
+
 String String::formatter(Memory::Allocator& _allocator, const char* _format, ...) {
   String result{_allocator};
 
@@ -430,7 +440,9 @@ String String::human_size_format(Size _size) {
   char* period = strchr(buffer, '.');
   RX_ASSERT(period, "failed to format");
   period[3] = '\0';
-  return format("%s %s", buffer, SUFFIXES[i]);
+  // TODO(dweiler): Consider using NullAllocator here as human_size_format
+  // should fit completely in-situ.
+  return format(Memory::SystemAllocator::instance(), "%s %s", buffer, SUFFIXES[i]);
 }
 
 bool String::begins_with(const char* _prefix) const {

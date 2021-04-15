@@ -362,7 +362,7 @@ bool Engine::init() {
     window = SDL_CreateWindow(
       app_name->get().is_empty()
         ? "Rex"
-        : String::format("Rex: %s", app_name->get()).data(),
+        : String::format(Memory::SystemAllocator::instance(), "Rex: %s", app_name->get()).data(),
       SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
       SDL_WINDOWPOS_CENTERED_DISPLAY(display_index),
       display_resolution->get().w,

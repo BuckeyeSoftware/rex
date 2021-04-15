@@ -123,29 +123,31 @@ void Token::destroy() {
 }
 
 String Token::print() const {
+  auto& allocator = Memory::SystemAllocator::instance();
+
   switch (m_type) {
   case Type::ATOM:
     return m_as_atom;
   case Type::STRING:
-    return String::format("\"%s\"", m_as_string);
+    return String::format(allocator, "\"%s\"", m_as_string);
   case Type::BOOLEAN:
     return m_as_boolean ? "true" : "false";
   case Type::INT:
-    return String::format("%d", m_as_int);
+    return String::format(allocator, "%d", m_as_int);
   case Type::FLOAT:
-    return String::format("%f", m_as_float);
+    return String::format(allocator, "%f", m_as_float);
   case Type::VEC4F:
-    return String::format("%s", m_as_vec4f);
+    return String::format(allocator, "%s", m_as_vec4f);
   case Type::VEC4I:
-    return String::format("%s", m_as_vec4i);
+    return String::format(allocator, "%s", m_as_vec4i);
   case Type::VEC3F:
-    return String::format("%s", m_as_vec3f);
+    return String::format(allocator, "%s", m_as_vec3f);
   case Type::VEC3I:
-    return String::format("%s", m_as_vec3i);
+    return String::format(allocator, "%s", m_as_vec3i);
   case Type::VEC2F:
-    return String::format("%s", m_as_vec2f);
+    return String::format(allocator, "%s", m_as_vec2f);
   case Type::VEC2I:
-    return String::format("%s", m_as_vec2i);
+    return String::format(allocator, "%s", m_as_vec2i);
   }
 
   return "";

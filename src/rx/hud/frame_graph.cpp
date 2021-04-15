@@ -58,8 +58,8 @@ void FrameGraph::render() {
   m_immediate->frame_queue().record_line({box_left,   box_top},    {box_right,  box_top},    0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
   m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_center,       box_top    + 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::CENTER, "Frame Time", {1.0f, 1.0f, 1.0f, 1.0f});
   m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_top    - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, "0.0", {1.0f, 1.0f, 1.0f, 1.0f});
-  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_middle - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format("%.1f", FRAME_SCALE * .5), {1.0f, 1.0f, 1.0f, 1.0f});
-  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_bottom - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format("%.1f", FRAME_SCALE), {1.0f, 1.0f, 1.0f, 1.0f});
+  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_middle - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format(Memory::SystemAllocator::instance(), "%.1f", FRAME_SCALE * .5), {1.0f, 1.0f, 1.0f, 1.0f});
+  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_bottom - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format(Memory::SystemAllocator::instance(), "%.1f", FRAME_SCALE), {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
 } // namespace rx::hud
