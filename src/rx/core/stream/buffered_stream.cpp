@@ -185,12 +185,12 @@ const String& BufferedStream::name() const & {
 }
 
 BufferedStream::Iterator BufferedStream::page_iterate(Uint64 _size, Uint64 _offset) const {
-  const auto beg_page = _offset / m_page_size;
-  const auto end_page = (_offset + _size - 1) / m_page_size;
-  const auto beg_offset = _offset % m_page_size;
-  const auto end_offset = 0;
-  const auto beg_size = Algorithm::min(m_page_size - beg_offset, _size);
-  const auto end_size = (_offset + _size) - end_page * m_page_size;
+  const Uint32 beg_page = _offset / m_page_size;
+  const Uint32 end_page = (_offset + _size - 1) / m_page_size;
+  const Uint16 beg_offset = _offset % m_page_size;
+  const Uint16 end_offset = 0;
+  const Uint16 beg_size = Algorithm::min(m_page_size - beg_offset, Sint32(_size));
+  const Uint16 end_size = (_offset + _size) - end_page * m_page_size;
   return Iterator{*this, {beg_page, beg_size, beg_offset}, {end_page, end_size, end_offset}, m_page_size};
 }
 
