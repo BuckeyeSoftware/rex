@@ -94,7 +94,7 @@ private:
     RX_MARK_NO_COPY(State);
     RX_MARK_NO_MOVE(State);
 
-    State(Memory::Allocator& _allocator, const char* _name, Func&& function_);
+    State(const char* _name, Func&& function_);
 
     [[nodiscard]] bool spawn();
     [[nodiscard]] bool join();
@@ -108,7 +108,6 @@ private:
       alignas(16) Byte m_thread[16];
     };
 
-    Memory::Allocator& m_allocator;
     Func m_function;
     const char* m_name;
     bool m_joined;
@@ -121,9 +120,8 @@ private:
 };
 
 // [Thread::State]
-inline Thread::State::State(Memory::Allocator& _allocator, const char* _name, Func&& function_)
-  : m_allocator{_allocator}
-  , m_function{Utility::move(function_)}
+inline Thread::State::State(const char* _name, Func&& function_)
+  : m_function{Utility::move(function_)}
   , m_name{_name}
   , m_joined{false}
 {

@@ -142,16 +142,14 @@ private:
     // byte offset inside |m_buffer|.
     Uint8 buffer_index;
 
+    Uint8 hits : 7;  // Number of times this page was hit in cache.
+    Uint8 dirty : 1; // Indicates if this page is dirty and needs to be flushed.
+
     // Called each time this page is hit. Saturates |hits| because it's only
     // 7-bits and overflow is not desired here. If we overflow then the LRU
     // would flush a possibly common page from cache to replace it since it
     // would have a lower hit rate due to wrapping around.
     Page* hit();
-
-    struct {
-      Uint8 hits : 7;  // Number of times this page was hit in cache.
-      Uint8 dirty : 1; // Indicates if this page is dirty and needs to be flushed.
-    };
   };
 
   // Retrieve pointer to the page data for the given page.
@@ -184,10 +182,8 @@ private:
   };
 
   struct Iterator {
-    constexpr Iterator(const BufferedStream& _buffered_stream,
-      PageInfo _beg_page, PageInfo _end_page, Size _page_size)
-      : m_buffered_stream{_buffered_stream}
-      , m_this_page{_beg_page}
+    constexpr Iterator(PageInfo _beg_page, PageInfo _end_page, Size _page_size)
+      : m_this_page{_beg_page}
       , m_last_page{_end_page}
       , m_page_size{_page_size}
     {
@@ -207,7 +203,6 @@ private:
     }
 
   private:
-    const BufferedStream& m_buffered_stream;
     PageInfo m_this_page;
     PageInfo m_last_page;
     Size m_page_size;

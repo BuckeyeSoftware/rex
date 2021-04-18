@@ -22,7 +22,7 @@ enum class MemoryOrder : Uint8 {
   /// guaranteed.
   ///
   /// All atomic operations tagged with this order are not synchronization
-  /// operations; they do not impose an order among concurrency memory accesses.
+  /// operations; they do not impose an order among concurrent memory accesses.
   /// They only guarantee atomicity and modification order consistency.
   ///
   /// Typical use of relaxed memory ordering is incrementing counters, such as
@@ -104,7 +104,7 @@ struct AtomicValue {
   AtomicValue() = default;
 
   /// Initialize with value.
-  /// \param _value The value to initialized with.
+  /// \param _value The value to initialize with.
   /// \warning The initialization is not atomic.
   constexpr AtomicValue(T _value) : m_value{_value} {}
 

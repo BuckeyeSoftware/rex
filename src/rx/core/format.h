@@ -57,7 +57,7 @@ struct FormatNormalize<char[E]> {
 
 // Low-level format functions.
 RX_API Size format_buffer_va_list(Span<char> buffer_, const char* _format, va_list _list) RX_HINT_FORMAT(2, 0);
-RX_API Size format_buffer_va_args(Span<char> buffer_, const char* _format, ...) RX_HINT_FORMAT(2, 3);
+RX_API Size format_buffer_va_args(Span<char> buffer_, const char* _format, ...); /*RX_HINT_FORMAT(2, 3);*/
 
 template<typename... Ts>
 RX_HINT_FORMAT(2, 0) Size format_buffer(Span<char> buffer_, const char* _format, Ts&&... _arguments) {

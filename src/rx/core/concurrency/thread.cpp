@@ -79,7 +79,7 @@ static Global<ThreadDescription> s_thread_description{"system"};
 
 // [Thread]
 Optional<Thread> Thread::create(Memory::Allocator& _allocator, const char* _name, Func&& function_) {
-  auto state = make_ptr<State>(_allocator, _allocator, _name, Utility::move(function_));
+  auto state = make_ptr<State>(_allocator, _name, Utility::move(function_));
   if (state && state->spawn()) {
     return Thread{Utility::move(state)};
   }

@@ -66,8 +66,8 @@ struct RX_API String {
   [[nodiscard]] bool append(char _ch);
 
   template<typename... Ts>
-  RX_HINT_FORMAT(2, 0)
-  [[nodiscard]] bool formatted_append(const char* _format, Ts&&... _arguments) {
+  [[nodiscard]] RX_HINT_FORMAT(2, 0)
+  bool formatted_append(const char* _format, Ts&&... _arguments) {
     if constexpr(sizeof...(Ts) > 0) {
       auto contents = format(*m_allocator, _format, Utility::forward<Ts>(_arguments)...);
       return append(contents);

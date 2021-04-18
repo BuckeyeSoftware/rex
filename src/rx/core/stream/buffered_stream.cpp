@@ -191,7 +191,7 @@ BufferedStream::Iterator BufferedStream::page_iterate(Uint64 _size, Uint64 _offs
   const Uint16 end_offset = 0;
   const Uint16 beg_size = Algorithm::min(m_page_size - beg_offset, Sint32(_size));
   const Uint16 end_size = (_offset + _size) - end_page * m_page_size;
-  return Iterator{*this, {beg_page, beg_size, beg_offset}, {end_page, end_size, end_offset}, m_page_size};
+  return Iterator{{beg_page, beg_size, beg_offset}, {end_page, end_size, end_offset}, m_page_size};
 }
 
 bool BufferedStream::resize(Uint16 _page_size, Uint8 _page_count) {
