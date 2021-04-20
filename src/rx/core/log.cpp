@@ -13,6 +13,10 @@
 #include "rx/core/concurrency/condition_variable.h"
 #include "rx/core/concurrency/thread.h"
 
+#if defined(RX_PLATFORM_EMSCRIPTEN)
+#include <emscripten.h>
+#endif
+
 namespace Rx {
 
 namespace {
@@ -295,6 +299,26 @@ void Logger::write(Ptr<Message>& message_) {
     const auto size = contents.size();
     RX_ASSERT(_stream->write(data, size) != 0, "failed to write to stream");
   });
+
+  // Write the log to the browser for Emscripten.
+  //
+  // TODO(dweiler): Implement a Stream::Context for Emscripten log and have
+  // engine entry point attach it to the logger. This should not be in here.
+#if defined(RX_PLATFORM_EMSCRIPTEN)
+  switch (message_->level) {
+  case Log::Level::ERROR:
+    emscripten_log(EM_LOG_ERROR, "%s", contents.data());
+    break;
+  case Log::Level::INFO:
+    [[fallthrough]];
+  case Log::Level::VERBOSE:
+    emscripten_log(EM_LOG_INFO, "%s", contents.data());
+    break;
+  case Log::Level::WARNING:
+    emscripten_log(EM_LOG_WARN, "%s", contents.data());
+    break;
+  }
+#endif
 
   // Signal the write event for the log associated with this message.
   this_queue->owner->signal_write(message_->level,
