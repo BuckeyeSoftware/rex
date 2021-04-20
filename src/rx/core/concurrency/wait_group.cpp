@@ -3,10 +3,11 @@
 
 namespace Rx::Concurrency {
 
-void WaitGroup::signal() {
+bool WaitGroup::signal() {
   ScopeLock lock{m_mutex};
   m_signaled_count++;
   m_condition_variable.signal();
+  return m_signaled_count == m_count;
 }
 
 void WaitGroup::wait() {

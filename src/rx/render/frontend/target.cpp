@@ -177,8 +177,9 @@ void Target::attach_depth_stencil(Texture2D* _depth_stencil) {
 
 void Target::attach_texture(Texture2D* _texture, Size _level) {
   RX_ASSERT(!is_swapchain(), "cannot attach to swapchain");
+  RX_ASSERT(_texture->is_renderable(), "non renderable texture");
   RX_ASSERT(_texture->type() == Texture::Type::ATTACHMENT,
-    "not attachable texture");
+    "non attachable texture");
   RX_ASSERT(_texture->is_level_in_range(_level), "level out of bounds");
 
   const auto& dimensions{_texture->info_for_level(_level).dimensions};
@@ -186,8 +187,6 @@ void Target::attach_texture(Texture2D* _texture, Size _level) {
   if (m_flags & DIMENSIONS) {
     RX_ASSERT(dimensions == m_dimensions, "invalid dimensions");
   }
-
-  RX_ASSERT(!has_texture(_texture), "texture already attached");
 
   if (!(m_flags & DIMENSIONS)) {
     m_dimensions = dimensions;

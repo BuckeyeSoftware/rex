@@ -7,6 +7,8 @@
 #include "rx/core/concurrency/mutex.h"
 #include "rx/core/concurrency/condition_variable.h"
 
+#include "rx/core/time/stop_watch.h"
+
 #include "rx/core/memory/slab.h"
 
 namespace Rx::Concurrency {
@@ -38,6 +40,7 @@ private:
   Vector<Thread> m_threads  RX_HINT_GUARDED_BY(m_mutex);
   Memory::Slab m_job_memory RX_HINT_GUARDED_BY(m_mutex);
   bool m_stop               RX_HINT_GUARDED_BY(m_mutex);
+  Time::StopWatch m_timer;
 
   static Global<ThreadPool> s_instance;
 };

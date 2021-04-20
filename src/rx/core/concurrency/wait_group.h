@@ -11,7 +11,7 @@ struct RX_API WaitGroup {
   WaitGroup(Size _count);
   WaitGroup();
 
-  void signal();
+  bool signal();
   void wait();
 
 private:

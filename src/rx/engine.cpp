@@ -141,6 +141,8 @@ RX_CONSOLE_SVAR(
 
 static constexpr const char* CONFIG = "config.cfg";
 
+RX_LOG("engine", logger);
+
 Engine::Engine()
   : m_console{Memory::SystemAllocator::instance()}
   , m_input{Memory::SystemAllocator::instance()}
@@ -270,6 +272,7 @@ bool Engine::init() {
 
   // Try this as early as possible.
   if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
+    logger->error("Failed to initialize video: %s", SDL_GetError());
     return false;
   }
 
@@ -319,10 +322,11 @@ bool Engine::init() {
 
   if (is_gl || is_es) {
 #if defined(RX_PLATFORM_EMSCRIPTEN)
-    // When building for Emscripten assume ES 3.0 which is WebGL 3.0.
+    // When building for Emscripten assume ES 3.0 which is WebGL 2.0
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    // NOTE(dweiler): The default framebuffer cannot be sRGB in WebGL.
 #else
     if (is_gl) {
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -340,13 +344,13 @@ bool Engine::init() {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
       }
     }
+    SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
 #endif
 
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
   }
 
   SDL_Window* window = nullptr;
@@ -374,6 +378,11 @@ bool Engine::init() {
     }
   }
 
+  if (!window) {
+    logger->error("Failed to create window: %s", SDL_GetError());
+    return false;
+  }
+
   if (!app_icon->get().is_empty()) {
     Texture::Loader loader{Memory::SystemAllocator::instance()};
     if (loader.load(app_icon->get(), Texture::PixelFormat::RGBA_U8, {64, 64})) {
@@ -394,10 +403,6 @@ bool Engine::init() {
     }
   }
 
-  if (!window) {
-    return false;
-  }
-
   // Get the actual created window dimensions and update the display resolution.
   Math::Vec2i size;
   SDL_GetWindowSize(window, &size.w, &size.h);
@@ -415,6 +420,7 @@ bool Engine::init() {
   }
 
   // Create the rendering backend context.
+  logger->verbose("Initializing renderer ...");
   auto& allocator = Memory::SystemAllocator::instance();
   if (driver_name == "gl4") {
     m_render_backend = allocator.create<Render::Backend::GL4>(allocator, reinterpret_cast<void*>(window));
@@ -429,6 +435,7 @@ bool Engine::init() {
   }
 
   if (!m_render_backend || !m_render_backend->init()) {
+    logger->error("Failed to initialize renderer");
     return false;
   }
 
@@ -444,16 +451,22 @@ bool Engine::init() {
     display_hdr->get());
 
   if (!m_render_frontend) {
+    logger->error("Failed to initialize renderer");
     return false;
   }
 
+  // This blocks the browser too long. Defer it.
+#if !defined(RX_PLATFORM_EMSCRIPTEN)
   // Quickly get a blank window.
   m_render_frontend->process();
   m_render_frontend->swap();
+#endif
 
   // Create the application instance.
+  logger->verbose("Initializing application ...");
   m_application = create(this);
   if (!m_application || !m_application->on_init()) {
+    logger->error("Failed to initialize application");
     return false;
   }
 
@@ -559,14 +572,14 @@ Engine::Status Engine::integrate() {
           extents.dimensions = display_resolution->get();
           const Math::Vec2i offset{event.window.data1, event.window.data2};
           extents.offset = offset;
-          //logger->info("Window %s moved to %s", extents.dimensions,
-          //  extents.offset);
+          logger->info("Window %s moved to %s", extents.dimensions,
+            extents.offset);
 
           m_displays.each_fwd([&](const Display& _display) {
             if (_display.contains(extents)) {
               // The window has moved to another display, update the name
               display_name->set(_display.name());
-              // logger->info("Display changed to \"%s\"", display_name->get());
+              logger->info("Display changed to \"%s\"", display_name->get());
               return false;
             }
             return true;

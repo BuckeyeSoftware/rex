@@ -97,6 +97,7 @@ struct Texture
   static bool is_stencil_format(DataFormat _format);
   static bool is_depth_stencil_format(DataFormat _format);
   static bool is_srgb_color_format(DataFormat _format);
+  static bool is_renderable(DataFormat _format);
   static bool has_alpha(DataFormat _format);
 
   bool is_compressed_format() const;
@@ -105,6 +106,7 @@ struct Texture
   bool is_stencil_format() const;
   bool is_depth_stencil_format() const;
   bool is_srgb_color_format() const;
+  bool is_renderable() const;
 
   bool has_alpha() const;
 
@@ -460,6 +462,52 @@ inline bool Texture::is_srgb_color_format(DataFormat _format) {
       || _format == DataFormat::SRGBA_U8;
 }
 
+inline bool Texture::is_renderable(DataFormat _format) {
+  // Cannot render to compressed texutures, 3-channel textures, depth, or
+  // stencil textures.
+  switch (_format) {
+  case DataFormat::R_U8:
+    return true;
+  case DataFormat::RGB_U8:
+    return false;
+  case DataFormat::RGBA_U8:
+    return true;
+  case DataFormat::BGR_U8:
+    return false;
+  case DataFormat::BGRA_U8:
+    return false;
+  case DataFormat::RGBA_F16:
+    return true;
+  case DataFormat::BGRA_F16:
+    return false;
+  case DataFormat::RGBA_F32:
+    return true;
+  case DataFormat::D16:
+    return false;
+  case DataFormat::D24:
+    return false;
+  case DataFormat::D32:
+    return false;
+  case DataFormat::D32F:
+    return false;
+  case DataFormat::D24_S8:
+    return false;
+  case DataFormat::D32F_S8:
+    return false;
+  case DataFormat::S8:
+    return false;
+  case DataFormat::DXT1:
+    return false;
+  case DataFormat::DXT5:
+    return false;
+  case DataFormat::SRGB_U8:
+    return false;
+  case DataFormat::SRGBA_U8:
+    return true;
+  }
+  RX_HINT_UNREACHABLE();
+}
+
 inline bool Texture::has_alpha(DataFormat _format) {
   switch (_format) {
   case DataFormat::R_U8:
@@ -526,6 +574,10 @@ inline bool Texture::is_depth_stencil_format() const {
 
 inline bool Texture::is_srgb_color_format() const {
   return is_srgb_color_format(m_format);
+}
+
+inline bool Texture::is_renderable() const {
+  return is_renderable(m_format);
 }
 
 inline bool Texture::is_swapchain() const {

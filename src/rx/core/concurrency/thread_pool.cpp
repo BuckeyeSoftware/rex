@@ -1,5 +1,4 @@
 #include "rx/core/concurrency/thread_pool.h"
-#include "rx/core/concurrency/wait_group.h"
 
 #include "rx/core/time/stop_watch.h"
 #include "rx/core/time/delay.h"
@@ -34,18 +33,21 @@ ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _stati
   RX_ASSERT(slab, "couldn't allocate work memory for thread pool");
   m_job_memory = Utility::move(*slab);
 
-  Time::StopWatch timer;
-  timer.start();
+  m_timer.start();
 
   logger->info("starting pool with %zu threads", _threads);
   RX_ASSERT(m_threads.reserve(_threads), "out of memory");
 
-  WaitGroup group{_threads};
+  Concurrency::Atomic<Size> ready = 0;
   for (Size i{0}; i < _threads; i++) {
-    auto func = Task::create([this, &group](int _thread_id) {
+    auto func = Task::create([&](int _thread_id) {
       logger->info("starting thread %d", _thread_id);
 
-      group.signal();
+      // When all threads are started.
+      if (++ready == _threads) {
+        m_timer.stop();
+        logger->info("started pool with %zu threads (took %s)", _threads, m_timer.elapsed());
+      }
 
       for (;;) {
         Function<void(int)> task;
@@ -90,13 +92,6 @@ ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _stati
       break;
     }
   }
-
-  // wait for all threads to start
-  group.wait();
-
-  timer.stop();
-  logger->info("started pool with %zu threads (took %s)", _threads,
-    timer.elapsed());
 }
 
 ThreadPool::~ThreadPool() {
