@@ -48,7 +48,7 @@ struct RX_API Directory {
   /// @{
   /// Check if the directory is valid.
   bool is_valid() const;
-  operator bool() const;
+  explicit operator bool() const;
   /// @}
 
   /// \brief Enumerate directory items.

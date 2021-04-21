@@ -36,7 +36,7 @@ struct Optional {
   Optional& operator=(const Optional& _other)
     requires Concepts::TriviallyCopyable<T>;
 
-  operator bool() const;
+  explicit operator bool() const;
 
   bool has_value() const;
 
@@ -224,6 +224,30 @@ template<typename T>
 const T* Optional<T>::operator->() const {
   RX_ASSERT(m_init, "not valid");
   return m_data.data();
+}
+
+// Optional<T> == nullopt
+template<typename T>
+inline constexpr bool operator==(const Optional<T>& _optional, decltype(nullopt)) {
+  return !_optional.has_value();
+}
+
+// Optional<T> != nullopt
+template<typename T>
+inline constexpr bool operator!=(const Optional<T>& _optional, decltype(nullopt)) {
+  return _optional.has_value();
+}
+
+// nullopt == Optional<T>
+template<typename T>
+inline constexpr bool operator==(decltype(nullopt), const Optional<T>& _optional) {
+  return !_optional.has_value();
+}
+
+// nullopt != Optional<T>
+template<typename T>
+inline constexpr bool operator!=(decltype(nullopt), const Optional<T>& _optional) {
+  return _optional.has_value();
 }
 
 } // namespace Rx

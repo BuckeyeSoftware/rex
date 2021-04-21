@@ -87,7 +87,7 @@ struct Function<R(Ts...)> {
   /// Checks if a valid target is contained.
   bool is_valid() const;
 
-  operator bool() const;
+  explicit operator bool() const;
   /// @}
 
 private:

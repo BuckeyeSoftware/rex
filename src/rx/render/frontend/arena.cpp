@@ -61,7 +61,7 @@ bool Arena::List::reallocate(Uint32 _old_offset, Uint32 _size, Uint32& new_offse
     return false;
   }
 
-  auto& r = m_data[index];
+  auto& r = m_data[*index];
   if (r.size == _size) {
     // Size hasn't changed.
     new_offset_ = _old_offset;
@@ -82,7 +82,7 @@ bool Arena::List::reallocate(Uint32 _old_offset, Uint32 _size, Uint32& new_offse
       split.size = remain;
       split.offset = offset + _size;
       split.free = 1;
-      if (!insert_at(index + 1, split)) {
+      if (!insert_at(*index + 1, split)) {
         r.size += remain;
         return false;
       }
@@ -92,7 +92,7 @@ bool Arena::List::reallocate(Uint32 _old_offset, Uint32 _size, Uint32& new_offse
     return true;
   }
 
-  remove_at(index);
+  remove_at(*index);
 
   return allocate(_size, new_offset_);
 }
@@ -126,11 +126,12 @@ void Arena::List::destroy() {
 
 bool Arena::List::grow() {
   if (m_size + 1 >= m_capacity) {
-    m_capacity = ((m_capacity + 1) * 3) / 2;
-    if (auto data = m_context->allocator().reallocate(m_data, sizeof *m_data * m_capacity); !data) {
+    const auto new_capacity = ((m_capacity + 1) * 3) / 2;
+    if (auto data = m_context->allocator().reallocate(m_data, sizeof *m_data * new_capacity); !data) {
       // Out of memory on the |m_context| allocator.
       return false;
     } else {
+      m_capacity = new_capacity;
       m_data = reinterpret_cast<Region*>(data);
     }
   }

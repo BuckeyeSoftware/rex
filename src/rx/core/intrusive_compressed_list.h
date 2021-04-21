@@ -88,7 +88,7 @@ public:
     Enumerate(Enumerate&& enumerate_);
     Enumerate& operator=(Enumerate&& enumerate_);
 
-    operator bool() const;
+    explicit operator bool() const;
 
     T& operator*();
     const T& operator*() const;

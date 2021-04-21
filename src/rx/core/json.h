@@ -40,7 +40,7 @@ struct RX_API JSON {
     INTEGER
   };
 
-  operator bool() const;
+  explicit operator bool() const;
   Optional<String> error() const;
 
   bool is_type(Type _type) const;

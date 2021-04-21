@@ -159,7 +159,7 @@ bool Decoder::read_header() {
   size += m_header.data_size;
   size += m_header.string_size;
 
-  if (size != m_stream->size()) {
+  if (size != *m_stream->size()) {
     return error("corrupted stream");
   }
 
