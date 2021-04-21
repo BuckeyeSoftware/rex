@@ -20,64 +20,6 @@ struct Context;
 struct Module;
 
 struct Technique {
-  RX_MARK_NO_COPY(Technique);
-
-  Technique() = default;
-  Technique(Context* _frontend);
-  ~Technique();
-
-  Technique(Technique&& technique_);
-  Technique& operator=(Technique&& technique_);
-
-  struct Configuration {
-    RX_MARK_NO_COPY(Configuration);
-
-    enum class Type : Uint8 {
-      BASIC,
-      VARIANT,
-      PERMUTE
-    };
-
-    Configuration(Technique* _technique, Type _type, String&& name_);
-    Configuration(Configuration&& configuration_);
-    ~Configuration();
-    Configuration& operator=(Configuration&& configguration_);
-
-    const String& name() const &;
-
-    Program* basic() const;
-    Program* permute(Uint64 _flags) const;
-    Program* variant(Size _index) const;
-
-  private:
-    friend struct Technique;
-
-    bool parse_specializations(const JSON& _specializations, const char* _type);
-    bool parse_specialization(const JSON& _specialization, const char* _type);
-
-    bool compile(const Map<String, Module>& _modules,
-      const Map<String, bool>& _values);
-
-    void release();
-
-    Technique* m_technique;
-    Type m_type;
-    String m_name;
-    Vector<Program*> m_programs;
-    Vector<Uint64> m_permute_flags;
-    Vector<String> m_specializations;
-  };
-
-  [[nodiscard]] bool load(Stream::Context& _stream);
-  [[nodiscard]] bool load(const String& _file_name);
-
-  [[nodiscard]] bool parse(const JSON& _description);
-  [[nodiscard]] bool compile(const Map<String, Module>& _modules);
-
-  const Configuration& configuration(Size _index) const;
-
-  const String& name() const;
-
 private:
   struct UniformDefinition {
     union Variant {
@@ -106,6 +48,89 @@ private:
     bool has_value;
   };
 
+public:
+  RX_MARK_NO_COPY(Technique);
+
+  Technique() = default;
+  Technique(Context* _frontend);
+  ~Technique();
+
+  Technique(Technique&& technique_);
+  Technique& operator=(Technique&& technique_);
+
+  struct Configuration {
+    RX_MARK_NO_COPY(Configuration);
+
+    enum class Type : Uint8 {
+      BASIC,
+      VARIANT,
+      PERMUTE
+    };
+
+    Configuration(Technique* _technique, Type _type, String&& name_);
+    Configuration(Configuration&& configuration_);
+    ~Configuration();
+
+    const String& name() const &;
+
+    Program* basic() const;
+    Program* permute(Uint64 _flags) const;
+    Program* variant(Size _index) const;
+
+  private:
+    friend struct Technique;
+
+    bool parse_specializations(const JSON& _specializations, const char* _type);
+    bool parse_specialization(const JSON& _specialization, const char* _type);
+
+    bool compile(const Map<String, Module>& _modules,
+      const Map<String, bool>& _values);
+
+    void release();
+
+    // Lazily evaluated program. Only compiles when needed.
+    //
+    // Can call |compile| to force evaluation though.
+    struct LazyProgram {
+      LazyProgram(Technique* _technique);
+      LazyProgram(LazyProgram&& intermediate_);
+      ~LazyProgram();
+
+      bool add_shader(Shader&& shader_);
+      bool add_uniform(const UniformDefinition& _uniform_definition, bool _is_padding);
+
+      bool compile();
+
+      Program* evaluate() const;
+
+    private:
+      friend Technique;
+
+      Technique* m_technique;
+      Vector<Shader> m_shaders;
+      Vector<Pair<UniformDefinition, bool>> m_uniforms;
+      mutable Program* m_program;
+    };
+
+    Technique* m_technique;
+    Type m_type;
+    String m_name;
+    Vector<LazyProgram> m_programs;
+    Vector<Uint64> m_permute_flags;
+    Vector<String> m_specializations;
+  };
+
+  [[nodiscard]] bool load(Stream::Context& _stream);
+  [[nodiscard]] bool load(const String& _file_name);
+
+  [[nodiscard]] bool parse(const JSON& _description);
+  [[nodiscard]] bool compile(const Map<String, Module>& _modules);
+
+  const Configuration& configuration(Size _index) const;
+
+  const String& name() const;
+
+private:
   struct ShaderDefinition {
     ShaderDefinition(Memory::Allocator& _allocator)
       : source{_allocator}
@@ -191,6 +216,10 @@ inline Technique::Technique(Technique&& technique_)
   // Update |m_configuration| references to this Technique instance.
   m_configurations.each_fwd([this](Configuration& configuration_) {
     configuration_.m_technique = this;
+    // Update |m_programs| references to this Technique instance.
+    configuration_.m_programs.each_fwd([this](Configuration::LazyProgram& program_) {
+      program_.m_technique = this;
+    });
   });
 }
 
@@ -234,21 +263,17 @@ inline Technique::Configuration::~Configuration() {
   release();
 }
 
-inline Technique::Configuration& Technique::Configuration::operator=(Configuration&& configuration_) {
-  if (this != &configuration_) {
-    release();
-    m_technique = Utility::exchange(configuration_.m_technique, nullptr);
-    m_type = Utility::exchange(configuration_.m_type, Type::BASIC);
-    m_name = Utility::move(configuration_.m_name);
-    m_programs = Utility::move(configuration_.m_programs);
-    m_permute_flags = Utility::move(configuration_.m_permute_flags);
-    m_specializations = Utility::move(configuration_.m_specializations);
-  }
-  return *this;
-}
-
 inline const String& Technique::Configuration::name() const & {
   return m_name;
+}
+
+// [Technique::Configuration::LazyProgram]
+inline Technique::Configuration::LazyProgram::LazyProgram(LazyProgram&& program_)
+  : m_technique{Utility::exchange(program_.m_technique, nullptr)}
+  , m_shaders{Utility::move(program_.m_shaders)}
+  , m_uniforms{Utility::move(program_.m_uniforms)}
+  , m_program{Utility::exchange(program_.m_program, nullptr)}
+{
 }
 
 } // namespace Rx::Render::Frontend

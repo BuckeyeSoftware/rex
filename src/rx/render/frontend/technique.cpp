@@ -460,7 +460,7 @@ Technique::Configuration::Configuration(Technique* _technique, Type _type, Strin
 
 Program* Technique::Configuration::basic() const {
   RX_ASSERT(m_type == Type::BASIC, "not a basic technique");
-  return m_programs[0];
+  return m_programs[0].evaluate();
 }
 
 Program* Technique::Configuration::permute(Uint64 _flags) const {
@@ -471,7 +471,7 @@ Program* Technique::Configuration::permute(Uint64 _flags) const {
     if (m_permute_flags[i] != _flags) {
       continue;
     }
-    return m_programs[i];
+    return m_programs[i].evaluate();
   }
 
   return nullptr;
@@ -479,7 +479,7 @@ Program* Technique::Configuration::permute(Uint64 _flags) const {
 
 Program* Technique::Configuration::variant(Size _index) const {
   RX_ASSERT(m_type == Type::VARIANT, "not a variant technique");
-  return m_programs[_index];
+  return m_programs[_index].evaluate();
 }
 
 bool Technique::load(Stream::Context& _stream) {
@@ -514,8 +514,8 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
   *values->find(m_name) = true;
 
   if (m_type == Type::BASIC) {
-    // create and add just a single program to m_programs
-    auto program = frontend->create_program(RX_RENDER_TAG("technique"));
+    // Create a single program.
+    LazyProgram program{m_technique};
 
     shader_definitions.each_fwd([&](const ShaderDefinition& _shader_definition) {
       if (!m_technique->evaluate_when({allocator}, _shader_definition.when)) {
@@ -549,26 +549,15 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
         }
       });
 
-      return program->add_shader(Utility::move(specialized_shader));
+      return program.add_shader(Utility::move(specialized_shader));
     });
 
     uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
-      auto* uniform = program->add_uniform(_uniform_definition.name,
-        _uniform_definition.kind, !m_technique->evaluate_when(*values, _uniform_definition.when));
-      if (!uniform) {
-        // Out of memory.
-        return false;
-      }
-      if (_uniform_definition.has_value) {
-        const auto* data = reinterpret_cast<const Byte*>(&_uniform_definition.value);
-        uniform->record_raw(data, uniform->size());
-      }
-      return true;
+      const auto is_padding = !m_technique->evaluate_when(*values, _uniform_definition.when);
+      return program.add_uniform(_uniform_definition, is_padding);
     });
 
-    frontend->initialize_program(RX_RENDER_TAG("technique"), program);
-
-    if (!m_programs.push_back(program)) {
+    if (!m_programs.push_back(Utility::move(program))) {
       return false;
     }
   } else if (m_type == Type::PERMUTE) {
@@ -587,8 +576,7 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
 
       m_permute_flags.push_back(_flags);
 
-      auto program = frontend->create_program(RX_RENDER_TAG("technique"));
-
+      LazyProgram program{m_technique};
       shader_definitions.each_fwd([&](const ShaderDefinition& _shader_definition) {
         if (!m_technique->evaluate_when(*values, _shader_definition.when)) {
           return true;
@@ -632,32 +620,16 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
           return false;
         }
 
-        return program->add_shader(Utility::move(specialized_shader));
+        return program.add_shader(Utility::move(specialized_shader));
       });
 
       // emit uniforms
       uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
-        auto* uniform = program->add_uniform(_uniform_definition.name,
-          _uniform_definition.kind, !m_technique->evaluate_when(*values, _uniform_definition.when));
-        if (!uniform) {
-          // Out of memory.
-          return false;
-        }
-        if (_uniform_definition.has_value) {
-          const auto* data = reinterpret_cast<const Byte*>(&_uniform_definition.value);
-          uniform->record_raw(data, uniform->size());
-        }
-        return true;
+        const auto is_padding = !m_technique->evaluate_when(*values, _uniform_definition.when);
+        return program.add_uniform(_uniform_definition, is_padding);
       });
 
-      // initialize and track
-      frontend->initialize_program(RX_RENDER_TAG("technique"), program);
-
-      if (!m_programs.push_back(program)) {
-        return false;
-      }
-
-      return true;
+      return m_programs.push_back(Utility::move(program));
     };
 
     for (Uint64 flags = 0; flags != mask; flags = ((flags | ~mask) + 1_u64) & mask) {
@@ -676,7 +648,6 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
     }
 
     for (Size i = 0; i < specializations; i++) {
-      // const auto& specialization = m_specializations[i];
 
       // This can never fail.
       auto value = values->find(m_specializations[i]);
@@ -684,8 +655,7 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
 
       *value = true;
 
-      auto program = frontend->create_program(RX_RENDER_TAG("technique"));
-
+      LazyProgram program{m_technique};
       shader_definitions.each_fwd([&](const ShaderDefinition& _shader_definition) {
         if (!m_technique->evaluate_when(*values, _shader_definition.when)) {
           return true;
@@ -729,28 +699,16 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
           return false;
         }
 
-        return program->add_shader(Utility::move(specialized_shader));
+        return program.add_shader(Utility::move(specialized_shader));
       });
 
       // Emit uniforms.
       uniform_definitions.each_fwd([&](const UniformDefinition& _uniform_definition) {
-        auto* uniform = program->add_uniform(_uniform_definition.name,
-          _uniform_definition.kind, !m_technique->evaluate_when(*values, _uniform_definition.when));
-        if (!uniform) {
-          // Out of memory.
-          return false;
-        }
-        if (_uniform_definition.has_value) {
-          const auto* data = reinterpret_cast<const Byte*>(&_uniform_definition.value);
-          uniform->record_raw(data, uniform->size());
-        }
-        return true;
+        const auto is_padding = !m_technique->evaluate_when(*values, _uniform_definition.when);
+        return program.add_uniform(_uniform_definition, is_padding);
       });
 
-      // initialize and track
-      frontend->initialize_program(RX_RENDER_TAG("technique"), program);
-
-      if (!m_programs.push_back(program)) {
+      if (!m_programs.push_back(Utility::move(program))) {
         return false;
       }
 
@@ -758,18 +716,15 @@ bool Technique::Configuration::compile(const Map<String, Module>& _modules,
     };
   }
 
+  // Enable to compile all.
+  // return m_programs.each_fwd([](LazyProgram& program_) {
+  //   return program_.compile();
+  // });
+
   return true;
 }
 
 void Technique::Configuration::release() {
-  if (!m_technique) {
-    return;
-  }
-
-  m_programs.each_fwd([this](Program* _program) {
-    m_technique->m_frontend->destroy_program(RX_RENDER_TAG("technique"), _program);
-  });
-
   m_programs.clear();
 }
 
@@ -795,6 +750,85 @@ bool Technique::Configuration::parse_specialization(
   return m_specializations.push_back(_specialization.as_string());
 }
 
+// [Technique::Configuration::LazyProgram]
+Technique::Configuration::LazyProgram::LazyProgram(Technique* _technique)
+  : m_technique{_technique}
+  , m_shaders{m_technique->m_frontend->allocator()}
+  , m_program{nullptr}
+{
+}
+
+Technique::Configuration::LazyProgram::~LazyProgram() {
+  if (m_technique) {
+    auto frontend = m_technique->m_frontend;
+    frontend->destroy_program(RX_RENDER_TAG("Technique"), m_program);
+  }
+}
+
+Program* Technique::Configuration::LazyProgram::evaluate() const {
+  if (m_program) {
+    return m_program;
+  }
+
+  if (const_cast<LazyProgram*>(this)->compile()) {
+    return m_program;
+  }
+
+  return nullptr;
+}
+
+bool Technique::Configuration::LazyProgram::add_shader(Shader&& shader_) {
+  return m_shaders.push_back(Utility::move(shader_));
+}
+
+bool Technique::Configuration::LazyProgram::add_uniform(
+  const UniformDefinition& _uniform_definition, bool _is_padding)
+{
+  return m_uniforms.emplace_back(_uniform_definition, _is_padding);
+}
+
+bool Technique::Configuration::LazyProgram::compile() {
+  // Already compiled, nothing to do.
+  if (m_program) {
+    return true;
+  }
+
+  auto frontend = m_technique->m_frontend;
+
+  // Create and compile the program.
+  auto program = frontend->create_program(RX_RENDER_TAG("technique"));
+  if (!program) {
+    return false;
+  }
+
+  auto add_shader = [program](Shader& shader_) {
+    return program->add_shader(Utility::move(shader_));
+  };
+
+  auto add_uniform = [program](const Pair<UniformDefinition, bool>& _uniform) {
+    if (auto uniform = program->add_uniform(_uniform.first.name, _uniform.first.kind, _uniform.second)) {
+      if (_uniform.first.has_value) {
+        const auto* data = reinterpret_cast<const Byte*>(&_uniform.first.value);
+        uniform->record_raw(data, uniform->size());
+      }
+      return true;
+    }
+    return false;
+  };
+
+  if (!m_shaders.each_fwd(add_shader) || !m_uniforms.each_fwd(add_uniform)) {
+    frontend->destroy_program(RX_RENDER_TAG("technique"), program);
+    return false;
+  }
+
+  frontend->initialize_program(RX_RENDER_TAG("technique"), program);
+
+  m_program = program;
+
+  return true;
+}
+
+// [Technique]
 bool Technique::load(const String& _file_name) {
   auto& allocator = m_frontend->allocator();
   if (auto file = Filesystem::UnbufferedFile::open(allocator, _file_name, "r")) {
@@ -1083,7 +1117,8 @@ bool Technique::parse_uniform(const JSON& _uniform) {
     }
   }
 
-  return m_uniform_definitions.emplace_back(*kind, name_string, when ? when.as_string() : "", constant, value ? true : false);
+  return m_uniform_definitions.emplace_back(*kind, name_string,
+    when ? when.as_string() : "", constant, value ? true : false);
 }
 
 bool Technique::parse_shader(const JSON& _shader) {
