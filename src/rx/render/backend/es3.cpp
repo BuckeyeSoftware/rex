@@ -11,6 +11,10 @@
 #include "rx/core/log.h"
 #include "rx/core/abort.h"
 
+#if defined(RX_PLATFORM_EMSCRIPTEN)
+#include <emscripten/html5.h>
+#endif
+
 namespace Rx::Render::Backend {
 
 RX_LOG("render/es3", logger);
@@ -56,7 +60,6 @@ static void (GLAPIENTRYP pglDeleteFramebuffers)(GLsizei, const GLuint*);
 static void (GLAPIENTRYP pglFramebufferTexture2D)(GLenum, GLenum, GLenum, GLuint, GLint);
 static void (GLAPIENTRYP pglBindFramebuffer)(GLenum, GLuint);
 static void (GLAPIENTRYP pglDrawBuffers)(GLsizei, const GLenum*);
-static void (GLAPIENTRYP pglDrawBuffer)(GLenum);
 static void (GLAPIENTRYP pglReadBuffer)(GLenum);
 static void (GLAPIENTRYP pglBlitFramebuffer)(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum);
 
@@ -76,8 +79,6 @@ static GLuint (GLAPIENTRYP pglCreateProgram)();
 static void (GLAPIENTRYP pglDeleteProgram)(GLuint);
 static void (GLAPIENTRYP pglUseProgram)(GLuint);
 static GLuint (GLAPIENTRYP pglGetUniformLocation)(GLuint, const GLchar*);
-//static void (GLAPIENTRYP pglBindAttribLocation)(GLuint, GLuint, const char*);
-//static void (GLAPIENTRYP pglBindFragDataLocation)(GLuint, GLuint, const char*);
 static void (GLAPIENTRYP pglUniform1i)(GLint, GLint);
 static void (GLAPIENTRYP pglUniform2iv)(GLint, GLsizei, const GLint*);
 static void (GLAPIENTRYP pglUniform3iv)(GLint, GLsizei, const GLint*);
@@ -104,7 +105,6 @@ static void (GLAPIENTRYP pglCullFace)(GLenum);
 static void (GLAPIENTRYP pglStencilMask)(GLuint);
 static void (GLAPIENTRYP pglStencilFunc)(GLenum, GLint, GLuint);
 static void (GLAPIENTRYP pglStencilOpSeparate)(GLenum, GLenum, GLenum, GLenum);
-static void (GLAPIENTRYP pglPolygonMode)(GLenum, GLenum);
 static void (GLAPIENTRYP pglViewport)(GLint, GLint, GLsizei, GLsizei);
 static void (GLAPIENTRYP pglClearBufferfi)(GLenum, GLint, GLfloat, GLint);
 static void (GLAPIENTRYP pglClearBufferfv)(GLenum, GLint, const GLfloat*);
@@ -120,17 +120,59 @@ static const GLubyte* (GLAPIENTRYP pglGetStringi)(GLenum, GLuint);
 static void (GLAPIENTRYP pglDrawArrays)(GLenum, GLint, GLsizei);
 static void (GLAPIENTRYP pglDrawArraysInstanced)(GLenum, GLint, GLsizei, GLsizei);
 static void (GLAPIENTRYP pglDrawElements)(GLenum, GLsizei, GLenum, const GLvoid*);
-static void (GLAPIENTRYP pglDrawElementsBaseVertex)(GLenum, GLsizei, GLenum, const GLvoid*, GLint);
 static void (GLAPIENTRYP pglDrawElementsInstanced)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei);
-static void (GLAPIENTRYP pglDrawElementsInstancedBaseVertex)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei, GLint);
 
 // flush
 static void (GLAPIENTRYP pglFinish)(void);
 
-// GL_EXT_base_instance
-static void (GLAPIENTRYP pglDrawArraysInstancedBaseInstanceEXT)(GLenum, GLint, GLsizei, GLsizei, GLuint);
-static void (GLAPIENTRYP pglDrawElementsInstancedBaseInstanceEXT)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei, GLuint);
-static void (GLAPIENTRYP pglDrawElementsInstancedBaseVertexBaseInstanceEXT)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei, GLint, GLuint);
+#define GL(...) __VA_ARGS__
+
+static Size setup_attributes(
+  const Vector<Frontend::Buffer::Attribute>& attributes,
+  Size _stride, Size _index_offset, bool _instanced, Size _offset = 0)
+{
+  auto is_int_format = [](GLenum _type) {
+    return _type == GL_SHORT || _type == GL_INT || _type == GL_UNSIGNED_INT;
+  };
+
+  const auto n_attributes = attributes.size();
+
+  Size count = 0;
+  for (Size i = 0; i < n_attributes; i++) {
+    const auto& attribute = attributes[i];
+    const auto index = static_cast<GLuint>(i + _index_offset);
+    const auto result = convert_attribute(attribute);
+
+    Size offset = _offset + attribute.offset;
+    for (GLsizei j = 0; j < result.instances; j++) {
+      GL(pglEnableVertexAttribArray(index + j));
+      if (is_int_format(result.type_enum)) {
+        GL(pglVertexAttribIPointer(
+          index + j,
+          result.components,
+          result.type_enum,
+          _stride,
+          reinterpret_cast<const GLvoid*>(offset)));
+      } else {
+        GL(pglVertexAttribPointer(
+          index + j,
+          result.components,
+          result.type_enum,
+          GL_FALSE,
+          _stride,
+          reinterpret_cast<const GLvoid*>(offset)));
+      }
+      if (_instanced) {
+        GL(pglVertexAttribDivisor(index + j, 1));
+      }
+      offset += result.type_size * result.components;
+      count++;
+    }
+  }
+  return count;
+}
+
+void setup_attachments(Frontend::Target* _target, const Frontend::Buffers* _draw_buffers);
 
 template<typename F>
 static void fetch(const char* _name, F& function_) {
@@ -142,13 +184,13 @@ static void fetch(const char* _name, F& function_) {
 namespace detail_es3 {
   struct buffer {
     buffer() {
-      pglGenBuffers(3, bo);
-      pglGenVertexArrays(1, &va);
+      GL(pglGenBuffers(3, bo));
+      GL(pglGenVertexArrays(1, &va));
     }
 
     ~buffer() {
-      pglDeleteBuffers(3, bo);
-      pglDeleteVertexArrays(1, &va);
+      GL(pglDeleteBuffers(3, bo));
+      GL(pglDeleteVertexArrays(1, &va));
     }
 
     GLuint bo[3];
@@ -162,7 +204,7 @@ namespace detail_es3 {
     target()
       : owned{true}
     {
-      pglGenFramebuffers(1, &fbo);
+      GL(pglGenFramebuffers(1, &fbo));
     }
 
     target(GLuint _fbo)
@@ -173,7 +215,7 @@ namespace detail_es3 {
 
     ~target() {
       if (owned) {
-        pglDeleteFramebuffers(1, &fbo);
+        GL(pglDeleteFramebuffers(1, &fbo));
       }
     }
 
@@ -189,7 +231,7 @@ namespace detail_es3 {
     }
 
     ~program() {
-      pglDeleteProgram(handle);
+      GL(pglDeleteProgram(handle));
     }
 
     GLuint handle;
@@ -198,11 +240,11 @@ namespace detail_es3 {
 
   struct texture1D {
     texture1D() {
-      pglGenTextures(1, &tex);
+      GL(pglGenTextures(1, &tex));
     }
 
     ~texture1D() {
-      pglDeleteTextures(1, &tex);
+      GL(pglDeleteTextures(1, &tex));
     }
 
     GLuint tex;
@@ -210,11 +252,11 @@ namespace detail_es3 {
 
   struct texture2D {
     texture2D() {
-      pglGenTextures(1, &tex);
+      GL(pglGenTextures(1, &tex));
     }
 
     ~texture2D() {
-      pglDeleteTextures(1, &tex);
+      GL(pglDeleteTextures(1, &tex));
     }
 
     GLuint tex;
@@ -222,11 +264,11 @@ namespace detail_es3 {
 
   struct texture3D {
     texture3D() {
-      pglGenTextures(1, &tex);
+      GL(pglGenTextures(1, &tex));
     }
 
     ~texture3D() {
-      pglDeleteTextures(1, &tex);
+      GL(pglDeleteTextures(1, &tex));
     }
 
     GLuint tex;
@@ -234,11 +276,11 @@ namespace detail_es3 {
 
   struct textureCM {
     textureCM() {
-      pglGenTextures(1, &tex);
+      GL(pglGenTextures(1, &tex));
     }
 
     ~textureCM() {
-      pglDeleteTextures(1, &tex);
+      GL(pglDeleteTextures(1, &tex));
     }
 
     GLuint tex;
@@ -264,21 +306,23 @@ namespace detail_es3 {
 
       // There's no unsigned variant of glGetIntegerv
       GLint swap_chain_fbo;
-      pglGetIntegerv(GL_FRAMEBUFFER_BINDING, &swap_chain_fbo);
+      GL(pglGetIntegerv(GL_FRAMEBUFFER_BINDING, &swap_chain_fbo));
       m_swap_chain_fbo = static_cast<GLuint>(swap_chain_fbo);
 
-      pglEnable(GL_CULL_FACE);
-      pglEnable(GL_PROGRAM_POINT_SIZE);
-      // This is default in ES 3.0.
+      GL(pglEnable(GL_CULL_FACE));
+
+      // These are default in ES 3.0.
+      // pglEnable(GL_PROGRAM_POINT_SIZE);
       // pglEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-      pglCullFace(GL_BACK);
-      pglFrontFace(GL_CW);
+      GL(pglCullFace(GL_BACK));
+      GL(pglFrontFace(GL_CW));
 
-      pglDepthFunc(GL_LEQUAL);
-      pglDisable(GL_MULTISAMPLE);
-      pglPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+      GL(pglDepthFunc(GL_LEQUAL));
+      // Not supported in ES 3.0
+      // GL(pglDisable(GL_MULTISAMPLE));
+      GL(pglPixelStorei(GL_UNPACK_ALIGNMENT, 1));
 
-      pglGenVertexArrays(1, &m_empty_vao);
+      GL(pglGenVertexArrays(1, &m_empty_vao));
 
       const auto vendor{reinterpret_cast<const char*>(pglGetString(GL_VENDOR))};
       const auto renderer{reinterpret_cast<const char*>(pglGetString(GL_RENDERER))};
@@ -287,38 +331,25 @@ namespace detail_es3 {
       logger->info("GL %s %s %s", vendor, version, renderer);
 
       GLint extensions{0};
-      pglGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
-      bool has_ext_base_instance = false;
+      GL(pglGetIntegerv(GL_NUM_EXTENSIONS, &extensions));
 
       for (GLint i{0}; i < extensions; i++) {
         const auto name{reinterpret_cast<const char*>(pglGetStringi(GL_EXTENSIONS, i))};
         logger->verbose("extension '%s' supported", name);
-
-        // GL_EXT_base_instance
-        if (!strcmp(name, "GL_EXT_base_instance")) {
-          fetch("glDrawArraysInstancedBaseInstanceEXT", pglDrawArraysInstancedBaseInstanceEXT);
-          fetch("glDrawElementsInstancedBaseInstanceEXT", pglDrawElementsInstancedBaseInstanceEXT);
-          fetch("glDrawElementsInstancedBaseVertexBaseInstanceEXT", pglDrawElementsInstancedBaseVertexBaseInstanceEXT);
-          has_ext_base_instance = true;
-        }
-      }
-
-      if (!has_ext_base_instance) {
-        abort("GPU does not support GL_EXT_base_instance");
       }
     }
 
     ~state() {
-      pglDeleteVertexArrays(1, &m_empty_vao);
+      GL(pglDeleteVertexArrays(1, &m_empty_vao));
 
       SDL_GL_DeleteContext(m_context);
     }
 
     void use_enable(GLenum _thing, bool _enable) {
       if (_enable) {
-        pglEnable(_thing);
+        GL(pglEnable(_thing));
       } else {
-        pglDisable(_thing);
+        GL(pglDisable(_thing));
       }
     }
 
@@ -345,7 +376,7 @@ namespace detail_es3 {
 
         if (enabled) {
           if (this->scissor.offset() != offset || this->scissor.size() != size) {
-            pglScissor(offset.x, offset.y, size.w, size.h);
+            GL(pglScissor(offset.x, offset.y, size.w, size.h));
 
             this->scissor.record_offset(offset);
             this->scissor.record_size(size);
@@ -373,7 +404,7 @@ namespace detail_es3 {
             const bool g{!!(write_mask & (1 << 1))};
             const bool b{!!(write_mask & (1 << 2))};
             const bool a{!!(write_mask & (1 << 3))};
-            pglColorMask(r, g, b, a);
+            GL(pglColorMask(r, g, b, a));
             m_color_mask = write_mask;
             this->blend.record_write_mask(write_mask);
           }
@@ -385,11 +416,11 @@ namespace detail_es3 {
               this->blend.alpha_src_factor() != alpha_src_factor ||
               this->blend.alpha_dst_factor() != alpha_dst_factor)
           {
-            pglBlendFuncSeparate(
+            GL(pglBlendFuncSeparate(
               convert_blend_factor(color_src_factor),
               convert_blend_factor(color_dst_factor),
               convert_blend_factor(alpha_src_factor),
-              convert_blend_factor(alpha_dst_factor));
+              convert_blend_factor(alpha_dst_factor)));
 
             this->blend.record_color_blend_factors(color_src_factor, color_dst_factor);
             this->blend.record_alpha_blend_factors(alpha_src_factor, alpha_dst_factor);
@@ -408,7 +439,7 @@ namespace detail_es3 {
 
         if (test) {
           if (this->depth.write() != write) {
-            pglDepthMask(write ? GL_TRUE : GL_FALSE);
+            GL(pglDepthMask(write ? GL_TRUE : GL_FALSE));
             this->depth.record_write(write);
           }
         }
@@ -428,10 +459,10 @@ namespace detail_es3 {
           if (this->cull.front_face() != front_face) {
             switch (front_face) {
             case Frontend::CullState::FrontFaceType::CLOCK_WISE:
-              pglFrontFace(GL_CW);
+              GL(pglFrontFace(GL_CW));
               break;
             case Frontend::CullState::FrontFaceType::COUNTER_CLOCK_WISE:
-              pglFrontFace(GL_CCW);
+              GL(pglFrontFace(GL_CCW));
               break;
             }
             this->cull.record_front_face(front_face);
@@ -440,10 +471,10 @@ namespace detail_es3 {
           if (this->cull.cull_face() != cull_face) {
             switch (cull_face) {
             case Frontend::CullState::CullFaceType::FRONT:
-              pglCullFace(GL_FRONT);
+              GL(pglCullFace(GL_FRONT));
               break;
             case Frontend::CullState::CullFaceType::BACK:
-              pglCullFace(GL_BACK);
+              GL(pglCullFace(GL_BACK));
               break;
             }
             this->cull.record_cull_face(cull_face);
@@ -471,7 +502,7 @@ namespace detail_es3 {
 
         if (enabled) {
           if (this->stencil.write_mask() != write_mask) {
-            pglStencilMask(write_mask);
+            GL(pglStencilMask(write_mask));
             this->stencil.record_write_mask(write_mask);
           }
 
@@ -479,10 +510,10 @@ namespace detail_es3 {
               this->stencil.reference() != reference ||
               this->stencil.mask() != mask)
           {
-            pglStencilFunc(
+            GL(pglStencilFunc(
               convert_stencil_function(function),
               static_cast<GLint>(reference),
-              static_cast<GLuint>(mask));
+              static_cast<GLuint>(mask)));
 
             this->stencil.record_function(function);
             this->stencil.record_reference(reference);
@@ -493,11 +524,11 @@ namespace detail_es3 {
               this->stencil.front_depth_fail_action() != front_depth_fail_action ||
               this->stencil.front_depth_pass_action() != front_depth_pass_action)
           {
-            pglStencilOpSeparate(
+            GL(pglStencilOpSeparate(
               GL_FRONT,
               convert_stencil_operation(front_fail_action),
               convert_stencil_operation(front_depth_fail_action),
-              convert_stencil_operation(front_depth_pass_action));
+              convert_stencil_operation(front_depth_pass_action)));
 
             this->stencil.record_front_fail_action(front_fail_action);
             this->stencil.record_front_depth_fail_action(front_depth_fail_action);
@@ -508,11 +539,11 @@ namespace detail_es3 {
               this->stencil.back_depth_fail_action() != back_depth_fail_action ||
               this->stencil.back_depth_pass_action() != back_depth_pass_action)
           {
-            pglStencilOpSeparate(
+            GL(pglStencilOpSeparate(
               GL_BACK,
               convert_stencil_operation(back_fail_action),
               convert_stencil_operation(back_depth_fail_action),
-              convert_stencil_operation(back_depth_pass_action));
+              convert_stencil_operation(back_depth_pass_action)));
 
             this->stencil.record_back_fail_action(back_fail_action);
             this->stencil.record_back_depth_fail_action(back_depth_fail_action);
@@ -521,16 +552,20 @@ namespace detail_es3 {
         }
       }
 
+      // Not supported by WebGL.
+      #if !defined(RX_PLATFORM_EMSCRIPTEN)
       if (this->polygon != polygon) {
-        const auto mode{polygon.mode()};
-        pglPolygonMode(GL_FRONT_AND_BACK, convert_polygon_mode(mode));
-        this->polygon.record_mode(mode);
+        // TODO(dweiler): Remove this state?
+        // const auto mode{polygon.mode()};
+        // GL(pglPolygonMode(GL_FRONT_AND_BACK, convert_polygon_mode(mode)));
+        // this->polygon.record_mode(mode);
       }
+      #endif
 
       if (this->viewport != viewport) {
         const auto& offset{viewport.offset().cast<GLuint>()};
         const auto& dimensions{viewport.dimensions().cast<GLsizei>()};
-        pglViewport(offset.x, offset.y, dimensions.w, dimensions.h);
+        GL(pglViewport(offset.x, offset.y, dimensions.w, dimensions.h));
         this->viewport.record_offset(viewport.offset());
         this->viewport.record_dimensions(viewport.dimensions());
       }
@@ -544,7 +579,7 @@ namespace detail_es3 {
 
       auto this_target{reinterpret_cast<target*>(_render_target + 1)};
       if (m_bound_draw_fbo != this_target->fbo) {
-        pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, this_target->fbo);
+        GL(pglBindFramebuffer(GL_DRAW_FRAMEBUFFER, this_target->fbo));
         m_bound_draw_fbo = this_target->fbo;
       }
 
@@ -553,13 +588,22 @@ namespace detail_es3 {
         // The draw buffers changed.
         if (this_target->draw_buffers != *_draw_buffers) {
           if (_draw_buffers->is_empty()) {
-            pglDrawBuffer(GL_NONE);
+            // Calling DrawBuffers with 0 is the same as setting all draw
+            // buffers to GL_NONE.
+            GL(pglDrawBuffers(0, nullptr));
           } else {
-            Vector<GLenum> draw_buffers;
-            for (Size i{0}; i < _draw_buffers->size(); i++) {
-              draw_buffers.push_back(GL_COLOR_ATTACHMENT0 + (*_draw_buffers)[i]);
+            // Change FBO attachments around to be the same as the order inside
+            // |_draw_buffers|. This is only necessary in ES 3.0 since only
+            // iota'd DrawBuffers is allowed.
+            setup_attachments(_render_target, _draw_buffers);
+
+            GLenum draw_buffers[Frontend::Buffers::MAX_BUFFERS];
+            const auto n_attachments = _draw_buffers->size();
+            for (Size i = 0; i < n_attachments; i++) {
+              draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
             }
-            pglDrawBuffers(static_cast<GLsizei>(draw_buffers.size()), draw_buffers.data());
+
+            GL(pglDrawBuffers(n_attachments, draw_buffers));
           }
           this_target->draw_buffers = *_draw_buffers;
         }
@@ -571,7 +615,7 @@ namespace detail_es3 {
 
       auto this_target{reinterpret_cast<target*>(_render_target + 1)};
       if (m_bound_read_fbo != this_target->fbo) {
-        pglBindFramebuffer(GL_READ_FRAMEBUFFER, this_target->fbo);
+        GL(pglBindFramebuffer(GL_READ_FRAMEBUFFER, this_target->fbo));
         m_bound_read_fbo = this_target->fbo;
       }
 
@@ -580,9 +624,9 @@ namespace detail_es3 {
         // The read buffer changed.
         if (this_target->read_buffers != *_read_buffers) {
           if (_read_buffers->is_empty()) {
-            pglReadBuffer(GL_NONE);
+            GL(pglReadBuffer(GL_NONE));
           } else {
-            pglReadBuffer(GL_COLOR_ATTACHMENT0 + _read_buffers->last());
+            GL(pglReadBuffer(GL_COLOR_ATTACHMENT0 + _read_buffers->last()));
           }
         }
         this_target->read_buffers = *_read_buffers;
@@ -594,7 +638,7 @@ namespace detail_es3 {
 
       const auto this_program{reinterpret_cast<const program*>(_render_program + 1)};
       if (this_program->handle != m_bound_program) {
-        pglUseProgram(this_program->handle);
+        GL(pglUseProgram(this_program->handle));
         m_bound_program = this_program->handle;
       }
     }
@@ -604,11 +648,11 @@ namespace detail_es3 {
       if (_render_buffer) {
         const auto this_buffer{reinterpret_cast<const buffer*>(_render_buffer + 1)};
         if (this_buffer->va != m_bound_vao) {
-          pglBindVertexArray(this_buffer->va);
+          GL(pglBindVertexArray(this_buffer->va));
           m_bound_vao = this_buffer->va;
         }
       } else if (!m_bound_vao) {
-        pglBindVertexArray(m_empty_vao);
+        GL(pglBindVertexArray(m_empty_vao));
         m_bound_vao = m_empty_vao;
       }
     }
@@ -617,7 +661,7 @@ namespace detail_es3 {
       RX_PROFILE_CPU("use_vbo");
 
       if (m_bound_vbo != _vbo) {
-        pglBindBuffer(GL_ARRAY_BUFFER, _vbo);
+        GL(pglBindBuffer(GL_ARRAY_BUFFER, _vbo));
         m_bound_vbo = _vbo;
       }
     }
@@ -626,7 +670,7 @@ namespace detail_es3 {
       RX_PROFILE_CPU("use_ebo");
 
       if (m_bound_ebo != _ebo) {
-        pglBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
+        GL(pglBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo));
         m_bound_ebo = _ebo;
       }
     }
@@ -646,7 +690,7 @@ namespace detail_es3 {
       auto& texture_unit{m_texture_units[m_active_texture]};
       if (texture_unit.*name != this_texture->tex) {
         texture_unit.*name = this_texture->tex;
-        pglBindTexture(_type, this_texture->tex);
+        GL(pglBindTexture(_type, this_texture->tex));
       }
     }
 
@@ -656,11 +700,11 @@ namespace detail_es3 {
       auto& texture_unit{m_texture_units[_unit]};
       if (texture_unit.*name != this_texture->tex) {
         if (m_active_texture != _unit) {
-          pglActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + _unit));
+          GL(pglActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + _unit)));
           m_active_texture = _unit;
         }
         texture_unit.*name = this_texture->tex;
-        pglBindTexture(_type, this_texture->tex);
+        GL(pglBindTexture(_type, this_texture->tex));
       }
     }
 
@@ -741,6 +785,72 @@ namespace detail_es3 {
   };
 };
 
+// ES 3.0 requires draw buffers are iota, so use |_draw_buffers| to select
+// attachments and wire them into the FBO in iota order.
+//
+// TODO(dweiler): Consider creating an FBO LRU cache so this doesn't need to
+// occur everytime |_draw_buffers| differes for the last configuration of
+// |_target|.
+void setup_attachments(Frontend::Target* _target, const Frontend::Buffers* _draw_buffers) {
+  const auto& attachments = _target->attachments();
+
+  // Don't configure more than the number of draw buffers given.
+  const Size n_attachments = attachments.size();
+  const Size n_count = _draw_buffers
+    ? Algorithm::min(n_attachments, _draw_buffers->size()) : n_attachments;
+
+  for (Size i = 0; i < n_count; i++) {
+    // Select attachments based on |_draw_buffers| but always put them in
+    // iota'd GL_COLOR_ATTACHMENT order.
+    const auto& attachment = attachments[_draw_buffers ? (*_draw_buffers)[i] : i];
+    const auto attachment_enum = static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i);
+    switch (attachment.kind) {
+    case Frontend::Target::Attachment::Type::TEXTURE2D:
+      GL(pglFramebufferTexture2D(
+        GL_DRAW_FRAMEBUFFER,
+        attachment_enum,
+        GL_TEXTURE_2D,
+        reinterpret_cast<detail_es3::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
+        static_cast<GLint>(attachment.level)));
+      break;
+    case Frontend::Target::Attachment::Type::TEXTURECM:
+      GL(pglFramebufferTexture2D(
+        GL_DRAW_FRAMEBUFFER,
+        attachment_enum,
+        GL_TEXTURE_CUBE_MAP_POSITIVE_X + static_cast<GLenum>(attachment.as_textureCM.face),
+        reinterpret_cast<detail_es3::textureCM*>(attachment.as_textureCM.texture + 1)->tex,
+        static_cast<GLint>(attachment.level)));
+      break;
+    }
+  }
+
+  // Remainder attachments should be detached from the FBO to prevent feedback.
+  for (Size i = n_count; i < n_attachments; i++) {
+    const auto& attachment = attachments[i];
+    const auto attachment_enum = static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i);
+    switch (attachment.kind) {
+    case Frontend::Target::Attachment::Type::TEXTURE2D:
+      GL(pglFramebufferTexture2D(
+        GL_DRAW_FRAMEBUFFER,
+        attachment_enum,
+        GL_TEXTURE_2D,
+        0,
+        static_cast<GLint>(attachment.level)));
+      break;
+    case Frontend::Target::Attachment::Type::TEXTURECM:
+      GL(pglFramebufferTexture2D(
+        GL_DRAW_FRAMEBUFFER,
+        attachment_enum,
+        GL_TEXTURE_CUBE_MAP_POSITIVE_X + static_cast<GLenum>(attachment.as_textureCM.face),
+        0,
+        static_cast<GLint>(attachment.level)));
+      break;
+    }
+  }
+
+  // check_target(_target, _draw_buffers);
+}
+
 static GLuint compile_shader(Memory::Allocator& _allocator,
   Vector<Frontend::Uniform>& _uniforms, const Frontend::Shader& _shader)
 {
@@ -750,14 +860,14 @@ static GLuint compile_shader(Memory::Allocator& _allocator,
   auto size = static_cast<GLint>(contents->size());
 
   GLuint handle = pglCreateShader(convert_shader_type(_shader.kind));
-  pglShaderSource(handle, 1, &data, &size);
-  pglCompileShader(handle);
+  GL(pglShaderSource(handle, 1, &data, &size));
+  GL(pglCompileShader(handle));
 
   GLint status{0};
-  pglGetShaderiv(handle, GL_COMPILE_STATUS, &status);
+  GL(pglGetShaderiv(handle, GL_COMPILE_STATUS, &status));
   if (status != GL_TRUE) {
     GLint log_size{0};
-    pglGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_size);
+    GL(pglGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_size));
 
     logger->error("failed compiling shader");
 
@@ -766,12 +876,12 @@ static GLuint compile_shader(Memory::Allocator& _allocator,
       if (!error_log.resize(log_size)) {
         logger->error("out of memory");
       } else {
-        pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data());
+        GL(pglGetShaderInfoLog(handle, log_size, &log_size, error_log.data()));
         logger->error("\n%s\n%s", error_log.data(), contents->data());
       }
     }
 
-    pglDeleteShader(handle);
+    GL(pglDeleteShader(handle));
     return 0;
   }
 
@@ -815,6 +925,27 @@ bool ES3::init() {
     return false;
   }
 
+  // Enable some WebGL extensions after the GL context is created.
+#if defined(RX_PLATFORM_EMSCRIPTEN)
+  auto webgl = emscripten_webgl_get_current_context();
+  auto enable = [&](const char* _name) {
+    if (emscripten_webgl_enable_extension(webgl, _name)) {
+      logger->verbose("WebGL extension: %s ENABLED", _name);
+    } else {
+      logger->warning("WebGL extension: %s UNSUPPORTED", _name);
+    }
+  };
+
+  // F32 RTTs
+  enable("EXT_color_buffer_float");
+
+  // F16 RTTs
+  enable("EXT_color_buffer_half_float");
+
+  // Linear filtering of F16 RTTs
+  enable("OES_texture_float_linear");
+#endif
+
   // buffers
   fetch("glGenBuffers", pglGenBuffers);
   fetch("glDeleteBuffers", pglDeleteBuffers);
@@ -853,7 +984,6 @@ bool ES3::init() {
   fetch("glFramebufferTexture2D", pglFramebufferTexture2D);
   fetch("glBindFramebuffer", pglBindFramebuffer);
   fetch("glDrawBuffers", pglDrawBuffers);
-  fetch("glDrawBuffer", pglDrawBuffer);
   fetch("glReadBuffer", pglReadBuffer);
   fetch("glBlitFramebuffer", pglBlitFramebuffer);
   fetch("glClearBufferfv", pglClearBufferfv);
@@ -902,7 +1032,6 @@ bool ES3::init() {
   fetch("glStencilMask", pglStencilMask);
   fetch("glStencilFunc", pglStencilFunc);
   fetch("glStencilOpSeparate", pglStencilOpSeparate);
-  fetch("glPolygonMode", pglPolygonMode);
   fetch("glViewport", pglViewport);
 
   // query
@@ -915,7 +1044,6 @@ bool ES3::init() {
   fetch("glDrawArrays", pglDrawArrays);
   fetch("glDrawArraysInstanced", pglDrawArraysInstanced);
   fetch("glDrawElements", pglDrawElements);
-  fetch("glDrawElementsBaseVertex", pglDrawElementsBaseVertex);
   fetch("glDrawElementsInstanced", pglDrawElementsInstanced);
 
   // flush
@@ -1053,52 +1181,6 @@ void ES3::process(Byte* _command) {
 
           state->use_buffer(render_buffer);
 
-          auto setup_attributes = [](const Vector<Frontend::Buffer::Attribute>& attributes,
-                                     Size _stride,
-                                     Size _index_offset,
-                                     bool _instanced)
-          {
-            auto is_int_format = [](GLenum _type) {
-              return _type == GL_SHORT || _type == GL_INT || _type == GL_UNSIGNED_INT;
-            };
-
-            const auto n_attributes = attributes.size();
-
-            Size count = 0;
-            for (Size i = 0; i < n_attributes; i++) {
-              const auto& attribute = attributes[i];
-              const auto index = static_cast<GLuint>(i + _index_offset);
-              const auto result = convert_attribute(attribute);
-
-              Size offset = attribute.offset;
-              for (GLsizei j = 0; j < result.instances; j++) {
-                pglEnableVertexAttribArray(index + j);
-                if (is_int_format(result.type_enum)) {
-                  pglVertexAttribIPointer(
-                    index + j,
-                    result.components,
-                    result.type_enum,
-                    _stride,
-                    reinterpret_cast<const GLvoid*>(offset));
-                } else {
-                  pglVertexAttribPointer(
-                    index + j,
-                    result.components,
-                    result.type_enum,
-                    GL_FALSE,
-                    _stride,
-                    reinterpret_cast<const GLvoid*>(offset));
-                }
-                if (_instanced) {
-                  pglVertexAttribDivisor(index + j, 1);
-                }
-                offset += result.type_size * result.components;
-                count++;
-              }
-            }
-            return count;
-          };
-
           Size current_attribute = 0;
 
           // Setup element buffer.
@@ -1106,10 +1188,10 @@ void ES3::process(Byte* _command) {
             const auto& elements = render_buffer->elements();
             state->use_ebo(buffer->bo[0]);
             if (elements.is_empty()) {
-              pglBufferData(GL_ELEMENT_ARRAY_BUFFER, BUFFER_SLAB_SIZE, nullptr, type);
+              GL(pglBufferData(GL_ELEMENT_ARRAY_BUFFER, BUFFER_SLAB_SIZE, nullptr, type));
               buffer->elements_size = BUFFER_SLAB_SIZE;
             } else {
-              pglBufferData(GL_ELEMENT_ARRAY_BUFFER, elements.size(), elements.data(), type);
+              GL(pglBufferData(GL_ELEMENT_ARRAY_BUFFER, elements.size(), elements.data(), type));
               buffer->elements_size = elements.size();
             }
           }
@@ -1118,10 +1200,10 @@ void ES3::process(Byte* _command) {
           const auto& vertices = render_buffer->vertices();
           state->use_vbo(buffer->bo[1]);
           if (vertices.is_empty()) {
-            pglBufferData(GL_ARRAY_BUFFER, BUFFER_SLAB_SIZE, nullptr, type);
+            GL(pglBufferData(GL_ARRAY_BUFFER, BUFFER_SLAB_SIZE, nullptr, type));
             buffer->vertices_size = BUFFER_SLAB_SIZE;
           } else {
-            pglBufferData(GL_ARRAY_BUFFER, vertices.size(), vertices.data(), type);
+            GL(pglBufferData(GL_ARRAY_BUFFER, vertices.size(), vertices.data(), type));
             buffer->vertices_size = vertices.size();
           }
           current_attribute = setup_attributes(
@@ -1135,10 +1217,10 @@ void ES3::process(Byte* _command) {
             const auto& instances = render_buffer->instances();
             state->use_vbo(buffer->bo[2]);
             if (instances.is_empty()) {
-              pglBufferData(GL_ARRAY_BUFFER, BUFFER_SLAB_SIZE, nullptr, type);
+              GL(pglBufferData(GL_ARRAY_BUFFER, BUFFER_SLAB_SIZE, nullptr, type));
               buffer->instances_size = BUFFER_SLAB_SIZE;
             } else {
-              pglBufferData(GL_ARRAY_BUFFER, instances.size(), instances.data(), type);
+              GL(pglBufferData(GL_ARRAY_BUFFER, instances.size(), instances.data(), type));
               buffer->instances_size = instances.size();
             }
             current_attribute = setup_attributes(
@@ -1163,43 +1245,20 @@ void ES3::process(Byte* _command) {
             const auto depth_stencil{render_target->depth_stencil()};
             // combined depth stencil format
             const auto texture{reinterpret_cast<const detail_es3::texture2D*>(depth_stencil + 1)};
-            pglFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0);
-          } else {
-            if (render_target->has_depth()) {
-              const auto depth{render_target->depth()};
-              const auto texture{reinterpret_cast<const detail_es3::texture2D*>(depth + 1)};
-              pglFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0);
-            } else if (render_target->has_stencil()) {
-              const auto stencil{render_target->stencil()};
-              const auto texture{reinterpret_cast<const detail_es3::texture2D*>(stencil + 1)};
-              pglFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0);
-            }
+            GL(pglFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0));
+          } else if (render_target->has_depth()) {
+            const auto depth{render_target->depth()};
+            const auto texture{reinterpret_cast<const detail_es3::texture2D*>(depth + 1)};
+            GL(pglFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0));
+          } else if (render_target->has_stencil()) {
+            const auto stencil{render_target->stencil()};
+            const auto texture{reinterpret_cast<const detail_es3::texture2D*>(stencil + 1)};
+            GL(pglFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texture->tex, 0));
           }
-
-          // color attachments
-          const auto& attachments{render_target->attachments()};
-          for (Size i{0}; i < attachments.size(); i++) {
-            const auto& attachment{attachments[i]};
-            const auto attachment_enum{static_cast<GLenum>(GL_COLOR_ATTACHMENT0 + i)};
-            switch (attachment.kind) {
-            case Frontend::Target::Attachment::Type::TEXTURE2D:
-              pglFramebufferTexture2D(
-                GL_DRAW_FRAMEBUFFER,
-                attachment_enum,
-                GL_TEXTURE_2D,
-                reinterpret_cast<detail_es3::texture2D*>(attachment.as_texture2D.texture + 1)->tex,
-                static_cast<GLint>(attachment.level));
-              break;
-            case Frontend::Target::Attachment::Type::TEXTURECM:
-              pglFramebufferTexture2D(
-                GL_DRAW_FRAMEBUFFER,
-                attachment_enum,
-                GL_TEXTURE_CUBE_MAP_POSITIVE_X + static_cast<GLenum>(attachment.as_textureCM.face),
-                reinterpret_cast<detail_es3::textureCM*>(attachment.as_textureCM.texture + 1)->tex,
-                static_cast<GLint>(attachment.level));
-              break;
-            }
-          }
+          // NOTE(weiler): We don't setup draw buffers here because ES 3.0
+          // requires that draw buffers are an iota of GL_COLOR_ATTACHMENT
+          // values which is not possible. Instead we setup the attachments
+          // in order of the draw buffers at each draw call.
         }
         break;
       case Frontend::ResourceCommand::Type::PROGRAM:
@@ -1213,18 +1272,18 @@ void ES3::process(Byte* _command) {
           shaders.each_fwd([&](const Frontend::Shader& _shader) {
             GLuint shader_handle{compile_shader(m_allocator, render_program->uniforms(), _shader)};
             if (shader_handle != 0) {
-              pglAttachShader(program->handle, shader_handle);
+              GL(pglAttachShader(program->handle, shader_handle));
               shader_handles.push_back(shader_handle);
             }
           });
 
-          pglLinkProgram(program->handle);
+          GL(pglLinkProgram(program->handle));
 
           GLint status{0};
-          pglGetProgramiv(program->handle, GL_LINK_STATUS, &status);
+          GL(pglGetProgramiv(program->handle, GL_LINK_STATUS, &status));
           if (status != GL_TRUE) {
             GLint log_size{0};
-            pglGetProgramiv(program->handle, GL_INFO_LOG_LENGTH, &log_size);
+            GL(pglGetProgramiv(program->handle, GL_INFO_LOG_LENGTH, &log_size));
 
             logger->error("failed linking program");
 
@@ -1233,15 +1292,15 @@ void ES3::process(Byte* _command) {
               if (!error_log.resize(log_size)) {
                 logger->error("out of memory");
               } else {
-                pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data());
+                GL(pglGetProgramInfoLog(program->handle, log_size, &log_size, error_log.data()));
                 logger->error("\n%s", error_log.data());
               }
             }
           }
 
           shader_handles.each_fwd([&](GLuint _shader) {
-            pglDetachShader(program->handle, _shader);
-            pglDeleteShader(_shader);
+            GL(pglDetachShader(program->handle, _shader));
+            GL(pglDeleteShader(_shader));
           });
 
           // fetch uniform locations
@@ -1268,20 +1327,20 @@ void ES3::process(Byte* _command) {
 
           state->use_texture(render_texture);
 
-          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, filter.min);
-          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, filter.mag);
-          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, wrap_s);
-          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, levels - 1);
+          GL(pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, filter.min));
+          GL(pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, filter.mag));
+          GL(pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, wrap_s));
+          GL(pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0));
+          GL(pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, levels - 1));
           if (requires_border_color(wrap_s)) {
             const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            pglTexParameteriv(GL_TEXTURE_1D, GL_TEXTURE_BORDER_COLOR, color.data());
+            GL(pglTexParameteriv(GL_TEXTURE_1D, GL_TEXTURE_BORDER_COLOR, color.data()));
           }
 
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
             if (render_texture->is_compressed_format()) {
-              pglCompressedTexImage2D(
+              GL(pglCompressedTexImage2D(
                 GL_TEXTURE_1D,
                 i,
                 convert_texture_data_format(format),
@@ -1289,9 +1348,9 @@ void ES3::process(Byte* _command) {
                 1,
                 0,
                 level_info.size,
-                data.is_empty() ? nullptr : data.data() + level_info.offset);
+                data.is_empty() ? nullptr : data.data() + level_info.offset));
             } else {
-              pglTexImage2D(
+              GL(pglTexImage2D(
                 GL_TEXTURE_1D,
                 i,
                 convert_texture_data_format(format),
@@ -1300,7 +1359,7 @@ void ES3::process(Byte* _command) {
                 0,
                 convert_texture_format(format),
                 convert_texture_data_type(format),
-                data.is_empty() ? nullptr : data.data() + level_info.offset);
+                data.is_empty() ? nullptr : data.data() + level_info.offset));
             }
           }
         }
@@ -1323,21 +1382,21 @@ void ES3::process(Byte* _command) {
 
           state->use_texture(render_texture);
 
-          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter.min);
-          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter.mag);
-          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
-          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
-          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levels - 1);
+          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter.min));
+          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter.mag));
+          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s));
+          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t));
+          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0));
+          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levels - 1));
           if (requires_border_color(wrap_s, wrap_t)) {
             const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            pglTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color.data());
+            GL(pglTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color.data()));
           }
 
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
             if (render_texture->is_compressed_format()) {
-              pglCompressedTexImage2D(
+              GL(pglCompressedTexImage2D(
                 GL_TEXTURE_2D,
                 i,
                 convert_texture_data_format(format),
@@ -1345,9 +1404,9 @@ void ES3::process(Byte* _command) {
                 static_cast<GLsizei>(level_info.dimensions.h),
                 0,
                 level_info.size,
-                data.is_empty() ? nullptr : data.data() + level_info.offset);
+                data.is_empty() ? nullptr : data.data() + level_info.offset));
             } else {
-              pglTexImage2D(
+              GL(pglTexImage2D(
                 GL_TEXTURE_2D,
                 i,
                 convert_texture_data_format(format),
@@ -1356,7 +1415,7 @@ void ES3::process(Byte* _command) {
                 0,
                 convert_texture_format(format),
                 convert_texture_data_type(format),
-                data.is_empty() ? nullptr : data.data() + level_info.offset);
+                data.is_empty() ? nullptr : data.data() + level_info.offset));
             }
           }
         }
@@ -1376,22 +1435,22 @@ void ES3::process(Byte* _command) {
 
           state->use_texture(render_texture);
 
-          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, filter.min);
-          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, filter.mag);
-          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, wrap_s);
-          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, wrap_t);
-          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, wrap_r);
-          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, levels - 1);
+          GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, filter.min));
+          GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, filter.mag));
+          GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, wrap_s));
+          GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, wrap_t));
+          GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, wrap_r));
+          GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, 0));
+          GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, levels - 1));
           if (requires_border_color(wrap_s, wrap_t, wrap_r)) {
             const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            pglTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, color.data());
+            GL(pglTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, color.data()));
           }
 
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
             if (render_texture->is_compressed_format()) {
-              pglCompressedTexImage3D(
+              GL(pglCompressedTexImage3D(
                 GL_TEXTURE_3D,
                 i,
                 convert_texture_data_format(format),
@@ -1400,9 +1459,9 @@ void ES3::process(Byte* _command) {
                 static_cast<GLsizei>(level_info.dimensions.d),
                 0,
                 level_info.size,
-                data.is_empty() ? nullptr : data.data() + level_info.offset);
+                data.is_empty() ? nullptr : data.data() + level_info.offset));
             } else {
-              pglTexImage3D(
+              GL(pglTexImage3D(
                 GL_TEXTURE_3D,
                 i,
                 convert_texture_data_format(format),
@@ -1412,7 +1471,7 @@ void ES3::process(Byte* _command) {
                 0,
                 convert_texture_format(format),
                 convert_texture_data_type(format),
-                data.is_empty() ? nullptr : data.data() + level_info.offset);
+                data.is_empty() ? nullptr : data.data() + level_info.offset));
             }
           }
         }
@@ -1432,23 +1491,23 @@ void ES3::process(Byte* _command) {
 
           state->use_texture(render_texture);
 
-          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, filter.min);
-          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, filter.mag);
-          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, wrap_s);
-          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, wrap_t);
-          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, wrap_p);
-          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
-          pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, levels - 1);
+          GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, filter.min));
+          GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, filter.mag));
+          GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, wrap_s));
+          GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, wrap_t));
+          GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, wrap_p));
+          GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0));
+          GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, levels - 1));
           if (requires_border_color(wrap_s, wrap_t, wrap_p)) {
             const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            pglTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BORDER_COLOR, color.data());
+            GL(pglTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BORDER_COLOR, color.data()));
           }
 
           for (GLint i{0}; i < levels; i++) {
             const auto level_info{render_texture->info_for_level(i)};
             for (GLint j{0}; j < 6; j++) {
               if (render_texture->is_compressed_format()) {
-                pglCompressedTexImage2D(
+                GL(pglCompressedTexImage2D(
                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
                   i,
                   convert_texture_data_format(format),
@@ -1456,9 +1515,9 @@ void ES3::process(Byte* _command) {
                   static_cast<GLsizei>(level_info.dimensions.h),
                   0,
                   level_info.size / 6,
-                  data.is_empty() ? nullptr : data.data() + level_info.offset + level_info.size / 6 * j);
+                  data.is_empty() ? nullptr : data.data() + level_info.offset + level_info.size / 6 * j));
               } else {
-                pglTexImage2D(
+                GL(pglTexImage2D(
                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
                   i,
                   convert_texture_data_format(format),
@@ -1467,7 +1526,7 @@ void ES3::process(Byte* _command) {
                   0,
                   convert_texture_format(format),
                   convert_texture_data_type(format),
-                  data.is_empty() ? nullptr : data.data() + level_info.offset + level_info.size / 6 * j);
+                  data.is_empty() ? nullptr : data.data() + level_info.offset + level_info.size / 6 * j));
               }
             }
           }
@@ -1504,7 +1563,7 @@ void ES3::process(Byte* _command) {
             const auto& elements = render_buffer->elements();
             if (elements.size() > buffer->elements_size) {
               state->use_ebo(buffer->bo[0]);
-              pglBufferData(GL_ELEMENT_ARRAY_BUFFER, elements.size(), elements.data(), type);
+              GL(pglBufferData(GL_ELEMENT_ARRAY_BUFFER, elements.size(), elements.data(), type));
               buffer->elements_size = elements.size();
             } else {
               use_elements_edits = true;
@@ -1513,7 +1572,7 @@ void ES3::process(Byte* _command) {
 
           if (vertices.size() > buffer->vertices_size) {
             state->use_vbo(buffer->bo[1]);
-            pglBufferData(GL_ARRAY_BUFFER, vertices.size(), vertices.data(), type);
+            GL(pglBufferData(GL_ARRAY_BUFFER, vertices.size(), vertices.data(), type));
             buffer->vertices_size = vertices.size();
           } else {
             use_vertices_edits = true;
@@ -1524,7 +1583,7 @@ void ES3::process(Byte* _command) {
             const auto& instances = render_buffer->instances();
             if (instances.size() > buffer->instances_size) {
               state->use_vbo(buffer->bo[2]);
-              pglBufferData(GL_ARRAY_BUFFER, instances.size(), instances.data(), type);
+              GL(pglBufferData(GL_ARRAY_BUFFER, instances.size(), instances.data(), type));
               buffer->instances_size = instances.size();
             } else {
               use_instances_edits = true;
@@ -1540,20 +1599,20 @@ void ES3::process(Byte* _command) {
                 if (use_elements_edits) {
                   const auto& elements = render_buffer->elements();
                   state->use_ebo(buffer->bo[0]);
-                  pglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, edit[1], edit[2], elements.data() + edit[1]);
+                  GL(pglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, edit[1], edit[2], elements.data() + edit[1]));
                 }
                 break;
               case 1:
                 if (use_vertices_edits) {
                   state->use_vbo(buffer->bo[1]);
-                  pglBufferSubData(GL_ARRAY_BUFFER, edit[1], edit[2], vertices.data() + edit[1]);
+                  GL(pglBufferSubData(GL_ARRAY_BUFFER, edit[1], edit[2], vertices.data() + edit[1]));
                 }
                 break;
               case 2:
                 if (use_instances_edits) {
                   const auto& instances = render_buffer->instances();
                   state->use_vbo(buffer->bo[2]);
-                  pglBufferSubData(GL_ARRAY_BUFFER, edit[1], edit[2], instances.data() + edit[1]);
+                  GL(pglBufferSubData(GL_ARRAY_BUFFER, edit[1], edit[2], instances.data() + edit[1]));
                 }
               }
               edit += 3;
@@ -1589,7 +1648,7 @@ void ES3::process(Byte* _command) {
               + y_offset * pitch
               + x_offset * bpp;
 
-            pglTexSubImage3D(
+            GL(pglTexSubImage3D(
               GL_TEXTURE_3D,
               edit[0],
               x_offset,
@@ -1600,7 +1659,7 @@ void ES3::process(Byte* _command) {
               edit[6], // depth
               convert_texture_format(render_texture->format()),
               convert_texture_data_type(render_texture->format()),
-              ptr);
+              ptr));
 
             edit += 7;
           }
@@ -1627,20 +1686,20 @@ void ES3::process(Byte* _command) {
       if (command->clear_colors) {
         for (Uint32 i{0}; i < sizeof command->color_values / sizeof *command->color_values; i++) {
           if (command->clear_colors & (1 << i)) {
-            pglClearBufferfv(GL_COLOR, static_cast<GLint>(i),
-              command->color_values[i].data());
+            GL(pglClearBufferfv(GL_COLOR, static_cast<GLint>(i),
+              command->color_values[i].data()));
           }
         }
       }
 
       if (clear_depth && clear_stencil) {
-        pglClearBufferfi(GL_DEPTH_STENCIL, 0, command->depth_value,
-          command->stencil_value);
+        GL(pglClearBufferfi(GL_DEPTH_STENCIL, 0, command->depth_value,
+          command->stencil_value));
       } else if (clear_depth) {
-        pglClearBufferfv(GL_DEPTH, 0, &command->depth_value);
+        GL(pglClearBufferfv(GL_DEPTH, 0, &command->depth_value));
       } else if (clear_stencil) {
         const GLint value{command->stencil_value};
-        pglClearBufferiv(GL_STENCIL, 0, &value);
+        GL(pglClearBufferiv(GL_STENCIL, 0, &value));
       }
     }
     break;
@@ -1774,82 +1833,55 @@ void ES3::process(Byte* _command) {
 
       if (render_buffer) {
         const auto& format = render_buffer->format();
+        const auto buffer = reinterpret_cast<detail_es3::buffer*>(render_buffer + 1);
         const auto element_type = convert_element_type(format.element_type());
         const auto indices = reinterpret_cast<const GLvoid*>(format.element_size() * command->offset);
+
+        Size current_attribute = 0;
+
+        state->use_vbo(buffer->bo[1]);
+        current_attribute = setup_attributes(
+          format.vertex_attributes(),
+          format.vertex_stride(),
+          current_attribute,
+          false,
+          format.vertex_stride() * command->base_vertex);
+
+        if (format.is_instanced()) {
+          state->use_vbo(buffer->bo[2]);
+          current_attribute = setup_attributes(
+            format.instance_attributes(),
+            format.instance_stride(),
+            current_attribute,
+            true,
+            format.instance_stride() * command->base_instance);
+        }
+
         if (command->instances) {
-          const bool base_instance = command->base_instance != 0;
           if (format.is_indexed()) {
-            const bool base_vertex = command->base_vertex != 0;
-            if (base_vertex) {
-              if (base_instance) {
-                pglDrawElementsInstancedBaseVertexBaseInstanceEXT(
-                  primitive_type,
-                  count,
-                  element_type,
-                  indices,
-                  static_cast<GLsizei>(command->instances),
-                  static_cast<GLint>(command->base_vertex),
-                  static_cast<GLuint>(command->base_instance));
-              } else {
-                pglDrawElementsInstancedBaseVertex(
-                  primitive_type,
-                  count,
-                  element_type,
-                  indices,
-                  static_cast<GLsizei>(command->instances),
-                  static_cast<GLint>(command->base_vertex));
-              }
-            } else if (base_instance) {
-              pglDrawElementsInstancedBaseInstanceEXT(
-                primitive_type,
-                count,
-                element_type,
-                indices,
-                static_cast<GLsizei>(command->instances),
-                static_cast<GLint>(command->base_instance));
-            } else {
-              pglDrawElementsInstanced(
-                primitive_type,
-                count,
-                element_type,
-                indices,
-                static_cast<GLsizei>(command->instances));
-            }
+            GL(pglDrawElementsInstanced(
+              primitive_type,
+              count,
+              element_type,
+              indices,
+              static_cast<GLsizei>(command->instances)));
           } else {
-            if (base_instance) {
-              pglDrawArraysInstancedBaseInstanceEXT(
-                primitive_type,
-                offset,
-                count,
-                static_cast<GLsizei>(command->instances),
-                static_cast<GLuint>(command->base_instance));
-            } else {
-              pglDrawArraysInstanced(
-                primitive_type,
-                offset,
-                count,
-                static_cast<GLsizei>(command->instances));
-            }
+            GL(pglDrawArraysInstanced(
+              primitive_type,
+              offset,
+              count,
+              static_cast<GLsizei>(command->instances)));
           }
         } else {
           if (format.is_indexed()) {
-            if (command->base_vertex) {
-              pglDrawElementsBaseVertex(
-                primitive_type,
-                count,
-                element_type,
-                indices,
-                static_cast<GLint>(command->base_vertex));
-            } else {
-              pglDrawElements(primitive_type, count, element_type, indices);
-            }
+            GL(pglDrawElements(primitive_type, count, element_type, indices));
           } else {
-            pglDrawArrays(primitive_type, offset, count);
+            GL(pglDrawArrays(primitive_type, offset, count));
           }
         }
       } else {
         // Bufferless draw calls
-        pglDrawArrays(primitive_type, 0, count);
+        GL(pglDrawArrays(primitive_type, 0, count));
       }
     }
     break;
@@ -1884,7 +1916,7 @@ void ES3::process(Byte* _command) {
       state->use_read_target(src_render_target, &read_buffers);
       state->use_draw_target(dst_render_target, &draw_buffers);
 
-      pglBlitFramebuffer(
+      GL(pglBlitFramebuffer(
         0,
         0,
         src_dimensions.w,
@@ -1894,7 +1926,7 @@ void ES3::process(Byte* _command) {
         dst_dimensions.w,
         dst_dimensions.h,
         GL_COLOR_BUFFER_BIT,
-        GL_NEAREST);
+        GL_NEAREST));
 
       break;
     }
