@@ -20,6 +20,7 @@ For debuggging purposes several sanitizer exist for POSIX platforms. Here's the 
 | Thread Sanitizer             | `TSAN`        |
 | Undefined Behavior Sanitizer | `UBSAN`       |
 | Engine Sanitizer             | `ESAN`        |
+
 Sanitizers can be used together. Here's an example:
   > make ASAN=1 TSAN=1 UBSAN=1 -j9
 
@@ -29,7 +30,7 @@ To build for FreeBSD you'll need `gmake` and `gcc` (or `clang`) installed. The r
 
 All the build options outlined in [Linux](#linux) are available under FreeBSD too, including the Sanitizers.
 
-Optionally, for improved stack traces in debug builds, you will need to have [devel/binutils](https://www.freshports.org/devel/binutils) installled for `addr2line`.
+Optionally, for improved engine stack traces in debug builds, you'll need to have [devel/binutils](https://www.freshports.org/devel/binutils) installled for `addr2line`.
 
 ## Emscripten
 To build for Emscripten you'll need the [Emscripten toolchain](https://emscripten.org/docs/getting_started/downloads.html) installed and set in your `PATH`. Building is the same as Linux, just set the compiler to `emcc`. Here's an example:
