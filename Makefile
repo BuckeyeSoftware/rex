@@ -120,9 +120,12 @@ ifeq ($(UNUSED), 1)
 	CFLAGS += -fdata-sections
 endif
 
-# Disable some unneeded features.
-CFLAGS += -fno-unwind-tables
-CFLAGS += -fno-asynchronous-unwind-tables
+# Disable unneded features in release builds.
+ifneq ($(DEBUG),1)
+	# These are needed for stack traces in debug builds.
+	CFLAGS += -fno-unwind-tables
+	CFLAGS += -fno-asynchronous-unwind-tables
+endif
 
 # Enable link-time optimizations if requested.
 ifeq ($(LTO),1)
@@ -145,7 +148,7 @@ ifeq ($(DEBUG),1)
 	CFLAGS += -DRX_DEBUG
 
 	# Optimize for debugging.
-	CFLAGS += -O1
+	CFLAGS += -O0
 
 	# Ensure there's a frame pointer in debug builds.
 	CFLAGS += -fno-omit-frame-pointer
@@ -227,6 +230,7 @@ DEPFLAGS += -MP
 #
 ifeq ($(EMSCRIPTEN), 1)
 	OFLAGS := --preload-file ./base/
+	OFLAGS += --shell-file src/rx/shell.html
 endif
 
 #
@@ -240,14 +244,13 @@ ifeq ($(EMSCRIPTEN), 1)
 	# Emscripten ports.
 	LDFLAGS += -s USE_PTHREADS=1
 	LDFLAGS += -s USE_SDL=2
+	LDFLAGS += -s USE_WEBGL2=1
 
-	# Emulate full ES 3.0.
-	LDFLAGS += -s FULL_ES3=1
 
 	# Preinitialize a thread pool with four webworkers here to avoid blocking
 	# in main waiting for our builtin thread pool to initialize since we depend
 	# on synchronous thread construction of our thread pool.
-	LDFLAGS += -s PTHREAD_POOL_SIZE=4
+	LDFLAGS += -s PTHREAD_POOL_SIZE=5
 
 	# Allow the heap to grow when we run out of memory in the browser.
 	LDFLAGS += -s ALLOW_MEMORY_GROWTH=1
@@ -256,7 +259,7 @@ ifeq ($(EMSCRIPTEN), 1)
 	LDFLAGS += -s RETAIN_COMPILER_SETTINGS=1
 
 	# Allocate 1 GiB for Rex.
-	LDFLAGS += -s INITIAL_MEMORY=1073742000
+	LDFLAGS += -s INITIAL_MEMORY=1073741824
 
 	ifeq ($(DEBUG), 1)
 		# When building debug builds with Emscripten the -g flag must also be given
@@ -264,15 +267,7 @@ ifeq ($(EMSCRIPTEN), 1)
 		# browser can find it when debugging.
 		#
 		# Note that the port 6931 is the default port for emrun.
-		LDFLAGS += -g4 --source-map-base http://0.0.0.0:6931/
-
-		# Catch threading bugs.
-		LDFLAGS += -PTHREADS_DEBUG=1
-
-		# Catch heap corruption issues. These are typically caused by misalignments
-		# and pointer aliasing which tend to work on Desktop but won't on the Web.
-		LDFLAGS += -s SAFE_HEAP=1
-		LDFLAGS += -s SAFE_HEAP_LOG=1
+		LDFLAGS += -g4 --source-map-base http://localhost:6931/
 
 		# Additional assertions and loggging.
 		LDFLAGS += -s ASSERTIONS=2
