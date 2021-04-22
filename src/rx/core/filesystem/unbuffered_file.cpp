@@ -53,15 +53,15 @@ static void* open_file([[maybe_unused]] Memory::Allocator& _allocator, const cha
   // An UnbufferedFile has no caching or buffering, not even in kernel-space.
   //
   // The purpose of BufferedFile is to implement the same page cache mechanisms
-  // some kernels implement, entierly in user-space. This has several advantages
-  //  * Copies from a user-space page-cache are faster than a kernel-space one.
+  // some kernels implement, entirely in user-space. This has several advantages
+  //  * Copies from a user-space page-cache are faster than a kernel-space page-cache.
   //  * Not all kernels implement page caching, e.g consoles.
   //  * Can explicitly manage caches to enable more optimization oppertunities.
   //  * Can explicitly flush caches for data consistency.
   //  * Can have a page cache on virtual files not backed by the OS.
   //
   // The O_DIRECT flag, if present, instructs the kernel not to back the file
-  // with kernel page cache. Leaving page caching on in the kernel would double
+  // with kernel page-cache. Leaving page caching on in the kernel would double
   // both the memory used by a BufferedFile and the number of copies made.
 #if defined(O_DIRECT)
   flags |= O_DIRECT;
