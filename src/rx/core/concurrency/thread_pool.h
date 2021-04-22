@@ -41,6 +41,7 @@ private:
   Memory::Slab m_job_memory RX_HINT_GUARDED_BY(m_mutex);
   bool m_stop               RX_HINT_GUARDED_BY(m_mutex);
   Time::StopWatch m_timer;
+  Concurrency::Atomic<Size> m_ready;
 
   static Global<ThreadPool> s_instance;
 };

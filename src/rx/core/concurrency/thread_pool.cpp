@@ -38,13 +38,12 @@ ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _stati
   logger->info("starting pool with %zu threads", _threads);
   RX_ASSERT(m_threads.reserve(_threads), "out of memory");
 
-  Concurrency::Atomic<Size> ready = 0;
   for (Size i{0}; i < _threads; i++) {
-    auto func = Task::create([&](int _thread_id) {
+    auto func = Task::create([_threads, this](int _thread_id) {
       logger->info("starting thread %d", _thread_id);
 
       // When all threads are started.
-      if (++ready == _threads) {
+      if (++m_ready == _threads) {
         m_timer.stop();
         logger->info("started pool with %zu threads (took %s)", _threads, m_timer.elapsed());
       }
