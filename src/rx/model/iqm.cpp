@@ -119,7 +119,7 @@ bool IQM::read(Stream::Context& _stream) {
     return false;
   }
 
-  // Don't read the contents entierly into memory until we know it looks like a
+  // Don't read the contents entirely into memory until we know it looks like a
   // valid IQM.
   Header read_header;
   if (_stream.read(reinterpret_cast<Byte*>(&read_header), sizeof read_header) != sizeof read_header) {

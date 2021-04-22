@@ -35,7 +35,7 @@ namespace Rx::Memory {
 /// operations as more caches need to be searched. Setting too high of an
 /// initial minimum cache count will waste memory. Setting too low of an initial
 /// minimum cache count will lead to thrashing of the slab as it rushes to
-/// create new caches. Similarly, when a cache becomes entierly free and the
+/// create new caches. Similarly, when a cache becomes entirely free and the
 /// number of caches in the slab is larger than the minimum cache count, the
 /// slab will attempt to remove the cache to reduce memory usage. This removal
 /// can be triggered often with low initial minimum cache count too, leading to

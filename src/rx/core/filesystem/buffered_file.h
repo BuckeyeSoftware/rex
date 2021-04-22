@@ -77,7 +77,7 @@ struct BufferedFile
 
   /// \brief Close the file.
   /// \return When closed successfully, \c true. Otherwise, \c false.
-  /// \note The close can fail if flushing of buffered contents are not entierly
+  /// \note The close can fail if flushing of buffered contents are not entirely
   /// written out, or the file has already been closed.
   [[nodiscard]] bool close();
 

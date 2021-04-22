@@ -9,7 +9,7 @@ struct Rectangle {
   Vec2<T> offset;
   Vec2<T> dimensions;
 
-  // Checks if rectangle |_other| is entierly inside this rectangle.
+  // Checks if rectangle |_other| is entirely inside this rectangle.
   bool contains(const Rectangle& _other) const;
 
   // Checks if |_point| is inside this rectangle.
