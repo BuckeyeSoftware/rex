@@ -56,9 +56,9 @@ static void* open_file([[maybe_unused]] Memory::Allocator& _allocator, const cha
   // some kernels implement, entirely in user-space. This has several advantages
   //  * Copies from a user-space page-cache are faster than a kernel-space page-cache.
   //  * Not all kernels implement page caching, e.g consoles.
-  //  * Can explicitly manage caches to enable more optimization oppertunities.
+  //  * Can explicitly manage caches to enable more optimization opportunities.
   //  * Can explicitly flush caches for data consistency.
-  //  * Can have a page cache on virtual files not backed by the OS.
+  //  * Can have a page-cache on virtual files not backed by the OS.
   //
   // The O_DIRECT flag, if present, instructs the kernel not to back the file
   // with kernel page-cache. Leaving page caching on in the kernel would double
@@ -135,7 +135,8 @@ static void* open_file([[maybe_unused]] Memory::Allocator& _allocator, const cha
   DWORD dwDesiredAccess = 0;
   DWORD dwShareMode = 0;
   DWORD dwCreationDisposition = 0;
-  DWORD dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL;
+  DWORD dwFlagsAndAttributes =
+    FILE_ATTRIBUTE_NORMAL | FILE_FLAG_NO_BUFFERING;
 
   // The '+' inside |_mode| indicates R+W
   if (strchr(_mode, '+')) {
