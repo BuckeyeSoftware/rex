@@ -104,6 +104,8 @@ protected:
   virtual Uint64 on_read(Byte* _data, Uint64 _size, Uint64 _offset);
   virtual Uint64 on_write(const Byte* _data, Uint64 _size, Uint64 _offset);
   virtual bool on_stat(Stream::Stat& stat_) const;
+  virtual bool on_truncate(Uint64 _size);
+  virtual Uint64 on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size);
 
 private:
   UnbufferedFile(Uint32 _flags, void* _impl, String&& name_, const char* _mode);

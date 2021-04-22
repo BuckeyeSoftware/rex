@@ -279,6 +279,34 @@ bool UnbufferedFile::on_stat(Stream::Stat& stat_) const {
   return stat_file(m_impl, stat_);
 }
 
+bool UnbufferedFile::on_truncate(Uint64 _size) {
+#if defined(RX_PLATFORM_POSIX)
+  return ftruncate64(impl(m_impl), _size) == 0;
+#elif defined(RX_PLATFORM_WINDOWS)
+  return SetEndOfFile(impl(m_impl));
+#endif
+  return false;
+}
+
+Uint64 UnbufferedFile::on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size) {
+#if defined(RX_PLATFORM_LINUX)
+  off64_t dst = _dst_offset;
+  off64_t src = _src_offset;
+  // Process copy in loop since |copy_file_range| can do less than requested.
+  Uint64 bytes = 0;
+  while (bytes < _size) {
+    auto copy = copy_file_range(impl(m_impl), &src, impl(m_impl), &dst, _size - bytes, 0);
+    if (copy <= 0) {
+      break;
+    }
+    bytes += Uint64(copy);
+  }
+  return bytes;
+#endif
+  // Use the user-space block copy implementation.
+  return Context::on_copy(_dst_offset, _src_offset, _size);
+}
+
 bool UnbufferedFile::close() {
   if (m_impl && close_file(m_impl)) {
     m_impl = nullptr;
