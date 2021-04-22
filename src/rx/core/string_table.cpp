@@ -16,7 +16,7 @@ Optional<StringTable> StringTable::create_from_linear_buffer(LinearBuffer&& line
     // When the StringTable is ultimately moved the SharedString table pointer
     // will be fixed up by |update_table_references|. Just put nullptr in
     // the SharedStrings for now.
-    if (!result.m_string_set.insert({i, nullptr})) {
+    if (!result.m_string_set.insert({i, &result})) {
       return nullopt;
     }
     // Skip this string in the table. The `i++` in the for loop will skip
