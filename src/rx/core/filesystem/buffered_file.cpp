@@ -31,15 +31,14 @@ Optional<BufferedFile> BufferedFile::open(Memory::Allocator& _allocator,
 }
 
 bool BufferedFile::close() {
-  if (!flush()) {
+  // Detach |m_unbuffered_file|.
+  if (!attach(nullptr)) {
     return false;
   }
 
   if (!m_unbuffered_file.close()) {
     return false;
   }
-
-  (void)attach(nullptr);
 
   return true;
 }
