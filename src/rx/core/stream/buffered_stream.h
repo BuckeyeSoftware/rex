@@ -125,6 +125,14 @@ struct RX_API BufferedStream
   /// \note A flush can fail if not all pages are written out successfully.
   virtual bool on_flush();
 
+  /// \brief Truncates the stream.
+  /// \returns On a successful truncation, \c true. Otherwise, \c false.
+  /// \note A truncation can fail if the underlying stream does not support
+  /// truncation.
+  virtual bool on_truncate(Uint64 _size);
+
+  virtual Uint64 on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size);
+
 private:
   // sizeof(Page) = 8.
   struct Page {

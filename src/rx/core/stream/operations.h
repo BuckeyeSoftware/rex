@@ -15,10 +15,11 @@ struct Stat {
 /// \brief Stream flags.
 /// OR'd bitmask of these flags indicate what features a Context supports.
 enum : Uint32 {
-  READ  = 1 << 0,
-  WRITE = 1 << 1,
-  STAT  = 1 << 3,
-  FLUSH = 1 << 4
+  READ     = 1 << 0, //< Stream supports read operations.
+  WRITE    = 1 << 1, //< Stream supports write operations.
+  STAT     = 1 << 3, //< Stream supports stat operations.
+  FLUSH    = 1 << 4, //< Stream supports flush operations.
+  TRUNCATE = 1 << 5  //< Stream supports truncate operation.
 };
 
 /// \brief Relative location for stream seeks.
