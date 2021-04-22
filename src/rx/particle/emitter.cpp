@@ -6,8 +6,6 @@
 
 #include "rx/core/utility/copy.h"
 
-#include <stdio.h>
-
 namespace Rx::Particle {
 
 Optional<Emitter> Emitter::create(const Program& _program, Float32 _rate) {

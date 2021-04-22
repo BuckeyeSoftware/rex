@@ -1,5 +1,4 @@
 #include <stdlib.h> // rand, RAND_MAX.
-#include <stdio.h>
 #include <string.h> // memcpy
 
 #include "rx/particle/vm.h"
