@@ -1,6 +1,8 @@
 #include <limits.h> // UCHAR_MAX
 #include <string.h> // memmove
 
+#include "rx/core/algorithm/min.h"
+
 #include "rx/core/stream/context.h"
 
 #include "rx/core/string.h"
@@ -12,7 +14,7 @@ namespace Rx::Stream {
 
 static Optional<LinearBuffer> convert_text_encoding(LinearBuffer&& data_) {
   // Ensure the data contains a null-terminator.
-  if (data_.last() != 0 && !data_.push_back(0)) {
+  if ((data_.is_empty() || data_.last() != 0) && !data_.push_back(0)) {
     return nullopt;
   }
 
@@ -52,19 +54,67 @@ static Optional<LinearBuffer> convert_text_encoding(LinearBuffer&& data_) {
 }
 
 Uint64 Context::on_read(Byte*, Uint64, Uint64) {
-  abort("stream does not implement on_read");
+  abort("Stream does not implement on_read");
 }
 
 Uint64 Context::on_write(const Byte*, Uint64, Uint64) {
-  abort("stream does not implement on_write");
+  abort("Stream does not implement on_write");
 }
 
 bool Context::on_stat(Stat&) const {
-  abort("stream does not implement on_stat");
+  abort("Stream does not implement on_stat");
 }
 
 bool Context::on_flush() {
-  abort("stream does not implement on_flush");
+  abort("Stream does not implement on_flush");
+}
+
+bool Context::on_truncate(Uint64) {
+  abort("Stream does not implement on_truncate");
+}
+
+Uint64 Context::on_zero(Uint64 _size, Uint64 _offset) {
+  // 4 KiB of zeros written in a loop.
+  Byte zero[4096] = {0};
+  Uint64 bytes = 0;
+  while (bytes < _size) {
+    // Which ever is smaller is the max bytes to zero.
+    const auto remain = _size - bytes;
+    const auto max = Algorithm::min(remain, sizeof zero);
+    if (const auto wr = on_write(zero, max, _offset + bytes)) {
+      bytes += wr;
+      if (wr != max) {
+        // Out of stream space.
+        break;
+      }
+    } else {
+      // End of stream.
+    }
+  }
+  return bytes;
+}
+
+Uint64 Context::on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size) {
+  // 4 KiB copies from one place to another.
+  Byte buffer[4096];
+  Uint64 bytes = 0;
+  while (bytes < _size) {
+    // Which ever is smaller is the max bytes to copy.
+    const auto remain = _size - bytes;
+    const auto max = Algorithm::min(remain, sizeof buffer);
+    if (const auto rd = on_read(buffer, max, _src_offset + bytes)) {
+      const auto wr = on_write(buffer, rd, _dst_offset + bytes);
+      bytes += wr;
+      if (wr != rd) {
+        // Out of stream space.
+        break;
+      }
+    } else {
+      // End of stream.
+      break;
+    }
+  }
+  return bytes;
 }
 
 Uint64 Context::read(Byte* _data, Uint64 _size) {
@@ -172,6 +222,13 @@ bool Context::flush() {
   }
 
   return on_flush();
+}
+
+bool Context::truncate(Uint64 _size) {
+  if (!(m_flags & TRUNCATE)) {
+    return false;
+  }
+  return on_truncate(_size);
 }
 
 Optional<LinearBuffer> Context::read_binary(Memory::Allocator& _allocator) {

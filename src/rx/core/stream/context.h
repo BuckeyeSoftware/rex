@@ -52,8 +52,21 @@ struct RX_API Context {
   /// Stat stream for info.
   Optional<Stat> stat() const;
 
-  /// Flush the stream.
+  /// \brief Flush the stream.
+  /// \returns On a successful flush, \c true. Otherwise, \c false.
+  /// \note Flushing can fail if the flush couldn't write all the bytes
+  /// necessary, or the underlying stream does not support flushing. You can
+  /// check that a stream supports flushing by checking for the #FLUSH flag in
+  /// flags().
   [[nodiscard]] bool flush();
+
+  /// \brief Truncate the stream.
+  /// \param _size The total size.
+  /// \returns On a successful truncation, \c true. Otherwise, \c false.
+  /// \note Truncation can fail if the underlying stream does not support
+  /// truncation. You can check that a stream supports truncation by checking
+  /// for the #TRUNCATION flag in flags().
+  [[nodiscard]] bool truncate(Uint64 _size);
 
   /// \brief Seek the stream.
   ///
@@ -124,16 +137,34 @@ struct RX_API Context {
   virtual Uint64 on_write(const Byte* _data, Uint64 _size, Uint64 _offset);
 
   /// \brief Stat the stream for information.
+  /// \param stat_ The stat object to fill.
   /// Updates the stat object referenced by \p stat_.
   /// \returns On a successful stat, \c true. Otherwise, \c false.
   virtual bool on_stat(Stat& stat_) const;
 
   /// \brief Flush the stream.
   /// \returns On a successful flush, \c true. Otherwise, \c false.
-  /// \note Flushing can fail if the underlying stream does not support flushing.
-  /// You can check that a stream supports flushing by checking for the #FLUSH
-  /// flag in flags().
   virtual bool on_flush();
+
+  /// \brief Zero a region in the stream
+  /// Zeros the region [ \p _size, \p _size + \p _offset ) in the stream.
+  /// \param _size The number of bytes to zero.
+  /// \param _offset The offset to zero.
+  /// \returns The number of bytes actually zerored from \p _offset.
+  /// \note The zeroing must be within the already allocated stream. This does
+  /// not expand ther stream.
+  virtual Uint64 on_zero(Uint64 _size, Uint64 _offset);
+
+  /// \brief Copy a region in the stream
+  /// \param _dst_offset The destination offset of the copy.
+  /// \param _src_offset The source offset of the copy.
+  /// \returns The number of bytes actually copied.
+  virtual Uint64 on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size);
+
+  /// \brief Truncate the stream.
+  /// \param _size The total size.
+  /// \returns On a successful truncation, \c true. Otherwise, \c false.
+  virtual bool on_truncate(Uint64 _size);
 
 protected:
   // End-of-stream flag. This is set when |on_read| returns a truncated result.
