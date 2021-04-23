@@ -11,6 +11,7 @@
 #include "rx/core/concurrency/scope_lock.h"
 
 #include "rx/core/filesystem/buffered_file.h"
+#include "rx/core/stream/tracked_stream.h"
 
 #include "rx/core/log.h" // RX_LOG
 
@@ -258,20 +259,22 @@ bool Context::save(const char* _file_name) {
     return false;
   }
 
+  Stream::TrackedStream stream{*file};
+
   #define attempt(_expr) \
     if (!(_expr)) return false
 
   logger->info("saving '%s'", _file_name);
   for (const VariableReference *head = g_head; head; head = head->m_next) {
     if (VariableType_is_ranged(head->type())) {
-      attempt(file->print(m_allocator, "## %s (in range %s, defaults to %s)\n",
+      attempt(stream.print(m_allocator, "## %s (in range %s, defaults to %s)\n",
         head->description(), head->print_range(), head->print_initial()));
-      attempt(file->print(m_allocator, head->is_initial() ? ";%s %s\n" : "%s %s\n",
+      attempt(stream.print(m_allocator, head->is_initial() ? ";%s %s\n" : "%s %s\n",
         head->name(), head->print_current()));
     } else {
-      attempt(file->print(m_allocator, "## %s (defaults to %s)\n",
+      attempt(stream.print(m_allocator, "## %s (defaults to %s)\n",
         head->description(), head->print_initial()));
-      attempt(file->print(m_allocator, head->is_initial() ? ";%s %s\n" : "%s %s\n",
+      attempt(stream.print(m_allocator, head->is_initial() ? ";%s %s\n" : "%s %s\n",
         head->name(), head->print_current()));
     }
   }

@@ -6,8 +6,6 @@
 #include "rx/core/filesystem/unbuffered_file.h"
 #include "rx/core/log.h"
 
-#include "rx/core/stream/context.h"
-
 #define STBI_NO_BMP
 #define STBI_NO_PSD
 #define STBI_NO_GIF
@@ -21,7 +19,7 @@ RX_LOG("texture/loader", logger);
 
 namespace Rx::Texture {
 
-bool Loader::load(Stream::Context& _stream, PixelFormat _want_format,
+bool Loader::load(Stream::UntrackedStream& _stream, PixelFormat _want_format,
   const Math::Vec2z& _max_dimensions)
 {
   auto data = _stream.read_binary(allocator());

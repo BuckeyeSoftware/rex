@@ -15,7 +15,7 @@ namespace Rx::Material {
 
 RX_LOG("material/texture", logger);
 
-bool Texture::load(Stream::Context& _stream) {
+bool Texture::load(Stream::UntrackedStream& _stream) {
   if (auto contents = _stream.read_text(allocator())) {
     if (auto disown = contents->disown()) {
       if (auto json = JSON::parse(allocator(), *disown)) {

@@ -20,16 +20,16 @@ struct BufferedFile
   /// \param _allocator The allocator to associate with this buffered file.
   constexpr BufferedFile(Memory::Allocator& _allocator);
 
+  ~BufferedFile();
+
   /// \brief Move constructor.
   /// \param other_ The other buffered file to move from.
   ///
   /// Assigns the state of \p other_ to \c *this and sets \p other_ to a default
   /// constructed state.
+  ///
+  /// \note May assert if flushing the existing BufferedFile fails.
   BufferedFile(BufferedFile&& other_);
-
-  /// \brief Destroy a buffered file.
-  /// \note Will call close(), asserting if the close fails.
-  ~BufferedFile();
 
   /// \brief Moves the buffered file.
   ///
@@ -75,36 +75,6 @@ struct BufferedFile
     Uint16 _page_size = BUFFER_PAGE_SIZE, Uint8 _page_count = BUFFER_PAGE_COUNT);
   /// @}
 
-  /// \brief Close the file.
-  /// \return When closed successfully, \c true. Otherwise, \c false.
-  /// \note The close can fail if flushing of buffered contents are not entirely
-  /// written out, or the file has already been closed.
-  [[nodiscard]] bool close();
-
-  /// \brief Print formatted text to the file.
-  ///
-  /// \param _allocator The allocator to use for formatting the text.
-  /// \param _format The format string.
-  /// \param _args Arguments for formatting.
-  /// \return On a successful print, \c true. Otherwise, \c false.
-  ///
-  /// \note A print can fail for multiple reasons:
-  ///  * The file is not opened.
-  ///  * Ran out of memory in \p _allocator to format the text.
-  ///  * The underlying Stream::Context::write failed to write all bytes.
-  template<typename... Ts>
-  [[nodiscard]] RX_HINT_FORMAT(3, 0)
-  bool print(Memory::Allocator& _allocator, const char* _format, Ts&&... _args);
-
-  /// \brief Print a string into the file.
-  /// \param contents_ The contents to print
-  /// \return On a successful print, \c true. Otherwise, \c false.
-  /// \see Note in print() for why this can fail.
-  [[nodiscard]] bool print(String&& contents_);
-
-  /// Get the name of the file.
-  virtual const String& name() const &;
-
 private:
   BufferedFile(BufferedStream&& buffered_stream_, UnbufferedFile&& unbuffered_file_);
   UnbufferedFile m_unbuffered_file;
@@ -116,20 +86,11 @@ inline constexpr BufferedFile::BufferedFile(Memory::Allocator& _allocator)
 {
 }
 
-inline BufferedFile::~BufferedFile() {
-  (void)close();
-}
-
 inline Optional<BufferedFile> BufferedFile::open(Memory::Allocator& _allocator,
   const String& _file_name, const char* _mode,
   Uint16 _page_size, Uint8 _page_count)
 {
   return open(_allocator, _file_name.data(), _mode, _page_size, _page_count);
-}
-
-template<typename... Ts>
-inline bool BufferedFile::print(Memory::Allocator& _allocator, const char* _format, Ts&&... _args) {
-  return print(String::format(_allocator, _format, Utility::forward<Ts>(_args)...));
 }
 
 } // namespace Rx::Filesystem

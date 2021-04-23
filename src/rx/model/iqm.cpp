@@ -4,7 +4,8 @@
 
 #include "rx/model/iqm.h"
 
-#include "rx/core/stream/context.h"
+#include "rx/core/stream/untracked_stream.h"
+#include "rx/core/stream/tracked_stream.h"
 
 namespace Rx::Model {
 
@@ -113,21 +114,23 @@ struct IQM::Header {
   Uint32 extensions_offset;
 };
 
-bool IQM::read(Stream::Context& _stream) {
-  const auto size = _stream.size();
-  if (!size) {
+bool IQM::read(Stream::UntrackedStream& _stream) {
+  Stream::TrackedStream stream{_stream};
+
+  const auto stat = stream.stat();
+  if (!stat) {
     return false;
   }
 
   // Don't read the contents entirely into memory until we know it looks like a
   // valid IQM.
   Header read_header;
-  if (_stream.read(reinterpret_cast<Byte*>(&read_header), sizeof read_header) != sizeof read_header) {
+  if (stream.read(reinterpret_cast<Byte*>(&read_header), sizeof read_header) != sizeof read_header) {
     return error("could not read header");
   }
 
   // Don't load files which report the wrong size.
-  if (*size != read_header.file_size ||
+  if (stat->size != read_header.file_size ||
     memcmp(read_header.magic, "INTERQUAKEMODEL\0", sizeof read_header.magic) != 0)
   {
     return error("malformed header");
@@ -142,12 +145,12 @@ bool IQM::read(Stream::Context& _stream) {
   // hole in the memory and skip it, such that |read_meshes| and
   // |read_animations| can use the |read_header|'s values directly.
   LinearBuffer data{allocator()};
-  if (!data.resize(*size)) {
+  if (!data.resize(stat->size)) {
     return error("out of memory");
   }
 
   const auto size_no_header = data.size() - sizeof read_header;
-  if (_stream.read(data.data() + sizeof read_header, size_no_header) != size_no_header) {
+  if (stream.read(data.data() + sizeof read_header, size_no_header) != size_no_header) {
     return error("unexpected end of file");
   }
 

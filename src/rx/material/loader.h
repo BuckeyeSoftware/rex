@@ -11,9 +11,7 @@ namespace Rx {
   struct JSON;
 } // namespace Rx
 
-namespace Rx::Stream {
-  struct Context;
-} // namespace Rx::Stream
+namespace Rx::Stream { struct UntrackedStream; }
 
 namespace Rx::Material {
 
@@ -25,7 +23,7 @@ struct Loader {
 
   Loader& operator=(Loader&& loader_);
 
-  [[nodiscard]] bool load(Stream::Context& _stream);
+  [[nodiscard]] bool load(Stream::UntrackedStream& _stream);
   [[nodiscard]] bool load(const String& _file_name);
 
   [[nodiscard]] bool parse(const JSON& _definition);

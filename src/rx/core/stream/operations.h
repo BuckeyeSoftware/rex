@@ -9,6 +9,7 @@ namespace Rx::Stream {
 /// \brief Statistics of a stream.
 struct Stat {
   Uint64 size; ///< Size in bytes.
+
   // Can extend with aditional stats.
 };
 
@@ -22,7 +23,7 @@ enum : Uint32 {
   TRUNCATE = 1 << 5  //< Stream supports truncate operation.
 };
 
-/// \brief Relative location for stream seeks.
+/// \brief Relative location for TrackedStream seeks.
 enum class Whence : Uint8 {
   SET,     ///< Beginning of stream.
   CURRENT, ///< Current position

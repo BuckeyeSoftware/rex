@@ -482,7 +482,7 @@ Program* Technique::Configuration::variant(Size _index) const {
   return m_programs[_index].evaluate();
 }
 
-bool Technique::load(Stream::Context& _stream) {
+bool Technique::load(Stream::UntrackedStream& _stream) {
   m_name = _stream.name();
   auto& allocator = m_frontend->allocator();
   if (auto data = _stream.read_text(allocator)) {

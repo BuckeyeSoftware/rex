@@ -1,6 +1,6 @@
 #ifndef RX_CORE_FILESYSTEM_UNBUFFERED_FILE_H
 #define RX_CORE_FILESYSTEM_UNBUFFERED_FILE_H
-#include "rx/core/stream/context.h"
+#include "rx/core/stream/untracked_stream.h"
 #include "rx/core/string.h"
 
 /// \file unbuffered_file.h
@@ -10,7 +10,7 @@ namespace Rx::Filesystem {
 
 /// \brief Unbuffered file.
 struct RX_API UnbufferedFile
-  : Stream::Context
+  : Stream::UntrackedStream
 {
   RX_MARK_NO_COPY(UnbufferedFile);
 
@@ -75,35 +75,13 @@ struct RX_API UnbufferedFile
   /// \note The close can fail if the file has already been closed.
   [[nodiscard]] bool close();
 
-  /// \brief Print formatted text to the file.
-  ///
-  /// \param _allocator The allocator to use for formatting the text.
-  /// \param _format The format string.
-  /// \param _args Arguments for formatting.
-  /// \return On a successful print, \c true. Otherwise, \c false.
-  ///
-  /// \note A print can fail for multiple reasons:
-  ///  * The file is not opened.
-  ///  * Ran out of memory in \p _allocator to format the text.
-  ///  * The underlying Stream::Context::write failed to write all bytes.
-  template<typename... Ts>
-  [[nodiscard]] RX_HINT_FORMAT(3, 0)
-  bool print(Memory::Allocator& _allocator, const char* _format, Ts&&... _args);
-
-  /// \brief Print a string into the file.
-  /// \param contents_ The contents to print
-  /// \return On a successful print, \c true. Otherwise, \c false.
-  /// \see Note in print() for why this can fail.
-  [[nodiscard]]
-  bool print(String&& contents_);
-
   /// Get the name of the file.
   virtual const String& name() const &;
 
 protected:
   virtual Uint64 on_read(Byte* _data, Uint64 _size, Uint64 _offset);
   virtual Uint64 on_write(const Byte* _data, Uint64 _size, Uint64 _offset);
-  virtual bool on_stat(Stream::Stat& stat_) const;
+  virtual Optional<Stream::Stat> on_stat() const;
   virtual bool on_truncate(Uint64 _size);
   virtual Uint64 on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size);
 
@@ -116,7 +94,7 @@ private:
 };
 
 inline constexpr UnbufferedFile::UnbufferedFile(Memory::Allocator& _allocator)
-  : Stream::Context{0}
+  : Stream::UntrackedStream{0}
   , m_impl{nullptr}
   , m_name{_allocator}
   , m_mode{nullptr}
@@ -129,11 +107,6 @@ inline UnbufferedFile::~UnbufferedFile() {
 
 inline Optional<UnbufferedFile> UnbufferedFile::open(Memory::Allocator& _allocator, const String& _file_name, const char* _mode) {
   return open(_allocator, _file_name.data(), _mode);
-}
-
-template<typename... Ts>
-bool UnbufferedFile::print(Memory::Allocator& _allocator, const char* _format, Ts&&... _arguments) {
-  return print(String::format(_allocator, _format, Utility::forward<Ts>(_arguments)...));
 }
 
 // Helper functions for whole-file reading.

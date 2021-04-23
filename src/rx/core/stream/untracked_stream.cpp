@@ -3,7 +3,7 @@
 
 #include "rx/core/algorithm/min.h"
 
-#include "rx/core/stream/context.h"
+#include "rx/core/stream/untracked_stream.h"
 
 #include "rx/core/string.h"
 #include "rx/core/abort.h"
@@ -11,6 +11,70 @@
 #include "rx/core/hints/may_alias.h"
 
 namespace Rx::Stream {
+
+Uint64 UntrackedStream::on_read(Byte*, Uint64, Uint64) {
+  abort("Stream does not implement on_read");
+}
+
+Uint64 UntrackedStream::on_write(const Byte*, Uint64, Uint64) {
+  abort("Stream does not implement on_write");
+}
+
+Optional<Stat> UntrackedStream::on_stat() const {
+  abort("Stream does not implement on_stat");
+}
+
+bool UntrackedStream::on_flush() {
+  abort("Stream does not implement on_flush");
+}
+
+bool UntrackedStream::on_truncate(Uint64) {
+  abort("Stream does not implement on_truncate");
+}
+
+Uint64 UntrackedStream::on_zero(Uint64 _size, Uint64 _offset) {
+  // 4 KiB of zeros written in a loop.
+  Byte zero[4096] = {0};
+  Uint64 bytes = 0;
+  while (bytes < _size) {
+    // Which ever is smaller is the max bytes to zero.
+    const auto remain = _size - bytes;
+    const auto max = Algorithm::min(remain, sizeof zero);
+    if (const auto wr = on_write(zero, max, _offset + bytes)) {
+      bytes += wr;
+      if (wr != max) {
+        // Out of stream space.
+        break;
+      }
+    } else {
+      // End of stream.
+    }
+  }
+  return bytes;
+}
+
+Uint64 UntrackedStream::on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size) {
+  // 4 KiB copies from one place to another.
+  Byte buffer[4096];
+  Uint64 bytes = 0;
+  while (bytes < _size) {
+    // Which ever is smaller is the max bytes to copy.
+    const auto remain = _size - bytes;
+    const auto max = Algorithm::min(remain, sizeof buffer);
+    if (const auto rd = on_read(buffer, max, _src_offset + bytes)) {
+      const auto wr = on_write(buffer, rd, _dst_offset + bytes);
+      bytes += wr;
+      if (wr != rd) {
+        // Out of stream space.
+        break;
+      }
+    } else {
+      // End of stream.
+      break;
+    }
+  }
+  return bytes;
+}
 
 static Optional<LinearBuffer> convert_text_encoding(LinearBuffer&& data_) {
   // Ensure the data contains a null-terminator.
@@ -53,211 +117,44 @@ static Optional<LinearBuffer> convert_text_encoding(LinearBuffer&& data_) {
   return Utility::move(data_);
 }
 
-Uint64 Context::on_read(Byte*, Uint64, Uint64) {
-  abort("Stream does not implement on_read");
-}
-
-Uint64 Context::on_write(const Byte*, Uint64, Uint64) {
-  abort("Stream does not implement on_write");
-}
-
-bool Context::on_stat(Stat&) const {
-  abort("Stream does not implement on_stat");
-}
-
-bool Context::on_flush() {
-  abort("Stream does not implement on_flush");
-}
-
-bool Context::on_truncate(Uint64) {
-  abort("Stream does not implement on_truncate");
-}
-
-Uint64 Context::on_zero(Uint64 _size, Uint64 _offset) {
-  // 4 KiB of zeros written in a loop.
-  Byte zero[4096] = {0};
-  Uint64 bytes = 0;
-  while (bytes < _size) {
-    // Which ever is smaller is the max bytes to zero.
-    const auto remain = _size - bytes;
-    const auto max = Algorithm::min(remain, sizeof zero);
-    if (const auto wr = on_write(zero, max, _offset + bytes)) {
-      bytes += wr;
-      if (wr != max) {
-        // Out of stream space.
-        break;
-      }
-    } else {
-      // End of stream.
-    }
-  }
-  return bytes;
-}
-
-Uint64 Context::on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size) {
-  // 4 KiB copies from one place to another.
-  Byte buffer[4096];
-  Uint64 bytes = 0;
-  while (bytes < _size) {
-    // Which ever is smaller is the max bytes to copy.
-    const auto remain = _size - bytes;
-    const auto max = Algorithm::min(remain, sizeof buffer);
-    if (const auto rd = on_read(buffer, max, _src_offset + bytes)) {
-      const auto wr = on_write(buffer, rd, _dst_offset + bytes);
-      bytes += wr;
-      if (wr != rd) {
-        // Out of stream space.
-        break;
-      }
-    } else {
-      // End of stream.
-      break;
-    }
-  }
-  return bytes;
-}
-
-Uint64 Context::read(Byte* _data, Uint64 _size) {
-  if (!(m_flags & READ) || _size == 0) {
-    return 0;
-  }
-
-  const auto read = on_read(_data, _size, m_offset);
-  if (read != _size) {
-    m_flags |= EOS;
-  }
-
-  m_offset += read;
-  return read;
-}
-
-Uint64 Context::write(const Byte* _data, Uint64 _size) {
-  if (!(m_flags & WRITE) || _size == 0) {
-    return 0;
-  }
-
-  const auto write = on_write(_data, _size, m_offset);
-  m_offset += write;
-  return write;
-}
-
-bool Context::seek(Sint64 _where, Whence _whence) {
-  // Calculate the new offset based on |_whence|.
-  if (_whence == Whence::CURRENT) {
-    if (m_flags & EOS) {
-      if (_where < 0) {
-        // Rewinds the stream. Unset EOS.
-        m_flags &= ~EOS;
-      } else if (_where > 0) {
-        // Would seek beyond the end of the stream.
-        return false;
-      }
-    }
-    m_offset = m_offset + _where;
-  } else if (_whence == Whence::SET) {
-    // Seeking to negative position is an error.
-    if (_where < 0) {
-      return false;
-    }
-
-    const auto where = static_cast<Uint64>(_where);
-
-    if (m_flags & EOS) {
-      if (where < m_offset) {
-        // Rewinds the stream. Unset EOS.
-        m_flags &= ~EOS;
-      } else if (where > m_offset) {
-        // Would seek beyond the end of the stream.
-        return false;
-      }
-    }
-    m_offset = _where;
-  } else if (_whence == Whence::END) {
-    // Seeking past the end of the stream is an error.
-    if (_where > 0) {
-      return false;
-    }
-
-    // Can only seek relative to end if stat is supported.
-    auto s = stat();
-    if (!s) {
-      return false;
-    }
-
-    m_offset = s->size + _where;
-
-    if (_where < 0) {
-      m_flags &= ~EOS;
-    } else {
-      m_flags |= EOS;
-    }
-  }
-
-  return true;
-}
-
-void Context::rewind() {
-  m_flags &= ~EOS;
-  m_offset = 0;
-}
-
-Optional<Stat> Context::stat() const {
-  // Stream does not support stating.
-  if (!(m_flags & STAT)) {
-    return nullopt;
-  }
-
-  if (Stat s; on_stat(s)) {
-    return s;
-  }
-
-  // Stream supports stating but |on_stat| failed for some reason.
-  return nullopt;
-}
-
-bool Context::flush() {
-  // Stream does not support flushing.
-  if (!(m_flags & FLUSH)) {
-    return false;
-  }
-
-  return on_flush();
-}
-
-bool Context::truncate(Uint64 _size) {
-  if (!(m_flags & TRUNCATE)) {
-    return false;
-  }
-  return on_truncate(_size);
-}
-
-Optional<LinearBuffer> Context::read_binary(Memory::Allocator& _allocator) {
+Optional<LinearBuffer> UntrackedStream::read_binary(Memory::Allocator& _allocator) {
   LinearBuffer result{_allocator};
 
-  auto n_bytes = size();
-  if (n_bytes && *n_bytes) {
-    if (!result.resize(*n_bytes)) {
+  // When stat is supported try and use it to optimize the read.
+  if (m_flags & STAT) {
+    if (auto stat = on_stat(); !result.resize(stat->size)) {
+      // Out of memory.
       return nullopt;
     }
+  }
 
-    if (read(result.data(), *n_bytes) != *n_bytes) {
-      return nullopt;
-    }
-  } else {
-    // Stream does not support quering file size. Read in a loop until EOS.
-    while (!is_eos()) {
-      Byte data[4096];
-      auto bytes = read(data, sizeof data);
-      if (!result.append(data, bytes)) {
+  if (result.is_empty()) {
+    // Couldn't determine size of the stream. This could be because STAT
+    // is not supported or because |on_stat| returned a zero size. Read the
+    // contents from the stream in a loop until EOS.
+    Byte buffer[4096];
+    Uint64 offset = 0;
+    for (;;) {
+      const auto read = on_read(buffer, sizeof buffer, offset);
+      if (read == 0) {
+        // End of stream.
+        break;
+      }
+      if (!result.append(buffer, read)) {
+        // Out of memory.
         return nullopt;
       }
+      offset += read;
     }
+  } else if (on_read(result.data(), result.size(), 0) != result.size()) {
+    // Couldn't read all the contents.
+    return nullopt;
   }
 
   return result;
 }
 
-Optional<LinearBuffer> Context::read_text(Memory::Allocator& _allocator) {
+Optional<LinearBuffer> UntrackedStream::read_text(Memory::Allocator& _allocator) {
   if (auto result = read_binary(_allocator)) {
     // Convert the given byte stream into a compatible UTF-8 encoding. This will
     // introduce a null-terminator, strip Unicode BOMs and convert UTF-16

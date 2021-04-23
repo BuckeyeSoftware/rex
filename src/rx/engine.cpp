@@ -178,6 +178,8 @@ bool Engine::init() {
     return false;
   }
 
+  auto& allocator = Memory::SystemAllocator::instance();
+
   const Size static_pool_size = *thread_pool_static_pool_size;
 
   // Determine how many threads the Emscripten pool was preallocated with.
@@ -421,7 +423,6 @@ bool Engine::init() {
 
   // Create the rendering backend context.
   logger->verbose("Initializing renderer ...");
-  auto& allocator = Memory::SystemAllocator::instance();
   if (driver_name == "gl4") {
     m_render_backend = allocator.create<Render::Backend::GL4>(allocator, reinterpret_cast<void*>(window));
   } else if (driver_name == "gl3") {

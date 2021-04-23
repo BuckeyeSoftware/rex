@@ -8,8 +8,8 @@ namespace Rx::Stream {
 
 // [BufferedStream]
 BufferedStream::BufferedStream(BufferedStream&& buffered_stream_)
-  : Context{Utility::move(buffered_stream_)}
-  , m_context{Utility::exchange(buffered_stream_.m_context, nullptr)}
+  : UntrackedStream{Utility::move(buffered_stream_)}
+  , m_stream{Utility::exchange(buffered_stream_.m_stream, nullptr)}
   , m_buffer{Utility::move(buffered_stream_.m_buffer)}
   , m_pages{Utility::move(buffered_stream_.m_pages)}
   , m_page_size{Utility::exchange(buffered_stream_.m_page_size, 0)}
@@ -20,14 +20,18 @@ BufferedStream::BufferedStream(BufferedStream&& buffered_stream_)
 BufferedStream& BufferedStream::operator=(BufferedStream&& buffered_stream_) {
   if (this != &buffered_stream_) {
     on_flush();
-    Context::operator=(Utility::move(buffered_stream_));
-    m_context = Utility::exchange(buffered_stream_.m_context, nullptr);
+    UntrackedStream::operator=(Utility::move(buffered_stream_));
+    m_stream = Utility::exchange(buffered_stream_.m_stream, nullptr);
     m_buffer = Utility::move(buffered_stream_.m_buffer);
     m_pages = Utility::move(buffered_stream_.m_pages);
     m_page_size = Utility::exchange(buffered_stream_.m_page_size, 0);
     m_page_count = Utility::exchange(buffered_stream_.m_page_count, 0);
   }
   return *this;
+}
+
+BufferedStream::~BufferedStream() {
+  RX_ASSERT(on_flush(), "failed to flush");
 }
 
 Optional<BufferedStream> BufferedStream::create(Memory::Allocator& _allocator,
@@ -46,7 +50,8 @@ bool BufferedStream::flush_page(Page& page_) {
   if (page_.dirty) {
     page_.dirty = 0;
     page_.hits = 0;
-    const auto bytes = m_context->on_write(page_data(page_), page_.size, page_offset(page_));
+    const auto bytes =
+      m_stream->on_write(page_data(page_), page_.size, page_offset(page_));
     return bytes == page_.size;
   }
   return true;
@@ -125,7 +130,7 @@ BufferedStream::Page* BufferedStream::fill_page(Uint32 _page_no, Uint16 _allocat
 
   // Fill in the page cache now with new page data.
   const auto bytes =
-    m_context->on_read(page_data(page), m_page_size, page_offset(page));
+    m_stream->on_read(page_data(page), m_page_size, page_offset(page));
 
   // When we couldn't read any data we're at the end of the stream, and this
   // is an append, so allocate fresh storage.
@@ -170,7 +175,7 @@ Uint16 BufferedStream::write_page(Uint32 _page_no, const Byte* _data, Uint16 _of
 }
 
 const String& BufferedStream::name() const & {
-  return m_context->name();
+  return m_stream->name();
 }
 
 BufferedStream::Iterator BufferedStream::page_iterate(Uint64 _size, Uint64 _offset) const {
@@ -205,9 +210,9 @@ bool BufferedStream::resize(Uint16 _page_size, Uint8 _page_count) {
   return false;
 }
 
-bool BufferedStream::attach(Context* _context) {
+bool BufferedStream::attach(UntrackedStream& _stream) {
   // Nothing to do when already attached.
-  if (m_context == _context) {
+  if (m_stream == &_stream) {
     return true;
   }
 
@@ -216,11 +221,22 @@ bool BufferedStream::attach(Context* _context) {
     return false;
   }
 
-  // Change the context.
-  m_context = _context;
+  // Change the stream.
+  m_stream = &_stream;
 
-  // Adopt the flags of the context.
-  m_flags = _context ? (_context->flags() | FLUSH) : 0;
+  // Adopt the flags of the stream.
+  m_flags = m_stream->flags() | FLUSH;
+
+  return true;
+}
+
+[[nodiscard]] bool BufferedStream::detach() {
+  // Flush everything in cache.
+  if (!on_flush()) {
+    return false;
+  }
+
+  m_stream = nullptr;
 
   return true;
 }
@@ -255,27 +271,28 @@ Uint64 BufferedStream::on_write(const Byte* _data, Uint64 _size, Uint64 _offset)
   return bytes;
 }
 
-bool BufferedStream::on_stat(Stat& stat_) const {
-  auto stat = m_context->stat();
+Optional<Stat> BufferedStream::on_stat() const {
+  auto stat = m_stream->on_stat();
   if (!stat) {
-    return false;
+    return nullopt;
   }
 
-  stat_.size = stat->size;
+  Stat result;
+  result.size = stat->size;
 
   // There may be a higher watermark size in the page cache.
   m_pages.each_fwd([&](const Page& _page) {
-    const auto size = Uint64(_page.page_no * m_page_size + _page.size);
-    stat_.size = Algorithm::max(stat_.size, size);
+    const auto page_end = Uint64(_page.page_no * m_page_size + _page.size);
+    result.size = Algorithm::max(result.size, page_end);
   });
 
-  return true;
+  return result;
 }
 
 // Flushes all pages in the cache that are dirty.
 bool BufferedStream::on_flush() {
-  // Nothing to flush if no context.
-  if (!m_context) {
+  // Nothing to flush if no stream.
+  if (!m_stream) {
     return true;
   }
 
@@ -294,12 +311,12 @@ bool BufferedStream::on_flush() {
 
 bool BufferedStream::on_truncate(Uint64 _size) {
   // Just flush all pages and truncate the underlying stream.
-  return on_flush() && m_context->truncate(_size);
+  return on_flush() && m_stream->on_truncate(_size);
 }
 
 Uint64 BufferedStream::on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size) {
   // Just flush all pages and do the copy on the underlying stream.
-  return on_flush() ? m_context->on_copy(_dst_offset, _src_offset, _size) : 0;
+  return on_flush() ? m_stream->on_copy(_dst_offset, _src_offset, _size) : 0;
 }
 
 // [BufferedStream::Page]
