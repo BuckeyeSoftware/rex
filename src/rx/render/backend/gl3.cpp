@@ -108,7 +108,6 @@ static void (GLAPIENTRYP pglCullFace)(GLenum);
 static void (GLAPIENTRYP pglStencilMask)(GLuint);
 static void (GLAPIENTRYP pglStencilFunc)(GLenum, GLint, GLuint);
 static void (GLAPIENTRYP pglStencilOpSeparate)(GLenum, GLenum, GLenum, GLenum);
-static void (GLAPIENTRYP pglPolygonMode)(GLenum, GLenum);
 static void (GLAPIENTRYP pglViewport)(GLint, GLint, GLsizei, GLsizei);
 static void (GLAPIENTRYP pglClearBufferfi)(GLenum, GLint, GLfloat, GLint);
 static void (GLAPIENTRYP pglClearBufferfv)(GLenum, GLint, const GLfloat*);
@@ -343,7 +342,6 @@ namespace detail_gl3 {
       const auto& blend{_render_state->blend};
       const auto& cull{_render_state->cull};
       const auto& stencil{_render_state->stencil};
-      const auto& polygon{_render_state->polygon};
       const auto& depth{_render_state->depth};
       const auto& viewport{_render_state->viewport};
 
@@ -533,12 +531,6 @@ namespace detail_gl3 {
             this->stencil.record_back_depth_pass_action(back_depth_pass_action);
           }
         }
-      }
-
-      if (this->polygon != polygon) {
-        const auto mode{polygon.mode()};
-        pglPolygonMode(GL_FRONT_AND_BACK, convert_polygon_mode(mode));
-        this->polygon.record_mode(mode);
       }
 
       if (this->viewport != viewport) {
@@ -930,7 +922,6 @@ bool GL3::init() {
   fetch("glStencilMask", pglStencilMask);
   fetch("glStencilFunc", pglStencilFunc);
   fetch("glStencilOpSeparate", pglStencilOpSeparate);
-  fetch("glPolygonMode", pglPolygonMode);
   fetch("glViewport", pglViewport);
 
   // query

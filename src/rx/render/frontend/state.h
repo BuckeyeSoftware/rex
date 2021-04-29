@@ -225,32 +225,6 @@ private:
   bool m_enabled;
 };
 
-struct PolygonState {
-  PolygonState();
-
-  enum class ModeType : Uint8 {
-    POINT,
-    LINE,
-    FILL
-  };
-
-  void record_mode(ModeType _mode);
-
-  ModeType mode() const;
-
-  bool operator!=(const PolygonState& _other) const;
-  bool operator==(const PolygonState& _other) const;
-
-  Size flush();
-
-private:
-  static inline constexpr const auto DIRTY_BIT = 1_z << (sizeof(Size) * 8 - 1);
-
-  Size m_hash;
-
-  ModeType m_mode;
-};
-
 struct ViewportState {
   ViewportState();
 
@@ -281,7 +255,6 @@ struct State {
   DepthState depth;
   CullState cull;
   StencilState stencil;
-  PolygonState polygon;
   ViewportState viewport;
 
   void flush();
@@ -560,20 +533,6 @@ inline StencilState::OperationType StencilState::back_depth_pass_action() const 
 }
 
 inline bool StencilState::operator!=(const StencilState& _other) const {
-  return !operator==(_other);
-}
-
-// polygon_state
-inline void PolygonState::record_mode(ModeType _mode) {
-  m_mode = _mode;
-  m_hash |= DIRTY_BIT;
-}
-
-inline PolygonState::ModeType PolygonState::mode() const {
-  return m_mode;
-}
-
-inline bool PolygonState::operator!=(const PolygonState& _other) const {
   return !operator==(_other);
 }
 

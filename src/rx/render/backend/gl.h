@@ -16,7 +16,6 @@ namespace Rx::Render {
 GLenum convert_blend_factor(Frontend::BlendState::FactorType _factor_type);
 GLenum convert_stencil_operation(Frontend::StencilState::OperationType _operation_type);
 GLenum convert_stencil_function(Frontend::StencilState::FunctionType _function_type);
-GLenum convert_polygon_mode(Frontend::PolygonState::ModeType _mode_type);
 GLenum convert_texture_data_format(Frontend::Texture::DataFormat _data_format);
 GLenum convert_texture_data_type(Frontend::Texture::DataFormat _data_format);
 GLenum convert_texture_format(Frontend::Texture::DataFormat _data_format);

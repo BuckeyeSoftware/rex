@@ -360,7 +360,6 @@ namespace detail_es3 {
       const auto& blend{_render_state->blend};
       const auto& cull{_render_state->cull};
       const auto& stencil{_render_state->stencil};
-      const auto& polygon{_render_state->polygon};
       const auto& depth{_render_state->depth};
       const auto& viewport{_render_state->viewport};
 
@@ -551,16 +550,6 @@ namespace detail_es3 {
           }
         }
       }
-
-      // Not supported by WebGL.
-      #if !defined(RX_PLATFORM_EMSCRIPTEN)
-      if (this->polygon != polygon) {
-        // TODO(dweiler): Remove this state?
-        // const auto mode{polygon.mode()};
-        // GL(pglPolygonMode(GL_FRONT_AND_BACK, convert_polygon_mode(mode)));
-        // this->polygon.record_mode(mode);
-      }
-      #endif
 
       if (this->viewport != viewport) {
         const auto& offset{viewport.offset().cast<GLuint>()};

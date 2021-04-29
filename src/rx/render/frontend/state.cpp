@@ -262,34 +262,6 @@ Size StencilState::flush() {
   return m_hash;
 }
 
-// polygon_state
-PolygonState::PolygonState()
-  : m_hash{DIRTY_BIT}
-  , m_mode{ModeType::FILL}
-{
-  flush();
-}
-
-bool PolygonState::operator==(const PolygonState& _other) const {
-  if (m_hash != _other.m_hash) {
-    return false;
-  }
-
-  if (m_mode != _other.m_mode) {
-    return false;
-  }
-
-  return true;
-}
-
-Size PolygonState::flush() {
-  if (m_hash & DIRTY_BIT) {
-    m_hash = Hash::mix_enum(m_mode);
-    m_hash &= ~DIRTY_BIT;
-  }
-  return m_hash;
-}
-
 // viewport_state
 ViewportState::ViewportState()
   : m_hash{DIRTY_BIT}
@@ -313,7 +285,6 @@ void State::flush() {
   m_hash = Hash::combine(m_hash, depth.flush());
   m_hash = Hash::combine(m_hash, cull.flush());
   m_hash = Hash::combine(m_hash, stencil.flush());
-  m_hash = Hash::combine(m_hash, polygon.flush());
   m_hash = Hash::combine(m_hash, viewport.flush());
 }
 
@@ -324,9 +295,7 @@ bool State::operator==(const State& _state) const {
   // 1) Smaller and easier to compare sub states are compared first as they take
   //    less time to compare than larger and harder sub states.
   //
-  // 2) More frequently changing state is compared first. Something like
-  //    PolygonState is statistically less likely to change in a renderer than
-  //    say DepthState as an example.
+  // 2) More frequently changing state is compared first.
   //
   // The hash - which represents a really crude bloom filter, is always compared
   // first as it's a simple integer comparison.
@@ -343,10 +312,6 @@ bool State::operator==(const State& _state) const {
   }
 
   if (_state.blend != blend) {
-    return false;
-  }
-
-  if (_state.polygon != polygon) {
     return false;
   }
 

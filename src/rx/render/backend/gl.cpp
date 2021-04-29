@@ -153,19 +153,6 @@ GLenum convert_stencil_function(Frontend::StencilState::FunctionType _function_t
   RX_HINT_UNREACHABLE();
 }
 
-GLenum convert_polygon_mode(Frontend::PolygonState::ModeType _mode_type) {
-  switch (_mode_type) {
-  case Frontend::PolygonState::ModeType::FILL:
-    return GL_FILL;
-  case Frontend::PolygonState::ModeType::LINE:
-    return GL_LINE;
-  case Frontend::PolygonState::ModeType::POINT:
-    return GL_POINT;
-  }
-
-  RX_HINT_UNREACHABLE();
-}
-
 GLenum convert_texture_data_format(Frontend::Texture::DataFormat _data_format) {
   switch (_data_format) {
   case Frontend::Texture::DataFormat::RGBA_U8:
