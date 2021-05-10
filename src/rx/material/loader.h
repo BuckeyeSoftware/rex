@@ -2,6 +2,7 @@
 #define RX_MATERIAL_LOADER_H
 #include "rx/core/vector.h"
 #include "rx/core/map.h"
+#include "rx/core/report.h"
 
 #include "rx/math/transform.h"
 
@@ -41,16 +42,6 @@ struct Loader {
   const Optional<Math::Transform>& transform() const &;
 
 private:
-  template<typename... Ts>
-  [[nodiscard]] RX_HINT_FORMAT(2, 0)
-  bool error(const char* _format, Ts&&... _arguments) const;
-
-  template<typename... Ts>
-  RX_HINT_FORMAT(3, 0)
-  void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
-
-  void write_log(Log::Level _level, String&& message_) const;
-
   bool parse_textures(const JSON& _textures);
 
   enum {
@@ -68,6 +59,7 @@ private:
   Math::Vec3f m_albedo;
   Math::Vec3f m_emission;
   Optional<Math::Transform> m_transform;
+  Report m_report;
 };
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Loader::allocator() const {
@@ -112,25 +104,6 @@ inline const Math::Vec3f& Loader::albedo() const & {
 
 inline const Optional<Math::Transform>& Loader::transform() const & {
   return m_transform;
-}
-
-template<typename... Ts>
-bool Loader::error(const char* _format, Ts&&... _arguments) const {
-  log(Log::Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
-  return false;
-}
-
-template<typename... Ts>
-void Loader::log(Log::Level _level, const char* _format,
-  Ts&&... _arguments) const
-{
-  if constexpr(sizeof...(Ts) > 0) {
-    auto format = String::format(allocator(), _format,
-      Utility::forward<Ts>(_arguments)...);
-    write_log(_level, Utility::move(format));
-  } else {
-    write_log(_level, _format);
-  }
 }
 
 } // namespace Rx::Material

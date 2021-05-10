@@ -1,6 +1,6 @@
 #ifndef RX_RENDER_FRONTEND_TECHNIQUE_H
 #define RX_RENDER_FRONTEND_TECHNIQUE_H
-#include "rx/core/log.h"
+#include "rx/core/report.h"
 
 #include "rx/render/frontend/program.h"
 
@@ -177,16 +177,6 @@ private:
                    Map<String, ShaderDefinition::InOut>& inouts_,
                    Size& index_);
 
-  template<typename... Ts>
-  [[nodiscard]] RX_HINT_FORMAT(2, 0)
-  bool error(const char* _format, Ts&&... _arguments) const;
-
-  template<typename... Ts>
-  RX_HINT_FORMAT(3, 0)
-  void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
-
-  void write_log(Log::Level _level, String&& message_) const;
-
   Context* m_frontend;
 
   String m_name;
@@ -194,6 +184,7 @@ private:
   Vector<Configuration> m_configurations;
   Vector<ShaderDefinition> m_shader_definitions;
   Vector<UniformDefinition> m_uniform_definitions;
+  Report m_report;
 };
 
 // [Technique]
@@ -207,6 +198,7 @@ inline Technique::Technique(Technique&& technique_)
   , m_configurations{Utility::move(technique_.m_configurations)}
   , m_shader_definitions{Utility::move(technique_.m_shader_definitions)}
   , m_uniform_definitions{Utility::move(technique_.m_uniform_definitions)}
+  , m_report{Utility::move(technique_.m_report)}
 {
   // Update |m_configuration| references to this Technique instance.
   m_configurations.each_fwd([this](Configuration& configuration_) {
@@ -224,23 +216,6 @@ inline const Technique::Configuration& Technique::configuration(Size _index) con
 
 inline const String& Technique::name() const {
   return m_name;
-}
-
-template<typename... Ts>
-bool Technique::error(const char* _format, Ts&&... _arguments) const {
-  log(Log::Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
-  return false;
-}
-
-template<typename... Ts>
-void Technique::log(Log::Level _level, const char* _format,  Ts&&... _arguments) const {
-  if constexpr (sizeof...(Ts) != 0) {
-    auto format = String::format(m_name.allocator(), _format,
-      Utility::forward<Ts>(_arguments)...);
-    write_log(_level, Utility::move(format));
-  } else {
-    write_log(_level, _format);
-  }
 }
 
 // [Technique::Configuration]

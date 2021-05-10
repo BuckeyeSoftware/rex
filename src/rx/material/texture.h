@@ -3,6 +3,7 @@
 #include "rx/core/array.h"
 #include "rx/core/log.h"
 #include "rx/core/optional.h"
+#include "rx/core/report.h"
 
 #include "rx/math/transform.h"
 
@@ -77,16 +78,6 @@ private:
   bool parse_wrap(const JSON& _wrap);
   bool parse_border(const JSON& _border);
 
-  template<typename... Ts>
-  [[nodiscard]] RX_HINT_FORMAT(2, 0)
-  bool error(const char* _format, Ts&&... _arguments) const;
-
-  template<typename... Ts>
-  RX_HINT_FORMAT(3, 0)
-  void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
-
-  void write_log(Log::Level _level, String&& message_) const;
-
   Memory::Allocator* m_allocator;
   Bitmap m_bitmap;
   Filter m_filter;
@@ -94,29 +85,8 @@ private:
   Type m_type;
   String m_file;
   Optional<Math::Vec4f> m_border;
+  Report m_report;
 };
-
-template<typename... Ts>
-bool Texture::error(const char* _format, Ts&&... _arguments) const {
-  log(Log::Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
-  return false;
-}
-
-template<typename... Ts>
-void Texture::log(Log::Level _level, const char* _format, Ts&&... _arguments) const {
-  if constexpr(sizeof...(Ts) > 0) {
-    auto format =  String::format(*m_allocator, _format, Utility::forward<Ts>(_arguments)...);
-    write_log(_level, Utility::move(format));
-  } else {
-    write_log(_level, _format);
-  }
-}
-
-inline Texture::Texture(Memory::Allocator& _allocator)
-  : m_allocator{&_allocator}
-  , m_file{allocator()}
-{
-}
 
 inline Texture::Texture(Texture&& texture_)
   : m_allocator{texture_.m_allocator}
@@ -126,6 +96,7 @@ inline Texture::Texture(Texture&& texture_)
   , m_type{texture_.m_type}
   , m_file{Utility::move(texture_.m_file)}
   , m_border{Utility::move(texture_.m_border)}
+  , m_report{Utility::move(texture_.m_report)}
 {
 }
 
@@ -138,6 +109,7 @@ inline Texture& Texture::operator=(Texture&& texture_) {
     m_type = texture_.m_type;
     m_file = Utility::move(texture_.m_file);
     m_border = Utility::move(texture_.m_border);
+    m_report = Utility::move(texture_.m_report);
   }
   return *this;
 }

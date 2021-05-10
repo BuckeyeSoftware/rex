@@ -28,18 +28,20 @@ Importer::Importer(Memory::Allocator& _allocator)
   , m_blend_weights{allocator()}
   , m_clips{allocator()}
   , m_name{allocator()}
+  , m_report{allocator(), *logger}
 {
 }
 
 bool Importer::load(Stream::UntrackedStream& _stream) {
   m_name = _stream.name();
+  m_report.rename(m_name);
 
   if (!read(_stream)) {
     return false;
   }
 
   if (m_elements.is_empty() || m_positions.is_empty()) {
-    return error("missing vertices");
+    return m_report.error("missing vertices");
   }
 
   // Ensure none of the elements go out of bounds.
@@ -50,11 +52,11 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
   });
 
   if (max_element >= vertices) {
-    return error("element %zu out of bounds", max_element);
+    return m_report.error("element %zu out of bounds", max_element);
   }
 
   if (m_elements.size() % 3 != 0) {
-    return error("unfinished triangles");
+    return m_report.error("unfinished triangles");
   }
 
   logger->verbose("%zu triangles, %zu vertices, %zu meshes",
@@ -73,7 +75,7 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
     // Generating tangent vectors cannot be done unless the model contains
     // appropriate texture coordinates.
     if (m_coordinates.is_empty()) {
-      return error("missing tangents and texture coordinates, bailing");
+      return m_report.error("missing tangents and texture coordinates, bailing");
     } else {
       logger->warning("missing tangents, generating them");
       if (!generate_tangents()) {
@@ -88,7 +90,7 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
     logger->warning("too %s normals",
       m_normals.size() > vertices ? "many" : "few");
     if (!m_normals.resize(vertices)) {
-      return error("out of memory");
+      return m_report.error("out of memory");
     }
   }
 
@@ -96,7 +98,7 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
     logger->warning("too %s tangents",
       m_tangents.size() > vertices ? "many" : "few");
     if (!m_tangents.resize(vertices)) {
-      return error("out of memory");
+      return m_report.error("out of memory");
     }
   }
 
@@ -104,7 +106,7 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
     logger->warning("too %s coordinates",
       m_coordinates.size() > vertices ? "many" : "few");
     if (!m_coordinates.resize(vertices)) {
-      return error("out of memory");
+      return m_report.error("out of memory");
     }
   }
 
@@ -128,7 +130,7 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
   };
 
   if (!m_meshes.each_fwd(batch)) {
-    return error("out of memory");
+    return m_report.error("out of memory");
   }
 
   Vector<Mesh> optimized_meshes{allocator()};
@@ -157,7 +159,7 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
   };
 
   if (!batches.each_pair(coalesce_batch)) {
-    return error("out of memory");
+    return m_report.error("out of memory");
   }
 
   if (optimized_meshes.size() < m_meshes.size()) {
@@ -243,7 +245,7 @@ bool Importer::generate_normals() {
   const auto n_elements = m_elements.size();
 
   if (!m_normals.resize(n_vertices)) {
-    return error("out of memory");
+    return m_report.error("out of memory");
   }
 
   for (Size i = 0; i < n_elements; i += 3) {
@@ -280,7 +282,7 @@ bool Importer::generate_tangents() {
   result &= bitangents.resize(n_vertices);
   result &= m_tangents.resize(n_vertices);
   if (!result) {
-    return error("out of memory");
+    return m_report.error("out of memory");
   }
 
   for (Size i = 0; i < n_elements; i += 3) {
@@ -340,14 +342,6 @@ bool Importer::generate_tangents() {
   }
 
   return true;
-}
-
-void Importer::write_log(Log::Level _level, String&& message_) const {
-  if (m_name.is_empty()) {
-    logger->write(_level, "%s", Utility::move(message_));
-  } else {
-    logger->write(_level, "%s: %s", m_name, Utility::move(message_));
-  }
 }
 
 } // namespace Rx::Model

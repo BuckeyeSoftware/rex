@@ -15,6 +15,13 @@ namespace Rx::Material {
 
 RX_LOG("material/texture", logger);
 
+Texture::Texture(Memory::Allocator& _allocator)
+  : m_allocator{&_allocator}
+  , m_file{allocator()}
+  , m_report{allocator(), *logger}
+{
+}
+
 bool Texture::load(Stream::UntrackedStream& _stream) {
   if (auto contents = _stream.read_text(allocator())) {
     if (auto disown = contents->disown()) {
@@ -37,9 +44,9 @@ bool Texture::parse(const JSON& _definition) {
   if (!_definition) {
     const auto json_error{_definition.error()};
     if (json_error) {
-      return error("%s", *json_error);
+      return m_report.error("%s", *json_error);
     } else {
-      return error("empty definition");
+      return m_report.error("empty definition");
     }
   }
 
@@ -51,23 +58,23 @@ bool Texture::parse(const JSON& _definition) {
   const auto& border{_definition["border"]};
 
   if (!file) {
-    return error("missing 'file'");
+    return m_report.error("missing 'file'");
   }
 
   if (!type) {
-    return error("missing 'type'");
+    return m_report.error("missing 'type'");
   }
 
   if (!filter) {
-    return error("missing 'filter'");
+    return m_report.error("missing 'filter'");
   }
 
   if (!file.is_string()) {
-    return error("expected String for 'file'");
+    return m_report.error("expected String for 'file'");
   }
 
   if (mipmaps && !mipmaps.is_boolean()) {
-    return error("expected Boolean for 'mipmaps'");
+    return m_report.error("expected Boolean for 'mipmaps'");
   }
 
   if (border && !parse_border(border)) {
@@ -88,7 +95,7 @@ bool Texture::parse(const JSON& _definition) {
   }
 
   if (m_wrap.is_any(WrapType::CLAMP_TO_BORDER) && !m_border) {
-    return error("missing 'border' for \"clamp_to_border\"");
+    return m_report.error("missing 'border' for \"clamp_to_border\"");
   }
 
   m_file = file.as_string();
@@ -130,7 +137,7 @@ bool Texture::load_texture_file(const Math::Vec2z& _max_dimensions) {
 
 bool Texture::parse_type(const JSON& _type) {
   if (!_type.is_string()) {
-    return error("expected String");
+    return m_report.error("expected String");
   }
 
   static constexpr struct {
@@ -147,18 +154,22 @@ bool Texture::parse_type(const JSON& _type) {
   };
 
   for (const auto& match : MATCHES) {
-    if (match.name == _type.as_string()) {
-      m_type = match.type;
-      return true;
+    const auto& name = _type.as_string();
+    if (match.name != name) {
+      continue;
     }
+
+    m_type = match.type;
+    m_report.rename(name);
+    return true;
   }
 
-  return error("unknown type '%s'", _type.as_string());
+  return m_report.error("unknown type '%s'", _type.as_string());
 }
 
 bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
   if (!_filter.is_string()) {
-    return error("expected String");
+    return m_report.error("expected String");
   }
 
   static constexpr const char* MATCHES[] = {
@@ -184,12 +195,12 @@ bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
     }
   }
 
-  return error("unknown filter '%s'", filter_string);
+  return m_report.error("unknown filter '%s'", filter_string);
 }
 
 bool Texture::parse_wrap(const JSON& _wrap) {
   if (!_wrap.is_array_of(JSON::Type::STRING, 2)) {
-    return error("expected Array[String, 2]");
+    return m_report.error("expected Array[String, 2]");
   }
 
   static constexpr const struct {
@@ -209,8 +220,7 @@ bool Texture::parse_wrap(const JSON& _wrap) {
         return match.type;
       }
     }
-    (void)error("invalid wrap type '%s'", _type);
-    return nullopt;
+    return m_report.error("invalid wrap type '%s'", _type);
   };
 
   const auto& s_wrap = parse(_wrap[0_z].as_string());
@@ -227,7 +237,7 @@ bool Texture::parse_wrap(const JSON& _wrap) {
 
 bool Texture::parse_border(const JSON& _border) {
   if (!_border.is_array_of(JSON::Type::NUMBER, 4)) {
-    return error("expected Array[Number, 4]");
+    return m_report.error("expected Array[Number, 4]");
   }
 
   m_border = {
@@ -238,32 +248,6 @@ bool Texture::parse_border(const JSON& _border) {
   };
 
   return true;
-}
-
-
-void Texture::write_log(Log::Level _level, String&& message_) const {
-  static constexpr const struct {
-    Type type;
-    const char* name;
-  } MATCHES[] = {
-    { Type::ALBEDO,    "albedo"    },
-    { Type::NORMAL,    "normal"    },
-    { Type::METALNESS, "metalness" },
-    { Type::ROUGHNESS, "roughness" },
-    { Type::OCCLUSION, "occlusion" },
-    { Type::EMISSIVE,  "emissive"  },
-    { Type::CUSTOM,    "custom"    }
-  };
-
-  const char* type = nullptr;
-  for (const auto& match : MATCHES) {
-    if (match.type == m_type) {
-      type = match.name;
-      break;
-    }
-  }
-
-  logger->write(_level, "%s: %s", type, Utility::move(message_));
 }
 
 } // namespace Rx::Material

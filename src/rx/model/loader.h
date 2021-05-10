@@ -54,17 +54,6 @@ struct Loader {
 
 private:
   void destroy();
-
-  template<typename... Ts>
-  [[nodiscard]] RX_HINT_FORMAT(2, 0)
-  bool error(const char* _format, Ts&&... _arguments) const;
-
-  template<typename... Ts>
-  RX_HINT_FORMAT(3, 0)
-  void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
-
-  void write_log(Log::Level _level, String&& message_) const;
-
   bool parse_transform(const JSON& _transform);
 
   enum {
@@ -89,26 +78,8 @@ private:
   Map<String, Material::Loader> m_materials;
   String m_name;
   int m_flags;
+  Report m_report;
 };
-
-template<typename... Ts>
-bool Loader::error(const char* _format, Ts&&... _arguments) const {
-  log(Log::Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
-  return false;
-}
-
-template<typename... Ts>
-void Loader::log(Log::Level _level, const char* _format,
-  Ts&&... _arguments) const
-{
-  if constexpr(sizeof...(Ts) > 0) {
-    auto format = String::format(m_allocator, _format,
-      Utility::forward<Ts>(_arguments)...);
-    write_log(_level, Utility::move(format));
-  } else {
-    write_log(_level, _format);
-  }
-}
 
 inline bool Loader::is_animated() const {
   return m_flags & ANIMATED;

@@ -12,6 +12,7 @@ Module::Module(Memory::Allocator& _allocator)
   , m_name{allocator()}
   , m_source{allocator()}
   , m_dependencies{allocator()}
+  , m_report{allocator(), *logger}
 {
 }
 
@@ -20,6 +21,7 @@ Module::Module(Module&& module_)
   , m_name{Utility::move(module_.m_name)}
   , m_source{Utility::move(module_.m_source)}
   , m_dependencies{Utility::move(module_.m_dependencies)}
+  , m_report{Utility::move(module_.m_report)}
 {
 }
 
@@ -28,7 +30,7 @@ Module& Module::operator=(Module&& module_) {
   m_name = Utility::move(module_.m_name);
   m_source = Utility::move(module_.m_source);
   m_dependencies = Utility::move(module_.m_dependencies);
-
+  m_report = Utility::move(module_.m_report);
   return *this;
 }
 
@@ -54,9 +56,9 @@ bool Module::parse(const JSON& _description) {
   if (!_description) {
     const auto json_error{_description.error()};
     if (json_error) {
-      return error("%s", *json_error);
+      return m_report.error("%s", *json_error);
     } else {
-      return error("empty description");
+      return m_report.error("empty description");
     }
   }
 
@@ -64,21 +66,22 @@ bool Module::parse(const JSON& _description) {
   const JSON& source{_description["source"]};
 
   if (!name) {
-    return error("missing 'name'");
+    return m_report.error("missing 'name'");
   }
 
   if (!name.is_string()) {
-    return error("expected String for 'name'");
+    return m_report.error("expected String for 'name'");
   }
 
-  m_name = name.as_string();
+  m_name = Utility::move(name.as_string());
+  m_report.rename(m_name);
 
   if (!source) {
-    return error("missing 'source'");
+    return m_report.error("missing 'source'");
   }
 
   if (!source.is_string()) {
-    return error("expected String for 'source'");
+    return m_report.error("expected String for 'source'");
   }
 
   // Trim any leading and trailing whitespace characters from the contents too.
@@ -90,7 +93,7 @@ bool Module::parse(const JSON& _description) {
   }
 
   if (!imports.is_array_of(JSON::Type::STRING)) {
-    return error("expected Array[String] for 'imports'");
+    return m_report.error("expected Array[String] for 'imports'");
   }
 
   return imports.each([&](const JSON& _import) {
@@ -131,14 +134,6 @@ bool resolve_module_dependencies(
 
     return true;
   });
-}
-
-void Module::write_log(Log::Level _level, String&& message_) const {
-  if (m_name.is_empty()) {
-    logger->write(_level, Utility::move(message_));
-  } else {
-    logger->write(_level, "module '%s': %s", m_name, Utility::move(message_));
-  }
 }
 
 } // namespace Rx::Render::Frontend

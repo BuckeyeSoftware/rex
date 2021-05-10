@@ -2,7 +2,7 @@
 #define RX_RENDER_FRONTEND_MODULE_H
 #include "rx/core/string.h"
 #include "rx/core/vector.h"
-#include "rx/core/log.h"
+#include "rx/core/report.h"
 
 #include "rx/core/algorithm/topological_sort.h"
 
@@ -31,20 +31,11 @@ struct Module {
   constexpr Memory::Allocator& allocator() const;
 
 private:
-  template<typename... Ts>
-  [[nodiscard]] RX_HINT_FORMAT(2, 0)
-  bool error(const char* _format, Ts&&... _arguments) const;
-
-  template<typename... Ts>
-  RX_HINT_FORMAT(3, 0)
-  void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
-
-  void write_log(Log::Level _level, String&& message_) const;
-
   Memory::Allocator* m_allocator;
   String m_name;
   String m_source;
   Vector<String> m_dependencies;
+  Report m_report;
 };
 
 inline const String& Module::source() const & {
@@ -61,22 +52,6 @@ inline const Vector<String>& Module::dependencies() const & {
 
 RX_HINT_FORCE_INLINE constexpr Memory::Allocator& Module::allocator() const {
   return *m_allocator;
-}
-
-template<typename... Ts>
-bool Module::error(const char* _format, Ts&&... _arguments) const {
-  log(Log::Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
-  return false;
-}
-
-template<typename... Ts>
-void Module::log(Log::Level _level, const char* _format, Ts&&... _arguments) const {
-  if constexpr (sizeof...(Ts) != 0) {
-    auto format = String::format(*m_allocator, _format, Utility::forward<Ts>(_arguments)...);
-    write_log(_level, Utility::move(format));
-  } else {
-    write_log(_level, _format);
-  }
 }
 
 bool resolve_module_dependencies(

@@ -229,6 +229,7 @@ Technique::Technique(Context* _frontend)
   , m_configurations{m_frontend->allocator()}
   , m_shader_definitions{m_frontend->allocator()}
   , m_uniform_definitions{m_frontend->allocator()}
+  , m_report{_frontend->allocator(), *logger}
 {
 }
 
@@ -242,6 +243,7 @@ Technique& Technique::operator=(Technique&& technique_) {
   m_configurations = Utility::move(technique_.m_configurations);
   m_shader_definitions = Utility::move(technique_.m_shader_definitions);
   m_uniform_definitions = Utility::move(technique_.m_uniform_definitions);
+  m_report = Utility::move(technique_.m_report);
 
   // Update |m_configuration| references to this Technique instance.
   m_configurations.each_fwd([this](Configuration& configuration_) {
@@ -254,7 +256,7 @@ Technique& Technique::operator=(Technique&& technique_) {
 bool Technique::evaluate_when(const Map<String, bool>& _values, const String& _when) const {
   const auto result = binexp_evaluate(_when.data(), _values);
   if (result < 0) {
-    return error("when expression evaluation failed: %s for \"%s\"",
+    return m_report.error("when expression evaluation failed: %s for \"%s\"",
       binexp_result_to_string(result), _when);
   }
   return result;
@@ -271,10 +273,10 @@ Optional<String> Technique::resolve_source(
   Set<String> visited{allocator};
 
   // For each dependency in shader definition.
-  const auto result = _definition.dependencies.each_fwd([&](const ShaderDefinition::Dependency& _dependency) {
+  const auto result = _definition.dependencies.each_fwd([&](const ShaderDefinition::Dependency& _dependency) -> bool {
     const auto evaluate = binexp_evaluate(_dependency.when.data(), _values);
     if (evaluate < 0) {
-      return error("when expression evaluation failed: %s for \"%s\"",
+      return m_report.error("when expression evaluation failed: %s for \"%s\"",
         binexp_result_to_string(evaluate), _dependency.when);
     }
 
@@ -292,22 +294,20 @@ Optional<String> Technique::resolve_source(
   });
 
   if (!result) {
-    (void)error("could not satisfy all dependencies");
-    return nullopt;
+    return m_report.error("could not satisfy all dependencies");
   }
 
   // Sort the dependencies in topological order.
   auto dependencies = sorter.sort();
   if (!dependencies) {
-    (void)error("out of memory");
-    return nullopt;
+    return m_report.error("out of memory");
   }
 
   // When cycles are formed in the resolution we cannot satisfy.
   if (dependencies->cycled.size()) {
     // Write an error for each dependency that forms a cycle.
     dependencies->cycled.each_fwd([&](const String& _module) {
-      (void)error("dependency '%s' forms a cycle", _module);
+      return !m_report.error("dependency '%s' forms a cycle", _module);
     });
     return nullopt;
   }
@@ -342,10 +342,10 @@ Optional<String> Technique::resolve_source(
       "fragment" : "vertex", special, modules);
 
   String source{allocator};
-  auto append_modules = dependencies->sorted.each_fwd([&](const String& _module) {
+  auto append_modules = dependencies->sorted.each_fwd([&](const String& _module) -> bool {
     const auto find = _modules.find(_module);
     if (!find) {
-      return error("module '%s' not found", _module);
+      return m_report.error("module '%s' not found", _module);
     }
 
     return source.append("// Module ")
@@ -360,8 +360,7 @@ Optional<String> Technique::resolve_source(
   }
 
   if (!source.append(_definition.source)) {
-    (void)error("out of memory");
-    return nullopt;
+    return m_report.error("out of memory");
   }
 
   return source;
@@ -382,37 +381,37 @@ bool Technique::compile(const Map<String, Module>& _modules) {
   // if we have a fragment shader, ensure we have a vertex shader to go with it
   if (fragment) {
     if (!vertex) {
-      return error("missing vertex shader");
+      return m_report.error("missing vertex shader");
     }
 
     // ensure all fragment inputs wire correctly into vertex outputs
     const bool check_inouts{
       // enumerate all vertex outputs and check for matching fragment inputs
-      vertex->outputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout_definition) {
+      vertex->outputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout_definition) -> bool {
         const auto check{fragment->inputs.find(_name)};
         if (!check) {
-          return error("could not find fragment input for vertex output '%s'", _name);
+          return m_report.error("could not find fragment input for vertex output '%s'", _name);
         }
         if (check->kind != _inout_definition.kind) {
-          return error("type mismatch for fragment input '%s'", _name);
+          return m_report.error("type mismatch for fragment input '%s'", _name);
         }
         if (check->when != _inout_definition.when) {
-          return error("when mismatch for fragment input '%s'", _name);
+          return m_report.error("when mismatch for fragment input '%s'", _name);
         }
         return true;
       })
       &&
       // enumerate all fragment inputs and check for matching vertex outputs
-      fragment->inputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout_definition) {
+      fragment->inputs.each_pair([&](const String& _name, const ShaderDefinition::InOut& _inout_definition) -> bool {
         const auto check{vertex->outputs.find(_name)};
         if (!check) {
-          return error("could not find vertex output for fragment input '%s'", _name);
+          return m_report.error("could not find vertex output for fragment input '%s'", _name);
         }
         if (check->kind != _inout_definition.kind) {
-          return error("type mismatch for vertex output '%s'", _name);
+          return m_report.error("type mismatch for vertex output '%s'", _name);
         }
         if (check->when != _inout_definition.when) {
-          return error("when mismatch for vertex output '%s'", _name);
+          return m_report.error("when mismatch for vertex output '%s'", _name);
         }
         return true;
       })
@@ -424,7 +423,7 @@ bool Technique::compile(const Map<String, Module>& _modules) {
 
     // ensure there is at least one fragment output
     if (fragment->outputs.is_empty()) {
-      return error("missing output in fragment shader");
+      return m_report.error("missing output in fragment shader");
     }
   }
 
@@ -484,6 +483,7 @@ Program* Technique::Configuration::variant(Size _index) const {
 
 bool Technique::load(Stream::UntrackedStream& _stream) {
   m_name = _stream.name();
+  m_report.rename(m_name);
   auto& allocator = m_frontend->allocator();
   if (auto data = _stream.read_text(allocator)) {
     if (auto disown = data->disown()) {
@@ -732,7 +732,7 @@ bool Technique::Configuration::parse_specializations(
   const JSON& _specializations, const char* _type)
 {
   if (!_specializations.is_array_of(JSON::Type::STRING)) {
-    return m_technique->error("expected Array[String] for '%ss'", _type);
+    return m_technique->m_report.error("expected Array[String] for '%ss'", _type);
   }
 
   return _specializations.each([this, _type](const JSON& _specialization) {
@@ -744,7 +744,7 @@ bool Technique::Configuration::parse_specialization(
   const JSON& _specialization, const char* _type)
 {
   if (!_specialization.is_string()) {
-    return m_technique->error("expected String for '%s'", _type);
+    return m_technique->m_report.error("expected String for '%s'", _type);
   }
 
   return m_specializations.push_back(_specialization.as_string());
@@ -841,33 +841,34 @@ bool Technique::parse(const JSON& _description) {
   if (!_description) {
     const auto json_error{_description.error()};
     if (json_error) {
-      return error("%s: %s", m_name, *json_error);
+      return m_report.error("%s: %s", m_name, *json_error);
     } else {
-      return error("empty description");
+      return m_report.error("empty description");
     }
   }
 
   const auto& name{_description["name"]};
   if (!name) {
-    return error("missing name");
+    return m_report.error("missing name");
   }
 
   if (!name.is_string()) {
-    return error("expected String");
+    return m_report.error("expected String");
   }
 
   m_name = Utility::move(name.as_string());
+  m_report.rename(m_name);
 
   const auto& uniforms{_description["uniforms"]};
   const auto& shaders{_description["shaders"]};
   const auto& configurations{_description["configurations"]};
 
   if (!shaders) {
-    return error("missing shaders");
+    return m_report.error("missing shaders");
   }
 
   if (!configurations) {
-    return error("missing configurations");
+    return m_report.error("missing configurations");
   }
 
   if (uniforms && !parse_uniforms(uniforms)) {
@@ -885,17 +886,9 @@ bool Technique::parse(const JSON& _description) {
   return true;
 }
 
-void Technique::write_log(Log::Level _level, String&& message_) const {
-  if (m_name.is_empty()) {
-    logger->write(_level, "%s", Utility::move(message_));
-  } else {
-    logger->write(_level, "technique '%s': %s", m_name, Utility::move(message_));
-  }
-}
-
 bool Technique::parse_uniforms(const JSON& _uniforms) {
   if (!_uniforms.is_array_of(JSON::Type::OBJECT)) {
-    return error("expected Array[Object] for 'uniforms'");
+    return m_report.error("expected Array[Object] for 'uniforms'");
   }
 
   return _uniforms.each([this](const JSON& _uniform) {
@@ -905,7 +898,7 @@ bool Technique::parse_uniforms(const JSON& _uniforms) {
 
 bool Technique::parse_shaders(const JSON& _shaders) {
   if (!_shaders.is_array_of(JSON::Type::OBJECT)) {
-    return error("expected Array[Object] for 'shaders'");
+    return m_report.error("expected Array[Object] for 'shaders'");
   }
 
   return _shaders.each([this](const JSON& _shader) {
@@ -915,7 +908,7 @@ bool Technique::parse_shaders(const JSON& _shaders) {
 
 bool Technique::parse_configurations(const JSON& _configurations) {
   if (!_configurations.is_array_of(JSON::Type::OBJECT)) {
-    return error("expected Array[Object] for 'configurations'");
+    return m_report.error("expected Array[Object] for 'configurations'");
   }
 
   return _configurations.each([this](const JSON& _configuration) {
@@ -925,7 +918,7 @@ bool Technique::parse_configurations(const JSON& _configurations) {
 
 bool Technique::parse_uniform(const JSON& _uniform) {
   if (!_uniform.is_object()) {
-    return error("expected Object");
+    return m_report.error("expected Object");
   }
 
   const auto& name{_uniform["name"]};
@@ -934,23 +927,23 @@ bool Technique::parse_uniform(const JSON& _uniform) {
   const auto& value{_uniform["value"]};
 
   if (!name) {
-    return error("missing 'name' in uniform");
+    return m_report.error("missing 'name' in uniform");
   }
 
   if (!type) {
-    return error("missing 'type' in uniform");
+    return m_report.error("missing 'type' in uniform");
   }
 
   if (!name.is_string()) {
-    return error("expected String for 'name'");
+    return m_report.error("expected String for 'name'");
   }
 
   if (!type.is_string()) {
-    return error("expected String for 'type'");
+    return m_report.error("expected String for 'type'");
   }
 
   if (when && !when.is_string()) {
-    return error("expected String for 'when'");
+    return m_report.error("expected String for 'when'");
   }
 
   const auto name_string{name.as_string()};
@@ -961,12 +954,12 @@ bool Technique::parse_uniform(const JSON& _uniform) {
     return _uniform_definition.name == name_string;
   };
   if (m_uniform_definitions.find_if(find)) {
-    return error("duplicate uniform '%s'", name_string);
+    return m_report.error("duplicate uniform '%s'", name_string);
   }
 
   const auto kind = uniform_type_from_string(type_string);
   if (!kind) {
-    return error("unknown type '%s' for '%s'", type_string, name_string);
+    return m_report.error("unknown type '%s' for '%s'", type_string, name_string);
   }
 
   UniformDefinition::Variant constant;
@@ -980,19 +973,19 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       [[fallthrough]];
     case Uniform::Type::S32:
       if (!value.is_integer()) {
-        return error("expected Integer for %s", name_string);
+        return m_report.error("expected Integer for %s", name_string);
       }
       constant.as_int = value.as_integer();
       break;
     case Uniform::Type::F32:
       if (!value.is_number()) {
-        return error("expected Number for %s", name_string);
+        return m_report.error("expected Number for %s", name_string);
       }
       constant.as_float = value.as_float();
       break;
     case Uniform::Type::S32x2:
       if (!value.is_array_of(JSON::Type::INTEGER, 2)) {
-        return error("expected Array[Integer, 2] for %s", name_string);
+        return m_report.error("expected Array[Integer, 2] for %s", name_string);
       }
       constant.as_vec2i = {
         value[0_z].as_integer(),
@@ -1001,7 +994,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
     case Uniform::Type::S32x3:
       if (!value.is_array_of(JSON::Type::INTEGER, 3)) {
-        return error("expected Array[Integer, 3] for %s", name_string);
+        return m_report.error("expected Array[Integer, 3] for %s", name_string);
       }
       constant.as_vec3i = {
         value[0_z].as_integer(),
@@ -1011,7 +1004,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
     case Uniform::Type::S32x4:
       if (!value.is_array_of(JSON::Type::INTEGER, 4)) {
-        return error("expected Array[Integer, 4] for %s", name_string);
+        return m_report.error("expected Array[Integer, 4] for %s", name_string);
       }
       constant.as_vec4i = {
         value[0_z].as_integer(),
@@ -1022,7 +1015,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
     case Uniform::Type::F32x2:
       if (!value.is_array_of(JSON::Type::NUMBER, 2)) {
-        return error("expected Array[Number, 2] for %s", name_string);
+        return m_report.error("expected Array[Number, 2] for %s", name_string);
       }
       constant.as_vec2f = {
         value[0_z].as_float(),
@@ -1031,7 +1024,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
     case Uniform::Type::F32x3:
       if (!value.is_array_of(JSON::Type::NUMBER, 3)) {
-        return error("expected Array[Number, 3] for %s", name_string);
+        return m_report.error("expected Array[Number, 3] for %s", name_string);
       }
       constant.as_vec3f = {
         value[0_z].as_float(),
@@ -1042,7 +1035,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
 
     case Uniform::Type::F32x4:
       if (!value.is_array_of(JSON::Type::NUMBER, 4)) {
-        return error("expected Array[Number, 4] for %s", name_string);
+        return m_report.error("expected Array[Number, 4] for %s", name_string);
       }
       constant.as_vec4f = {
         value[0_z].as_float(),
@@ -1055,7 +1048,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       if (!value.is_array_of(JSON::Type::ARRAY, 4) ||
           !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 4); }))
       {
-        return error("expected Array[Array[Number, 4], 4] for %s", name_string);
+        return m_report.error("expected Array[Array[Number, 4], 4] for %s", name_string);
       }
       constant.as_mat4x4f = {
         {
@@ -1088,7 +1081,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       if (!value.is_array_of(JSON::Type::ARRAY, 3) ||
           !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 3); }))
       {
-        return error("expected Array[Array[Number, 3], 3] for %s", name_string);
+        return m_report.error("expected Array[Array[Number, 3], 3] for %s", name_string);
       }
       constant.as_mat3x3f = {
         {
@@ -1109,11 +1102,11 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
     case Uniform::Type::F32x3x4:
-      return error("cannot specify value for non-square matrices");
+      return m_report.error("cannot specify value for non-square matrices");
     case Uniform::Type::LB_BONES:
       [[fallthrough]];
     case Uniform::Type::DQ_BONES:
-      return error("cannot give value for bones");
+      return m_report.error("cannot give value for bones");
     }
   }
 
@@ -1123,7 +1116,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
 
 bool Technique::parse_shader(const JSON& _shader) {
   if (!_shader.is_object()) {
-    return error("expected Object");
+    return m_report.error("expected Object");
   }
 
   const auto& type{_shader["type"]};
@@ -1132,27 +1125,27 @@ bool Technique::parse_shader(const JSON& _shader) {
   const auto& imports{_shader["imports"]};
 
   if (!type) {
-    return error("missing 'type' in shader");
+    return m_report.error("missing 'type' in shader");
   }
 
   if (!source) {
-    return error("missing 'source' in shader");
+    return m_report.error("missing 'source' in shader");
   }
 
   if (!type.is_string()) {
-    return error("expected String for 'type'");
+    return m_report.error("expected String for 'type'");
   }
 
   if (!source.is_string()) {
-    return error("expected String for 'source'");
+    return m_report.error("expected String for 'source'");
   }
 
   if (when && !when.is_string()) {
-    return error("expected String for 'when'");
+    return m_report.error("expected String for 'when'");
   }
 
   if (imports && !imports.is_array()) {
-    return error("expected Array[String | Object] for 'imports'");
+    return m_report.error("expected Array[String | Object] for 'imports'");
   }
 
   const auto type_string{type.as_string()};
@@ -1162,14 +1155,14 @@ bool Technique::parse_shader(const JSON& _shader) {
   } else if (type_string == "fragment") {
     shader_type = Shader::Type::FRAGMENT;
   } else {
-    return error("unknown type '%s' for shader", type_string);
+    return m_report.error("unknown type '%s' for shader", type_string);
   }
 
   // Ensure we don't have multiple definitions of the same shader.
   if (!m_shader_definitions.each_fwd([shader_type](const ShaderDefinition& _shader_definition)
     { return _shader_definition.kind != shader_type; }))
   {
-    return error("multiple %s shaders present", type_string);
+    return m_report.error("multiple %s shaders present", type_string);
   }
 
   ShaderDefinition definition{m_frontend->allocator()};
@@ -1178,27 +1171,27 @@ bool Technique::parse_shader(const JSON& _shader) {
   definition.source = source.as_string();
 
   if (imports) {
-    const auto result{imports.each([this, &definition](const JSON& _import) {
+    const auto result{imports.each([this, &definition](const JSON& _import) -> bool {
       if (_import.is_string()) {
         return definition.dependencies.emplace_back(_import.as_string(), "");
       } else if (_import.is_object()) {
         const auto& name = _import["name"];
         const auto& when = _import["when"];
         if (!name) {
-          return error("expected 'name' for import");
+          return m_report.error("expected 'name' for import");
         }
         if (!when) {
-          return error("expected 'when' for import");
+          return m_report.error("expected 'when' for import");
         }
         if (!name.is_string()) {
-          return error("expected String for 'name' in import");
+          return m_report.error("expected String for 'name' in import");
         }
         if (!when.is_string()) {
-          return error("expected String for 'when' in import");
+          return m_report.error("expected String for 'when' in import");
         }
         return definition.dependencies.emplace_back(name.as_string(), when.as_string());
       }
-      return error("expected String or Object for import");
+      return m_report.error("expected String or Object for import");
     })};
 
     if (!result) {
@@ -1225,15 +1218,15 @@ bool Technique::parse_configuration(const JSON& _configuration) {
   const auto& variants = _configuration["variants"];
 
   if (!name) {
-    return error("expected name for configuration");
+    return m_report.error("expected name for configuration");
   }
 
   if (!name.is_string()) {
-    return error("expected String for 'name' in configuration");
+    return m_report.error("expected String for 'name' in configuration");
   }
 
   if (permutes && variants) {
-    return error("cannot define both permutes and variants");
+    return m_report.error("cannot define both permutes and variants");
   }
 
   if (permutes) {
@@ -1261,7 +1254,7 @@ bool Technique::parse_inouts(const JSON& _inouts, const char* _type,
                              Map<String, ShaderDefinition::InOut>& inouts_)
 {
   if (!_inouts.is_array_of(JSON::Type::OBJECT)) {
-    return error("expected Array[Object] in %ss", _type);
+    return m_report.error("expected Array[Object] in %ss", _type);
   }
 
   Size index = 0;
@@ -1279,34 +1272,34 @@ bool Technique::parse_inout(const JSON& _inout, const char* _type,
   const auto& when{_inout["when"]};
 
   if (!name) {
-    return error("missing 'name' in %s", _type);
+    return m_report.error("missing 'name' in %s", _type);
   }
 
   if (!type) {
-    return error("missing 'type' in %s", _type);
+    return m_report.error("missing 'type' in %s", _type);
   }
 
   if (!name.is_string()) {
-    return error("expected String for 'name'");
+    return m_report.error("expected String for 'name'");
   }
 
   if (!type.is_string()) {
-    return error("expected String for 'type'");
+    return m_report.error("expected String for 'type'");
   }
 
   if (when && !when.is_string()) {
-    return error("expected String for 'when'");
+    return m_report.error("expected String for 'when'");
   }
 
   const auto name_string{name.as_string()};
   if (inouts_.find(name_string)) {
-    return error("duplicate '%s'", name_string);
+    return m_report.error("duplicate '%s'", name_string);
   }
 
   const auto type_string{type.as_string()};
   const auto kind{inout_type_from_string(type_string)};
   if (!kind) {
-    return error("unknown type '%s' for '%s'", type_string, name_string);
+    return m_report.error("unknown type '%s' for '%s'", type_string, name_string);
   }
 
   ShaderDefinition::InOut inout;

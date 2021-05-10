@@ -1,7 +1,7 @@
 #ifndef RX_MODEL_IMPORTER_H
 #define RX_MODEL_IMPORTER_H
 #include "rx/core/vector.h"
-#include "rx/core/log.h"
+#include "rx/core/report.h"
 
 #include "rx/math/vec2.h"
 #include "rx/math/vec3.h"
@@ -56,16 +56,6 @@ struct Importer {
   constexpr Memory::Allocator& allocator() const;
 
 protected:
-  template<typename... Ts>
-  [[nodiscard]] RX_HINT_FORMAT(2, 0)
-  bool error(const char* _format, Ts&&... _arguments) const;
-
-  template<typename... Ts>
-  RX_HINT_FORMAT(3, 0)
-  void log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
-
-  void write_log(Log::Level _level, String&& message_) const;
-
   [[nodiscard]] bool generate_normals();
   [[nodiscard]] bool generate_tangents();
 
@@ -82,25 +72,8 @@ protected:
   Vector<Clip> m_clips;
   Optional<Skeleton> m_skeleton;
   String m_name;
+  Report m_report;
 };
-
-template<typename... Ts>
-bool Importer::error(const char* _format, Ts&&... _arguments) const {
-  log(Log::Level::ERROR, _format, Utility::forward<Ts>(_arguments)...);
-  return false;
-}
-
-template<typename... Ts>
-void Importer::log(Log::Level _level, const char* _format,
-  Ts&&... _arguments) const
-{
-  if constexpr(sizeof...(Ts) > 0) {
-    auto format = String::format(m_allocator, _format, Utility::forward<Ts>(_arguments)...);
-    write_log(_level, Utility::move(format));
-  } else {
-    write_log(_level, _format);
-  }
-}
 
 inline Vector<Mesh>&& Importer::meshes() {
   return Utility::move(m_meshes);

@@ -126,19 +126,19 @@ bool IQM::read(Stream::UntrackedStream& _stream) {
   // valid IQM.
   Header read_header;
   if (stream.read(reinterpret_cast<Byte*>(&read_header), sizeof read_header) != sizeof read_header) {
-    return error("could not read header");
+    return m_report.error("could not read header");
   }
 
   // Don't load files which report the wrong size.
   if (stat->size != read_header.file_size ||
     memcmp(read_header.magic, "INTERQUAKEMODEL\0", sizeof read_header.magic) != 0)
   {
-    return error("malformed header");
+    return m_report.error("malformed header");
   }
 
   // Don't load files which have the wrong version.
   if (read_header.version != 2) {
-    return error("unsupported iqm version %d", read_header.version);
+    return m_report.error("unsupported iqm version %d", read_header.version);
   }
 
   // Offsets in the header are relative to the beginning of the file, make a
@@ -146,12 +146,12 @@ bool IQM::read(Stream::UntrackedStream& _stream) {
   // |read_animations| can use the |read_header|'s values directly.
   LinearBuffer data{allocator()};
   if (!data.resize(stat->size)) {
-    return error("out of memory");
+    return m_report.error("out of memory");
   }
 
   const auto size_no_header = data.size() - sizeof read_header;
   if (stream.read(data.data() + sizeof read_header, size_no_header) != size_no_header) {
-    return error("unexpected end of file");
+    return m_report.error("unexpected end of file");
   }
 
   if (read_header.meshes && !read_meshes(read_header, data)) {
@@ -188,55 +188,55 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
     switch (attribute) {
     case VertexAttribute::POSITION:
       if (format != VertexFormat::F32) {
-        return error("unsupported format for position");
+        return m_report.error("unsupported format for position");
       }
       if (size != 3) {
-        return error("invalid size for position");
+        return m_report.error("invalid size for position");
       }
       in_position = reinterpret_cast<const Float32*>(_data.data() + offset);
       break;
     case VertexAttribute::NORMAL:
       if (format != VertexFormat::F32) {
-        return error("unsupported format for normal");
+        return m_report.error("unsupported format for normal");
       }
       if (size != 3) {
-        return error("invalid size for normal");
+        return m_report.error("invalid size for normal");
       }
       in_normal = reinterpret_cast<const Float32*>(_data.data() + offset);
       break;
     case VertexAttribute::TANGENT:
       if (format != VertexFormat::F32) {
-        return error("unsupported format for tangent");
+        return m_report.error("unsupported format for tangent");
       }
       if (size != 4) {
-        return error("invalid size for tangent");
+        return m_report.error("invalid size for tangent");
       }
       in_tangent = reinterpret_cast<const Float32*>(_data.data() + offset);
       break;
     case VertexAttribute::COORDINATE:
       if (format != VertexFormat::F32) {
-        return error("unsupported format for coordinate");
+        return m_report.error("unsupported format for coordinate");
       }
       if (size != 2) {
-        return error("invalid size for coordinate");
+        return m_report.error("invalid size for coordinate");
       }
       in_coordinate = reinterpret_cast<const Float32*>(_data.data() + offset);
       break;
     case VertexAttribute::BLEND_WEIGHTS:
       if (format != VertexFormat::U8) {
-        return error("unsupported format for blend weights");
+        return m_report.error("unsupported format for blend weights");
       }
       if (size != 4) {
-        return error("invalid size for blend weights");
+        return m_report.error("invalid size for blend weights");
       }
       in_blend_weight = _data.data() + offset;
       break;
     case VertexAttribute::BLEND_INDEXES:
       if (format != VertexFormat::U8) {
-        return error("unsupported format for blend indices");
+        return m_report.error("unsupported format for blend indices");
       }
       if (size != 4) {
-        return error("invalid size for blend indices");
+        return m_report.error("invalid size for blend indices");
       }
       in_blend_index = _data.data() + offset;
     default:
@@ -278,7 +278,7 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
   }
 
   if (!result) {
-    return error("out of memory");
+    return m_report.error("out of memory");
   }
 
   for (Size i = 0; i < vertices; i++) {
@@ -330,7 +330,7 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
     if (!m_meshes.emplace_back(mesh.first_triangle * 3, mesh.num_triangles * 3,
       material_name, Vector<Vector<Math::AABB>>{allocator()}))
     {
-      return error("out of memory");
+      return m_report.error("out of memory");
     }
   }
 
@@ -362,7 +362,7 @@ bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
   result &= s_joints.resize(n_joints);
   result &= s_frames.resize(n_joints * _header.frames);
   if (!result) {
-    return error("out of memory");
+    return m_report.error("out of memory");
   }
 
   const auto joints =
@@ -397,7 +397,7 @@ bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
   for (Uint32 i = 0; i < _header.animations; i++) {
     const auto& animation = animations[i];
     if (!m_clips.emplace_back(i, animation.frame_rate, animation.first_frame, animation.num_frames, string_table + animation.name)) {
-      return error("out of memory");
+      return m_report.error("out of memory");
     }
   }
 
@@ -451,7 +451,7 @@ bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
   if (_header.joints || _header.frames) {
     m_skeleton = Skeleton::create(Utility::move(s_joints), Utility::move(s_frames));
     if (!m_skeleton) {
-      return false;
+      return m_report.error("out of memory");
     }
   }
 

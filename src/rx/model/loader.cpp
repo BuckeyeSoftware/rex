@@ -29,6 +29,7 @@ Loader::Loader(Memory::Allocator& _allocator)
   , m_materials{allocator()}
   , m_name{allocator()}
   , m_flags{0}
+  , m_report{allocator(), *logger}
 {
 }
 
@@ -70,14 +71,14 @@ bool Loader::parse(const JSON& _definition) {
   if (!_definition) {
     const auto json_error{_definition.error()};
     if (json_error) {
-      return error("%s", *json_error);
+      return m_report.error("%s", *json_error);
     } else {
-      return error("empty definition");
+      return m_report.error("empty definition");
     }
   }
 
   if (!_definition.is_object()) {
-    return error("expected Object");
+    return m_report.error("expected Object");
   }
 
   const auto& name = _definition["name"];
@@ -86,29 +87,30 @@ bool Loader::parse(const JSON& _definition) {
   const auto& transform = _definition["transform"];
 
   if (!name) {
-    return error("missing 'name'");
+    return m_report.error("missing 'name'");
   }
 
   if (!name.is_string()) {
-    return error("expected String for 'name'");
+    return m_report.error("expected String for 'name'");
   }
 
-  m_name = name.as_string();
+  m_name = Utility::move(name.as_string());
+  m_report.rename(m_name);
 
   if (!file) {
-    return error("missing 'file'");
+    return m_report.error("missing 'file'");
   }
 
   if (!file.is_string()) {
-    return error("expected String for 'file'");
+    return m_report.error("expected String for 'file'");
   }
 
   if (!materials) {
-    return error("missing 'materials'");
+    return m_report.error("missing 'materials'");
   }
 
   if (!materials.is_array_of(JSON::Type::OBJECT) && !materials.is_array_of(JSON::Type::STRING)) {
-    return error("expected Array[Object] or Array[String] for 'materials'");
+    return m_report.error("expected Array[Object] or Array[String] for 'materials'");
   }
 
   m_transform = nullopt;
@@ -152,15 +154,15 @@ bool Loader::import(const String& _file_name) {
   if (_file_name.ends_with(".iqm")) {
     auto& this_allocator = allocator();
     if (!(new_loader = make_ptr<IQM>(this_allocator, this_allocator))) {
-      return error("out of memory");
+      return m_report.error("out of memory");
     }
   } else {
-    return error("unsupported model format");
+    return m_report.error("unsupported model format");
   }
 
   const bool result = new_loader->load(_file_name);
   if (!result) {
-    return error("failed to import");
+    return m_report.error("failed to import");
   }
 
   // We may possibly call import multiple times.
@@ -183,13 +185,13 @@ bool Loader::import(const String& _file_name) {
     Utility::construct<Vector<Vertex>>(&as_vertices, allocator());
     m_flags = CONSTRUCTED;
     if (!as_vertices.resize(n_vertices)) {
-      return error("out of memory");
+      return m_report.error("out of memory");
     }
   } else {
     Utility::construct<Vector<AnimatedVertex>>(&as_animated_vertices, allocator());
     m_flags = CONSTRUCTED | ANIMATED;
     if (!as_animated_vertices.resize(n_vertices)) {
-      return error("out of memory");
+      return m_report.error("out of memory");
     }
   }
 
@@ -268,9 +270,9 @@ bool Loader::parse_transform(const JSON& _transform) {
   const auto& rotate = _transform["rotate"];
   const auto& translate = _transform["translate"];
 
-  auto parse_vec3 = [&](const JSON& _array, const char* _tag, Math::Vec3f& result_) {
+  auto parse_vec3 = [&](const JSON& _array, const char* _tag, Math::Vec3f& result_) -> bool {
     if (!_array.is_array_of(JSON::Type::NUMBER, 3)) {
-      return error("expected Array[Number, 3] for '%s'", _tag);
+      return m_report.error("expected Array[Number, 3] for '%s'", _tag);
     }
     result_.x = Algorithm::clamp(_array[0_z].as_number(), 0.0, 360.0);
     result_.y = Algorithm::clamp(_array[1_z].as_number(), 0.0, 360.0);
@@ -296,14 +298,6 @@ bool Loader::parse_transform(const JSON& _transform) {
 
   m_transform = transform;
   return true;
-}
-
-void Loader::write_log(Log::Level _level, String&& message_) const {
-  if (m_name.is_empty()) {
-    logger->write(_level, "%s", Utility::move(message_));
-  } else {
-    logger->write(_level, "%s: %s", m_name, Utility::move(message_));
-  }
 }
 
 } // namespace Rx::Model
