@@ -82,6 +82,7 @@ private:
   Optional<Rx::Model::Animation> m_animation;
   Vector<Rx::Model::Clip> m_clips;
   Math::AABB m_aabb;
+  Optional<Math::Mat4x4f> m_last_transform;
 };
 
 inline Model::Model()

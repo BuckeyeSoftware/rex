@@ -185,6 +185,8 @@ GLenum convert_texture_data_format(Frontend::Texture::DataFormat _data_format) {
     return GL_STENCIL_INDEX8;
   case Frontend::Texture::DataFormat::R_U8:
     return GL_R8;
+  case Frontend::Texture::DataFormat::RG_F16:
+    return GL_RG16F;
   case Frontend::Texture::DataFormat::DXT1:
     return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
   case Frontend::Texture::DataFormat::DXT5:
@@ -257,6 +259,8 @@ GLenum convert_texture_format(Frontend::Texture::DataFormat _data_format) {
     return GL_STENCIL_INDEX;
   case Frontend::Texture::DataFormat::R_U8:
     return GL_RED;
+  case Frontend::Texture::DataFormat::RG_F16:
+    return GL_RG;
   case Frontend::Texture::DataFormat::DXT1:
     return GL_RGB;
   case Frontend::Texture::DataFormat::DXT5:

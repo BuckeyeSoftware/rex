@@ -40,8 +40,8 @@
   ],
   uniforms: [
     { name: "u_model",           type: "f32x4x4" },
-    { name: "u_view",            type: "f32x4x4" },
-    { name: "u_projection",      type: "f32x4x4" },
+    { name: "u_view_projection", type: "f32x4x4" },
+    { name: "u_last_transform",  type: "f32x4x4" },
     { name: "u_transform",       type: "f32x3x3", value: [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]},
     { name: "u_roughness_value", type: "f32", value: 1.0},
     { name: "u_metalness_value", type: "f32", value: 1.0},
@@ -61,17 +61,19 @@
     {
       type: "vertex",
       inputs: [
-        { name: "a_position",      type: "f32x3" },
-        { name: "a_normal",        type: "f32x3" },
-        { name: "a_tangent",       type: "f32x4" },
-        { name: "a_coordinate",    type: "f32x2" },
-        { name: "a_blend_weights", type: "f32x4", when: "FOR_LBS || FOR_DQS" },
-        { name: "a_blend_indices", type: "s32x4", when: "FOR_LBS || FOR_DQS" }
+        { name: "a_position",       type: "f32x3" },
+        { name: "a_normal",         type: "f32x3" },
+        { name: "a_tangent",        type: "f32x4" },
+        { name: "a_coordinate",     type: "f32x2" },
+        { name: "a_blend_weights",  type: "f32x4", when: "FOR_LBS || FOR_DQS" },
+        { name: "a_blend_indices",  type: "s32x4", when: "FOR_LBS || FOR_DQS" }
       ],
       outputs: [
-        { name: "vs_normal",       type: "f32x3" },
-        { name: "vs_tangent",      type: "f32x4" },
-        { name: "vs_coordinate",   type: "f32x2" }
+        { name: "vs_normal",        type: "f32x3" },
+        { name: "vs_tangent",       type: "f32x4" },
+        { name: "vs_coordinate",    type: "f32x2" },
+        { name: "vs_this_position", type: "f32x3" },
+        { name: "vs_last_position", type: "f32x3" }
       ],
       imports: [
         { name: "dual_quaternion_skinning", when: "FOR_DQS" },
@@ -94,27 +96,36 @@
           f32x3 normal   = a_normal;
         #endif
 
-          // Transform position into clip space.
-          f32x4 clip_position = u_projection * u_view * u_model * f32x4(position, 1.0);
+          f32x4x4 this_transform = u_view_projection * u_model;
+          f32x4x4 last_transform = u_last_transform;
 
-          vs_normal     = normal;
-          vs_tangent    = a_tangent;
-          vs_coordinate = (u_transform * f32x3(a_coordinate, 1.0)).xy;
+          // Transform positions into clip space.
+          f32x4 this_position = this_transform * f32x4(position, 1.0);
+          f32x4 last_position = last_transform * f32x4(position, 1.0);
 
-          rx_position   = clip_position;
+          vs_normal        = normal;
+          vs_tangent       = a_tangent;
+          vs_coordinate    = (u_transform * f32x3(a_coordinate, 1.0)).xy;
+          vs_this_position = this_position.xyw;
+          vs_last_position = last_position.xyw;
+
+          rx_position      = this_position;
         }
       "
     },{
       type: "fragment",
       inputs: [
-        { name: "vs_normal",       type: "f32x3" },
-        { name: "vs_tangent",      type: "f32x4" },
-        { name: "vs_coordinate",   type: "f32x2" }
+        { name: "vs_normal",        type: "f32x3" },
+        { name: "vs_tangent",       type: "f32x4" },
+        { name: "vs_coordinate",    type: "f32x2" },
+        { name: "vs_this_position", type: "f32x3" },
+        { name: "vs_last_position", type: "f32x3" }
       ],
       outputs: [
-        { name: "fs_albedo",       type: "f32x4" },
-        { name: "fs_normal",       type: "f32x4" },
-        { name: "fs_emission",     type: "f32x4" }
+        { name: "fs_albedo",        type: "f32x4" },
+        { name: "fs_normal",        type: "f32x4" },
+        { name: "fs_emission",      type: "f32x4" },
+        { name: "fs_velocity",      type: "f32x2" }
       ],
       imports: [
         "normal_encode"
@@ -181,9 +192,14 @@
           // Transform normal into model space.
           normal = normalize(u_model * f32x4(normal, 0.0)).xyz;
 
+          // Calculate per-pixel velocity.
+          f32x2 this_velocity = (vs_this_position.xy / vs_this_position.z) * 0.5 + 0.5;
+          f32x2 last_velocity = (vs_last_position.xy / vs_last_position.z) * 0.5 + 0.5;
+
           fs_albedo   = f32x4(albedo.rgb,            ambient);
           fs_normal   = f32x4(normal_encode(normal), roughness, metalness);
           fs_emission = f32x4(emission,              1.0);
+          fs_velocity = this_velocity - last_velocity;
         }
       "
     }

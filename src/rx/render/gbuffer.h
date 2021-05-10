@@ -31,6 +31,7 @@ struct GBuffer {
   Frontend::Texture2D* albedo() const;
   Frontend::Texture2D* normal() const;
   Frontend::Texture2D* emission() const;
+  Frontend::Texture2D* velocity() const;
   Frontend::Texture2D* depth_stencil() const;
 
   Frontend::Target* target() const;
@@ -38,7 +39,7 @@ struct GBuffer {
 private:
   constexpr GBuffer(Frontend::Context* _frontend, Frontend::Target* _target,
     Frontend::Texture2D* _albedo, Frontend::Texture2D* _normal,
-    Frontend::Texture2D* _emission);
+    Frontend::Texture2D* _emission, Frontend::Texture2D* _velocity);
 
   void release();
 
@@ -47,21 +48,24 @@ private:
   Frontend::Texture2D* m_albedo_texture;
   Frontend::Texture2D* m_normal_texture;
   Frontend::Texture2D* m_emission_texture;
+  Frontend::Texture2D* m_velocity_texture;
 };
 
 inline constexpr GBuffer::GBuffer()
-  : GBuffer{nullptr, nullptr, nullptr, nullptr, nullptr}
+  : GBuffer{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}
 {
 }
 
 inline constexpr GBuffer::GBuffer(Frontend::Context* _frontend,
   Frontend::Target* _target, Frontend::Texture2D* _albedo,
-  Frontend::Texture2D* _normal, Frontend::Texture2D* _emission)
+  Frontend::Texture2D* _normal, Frontend::Texture2D* _emission,
+  Frontend::Texture2D* _velocity)
   : m_frontend{_frontend}
   , m_target{_target}
   , m_albedo_texture{_albedo}
   , m_normal_texture{_normal}
   , m_emission_texture{_emission}
+  , m_velocity_texture{_velocity}
 {
 }
 
@@ -71,6 +75,7 @@ inline GBuffer::GBuffer(GBuffer&& gbuffer_)
   , m_albedo_texture{Utility::exchange(gbuffer_.m_albedo_texture, nullptr)}
   , m_normal_texture{Utility::exchange(gbuffer_.m_normal_texture, nullptr)}
   , m_emission_texture{Utility::exchange(gbuffer_.m_emission_texture, nullptr)}
+  , m_velocity_texture{Utility::exchange(gbuffer_.m_velocity_texture, nullptr)}
 {
 }
 
@@ -96,6 +101,10 @@ inline Frontend::Texture2D* GBuffer::normal() const {
 
 inline Frontend::Texture2D* GBuffer::emission() const {
   return m_emission_texture;
+}
+
+inline Frontend::Texture2D* GBuffer::velocity() const {
+  return m_velocity_texture;
 }
 
 inline Frontend::Target* GBuffer::target() const {

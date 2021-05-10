@@ -395,6 +395,7 @@ struct TestGame
     draw_buffers.add(0);
     draw_buffers.add(1);
     draw_buffers.add(2);
+    draw_buffers.add(3);
 
     m_frontend.clear(
       RX_RENDER_TAG("gbuffer"),
@@ -405,12 +406,14 @@ struct TestGame
       RX_RENDER_CLEAR_STENCIL |
       RX_RENDER_CLEAR_COLOR(0) |
       RX_RENDER_CLEAR_COLOR(1) |
-      RX_RENDER_CLEAR_COLOR(2),
+      RX_RENDER_CLEAR_COLOR(2) |
+      RX_RENDER_CLEAR_COLOR(3),
       1.0f,
       0,
       Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
       Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
-      Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data());
+      Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
+      Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data());
 
 #if 1
     m_models.each_fwd([&](Render::Model& model_) {

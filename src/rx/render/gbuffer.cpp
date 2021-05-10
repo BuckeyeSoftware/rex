@@ -12,10 +12,12 @@ Optional<GBuffer> GBuffer::create(Frontend::Context* _frontend,
   auto albedo = _frontend->create_texture2D(RX_RENDER_TAG("gbuffer albedo"));
   auto normal = _frontend->create_texture2D(RX_RENDER_TAG("gbuffer normal"));
   auto emission = _frontend->create_texture2D(RX_RENDER_TAG("gbuffer emission"));
+  auto velocity = _frontend->create_texture2D(RX_RENDER_TAG("gbuffer velocity"));
   auto target = _frontend->create_target(RX_RENDER_TAG("gbuffer"));
 
-  if (!albedo || !normal || !emission || !target) {
+  if (!albedo || !normal || !emission || !velocity || !target) {
     _frontend->destroy_target(RX_RENDER_TAG("gbuffer"), target);
+    _frontend->destroy_texture(RX_RENDER_TAG("gbuffer velocity"), velocity);
     _frontend->destroy_texture(RX_RENDER_TAG("gbuffer emission"), emission);
     _frontend->destroy_texture(RX_RENDER_TAG("gbuffer normal"), normal);
     _frontend->destroy_texture(RX_RENDER_TAG("gbuffer albedo"), albedo);
@@ -55,11 +57,23 @@ Optional<GBuffer> GBuffer::create(Frontend::Context* _frontend,
   _frontend->initialize_texture(RX_RENDER_TAG("gbuffer emission"), emission);
   target->attach_texture(emission, 0);
 
+  // Velocity.
+  velocity->record_format(Frontend::Texture::DataFormat::RG_F16);
+  velocity->record_type(Frontend::Texture::Type::ATTACHMENT);
+  velocity->record_levels(1);
+  velocity->record_dimensions(_resolution);
+  velocity->record_filter({false, false, false});
+  velocity->record_wrap({
+    Frontend::Texture::WrapType::CLAMP_TO_EDGE,
+    Frontend::Texture::WrapType::CLAMP_TO_EDGE});
+  _frontend->initialize_texture(RX_RENDER_TAG("gbuffer velocity"), velocity);
+  target->attach_texture(velocity, 0);
+
   // Depth & Stencil.
   target->request_depth_stencil(Frontend::Texture::DataFormat::D24_S8, _resolution);
   _frontend->initialize_target(RX_RENDER_TAG("gbuffer"), target);
 
-  return GBuffer{_frontend, target, albedo, normal, emission};
+  return GBuffer{_frontend, target, albedo, normal, emission, velocity};
 }
 
 GBuffer& GBuffer::operator=(GBuffer&& gbuffer_) {
@@ -71,6 +85,7 @@ GBuffer& GBuffer::operator=(GBuffer&& gbuffer_) {
     m_albedo_texture = Utility::exchange(gbuffer_.m_albedo_texture, nullptr);
     m_normal_texture = Utility::exchange(gbuffer_.m_normal_texture, nullptr);
     m_emission_texture = Utility::exchange(gbuffer_.m_emission_texture, nullptr);
+    m_velocity_texture = Utility::exchange(gbuffer_.m_velocity_texture, nullptr);
   }
 
   return *this;
@@ -84,6 +99,7 @@ void GBuffer::release() {
   m_frontend->destroy_texture(RX_RENDER_TAG("gbuffer albedo"), m_albedo_texture);
   m_frontend->destroy_texture(RX_RENDER_TAG("gbuffer normal"), m_normal_texture);
   m_frontend->destroy_texture(RX_RENDER_TAG("gbuffer emission"), m_emission_texture);
+  m_frontend->destroy_texture(RX_RENDER_TAG("gbuffer velocity"), m_velocity_texture);
   m_frontend->destroy_target(RX_RENDER_TAG("gbuffer"), m_target);
 }
 

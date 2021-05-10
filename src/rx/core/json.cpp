@@ -11,7 +11,7 @@ namespace Rx {
 static const char* json_parse_error_to_string(enum json_parse_error_e _error) {
   switch (_error) {
   case json_parse_error_expected_comma_or_closing_bracket:
-    return "expected either a comma or closing '}' or ']'";
+    return "expected a comma, closing '}', or ']'";
   case json_parse_error_expected_colon:
     return "expected a colon";
   case json_parse_error_expected_opening_quote:

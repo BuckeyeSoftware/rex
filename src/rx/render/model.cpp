@@ -89,6 +89,8 @@ bool Model::upload(const Rx::Model::Loader& _loader) {
     }
   }
 
+  m_last_transform = nullopt;
+
   // Clear incase being called multiple times for model changes.
   m_opaque_meshes.clear();
   m_transparent_meshes.clear();
@@ -228,7 +230,9 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
                    const Math::Mat4x4f& _view, const Math::Mat4x4f& _projection,
                    Uint32 _flags, Immediate3D* _immediate)
 {
-  Math::Frustum frustum{_view * _projection};
+  const auto& view_projection = _view * _projection;
+
+  Math::Frustum frustum{view_projection};
 
   RX_PROFILE_CPU("model::render");
   RX_PROFILE_GPU("model::render");
@@ -285,8 +289,12 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     auto& uniforms = program->uniforms();
 
     uniforms[0].record_mat4x4f(_model);
-    uniforms[1].record_mat4x4f(_view);
-    uniforms[2].record_mat4x4f(_projection);
+    uniforms[1].record_mat4x4f(view_projection);
+    if (m_last_transform) {
+      uniforms[2].record_mat4x4f(*m_last_transform);
+    } else {
+      uniforms[2].record_mat4x4f(_model * view_projection);
+    }
     if (const auto& transform = material.transform()) {
       uniforms[3].record_mat3x3f(transform->as_mat3());
     }
@@ -319,6 +327,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     draw_buffers.add(0); // gbuffer albedo    (albedo.r,   albedo.g,   albedo.b,   ambient)
     draw_buffers.add(1); // gbuffer normal    (normal.r,   normal.g,   roughness,  metalness)
     draw_buffers.add(2); // gbuffer emission  (emission.r, emission.g, emission.b, 0.0)
+    draw_buffers.add(3); // gbuffer velocity  (velocity.x, velocity.y)
 
     // Only backface cull when neither alpha-testing or transparent.
     state.cull.record_enable(!material.alpha_test() && !_transparent);
@@ -359,6 +368,8 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
   m_transparent_meshes.each_fwd([&](const Mesh& _mesh) {
     visible |= draw(_mesh, true);
   });
+
+  m_last_transform = _model * view_projection;
 
   if (!visible) {
     return;
