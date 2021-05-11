@@ -95,6 +95,9 @@ struct TestGame
   ~TestGame() {
   }
 
+  Math::Transform mdl_transform;
+  Math::Vec3f mdl_rotate;
+
   virtual bool on_init() {
     m_camera.translate = {0.0f, 1.0f, -10.0f};
 
@@ -247,7 +250,7 @@ struct TestGame
     #if 1
     auto model = Render::Model::create(&m_frontend);
     if (!model) return false;
-    if (model->load("base/models/mrfixit/mrfixit.json5")) {
+    if (model->load("base/models/helmet/helmet.json5")) {
       if (!m_models.push_back(Utility::move(*model))) {
         return false;
       }
@@ -373,6 +376,8 @@ struct TestGame
     m_particle_system.update(_delta_time);
     m_particle_system_render.update(&m_particle_system);
 
+    mdl_rotate.y += 90.0f * _delta_time;
+
     return true;
   }
 
@@ -416,11 +421,12 @@ struct TestGame
       Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data());
 
 #if 1
+  mdl_transform.rotation = Math::Mat3x3f::rotate(mdl_rotate);
+
     m_models.each_fwd([&](Render::Model& model_) {
-      Math::Transform transform;
-      model_.render(m_gbuffer.target(), transform.as_mat4(), m_camera.view(),
+      model_.render(m_gbuffer.target(), mdl_transform.as_mat4(), m_camera.view(),
         m_camera.projection,
-          Render::Model::SKELETON | Render::Model::BOUNDS,
+          0, // Render::Model::SKELETON | Render::Model::BOUNDS,
           &m_immediate3D);
     });
 #endif

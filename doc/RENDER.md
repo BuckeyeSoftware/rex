@@ -404,9 +404,9 @@ Byte* map(Size _level);
 
 Assertions can be triggered in the following cases:
 * Not all levels were written.
-* A depth, stencil or combined depth-stencil format was recorded and `k_attachment` was not used for type.
-* An attempt was made to write or map a level when `k_attachment` was recorded as the type.
-* An attempt was made to write or map a level when `k_static` was recorded as the type after initialization.
+* A depth, stencil or combined depth-stencil format was recorded and `ATTACHMENT` was not used for type.
+* An attempt was made to write or map a level when `ATTACHMENT` was recorded as the type.
+* An attempt was made to write or map a level when `STATIC` was recorded as the type after initialization.
 * An attempt was made to write or map a level that is out of bounds.
 * An attempt was made to write or map a level other than zero for a texture with no mipmaps.
 * An attempt was made to record dimensions that are greater than 4096 pixels in any dimension.
@@ -439,7 +439,6 @@ BlendState blend;
 DepthState depth;
 CullState cull;
 StencilState stencil;
-PolygonState polygon;
 ```
 
 The state vector is hashed as well as the nested state objects to avoid excessive state changes in the backend. You do not need to manage any state when rendering, state bleed is not possible. This vector can be built every frame for every draw command.
@@ -468,6 +467,7 @@ The following backends already exist:
   * GL4 `src/rx/render/backend/gl4.{h,cpp}`
   * ES3 `src/rx/render/backend/es3.{h,cpp}`
   * NVN `src/rx/render/backend/nvn.{h,cpp}`
+  * NULL `src/rx/render/backend/null.{h,cpp}`
 
 ### Command Buffer
 The [frontend interface](#frontend-interface) allocates commands from a command buffer which are executed by the [backend interface](#backend-interface) `process()` function.
@@ -506,14 +506,14 @@ The following command types exist:
 
 ```cpp
 enum class CommandType : Byte {
-  k_resource_allocate,
-  k_resource_construct,
-  k_resource_update,
-  k_resource_destroy,
-  k_clear,
-  k_draw,
-  k_blit,
-  k_profile
+  RESOURCE_ALLOCATE,
+  RESOURCE_CONSTRUCT,
+  RESOURCE_UPDATE,
+  RESOURCE_DESTROY,
+  CLEAR,
+  DRAW,
+  BLIT,
+  PROFILE
 };
 ```
 

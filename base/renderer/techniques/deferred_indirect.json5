@@ -8,10 +8,11 @@
   uniforms: [
     { name: "u_albedo",             type: "sampler2D", value: 0 },
     { name: "u_normal",             type: "sampler2D", value: 1 },
-    { name: "u_depth",              type: "sampler2D", value: 2 },
-    { name: "u_irradiance",         type: "samplerCM", value: 3 },
-    { name: "u_prefilter",          type: "samplerCM", value: 4 },
-    { name: "u_scale_bias",         type: "sampler2D", value: 5 },
+    { name: "u_emission",           type: "sampler2D", value: 2 },
+    { name: "u_depth",              type: "sampler2D", value: 3 },
+    { name: "u_irradiance",         type: "samplerCM", value: 4 },
+    { name: "u_prefilter",          type: "samplerCM", value: 5 },
+    { name: "u_scale_bias",         type: "sampler2D", value: 6 },
     { name: "u_inverse_projection", type: "f32x4x4" },
     { name: "u_camera_position",    type: "f32x3" }
   ],
@@ -55,6 +56,7 @@
         void main() {
           f32x4 sample_albedo = rx_texture2D(u_albedo, vs_coordinate);
           f32x4 sample_normal = rx_texture2D(u_normal, vs_coordinate);
+          f32x4 sample_emission = rx_texture2D(u_emission, vs_coordinate);
           f32 sample_depth = rx_texture2D(u_depth, vs_coordinate).r;
 
           f32x3 albedo = sample_albedo.rgb;
@@ -73,7 +75,7 @@
           f32x3 specular_color = mix(f32x3(0.04), base_color, metalness);
 
           f32x3 irradiance = rx_textureCM(u_irradiance, normal).rgb;
-          f32x3 indirect_diffuse = diffuse_color * irradiance;
+          f32x3 indirect_diffuse = diffuse_color * irradiance + sample_emission.rgb;
           f32x3 indirect_specular = approximate_specular_ibl(
             specular_color, roughness, normal, v);
 
