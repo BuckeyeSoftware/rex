@@ -39,8 +39,7 @@ private:
     Uniform::Type kind;
     String name;
     String when;
-    Variant value;
-    bool has_value;
+    Optional<Variant> value;
   };
 
 public:

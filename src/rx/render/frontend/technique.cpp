@@ -807,8 +807,8 @@ bool Technique::Configuration::LazyProgram::compile() {
 
   auto add_uniform = [program](const Pair<UniformDefinition, bool>& _uniform) {
     if (auto uniform = program->add_uniform(_uniform.first.name, _uniform.first.kind, _uniform.second)) {
-      if (_uniform.first.has_value) {
-        const auto* data = reinterpret_cast<const Byte*>(&_uniform.first.value);
+      if (_uniform.first.value) {
+        const auto* data = reinterpret_cast<const Byte*>(&*_uniform.first.value);
         uniform->record_raw(data, uniform->size());
       }
       return true;
@@ -962,9 +962,10 @@ bool Technique::parse_uniform(const JSON& _uniform) {
     return m_report.error("unknown type '%s' for '%s'", type_string, name_string);
   }
 
-  UniformDefinition::Variant constant;
+  Optional<UniformDefinition::Variant> variant;
 
   if (value) {
+    UniformDefinition::Variant constant;
     switch (*kind) {
     case Uniform::Type::SAMPLER1D: [[fallthrough]];
     case Uniform::Type::SAMPLER2D: [[fallthrough]];
@@ -1032,7 +1033,6 @@ bool Technique::parse_uniform(const JSON& _uniform) {
         value[2_z].as_float()
       };
       break;
-
     case Uniform::Type::F32x4:
       if (!value.is_array_of(JSON::Type::NUMBER, 4)) {
         return m_report.error("expected Array[Number, 4] for %s", name_string);
@@ -1108,10 +1108,12 @@ bool Technique::parse_uniform(const JSON& _uniform) {
     case Uniform::Type::DQ_BONES:
       return m_report.error("cannot give value for bones");
     }
+
+    variant = constant;
   }
 
   return m_uniform_definitions.emplace_back(*kind, name_string,
-    when ? when.as_string() : "", constant, value ? true : false);
+    when ? when.as_string() : "", variant);
 }
 
 bool Technique::parse_shader(const JSON& _shader) {
