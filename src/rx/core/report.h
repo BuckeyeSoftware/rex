@@ -32,6 +32,8 @@ struct Report {
   // Rename this report.
   bool rename(const String& _name);
 
+  const String& name() const;
+
 private:
   [[nodiscard]] bool write(Log::Level _level, const char* _data) const;
 
@@ -76,6 +78,10 @@ Report::Error Report::error(const char* _format, Ts&&... _arguments) const {
   RX_ASSERT(log(Log::Level::ERROR, _format, Utility::forward<Ts>(_arguments)...),
     "report log failure");
   return {};
+}
+
+inline const String& Report::name() const {
+  return m_name;
 }
 
 } // namespace Rx
