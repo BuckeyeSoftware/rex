@@ -330,11 +330,11 @@ Optional<String> Technique::resolve_source(
   };
 
   if (!_values.each_pair(append_value)) {
-    return nullopt; // OOM.
+    return m_report.error("out of memory");
   }
 
   if (!dependencies->sorted.each_fwd(append_module)) {
-    return nullopt;
+    return m_report.error("out of memory");
   };
 
   logger->verbose("%s: %s shader [%s] requires [%s]",
@@ -897,6 +897,10 @@ bool Technique::parse_uniforms(const JSON& _uniforms) {
 }
 
 bool Technique::parse_shaders(const JSON& _shaders) {
+  if (_shaders.is_empty()) {
+    return m_report.error("empty 'shaders'");
+  }
+
   if (!_shaders.is_array_of(JSON::Type::OBJECT)) {
     return m_report.error("expected Array[Object] for 'shaders'");
   }
@@ -907,6 +911,10 @@ bool Technique::parse_shaders(const JSON& _shaders) {
 }
 
 bool Technique::parse_configurations(const JSON& _configurations) {
+  if (_configurations.is_empty()) {
+    return m_report.error("empty 'configurations'");
+  }
+
   if (!_configurations.is_array_of(JSON::Type::OBJECT)) {
     return m_report.error("expected Array[Object] for 'configurations'");
   }
@@ -974,19 +982,19 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       [[fallthrough]];
     case Uniform::Type::S32:
       if (!value.is_integer()) {
-        return m_report.error("expected Integer for %s", name_string);
+        return m_report.error("expected Integer for '%s'", name_string);
       }
       constant.as_int = value.as_integer();
       break;
     case Uniform::Type::F32:
       if (!value.is_number()) {
-        return m_report.error("expected Number for %s", name_string);
+        return m_report.error("expected Number for '%s'", name_string);
       }
       constant.as_float = value.as_float();
       break;
     case Uniform::Type::S32x2:
       if (!value.is_array_of(JSON::Type::INTEGER, 2)) {
-        return m_report.error("expected Array[Integer, 2] for %s", name_string);
+        return m_report.error("expected Array[Integer, 2] for '%s'", name_string);
       }
       constant.as_vec2i = {
         value[0_z].as_integer(),
@@ -995,7 +1003,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
     case Uniform::Type::S32x3:
       if (!value.is_array_of(JSON::Type::INTEGER, 3)) {
-        return m_report.error("expected Array[Integer, 3] for %s", name_string);
+        return m_report.error("expected Array[Integer, 3] for '%s'", name_string);
       }
       constant.as_vec3i = {
         value[0_z].as_integer(),
@@ -1005,7 +1013,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
     case Uniform::Type::S32x4:
       if (!value.is_array_of(JSON::Type::INTEGER, 4)) {
-        return m_report.error("expected Array[Integer, 4] for %s", name_string);
+        return m_report.error("expected Array[Integer, 4] for '%s'", name_string);
       }
       constant.as_vec4i = {
         value[0_z].as_integer(),
@@ -1016,7 +1024,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
     case Uniform::Type::F32x2:
       if (!value.is_array_of(JSON::Type::NUMBER, 2)) {
-        return m_report.error("expected Array[Number, 2] for %s", name_string);
+        return m_report.error("expected Array[Number, 2] for '%s'", name_string);
       }
       constant.as_vec2f = {
         value[0_z].as_float(),
@@ -1025,7 +1033,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
     case Uniform::Type::F32x3:
       if (!value.is_array_of(JSON::Type::NUMBER, 3)) {
-        return m_report.error("expected Array[Number, 3] for %s", name_string);
+        return m_report.error("expected Array[Number, 3] for '%s'", name_string);
       }
       constant.as_vec3f = {
         value[0_z].as_float(),
@@ -1035,7 +1043,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       break;
     case Uniform::Type::F32x4:
       if (!value.is_array_of(JSON::Type::NUMBER, 4)) {
-        return m_report.error("expected Array[Number, 4] for %s", name_string);
+        return m_report.error("expected Array[Number, 4] for '%s'", name_string);
       }
       constant.as_vec4f = {
         value[0_z].as_float(),
@@ -1048,7 +1056,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       if (!value.is_array_of(JSON::Type::ARRAY, 4) ||
           !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 4); }))
       {
-        return m_report.error("expected Array[Array[Number, 4], 4] for %s", name_string);
+        return m_report.error("expected Array[Array[Number, 4], 4] for '%s'", name_string);
       }
       constant.as_mat4x4f = {
         {
@@ -1081,7 +1089,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       if (!value.is_array_of(JSON::Type::ARRAY, 3) ||
           !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 3); }))
       {
-        return m_report.error("expected Array[Array[Number, 3], 3] for %s", name_string);
+        return m_report.error("expected Array[Array[Number, 3], 3] for '%s'", name_string);
       }
       constant.as_mat3x3f = {
         {
@@ -1102,7 +1110,32 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
     case Uniform::Type::F32x3x4:
-      return m_report.error("cannot specify value for non-square matrices");
+      if (!value.is_array_of(JSON::Type::ARRAY, 3) ||
+          !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 4); }))
+      {
+        return m_report.error("expected Array[Array[Number, 4], 3] for '%s'", name_string);
+      }
+      constant.as_mat3x4f = {
+        {
+          value[0_z][0_z].as_float(),
+          value[0_z][1_z].as_float(),
+          value[0_z][2_z].as_float(),
+          value[0_z][3_z].as_float()
+        },
+        {
+          value[1_z][0_z].as_float(),
+          value[1_z][1_z].as_float(),
+          value[1_z][2_z].as_float(),
+          value[1_z][3_z].as_float()
+        },
+        {
+          value[2_z][0_z].as_float(),
+          value[2_z][1_z].as_float(),
+          value[2_z][2_z].as_float(),
+          value[2_z][3_z].as_float()
+        }
+      };
+      break;
     case Uniform::Type::LB_BONES:
       [[fallthrough]];
     case Uniform::Type::DQ_BONES:
@@ -1146,7 +1179,7 @@ bool Technique::parse_shader(const JSON& _shader) {
     return m_report.error("expected String for 'when'");
   }
 
-  if (imports && !imports.is_array()) {
+  if (imports && !imports.is_array_of(JSON::Type::STRING) && !imports.is_array_of(JSON::Type::OBJECT)) {
     return m_report.error("expected Array[String | Object] for 'imports'");
   }
 
@@ -1232,6 +1265,9 @@ bool Technique::parse_configuration(const JSON& _configuration) {
   }
 
   if (permutes) {
+    if (permutes.is_empty()) {
+      return m_report.error("empty 'permutes'");
+    }
     if (!m_configurations.emplace_back(this, Configuration::Type::PERMUTE, name.as_string())) {
       return false;
     }
@@ -1239,6 +1275,9 @@ bool Technique::parse_configuration(const JSON& _configuration) {
       return false;
     }
   } else if (variants) {
+    if (variants.is_empty()) {
+      return m_report.error("empty 'variants'");
+    }
     if (!m_configurations.emplace_back(this, Configuration::Type::VARIANT, name.as_string())) {
       return false;
     }

@@ -33,6 +33,7 @@ private:
       Math::Vec3f as_vec3f;
       Math::Vec4f as_vec4f;
       Math::Mat3x3f as_mat3x3f;
+      Math::Mat3x4f as_mat3x4f;
       Math::Mat4x4f as_mat4x4f;
     };
 
