@@ -307,7 +307,7 @@ Immediate2D::Font& Immediate2D::Font::operator=(Font&& font_) {
 Immediate2D::Font::Quad Immediate2D::Font::quad_for_glyph(Size _glyph,
   Float32 _scale, Math::Vec2f& position_) const
 {
-  const auto& glyph{m_glyphs[_glyph]};
+  const auto& glyph = glyph_for_code(_glyph);
 
   const Math::Vec2f scaled_offset{glyph.offset * _scale};
   const Math::Vec2f scaled_position[2]{

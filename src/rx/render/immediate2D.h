@@ -363,7 +363,9 @@ inline bool Immediate2D::Font::Key::operator==(const Key& _key) const {
 }
 
 inline Immediate2D::Font::Glyph Immediate2D::Font::glyph_for_code(Uint32 _code) const {
-  return m_glyphs.in_range(_code) ? m_glyphs[static_cast<Size>(_code)] : m_glyphs[0];
+  return m_glyphs.in_range(_code)
+    ? m_glyphs[static_cast<Size>(_code)]
+    : m_glyphs[0];
 }
 
 inline Sint32 Immediate2D::Font::size() const {
