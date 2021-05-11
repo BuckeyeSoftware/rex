@@ -18,6 +18,7 @@
 
 #include "rx/core/profiler.h"
 #include "rx/core/log.h"
+#include "rx/core/time/stop_watch.h"
 
 #include "rx/console/variable.h"
 
@@ -43,6 +44,7 @@ RX_LOG("render", logger);
 
 static constexpr const char* TECHNIQUES_PATH = "base/renderer/techniques";
 static constexpr const char* MODULES_PATH = "base/renderer/modules";
+static constexpr const char* PASSES_PATH = "base/renderer/passes";
 
 namespace Rx::Render::Frontend {
 
@@ -107,6 +109,8 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
 {
   RX_ASSERT(_backend, "expected valid backend");
 
+  Time::StopWatch time;
+
   for (Size i = 0; i < sizeof m_resource_usage / sizeof *m_resource_usage; i++) {
     m_resource_usage[i] = 0;
   }
@@ -117,8 +121,8 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
   m_device_info.renderer = info.renderer;
   m_device_info.version = info.version;
 
-
-  // load all modules
+  // Load all modules.
+  time.start();
   if (auto directory = Filesystem::Directory::open(m_allocator, MODULES_PATH)) {
     directory->each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
@@ -131,8 +135,11 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
       }
     });
   }
+  time.stop();
+  logger->info("Loaded %zu modules in %s", m_modules.size(), time.elapsed());
 
   // Load all the techniques.
+  time.start();
   if (auto directory = Filesystem::Directory::open(m_allocator, TECHNIQUES_PATH)) {
     directory->each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
@@ -146,6 +153,8 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
       }
     });
   }
+  time.stop();
+  logger->info("Loaded %zu techniques in %s", m_techniques.size(), time.elapsed());
 
   // Generate swapchain target.
   m_swapchain_texture = create_texture2D(RX_RENDER_TAG("swapchain"));
@@ -910,46 +919,48 @@ bool Context::process() {
 
   m_commands_recorded[0] = m_commands.size();
 
-  Concurrency::ScopeLock lock{m_mutex};
+  {
+    Concurrency::ScopeLock lock{m_mutex};
 
-  // Consume all recorded commands on the backend.
-  m_backend->process(m_commands);
+    // Consume all recorded commands on the backend.
+    m_backend->process(m_commands);
 
-  // Clear edit lists
-  m_edit_buffers.each_fwd([](Buffer* _buffer) { _buffer->clear_edits(); });
-  m_edit_textures1D.each_fwd([](Texture1D* _texture) { _texture->clear_edits(); });
-  m_edit_textures2D.each_fwd([](Texture2D* _texture) { _texture->clear_edits(); });
-  m_edit_textures3D.each_fwd([](Texture3D* _texture) { _texture->clear_edits(); });
+    // Clear edit lists
+    m_edit_buffers.each_fwd([](Buffer* _buffer) { _buffer->clear_edits(); });
+    m_edit_textures1D.each_fwd([](Texture1D* _texture) { _texture->clear_edits(); });
+    m_edit_textures2D.each_fwd([](Texture2D* _texture) { _texture->clear_edits(); });
+    m_edit_textures3D.each_fwd([](Texture3D* _texture) { _texture->clear_edits(); });
 
-  // Cleanup unreferenced frontend resources.
-  m_destroy_buffers.each_fwd([this](Buffer* _buffer) { m_buffer_pool.destroy<Buffer>(_buffer); });
-  m_destroy_targets.each_fwd([this](Target* _target) { m_target_pool.destroy<Target>(_target); });
-  m_destroy_programs.each_fwd([this](Program* _program) { m_program_pool.destroy<Program>(_program); });
-  m_destroy_textures1D.each_fwd([this](Texture1D* _texture) { m_texture1D_pool.destroy<Texture1D>(_texture); });
-  m_destroy_textures2D.each_fwd([this](Texture2D* _texture) { m_texture2D_pool.destroy<Texture2D>(_texture); });
-  m_destroy_textures3D.each_fwd([this](Texture3D* _texture) { m_texture3D_pool.destroy<Texture3D>(_texture); });
-  m_destroy_texturesCM.each_fwd([this](TextureCM* _texture) { m_textureCM_pool.destroy<TextureCM>(_texture); });
-  m_destroy_downloaders.each_fwd([this](Downloader* _downloader) { m_downloader_pool.destroy<Downloader>(_downloader); });
+    // Cleanup unreferenced frontend resources.
+    m_destroy_buffers.each_fwd([this](Buffer* _buffer) { m_buffer_pool.destroy<Buffer>(_buffer); });
+    m_destroy_targets.each_fwd([this](Target* _target) { m_target_pool.destroy<Target>(_target); });
+    m_destroy_programs.each_fwd([this](Program* _program) { m_program_pool.destroy<Program>(_program); });
+    m_destroy_textures1D.each_fwd([this](Texture1D* _texture) { m_texture1D_pool.destroy<Texture1D>(_texture); });
+    m_destroy_textures2D.each_fwd([this](Texture2D* _texture) { m_texture2D_pool.destroy<Texture2D>(_texture); });
+    m_destroy_textures3D.each_fwd([this](Texture3D* _texture) { m_texture3D_pool.destroy<Texture3D>(_texture); });
+    m_destroy_texturesCM.each_fwd([this](TextureCM* _texture) { m_textureCM_pool.destroy<TextureCM>(_texture); });
+    m_destroy_downloaders.each_fwd([this](Downloader* _downloader) { m_downloader_pool.destroy<Downloader>(_downloader); });
 
-  // Reset the command buffer.
-  m_commands.clear();
-  m_command_buffer.reset();
+    // Reset the command buffer.
+    m_commands.clear();
+    m_command_buffer.reset();
 
-  // Cleanup edit lists.
-  m_edit_buffers.clear();
-  m_edit_textures1D.clear();
-  m_edit_textures2D.clear();
-  m_edit_textures3D.clear();
+    // Cleanup edit lists.
+    m_edit_buffers.clear();
+    m_edit_textures1D.clear();
+    m_edit_textures2D.clear();
+    m_edit_textures3D.clear();
 
-  // Cleanup destroyed resources list.
-  m_destroy_buffers.clear();
-  m_destroy_targets.clear();
-  m_destroy_programs.clear();
-  m_destroy_textures1D.clear();
-  m_destroy_textures2D.clear();
-  m_destroy_textures3D.clear();
-  m_destroy_texturesCM.clear();
-  m_destroy_downloaders.clear();
+    // Cleanup destroyed resources list.
+    m_destroy_buffers.clear();
+    m_destroy_targets.clear();
+    m_destroy_programs.clear();
+    m_destroy_textures1D.clear();
+    m_destroy_textures2D.clear();
+    m_destroy_textures3D.clear();
+    m_destroy_texturesCM.clear();
+    m_destroy_downloaders.clear();
+  }
 
   // Update all rendering stats for the last frame.
   auto swap = [](Concurrency::Atomic<Size> (&value_)[2]) { value_[1] = value_[0].exchange(0); };
