@@ -49,7 +49,7 @@ Byte* search(const void* _haystack, Size _haystack_size, Byte _byte) {
 // directly.
 //
 // We should consider unrolling for needles of size 5, 6, 7, and 8 on 64-bit
-// systems as well, buiilding Uint64 integers and comparing those directly.
+// systems as well, building Uint64 integers and comparing those directly.
 static Byte* search_2(const Byte* _haystack, Size _length, const Byte* _needle) {
   Uint16 nw = _needle[0] << 8 | _needle[1];
   Uint16 hw = _haystack[0] << 8 | _haystack[1];
@@ -221,7 +221,7 @@ Byte* search(const void* _haystack, Size _haystack_size, const void* _needle, Si
     return const_cast<Byte*>(haystack);
   }
 
-  // The first byte was found with quickk search, subtract distance to that
+  // The first byte was found with quick search, subtract distance to that
   // byte so |_haystack_size| is the remainder of haystack not searched.
   _haystack_size -= haystack - static_cast<const Byte*>(_haystack);
   if (_haystack_size < _needle_size) {
