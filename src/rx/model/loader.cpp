@@ -274,9 +274,9 @@ bool Loader::parse_transform(const JSON& _transform) {
     if (!_array.is_array_of(JSON::Type::NUMBER, 3)) {
       return m_report.error("expected Array[Number, 3] for '%s'", _tag);
     }
-    result_.x = Algorithm::clamp(_array[0_z].as_number(), 0.0, 360.0);
-    result_.y = Algorithm::clamp(_array[1_z].as_number(), 0.0, 360.0);
-    result_.z = Algorithm::clamp(_array[2_z].as_number(), 0.0, 360.0);
+    result_.x = Algorithm::clamp(_array[0_z].as_number(), -180.0, 180.0);
+    result_.y = Algorithm::clamp(_array[1_z].as_number(), -180.0, 180.0);
+    result_.z = Algorithm::clamp(_array[2_z].as_number(), -180.0, 180.0);
     return true;
   };
 
@@ -297,6 +297,7 @@ bool Loader::parse_transform(const JSON& _transform) {
   }
 
   m_transform = transform;
+
   return true;
 }
 

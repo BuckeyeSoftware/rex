@@ -1,6 +1,10 @@
 {
   name: "helmet",
   file: "base/models/helmet/helmet.iqm",
+  transform: {
+    rotate: [0, -90, 0],
+    scale: [0.5, 0.5, 0.5]
+  },
   materials: [
     {
       name: "",

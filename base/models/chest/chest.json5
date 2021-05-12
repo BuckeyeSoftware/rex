@@ -1,6 +1,9 @@
 {
   name: "chest",
   file: "base/models/chest/chest.iqm",
+  transform: {
+    scale: [2, 2, 2]
+  },
   materials: [
     {
       name: "chest",

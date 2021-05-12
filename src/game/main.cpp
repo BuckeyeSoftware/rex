@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "rx/application.h"
 #include "rx/engine.h"
@@ -95,8 +96,8 @@ struct TestGame
   ~TestGame() {
   }
 
-  Math::Transform mdl_transform;
-  Math::Vec3f mdl_rotate;
+  Vector<Math::Transform> m_mdl_tranforms;
+  Vector<Math::Vec3f> m_mdl_rotations;
 
   virtual bool on_init() {
     m_camera.translate = {0.0f, 1.0f, -10.0f};
@@ -170,6 +171,7 @@ struct TestGame
       return false;
     }
 
+/*
     const char* LUTS[] = {
       "base/colorgrading/Arabica 12.CUBE",
       "base/colorgrading/Ava 614.CUBE",
@@ -207,6 +209,7 @@ struct TestGame
       "base/colorgrading/Zed 32.CUBE",
       "base/colorgrading/Zeke 39.CUBE"
     };
+*/
 
     if (auto ibl = Render::ImageBasedLighting::create(&m_frontend, 16, 64)) {
       m_ibl = Utility::move(*ibl);
@@ -214,51 +217,39 @@ struct TestGame
       return false;
     }
 
+    /*
     // Load in all the grading LUTs and update the atlas.
     for (Size i = 0; i < sizeof LUTS / sizeof* LUTS; i++) {
       if (auto lut = m_color_grader.load(LUTS[i])) {
         m_luts[m_lut_count++] = Utility::move(*lut);
       }
     }
-    m_color_grader.update();
+    m_color_grader.update();*/
 
-/*
-    if (Filesystem::Directory dir{"./chess"}) {
-      printf("opened light_unit\n");
-      dir.each([&](Filesystem::Directory::Item&& item_) {
-        //if (i > 10) return;
-        if (item_.is_file() && item_.name().ends_with(".json5")) {
-          printf("found %s\n", item_.name().data());
-          if (auto model = Render::Model::create(&m_frontend)) {
-            if (model->load("./chess/" + item_.name())) {
-              if (item_.name().contains("board")) {
-                board = m_models.size();
-                // printf("%s\n", model.is_animated() ? "true" : "false");
-              }
-              m_models.push_back(Utility::move(*model));
-              i++;
-            } else {
-              printf("failed to load %s\n", item_.name().data());
+    Math::Transform transform;
+    transform.translate.x = -((5.0f * (4.0f - 1.0f)) * 0.5f);
+
+    auto add_model = [&](const char* _file_name) {
+      if (auto model = Render::Model::create(&m_frontend)) {
+        if (model->load(_file_name)) {
+          if (m_models.push_back(Utility::move(*model))) {
+            if (m_mdl_tranforms.push_back(transform)) {
+              m_mdl_rotations.emplace_back(0.0f, 0.0f, 0.0f);
+              transform.translate.x += 5.0f;
+              return true;
             }
           }
         }
-      });
-    } else {
-      return false;
-    }*/
-
-    #if 1
-    auto model = Render::Model::create(&m_frontend);
-    if (!model) return false;
-    if (model->load("base/models/helmet/helmet.json5")) {
-      if (!m_models.push_back(Utility::move(*model))) {
-        return false;
       }
-    }
-    #endif
+      return false;
+    };
 
-    auto animate = [](Render::Model& _model) { _model.animate(0, true); };
-    m_models.each_fwd(animate);
+    if (!add_model("base/models/chest/chest.json5")) return false;
+    if (!add_model("base/models/mrfixit/mrfixit.json5")) return false;
+    if (!add_model("base/models/fire_hydrant/fire_hydrant.json5")) return false;
+    if (!add_model("base/models/helmet/helmet.json5")) return false;
+
+    m_models[1].animate(0, true); // mrfixit loop 0th animation.
 
     return true;
   }
@@ -373,10 +364,12 @@ struct TestGame
       model_.update(_delta_time);
     });
 
+    m_mdl_rotations.each_fwd([&](Math::Vec3f& rotation_) {
+      rotation_.y += 15.0f * _delta_time;
+    });
+
     m_particle_system.update(_delta_time);
     m_particle_system_render.update(&m_particle_system);
-
-    mdl_rotate.y += 90.0f * _delta_time;
 
     return true;
   }
@@ -420,16 +413,17 @@ struct TestGame
       Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
       Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data());
 
-#if 1
-  mdl_transform.rotation = Math::Mat3x3f::rotate(mdl_rotate);
-
-    m_models.each_fwd([&](Render::Model& model_) {
-      model_.render(m_gbuffer.target(), mdl_transform.as_mat4(), m_camera.view(),
+    const auto n_models = m_models.size();
+    for (Size i = 0; i < n_models; i++) {
+      auto& model = m_models[i];
+      auto& transform = m_mdl_tranforms[i];
+      const auto& rotate = m_mdl_rotations[i];
+      transform.rotation = Math::Mat3x3f::rotate(rotate);
+      model.render(m_gbuffer.target(), transform.as_mat4(), m_camera.view(),
         m_camera.projection,
-          0, // Render::Model::SKELETON | Render::Model::BOUNDS,
-          &m_immediate3D);
-    });
-#endif
+        Render::Model::SKELETON | Render::Model::BOUNDS,
+        &m_immediate3D);
+    }
 
     m_indirect_lighting_pass.render(m_camera, &m_gbuffer, &m_ibl);
 
