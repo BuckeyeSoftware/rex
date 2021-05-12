@@ -8,6 +8,8 @@
 
 #include "rx/core/hash/string.h"
 
+#include "rx/core/memory/search.h"
+
 #include "rx/core/hints/unreachable.h"
 #include "rx/core/hints/unlikely.h"
 
@@ -184,12 +186,12 @@ String::String(Memory::View _view)
   , m_last{m_data + _view.size - 1}
   , m_capacity{m_data + _view.capacity - 1}
 {
-  // Valide the view represents a string by ensuring |m_last| is equal in
+  // Validate the view represents a string by ensuring |m_last| is equal in
   // address to the position of the first null-terminator in the view.
   //
   // This will indicate no null-terminator exists in the middle and that the
   // view's size field represents the string's length including the null.
-  RX_ASSERT(m_last == memchr(m_data, '\0', _view.capacity),
+  RX_ASSERT(m_last == reinterpret_cast<char*>(Memory::search(m_data, _view.capacity, '\0')),
     "malformed string view");
 }
 

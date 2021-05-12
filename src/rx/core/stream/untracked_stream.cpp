@@ -236,7 +236,7 @@ Optional<LinearBuffer> UntrackedStream::read_text(Memory::Allocator& _allocator)
     *dst++ = '\0';
 
     // Respecify the size of storage after removing all those CRs.
-    data->resize(dst - data->data());
+    (void)data->resize(dst - data->data());
 #endif
     return data;
   }
