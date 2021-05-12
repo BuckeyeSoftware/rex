@@ -11,7 +11,7 @@
 
 #include "rx/render/frontend/technique.h"
 #include "rx/render/frontend/module.h"
-#include "rx/render/frontend/material.h"
+// #include "rx/render/frontend/routine.h"
 
 #include "rx/core/concurrency/scope_lock.h"
 #include "rx/core/filesystem/directory.h"
@@ -44,7 +44,7 @@ RX_LOG("render", logger);
 
 static constexpr const char* TECHNIQUES_PATH = "base/renderer/techniques";
 static constexpr const char* MODULES_PATH = "base/renderer/modules";
-static constexpr const char* PASSES_PATH = "base/renderer/passes";
+static constexpr const char* ROUTINES_PATH = "base/renderer/routines";
 
 namespace Rx::Render::Frontend {
 
@@ -91,6 +91,7 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
   , m_cached_texturesCM{allocator()}
   , m_techniques{allocator()}
   , m_modules{allocator()}
+  // , m_routines{allocator()}
   , m_arenas{allocator()}
   , m_draw_calls{0, 0}
   , m_instanced_draw_calls{0, 0}
@@ -127,9 +128,7 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
     directory->each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
         Module new_module{allocator()};
-        const auto path{String::format(m_allocator, "%s/%s", MODULES_PATH,
-                                       Utility::move(item_.name()))};
-        if (new_module.load(path)) {
+        if (auto path = item_.full_name(); new_module.load(*path)) {
           m_modules.insert(new_module.name(), Utility::move(new_module));
         }
       }
@@ -144,17 +143,29 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
     directory->each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
         Technique new_technique{this};
-        const auto path{String::format(m_allocator, "%s/%s", TECHNIQUES_PATH,
-                                       Utility::move(item_.name()))};
-        if (new_technique.load(path) && new_technique.compile(m_modules)) {
-          m_techniques.insert(new_technique.name(),
-                              Utility::move(new_technique));
+        if (auto path = item_.full_name(); new_technique.load(*path) && new_technique.compile(m_modules)) {
+          m_techniques.insert(new_technique.name(), Utility::move(new_technique));
         }
       }
     });
   }
   time.stop();
   logger->info("Loaded %zu techniques in %s", m_techniques.size(), time.elapsed());
+
+#if 0
+  // Load all the routines.
+  time.start();
+  if (auto directory = Filesystem::Directory::open(m_allocator, ROUTINES_PATH)) {
+    directory->each([this](Filesystem::Directory::Item&& item_) {
+      Routine new_routine{this};
+      if (auto path = item_.full_name(); new_routine.load(*path)) {
+        m_routines.insert(new_routine.name(), Utility::move(new_routine));
+      }
+    });
+  }
+  time.stop();
+  logger->info("Loaded %zu routines in %s", m_routines.size(), time.elapsed());
+#endif
 
   // Generate swapchain target.
   m_swapchain_texture = create_texture2D(RX_RENDER_TAG("swapchain"));
@@ -203,6 +214,7 @@ Context::~Context() {
   });
 
   m_arenas.clear();
+  // m_routines.clear();
   m_modules.clear();
   m_techniques.clear();
 

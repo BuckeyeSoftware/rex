@@ -31,6 +31,7 @@ struct Downloader;
 // Higher-level resource types.
 struct Technique;
 struct Module;
+struct Routine;
 
 struct Context {
   Context(Memory::Allocator& _allocator, Backend::Context* _backend, const Math::Vec2z& _dimensions, bool _hdr);
@@ -309,6 +310,7 @@ private:
 
   Map<String, Technique> m_techniques          RX_HINT_GUARDED_BY(m_mutex);
   Map<String, Module> m_modules                RX_HINT_GUARDED_BY(m_mutex);
+  // Map<String, Routine> m_routines              RX_HINT_GUARDED_BY(m_mutex);
 
   Map<Buffer::Format, Arena> m_arenas          RX_HINT_GUARDED_BY(m_mutex);
 
