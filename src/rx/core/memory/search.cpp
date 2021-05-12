@@ -1,7 +1,6 @@
 #include <limits.h> // UCHAR_MAX
 #include <string.h>
 
-
 #include "rx/core/algorithm/max.h"
 
 #include "rx/core/memory/search.h"
@@ -24,12 +23,12 @@ Byte* search(const void* _haystack, Size _haystack_size, Byte _byte) {
   auto s = static_cast<const Byte*>(_haystack);
 
   // Search byte at a time until pointer is aligned by |ALIGN|.
-  for (; reinterpret_cast<UintPtr>(s) & ALIGN && _haystack_size && *s != _byte; s++, _haystack_size--)
+  for (; (reinterpret_cast<UintPtr>(s) & ALIGN) && _haystack_size && *s != _byte; s++, _haystack_size--)
     ;
 
   // Optimize by reading Size at a time from |_haystack| and checking for
   // the |_byte| inside that.
-  if (_haystack_size >= sizeof(Size) && *s != _byte) {
+  if (_haystack_size && *s != _byte) {
     typedef Size RX_HINT_MAY_ALIAS Word;
     const Word *w;
     Size k = ONES * _byte;
@@ -38,6 +37,8 @@ Byte* search(const void* _haystack, Size _haystack_size, Byte _byte) {
       w++, _haystack_size -= sizeof(Size));
     s = reinterpret_cast<const Byte*>(w);
   }
+
+  // Handle remaining bytes a byte at a time.
   for (; _haystack_size && *s != _byte; s++, _haystack_size--)
     ;
 
