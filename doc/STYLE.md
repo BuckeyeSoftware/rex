@@ -34,6 +34,7 @@
   + [Loop in reverse complaint](#loop-in-reverse-complaint)
 * [Use explicitly sized types](#use-explicitly-sized-types)
 * [Size](#size)
+* [Alternatives](#alternatives)
 
 Note that most of this can be enforced with the `.clang-format` in the root of
 the source tree.
@@ -410,3 +411,12 @@ the index exceeds `UINT32_MAX`. Similarly, the use of other types may require
 expensive modular arithmetic on some platforms.
 
 **NEVER** use `Size` to represent the size or offsets inside files, use `Uint64`.
+
+## Alternatives
+There are alternative functions that replace common libc functions that are
+reccomended are used instead. A simple replacement table is provided below.
+
+| C header     | C function | Rex header             | Rex function     |
+|--------------|------------|------------------------|------------------|
+| `<string.h>` | `memchr`   | `"rx/memory/search.h"` | `Memory::search` |
+| `<string.h>` | `memmem`   | `"rx/memory/search.h"` | `Memory::search` |
