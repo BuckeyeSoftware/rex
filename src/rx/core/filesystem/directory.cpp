@@ -19,30 +19,36 @@
 
 namespace Rx::Filesystem {
 
+// [Directory::Item]
 Optional<Directory> Directory::Item::as_directory() const {
   if (is_directory()) {
-    auto& allocator = m_directory->allocator();
-
-    // Construct the path in-place as one allocation, as operator+ may require
-    // up to three allocations to format the final path.
-    const auto& root = m_directory->path();
-    const auto& filename = name();
-
-    // Storage for "${root}/${filename}" including null-terminator.
-    const auto length = root.size() + 1 + filename.size() + 1;
-
-    if (auto data = allocator.allocate(length)) {
-      // Copy root without null-terminator.
-      memcpy(data, root.data(), root.size());
-
-      // Write path separator in the middle.
-      data[root.size()] = '/';
-
-      // Copy filename with null-terminator to also terminate our string.
-      memcpy(data + root.size() + 1, filename.data(), filename.size() + 1);
-
-      return Directory::open(allocator, Memory::View{&allocator, data, length, length});
+    if (const auto path = full_name()) {
+      return Directory::open(m_directory->allocator(), *path);
     }
+  }
+  return nullopt;
+}
+
+Optional<String> Directory::Item::full_name() const {
+  auto& allocator = m_directory->allocator();
+
+  const auto& root = m_directory->path();
+  const auto& stem = name();
+
+  // Storage for "${root}/${stem}" including null-terminator.
+  const auto length = root.size() + 1 + stem.size() + 1;
+
+  if (auto data = allocator.allocate(length)) {
+    // Copy root without null-terminator.
+    memcpy(data, root.data(), root.size());
+
+    // Write path separtator in the middle.
+    data[root.size()] = '/';
+
+    // Copy stem with null-terminator to also terminate the string.
+    memcpy(data + root.size() + 1, stem.data(), stem.size() + 1);
+
+    return String{{&allocator, data, length, length}};
   }
 
   return nullopt;

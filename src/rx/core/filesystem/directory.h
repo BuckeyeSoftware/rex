@@ -100,6 +100,9 @@ struct RX_API Directory {
     /// as_directory().
     Optional<Directory> as_directory() const;
 
+    /// Get full name of the item.
+    Optional<String> full_name() const;
+
   private:
     friend struct Directory;
 
