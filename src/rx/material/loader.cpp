@@ -91,7 +91,7 @@ bool Loader::parse(const JSON& _definition) {
     return m_report.error("expected String for 'name'");
   }
 
-  m_name = Utility::move(name.as_string());
+  m_name = Utility::move(name.as_string_with_allocator(allocator()));
   m_report.rename(m_name);
 
   const auto& alpha_test{_definition["alpha_test"]};
@@ -202,7 +202,7 @@ bool Loader::parse(const JSON& _definition) {
 bool Loader::parse_textures(const JSON& _textures) {
   return _textures.each([&](const JSON& _texture) {
     Texture new_texture{allocator()};
-    if (_texture.is_string() && new_texture.load(_texture.as_string())) {
+    if (_texture.is_string() && new_texture.load(_texture.as_string_with_allocator(allocator()))) {
       return m_textures.push_back(Utility::move(new_texture));
     } else if (_texture.is_object() && new_texture.parse(_texture)) {
       return m_textures.push_back(Utility::move(new_texture));

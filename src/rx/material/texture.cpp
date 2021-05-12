@@ -98,7 +98,7 @@ bool Texture::parse(const JSON& _definition) {
     return m_report.error("missing 'border' for \"clamp_to_border\"");
   }
 
-  m_file = file.as_string();
+  m_file = file.as_string_with_allocator(allocator());
 
   // TODO(dweiler): Inject the max dimensions from a higher level place.
   return load_texture_file({4096, 4096});
@@ -153,18 +153,19 @@ bool Texture::parse_type(const JSON& _type) {
     { "custom",    Type::CUSTOM    }
   };
 
+  const auto& type_string = _type.as_string_with_allocator(allocator());
+
   for (const auto& match : MATCHES) {
-    const auto& name = _type.as_string();
-    if (match.name != name) {
+    if (match.name != type_string) {
       continue;
     }
 
     m_type = match.type;
-    m_report.rename(name);
+
     return true;
   }
 
-  return m_report.error("unknown type '%s'", _type.as_string());
+  return m_report.error("unknown type '%s'", type_string);
 }
 
 bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
@@ -178,21 +179,23 @@ bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
     "nearest"
   };
 
-  const auto& filter_string = _filter.as_string();
+  const auto& filter_string = _filter.as_string_with_allocator(allocator());
   for (const auto& match : MATCHES) {
-    if (filter_string == match) {
-      const bool trilinear = *match == 't';
-      const bool bilinear = trilinear || *match == 'b'; // trilinear is an extension of bilinear
-      const bool mipmaps = trilinear || _mipmaps; // trilinear needs mipmaps
-
-      m_filter.trilinear = trilinear;
-      m_filter.bilinear = bilinear;
-      m_filter.mipmaps = mipmaps;
-
-      _mipmaps = mipmaps;
-
-      return true;
+    if (filter_string != match) {
+      continue;
     }
+
+    const bool trilinear = *match == 't';
+    const bool bilinear = trilinear || *match == 'b'; // trilinear is an extension of bilinear
+    const bool mipmaps = trilinear || _mipmaps; // trilinear needs mipmaps
+
+    m_filter.trilinear = trilinear;
+    m_filter.bilinear = bilinear;
+    m_filter.mipmaps = mipmaps;
+
+    _mipmaps = mipmaps;
+
+    return true;
   }
 
   return m_report.error("unknown filter '%s'", filter_string);
@@ -223,8 +226,8 @@ bool Texture::parse_wrap(const JSON& _wrap) {
     return m_report.error("invalid wrap type '%s'", _type);
   };
 
-  const auto& s_wrap = parse(_wrap[0_z].as_string());
-  const auto& t_wrap = parse(_wrap[1_z].as_string());
+  const auto& s_wrap = parse(_wrap[0_z].as_string_with_allocator(allocator()));
+  const auto& t_wrap = parse(_wrap[1_z].as_string_with_allocator(allocator()));
 
   if (s_wrap && t_wrap) {
     m_wrap.s = *s_wrap;

@@ -94,7 +94,7 @@ bool Loader::parse(const JSON& _definition) {
     return m_report.error("expected String for 'name'");
   }
 
-  m_name = Utility::move(name.as_string());
+  m_name = Utility::move(name.as_string_with_allocator(allocator()));
   m_report.rename(m_name);
 
   if (!file) {
@@ -118,7 +118,7 @@ bool Loader::parse(const JSON& _definition) {
     return false;
   }
 
-  if (!import(file.as_string())) {
+  if (!import(file.as_string_with_allocator(allocator()))) {
     return false;
   }
 
@@ -132,7 +132,7 @@ bool Loader::parse(const JSON& _definition) {
   materials.each([&](const JSON& _material) {
     (void)Concurrency::ThreadPool::instance().add([&, _material](int) {
       Material::Loader loader{allocator()};
-      if (_material.is_string() && loader.load(_material.as_string())) {
+      if (_material.is_string() && loader.load(_material.as_string_with_allocator(allocator()))) {
         Concurrency::ScopeLock lock{mutex};
         m_materials.insert(loader.name(), Utility::move(loader));
       } else if (_material.is_object() && loader.parse(_material)) {

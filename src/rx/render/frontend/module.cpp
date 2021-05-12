@@ -53,6 +53,8 @@ bool Module::load(const String& _file_name) {
 }
 
 bool Module::parse(const JSON& _description) {
+  auto& allocator = *m_allocator;
+
   if (!_description) {
     const auto json_error{_description.error()};
     if (json_error) {
@@ -62,8 +64,8 @@ bool Module::parse(const JSON& _description) {
     }
   }
 
-  const JSON& name{_description["name"]};
-  const JSON& source{_description["source"]};
+  const auto& name = _description["name"];
+  const auto& source = _description["source"];
 
   if (!name) {
     return m_report.error("missing 'name'");
@@ -73,7 +75,7 @@ bool Module::parse(const JSON& _description) {
     return m_report.error("expected String for 'name'");
   }
 
-  m_name = Utility::move(name.as_string());
+  m_name = Utility::move(name.as_string_with_allocator(allocator));
   m_report.rename(m_name);
 
   if (!source) {
@@ -85,7 +87,7 @@ bool Module::parse(const JSON& _description) {
   }
 
   // Trim any leading and trailing whitespace characters from the contents too.
-  m_source = source.as_string().strip("\t\r\n ");
+  m_source = source.as_string_with_allocator(allocator).strip("\t\r\n ");
 
   const JSON& imports = _description["imports"];
   if (!imports) {
@@ -97,7 +99,7 @@ bool Module::parse(const JSON& _description) {
   }
 
   return imports.each([&](const JSON& _import) {
-    return m_dependencies.push_back(_import.as_string());
+    return m_dependencies.push_back(_import.as_string_with_allocator(allocator));
   });
 }
 
