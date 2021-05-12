@@ -440,7 +440,7 @@ RX_HINT_FORCE_INLINE bool Vector<T>::in_range(Size _index) const {
 
 template<typename T>
 template<typename F>
-bool Vector<T>::each_fwd(F&& _func) {
+RX_HINT_FORCE_INLINE bool Vector<T>::each_fwd(F&& _func) {
   using ReturnType = Traits::InvokeResult<F, T&>;
   for (Size i{0}; i < m_size; i++) {
     if constexpr (Traits::IS_SAME<ReturnType, bool>) {
@@ -456,7 +456,7 @@ bool Vector<T>::each_fwd(F&& _func) {
 
 template<typename T>
 template<typename F>
-bool Vector<T>::each_fwd(F&& _func) const {
+RX_HINT_FORCE_INLINE bool Vector<T>::each_fwd(F&& _func) const {
   using ReturnType = Traits::InvokeResult<F, const T&>;
   for (Size i{0}; i < m_size; i++) {
     if constexpr (Traits::IS_SAME<ReturnType, bool>) {

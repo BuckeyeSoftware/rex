@@ -486,7 +486,7 @@ bool Map<K, V>::lookup_index(const L& _key, Size& _index) const {
 
 template<typename K, typename V>
 template<typename F>
-bool Map<K, V>::each_key(F&& _function) {
+RX_HINT_FORCE_INLINE bool Map<K, V>::each_key(F&& _function) {
   using ReturnType = Traits::InvokeResult<F, const K&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
@@ -505,7 +505,7 @@ bool Map<K, V>::each_key(F&& _function) {
 
 template<typename K, typename V>
 template<typename F>
-bool Map<K, V>::each_key(F&& _function) const {
+RX_HINT_FORCE_INLINE bool Map<K, V>::each_key(F&& _function) const {
   using ReturnType = Traits::InvokeResult<F, const K&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
@@ -524,7 +524,7 @@ bool Map<K, V>::each_key(F&& _function) const {
 
 template<typename K, typename V>
 template<typename F>
-bool Map<K, V>::each_value(F&& _function) {
+RX_HINT_FORCE_INLINE bool Map<K, V>::each_value(F&& _function) {
   using ReturnType = Traits::InvokeResult<F, V&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
@@ -543,7 +543,7 @@ bool Map<K, V>::each_value(F&& _function) {
 
 template<typename K, typename V>
 template<typename F>
-bool Map<K, V>::each_value(F&& _function) const {
+RX_HINT_FORCE_INLINE bool Map<K, V>::each_value(F&& _function) const {
   using ReturnType = Traits::InvokeResult<F, const V&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
@@ -562,7 +562,7 @@ bool Map<K, V>::each_value(F&& _function) const {
 
 template<typename K, typename V>
 template<typename F>
-bool Map<K, V>::each_pair(F&& _function) {
+RX_HINT_FORCE_INLINE bool Map<K, V>::each_pair(F&& _function) {
   using ReturnType = Traits::InvokeResult<F, const K&, V&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
@@ -581,7 +581,7 @@ bool Map<K, V>::each_pair(F&& _function) {
 
 template<typename K, typename V>
 template<typename F>
-bool Map<K, V>::each_pair(F&& _function) const {
+RX_HINT_FORCE_INLINE bool Map<K, V>::each_pair(F&& _function) const {
   using ReturnType = Traits::InvokeResult<F, const K&, const V&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};

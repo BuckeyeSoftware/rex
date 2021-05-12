@@ -435,7 +435,7 @@ bool Set<K>::lookup_index(const L& _key, Size& _index) const {
 
 template<typename K>
 template<typename F>
-bool Set<K>::each(F&& _function) {
+RX_HINT_FORCE_INLINE bool Set<K>::each(F&& _function) {
   using ReturnType = Traits::InvokeResult<F, K&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
@@ -454,7 +454,7 @@ bool Set<K>::each(F&& _function) {
 
 template<typename K>
 template<typename F>
-bool Set<K>::each(F&& _function) const {
+RX_HINT_FORCE_INLINE bool Set<K>::each(F&& _function) const {
   using ReturnType = Traits::InvokeResult<F, const K&>;
   for (Size i{0}; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};

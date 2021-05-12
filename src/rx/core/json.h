@@ -205,7 +205,7 @@ inline String JSON::as_string() const {
 }
 
 template<typename F>
-bool JSON::each(F&& _function) const {
+RX_HINT_FORCE_INLINE bool JSON::each(F&& _function) const {
   const bool array = is_array();
   const bool object = is_object();
 
