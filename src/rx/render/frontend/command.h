@@ -3,7 +3,9 @@
 
 #include "rx/core/source_location.h"
 #include "rx/core/memory/bump_point_allocator.h"
+
 #include "rx/math/vec4.h"
+
 #include "rx/render/frontend/state.h"
 
 namespace Rx::Render::Frontend {
