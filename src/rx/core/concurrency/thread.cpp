@@ -74,7 +74,7 @@ private:
   HANDLE (WINAPI* m_set_thread_description)(HANDLE, PCWSTR);
 };
 
-static Global<ThreadDescription> s_thread_description{"system"};
+static Global<ThreadDescription> s_thread_description{"system", "thread_description"};
 #endif // !defined(RX_PLATFORM_WINDOWS)
 
 // [Thread]
@@ -150,7 +150,7 @@ bool Thread::State::spawn() {
   auto handle = reinterpret_cast<HANDLE>(thread);
 
   // Set the thread description.
-  s_thread_description.set(handle, m_name);
+  s_thread_description->set(handle, m_name);
 
   // Store the handle.
   *reinterpret_cast<HANDLE*>(m_thread) = handle;

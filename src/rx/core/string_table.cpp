@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "rx/core/string_table.h"
+#include "rx/core/memory/search.h"
 
 namespace Rx {
 
@@ -46,10 +47,10 @@ Optional<Size> StringTable::insert(Span<const char> _span) {
 
   const auto* base =
     reinterpret_cast<const Byte*>(m_string_data.data());
-
+  
   // Search the contents with memmem for |_string| as it may be an overlapping
   // string which we can save on space in the StringTable for.
-  if (const auto search = memmem(base, m_string_data.size(), _span.data(), _span.size())) {
+  if (const auto search = Memory::search(base, m_string_data.size(), _span.data(), _span.size())) {
     const auto cursor = reinterpret_cast<const Byte*>(search);
     if (!m_string_set.insert({Size(cursor - base), this})) {
       return nullopt;

@@ -148,7 +148,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -163,7 +163,7 @@
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExceptionHandling>false</ExceptionHandling>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <ControlFlowGuard>false</ControlFlowGuard>
@@ -185,7 +185,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExceptionHandling>false</ExceptionHandling>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
@@ -203,7 +203,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExceptionHandling>false</ExceptionHandling>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <ControlFlowGuard>false</ControlFlowGuard>
@@ -233,10 +233,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsC</CompileAs>
     </ClCompile>
-    <ClCompile Include="src\lib\stb_image.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsC</CompileAs>
-    </ClCompile>
+    <ClCompile Include="src\lib\stb_image.cpp" />
     <ClCompile Include="src\lib\stb_truetype.cpp" />
     <ClCompile Include="src\rx\console\command.cpp" />
     <ClCompile Include="src\rx\console\context.cpp" />
@@ -254,26 +251,30 @@
     <ClCompile Include="src\rx\core\concurrency\wait_group.cpp" />
     <ClCompile Include="src\rx\core\concurrency\yield.cpp" />
     <ClCompile Include="src\rx\core\cpprt.cpp" />
-    <ClCompile Include="src\rx\core\dynamic_pool.cpp" />
+    <ClCompile Include="src\rx\core\filesystem\buffered_file.cpp" />
     <ClCompile Include="src\rx\core\filesystem\directory.cpp" />
-    <ClCompile Include="src\rx\core\filesystem\file.cpp" />
-    <ClCompile Include="src\rx\core\filesystem\path_resolver.cpp" />
+    <ClCompile Include="src\rx\core\filesystem\unbuffered_file.cpp" />
     <ClCompile Include="src\rx\core\format.cpp" />
     <ClCompile Include="src\rx\core\global.cpp" />
+    <ClCompile Include="src\rx\core\hash\djbx33a.cpp" />
     <ClCompile Include="src\rx\core\hash\fnv1a.cpp" />
     <ClCompile Include="src\rx\core\intrusive_compressed_list.cpp" />
     <ClCompile Include="src\rx\core\intrusive_list.cpp" />
     <ClCompile Include="src\rx\core\json.cpp" />
     <ClCompile Include="src\rx\core\library\loader.cpp" />
+    <ClCompile Include="src\rx\core\linear_buffer.cpp" />
     <ClCompile Include="src\rx\core\log.cpp" />
     <ClCompile Include="src\rx\core\math\abs.cpp" />
     <ClCompile Include="src\rx\core\math\ceil.cpp" />
     <ClCompile Include="src\rx\core\math\cos.cpp" />
     <ClCompile Include="src\rx\core\math\floor.cpp" />
+    <ClCompile Include="src\rx\core\math\fract.cpp" />
     <ClCompile Include="src\rx\core\math\half.cpp" />
+    <ClCompile Include="src\rx\core\math\ldexp.cpp" />
     <ClCompile Include="src\rx\core\math\mod.cpp" />
     <ClCompile Include="src\rx\core\math\pow.cpp" />
     <ClCompile Include="src\rx\core\math\round.cpp" />
+    <ClCompile Include="src\rx\core\math\scalbnf.cpp" />
     <ClCompile Include="src\rx\core\math\sin.cpp" />
     <ClCompile Include="src\rx\core\math\sqrt.cpp" />
     <ClCompile Include="src\rx\core\math\tan.cpp" />
@@ -283,17 +284,20 @@
     <ClCompile Include="src\rx\core\memory\bump_point_allocator.cpp" />
     <ClCompile Include="src\rx\core\memory\electric_fence_allocator.cpp" />
     <ClCompile Include="src\rx\core\memory\heap_allocator.cpp" />
+    <ClCompile Include="src\rx\core\memory\null_allocator.cpp" />
+    <ClCompile Include="src\rx\core\memory\search.cpp" />
     <ClCompile Include="src\rx\core\memory\single_shot_allocator.cpp" />
+    <ClCompile Include="src\rx\core\memory\slab.cpp" />
     <ClCompile Include="src\rx\core\memory\stats_allocator.cpp" />
     <ClCompile Include="src\rx\core\memory\system_allocator.cpp" />
     <ClCompile Include="src\rx\core\memory\vma.cpp" />
     <ClCompile Include="src\rx\core\prng\mt19937.cpp" />
     <ClCompile Include="src\rx\core\profiler.cpp" />
-    <ClCompile Include="src\rx\core\serialize\buffer.cpp" />
-    <ClCompile Include="src\rx\core\serialize\decoder.cpp" />
-    <ClCompile Include="src\rx\core\serialize\encoder.cpp" />
-    <ClCompile Include="src\rx\core\static_pool.cpp" />
-    <ClCompile Include="src\rx\core\stream.cpp" />
+    <ClCompile Include="src\rx\core\report.cpp" />
+    <ClCompile Include="src\rx\core\stream\buffered_stream.cpp" />
+    <ClCompile Include="src\rx\core\stream\memory_stream.cpp" />
+    <ClCompile Include="src\rx\core\stream\tracked_stream.cpp" />
+    <ClCompile Include="src\rx\core\stream\untracked_stream.cpp" />
     <ClCompile Include="src\rx\core\string.cpp" />
     <ClCompile Include="src\rx\core\string_table.cpp" />
     <ClCompile Include="src\rx\core\time\delay.cpp" />
@@ -307,10 +311,7 @@
     <ClCompile Include="src\rx\hud\frame_graph.cpp" />
     <ClCompile Include="src\rx\hud\memory_stats.cpp" />
     <ClCompile Include="src\rx\hud\render_stats.cpp" />
-    <ClCompile Include="src\rx\image\convert.cpp" />
-    <ClCompile Include="src\rx\image\intensity_map.cpp" />
     <ClCompile Include="src\rx\image\matrix.cpp" />
-    <ClCompile Include="src\rx\image\normal_map.cpp" />
     <ClCompile Include="src\rx\input\context.cpp" />
     <ClCompile Include="src\rx\input\controller.cpp" />
     <ClCompile Include="src\rx\input\keyboard.cpp" />
@@ -321,9 +322,11 @@
     <ClCompile Include="src\rx\material\loader.cpp" />
     <ClCompile Include="src\rx\material\texture.cpp" />
     <ClCompile Include="src\rx\math\aabb.cpp" />
+    <ClCompile Include="src\rx\math\dual_quat.cpp" />
     <ClCompile Include="src\rx\math\frustum.cpp" />
     <ClCompile Include="src\rx\math\mat3x3.cpp" />
     <ClCompile Include="src\rx\math\mat3x4.cpp" />
+    <ClCompile Include="src\rx\math\mat4x4.cpp" />
     <ClCompile Include="src\rx\math\noise\perlin.cpp" />
     <ClCompile Include="src\rx\math\quat.cpp" />
     <ClCompile Include="src\rx\math\sphere.cpp" />
@@ -334,11 +337,19 @@
     <ClCompile Include="src\rx\model\importer.cpp" />
     <ClCompile Include="src\rx\model\iqm.cpp" />
     <ClCompile Include="src\rx\model\loader.cpp" />
+    <ClCompile Include="src\rx\model\skeleton.cpp" />
+    <ClCompile Include="src\rx\particle\assembler.cpp" />
+    <ClCompile Include="src\rx\particle\emitter.cpp" />
+    <ClCompile Include="src\rx\particle\program.cpp" />
+    <ClCompile Include="src\rx\particle\state.cpp" />
+    <ClCompile Include="src\rx\particle\system.cpp" />
+    <ClCompile Include="src\rx\particle\vm.cpp" />
     <ClCompile Include="src\rx\render\backend\es3.cpp" />
     <ClCompile Include="src\rx\render\backend\gl.cpp" />
     <ClCompile Include="src\rx\render\backend\gl3.cpp" />
     <ClCompile Include="src\rx\render\backend\gl4.cpp" />
     <ClCompile Include="src\rx\render\backend\null.cpp" />
+    <ClCompile Include="src\rx\render\color_grader.cpp" />
     <ClCompile Include="src\rx\render\copy_pass.cpp" />
     <ClCompile Include="src\rx\render\frontend\arena.cpp" />
     <ClCompile Include="src\rx\render\frontend\buffer.cpp" />
@@ -361,6 +372,7 @@
     <ClCompile Include="src\rx\render\indirect_lighting_pass.cpp" />
     <ClCompile Include="src\rx\render\lens_distortion_pass.cpp" />
     <ClCompile Include="src\rx\render\model.cpp" />
+    <ClCompile Include="src\rx\render\particle_system.cpp" />
     <ClCompile Include="src\rx\render\skybox.cpp" />
     <ClCompile Include="src\rx\texture\chain.cpp" />
     <ClCompile Include="src\rx\texture\convert.cpp" />
@@ -400,17 +412,22 @@
     <ClInclude Include="src\rx\core\concurrency\wait_group.h" />
     <ClInclude Include="src\rx\core\concurrency\yield.h" />
     <ClInclude Include="src\rx\core\config.h" />
-    <ClInclude Include="src\rx\core\deferred_function.h" />
-    <ClInclude Include="src\rx\core\dynamic_pool.h" />
     <ClInclude Include="src\rx\core\event.h" />
+    <ClInclude Include="src\rx\core\filesystem\buffered_file.h" />
     <ClInclude Include="src\rx\core\filesystem\directory.h" />
-    <ClInclude Include="src\rx\core\filesystem\file.h" />
-    <ClInclude Include="src\rx\core\filesystem\path_resolver.h" />
+    <ClInclude Include="src\rx\core\filesystem\unbuffered_file.h" />
     <ClInclude Include="src\rx\core\format.h" />
     <ClInclude Include="src\rx\core\function.h" />
     <ClInclude Include="src\rx\core\global.h" />
-    <ClInclude Include="src\rx\core\hash.h" />
+    <ClInclude Include="src\rx\core\hash\combine.h" />
+    <ClInclude Include="src\rx\core\hash\djbx33a.h" />
     <ClInclude Include="src\rx\core\hash\fnv1a.h" />
+    <ClInclude Include="src\rx\core\hash\hasher.h" />
+    <ClInclude Include="src\rx\core\hash\mix_enum.h" />
+    <ClInclude Include="src\rx\core\hash\mix_float.h" />
+    <ClInclude Include="src\rx\core\hash\mix_int.h" />
+    <ClInclude Include="src\rx\core\hash\mix_pointer.h" />
+    <ClInclude Include="src\rx\core\hash\string.h" />
     <ClInclude Include="src\rx\core\hints\assume_aligned.h" />
     <ClInclude Include="src\rx\core\hints\empty_bases.h" />
     <ClInclude Include="src\rx\core\hints\force_inline.h" />
@@ -426,6 +443,7 @@
     <ClInclude Include="src\rx\core\intrusive_list.h" />
     <ClInclude Include="src\rx\core\json.h" />
     <ClInclude Include="src\rx\core\library\loader.h" />
+    <ClInclude Include="src\rx\core\linear_buffer.h" />
     <ClInclude Include="src\rx\core\log.h" />
     <ClInclude Include="src\rx\core\map.h" />
     <ClInclude Include="src\rx\core\markers.h" />
@@ -434,12 +452,15 @@
     <ClInclude Include="src\rx\core\math\cos.h" />
     <ClInclude Include="src\rx\core\math\floor.h" />
     <ClInclude Include="src\rx\core\math\force_eval.h" />
+    <ClInclude Include="src\rx\core\math\fract.h" />
     <ClInclude Include="src\rx\core\math\half.h" />
     <ClInclude Include="src\rx\core\math\isnan.h" />
+    <ClInclude Include="src\rx\core\math\ldexp.h" />
     <ClInclude Include="src\rx\core\math\log2.h" />
     <ClInclude Include="src\rx\core\math\mod.h" />
     <ClInclude Include="src\rx\core\math\pow.h" />
     <ClInclude Include="src\rx\core\math\round.h" />
+    <ClInclude Include="src\rx\core\math\scalbnf.h" />
     <ClInclude Include="src\rx\core\math\shape.h" />
     <ClInclude Include="src\rx\core\math\sign.h" />
     <ClInclude Include="src\rx\core\math\sin.h" />
@@ -451,7 +472,10 @@
     <ClInclude Include="src\rx\core\memory\bump_point_allocator.h" />
     <ClInclude Include="src\rx\core\memory\electric_fence_allocator.h" />
     <ClInclude Include="src\rx\core\memory\heap_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\null_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\search.h" />
     <ClInclude Include="src\rx\core\memory\single_shot_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\slab.h" />
     <ClInclude Include="src\rx\core\memory\stats_allocator.h" />
     <ClInclude Include="src\rx\core\memory\system_allocator.h" />
     <ClInclude Include="src\rx\core\memory\uninitialized_storage.h" />
@@ -460,14 +484,14 @@
     <ClInclude Include="src\rx\core\prng\mt19937.h" />
     <ClInclude Include="src\rx\core\profiler.h" />
     <ClInclude Include="src\rx\core\ptr.h" />
-    <ClInclude Include="src\rx\core\serialize\buffer.h" />
-    <ClInclude Include="src\rx\core\serialize\decoder.h" />
-    <ClInclude Include="src\rx\core\serialize\encoder.h" />
-    <ClInclude Include="src\rx\core\serialize\header.h" />
+    <ClInclude Include="src\rx\core\report.h" />
     <ClInclude Include="src\rx\core\set.h" />
     <ClInclude Include="src\rx\core\source_location.h" />
-    <ClInclude Include="src\rx\core\static_pool.h" />
-    <ClInclude Include="src\rx\core\stream.h" />
+    <ClInclude Include="src\rx\core\stream\buffered_stream.h" />
+    <ClInclude Include="src\rx\core\stream\memory_stream.h" />
+    <ClInclude Include="src\rx\core\stream\operations.h" />
+    <ClInclude Include="src\rx\core\stream\tracked_stream.h" />
+    <ClInclude Include="src\rx\core\stream\untracked_stream.h" />
     <ClInclude Include="src\rx\core\string.h" />
     <ClInclude Include="src\rx\core\string_table.h" />
     <ClInclude Include="src\rx\core\tagged_ptr.h" />
@@ -531,15 +555,11 @@
     <ClInclude Include="src\rx\core\vector.h" />
     <ClInclude Include="src\rx\display.h" />
     <ClInclude Include="src\rx\engine.h" />
-    <ClInclude Include="src\rx\game.h" />
     <ClInclude Include="src\rx\hud\console.h" />
     <ClInclude Include="src\rx\hud\frame_graph.h" />
     <ClInclude Include="src\rx\hud\memory_stats.h" />
     <ClInclude Include="src\rx\hud\render_stats.h" />
-    <ClInclude Include="src\rx\image\convert.h" />
-    <ClInclude Include="src\rx\image\intensity_map.h" />
     <ClInclude Include="src\rx\image\matrix.h" />
-    <ClInclude Include="src\rx\image\normal_map.h" />
     <ClInclude Include="src\rx\input\context.h" />
     <ClInclude Include="src\rx\input\controller.h" />
     <ClInclude Include="src\rx\input\event.h" />
@@ -553,6 +573,7 @@
     <ClInclude Include="src\rx\math\camera.h" />
     <ClInclude Include="src\rx\math\compare.h" />
     <ClInclude Include="src\rx\math\constants.h" />
+    <ClInclude Include="src\rx\math\dual_quat.h" />
     <ClInclude Include="src\rx\math\frustum.h" />
     <ClInclude Include="src\rx\math\mat3x3.h" />
     <ClInclude Include="src\rx\math\mat3x4.h" />
@@ -571,12 +592,20 @@
     <ClInclude Include="src\rx\model\importer.h" />
     <ClInclude Include="src\rx\model\iqm.h" />
     <ClInclude Include="src\rx\model\loader.h" />
+    <ClInclude Include="src\rx\model\skeleton.h" />
+    <ClInclude Include="src\rx\particle\assembler.h" />
+    <ClInclude Include="src\rx\particle\emitter.h" />
+    <ClInclude Include="src\rx\particle\program.h" />
+    <ClInclude Include="src\rx\particle\state.h" />
+    <ClInclude Include="src\rx\particle\system.h" />
+    <ClInclude Include="src\rx\particle\vm.h" />
     <ClInclude Include="src\rx\render\backend\context.h" />
     <ClInclude Include="src\rx\render\backend\es3.h" />
     <ClInclude Include="src\rx\render\backend\gl.h" />
     <ClInclude Include="src\rx\render\backend\gl3.h" />
     <ClInclude Include="src\rx\render\backend\gl4.h" />
     <ClInclude Include="src\rx\render\backend\null.h" />
+    <ClInclude Include="src\rx\render\color_grader.h" />
     <ClInclude Include="src\rx\render\copy_pass.h" />
     <ClInclude Include="src\rx\render\frontend\arena.h" />
     <ClInclude Include="src\rx\render\frontend\buffer.h" />
@@ -599,6 +628,7 @@
     <ClInclude Include="src\rx\render\indirect_lighting_pass.h" />
     <ClInclude Include="src\rx\render\lens_distortion_pass.h" />
     <ClInclude Include="src\rx\render\model.h" />
+    <ClInclude Include="src\rx\render\particle_system.h" />
     <ClInclude Include="src\rx\render\skybox.h" />
     <ClInclude Include="src\rx\texture\chain.h" />
     <ClInclude Include="src\rx\texture\convert.h" />

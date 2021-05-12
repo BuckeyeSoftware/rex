@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "rx/core/algorithm/min.h"
 #include "rx/core/filesystem/unbuffered_file.h"
 #include "rx/core/log.h"
 
@@ -135,8 +136,7 @@ static void* open_file([[maybe_unused]] Memory::Allocator& _allocator, const cha
   DWORD dwDesiredAccess = 0;
   DWORD dwShareMode = 0;
   DWORD dwCreationDisposition = 0;
-  DWORD dwFlagsAndAttributes =
-    FILE_ATTRIBUTE_NORMAL | FILE_FLAG_NO_BUFFERING;
+  DWORD dwFlagsAndAttributes = FILE_ATTRIBUTE_NORMAL;
 
   // The '+' inside |_mode| indicates R+W
   if (strchr(_mode, '+')) {
@@ -222,7 +222,7 @@ static bool write_file(void* _impl, const Byte* _data, Size _size, Uint64 _offse
   return result;
 }
 
-static bool stat_file(void* _impl, File::Stat& stat_) {
+static bool stat_file(void* _impl, Stream::Stat& stat_) {
   BY_HANDLE_FILE_INFORMATION info;
   if (GetFileInformationByHandle(impl(_impl), &info)) {
     // Windows splits size into two 32-bit quanities. Reconstruct as 64-bit value.

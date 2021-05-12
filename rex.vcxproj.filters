@@ -79,9 +79,6 @@
     <Filter Include="src\rx\core\prng">
       <UniqueIdentifier>{ebfc246c-eabc-4ef9-bd06-a7ef9a7caf79}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\rx\core\serialize">
-      <UniqueIdentifier>{24d2d3ac-931e-463a-be10-da108a812165}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\rx\core\time">
       <UniqueIdentifier>{e1269559-4b75-4446-bf90-a8c0d6bb21a2}</UniqueIdentifier>
     </Filter>
@@ -100,15 +97,18 @@
     <Filter Include="src\rx\core\concurrency\std">
       <UniqueIdentifier>{c0550812-7b93-457a-8496-ac9ae06b2d71}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\rx\particle">
+      <UniqueIdentifier>{139cab98-402e-425d-b901-a62e682186ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx\core\stream">
+      <UniqueIdentifier>{ead92af9-3f2c-40c1-bf30-7813bdfbf064}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\game\main.cpp">
       <Filter>src\game</Filter>
     </ClCompile>
     <ClCompile Include="src\lib\json.c">
-      <Filter>src\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\lib\stb_image.c">
       <Filter>src\lib</Filter>
     </ClCompile>
     <ClCompile Include="src\lib\stb_truetype.cpp">
@@ -141,16 +141,7 @@
     <ClCompile Include="src\rx\hud\render_stats.cpp">
       <Filter>src\rx\hud</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\image\convert.cpp">
-      <Filter>src\rx\image</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rx\image\intensity_map.cpp">
-      <Filter>src\rx\image</Filter>
-    </ClCompile>
     <ClCompile Include="src\rx\image\matrix.cpp">
-      <Filter>src\rx\image</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rx\image\normal_map.cpp">
       <Filter>src\rx\image</Filter>
     </ClCompile>
     <ClCompile Include="src\rx\material\loader.cpp">
@@ -315,12 +306,6 @@
     <ClCompile Include="src\rx\core\filesystem\directory.cpp">
       <Filter>src\rx\core\filesystem</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\core\filesystem\file.cpp">
-      <Filter>src\rx\core\filesystem</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rx\core\filesystem\path_resolver.cpp">
-      <Filter>src\rx\core\filesystem</Filter>
-    </ClCompile>
     <ClCompile Include="src\rx\core\hash\fnv1a.cpp">
       <Filter>src\rx\core\hash</Filter>
     </ClCompile>
@@ -393,15 +378,6 @@
     <ClCompile Include="src\rx\core\prng\mt19937.cpp">
       <Filter>src\rx\core\prng</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\core\serialize\buffer.cpp">
-      <Filter>src\rx\core\serialize</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rx\core\serialize\decoder.cpp">
-      <Filter>src\rx\core\serialize</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rx\core\serialize\encoder.cpp">
-      <Filter>src\rx\core\serialize</Filter>
-    </ClCompile>
     <ClCompile Include="src\rx\core\time\delay.cpp">
       <Filter>src\rx\core\time</Filter>
     </ClCompile>
@@ -426,9 +402,6 @@
     <ClCompile Include="src\rx\core\cpprt.cpp">
       <Filter>src\rx\core</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\core\dynamic_pool.cpp">
-      <Filter>src\rx\core</Filter>
-    </ClCompile>
     <ClCompile Include="src\rx\core\format.cpp">
       <Filter>src\rx\core</Filter>
     </ClCompile>
@@ -445,12 +418,6 @@
       <Filter>src\rx\core</Filter>
     </ClCompile>
     <ClCompile Include="src\rx\core\profiler.cpp">
-      <Filter>src\rx\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rx\core\static_pool.cpp">
-      <Filter>src\rx\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rx\core\stream.cpp">
       <Filter>src\rx\core</Filter>
     </ClCompile>
     <ClCompile Include="src\rx\core\string.cpp">
@@ -501,6 +468,87 @@
     <ClCompile Include="src\rx\engine.cpp">
       <Filter>src\rx</Filter>
     </ClCompile>
+    <ClCompile Include="src\rx\math\mat4x4.cpp">
+      <Filter>src\rx\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\particle\assembler.cpp">
+      <Filter>src\rx\particle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\particle\emitter.cpp">
+      <Filter>src\rx\particle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\particle\program.cpp">
+      <Filter>src\rx\particle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\particle\state.cpp">
+      <Filter>src\rx\particle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\particle\system.cpp">
+      <Filter>src\rx\particle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\particle\vm.cpp">
+      <Filter>src\rx\particle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\memory\null_allocator.cpp">
+      <Filter>src\rx\core\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\memory\slab.cpp">
+      <Filter>src\rx\core\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\stream\buffered_stream.cpp">
+      <Filter>src\rx\core\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\stream\memory_stream.cpp">
+      <Filter>src\rx\core\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\stream\tracked_stream.cpp">
+      <Filter>src\rx\core\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\stream\untracked_stream.cpp">
+      <Filter>src\rx\core\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\color_grader.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\particle_system.cpp">
+      <Filter>src\rx\render</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\linear_buffer.cpp">
+      <Filter>src\rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\ldexp.cpp">
+      <Filter>src\rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\filesystem\buffered_file.cpp">
+      <Filter>src\rx\core\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\filesystem\unbuffered_file.cpp">
+      <Filter>src\rx\core\filesystem</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\scalbnf.cpp">
+      <Filter>src\rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\hash\djbx33a.cpp">
+      <Filter>src\rx\core\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\report.cpp">
+      <Filter>src\rx\core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\model\skeleton.cpp">
+      <Filter>src\rx\model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\math\dual_quat.cpp">
+      <Filter>src\rx\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\math\fract.cpp">
+      <Filter>src\rx\core\math</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\memory\search.cpp">
+      <Filter>src\rx\core\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\stb_image.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\game\terrain.h">
@@ -516,9 +564,6 @@
       <Filter>src\lib</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\display.h">
-      <Filter>src\rx</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\game.h">
       <Filter>src\rx</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\console\command.h">
@@ -542,16 +587,7 @@
     <ClInclude Include="src\rx\hud\render_stats.h">
       <Filter>src\rx\hud</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\image\convert.h">
-      <Filter>src\rx\image</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\image\intensity_map.h">
-      <Filter>src\rx\image</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\image\matrix.h">
-      <Filter>src\rx\image</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\image\normal_map.h">
       <Filter>src\rx\image</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\material\loader.h">
@@ -779,12 +815,6 @@
     <ClInclude Include="src\rx\core\filesystem\directory.h">
       <Filter>src\rx\core\filesystem</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\core\filesystem\file.h">
-      <Filter>src\rx\core\filesystem</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\filesystem\path_resolver.h">
-      <Filter>src\rx\core\filesystem</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\core\hash\fnv1a.h">
       <Filter>src\rx\core\hash</Filter>
     </ClInclude>
@@ -907,18 +937,6 @@
     </ClInclude>
     <ClInclude Include="src\rx\core\prng\mt19937.h">
       <Filter>src\rx\core\prng</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\serialize\buffer.h">
-      <Filter>src\rx\core\serialize</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\serialize\decoder.h">
-      <Filter>src\rx\core\serialize</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\serialize\encoder.h">
-      <Filter>src\rx\core\serialize</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\serialize\header.h">
-      <Filter>src\rx\core\serialize</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\time\delay.h">
       <Filter>src\rx\core\time</Filter>
@@ -1097,12 +1115,6 @@
     <ClInclude Include="src\rx\core\config.h">
       <Filter>src\rx\core</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\core\deferred_function.h">
-      <Filter>src\rx\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\dynamic_pool.h">
-      <Filter>src\rx\core</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\core\event.h">
       <Filter>src\rx\core</Filter>
     </ClInclude>
@@ -1113,9 +1125,6 @@
       <Filter>src\rx\core</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\global.h">
-      <Filter>src\rx\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\hash.h">
       <Filter>src\rx\core</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\intrusive_list.h">
@@ -1146,12 +1155,6 @@
       <Filter>src\rx\core</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\source_location.h">
-      <Filter>src\rx\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\static_pool.h">
-      <Filter>src\rx\core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\stream.h">
       <Filter>src\rx\core</Filter>
     </ClInclude>
     <ClInclude Include="src\rx\core\string.h">
@@ -1216,6 +1219,105 @@
     </ClInclude>
     <ClInclude Include="src\rx\engine.h">
       <Filter>src\rx</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\particle\assembler.h">
+      <Filter>src\rx\particle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\particle\emitter.h">
+      <Filter>src\rx\particle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\particle\program.h">
+      <Filter>src\rx\particle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\particle\state.h">
+      <Filter>src\rx\particle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\particle\system.h">
+      <Filter>src\rx\particle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\particle\vm.h">
+      <Filter>src\rx\particle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\memory\null_allocator.h">
+      <Filter>src\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\memory\slab.h">
+      <Filter>src\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\stream\buffered_stream.h">
+      <Filter>src\rx\core\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\stream\memory_stream.h">
+      <Filter>src\rx\core\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\stream\operations.h">
+      <Filter>src\rx\core\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\stream\tracked_stream.h">
+      <Filter>src\rx\core\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\stream\untracked_stream.h">
+      <Filter>src\rx\core\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\color_grader.h">
+      <Filter>src\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\particle_system.h">
+      <Filter>src\rx\render</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\linear_buffer.h">
+      <Filter>src\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\ldexp.h">
+      <Filter>src\rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\filesystem\buffered_file.h">
+      <Filter>src\rx\core\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\filesystem\unbuffered_file.h">
+      <Filter>src\rx\core\filesystem</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\scalbnf.h">
+      <Filter>src\rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hash\combine.h">
+      <Filter>src\rx\core\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hash\djbx33a.h">
+      <Filter>src\rx\core\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hash\hasher.h">
+      <Filter>src\rx\core\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hash\mix_enum.h">
+      <Filter>src\rx\core\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hash\mix_float.h">
+      <Filter>src\rx\core\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hash\mix_int.h">
+      <Filter>src\rx\core\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hash\mix_pointer.h">
+      <Filter>src\rx\core\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\hash\string.h">
+      <Filter>src\rx\core\hash</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\report.h">
+      <Filter>src\rx\core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\model\skeleton.h">
+      <Filter>src\rx\model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\math\dual_quat.h">
+      <Filter>src\rx\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\math\fract.h">
+      <Filter>src\rx\core\math</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\memory\search.h">
+      <Filter>src\rx\core\memory</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

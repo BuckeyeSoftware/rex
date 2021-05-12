@@ -57,13 +57,12 @@ struct FindContext {
 #endif
 
 Optional<Directory> Directory::open(Memory::Allocator& _allocator, const String& _path) {
-#if defined(RX_PLATFORM_POSIX)
   // Make a copy of the path name to store in Directory.
   auto path_copy = Utility::copy(_path);
   if (!path_copy) {
     return nullopt;
   }
-
+#if defined(RX_PLATFORM_POSIX)
   if (auto impl = opendir(_path.data())) {
     return Directory{_allocator, Utility::move(*path_copy), reinterpret_cast<void*>(impl)};
   }
@@ -76,8 +75,8 @@ Optional<Directory> Directory::open(Memory::Allocator& _allocator, const String&
     return nullopt;
   }
 
-  // Convert |m_path| to UTF-16 for Windows.
-  const auto path_utf16 = m_path.to_utf16();
+  // Convert |_path| to UTF-16 for Windows.
+  const auto path_utf16 = _path.to_utf16();
   static constexpr const wchar_t PATH_EXTRA[] = L"\\*";
   LinearBuffer path_data{_allocator};
   if (!path_data.resize(path_utf16.size() * 2 + sizeof PATH_EXTRA)) {
@@ -226,7 +225,7 @@ bool create_directory(const String& _path) {
   // also requires that "\\?\" be prepended to the |_path| to remove the 248
   // character limit. Windows 10 doesn't require this, but it doesn't hurt
   // to add it either.
-  const auto path = ("\\\\?\\" + _path).to_utf16();
+  const auto path = String::format(_path.allocator(), "\\\\?\\%s", _path).to_utf16();
   return CreateDirectoryW(reinterpret_cast<LPCWSTR>(path.data()), nullptr);
 #endif
 }
