@@ -58,6 +58,16 @@
             "repeat",
             "repeat"
           ]
+        },
+        {
+          file: "base/models/helmet/occlusion.jpg",
+          type: "occlusion",
+          filter: "bilinear",
+          mipmaps: true,
+          wrap: [
+            "repeat",
+            "repeat"
+          ]
         }
       ]
     }
