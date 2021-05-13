@@ -1,5 +1,9 @@
 #include "rx/math/aabb.h"
 #include "rx/math/mat4x4.h"
+#include "rx/math/ray.h"
+
+#include "rx/core/algorithm/min.h"
+#include "rx/core/algorithm/max.h"
 
 namespace Rx::Math {
 
@@ -26,26 +30,42 @@ AABB AABB::transform(const Mat4x4f& _mat) const {
   const Vec3f& za{z * m_min.z};
   const Vec3f& zb{z * m_max.z};
 
-  const auto min{[](const Vec3f& _lhs, const Vec3f& _rhs) -> Vec3f {
-    return {
-      Algorithm::min(_lhs.x, _rhs.x),
-      Algorithm::min(_lhs.y, _rhs.y),
-      Algorithm::min(_lhs.z, _rhs.z)
-    };
-  }};
-
-  const auto max{[](const Vec3f& _lhs, const Vec3f& _rhs) -> Vec3f {
-    return {
-      Algorithm::max(_lhs.x, _rhs.x),
-      Algorithm::max(_lhs.y, _rhs.y),
-      Algorithm::max(_lhs.z, _rhs.z)
-    };
-  }};
-
   return {
-    min(xa, xb) + min(ya, yb) + min(za, zb) + w,
-    max(xa, xb) + max(ya, yb) + max(za, zb) + w
+    Math::min(xa, xb) + Math::min(ya, yb) + Math::min(za, zb) + w,
+    Math::max(xa, xb) + Math::max(ya, yb) + Math::max(za, zb) + w
   };
+}
+
+Optional<Vec3f> AABB::ray_intersect(const Ray& _ray) const {
+  const auto& origin = _ray.point();
+  const auto& dir = _ray.direction();
+
+  const auto& inv_dir = 1.0f / dir;
+
+  const auto t1 = (m_min.x - origin.x) * inv_dir.x;
+  const auto t2 = (m_max.x - origin.x) * inv_dir.x;
+  const auto t3 = (m_min.y - origin.y) * inv_dir.y;
+  const auto t4 = (m_max.y - origin.y) * inv_dir.y;
+  const auto t5 = (m_min.z - origin.z) * inv_dir.z;
+  const auto t6 = (m_max.z - origin.z) * inv_dir.z;
+
+  const auto tmin = Algorithm::max(
+    Algorithm::min(t1, t2),
+    Algorithm::min(t3, t4),
+    Algorithm::min(t5, t6)
+  );
+
+  const auto tmax = Algorithm::min(
+    Algorithm::max(t1, t2),
+    Algorithm::max(t3, t4),
+    Algorithm::max(t5, t6)
+  );
+
+  if (tmax < 0.0f || tmin > tmax) {
+    return nullopt;
+  }
+
+  return tmin < 0.0f ? origin : _ray.point_at_time(tmin);
 }
 
 } // namespace Rx::Math

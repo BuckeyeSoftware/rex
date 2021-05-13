@@ -13,6 +13,8 @@ struct Ray {
 
   constexpr Vec3f closest_point(const Vec3f& _point) const;
 
+  constexpr Vec3f point_at_time(Float32 _time) const;
+
 private:
   Vec3f m_point;
   Vec3f m_direction;
@@ -36,6 +38,10 @@ inline constexpr Vec3f Ray::closest_point(const Vec3f& _point) const {
   const auto relative_point = m_point - _point;
   const auto relative_point_distance = -dot(m_direction, relative_point);
   return _point + relative_point + (m_direction * relative_point_distance);
+}
+
+inline constexpr Vec3f Ray::point_at_time(Float32 _time) const {
+  return m_point + m_direction * _time;
 }
 
 } // namespace Rx::Math

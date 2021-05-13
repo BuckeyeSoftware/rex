@@ -140,10 +140,10 @@ Float32 acos(Float32 _x) {
 
   // x < -0.5
   if (hx >> 31) {
-    const Float32 z{(1 + _x) * 0.5f};
-    const Float32 s{sqrt(z)};
-    const Float32 w{R(z) * s - PI_2_LO};
-    return 2*(PI_2_LO - (s+w));
+    const Float32 z = (1 + _x) * 0.5f;
+    const Float32 s = sqrt(z);
+    const Float32 w = R(z) * s - PI_2_LO;
+    return 2 * (PI_2_HI - (s+w));
   }
 
   // x > 0.5

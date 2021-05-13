@@ -116,6 +116,7 @@ bool Material::load(const Rx::Material::Loader& _loader) {
     for (const auto& item : table) {
       if (item.type == type) {
         find = &item;
+        break;
       }
     }
 
