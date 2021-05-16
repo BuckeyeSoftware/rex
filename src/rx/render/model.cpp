@@ -104,11 +104,11 @@ bool Model::upload(const Rx::Model::Loader& _loader) {
     format.record_vertex_stride(sizeof(Vertex));
     format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, position)});
     format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, normal)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32, offsetof(Vertex, occlusion)});
     format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x4, offsetof(Vertex, tangent)});
     format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x2, offsetof(Vertex, coordinate)});
     format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x4, offsetof(Vertex, blend_weights)});
     format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::S32x4, offsetof(Vertex, blend_indices)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32,   offsetof(Vertex, occlusion)});
     format.finalize();
 
     m_arena = m_frontend->arena(format);
@@ -127,10 +127,10 @@ bool Model::upload(const Rx::Model::Loader& _loader) {
     format.record_element_type(Frontend::Buffer::ElementType::U32);
     format.record_vertex_stride(sizeof(Vertex));
     format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, position)});
-    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32, offsetof(Vertex, occlusion)});
     format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, normal)});
     format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x4, offsetof(Vertex, tangent)});
     format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x2, offsetof(Vertex, coordinate)});
+    format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32, offsetof(Vertex, occlusion)});
     format.finalize();
 
     m_arena = m_frontend->arena(format);

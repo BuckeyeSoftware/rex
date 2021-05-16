@@ -20,20 +20,20 @@ struct Loader {
 
   struct Vertex {
     Math::Vec3f position;
-    Float32 occlusion;
     Math::Vec3f normal;
     Math::Vec4f tangent;
     Math::Vec2f coordinate;
+    Float32 occlusion;
   };
 
   struct AnimatedVertex {
     Math::Vec3f position;
-    Float32 occlusion;
     Math::Vec3f normal;
     Math::Vec4f tangent;
     Math::Vec2f coordinate;
     Math::Vec4f blend_weights;
     Math::Vec4i blend_indices;
+    Float32 occlusion;
   };
 
   bool is_animated() const;
