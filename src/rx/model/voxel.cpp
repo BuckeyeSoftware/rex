@@ -18,6 +18,8 @@
 #include "rx/math/vec2.h"
 #include "rx/math/ray.h"
 
+#include <stdio.h>
+
 namespace Rx::Model {
 
 // Maximum distance to rasterize in [0, 1) range. A value close to 1.0 is ideal.
@@ -167,22 +169,22 @@ Optional<Voxel> Voxel::create(Concurrency::Scheduler& _scheduler,
     bb.expand(b);
     bb.expand(c);
 
-    const auto& min_coord = ((bb.min() - min) / full_voxel_size).cast<Size>();
-    const auto& max_coord = ((bb.max() - min) / full_voxel_size).cast<Size>();
+    const auto& min_coord = ((bb.min() - min) / full_voxel_size).cast<Sint32>();
+    const auto& max_coord = ((bb.max() - min) / full_voxel_size).cast<Sint32>();
 
     // Determine the minimum and maximum coordinates in voxel-space, bounding
     // the triangle's axis-aligned bounding-box, this is the area that will be
     // rastized to.
     const Math::Vec3z min_coords = {
-      Algorithm::clamp(min_coord.x, 0_z, voxel_count.x - 1),
-      Algorithm::clamp(min_coord.y, 0_z, voxel_count.y - 1),
-      Algorithm::clamp(min_coord.z, 0_z, voxel_count.z - 1)
+      Size(Algorithm::clamp(min_coord.x, 0, Sint32(voxel_count.x - 1))),
+      Size(Algorithm::clamp(min_coord.y, 0, Sint32(voxel_count.y - 1))),
+      Size(Algorithm::clamp(min_coord.z, 0, Sint32(voxel_count.z - 1)))
     };
 
     const Math::Vec3z max_coords = {
-      Algorithm::clamp(max_coord.x, 0_z, voxel_count.x - 1),
-      Algorithm::clamp(max_coord.y, 0_z, voxel_count.y - 1),
-      Algorithm::clamp(max_coord.z, 0_z, voxel_count.z - 1)
+      Size(Algorithm::clamp(max_coord.x, 0, Sint32(voxel_count.x - 1))),
+      Size(Algorithm::clamp(max_coord.y, 0, Sint32(voxel_count.y - 1))),
+      Size(Algorithm::clamp(max_coord.z, 0, Sint32(voxel_count.z - 1)))
     };
 
     const auto count = max_coords - min_coords + 1_z;
@@ -196,8 +198,8 @@ Optional<Voxel> Voxel::create(Concurrency::Scheduler& _scheduler,
 
     // Out of memory.
     if (RX_HINT_UNLIKELY(!xy_mat || !xz_mat || !zy_mat)) {
-      return false;
-    }
+       return false;
+     }
 
     // Render the voxels for triangle |_triangle| in each plane.
     const Math::Mat3x3f triangle{a, b, c};
