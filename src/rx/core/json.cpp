@@ -45,7 +45,7 @@ static void* json_allocator(void* _user, Size _size) {
 JSON::Shared::Shared(Memory::Allocator& _allocator, const char* _contents, Size _length)
   : m_allocator{_allocator}
   , m_root{nullptr}
-  , m_count{1}
+  , m_count{0}
 {
   m_root = json_parse_ex(_contents, _length,
     (json_parse_flags_allow_c_style_comments |
@@ -58,13 +58,12 @@ JSON::Shared::Shared(Memory::Allocator& _allocator, const char* _contents, Size 
 }
 
 JSON::Shared* JSON::Shared::acquire() {
-  RX_ASSERT(m_count, "consistency check failed");
-  m_count++;
+  m_count.fetch_add(1, Concurrency::MemoryOrder::RELAXED);
   return this;
 }
 
 void JSON::Shared::release() {
-  if (--m_count == 0) {
+  if (m_count.fetch_sub(1, Concurrency::MemoryOrder::ACQ_REL) == 1) {
     m_allocator.destroy<Shared>(this);
   }
 }
@@ -79,11 +78,11 @@ Optional<JSON> JSON::parse(Memory::Allocator& _allocator, const char* _contents,
     return nullopt;
   }
 
-  JSON result;
-  result.m_value = shared->m_root;
-  result.m_shared = shared;
+  // JSON result;
+  // result.m_value = shared->m_root;
+  // result.m_shared = shared;
 
-  return result;
+  return JSON { shared, shared->m_root };
 }
 
 Optional<JSON> JSON::parse(Memory::Allocator& _allocator, const char* _contents) {
