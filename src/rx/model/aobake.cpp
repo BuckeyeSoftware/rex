@@ -71,6 +71,11 @@ Optional<Vector<Float32>> bake_ao(
     _config.voxelize_max_voxels_per_dimension,
     _config.voxelize_triangles_per_task);
 
+  if (!voxel) {
+    logger->error("failed to voxelize");
+    return nullopt;
+  }
+
   const auto n_vertices = _positions.size();
   Vector<float> ao;
   if (!ao.resize(n_vertices)) {
