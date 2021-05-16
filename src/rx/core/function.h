@@ -1,5 +1,6 @@
 #ifndef RX_CORE_FUNCTION_HDR
 #define RX_CORE_FUNCTION_HDR
+
 #include "rx/core/linear_buffer.h"
 #include "rx/core/concepts/invocable.h"
 #include "rx/core/utility/copy.h"
@@ -93,7 +94,7 @@ struct Function<R(Ts...)> {
 private:
   enum class Operation {
     DESTRUCT,
-    MOVE,
+    MOVE
   };
 
   static void move(Function* dst_, Function* src_) {
@@ -151,6 +152,7 @@ private:
       break;
     case Operation::MOVE:
       Utility::construct<F>(dst_, Utility::move(*reinterpret_cast<F*>(_src)));
+      Utility::destruct<F>(_src);
       break;
     }
   }
@@ -192,7 +194,7 @@ Optional<Function<R(Ts...)>> Function<R(Ts...)>::create(F&& _function) {
     return nullopt;
   }
 
-  Utility::construct<Control>(result.control(), Control{&invoke<F>, &modify<F>});
+  Utility::construct<Control>(result.control(), Control{&invoke<T>, &modify<T>});
   Utility::construct<T>(result.function(), Utility::forward<F>(_function));
 
   return result;
