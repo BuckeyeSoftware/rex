@@ -1,7 +1,9 @@
 #include <string.h> // memcpy
 
 #include "rx/model/loader.h"
+#include "rx/model/aobake.h"
 
+#include "rx/core/concurrency/thread_pool.h"
 #include "rx/core/filesystem/buffered_file.h"
 #include "rx/core/algorithm/max.h"
 #include "rx/core/map.h"
@@ -81,14 +83,6 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
       if (!generate_tangents()) {
         return false;
       }
-    }
-  }
-
-  // Check for occlusions.
-  if (m_occlusions.is_empty()) {
-    // Set them all to 1.0 (full distance).
-    if (!m_occlusions.resize(m_positions.size(), 1.0f)) {
-      return m_report.error("out of memory");
     }
   }
 
@@ -235,6 +229,29 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
       if (!mesh.bounds[0].push_back(aabb)) {
         return false;
       }
+    }
+  }
+
+  // Check for occlusions.
+  if (m_occlusions.is_empty()) {
+    Math::AABB aabb;
+    m_meshes.each_fwd([&](const Mesh& _mesh) {
+      aabb.expand(_mesh.bounds[0][0]);
+    });
+
+    /*
+    auto& scheduler = Concurrency::ThreadPool::instance();
+
+    // Set them all to 1.0 (full distance).
+    AoConfig config;
+    if (auto ao = bake_ao(scheduler, aabb, m_positions, m_elements, config)) {
+      m_occlusions = Utility::move(*ao);
+    }
+    */
+
+    // Set them all to 1.0 if none.
+    if (m_occlusions.is_empty() && !m_occlusions.resize(m_positions.size(), 1.0f)) {
+      return m_report.error("out of memory");
     }
   }
 
