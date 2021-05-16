@@ -549,6 +549,12 @@
     <ClCompile Include="src\lib\stb_image.cpp">
       <Filter>src\lib</Filter>
     </ClCompile>
+    <ClCompile Include="src\rx\model\aobake.cpp">
+      <Filter>src\rx\model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\model\voxel.cpp">
+      <Filter>src\rx\model</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\game\terrain.h">
@@ -1318,6 +1324,12 @@
     </ClInclude>
     <ClInclude Include="src\rx\core\memory\search.h">
       <Filter>src\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\model\aobake.h">
+      <Filter>src\rx\model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\model\voxel.h">
+      <Filter>src\rx\model</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

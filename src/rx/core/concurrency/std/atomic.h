@@ -25,10 +25,29 @@ static inline constexpr std::memory_order convert_memory_order(MemoryOrder _orde
 }
 
 template<typename T>
+struct CopyableAtomic
+  : std::atomic<T>
+{
+  CopyableAtomic()
+    : std::atomic<T>(T{}) {}
+
+  constexpr CopyableAtomic(T _value)
+    : std::atomic<T>(_value) {}
+
+  constexpr CopyableAtomic(const CopyableAtomic& _other)
+    : CopyableAtomic(_other.load(std::memory_order_relaxed)) {}
+
+  CopyableAtomic& operator=(const CopyableAtomic& _other) {
+    this->store(_other.load(std::memory_order_relaxed), std::memory_order_relaxed);
+    return *this;
+  }
+};
+
+template<typename T>
 struct AtomicBase {
   AtomicBase() = default;
   constexpr explicit AtomicBase(T _value) : value(_value) {}
-  std::atomic<T> value;
+  CopyableAtomic<T> value;
 };
 
 template<typename T>

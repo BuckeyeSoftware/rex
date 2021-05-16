@@ -98,7 +98,7 @@ struct AtomicValue : AtomicBase<T> {
 /// \warning Might not be lock-free. Use Atomic<T> for lock-free gurantees.
 template<typename T>
 struct AtomicValue {
-  RX_MARK_NO_COPY(AtomicValue);
+  // RX_MARK_NO_COPY(AtomicValue);
 
   /// Constructs an atomic value.
   AtomicValue() = default;

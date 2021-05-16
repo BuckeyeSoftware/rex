@@ -334,10 +334,12 @@
     <ClCompile Include="src\rx\math\vec3.cpp" />
     <ClCompile Include="src\rx\math\vec4.cpp" />
     <ClCompile Include="src\rx\model\animation.cpp" />
+    <ClCompile Include="src\rx\model\aobake.cpp" />
     <ClCompile Include="src\rx\model\importer.cpp" />
     <ClCompile Include="src\rx\model\iqm.cpp" />
     <ClCompile Include="src\rx\model\loader.cpp" />
     <ClCompile Include="src\rx\model\skeleton.cpp" />
+    <ClCompile Include="src\rx\model\voxel.cpp" />
     <ClCompile Include="src\rx\particle\assembler.cpp" />
     <ClCompile Include="src\rx\particle\emitter.cpp" />
     <ClCompile Include="src\rx\particle\program.cpp" />
@@ -589,10 +591,12 @@
     <ClInclude Include="src\rx\math\vec3.h" />
     <ClInclude Include="src\rx\math\vec4.h" />
     <ClInclude Include="src\rx\model\animation.h" />
+    <ClInclude Include="src\rx\model\aobake.h" />
     <ClInclude Include="src\rx\model\importer.h" />
     <ClInclude Include="src\rx\model\iqm.h" />
     <ClInclude Include="src\rx\model\loader.h" />
     <ClInclude Include="src\rx\model\skeleton.h" />
+    <ClInclude Include="src\rx\model\voxel.h" />
     <ClInclude Include="src\rx\particle\assembler.h" />
     <ClInclude Include="src\rx\particle\emitter.h" />
     <ClInclude Include="src\rx\particle\program.h" />

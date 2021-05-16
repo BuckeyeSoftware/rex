@@ -87,7 +87,7 @@ inline Animation& Animation::operator=(Animation&& animation_) {
     m_clip = Utility::exchange(animation_.m_clip, nullptr);
     m_rendered_lb_frames = Utility::move(animation_.m_rendered_lb_frames);
     m_rendered_dq_frames = Utility::move(animation_.m_rendered_dq_frames);
-    m_current_frame = Utility::exchange(animation_.m_current_frame, 0);
+    m_current_frame = Utility::exchange(animation_.m_current_frame, 0.0f);
     m_interpolant = Utility::move(animation_.m_interpolant);
     m_completed = Utility::exchange(animation_.m_completed, false);
   }

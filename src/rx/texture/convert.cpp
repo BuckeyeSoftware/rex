@@ -837,12 +837,15 @@ static RX_HINT_NO_INLINE void srgba_u8_to_rgba_f32(Byte *RX_HINT_RESTRICT dst_,
 {
   RX_HINT_ASSUME_ALIGNED(dst_, Memory::Allocator::ALIGNMENT);
   RX_HINT_ASSUME_ALIGNED(_src, Memory::Allocator::ALIGNMENT);
+
+  auto dst = reinterpret_cast<Float32*>(dst_);
+
   for (Size i = 0; i < _samples; i++, dst_ += 4, _src += 4) {
-    dst_[0] = sRGB_u8_to_linear_f32(_src[0]);
-    dst_[1] = sRGB_u8_to_linear_f32(_src[1]);
-    dst_[2] = sRGB_u8_to_linear_f32(_src[2]);
+    dst[0] = sRGB_u8_to_linear_f32(_src[0]);
+    dst[1] = sRGB_u8_to_linear_f32(_src[1]);
+    dst[2] = sRGB_u8_to_linear_f32(_src[2]);
   
-    dst_[3] = linear_u8_to_linear_f32(_src[3]);
+    dst[3] = linear_u8_to_linear_f32(_src[3]);
   }
 }
 
