@@ -62,12 +62,12 @@
       type: "vertex",
       inputs: [
         { name: "a_position",       type: "f32x3" },
+        { name: "a_occlusion",      type: "f32"   },
         { name: "a_normal",         type: "f32x3" },
         { name: "a_tangent",        type: "f32x4" },
         { name: "a_coordinate",     type: "f32x2" },
         { name: "a_blend_weights",  type: "f32x4", when: "FOR_LBS || FOR_DQS" },
-        { name: "a_blend_indices",  type: "s32x4", when: "FOR_LBS || FOR_DQS" },
-        { name: "a_occlusion",      type: "f32"   }
+        { name: "a_blend_indices",  type: "s32x4", when: "FOR_LBS || FOR_DQS" }
       ],
       outputs: [
         { name: "vs_normal",        type: "f32x3" },
@@ -162,7 +162,7 @@
         #endif
 
           // Calculate ambient factor from material if present.
-          f32 ambient = vs_occlusion; //  * u_occlusion_value;
+          f32 ambient = vs_occlusion * u_occlusion_value;
         #if defined(HAS_AMBIENT)
           ambient *= rx_texture2D(u_ambient, vs_coordinate).r;
         #endif
