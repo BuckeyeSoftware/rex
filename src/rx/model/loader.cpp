@@ -25,7 +25,6 @@ Loader::Loader(Memory::Allocator& _allocator)
   , m_elements{allocator()}
   , m_meshes{allocator()}
   , m_clips{allocator()}
-  , m_positions{allocator()}
   , m_materials{allocator()}
   , m_name{allocator()}
   , m_flags{0}
@@ -169,17 +168,18 @@ bool Loader::import(const String& _file_name) {
   destroy();
   m_materials.clear();
 
-  m_positions = Utility::move(new_loader->positions());
   m_meshes = Utility::move(new_loader->meshes());
   m_elements = Utility::move(new_loader->elements());
   m_clips = Utility::move(new_loader->clips());
   m_skeleton = Utility::move(new_loader->skeleton());
 
+  const auto& positions = new_loader->positions();
   const auto& normals = new_loader->normals();
   const auto& tangents = new_loader->tangents();
-  const auto& coordinates =new_loader->coordinates();
+  const auto& coordinates = new_loader->coordinates();
+  const auto& occlusions = new_loader->occlusions();
 
-  const Size n_vertices{m_positions.size()};
+  const Size n_vertices = positions.size();
 
   if (m_clips.is_empty()) {
     Utility::construct<Vector<Vertex>>(&as_vertices, allocator());
@@ -201,7 +201,8 @@ bool Loader::import(const String& _file_name) {
     if (m_clips.is_empty()) {
       for (Size i{0}; i < n_vertices; i++) {
         const Math::Vec3f tangent{Math::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
-        as_vertices[i].position = Math::transform_point(m_positions[i], transform);
+        as_vertices[i].position = Math::transform_point(positions[i], transform);
+        as_vertices[i].occlusion = occlusions[i];
         as_vertices[i].normal = Math::transform_vector(normals[i], transform);
         as_vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangents[i].w};
         as_vertices[i].coordinate = coordinates[i];
@@ -211,7 +212,8 @@ bool Loader::import(const String& _file_name) {
       const auto& blend_indices{new_loader->blend_indices()};
       for (Size i{0}; i < n_vertices; i++) {
         const Math::Vec3f tangent{Math::transform_vector({tangents[i].x, tangents[i].y, tangents[i].z}, transform)};
-        as_animated_vertices[i].position = Math::transform_point(m_positions[i], transform);
+        as_animated_vertices[i].position = Math::transform_point(positions[i], transform);
+        as_animated_vertices[i].occlusion = occlusions[i];
         as_animated_vertices[i].normal = Math::transform_vector(normals[i], transform);
         as_animated_vertices[i].tangent = {tangent.x, tangent.y, tangent.z, tangents[i].w};
         as_animated_vertices[i].coordinate = coordinates[i];
@@ -231,7 +233,8 @@ bool Loader::import(const String& _file_name) {
   } else {
     if (m_clips.is_empty()) {
       for (Size i = 0; i < n_vertices; i++) {
-        as_vertices[i].position = m_positions[i];
+        as_vertices[i].position = positions[i];
+        as_vertices[i].occlusion = occlusions[i];
         as_vertices[i].normal = normals[i];
         as_vertices[i].tangent = tangents[i];
         as_vertices[i].coordinate = coordinates[i];
@@ -240,7 +243,8 @@ bool Loader::import(const String& _file_name) {
       const auto& blend_weights = new_loader->blend_weights();
       const auto& blend_indices = new_loader->blend_indices();
       for (Size i = 0; i < n_vertices; i++) {
-        as_animated_vertices[i].position = m_positions[i];
+        as_animated_vertices[i].position = positions[i];
+        as_animated_vertices[i].occlusion = occlusions[i];
         as_animated_vertices[i].normal = normals[i];
         as_animated_vertices[i].tangent = tangents[i];
         as_animated_vertices[i].coordinate = coordinates[i];

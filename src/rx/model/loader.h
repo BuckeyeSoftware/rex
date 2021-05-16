@@ -20,6 +20,7 @@ struct Loader {
 
   struct Vertex {
     Math::Vec3f position;
+    Float32 occlusion;
     Math::Vec3f normal;
     Math::Vec4f tangent;
     Math::Vec2f coordinate;
@@ -27,6 +28,7 @@ struct Loader {
 
   struct AnimatedVertex {
     Math::Vec3f position;
+    Float32 occlusion;
     Math::Vec3f normal;
     Math::Vec4f tangent;
     Math::Vec2f coordinate;
@@ -73,7 +75,6 @@ private:
   Vector<Mesh> m_meshes;
   Vector<Clip> m_clips;
   Optional<Skeleton> m_skeleton;
-  Vector<Math::Vec3f> m_positions;
   Optional<Math::Transform> m_transform;
   Map<String, Material::Loader> m_materials;
   String m_name;

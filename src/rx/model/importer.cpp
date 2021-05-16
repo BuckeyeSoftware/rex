@@ -84,6 +84,14 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
     }
   }
 
+  // Check for occlusions.
+  if (m_occlusions.is_empty()) {
+    // Set them all to 1.0 (full distance).
+    if (!m_occlusions.resize(m_positions.size(), 1.0f)) {
+      return m_report.error("out of memory");
+    }
+  }
+
   // Ensure none of the normals, tangents or coordinates go out of bounds of
   // the loaded model.
   if (m_normals.size() != vertices) {

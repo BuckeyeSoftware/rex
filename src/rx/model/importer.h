@@ -41,9 +41,10 @@ struct Importer {
 
   Vector<Mesh>&& meshes();
   Vector<Uint32>&& elements();
-  Vector<Math::Vec3f>&& positions();
   Optional<Skeleton>&& skeleton();
 
+  const Vector<Math::Vec3f>& positions() const &;
+  const Vector<Float32>& occlusions() const &;
   const Vector<Math::Vec2f>& coordinates() const &;
   const Vector<Math::Vec3f>& normals() const &;
   const Vector<Math::Vec4f>& tangents() const &;
@@ -64,6 +65,7 @@ protected:
   Vector<Mesh> m_meshes;
   Vector<Uint32> m_elements;
   Vector<Math::Vec3f> m_positions;
+  Vector<Float32> m_occlusions;
   Vector<Math::Vec2f> m_coordinates;
   Vector<Math::Vec3f> m_normals;
   Vector<Math::Vec4f> m_tangents; // w = bitangent sign
@@ -83,8 +85,12 @@ inline Vector<Uint32>&& Importer::elements() {
   return Utility::move(m_elements);
 }
 
-inline Vector<Math::Vec3f>&& Importer::positions() {
-  return Utility::move(m_positions);
+inline const Vector<Math::Vec3f>& Importer::positions() const & {
+  return m_positions;
+}
+
+inline const Vector<Float32>& Importer::occlusions() const & {
+  return m_occlusions;
 }
 
 inline const Vector<Math::Vec2f>& Importer::coordinates() const & {
