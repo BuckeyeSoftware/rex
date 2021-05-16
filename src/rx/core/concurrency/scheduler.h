@@ -25,6 +25,10 @@ struct Scheduler {
   template<typename F>
   [[nodiscard]] bool add(F&& functor_);
 
+  /// Determine how many threads of execution are on this scheduler.
+  virtual Size total_threads() const = 0;
+  virtual Size active_threads() const = 0;
+
   /// The function which must be implemented to add a task to the scheduler.
   /// \param task_ The task to add.
   [[nodiscard]] virtual bool add_task(Task&& task_) = 0;

@@ -52,6 +52,7 @@ ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _stati
         Function<void(int)> task;
         {
           ScopeLock lock{m_mutex};
+
           m_task_cond.wait(lock, [this] { return m_stop || !m_queue.is_empty(); });
           if (m_stop && m_queue.is_empty()) {
             logger->info("stopping thread %d", _thread_id);
@@ -66,6 +67,7 @@ ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _stati
           m_job_memory.destroy(item);
         }
 
+        m_active_threads++;
         logger->verbose("starting task on thread %d", _thread_id);
 
         Time::StopWatch timer;
@@ -75,6 +77,7 @@ ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _stati
 
         logger->verbose("finished task on thread %d (took %s)",
           _thread_id, timer.elapsed());
+        m_active_threads--;
       }
     });
 
@@ -124,6 +127,14 @@ bool ThreadPool::add_task(Function<void(int)>&& task_) {
   m_task_cond.signal();
 
   return true;
+}
+
+Size ThreadPool::total_threads() const {
+  return m_threads.size();
+}
+
+Size ThreadPool::active_threads() const {
+  return m_active_threads.load();
 }
 
 } // namespace Rx::Concurrency

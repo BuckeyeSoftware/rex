@@ -25,6 +25,9 @@ struct RX_API ThreadPool
 
   [[nodiscard]] virtual bool add_task(Task&& task_);
 
+  virtual Size total_threads() const;
+  virtual Size active_threads() const;
+
   constexpr Memory::Allocator& allocator() const;
 
   static constexpr ThreadPool& instance();
@@ -42,6 +45,7 @@ private:
   bool m_stop               RX_HINT_GUARDED_BY(m_mutex);
   Time::StopWatch m_timer;
   Concurrency::Atomic<Size> m_ready;
+  Concurrency::Atomic<Size> m_active_threads;
 
   static Global<ThreadPool> s_instance;
 };
