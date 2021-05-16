@@ -1,5 +1,4 @@
 #include <string.h> // memcpy
-#include <stdio.h> // printf
 
 #include "rx/particle/state.h"
 #include "rx/core/utility/swap.h"
