@@ -23,7 +23,7 @@ struct Report {
 
   template<typename... Ts>
   RX_HINT_FORMAT(3, 0)
-  [[nodiscard]] bool log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
+  bool log(Log::Level _level, const char* _format, Ts&&... _arguments) const;
 
   template<typename... Ts>
   RX_HINT_FORMAT(2, 0)
