@@ -39,13 +39,13 @@ static Math::Vec3f random_unit_vec(PRNG::MT19937& _rng) {
   };
 }
 
-float compute_ao(const Vector<float>& _ray_results, Float32 _max_distance, int rayCount, Float32 _fall_off) {
+float compute_ao(const Vector<float>& _ray_results, Float32 _max_distance, Size _ray_count, Float32 _fall_off) {
   Float32 brightness = 1.0f;
   const auto inv_max_distance = 1.0f / _max_distance;
   _ray_results.each_fwd([&](Float32 _distance) {
     const auto normalized_distance = _distance * inv_max_distance;
     const auto occlusion = 1.0f - Math::pow(normalized_distance, _fall_off);
-    brightness -= occlusion / rayCount;
+    brightness -= occlusion / _ray_count;
   });
   return Algorithm::min(1.0f, brightness * SQRT_2);
 }
@@ -129,7 +129,7 @@ Optional<Vector<Float32>> bake_ao(
   };
 
   // Denoising pass
-  for (Size pass = 0; pass < 2; pass++) {
+  for (Size pass = 0; pass < _config.denoising_passes; pass++) {
     const auto n_elements = _elements.size();
     for (Size element = 0; element < n_elements; element += 3) {
       const auto average =
@@ -137,9 +137,9 @@ Optional<Vector<Float32>> bake_ao(
          ao[_elements[element + 1]] +
          ao[_elements[element + 2]]) / 3.0f;
 
-      ao[_elements[element + 0]] = mix(ao[_elements[element + 0]], average, 0.2f);
-      ao[_elements[element + 1]] = mix(ao[_elements[element + 1]], average, 0.2f);
-      ao[_elements[element + 2]] = mix(ao[_elements[element + 2]], average, 0.2f);
+      ao[_elements[element + 0]] = mix(ao[_elements[element + 0]], average, _config.denoising_weight);
+      ao[_elements[element + 1]] = mix(ao[_elements[element + 1]], average, _config.denoising_weight);
+      ao[_elements[element + 2]] = mix(ao[_elements[element + 2]], average, _config.denoising_weight);
     }
   }
 
