@@ -1,11 +1,12 @@
 #ifndef RX_CORE_PRNG_MT19937_H
 #define RX_CORE_PRNG_MT19937_H
 #include "rx/core/types.h"
+#include "rx/core/concurrency/mutex.h"
 
 namespace Rx::PRNG {
 
 struct RX_API MT19937 {
-  constexpr MT19937();
+  MT19937();
 
   void seed(Uint32 _seed);
 
@@ -23,16 +24,13 @@ private:
 
   void generate();
 
-  union {
-    struct {} m_nat;
-    Uint32 m_state[SIZE];
-  };
+  Uint32 m_state[SIZE];
   Size m_index;
+  Concurrency::Mutex m_lock;
 };
 
-inline constexpr MT19937::MT19937()
-  : m_nat{}
-  , m_index{0}
+inline MT19937::MT19937()
+  : m_index{0}
 {
 }
 

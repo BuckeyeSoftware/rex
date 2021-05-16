@@ -24,6 +24,8 @@ void MT19937::seed(Uint32 _seed) {
 }
 
 Uint32 MT19937::u32() {
+  m_lock.lock();
+
   if (RX_HINT_UNLIKELY(m_index == 0)) {
     generate();
   }
@@ -38,6 +40,8 @@ Uint32 MT19937::u32() {
   if (RX_HINT_UNLIKELY(++m_index == SIZE)) {
     m_index = 0;
   }
+
+  m_lock.unlock();
 
   return value;
 }
