@@ -200,7 +200,7 @@ bool Loader::parse(const JSON& _definition) {
 }
 
 bool Loader::parse_textures(const JSON& _textures) {
-  return _textures.each([&](const JSON& _texture) {
+  return _textures.each([this](const JSON& _texture) {
     Texture new_texture{allocator()};
     if (_texture.is_string() && new_texture.load(_texture.as_string_with_allocator(allocator()))) {
       return m_textures.push_back(Utility::move(new_texture));
