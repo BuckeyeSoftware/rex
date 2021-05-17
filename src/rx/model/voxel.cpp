@@ -23,7 +23,7 @@
 namespace Rx::Model {
 
 // Maximum distance to rasterize in [0, 1) range. A value close to 1.0 is ideal.
-static constexpr const auto RASTERIZE_MAX_DISTANCE = 0.75f;
+static constexpr const auto RASTERIZE_MAX_DISTANCE = 0.7f;
 
 // Calculate the distance from point |_p| to a line segment [|_l0|, |_l1|].
 static Float32 line_segment_point_distance(const Math::Vec2f& _p,
@@ -362,7 +362,7 @@ Optional<Float32> Voxel::ray_cast(const Math::Ray& _ray) const {
 
     if (m_voxels[index] && in_air) {
       // Distance to origin of voxel, not a corner point.
-      return Math::length(_ray.point() - center);
+      return Math::length(_ray.point() - voxel_origin(voxel));
     }
   }
 }
