@@ -1,7 +1,7 @@
 #ifndef RX_CORE_MEMORY_BUMP_POINT_ALLOCATOR_H
 #define RX_CORE_MEMORY_BUMP_POINT_ALLOCATOR_H
 #include "rx/core/memory/allocator.h"
-#include "rx/core/concurrency/spin_lock.h"
+#include "rx/core/concurrency/word_lock.h"
 
 /// \file bump_point_allocator.h
 
@@ -44,7 +44,7 @@ private:
   Size m_size;
   Byte* m_data;
 
-  Concurrency::SpinLock m_lock;
+  Concurrency::WordLock m_lock;
 
   Byte* m_this_point RX_HINT_GUARDED_BY(m_lock);
   Byte* m_last_point RX_HINT_GUARDED_BY(m_lock);

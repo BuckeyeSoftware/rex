@@ -4,7 +4,7 @@
 #include "rx/math/mat4x4.h"
 
 #include "rx/core/string.h"
-#include "rx/core/concurrency/spin_lock.h"
+#include "rx/core/concurrency/word_lock.h"
 
 #include "rx/render/color_grader.h"
 
@@ -63,7 +63,7 @@ private:
   Concurrency::Atomic<Frontend::Texture*> m_texture;
   String m_name;
 
-  Concurrency::SpinLock m_lock;
+  Concurrency::WordLock m_lock;
 };
 
 inline constexpr Skybox::Skybox(Frontend::Context* _frontend, Frontend::Technique* _technique)

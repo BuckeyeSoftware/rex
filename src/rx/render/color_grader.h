@@ -1,6 +1,7 @@
 #ifndef RX_RENDER_COLOR_GRADER_H
 #define RX_RENDER_COLOR_GRADER_H
 #include "rx/core/memory/null_allocator.h"
+#include "rx/core/concurrency/word_lock.h"
 
 #include "rx/core/bitset.h"
 #include "rx/core/string.h"
@@ -98,7 +99,7 @@ struct ColorGrader {
     Vector<Math::Vec4h> m_neutral;
 
     // Scratch space for performing LUT conversions to avoid allocations.
-    Concurrency::SpinLock m_scratch_lock;
+    Concurrency::WordLock m_scratch_lock;
     Vector<Math::Vec4h> m_scratch RX_HINT_GUARDED_BY(m_scratch_lock);
   };
 
@@ -111,7 +112,7 @@ struct ColorGrader {
 private:
   Frontend::Context* m_frontend;
 
-  Concurrency::SpinLock m_atlases_lock;
+  Concurrency::WordLock m_atlases_lock;
   Map<Size, Atlas> m_atlases RX_HINT_GUARDED_BY(m_atlases_lock);
 };
 
