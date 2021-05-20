@@ -39,7 +39,7 @@ struct AoConfig {
   Uint32 raytrace_seed = 0xdeadbeef;
 
   // Soft attenuation / fall-off for the AO as an exponent.
-  Float32 fall_off = 6.0f;
+  Float32 fall_off = 1.1f;
 
   // Denoising passes to cleanup noise. The more passes the softer.
   Size denoising_passes = 2;

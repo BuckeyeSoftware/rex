@@ -69,7 +69,7 @@ static Float32 tri_point_distance(const Math::Vec2f& _p, const Math::Vec2f& _t0,
   return Algorithm::min(a, b, c);
 }
 
-// Rasterizes triangle |_a, _b, _c| within the voxel space bounded by
+// Rasterizes triangle |_triangle| within the voxel space bounded by
 // [|_min, |_max|) into |plane_set| with voxel size |_voxel_size|.
 template<Size I, Size J>
 static void voxelize_in_plane(
