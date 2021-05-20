@@ -1,7 +1,7 @@
 #ifndef RX_CORE_CONCURRENCY_SPIN_LOCK_H
 #define RX_CORE_CONCURRENCY_SPIN_LOCK_H
 #include "rx/core/concurrency/atomic.h" // AtomicFlag
-#include "rx/core/hints/thread.h"
+#include "rx/core/hints/thread.h" // RX_HINT_{LOCKABLE, ACQUIRE, RELEASE}
 
 /// \file spin_lock.h
 
@@ -26,7 +26,8 @@ namespace Rx::Concurrency {
 /// those threads will spin forever consuming CPU time.
 struct RX_API RX_HINT_LOCKABLE SpinLock {
   /// Construct a SpinLock.
-  constexpr SpinLock();
+  constexpr SpinLock() = default;
+
   /// Destruct a SpinLock.
   ~SpinLock() = default;
 
@@ -38,14 +39,10 @@ struct RX_API RX_HINT_LOCKABLE SpinLock {
 
   /// Unlocks the SpinLock.
   void unlock() RX_HINT_RELEASE();
-private:
-  AtomicFlag m_lock;
-};
 
-inline constexpr SpinLock::SpinLock()
-  : m_lock{false}
-{
-}
+private:
+  AtomicFlag m_lock { false };
+};
 
 } // namespace Rx::Concurrency
 
