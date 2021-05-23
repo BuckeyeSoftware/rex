@@ -1,9 +1,9 @@
 #include "rx/math/noise/perlin.h"
 #include "rx/core/math/floor.h"
-#include "rx/core/prng/mt19937.h"
+#include "rx/core/random/mt19937.h"
 #include "rx/core/utility/swap.h"
 
-namespace Rx::Math::noise {
+namespace Rx::Math::Noise {
 
 static inline Float32 fade(Float32 _t) {
   return _t * _t * _t * (_t * (_t * 6.0f - 15.0f) + 10.0f);
@@ -20,8 +20,8 @@ static inline Float32 grad(Byte _hash, Float32 _x, Float32 _y, Float32 _z) {
   return ((_hash & 1) == 0 ? u : -u) + ((hash & 2) == 0 ? v : -v);
 }
 
-Perlin::Perlin(PRNG::MT19937& _mt19937)
-  : m_mt19937{_mt19937}
+Perlin::Perlin(Random::Context& _random)
+  : m_random{_random}
 {
   reseed();
 }
@@ -33,7 +33,7 @@ void Perlin::reseed() {
 
   Size n{256};
   for (Size i{0}; i < n - 1; i++) {
-    const Size j{m_mt19937.u32() % (i + 1)};
+    const Size j{m_random.u32() % (i + 1)};
     Utility::swap(m_data[i], m_data[j]);
   }
 

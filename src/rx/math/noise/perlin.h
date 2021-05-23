@@ -2,14 +2,14 @@
 #define RX_MATH_NOISE_PERLIN_H
 #include "rx/core/types.h"
 
-namespace Rx::PRNG {
-  struct MT19937;
+namespace Rx::Random {
+  struct Context;
 }
 
-namespace Rx::Math::noise {
+namespace Rx::Math::Noise {
 
 struct Perlin {
-  Perlin(PRNG::MT19937& _mt19937);
+  Perlin(Random::Context& _context);
 
   Float32 noise(Float32 _x) const;
   Float32 noise(Float32 _x, Float32 _y) const;
@@ -18,7 +18,7 @@ struct Perlin {
   void reseed();
 
 private:
-  PRNG::MT19937& m_mt19937;
+  Random::Context& m_random;
   Byte m_data[512];
 };
 

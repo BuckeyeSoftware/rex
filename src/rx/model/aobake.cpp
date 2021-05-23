@@ -15,7 +15,7 @@
 
 #include "rx/math/ray.h"
 
-#include "rx/core/prng/mt19937.h"
+#include "rx/core/random/mt19937.h"
 
 namespace Rx::Model {
 
@@ -28,7 +28,7 @@ static constexpr const auto SQRT_2 = 1.41421356237f;
 // false self-occlusion.
 static constexpr const auto ORIGIN_OFFSET = 0.0001f;
 
-static Math::Vec3f random_unit_vec(PRNG::MT19937& _rng) {
+static Math::Vec3f random_unit_vec(Random::Context& _rng) {
   const auto phi = _rng.f32() * Math::TAU<Float32>;
   const auto cos_theta = _rng.f32() * 2.0f - 1.0f;
   const auto theta = Math::acos(cos_theta);
@@ -59,7 +59,7 @@ Optional<Vector<Float32>> bake_ao(
 {
   const auto max_distance = Math::length(_aabb.max() - _aabb.min());
 
-  PRNG::MT19937 random;
+  Random::MT19937 random;
   random.seed(_config.raytrace_seed);
 
   auto voxel = Voxel::create(

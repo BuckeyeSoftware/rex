@@ -1,7 +1,8 @@
-#include "rx/core/prng/mt19937.h"
+#include "rx/core/random/mt19937.h"
+#include "rx/core/concurrency/scope_lock.h"
 #include "rx/core/hints/unlikely.h"
 
-namespace Rx::PRNG {
+namespace Rx::Random {
 
 static inline constexpr Uint32 m32(Uint32 _x) {
   return 0x80000000 & _x;
@@ -15,7 +16,7 @@ static inline constexpr bool odd(Uint32 _x) {
   return _x & 1;
 }
 
-void MT19937::seed(Uint32 _seed) {
+void MT19937::seed(Uint64 _seed) {
   m_index = 0;
   m_state[0] = _seed;
   for (Size i = 1; i < SIZE; i++) {
@@ -23,9 +24,7 @@ void MT19937::seed(Uint32 _seed) {
   }
 }
 
-Uint32 MT19937::u32() {
-  m_lock.lock();
-
+Uint32 MT19937::u32_unlocked() {
   if (RX_HINT_UNLIKELY(m_index == 0)) {
     generate();
   }
@@ -40,8 +39,6 @@ Uint32 MT19937::u32() {
   if (RX_HINT_UNLIKELY(++m_index == SIZE)) {
     m_index = 0;
   }
-
-  m_lock.unlock();
 
   return value;
 }
@@ -85,4 +82,24 @@ void MT19937::generate() {
   m_state[SIZE - 1] = m_state[PERIOD - 1] ^ (y >> 1) ^ (0x9908b0df * odd(y));
 }
 
-} // namespace Rx::PRNG
+Uint32 MT19937::u32() {
+  Concurrency::ScopeLock lock{m_lock};
+  return u32_unlocked();
+}
+
+Uint64 MT19937::u64() {
+  Concurrency::ScopeLock lock{m_lock};
+  const auto a = u32_unlocked();
+  const auto b = u32_unlocked();
+  return static_cast<Uint64>(a) << 32_u64 | b;
+}
+
+inline Float32 MT19937::f32() {
+  return static_cast<Float32>(u32()) / Float32(MAX);
+}
+
+inline Float64 MT19937::f64() {
+  return static_cast<Float64>(u64()) / Float64(MAX);
+}
+
+} // namespace Rx::Random
