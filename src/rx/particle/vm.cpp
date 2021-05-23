@@ -1,4 +1,3 @@
-#include <stdlib.h> // rand, RAND_MAX.
 #include <string.h> // memcpy
 
 #include "rx/particle/vm.h"
@@ -8,17 +7,21 @@
 #include "rx/core/math/cos.h"
 #include "rx/core/math/tan.h"
 
+#include "rx/core/random/context.h"
+
 namespace Rx::Particle {
 
 static inline auto mix(auto x, auto y, Float32 a) {
   return x * (1.0f - a) + y * a;
 }
 
-static inline Float32 rnd(Float32 _min, Float32 _max) {
-  return ((Float32(rand()) / Float32(RAND_MAX)) * (_max - _min)) + _min;
+static inline Float32 rnd(Random::Context& _random, Float32 _min, Float32 _max) {
+  return (_random.f32() * (_max - _min)) + _min;
 }
 
-VM::Result VM::execute(const Parameters& _parameters, const Program& _program) {
+VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
+  const Program& _program)
+{
   Result result;
 
   auto rd_s = [this](Uint8 _i) {
@@ -245,10 +248,16 @@ VM::Result VM::execute(const Parameters& _parameters, const Program& _program) {
     case Instruction::OpCode::RND:
       switch (instruction.a.w) {
       case Instruction::Width::SCALAR:
-        wr_s(instruction.a.i, rnd(0.0f, 1.0f));
+        wr_s(instruction.a.i, rnd(_random, 0.0f, 1.0f));
         break;
       case Instruction::Width::VECTOR:
-        wr_v(instruction.a.i, Math::Vec4f{rnd(0.0f, 1.0f), rnd(0.0f, 1.0f), rnd(0.0f, 1.0f), rnd(0.0f, 1.0f)});
+        wr_v(
+          instruction.a.i,
+          Math::Vec4f {
+            rnd(_random, 0.0f, 1.0f),
+            rnd(_random, 0.0f, 1.0f),
+            rnd(_random, 0.0f, 1.0f),
+            rnd(_random, 0.0f, 1.0f)});
         break;
       }
       break;

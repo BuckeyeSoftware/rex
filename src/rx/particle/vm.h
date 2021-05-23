@@ -5,6 +5,10 @@
 #include "rx/math/vec3.h"
 #include "rx/math/vec4.h"
 
+namespace Rx::Random {
+  struct Context;
+} // namespace Rx::Random
+
 namespace Rx::Particle {
 
 struct Program;
@@ -136,7 +140,8 @@ struct VM {
     Uint8 mask;
   };
 
-  Result execute(const Parameters& _parameters, const Program& _program);
+  Result execute(Random::Context& _random, const Parameters& _parameters,
+    const Program& _program);
 
 private:
   union {
