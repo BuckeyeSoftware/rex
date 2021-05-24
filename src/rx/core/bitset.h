@@ -17,10 +17,10 @@ namespace Rx {
 struct RX_API Bitset {
   RX_MARK_NO_COPY(Bitset);
 
-  using BitType = Uint64;
+  using WordType = Uint64;
 
-  static constexpr const BitType BIT_ONE = 1;
-  static constexpr const Size WORD_BITS = 8 * sizeof(BitType);
+  static constexpr const WordType BIT_ONE = 1;
+  static constexpr const Size WORD_BITS = 8 * sizeof(WordType);
 
   /// Default construct a bitset.
   constexpr Bitset();
@@ -101,7 +101,7 @@ private:
 
   static Optional<Bitset> create_uninitialized(Memory::Allocator& _allocator, Size _size);
 
-  static Size bytes_for_size(Size _size);
+  static Size words_for_size(Size _size);
 
   static Size index(Size bit);
   static Size offset(Size bit);
@@ -110,7 +110,7 @@ private:
 
   Memory::Allocator* m_allocator;
   Size m_size;
-  BitType* m_data;
+  WordType* m_data;
 };
 
 inline void Bitset::move(Bitset* dst_, Bitset* src_) {
@@ -161,8 +161,8 @@ inline Size Bitset::size() const {
   return m_size;
 }
 
-inline Size Bitset::bytes_for_size(Size _size) {
-  return sizeof(BitType) * (_size / WORD_BITS + 1);
+inline Size Bitset::words_for_size(Size _size) {
+  return _size / WORD_BITS + 1;
 }
 
 inline Size Bitset::index(Size _bit) {

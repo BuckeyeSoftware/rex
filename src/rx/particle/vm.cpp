@@ -1,5 +1,3 @@
-#include <string.h> // memcpy
-
 #include "rx/particle/vm.h"
 #include "rx/particle/program.h"
 

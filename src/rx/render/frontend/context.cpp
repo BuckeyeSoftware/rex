@@ -419,16 +419,16 @@ void Context::update_buffer(const CommandHeader::Info& _info, Buffer* _buffer) {
       return;
     }
 
+    using EditType = Buffer::Edit;
     const auto n_edits = edits.size();
-    const Size edit_bytes = n_edits * sizeof(Buffer::Edit);
 
-    auto command_base = m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::RESOURCE_UPDATE, _info);
+    auto command_base = m_command_buffer.allocate(sizeof(UpdateCommand) + n_edits * sizeof(EditType), CommandType::RESOURCE_UPDATE, _info);
     auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
 
     command->edits = n_edits;
     command->type = UpdateCommand::Type::BUFFER;
     command->as_buffer = _buffer;
-    memcpy(command->edit(), edits.data(), edit_bytes);
+    Memory::copy(command->edit<EditType>(), edits.data(), n_edits);
     m_commands.push_back(command_base);
 
     // So we can clear edit list after processing.
@@ -449,16 +449,16 @@ void Context::update_texture(const CommandHeader::Info& _info, Texture1D* _textu
       return;
     }
 
+    using EditType = Texture::Edit<Texture1D::DimensionType>;
     const auto n_edits = edits.size();
-    const Size edit_bytes = n_edits * sizeof(Texture::Edit<Texture1D::DimensionType>);
 
-    auto command_base = m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::RESOURCE_UPDATE, _info);
+    auto command_base = m_command_buffer.allocate(sizeof(UpdateCommand) + n_edits * sizeof(EditType), CommandType::RESOURCE_UPDATE, _info);
     auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
 
     command->edits = n_edits;
     command->type = UpdateCommand::Type::TEXTURE1D;
     command->as_texture1D = _texture;
-    memcpy(command->edit(), edits.data(), edit_bytes);
+    Memory::copy(command->edit<EditType>(), edits.data(), n_edits);
     m_commands.push_back(command_base);
 
     // So we can clear edit list after processing.
@@ -479,16 +479,16 @@ void Context::update_texture(const CommandHeader::Info& _info, Texture2D* _textu
       return;
     }
 
+    using EditType = Texture::Edit<Texture2D::DimensionType>;
     const auto n_edits = edits.size();
-    const Size edit_bytes = n_edits * sizeof(Texture::Edit<Texture2D::DimensionType>);
 
-    auto command_base = m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::RESOURCE_UPDATE, _info);
+    auto command_base = m_command_buffer.allocate(sizeof(UpdateCommand) + n_edits * sizeof(EditType), CommandType::RESOURCE_UPDATE, _info);
     auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
 
     command->edits = n_edits;
     command->type = UpdateCommand::Type::TEXTURE2D;
     command->as_texture2D = _texture;
-    memcpy(command->edit(), edits.data(), edit_bytes);
+    Memory::copy(command->edit<EditType>(), edits.data(), n_edits);
     m_commands.push_back(command_base);
 
     // So we can clear edit list after processing.
@@ -509,8 +509,9 @@ void Context::update_texture(const CommandHeader::Info& _info, Texture3D* _textu
       return;
     }
 
+    using EditType = Texture::Edit<Texture3D::DimensionType>;
     const auto n_edits = edits.size();
-    const Size edit_bytes = n_edits * sizeof(Texture::Edit<Texture3D::DimensionType>);
+    const Size edit_bytes = n_edits * sizeof(EditType);
 
     auto command_base = m_command_buffer.allocate(sizeof(UpdateCommand) + edit_bytes, CommandType::RESOURCE_UPDATE, _info);
     auto command = reinterpret_cast<UpdateCommand*>(command_base + sizeof(CommandHeader));
@@ -518,7 +519,7 @@ void Context::update_texture(const CommandHeader::Info& _info, Texture3D* _textu
     command->edits = n_edits;
     command->type = UpdateCommand::Type::TEXTURE3D;
     command->as_texture3D = _texture;
-    memcpy(command->edit(), edits.data(), edit_bytes);
+    Memory::copy(command->edit<EditType>(), edits.data(), n_edits);
     m_commands.push_back(command_base);
 
     // So we can clear edit list after processing.

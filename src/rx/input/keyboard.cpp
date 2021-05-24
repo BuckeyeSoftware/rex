@@ -1,12 +1,11 @@
-#include <string.h> // memset
-
 #include "rx/input/keyboard.h"
+#include "rx/core/memory/zero.h"
 
 namespace Rx::Input {
 
 Keyboard::Keyboard() {
-  memset(m_symbols, 0, sizeof m_symbols);
-  memset(m_scan_codes, 0, sizeof m_scan_codes);
+  Memory::zero(m_symbols);
+  Memory::zero(m_scan_codes);
 }
 
 void Keyboard::update(Float32) {

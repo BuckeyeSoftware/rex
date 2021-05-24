@@ -1,5 +1,5 @@
-#include <string.h>
 #include "rx/core/hash/djbx33a.h"
+#include "rx/core/memory/copy.h"
 
 namespace Rx::Hash {
 
@@ -12,7 +12,7 @@ Array<Byte[16]> djbx33a(const Byte* _data, Size _size) {
   }
 
   Array<Byte[16]> result;
-  memcpy(result.data(), state, sizeof state);
+  Memory::copy(result.data(), reinterpret_cast<const Byte*>(state), sizeof state);
   return result;
 }
 

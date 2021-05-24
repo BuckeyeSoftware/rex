@@ -1,7 +1,9 @@
-#include <string.h>
+#include <string.h> // strlen, strcmp
 
 #include "rx/core/string_table.h"
+
 #include "rx/core/memory/search.h"
+#include "rx/core/memory/copy.h"
 
 namespace Rx {
 
@@ -47,7 +49,7 @@ Optional<Size> StringTable::insert(Span<const char> _span) {
 
   const auto* base =
     reinterpret_cast<const Byte*>(m_string_data.data());
-  
+
   // Search the contents with memmem for |_string| as it may be an overlapping
   // string which we can save on space in the StringTable for.
   if (const auto search = Memory::search(base, m_string_data.size(), _span.data(), _span.size())) {
@@ -75,14 +77,15 @@ StringTable::SharedString::create(StringTable* table_, Span<const char> _span) {
   auto& string_set = table_->m_string_set;
 
   const auto offset = string_data.size();
+  const auto span = _span.cast<const Byte>();
 
   SharedString shared{offset, table_};
 
-  if (!string_data.resize(offset + _span.size())) {
+  if (!string_data.resize(offset + span.size())) {
     return nullopt;
   }
 
-  memcpy(string_data.data() + offset, _span.data(), _span.size());
+  Memory::copy(string_data.data() + offset, span.data(), _span.size());
 
   if (!string_set.insert(shared)) {
     // This cannot fail, only ever shrinks.

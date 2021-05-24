@@ -1,19 +1,25 @@
-#include <string.h> // memset
-
 #include "rx/core/bitset.h"
 #include "rx/core/assert.h" // RX_ASSERT
 
 #include "rx/core/memory/system_allocator.h"
+#include "rx/core/memory/zero.h"
 
 namespace Rx {
 
 Optional<Bitset> Bitset::create_uninitialized(Memory::Allocator& _allocator, Size _size) {
-  auto bytes = bytes_for_size(_size);
+  const auto words = words_for_size(_size);
+
+  // |words * sizeof(WordType)| would overflow.
+  if (words > -1_z / sizeof(WordType)) {
+    return nullopt;
+  }
+
+  const auto bytes = sizeof(WordType) * words;
   if (auto data = _allocator.allocate(bytes)) {
     Bitset bitset;
     bitset.m_allocator = &_allocator;
     bitset.m_size = _size;
-    bitset.m_data = reinterpret_cast<BitType*>(data);
+    bitset.m_data = reinterpret_cast<WordType*>(data);
     return bitset;
   }
   return nullopt;
@@ -34,7 +40,7 @@ void Bitset::release() {
 }
 
 void Bitset::clear() {
-  memset(m_data, 0, bytes_for_size(m_size));
+  Memory::zero(m_data, words_for_size(m_size));
 }
 
 Size Bitset::count_set_bits() const {

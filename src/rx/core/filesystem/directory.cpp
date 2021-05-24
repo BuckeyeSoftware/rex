@@ -1,5 +1,3 @@
-#include <string.h> // memcpy
-
 #include "rx/core/config.h" // RX_PLATFORM_*
 #include "rx/core/assert.h" // RX_ASSERT
 #include "rx/core/linear_buffer.h"
@@ -40,13 +38,15 @@ Optional<String> Directory::Item::full_name() const {
 
   if (auto data = allocator.allocate(length)) {
     // Copy root without null-terminator.
-    memcpy(data, root.data(), root.size());
+    Memory::copy(data,
+      reinterpret_cast<const Byte*>(root.data()), root.size());
 
     // Write path separtator in the middle.
     data[root.size()] = '/';
 
     // Copy stem with null-terminator to also terminate the string.
-    memcpy(data + root.size() + 1, stem.data(), stem.size() + 1);
+    Memory::copy(data + root.size() + 1,
+      reinterpret_cast<const Byte*>(stem.data()), stem.size() + 1);
 
     return String{{&allocator, data, length, length}};
   }

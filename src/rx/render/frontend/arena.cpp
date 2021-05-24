@@ -1,8 +1,8 @@
-#include <string.h> // memcpy
-
 #include "rx/render/frontend/arena.h"
 #include "rx/render/frontend/context.h"
 #include "rx/render/frontend/buffer.h"
+
+#include "rx/core/memory/move.h"
 
 namespace Rx::Render::Frontend {
 
@@ -142,7 +142,11 @@ bool Arena::List::grow() {
 }
 
 bool Arena::List::push(const Region& _region) {
-  return grow() && memcpy(m_data + m_size - 1, &_region, sizeof _region);
+  if (grow()) {
+    m_data[m_size - 1] = _region;
+    return true;
+  }
+  return false;
 }
 
 void Arena::List::remove_at(Size _index) {
@@ -158,7 +162,11 @@ void Arena::List::remove_at(Size _index) {
 }
 
 bool Arena::List::insert_at(Size _index, const Region& _region) {
-  return shift_up_at(_index) && memcpy(m_data + _index, &_region, sizeof _region);
+  if (shift_up_at(_index)) {
+    m_data[_index] = _region;
+    return true;
+  }
+  return false;
 }
 
 Optional<Size> Arena::List::index_of(Uint32 _offset) const {
@@ -262,7 +270,7 @@ void Arena::Block::destroy() {
 
 bool Arena::Block::write_sink_data(Buffer::Sink _sink, const Byte* _data, Size _size) {
   if (auto data = map_sink_data(_sink, _size)) {
-    memcpy(data, _data, _size);
+    Memory::copy(data, _data, _size);
     return true;
   }
   return false;
@@ -306,7 +314,7 @@ Byte* Arena::Block::map_sink_data(Buffer::Sink _sink, Uint32 _size) {
       }
 
       // Move the data since the reallocation could've moved it.
-      memmove(result + new_offset, result + old_offset, old_size);
+      Memory::move(result + new_offset, result + old_offset, old_size);
     }
   }
 

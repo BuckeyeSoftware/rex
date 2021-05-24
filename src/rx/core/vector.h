@@ -14,12 +14,9 @@
 #include "rx/core/assert.h"
 
 #include "rx/core/memory/system_allocator.h"
+#include "rx/core/memory/copy.h"
 
 namespace Rx {
-
-namespace detail {
-  RX_API void copy(void *RX_HINT_RESTRICT dst_, const void* RX_HINT_RESTRICT _src, Size _size);
-}
 
 // 32-bit: 16 bytes
 // 64-bit: 32 bytes
@@ -302,7 +299,7 @@ bool Vector<T>::append(const Vector& _other) {
       return false;
     }
     // Use fast copy.
-    detail::copy(m_data + old_size, _other.m_data, sizeof(T) * _other.m_size);
+    Memory::copy(m_data + old_size, _other.m_data, _other.m_size);
   } else {
     if (!reserve(new_size)) {
       return false;

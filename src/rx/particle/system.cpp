@@ -1,7 +1,6 @@
-#include <string.h> // memset
-
 #include "rx/particle/system.h"
 #include "rx/core/concurrency/scope_lock.h"
+#include "rx/core/memory/zero.h"
 #include "rx/math/vec4.h"
 
 namespace Rx::Particle {
@@ -9,9 +8,9 @@ namespace Rx::Particle {
 void System::update(Float32 _delta_time) {
   if (m_alive_count) {
     // Reset acceleration.
-    memset(m_acceleration_x, 0, sizeof(Float32) * m_alive_count);
-    memset(m_acceleration_y, 0, sizeof(Float32) * m_alive_count);
-    memset(m_acceleration_z, 0, sizeof(Float32) * m_alive_count);
+    Memory::zero(m_acceleration_x, m_alive_count);
+    Memory::zero(m_acceleration_y, m_alive_count);
+    Memory::zero(m_acceleration_z, m_alive_count);
   }
 
   // Execute emitters.

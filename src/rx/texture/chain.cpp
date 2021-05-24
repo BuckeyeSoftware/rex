@@ -1,5 +1,3 @@
-#include <string.h> // memcpy
-
 #include "rx/texture/chain.h"
 #include "rx/texture/scale.h"
 #include "rx/texture/convert.h"
@@ -7,6 +5,8 @@
 #include "rx/core/math/log2.h"
 
 #include "rx/core/utility/swap.h"
+
+#include "rx/core/memory/move.h"
 
 namespace Rx::Texture {
 
@@ -40,7 +40,7 @@ bool Chain::generate(const Byte* _data, PixelFormat _has_format,
   }
 
   if (_has_format == _want_format) {
-    memcpy(m_data.data(), _data, m_data.size());
+    Memory::copy(m_data.data(), _data, m_data.size());
   } else if (auto data = convert(allocator(), _data, _dimensions.area(), _has_format, _want_format)) {
     m_data = Utility::move(*data);
   } else {
@@ -173,7 +173,7 @@ bool Chain::resize(const Math::Vec2z& _dimensions) {
 
     // Copy the mipchain from |best_index| forward to the beginning, this
     // is inplace and may overlap so memmove must be used.
-    memmove(m_data.data(), m_data.data() + level.offset, new_size);
+    Memory::move(m_data.data(), m_data.data() + level.offset, new_size);
 
     return generate_mipchain(true, true);
   } else {

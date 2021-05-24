@@ -11,6 +11,8 @@
 #include "rx/core/log.h"
 #include "rx/core/abort.h"
 
+#include "rx/core/memory/zero.h"
+
 #if defined(RX_PLATFORM_EMSCRIPTEN)
 #include <emscripten/html5.h>
 #endif
@@ -302,7 +304,7 @@ namespace detail_es3 {
       , m_active_texture{0}
       , m_context{_context}
     {
-      memset(m_texture_units, 0, sizeof m_texture_units);
+      Memory::zero(m_texture_units);
 
       // There's no unsigned variant of glGetIntegerv
       GLint swap_chain_fbo;
@@ -1581,7 +1583,7 @@ void ES3::process(Byte* _command) {
 
           // Enumerate and apply all buffer edits.
           if (use_vertices_edits || use_elements_edits || use_instances_edits) {
-            const Size* edit = resource->edit();
+            const Size* edit = resource->edit<Size>();
             for (Size i{0}; i < resource->edits; i++) {
               switch (edit[0]) {
               case 0:
@@ -1622,7 +1624,7 @@ void ES3::process(Byte* _command) {
       case Frontend::UpdateCommand::Type::TEXTURE3D:
         {
           const auto render_texture = resource->as_texture3D;
-          const Size* edit = resource->edit();
+          const Size* edit = resource->edit<Size>();
 
           state->use_texture(render_texture);
 

@@ -1,4 +1,4 @@
-#include <string.h> // strcmp, memcpy, memmove
+#include <string.h> // strcmp, memmove
 #include <stdarg.h> // va_{list, start, end, copy}
 #include <stdio.h> // vsnprintf
 
@@ -9,6 +9,7 @@
 #include "rx/core/hash/string.h"
 
 #include "rx/core/memory/search.h"
+#include "rx/core/memory/copy.h"
 
 #include "rx/core/hints/unreachable.h"
 #include "rx/core/hints/unlikely.h"
@@ -234,7 +235,7 @@ bool String::reserve(Size _capacity) {
       return false;
     }
     // Copy data out of |m_buffer| to |data|.
-    memcpy(data, m_buffer, size + 1);
+    Memory::copy(data, m_buffer, size + 1);
   } else {
     data = reinterpret_cast<char*>(m_allocator->reallocate(m_data, _capacity + 1));
     if (RX_HINT_UNLIKELY(!data)) {
@@ -319,7 +320,7 @@ bool String::append(const char* _first, const char* _last) {
   }
 
   const auto length = static_cast<Size>(_last - _first);
-  memcpy(m_last, _first, length);
+  Memory::copy(m_last, _first, length);
 
   m_last += length;
   *m_last = '\0';
@@ -497,7 +498,7 @@ Optional<Memory::View> String::disown() {
     if (!data) {
       return nullopt;
     }
-    memcpy(data, m_data, n_capacity);
+    Memory::copy(data, reinterpret_cast<Byte*>(m_data), n_capacity);
   } else {
     n_size = size() + 1;
     n_capacity = capacity() + 1;
@@ -693,7 +694,7 @@ WideString::WideString(Memory::Allocator& _allocator, const Uint16* _contents,
   m_data = reinterpret_cast<Uint16*>(m_allocator->allocate(sizeof(Uint16), _size + 1));
   RX_ASSERT(m_data, "out of memory");
 
-  memcpy(m_data, _contents, sizeof(Uint16) * (_size + 1));
+  Memory::copy(m_data, _contents, _size + 1);
 }
 
 WideString::WideString(WideString&& other_)

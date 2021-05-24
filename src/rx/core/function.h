@@ -101,7 +101,7 @@ private:
     // Moving is tricky because if |function_| is in-situ, then any captured
     // data that holds references to |this| will be invalidated with a regular
     // move, as one cannot move in-situ data, it must be copied. Similarly we
-    // cannot just memcpy the contents, as the data may be non-trivial.
+    // cannot just copy the contents, as the data may be non-trivial.
     //
     // The one time a move can be done is when |function_| is **not** in-situ,
     // as the move just becomes a pointer exchange which won't invalidate

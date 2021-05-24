@@ -1,5 +1,4 @@
 #include <stddef.h> // offsetof
-#include <string.h> // memcpy
 
 #include "rx/render/canvas.h"
 
@@ -508,7 +507,8 @@ static int nvg_render_update_texture(void* _user, int _image, int _x, int _y,
   const auto dimensions = Math::Vec2z(texture->dimensions().w, _h);
   const auto skip = (offset.y * dimensions.w * bits_per_pixel) / 8;
 
-  memcpy(texture->map(0) + skip, _data + skip, (dimensions.area() * bits_per_pixel) / 8);
+  Memory::copy(texture->map(0) + skip, _data + skip,
+    (dimensions.area() * bits_per_pixel) / 8);
 
   texture->record_edit(0, offset, dimensions);
 

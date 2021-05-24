@@ -11,6 +11,8 @@
 
 #include "rx/console/variable.h"
 
+#include "rx/core/memory/zero.h"
+
 namespace Rx::Render::Backend {
 
 RX_LOG("render/gl4", logger);
@@ -277,7 +279,7 @@ namespace detail_gl4 {
       , m_swap_chain_fbo{0}
       , m_context{_context}
     {
-      memset(m_texture_units, 0, sizeof m_texture_units);
+      Memory::zero(m_texture_units);
 
       // There's no unsigned variant of glGetIntegerv
       GLint swap_chain_fbo;
@@ -1526,7 +1528,7 @@ void GL4::process(Byte* _command) {
 
           // Enumerate and apply all buffer edits.
           if (use_vertices_edits || use_elements_edits || use_instances_edits) {
-            const Size* edit = resource->edit();
+            const Size* edit = resource->edit<Size>();
             for (Size i{0}; i < resource->edits; i++) {
               switch (edit[0]) {
               case 0:
@@ -1558,7 +1560,7 @@ void GL4::process(Byte* _command) {
         {
           const auto render_texture = resource->as_texture2D;
           const auto texture = reinterpret_cast<detail_gl4::texture2D*>(render_texture + 1);
-          const Size* edit = resource->edit();
+          const Size* edit = resource->edit<Size>();
 
           for (Size i = 0; i < resource->edits; i++) {
             const auto x_offset = edit[1];
@@ -1588,7 +1590,7 @@ void GL4::process(Byte* _command) {
         {
           const auto render_texture = resource->as_texture3D;
           const auto texture = reinterpret_cast<detail_gl4::texture3D*>(render_texture + 1);
-          const Size* edit = resource->edit();
+          const Size* edit = resource->edit<Size>();
 
           for (Size i = 0; i < resource->edits; i++) {
             const auto x_offset = edit[1];

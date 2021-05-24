@@ -129,6 +129,10 @@ struct Buffer
     Size size;
   };
 
+  // Ensure the Edit type maintains multiple of Size.
+  static_assert(sizeof(Edit) == sizeof(Size[3]),
+    "invalid size for command stream");
+
   Buffer(Context* _frontend);
   ~Buffer();
 

@@ -1,8 +1,10 @@
-#include <string.h> // memcpy
-
 #include "rx/particle/state.h"
-#include "rx/core/utility/swap.h"
+
 #include "rx/core/memory/aggregate.h"
+#include "rx/core/memory/copy.h"
+
+#include "rx/core/utility/swap.h"
+
 #include "rx/core/concurrency/scope_lock.h"
 
 namespace Rx::Particle {
@@ -93,9 +95,10 @@ bool State::resize(Size _particles) {
     return false;
   }
 
+  // TODO(dweiler): Should the existing particles be copied on resize?
 #if 0
   // Zero fill...
-  memset(data, 0, aggregate.bytes());
+  Memory::zero(data, aggregate.bytes());
 
   if (m_alive_count) {
     memcpy(data + aggregate[0], m_velocity_x, sizeof(Float32) * m_alive_count);

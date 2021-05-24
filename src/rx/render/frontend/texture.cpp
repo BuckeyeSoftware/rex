@@ -1,5 +1,3 @@
-#include <string.h> // memcpy
-
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/context.h"
 
@@ -146,7 +144,7 @@ void Texture1D::write(const Byte* _data, Size _level) {
   RX_ASSERT(is_level_in_range(_level), "mipmap level out of bounds");
 
   const auto& info{info_for_level(_level)};
-  memcpy(m_data.data() + info.offset, _data, info.size);
+  Memory::copy(m_data.data() + info.offset, _data, info.size);
 }
 
 Byte* Texture1D::map(Size _level) {
@@ -220,8 +218,8 @@ void Texture2D::write(const Byte* _data, Size _level) {
   RX_ASSERT(is_level_in_range(_level), "mipmap level out of bounds");
   validate();
 
-  const auto& info{info_for_level(_level)};
-  memcpy(m_data.data() + info.offset, _data, info.size);
+  const auto& info = info_for_level(_level);
+  Memory::copy(m_data.data() + info.offset, _data, info.size);
 }
 
 Byte* Texture2D::map(Size _level) {
@@ -298,8 +296,8 @@ void Texture3D::write(const Byte* _data, Size _level) {
   RX_ASSERT(is_level_in_range(_level), "mipmap level out of bounds");
   validate();
 
-  const auto& info{info_for_level(_level)};
-  memcpy(m_data.data() + info.offset, _data, info.size);
+  const auto& info = info_for_level(_level);
+  Memory::copy(m_data.data() + info.offset, _data, info.size);
 }
 
 Byte* Texture3D::map(Size _level) {
@@ -372,8 +370,8 @@ void TextureCM::write(const Byte* _data, Face _face, Size _level) {
   RX_ASSERT(is_level_in_range(_level), "mipmap level out of bounds");
   validate();
 
-  const auto& info{info_for_level(_level)};
-  memcpy(map(_level, _face), _data, info.size / 6);
+  const auto& info = info_for_level(_level);
+  Memory::copy(map(_level, _face), _data, info.size / 6);
 }
 
 Byte* TextureCM::map(Size _level, Face _face) {

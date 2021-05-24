@@ -3,6 +3,7 @@
 #include "display.h"
 
 #include "rx/core/map.h"
+#include "rx/core/memory/copy.h"
 
 namespace Rx {
 
@@ -18,7 +19,7 @@ Optional<Vector<Display>> Display::displays(Memory::Allocator& _allocator) {
       if (!name_data) {
         return nullopt;
       }
-      memcpy(name_data, name, name_size);
+      Memory::copy(name_data, name, name_size);
 
       // SDL2 introduces the physical size of the display in inches as a suffix
       // to the display name. Strip this information from the name, as it's

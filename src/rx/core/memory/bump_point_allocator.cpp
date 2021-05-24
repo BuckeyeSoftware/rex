@@ -1,6 +1,6 @@
-#include <string.h> // memmove
-
 #include "rx/core/memory/bump_point_allocator.h"
+#include "rx/core/memory/move.h"
+
 #include "rx/core/concurrency/scope_lock.h"
 
 #include "rx/core/hints/likely.h"
@@ -78,8 +78,8 @@ Byte* BumpPointAllocator::reallocate(void* _data, Size _size) {
       // as such copy represents uninitialized memory to the caller anyways.
       //
       // However, since it's possible for the copy to land into ourselves, we
-      // cannot use memcpy here, use memmove instead.
-      memmove(data, _data, _size);
+      // cannot use Memory::copy here, use Memory::move instead.
+      Memory::move(data, reinterpret_cast<Byte*>(_data), _size);
       return data;
     } else {
       // Out of memory.

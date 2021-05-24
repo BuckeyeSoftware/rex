@@ -1,8 +1,10 @@
-#include <string.h>
 #include "rx/core/stream/buffered_stream.h"
 
 #include "rx/core/algorithm/min.h"
 #include "rx/core/algorithm/max.h"
+
+#include "rx/core/memory/zero.h"
+#include "rx/core/memory/copy.h"
 
 namespace Rx::Stream {
 
@@ -82,7 +84,7 @@ BufferedStream::Page* BufferedStream::lookup_page(Uint32 _page_no, Uint16 _alloc
     // Possibly expand the page.
     if (_allocate > page->size) {
       // Zero out the page cache area representing the resize.
-      memset(page_data(*page) + page->size, 0, _allocate - page->size);
+      Memory::zero(page_data(*page) + page->size, _allocate - page->size);
       page->size = _allocate;
     }
 
@@ -136,7 +138,7 @@ BufferedStream::Page* BufferedStream::fill_page(Uint32 _page_no, Uint16 _allocat
   // is an append, so allocate fresh storage.
   if (bytes == 0 && _allocate) {
     // Zero the page data as this is freshly allocated storage in the cache.
-    memset(page_data(page), 0, _allocate);
+    Memory::zero(page_data(page), _allocate);
     page.size = _allocate;
     page.dirty = 1;
   } else {
@@ -155,7 +157,7 @@ BufferedStream::Page* BufferedStream::fill_page(Uint32 _page_no, Uint16 _allocat
 Uint16 BufferedStream::read_page(Uint32 _page_no, Byte* data_, Uint16 _offset, Uint16 _size) {
   if (Page* page = lookup_page(_page_no)) {
     const auto size = Algorithm::min(_size, page->size);
-    memcpy(data_, page_data(*page) + _offset, size);
+    Memory::copy(data_, page_data(*page) + _offset, size);
     return size;
   }
   return 0;
@@ -168,7 +170,7 @@ Uint16 BufferedStream::write_page(Uint32 _page_no, const Byte* _data, Uint16 _of
     // The page is going to be made dirty by this write.
     page->dirty = 1;
     const auto size = Algorithm::min(_size, page->size);
-    memcpy(page_data(*page) + _offset, _data, size);
+    Memory::copy(page_data(*page) + _offset, _data, size);
     return size;
   }
   return 0;
@@ -200,7 +202,7 @@ bool BufferedStream::resize(Uint16 _page_size, Uint8 _page_count) {
 
   if (m_buffer.resize(_page_size * _page_count)) {
     // Zero the contents of the buffer.
-    memset(m_buffer.data(), 0, m_buffer.size());
+    Memory::zero(m_buffer.data(), m_buffer.size());
 
     m_page_size = _page_size;
     m_page_count = _page_count;

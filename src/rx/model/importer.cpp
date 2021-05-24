@@ -1,5 +1,3 @@
-#include <string.h> // memcpy
-
 #include "rx/model/loader.h"
 #include "rx/model/aobake.h"
 
@@ -146,8 +144,8 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
       if (!optimized_elements.resize(count + _batch.count)) {
         return false;
       }
-      memcpy(optimized_elements.data() + count, m_elements.data() + _batch.offset,
-        sizeof(Uint32) * _batch.count);
+      Memory::copy(optimized_elements.data() + count,
+        m_elements.data() + _batch.offset, _batch.count);
       return true;
     };
 

@@ -1,10 +1,13 @@
-#include <string.h> // memcpy
+#include <string.h> // memcpy, memcmp
 
 #include "rx/render/frontend/program.h"
 #include "rx/render/frontend/context.h"
 
 #include "rx/core/utility/bit.h"
 #include "rx/core/algorithm/min.h"
+
+#include "rx/core/memory/zero.h"
+#include "rx/core/memory/copy.h"
 
 namespace Rx::Render::Frontend {
 
@@ -38,7 +41,7 @@ Uniform::Uniform(Program* _program, Uint64 _bit, const String& _name, Type _type
   , m_name{_name}
 {
   as_opaque = _data;
-  memset(as_opaque, 0, size());
+  Memory::zero(as_opaque, size());
 }
 
 Uniform::Uniform(Uniform&& uniform_)
@@ -56,7 +59,7 @@ Uniform::~Uniform() {
 
 void Uniform::flush(Byte* _flush) {
   RX_ASSERT(m_program->m_dirty_uniforms & m_bit, "flush on non-dirty uniform");
-  memcpy(_flush, as_opaque, size());
+  Memory::copy(_flush, as_opaque, size());
   m_program->m_dirty_uniforms &= ~m_bit;
 }
 
@@ -120,7 +123,7 @@ void Uniform::record_int(int _value) {
 void Uniform::record_vec2i(const Math::Vec2i& _value) {
   RX_ASSERT(m_type == Type::S32x2, "not S32x2");
   if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
-    memcpy(as_int, _value.data(), sizeof _value);
+    Memory::copy(as_int, _value.data(), 2);
     m_program->mark_uniform_dirty(m_bit);
   }
 }
@@ -128,7 +131,7 @@ void Uniform::record_vec2i(const Math::Vec2i& _value) {
 void Uniform::record_vec3i(const Math::Vec3i& _value) {
   RX_ASSERT(m_type == Type::S32x3, "not S32x3");
   if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
-    memcpy(as_int, _value.data(), sizeof _value);
+    Memory::copy(as_int, _value.data(), 3);
     m_program->mark_uniform_dirty(m_bit);
   }
 }
@@ -136,7 +139,7 @@ void Uniform::record_vec3i(const Math::Vec3i& _value) {
 void Uniform::record_vec4i(const Math::Vec4i& _value) {
   RX_ASSERT(m_type == Type::S32x4, "not S32x4");
   if (memcmp(as_int, _value.data(), sizeof _value) != 0) {
-    memcpy(as_int, _value.data(), sizeof _value);
+    Memory::copy(as_int, _value.data(), 4);
     m_program->mark_uniform_dirty(m_bit);
   }
 }
@@ -152,7 +155,7 @@ void Uniform::record_float(Float32 _value) {
 void Uniform::record_vec2f(const Math::Vec2f& _value) {
   RX_ASSERT(m_type == Type::F32x2, "not F32x2");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
-    memcpy(as_float, _value.data(), sizeof _value);
+    Memory::copy(as_float, _value.data(), 2);
     m_program->mark_uniform_dirty(m_bit);
   }
 }
@@ -160,7 +163,7 @@ void Uniform::record_vec2f(const Math::Vec2f& _value) {
 void Uniform::record_vec3f(const Math::Vec3f& _value) {
   RX_ASSERT(m_type == Type::F32x3, "not F32x3");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
-    memcpy(as_float, _value.data(), sizeof _value);
+    Memory::copy(as_float, _value.data(), 3);
     m_program->mark_uniform_dirty(m_bit);
   }
 }
@@ -168,7 +171,7 @@ void Uniform::record_vec3f(const Math::Vec3f& _value) {
 void Uniform::record_vec4f(const Math::Vec4f& _value) {
   RX_ASSERT(m_type == Type::F32x4, "not a F32x4");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
-    memcpy(as_float, _value.data(), sizeof _value);
+    Memory::copy(as_float, _value.data(), 4);
     m_program->mark_uniform_dirty(m_bit);
   }
 }
@@ -176,7 +179,7 @@ void Uniform::record_vec4f(const Math::Vec4f& _value) {
 void Uniform::record_mat3x3f(const Math::Mat3x3f& _value) {
   RX_ASSERT(m_type == Type::F32x3x3, "not F32x3x3");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
-    memcpy(as_float, _value.data(), sizeof _value);
+    Memory::copy(as_float, _value.data(), 3 * 3);
     m_program->mark_uniform_dirty(m_bit);
   }
 }
@@ -184,7 +187,7 @@ void Uniform::record_mat3x3f(const Math::Mat3x3f& _value) {
 void Uniform::record_mat3x4f(const Math::Mat3x4f& _value) {
   RX_ASSERT(m_type == Type::F32x3x4, "not F32x3x4");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
-    memcpy(as_float, _value.data(), sizeof _value);
+    Memory::copy(as_float, _value.data(), 3 * 4);
     m_program->mark_uniform_dirty(m_bit);
   }
 }
@@ -192,7 +195,7 @@ void Uniform::record_mat3x4f(const Math::Mat3x4f& _value) {
 void Uniform::record_mat4x4f(const Math::Mat4x4f& _value) {
   RX_ASSERT(m_type == Type::F32x4x4, "not F32x4x4");
   if (memcmp(as_float, _value.data(), sizeof _value) != 0) {
-    memcpy(as_float, _value.data(), sizeof _value);
+    Memory::copy(as_float, _value.data(), 4 * 4);
     m_program->mark_uniform_dirty(m_bit);
   }
 }
@@ -217,7 +220,7 @@ void Uniform::record_dq_bones(const Vector<Math::DualQuatf>& _frames, Size _join
 
 void Uniform::record_raw(const Byte* _data, Size _size) {
   RX_ASSERT(_size == size_for_type(m_type), "invalid size");
-  memcpy(as_opaque, _data, _size);
+  Memory::copy(as_opaque, _data, _size);
   m_program->mark_uniform_dirty(m_bit);
 }
 

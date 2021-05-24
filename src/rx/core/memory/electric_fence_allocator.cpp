@@ -1,7 +1,6 @@
-#include <string.h> // memcpy
-
 #include "rx/core/memory/electric_fence_allocator.h"
 #include "rx/core/memory/heap_allocator.h"
+#include "rx/core/memory/copy.h"
 
 #include "rx/core/concurrency/scope_lock.h"
 
@@ -65,7 +64,7 @@ Byte* ElectricFenceAllocator::reallocate(void* _data, Size _size) {
       if (auto resize = allocate_vma(_size)) {
         // Copy all pages except the electric fence pages on either end.
         const auto size = mapping->page_size() * (mapping->page_count() - 2);
-        memcpy(resize->page(1), mapping->page(1), size);
+        Memory::copy(resize->page(1), mapping->page(1), size);
 
         // Release the smaller VMA.
         m_mappings.erase(base);

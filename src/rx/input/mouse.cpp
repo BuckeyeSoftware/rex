@@ -1,11 +1,10 @@
-#include <string.h> // memset
-
 #include "rx/input/mouse.h"
+#include "rx/core/memory/zero.h"
 
 namespace Rx::Input {
 
 Mouse::Mouse() {
-  memset(m_buttons, 0, sizeof m_buttons);
+  Memory::zero(m_buttons);
 }
 
 void Mouse::update(Float32) {

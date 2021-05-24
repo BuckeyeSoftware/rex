@@ -1,5 +1,3 @@
-#include <string.h> // memcpy
-
 #include "rx/texture/loader.h"
 #include "rx/texture/scale.h"
 
@@ -102,7 +100,7 @@ bool Loader::load(Stream::UntrackedStream& _stream, PixelFormat _want_format,
       dimensions.w * want_channels, m_data.data(), _max_dimensions.w,
       _max_dimensions.h);
   } else {
-    memcpy(m_data.data(), decoded_image, m_data.size());
+    Memory::copy(m_data.data(), decoded_image, m_data.size());
   }
 
   stbi_image_free(decoded_image);

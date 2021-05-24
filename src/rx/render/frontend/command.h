@@ -246,12 +246,14 @@ struct UpdateCommand {
   //   offset: offset in pixels (1, 2, or 3 integers for 1D, 2D and 3D textures, respectively)
   //   size:   size in pixels (1, 2, or 3 integers for 1D, 2D and 3D textures, respectively)
   // }
-  const Size *edit() const;
+  template<typename T>
+  const T* edit() const;
 
-  Size *edit();
+  template<typename T>
+  T* edit();
 };
 
-// command_buffer
+// [CommandBuffer]
 inline Size CommandBuffer::used() const {
   return m_allocator.used();
 }
@@ -260,7 +262,7 @@ inline Size CommandBuffer::size() const {
   return m_allocator.size();
 }
 
-// textures
+// [Texture]
 inline constexpr Textures::Textures()
   : m_nat{}
   , m_index{0}
@@ -290,7 +292,7 @@ inline Texture *Textures::operator[](Size _index) const {
   return reinterpret_cast<Texture *>(m_handles[_index]);
 }
 
-// buffers
+// [Buffers]
 inline constexpr Buffers::Buffers()
   : m_nat{}
   , m_index{0}
@@ -342,7 +344,7 @@ inline const int* Buffers::data() const {
   return m_elements;
 }
 
-// draw_command
+// [DrawCommand]
 inline const Byte *DrawCommand::uniforms() const {
   // NOTE: standard permits aliasing with char (Byte)
   return reinterpret_cast<const Byte *>(this) + sizeof *this;
@@ -353,17 +355,19 @@ inline Byte *DrawCommand::uniforms() {
   return reinterpret_cast<Byte *>(this) + sizeof *this;
 }
 
-// update_command
-inline const Size *UpdateCommand::edit() const {
+// [UpdateCommand]
+template<typename T>
+const T *UpdateCommand::edit() const {
   // NOTE: standard permits aliasing with char (Byte)
-  const auto *opaque = reinterpret_cast<const Byte *>(this) + sizeof *this;
-  return reinterpret_cast<const Size *>(opaque);
+  const auto data = reinterpret_cast<const Byte *>(this) + sizeof *this;
+  return reinterpret_cast<const T*>(data);
 }
 
-inline Size *UpdateCommand::edit() {
+template<typename T>
+inline T *UpdateCommand::edit() {
   // NOTE: standard permits aliasing with char (Byte)
-  auto *opaque = reinterpret_cast<Byte *>(this) + sizeof *this;
-  return reinterpret_cast<Size *>(opaque);
+  const auto data = reinterpret_cast<Byte *>(this) + sizeof *this;
+  return reinterpret_cast<T*>(data);
 }
 
 } // namespace Rx::Render::Frontend

@@ -1,6 +1,6 @@
-#include <string.h> // memcpy
 #include <stdlib.h> // strtol
 #include <stdio.h> // sscanf
+#include <string.h> // strcspn, strncmp
 
 #include "rx/render/color_grader.h"
 
@@ -225,18 +225,18 @@ void ColorGrader::Entry::write(const Math::Vec4h* _samples) {
   const auto dst = reinterpret_cast<Math::Vec4h*>(texture->map(0));
   for (Size z = 0; z < size; z++) {
     for (Size y = 0; y < size; y++) {
-      memcpy(dst + (z + size * m_handle) * size * size + y * size,
-        src + z * size + y * size * size, sizeof(Math::Vec4h) * size);
+      Memory::copy(dst + (z + size * m_handle) * size * size + y * size,
+        src + z * size + y * size * size, size);
     }
   }
 
   // This code is what would be used if we didn't need to swizzle incoming.
   //
-  // auto src = _samples;
+  // auto src = reinterpret_cast<const Byte*>(_samples);
   // auto dst = m_texture->map(0) + (size * _handle * size * size) * sizeof(Math::Vec4h);
   // auto len = size * size * sizeof(Math::Vec4h);
   // for (Size z = 0; z < size; z++) {
-  //   memcpy(dst, src, len);
+  //   Memory::copy(dst, src, len);
   //   src += len;
   //   dst += len;
   // }
@@ -362,7 +362,7 @@ void ColorGrader::Atlas::update() {
   const auto size = m_texture->dimensions().w;
 
   // Record all the edits to the atlas and update the texture.
-  m_dirty.each_set([&](Bitset::BitType _texture) {
+  m_dirty.each_set([&](Bitset::WordType _texture) {
     m_texture->record_edit(0, {0, 0, Size(size * _texture)}, {size, size, size});
   });
 

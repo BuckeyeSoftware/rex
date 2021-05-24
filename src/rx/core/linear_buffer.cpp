@@ -1,6 +1,7 @@
-#include <string.h> // memcpy
-
 #include "rx/core/linear_buffer.h"
+
+#include "rx/core/memory/copy.h"
+#include "rx/core/memory/move.h"
 
 namespace Rx {
 
@@ -12,7 +13,7 @@ LinearBuffer::LinearBuffer(LinearBuffer&& buffer_)
 {
   if (m_data == buffer_.m_insitu.data()) {
     m_data = m_insitu.data();
-    memcpy(m_insitu.data(), buffer_.m_insitu.data(), m_size);
+    Memory::copy(m_insitu.data(), buffer_.m_insitu.data(), m_size);
   }
 }
 
@@ -30,7 +31,7 @@ LinearBuffer& LinearBuffer::operator=(LinearBuffer&& buffer_) {
 
   if (m_data == buffer_.m_insitu.data()) {
     m_data = m_insitu.data();
-    memcpy(m_insitu.data(), buffer_.m_insitu.data(), m_size);
+    Memory::copy(m_insitu.data(), buffer_.m_insitu.data(), m_size);
   }
 
   return *this;
@@ -46,7 +47,7 @@ void LinearBuffer::erase(Size _begin, Size _end) {
 
   const auto length = (m_data + m_size) - end;
 
-  memmove(begin, end, length);
+  Memory::move(begin, end, length);
 
   m_size -= _end - _begin;
 }
@@ -58,7 +59,8 @@ bool LinearBuffer::append(const Byte* _data, Size _size) {
     return false;
   }
 
-  memcpy(m_data + old_size, _data, _size);
+  Memory::copy(m_data + old_size, _data, _size);
+
   return true;
 }
 
@@ -95,7 +97,7 @@ bool LinearBuffer::reserve(Size _capacity) {
 
   // Copy from in-situ.
   if (in_situ()) {
-    memcpy(data, m_data, m_size);
+    Memory::copy(data, m_data, m_size);
   }
 
   m_data = data;
@@ -125,7 +127,7 @@ Optional<Memory::View> LinearBuffer::disown() {
     const auto size = Utility::exchange(m_size, 0);
     const auto capacity = Utility::exchange(m_capacity, INSITU_SIZE);
 
-    memcpy(data, m_data, size);
+    Memory::copy(data, m_data, size);
 
     // Reset back to in-situ representation.
     Utility::exchange(m_data, m_insitu.data());

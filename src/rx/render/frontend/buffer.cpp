@@ -1,5 +1,3 @@
-#include <string.h> // memcpy
-
 #include "rx/render/frontend/buffer.h"
 #include "rx/render/frontend/context.h"
 
@@ -168,7 +166,7 @@ Byte* Buffer::map_sink(Sink _sink, Size _size) {
 bool Buffer::write_sink_data(Sink _sink, const Byte* _data, Size _size) {
   RX_ASSERT(_data, "null data");
   if (auto data = map_sink(_sink, _size)) {
-    memcpy(data, _data, _size);
+    Memory::copy(data, _data, _size);
     return true;
   }
   return false;

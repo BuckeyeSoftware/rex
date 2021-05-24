@@ -110,7 +110,6 @@ struct TestGame
 
     Particle::Assembler assembler{m_frontend.allocator()};
     if (!assembler.assemble("base/particles/point.asm")) {
-      printf("%s\n", assembler.error().data());
       return false;
     }
 

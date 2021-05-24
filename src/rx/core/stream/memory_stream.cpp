@@ -1,9 +1,10 @@
-#include <string.h> // memcpy
-
 #include "rx/core/stream/memory_stream.h"
 
 #include "rx/core/algorithm/min.h"
 #include "rx/core/algorithm/max.h"
+
+#include "rx/core/memory/zero.h"
+#include "rx/core/memory/copy.h"
 
 namespace Rx::Stream {
 
@@ -12,7 +13,7 @@ Uint64 MemoryStream::on_read(Byte* data_, Uint64 _size, Uint64 _offset) {
     return 0;
   }
   const auto bytes = Algorithm::min(_size, m_size - _offset);
-  memcpy(data_, m_data + _offset, _size);
+  Memory::copy(data_, m_data + _offset, _size);
   return bytes;
 }
 
@@ -27,11 +28,11 @@ Uint64 MemoryStream::on_write(const Byte* _data, Uint64 _size, Uint64 _offset) {
   // The write would expand the size.
   if (_offset > m_size) {
     // Zero the contents in range [m_size, _offset).
-    memset(m_data + m_size, 0, _offset - m_size);
+    Memory::zero(m_data + m_size, _offset - m_size);
     m_size = _offset + bytes;
   }
 
-  memcpy(m_data + _offset, _data, _size);
+  Memory::copy(m_data + _offset, _data, _size);
 
   return bytes;
 }
@@ -61,7 +62,7 @@ Uint64 MemoryStream::on_zero(Uint64 _size, Uint64 _offset) {
   // Don't allow over zeroring.
   const auto wr = Algorithm::min(_size, m_size - _offset);
 
-  memset(m_data + _offset, 0, wr);
+  Memory::zero(m_data + _offset, wr);
 
   return wr;
 }
@@ -81,12 +82,12 @@ Uint64 MemoryStream::on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _siz
   // The write would expand the size.
   if (_dst_offset > m_size) {
     // Zero the contents in range [m_size, _dst_offset).
-    memset(m_data + m_size, 0, _dst_offset - m_size);
+    Memory::zero(m_data + m_size, _dst_offset - m_size);
     m_size = _dst_offset + wr_bytes;
   }
 
   // NOTE(dweiler): The interface contract of |on_copy| must not overlap!
-  memcpy(m_data + _src_offset, m_data + _dst_offset, wr_bytes);
+  Memory::copy(m_data + _src_offset, m_data + _dst_offset, wr_bytes);
 
   return wr_bytes;
 }

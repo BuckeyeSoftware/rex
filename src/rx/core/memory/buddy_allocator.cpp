@@ -1,6 +1,5 @@
-#include <string.h> // memcpy
-
 #include "rx/core/memory/buddy_allocator.h"
+#include "rx/core/memory/copy.h"
 
 #include "rx/core/concurrency/scope_lock.h"
 
@@ -249,7 +248,8 @@ Byte* BuddyAllocator::reallocate_unlocked(void* _data, Size _size) {
     // Create a new allocation.
     auto resize = allocate_unlocked(_size);
     if (RX_HINT_LIKELY(resize)) {
-      memcpy(resize, _data, region->size - sizeof *region);
+      Memory::copy(resize, reinterpret_cast<const Byte*>(_data),
+        region->size - sizeof *region);
       deallocate_unlocked(_data);
       return resize;
     }
