@@ -424,3 +424,13 @@ reccomended are used instead. A simple replacement table is provided below.
 | `<string.h>` | `memset`              | `"rx/memory/fill.h"`   | `Memory::fill`   |
 | `<string.h>` | `memset(dst, 0, n)`   | `"rx/memory/zero.h"`   | `Memory::zero`   |
 | `<string.h>` | `memmove`             | `"rx/memory/move.h"`   | `Memory::move`   |
+
+Most of these functions are generally safer as they compile-time assert that the
+types given are trivially copyable or constructible. Similarly, it's undefined
+behavior to call many of the libc `mem` functions with null pointers, even if
+the size is also zero, instead this functions will runtime assert such misuses.
+
+Specializations also exist for certain types like arrays and objects, prefering
+the use of an element count to a byte count, catching possible integer multiply
+overflow on `sizeof(T)` and the element count which is often written inplace
+in calls to e.g `memcpy`.
