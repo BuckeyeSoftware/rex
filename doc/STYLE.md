@@ -420,7 +420,7 @@ reccomended are used instead. A simple replacement table is provided below.
 |--------------|-----------------------|------------------------|------------------|
 | `<string.h>` | `memchr`              | `"rx/memory/search.h"` | `Memory::search` |
 | `<string.h>` | `memmem`              | `"rx/memory/search.h"` | `Memory::search` |
-| `<string.h>` | `memcpy`              | `"rx/memory/memcpy.h"` | `Memory::copy`   |
+| `<string.h>` | `memcpy`              | `"rx/memory/copy.h"`   | `Memory::copy`   |
 | `<string.h>` | `memset`              | `"rx/memory/fill.h"`   | `Memory::fill`   |
 | `<string.h>` | `memset(dst, 0, n)`   | `"rx/memory/zero.h"`   | `Memory::zero`   |
 | `<string.h>` | `memmove`             | `"rx/memory/move.h"`   | `Memory::move`   |
