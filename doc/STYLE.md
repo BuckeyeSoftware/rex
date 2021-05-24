@@ -413,8 +413,7 @@ expensive modular arithmetic on some platforms.
 **NEVER** use `Size` to represent the size or offsets inside files, use `Uint64`.
 
 ## Alternatives
-There are alternative functions that replace common libc functions that are
-reccomended are used instead. A simple replacement table is provided below.
+Alternate functions that replace common libc functions are to be used instead.
 
 | C header     | C function or pattern | Rex header             | Rex function     |
 |--------------|-----------------------|------------------------|------------------|
@@ -426,11 +425,15 @@ reccomended are used instead. A simple replacement table is provided below.
 | `<string.h>` | `memmove`             | `"rx/memory/move.h"`   | `Memory::move`   |
 
 Most of these functions are generally safer as they compile-time assert that the
-types given are trivially copyable or constructible. Similarly, it's undefined
+types given are trivially copyable and constructible. Similarly, it's undefined
 behavior to call many of the libc `mem` functions with null pointers, even if
-the size is also zero, instead this functions will runtime assert such misuses.
+the size is also zero, instead these functions will runtime assert such misuses.
 
 Specializations also exist for certain types like arrays and objects, prefering
-the use of an element count to a byte count, catching possible integer multiply
-overflow on `sizeof(T)` and the element count which is often written inplace
-in calls to e.g `memcpy`.
+the use of an element count rather than a byte count, catching possible integer
+multiply overflow on `sizeof(T)` and the element count which is often written
+inplace in calls to such functions, e.g `memcpy(dst, src, sizeof(T) * elements)`.
+
+Additional subtle (by often surprsing) behavior is caught as well during runtime for debug builds, such as passing overlapping regions to `Memory::copy` when
+`Memory::move` should be used instead. Check the `rx/memory/` headers for more
+information on the additional safety measures afforded in debug builds.
