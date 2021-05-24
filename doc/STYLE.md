@@ -416,7 +416,11 @@ expensive modular arithmetic on some platforms.
 There are alternative functions that replace common libc functions that are
 reccomended are used instead. A simple replacement table is provided below.
 
-| C header     | C function | Rex header             | Rex function     |
-|--------------|------------|------------------------|------------------|
-| `<string.h>` | `memchr`   | `"rx/memory/search.h"` | `Memory::search` |
-| `<string.h>` | `memmem`   | `"rx/memory/search.h"` | `Memory::search` |
+| C header     | C function or pattern | Rex header             | Rex function     |
+|--------------|-----------------------|------------------------|------------------|
+| `<string.h>` | `memchr`              | `"rx/memory/search.h"` | `Memory::search` |
+| `<string.h>` | `memmem`              | `"rx/memory/search.h"` | `Memory::search` |
+| `<string.h>` | `memcpy`              | `"rx/memory/memcpy.h"` | `Memory::copy`   |
+| `<string.h>` | `memset`              | `"rx/memory/fill.h"`   | `Memory::fill`   |
+| `<string.h>` | `memset(dst, 0, n)`   | `"rx/memory/zero.h"`   | `Memory::zero`   |
+| `<string.h>` | `memmove`             | `"rx/memory/move.h"`   | `Memory::move`   |
