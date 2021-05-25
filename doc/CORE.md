@@ -55,7 +55,6 @@ Any container that manages a single, contiguous allocation can have it's memory 
   * `Vector<T>`    => `String`
   * `LinearBuffer` => `Vector<T>`
   * `LinearBuffer` => `String`
-  * `RingBuffer`   => `Vector<T>`
 
 Similarly, other types like `Map` and `Set` are implemented in terms of Robinhood hashing and maintain a single contiguous allocation for keys, values, and hash values. This means you can disown the keys of a `Set<T>` as an example into `Vector<T>`. There will be gaps of course since it is a hash set, but `Set<T>` and `Map<T>` have hash values that are zero in the same index for uninitialized slots.
 
@@ -84,6 +83,7 @@ There's a few algorithm implementations:
   * `max`
   * `min`
   * `quick_sort`
+  * `saturate`
   * `topological_sort`
 
 ## Concepts
@@ -91,11 +91,15 @@ It's encouraged to prefer concepts to traits.
 
 The following concepts exist:
   * `Assignable`
+  * `Boolean`
+  * `Copyable`
   * `Enum`
   * `FloatingPoint`
   * `Integral`
   * `Invocable`
+  * `Pointer`
   * `Referenceable`
+  * `Trivial`
   * `TriviallyCopyable`
   * `TriviallyDestructible`
 
@@ -108,12 +112,14 @@ The following concurrency types are implemented:
   * `ConditionVariable`. Standard condition variable.
   * `Mutex` A non-recursive mutex.
   * `RecursiveMutex` A recursive mutex.
+  * `Scheduler` Interface for describing a task based scheduler.
   * `ScopeLock` A generic locked scope (works with any `T` that implements `lock` and `unlock` functions.)
   * `ScopeUnlock` A generic unlocked scope (works with any `T` that implements `lock` and `unlock` functions.)
   * `SpinLock` A non-recursive spin-lock with finely tuned backoff policy and yield.
-  * `ThreadPool` A generic thread pool.
+  * `ThreadPool` A generic thread pool implementing the `Scheduler` interface.
   * `Thread` A kernel thread.
   * `WaitGroup` Helper primitive to wait for a group of work to complete.
+  * `WordLock` A more efficient spin-lock with thread parking.
 
 The following concurrency primitives are implemented:
   * `yield` Relinquish the thread to the OS.
@@ -121,13 +127,13 @@ The following concurrency primitives are implemented:
 ## Filesystem
 
 The following filesystem types are implemented:
+  * `BufferedFile` Open and manipulate files with buffering.
   * `Directory` Open and manipulate a directory.
-  * `File` Open and manipulate files.
+  * `UnbufferedFile` Open and manipulate files without buffering.
 
 ## Hash
 
 Hashing functions and utilities:
-
   * `combine` TEA algorithm for combining hashes.
   * `djbx33a` Interleave DJB hash four times for 128-bit hash.
   * `fnv1a` The fnv1a hash function.
@@ -136,6 +142,7 @@ Hashing functions and utilities:
   * `mix_float` Mix the bits of a floating point value to use in hashes.
   * `mix_int` Mix the bits of an integer value to use in hashes.
   * `mix_pointer` Mix the representation of a pointer value to use in hashes.
+  * `string` String hashes.
 
 ## Hints
 
@@ -192,28 +199,37 @@ The following allocator types exist:
   * `HeapAllocator` The default heap allocator.
   * `SingleShotAllocator` One time use allocator.
   * `StatsAllocator` Wraps an existing allocator to provide statistics about it.
-  * `SystemAllocato` The default system allocator.
+  * `SystemAllocator` The default system allocator.
 
 Some additional, low-level memory types exist as well such as:
-  * `Allocator` The allocator interface allocators must implement.
   * `Aggregate` Perform an aggregate allocation of different types in one allocation instead of multiple.
+  * `Allocator` The allocator interface allocators must implement.
+  * `Slab` An object slab.
   * `UnintializedStorage` Storage with specific size and alignment that can be used in constexpr contexts while staying uninitialized.
   * `VMA` Virtual memory allocator interfaces.
 
-## PRNG
+In addition, the following functions exist:
+  * `copy` A better `memcpy`.
+  * `fill` A better `memset`.
+  * `move` A better `memmove`.
+  * `search` A better `memmem` and `memchr`.
+  * `zero` Fast and safe memory zeroing.
 
-There exists some implementations of random-number generators
+## Random
 
-The following PRNG types exist:
+There exists some implementations of random-number generators.
+
+The following random number generator types exist:
+  * `Context` Random interface, implemented by generators.
   * `MT19937` Mersenne Twister
 
-## Serialize
+## Stream
 
-A generic binary searializer for any `Stream`.
-
-The following types exist:
-  * `Encoder`
-  * `Decoder`
+There exists an efficient stream library with multiple types:
+  * `BufferedStream` Adds buffering to an existing stream with page caching.
+  * `MemoryStream` Treat memory as a stream.
+  * `TrackedStream` Provides a seekable interface to a stream.
+  * `UntrackedStream` The default stream interface.
 
 ## Time
 
@@ -243,6 +259,7 @@ The following traits exist:
   * `is_array`
   * `is_function`
   * `is_lvalue_reference`
+  * `is_pointer`
   * `is_restrict`
   * `is_same`
   * `remove_const`
@@ -270,7 +287,6 @@ The following functions exist:
   * `forward` Exact implementation of `std::forward`.
   * `invoke` Similar to `std::invoke`.
   * `move` Exact implementation of `std::move`.
-  * `pair` Similar to `std::pair`.
   * `swap` Exact implementation of `std::swap`.
 
 ## Containers
@@ -278,7 +294,6 @@ The following functions exist:
 The following types exist:
   * `Array` Similar to `std::array`. 1D only.
   * `Bitset` A fixed-capacity bitset.
-  * `DynamicPool` A dynamic-capacity pool.
   * `Function` A fast delegate that is similar to `std::function`, move-only.
   * `Global` Global variables are wrapped with this type.
   * `IntrusiveCompressedList` A space-optimized intrusive doubly-linked list.
@@ -288,21 +303,23 @@ The following types exist:
   * `Optional` Optional type implementation.
   * `Ptr` A unique pointer implementation.
   * `Set` An unordered flat set using Robin-hood hashing.
-  * `StaticPool` A fixed-capacity pool.
   * `StringTable` A UTF-8-safe string table with language conversions.
   * `String` A UTF-8-safe string and a UTF16 conversion interface for Windows with SSO.
-  * `TaggedPtr` A tagged pointer for space saving optimizations.
   * `WideString` A UTF-16 safe string used to round-trip convert to `String`.
   * `Vector` A dynamic resizing array.
 
-## Misc
+## Miscellaneous
 
-The following types exist:
+The following miscellaneous types exist:
   * `Event` An event system with signal and slots. Slot adds a delegate, signal calls all delegates.
   * `JSON` A JSON & JSON5 reader and parser into a tree-like structure with thread-safe traversal.
+  * `Log` A self-registering, named logger.
   * `Profiler` A CPU and GPU profiler framework.
+  * `Report` Error reporting helper backed by a `Log`.
   * `SourceLocation` Type that describes file, line, and function where `RX_SOURCE_LOCATION` is used.
-  * `Stream` Stream interface including stream conversion functions.
+  * `Span` A pointer and length wrapper.
+  * `TaggedPtr` A tagged pointer for space saving optimizations.
+  * `Uninitialized` An uninitialied object.
 
 Other things not easily documented:
   * `abort` Take down the runtime safely while logging an abortion message.
