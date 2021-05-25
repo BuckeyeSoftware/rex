@@ -133,7 +133,7 @@ bool atomic_compare_exchange_weak(AtomicBase<T>* base_, T* _expected,
   T _value, MemoryOrder _success, MemoryOrder _failure)
 {
   return std::atomic_compare_exchange_weak_explicit(&base_->value, _expected,
-    _value, convert_memory_order(_success), convert_memory_order(_failure))
+    _value, convert_memory_order(_success), convert_memory_order(_failure));
 }
 
 template<typename T>

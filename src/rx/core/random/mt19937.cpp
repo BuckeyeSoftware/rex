@@ -94,11 +94,11 @@ Uint64 MT19937::u64() {
   return static_cast<Uint64>(a) << 32_u64 | b;
 }
 
-inline Float32 MT19937::f32() {
+Float32 MT19937::f32() {
   return static_cast<Float32>(u32()) / Float32(MAX);
 }
 
-inline Float64 MT19937::f64() {
+Float64 MT19937::f64() {
   return static_cast<Float64>(u64()) / Float64(MAX);
 }
 
