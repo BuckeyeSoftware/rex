@@ -1,6 +1,42 @@
 # Vendoring a dependency
 
-Vendoring a dependency in Rex correctly involves making some changes to the
+This document outlines the steps necessary to vendor a library into Rex.
+
+## Licence
+All vendored code must be permissively licensed with one of the following
+licenses.
+  * APL
+  * Apache
+  * Beerware
+  * BSD
+  * Creative Commons Zero
+  * CC BY
+  * CC BY-SA
+  * FreeBSD
+  * ISC
+  * MIT/X11
+  * Unlicense
+  * WTFPL
+  * zlib/libpng
+
+The use of GPL, LGPL, and AGPL libraries is not permitted.
+
+The license of the vendored code must not be removed and a copy of it must
+be present either as a license header for single file libraries, or as a
+Markdown document named `LICENSE.md` at the root.
+
+## Location
+All vendored code goes into `./src/lib`. Single file libraries can just be put
+there directly as-is. Multi-file libraries should have their own directory.
+
+## Language
+All non-free-standing C libraries must compile as C++ code as integration of
+non-free-standing involves substituting functions used in the vendored code with
+C++ functions in Rex. What this means in practice is such `.c` source files must
+be renamed to the `.cpp` extension and compile as C++ code.
+
+## Integrating
+Integrating a vendored dependency in Rex correctly involves making some changes to the
 dependency source code to be completely free of external symbols, including
 standard C library functions. This can be an involved process if the dependency
 wasn't written with this in mind.
@@ -16,7 +52,7 @@ only partially, the idiom Rex uses can be described in three parts.
   * Use the external symbols if an implementation is not found.
   * Implement the external symbols.
 
-## Namespace the external symbols and use them.
+### Namespace the external symbols and use them.
 When a library uses an external symbol, namespace the external symbol with the
 prefix of the library name and make use of it in the library. This is mostly a
 process of search and replace on the whole library. To give an example, imagine
@@ -29,7 +65,7 @@ code may still include headers that have those symbols. Had we just replaced
 included in the vendored code woulld be textually replaced with our macro,
 producing an invalid definition.
 
-## Use the external symbols if an implementation is not found.
+### Use the external symbols if an implementation is not found.
 Vendored code should maintain the invariant that it will compile and run with
 the same symbols it was written to use unless explicitly asked to. To maintain
 this invariant, the vendored code should perform a series of preprocessor
@@ -43,7 +79,7 @@ earlier, the `libmp3` vendored code would contain:
 #endif
 ```
 
-## Implement the external symbols.
+### Implement the external symbols.
 This is the optional step that allows allows replacement of the external symbols
 in the vendored library with our own. This is usually done with some source code
 which implements the external symbol before including the vendor code.
