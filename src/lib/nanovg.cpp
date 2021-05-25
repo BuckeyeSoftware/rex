@@ -1,5 +1,6 @@
 #include "rx/core/memory/fill.h"
 #include "rx/core/memory/copy.h"
+#include "rx/core/memory/system_allocator.h"
 
 #include "rx/core/math/sqrt.h"
 #include "rx/core/math/mod.h"
@@ -9,23 +10,21 @@
 #include "rx/core/math/ceil.h"
 #include "rx/core/math/floor.h"
 
-#include "rx/core/memory/system_allocator.h"
+#define nvg__memcpy(dst_, _src, _size)   Rx::Memory::copy_untyped((dst_), (_src), (_size))
+#define nvg__memset(dst_, _value, _size) Rx::Memory::fill_untyped((dst_), (_value), (_size))
 
-#define nvg__memset(...)   Rx::Memory::fill_untyped(__VA_ARGS__)
-#define nvg__memcpy(...)   Rx::Memory::copy_untyped(__VA_ARGS__)
+#define nvg__malloc(_size)               Rx::Memory::SystemAllocator::instance().allocate((_size))
+#define nvg__realloc(_ptr, _size)        Rx::Memory::SystemAllocator::instance().reallocate((_ptr), (_size))
+#define nvg__free(_ptr)                  Rx::Memory::SystemAllocator::instance().deallocate((_ptr))
 
-#define nvg__malloc(...)   Rx::Memory::SystemAllocator::instance().allocate(__VA_ARGS__)
-#define nvg__realloc(...)  Rx::Memory::SystemAllocator::instance().reallocate(__VA_ARGS__)
-#define nvg__free(...)     Rx::Memory::SystemAllocator::instance().deallocate(__VA_ARGS__)
-
-#define nvg__sqrtf(...)    Rx::Math::sqrt(__VA_ARGS__)
-#define nvg__modf(...)     Rx::Math::mod(__VA_ARGS__)
-#define nvg__sinf(...)     Rx::Math::sin(__VA_ARGS__)
-#define nvg__cosf(...)     Rx::Math::cos(__VA_ARGS__)
-#define nvg__tanf(...)     Rx::Math::tan(__VA_ARGS__)
-#define nvg__atan2f(...)   Rx::Math::atan2(__VA_ARGS__)
-#define nvg__acosf(...)    Rx::Math::acos(__VA_ARGS__)
-#define nvg__ceilf(...)    Rx::Math::ceil(__VA_ARGS__)
+#define nvg__sqrtf(_x)                   Rx::Math::sqrt((_x))
+#define nvg__modf(_x, _y)                Rx::Math::mod((_x), (_y))
+#define nvg__sinf(_x)                    Rx::Math::sin((_x))
+#define nvg__cosf(_x)                    Rx::Math::cos((_x))
+#define nvg__acosf(_x)                   Rx::Math::acos((_x))
+#define nvg__tanf(_x)                    Rx::Math::tan((_x))
+#define nvg__atan2f(_x, _y)              Rx::Math::atan2((_x), (_y))
+#define nvg__ceilf(_x)                   Rx::Math::ceil((_x))
 
 #define NANOVG_IMPLEMENTATION
-#include "nanovg.h"
+#include "lib/nanovg.h"

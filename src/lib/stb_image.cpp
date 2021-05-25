@@ -1,35 +1,25 @@
-#include <string.h> // strcpy, strncpy
-#include <stdlib.h> // strtol
-
 #include "rx/core/config.h"
-
-#include "rx/core/math/pow.h"
-#include "rx/core/math/ldexp.h"
 
 #include "rx/core/memory/copy.h"
 #include "rx/core/memory/fill.h"
 
-#define STB_IMAGE_IMPLEMENTATION
+#include "rx/core/math/pow.h"
+#include "rx/core/math/ldexp.h"
 
 #define STBI_NO_BMP
 #define STBI_NO_PSD
 #define STBI_NO_GIF
 #define STBI_NO_PIC
 #define STBI_NO_PNM
-// #define STBI_NO_STDIO
+#define STBI_NO_STDIO
 
-#define STBI_ASSERT(x) ((void)(x))
+#define STBI_memcpy(dst_, _src, _size)   Rx::Memory::copy_untyped((dst_), (_src), (_size))
+#define STBI_memset(dst_, _value, _size) Rx::Memory::fill_untyped((dst_), (_value), (_size))
 
-#define STBI_pow(x, y) Rx::Math::pow((x), (y))
-#define STBI_ldexp(x, n) Rx::Math::ldexp((x), (n))
+#define STBI_pow(_base, _exp)            Rx::Math::pow((_base), (_exp))
+#define STBI_ldexp(_x, _exp)             Rx::Math::ldexp((_x), (_exp))
 
-#define STBI_memcpy Rx::Memory::copy_untyped
-#define STBI_memset Rx::Memory::fill_untyped
-
-#define STBI_strcpy strcpy
-#define STBI_strcmp strcmp
-#define STBI_strncmp strncmp
-#define STBI_strtol strtol
+#define STBI_ASSERT(_x) RX_ASSERT((_x), "stb_image")
 
 #if defined(RX_COMPILER_GCC)
 #pragma GCC diagnostic push
@@ -39,6 +29,7 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
+#define STB_IMAGE_IMPLEMENTATION
 #include "lib/stb_image.h"
 
 #if defined(RX_COMPILER_GCC)

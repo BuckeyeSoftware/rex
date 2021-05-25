@@ -529,6 +529,21 @@ STBIDEF int   stbi_zlib_decode_noheader_buffer(char *obuffer, int olen, const ch
 #include <stddef.h> // ptrdiff_t on osx
 #include <limits.h>
 
+#ifndef STBI_strcmp
+#include <string.h>
+#define STBI_strcmp strcmp
+#endif
+
+#ifndef STBI_strncmp
+#include <string.h>
+#define STBI_strncmp strncmp
+#endif
+
+#ifndef STBI_strtol
+#include <stdlib.h>
+#define STBI_strtol strtol
+#endif
+
 #ifndef STBI_NO_STDIO
 #include <stdio.h>
 #endif
