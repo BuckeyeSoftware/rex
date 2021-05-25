@@ -73,34 +73,34 @@ T atomic_exchange(AtomicBase<T>* base_, T _value, MemoryOrder _order) {
 
 template<typename T>
 bool atomic_compare_exchange_strong(volatile AtomicBase<T>* base_,
-  T* _expected, T _value, MemoryOrder _order)
+  T* _expected, T _value, MemoryOrder _success, MemoryOrder _failure)
 {
   return __c11_atomic_compare_exchange_strong(&base_->value, _expected, _value,
-    static_cast<int>(_order));
+    static_cast<int>(_success), static_cast<int>(_failure));
 }
 
 template<typename T>
 bool atomic_compare_exchange_strong(AtomicBase<T>* base_, T* _expected,
-  T _value, MemoryOrder _order)
+  T _value, MemoryOrder _success, MemoryOrder _failure)
 {
   return __c11_atomic_compare_exchange_strong(&base_->value, _expected, _value,
-    static_cast<int>(_order));
+    static_cast<int>(_success), static_cast<int>(_failure));
 }
 
 template<typename T>
 bool atomic_compare_exchange_weak(volatile AtomicBase<T>* base_,
-  T* _expected, T _value, MemoryOrder _order)
+  T* _expected, T _value, MemoryOrder _success, MemoryOrder _failure)
 {
   return __c11_atomic_compare_exchange_weak(&base_->value, _expected, _value,
-    static_cast<int>(_order));
+    static_cast<int>(_success), static_cast<int>(_failure));
 }
 
 template<typename T>
 bool atomic_compare_exchange_weak(AtomicBase<T>* base_, T* _expected,
-  T _value, MemoryOrder _order)
+  T _value, MemoryOrder _success, MemoryOrder _failure)
 {
   return __c11_atomic_compare_exchange_weak(&base_->value, _expected, _value,
-    static_cast<int>(_order));
+    static_cast<int>(_success), static_cast<int>(_failure));
 }
 
 template<typename T>

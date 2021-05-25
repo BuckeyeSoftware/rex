@@ -106,30 +106,34 @@ T atomic_exchange(AtomicBase<T>* base_, T _value, MemoryOrder _order) {
 
 template<typename T>
 bool atomic_compare_exchange_strong(volatile AtomicBase<T>* base_,
-  T* _expected, T _value, MemoryOrder _order)
+  T* _expected, T _value, MemoryOrder _success, MemoryOrder _failure)
 {
-  return std::atomic_compare_exchange_strong_explicit(&base_->value, _expected, _value, convert_memory_order(_order));
+  return std::atomic_compare_exchange_strong_explicit(&base_->value, _expected,
+    _value, convert_memory_order(_success), convert_memory_order(_failure));
 }
 
 template<typename T>
 bool atomic_compare_exchange_strong(AtomicBase<T>* base_, T* _expected,
-  T _value, MemoryOrder _order)
+  T _value, MemoryOrder _success, MemoryOrder _failure)
 {
-  return std::atomic_compare_exchange_strong_explicit(&base_->value, _expected, _value, convert_memory_order(_order));
+  return std::atomic_compare_exchange_strong_explicit(&base_->value, _expected,
+    _value, convert_memory_order(_success), convert_memory_order(_failure));
 }
 
 template<typename T>
 bool atomic_compare_exchange_weak(volatile AtomicBase<T>* base_,
-  T* _expected, T _value, MemoryOrder _order)
+  T* _expected, T _value, MemoryOrder _success, MemoryOrder _failure)
 {
-  return std::atomic_compare_exchange_weak_explicit(&base_->value, _expected, _value, convert_memory_order(_order));
+  return std::atomic_compare_exchange_weak_explicit(&base_->value, _expected,
+    _value, convert_memory_order(_success), convert_memory_order(_failure));
 }
 
 template<typename T>
 bool atomic_compare_exchange_weak(AtomicBase<T>* base_, T* _expected,
-  T _value, MemoryOrder _order)
+  T _value, MemoryOrder _success, MemoryOrder _failure)
 {
-  return std::atomic_compare_exchange_weak_explicit(&base_->value, _expected, _value, convert_memory_order(_order));
+  return std::atomic_compare_exchange_weak_explicit(&base_->value, _expected,
+    _value, convert_memory_order(_success), convert_memory_order(_failure))
 }
 
 template<typename T>
