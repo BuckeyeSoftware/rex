@@ -91,6 +91,21 @@ struct AtomicValue : AtomicBase<T> {
   {
   }
 };
+
+// When a memory order is used for both read-modify-write and load operations,
+// the load operation should use ACQUIRE and RELAXED for the load operation if
+// order is ACQ_REL, or RELEASE respectively.
+inline constexpr MemoryOrder load_memory_order(MemoryOrder _order) {
+  switch (_order) {
+  case MemoryOrder::ACQ_REL:
+    return MemoryOrder::ACQUIRE;
+  case MemoryOrder::RELEASE:
+    return MemoryOrder::RELAXED;
+  default:
+    return _order;
+  }
+}
+
 } // namespace _
 #endif
 
@@ -230,41 +245,53 @@ struct AtomicValue {
   bool compare_exchange_weak(T& expected_, T _value, MemoryOrder _success,
     MemoryOrder _failure) volatile
   {
-    return atomic_compare_exchange_weak(&m_value, &expected_, _value, _success, _failure);
+    return atomic_compare_exchange_weak(&m_value, &expected_, _value, _success,
+      _failure);
   }
 
   bool compare_exchange_weak(T& expected_, T _value, MemoryOrder _success,
     MemoryOrder _failure)
   {
-    return atomic_compare_exchange_weak(&m_value, &expected_, _value, _success, _failure);
+    return atomic_compare_exchange_weak(&m_value, &expected_, _value, _success,
+      _failure);
   }
 
-  bool compare_exchange_weak(T& expected_, T _value, MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
-    return atomic_compare_exchange_weak(&m_value, &expected_, _value, _order, _order);
+  bool compare_exchange_weak(T& expected_, T _value,
+    MemoryOrder _order = MemoryOrder::SEQ_CST) volatile
+  {
+    return atomic_compare_exchange_weak(&m_value, &expected_, _value, _order,
+      _order, _::load_memory_order(_order));
   }
 
-  bool compare_exchange_weak(T& expected_, T _value, MemoryOrder _order = MemoryOrder::SEQ_CST) {
-    return atomic_compare_exchange_weak(&m_value, &expected_, _value, _order, _order);
+  bool compare_exchange_weak(T& expected_, T _value,
+    MemoryOrder _order = MemoryOrder::SEQ_CST)
+  {
+    return atomic_compare_exchange_weak(&m_value, &expected_, _value,
+      _order, _::load_memory_order(_order));
   }
 
   bool compare_exchange_strong(T& expected_, T _value, MemoryOrder _success,
     MemoryOrder _failure) volatile
   {
-    return atomic_compare_exchange_strong(&m_value, &expected_, _value, _success, _failure);
+    return atomic_compare_exchange_strong(&m_value, &expected_, _value, _success,
+      _failure);
   }
 
   bool compare_exchange_strong(T& expected_, T _value, MemoryOrder _success,
     MemoryOrder _failure)
   {
-    return atomic_compare_exchange_strong(&m_value, &expected_, _value, _success, _failure);
+    return atomic_compare_exchange_strong(&m_value, &expected_, _value, _success,
+      _failure);
   }
 
   bool compare_exchange_strong(T& expected_, T _value, MemoryOrder _order) volatile {
-    return atomic_compare_exchange_strong(&m_value, &expected_, _value, _order, _order);
+    return atomic_compare_exchange_strong(&m_value, &expected_, _value, _order,
+      _::load_memory_order(_order));
   }
 
   bool compare_exchange_strong(T& expected_, T _value, MemoryOrder _order) {
-    return atomic_compare_exchange_strong(&m_value, &expected_, _value, _order, _order);
+    return atomic_compare_exchange_strong(&m_value, &expected_, _value, _order,
+      _::load_memory_order(_order));
   }
   /// @}
 
