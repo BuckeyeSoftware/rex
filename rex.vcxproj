@@ -229,6 +229,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\game\main.cpp" />
+    <ClCompile Include="src\lib\fontstash.cpp" />
     <ClCompile Include="src\lib\json.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsC</CompileAs>
@@ -249,6 +250,7 @@
     <ClCompile Include="src\rx\core\concurrency\thread.cpp" />
     <ClCompile Include="src\rx\core\concurrency\thread_pool.cpp" />
     <ClCompile Include="src\rx\core\concurrency\wait_group.cpp" />
+    <ClCompile Include="src\rx\core\concurrency\word_lock.cpp" />
     <ClCompile Include="src\rx\core\concurrency\yield.cpp" />
     <ClCompile Include="src\rx\core\cpprt.cpp" />
     <ClCompile Include="src\rx\core\filesystem\buffered_file.cpp" />
@@ -282,8 +284,11 @@
     <ClCompile Include="src\rx\core\memory\allocator.cpp" />
     <ClCompile Include="src\rx\core\memory\buddy_allocator.cpp" />
     <ClCompile Include="src\rx\core\memory\bump_point_allocator.cpp" />
+    <ClCompile Include="src\rx\core\memory\copy.cpp" />
     <ClCompile Include="src\rx\core\memory\electric_fence_allocator.cpp" />
+    <ClCompile Include="src\rx\core\memory\fill.cpp" />
     <ClCompile Include="src\rx\core\memory\heap_allocator.cpp" />
+    <ClCompile Include="src\rx\core\memory\move.cpp" />
     <ClCompile Include="src\rx\core\memory\null_allocator.cpp" />
     <ClCompile Include="src\rx\core\memory\search.cpp" />
     <ClCompile Include="src\rx\core\memory\single_shot_allocator.cpp" />
@@ -291,8 +296,8 @@
     <ClCompile Include="src\rx\core\memory\stats_allocator.cpp" />
     <ClCompile Include="src\rx\core\memory\system_allocator.cpp" />
     <ClCompile Include="src\rx\core\memory\vma.cpp" />
-    <ClCompile Include="src\rx\core\prng\mt19937.cpp" />
     <ClCompile Include="src\rx\core\profiler.cpp" />
+    <ClCompile Include="src\rx\core\random\mt19937.cpp" />
     <ClCompile Include="src\rx\core\report.cpp" />
     <ClCompile Include="src\rx\core\stream\buffered_stream.cpp" />
     <ClCompile Include="src\rx\core\stream\memory_stream.cpp" />
@@ -304,7 +309,6 @@
     <ClCompile Include="src\rx\core\time\qpc.cpp" />
     <ClCompile Include="src\rx\core\time\span.cpp" />
     <ClCompile Include="src\rx\core\time\stop_watch.cpp" />
-    <ClCompile Include="src\rx\core\vector.cpp" />
     <ClCompile Include="src\rx\display.cpp" />
     <ClCompile Include="src\rx\engine.cpp" />
     <ClCompile Include="src\rx\hud\console.cpp" />
@@ -382,6 +386,7 @@
     <ClCompile Include="src\rx\texture\loader.cpp" />
     <ClCompile Include="src\rx\texture\scale.cpp" />
     <ClInclude Include="src\game\terrain.h" />
+    <ClInclude Include="src\lib\fontstash.h" />
     <ClInclude Include="src\lib\json.h" />
     <ClInclude Include="src\lib\stb_image.h" />
     <ClInclude Include="src\lib\stb_truetype.h" />
@@ -412,6 +417,7 @@
     <ClInclude Include="src\rx\core\concurrency\thread.h" />
     <ClInclude Include="src\rx\core\concurrency\thread_pool.h" />
     <ClInclude Include="src\rx\core\concurrency\wait_group.h" />
+    <ClInclude Include="src\rx\core\concurrency\word_lock.h" />
     <ClInclude Include="src\rx\core\concurrency\yield.h" />
     <ClInclude Include="src\rx\core\config.h" />
     <ClInclude Include="src\rx\core\event.h" />
@@ -472,8 +478,11 @@
     <ClInclude Include="src\rx\core\memory\allocator.h" />
     <ClInclude Include="src\rx\core\memory\buddy_allocator.h" />
     <ClInclude Include="src\rx\core\memory\bump_point_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\copy.h" />
     <ClInclude Include="src\rx\core\memory\electric_fence_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\fill.h" />
     <ClInclude Include="src\rx\core\memory\heap_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\move.h" />
     <ClInclude Include="src\rx\core\memory\null_allocator.h" />
     <ClInclude Include="src\rx\core\memory\search.h" />
     <ClInclude Include="src\rx\core\memory\single_shot_allocator.h" />
@@ -482,10 +491,12 @@
     <ClInclude Include="src\rx\core\memory\system_allocator.h" />
     <ClInclude Include="src\rx\core\memory\uninitialized_storage.h" />
     <ClInclude Include="src\rx\core\memory\vma.h" />
+    <ClInclude Include="src\rx\core\memory\zero.h" />
     <ClInclude Include="src\rx\core\optional.h" />
-    <ClInclude Include="src\rx\core\prng\mt19937.h" />
     <ClInclude Include="src\rx\core\profiler.h" />
     <ClInclude Include="src\rx\core\ptr.h" />
+    <ClInclude Include="src\rx\core\random\context.h" />
+    <ClInclude Include="src\rx\core\random\mt19937.h" />
     <ClInclude Include="src\rx\core\report.h" />
     <ClInclude Include="src\rx\core\set.h" />
     <ClInclude Include="src\rx\core\source_location.h" />
@@ -554,7 +565,6 @@
     <ClInclude Include="src\rx\core\utility\pair.h" />
     <ClInclude Include="src\rx\core\utility\swap.h" />
     <ClInclude Include="src\rx\core\utility\uninitialized.h" />
-    <ClInclude Include="src\rx\core\vector.h" />
     <ClInclude Include="src\rx\display.h" />
     <ClInclude Include="src\rx\engine.h" />
     <ClInclude Include="src\rx\hud\console.h" />
