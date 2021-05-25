@@ -4,7 +4,7 @@
 
 namespace Rx::Memory {
 
-void fill_untyped(void* dest_, Byte _value, Size _size);
+void* fill_untyped(void* dest_, Byte _value, Size _size);
 
 } // namespace Rx::Memory
 

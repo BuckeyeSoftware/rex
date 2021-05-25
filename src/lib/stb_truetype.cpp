@@ -6,6 +6,9 @@
 #include "rx/core/math/cos.h"
 #include "rx/core/math/abs.h"
 
+#include "rx/core/memory/copy.h"
+#include "rx/core/memory/fill.h"
+
 #define STBTT_ifloor(_x) static_cast<int>(Rx::Math::floor(_x))
 #define STBTT_iceil(_x)  static_cast<int>(Rx::Math::ceil(_x))
 
@@ -15,6 +18,8 @@
 #define STBTT_cos(_x) Rx::Math::cos(_x)
 #define STBTT_acos(_x) Rx::Math::acos(_x)
 #define STBTT_fabs(_x) Rx::Math::abs(_x)
+#define STBTT_memcpy(...) Rx::Memory::copy_untyped(__VA_ARGS__)
+#define STBTT_memset(...) Rx::Memory::fill_untyped(__VA_ARGS__)
 
 #define STBTT_assert(x) ((void)(x))
 

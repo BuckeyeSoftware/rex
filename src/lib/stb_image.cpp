@@ -1,7 +1,13 @@
+#include <string.h> // strcpy, strncpy
+#include <stdlib.h> // strtol
+
 #include "rx/core/config.h"
 
 #include "rx/core/math/pow.h"
 #include "rx/core/math/ldexp.h"
+
+#include "rx/core/memory/copy.h"
+#include "rx/core/memory/fill.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 
@@ -14,8 +20,16 @@
 
 #define STBI_ASSERT(x) ((void)(x))
 
-#define pow(x, y) Rx::Math::pow((x), (y))
-#define ldexp(x, n) Rx::Math::ldexp((x), (n))
+#define STBI_pow(x, y) Rx::Math::pow((x), (y))
+#define STBI_ldexp(x, n) Rx::Math::ldexp((x), (n))
+
+#define STBI_memcpy Rx::Memory::copy_untyped
+#define STBI_memset Rx::Memory::fill_untyped
+
+#define STBI_strcpy strcpy
+#define STBI_strcmp strcmp
+#define STBI_strncmp strncmp
+#define STBI_strtol strtol
 
 #if defined(RX_COMPILER_GCC)
 #pragma GCC diagnostic push

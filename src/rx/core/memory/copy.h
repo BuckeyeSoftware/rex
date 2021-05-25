@@ -6,7 +6,7 @@
 
 namespace Rx::Memory {
 
-void copy_untyped(void *RX_HINT_RESTRICT dst_, const void *RX_HINT_RESTRICT _src, Size _bytes);
+void* copy_untyped(void *RX_HINT_RESTRICT dst_, const void *RX_HINT_RESTRICT _src, Size _bytes);
 
 template<Concepts::TriviallyCopyable T>
 void copy(T *RX_HINT_RESTRICT dst_, const T *RX_HINT_RESTRICT _src, Size _elements = 1) {
