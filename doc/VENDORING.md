@@ -64,7 +64,7 @@ substitute it. This step would involve replacing all instances of `malloc` with
 Replacing the symbol name in this fashion is necessary because the vendored
 code may still include headers that have those symbols. Had we just replaced
 `malloc` with a macro, then the `malloc` function inside `stdlib.h` (which may
-be possibly included in the vendored code stilll) woulld be textually replaced
+be possibly included in the vendored code still) would be textually replaced
 with our macro, producing an invalid definition.
 
 ### Use the external symbols if an implementation is not found.
@@ -96,4 +96,4 @@ From the example earlier, this could look something like:
 
 Now to toggle between Rex replacements and the actual default code, all one has
 to do is comment out the `#define` and rebuild since the absence of the macro
-will cause a definition of the macro producing the original symbol.
+will cause a default definition of the macro producing the original symbol.
