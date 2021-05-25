@@ -10,8 +10,14 @@ namespace Rx {
 #define RX_FUNCTION __func__
 #endif // defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG)
 
+// Don't emit file or function strings in anything but debug builds.
+#if defined(RX_DEBUG)
 #define RX_SOURCE_LOCATION \
   ::Rx::SourceLocation{__FILE__, RX_FUNCTION, __LINE__}
+#else
+#define RX_SOURCE_LOCATION \
+  ::Rx::SourceLocation{"(unknown)", "(unknown)", 0}
+#endif // defined(RX_DEBUG)
 
 struct SourceLocation {
   constexpr SourceLocation(const char* _file,
