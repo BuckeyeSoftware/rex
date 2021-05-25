@@ -46,7 +46,7 @@ private:
 public:
   RX_MARK_NO_COPY(Technique);
 
-  Technique() = default;
+  Technique() = delete;
   Technique(Context* _frontend);
   ~Technique();
 
