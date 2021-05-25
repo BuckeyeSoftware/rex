@@ -76,9 +76,6 @@
     <Filter Include="src\rx\core\memory">
       <UniqueIdentifier>{97d2146c-563b-4438-9e05-195e660b40db}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\rx\core\prng">
-      <UniqueIdentifier>{ebfc246c-eabc-4ef9-bd06-a7ef9a7caf79}</UniqueIdentifier>
-    </Filter>
     <Filter Include="src\rx\core\time">
       <UniqueIdentifier>{e1269559-4b75-4446-bf90-a8c0d6bb21a2}</UniqueIdentifier>
     </Filter>
@@ -102,6 +99,9 @@
     </Filter>
     <Filter Include="src\rx\core\stream">
       <UniqueIdentifier>{ead92af9-3f2c-40c1-bf30-7813bdfbf064}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rx\core\random">
+      <UniqueIdentifier>{bdfd7dcd-4339-4165-8916-53645ddf1062}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -375,9 +375,6 @@
     <ClCompile Include="src\rx\core\memory\vma.cpp">
       <Filter>src\rx\core\memory</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\core\prng\mt19937.cpp">
-      <Filter>src\rx\core\prng</Filter>
-    </ClCompile>
     <ClCompile Include="src\rx\core\time\delay.cpp">
       <Filter>src\rx\core\time</Filter>
     </ClCompile>
@@ -424,9 +421,6 @@
       <Filter>src\rx\core</Filter>
     </ClCompile>
     <ClCompile Include="src\rx\core\string_table.cpp">
-      <Filter>src\rx\core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rx\core\vector.cpp">
       <Filter>src\rx\core</Filter>
     </ClCompile>
     <ClCompile Include="src\rx\input\context.cpp">
@@ -554,6 +548,24 @@
     </ClCompile>
     <ClCompile Include="src\rx\model\voxel.cpp">
       <Filter>src\rx\model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib\fontstash.cpp">
+      <Filter>src\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\concurrency\word_lock.cpp">
+      <Filter>src\rx\core\concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\memory\copy.cpp">
+      <Filter>src\rx\core\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\memory\fill.cpp">
+      <Filter>src\rx\core\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\memory\move.cpp">
+      <Filter>src\rx\core\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\random\mt19937.cpp">
+      <Filter>src\rx\core\random</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -941,9 +953,6 @@
     <ClInclude Include="src\rx\core\memory\vma.h">
       <Filter>src\rx\core\memory</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\core\prng\mt19937.h">
-      <Filter>src\rx\core\prng</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\core\time\delay.h">
       <Filter>src\rx\core\time</Filter>
     </ClInclude>
@@ -1178,9 +1187,6 @@
     <ClInclude Include="src\rx\core\uninitialized.h">
       <Filter>src\rx\core</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\core\vector.h">
-      <Filter>src\rx\core</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\core\array.h">
       <Filter>src\rx\core\utility</Filter>
     </ClInclude>
@@ -1330,6 +1336,30 @@
     </ClInclude>
     <ClInclude Include="src\rx\model\voxel.h">
       <Filter>src\rx\model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lib\fontstash.h">
+      <Filter>src\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\concurrency\word_lock.h">
+      <Filter>src\rx\core\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\memory\copy.h">
+      <Filter>src\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\memory\fill.h">
+      <Filter>src\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\memory\move.h">
+      <Filter>src\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\memory\zero.h">
+      <Filter>src\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\random\context.h">
+      <Filter>src\rx\core\random</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\random\mt19937.h">
+      <Filter>src\rx\core\random</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
