@@ -57,6 +57,7 @@ struct Loader {
 private:
   void destroy();
   bool parse_transform(const JSON& _transform);
+  bool validate();
 
   enum {
     CONSTRUCTED = 1 << 0,

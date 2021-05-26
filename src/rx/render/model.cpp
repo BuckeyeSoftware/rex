@@ -183,7 +183,7 @@ bool Model::upload(const Rx::Model::Loader& _loader) {
           *find, Utility::move(*bounds));
       }
     }
-    return true;
+    return false;
   });
 }
 

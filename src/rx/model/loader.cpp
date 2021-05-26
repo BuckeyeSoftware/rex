@@ -3,6 +3,7 @@
 #include "rx/model/skeleton.h"
 
 #include "rx/core/map.h"
+#include "rx/core/set.h"
 #include "rx/core/ptr.h"
 #include "rx/core/json.h"
 #include "rx/core/filesystem/unbuffered_file.h"
@@ -117,14 +118,14 @@ bool Loader::parse(const JSON& _definition) {
     return false;
   }
 
+  // Clear incase we're being run multiple times to change.
+  m_materials.clear();
+
   if (!import(file.as_string_with_allocator(allocator()))) {
     return false;
   }
 
   // Load all the materials across multiple threads.
-
-  // Clear incase we're being run multiple times to change.
-  m_materials.clear();
 
   Concurrency::Mutex mutex;
   Concurrency::WaitGroup group{materials.size()};
@@ -143,7 +144,8 @@ bool Loader::parse(const JSON& _definition) {
   });
   group.wait();
 
-  return true;
+  // Validate the materials.
+  return validate();
 }
 
 bool Loader::import(const String& _file_name) {
@@ -166,7 +168,6 @@ bool Loader::import(const String& _file_name) {
 
   // We may possibly call import multiple times.
   destroy();
-  m_materials.clear();
 
   m_meshes = Utility::move(new_loader->meshes());
   m_elements = Utility::move(new_loader->elements());
@@ -301,6 +302,36 @@ bool Loader::parse_transform(const JSON& _transform) {
   }
 
   m_transform = transform;
+
+  return true;
+}
+
+bool Loader::validate() {
+  // Validate that each mesh has a material and is referenced.
+  Set<String> referenced{m_allocator};
+  auto check_mesh = [&](const Mesh& _mesh) -> bool {
+    if (!m_materials.find(_mesh.material)) {
+      return m_report.error("missing material \"%s\" for mesh \"%s\"",
+        _mesh.material, _mesh.name);
+    }
+    return referenced.insert(_mesh.material);
+  };
+
+  if (!m_meshes.each_fwd(check_mesh)) {
+    return false;
+  }
+
+  // Validate each material is referenced.
+  auto check_material = [&](const String& _name) -> bool {
+    if (!referenced.find(_name)) {
+      return m_report.error("material \"%s\" is not referenced by any mesh", _name);
+    }
+    return true;
+  };
+
+  if (!m_materials.each_key(check_material)) {
+    return false;
+  }
 
   return true;
 }

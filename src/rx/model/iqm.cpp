@@ -327,8 +327,9 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
   for (Uint32 i = 0; i < _header.meshes; i++) {
     const auto& mesh = meshes[i];
     const auto* material_name = string_table + mesh.material;
-    if (!m_meshes.emplace_back(mesh.first_triangle * 3, mesh.num_triangles * 3,
-      material_name, Vector<Vector<Math::AABB>>{allocator()}))
+    const auto* mesh_name = string_table + mesh.name;
+    if (!m_meshes.emplace_back(mesh_name, material_name, mesh.first_triangle * 3,
+      mesh.num_triangles * 3, Vector<Vector<Math::AABB>>{allocator()}))
     {
       return m_report.error("out of memory");
     }

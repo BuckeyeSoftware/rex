@@ -10,6 +10,8 @@
 #include "rx/core/math/abs.h"
 #include "rx/core/math/constants.h"
 
+#include "rx/core/time/stop_watch.h"
+
 #include "rx/math/mat3x3.h"
 
 RX_LOG("model/importer", logger);
@@ -36,9 +38,12 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
   m_name = _stream.name();
   m_report.rename(m_name);
 
+  Time::StopWatch time;
+  time.start();
   if (!read(_stream)) {
     return false;
   }
+  time.stop();
 
   if (m_elements.is_empty() || m_positions.is_empty()) {
     return m_report.error("missing vertices");
@@ -59,8 +64,9 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
     return m_report.error("unfinished triangles");
   }
 
-  logger->verbose("%zu triangles, %zu vertices, %zu meshes",
-    m_elements.size() / 3, m_positions.size(), m_meshes.size());
+  logger->verbose("%s: loaded %zu triangles, %zu vertices, %zu meshes in %s",
+    m_name, m_elements.size() / 3, m_positions.size(), m_meshes.size(),
+    time.elapsed());
 
   // Check for normals.
   if (m_normals.is_empty()) {
@@ -154,17 +160,19 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
     }
 
     const auto count = optimized_elements.size() - n_elements;
-    return optimized_meshes.emplace_back(n_elements, count, _material_name,
+    return optimized_meshes.emplace_back("", _material_name, n_elements, count,
       Vector<Vector<Math::AABB>>{allocator()});
   };
 
+  time.start();
   if (!batches.each_pair(coalesce_batch)) {
     return m_report.error("out of memory");
   }
+  time.stop();
 
   if (optimized_meshes.size() < m_meshes.size()) {
-    logger->info("reduced %zu meshes to %zu", m_meshes.size(),
-      optimized_meshes.size());
+    logger->info("%s: reduced %zu meshes to %zu in %s", m_name, m_meshes.size(),
+      optimized_meshes.size(), time.elapsed());
   }
 
   m_meshes = Utility::move(optimized_meshes);

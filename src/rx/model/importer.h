@@ -16,9 +16,10 @@ namespace Rx::Stream { struct UntrackedStream; }
 namespace Rx::Model {
 
 struct Mesh {
+  String name;
+  String material;
   Size offset;
   Size count;
-  String material;
 
   // Contains the per frame bounds for mesh. When the mesh contains no
   // animations, bounds[0][0] contains the bounds for the static mesh.
