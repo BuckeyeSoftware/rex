@@ -141,12 +141,15 @@ static void* open_file([[maybe_unused]] Memory::Allocator& _allocator, const cha
   // The '+' inside |_mode| indicates R+W
   if (strchr(_mode, '+')) {
     dwDesiredAccess |= (GENERIC_READ | GENERIC_WRITE);
+    dwShareMode |= (FILE_SHARE_READ | FILE_SHARE_WRITE);
   } else if (*_mode == 'r') {
     // Read-only.
     dwDesiredAccess |= GENERIC_READ;
+    dwShareMode |= FILE_SHARE_READ;
   } else {
     // Write-only.
     dwDesiredAccess |= GENERIC_WRITE;
+    dwShareMode |= FILE_SHARE_WRITE;
   }
 
   if (*_mode == 'r') {
