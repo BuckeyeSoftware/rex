@@ -122,7 +122,7 @@ bool Texture::load_texture_file(const Math::Vec2z& _max_dimensions) {
 
   Rx::Texture::Loader loader{allocator()};
   if (!loader.load(m_file, want_format, _max_dimensions)) {
-    return false;
+    return m_report.error("failed to load file \"%s\"", m_file);
   }
 
   auto data = Utility::move(loader.data());

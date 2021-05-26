@@ -182,8 +182,6 @@ bool Loader::parse(const JSON& _definition) {
     }
 
     m_transform = xform;
-
-    return true;
   }
 
   if (const auto& textures = _definition["textures"]) {
