@@ -17,6 +17,8 @@
 
 namespace Rx::Console {
 
+static constexpr const auto MAX_LINES = 4096_z;
+
 static Concurrency::SpinLock g_lock;
 
 static VariableReference* g_head RX_HINT_GUARDED_BY(g_lock);
@@ -52,6 +54,11 @@ static bool type_check(VariableType _VariableType, Token::Type _token_type) {
 }
 
 bool Context::write(const String& message_) {
+  // Limit the # of lines.
+  if (m_lines.size() > MAX_LINES) {
+    m_lines.erase(0, MAX_LINES);
+  }
+
   return m_lines.push_back(message_);
 }
 
