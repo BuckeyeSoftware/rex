@@ -28,6 +28,11 @@ void IndirectLightingPass::render(const Math::Camera& _camera, const GBuffer* _g
     RX_RENDER_CLEAR_COLOR(0),
     Math::Vec4f{0.0f, 0.0f, 0.0f, 1.0f}.data());
 
+  // Only where stencil = 1
+  state.stencil.record_enable(true);
+  state.stencil.record_function(Frontend::StencilState::FunctionType::EQUAL);
+  state.stencil.record_reference(1);
+
   Frontend::Textures draw_textures;
   program->uniforms()[0].record_sampler(draw_textures.add(_gbuffer->albedo()));
   program->uniforms()[1].record_sampler(draw_textures.add(_gbuffer->normal()));
@@ -56,7 +61,7 @@ void IndirectLightingPass::render(const Math::Camera& _camera, const GBuffer* _g
 }
 
 Optional<IndirectLightingPass> IndirectLightingPass::create(
-  Frontend::Context* _frontend, const Math::Vec2z& _dimensions)
+  Frontend::Context* _frontend, Frontend::Texture2D* _depth_stencil, const Math::Vec2z& _dimensions)
 {
   auto technique = _frontend->find_technique_by_name("deferred_indirect");
   if (!technique) {
@@ -85,6 +90,7 @@ Optional<IndirectLightingPass> IndirectLightingPass::create(
   }
 
   target->attach_texture(texture, 0);
+  target->attach_depth_stencil(_depth_stencil);
   _frontend->initialize_target(RX_RENDER_TAG("indirect lighting pass"), target);
 
   IndirectLightingPass indirect_lighting_pass;
@@ -95,6 +101,15 @@ Optional<IndirectLightingPass> IndirectLightingPass::create(
 
   return indirect_lighting_pass;
 }
+
+bool IndirectLightingPass::resize(const Math::Vec2z& _dimensions) {
+  if (auto recreate = create(m_frontend, m_target->depth_stencil(), _dimensions)) {
+    *this = Utility::move(*recreate);
+    return true;
+  }
+  return false;
+}
+
 
 void IndirectLightingPass::release() {
   if (m_frontend) {

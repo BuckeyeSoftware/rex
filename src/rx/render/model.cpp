@@ -243,6 +243,20 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
   // Enable(DEPTH_TEST)
   state.depth.record_test(true);
 
+  // Enable(STENCIL_TEST)
+  state.stencil.record_enable(true);
+
+  // StencilMask(0xff)
+  state.stencil.record_write_mask(0xff);
+  // StencilFunc(ALWAYS, 1, 0xff)
+  state.stencil.record_function(Frontend::StencilState::FunctionType::ALWAYS);
+  state.stencil.record_reference(1);
+  state.stencil.record_mask(0xff);
+
+  state.stencil.record_fail_action(Frontend::StencilState::OperationType::KEEP);
+  state.stencil.record_depth_fail_action(Frontend::StencilState::OperationType::REPLACE);
+  state.stencil.record_depth_pass_action(Frontend::StencilState::OperationType::REPLACE);
+
   // Enable(CULL_FACE)
   state.cull.record_enable(true);
 

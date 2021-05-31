@@ -29,7 +29,7 @@ struct IndirectLightingPass {
   ~IndirectLightingPass();
   IndirectLightingPass& operator=(IndirectLightingPass&& indirect_lighting_pass_);
 
-  static Optional<IndirectLightingPass> create(Frontend::Context* _frontend, const Math::Vec2z& _dimensions);
+  static Optional<IndirectLightingPass> create(Frontend::Context* _frontend, Frontend::Texture2D* _depth_stencil, const Math::Vec2z& _dimensions);
 
   void render(const Math::Camera& _camera, const GBuffer* _gbuffer, const ImageBasedLighting* _ibl);
   bool resize(const Math::Vec2z& _resolution);
@@ -78,14 +78,6 @@ inline IndirectLightingPass& IndirectLightingPass::operator=(IndirectLightingPas
 
 inline IndirectLightingPass::~IndirectLightingPass() {
   release();
-}
-
-inline bool IndirectLightingPass::resize(const Math::Vec2z& _dimensions) {
-  if (auto recreate = create(m_frontend, _dimensions)) {
-    *this = Utility::move(*recreate);
-    return true;
-  }
-  return false;
 }
 
 inline Frontend::Texture2D* IndirectLightingPass::texture() const {

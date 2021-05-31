@@ -152,7 +152,7 @@ struct TestGame
       return false;
     }
 
-    if (auto pass = Render::IndirectLightingPass::create(&m_frontend, dimensions)) {
+    if (auto pass = Render::IndirectLightingPass::create(&m_frontend, m_gbuffer.depth_stencil(), dimensions)) {
       m_indirect_lighting_pass = Utility::move(*pass);
     } else {
       return false;
