@@ -1,7 +1,6 @@
 #ifndef RX_RENDER_COPY_PASS
 #define RX_RENDER_COPY_PASS
-#include "rx/core/optional.h"
-#include "rx/core/utility/exchange.h"
+#include "rx/render/frontend/texture.h"
 
 #include "rx/math/vec2.h"
 
@@ -9,7 +8,6 @@ namespace Rx::Render {
 
 namespace Frontend {
   struct Target;
-  struct Texture2D;
   struct Technique;
   struct Context;
 } // Frontend
@@ -17,46 +15,62 @@ namespace Frontend {
 struct CopyPass {
   RX_MARK_NO_COPY(CopyPass);
 
-  constexpr CopyPass() = default;
+  constexpr CopyPass();
   CopyPass(CopyPass&& copy_pass_);
   ~CopyPass();
   CopyPass& operator=(CopyPass&& copy_pass_);
 
+  struct Options {
+    Math::Vec2z                     dimensions;
+    Frontend::Texture2D::DataFormat format;
+  };
+
   // Create a CopyPass.
   static Optional<CopyPass> create(Frontend::Context* _frontend,
-    const Math::Vec2z& _dimensions, Frontend::Texture2D* _depth_stencil = nullptr);
-
-  void attach_depth_stencil(Frontend::Texture2D* _depth_stencil);
-
-  bool resize(const Math::Vec2z& _dimensions);
+    const Options& _options);
 
   void render(Frontend::Texture2D* _source);
+  bool recreate(const Options& _options);
 
   Frontend::Texture2D* texture() const;
   Frontend::Target* target() const;
 
 private:
-  static void move(CopyPass* dst_, CopyPass* src_);
+  CopyPass(Frontend::Context* _frontend, Frontend::Target* _target,
+    Frontend::Texture2D* _texture, Frontend::Technique* _technique);
 
   void release();
 
-  Frontend::Context* m_frontend = nullptr;
-  Frontend::Target* m_target = nullptr;
-  Frontend::Texture2D* m_texture = nullptr;
-  Frontend::Technique* m_technique = nullptr;
-  Frontend::Texture2D* m_depth_stencil = nullptr;
+  Frontend::Context* m_frontend;
+  Frontend::Target* m_target;
+  Frontend::Texture2D* m_texture;
+  Frontend::Technique* m_technique;
 };
 
-inline void CopyPass::move(CopyPass* dst_, CopyPass* src_) {
-  dst_->m_frontend = Utility::exchange(src_->m_frontend, nullptr);
-  dst_->m_target = Utility::exchange(src_->m_target, nullptr);
-  dst_->m_texture = Utility::exchange(src_->m_texture, nullptr);
-  dst_->m_technique = Utility::exchange(src_->m_technique, nullptr);
-  dst_->m_depth_stencil = Utility::exchange(src_->m_depth_stencil, nullptr);
+// [CopyPass]
+inline constexpr CopyPass::CopyPass()
+  : m_frontend{nullptr}
+  , m_target{nullptr}
+  , m_texture{nullptr}
+  , m_technique{nullptr}
+{
 }
 
-inline CopyPass::CopyPass(CopyPass&& copy_pass_) {
-  move(this, &copy_pass_);
+inline CopyPass::CopyPass(Frontend::Context* _frontend, Frontend::Target* _target,
+  Frontend::Texture2D* _texture, Frontend::Technique* _technique)
+  : m_frontend{_frontend}
+  , m_target{_target}
+  , m_texture{_texture}
+  , m_technique{_technique}
+{
+}
+
+inline CopyPass::CopyPass(CopyPass&& copy_pass_)
+  : m_frontend{Utility::exchange(copy_pass_.m_frontend, nullptr)}
+  , m_target{Utility::exchange(copy_pass_.m_target, nullptr)}
+  , m_texture{Utility::exchange(copy_pass_.m_texture, nullptr)}
+  , m_technique{Utility::exchange(copy_pass_.m_technique, nullptr)}
+{
 }
 
 inline CopyPass::~CopyPass() {
@@ -66,21 +80,12 @@ inline CopyPass::~CopyPass() {
 inline CopyPass& CopyPass::operator=(CopyPass&& copy_pass_) {
   if (this != &copy_pass_) {
     release();
-    move(this, &copy_pass_);
+    m_frontend = Utility::exchange(copy_pass_.m_frontend, nullptr);
+    m_target = Utility::exchange(copy_pass_.m_target, nullptr);
+    m_texture = Utility::exchange(copy_pass_.m_texture, nullptr);
+    m_technique = Utility::exchange(copy_pass_.m_technique, nullptr);
   }
   return *this;
-}
-
-inline void CopyPass::attach_depth_stencil(Frontend::Texture2D* _depth_stencil) {
-  m_depth_stencil = _depth_stencil;
-}
-
-inline bool CopyPass::resize(const Math::Vec2z& _dimensions) {
-  if (auto recreate = create(m_frontend, _dimensions, m_depth_stencil)) {
-    *this = Utility::move(*recreate);
-    return true;
-  }
-  return false;
 }
 
 inline Frontend::Texture2D* CopyPass::texture() const {

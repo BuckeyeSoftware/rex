@@ -47,6 +47,7 @@ struct Texture
 
   enum class DataFormat : Uint8 {
     R_U8,
+    R_F16,
     RG_F16,
     RGB_U8,
     RGBA_U8,
@@ -348,6 +349,8 @@ inline Size Texture::channels() const {
     return 1;
   case DataFormat::R_U8:
     return 1;
+  case DataFormat::R_F16:
+    return 1;
   case DataFormat::RG_F16:
     return 2;
   case DataFormat::DXT1:
@@ -402,6 +405,8 @@ inline Size Texture::bits_per_pixel() const {
     return 8;
   case DataFormat::R_U8:
     return 8;
+  case DataFormat::R_F16:
+    return 16;
   case DataFormat::RG_F16:
     return 8 * 2 * 2;
   case DataFormat::DXT1:
@@ -428,6 +433,7 @@ inline const Math::Vec4f& Texture::border() const & {
 
 inline bool Texture::is_color_format(DataFormat _format) {
   return _format == DataFormat::R_U8
+      || _format == DataFormat::R_F16
       || _format == DataFormat::RG_F16
       || _format == DataFormat::RGB_U8
       || _format == DataFormat::RGBA_U8
@@ -474,6 +480,8 @@ inline bool Texture::is_renderable(DataFormat _format) {
   switch (_format) {
   case DataFormat::R_U8:
     return true;
+  case DataFormat::R_F16:
+    return true;
   case DataFormat::RG_F16:
     return true;
   case DataFormat::RGB_U8:
@@ -519,6 +527,8 @@ inline bool Texture::is_renderable(DataFormat _format) {
 inline bool Texture::has_alpha(DataFormat _format) {
   switch (_format) {
   case DataFormat::R_U8:
+    return false;
+  case DataFormat::R_F16:
     return false;
   case DataFormat::RG_F16:
     return false;

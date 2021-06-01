@@ -13,12 +13,12 @@ namespace Frontend {
 
 struct Target;
 struct Texture2D;
+struct TextureCM;
 struct Technique;
 struct Context;
 
 } // namespace Frontend
 
-struct GBuffer;
 struct ImageBasedLighting;
 
 struct IndirectLightingPass {
@@ -29,49 +29,77 @@ struct IndirectLightingPass {
   ~IndirectLightingPass();
   IndirectLightingPass& operator=(IndirectLightingPass&& indirect_lighting_pass_);
 
-  static Optional<IndirectLightingPass> create(Frontend::Context* _frontend, Frontend::Texture2D* _depth_stencil, const Math::Vec2z& _dimensions);
+  struct Options {
+    Frontend::Texture2D* stencil;
+    Math::Vec2z dimensions;
+  };
 
-  void render(const Math::Camera& _camera, const GBuffer* _gbuffer, const ImageBasedLighting* _ibl);
-  bool resize(const Math::Vec2z& _resolution);
+  static Optional<IndirectLightingPass> create(Frontend::Context* _frontend,
+    const Options& _options);
+
+  struct Input {
+    Frontend::Texture2D* albedo     = nullptr;
+    Frontend::Texture2D* normal     = nullptr;
+    Frontend::Texture2D* emission   = nullptr;
+    Frontend::Texture2D* depth      = nullptr;
+    Frontend::TextureCM* irradiance = nullptr;
+    Frontend::TextureCM* prefilter  = nullptr;
+    Frontend::Texture2D* scale_bias = nullptr;
+  };
+
+  void render(const Math::Camera& _camera, const Input& _input);
+  bool recreate(const Options& _options);
 
   Frontend::Texture2D* texture() const;
   Frontend::Target* target() const;
 
 private:
-  static void move(IndirectLightingPass* dst_, IndirectLightingPass* src_);
+  constexpr IndirectLightingPass(Frontend::Context* _frontend,
+    Frontend::Target* _target, Frontend::Texture2D* _texture,
+    Frontend::Technique* _technique);
 
   void release();
 
   Frontend::Context* m_frontend;
-  Frontend::Technique* m_technique;
-  Frontend::Texture2D* m_texture;
   Frontend::Target* m_target;
+  Frontend::Texture2D* m_texture;
+  Frontend::Technique* m_technique;
 };
 
 // [IndirectLightingPass]
-inline void IndirectLightingPass::move(IndirectLightingPass* dst_, IndirectLightingPass* src_) {
-  dst_->m_frontend = Utility::exchange(src_->m_frontend, nullptr);
-  dst_->m_technique = Utility::exchange(src_->m_technique, nullptr);
-  dst_->m_texture = Utility::exchange(src_->m_texture, nullptr);
-  dst_->m_target = Utility::exchange(src_->m_target, nullptr);
-}
-
 inline constexpr IndirectLightingPass::IndirectLightingPass()
   : m_frontend{nullptr}
-  , m_technique{nullptr}
-  , m_texture{nullptr}
   , m_target{nullptr}
+  , m_texture{nullptr}
+  , m_technique{nullptr}
 {
 }
 
-inline IndirectLightingPass::IndirectLightingPass(IndirectLightingPass&& indirect_lighting_pass_) {
-  move(this, &indirect_lighting_pass_);
+inline constexpr IndirectLightingPass::IndirectLightingPass(
+  Frontend::Context* _frontend, Frontend::Target* _target,
+  Frontend::Texture2D* _texture, Frontend::Technique* _technique)
+  : m_frontend{_frontend}
+  , m_target{_target}
+  , m_texture{_texture}
+  , m_technique{_technique}
+{
+}
+
+inline IndirectLightingPass::IndirectLightingPass(IndirectLightingPass&& indirect_lighting_pass_)
+  : m_frontend{Utility::exchange(indirect_lighting_pass_.m_frontend, nullptr)}
+  , m_target{Utility::exchange(indirect_lighting_pass_.m_target, nullptr)}
+  , m_texture{Utility::exchange(indirect_lighting_pass_.m_texture, nullptr)}
+  , m_technique{Utility::exchange(indirect_lighting_pass_.m_technique, nullptr)}
+{
 }
 
 inline IndirectLightingPass& IndirectLightingPass::operator=(IndirectLightingPass&& indirect_lighting_pass_) {
   if (this != &indirect_lighting_pass_) {
     release();
-    move(this, &indirect_lighting_pass_);
+    m_frontend = Utility::exchange(indirect_lighting_pass_.m_frontend, nullptr);
+    m_target = Utility::exchange(indirect_lighting_pass_.m_target, nullptr);
+    m_texture = Utility::exchange(indirect_lighting_pass_.m_texture, nullptr);
+    m_technique = Utility::exchange(indirect_lighting_pass_.m_technique, nullptr);
   }
   return *this;
 }

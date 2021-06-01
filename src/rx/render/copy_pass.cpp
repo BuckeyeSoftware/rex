@@ -10,7 +10,7 @@
 namespace Rx::Render {
 
 Optional<CopyPass> CopyPass::create(Frontend::Context* _frontend,
-  const Math::Vec2z& _dimensions, Frontend::Texture2D* _depth_stencil)
+  const Options& _options)
 {
   auto technique = _frontend->find_technique_by_name("copy");
   if (!technique) {
@@ -23,10 +23,10 @@ Optional<CopyPass> CopyPass::create(Frontend::Context* _frontend,
   }
 
   texture->record_type(Frontend::Texture::Type::ATTACHMENT);
-  texture->record_format(Frontend::Texture::DataFormat::SRGBA_U8);
+  texture->record_format(_options.format);
   texture->record_filter({true, false, false});
   texture->record_levels(1);
-  texture->record_dimensions(_dimensions);
+  texture->record_dimensions(_options.dimensions);
   texture->record_wrap({
     Frontend::Texture::WrapType::CLAMP_TO_EDGE,
     Frontend::Texture::WrapType::CLAMP_TO_EDGE});
@@ -39,19 +39,14 @@ Optional<CopyPass> CopyPass::create(Frontend::Context* _frontend,
   }
 
   target->attach_texture(texture, 0);
-  if (_depth_stencil) {
-    target->attach_depth_stencil(_depth_stencil);
-  }
   _frontend->initialize_target(RX_RENDER_TAG("CopyPass"), target);
 
-  CopyPass copy_pass;
-  copy_pass.m_frontend = _frontend;
-  copy_pass.m_target = target;
-  copy_pass.m_texture = texture;
-  copy_pass.m_technique = technique;
-  copy_pass.m_depth_stencil = _depth_stencil;
-
-  return copy_pass;
+  return CopyPass {
+    _frontend,
+    target,
+    texture,
+    technique
+  };
 }
 
 void CopyPass::release() {
@@ -93,6 +88,14 @@ void CopyPass::render(Frontend::Texture2D* _source) {
     0,
     Frontend::PrimitiveType::TRIANGLES,
     draw_textures);
+}
+
+bool CopyPass::recreate(const Options& _options) {
+  if (auto result = create(m_frontend, _options)) {
+    *this = Utility::move(*result);
+    return true;
+  }
+  return false;
 }
 
 } // namespace Rx::Render

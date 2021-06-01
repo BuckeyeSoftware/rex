@@ -152,22 +152,34 @@ struct TestGame
       return false;
     }
 
-    if (auto pass = Render::IndirectLightingPass::create(&m_frontend, m_gbuffer.depth_stencil(), dimensions)) {
-      m_indirect_lighting_pass = Utility::move(*pass);
-    } else {
-      return false;
-    }
-
     if (auto pass = Render::LensDistortionPass::create(&m_frontend, dimensions)) {
       m_lens_distortion_pass = Utility::move(*pass);
     } else {
       return false;
     }
 
-    if (auto pass = Render::CopyPass::create(&m_frontend, dimensions, m_gbuffer.depth_stencil())) {
-      m_copy_pass = Utility::move(*pass);
-    } else {
-      return false;
+    {
+      Render::IndirectLightingPass::Options options;
+      options.stencil = m_gbuffer.depth_stencil();
+      options.dimensions = dimensions;
+
+      if (auto pass = Render::IndirectLightingPass::create(&m_frontend, options)) {
+        m_indirect_lighting_pass = Utility::move(*pass);
+      } else {
+        return false;
+      }
+    }
+
+    {
+      Render::CopyPass::Options options;
+      options.format = Render::Frontend::Texture::DataFormat::R_F16;
+      options.dimensions = dimensions;
+
+      if (auto pass = Render::CopyPass::create(&m_frontend, options)) {
+        m_depth_copy_pass = Utility::move(*pass);
+      } else {
+        return false;
+      }
     }
 
 /*
@@ -424,25 +436,34 @@ struct TestGame
         &m_immediate3D);
     }
 
-    m_indirect_lighting_pass.render(m_camera, &m_gbuffer, &m_ibl);
+    // Copy the depth for IndirectLightingPass because DS.
+    m_depth_copy_pass.render(m_gbuffer.depth_stencil());
 
-    // Copy the indirect result.
-    m_copy_pass.render(m_indirect_lighting_pass.texture());
+    // Render indirect lighting pass.
+    Render::IndirectLightingPass::Input ilp_input;
+    ilp_input.albedo = m_gbuffer.albedo();
+    ilp_input.normal = m_gbuffer.normal();
+    ilp_input.emission = m_gbuffer.emission();
+    ilp_input.depth = m_depth_copy_pass.texture();
+    ilp_input.irradiance = m_ibl.irradiance_map();
+    ilp_input.prefilter = m_ibl.prefilter();
+    ilp_input.scale_bias = m_ibl.scale_bias();
+    m_indirect_lighting_pass.render(m_camera, ilp_input);
 
-    // Render the skybox absolutely last into the copy pass target.
-    m_skybox.render(m_copy_pass.target(), m_camera.view(), m_camera.projection,
+    // Render the skybox absolutely last into that target.
+    m_skybox.render(m_indirect_lighting_pass.target(), m_camera.view(), m_camera.projection,
       m_lut_index ? &m_luts[m_lut_index] : nullptr);
 
     // Then 3D immediates.
-    m_immediate3D.render(m_copy_pass.target(), m_camera.view(), m_camera.projection);
+    m_immediate3D.render(m_indirect_lighting_pass.target(), m_camera.view(), m_camera.projection);
 
-    m_particle_system_render.render(m_copy_pass.target(), {}, m_camera.view(), m_camera.projection);
+    m_particle_system_render.render(m_indirect_lighting_pass.target(), {}, m_camera.view(), m_camera.projection);
 
     // Lens distortion pass.
     m_lens_distortion_pass.distortion = *lens_distortion;
     m_lens_distortion_pass.dispersion = *lens_dispersion;
     m_lens_distortion_pass.scale = *lens_scale;
-    m_lens_distortion_pass.render(m_copy_pass.texture());
+    m_lens_distortion_pass.render(m_indirect_lighting_pass.texture());
 
     // Blit lens distortion pass to backbuffer
     m_frontend.blit(
@@ -471,9 +492,22 @@ struct TestGame
 
   void on_resize(const Math::Vec2z& _dimensions) {
     m_gbuffer.resize(_dimensions);
-    m_copy_pass.attach_depth_stencil(m_gbuffer.depth_stencil());
-    m_copy_pass.resize(_dimensions);
-    m_indirect_lighting_pass.resize(_dimensions);
+
+    {
+      Render::CopyPass::Options options;
+      options.format = Render::Frontend::Texture2D::DataFormat::R_F16;
+      options.dimensions = _dimensions;
+
+      m_depth_copy_pass.recreate(options);
+    }
+
+    {
+      Render::IndirectLightingPass::Options options;
+      options.dimensions = _dimensions;
+      options.stencil = m_gbuffer.depth_stencil();
+      m_indirect_lighting_pass.recreate(options);
+    }
+
     m_frontend.resize(_dimensions);
   }
 
@@ -496,7 +530,7 @@ struct TestGame
 
   Render::IndirectLightingPass m_indirect_lighting_pass;
   Render::LensDistortionPass m_lens_distortion_pass;
-  Render::CopyPass m_copy_pass;
+  Render::CopyPass m_depth_copy_pass;
   Render::ColorGrader m_color_grader;
   Render::ColorGrader::Entry m_luts[128];
   Size m_lut_index;

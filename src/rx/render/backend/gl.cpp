@@ -154,123 +154,149 @@ GLenum convert_stencil_function(Frontend::StencilState::FunctionType _function_t
 }
 
 GLenum convert_texture_data_format(Frontend::Texture::DataFormat _data_format) {
+  using Format = Frontend::Texture::DataFormat;
   switch (_data_format) {
-  case Frontend::Texture::DataFormat::RGBA_U8:
-    return GL_RGBA8;
-  case Frontend::Texture::DataFormat::RGB_U8:
-    return GL_RGB8;
-  case Frontend::Texture::DataFormat::BGRA_U8:
-    return GL_RGBA8; // not a bug
-  case Frontend::Texture::DataFormat::BGR_U8:
-    return GL_RGB8; // not a bug
-  case Frontend::Texture::DataFormat::RGBA_F16:
-    return GL_RGBA16F;
-  case Frontend::Texture::DataFormat::BGRA_F16:
-    return GL_RGBA16F; // not a bug
-  case Frontend::Texture::DataFormat::RGBA_F32:
-    return GL_RGBA32F;
-  case Frontend::Texture::DataFormat::D16:
-    return GL_DEPTH_COMPONENT16;
-  case Frontend::Texture::DataFormat::D24:
-    return GL_DEPTH_COMPONENT24;
-  case Frontend::Texture::DataFormat::D32:
-    return GL_DEPTH_COMPONENT32;
-  case Frontend::Texture::DataFormat::D32F:
-    return GL_DEPTH_COMPONENT32F;
-  case Frontend::Texture::DataFormat::D24_S8:
-    return GL_DEPTH24_STENCIL8;
-  case Frontend::Texture::DataFormat::D32F_S8:
-    return GL_DEPTH32F_STENCIL8;
-  case Frontend::Texture::DataFormat::S8:
-    return GL_STENCIL_INDEX8;
-  case Frontend::Texture::DataFormat::R_U8:
+  case Format::R_U8:
     return GL_R8;
-  case Frontend::Texture::DataFormat::RG_F16:
+  case Format::R_F16:
+    return GL_R16F;
+  case Format::RG_F16:
     return GL_RG16F;
-  case Frontend::Texture::DataFormat::DXT1:
+  case Format::RGB_U8:
+    return GL_RGB8;
+  case Format::RGBA_U8:
+    return GL_RGBA8;
+  case Format::BGR_U8:
+    return GL_RGB8; // Not a bug.
+  case Format::BGRA_U8:
+    return GL_RGBA8; // Not a bug.
+  case Format::RGBA_F16:
+    return GL_RGBA16F;
+  case Format::BGRA_F16:
+    return GL_RGBA16F; // Not a bug.
+  case Format::RGBA_F32:
+    return GL_RGBA32F;
+  case Format::D16:
+    return GL_DEPTH_COMPONENT16;
+  case Format::D24:
+    return GL_DEPTH_COMPONENT24;
+  case Format::D32:
+    return GL_DEPTH_COMPONENT32;
+  case Format::D32F:
+    return GL_DEPTH_COMPONENT32F;
+  case Format::D24_S8:
+    return GL_DEPTH24_STENCIL8;
+  case Format::D32F_S8:
+    return GL_DEPTH32F_STENCIL8;
+  case Format::S8:
+    return GL_STENCIL_INDEX8;
+  case Format::DXT1:
     return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-  case Frontend::Texture::DataFormat::DXT5:
+  case Format::DXT5:
     return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-  case Frontend::Texture::DataFormat::SRGB_U8:
+  case Format::SRGB_U8:
     return GL_SRGB8;
-  case Frontend::Texture::DataFormat::SRGBA_U8:
+  case Format::SRGBA_U8:
     return GL_SRGB8_ALPHA8;
   }
-
   RX_HINT_UNREACHABLE();
 }
 
 GLenum convert_texture_data_type(Frontend::Texture::DataFormat _data_format) {
+  using Format = Frontend::Texture::DataFormat;
   switch (_data_format) {
-  case Frontend::Texture::DataFormat::D16:
-    return GL_UNSIGNED_SHORT;
-  case Frontend::Texture::DataFormat::D24:
-    [[fallthrough]];
-  case Frontend::Texture::DataFormat::D32:
-    return GL_UNSIGNED_INT;
-  case Frontend::Texture::DataFormat::D32F:
-    return GL_FLOAT;
-  case Frontend::Texture::DataFormat::RGBA_F16:
-    [[fallthrough]];
-  case Frontend::Texture::DataFormat::BGRA_F16:
-    return GL_HALF_FLOAT;
-  case Frontend::Texture::DataFormat::RGBA_F32:
-    return GL_FLOAT;
-  case Frontend::Texture::DataFormat::D24_S8:
-    return GL_UNSIGNED_INT_24_8;
-  case Frontend::Texture::DataFormat::D32F_S8:
-    return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
-  case Frontend::Texture::DataFormat::S8:
+  case Format::R_U8:
     return GL_UNSIGNED_BYTE;
-  default:
+  case Format::R_F16:
+    return GL_HALF_FLOAT;
+  case Format::RG_F16:
+    return GL_HALF_FLOAT;
+  case Format::RGB_U8:
+    return GL_UNSIGNED_BYTE;
+  case Format::RGBA_U8:
+    return GL_UNSIGNED_BYTE;
+  case Format::BGR_U8:
+    return GL_UNSIGNED_BYTE;
+  case Format::BGRA_U8:
+    return GL_UNSIGNED_BYTE;
+  case Format::RGBA_F16:
+    return GL_HALF_FLOAT;
+  case Format::BGRA_F16:
+    return GL_HALF_FLOAT;
+  case Format::RGBA_F32:
+    return GL_FLOAT;
+  case Format::D16:
+    return GL_UNSIGNED_SHORT;
+  case Format::D24:
+    return GL_UNSIGNED_INT;
+  case Format::D32:
+    return GL_UNSIGNED_INT;
+  case Format::D32F:
+    return GL_FLOAT;
+  case Format::D24_S8:
+    return GL_UNSIGNED_INT_24_8;
+  case Format::D32F_S8:
+    return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
+  case Format::S8:
+    return GL_UNSIGNED_BYTE;
+  case Format::DXT1:
+    return GL_UNSIGNED_BYTE;
+  case Format::DXT5:
+    return GL_UNSIGNED_BYTE;
+  case Format::SRGB_U8:
+    return GL_UNSIGNED_BYTE;
+  case Format::SRGBA_U8:
     return GL_UNSIGNED_BYTE;
   }
+  RX_HINT_UNREACHABLE();
 }
 
 GLenum convert_texture_format(Frontend::Texture::DataFormat _data_format) {
+  using Format = Frontend::Texture::DataFormat;
   switch (_data_format) {
-  case Frontend::Texture::DataFormat::RGBA_U8:
-    return GL_RGBA;
-  case Frontend::Texture::DataFormat::RGB_U8:
-    return GL_RGB;
-  case Frontend::Texture::DataFormat::BGRA_U8:
-    return GL_BGRA;
-  case Frontend::Texture::DataFormat::BGR_U8:
-    return GL_BGR;
-  case Frontend::Texture::DataFormat::RGBA_F16:
-    [[fallthrough]];
-  case Frontend::Texture::DataFormat::RGBA_F32:
-    return GL_RGBA;
-  case Frontend::Texture::DataFormat::BGRA_F16:
-    return GL_BGRA;
-  case Frontend::Texture::DataFormat::D16:
-    return GL_DEPTH_COMPONENT;
-  case Frontend::Texture::DataFormat::D24:
-    return GL_DEPTH_COMPONENT;
-  case Frontend::Texture::DataFormat::D32:
-    return GL_DEPTH_COMPONENT;
-  case Frontend::Texture::DataFormat::D32F:
-    return GL_DEPTH_COMPONENT;
-  case Frontend::Texture::DataFormat::D24_S8:
-    return GL_DEPTH_STENCIL;
-  case Frontend::Texture::DataFormat::D32F_S8:
-    return GL_DEPTH_STENCIL;
-  case Frontend::Texture::DataFormat::S8:
-    return GL_STENCIL_INDEX;
-  case Frontend::Texture::DataFormat::R_U8:
+  case Format::R_U8:
     return GL_RED;
-  case Frontend::Texture::DataFormat::RG_F16:
+  case Format::R_F16:
+    return GL_RED;
+  case Format::RG_F16:
     return GL_RG;
-  case Frontend::Texture::DataFormat::DXT1:
+  case Format::RGB_U8:
     return GL_RGB;
-  case Frontend::Texture::DataFormat::DXT5:
+  case Format::RGBA_U8:
     return GL_RGBA;
-  case Frontend::Texture::DataFormat::SRGB_U8:
+  case Format::BGR_U8:
+    return GL_BGR;
+  case Format::BGRA_U8:
+    return GL_BGRA;
+  case Format::RGBA_F16:
+    return GL_RGBA;
+  case Format::BGRA_F16:
+    return GL_BGRA;
+  case Format::RGBA_F32:
+    return GL_RGBA;
+  case Format::D16:
+    return GL_DEPTH_COMPONENT;
+  case Format::D24:
+    return GL_DEPTH_COMPONENT;
+  case Format::D32:
+    return GL_DEPTH_COMPONENT;
+  case Format::D32F:
+    return GL_DEPTH_COMPONENT;
+  case Format::D24_S8:
+    return GL_DEPTH_STENCIL;
+  case Format::D32F_S8:
+    return GL_DEPTH_STENCIL;
+  case Format::S8:
+    return GL_STENCIL_INDEX;
+  case Format::DXT1:
     return GL_RGB;
-  case Frontend::Texture::DataFormat::SRGBA_U8:
+  case Format::DXT5:
+    return GL_RGBA;
+  case Format::SRGB_U8:
+    return GL_RGB;
+  case Format::SRGBA_U8:
     return GL_RGBA;
   }
-
   RX_HINT_UNREACHABLE();
 }
 
