@@ -48,11 +48,11 @@ inline constexpr Size Resource::count() {
 }
 
 inline bool Resource::release_reference() {
-  return --m_reference_count == 0;
+  return m_reference_count.fetch_sub(1, Concurrency::MemoryOrder::ACQ_REL) == 1;
 }
 
 inline void Resource::acquire_reference() {
-  m_reference_count++;
+  m_reference_count.fetch_add(1, Concurrency::MemoryOrder::RELAXED);
 }
 
 inline Resource::Type Resource::resource_type() const {
