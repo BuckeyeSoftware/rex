@@ -20,7 +20,7 @@ Context::Context(Memory::Allocator& _allocator)
   m_root.capture_mouse(true);
 }
 
-bool Context::handle_event(const Event& _event) {
+bool Context::handle_event(Event& _event) {
   switch (_event.type) {
   case Event::Type::MOUSE_BUTTON:
     // Can only change layer when mouse isn't captured and button was pressed.

@@ -92,7 +92,10 @@ bool Loader::parse(const JSON& _definition) {
   }
 
   m_name = Utility::move(name.as_string_with_allocator(allocator()));
-  m_report.rename(m_name);
+
+  if (!m_report.rename(m_name)) {
+    return false;
+  }
 
   const auto& alpha_test{_definition["alpha_test"]};
   if (alpha_test && !alpha_test.is_boolean()) {

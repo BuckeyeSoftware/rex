@@ -81,7 +81,12 @@ Material::~Material() {
 }
 
 bool Material::load(const Rx::Material::Loader& _loader) {
-  m_name = _loader.name();
+  auto name = Utility::copy(_loader.name());
+  if (!name) {
+    return false;
+  }
+
+  m_name = Utility::move(*name);
   m_roughness_value = _loader.roughness();
   m_metalness_value = _loader.metalness();
   m_occlusion_value = _loader.occlusion();

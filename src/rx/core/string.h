@@ -19,9 +19,7 @@ struct RX_API String {
   static inline constexpr const Size INSITU_SIZE = 16;
 
   constexpr String(Memory::Allocator& _allocator);
-  String(Memory::Allocator& _allocator, const String& _contents);
   String(Memory::Allocator& _allocator, const char* _contents);
-  String(Memory::Allocator& _allocator, const char* _contents, Size _size);
   String(Memory::Allocator& _allocator, const char* _first, const char* _last);
 
   constexpr String();
@@ -36,8 +34,9 @@ struct RX_API String {
   static String format(Memory::Allocator& _allocator, const char* _format,
     Ts&&... _arguments);
 
-  String& operator=(const String& _contents);
-  String& operator=(const char* _contents);
+  // String& operator=(const String& _contents);
+  // String& operator=(const char* _contents);
+
   String& operator=(String&& contents_);
 
   [[nodiscard]] bool reserve(Size _size);
@@ -209,11 +208,6 @@ String String::format(Memory::Allocator& _allocator, const char* _format, Ts&&..
   return formatter(_allocator, _format, FormatNormalize<Traits::RemoveCVRef<Ts>>{}(Utility::forward<Ts>(_arguments))...);
 }
 
-inline String::String(Memory::Allocator& _allocator, const String& _contents)
-  : String{_allocator, _contents.data(), _contents.size()}
-{
-}
-
 inline constexpr String::String(Memory::Allocator& _allocator)
   : m_allocator{&_allocator}
   , m_data{m_buffer}
@@ -230,7 +224,7 @@ inline constexpr String::String()
 }
 
 inline String::String(const String& _contents)
-  : String{_contents.allocator(), _contents.data(), _contents.size()}
+  : String{_contents.allocator(), _contents.data(), _contents.data() + _contents.size()}
 {
 }
 

@@ -30,7 +30,7 @@ struct Report {
   Error error(const char* _format, Ts&&... _arguments) const;
 
   // Rename this report.
-  bool rename(const String& _name);
+  [[nodiscard]] bool rename(const String& _name);
 
   const String& name() const;
 

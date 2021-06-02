@@ -482,8 +482,17 @@ Program* Technique::Configuration::variant(Size _index) const {
 }
 
 bool Technique::load(Stream::UntrackedStream& _stream) {
-  m_name = _stream.name();
-  m_report.rename(m_name);
+  auto name = Utility::copy(_stream.name());
+  if (!name) {
+    return false;
+  }
+
+  m_name = Utility::move(*name);
+
+  if (!m_report.rename(m_name)) {
+    return false;
+  }
+
   auto& allocator = m_frontend->allocator();
   if (auto data = _stream.read_text(allocator)) {
     if (auto disown = data->disown()) {
@@ -861,7 +870,10 @@ bool Technique::parse(const JSON& _description) {
   }
 
   m_name = Utility::move(name.as_string_with_allocator(allocator));
-  m_report.rename(String::format(allocator, "%s: %s", m_report.name(), m_name));
+
+  if (!m_report.rename(m_name)) {
+    return false;
+  }
 
   const auto& uniforms{_description["uniforms"]};
   const auto& shaders{_description["shaders"]};

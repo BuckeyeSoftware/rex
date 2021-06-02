@@ -35,8 +35,16 @@ Importer::Importer(Memory::Allocator& _allocator)
 }
 
 bool Importer::load(Stream::UntrackedStream& _stream) {
-  m_name = _stream.name();
-  m_report.rename(m_name);
+  auto name = Utility::copy(_stream.name());
+  if (!name) {
+    return false;
+  }
+
+  m_name = Utility::move(*name);
+
+  if (!m_report.rename(m_name)) {
+    return false;
+  }
 
   Time::StopWatch time;
   time.start();

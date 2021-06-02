@@ -207,12 +207,19 @@ void Text::move_cursor(Position _position) {
   reset_cursor();
 }
 
-void Text::assign(const String& _contents) {
-  m_contents = _contents;
+bool Text::assign(const String& _contents) {
+  auto contents = Utility::copy(_contents);
+  if (!contents) {
+    return false;
+  }
+
+  m_contents = Utility::move(*contents);
   m_cursor = m_contents.size();
 
   reset_selection();
   reset_cursor();
+
+  return true;
 }
 
 void Text::clear() {

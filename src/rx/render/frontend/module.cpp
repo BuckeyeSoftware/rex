@@ -76,7 +76,10 @@ bool Module::parse(const JSON& _description) {
   }
 
   m_name = Utility::move(name.as_string_with_allocator(allocator));
-  m_report.rename(m_name);
+
+  if (!m_report.rename(m_name)) {
+    return false;
+  }
 
   if (!source) {
     return m_report.error("missing 'source'");

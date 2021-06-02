@@ -11,9 +11,11 @@ bool Report::write(Log::Level _level, const char* _data) const {
 }
 
 bool Report::rename(const String& _name) {
-  // TODO(dweiler): Utility::copy.
-  m_name = _name;
-  return true;
+  if (auto name = Utility::copy(_name)) {
+    m_name = Utility::move(*name);
+    return true;
+  }
+  return false;
 }
 
 } // namespace Rx

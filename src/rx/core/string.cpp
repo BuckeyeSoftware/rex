@@ -139,15 +139,8 @@ String String::formatter(Memory::Allocator& _allocator, const char* _format, ...
 }
 
 String::String(Memory::Allocator& _allocator, const char* _contents)
-  : String{_allocator, _contents, strlen(_contents)}
+  : String{_allocator, _contents, _contents + strlen(_contents)}
 {
-}
-
-String::String(Memory::Allocator& _allocator, const char* _contents,
-               Size _size)
-  : String{_allocator}
-{
-  (void)append(_contents, _size);
 }
 
 String::String(Memory::Allocator& _allocator, const char* _first,
@@ -202,18 +195,20 @@ String::~String() {
   }
 }
 
+/*
 String& String::operator=(const String& _contents) {
   if (&_contents != this) {
     String(_contents).swap(*this);
   }
   return *this;
-}
+}*/
 
+/*
 String& String::operator=(const char* _contents) {
   RX_ASSERT(_contents, "empty string");
   String(allocator(), _contents).swap(*this);
   return *this;
-}
+}*/
 
 String& String::operator=(String&& contents_) {
   if (&contents_ != this) {
@@ -379,7 +374,7 @@ String String::substring(Size _offset, Size _length) const {
   }
   // NOTE(dweiler): You can substring the whole string.
   RX_ASSERT(begin + _length <= m_data + size(), "out of bounds");
-  return {allocator(), begin, _length};
+  return {allocator(), begin, begin + _length};
 }
 
 Size String::scan(const char* _scan_format, ...) const {

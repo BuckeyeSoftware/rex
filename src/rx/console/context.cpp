@@ -155,6 +155,15 @@ bool Context::execute(const String& _contents) {
           VariableType_as_string(variable->type()),
           token_type_as_string(tokens[1].kind()));
         break;
+      case VariableStatus::OUT_OF_MEMORY:
+        // Only possible when setting String values and the String failed to
+        // allocate. Generally this would be an attempted denial of service on
+        // the engine console with an overly large string.
+        //
+        // Since Rex takes memory allocation and failure seriously, it's
+        // neatly caught here in a non-destructive way and will report it.
+        print("^rOut of memory.");
+        break;
       }
     } else {
       print("^cinfo: ^w%s = %s", atom, variable->print_current());

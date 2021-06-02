@@ -12,7 +12,7 @@ struct Context {
 
   Context(Memory::Allocator& _allocator);
 
-  [[nodiscard]] bool handle_event(const Event& _event);
+  [[nodiscard]] bool handle_event(Event& _event);
 
   int on_update(Float32 _delta_time);
   void on_resize(const Math::Vec2z& _dimensions);

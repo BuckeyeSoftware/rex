@@ -44,7 +44,8 @@ enum class VariableType : Uint8 {
 enum class VariableStatus : Uint8 {
   SUCCESS,
   OUT_OF_RANGE,
-  TYPE_MISMATCH
+  OUT_OF_MEMORY,
+  TYPE_MISMATCH,
 };
 
 // Type traits
@@ -501,8 +502,13 @@ inline VariableStatus Variable<String>::set(const char* _value, bool _signal_cha
 }
 
 inline VariableStatus Variable<String>::set(const String& _value, bool _signal_change) {
+  auto value = Utility::copy(_value);
+  if (!value) {
+    return VariableStatus::OUT_OF_MEMORY;
+  }
+
   if (m_current != _value) {
-    m_current = _value;
+    m_current = Utility::move(*value);
     if (_signal_change) {
       m_on_change.signal(*this);
     }

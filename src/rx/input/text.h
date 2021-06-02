@@ -27,7 +27,7 @@ struct Text {
 
   void move_cursor(Position _position);
   void erase();
-  void assign(const String& _contents);
+  bool assign(const String& _contents);
   void clear();
 
   bool is_cursor_visible() const;
