@@ -2932,9 +2932,9 @@ void nvgCircle(NVGcontext* ctx, float cx, float cy, float r)
 	nvgEllipse(ctx, cx,cy, r,r);
 }
 
+/*
 void nvgDebugDumpPathCache(NVGcontext* ctx)
 {
-/*
 	const NVGpath* path;
 	int i, j;
 
@@ -2953,8 +2953,8 @@ void nvgDebugDumpPathCache(NVGcontext* ctx)
 				printf("%f\t%f\n", path->stroke[j].x, path->stroke[j].y);
 		}
 	}
-*/
 }
+*/
 
 void nvgFill(NVGcontext* ctx)
 {
