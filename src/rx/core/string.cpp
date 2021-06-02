@@ -195,21 +195,6 @@ String::~String() {
   }
 }
 
-/*
-String& String::operator=(const String& _contents) {
-  if (&_contents != this) {
-    String(_contents).swap(*this);
-  }
-  return *this;
-}*/
-
-/*
-String& String::operator=(const char* _contents) {
-  RX_ASSERT(_contents, "empty string");
-  String(allocator(), _contents).swap(*this);
-  return *this;
-}*/
-
 String& String::operator=(String&& contents_) {
   if (&contents_ != this) {
     String(Utility::move(contents_)).swap(*this);

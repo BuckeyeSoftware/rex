@@ -34,9 +34,6 @@ struct RX_API String {
   static String format(Memory::Allocator& _allocator, const char* _format,
     Ts&&... _arguments);
 
-  // String& operator=(const String& _contents);
-  // String& operator=(const char* _contents);
-
   String& operator=(String&& contents_);
 
   [[nodiscard]] bool reserve(Size _size);
