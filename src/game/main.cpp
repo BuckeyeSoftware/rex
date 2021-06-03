@@ -394,35 +394,7 @@ struct TestGame
 
     m_color_grader.update();
 
-    static auto display_resolution =
-      console.find_variable_by_name("display.resolution")->cast<Math::Vec2i>();
-
-    Render::Frontend::State state;
-    state.viewport.record_dimensions(display_resolution->get().cast<Size>());
-
-    Render::Frontend::Buffers draw_buffers;
-    draw_buffers.add(0);
-    draw_buffers.add(1);
-    draw_buffers.add(2);
-    draw_buffers.add(3);
-
-    m_frontend.clear(
-      RX_RENDER_TAG("gbuffer"),
-      state,
-      m_gbuffer.target(),
-      draw_buffers,
-      RX_RENDER_CLEAR_DEPTH |
-      RX_RENDER_CLEAR_STENCIL |
-      RX_RENDER_CLEAR_COLOR(0) |
-      RX_RENDER_CLEAR_COLOR(1) |
-      RX_RENDER_CLEAR_COLOR(2) |
-      RX_RENDER_CLEAR_COLOR(3),
-      1.0f,
-      0,
-      Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
-      Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
-      Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
-      Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data());
+    m_gbuffer.clear();
 
     const auto n_models = m_models.size();
     for (Size i = 0; i < n_models; i++) {
@@ -460,16 +432,19 @@ struct TestGame
     m_particle_system_render.render(m_indirect_lighting_pass.target(), {}, m_camera.view(), m_camera.projection);
 
     // Lens distortion pass.
-    m_lens_distortion_pass.distortion = *lens_distortion;
-    m_lens_distortion_pass.dispersion = *lens_dispersion;
-    m_lens_distortion_pass.scale = *lens_scale;
-    m_lens_distortion_pass.render(m_indirect_lighting_pass.texture());
+    //m_lens_distortion_pass.distortion = *lens_distortion;
+    //m_lens_distortion_pass.dispersion = *lens_dispersion;
+    //m_lens_distortion_pass.scale = *lens_scale;
+    //m_lens_distortion_pass.render(m_indirect_lighting_pass.texture());
 
     // Blit lens distortion pass to backbuffer
+    Render::Frontend::State state;
+    state.viewport.record_dimensions(m_frontend.swapchain()->dimensions());
+
     m_frontend.blit(
       RX_RENDER_TAG("test"),
       state,
-      m_lens_distortion_pass.target(),
+      m_indirect_lighting_pass.target(),
       0,
       m_frontend.swapchain(),
       0);
