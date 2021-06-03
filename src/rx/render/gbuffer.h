@@ -26,6 +26,7 @@ struct GBuffer {
   static Optional<GBuffer> create(Frontend::Context* _frontend,
     const Math::Vec2z& _resolution);
 
+  void clear();
   bool resize(const Math::Vec2z& _resolution);
 
   Frontend::Texture2D* albedo() const;

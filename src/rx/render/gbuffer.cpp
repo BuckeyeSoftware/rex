@@ -103,6 +103,35 @@ void GBuffer::release() {
   m_frontend->destroy_target(RX_RENDER_TAG("gbuffer"), m_target);
 }
 
+void GBuffer::clear() {
+  Render::Frontend::State state;
+  state.viewport.record_dimensions(m_target->dimensions());
+
+  Render::Frontend::Buffers draw_buffers;
+  draw_buffers.add(0);
+  draw_buffers.add(1);
+  draw_buffers.add(2);
+  draw_buffers.add(3);
+
+  m_frontend->clear(
+    RX_RENDER_TAG("gbuffer"),
+    state,
+    m_target,
+    draw_buffers,
+    RX_RENDER_CLEAR_DEPTH |
+    RX_RENDER_CLEAR_STENCIL |
+    RX_RENDER_CLEAR_COLOR(0) |
+    RX_RENDER_CLEAR_COLOR(1) |
+    RX_RENDER_CLEAR_COLOR(2) |
+    RX_RENDER_CLEAR_COLOR(3),
+    1.0f,
+    0,
+    Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
+    Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
+    Math::Vec4f{1.0f, 1.0f, 1.0f, 1.0f}.data(),
+    Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data());
+}
+
 Frontend::Texture2D* GBuffer::depth_stencil() const {
   return m_target->depth_stencil();
 }
