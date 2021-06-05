@@ -387,7 +387,6 @@ struct TestGame
 
   virtual bool on_render() {
     auto& input = engine()->input();
-    auto& console = engine()->console();
 
     // When calculating
     m_ibl.render(m_skybox.texture());
@@ -431,13 +430,7 @@ struct TestGame
 
     m_particle_system_render.render(m_indirect_lighting_pass.target(), {}, m_camera.view(), m_camera.projection);
 
-    // Lens distortion pass.
-    //m_lens_distortion_pass.distortion = *lens_distortion;
-    //m_lens_distortion_pass.dispersion = *lens_dispersion;
-    //m_lens_distortion_pass.scale = *lens_scale;
-    //m_lens_distortion_pass.render(m_indirect_lighting_pass.texture());
-
-    // Blit lens distortion pass to backbuffer
+    // Blit.
     Render::Frontend::State state;
     state.viewport.record_dimensions(m_frontend.swapchain()->dimensions());
 
