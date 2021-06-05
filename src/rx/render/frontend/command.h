@@ -230,22 +230,17 @@ struct UpdateCommand {
   // a footer on this structure. It's contents encode a variable amount of edits
   // to the given resource.
   //
-  // The encoding of the edit stream is a list of Size integers. The number
-  // of integers per edit is determined by the resource Type |kind|.
+  // The encoding of the edit stream is a tightly-packed array of T.
   //
-  // Buffer edits are represented by a three-tuple of integers of the format
-  // {
-  //   sink:   sink to edit: 0 = elements, 1 = vertices, 2 = instances
-  //   offset: byte offset
-  //   size:   size in bytes
-  // }
+  // The type T depends on the enum Type here with this structure, a table
+  // is given below.
   //
-  // Texture edits are represented by a variable-tuple of integers of the format
-  // {
-  //   level:  miplevel to edit
-  //   offset: offset in pixels (1, 2, or 3 integers for 1D, 2D and 3D textures, respectively)
-  //   size:   size in pixels (1, 2, or 3 integers for 1D, 2D and 3D textures, respectively)
-  // }
+  // | Enum type | Edit type                               |
+  // |-----------------------------------------------------|
+  // | BUFFER    | Buffer::Edit                            |
+  // | TEXTURE1D | Texture::Edit<Texture1D::DimensionType> |
+  // | TEXTURE2D | Texture::Edit<Texutre2D::DimensionType> |
+  // | TEXTURE3D | Texture::Edit<Texture3D::DimensionType> |
   template<typename T>
   const T* edit() const;
 

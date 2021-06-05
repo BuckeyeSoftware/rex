@@ -1583,30 +1583,42 @@ void ES3::process(Byte* _command) {
 
           // Enumerate and apply all buffer edits.
           if (use_vertices_edits || use_elements_edits || use_instances_edits) {
-            const Size* edit = resource->edit<Size>();
-            for (Size i{0}; i < resource->edits; i++) {
-              switch (edit[0]) {
-              case 0:
+            const auto edits = resource->edit<Frontend::Buffer::Edit>();
+            for (Size i = 0; i < resource->edits; i++) {
+              switch (const auto& edit = edits[i]; edit.sink) {
+              case Frontend::Buffer::Sink::ELEMENTS:
                 if (use_elements_edits) {
                   const auto& elements = render_buffer->elements();
                   state->use_ebo(buffer->bo[0]);
-                  GL(pglBufferSubData(GL_ELEMENT_ARRAY_BUFFER, edit[1], edit[2], elements.data() + edit[1]));
+                  pglBufferSubData(
+                    GL_ELEMENT_ARRAY_BUFFER,
+                    edit.offset,
+                    edit.size,
+                    elements.data() + edit.offset);
                 }
                 break;
-              case 1:
+              case Frontend::Buffer::Sink::VERTICES:
                 if (use_vertices_edits) {
                   state->use_vbo(buffer->bo[1]);
-                  GL(pglBufferSubData(GL_ARRAY_BUFFER, edit[1], edit[2], vertices.data() + edit[1]));
+                  pglBufferSubData(
+                    GL_ARRAY_BUFFER,
+                    edit.offset,
+                    edit.size,
+                    vertices.data() + edit.offset);
                 }
                 break;
-              case 2:
+              case Frontend::Buffer::Sink::INSTANCES:
                 if (use_instances_edits) {
                   const auto& instances = render_buffer->instances();
                   state->use_vbo(buffer->bo[2]);
-                  GL(pglBufferSubData(GL_ARRAY_BUFFER, edit[1], edit[2], instances.data() + edit[1]));
+                  pglBufferSubData(
+                    GL_ARRAY_BUFFER,
+                    edit.offset,
+                    edit.size,
+                    instances.data() + edit.offset);
                 }
+                break;
               }
-              edit += 3;
             }
           }
         }
@@ -1624,35 +1636,32 @@ void ES3::process(Byte* _command) {
       case Frontend::UpdateCommand::Type::TEXTURE3D:
         {
           const auto render_texture = resource->as_texture3D;
-          const Size* edit = resource->edit<Size>();
+          const auto edits = resource->edit<Frontend::Texture::Edit<Frontend::Texture3D::DimensionType>>();
 
           state->use_texture(render_texture);
 
           for (Size i = 0; i < resource->edits; i++) {
-            const auto x_offset = edit[1];
-            const auto y_offset = edit[2];
-            const auto z_offset = edit[3];
+            const auto& edit = edits[i];
+
             const auto bpp = render_texture->bits_per_pixel() / 8;
             const auto pitch = render_texture->dimensions().w * bpp;
             const auto ptr = render_texture->data().data()
-              + z_offset * pitch * render_texture->dimensions().h
-              + y_offset * pitch
-              + x_offset * bpp;
+              + edit.offset.z * pitch * render_texture->dimensions().h
+              + edit.offset.y * pitch
+              + edit.offset.x * bpp;
 
             GL(pglTexSubImage3D(
               GL_TEXTURE_3D,
-              edit[0],
-              x_offset,
-              y_offset,
-              z_offset,
-              edit[4], // width
-              edit[5], // height
-              edit[6], // depth
+              edit.level,
+              edit.offset.x,
+              edit.offset.y,
+              edit.offset.z,
+              edit.size.w,
+              edit.size.h, // height
+              edit.size.d, // depth
               convert_texture_format(render_texture->format()),
               convert_texture_data_type(render_texture->format()),
               ptr));
-
-            edit += 7;
           }
         }
         break;
