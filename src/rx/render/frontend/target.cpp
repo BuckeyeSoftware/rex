@@ -245,12 +245,12 @@ void Target::validate() const {
 }
 
 void Target::update_resource_usage() {
-  const auto rt_usage{[](const auto* _texture) {
-    return _texture->dimensions().area() * _texture->bits_per_pixel() / 8;
-  }};
+  const auto rt_usage = [](const auto* _texture) {
+    return (_texture->dimensions().area() * _texture->bits_per_pixel()) / 8;
+  };
 
   // Calculate memory usage for each attachment texture.
-  Float32 usage{0};
+  Float32 usage = 0.0f;
   m_attachments.each_fwd([&](const Attachment& _attachment) {
     switch (_attachment.kind) {
     case Attachment::Type::TEXTURE2D:

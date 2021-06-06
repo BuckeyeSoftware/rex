@@ -199,7 +199,7 @@ void Texture1D::record_edit(Size _level, const DimensionType& _offset,
 Size Texture1D::bytes_for_edits() const {
   Size bytes = 0;
   m_edits.each_fwd([&](const Edit& _edit) { bytes += _edit.size; });
-  return bytes * bits_per_pixel() / 8;
+  return (bytes * bits_per_pixel()) / 8;
 }
 
 // Texture2D

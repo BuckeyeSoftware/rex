@@ -1633,7 +1633,7 @@ void GL3::process(Byte* _command) {
             const auto& edit = edits[i];
 
             const auto bpp = render_texture->bits_per_pixel() / 8;
-            const auto pitch = render_texture->dimensions().w * bpp;
+            const auto pitch = render_texture->pitch();
             const auto ptr = render_texture->data().data()
               + edit.offset.z * pitch * render_texture->dimensions().h
               + edit.offset.y * pitch

@@ -90,7 +90,7 @@ bool Loader::load(Stream::UntrackedStream& _stream, PixelFormat _want_format,
     resize = true;
   }
 
-  if (!m_data.resize(m_dimensions.area() * bits_per_pixel() / 8)) {
+  if (!m_data.resize((m_dimensions.area() * bits_per_pixel()) / 8)) {
     stbi_image_free(decoded_image);
     return false;
   }
