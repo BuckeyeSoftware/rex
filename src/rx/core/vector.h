@@ -263,9 +263,9 @@ bool Vector<T>::reserve(Size _size) {
 
   T* resize = nullptr;
   if constexpr (Concepts::TriviallyCopyable<T>) {
-    resize = reinterpret_cast<T*>(m_allocator->reallocate(m_data, capacity * sizeof *m_data));
+    resize = reinterpret_cast<T*>(m_allocator->reallocate(m_data, sizeof *m_data, capacity));
   } else {
-    resize = reinterpret_cast<T*>(m_allocator->allocate(sizeof(T), capacity));
+    resize = reinterpret_cast<T*>(m_allocator->allocate(sizeof *m_data, capacity));
   }
 
   if (RX_HINT_UNLIKELY(!resize)) {

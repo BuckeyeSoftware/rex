@@ -127,7 +127,7 @@ void Arena::List::destroy() {
 bool Arena::List::grow() {
   if (m_size + 1 >= m_capacity) {
     const auto new_capacity = ((m_capacity + 1) * 3) / 2;
-    if (auto data = m_context->allocator().reallocate(m_data, sizeof *m_data * new_capacity); !data) {
+    if (auto data = m_context->allocator().reallocate(m_data, sizeof *m_data, new_capacity); !data) {
       // Out of memory on the |m_context| allocator.
       return false;
     } else {

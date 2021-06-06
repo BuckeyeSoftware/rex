@@ -717,8 +717,8 @@ void Context::draw(
     Concurrency::ScopeLock lock{m_mutex};
     const auto dirty_uniforms_size{_program->dirty_uniforms_size()};
 
-    auto command_base{m_command_buffer.allocate(sizeof(DrawCommand) + dirty_uniforms_size, CommandType::DRAW, _info)};
-    auto command{reinterpret_cast<DrawCommand*>(command_base + sizeof(CommandHeader))};
+    auto command_base = m_command_buffer.allocate(sizeof(DrawCommand) + dirty_uniforms_size, CommandType::DRAW, _info);
+    auto command = reinterpret_cast<DrawCommand*>(command_base + sizeof(CommandHeader));
 
     command->draw_buffers = _draw_buffers;
     command->draw_textures = _draw_textures;

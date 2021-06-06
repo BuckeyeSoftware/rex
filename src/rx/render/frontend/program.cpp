@@ -247,16 +247,26 @@ void Program::validate() const {
 }
 
 Uniform* Program::add_uniform(const String& _name, Uniform::Type _type, bool _is_padding) {
-  const Uint64 bit = 1_u64 << m_uniforms.size();
-  if (auto data = m_frontend->allocator().allocate(Uniform::size_for_type(_type))) {
-    m_uniforms.emplace_back(this, bit, _name, _type, data);
-    if (_is_padding) {
-      m_padding_uniforms |= bit;
-    }
-    update_resource_usage();
-    return &m_uniforms.last();
+  const auto bit = 1_u64 << m_uniforms.size();
+  auto& allocator = m_frontend->allocator();
+  auto data = allocator.allocate(Uniform::size_for_type(_type));
+
+  if (!data) {
+    return nullptr;
   }
-  return nullptr;
+
+  if (!m_uniforms.emplace_back(this, bit, _name, _type, data)) {
+    allocator.deallocate(data);
+    return nullptr;
+  }
+
+  if (_is_padding) {
+    m_padding_uniforms |= bit;
+  }
+
+  update_resource_usage();
+
+  return &m_uniforms.last();
 }
 
 Uint64 Program::dirty_uniforms_bitset() const {

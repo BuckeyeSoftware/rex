@@ -621,7 +621,7 @@ bool operator>(const char* _lhs, const String& _rhs) {
 }
 
 bool WideString::resize(Size _size) {
-  Uint16* resize = reinterpret_cast<Uint16*>(m_allocator->reallocate(m_data, (_size + 1) * sizeof *m_data));
+  Uint16* resize = reinterpret_cast<Uint16*>(m_allocator->reallocate(m_data, sizeof *m_data, _size + 1));
   if (!RX_HINT_UNLIKELY(resize)) {
     return false;
   }
@@ -671,7 +671,7 @@ WideString::WideString(Memory::Allocator& _allocator, const Uint16* _contents,
   : m_allocator{&_allocator}
   , m_size{_size}
 {
-  m_data = reinterpret_cast<Uint16*>(m_allocator->allocate(sizeof(Uint16), _size + 1));
+  m_data = reinterpret_cast<Uint16*>(m_allocator->allocate(sizeof *m_data, _size + 1));
   RX_ASSERT(m_data, "out of memory");
 
   Memory::copy(m_data, _contents, _size + 1);

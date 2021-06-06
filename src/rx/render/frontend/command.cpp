@@ -14,8 +14,8 @@ CommandBuffer::~CommandBuffer() {
 }
 
 Byte* CommandBuffer::allocate(Size _size, CommandType _command, const CommandHeader::Info& _info) {
-  if (Byte* data = m_allocator.allocate(sizeof(CommandHeader) + _size)) {
-    auto* header = reinterpret_cast<CommandHeader*>(data);
+  if (const auto data = m_allocator.allocate(sizeof(CommandHeader) + _size)) {
+    const auto header = reinterpret_cast<CommandHeader*>(data);
     header->type = _command;
     header->tag = _info;
     return data;

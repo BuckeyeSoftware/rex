@@ -95,6 +95,17 @@ struct RX_API Allocator {
   /// \param _count The number of elements.
   Byte* allocate(Size _size, Size _count);
 
+  ///
+  /// \brief Reallocate an array safely.
+  ///
+  /// The same as reallocate() but performs _size * _count arithmetic checking
+  /// for possible integer overflow.
+  ///
+  /// \param _data The data to reallocate.
+  /// \param _size The size of each element.
+  /// \param _count The number of elements.
+  Byte* reallocate(void* _data, Size _size, Size _count);
+
   /// @{
   /// \brief Convienence functions to round a pointer or size to ALIGNMENT.
   static constexpr UintPtr round_to_alignment(UintPtr _ptr_or_size);
