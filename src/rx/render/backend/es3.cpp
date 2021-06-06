@@ -1583,7 +1583,7 @@ void ES3::process(Byte* _command) {
 
           // Enumerate and apply all buffer edits.
           if (use_vertices_edits || use_elements_edits || use_instances_edits) {
-            const auto edits = resource->edit<Frontend::Buffer::Edit>();
+            const auto edits = resource->edit<Frontend::Buffer>();
             for (Size i = 0; i < resource->edits; i++) {
               switch (const auto& edit = edits[i]; edit.sink) {
               case Frontend::Buffer::Sink::ELEMENTS:
@@ -1636,7 +1636,7 @@ void ES3::process(Byte* _command) {
       case Frontend::UpdateCommand::Type::TEXTURE3D:
         {
           const auto render_texture = resource->as_texture3D;
-          const auto edits = resource->edit<Frontend::Texture::Edit<Frontend::Texture3D::DimensionType>>();
+          const auto edits = resource->edit<Frontend::Texture3D>();
 
           state->use_texture(render_texture);
 

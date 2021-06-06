@@ -22,7 +22,7 @@ struct ChainInfo {
   {
   }
 
-  Vector<Texture::LevelInfo<T>> levels;
+  Vector<Texture::LevelInfoType<T>> levels;
   Size size;
 };
 
@@ -198,7 +198,7 @@ void Texture1D::record_edit(Size _level, const DimensionType& _offset,
 
 Size Texture1D::bytes_for_edits() const {
   Size bytes = 0;
-  m_edits.each_fwd([&](const EditType& _edit) { bytes += _edit.size; });
+  m_edits.each_fwd([&](const Edit& _edit) { bytes += _edit.size; });
   return bytes * bits_per_pixel() / 8;
 }
 
@@ -276,8 +276,8 @@ void Texture2D::record_edit(Size _level, const DimensionType& _offset,
 
 Size Texture2D::bytes_for_edits() const {
   Size bytes = 0;
-  m_edits.each_fwd([&](const EditType& _edit) { bytes += _edit.size.area(); });
-  return bytes * bits_per_pixel() / 8;
+  m_edits.each_fwd([&](const Edit& _edit) { bytes += _edit.size.area(); });
+  return (bytes * bits_per_pixel()) / 8;
 }
 
 // Texture3D
@@ -351,8 +351,8 @@ void Texture3D::record_edit(Size _level, const DimensionType& _offset,
 
 Size Texture3D::bytes_for_edits() const {
   Size bytes = 0;
-  m_edits.each_fwd([&](const EditType& _edit) { bytes += _edit.size.area(); });
-  return bytes * bits_per_pixel() / 8;
+  m_edits.each_fwd([&](const Edit& _edit) { bytes += _edit.size.area(); });
+  return (bytes * bits_per_pixel()) / 8;
 }
 
 // TextureCM

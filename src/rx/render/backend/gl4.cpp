@@ -1528,7 +1528,7 @@ void GL4::process(Byte* _command) {
 
           // Enumerate and apply all buffer edits.
           if (use_vertices_edits || use_elements_edits || use_instances_edits) {
-            const auto edits = resource->edit<Frontend::Buffer::Edit>();
+            const auto edits = resource->edit<Frontend::Buffer>();
             for (Size i = 0; i < resource->edits; i++) {
               switch (const auto& edit = edits[i]; edit.sink) {
               case Frontend::Buffer::Sink::ELEMENTS:
@@ -1572,7 +1572,7 @@ void GL4::process(Byte* _command) {
         {
           const auto render_texture = resource->as_texture2D;
           const auto texture = reinterpret_cast<detail_gl4::texture2D*>(render_texture + 1);
-          const auto edits = resource->edit<Frontend::Texture::Edit<Frontend::Texture2D::DimensionType>>();
+          const auto edits = resource->edit<Frontend::Texture2D>();
 
           for (Size i = 0; i < resource->edits; i++) {
             const auto& edit = edits[i];
@@ -1600,7 +1600,7 @@ void GL4::process(Byte* _command) {
         {
           const auto render_texture = resource->as_texture3D;
           const auto texture = reinterpret_cast<detail_gl4::texture3D*>(render_texture + 1);
-          const auto edits = resource->edit<Frontend::Texture::Edit<Frontend::Texture3D::DimensionType>>();
+          const auto edits = resource->edit<Frontend::Texture3D>();
 
           for (Size i = 0; i < resource->edits; i++) {
             const auto& edit = edits[i];
