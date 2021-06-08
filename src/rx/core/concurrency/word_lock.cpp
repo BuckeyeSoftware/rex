@@ -226,7 +226,7 @@ void WordLock::unlock_slow() {
 
   // The lock is avaialble for acquisition, wakeup the thread indicated by head.
   head->next = nullptr;
-  next->tail = nullptr;
+  head->tail = nullptr;
 
   // This can run either before or during the critical section in lock_slow(),
   // so be very careful here.
