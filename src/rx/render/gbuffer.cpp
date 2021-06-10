@@ -7,7 +7,7 @@
 namespace Rx::Render {
 
 Optional<GBuffer> GBuffer::create(Frontend::Context* _frontend,
-  const Math::Vec2z& _resolution)
+  const Options& _options)
 {
   auto albedo = _frontend->create_texture2D(RX_RENDER_TAG("gbuffer albedo"));
   auto normal = _frontend->create_texture2D(RX_RENDER_TAG("gbuffer normal"));
@@ -28,7 +28,7 @@ Optional<GBuffer> GBuffer::create(Frontend::Context* _frontend,
   albedo->record_format(Frontend::Texture::DataFormat::SRGBA_U8);
   albedo->record_type(Frontend::Texture::Type::ATTACHMENT);
   albedo->record_levels(1);
-  albedo->record_dimensions(_resolution);
+  albedo->record_dimensions(_options.dimensions);
   albedo->record_filter({false, false, false});
   albedo->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
                                  Frontend::Texture::WrapType::CLAMP_TO_EDGE});
@@ -39,7 +39,7 @@ Optional<GBuffer> GBuffer::create(Frontend::Context* _frontend,
   normal->record_format(Frontend::Texture::DataFormat::RGBA_U8);
   normal->record_type(Frontend::Texture::Type::ATTACHMENT);
   normal->record_levels(1);
-  normal->record_dimensions(_resolution);
+  normal->record_dimensions(_options.dimensions);
   normal->record_filter({false, false, false});
   normal->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
                                  Frontend::Texture::WrapType::CLAMP_TO_EDGE});
@@ -50,7 +50,7 @@ Optional<GBuffer> GBuffer::create(Frontend::Context* _frontend,
   emission->record_format(Frontend::Texture::DataFormat::RGBA_U8);
   emission->record_type(Frontend::Texture::Type::ATTACHMENT);
   emission->record_levels(1);
-  emission->record_dimensions(_resolution);
+  emission->record_dimensions(_options.dimensions);
   emission->record_filter({false, false, false});
   emission->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
                                    Frontend::Texture::WrapType::CLAMP_TO_EDGE});
@@ -61,7 +61,7 @@ Optional<GBuffer> GBuffer::create(Frontend::Context* _frontend,
   velocity->record_format(Frontend::Texture::DataFormat::RG_F16);
   velocity->record_type(Frontend::Texture::Type::ATTACHMENT);
   velocity->record_levels(1);
-  velocity->record_dimensions(_resolution);
+  velocity->record_dimensions(_options.dimensions);
   velocity->record_filter({false, false, false});
   velocity->record_wrap({
     Frontend::Texture::WrapType::CLAMP_TO_EDGE,
@@ -70,7 +70,9 @@ Optional<GBuffer> GBuffer::create(Frontend::Context* _frontend,
   target->attach_texture(velocity, 0);
 
   // Depth & Stencil.
-  target->request_depth_stencil(Frontend::Texture::DataFormat::D24_S8, _resolution);
+  target->request_depth_stencil(Frontend::Texture::DataFormat::D24_S8,
+    _options.dimensions);
+
   _frontend->initialize_target(RX_RENDER_TAG("gbuffer"), target);
 
   return GBuffer{_frontend, target, albedo, normal, emission, velocity};

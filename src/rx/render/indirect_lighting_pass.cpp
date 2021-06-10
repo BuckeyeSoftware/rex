@@ -68,7 +68,7 @@ void IndirectLightingPass::render(const Math::Camera& _camera, const Input& _inp
     m_target,
     draw_buffers,
     RX_RENDER_CLEAR_COLOR(0),
-    Math::Vec4f{0.0f, 1.0f, 0.0f, 1.0f}.data());
+    Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data());
 
   // Only where stencil = 1
   state.stencil.record_enable(true);

@@ -171,8 +171,13 @@ struct ImageBasedLighting {
   ImageBasedLighting(ImageBasedLighting&&);
   ImageBasedLighting& operator=(ImageBasedLighting&&);
 
+  struct Options {
+    Size irradiance_size = 32;
+    Size prefilter_size = 256;
+  };
+
   static Optional<ImageBasedLighting> create(Frontend::Context* _frontend,
-    Size _irradiance_size = 32, Size _prefilter_size = 256);
+    const Options& _options);
 
   void render(Frontend::Texture* _env_map);
 

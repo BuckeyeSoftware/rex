@@ -23,11 +23,15 @@ struct GBuffer {
 
   GBuffer& operator=(GBuffer&& gbuffer_);
 
+  struct Options {
+    Math::Vec2z dimensions;
+  };
+
   static Optional<GBuffer> create(Frontend::Context* _frontend,
-    const Math::Vec2z& _resolution);
+    const Options& _options);
 
   void clear();
-  bool resize(const Math::Vec2z& _resolution);
+  bool recreate(const Options& _options);
 
   Frontend::Texture2D* albedo() const;
   Frontend::Texture2D* normal() const;
@@ -84,8 +88,8 @@ inline GBuffer::~GBuffer() {
   release();
 }
 
-inline bool GBuffer::resize(const Math::Vec2z& _resolution) {
-  if (auto gbuffer = create(m_frontend, _resolution)) {
+inline bool GBuffer::recreate(const Options& _options) {
+  if (auto gbuffer = create(m_frontend, _options)) {
     *this = Utility::move(*gbuffer);
     return true;
   }

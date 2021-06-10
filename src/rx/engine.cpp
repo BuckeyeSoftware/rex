@@ -55,6 +55,12 @@ RX_CONSOLE_BVAR(
   "use HDR output if supported",
   false);
 
+RX_CONSOLE_BVAR(
+  display_alpha,
+  "display.alpha",
+  "alpha channel for display (useful for Web transparent canvas)",
+  true);
+
 RX_CONSOLE_IVAR(
   display_swap_interval,
   "display.swap_interval",
@@ -363,6 +369,9 @@ bool Engine::init() {
       SDL_GL_SetAttribute(SDL_GL_RED_SIZE, bit_depth);
       SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, bit_depth);
       SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, bit_depth);
+      if (*display_alpha) {
+        SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, bit_depth);
+      }
     }
 
     window = SDL_CreateWindow(
@@ -563,6 +572,7 @@ Engine::Status Engine::integrate() {
           const Math::Vec2i size{event.window.data1, event.window.data2};
           display_resolution->set(size, false);
           m_application->on_resize(size.cast<Size>());
+          m_render_frontend->resize(size.cast<Size>());
           m_input.on_resize(size.cast<Size>());
         }
         break;

@@ -222,7 +222,7 @@ void PrefilteredEnvironmentMap::render_next_face() {
 }
 
 Optional<ImageBasedLighting> ImageBasedLighting::create(
-  Frontend::Context* _frontend, Size _irradiance_size, Size _prefilter_size)
+  Frontend::Context* _frontend, const Options& _options)
 {
   auto scale_bias_technique = _frontend->find_technique_by_name("brdf_integration");
   if (!scale_bias_technique) {
@@ -274,8 +274,8 @@ Optional<ImageBasedLighting> ImageBasedLighting::create(
 
   _frontend->destroy_target(RX_RENDER_TAG("scale bias"), scale_bias_target);
 
-  auto irradiance_map = IrradianceMap::create(_frontend, _irradiance_size);
-  auto prefiltered_environment_map = PrefilteredEnvironmentMap::create(_frontend, _prefilter_size);
+  auto irradiance_map = IrradianceMap::create(_frontend, _options.irradiance_size);
+  auto prefiltered_environment_map = PrefilteredEnvironmentMap::create(_frontend, _options.prefilter_size);
   if (!irradiance_map || !prefiltered_environment_map) {
     _frontend->destroy_texture(RX_RENDER_TAG("scale bias"), scale_bias_texture);
     return nullopt;
