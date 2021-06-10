@@ -100,7 +100,7 @@ struct TestGame
   Vector<Math::Vec3f> m_mdl_rotations;
 
   virtual bool on_init() {
-    m_camera.translate = {0.0f, 1.0f, -10.0f};
+    m_camera.translate = {0.0f, 0.0f, -1.0f};
 
     const auto& dimensions = m_frontend.swapchain()->dimensions();
 
@@ -137,10 +137,14 @@ struct TestGame
       return false;
     }
 
-    if (auto gbuffer = Render::GBuffer::create(&m_frontend, dimensions)) {
-      m_gbuffer = Utility::move(*gbuffer);
-    } else {
-      return false;
+    {
+      Render::GBuffer::Options options;
+      options.dimensions = dimensions;
+      if (auto gbuffer = Render::GBuffer::create(&m_frontend, options)) {
+        m_gbuffer = Utility::move(*gbuffer);
+      } else {
+        return false;
+      }
     }
 
     if (auto skybox = Render::Skybox::create(&m_frontend)) {
@@ -222,7 +226,10 @@ struct TestGame
     };
 */
 
-    if (auto ibl = Render::ImageBasedLighting::create(&m_frontend, 16, 64)) {
+    Render::ImageBasedLighting::Options options;
+    options.irradiance_size = 16;
+    options.prefilter_size = 64;
+    if (auto ibl = Render::ImageBasedLighting::create(&m_frontend, options)) {
       m_ibl = Utility::move(*ibl);
     } else {
       return false;
@@ -238,7 +245,7 @@ struct TestGame
     m_color_grader.update();*/
 
     Math::Transform transform;
-    transform.translate.x = -((5.0f * (4.0f - 1.0f)) * 0.5f);
+    // transform.translate.x = -((5.0f * (4.0f - 1.0f)) * 0.5f);
 
     auto add_model = [&](const char* _file_name) {
       if (auto model = Render::Model::create(&m_frontend)) {
@@ -255,12 +262,12 @@ struct TestGame
       return false;
     };
 
-    if (!add_model("base/models/chest/chest.json5")) return false;
-    if (!add_model("base/models/mrfixit/mrfixit.json5")) return false;
-    if (!add_model("base/models/fire_hydrant/fire_hydrant.json5")) return false;
+    // if (!add_model("base/models/chest/chest.json5")) return false;
+    // if (!add_model("base/models/mrfixit/mrfixit.json5")) return false;
+    // if (!add_model("base/models/fire_hydrant/fire_hydrant.json5")) return false;
     if (!add_model("base/models/helmet/helmet.json5")) return false;
 
-    m_models[1].animate(0, true); // mrfixit loop 0th animation.
+    // m_models[1].animate(0, true); // mrfixit loop 0th animation.
 
     return true;
   }
@@ -434,6 +441,22 @@ struct TestGame
     Render::Frontend::State state;
     state.viewport.record_dimensions(m_frontend.swapchain()->dimensions());
 
+    state.blend.record_enable(true);
+    state.blend.record_blend_factors(
+      Render::Frontend::BlendState::FactorType::SRC_ALPHA,
+      Render::Frontend::BlendState::FactorType::ONE_MINUS_SRC_ALPHA);
+
+    Render::Frontend::Buffers buffers;
+    buffers.add(0);
+
+    m_frontend.clear(
+      RX_RENDER_TAG("swapchain clear"),
+      state,
+      m_frontend.swapchain(),
+      buffers,
+      RX_RENDER_CLEAR_COLOR(0),
+      Math::Vec4f{0.0f, 0.0f, 0.0f, 0.0f}.data());
+
     m_frontend.blit(
       RX_RENDER_TAG("test"),
       state,
@@ -459,7 +482,11 @@ struct TestGame
   }
 
   void on_resize(const Math::Vec2z& _dimensions) {
-    m_gbuffer.resize(_dimensions);
+    {
+      Render::GBuffer::Options options;
+      options.dimensions = _dimensions;
+      m_gbuffer.recreate(options);
+    }
 
     {
       Render::CopyPass::Options options;
@@ -475,8 +502,6 @@ struct TestGame
       options.stencil = m_gbuffer.depth_stencil();
       m_indirect_lighting_pass.recreate(options);
     }
-
-    m_frontend.resize(_dimensions);
   }
 
   Render::Frontend::Context& m_frontend;
