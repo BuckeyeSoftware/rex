@@ -393,7 +393,7 @@ bool Engine::init() {
         Sint32(loader.dimensions().w),
         Sint32(loader.dimensions().h),
         loader.bits_per_pixel(),
-        loader.dimensions().w * loader.bits_per_pixel() / 8,
+        (loader.dimensions().w * loader.bits_per_pixel()) / 8,
         0xFF000000,
         0x00FF0000,
         0x0000FF00,

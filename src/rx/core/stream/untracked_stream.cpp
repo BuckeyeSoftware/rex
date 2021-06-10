@@ -39,7 +39,7 @@ Uint64 UntrackedStream::on_zero(Uint64 _size, Uint64 _offset) {
   while (bytes < _size) {
     // Which ever is smaller is the max bytes to zero.
     const auto remain = _size - bytes;
-    const auto max = Algorithm::min(remain, sizeof zero);
+    const auto max = Algorithm::min(remain, Uint64(sizeof zero));
     if (const auto wr = on_write(zero, max, _offset + bytes)) {
       bytes += wr;
       if (wr != max) {
@@ -60,7 +60,7 @@ Uint64 UntrackedStream::on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _
   while (bytes < _size) {
     // Which ever is smaller is the max bytes to copy.
     const auto remain = _size - bytes;
-    const auto max = Algorithm::min(remain, sizeof buffer);
+    const auto max = Algorithm::min(remain, Uint64(sizeof buffer));
     if (const auto rd = on_read(buffer, max, _src_offset + bytes)) {
       const auto wr = on_write(buffer, rd, _dst_offset + bytes);
       bytes += wr;
