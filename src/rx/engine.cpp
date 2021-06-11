@@ -15,6 +15,7 @@
 
 #if defined(RX_PLATFORM_EMSCRIPTEN)
 #include <emscripten.h>
+#include <emscripten/html5.h>
 #endif
 
 extern Rx::Ptr<Rx::Application> create(Rx::Engine* _engine);
@@ -25,8 +26,8 @@ RX_CONSOLE_V2IVAR(
   display_resolution,
   "display.resolution",
   "display resolution",
-  Math::Vec2i(800, 600),
-  Math::Vec2i(4096, 4096),
+  Math::Vec2i(128, 72),
+  Math::Vec2i(7680, 4320),
   Math::Vec2i(1600, 900));
 
 RX_CONSOLE_IVAR(
@@ -311,6 +312,7 @@ bool Engine::init() {
   // Fetch the index of display inside the display list.
   const Size display_index = found_display - &m_displays.first();
 
+  // Create the visual.
   const auto& driver_name = render_driver->get();
   const bool is_gl = driver_name.begins_with("gl");
   const bool is_es = driver_name.begins_with("es");
@@ -360,6 +362,16 @@ bool Engine::init() {
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   }
+
+  // Read the canvas size from the HTML / CSS and set the internal display
+  // resolution to that instead.
+#if defined(RX_PLATFORM_EMSCRIPTEN)
+  Math::Vec2i canvas_size;
+  emscripten_get_canvas_element_size("canvas", &canvas_size.w, &canvas_size.h);
+
+  // Set the display resolution to the canvas size.
+  display_resolution->set(canvas_size);
+#endif
 
   SDL_Window* window = nullptr;
   int bit_depth = 0;
@@ -424,7 +436,6 @@ bool Engine::init() {
 
   SDL_RaiseWindow(window);
   SDL_StartTextInput();
-  SDL_SetRelativeMouseMode(SDL_TRUE);
 
   if (bit_depth != 10) {
     display_hdr->set(false);
