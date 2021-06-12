@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Rex</title>
+    <link rel="stylesheet" href="rex.css">
+  </head>
+  <body>
+    <figure id="spinner">
+      <div class="spinner">
+      </div>
+    </figure>
+    <div class="rex" id="status">
+      Downloading...
+    </div>
+    <div class="rex">
+      <progress value="0" max="100" id="progress" hidden=1>
+      </progress>
+    </div>
+    <div class="rex-border">
+      <canvas class="rex" id="canvas" width="256" height="256" oncontextmenu="event.preventDefault()" tabindex=-1>
+      </canvas>
+    </div>
+    <script async type="text/javascript" src="rex.module.js"></script>
+    {{{ SCRIPT }}}
+  </body>
+</html>

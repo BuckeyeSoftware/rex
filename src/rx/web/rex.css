@@ -1,0 +1,37 @@
+.rex {
+  padding-right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+div.rex {
+  text-align: center;
+}
+
+div.rex-border {
+  border: 0px none;
+}
+
+canvas.rex {
+  border: 0px none;
+}
+
+.spinner {
+  overflow: visible;
+  height: 50px;
+  width: 50px;
+  margin: 0px auto;
+  animation: rotation 0.8s linear infinite;
+  border-left: 10px solid rgb(0, 150, 240);
+  border-right: 10px solid rgb(0, 150, 240);
+  border-bottom: 10px solid rgb(0, 150, 240);
+  border-top: 10px solid rgb(100, 0, 200);
+  border-radius: 100%;
+  background-color: rgb(200, 100, 250);
+}
+
+@keyframes rotation {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

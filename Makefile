@@ -70,9 +70,11 @@ ifeq ($(EMSCRIPTEN), 1)
 	# Emscripten generates additional artifacts so list them here.
 	ARTIFACTS += rex.js
 	ARTIFACTS += rex.wasm
-	ARTIFACTS += rex.wasm.map
 	ARTIFACTS += rex.data
 	ARTIFACTS += rex.worker.js
+	ifeq ($(DEBUG), 1)
+		ARTIFACTS += rex.wasm.map
+	endif
 endif
 
 # Build artifact directories.
@@ -230,7 +232,7 @@ DEPFLAGS += -MP
 #
 ifeq ($(EMSCRIPTEN), 1)
 	OFLAGS := --preload-file ./base/
-	OFLAGS += --shell-file src/rx/shell.html
+	OFLAGS += --shell-file src/rx/web/shell.html
 endif
 
 #
@@ -245,7 +247,6 @@ ifeq ($(EMSCRIPTEN), 1)
 	LDFLAGS += -s USE_PTHREADS=1
 	LDFLAGS += -s USE_SDL=2
 	LDFLAGS += -s USE_WEBGL2=1
-
 
 	# Preinitialize a thread pool with four webworkers here to avoid blocking
 	# in main waiting for our builtin thread pool to initialize since we depend
@@ -350,6 +351,12 @@ $(OBJDIR)/%.o: %.S | $(OBJDIR)
 $(BIN): $(OBJS)
 	$(LD) $(OBJS) $(LDFLAGS) -o $@ $(OFLAGS)
 	$(STRIP) $@
+ifeq ($(EMSCRIPTEN), 1)
+	mkdir -p web
+	mv -t web/ $(ARTIFACTS)
+	cp src/rx/web/rex.css web/
+	cp src/rx/web/rex.module.js web/
+endif
 
 clean:
 	rm -rf $(DEPDIR) $(OBJDIR) $(ARTIFACTS)
