@@ -15,6 +15,10 @@
 
 #include "rx/core/log.h" // RX_LOG
 
+#if defined(RX_PLATFORM_EMSCRIPTEN)
+#include <emscripten/html5.h>
+#endif // defined(RX_PLATFORM_EMSCRIPTEN)
+
 namespace Rx::Console {
 
 static constexpr const auto MAX_LINES = 4096_z;
@@ -145,16 +149,16 @@ bool Context::execute(const String& _contents) {
       switch (set_from_reference_and_token(variable, tokens[1])) {
       case VariableStatus::SUCCESS:
         print("^gsuccess: ^wChanged: \"%s\" to %s", atom, tokens[1].print());
-        break;
+        return true;
       case VariableStatus::OUT_OF_RANGE:
         print("^rerror: ^wOut of range: \"%s\" has range %s", atom,
           variable->print_range());
-        break;
+        return false;
       case VariableStatus::TYPE_MISMATCH:
         print("^rerror: ^wType mismatch: \"%s\" expected %s, got %s", atom,
           VariableType_as_string(variable->type()),
           token_type_as_string(tokens[1].kind()));
-        break;
+        return false;
       case VariableStatus::OUT_OF_MEMORY:
         // Only possible when setting String values and the String failed to
         // allocate. Generally this would be an attempted denial of service on
@@ -163,21 +167,20 @@ bool Context::execute(const String& _contents) {
         // Since Rex takes memory allocation and failure seriously, it's
         // neatly caught here in a non-destructive way and will report it.
         print("^rOut of memory.");
-        break;
+        return false;
       }
     } else {
       print("^cinfo: ^w%s = %s", atom, variable->print_current());
+      return true;
     }
   } else if (auto* command = m_commands.find(atom)) {
     tokens.erase(0, 1);
-    if (!command->execute_tokens(*this, tokens)) {
-      return false;
-    }
+    return command->execute_tokens(*this, tokens);
   } else {
     print("^rerror: ^wCommand or variable \"%s\", not found", atom);
   }
 
-  return true;
+  return false;
 }
 
 Optional<Vector<String>> Context::auto_complete_variables(const String& _prefix) {
@@ -411,3 +414,98 @@ VariableReference* Context::sort(VariableReference* reference) {
 }
 
 } // namespace Rx::Console
+
+
+#if defined(RX_PLATFORM_EMSCRIPTEN)
+static bool rx_console_execute(const char* _contents) {
+  using namespace Rx;
+  using namespace Rx::Console;
+
+  emscripten_console_log("Executed!");
+
+  auto& allocator = Memory::SystemAllocator::instance();
+
+  Console::Parser parse{allocator};
+
+  if (!parse.parse(_contents)) {
+    return false;
+  }
+
+  auto tokens = Utility::move(parse.tokens());
+
+  if (tokens.is_empty()) {
+    return false;
+  }
+
+  if (tokens[0].kind() != Console::Token::Type::ATOM) {
+    emscripten_console_error("Expected atom");
+    return false;
+  }
+
+  String format;
+  const auto& atom = tokens[0].as_atom();
+  if (auto* variable = Context::find_variable_by_name(atom)) {
+    if (tokens.size() > 1) {
+      switch (Context::set_from_reference_and_token(variable, tokens[1])) {
+      case Console::VariableStatus::SUCCESS:
+        format = String::format(allocator,
+          "Changed: \"%s\" to %s", atom, tokens[1].print());
+        emscripten_console_log(format.data());
+        return true;
+      case Console::VariableStatus::OUT_OF_RANGE:
+        format = String::format(allocator,
+          "Out of range: \"%s\" has range %s", atom, variable->print_range());
+        emscripten_console_error(format.data());
+        return false;
+      case Console::VariableStatus::TYPE_MISMATCH:
+        format = String::format(allocator,
+          "Type mismatch: \"%s\" expected %s, got %s", atom,
+          Console::VariableType_as_string(variable->type()),
+          Console::token_type_as_string(tokens[1].kind()));
+        emscripten_console_error(format.data());
+        return false;
+      case Console::VariableStatus::OUT_OF_MEMORY:
+        emscripten_console_error("Out of memory.");
+        return false;
+      }
+    } else {
+      const auto format = String::format(allocator,
+        "%s = %s", atom, variable->print_current());
+      emscripten_console_log(format.data());
+    }
+  } else {
+    const auto format = String::format(allocator,
+      "Command or variable \"%s\", not found", atom);
+    emscripten_console_error(format.data());
+  }
+
+  return false;
+}
+
+template<typename T>
+static bool wr_var(const char* _name, const T& _value) {
+  using namespace Rx;
+  using namespace Rx::Console;
+
+  if (auto* variable = Context::find_variable_by_name(_name)) {
+    return Context::set_from_reference_and_value(variable, _value) == VariableStatus::SUCCESS;
+  }
+
+  return false;
+}
+
+template<typename T>
+static T rd_var(const char* _name) {
+  using namespace Rx;
+  using namespace Rx::Console;
+
+  if (auto reference = Context::find_variable_by_name(_name)) {
+    if (auto variable = reference->try_cast<T>()) {
+      return *variable;
+    }
+  }
+
+  return {};
+}
+
+#endif

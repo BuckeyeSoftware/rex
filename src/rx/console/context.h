@@ -25,8 +25,8 @@ struct Context {
   Command* add_command(const String& _name, const char* _signature,
     Function<bool(Context& console_, const Vector<Command::Argument>&)>&& function_);
 
-  VariableReference* find_variable_by_name(const String& _name);
-  VariableReference* find_variable_by_name(const char* _name);
+  static VariableReference* find_variable_by_name(const String& _name);
+  static VariableReference* find_variable_by_name(const char* _name);
 
   bool execute(const String& _contents);
 
@@ -41,7 +41,6 @@ struct Context {
   Optional<Vector<String>> auto_complete_variables(const String& _prefix);
   Optional<Vector<String>> auto_complete_commands(const String& _prefix);
 
-private:
   // set variable |_reference| with token |_token|
   static VariableStatus set_from_reference_and_token(VariableReference* _reference, const Token& _token);
 
@@ -49,6 +48,7 @@ private:
   template<typename T>
   static VariableStatus set_from_reference_and_value(VariableReference* _reference, const T& _value);
 
+private:
   // merge-sort variable references in alphabetical order
   static VariableReference* split(VariableReference* _reference);
   static VariableReference* merge(VariableReference* _lhs, VariableReference* _rhs);
