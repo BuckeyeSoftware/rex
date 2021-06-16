@@ -22,6 +22,8 @@ static constexpr const char* MODEL_PATHS[] = {
 static constexpr const auto SPACING_BETWEEN_MODELS = 2.0f;
 static constexpr const auto N_MODELS = sizeof MODEL_PATHS / sizeof *MODEL_PATHS;
 
+RX_CONSOLE_IVAR(selection, "selection", "model selection", 0, Sint32(N_MODELS - 1), Sint32(N_MODELS / 2));
+
 ModelBanner::ModelBanner(Engine* _engine)
   : Application{_engine}
 {
@@ -29,6 +31,17 @@ ModelBanner::ModelBanner(Engine* _engine)
 
 bool ModelBanner::on_init() {
   m_camera.translate = {0.0f, 0.0f, -1.0f};
+
+  auto on_selection_change =
+    selection->on_change([this](Console::Variable<Rx::Sint32>& _var) {
+      m_animation = Animation{m_camera.translate.x, m_transforms[_var].translate.x, 1.0f};
+    });
+
+  if (!on_selection_change) {
+    return false;
+  }
+
+  m_on_selection_change = Utility::move(*on_selection_change);
 
   auto renderer = engine()->renderer();
   auto& input = engine()->input();
@@ -115,8 +128,7 @@ bool ModelBanner::on_init() {
   });
 
   // Set the camera location to the middle model by default.
-  m_selected = m_transforms.size() / 2;
-  m_camera.translate.x = m_transforms[m_selected].translate.x;
+  m_camera.translate.x = m_transforms[*selection].translate.x;
 
   return true;
 }
@@ -138,11 +150,9 @@ bool ModelBanner::on_update(Float32 _delta_time) {
 
   // To test selection.
   if (input.root_layer().keyboard().is_released(Input::ScanCode::A)) {
-    if (m_selected) m_selected--;
-    m_animation = Animation{m_camera.translate.x, m_transforms[m_selected].translate.x, 1.0f};
+    selection->set(selection->get() - 1);
   } else if (input.root_layer().keyboard().is_released(Input::ScanCode::D)) {
-    if (m_selected < N_MODELS - 1) m_selected++;
-    m_animation = Animation{m_camera.translate.x, m_transforms[m_selected].translate.x, 1.0f};
+    selection->set(selection->get() + 1);
   }
 #endif
 
@@ -152,7 +162,7 @@ bool ModelBanner::on_update(Float32 _delta_time) {
     const auto rx = Math::Quatf({1.0f, 0.0f, 0.0f}, delta.y * _delta_time);
     const auto ry = Math::Quatf({0.0f, 1.0f, 0.0f}, delta.x * _delta_time);
 
-    m_transforms[m_selected].rotation *= rx * ry;
+    m_transforms[*selection].rotation *= rx * ry;
   }
 
   // Update camera projection.

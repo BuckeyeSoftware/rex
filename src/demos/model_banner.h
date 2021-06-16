@@ -13,6 +13,8 @@
 #include "rx/math/camera.h"
 #include "rx/math/vec2.h"
 
+#include "rx/console/variable.h"
+
 namespace Rx {
 
 inline auto sampler(Float32 _time, const auto& _start, const auto& _end, Float32 _duration) {
@@ -73,8 +75,9 @@ private:
   Optional<Render::Skybox> m_skybox;
   Vector<Math::Transform> m_transforms;
   Math::Camera m_camera;
-  Size m_selected;
   Optional<Animation<Float32>> m_animation;
+
+  Rx::Event<void (Rx::Console::Variable<Rx::Sint32> &)>::Handle m_on_selection_change;
 };
 } // namespace Rx
 
