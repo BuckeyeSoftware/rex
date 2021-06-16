@@ -1,0 +1,61 @@
+{
+  name:      "modern_nightstand",
+  file:      "base/models/modern_nightstand/modern_nightstand.iqm",
+  transform: {
+      scale: [
+        1.4, 1.4, 1.4
+      ],
+      translate: [
+        0.0, -0.4, 0.0
+      ]
+  },
+  materials: [
+    {
+      name:       "frame/legs",
+      textures: [
+        {
+          file:       "base/models/modern_nightstand/albedo.jpg",
+          type:       "albedo",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        },
+        {
+          file:       "base/models/modern_nightstand/normal.jpg",
+          type:       "normal",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        },
+        {
+          file:       "base/models/modern_nightstand/roughness.jpg",
+          type:       "roughness",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        }
+      ],
+      alpha_test: false,
+      roughness:  0.6,
+      metalness:  0.2
+    },
+    {
+      name:       "Drawer",
+      albedo: [
+        1.0, 1.0, 1.0
+      ],
+      alpha_test: false,
+      roughness:  1.0,
+      metalness:  0.0
+    }
+  ]
+}

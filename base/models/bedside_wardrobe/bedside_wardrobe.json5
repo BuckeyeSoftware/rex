@@ -1,0 +1,60 @@
+{
+  name:      "bedside_wardrobe",
+  file:      "base/models/bedside_wardrobe/bedside_wardrobe.iqm",
+  transform: {
+      scale: [
+        1.4, 1.4, 1.4
+      ],
+      translate: [
+        0.0, -0.4, 0.0
+      ]
+  },
+  materials: [
+    {
+      name:       "wood",
+      textures: [
+        {
+          file:       "base/models/bedside_wardrobe/albedo.jpg",
+          type:       "albedo",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        },
+        {
+          file:       "base/models/bedside_wardrobe/normal.jpg",
+          type:       "normal",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        },
+        {
+          file:       "base/models/bedside_wardrobe/roughness.jpg",
+          type:       "roughness",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        }
+      ],
+      alpha_test: false,
+      metalness:  0.0
+    },
+    {
+      name:       "white",
+      albedo: [
+        1.0, 1.0, 1.0
+      ],
+      alpha_test: false,
+      roughness:  1.0,
+      metalness:  0.0
+    }
+  ]
+}

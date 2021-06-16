@@ -103,6 +103,9 @@
     <Filter Include="src\rx\core\random">
       <UniqueIdentifier>{bdfd7dcd-4339-4165-8916-53645ddf1062}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\demos">
+      <UniqueIdentifier>{39ff5e87-5a8b-43aa-a5a8-21a2b1277ce7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\game\main.cpp">
@@ -566,6 +569,12 @@
     </ClCompile>
     <ClCompile Include="src\rx\core\random\mt19937.cpp">
       <Filter>src\rx\core\random</Filter>
+    </ClCompile>
+    <ClCompile Include="src\demos\model_viewer.cpp">
+      <Filter>src\demos</Filter>
+    </ClCompile>
+    <ClCompile Include="src\demos\model_banner.cpp">
+      <Filter>src\demos</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1360,6 +1369,15 @@
     </ClInclude>
     <ClInclude Include="src\rx\core\random\mt19937.h">
       <Filter>src\rx\core\random</Filter>
+    </ClInclude>
+    <ClInclude Include="src\demos\model_viewer.h">
+      <Filter>src\demos</Filter>
+    </ClInclude>
+    <ClInclude Include="src\demos\model_banner.h">
+      <Filter>src\demos</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\application.h">
+      <Filter>src\rx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
