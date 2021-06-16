@@ -1,0 +1,106 @@
+{
+  name:      "food_pineapple",
+  file:      "base/models/food_pineapple/food_pineapple.iqm",
+  transform: {
+      scale: [
+        1.6, 1.6, 1.6
+      ],
+      translate: [
+        0.0, -0.1, 0.0
+      ]
+  },
+  materials: [
+    {
+      name:       "Pineapple_1_leafs",
+      textures: [
+        {
+          file:       "base/models/food_pineapple/leafs_albedo.png",
+          type:       "albedo",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        },
+        {
+          file:       "base/models/food_pineapple/leafs_metalness.png",
+          type:       "metalness",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        },
+        {
+          file:       "base/models/food_pineapple/leafs_normal.png",
+          type:       "normal",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        },
+        {
+          file:       "base/models/food_pineapple/leafs_occlusion.png",
+          type:       "occlusion",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        }
+      ],
+      alpha_test: true
+    },
+    {
+      name:       "Pineapple_1",
+        textures: [
+        {
+          file:       "base/models/food_pineapple/albedo.png",
+          type:       "albedo",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        },
+        {
+          file:       "base/models/food_pineapple/metalness.png",
+          type:       "metalness",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        },
+        {
+          file:       "base/models/food_pineapple/normal.png",
+          type:       "normal",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        },
+        {
+          file:       "base/models/food_pineapple/occlusion.png",
+          type:       "occlusion",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        }
+      ],
+      alpha_test: false
+    }
+  ]
+}
