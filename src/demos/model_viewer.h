@@ -10,6 +10,7 @@
 #include "rx/render/copy_pass.h"
 
 #include "rx/math/camera.h"
+#include "rx/math/vec2.h"
 
 namespace Rx {
 

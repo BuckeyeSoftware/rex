@@ -1,4 +1,4 @@
-#include "demos/model_viewer.h"
+#include "demos/model_banner.h"
 
 #include "rx/engine.h"
 
@@ -11,17 +11,24 @@
 
 namespace Rx {
 
-RX_CONSOLE_SVAR(mdl, "demo.mdl", "model", "base/models/helmet/helmet.json5");
-RX_CONSOLE_SVAR(sky, "demo.sky", "skybox", "base/skyboxes/yokohama/yokohama.json5");
+static constexpr const char* SKYBOX_PATH = "base/skyboxes/yokohama/yokohama.json5";
+static constexpr const char* MODEL_PATHS[] = {
+  "base/models/chest/chest.json5",
+  "base/models/fire_hydrant/fire_hydrant.json5",
+  "base/models/helmet/helmet.json5",
+  "base/models/mrfixit/mrfixit.json5"
+};
 
-ModelViewer::ModelViewer(Engine* _engine)
+static constexpr const auto SPACING_BETWEEN_MODELS = 2.0f;
+static constexpr const auto N_MODELS = sizeof MODEL_PATHS / sizeof *MODEL_PATHS;
+
+ModelBanner::ModelBanner(Engine* _engine)
   : Application{_engine}
 {
 }
 
-bool ModelViewer::on_init() {
-  // Start with camera 1 unit back on Z axis.
-  m_camera.translate = {0.0f, -0.025f, -1.45f};
+bool ModelBanner::on_init() {
+  m_camera.translate = {0.0f, 0.0f, -1.0f};
 
   auto renderer = engine()->renderer();
   auto& input = engine()->input();
@@ -72,21 +79,49 @@ bool ModelViewer::on_init() {
     }
   }
 
-  // Renderables.
-  m_model = Render::Model::create(renderer);
-  if (!m_model || !m_model->load(*mdl)) {
+  // Load the skybox.
+  m_skybox = Render::Skybox::create(renderer);
+  if (!m_skybox || !m_skybox->load(SKYBOX_PATH, {1024, 1024})) {
     return false;
   }
 
-  m_skybox = Render::Skybox::create(renderer);
-  if (!m_skybox || !m_skybox->load(*sky, {1024, 1024})) {
-    return false;
+  // Load some models and setup transforms for them.
+  Math::Vec3f translate;
+  translate.z = 0.75f;
+
+  for (Size i = 0; i < N_MODELS; i++) {
+    auto model = Render::Model::create(renderer);
+    if (!model || !model->load(MODEL_PATHS[i])) {
+      return false;
+    }
+
+    Math::Transform transform;
+    transform.translate = translate;
+
+    if (!m_models.push_back(Utility::move(*model))) {
+      return false;
+    }
+
+    if (!m_transforms.push_back(transform)) {
+      return false;
+    }
+
+    translate.x += SPACING_BETWEEN_MODELS;
   }
+
+  // Start any animations.
+  m_models.each_fwd([](Render::Model& model_) {
+    model_.animate(0, true);
+  });
+
+  // Set the camera location to the middle model by default.
+  m_selected = m_transforms.size() / 2;
+  m_camera.translate.x = m_transforms[m_selected].translate.x;
 
   return true;
 }
 
-bool ModelViewer::on_update(Float32 _delta_time) {
+bool ModelBanner::on_update(Float32 _delta_time) {
   auto& input = engine()->input();
   const auto& renderer = engine()->renderer();
 
@@ -100,6 +135,15 @@ bool ModelViewer::on_update(Float32 _delta_time) {
   if (input.root_layer().keyboard().is_released(Input::ScanCode::GRAVE)) {
     input.root_layer().capture_mouse(!input.root_layer().is_mouse_captured());
   }
+
+  // To test selection.
+  if (input.root_layer().keyboard().is_released(Input::ScanCode::A)) {
+    if (m_selected) m_selected--;
+    m_animation = Animation{m_camera.translate.x, m_transforms[m_selected].translate.x, 1.0f};
+  } else if (input.root_layer().keyboard().is_released(Input::ScanCode::D)) {
+    if (m_selected < N_MODELS - 1) m_selected++;
+    m_animation = Animation{m_camera.translate.x, m_transforms[m_selected].translate.x, 1.0f};
+  }
 #endif
 
   if (input.root_layer().mouse().is_held(1)) {
@@ -108,24 +152,26 @@ bool ModelViewer::on_update(Float32 _delta_time) {
     const auto rx = Math::Quatf({1.0f, 0.0f, 0.0f}, delta.y * _delta_time);
     const auto ry = Math::Quatf({0.0f, 1.0f, 0.0f}, delta.x * _delta_time);
 
-    m_transform.rotation *= rx * ry;
+    m_transforms[m_selected].rotation *= rx * ry;
   }
 
   // Update camera projection.
   const auto& dimensions = renderer->swapchain()->dimensions().cast<Float32>();
-  m_camera.projection = Math::perspective(45.0f, {0.01f, 128.0f},
+  m_camera.projection = Math::perspective(45.0f, {0.01f, 1024.0f},
     dimensions.w / dimensions.h);
 
-  m_model->update(_delta_time);
+  m_models.each_fwd([&](Render::Model& _model) {
+    _model.update(_delta_time);
+  });
 
-  // Rotate on the Y axis slowly.
-  m_transform.rotation *=
-    Math::Quatf({0.0f, 1.0f, 0.0f}, -0.5f * _delta_time);
+  if (m_animation) {
+    m_animation->update(_delta_time);
+  }
 
   return true;
 }
 
-bool ModelViewer::on_render() {
+bool ModelBanner::on_render() {
   auto renderer = engine()->renderer();
   auto swapchain = renderer->swapchain();
 
@@ -135,13 +181,15 @@ bool ModelViewer::on_render() {
   // Clear the geometry buffer.
   m_gbuffer->clear();
 
-  // Render the model into the geometry buffer.
-  m_model->render(
-    m_gbuffer->target(),
-    m_transform.as_mat4(),
-    m_camera.view(),
-    m_camera.projection,
-    0);
+  // Render the models into the geometry buffer.
+  for (Size i = 0; i < N_MODELS; i++) {
+    m_models[i].render(
+      m_gbuffer->target(),
+      m_transforms[i].as_mat4(),
+      m_camera.view(),
+      m_camera.projection,
+      0);
+  }
 
   // Copy the depth from the geometry buffer as it's sampled during the indirect
   // lighting pass yet the indirect lighting pass has the geometry buffer's
@@ -193,7 +241,7 @@ bool ModelViewer::on_render() {
   return true;
 }
 
-void ModelViewer::on_resize(const Math::Vec2z& _dimensions) {
+void ModelBanner::on_resize(const Math::Vec2z& _dimensions) {
   // Recreate the geometry buffer.
   {
     Render::GBuffer::Options options;
@@ -220,7 +268,6 @@ void ModelViewer::on_resize(const Math::Vec2z& _dimensions) {
 
 } // namespace Rx
 
-/*
 Rx::Ptr<Rx::Application> create(Rx::Engine* _engine) {
-  return make_ptr<Rx::ModelViewer>(Rx::Memory::SystemAllocator::instance(), _engine);
-}*/
+  return make_ptr<Rx::ModelBanner>(Rx::Memory::SystemAllocator::instance(), _engine);
+}
