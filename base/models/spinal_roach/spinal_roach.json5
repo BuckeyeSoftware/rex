@@ -1,0 +1,27 @@
+{
+  name:      "spinal_roach",
+  file:      "base/models/spinal_roach/spinal_roach.iqm",
+  transform: {
+      translate: [
+        0.0, -0.2, -0.45
+      ]
+  },
+  materials: [
+    {
+      name:       "roach",
+      textures: [
+        {
+          file:       "base/models/spinal_roach/albedo.png",
+          type:       "albedo",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        }
+      ],
+      alpha_test: false
+    }
+  ]
+}

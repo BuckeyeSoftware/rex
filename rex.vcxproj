@@ -228,6 +228,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\demos\model_banner.cpp" />
+    <ClCompile Include="src\demos\model_viewer.cpp" />
     <ClCompile Include="src\game\main.cpp" />
     <ClCompile Include="src\lib\fontstash.cpp" />
     <ClCompile Include="src\lib\json.c">
@@ -385,11 +387,14 @@
     <ClCompile Include="src\rx\texture\dxt.cpp" />
     <ClCompile Include="src\rx\texture\loader.cpp" />
     <ClCompile Include="src\rx\texture\scale.cpp" />
+    <ClInclude Include="src\demos\model_banner.h" />
+    <ClInclude Include="src\demos\model_viewer.h" />
     <ClInclude Include="src\game\terrain.h" />
     <ClInclude Include="src\lib\fontstash.h" />
     <ClInclude Include="src\lib\json.h" />
     <ClInclude Include="src\lib\stb_image.h" />
     <ClInclude Include="src\lib\stb_truetype.h" />
+    <ClInclude Include="src\rx\application.h" />
     <ClInclude Include="src\rx\console\command.h" />
     <ClInclude Include="src\rx\console\context.h" />
     <ClInclude Include="src\rx\console\parser.h" />
