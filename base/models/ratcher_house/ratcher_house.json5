@@ -38,8 +38,8 @@
         }
       ],
       alpha_test: false,
-      roughness:  0.3,
-      metalness:  0.6
+      roughness:  0.8,
+      metalness:  0.0
     }
   ]
 }
