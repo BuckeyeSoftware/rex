@@ -5,6 +5,7 @@
 #include "rx/math/quat.h"
 #include "rx/math/mat3x3.h"
 #include "rx/math/mat3x4.h"
+#include "rx/math/mat4x4.h"
 
 namespace Rx::Math {
 
@@ -68,6 +69,12 @@ Quat<T>::Quat(const Mat3x4<T>& _mat)
 }
 
 template<typename T>
+Quat<T>::Quat(const Mat4x4<T>& _mat)
+  : Quat{matrix_to_quat(_mat)}
+{
+}
+
+template<typename T>
 Quat<T>::Quat(const Vec3<T>& _axis, T _angle) {
   const T s = sin(T(0.5) * _angle);
   const T c = cos(T(0.5) * _angle);
@@ -79,6 +86,7 @@ Quat<T>::Quat(const Vec3<T>& _axis, T _angle) {
 
 template Quat<Float32>::Quat(const Mat3x3<Float32>& _mat);
 template Quat<Float32>::Quat(const Mat3x4<Float32>& _mat);
+template Quat<Float32>::Quat(const Mat4x4<Float32>& _mat);
 template Quat<Float32>::Quat(const Vec3<Float32>& _axis, Float32 _angle);
 
 Float32 length(const Quatf& _value) {

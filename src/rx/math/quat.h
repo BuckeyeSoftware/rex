@@ -11,6 +11,9 @@ template<typename T>
 struct Mat3x4;
 
 template<typename T>
+struct Mat4x4;
+
+template<typename T>
 struct Vec3;
 
 template<typename T>
@@ -20,6 +23,7 @@ struct Quat {
 
   Quat(const Mat3x3<T>& _rotation);
   Quat(const Mat3x4<T>& _rotation);
+  Quat(const Mat4x4<T>& _rotation);
 
   Quat(const Vec3<T>& _axis, T _angle);
 
