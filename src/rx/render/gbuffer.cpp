@@ -53,7 +53,7 @@ Optional<GBuffer> GBuffer::create(Frontend::Context* _frontend,
   emission->record_dimensions(_options.dimensions);
   emission->record_filter({false, false, false});
   emission->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-                                   Frontend::Texture::WrapType::CLAMP_TO_EDGE});
+                         Frontend::Texture::WrapType::CLAMP_TO_EDGE});
   _frontend->initialize_texture(RX_RENDER_TAG("gbuffer emission"), emission);
   target->attach_texture(emission, 0);
 
