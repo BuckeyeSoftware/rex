@@ -25,6 +25,8 @@ FrameTimer::FrameTimer()
   , m_frame_average{0.0f}
   , m_frames_per_second{0}
 {
+  // Reserve 4x the 60hz framerate for m_frame_times.
+  (void)m_frame_times.reserve(HISTORY_SECONDS * 60 * 4);
 }
 
 void FrameTimer::cap_fps(Float32 _max_fps) {

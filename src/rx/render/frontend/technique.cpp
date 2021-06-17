@@ -767,6 +767,9 @@ Technique::Configuration::LazyProgram::LazyProgram(Technique* _technique)
   , m_shaders{m_technique->m_frontend->allocator()}
   , m_program{nullptr}
 {
+  // TODO(dweiler): Use a fixed sized container here instead of reserving.
+  (void)m_shaders.reserve(2);
+  (void)m_uniforms.reserve(64);
 }
 
 Technique::Configuration::LazyProgram::~LazyProgram() {

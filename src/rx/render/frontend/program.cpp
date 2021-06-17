@@ -231,6 +231,9 @@ Program::Program(Context* _frontend)
   , m_dirty_uniforms{0}
   , m_padding_uniforms{0}
 {
+  // TODO(dweiler): Use a fixed sized container here instead of reserving.
+  (void)m_shaders.reserve(2);
+  (void)m_uniforms.reserve(64);
 }
 
 bool Program::add_shader(Shader&& shader_) {
