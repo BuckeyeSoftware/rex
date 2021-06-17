@@ -932,6 +932,40 @@ bool Context::process() {
     // Consume all recorded commands on the backend.
     m_backend->process(m_commands);
 
+    // Flush staging memory for initial resource specification of static resources.
+    m_commands.each_fwd([](const Byte* _commands) {
+      auto header = reinterpret_cast<const CommandHeader*>(_commands);
+      if (header->type != CommandType::RESOURCE_CONSTRUCT) {
+        return true;
+      }
+      const auto resource = reinterpret_cast<const ResourceCommand*>(header + 1);
+      switch (resource->type) {
+      case ResourceCommand::Type::TEXTURE1D:
+        if (resource->as_texture1D->type() == Texture::Type::STATIC) {
+          resource->as_texture1D->m_data.reset();
+        }
+        break;
+      case ResourceCommand::Type::TEXTURE2D:
+        if (resource->as_texture2D->type() == Texture::Type::STATIC) {
+          resource->as_texture2D->m_data.reset();
+        }
+        break;
+      case ResourceCommand::Type::TEXTURE3D:
+        if (resource->as_texture3D->type() == Texture::Type::STATIC) {
+          resource->as_texture3D->m_data.reset();
+        }
+        break;
+      case ResourceCommand::Type::TEXTURECM:
+        if (resource->as_textureCM->type() == Texture::Type::STATIC) {
+          resource->as_textureCM->m_data.reset();
+        }
+        break;
+      default:
+        break;
+      }
+      return true;
+    });
+
     // Clear edit lists
     m_edit_buffers.each_fwd([](Buffer* _buffer) { _buffer->clear_edits(); });
     m_edit_textures1D.each_fwd([](Texture1D* _texture) { _texture->clear_edits(); });
