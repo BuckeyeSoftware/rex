@@ -13,16 +13,25 @@ namespace Rx {
 
 static constexpr const char* SKYBOX_PATH = "base/skyboxes/yokohama/yokohama.json5";
 static constexpr const char* MODEL_PATHS[] = {
-  "base/models/chest/chest.json5",
-  "base/models/fire_hydrant/fire_hydrant.json5",
-  "base/models/helmet/helmet.json5",
-  "base/models/mrfixit/mrfixit.json5"
+  "base/models/bedside_wardrobe/bedside_wardrobe.json5",
+  "base/models/drak_chest/drak_chest.json5",
+  "base/models/food_pineapple/food_pineapple.json5",
+  "base/models/modern_nightstand/modern_nightstand.json5",
+  "base/models/osiris_monitor/osiris_monitor.json5",
+  "base/models/raspberry_pico/raspberry_pico.json5",
+  "base/models/ratcher_house/ratcher_house.json5",
+  "base/models/spinal_roach/spinal_roach.json5"
 };
 
 static constexpr const auto SPACING_BETWEEN_MODELS = 2.0f;
 static constexpr const auto N_MODELS = sizeof MODEL_PATHS / sizeof *MODEL_PATHS;
 
-RX_CONSOLE_IVAR(selection, "selection", "model selection", 0, Sint32(N_MODELS - 1), Sint32(N_MODELS / 2));
+RX_CONSOLE_IVAR(selection, "selection", "model selection", -INT_MAX, INT_MAX, Sint32(N_MODELS / 2));
+
+static void wrap_selection() {
+  if (*selection < 0)         selection->set(N_MODELS - 1, false);
+  if (*selection >= N_MODELS) selection->set(0,            false);
+}
 
 ModelBanner::ModelBanner(Engine* _engine)
   : Application{_engine}
@@ -32,8 +41,11 @@ ModelBanner::ModelBanner(Engine* _engine)
 bool ModelBanner::on_init() {
   m_camera.translate = {0.0f, 0.0f, -1.0f};
 
+  wrap_selection();
+
   auto on_selection_change =
     selection->on_change([this](Console::Variable<Rx::Sint32>& _var) {
+      wrap_selection();
       m_animation = Animation{m_camera.translate.x, m_transforms[_var].translate.x, 1.0f};
     });
 
