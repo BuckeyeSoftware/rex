@@ -44,7 +44,7 @@ RX_LOG("render", logger);
 
 static constexpr const char* TECHNIQUES_PATH = "base/renderer/techniques";
 static constexpr const char* MODULES_PATH = "base/renderer/modules";
-static constexpr const char* ROUTINES_PATH = "base/renderer/routines";
+// static constexpr const char* ROUTINES_PATH = "base/renderer/routines";
 
 namespace Rx::Render::Frontend {
 
