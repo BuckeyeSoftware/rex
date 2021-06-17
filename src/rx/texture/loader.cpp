@@ -125,18 +125,24 @@ bool Loader::load(Stream::UntrackedStream& _stream, PixelFormat _want_format,
   stbi_image_free(decoded_image);
 #endif
 
-  // Scale the texture down if it exceeds the max dimensions.
+  // Scale the texture down if it exceeds the max dimensions, but preserve
+  // aspect ratio when doing it.
+  //
   // TODO(dweiler): Support resizing float formats.
   if (m_dimensions > _max_dimensions && !is_float_format(_want_format)) {
+    const auto factor =
+      (_max_dimensions.cast<Float32>() / m_dimensions.cast<Float32>()).min_element();
+    const auto max_dimensions =
+      (m_dimensions.cast<Float32>() * factor).cast<Size>();
     const auto n_bytes = (m_dimensions.area() * bits_per_pixel()) / 8;
     if (!m_data.resize(n_bytes)) {
       logger->error("%s out of memory", _stream.name());
       return false;
     }
     scale(content.data(), m_dimensions.w, m_dimensions.h, m_channels,
-      m_dimensions.w * m_channels, m_data.data(), _max_dimensions.w,
-      _max_dimensions.h);
-    m_dimensions = _max_dimensions;
+      m_dimensions.w * m_channels, m_data.data(), max_dimensions.w,
+      max_dimensions.h);
+    m_dimensions = max_dimensions;
   } else {
     m_data = Utility::move(content);
   }
