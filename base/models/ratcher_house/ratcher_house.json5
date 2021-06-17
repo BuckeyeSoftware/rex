@@ -1,0 +1,45 @@
+{
+  name:      "ratcher_house",
+  file:      "base/models/ratcher_house/ratcher_house.iqm",
+  transform: {
+      scale: [
+        0.125, 0.125, 0.125
+      ],
+      translate: [
+        0.0, -0.385, 0.0
+      ],
+      rotate: [
+        0.0, -90.0, 0.0
+      ]
+  },
+  materials: [
+    {
+      name:       "houses_atlas_mat",
+      textures: [
+        {
+          file:       "base/models/ratcher_house/albedo.png",
+          type:       "albedo",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        },
+        {
+          file:       "base/models/ratcher_house/normal.png",
+          type:       "normal",
+          filter:     "trilinear",
+          wrap: [
+            "clamp_to_edge",
+            "clamp_to_edge"
+          ],
+          mipmaps:    true
+        }
+      ],
+      alpha_test: false,
+      roughness:  0.8,
+      metalness:  0.0
+    }
+  ]
+}
