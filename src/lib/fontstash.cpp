@@ -13,5 +13,19 @@
 
 #define fons__floorf(_x)                  Rx::Math::floor((_x))
 
+#if defined(RX_COMPILER_GCC)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif defined(RX_COMPILER_CLANG)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
 #define FONTSTASH_IMPLEMENTATION
 #include "lib/fontstash.h"
+
+#if defined(RX_COMPILER_GCC)
+#pragma GCC diagnostic pop
+#elif defined(RX_COMPILER_CLANG)
+#pragma clang diagnostic pop
+#endif
