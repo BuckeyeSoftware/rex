@@ -26,6 +26,7 @@ struct LinearBuffer {
   LinearBuffer& operator=(LinearBuffer&& buffer_);
 
   void clear();
+  void reset();
 
   void erase(Size _from, Size _to);
 

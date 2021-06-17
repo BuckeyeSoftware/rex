@@ -142,4 +142,11 @@ Optional<Memory::View> LinearBuffer::disown() {
   return Memory::View{m_allocator, data, size, capacity};
 }
 
+void LinearBuffer::reset() {
+  release();
+  m_data = m_insitu.data();
+  m_size = 0;
+  m_capacity = INSITU_SIZE;
+}
+
 } // namespace Rx
