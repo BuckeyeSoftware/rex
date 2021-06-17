@@ -2,12 +2,12 @@
   name:      "raspberry_pico",
   file:      "base/models/raspberry_pico/raspberry_pico.iqm",
   transform: {
-      scale: [
-        0.24, 0.24, 0.24
-      ],
-      rotate: [
-        90.0, 180.0, 180.0
-      ]
+    scale: [
+      0.24, 0.24, 0.24
+    ],
+    rotate: [
+      90.0, 180.0, 180.0
+    ]
   },
   materials: [
     {

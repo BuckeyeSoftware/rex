@@ -2,9 +2,9 @@
   name:      "spinal_roach",
   file:      "base/models/spinal_roach/spinal_roach.iqm",
   transform: {
-      translate: [
-        0.0, -0.2, -0.45
-      ]
+    translate: [
+      0.0, -0.2, -0.45
+    ]
   },
   materials: [
     {

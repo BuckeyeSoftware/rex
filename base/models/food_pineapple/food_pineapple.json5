@@ -2,12 +2,12 @@
   name:      "food_pineapple",
   file:      "base/models/food_pineapple/food_pineapple.iqm",
   transform: {
-      scale: [
-        1.6, 1.6, 1.6
-      ],
-      translate: [
-        0.0, -0.1, 0.0
-      ]
+    scale: [
+      1.6, 1.6, 1.6
+    ],
+    translate: [
+      0.0, -0.1, 0.0
+    ]
   },
   materials: [
     {

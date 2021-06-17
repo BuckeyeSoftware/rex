@@ -2,12 +2,12 @@
   name:      "osiris_monitor",
   file:      "base/models/osiris_monitor/osiris_monitor.iqm",
   transform: {
-      scale: [
-        2.2, 2.2, 2.2
-      ],
-      translate: [
-        0.0, -0.385, 0.0
-      ]
+    scale: [
+      2.2, 2.2, 2.2
+    ],
+    translate: [
+      0.0, -0.385, 0.0
+    ]
   },
   materials: [
     {

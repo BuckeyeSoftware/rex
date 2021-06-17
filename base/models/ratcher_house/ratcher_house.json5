@@ -2,15 +2,15 @@
   name:      "ratcher_house",
   file:      "base/models/ratcher_house/ratcher_house.iqm",
   transform: {
-      scale: [
-        0.125, 0.125, 0.125
-      ],
-      translate: [
-        0.0, -0.385, 0.0
-      ],
-      rotate: [
-        0.0, -90.0, 0.0
-      ]
+    scale: [
+      0.125, 0.125, 0.125
+    ],
+    translate: [
+      0.0, -0.385, 0.0
+    ],
+    rotate: [
+      0.0, -90.0, 0.0
+    ]
   },
   materials: [
     {

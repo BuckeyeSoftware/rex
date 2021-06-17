@@ -2,12 +2,12 @@
   name:      "drak_chest",
   file:      "base/models/drak_chest/drak_chest.iqm",
   transform: {
-      scale: [
-        0.25, 0.25, 0.25
-      ],
-      translate: [
-        0.0, -0.225, 0.0
-      ]
+    scale: [
+      0.25, 0.25, 0.25
+    ],
+    translate: [
+      0.0, -0.225, 0.0
+    ]
   },
   materials: [
     {

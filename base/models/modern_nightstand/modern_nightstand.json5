@@ -2,12 +2,12 @@
   name:      "modern_nightstand",
   file:      "base/models/modern_nightstand/modern_nightstand.iqm",
   transform: {
-      scale: [
-        1.4, 1.4, 1.4
-      ],
-      translate: [
-        0.0, -0.4, 0.0
-      ]
+    scale: [
+      1.4, 1.4, 1.4
+    ],
+    translate: [
+      0.0, -0.4, 0.0
+    ]
   },
   materials: [
     {
