@@ -1,36 +1,15 @@
 #ifndef RX_TEXTURE_LOADER_H
 #define RX_TEXTURE_LOADER_H
-#include "rx/core/linear_buffer.h"
-#include "rx/core/string.h"
+#include "rx/texture/format.h"
 
-#include "rx/core/hints/unreachable.h"
+#include "rx/core/linear_buffer.h"
 
 #include "rx/math/vec2.h"
 
+namespace Rx { struct String; }
 namespace Rx::Stream { struct UntrackedStream; }
 
 namespace Rx::Texture {
-
-// The sorting order of PixelFormat enum is important for good conversion code.
-//
-// Maintain the following key:
-//  data format   => smallest to largest
-//  data scale    => linear to non-linear
-//  channel order => rgba? to bgra?
-//  channel count => smallest to largest
-enum class PixelFormat : Uint8 {
-  // Linear byte formats.
-  R_U8,
-  RGB_U8,
-  RGBA_U8,
-  BGR_U8,
-  BGRA_U8,
-  // sRGB byte formats.
-  SRGB_U8,
-  SRGBA_U8,
-  // Linear float formats.
-  RGBA_F32
-};
 
 // Checks if the PixelFormat |_format| has an alpha channel.
 inline bool has_alpha_channel(PixelFormat _format) {

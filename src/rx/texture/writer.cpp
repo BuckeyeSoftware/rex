@@ -126,8 +126,6 @@ bool write(Memory::Allocator& _allocator, FileFormat _file_format,
   switch (_file_format) {
   case FileFormat::PNG:
     return stbi_write_png_to_func(cb, ctx, w, h, c, data, stride) != 0 && context.valid();
-  case FileFormat::BMP:
-    return stbi_write_bmp_to_func(cb, ctx, w, h, c, data) != 0 && context.valid();
   case FileFormat::TGA:
     return stbi_write_tga_to_func(cb, ctx, w, h, c, data) != 0 && context.valid();
   case FileFormat::HDR:

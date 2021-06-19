@@ -2,7 +2,7 @@
 #define RX_TEXTURE_CHAIN_H
 #include "rx/texture/loader.h"
 
-#include "rx/core/hints/unreachable.h"
+#include "rx/core/vector.h"
 
 namespace Rx::Texture {
 

@@ -1,16 +1,13 @@
 #ifndef RX_TEXTURE_WRITER_H
 #define RX_TEXTURE_WRITER_H
-#include "rx/texture/loader.h"
+#include "rx/texture/format.h"
+
+#include "rx/math/vec2.h"
+
+namespace Rx::Stream { struct UntrackedStream; }
+namespace Rx::Memory { struct Allocator; }
 
 namespace Rx::Texture {
-
-enum class FileFormat {
-  PNG,
-  BMP,
-  TGA,
-  HDR,
-  JPG
-};
 
 /// Writes a texture file to the output stream from a raw byte array of pixels
 /// in the specified pixel format with specified dimensions.
