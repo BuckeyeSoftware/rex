@@ -6,10 +6,25 @@
 /// \file quick_sort.h
 namespace Rx::Algorithm {
 
-/// Quick sort
-/// \param start_ RandomAccessIterator to start of sequence to sort
-/// \param end_ RandomAccessIterator to end of sequence to sort
-/// \param _compare Invocable comparator functor taking two values of template parameter type T.
+/// \brief Quick sort
+///
+/// Sorts elements of the array pointed by [ \p start_ and \p end_ ) using the
+/// \p _compare invocable to determine the order.
+///
+/// The sorting algorithm used by this function compares pairs of elements by
+/// invoking the specified \p _compare invocable with references to them as
+/// argument.
+///
+/// The function does not return any value, but modifies the content of the
+/// array pointed by [ \p start_, \p end_ ) by reordering its elements as
+/// defined by \p _compare.
+///
+/// \param start_ Pointer to first object of the array to be sorted.
+/// \param end_ Pointer to one past the last object of the array to be sorted.
+/// \param _compare Invocable that compares two elements. This invocable is
+/// called repeatedly to compare two elements. It shall follow the prototype:
+///
+///   bool compare(const T& lhs, const T& rhs);
 ///
 /// \note This function has O(n log n) complexity
 template<typename T, typename F>
