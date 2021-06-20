@@ -3,7 +3,7 @@
 
 namespace Rx::Stream {
 
-Uint64 TrackedStream::read(Byte* _data, Uint64 _size) {
+Uint64 TrackedStream::read(Byte* data_, Uint64 _size) {
   if (!(m_stream.flags() & READ)) {
     // Stream does not support reading.
     return 0;
@@ -14,7 +14,7 @@ Uint64 TrackedStream::read(Byte* _data, Uint64 _size) {
     return 0;
   }
 
-  const auto read = m_stream.on_read(_data, _size, m_offset);
+  const auto read = m_stream.on_read(data_, _size, m_offset);
   if (read != _size) {
     m_is_eos = true;
   }
