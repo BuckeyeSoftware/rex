@@ -70,7 +70,7 @@ inline Encoder::Encoder(Encoder&& encoder_)
   , m_stream{m_buffer}
 {
   // Copy seek poisition from |encoder_|.
-  m_stream.seek(encoder_.m_stream.tell(), Stream::Whence::SET);
+  (void)m_stream.seek(encoder_.m_stream.tell(), Stream::Whence::SET);
 }
 
 inline Stream::TrackedStream& Encoder::stream() {
