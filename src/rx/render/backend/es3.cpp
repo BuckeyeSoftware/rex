@@ -43,12 +43,12 @@ static void (GLAPIENTRYP pglVertexAttribDivisor)(GLuint, GLuint);
 // textures
 static void (GLAPIENTRYP pglGenTextures)(GLsizei, GLuint* );
 static void (GLAPIENTRYP pglDeleteTextures)(GLsizei, const GLuint*);
-static void (GLAPIENTRYP pglTexImage2D)(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid*);
-static void (GLAPIENTRYP pglTexImage3D)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid*);
+static void (GLAPIENTRYP pglTexStorage2D)(GLenum, GLsizei, GLenum, GLsizei, GLsizei);
+static void (GLAPIENTRYP pglTexStorage3D)(GLenum, GLsizei, GLenum, GLsizei, GLsizei, GLsizei);
 static void (GLAPIENTRYP pglTexSubImage2D)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, const GLvoid*);
 static void (GLAPIENTRYP pglTexSubImage3D)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, const GLvoid*);
-static void (GLAPIENTRYP pglCompressedTexImage2D)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const GLvoid*);
-static void (GLAPIENTRYP pglCompressedTexImage3D)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, const GLvoid*);
+static void (GLAPIENTRYP pglCompressedTexSubImage2D)(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid*);
+static void (GLAPIENTRYP pglCompressedTexSubImage3D)(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, const GLvoid*);
 static void (GLAPIENTRYP pglTexParameteri)(GLenum, GLenum, GLint);
 static void (GLAPIENTRYP pglTexParameteriv)(GLenum, GLenum, const GLint*);
 static void (GLAPIENTRYP pglTexParameterf)(GLenum, GLenum, GLfloat);
@@ -956,12 +956,12 @@ bool ES3::init() {
   // textures
   fetch("glGenTextures", pglGenTextures);
   fetch("glDeleteTextures", pglDeleteTextures);
-  fetch("glTexImage2D", pglTexImage2D);
-  fetch("glTexImage3D", pglTexImage3D);
+  fetch("glTexStorage2D", pglTexStorage2D);
+  fetch("glTexStorage3D", pglTexStorage3D);
   fetch("glTexSubImage2D", pglTexSubImage2D);
   fetch("glTexSubImage3D", pglTexSubImage3D);
-  fetch("glCompressedTexImage2D", pglCompressedTexImage2D);
-  fetch("glCompressedTexImage3D", pglCompressedTexImage3D);
+  fetch("glCompressedTexSubImage2D", pglCompressedTexSubImage2D);
+  fetch("glCompressedTexSubImage3D", pglCompressedTexSubImage3D);
   fetch("glTexParameteri", pglTexParameteri);
   fetch("glTexParameteriv", pglTexParameteriv);
   fetch("glTexParameterf", pglTexParameterf);
@@ -1310,6 +1310,7 @@ void ES3::process(Byte* _command) {
           const auto render_texture{resource->as_texture1D};
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap)};
+          const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
@@ -1318,39 +1319,50 @@ void ES3::process(Byte* _command) {
 
           state->use_texture(render_texture);
 
-          GL(pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, filter.min));
-          GL(pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, filter.mag));
-          GL(pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, wrap_s));
-          GL(pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_BASE_LEVEL, 0));
-          GL(pglTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAX_LEVEL, levels - 1));
+          // 1D textures are emulated on 2D.
+          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter.min));
+          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter.mag));
+          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s));
+          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0));
+          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levels - 1));
           if (requires_border_color(wrap_s)) {
             const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            GL(pglTexParameteriv(GL_TEXTURE_1D, GL_TEXTURE_BORDER_COLOR, color.data()));
+            GL(pglTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color.data()));
           }
 
-          for (GLint i{0}; i < levels; i++) {
-            const auto level_info{render_texture->info_for_level(i)};
-            if (render_texture->is_compressed_format()) {
-              GL(pglCompressedTexImage2D(
-                GL_TEXTURE_1D,
-                i,
-                convert_texture_data_format(format),
-                static_cast<GLsizei>(level_info.dimensions),
-                1,
-                0,
-                level_info.size,
-                data.is_empty() ? nullptr : data.data() + level_info.offset));
-            } else {
-              GL(pglTexImage2D(
-                GL_TEXTURE_1D,
-                i,
-                convert_texture_data_format(format),
-                static_cast<GLsizei>(level_info.dimensions),
-                1,
-                0,
-                convert_texture_format(format),
-                convert_texture_data_type(format),
-                data.is_empty() ? nullptr : data.data() + level_info.offset));
+          GL(pglTexStorage2D(
+            GL_TEXTURE_2D,
+            levels,
+            convert_texture_data_format(format),
+            static_cast<GLsizei>(dimensions),
+            1));
+
+          if (data.size()) {
+            for (GLint i{0}; i < levels; i++) {
+              const auto level_info{render_texture->info_for_level(i)};
+              if (render_texture->is_compressed_format()) {
+                GL(pglCompressedTexSubImage2D(
+                  GL_TEXTURE_2D,
+                  i,
+                  0,
+                  0,
+                  static_cast<GLsizei>(level_info.dimensions),
+                  1,
+                  convert_texture_data_format(format),
+                  level_info.size,
+                  data.data() + level_info.offset));
+              } else {
+                GL(pglTexSubImage2D(
+                  GL_TEXTURE_2D,
+                  i,
+                  0,
+                  0,
+                  static_cast<GLsizei>(level_info.dimensions),
+                  1,
+                  convert_texture_format(format),
+                  convert_texture_data_type(format),
+                  data.data() + level_info.offset));
+              }
             }
           }
         }
@@ -1365,6 +1377,7 @@ void ES3::process(Byte* _command) {
           const auto wrap{render_texture->wrap()};
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
+          const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
@@ -1384,29 +1397,39 @@ void ES3::process(Byte* _command) {
             GL(pglTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color.data()));
           }
 
-          for (GLint i{0}; i < levels; i++) {
-            const auto level_info{render_texture->info_for_level(i)};
-            if (render_texture->is_compressed_format()) {
-              GL(pglCompressedTexImage2D(
-                GL_TEXTURE_2D,
-                i,
-                convert_texture_data_format(format),
-                static_cast<GLsizei>(level_info.dimensions.w),
-                static_cast<GLsizei>(level_info.dimensions.h),
-                0,
-                level_info.size,
-                data.is_empty() ? nullptr : data.data() + level_info.offset));
-            } else {
-              GL(pglTexImage2D(
-                GL_TEXTURE_2D,
-                i,
-                convert_texture_data_format(format),
-                static_cast<GLsizei>(level_info.dimensions.w),
-                static_cast<GLsizei>(level_info.dimensions.h),
-                0,
-                convert_texture_format(format),
-                convert_texture_data_type(format),
-                data.is_empty() ? nullptr : data.data() + level_info.offset));
+          GL(pglTexStorage2D(
+            GL_TEXTURE_2D,
+            levels,
+            convert_texture_data_format(format),
+            static_cast<GLsizei>(dimensions.w),
+            static_cast<GLsizei>(dimensions.h)));
+
+          if (data.size()) {
+            for (GLint i{0}; i < levels; i++) {
+              const auto level_info{render_texture->info_for_level(i)};
+              if (render_texture->is_compressed_format()) {
+                GL(pglCompressedTexSubImage2D(
+                  GL_TEXTURE_2D,
+                  i,
+                  0,
+                  0,
+                  static_cast<GLsizei>(level_info.dimensions.w),
+                  static_cast<GLsizei>(level_info.dimensions.h),
+                  convert_texture_data_format(format),
+                  level_info.size,
+                  data.data() + level_info.offset));
+              } else {
+                GL(pglTexSubImage2D(
+                  GL_TEXTURE_2D,
+                  i,
+                  0,
+                  0,
+                  static_cast<GLsizei>(level_info.dimensions.w),
+                  static_cast<GLsizei>(level_info.dimensions.h),
+                  convert_texture_format(format),
+                  convert_texture_data_type(format),
+                  data.data() + level_info.offset));
+              }
             }
           }
         }
@@ -1418,6 +1441,7 @@ void ES3::process(Byte* _command) {
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
           const auto wrap_r{convert_texture_wrap(wrap.p)};
+          const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
@@ -1438,31 +1462,44 @@ void ES3::process(Byte* _command) {
             GL(pglTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, color.data()));
           }
 
-          for (GLint i{0}; i < levels; i++) {
-            const auto level_info{render_texture->info_for_level(i)};
-            if (render_texture->is_compressed_format()) {
-              GL(pglCompressedTexImage3D(
-                GL_TEXTURE_3D,
-                i,
-                convert_texture_data_format(format),
-                static_cast<GLsizei>(level_info.dimensions.w),
-                static_cast<GLsizei>(level_info.dimensions.h),
-                static_cast<GLsizei>(level_info.dimensions.d),
-                0,
-                level_info.size,
-                data.is_empty() ? nullptr : data.data() + level_info.offset));
-            } else {
-              GL(pglTexImage3D(
-                GL_TEXTURE_3D,
-                i,
-                convert_texture_data_format(format),
-                static_cast<GLsizei>(level_info.dimensions.w),
-                static_cast<GLsizei>(level_info.dimensions.h),
-                static_cast<GLsizei>(level_info.dimensions.d),
-                0,
-                convert_texture_format(format),
-                convert_texture_data_type(format),
-                data.is_empty() ? nullptr : data.data() + level_info.offset));
+          GL(pglTexStorage3D(
+            GL_TEXTURE_3D,
+            levels,
+            convert_texture_data_format(format),
+            static_cast<GLsizei>(dimensions.w),
+            static_cast<GLsizei>(dimensions.h),
+            static_cast<GLsizei>(dimensions.d)));
+
+          if (data.size()) {
+            for (GLint i{0}; i < levels; i++) {
+              const auto level_info{render_texture->info_for_level(i)};
+              if (render_texture->is_compressed_format()) {
+                GL(pglCompressedTexSubImage3D(
+                  GL_TEXTURE_3D,
+                  i,
+                  0,
+                  0,
+                  0,
+                  static_cast<GLsizei>(level_info.dimensions.w),
+                  static_cast<GLsizei>(level_info.dimensions.h),
+                  static_cast<GLsizei>(level_info.dimensions.d),
+                  convert_texture_data_format(format),
+                  level_info.size,
+                  data.data() + level_info.offset));
+              } else {
+                GL(pglTexSubImage3D(
+                  GL_TEXTURE_3D,
+                  i,
+                  0,
+                  0,
+                  0,
+                  static_cast<GLsizei>(level_info.dimensions.w),
+                  static_cast<GLsizei>(level_info.dimensions.h),
+                  static_cast<GLsizei>(level_info.dimensions.d),
+                  convert_texture_format(format),
+                  convert_texture_data_type(format),
+                  data.data() + level_info.offset));
+              }
             }
           }
         }
@@ -1474,6 +1511,7 @@ void ES3::process(Byte* _command) {
           const auto wrap_s{convert_texture_wrap(wrap.s)};
           const auto wrap_t{convert_texture_wrap(wrap.t)};
           const auto wrap_p{convert_texture_wrap(wrap.p)};
+          const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
           const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
@@ -1494,30 +1532,40 @@ void ES3::process(Byte* _command) {
             GL(pglTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BORDER_COLOR, color.data()));
           }
 
-          for (GLint i{0}; i < levels; i++) {
-            const auto level_info{render_texture->info_for_level(i)};
-            for (GLint j{0}; j < 6; j++) {
-              if (render_texture->is_compressed_format()) {
-                GL(pglCompressedTexImage2D(
-                  GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
-                  i,
-                  convert_texture_data_format(format),
-                  static_cast<GLsizei>(level_info.dimensions.w),
-                  static_cast<GLsizei>(level_info.dimensions.h),
-                  0,
-                  level_info.size / 6,
-                  data.is_empty() ? nullptr : data.data() + level_info.offset + level_info.size / 6 * j));
-              } else {
-                GL(pglTexImage2D(
-                  GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
-                  i,
-                  convert_texture_data_format(format),
-                  static_cast<GLsizei>(level_info.dimensions.w),
-                  static_cast<GLsizei>(level_info.dimensions.h),
-                  0,
-                  convert_texture_format(format),
-                  convert_texture_data_type(format),
-                  data.is_empty() ? nullptr : data.data() + level_info.offset + level_info.size / 6 * j));
+          GL(pglTexStorage2D(
+            GL_TEXTURE_CUBE_MAP,
+            levels,
+            convert_texture_data_format(format),
+            static_cast<GLsizei>(dimensions.w),
+            static_cast<GLsizei>(dimensions.h)));
+
+          if (data.size()) {
+            for (GLint i{0}; i < levels; i++) {
+              const auto level_info{render_texture->info_for_level(i)};
+              for (GLint j{0}; j < 6; j++) {
+                if (render_texture->is_compressed_format()) {
+                  GL(pglCompressedTexSubImage2D(
+                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
+                    i,
+                    0,
+                    0,
+                    static_cast<GLsizei>(level_info.dimensions.w),
+                    static_cast<GLsizei>(level_info.dimensions.h),
+                    convert_texture_data_format(format),
+                    level_info.size / 6,
+                    data.data() + level_info.offset + level_info.size / 6 * j));
+                } else {
+                  GL(pglTexSubImage2D(
+                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
+                    i,
+                    0,
+                    0,
+                    static_cast<GLsizei>(level_info.dimensions.w),
+                    static_cast<GLsizei>(level_info.dimensions.h),
+                    convert_texture_format(format),
+                    convert_texture_data_type(format),
+                    data.data() + level_info.offset + level_info.size / 6 * j));
+                }
               }
             }
           }
