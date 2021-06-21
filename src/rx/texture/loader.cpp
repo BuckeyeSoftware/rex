@@ -175,25 +175,7 @@ bool Loader::load(const String& _file_name, PixelFormat _want_format,
 }
 
 Size Loader::bits_per_pixel() const {
-  switch (m_format) {
-  case PixelFormat::R_U8:
-    return 8;
-  case PixelFormat::BGR_U8:
-    [[fallthrough]];
-  case PixelFormat::RGB_U8:
-    [[fallthrough]];
-  case PixelFormat::SRGB_U8:
-    return 8 * 3;
-  case PixelFormat::BGRA_U8:
-    [[fallthrough]];
-  case PixelFormat::RGBA_U8:
-    [[fallthrough]];
-  case PixelFormat::SRGBA_U8:
-    return 8 * 4;
-  case PixelFormat::RGBA_F32:
-    return 32 * 4;
-  }
-  RX_HINT_UNREACHABLE();
+  return Texture::bits_per_pixel(m_format);
 }
 
 } // namespace Rx::Texture
