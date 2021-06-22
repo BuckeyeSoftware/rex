@@ -8,6 +8,7 @@
 #include "rx/render/gbuffer.h"
 #include "rx/render/image_based_lighting.h"
 #include "rx/render/indirect_lighting_pass.h"
+#include "rx/render/immediate2D.h"
 #include "rx/render/copy_pass.h"
 
 #include "rx/math/camera.h"
@@ -71,7 +72,9 @@ private:
   Optional<Render::IndirectLightingPass> m_indirect_lighting_pass;
   Optional<Render::CopyPass> m_copy_pass;
   Optional<Render::ImageBasedLighting> m_image_based_lighting;
+  Optional<Render::Immediate2D> m_immediate_2d;
   Vector<Render::Model> m_models;
+  Vector<Render::Model*> m_draw_models;
   Optional<Render::Skybox> m_skybox;
   Vector<Math::Transform> m_transforms;
   Math::Camera m_camera;

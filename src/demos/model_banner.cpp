@@ -9,28 +9,30 @@
 
 #include "rx/math/range.h"
 
+#include <stdio.h>
+
 namespace Rx {
 
 static constexpr const char* SKYBOX_PATH = "base/skyboxes/yokohama/yokohama.json5";
 static constexpr const char* MODEL_PATHS[] = {
-  "base/models/bedside_wardrobe/bedside_wardrobe.json5",
-  "base/models/drak_chest/drak_chest.json5",
   "base/models/food_pineapple/food_pineapple.json5",
+  "base/models/drak_chest/drak_chest.json5",
   "base/models/modern_nightstand/modern_nightstand.json5",
-  "base/models/osiris_monitor/osiris_monitor.json5",
   "base/models/raspberry_pico/raspberry_pico.json5",
-  "base/models/ratcher_house/ratcher_house.json5",
-  "base/models/spinal_roach/spinal_roach.json5"
+  "base/models/ratcher_house/ratcher_house.json5"
 };
 
 static constexpr const auto SPACING_BETWEEN_MODELS = 2.0f;
 static constexpr const auto N_MODELS = sizeof MODEL_PATHS / sizeof *MODEL_PATHS;
+static constexpr const auto N_REPEAT = 1024;
+static constexpr const auto N_MAX = N_REPEAT * 2 * N_MODELS + N_MODELS;
 
-RX_CONSOLE_IVAR(selection, "selection", "model selection", -INT_MAX, INT_MAX, Sint32(N_MODELS / 2));
+RX_CONSOLE_IVAR(selection, "selection", "model selection", -INT_MAX, INT_MAX, 0);
 
 static void wrap_selection() {
-  if (*selection < 0)         selection->set(N_MODELS - 1, false);
-  if (*selection >= N_MODELS) selection->set(0,            false);
+  if (*selection < 0 || *selection >= N_MAX) {
+    selection->set(N_REPEAT * N_MODELS, false);
+  }
 }
 
 ModelBanner::ModelBanner(Engine* _engine)
@@ -110,28 +112,21 @@ bool ModelBanner::on_init() {
     return false;
   }
 
-  // Load some models and setup transforms for them.
-  Math::Vec3f translate;
-  translate.z = 0.75f;
-
+  // Load some models.
   for (Size i = 0; i < N_MODELS; i++) {
     auto model = Render::Model::create(renderer);
     if (!model || !model->load(MODEL_PATHS[i])) {
       return false;
     }
 
-    Math::Transform transform;
-    transform.translate = translate;
-
     if (!m_models.push_back(Utility::move(*model))) {
       return false;
     }
+  }
 
-    if (!m_transforms.push_back(transform)) {
-      return false;
-    }
-
-    translate.x += SPACING_BETWEEN_MODELS;
+  m_immediate_2d = Render::Immediate2D::create(renderer);
+  if (!m_immediate_2d) {
+    return false;
   }
 
   // Start any animations.
@@ -139,7 +134,46 @@ bool ModelBanner::on_init() {
     model_.animate(0, true);
   });
 
-  // Set the camera location to the middle model by default.
+  Math::Vec3f translate;
+  translate.z = 0.75f;
+
+  auto add_draw_models = [&] {
+    for (Size i = 0; i < N_MODELS; i++) {
+      Math::Transform transform;
+      transform.translate = translate;
+      if (!m_draw_models.push_back(&m_models[i])) {
+        return false;
+      }
+      if (!m_transforms.push_back(transform)) {
+        return false;
+      }
+      translate.x += SPACING_BETWEEN_MODELS;
+    }
+    return true;
+  };
+
+  // Put N_REPEAT instances of our N_MODELS down.
+  for (Size i = 0; i < N_REPEAT; i++) {
+    if (!add_draw_models()) {
+      return false;
+    }
+  }
+
+  // Make the middle our starting selection.
+  selection->set(m_draw_models.size(), false);
+
+  if (!add_draw_models()) {
+    return false;
+  }
+
+  for (Size i = 0; i < N_REPEAT; i++) {
+    if (!add_draw_models()) {
+      return false;
+    }
+  }
+
+  // Set the camera location to the first by default, note this is at index 1
+  // since index 0 contains the last model.
   m_camera.translate.x = m_transforms[*selection].translate.x;
 
   return true;
@@ -174,7 +208,7 @@ bool ModelBanner::on_update(Float32 _delta_time) {
     const auto rx = Math::Quatf({1.0f, 0.0f, 0.0f}, delta.y * _delta_time);
     const auto ry = Math::Quatf({0.0f, 1.0f, 0.0f}, delta.x * _delta_time);
 
-    m_transforms[*selection].rotation *= rx * ry;
+    m_transforms[(*selection % N_MODELS)].rotation *= rx * ry;
   }
 
   // Update camera projection.
@@ -204,10 +238,16 @@ bool ModelBanner::on_render() {
   m_gbuffer->clear();
 
   // Render the models into the geometry buffer.
-  for (Size i = 0; i < N_MODELS; i++) {
-    m_models[i].render(
+  const auto n_models = m_draw_models.size();
+
+  for (Size i = *selection - N_MODELS; i < *selection + N_MODELS; i++) {
+    // Share rotation of instances
+    Math::Transform transform;
+    transform.translate = m_transforms[i].translate;
+    transform.rotation = m_transforms[(i % N_MODELS)].rotation;
+    m_draw_models[i]->render(
       m_gbuffer->target(),
-      m_transforms[i].as_mat4(),
+      transform.as_mat4(),
       m_camera.view(),
       m_camera.projection,
       0);
@@ -259,6 +299,36 @@ bool ModelBanner::on_render() {
     0,
     swapchain,
     0);
+
+  const Math::Vec4f gradient_l[4] = {
+    {0.0f, 0.0f, 0.0f, 1.0f},
+    {0.0f, 0.0f, 0.0f, 0.0f},
+    {0.0f, 0.0f, 0.0f, 0.0f},
+    {0.0f, 0.0f, 0.0f, 1.0f},
+  };
+
+  const Math::Vec4f gradient_r[4] = {
+    {0.0f, 0.0f, 0.0f, 0.0f},
+    {0.0f, 0.0f, 0.0f, 1.0f},
+    {0.0f, 0.0f, 0.0f, 1.0f},
+    {0.0f, 0.0f, 0.0f, 0.0f},
+  };
+
+  const auto& dimensions = swapchain->dimensions().cast<Float32>();
+  m_immediate_2d->frame_queue().record_rectangle_gradient(
+    {0, 0},
+    dimensions * Math::Vec2f{0.25f, 1.0f},
+    0.0f,
+    gradient_l);
+
+  m_immediate_2d->frame_queue().record_rectangle_gradient(
+    {dimensions.w - dimensions.w * 0.25f, 0},
+    dimensions * Math::Vec2f{0.25f, 1.0f},
+    0.0f,
+    gradient_r);
+
+
+  m_immediate_2d->render(swapchain);
 
   return true;
 }
