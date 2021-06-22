@@ -83,7 +83,7 @@ struct Immediate2D {
 
       Type type;
       Uint32 flags;
-      Math::Vec4f color;
+      Math::Vec4f color[4];
 
       union {
         struct {} as_nat;
@@ -98,6 +98,8 @@ struct Immediate2D {
     bool record_scissor(const Math::Vec2f& _position, const Math::Vec2f& _size);
     bool record_rectangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
                           Float32 _roundness, const Math::Vec4f& _color);
+    bool record_rectangle_gradient(const Math::Vec2f& _position,
+      const Math::Vec2f& _size, Float32 _roundness, const Math::Vec4f (&_colors)[4]);
     bool record_line(const Math::Vec2f& _point_a, const Math::Vec2f& _point_b,
                      Float32 _roundness, Float32 _thickness, const Math::Vec4f& _color);
     bool record_triangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
@@ -245,17 +247,18 @@ private:
 
   template<Size E>
   void generate_polygon(const Math::Vec2f (&coordinates)[E],
-    Float32 _thickness, const Math::Vec4f& _color);
+    Float32 _thickness, const Math::Vec4f (&_colors)[4]);
   void generate_rectangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
-                          Float32 _roundness, const Math::Vec4f& _color);
+                          Float32 _roundness, const Math::Vec4f (&_colors)[4]);
   void generate_line(const Math::Vec2f& _point_a,
                      const Math::Vec2f& _point_b, Float32 _thickness, Float32 _roundness,
-                     const Math::Vec4f& _color);
+                     const Math::Vec4f (&_colors)[4]);
   void generate_text(Sint32 _size, const char* _font, Size _font_length,
                      const char* _contents, Size _contents_length, Float32 _scale,
-                     const Math::Vec2f& _position, TextAlign _align, const Math::Vec4f& _color);
+                     const Math::Vec2f& _position, TextAlign _align,
+                     const Math::Vec4f (&_colors)[4]);
   void generate_triangle(const Math::Vec2f& _positions,
-                         const Math::Vec2f& _size, const Math::Vec4f& _color);
+                         const Math::Vec2f& _size, const Math::Vec4f (&_colors)[4]);
 
   template<Size E>
   void size_polygon(Size& n_vertices_, Size& n_elements_);

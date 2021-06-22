@@ -57,7 +57,6 @@ bool Immediate2D::Queue::record_scissor(const Math::Vec2f& _position,
   Command next_command;
   next_command.type = Command::Type::SCISSOR;
   next_command.flags = _position.x < 0.0f ? 0 : 1;
-  next_command.color = {};
   next_command.as_scissor.position = _position;
   next_command.as_scissor.size = _size;
   return m_commands.push_back(Utility::move(next_command));
@@ -72,7 +71,31 @@ bool Immediate2D::Queue::record_rectangle(
   Command next_command;
   next_command.type = Command::Type::RECTANGLE;
   next_command.flags = 0;
-  next_command.color = _color;
+  // Four corners of rectangle.
+  next_command.color[0] = _color;
+  next_command.color[1] = _color;
+  next_command.color[2] = _color;
+  next_command.color[3] = _color;
+  next_command.as_rectangle.position = _position;
+  next_command.as_rectangle.size = _size;
+  next_command.as_rectangle.roundness = _roundness;
+
+  return m_commands.push_back(Utility::move(next_command));
+}
+
+bool Immediate2D::Queue::record_rectangle_gradient(const Math::Vec2f& _position,
+  const Math::Vec2f& _size, Float32 _roundness, const Math::Vec4f (&_colors)[4])
+{
+  RX_PROFILE_CPU("immediate2D::queue::record_rectangle_gradient");
+
+  Command next_command;
+  next_command.type = Command::Type::RECTANGLE;
+  next_command.flags = 0;
+  // Four corners of rectangle.
+  next_command.color[0] = _colors[0];
+  next_command.color[1] = _colors[1];
+  next_command.color[2] = _colors[2];
+  next_command.color[3] = _colors[3];
   next_command.as_rectangle.position = _position;
   next_command.as_rectangle.size = _size;
   next_command.as_rectangle.roundness = _roundness;
@@ -89,7 +112,9 @@ bool Immediate2D::Queue::record_line(
   Command next_command;
   next_command.type = Command::Type::LINE;
   next_command.flags = 0;
-  next_command.color = _color;
+  // Two sides of line.
+  next_command.color[0] = _color;
+  next_command.color[1] = _color;
   next_command.as_line.points[0] = _point_a;
   next_command.as_line.points[1] = _point_b;
   next_command.as_line.roundness = _roundness;
@@ -107,7 +132,10 @@ bool Immediate2D::Queue::record_triangle(
   Command next_command;
   next_command.type = Command::Type::TRIANGLE;
   next_command.flags = _flags;
-  next_command.color = _color;
+  // Three corners of triangle.
+  next_command.color[0] = _color;
+  next_command.color[1] = _color;
+  next_command.color[2] = _color;
   next_command.as_triangle.position = _position;
   next_command.as_triangle.size = _size;
 
@@ -147,7 +175,7 @@ bool Immediate2D::Queue::record_text(
   Command next_command;
   next_command.type = Command::Type::TEXT;
   next_command.flags = static_cast<Uint32>(_align);
-  next_command.color = _color;
+  next_command.color[0] = _color;
   next_command.as_text.position = _position;
   next_command.as_text.size = _size;
   next_command.as_text.scale = _scale;
@@ -625,7 +653,8 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
 
 template<Size E>
 void Immediate2D::generate_polygon(const Math::Vec2f (&_coordinates)[E],
-                                   const Float32 _thickness, const Math::Vec4f& _color)
+                                   const Float32 _thickness,
+                                   const Math::Vec4f (&_colors)[4])
 {
   RX_PROFILE_CPU("immediate2D::generate_polygon");
 
@@ -661,10 +690,10 @@ void Immediate2D::generate_polygon(const Math::Vec2f (&_coordinates)[E],
     add_element(element + 3);
     add_element(element + 0);
 
-    add_vertex({_coordinates[i], {}, _color});
-    add_vertex({_coordinates[j], {}, _color});
-    add_vertex({coordinates[j], {}, {_color.r, _color.g, _color.b, 0.0f}});
-    add_vertex({coordinates[i], {}, {_color.r, _color.g, _color.b, 0.0f}});
+    add_vertex({_coordinates[i], {}, _colors[i % 4]});
+    add_vertex({_coordinates[j], {}, _colors[j % 4]});
+    add_vertex({coordinates[j], {}, {_colors[j % 4].r, _colors[j % 4].g, _colors[j % 4].b, 0.0f}});
+    add_vertex({coordinates[i], {}, {_colors[i % 4].r, _colors[i % 4].g, _colors[i % 4].b, 0.0f}});
   }
 
   for (Size i{2}; i < E; i++) {
@@ -674,16 +703,18 @@ void Immediate2D::generate_polygon(const Math::Vec2f (&_coordinates)[E],
     add_element(element + 1);
     add_element(element + 2);
 
-    add_vertex({_coordinates[0], {}, _color});
-    add_vertex({_coordinates[(i - 1)], {}, _color});
-    add_vertex({_coordinates[i], {}, _color});
+    add_vertex({_coordinates[0], {}, _colors[0]});
+    add_vertex({_coordinates[(i - 1)], {}, _colors[(i - 1) % 4]});
+    add_vertex({_coordinates[i], {}, _colors[i % 4]});
   }
 
-  add_batch(offset, Batch::Type::TRIANGLES, _color.a < 1.0f);
+  const auto alpha = _colors[0].a < 1.0f || _colors[1].a < 1.0f
+    || _colors[2].a < 1.0f || _colors[3].a < 1.0f;
+  add_batch(offset, Batch::Type::TRIANGLES, alpha);
 }
 
 void Immediate2D::generate_rectangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
-                                     Float32 _roundness, const Math::Vec4f& _color)
+                                     Float32 _roundness, const Math::Vec4f (&_colors)[4])
 {
   RX_PROFILE_CPU("immediate2D::generate_rectangle");
 
@@ -710,7 +741,7 @@ void Immediate2D::generate_rectangle(const Math::Vec2f& _position, const Math::V
 
     vertices[j++] = _position + Math::Vec2f{_size.w - _roundness, _roundness} + m_circle_vertices[0] * _roundness;
 
-    generate_polygon(vertices, 1.0f, _color);
+    generate_polygon(vertices, 1.0f, _colors);
   } else {
     const Math::Vec2f vertices[]{
       {_position.x,           _position.y},
@@ -719,13 +750,14 @@ void Immediate2D::generate_rectangle(const Math::Vec2f& _position, const Math::V
       {_position.x,           _position.y + _size.h}
     };
 
-    generate_polygon(vertices, 1.0f, _color);
+    generate_polygon(vertices, 1.0f, _colors);
   }
 }
 
 void Immediate2D::generate_line(const Math::Vec2f& _point_a,
-                                const Math::Vec2f& _point_b, Float32 _thickness, Float32 _roundness,
-                                const Math::Vec4f& _color)
+                                const Math::Vec2f& _point_b,
+                                Float32 _thickness, Float32 _roundness,
+                                const Math::Vec4f (&_colors)[4])
 {
   RX_PROFILE_CPU("immediate2D::generate_line");
 
@@ -746,7 +778,7 @@ void Immediate2D::generate_line(const Math::Vec2f& _point_a,
       _point_b + delta - normal
     };
 
-    generate_polygon(vertices, _thickness, _color);
+    generate_polygon(vertices, _thickness, _colors);
   } else {
     const Size offset{m_element_index};
     const auto element{static_cast<Uint32>(m_vertex_index)};
@@ -754,10 +786,12 @@ void Immediate2D::generate_line(const Math::Vec2f& _point_a,
     add_element(element + 0);
     add_element(element + 1);
 
-    add_vertex({_point_a, {}, _color});
-    add_vertex({_point_b, {}, _color});
+    add_vertex({_point_a, {}, _colors[0]});
+    add_vertex({_point_b, {}, _colors[1]});
 
-    add_batch(offset, Batch::Type::LINES, _color.a < 1.0f);
+    const auto alpha = _colors[0].a < 1.0f || _colors[1].a < 1.0f
+      || _colors[2].a < 1.0f || _colors[3].a < 1.0f;
+    add_batch(offset, Batch::Type::LINES, alpha);
   }
 }
 
@@ -839,9 +873,10 @@ Float32 Immediate2D::measure_text_length(const char* _font, const char* _text,
 }
 
 void Immediate2D::generate_text(Sint32 _size, const char* _font,
-                                Size _font_length, const char* _contents, Size _contents_length,
-                                Float32 _scale, const Math::Vec2f& _position, TextAlign _align,
-                                const Math::Vec4f& _color)
+                                Size _font_length, const char* _contents,
+                                Size _contents_length, Float32 _scale,
+                                const Math::Vec2f& _position, TextAlign _align,
+                                const Math::Vec4f (&_colors)[4])
 {
   RX_PROFILE_CPU("immediate2D::generate_text");
 
@@ -853,7 +888,7 @@ void Immediate2D::generate_text(Sint32 _size, const char* _font,
   }
 
   Math::Vec2f position = _position;
-  Math::Vec4f color = _color;
+  Math::Vec4f color = _colors[0];
 
   switch (_align) {
   case TextAlign::CENTER:
@@ -905,14 +940,15 @@ void Immediate2D::generate_text(Sint32 _size, const char* _font,
 }
 
 void Immediate2D::generate_triangle(const Math::Vec2f& _position,
-                                    const Math::Vec2f& _size, const Math::Vec4f& _color)
+                                    const Math::Vec2f& _size,
+                                    const Math::Vec4f (&_colors)[4])
 {
   const Math::Vec2f coordinates[]{
     _position,
     {_position.x + _size.w, _position.y + _size.h / 2.0f},
     {_position.x, _position.y + _size.h}
   };
-  generate_polygon(coordinates, 1.0f, _color);
+  generate_polygon(coordinates, 1.0f, _colors);
 }
 
 template<Size E>
