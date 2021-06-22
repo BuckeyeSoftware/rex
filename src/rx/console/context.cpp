@@ -417,7 +417,7 @@ VariableReference* Context::sort(VariableReference* reference) {
 
 
 #if defined(RX_PLATFORM_EMSCRIPTEN)
-static bool rx_console_execute(const char* _contents) {
+extern "C" bool rx_console_execute(const char* _contents) {
   using namespace Rx;
   using namespace Rx::Console;
 
@@ -506,6 +506,14 @@ static T rd_var(const char* _name) {
   }
 
   return {};
+}
+
+extern "C" int rx_console_rd_ivar(const char* _name) {
+  return rd_var<int>(_name);
+}
+
+extern "C" bool rx_console_wr_ivar(const char* _name, int _value) {
+  return wr_var<int>(_name, _value);
 }
 
 #endif
