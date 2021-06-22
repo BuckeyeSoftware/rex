@@ -6,11 +6,19 @@
 
 namespace Rx {
 
+/// \brief Abort handler
+using AbortHandlerFn = void (*)(const char* _message, void* _user);
+
 /// \brief Abort with a message
 /// \param _message The message.
 /// \param _truncated If the message was truncated.
 /// \warning This function does not return.
 [[noreturn]] RX_API void abort_message(const char* _message, bool _truncated);
+
+/// \brief Register an abort handler to be called on abort.
+/// \param _handler The handler.
+/// \note This function can fail if there's too many abort handlers registered.
+[[nodiscard]] RX_API bool register_abort_handler(AbortHandlerFn _handler, void* _user);
 
 /// \brief Abort with a message
 /// \param _format The format string.
