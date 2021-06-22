@@ -19,7 +19,6 @@ Optional<ParticleSystem> ParticleSystem::create(Frontend::Context* _frontend) {
   }
 
   Frontend::Buffer::Format format{_frontend->allocator()};
-  format.record_type(Frontend::Buffer::Type::DYNAMIC);
   format.record_element_type(Frontend::Buffer::ElementType::NONE);
   format.record_vertex_stride(sizeof(Vertex));
   format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32, offsetof(Vertex, size)});
@@ -32,7 +31,13 @@ Optional<ParticleSystem> ParticleSystem::create(Frontend::Context* _frontend) {
     return nullopt;
   }
 
-  buffer->record_format(format);
+  if (!buffer->record_format(format)) {
+    _frontend->destroy_buffer(RX_RENDER_TAG("ParticleSystem"), buffer);
+    return nullopt;
+  }
+
+  buffer->record_type(Frontend::Buffer::Type::DYNAMIC);
+
   _frontend->initialize_buffer(RX_RENDER_TAG("ParticleSystem"), buffer);
 
   return ParticleSystem{_frontend, buffer, technique};

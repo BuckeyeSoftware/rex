@@ -30,7 +30,7 @@ static constexpr const auto N_MAX = N_REPEAT * 2 * N_MODELS + N_MODELS;
 RX_CONSOLE_IVAR(selection, "selection", "model selection", -INT_MAX, INT_MAX, 0);
 
 static void wrap_selection() {
-  if (*selection < 0 || *selection >= N_MAX) {
+  if (*selection < 0 || *selection >= Sint32(N_MAX)) {
     selection->set(N_REPEAT * N_MODELS, false);
   }
 }
@@ -238,8 +238,6 @@ bool ModelBanner::on_render() {
   m_gbuffer->clear();
 
   // Render the models into the geometry buffer.
-  const auto n_models = m_draw_models.size();
-
   for (Size i = *selection - N_MODELS; i < *selection + N_MODELS; i++) {
     // Share rotation of instances
     Math::Transform transform;

@@ -98,7 +98,6 @@ bool Model::upload(const Rx::Model::Loader& _loader) {
     using Vertex = Rx::Model::Loader::AnimatedVertex;
 
     Frontend::Buffer::Format format{m_frontend->allocator()};
-    format.record_type(Frontend::Buffer::Type::STATIC);
     format.record_element_type(Frontend::Buffer::ElementType::U32);
     format.record_vertex_stride(sizeof(Vertex));
     format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, position)});
@@ -122,7 +121,6 @@ bool Model::upload(const Rx::Model::Loader& _loader) {
     using Vertex = Rx::Model::Loader::Vertex;
 
     Frontend::Buffer::Format format{m_frontend->allocator()};
-    format.record_type(Frontend::Buffer::Type::STATIC);
     format.record_element_type(Frontend::Buffer::ElementType::U32);
     format.record_vertex_stride(sizeof(Vertex));
     format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, position)});

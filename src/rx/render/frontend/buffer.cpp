@@ -8,7 +8,6 @@ Optional<Buffer::Format> Buffer::Format::copy(const Format& _other) {
   Buffer::Format result{_other.allocator()};
 
   result.m_flags = _other.m_flags;
-  result.m_type = _other.m_type;
   result.m_element_type = _other.m_element_type;
   result.m_vertex_stride = _other.m_vertex_stride;
   result.m_instance_stride = _other.m_instance_stride;
