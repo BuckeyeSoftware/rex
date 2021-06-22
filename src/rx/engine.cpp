@@ -18,6 +18,8 @@
 #include <emscripten/html5.h>
 #endif
 
+#include "rx/bake.h"
+
 extern Rx::Ptr<Rx::Application> create(Rx::Engine* _engine);
 
 namespace Rx {
@@ -230,6 +232,10 @@ bool Engine::init() {
   // Initialize any other globals not already initialized.
   Globals::init();
 
+  // bake({256, 256});
+
+  // return false;
+
   auto cmd_reset = Console::Command::Delegate::create(
     [](Console::Context& console_, const Vector<Console::Command::Argument>& _arguments) {
       if (auto* variable = console_.find_variable_by_name(_arguments[0].as_string)) {
@@ -371,6 +377,12 @@ bool Engine::init() {
 
   // Set the display resolution to the canvas size.
   display_resolution->set(canvas_size);
+
+  // Disable mouse scroll so the webpage can be scrolled.
+  SDL_EventState(SDL_MOUSEWHEEL, SDL_IGNORE);
+
+  // Keyboard input should be constrained to the canvas.
+  SDL_SetHint(SDL_HINT_EMSCRIPTEN_KEYBOARD_ELEMENT, "#canvas");
 #endif
 
   SDL_Window* window = nullptr;
