@@ -193,7 +193,8 @@ inline Optional<Log::FlushEvent::Handle> Log::on_flush(F&& callback_) {
 
 #define RX_LOG(_name, _identifier) \
   static ::Rx::Global<::Rx::Log> _identifier{"loggers", (_name), (_name), \
-    ::Rx::SourceLocation{__FILE__, "(global constructor)", __LINE__}}
+    ::Rx::SourceLocation{__FILE__, "(global constructor)", \
+      "(global constructor)", __LINE__}}
 
 } // namespace Rx
 
