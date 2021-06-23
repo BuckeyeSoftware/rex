@@ -1,5 +1,6 @@
 #include <time.h> // time_t, time
 #include <string.h> // strlen
+#include <stdio.h>
 
 #include "rx/core/log.h"
 #include "rx/core/ptr.h"
@@ -13,6 +14,8 @@
 #include "rx/core/concurrency/mutex.h"
 #include "rx/core/concurrency/condition_variable.h"
 #include "rx/core/concurrency/thread.h"
+
+#include "rx/core/memory/search.h"
 
 #if defined(RX_PLATFORM_EMSCRIPTEN)
 #include <emscripten.h>
@@ -286,6 +289,12 @@ void Logger::flush_unlocked() {
 }
 
 void Logger::write(Ptr<Message>& message_) {
+#if defined(RX_PLATFORM_WINDOWS)
+  static constexpr const Byte CR[] = { '\r', '\n' };
+#else
+  static constexpr const Byte CR[] = { '\n' };
+#endif
+
   auto this_queue = message_->owner;
 
   const auto name = this_queue->owner->name();
@@ -294,7 +303,7 @@ void Logger::write(Ptr<Message>& message_) {
 
   // The streams written to are all binary streams. Handle platform differences
   // for handling for newline.
-  const auto contents = String::format(
+  const auto label = String::format(
     Memory::SystemAllocator::instance(),
     "[%s] [%s/%s]%*s | ",
     string_for_time(message_->time),
@@ -303,27 +312,23 @@ void Logger::write(Ptr<Message>& message_) {
     m_padding - padding,
     "");
 
-  // Send formatted message to each stream.
-  const auto& message = message_->contents;
+  const auto label_span = label.span().cast<const Byte>();
+  const auto content_span = message_->contents.span().cast<const Byte>();
 
-#if defined(RX_PLATFORM_WINDOWS)
-  static constexpr const char CR[] = {'\r', '\n'};
-#else
-  static constexpr const char CR[] = {'\n'};
-#endif
-
+  auto beg = content_span.data();
+  auto end = content_span.data() + content_span.size();
   m_streams.each_fwd([&](Stream::BufferedStream& _stream) {
-    auto stat = _stream.on_stat();
-    auto offset = stat->size;
-    for (auto beg = &message.first(); beg < &message.last() + 1; ) {
-      offset += _stream.on_write((const Byte*)contents.data(), contents.size(), offset);
-      auto end = strchr(beg, '\n');
-      if (!end) {
-        end = &message.last() + 1;
+    auto offset = _stream.on_stat()->size;
+    for (;;) {
+      const auto term = Memory::search(beg, '\n', end - beg);
+      offset += _stream.on_write(label_span.data(), label_span.size() - 1, offset);
+      offset += _stream.on_write(beg, (term ? term : end) - beg, offset);
+      offset += _stream.on_write(CR, sizeof CR, offset);
+      if (term) {
+        beg = term + 1;
+      } else {
+        break;
       }
-      offset += _stream.on_write((const Byte*)beg, end - beg, offset);
-      offset += _stream.on_write((const Byte*)CR, sizeof CR, offset);
-      beg = end + 1;
     }
   });
 
