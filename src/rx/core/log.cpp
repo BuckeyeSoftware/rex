@@ -175,8 +175,8 @@ inline constexpr Logger& Logger::instance() {
 }
 
 bool Logger::subscribe(Stream::UntrackedStream& _stream) {
-  // The stream needs to be writable.
-  if (!(_stream.flags() & Stream::WRITE)) {
+  // The stream needs to be readable and writable.
+  if (!(_stream.flags() & Stream::WRITE) || !(_stream.flags() & Stream::READ)) {
     return false;
   }
 
