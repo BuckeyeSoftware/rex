@@ -13,30 +13,33 @@ namespace Rx {
 // Don't emit file or function strings in anything but debug builds.
 #if defined(RX_DEBUG)
 #define RX_SOURCE_LOCATION \
-  ::Rx::SourceLocation{__FILE__, RX_FUNCTION, __LINE__}
+  ::Rx::SourceLocation{__FILE__, __func__, RX_FUNCTION, __LINE__}
 #else
 #define RX_SOURCE_LOCATION \
-  ::Rx::SourceLocation{"(unknown)", "(unknown)", 0}
+  ::Rx::SourceLocation{"(unknown)", "(unknown)", "(unknown)", 0}
 #endif // defined(RX_DEBUG)
 
 struct SourceLocation {
   constexpr SourceLocation(const char* _file,
-    const char* _function, int _line);
+    const char* _function, const char* _pretty_function, int _line);
 
   const char* file() const;
   const char* function() const;
+  const char* pretty_function() const;
   int line() const;
 
 private:
   const char* m_file;
   const char* m_function;
+  const char* m_pretty_function;
   int m_line;
 };
 
 inline constexpr SourceLocation::SourceLocation(const char* _file,
-  const char* _function, int _line)
+  const char* _function, const char* _pretty_function, int _line)
   : m_file{_file}
   , m_function{_function}
+  , m_pretty_function{_pretty_function}
   , m_line{_line}
 {
 }
@@ -47,6 +50,10 @@ inline const char* SourceLocation::file() const {
 
 inline const char* SourceLocation::function() const {
   return m_function;
+}
+
+inline const char* SourceLocation::pretty_function() const {
+  return m_pretty_function;
 }
 
 inline int SourceLocation::line() const {
