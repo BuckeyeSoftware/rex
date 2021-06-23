@@ -305,7 +305,8 @@ bool BufferedStream::on_flush() {
 
   if (m_pages.each_fwd([this](Page& page_) { return flush_page(page_); })) {
     m_pages.clear();
-    return true;
+    // Remember to flush the underlying stream if supported too.
+    return (m_stream->flags() & FLUSH) ? m_stream->on_flush() : true;
   }
 
   return false;
