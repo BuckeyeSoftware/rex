@@ -29,8 +29,10 @@ static inline Uint32 flags_from_mode(const char* _mode) {
       flags |= Stream::READ;
       break;
     case 'w':
-      [[fallthrough]];
+      flags |= Stream::WRITE;
+      break;
     case '+':
+      flags |= Stream::READ;
       flags |= Stream::WRITE;
       break;
     }
