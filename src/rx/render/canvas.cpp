@@ -293,7 +293,6 @@ static int nvg_render_create(void* _user) {
   }
 
   Frontend::Buffer::Format format{context->allocator()};
-  format.record_type(Frontend::Buffer::Type::DYNAMIC);
   format.record_element_type(Frontend::Buffer::ElementType::NONE);
   format.record_instance_stride(0);
   format.record_vertex_stride(sizeof(Vertex));
@@ -307,6 +306,8 @@ static int nvg_render_create(void* _user) {
     context->destroy_buffer(RX_RENDER_TAG("canvas"), buffer);
     return 0;
   }
+
+  buffer->record_type(Frontend::Buffer::Type::DYNAMIC);
 
   context->initialize_buffer(RX_RENDER_TAG("canvas"), buffer);
 

@@ -67,8 +67,6 @@ struct Buffer
 
     static Optional<Format> copy(const Format& _other);
 
-    void record_type(Type _type);
-
     void record_element_type(ElementType _type);
 
     void record_vertex_stride(Size _stride);
@@ -80,7 +78,6 @@ struct Buffer
     bool is_indexed() const;
     bool is_instanced() const;
 
-    Type type() const;
     ElementType element_type() const;
 
     const Vector<Attribute>& vertex_attributes() const &;
@@ -100,15 +97,13 @@ struct Buffer
 
   private:
     enum {
-      TYPE            = 1 << 0,
-      ELEMENT_TYPE    = 1 << 1,
-      VERTEX_STRIDE   = 1 << 2,
-      INSTANCE_STRIDE = 1 << 3,
-      FINALIZED       = 1 << 4
+      ELEMENT_TYPE    = 1 << 0,
+      VERTEX_STRIDE   = 1 << 1,
+      INSTANCE_STRIDE = 1 << 2,
+      FINALIZED       = 1 << 3
     };
 
     Uint32 m_flags;
-    Type m_type;
     ElementType m_element_type;
     Size m_vertex_stride;
     Size m_instance_stride;
@@ -138,6 +133,8 @@ struct Buffer
 
   // Record buffer format.
   bool record_format(const Format& _format);
+  // Record buffer type.
+  void record_type(Type _type);
 
   // Map |_size| bytes of sink |_sink|.
   [[nodiscard]] Byte* map_sink(Sink _sink, Size _size);
@@ -176,8 +173,11 @@ struct Buffer
   void validate() const;
 
   const Format& format() const &;
+  Type type() const;
 
 private:
+  friend struct Context;
+
   // Write |_size| bytes from |_data| into sink |_sink|.
   [[nodiscard]] bool write_sink_data(Sink _sink, const Byte* _data, Size _size);
 
@@ -187,7 +187,8 @@ private:
   friend struct Arena;
 
   enum {
-    FORMAT = 1 << 1
+    FORMAT = 1 << 0,
+    TYPE   = 1 << 1
   };
 
   LinearBuffer m_vertices_store;
@@ -195,6 +196,7 @@ private:
   LinearBuffer m_instances_store;
 
   Format m_format;
+  Type m_type;
   Vector<Edit> m_edits;
   Uint32 m_recorded;
 };
@@ -256,12 +258,6 @@ inline Buffer::Format::Format(Memory::Allocator& _allocator)
 {
 }
 
-inline void Buffer::Format::record_type(Type _type) {
-  RX_ASSERT(!(m_flags & FINALIZED), "finalized");
-  m_type = _type;
-  m_flags |= TYPE;
-}
-
 inline void Buffer::Format::record_element_type(ElementType _type) {
   RX_ASSERT(!(m_flags & FINALIZED), "finalized");
   m_element_type = _type;
@@ -298,11 +294,6 @@ inline bool Buffer::Format::is_indexed() const {
 inline bool Buffer::Format::is_instanced() const {
   RX_ASSERT(m_flags & FINALIZED, "not finalized");
   return !m_instance_attributes.is_empty();
-}
-
-inline Buffer::Type Buffer::Format::type() const {
-  RX_ASSERT(m_flags & FINALIZED, "not finalized");
-  return m_type;
 }
 
 inline Buffer::ElementType Buffer::Format::element_type() const {
@@ -386,14 +377,17 @@ bool Buffer::write_instances(const T* _data, Size _size) {
 }
 
 inline bool Buffer::record_vertices_edit(Size _offset, Size _size) {
+  RX_ASSERT(m_type != Type::STATIC, "cannot edit static buffer");
   return record_sink_edit(Sink::VERTICES, _offset, _size);
 }
 
 inline bool Buffer::record_elements_edit(Size _offset, Size _size) {
+  RX_ASSERT(m_type != Type::STATIC, "cannot edit static buffer");
   return record_sink_edit(Sink::ELEMENTS, _offset, _size);
 }
 
 inline bool Buffer::record_instances_edit(Size _offset, Size _size) {
+  RX_ASSERT(m_type != Type::STATIC, "cannot edit static buffer");
   return record_sink_edit(Sink::INSTANCES, _offset, _size);
 }
 
@@ -405,6 +399,12 @@ inline bool Buffer::record_format(const Format& _format) {
     return true;
   }
   return false;
+}
+
+inline void Buffer::record_type(Type _type) {
+  RX_ASSERT(!(m_recorded & TYPE), "already recorded");
+  m_type = _type;
+  m_recorded |= TYPE;
 }
 
 inline const LinearBuffer& Buffer::vertices() const & {
@@ -433,6 +433,10 @@ inline void Buffer::clear_edits() {
 
 inline const Buffer::Format& Buffer::format() const & {
   return m_format;
+}
+
+inline Buffer::Type Buffer::type() const {
+  return m_type;
 }
 
 } // namespace Rx::Render::Frontend

@@ -136,7 +136,6 @@ Optional<Immediate3D> Immediate3D::create(Frontend::Context* _frontend) {
   }
 
   Frontend::Buffer::Format format{_frontend->allocator()};
-  format.record_type(Frontend::Buffer::Type::DYNAMIC);
   format.record_element_type(Frontend::Buffer::ElementType::U32);
   format.record_vertex_stride(sizeof(Vertex));
   format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, position)});
@@ -152,6 +151,7 @@ Optional<Immediate3D> Immediate3D::create(Frontend::Context* _frontend) {
     auto buffer = _frontend->create_buffer(RX_RENDER_TAG("immediate3D"));
     if (buffer) {
       buffer->record_format(format);
+      buffer->record_type(Frontend::Buffer::Type::DYNAMIC);
       _frontend->initialize_buffer(RX_RENDER_TAG("immediate3D"), buffer);
       buffers[i] = buffer;
     } else {

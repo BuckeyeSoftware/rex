@@ -1167,7 +1167,7 @@ void ES3::process(Byte* _command) {
           const auto& format = render_buffer->format();
           auto buffer = reinterpret_cast<detail_es3::buffer*>(render_buffer + 1);
 
-          const auto type = format.type() == Frontend::Buffer::Type::DYNAMIC
+          const auto type = render_buffer->type() == Frontend::Buffer::Type::DYNAMIC
             ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
           state->use_buffer(render_buffer);
@@ -1586,7 +1586,7 @@ void ES3::process(Byte* _command) {
           const auto render_buffer = resource->as_buffer;
           const auto& format = render_buffer->format();
           const auto& vertices = render_buffer->vertices();
-          const auto type = format.type() == Frontend::Buffer::Type::DYNAMIC
+          const auto type = render_buffer->type() == Frontend::Buffer::Type::DYNAMIC
               ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
           bool use_vertices_edits = false;

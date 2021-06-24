@@ -128,6 +128,7 @@ struct RX_API String {
 
   // The span includes the null terminator.
   Span<char> span();
+  Span<const char> span() const;
 
   static char *read_line(char*& data_);
 
@@ -335,6 +336,10 @@ RX_HINT_FORCE_INLINE constexpr Memory::Allocator& String::allocator() const {
 }
 
 inline Span<char> String::span() {
+  return {m_data, size() + 1};
+}
+
+inline Span<const char> String::span() const {
   return {m_data, size() + 1};
 }
 

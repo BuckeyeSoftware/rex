@@ -145,6 +145,9 @@ struct RX_API BufferedStream
   /// cannot overlap.
   virtual Uint64 on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size);
 
+  /// \brief Get the attached stream.
+  UntrackedStream* stream() const;
+
 private:
   // sizeof(Page) = 8.
   struct Page {
@@ -245,6 +248,10 @@ inline constexpr BufferedStream::BufferedStream(Memory::Allocator& _allocator)
   , m_page_size{0}
   , m_page_count{0}
 {
+}
+
+inline UntrackedStream* BufferedStream::stream() const {
+  return m_stream;
 }
 
 } // namespace Rx::Stream

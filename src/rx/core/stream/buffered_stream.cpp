@@ -134,18 +134,15 @@ BufferedStream::Page* BufferedStream::fill_page(Uint32 _page_no, Uint16 _allocat
   const auto bytes =
     m_stream->on_read(page_data(page), m_page_size, page_offset(page));
 
-  // When we couldn't read any data we're at the end of the stream, and this
-  // is an append, so allocate fresh storage.
-  if (bytes == 0 && _allocate) {
-    // Zero the page data as this is freshly allocated storage in the cache.
-    Memory::zero(page_data(page), _allocate);
+  // Bytes read from the file is less than what we want to allocate.
+  if (bytes < _allocate) {
+    // Zero the area to allocate and expand allocation.
+    Memory::zero(page_data(page) + bytes, _allocate - bytes);
     page.size = _allocate;
     page.dirty = 1;
   } else {
-    // It's not always possible to read in a whole page when at the end of the
-    // stream. Here we need to store the actual amount of bytes this page
-    // truelly represents, so that future flushing of the contents does not
-    // over-flush the page and inflate the true size.
+    // Store the actual amount of bytes this page truely represents so that
+    // future flushing of the contents do not over-flush the page.
     page.size = bytes;
   }
 
@@ -156,7 +153,7 @@ BufferedStream::Page* BufferedStream::fill_page(Uint32 _page_no, Uint16 _allocat
 // Returns the number of bytes actually read into the page and zero on error.
 Uint16 BufferedStream::read_page(Uint32 _page_no, Byte* data_, Uint16 _offset, Uint16 _size) {
   if (Page* page = lookup_page(_page_no)) {
-    const auto size = Algorithm::min(_size, page->size);
+    const auto size = Algorithm::min(_size, Uint16(page->size - _offset));
     Memory::copy(data_, page_data(*page) + _offset, size);
     return size;
   }
@@ -169,7 +166,7 @@ Uint16 BufferedStream::write_page(Uint32 _page_no, const Byte* _data, Uint16 _of
   if (Page *page = lookup_page(_page_no, _offset + _size)) {
     // The page is going to be made dirty by this write.
     page->dirty = 1;
-    const auto size = Algorithm::min(_size, page->size);
+    const auto size = Algorithm::min(_size, Uint16(page->size - _offset));
     Memory::copy(page_data(*page) + _offset, _data, size);
     return size;
   }
@@ -305,7 +302,8 @@ bool BufferedStream::on_flush() {
 
   if (m_pages.each_fwd([this](Page& page_) { return flush_page(page_); })) {
     m_pages.clear();
-    return true;
+    // Remember to flush the underlying stream if supported too.
+    return (m_stream->flags() & FLUSH) ? m_stream->on_flush() : true;
   }
 
   return false;

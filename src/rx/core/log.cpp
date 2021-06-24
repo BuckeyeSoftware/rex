@@ -1,17 +1,21 @@
 #include <time.h> // time_t, time
 #include <string.h> // strlen
+#include <stdio.h>
 
 #include "rx/core/log.h"
 #include "rx/core/ptr.h"
 #include "rx/core/intrusive_list.h"
 
 #include "rx/core/stream/untracked_stream.h"
+#include "rx/core/stream/buffered_stream.h"
 
 #include "rx/core/algorithm/max.h"
 
 #include "rx/core/concurrency/mutex.h"
 #include "rx/core/concurrency/condition_variable.h"
 #include "rx/core/concurrency/thread.h"
+
+#include "rx/core/memory/search.h"
 
 #if defined(RX_PLATFORM_EMSCRIPTEN)
 #include <emscripten.h>
@@ -60,11 +64,11 @@ private:
   Concurrency::ConditionVariable m_ready_cond;
   Concurrency::ConditionVariable m_wakeup_cond;
 
-  Vector<Stream::UntrackedStream*> m_streams RX_HINT_GUARDED_BY(m_mutex);
-  Vector<Queue> m_queues                     RX_HINT_GUARDED_BY(m_mutex);
-  Vector<Ptr<Message>> m_messages            RX_HINT_GUARDED_BY(m_mutex);
-  int m_status                               RX_HINT_GUARDED_BY(m_mutex);
-  int m_padding                              RX_HINT_GUARDED_BY(m_mutex);
+  Vector<Stream::BufferedStream> m_streams RX_HINT_GUARDED_BY(m_mutex);
+  Vector<Queue> m_queues                   RX_HINT_GUARDED_BY(m_mutex);
+  Vector<Ptr<Message>> m_messages          RX_HINT_GUARDED_BY(m_mutex);
+  int m_status                             RX_HINT_GUARDED_BY(m_mutex);
+  int m_padding                            RX_HINT_GUARDED_BY(m_mutex);
 
   // NOTE(dweiler): This should come last.
   Concurrency::Thread m_thread;
@@ -171,23 +175,40 @@ inline constexpr Logger& Logger::instance() {
 }
 
 bool Logger::subscribe(Stream::UntrackedStream& _stream) {
-  // The stream needs to be writable.
-  if (!(_stream.flags() & Stream::WRITE)) {
+  // The stream needs to be readable and writable.
+  if (!(_stream.flags() & Stream::WRITE) || !(_stream.flags() & Stream::READ)) {
     return false;
   }
+
+  auto& allocator = Memory::SystemAllocator::instance();
+
+  auto stream = Stream::BufferedStream::create(allocator);
+  if (!stream || !stream->attach(_stream)) {
+    return false;
+  }
+
+  auto compare = [&](const Stream::BufferedStream& _buffered_stream) {
+    return _buffered_stream.stream() == &_stream;
+  };
 
   Concurrency::ScopeLock lock{m_mutex};
+
   // Don't allow subscribing the same stream more than once.
-  if (const auto find = m_streams.find(&_stream)) {
+  if (const auto find = m_streams.find_if(compare)) {
     return false;
   }
 
-  return m_streams.push_back(&_stream);
+  return m_streams.push_back(Utility::move(*stream));
 }
 
 bool Logger::unsubscribe(Stream::UntrackedStream& _stream) {
   Concurrency::ScopeLock lock{m_mutex};
-  if (const auto find = m_streams.find(&_stream)) {
+
+  auto compare = [&](const Stream::BufferedStream& _buffered_stream) {
+    return _buffered_stream.stream() == &_stream;
+  };
+
+  if (const auto find = m_streams.find_if(compare)) {
     // Flush any contents when removing a stream from the logger.
     flush_unlocked();
     m_streams.erase(*find, *find + 1);
@@ -261,15 +282,19 @@ void Logger::flush_unlocked() {
   m_messages.each_fwd([this](Ptr<Message>& message_) { write(message_); });
   m_messages.clear();
 
-  // Flush all the streams if supported.
-  m_streams.each_fwd([](Stream::UntrackedStream* _stream) {
-    if (_stream->flags() & Stream::FLUSH) {
-      _stream->on_flush();
-    }
+  // Flush all the streams.
+  m_streams.each_fwd([](Stream::BufferedStream& _stream) {
+    _stream.on_flush();
   });
 }
 
 void Logger::write(Ptr<Message>& message_) {
+#if defined(RX_PLATFORM_WINDOWS)
+  static constexpr const Byte CR[] = { '\r', '\n' };
+#else
+  static constexpr const Byte CR[] = { '\n' };
+#endif
+
   auto this_queue = message_->owner;
 
   const auto name = this_queue->owner->name();
@@ -278,32 +303,32 @@ void Logger::write(Ptr<Message>& message_) {
 
   // The streams written to are all binary streams. Handle platform differences
   // for handling for newline.
-  const char* format =
-#if defined(RX_PLATFORM_WINDOWS)
-    "[%s] [%s/%s]%*s | %s\r\n";
-#else
-    "[%s] [%s/%s]%*s | %s\n";
-#endif
-
-  const auto contents = String::format(
+  const auto label = String::format(
     Memory::SystemAllocator::instance(),
-    format,
+    "[%s] [%s/%s]%*s | ",
     string_for_time(message_->time),
     name,
     level,
     m_padding - padding,
-    "",
-    message_->contents);
+    "");
 
-  // Send formatted message to each stream.
-  m_streams.each_fwd([&contents](Stream::UntrackedStream* _stream) {
-    const auto data = reinterpret_cast<const Byte*>(contents.data());
-    const auto size = contents.size();
-    // RX_ASSERT(_stream->write(data, size) != 0, "failed to write to stream");
-    // TODO(dweiler): Wrap the UntrackedStream in a TrackStream for the Log.
-    if (auto stat = _stream->on_stat()) {
-      RX_ASSERT(_stream->on_write(data, size, stat->size) == size,
-        "failed to write to stream");
+  const auto label_span = label.span().cast<const Byte>();
+  const auto content_span = message_->contents.span().cast<const Byte>();
+
+  auto beg = content_span.data();
+  auto end = content_span.data() + content_span.size();
+  m_streams.each_fwd([&](Stream::BufferedStream& _stream) {
+    auto offset = _stream.on_stat()->size;
+    for (;;) {
+      const auto term = Memory::search(beg, '\n', end - beg);
+      offset += _stream.on_write(label_span.data(), label_span.size() - 1, offset);
+      offset += _stream.on_write(beg, (term ? term : end) - beg, offset);
+      offset += _stream.on_write(CR, sizeof CR, offset);
+      if (term) {
+        beg = term + 1;
+      } else {
+        break;
+      }
     }
   });
 

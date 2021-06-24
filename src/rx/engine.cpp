@@ -13,6 +13,8 @@
 #include "rx/engine.h"
 #include "rx/display.h"
 
+#include "rx/core/abort.h"
+
 #if defined(RX_PLATFORM_EMSCRIPTEN)
 #include <emscripten.h>
 #include <emscripten/html5.h>
@@ -415,6 +417,16 @@ bool Engine::init() {
 
   if (!window) {
     logger->error("Failed to create window: %s", SDL_GetError());
+    return false;
+  }
+
+  // Register an abort handler soon as we have a window.
+  auto handler = [](const char* _message, void* _window) {
+    auto window = static_cast<SDL_Window*>(_window);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Rex", _message, window);
+  };
+
+  if (!register_abort_handler(handler, window)) {
     return false;
   }
 

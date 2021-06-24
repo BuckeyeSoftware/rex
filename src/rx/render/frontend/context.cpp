@@ -960,6 +960,13 @@ bool Context::process() {
           resource->as_textureCM->m_data.reset();
         }
         break;
+      case ResourceCommand::Type::BUFFER:
+        if (resource->as_buffer->type() == Buffer::Type::STATIC) {
+          resource->as_buffer->m_vertices_store.reset();
+          resource->as_buffer->m_elements_store.reset();
+          resource->as_buffer->m_instances_store.reset();
+        }
+        break;
       default:
         break;
       }
