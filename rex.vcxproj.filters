@@ -106,6 +106,9 @@
     <Filter Include="src\demos">
       <UniqueIdentifier>{39ff5e87-5a8b-43aa-a5a8-21a2b1277ce7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\rx\core\serialize">
+      <UniqueIdentifier>{e8aabc92-54c1-4a0e-9d4f-b59eee0d6ecb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\game\main.cpp">
@@ -575,6 +578,12 @@
     </ClCompile>
     <ClCompile Include="src\demos\model_banner.cpp">
       <Filter>src\demos</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\serialize\decoder.cpp">
+      <Filter>src\rx\core\serialize</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\serialize\encoder.cpp">
+      <Filter>src\rx\core\serialize</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1378,6 +1387,18 @@
     </ClInclude>
     <ClInclude Include="src\rx\application.h">
       <Filter>src\rx</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\serialize\decoder.h">
+      <Filter>src\rx\core\serialize</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\serialize\encoder.h">
+      <Filter>src\rx\core\serialize</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\utility\byte_swap.h">
+      <Filter>src\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\texture\format.h">
+      <Filter>src\rx\texture</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
