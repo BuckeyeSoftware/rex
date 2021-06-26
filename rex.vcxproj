@@ -301,6 +301,8 @@
     <ClCompile Include="src\rx\core\profiler.cpp" />
     <ClCompile Include="src\rx\core\random\mt19937.cpp" />
     <ClCompile Include="src\rx\core\report.cpp" />
+    <ClCompile Include="src\rx\core\serialize\decoder.cpp" />
+    <ClCompile Include="src\rx\core\serialize\encoder.cpp" />
     <ClCompile Include="src\rx\core\stream\buffered_stream.cpp" />
     <ClCompile Include="src\rx\core\stream\memory_stream.cpp" />
     <ClCompile Include="src\rx\core\stream\tracked_stream.cpp" />
@@ -503,6 +505,8 @@
     <ClInclude Include="src\rx\core\random\context.h" />
     <ClInclude Include="src\rx\core\random\mt19937.h" />
     <ClInclude Include="src\rx\core\report.h" />
+    <ClInclude Include="src\rx\core\serialize\decoder.h" />
+    <ClInclude Include="src\rx\core\serialize\encoder.h" />
     <ClInclude Include="src\rx\core\set.h" />
     <ClInclude Include="src\rx\core\source_location.h" />
     <ClInclude Include="src\rx\core\stream\buffered_stream.h" />
@@ -560,6 +564,7 @@
     <ClInclude Include="src\rx\core\types.h" />
     <ClInclude Include="src\rx\core\uninitialized.h" />
     <ClInclude Include="src\rx\core\utility\bit.h" />
+    <ClInclude Include="src\rx\core\utility\byte_swap.h" />
     <ClInclude Include="src\rx\core\utility\construct.h" />
     <ClInclude Include="src\rx\core\utility\declval.h" />
     <ClInclude Include="src\rx\core\utility\destruct.h" />
@@ -652,6 +657,7 @@
     <ClInclude Include="src\rx\texture\chain.h" />
     <ClInclude Include="src\rx\texture\convert.h" />
     <ClInclude Include="src\rx\texture\dxt.h" />
+    <ClInclude Include="src\rx\texture\format.h" />
     <ClInclude Include="src\rx\texture\loader.h" />
     <ClInclude Include="src\rx\texture\scale.h" />
   </ItemGroup>
