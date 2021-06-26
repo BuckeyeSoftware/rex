@@ -98,8 +98,12 @@ static inline String string_for_time(time_t _time) {
   struct tm tm;
 #if defined(RX_PLATFORM_WINDOWS)
   localtime_s(&tm, &_time);
-#else
+#elif defined(RX_PLATFORM_POSIX)
   localtime_r(&_time, &tm);
+#else
+  // When implementing this for other platforms DO NOT USE the standard
+  // localtime function as it is NOT thread-safe.
+  static_assert(false, "missing localtime implemenation");
 #endif
   char date[256];
   strftime(date, sizeof date, "%Y-%m-%d %H:%M:%S", &tm);
