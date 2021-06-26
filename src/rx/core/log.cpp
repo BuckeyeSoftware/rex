@@ -316,11 +316,11 @@ void Logger::write(Ptr<Message>& message_) {
   const auto content_span = message_->contents.span().cast<const Byte>();
 
   auto beg = content_span.data();
-  auto end = content_span.data() + content_span.size();
+  auto end = content_span.data() + content_span.size() - 1;
   m_streams.each_fwd([&](Stream::BufferedStream& _stream) {
     auto offset = _stream.on_stat()->size;
-    for (;;) {
-      const auto term = Memory::search(beg, '\n', end - beg);
+    while (*beg) {
+      const auto term = Memory::search(beg, end - beg, '\n');
       offset += _stream.on_write(label_span.data(), label_span.size() - 1, offset);
       offset += _stream.on_write(beg, (term ? term : end) - beg, offset);
       offset += _stream.on_write(CR, sizeof CR, offset);
