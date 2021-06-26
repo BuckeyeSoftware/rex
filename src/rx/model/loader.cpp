@@ -49,25 +49,25 @@ void Loader::destroy() {
   m_flags = 0;
 }
 
-bool Loader::load(Stream::UntrackedStream& _stream) {
+bool Loader::load(Concurrency::Scheduler& _scheduler, Stream::UntrackedStream& _stream) {
   if (auto contents = _stream.read_text(allocator())) {
     if (auto disown = contents->disown()) {
       if (auto json = JSON::parse(allocator(), *disown)) {
-        return parse(*json);
+        return parse(_scheduler, *json);
       }
     }
   }
   return false;
 }
 
-bool Loader::load(const String& _file_name) {
+bool Loader::load(Concurrency::Scheduler& _scheduler, const String& _file_name) {
   if (auto file = Filesystem::UnbufferedFile::open(allocator(), _file_name, "r")) {
-    return load(*file);
+    return load(_scheduler, *file);
   }
   return false;
 }
 
-bool Loader::parse(const JSON& _definition) {
+bool Loader::parse(Concurrency::Scheduler& _scheduler, const JSON& _definition) {
   if (!_definition) {
     const auto json_error{_definition.error()};
     if (json_error) {
@@ -133,7 +133,7 @@ bool Loader::parse(const JSON& _definition) {
   Concurrency::Mutex mutex;
   Concurrency::WaitGroup group{materials.size()};
   materials.each([&](const JSON& _material) {
-    (void)Concurrency::ThreadPool::instance().add([&, _material](int) {
+    (void)_scheduler.add([&, _material](int) {
       Material::Loader loader{allocator()};
       if (_material.is_string() && loader.load(_material.as_string_with_allocator(allocator()))) {
         Concurrency::ScopeLock lock{mutex};

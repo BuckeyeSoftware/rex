@@ -531,14 +531,14 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
   }
 }
 
-bool Model::load(Stream::UntrackedStream& _stream) {
+bool Model::load(Concurrency::Scheduler& _scheduler, Stream::UntrackedStream& _stream) {
   Rx::Model::Loader loader{m_frontend->allocator()};
-  return loader.load(_stream) && upload(loader);
+  return loader.load(_scheduler, _stream) && upload(loader);
 }
 
-bool Model::load(const String& _file_name) {
+bool Model::load(Concurrency::Scheduler& _scheduler, const String& _file_name) {
   Rx::Model::Loader loader{m_frontend->allocator()};
-  return loader.load(_file_name) && upload(loader);
+  return loader.load(_scheduler, _file_name) && upload(loader);
 }
 
 } // namespace Rx::Render

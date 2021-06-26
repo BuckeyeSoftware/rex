@@ -1,66 +1,97 @@
 #ifndef RX_CORE_CONCURRENCY_THREAD_POOL_H
 #define RX_CORE_CONCURRENCY_THREAD_POOL_H
-#include "rx/core/intrusive_list.h"
-
 #include "rx/core/concurrency/scheduler.h"
-#include "rx/core/concurrency/thread.h"
-#include "rx/core/concurrency/mutex.h"
-#include "rx/core/concurrency/condition_variable.h"
-
-#include "rx/core/time/stop_watch.h"
-
-#include "rx/core/memory/slab.h"
 
 namespace Rx::Concurrency {
 
+/// \brief Pool of threads
+///
+/// Thread pool models the Scheduler interface and provides a multi-threaded
+/// system for adding tasks and having them execute on background threads when
+/// those threads are available.
+///
+/// The queue for the pool has a fixed initial capacity (pool size), adding more
+/// tasks than this initial capacity is permitted, but doing so expands the
+/// idle memory usage of the pool. Setting a good estimate for how many tasks
+/// will be queued at max avoids invoking the allocator, reducing memory
+/// fragmentation and lock contention. The latter is the primary reason for this
+/// design, as tasks are created and destroyed on different threads.
+///
+/// The actual design of this fixed initial capacity of tasks uses the same
+/// behavior of the slab in Memory::Slab.
 struct RX_API ThreadPool
   : Scheduler
 {
   RX_MARK_NO_COPY(ThreadPool);
-  RX_MARK_NO_MOVE(ThreadPool);
 
-  ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _static_pool_size);
-  ThreadPool(Size _threads, Size _job_pool_size);
+  constexpr ThreadPool();
+  ThreadPool(ThreadPool&& thread_pool_);
   ~ThreadPool();
 
+  ///\brief Create a thread pool
+  ///
+  /// \param _allocator Allocator to use for operations.
+  /// \param _threads Number of threads in the pool.
+  /// \param _pool_size Number of work items to reserve for the pool.
+  ///
+  /// \return The thread pool on success, nullopt otherwise. This function can
+  /// fail when out of memory.
+  static Optional<ThreadPool> create(Memory::Allocator& _allocator, Size _threads,
+    Size _pool_size);
+
+  ThreadPool& operator=(ThreadPool&& thread_pool_);
+
+  /// \brief Add task to the pool.
+  /// \param task_ The task to add.
   [[nodiscard]] virtual bool add_task(Task&& task_);
 
+  /// \brief Total number of threads in the thread pool.
   virtual Size total_threads() const;
+
+  /// \brief Number of threads currently occupied with work.
   virtual Size active_threads() const;
 
+  /// \brief Allocator used to construct the pool.
   constexpr Memory::Allocator& allocator() const;
 
-  static constexpr ThreadPool& instance();
-
 private:
-  Memory::Allocator& m_allocator;
+  // Use a private implementation because the ThreadPool needs to be movable.
+  struct Impl;
 
-  Mutex m_mutex;
-  ConditionVariable m_task_cond;
-  ConditionVariable m_ready_cond;
+  constexpr ThreadPool(Memory::Allocator& _allocator, Impl* _impl);
 
-  IntrusiveList m_queue     RX_HINT_GUARDED_BY(m_mutex);
-  Vector<Thread> m_threads  RX_HINT_GUARDED_BY(m_mutex);
-  Memory::Slab m_job_memory RX_HINT_GUARDED_BY(m_mutex);
-  bool m_stop               RX_HINT_GUARDED_BY(m_mutex);
-  Time::StopWatch m_timer;
-  Concurrency::Atomic<Size> m_ready;
-  Concurrency::Atomic<Size> m_active_threads;
-
-  static Global<ThreadPool> s_instance;
+  Memory::Allocator* m_allocator;
+  Impl* m_impl;
 };
 
-inline ThreadPool::ThreadPool(Size _threads, Size _static_pool_size)
-  : ThreadPool{Memory::SystemAllocator::instance(), _threads, _static_pool_size}
+inline constexpr ThreadPool::ThreadPool()
+  : m_allocator{&Memory::NullAllocator::instance()}
+  , m_impl{nullptr}
 {
 }
 
-RX_HINT_FORCE_INLINE constexpr Memory::Allocator& ThreadPool::allocator() const {
-  return m_allocator;
+inline constexpr ThreadPool::ThreadPool(Memory::Allocator& _allocator, Impl* _impl)
+  : m_allocator{&_allocator}
+  , m_impl{_impl}
+{
 }
 
-RX_HINT_FORCE_INLINE constexpr ThreadPool& ThreadPool::instance() {
-  return *s_instance;
+inline ThreadPool::ThreadPool(ThreadPool&& thread_pool_)
+  : m_allocator{Utility::exchange(thread_pool_.m_allocator, &Memory::NullAllocator::instance())}
+  , m_impl{Utility::exchange(thread_pool_.m_impl, nullptr)}
+{
+}
+
+inline ThreadPool& ThreadPool::operator=(ThreadPool&& thread_pool_) {
+  if (this != &thread_pool_) {
+    m_allocator = Utility::exchange(thread_pool_.m_allocator, &Memory::NullAllocator::instance());
+    m_impl = Utility::exchange(thread_pool_.m_impl, nullptr);
+  }
+  return *this;
+}
+
+RX_HINT_FORCE_INLINE constexpr Memory::Allocator& ThreadPool::allocator() const {
+  return *m_allocator;
 }
 
 } // namespace Rx::Concurrency

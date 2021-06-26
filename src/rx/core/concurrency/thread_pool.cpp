@@ -1,15 +1,17 @@
 #include "rx/core/concurrency/thread_pool.h"
+#include "rx/core/concurrency/mutex.h"
+#include "rx/core/concurrency/condition_variable.h"
+#include "rx/core/concurrency/thread.h"
 
 #include "rx/core/time/stop_watch.h"
-#include "rx/core/time/delay.h"
+
+#include "rx/core/memory/slab.h"
 
 #include "rx/core/log.h"
 
 namespace Rx::Concurrency {
 
 RX_LOG("ThreadPool", logger);
-
-Global<ThreadPool> ThreadPool::s_instance{"system", "thread_pool", 4_z, 4096_z};
 
 struct Work {
   RX_MARK_NO_COPY(Work);
@@ -24,50 +26,109 @@ struct Work {
   Function<void(int)> callback;
 };
 
-ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _static_pool_size)
-  : m_allocator{_allocator}
-  , m_threads{allocator()}
-  , m_stop{false}
-{
-  auto slab = Memory::Slab::create(allocator(), sizeof(Work), _static_pool_size, 1, 0);
-  RX_ASSERT(slab, "couldn't allocate work memory for thread pool");
-  m_job_memory = Utility::move(*slab);
+struct ThreadPool::Impl {
+  RX_MARK_NO_COPY(Impl);
+  RX_MARK_NO_MOVE(Impl);
 
-  m_timer.start();
+  Memory::Allocator& allocator;
+  Mutex mutex;
+  ConditionVariable task_cond;
+  ConditionVariable ready_cond;
+  IntrusiveList queue       RX_HINT_GUARDED_BY(mutex);
+  Vector<Thread> threads    RX_HINT_GUARDED_BY(mutex);
+  Memory::Slab job_memory   RX_HINT_GUARDED_BY(mutex);
+  bool stop                 RX_HINT_GUARDED_BY(mutex);
+  Time::StopWatch           timer;
+  Concurrency::Atomic<Size> ready;
+  Concurrency::Atomic<Size> active_threads;
 
-  logger->info("starting pool with %zu threads", _threads);
-  RX_ASSERT(m_threads.reserve(_threads), "out of memory");
+  Impl(Memory::Allocator& _allocator)
+    : allocator{_allocator}
+    , threads{_allocator}
+    , stop{false}
+    , ready{0}
+    , active_threads{0}
+  {
+  }
 
-  for (Size i{0}; i < _threads; i++) {
-    auto func = Task::create([_threads, this](int _thread_id) {
+  ~Impl() {
+    Time::StopWatch timer;
+    timer.start();
+
+    {
+      ScopeLock lock{mutex};
+      stop = true;
+    }
+
+    task_cond.broadcast();
+
+    threads.each_fwd([](Thread &_thread) {
+      RX_ASSERT(_thread.join(), "failed to join thread");
+    });
+
+    timer.stop();
+
+    logger->verbose("stopped pool with %zu threads (took %s)",
+      threads.size(), timer.elapsed());
+  }
+
+  bool add_task(ThreadPool::Task&& task_) {
+    {
+      ScopeLock lock{mutex};
+      auto item = job_memory.create<Work>(Utility::move(task_));
+      if (!item) {
+        logger->error("out of memory");
+        return false;
+      }
+      queue.push_back(&item->link);
+    }
+    task_cond.signal();
+    return true;
+  }
+
+  bool init(Size _threads, Size _pool_size) {
+    auto slab = Memory::Slab::create(allocator, sizeof(Work), _pool_size, 1, 0);
+    if (!slab) {
+      logger->error("out of memory");
+      return false;
+    }
+
+    job_memory = Utility::move(*slab);
+
+    timer.start();
+
+    logger->info("starting pool with %zu threads", _threads);
+
+    auto thread_func = [_threads, this](int _thread_id) {
       logger->info("starting thread %d", _thread_id);
 
       // When all threads are started.
-      if (++m_ready == _threads) {
-        m_timer.stop();
-        logger->info("started pool with %zu threads (took %s)", _threads, m_timer.elapsed());
+      if (++ready == _threads) {
+        timer.stop();
+        logger->info("started pool with %zu threads (took %s)", _threads,
+          timer.elapsed());
       }
 
       for (;;) {
         Function<void(int)> task;
         {
-          ScopeLock lock{m_mutex};
+          ScopeLock lock{mutex};
 
-          m_task_cond.wait(lock, [this] { return m_stop || !m_queue.is_empty(); });
-          if (m_stop && m_queue.is_empty()) {
+          task_cond.wait(lock, [this] { return stop || !queue.is_empty(); });
+          if (stop && queue.is_empty()) {
             logger->info("stopping thread %d", _thread_id);
             return;
           }
 
-          auto node = m_queue.pop_back();
+          auto node = queue.pop_back();
           auto item = node->data<Work>(&Work::link);
 
           task = Utility::move(item->callback);
 
-          m_job_memory.destroy(item);
+          job_memory.destroy(item);
         }
 
-        m_active_threads++;
+        active_threads++;
         logger->verbose("starting task on thread %d", _thread_id);
 
         Time::StopWatch timer;
@@ -77,64 +138,56 @@ ThreadPool::ThreadPool(Memory::Allocator& _allocator, Size _threads, Size _stati
 
         logger->verbose("finished task on thread %d (took %s)",
           _thread_id, timer.elapsed());
-        m_active_threads--;
+        active_threads--;
       }
-    });
+    };
 
-    if (!func) {
-      break;
+    // Create the threads.
+    if (!threads.reserve(_threads)) {
+      return false;
     }
 
-    auto thread = Thread::create(m_allocator, "thread pool", Utility::move(*func));
-    if (!thread) {
-      break;
+    for (Size i = 0; i < _threads; i++) {
+      auto func = Task::create(thread_func);
+      if (!func) {
+        return false;
+      }
+      auto thread = Thread::create(allocator, "thread pool", Utility::move(*func));
+      if (!thread || !threads.push_back(Utility::move(*thread))) {
+        return false;
+      }
     }
 
-    if (!m_threads.push_back(Utility::move(*thread))) {
-      break;
-    }
+    return true;
   }
+};
+
+Optional<ThreadPool> ThreadPool::create(Memory::Allocator& _allocator, Size _threads,
+  Size _pool_size)
+{
+  auto impl = _allocator.create<Impl>(_allocator);
+  if (!impl || !impl->init(_threads, _pool_size)) {
+    _allocator.destroy<Impl>(impl);
+    return nullopt;
+  }
+
+  return ThreadPool { _allocator, impl };
 }
 
 ThreadPool::~ThreadPool() {
-  Time::StopWatch timer;
-  timer.start();
-  {
-    ScopeLock lock{m_mutex};
-    m_stop = true;
-  }
-  m_task_cond.broadcast();
-
-  m_threads.each_fwd([](Thread &_thread) {
-    RX_ASSERT(_thread.join(), "failed to join thread");
-  });
-
-  timer.stop();
-  logger->verbose("stopped pool with %zu threads (took %s)",
-    m_threads.size(), timer.elapsed());
+  m_allocator->destroy<Impl>(m_impl);
 }
 
-bool ThreadPool::add_task(Function<void(int)>&& task_) {
-  {
-    ScopeLock lock{m_mutex};
-    auto item = m_job_memory.create<Work>(Utility::move(task_));
-    if (!item) {
-      return false;
-    }
-    m_queue.push_back(&item->link);
-  }
-
-  m_task_cond.signal();
-
-  return true;
+bool ThreadPool::add_task(Task&& task_) {
+  return m_impl ? m_impl->add_task(Utility::move(task_)) : false;
 }
 
 Size ThreadPool::total_threads() const {
-  return m_threads.size();
+  return m_impl ? m_impl->threads.size() : 0;
 }
 
 Size ThreadPool::active_threads() const {
-  return m_active_threads.load();
+  return m_impl ? m_impl->active_threads.load() : 0;
 }
 
 } // namespace Rx::Concurrency

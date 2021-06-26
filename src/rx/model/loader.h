@@ -4,6 +4,8 @@
 
 #include "rx/material/loader.h"
 
+namespace Rx::Concurrency { struct Scheduler; }
+
 namespace Rx::Model {
 
 struct Loader {
@@ -13,10 +15,10 @@ struct Loader {
   Loader(Memory::Allocator& _allocator);
   ~Loader();
 
-  [[nodiscard]] bool load(Stream::UntrackedStream& _stream);
-  [[nodiscard]] bool load(const String& _file_name);
+  [[nodiscard]] bool load(Concurrency::Scheduler& _scheduler, Stream::UntrackedStream& _stream);
+  [[nodiscard]] bool load(Concurrency::Scheduler& _scheduler, const String& _file_name);
 
-  [[nodiscard]] bool parse(const JSON& _json);
+  [[nodiscard]] bool parse(Concurrency::Scheduler& _scheduler, const JSON& _json);
 
   struct Vertex {
     Math::Vec3f position;

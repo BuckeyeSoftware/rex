@@ -249,7 +249,7 @@ struct TestGame
 
     auto add_model = [&](const char* _file_name) {
       if (auto model = Render::Model::create(&m_frontend)) {
-        if (model->load(_file_name)) {
+        if (model->load(engine()->thread_pool(), _file_name)) {
           if (m_models.push_back(Utility::move(*model))) {
             if (m_mdl_tranforms.push_back(transform)) {
               m_mdl_rotations.emplace_back(0.0f, 0.0f, 0.0f);
@@ -372,7 +372,7 @@ struct TestGame
         "base/skyboxes/yokohama/yokohama.json5",
         "base/skyboxes/miramar/miramar.json5"
       };
-      m_skybox.load_async(Concurrency::ThreadPool::instance(), SKYBOXES[sky], {512, 512});
+      m_skybox.load_async(engine()->thread_pool(), SKYBOXES[sky], {512, 512});
       sky = (sky + 1) % (sizeof SKYBOXES / sizeof *SKYBOXES);
     }
 
@@ -537,6 +537,8 @@ struct TestGame
   Math::Vec3f m_mouse;
 };
 
+/*
 Ptr<Application> create(Engine* _engine) {
   return make_ptr<TestGame>(Memory::SystemAllocator::instance(), _engine);
 }
+*/

@@ -74,7 +74,7 @@ bool ModelViewer::on_init() {
 
   // Renderables.
   m_model = Render::Model::create(renderer);
-  if (!m_model || !m_model->load(*mdl)) {
+  if (!m_model || !m_model->load(engine()->thread_pool(), *mdl)) {
     return false;
   }
 

@@ -5,6 +5,8 @@
 #include "rx/render/frontend/context.h"
 #include "rx/render/frontend/target.h"
 
+#include "rx/core/concurrency/thread_pool.h"
+
 #include "rx/console/variable.h"
 
 #include "rx/math/range.h"
@@ -115,7 +117,7 @@ bool ModelBanner::on_init() {
   // Load some models.
   for (Size i = 0; i < N_MODELS; i++) {
     auto model = Render::Model::create(renderer);
-    if (!model || !model->load(MODEL_PATHS[i])) {
+    if (!model || !model->load(engine()->thread_pool(), MODEL_PATHS[i])) {
       return false;
     }
 

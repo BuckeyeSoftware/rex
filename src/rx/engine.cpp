@@ -194,7 +194,6 @@ bool Engine::init() {
   const Size static_pool_size = *thread_pool_static_pool_size;
 
   // Determine how many threads the Emscripten pool was preallocated with.
-
 #if defined(RX_PLATFORM_EMSCRIPTEN)
   // We subtract 1 from PTHREAD_POOL_SIZE since the logger needs a thread.
   const Size threads = emscripten_get_compiler_setting("PTHREAD_POOL_SIZE") - 1;
@@ -202,7 +201,13 @@ bool Engine::init() {
   const Size threads = *thread_pool_threads ? *thread_pool_threads : SDL_GetCPUCount();
 #endif
 
-  Globals::find("system")->find("thread_pool")->init(threads, static_pool_size);
+  auto thread_pool =
+    Concurrency::ThreadPool::create(allocator, threads, static_pool_size);
+  if (!thread_pool) {
+    return false;
+  }
+
+  m_thread_pool = Utility::move(*thread_pool);
 
   // Setup all the loggers to emit to our console.
   Globals::find("loggers")->each([&](GlobalNode* _logger) {
@@ -233,10 +238,6 @@ bool Engine::init() {
 
   // Initialize any other globals not already initialized.
   Globals::init();
-
-  // bake({256, 256});
-
-  // return false;
 
   auto cmd_reset = Console::Command::Delegate::create(
     [](Console::Context& console_, const Vector<Console::Command::Argument>& _arguments) {

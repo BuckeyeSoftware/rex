@@ -3,6 +3,8 @@
 #include "rx/core/log.h"
 #include "rx/core/ptr.h"
 
+#include "rx/core/concurrency/thread_pool.h"
+
 #include "rx/console/context.h"
 #include "rx/console/variable.h"
 
@@ -43,6 +45,8 @@ struct Engine {
   // The render context.
   Render::Frontend::Context* renderer();
 
+  Concurrency::ThreadPool& thread_pool();
+
 protected:
   Status integrate();
 
@@ -66,6 +70,9 @@ protected:
   // The application.
   Ptr<Application> m_application;
 
+  // Thread pool
+  Concurrency::ThreadPool m_thread_pool;
+
   Float64 m_accumulator;
 };
 
@@ -79,6 +86,10 @@ inline Input::Context& Engine::input() {
 
 inline Render::Frontend::Context* Engine::renderer() {
   return m_render_frontend;
+}
+
+inline Concurrency::ThreadPool& Engine::thread_pool() {
+  return m_thread_pool;
 }
 
 } // namespace Rx
