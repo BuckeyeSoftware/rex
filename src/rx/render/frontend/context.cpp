@@ -128,7 +128,7 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
     directory->each([this](Filesystem::Directory::Item&& item_) {
       if (item_.is_file() && item_.name().ends_with(".json5")) {
         Module new_module{allocator()};
-        if (auto path = item_.full_name(); new_module.load(*path)) {
+        if (auto path = item_.full_name(); path && new_module.load(*path)) {
           m_modules.insert(new_module.name(), Utility::move(new_module));
         }
       }
@@ -1063,7 +1063,7 @@ bool Context::swap() {
   return m_timer.update();
 }
 
-Buffer* Context::cached_buffer(const String& _key) {
+Buffer* Context::cached_buffer(const StringView& _key) {
   Concurrency::ScopeLock lock{m_mutex};
   if (auto find = m_cached_buffers.find(_key)) {
     auto result = *find;
@@ -1073,7 +1073,7 @@ Buffer* Context::cached_buffer(const String& _key) {
   return nullptr;
 }
 
-Target* Context::cached_target(const String& _key) {
+Target* Context::cached_target(const StringView& _key) {
   Concurrency::ScopeLock lock{m_mutex};
   if (auto find{m_cached_targets.find(_key)}) {
     auto result{*find};
@@ -1083,7 +1083,7 @@ Target* Context::cached_target(const String& _key) {
   return nullptr;
 }
 
-Texture1D* Context::cached_texture1D(const String& _key) {
+Texture1D* Context::cached_texture1D(const StringView& _key) {
   Concurrency::ScopeLock lock{m_mutex};
   if (auto find{m_cached_textures1D.find(_key)}) {
     auto result{*find};
@@ -1093,7 +1093,7 @@ Texture1D* Context::cached_texture1D(const String& _key) {
   return nullptr;
 }
 
-Texture2D* Context::cached_texture2D(const String& _key) {
+Texture2D* Context::cached_texture2D(const StringView& _key) {
   Concurrency::ScopeLock lock{m_mutex};
   if (auto find{m_cached_textures2D.find(_key)}) {
     auto result{*find};
@@ -1103,7 +1103,7 @@ Texture2D* Context::cached_texture2D(const String& _key) {
   return nullptr;
 }
 
-Texture3D* Context::cached_texture3D(const String& _key) {
+Texture3D* Context::cached_texture3D(const StringView& _key) {
   Concurrency::ScopeLock lock{m_mutex};
   if (auto find{m_cached_textures3D.find(_key)}) {
     auto result{*find};
@@ -1113,7 +1113,7 @@ Texture3D* Context::cached_texture3D(const String& _key) {
   return nullptr;
 }
 
-TextureCM* Context::cached_textureCM(const String& _key) {
+TextureCM* Context::cached_textureCM(const StringView& _key) {
   Concurrency::ScopeLock lock{m_mutex};
   if (auto find{m_cached_texturesCM.find(_key)}) {
     auto result{*find};

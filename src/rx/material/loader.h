@@ -25,7 +25,7 @@ struct Loader {
   Loader& operator=(Loader&& loader_);
 
   [[nodiscard]] bool load(Stream::UntrackedStream& _stream);
-  [[nodiscard]] bool load(const String& _file_name);
+  [[nodiscard]] bool load(const StringView& _file_name);
 
   [[nodiscard]] bool parse(const JSON& _definition);
 

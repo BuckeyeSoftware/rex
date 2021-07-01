@@ -43,7 +43,7 @@ struct RX_API Directory {
   /// \param _allocator The allocator to use for directory operations.
   /// \param _path The path to the directory to open.
   /// \returns On success, the Directory. Otherwise, \c nullopt.
-  static Optional<Directory> open(Memory::Allocator& _allocator, const String& _path);
+  static Optional<Directory> open(Memory::Allocator& _allocator, const StringView& _path);
 
   /// @{
   /// Check if the directory is valid.
@@ -230,7 +230,7 @@ RX_HINT_FORCE_INLINE Directory::Item::Item(const Directory* _directory, String&&
 {
 }
 
-bool create_directory(const String& _path);
+bool create_directory(const StringView& _path);
 
 } // namespace Rx::Filesystem
 

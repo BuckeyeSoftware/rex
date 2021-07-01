@@ -433,7 +433,7 @@ private:
   String m_error;
 };
 
-bool Assembler::assemble(const String& _file_name) {
+bool Assembler::assemble(const StringView& _file_name) {
   auto& allocator = Memory::SystemAllocator::instance();
   auto file = Filesystem::read_text_file(allocator, _file_name);
   if (!file) {
@@ -451,6 +451,7 @@ bool Assembler::assemble(const String& _file_name) {
   }
 
   m_error = Utility::move(parser.m_error);
+
   return false;
 }
 

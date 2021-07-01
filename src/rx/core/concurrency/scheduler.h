@@ -36,7 +36,7 @@ struct Scheduler {
 
 template<typename F>
 bool Scheduler::add(F&& functor_) {
-  if (auto task = Task::create(Utility::move(functor_))) {
+  if (auto task = Task::create(Utility::forward<F>(functor_))) {
     return add_task(Utility::move(*task));
   }
   return false;

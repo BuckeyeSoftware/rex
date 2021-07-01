@@ -122,16 +122,16 @@ void Token::destroy() {
   }
 }
 
-String Token::print() const {
+Optional<String> Token::print() const {
   auto& allocator = Memory::SystemAllocator::instance();
 
   switch (m_type) {
   case Type::ATOM:
-    return m_as_atom;
+    return String::copy(m_as_atom);
   case Type::STRING:
     return String::format(allocator, "\"%s\"", m_as_string);
   case Type::BOOLEAN:
-    return m_as_boolean ? "true" : "false";
+    return String::create(allocator, m_as_boolean ? "true" : "false");
   case Type::INT:
     return String::format(allocator, "%d", m_as_int);
   case Type::FLOAT:
@@ -150,7 +150,7 @@ String Token::print() const {
     return String::format(allocator, "%s", m_as_vec2i);
   }
 
-  return "";
+  RX_HINT_UNREACHABLE();
 }
 
 Parser::Parser(Memory::Allocator& _allocator)
@@ -194,7 +194,7 @@ static bool float_like(const char* _contents) {
   return *_contents == '.';
 }
 
-bool Parser::parse(const String& _contents) {
+bool Parser::parse(const StringView& _contents) {
   m_tokens.clear();
 
   m_first = _contents.data();
@@ -326,7 +326,7 @@ bool Parser::parse(const String& _contents) {
     } else if (is_sign(*m_ch) || is_digit(*m_ch) || (*m_ch == '.' && is_digit(m_ch[1]))) {
       record_span();
       if (float_like(m_ch)) {
-        if (Float32 value; parse_float(m_ch, value)) {
+        if (Float32 value = 0.0f; parse_float(m_ch, value)) {
           if (!m_tokens.emplace_back(value)) {
             goto oom;
           }
@@ -334,7 +334,7 @@ bool Parser::parse(const String& _contents) {
           return false;
         }
       } else {
-        if (Sint32 value; parse_int(m_ch, value)) {
+        if (Sint32 value = 0; parse_int(m_ch, value)) {
           if (!m_tokens.emplace_back(value)) {
             goto oom;
           }

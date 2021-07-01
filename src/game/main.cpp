@@ -265,8 +265,8 @@ struct TestGame
     // if (!add_model("base/models/chest/chest.json5")) return false;
     // if (!add_model("base/models/mrfixit/mrfixit.json5")) return false;
     // if (!add_model("base/models/fire_hydrant/fire_hydrant.json5")) return false;
-    if (!add_model("base/models/helmet/helmet.json5")) return false;
-
+    // if (!add_model("base/models/helmet/helmet.json5")) return false;
+    if (!add_model("base/models/raspberry_pico/raspberry_pico.json5")) return false;
     // m_models[1].animate(0, true); // mrfixit loop 0th animation.
 
     return true;
@@ -537,8 +537,7 @@ struct TestGame
   Math::Vec3f m_mouse;
 };
 
-/*
+
 Ptr<Application> create(Engine* _engine) {
   return make_ptr<TestGame>(Memory::SystemAllocator::instance(), _engine);
 }
-*/

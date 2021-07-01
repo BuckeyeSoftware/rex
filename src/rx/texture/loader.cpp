@@ -165,7 +165,7 @@ bool Loader::load(Stream::UntrackedStream& _stream, PixelFormat _want_format,
   return true;
 }
 
-bool Loader::load(const String& _file_name, PixelFormat _want_format,
+bool Loader::load(const StringView& _file_name, PixelFormat _want_format,
   const Math::Vec2z& _max_dimensions)
 {
   if (auto file = Filesystem::UnbufferedFile::open(allocator(), _file_name, "r")) {

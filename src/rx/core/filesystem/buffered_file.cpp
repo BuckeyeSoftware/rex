@@ -30,7 +30,7 @@ BufferedFile& BufferedFile::operator=(BufferedFile&& file_) {
 }
 
 Optional<BufferedFile> BufferedFile::open(Memory::Allocator& _allocator,
-  const char* _file_name, const char* _mode, Uint16 _page_size, Uint8 _page_count)
+  const StringView& _file_name, const StringView& _mode, Uint16 _page_size, Uint8 _page_count)
 {
   if (auto buffer = BufferedStream::create(_allocator, _page_size, _page_count)) {
     if (auto file = UnbufferedFile::open(_allocator, _file_name, _mode)) {

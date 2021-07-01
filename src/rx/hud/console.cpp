@@ -186,7 +186,7 @@ void Console::render() {
   // Render every line for the console, lines outside will be scissored.
   m_lines.each_fwd([&](const String& _line) {
     m_immediate->frame_queue().record_text(
-      *console_font_name,
+      console_font_name->get(),
       {padding, resolution.h - text_y},
       static_cast<Sint32>(font_size),
       1.0f,
@@ -234,7 +234,7 @@ void Console::render() {
 
   // Render the current input text inside the box, centered.
   m_immediate->frame_queue().record_text(
-    *console_font_name,
+    console_font_name->get(),
     {padding, resolution.h - textbox_y - font_size * 0.75f},
     static_cast<Sint32>(font_size),
     1.0f,
@@ -321,9 +321,9 @@ void Console::render() {
     *console_selection_highlight_background_color);
 
   // Draw each suggestion now inside that box.
-  m_suggestions.each_fwd([&](const String& _suggestion){
+  m_suggestions.each_fwd([&](const StringView& _suggestion){
     m_immediate->frame_queue().record_text(
-      *console_font_name,
+      console_font_name->get(),
       {padding, resolution.h - suggestion_y + font_size*0.15f},
       static_cast<Sint32>(font_size),
       1.0f,

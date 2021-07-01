@@ -38,11 +38,11 @@ struct Skybox {
     const Math::Mat4x4f& _projection,
     const ColorGrader::Entry* _grading = nullptr);
 
-  bool load_async(Concurrency::Scheduler& _scheduler, const String& _file_name,
-    const Math::Vec2z& _max_face_dimensions);
+  bool load_async(Concurrency::Scheduler& _scheduler,
+    const StringView& _file_name, const Math::Vec2z& _max_face_dimensions);
 
   [[nodiscard]] bool load(Stream::UntrackedStream& _stream, const Math::Vec2z& _max_face_dimensions);
-  [[nodiscard]] bool load(const String& _file_name, const Math::Vec2z& _max_face_dimensions);
+  [[nodiscard]] bool load(const StringView& _file_name, const Math::Vec2z& _max_face_dimensions);
 
   Frontend::Texture* texture() const;
 

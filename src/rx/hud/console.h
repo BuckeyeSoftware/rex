@@ -23,7 +23,7 @@ private:
   Input::Layer m_input_layer;
   Input::Text m_text;
   Size m_selection;
-  Vector<String> m_suggestions;
+  Vector<StringView> m_suggestions;
   Vector<String> m_lines;
 };
 

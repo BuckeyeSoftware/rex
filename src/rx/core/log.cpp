@@ -94,7 +94,7 @@ static inline const char* string_for_level(Log::Level _level) {
   return nullptr;
 }
 
-static inline String string_for_time(time_t _time) {
+static inline Optional<String> string_for_time(time_t _time) {
   struct tm tm;
 #if defined(RX_PLATFORM_WINDOWS)
   localtime_s(&tm, &_time);
@@ -105,9 +105,14 @@ static inline String string_for_time(time_t _time) {
   // localtime function as it is NOT thread-safe.
   static_assert(false, "missing localtime implemenation");
 #endif
-  char date[256];
-  strftime(date, sizeof date, "%Y-%m-%d %H:%M:%S", &tm);
-  date[sizeof date - 1] = '\0';
+  String date{Memory::SystemAllocator::instance()};
+  if (!date.resize(256)) {
+    return nullopt;
+  }
+  const auto chars = strftime(date.data(), date.size(), "%Y-%m-%d %H:%M:%S", &tm);
+  if (chars == 0 || !date.resize(chars)) {
+    return nullopt;
+  }
   return date;
 }
 
@@ -305,12 +310,15 @@ void Logger::write(Ptr<Message>& message_) {
   const auto level = string_for_level(message_->level);
   const auto padding = strlen(name) + strlen(level) + 1; // +1 for '/'
 
+  const auto timestamp = string_for_time(message_->time);
+  const auto time = timestamp ? timestamp->data() : "out of memory";
+
   // The streams written to are all binary streams. Handle platform differences
   // for handling for newline.
   const auto label = String::format(
     Memory::SystemAllocator::instance(),
     "[%s] [%s/%s]%*s | ",
-    string_for_time(message_->time),
+    time,
     name,
     level,
     m_padding - padding,

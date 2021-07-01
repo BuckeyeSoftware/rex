@@ -242,8 +242,7 @@ bool Engine::init() {
   auto cmd_reset = Console::Command::Delegate::create(
     [](Console::Context& console_, const Vector<Console::Command::Argument>& _arguments) {
       if (auto* variable = console_.find_variable_by_name(_arguments[0].as_string)) {
-        variable->reset();
-        return true;
+        return variable->reset();
       }
       return false;
     }
@@ -641,8 +640,10 @@ Engine::Status Engine::integrate() {
       break;
     case SDL_CLIPBOARDUPDATE:
       if (char* text = SDL_GetClipboardText()) {
-        input.type = Input::Event::Type::CLIPBOARD;
-        Utility::construct<String>(&input.as_clipboard.contents, text);
+        if (auto copy = String::create(Memory::SystemAllocator::instance(), text)) {
+          input.type = Input::Event::Type::CLIPBOARD;
+          Utility::construct<String>(&input.as_clipboard.contents, Utility::move(*copy));
+        }
         SDL_free(text);
       }
       break;

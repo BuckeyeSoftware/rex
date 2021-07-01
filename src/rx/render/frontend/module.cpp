@@ -45,7 +45,7 @@ bool Module::load(Stream::UntrackedStream& _stream) {
   return false;
 }
 
-bool Module::load(const String& _file_name) {
+bool Module::load(const StringView& _file_name) {
   if (auto file = Filesystem::UnbufferedFile::open(allocator(), _file_name, "r")) {
     return load(*file);
   }
@@ -90,7 +90,7 @@ bool Module::parse(const JSON& _description) {
   }
 
   // Trim any leading and trailing whitespace characters from the contents too.
-  m_source = source.as_string_with_allocator(allocator).strip("\t\r\n ");
+  m_source = source.as_string_with_allocator(allocator); //.strip("\t\r\n ");
 
   const JSON& imports = _description["imports"];
   if (!imports) {

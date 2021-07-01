@@ -7,7 +7,7 @@
 
 namespace Rx {
 
-struct String;
+struct StringView;
 
 struct StringTable {
   RX_MARK_NO_COPY(StringTable);
@@ -19,10 +19,8 @@ struct StringTable {
 
   StringTable& operator=(StringTable&& string_table_);
 
-  Optional<Size> add(const char* _string);
-  Optional<Size> add(const char* _string, Size _length);
-
-  Optional<Size> find(const char* _string);
+  Optional<Size> add(const StringView& _string);
+  Optional<Size> find(const StringView& _string);
 
   const LinearBuffer& data() const &;
 
@@ -40,7 +38,7 @@ private:
     StringTable* table;
     const char* as_string() const;
     static Optional<SharedString> create(StringTable* table_, Span<const char> _span);
-    bool operator==(const char* _string) const;
+    bool operator==(const StringView& _string) const;
     bool operator==(const SharedString& _string) const;
     Size hash() const;
   };
@@ -70,7 +68,7 @@ inline StringTable& StringTable::operator=(StringTable&& string_table_) {
   return *this;
 }
 
-inline Optional<Size> StringTable::find(const char* _string) {
+inline Optional<Size> StringTable::find(const StringView& _string) {
   if (auto search = m_string_set.find(_string)) {
     return search->offset;
   }

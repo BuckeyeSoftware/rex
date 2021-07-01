@@ -61,7 +61,7 @@ struct RX_API JSON {
   Float32 as_float() const;
   Sint32 as_integer() const;
   JSON operator[](const char* _name) const;
-  String as_string() const;
+  Optional<String> as_string(Memory::Allocator& _allocator) const;
   String as_string_with_allocator(Memory::Allocator& _allocator) const;
 
   // # of elements for objects and arrays only
@@ -198,10 +198,6 @@ inline bool JSON::is_integer() const {
 
 inline bool JSON::is_empty() const {
   return size() == 0;
-}
-
-inline String JSON::as_string() const {
-  return as_string_with_allocator(allocator());
 }
 
 template<typename F>

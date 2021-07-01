@@ -35,9 +35,8 @@ struct MemoryStream
   virtual Uint64 on_write(const Byte* _data, Uint64 _size, Uint64 _offset);
 
   /// \brief Stat the stream for information.
-  /// Updates the stat object referenced by \p stat_.
-  /// \returns On a successful stat, \c true. Otherwise, \c false.
-  virtual bool on_stat(Stat& stat_) const;
+  /// \returns On a successful stat, the stat object. Otherwise, \c nullopt.
+  virtual Optional<Stat> on_stat() const;
 
   /// \brief Truncate the stream.
   /// \param _size The size to truncate to.

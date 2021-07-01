@@ -58,7 +58,7 @@ struct Token {
   const Math::Vec2f& as_vec2f() const &;
   const Math::Vec2i& as_vec2i() const &;
 
-  String print() const;
+  Optional<String> print() const;
 
 private:
   void destroy();
@@ -200,7 +200,7 @@ struct Parser {
 
   struct Diagnostic {
     Diagnostic(Memory::Allocator& _allocator);
-    String message;
+    Optional<String> message;
     Size offset;
     Size length;
     bool inside = false;
@@ -209,7 +209,7 @@ struct Parser {
 
   Parser(Memory::Allocator& _allocator);
 
-  [[nodiscard]] bool parse(const String& _contents);
+  [[nodiscard]] bool parse(const StringView& _contents);
 
   const Diagnostic& error() const &;
   Vector<Token>&& tokens();
@@ -262,7 +262,7 @@ bool Parser::error(bool _caret, const char* _format, Ts&&... _arguments) {
     m_diagnostic.message =
       String::format(allocator(), _format, Utility::forward<Ts>(_arguments)...);
   } else {
-    m_diagnostic.message = _format;
+    m_diagnostic.message = String::create(allocator(), _format);
   }
   return false;
 }

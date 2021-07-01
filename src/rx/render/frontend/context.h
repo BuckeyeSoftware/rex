@@ -190,12 +190,12 @@ struct Context {
   bool process();
   bool swap();
 
-  Buffer* cached_buffer(const String& _key);
-  Target* cached_target(const String& _key);
-  Texture1D* cached_texture1D(const String& _key);
-  Texture2D* cached_texture2D(const String& _key);
-  Texture3D* cached_texture3D(const String& _key);
-  TextureCM* cached_textureCM(const String& _key);
+  Buffer* cached_buffer(const StringView& _key);
+  Target* cached_target(const StringView& _key);
+  Texture1D* cached_texture1D(const StringView& _key);
+  Texture2D* cached_texture2D(const StringView& _key);
+  Texture3D* cached_texture3D(const StringView& _key);
+  TextureCM* cached_textureCM(const StringView& _key);
 
   // Pin a given resource to the render cache with the given |_key| allowing
   // it to be reused by checking the cache with the above functions.

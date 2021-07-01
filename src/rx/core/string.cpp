@@ -16,101 +16,7 @@
 
 namespace Rx {
 
-Size utf8_to_utf16(const char* _utf8_contents, Size _length,
-  Uint16* utf16_contents_)
-{
-  Size elements{0};
-  Uint32 code_point{0};
-
-  for (Size i{0}; i < _length; i++) {
-    const char* element{_utf8_contents + i};
-    const Byte element_ch{static_cast<Byte>(*element)};
-
-    if (element_ch <= 0x7f) {
-      code_point = static_cast<Uint16>(element_ch);
-    } else if (element_ch <= 0xbf) {
-      code_point = (code_point << 6) | (element_ch & 0x3f);
-    } else if (element_ch <= 0xdf) {
-      code_point = element_ch & 0x1f;
-    } else if (element_ch <= 0xef) {
-      code_point = element_ch & 0x0f;
-    } else {
-      code_point = element_ch & 0x07;
-    }
-
-    element++;
-    if ((*element & 0xc0) != 0x80 && code_point <= 0x10ffff) {
-      if (code_point > 0xffff) {
-        elements += 2;
-        if (utf16_contents_) {
-          *utf16_contents_++ = static_cast<Uint16>(0xd800 + (code_point >> 10));
-          *utf16_contents_++ = static_cast<Uint16>(0xdc00 + (code_point & 0x03ff));
-        }
-      } else if (code_point < 0xd800 || code_point >= 0xe000) {
-        elements += 1;
-        if (utf16_contents_) {
-          *utf16_contents_++ = static_cast<Uint16>(code_point);
-        }
-      }
-    }
-  }
-
-  return elements;
-}
-
-Size utf16_to_utf8(const Uint16* _utf16_contents, Size _length,
-  char* utf8_contents_)
-{
-  Size elements{0};
-  Uint32 code_point{0};
-
-  for (Size i{0}; i < _length; i++) {
-    const Uint16* element{_utf16_contents + i};
-
-    if (*element >= 0xd800 && *element <= 0xdbff) {
-      code_point = ((*element - 0xd800) << 10) + 0x10000;
-    } else {
-      if (*element >= 0xdc00 && *element <= 0xdfff) {
-        code_point |= *element - 0xdc00;
-      } else {
-        code_point = *element;
-      }
-
-      if (code_point < 0x7f) {
-        elements += 1;
-        if (utf8_contents_) {
-          *utf8_contents_++ = static_cast<char>(code_point);
-        }
-      } else if (code_point <= 0x7ff) {
-        elements += 2;
-        if (utf8_contents_) {
-          *utf8_contents_++ = static_cast<char>(0xc0 | ((code_point >> 6) & 0x1f));
-          *utf8_contents_++ = static_cast<char>(0x80 | (code_point & 0x3f));
-        }
-      } else if (code_point <= 0xffff) {
-        elements += 3;
-        if (utf8_contents_) {
-          *utf8_contents_++ = static_cast<char>(0xe0 | ((code_point >> 12) & 0x0f));
-          *utf8_contents_++ = static_cast<char>(0x80 | ((code_point >> 6) & 0x3f));
-          *utf8_contents_++ = static_cast<char>(0x80 | (code_point & 0x3f));
-        }
-      } else {
-        elements += 4;
-        if (utf8_contents_) {
-          *utf8_contents_++ = static_cast<char>(0xf0 | ((code_point >> 18) & 0x07));
-          *utf8_contents_++ = static_cast<char>(0x80 | ((code_point >> 12) & 0x3f));
-          *utf8_contents_++ = static_cast<char>(0x80 | ((code_point >> 6) & 0x3f));
-          *utf8_contents_++ = static_cast<char>(0x80 | (code_point & 0x3f));
-        }
-      }
-
-      code_point = 0;
-    }
-  }
-
-  return elements;
-}
-
+// [String]
 char* String::read_line(char*& line_) {
   if (!line_ || !*line_) {
     return nullptr;
@@ -121,15 +27,17 @@ char* String::read_line(char*& line_) {
   return line;
 }
 
-String String::formatter(Memory::Allocator& _allocator, const char* _format, ...) {
+Optional<String> String::formatter(Memory::Allocator& _allocator, const char* _format, ...) {
   String result{_allocator};
 
   va_list va;
   va_start(va, _format);
-  const Size need_length = format_buffer_va_list({nullptr, 0}, _format, va);
+  const auto need_length = format_buffer_va_list({nullptr, 0}, _format, va);
   va_end(va);
 
-  RX_ASSERT(result.resize(need_length), "out of memory");
+  if (!result.resize(need_length)) {
+    return nullopt;
+  }
 
   va_start(va, _format);
   format_buffer_va_list(result.span(), _format, va);
@@ -187,6 +95,26 @@ String::String(Memory::View _view)
   // view's size field represents the string's length including the null.
   RX_ASSERT(m_last == reinterpret_cast<char*>(Memory::search(m_data, _view.capacity, '\0')),
     "malformed string view");
+}
+
+Optional<String> String::create(Memory::Allocator& _allocator, const char* _contents) {
+  String result{_allocator};
+  if (!result.append(_contents)) {
+    return nullopt;
+  }
+  return result;
+}
+
+Optional<String> String::create(Memory::Allocator& _allocator, const char* _contents, Size _size) {
+  String result{_allocator};
+  if (!result.append(_contents, _size)) {
+    return nullopt;
+  }
+  return result;
+}
+
+Optional<String> String::copy(const String& _other) {
+  return create(_other.allocator(), _other.data(), _other.size());
 }
 
 String::~String() {
@@ -259,8 +187,8 @@ Optional<Size> String::find_first_of(int _ch) const {
   return nullopt;
 }
 
-Optional<Size> String::find_first_of(const char* _contents) const {
-  if (const char* search = strstr(m_data, _contents)) {
+Optional<Size> String::find_first_of(const StringView& _contents) const {
+  if (const char* search = strstr(m_data, _contents.data())) {
     return search - m_data;
   }
   return nullopt;
@@ -273,7 +201,7 @@ Optional<Size> String::find_last_of(int _ch) const {
   return nullopt;
 }
 
-Optional<Size> String::find_last_of(const char* _contents) const {
+Optional<Size> String::find_last_of(const StringView& _contents) const {
   auto reverse_strstr = [](const char* _haystack, const char* _needle) {
     const char* r = nullptr;
     for (;;) {
@@ -286,7 +214,7 @@ Optional<Size> String::find_last_of(const char* _contents) const {
     }
   };
 
-  if (const char* search = reverse_strstr(m_data, _contents)) {
+  if (const char* search = reverse_strstr(m_data, _contents.data())) {
     return search - m_data;
   }
 
@@ -308,10 +236,6 @@ bool String::append(const char* _first, const char* _last) {
   return true;
 }
 
-bool String::append(const char* _contents) {
-  return append(_contents, strlen(_contents));
-}
-
 bool String::insert_at(Size _position, const char* _contents, Size _size) {
   const Size old_this_size{size()};
   const Size old_that_size{_size};
@@ -331,35 +255,19 @@ bool String::insert_at(Size _position, const char* _contents) {
   return insert_at(_position, _contents, strlen(_contents));
 }
 
-String String::lstrip(const char* _set) const {
-  const char* ch = m_data;
-  for (; *ch && strchr(_set, *ch); ch++);
-  return {allocator(), ch};
-}
-
-String String::rstrip(const char* _set) const {
-  const char* ch = m_last - 1;
-  for (; ch > m_data && strchr(_set, *ch); ch--);
-  return {allocator(), m_data, ch + 1};
-}
-
-String String::strip(const char* _set) const {
-  const char* beg = m_data;
-  const char* end = m_last - 1;
-  for (; *beg && strchr(_set, *beg); beg++);
-  for (; end > beg && strchr(_set, *end); end--);
-  return {allocator(), beg, end + 1};
-}
-
-String String::substring(Size _offset, Size _length) const {
+Optional<String> String::substring(Size _offset, Size _length) const {
   const char* begin = m_data + _offset;
-  RX_ASSERT(begin < m_data + size(), "out of bounds");
-  if (_length == 0) {
-    return {allocator(), begin};
+
+  // Out of bounds, but permit a substring the whole string.
+  if (begin >= m_data + size() || begin + _length <= m_data + size()) {
+    return nullopt;
   }
-  // NOTE(dweiler): You can substring the whole string.
-  RX_ASSERT(begin + _length <= m_data + size(), "out of bounds");
-  return {allocator(), begin, begin + _length};
+
+  if (_length == 0) {
+    return String::create(allocator(), begin);
+  }
+
+  return String::create(allocator(), begin, _length);
 }
 
 Size String::scan(const char* _scan_format, ...) const {
@@ -428,23 +336,11 @@ String String::human_size_format(Size _size) {
   return format(Memory::SystemAllocator::instance(), "%s %s", buffer, SUFFIXES[i]);
 }
 
-bool String::begins_with(const char* _prefix) const {
-  return strstr(m_data, _prefix) == m_data;
-}
-
-bool String::begins_with(const String& _prefix) const {
+bool String::begins_with(const StringView& _prefix) const {
   return strstr(m_data, _prefix.data()) == m_data;
 }
 
-bool String::ends_with(const char* _suffix) const {
-  if (size() < strlen(_suffix)) {
-    return false;
-  }
-
-  return strcmp(m_data + size() - strlen(_suffix), _suffix) == 0;
-}
-
-bool String::ends_with(const String& _suffix) const {
+bool String::ends_with(const StringView& _suffix) const {
   if (size() < _suffix.size()) {
     return false;
   }
@@ -452,11 +348,7 @@ bool String::ends_with(const String& _suffix) const {
   return strcmp(m_data + size() - _suffix.size(), _suffix.data()) == 0;
 }
 
-bool String::contains(const char* _needle) const {
-  return strstr(m_data, _needle);
-}
-
-bool String::contains(const String& _needle) const {
+bool String::contains(const StringView& _needle) const {
   return strstr(m_data, _needle.data());
 }
 
@@ -556,6 +448,197 @@ void String::swap(String& other_) {
   }
 }
 
+// [WideString]
+bool WideString::resize(Size _size) {
+  Uint16* resize = reinterpret_cast<Uint16*>(m_allocator->reallocate(m_data, sizeof *m_data, _size + 1));
+  if (!RX_HINT_UNLIKELY(resize)) {
+    return false;
+  }
+
+  m_data = resize;
+  m_data[_size] = 0;
+  m_size = _size;
+  return true;
+}
+
+String WideString::to_utf8() const {
+  Size size{utf16_to_utf8(m_data, m_size, nullptr)};
+  String contents{allocator()};
+  (void)contents.resize(size);
+  utf16_to_utf8(m_data, m_size, contents.data());
+  return contents;
+}
+
+static Size utf16_len(const Uint16* _data) {
+  Size length = 0;
+  while (_data[length]) {
+    ++length;
+  }
+  return length;
+}
+
+WideString::WideString(Memory::Allocator& _allocator)
+  : m_allocator{&_allocator}
+  , m_data{nullptr}
+  , m_size{0}
+{
+}
+
+WideString::WideString(Memory::Allocator& _allocator, const WideString& _other)
+  : WideString{_allocator, _other.data(), _other.size()}
+{
+}
+
+WideString::WideString(Memory::Allocator& _allocator, const Uint16* _contents)
+  : WideString{_allocator, _contents, utf16_len(_contents)}
+{
+}
+
+WideString::WideString(Memory::Allocator& _allocator, const Uint16* _contents,
+                       Size _size)
+  : m_allocator{&_allocator}
+  , m_size{_size}
+{
+  m_data = reinterpret_cast<Uint16*>(m_allocator->allocate(sizeof *m_data, _size + 1));
+  RX_ASSERT(m_data, "out of memory");
+
+  Memory::copy(m_data, _contents, _size + 1);
+}
+
+WideString::WideString(WideString&& other_)
+  : m_allocator{other_.m_allocator}
+  , m_data{Utility::exchange(other_.m_data, nullptr)}
+  , m_size{Utility::exchange(other_.m_size, 0)}
+{
+}
+
+WideString::~WideString() {
+  m_allocator->deallocate(m_data);
+}
+
+// [StringView]
+StringView::StringView(const char* _contents)
+  : m_data{_contents}
+  , m_size{strlen(_contents)}
+{
+}
+
+bool StringView::begins_with(const StringView& _prefix) const {
+  return strstr(m_data, _prefix.data()) == m_data;
+}
+
+bool StringView::ends_with(const StringView& _other) const {
+  return size() >= _other.size() && strcmp(data() + size() - _other.size(), _other.data()) == 0;
+}
+
+bool StringView::contains(int _ch) const {
+  return strchr(m_data, _ch) != nullptr;
+}
+
+Optional<String> StringView::to_string(Memory::Allocator& _allocator) const {
+  return String::create(_allocator, m_data);
+}
+
+Size StringView::hash() const {
+  return Hash::string(m_data, m_size);
+}
+
+// [*]
+Size utf8_to_utf16(const char* _utf8_contents, Size _length,
+  Uint16* utf16_contents_)
+{
+  Size elements{0};
+  Uint32 code_point{0};
+
+  for (Size i{0}; i < _length; i++) {
+    const char* element{_utf8_contents + i};
+    const Byte element_ch{static_cast<Byte>(*element)};
+
+    if (element_ch <= 0x7f) {
+      code_point = static_cast<Uint16>(element_ch);
+    } else if (element_ch <= 0xbf) {
+      code_point = (code_point << 6) | (element_ch & 0x3f);
+    } else if (element_ch <= 0xdf) {
+      code_point = element_ch & 0x1f;
+    } else if (element_ch <= 0xef) {
+      code_point = element_ch & 0x0f;
+    } else {
+      code_point = element_ch & 0x07;
+    }
+
+    element++;
+    if ((*element & 0xc0) != 0x80 && code_point <= 0x10ffff) {
+      if (code_point > 0xffff) {
+        elements += 2;
+        if (utf16_contents_) {
+          *utf16_contents_++ = static_cast<Uint16>(0xd800 + (code_point >> 10));
+          *utf16_contents_++ = static_cast<Uint16>(0xdc00 + (code_point & 0x03ff));
+        }
+      } else if (code_point < 0xd800 || code_point >= 0xe000) {
+        elements += 1;
+        if (utf16_contents_) {
+          *utf16_contents_++ = static_cast<Uint16>(code_point);
+        }
+      }
+    }
+  }
+
+  return elements;
+}
+
+Size utf16_to_utf8(const Uint16* _utf16_contents, Size _length,
+  char* utf8_contents_)
+{
+  Size elements{0};
+  Uint32 code_point{0};
+
+  for (Size i{0}; i < _length; i++) {
+    const Uint16* element{_utf16_contents + i};
+
+    if (*element >= 0xd800 && *element <= 0xdbff) {
+      code_point = ((*element - 0xd800) << 10) + 0x10000;
+    } else {
+      if (*element >= 0xdc00 && *element <= 0xdfff) {
+        code_point |= *element - 0xdc00;
+      } else {
+        code_point = *element;
+      }
+
+      if (code_point < 0x7f) {
+        elements += 1;
+        if (utf8_contents_) {
+          *utf8_contents_++ = static_cast<char>(code_point);
+        }
+      } else if (code_point <= 0x7ff) {
+        elements += 2;
+        if (utf8_contents_) {
+          *utf8_contents_++ = static_cast<char>(0xc0 | ((code_point >> 6) & 0x1f));
+          *utf8_contents_++ = static_cast<char>(0x80 | (code_point & 0x3f));
+        }
+      } else if (code_point <= 0xffff) {
+        elements += 3;
+        if (utf8_contents_) {
+          *utf8_contents_++ = static_cast<char>(0xe0 | ((code_point >> 12) & 0x0f));
+          *utf8_contents_++ = static_cast<char>(0x80 | ((code_point >> 6) & 0x3f));
+          *utf8_contents_++ = static_cast<char>(0x80 | (code_point & 0x3f));
+        }
+      } else {
+        elements += 4;
+        if (utf8_contents_) {
+          *utf8_contents_++ = static_cast<char>(0xf0 | ((code_point >> 18) & 0x07));
+          *utf8_contents_++ = static_cast<char>(0x80 | ((code_point >> 12) & 0x3f));
+          *utf8_contents_++ = static_cast<char>(0x80 | ((code_point >> 6) & 0x3f));
+          *utf8_contents_++ = static_cast<char>(0x80 | (code_point & 0x3f));
+        }
+      }
+
+      code_point = 0;
+    }
+  }
+
+  return elements;
+}
+
 bool operator==(const String& _lhs, const String& _rhs) {
   if (&_lhs == &_rhs) {
     return true;
@@ -620,72 +703,28 @@ bool operator>(const char* _lhs, const String& _rhs) {
   return strcmp(_lhs, _rhs.data()) > 0;
 }
 
-bool WideString::resize(Size _size) {
-  Uint16* resize = reinterpret_cast<Uint16*>(m_allocator->reallocate(m_data, sizeof *m_data, _size + 1));
-  if (!RX_HINT_UNLIKELY(resize)) {
+bool operator==(const StringView& _lhs, const StringView& _rhs) {
+  if (_lhs.data() == _rhs.data()) {
+    return true;
+  }
+
+  if (_lhs.size() != _rhs.size()) {
     return false;
   }
 
-  m_data = resize;
-  m_data[_size] = 0;
-  m_size = _size;
-  return true;
+  return strcmp(_lhs.data(), _rhs.data()) == 0;
 }
 
-String WideString::to_utf8() const {
-  Size size{utf16_to_utf8(m_data, m_size, nullptr)};
-  String contents{allocator()};
-  (void)contents.resize(size);
-  utf16_to_utf8(m_data, m_size, contents.data());
-  return contents;
-}
-
-static Size utf16_len(const Uint16* _data) {
-  Size length = 0;
-  while (_data[length]) {
-    ++length;
+bool operator!=(const StringView& _lhs, const StringView& _rhs) {
+  if (_lhs.data() == _rhs.data()) {
+    return false;
   }
-  return length;
-}
 
-// WideString
-WideString::WideString(Memory::Allocator& _allocator)
-  : m_allocator{&_allocator}
-  , m_data{nullptr}
-  , m_size{0}
-{
-}
+  if (_lhs.size() != _rhs.size()) {
+    return true;
+  }
 
-WideString::WideString(Memory::Allocator& _allocator, const WideString& _other)
-  : WideString{_allocator, _other.data(), _other.size()}
-{
-}
-
-WideString::WideString(Memory::Allocator& _allocator, const Uint16* _contents)
-  : WideString{_allocator, _contents, utf16_len(_contents)}
-{
-}
-
-WideString::WideString(Memory::Allocator& _allocator, const Uint16* _contents,
-                       Size _size)
-  : m_allocator{&_allocator}
-  , m_size{_size}
-{
-  m_data = reinterpret_cast<Uint16*>(m_allocator->allocate(sizeof *m_data, _size + 1));
-  RX_ASSERT(m_data, "out of memory");
-
-  Memory::copy(m_data, _contents, _size + 1);
-}
-
-WideString::WideString(WideString&& other_)
-  : m_allocator{other_.m_allocator}
-  , m_data{Utility::exchange(other_.m_data, nullptr)}
-  , m_size{Utility::exchange(other_.m_size, 0)}
-{
-}
-
-WideString::~WideString() {
-  m_allocator->deallocate(m_data);
+  return strcmp(_lhs.data(), _rhs.data()) != 0;
 }
 
 } // namespace Rx

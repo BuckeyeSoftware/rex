@@ -6,8 +6,14 @@
 
 #include "rx/math/vec2.h"
 
-namespace Rx { struct String; }
-namespace Rx::Stream { struct UntrackedStream; }
+namespace Rx {
+  struct String;
+  struct StringView;
+}
+
+namespace Rx::Stream {
+  struct UntrackedStream;
+}
 
 namespace Rx::Texture {
 
@@ -39,7 +45,7 @@ struct Loader {
 
   [[nodiscard]] bool load(Stream::UntrackedStream& _stream, PixelFormat _want_format,
     const Math::Vec2z& _max_dimensions);
-  [[nodiscard]] bool load(const String& _file_name, PixelFormat _want_format,
+  [[nodiscard]] bool load(const StringView& _file_name, PixelFormat _want_format,
     const Math::Vec2z& _max_dimensions);
 
   Size bits_per_pixel() const;

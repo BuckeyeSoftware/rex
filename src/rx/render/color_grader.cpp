@@ -47,7 +47,9 @@ static Math::Vec3h remap(const Math::Vec3f& _value, const Math::Vec3f& _min, con
 };
 
 // Loads an Adobe Cube file.
-static Optional<Cube> load_cube(Memory::Allocator& _allocator, const String& _file_name) {
+static Optional<Cube> load_cube(Memory::Allocator& _allocator,
+  const StringView& _file_name)
+{
   Cube cube{_allocator};
 
   auto data = Filesystem::read_text_file(_allocator, _file_name);
@@ -137,7 +139,7 @@ ColorGrader::ColorGrader(Frontend::Context* _frontend)
 {
 }
 
-Optional<ColorGrader::Entry> ColorGrader::load(const String& _file_name) {
+Optional<ColorGrader::Entry> ColorGrader::load(const StringView& _file_name) {
   auto& allocator = m_frontend->allocator();
 
   auto find_or_create_atlas = [&](Size _size) -> Atlas* {

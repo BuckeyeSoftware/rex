@@ -20,7 +20,7 @@ struct Module {
   Module& operator=(Module&& module_);
 
   [[nodiscard]] bool load(Stream::UntrackedStream& _stream);
-  [[nodiscard]] bool load(const String& _file_name);
+  [[nodiscard]] bool load(const StringView& _file_name);
 
   [[nodiscard]] bool parse(const JSON& _description);
 

@@ -536,7 +536,7 @@ bool Model::load(Concurrency::Scheduler& _scheduler, Stream::UntrackedStream& _s
   return loader.load(_scheduler, _stream) && upload(loader);
 }
 
-bool Model::load(Concurrency::Scheduler& _scheduler, const String& _file_name) {
+bool Model::load(Concurrency::Scheduler& _scheduler, const StringView& _file_name) {
   Rx::Model::Loader loader{m_frontend->allocator()};
   return loader.load(_scheduler, _file_name) && upload(loader);
 }

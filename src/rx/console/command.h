@@ -55,7 +55,7 @@ struct Command {
   using Delegate = Function<bool(Context& console_, const Vector<Argument>& _arguments)>;
 
   static Optional<Command> create(Memory::Allocator& _allocator,
-    const String& _name, const char* _signature, Delegate&& function_);
+    const StringView& _name, const StringView& _signature, Delegate&& function_);
 
   Command(Command&& command_);
   Command& operator=(Command&& command_);

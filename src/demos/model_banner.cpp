@@ -360,6 +360,7 @@ void ModelBanner::on_resize(const Math::Vec2z& _dimensions) {
 
 } // namespace Rx
 
+/*
 Rx::Ptr<Rx::Application> create(Rx::Engine* _engine) {
   return make_ptr<Rx::ModelBanner>(Rx::Memory::SystemAllocator::instance(), _engine);
-}
+}*/

@@ -48,7 +48,7 @@ struct Model {
               Uint32 _flags, Render::Immediate3D* _immediate = nullptr);
 
   [[nodiscard]] bool load(Concurrency::Scheduler& _scheduler, Stream::UntrackedStream& _stream);
-  [[nodiscard]] bool load(Concurrency::Scheduler& _scheduler, const String& _file_name);
+  [[nodiscard]] bool load(Concurrency::Scheduler& _scheduler, const StringView& _file_name);
 
   const Optional<Rx::Model::Skeleton>& skeleton() const &;
   const Optional<Rx::Model::Animation>& animation() const &;

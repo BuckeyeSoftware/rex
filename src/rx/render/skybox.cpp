@@ -110,15 +110,18 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
 }
 
 bool Skybox::load_async(Concurrency::Scheduler& _scheduler,
-  const String& _file_name, const Math::Vec2z& _max_face_dimensions)
+  const StringView& _file_name, const Math::Vec2z& _max_face_dimensions)
 {
-  return _scheduler.add([=, this](int) {
-    // TODO(dweiler): Promise<bool> for status.
-    (void)load(_file_name, _max_face_dimensions);
-  });
+  // Copy of string is needed here since asyncronous.
+  if (auto file_name = _file_name.to_string(m_frontend->allocator())) {
+    return _scheduler.add([this, _max_face_dimensions, file_name = Utility::move(*file_name)](int) {
+      (void)load(file_name, _max_face_dimensions);
+    });
+  }
+  return false;
 }
 
-bool Skybox::load(const String& _file_name, const Math::Vec2z& _max_face_dimensions) {
+bool Skybox::load(const StringView& _file_name, const Math::Vec2z& _max_face_dimensions) {
   auto& allocator = m_frontend->allocator();
   if (auto file = Filesystem::UnbufferedFile::open(allocator, _file_name, "r")) {
     return load(*file, _max_face_dimensions);
@@ -162,6 +165,11 @@ bool Skybox::load(Stream::UntrackedStream& _stream, const Math::Vec2z& _max_face
     return false;
   }
 
+  auto name_string = name.as_string(allocator);
+  if (!name_string) {
+    return false;
+  }
+
   const auto& faces = description["faces"];
   const auto& hdri = description["hdri"];
   // Can only be one of these.
@@ -193,7 +201,7 @@ bool Skybox::load(Stream::UntrackedStream& _stream, const Math::Vec2z& _max_face
     Concurrency::ScopeLock lock{m_lock};
     release();
     m_texture = new_texture;
-    m_name = name.as_string();
+    m_name = Utility::move(*name_string);
   }
 
   return true;
@@ -202,6 +210,8 @@ bool Skybox::load(Stream::UntrackedStream& _stream, const Math::Vec2z& _max_face
 Frontend::TextureCM* Skybox::create_cubemap(const JSON& _faces,
   const Math::Vec2z& _max_face_dimensions) const
 {
+  auto& allocator = m_frontend->allocator();
+
   auto texture = m_frontend->create_textureCM(RX_RENDER_TAG("skybox"));
   if (!texture) {
     return nullptr;
@@ -217,9 +227,13 @@ Frontend::TextureCM* Skybox::create_cubemap(const JSON& _faces,
 
   Math::Vec2z dimensions;
   Frontend::TextureCM::Face face{Frontend::TextureCM::Face::RIGHT};
-  bool result = _faces.each([&](const JSON& file_name) {
+  bool result = _faces.each([&](const JSON& _file_name) {
+    auto file_name = _file_name.as_string(allocator);
+    if (!file_name) {
+      return false;
+    }
     Texture::Loader loader{m_frontend->allocator()};
-    if (!loader.load(file_name.as_string(), Texture::PixelFormat::RGBA_U8, _max_face_dimensions)) {
+    if (!loader.load(*file_name, Texture::PixelFormat::RGBA_U8, _max_face_dimensions)) {
       return false;
     }
     if (dimensions.is_all(0)) {
@@ -243,6 +257,13 @@ Frontend::TextureCM* Skybox::create_cubemap(const JSON& _faces,
 }
 
 Frontend::Texture2D* Skybox::create_hdri(const JSON& _json) const {
+  auto& allocator = m_frontend->allocator();
+
+  auto name = _json.as_string(allocator);
+  if (!name) {
+    return nullptr;
+  }
+
   auto texture = m_frontend->create_texture2D(RX_RENDER_TAG("skybox"));
   if (!texture) {
     return nullptr;
@@ -256,7 +277,7 @@ Frontend::Texture2D* Skybox::create_hdri(const JSON& _json) const {
                         Frontend::Texture::WrapType::CLAMP_TO_EDGE});
 
   Texture::Loader loader{m_frontend->allocator()};
-  if (!loader.load(_json.as_string(), Texture::PixelFormat::RGBA_F32, {4096, 4096})) {
+  if (!loader.load(*name, Texture::PixelFormat::RGBA_F32, {4096, 4096})) {
     return nullptr;
   }
 

@@ -37,7 +37,8 @@ enum {
   UNMATCHED_PARENTHESIS        = -1,
   UNEXPECTED_CHARACTER         = -2,
   UNEXPECTED_END_OF_EXPRESSION = -3,
-  UNDECLARED_IDENTIFIER        = -4
+  UNDECLARED_IDENTIFIER        = -4,
+  OUT_OF_MEMORY                = -5
 };
 
 static constexpr const char* binexp_result_to_string(int _result) {
@@ -50,6 +51,8 @@ static constexpr const char* binexp_result_to_string(int _result) {
     return "unexpected end of expression";
   case UNDECLARED_IDENTIFIER:
     return "undeclared identifier";
+  case OUT_OF_MEMORY:
+    return "out of memory";
   }
   return nullptr;
 }
@@ -85,21 +88,24 @@ static int binexp_parse_atom(const char*& expression_, int& parenthesis_, const 
     return negated ? !result : result;
   }
 
-  String identifier;
+  Optional<String> identifier;
   const char* end = strpbrk(expression_, " )"); // ' ' or ')' marks end of an identifier
   if (end) {
-    identifier = String { allocator, expression_, end };
+    identifier = String::create(allocator, expression_, end - expression_);
   } else {
-    // otherwise the identifier is at the end of the string
-    identifier = expression_;
+    identifier = String::create(allocator, expression_);
   }
 
-  const auto find = _values.find(identifier);
+  if (!identifier) {
+    return OUT_OF_MEMORY;
+  }
+
+  const auto find = _values.find(*identifier);
   if (!find) {
     return UNDECLARED_IDENTIFIER;
   }
 
-  expression_ += identifier.size();
+  expression_ += identifier->size();
 
   return negated ? !*find : *find;
 }
@@ -843,7 +849,7 @@ bool Technique::Configuration::LazyProgram::compile() {
 }
 
 // [Technique]
-bool Technique::load(const String& _file_name) {
+bool Technique::load(const StringView& _file_name) {
   auto& allocator = m_frontend->allocator();
   if (auto file = Filesystem::UnbufferedFile::open(allocator, _file_name, "r")) {
     return load(*file);

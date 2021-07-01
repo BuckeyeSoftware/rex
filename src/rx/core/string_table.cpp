@@ -1,6 +1,7 @@
 #include <string.h> // strlen, strcmp
 
 #include "rx/core/string_table.h"
+#include "rx/core/string.h"
 
 #include "rx/core/memory/search.h"
 #include "rx/core/memory/copy.h"
@@ -32,14 +33,8 @@ Optional<StringTable> StringTable::create_from_linear_buffer(LinearBuffer&& line
   return result;
 }
 
-Optional<Size> StringTable::add(const char* _string) {
-  // Remember to always include the null-terminator on insertions.
-  return insert({_string, strlen(_string) + 1});
-}
-
-Optional<Size> StringTable::add(const char* _string, Size _length) {
-  // Remember to always include the null-terminator on insertions.
-  return insert({_string, _length + 1});
+Optional<Size> StringTable::add(const StringView& _string) {
+  return insert(_string.span());
 }
 
 Optional<Size> StringTable::insert(Span<const char> _span) {
@@ -96,8 +91,8 @@ StringTable::SharedString::create(StringTable* table_, Span<const char> _span) {
   return shared;
 }
 
-bool StringTable::SharedString::operator==(const char* _string) const {
-  return strcmp(as_string(), _string) == 0;
+bool StringTable::SharedString::operator==(const StringView& _string) const {
+  return strcmp(as_string(), _string.data()) == 0;
 }
 
 bool StringTable::SharedString::operator==(const SharedString& _string) const {

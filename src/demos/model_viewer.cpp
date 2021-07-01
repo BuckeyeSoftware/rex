@@ -74,12 +74,12 @@ bool ModelViewer::on_init() {
 
   // Renderables.
   m_model = Render::Model::create(renderer);
-  if (!m_model || !m_model->load(engine()->thread_pool(), *mdl)) {
+  if (!m_model || !m_model->load(engine()->thread_pool(), mdl->get())) {
     return false;
   }
 
   m_skybox = Render::Skybox::create(renderer);
-  if (!m_skybox || !m_skybox->load(*sky, {1024, 1024})) {
+  if (!m_skybox || !m_skybox->load(sky->get(), {1024, 1024})) {
     return false;
   }
 

@@ -65,9 +65,7 @@ struct RX_API UnbufferedFile
   ///
   /// \returns The UnbufferedFile on success, \c nullopt otherwise.
   static Optional<UnbufferedFile> open(Memory::Allocator& _allocator,
-    const char* _file_name, const char* _mode);
-  static Optional<UnbufferedFile> open(Memory::Allocator& _allocator,
-    const String& _file_name, const char* _mode);
+    const StringView& _file_name, const StringView& _mode);
   /// @}
 
   /// \brief Close the file.
@@ -105,21 +103,11 @@ inline UnbufferedFile::~UnbufferedFile() {
   (void)close();
 }
 
-inline Optional<UnbufferedFile> UnbufferedFile::open(Memory::Allocator& _allocator, const String& _file_name, const char* _mode) {
-  return open(_allocator, _file_name.data(), _mode);
-}
-
 // Helper functions for whole-file reading.
-RX_API Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator, const char* _file_name);
-RX_API Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator, const char* _file_name);
-
-inline Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator, const String& _file_name) {
-  return read_binary_file(_allocator, _file_name.data());
-}
-
-inline Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator, const String& _file_name) {
-  return read_text_file(_allocator, _file_name.data());
-}
+Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator,
+  const StringView& _file_name);
+Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator,
+  const StringView& _file_name);
 
 } // namespace Rx::Filesystem
 

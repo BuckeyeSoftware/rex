@@ -5,7 +5,7 @@
 namespace Rx::Utility {
 
 template<typename T>
-Optional<T> copy(const T& _value) {
+Optional<Traits::RemoveReference<T>> copy(const T& _value) {
   if constexpr (Concepts::Copyable<T>) {
     return T::copy(_value);
   } else {

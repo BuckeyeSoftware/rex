@@ -168,8 +168,18 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
     }
 
     const auto count = optimized_elements.size() - n_elements;
-    return optimized_meshes.emplace_back("", _material_name, n_elements, count,
-      Vector<Vector<Math::AABB>>{allocator()});
+
+    auto name = String::create(allocator(), "");
+    auto material = String::copy(_material_name);
+
+    // TODO(dweiler): Revisit this.
+    return name && material &&
+      optimized_meshes.emplace_back(
+        Utility::move(*name),
+        Utility::move(*material),
+        n_elements,
+        count,
+        Vector<Vector<Math::AABB>>{allocator()});
   };
 
   time.start();
@@ -272,7 +282,7 @@ bool Importer::load(Stream::UntrackedStream& _stream) {
   return true;
 }
 
-bool Importer::load(const String& _file_name) {
+bool Importer::load(const StringView& _file_name) {
   if (auto file = Filesystem::BufferedFile::open(allocator(), _file_name, "r")) {
     return load(*file);
   }

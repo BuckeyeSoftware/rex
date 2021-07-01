@@ -15,31 +15,30 @@ struct Context {
 
   constexpr Context(Memory::Allocator& _allocator);
 
-  [[nodiscard]] bool load(const char* _file_name);
-  [[nodiscard]] bool save(const char* _file_name);
+  [[nodiscard]] bool load(const StringView& _file_name);
+  [[nodiscard]] bool save(const StringView& _file_name);
 
   // TODO(dweiler): Figure out how to do multiple Console Context for variables...
   static VariableReference* add_variable(VariableReference* _reference);
 
   [[nodiscard]]
-  Command* add_command(const String& _name, const char* _signature,
+  Command* add_command(const StringView& _name, const StringView& _signature,
     Function<bool(Context& console_, const Vector<Command::Argument>&)>&& function_);
 
-  static VariableReference* find_variable_by_name(const String& _name);
-  static VariableReference* find_variable_by_name(const char* _name);
+  static VariableReference* find_variable_by_name(const StringView& _name);
 
-  bool execute(const String& _contents);
+  bool execute(const StringView& _contents);
 
   template<typename... Ts>
   RX_HINT_FORMAT(2, 0) bool print(const char* _format, Ts&&... _arguments);
 
-  bool write(const String& _message);
+  bool write(const StringView& _message);
 
   void clear();
   const Vector<String>& lines();
 
-  Optional<Vector<String>> auto_complete_variables(const String& _prefix);
-  Optional<Vector<String>> auto_complete_commands(const String& _prefix);
+  Optional<Vector<StringView>> auto_complete_variables(const StringView& _prefix);
+  Optional<Vector<StringView>> auto_complete_commands(const StringView& _prefix);
 
   // set variable |_reference| with token |_token|
   static VariableStatus set_from_reference_and_token(VariableReference* _reference, const Token& _token);
@@ -74,10 +73,6 @@ bool Context::print(const char* _format, Ts&&... _arguments) {
   } else {
     return write(_format);
   }
-}
-
-inline VariableReference* Context::find_variable_by_name(const String& _name) {
-  return find_variable_by_name(_name.data());
 }
 
 } // namespace Rx::Console

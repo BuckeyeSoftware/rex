@@ -19,15 +19,15 @@ struct Text {
 
   void update(Float32 _delta_time);
 
-  String copy() const;
-  String cut();
-  void paste(const String& _contents);
+  Optional<String> copy() const;
+  Optional<String> cut();
+  void paste(const StringView& _contents);
   void select(bool _select);
   void select_all();
 
   void move_cursor(Position _position);
   void erase();
-  bool assign(const String& _contents);
+  bool assign(const StringView& _contents);
   void clear();
 
   bool is_cursor_visible() const;

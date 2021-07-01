@@ -241,6 +241,11 @@ bool BufferedStream::attach(UntrackedStream& _stream) {
 }
 
 Uint64 BufferedStream::on_read(Byte* data_, Uint64 _size, Uint64 _offset) {
+  // Reads larger than a page size, skip the buffering.
+  if (_size > m_page_size && on_flush()) {
+    return m_stream->on_read(data_, _size, _offset);
+  }
+
   // Enumerate in pages.
   Uint64 bytes = 0;
   auto i = page_iterate(_size, _offset);
@@ -256,6 +261,11 @@ Uint64 BufferedStream::on_read(Byte* data_, Uint64 _size, Uint64 _offset) {
 }
 
 Uint64 BufferedStream::on_write(const Byte* _data, Uint64 _size, Uint64 _offset) {
+  // Writes larger than a page size, skip the buffering.
+  if (_size > m_page_size && on_flush()) {
+    return m_stream->on_write(_data, _size, _offset);
+  }
+
   // Enumerate in pages.
   Uint64 bytes = 0;
   auto i = page_iterate(_size, _offset);

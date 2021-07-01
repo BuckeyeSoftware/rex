@@ -105,18 +105,19 @@ void Layer::update(Float32 _delta_time) {
       if (m_keyboard.is_pressed(ScanCode::A)) {
         // Control+A = Select All
         m_text->select_all();
-      } else if (m_keyboard.is_pressed(ScanCode::C)) {
-        // Control+C = Copy
-        m_context->update_clipboard(m_text->copy());
+      } else if (m_keyboard.is_pressed(ScanCode::C) || m_keyboard.is_pressed(ScanCode::INSERT)) {
+        // Control+(C|Insert) = Copy
+        if (auto copy = m_text->copy()) {
+          m_context->update_clipboard(Utility::move(*copy));
+        }
       } else if (m_keyboard.is_pressed(ScanCode::V)) {
         // Control+V = Paste
         m_text->paste(m_context->clipboard());
       } else if (m_keyboard.is_pressed(ScanCode::X)) {
         // Control+X = Cut
-        m_context->update_clipboard(m_text->cut());
-      } else if (m_keyboard.is_pressed(ScanCode::INSERT)) {
-        // Control+Insert = Copy
-        m_context->update_clipboard(m_text->copy());
+        if (auto cut = m_text->cut()) {
+          m_context->update_clipboard(Utility::move(*cut));
+        }
       }
     }
 
@@ -125,7 +126,9 @@ void Layer::update(Float32 _delta_time) {
     {
       if (m_keyboard.is_pressed(ScanCode::DELETE)) {
         // Shift+Delete = Cut
-        m_context->update_clipboard(m_text->cut());
+        if (auto cut = m_text->cut()) {
+          m_context->update_clipboard(Utility::move(*cut));
+        }
       } else if (m_keyboard.is_pressed(ScanCode::INSERT)) {
         // Shift+Insert = Paste
         m_text->paste(m_context->clipboard());

@@ -60,7 +60,7 @@ bool Loader::load(Concurrency::Scheduler& _scheduler, Stream::UntrackedStream& _
   return false;
 }
 
-bool Loader::load(Concurrency::Scheduler& _scheduler, const String& _file_name) {
+bool Loader::load(Concurrency::Scheduler& _scheduler, const StringView& _file_name) {
   if (auto file = Filesystem::UnbufferedFile::open(allocator(), _file_name, "r")) {
     return load(_scheduler, *file);
   }
@@ -151,7 +151,7 @@ bool Loader::parse(Concurrency::Scheduler& _scheduler, const JSON& _definition) 
   return validate();
 }
 
-bool Loader::import(const String& _file_name) {
+bool Loader::import(const StringView& _file_name) {
   Ptr<Importer> new_loader;
 
   // determine the model format based on the extension

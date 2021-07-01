@@ -184,6 +184,12 @@ JSON JSON::operator[](const char* _name) const {
   return {};
 }
 
+Optional<String> JSON::as_string(Memory::Allocator& _allocator) const {
+  RX_ASSERT(is_string(), "not a string");
+  auto string{reinterpret_cast<struct json_string_s*>(m_value->payload)};
+  return String::create(_allocator, string->string, string->string_size);
+}
+
 String JSON::as_string_with_allocator(Memory::Allocator& _allocator) const {
   RX_ASSERT(is_string(), "not a string");
   auto string{reinterpret_cast<struct json_string_s*>(m_value->payload)};

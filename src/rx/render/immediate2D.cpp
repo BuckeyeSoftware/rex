@@ -142,14 +142,13 @@ bool Immediate2D::Queue::record_triangle(
   return m_commands.push_back(Utility::move(next_command));
 }
 
-bool Immediate2D::Queue::record_text(
-  const char* _font, Size _font_length, const Math::Vec2f& _position,
-  Sint32 _size, Float32 _scale, TextAlign _align, const char* _text,
-  Size _text_length, const Math::Vec4f& _color)
+bool Immediate2D::Queue::record_text(const StringView& _font,
+  const Math::Vec2f& _position, Sint32 _size, Float32 _scale, TextAlign _align,
+  const StringView& _text, const Math::Vec4f& _color)
 {
   RX_PROFILE_CPU("immediate2D::queue::record_text");
 
-  if (_text_length == 0) {
+  if (_text.is_empty()) {
     return false;
   }
 
@@ -179,12 +178,12 @@ bool Immediate2D::Queue::record_text(
   next_command.as_text.position = _position;
   next_command.as_text.size = _size;
   next_command.as_text.scale = _scale;
-  next_command.as_text.font_length = _font_length;
-  next_command.as_text.text_length = _text_length;
+  next_command.as_text.font_length = _font.size();
+  next_command.as_text.text_length = _text.size();
 
   // insert strings into string table
-  const auto font_index = m_string_table.add(_font, _font_length);
-  const auto text_index = m_string_table.add(_text, _text_length);
+  const auto font_index = m_string_table.add(_font);
+  const auto text_index = m_string_table.add(_text);
   if (!font_index || !text_index) {
     return false;
   }
@@ -193,14 +192,6 @@ bool Immediate2D::Queue::record_text(
   next_command.as_text.text_index = *text_index;
 
   return m_commands.push_back(Utility::move(next_command));
-}
-
-bool Immediate2D::Queue::record_text(
-  const char* _font, const Math::Vec2f& _position, Sint32 _size, Float32 _scale,
-  TextAlign _align, const char* _contents, const Math::Vec4f& _color)
-{
-  return record_text(_font, strlen(_font), _position, _size, _scale, _align,
-    _contents, strlen(_contents), _color);
 }
 
 void Immediate2D::Queue::clear() {

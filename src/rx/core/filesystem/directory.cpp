@@ -62,15 +62,15 @@ struct FindContext {
 };
 #endif
 
-Optional<Directory> Directory::open(Memory::Allocator& _allocator, const String& _path) {
+Optional<Directory> Directory::open(Memory::Allocator& _allocator, const StringView& _path) {
   // Make a copy of the path name to store in Directory.
-  auto path_copy = Utility::copy(_path);
-  if (!path_copy) {
+  auto path = _path.to_string(_allocator);
+  if (!path) {
     return nullopt;
   }
 #if defined(RX_PLATFORM_POSIX)
   if (auto impl = opendir(_path.data())) {
-    return Directory{_allocator, Utility::move(*path_copy), reinterpret_cast<void*>(impl)};
+    return Directory{_allocator, Utility::move(*path), reinterpret_cast<void*>(impl)};
   }
 #elif defined(RX_PLATFORM_WINDOWS)
   // The only thing we can cache between reuses of a directory object is the
@@ -82,7 +82,7 @@ Optional<Directory> Directory::open(Memory::Allocator& _allocator, const String&
   }
 
   // Convert |_path| to UTF-16 for Windows.
-  const auto path_utf16 = _path.to_utf16();
+  const auto path_utf16 = path.to_utf16();
   static constexpr const wchar_t PATH_EXTRA[] = L"\\*";
   LinearBuffer path_data{_allocator};
   if (!path_data.resize(path_utf16.size() * 2 + sizeof PATH_EXTRA)) {
@@ -100,7 +100,7 @@ Optional<Directory> Directory::open(Memory::Allocator& _allocator, const String&
     // conversion for |each|.
     context->handle = handle;
     context->path_data = Utility::move(path_data);
-    return Directory{_allocator, Utility::move(*path_copy), reinterpret_cast<void*>(context)};
+    return Directory{_allocator, Utility::move(*path), reinterpret_cast<void*>(context)};
   } else {
     _allocator.destroy<FindContext>(context);
   }
@@ -146,12 +146,14 @@ bool Directory::enumerate(Function<bool(Item&&)>&& _function) {
 
     if (next) {
       if (next->d_type == DT_DIR) {
-        if (!_function({this, {allocator(), next->d_name}, Item::Type::DIRECTORY})) {
+        auto name = String::create(allocator(), next->d_name);
+        if (!name || !_function({this, Utility::move(*name), Item::Type::DIRECTORY})) {
           result = false;
           break;
         }
       } else if (next->d_type == DT_REG) {
-        if (!_function({this, {allocator(), next->d_name}, Item::Type::FILE})) {
+        auto name = String::create(allocator(), next->d_name);
+        if (!name || !_function({this, Utility::move(*name), Item::Type::FILE})) {
           result = false;
           break;
         }
@@ -219,7 +221,7 @@ bool Directory::enumerate(Function<bool(Item&&)>&& _function) {
   return result;
 }
 
-bool create_directory(const String& _path) {
+bool create_directory(const StringView& _path) {
 #if defined(RX_PLATFORM_POSIX)
   auto perms = 0;
   perms |= S_IRUSR; // Read bit for owner.

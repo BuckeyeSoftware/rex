@@ -326,11 +326,9 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
 
   for (Uint32 i = 0; i < _header.meshes; i++) {
     const auto& mesh = meshes[i];
-    const auto* material_name = string_table + mesh.material;
-    const auto* mesh_name = string_table + mesh.name;
-    if (!m_meshes.emplace_back(mesh_name, material_name, mesh.first_triangle * 3,
-      mesh.num_triangles * 3, Vector<Vector<Math::AABB>>{allocator()}))
-    {
+    auto material_name = String::create(allocator(), string_table + mesh.material);
+    auto mesh_name = String::create(allocator(), string_table + mesh.name);
+    if (!material_name || !mesh_name || !m_meshes.emplace_back(Utility::move(*mesh_name), Utility::move(*material_name), mesh.first_triangle * 3, mesh.num_triangles * 3, Vector<Vector<Math::AABB>>{allocator()})) {
       return m_report.error("out of memory");
     }
   }
@@ -397,7 +395,8 @@ bool IQM::read_animations(const Header& _header, const LinearBuffer& _data) {
 
   for (Uint32 i = 0; i < _header.animations; i++) {
     const auto& animation = animations[i];
-    if (!m_clips.emplace_back(i, animation.frame_rate, animation.first_frame, animation.num_frames, string_table + animation.name)) {
+    auto name = String::create(allocator(), string_table + animation.name);
+    if (!name || !m_clips.emplace_back(i, animation.frame_rate, animation.first_frame, animation.num_frames, Utility::move(*name))) {
       return m_report.error("out of memory");
     }
   }

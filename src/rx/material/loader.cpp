@@ -65,7 +65,7 @@ bool Loader::load(Stream::UntrackedStream& _stream) {
   return false;
 }
 
-bool Loader::load(const String& _file_name) {
+bool Loader::load(const StringView& _file_name) {
   if (auto file = Filesystem::UnbufferedFile::open(allocator(), _file_name, "r")) {
     return load(*file);
   }
@@ -91,7 +91,12 @@ bool Loader::parse(const JSON& _definition) {
     return m_report.error("expected String for 'name'");
   }
 
-  m_name = Utility::move(name.as_string_with_allocator(allocator()));
+  auto name_string = name.as_string(allocator());
+  if (!name_string) {
+    return false;
+  }
+
+  m_name = Utility::move(*name_string);
 
   if (!m_report.rename(m_name)) {
     return false;
@@ -203,8 +208,12 @@ bool Loader::parse(const JSON& _definition) {
 bool Loader::parse_textures(const JSON& _textures) {
   return _textures.each([this](const JSON& _texture) {
     Texture new_texture{allocator()};
-    if (_texture.is_string() && new_texture.load(_texture.as_string_with_allocator(allocator()))) {
-      return m_textures.push_back(Utility::move(new_texture));
+    if (_texture.is_string()) {
+      if (auto name = _texture.as_string(allocator())) {
+        return new_texture.load(*name) && m_textures.push_back(Utility::move(new_texture));
+      } else {
+        return false;
+      }
     } else if (_texture.is_object() && new_texture.parse(_texture)) {
       return m_textures.push_back(Utility::move(new_texture));
     } else {

@@ -38,13 +38,13 @@ void MemoryStats::render() {
   Float32 y = 25.0f;
   auto line{[&](const String &_line) {
     m_immediate->frame_queue().record_text(
-            *font_name,
-            Math::Vec2f{screen_size.x - 25.0f, y},
-            *font_size,
-            1.0f,
-            Render::Immediate2D::TextAlign::RIGHT,
-            _line,
-            {1.0f, 1.0f, 1.0f, 1.0f});
+      font_name->get(),
+      Math::Vec2f{screen_size.x - 25.0f, y},
+      *font_size,
+      1.0f,
+      Render::Immediate2D::TextAlign::RIGHT,
+      _line,
+      {1.0f, 1.0f, 1.0f, 1.0f});
     y += *font_size;
   }};
 

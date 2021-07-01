@@ -35,7 +35,7 @@ struct Importer {
   Importer(Memory::Allocator& _allocator);
 
   [[nodiscard]] bool load(Stream::UntrackedStream& _stream);
-  [[nodiscard]] bool load(const String& _file_name);
+  [[nodiscard]] bool load(const StringView& _file_name);
 
   // implemented by each model loader
   [[nodiscard]] virtual bool read(Stream::UntrackedStream& _stream) = 0;

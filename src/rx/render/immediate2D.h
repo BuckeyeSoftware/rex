@@ -96,29 +96,20 @@ struct Immediate2D {
     };
 
     bool record_scissor(const Math::Vec2f& _position, const Math::Vec2f& _size);
-    bool record_rectangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
-                          Float32 _roundness, const Math::Vec4f& _color);
+    bool record_rectangle(const Math::Vec2f& _position,
+      const Math::Vec2f& _size, Float32 _roundness, const Math::Vec4f& _color);
     bool record_rectangle_gradient(const Math::Vec2f& _position,
-      const Math::Vec2f& _size, Float32 _roundness, const Math::Vec4f (&_colors)[4]);
+      const Math::Vec2f& _size, Float32 _roundness,
+      const Math::Vec4f (&_colors)[4]);
     bool record_line(const Math::Vec2f& _point_a, const Math::Vec2f& _point_b,
-                     Float32 _roundness, Float32 _thickness, const Math::Vec4f& _color);
+      Float32 _roundness, Float32 _thickness, const Math::Vec4f& _color);
     bool record_triangle(const Math::Vec2f& _position, const Math::Vec2f& _size,
-                         Uint32 _flags, const Math::Vec4f& _color);
-
-    bool record_text(const char* _font, Size _font_length,
-                     const Math::Vec2f& _position, Sint32 _size, Float32 _scale, TextAlign _align,
-                     const char* _contents, Size _contents_length, const Math::Vec4f& _color);
-
-    bool record_text(const char* _font, const Math::Vec2f& _position,
-                     Sint32 _size, Float32 _scale, TextAlign _align, const char* _contents,
-                     const Math::Vec4f& _color);
-
-    bool record_text(const String& _font, const Math::Vec2f& _position,
-                     Sint32 _size, Float32 _scale, TextAlign _align, const String& _contents,
-                     const Math::Vec4f& _color);
+      Uint32 _flags, const Math::Vec4f& _color);
+    bool record_text(const StringView& _font, const Math::Vec2f& _position,
+      Sint32 _size, Float32 _scale, TextAlign _align, const StringView& _contents,
+      const Math::Vec4f& _color);
 
     void clear();
-
     bool is_empty() const;
 
   private:
@@ -192,7 +183,7 @@ struct Immediate2D {
 
     struct Key {
       Sint32 size;
-      String name;
+      StringView name;
       Size hash() const;
       bool operator==(const Key& _key) const;
     };
@@ -327,15 +318,6 @@ inline constexpr Immediate2D::Queue::Command::Command()
   , color{}
   , as_nat{}
 {
-}
-
-inline bool Immediate2D::Queue::record_text(
-  const String& _font, const Math::Vec2f& _position, Sint32 _size,
-  Float32 _scale, TextAlign _align, const String& _contents,
-  const Math::Vec4f& _color)
-{
-  return record_text(_font.data(), _font.size(), _position, _size, _scale, _align,
-    _contents.data(), _contents.size(), _color);
 }
 
 inline bool Immediate2D::Queue::is_empty() const {

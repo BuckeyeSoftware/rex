@@ -41,7 +41,6 @@ struct BufferedFile
   /// \returns \c *this.
   BufferedFile& operator=(BufferedFile&& file_);
 
-  /// @{
   /// \brief Opens a file.
   ///
   /// \param _allocator The allocator to use for stream state.
@@ -67,13 +66,8 @@ struct BufferedFile
   ///
   /// \returns The BufferedFile on success, nullopt otherwise.
   static Optional<BufferedFile> open(Memory::Allocator& _allocator,
-    const char* _file_name, const char* _mode,
+    const StringView& _file_name, const StringView& _mode,
     Uint16 _page_size = BUFFER_PAGE_SIZE, Uint8 _page_count = BUFFER_PAGE_COUNT);
-
-  static Optional<BufferedFile> open(Memory::Allocator& _allocator,
-    const String& _file_name, const char* _mode,
-    Uint16 _page_size = BUFFER_PAGE_SIZE, Uint8 _page_count = BUFFER_PAGE_COUNT);
-  /// @}
 
 private:
   BufferedFile(BufferedStream&& buffered_stream_, UnbufferedFile&& unbuffered_file_);
@@ -84,13 +78,6 @@ inline constexpr BufferedFile::BufferedFile(Memory::Allocator& _allocator)
   : BufferedStream{_allocator}
   , m_unbuffered_file{_allocator}
 {
-}
-
-inline Optional<BufferedFile> BufferedFile::open(Memory::Allocator& _allocator,
-  const String& _file_name, const char* _mode,
-  Uint16 _page_size, Uint8 _page_count)
-{
-  return open(_allocator, _file_name.data(), _mode, _page_size, _page_count);
 }
 
 } // namespace Rx::Filesystem

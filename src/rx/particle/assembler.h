@@ -13,7 +13,7 @@ struct Assembler {
   }
 
   // Assembles particle assembly source file |_src_file|.
-  [[nodiscard]] bool assemble(const String& _src_file);
+  [[nodiscard]] bool assemble(const StringView& _src_file);
 
   const Program& program() const &;
 

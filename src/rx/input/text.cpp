@@ -21,22 +21,21 @@ void Text::update(Float32 _delta_time) {
   }
 }
 
-String Text::copy() const {
-  return m_flags & SELECTED
-    ? m_contents.substring(m_selection[0], m_selection[1] - m_selection[0])
-    : m_contents;
+Optional<String> Text::copy() const {
+  if (m_flags & SELECTED) {
+    return m_contents.substring(m_selection[0], m_selection[1] - m_selection[0]);
+  }
+  return String::copy(m_contents);
 }
 
-String Text::cut() {
-  String contents;
-
+Optional<String> Text::cut() {
+  Optional<String> contents;
   if (m_flags & SELECTED) {
     // Take the substring defined by the selection region and remove that
     // substring from the contents.
     contents = m_contents.substring(m_selection[0],
       m_selection[1] - m_selection[0]);
     m_contents.erase(m_selection[0], m_selection[1]);
-
     // Then move the cursor to the beginning of the selection.
     m_cursor = m_selection[0];
   } else {
@@ -53,7 +52,7 @@ String Text::cut() {
   return contents;
 }
 
-void Text::paste(const String& _contents) {
+void Text::paste(const StringView& _contents) {
   // Pasting when you have selected text replaces the selected text.
   if ((m_flags & SELECTED) && !m_contents.is_empty()) {
     // Remove the selected text and move the cursor to the beginning of
@@ -64,7 +63,7 @@ void Text::paste(const String& _contents) {
 
   // Insert the new text at the cursor position and advance the cursor by the
   // length of the new text.
-  if (m_contents.insert_at(m_cursor, _contents)) {
+  if (m_contents.insert_at(m_cursor, _contents.data())) {
     m_cursor += _contents.size();
   }
 
@@ -207,8 +206,8 @@ void Text::move_cursor(Position _position) {
   reset_cursor();
 }
 
-bool Text::assign(const String& _contents) {
-  auto contents = Utility::copy(_contents);
+bool Text::assign(const StringView& _contents) {
+  auto contents = _contents.to_string(Memory::SystemAllocator::instance());
   if (!contents) {
     return false;
   }

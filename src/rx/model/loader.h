@@ -16,7 +16,7 @@ struct Loader {
   ~Loader();
 
   [[nodiscard]] bool load(Concurrency::Scheduler& _scheduler, Stream::UntrackedStream& _stream);
-  [[nodiscard]] bool load(Concurrency::Scheduler& _scheduler, const String& _file_name);
+  [[nodiscard]] bool load(Concurrency::Scheduler& _scheduler, const StringView& _file_name);
 
   [[nodiscard]] bool parse(Concurrency::Scheduler& _scheduler, const JSON& _json);
 
@@ -54,7 +54,7 @@ struct Loader {
 
   constexpr Memory::Allocator& allocator() const;
 
-  bool import(const String& _file_name);
+  bool import(const StringView& _file_name);
 
 private:
   void destroy();

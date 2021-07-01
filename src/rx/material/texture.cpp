@@ -33,7 +33,7 @@ bool Texture::load(Stream::UntrackedStream& _stream) {
   return false;
 }
 
-bool Texture::load(const String& _file_name) {
+bool Texture::load(const StringView& _file_name) {
   if (auto file = Filesystem::UnbufferedFile::open(allocator(), _file_name, "r")) {
     return load(*file);
   }

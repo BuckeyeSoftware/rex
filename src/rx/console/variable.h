@@ -91,10 +91,11 @@ struct VariableReference {
   const char* name() const;
   VariableType type() const;
 
-  void reset();
-  String print_current() const;
-  String print_range() const;
-  String print_initial() const;
+  [[nodiscard]] bool reset();
+
+  Optional<String> print_current() const;
+  Optional<String> print_range() const;
+  Optional<String> print_initial() const;
 
   bool is_initial() const;
 
@@ -159,7 +160,7 @@ struct Variable {
   VariableReference* reference();
   const VariableReference* reference() const;
 
-  void reset();
+  [[nodiscard]] bool reset();
   VariableStatus set(const T& value, bool _signal_change = true);
 
   template<typename F>
@@ -188,7 +189,7 @@ struct Variable<Bool> {
   VariableReference* reference();
   const VariableReference* reference() const;
 
-  void reset();
+  [[nodiscard]] bool reset();
   VariableStatus set(bool _value, bool _signal_change = true);
 
   void toggle();
@@ -217,9 +218,8 @@ struct Variable<String> {
   VariableReference* reference();
   const VariableReference* reference() const;
 
-  void reset();
-  VariableStatus set(const char* _value, bool _signal_change = true);
-  VariableStatus set(const String& _value, bool _signal_change = true);
+  [[nodiscard]] bool reset();
+  VariableStatus set(const StringView& _value, bool _signal_change = true);
 
   template<typename F>
   Optional<typename OnChangeEvent::Handle> on_change(F&& on_change_);
@@ -248,7 +248,7 @@ struct Variable<Vec2<T>> {
   VariableReference* reference();
   const VariableReference* reference() const;
 
-  void reset();
+  [[nodiscard]] bool reset();
   VariableStatus set(const Vec2<T>& _value, bool _signal_change = true);
 
   template<typename F>
@@ -279,7 +279,7 @@ struct Variable<Vec3<T>> {
   VariableReference* reference();
   const VariableReference* reference() const;
 
-  void reset();
+  [[nodiscard]] bool reset();
   VariableStatus set(const Vec3<T>& value, bool _signal_change = true);
 
   template<typename F>
@@ -310,7 +310,7 @@ struct Variable<Vec4<T>> {
   VariableReference* reference();
   const VariableReference* reference() const;
 
-  void reset();
+  [[nodiscard]] bool reset();
   VariableStatus set(const Vec4<T>& value, bool _signal_change = true);
 
   template<typename F>
@@ -373,8 +373,9 @@ VariableReference* Variable<T>::reference() {
 }
 
 template<typename T>
-void Variable<T>::reset() {
+bool Variable<T>::reset() {
   m_current = m_initial;
+  return true;
 }
 
 template<typename T>
@@ -430,8 +431,9 @@ inline const VariableReference* Variable<Bool>::reference() const {
   return &m_reference;
 }
 
-inline void Variable<Bool>::reset() {
+inline bool Variable<Bool>::reset() {
   m_current = m_initial;
+  return true;
 }
 
 inline VariableStatus Variable<Bool>::set(bool value, bool _signal_change) {
@@ -462,8 +464,11 @@ inline Optional<typename Variable<Bool>::OnChangeEvent::Handle> Variable<Bool>::
 inline Variable<String>::Variable(const char* _name, const char* _description, const char* _initial)
   : m_reference{_name, _description, static_cast<void*>(this), VariableTrait<String>::type}
   , m_initial{_initial}
-  , m_current{_initial}
+  // , m_current{_initial}
 {
+  auto initial = String::create(Memory::SystemAllocator::instance(), _initial);
+  RX_ASSERT(initial, "out of memory");
+  m_current = Utility::move(*initial);
 }
 
 inline Variable<String>::operator const String&() const {
@@ -486,32 +491,27 @@ inline const VariableReference* Variable<String>::reference() const {
   return &m_reference;
 }
 
-inline void Variable<String>::reset() {
-  m_current = m_initial;
+inline bool Variable<String>::reset() {
+  if (auto copy = String::create(m_current.allocator(), m_initial)) {
+    m_current = Utility::move(*copy);
+    return true;
+  }
+  return false;
 }
 
-inline VariableStatus Variable<String>::set(const char* _value, bool _signal_change) {
-  if (m_current != _value) {
-    m_current = _value;
-    if (_signal_change) {
-      m_on_change.signal(*this);
-    }
+inline VariableStatus Variable<String>::set(const StringView& _value, bool _signal_change) {
+  if (m_current == _value) {
+    return VariableStatus::SUCCESS;
   }
 
-  return VariableStatus::SUCCESS;
-}
-
-inline VariableStatus Variable<String>::set(const String& _value, bool _signal_change) {
-  auto value = Utility::copy(_value);
-  if (!value) {
+  auto copy = _value.to_string(Memory::SystemAllocator::instance());
+  if (!copy) {
     return VariableStatus::OUT_OF_MEMORY;
   }
 
-  if (m_current != _value) {
-    m_current = Utility::move(*value);
-    if (_signal_change) {
-      m_on_change.signal(*this);
-    }
+  m_current = Utility::move(*copy);
+  if (_signal_change) {
+    m_on_change.signal(*this);
   }
 
   return VariableStatus::SUCCESS;
@@ -573,8 +573,9 @@ const VariableReference* Variable<Vec2<T>>::reference() const {
 }
 
 template<typename T>
-void Variable<Vec2<T>>::reset() {
+bool Variable<Vec2<T>>::reset() {
   m_current = m_initial;
+  return true;
 }
 
 template<typename T>
@@ -652,8 +653,9 @@ const VariableReference* Variable<Vec3<T>>::reference() const {
 }
 
 template<typename T>
-void Variable<Vec3<T>>::reset() {
+bool Variable<Vec3<T>>::reset() {
   m_current = m_initial;
+  return true;
 }
 
 template<typename T>
@@ -731,8 +733,9 @@ const VariableReference* Variable<Vec4<T>>::reference() const {
 }
 
 template<typename T>
-void Variable<Vec4<T>>::reset() {
+bool Variable<Vec4<T>>::reset() {
   m_current = m_initial;
+  return true;
 }
 
 template<typename T>

@@ -67,7 +67,7 @@ void RenderStats::render() {
         _stats.cached);
 
     m_immediate->frame_queue().record_text(
-      *font_name,
+      font_name->get(),
       offset,
       *font_size,
       1.0f,
@@ -82,7 +82,7 @@ void RenderStats::render() {
   const Size commands_used = command_buffer.used();
   const Size commands_total = command_buffer.size();
   m_immediate->frame_queue().record_text(
-    *font_name,
+    font_name->get(),
     offset,
     *font_size,
     1.0f,
@@ -109,7 +109,7 @@ void RenderStats::render() {
 
   auto render_number = [&](const char* _name, Size _number) {
     m_immediate->frame_queue().record_text(
-      *font_name,
+      font_name->get(),
       offset,
       *font_size,
       1.0f,
@@ -127,7 +127,7 @@ void RenderStats::render() {
   render_number("clears", frontend.clear_calls());
 
   m_immediate->frame_queue().record_text(
-    *font_name,
+    font_name->get(),
     offset,
     *font_size,
     1.0f,
@@ -146,7 +146,7 @@ void RenderStats::render() {
   // mspf and fps
   const auto& _timer = frontend.timer();
   m_immediate->frame_queue().record_text(
-    *font_name,
+    font_name->get(),
     screen_size - Math::Vec2f{25, 25},
     *font_size,
     1.0f,

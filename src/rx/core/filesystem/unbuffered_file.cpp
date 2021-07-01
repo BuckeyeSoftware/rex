@@ -18,13 +18,13 @@ namespace Rx::Filesystem {
 
 RX_LOG("filesystem/file", logger);
 
-static inline Uint32 flags_from_mode(const char* _mode) {
+static inline Uint32 flags_from_mode(const StringView& _mode) {
   Uint32 flags = 0;
 
   flags |= Stream::STAT;
 
-  for (const char* ch = _mode; *ch; ch++) {
-    switch (*ch) {
+  for (Size n = _mode.size(), i = 0; i < n; i++) {
+    switch (_mode[i]) {
     case 'r':
       flags |= Stream::READ;
       break;
@@ -49,7 +49,9 @@ union ImplCast { void* impl; int fd; };
 #endif
 
 #if defined(RX_PLATFORM_POSIX)
-static void* open_file([[maybe_unused]] Memory::Allocator& _allocator, const char* _file_name, const char* _mode) {
+static void* open_file([[maybe_unused]] Memory::Allocator& _allocator,
+  const StringView& _file_name, const StringView& _mode)
+{
   // Determine flags to open file by.
   int flags = 0;
 
@@ -70,28 +72,28 @@ static void* open_file([[maybe_unused]] Memory::Allocator& _allocator, const cha
   flags |= O_DIRECT;
 #endif
 
-  if (strchr(_mode, '+')) {
+  if (_mode.contains('+')) {
     flags = O_RDWR;
-  } else if (*_mode == 'r') {
+  } else if (_mode[0] == 'r') {
     flags = O_RDONLY;
   } else {
     flags = O_WRONLY;
   }
 
-  if (*_mode != 'r') {
+  if (_mode[0] != 'r') {
     flags |= O_CREAT;
   }
 
-  if (*_mode == 'w') {
+  if (_mode[0] == 'w') {
     flags |= O_TRUNC;
-  } else if (*_mode == 'a') {
+  } else if (_mode[0] == 'a') {
     flags |= O_APPEND;
   }
 
   // Don't ever duplicate FDs on fork.
   flags |= O_CLOEXEC;
 
-  int fd = open(_file_name, flags, 0666);
+  int fd = open(_file_name.data(), flags, 0666);
   if (fd < 0) {
     return nullptr;
   }
@@ -265,9 +267,13 @@ UnbufferedFile& UnbufferedFile::operator=(UnbufferedFile&& file_) {
   return *this;
 }
 
-Optional<UnbufferedFile> UnbufferedFile::open(Memory::Allocator& _allocator, const char* _file_name, const char* _mode) {
-  if (auto file = open_file(_allocator, _file_name, _mode)) {
-    return UnbufferedFile{flags_from_mode(_mode), file, _file_name, _mode};
+Optional<UnbufferedFile> UnbufferedFile::open(Memory::Allocator& _allocator,
+  const StringView& _file_name, const StringView& _mode)
+{
+  if (auto name = _file_name.to_string(_allocator)) {
+    if (auto file = open_file(_allocator, _file_name, _mode)) {
+      return UnbufferedFile{flags_from_mode(_mode), file, Utility::move(*name), _mode.data()};
+    }
   }
   return nullopt;
 }
@@ -341,34 +347,28 @@ bool UnbufferedFile::close() {
   return false;
 }
 
-/*
-bool UnbufferedFile::print(String&& contents_) {
-  RX_ASSERT(m_impl, "invalid");
-  return write(reinterpret_cast<const Byte*>(contents_.data()), contents_.size());
-}*/
-
 const String& UnbufferedFile::name() const & {
   return m_name;
 }
 
 // When reading in the entire contents of a file use an UnbufferedFile.
-Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator, const char* _file_name) {
+Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator,
+  const StringView& _file_name)
+{
   if (auto file = UnbufferedFile::open(_allocator, _file_name, "r")) {
     return file->read_binary(_allocator);
   }
-
   logger->error("failed to open file '%s' [%s]", _file_name);
-
   return nullopt;
 }
 
-Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator, const char* _file_name) {
+Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator,
+  const StringView& _file_name)
+{
   if (auto file = UnbufferedFile::open(_allocator, _file_name, "r")) {
     return file->read_text(_allocator);
   }
-
   logger->error("failed to open file '%s'", _file_name);
-
   return nullopt;
 }
 

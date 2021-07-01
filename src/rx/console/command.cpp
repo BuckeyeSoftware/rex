@@ -88,16 +88,16 @@ Command::Command(Delegate&& delegate_, Vector<Argument>&& arguments_,
 }
 
 Optional<Command> Command::create(Memory::Allocator& _allocator,
-  const String& _name, const char* _signature, Delegate&& delegate_)
+  const StringView& _name, const StringView& _signature, Delegate&& delegate_)
 {
-  auto name = Utility::copy(_name);
+  auto name = _name.to_string(_allocator);
   if (!name) {
     return nullopt;
   }
 
   // Consume the signature specification for the command and generate the list.
   Vector<VariableType> signature{_allocator};
-  for (const char* ch = _signature; *ch; ch++) switch (*ch) {
+  for (const char* ch = _signature.data(); *ch; ch++) switch (*ch) {
   case 'b':
     if (!signature.emplace_back(VariableType::BOOLEAN)) {
       return nullopt;

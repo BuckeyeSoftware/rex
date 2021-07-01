@@ -31,8 +31,8 @@ const char* VariableType_as_string(VariableType _type) {
   RX_HINT_UNREACHABLE();
 }
 
-static Optional<String> escape(const String& _contents) {
-  String result{_contents.allocator()};
+static Optional<String> escape(Memory::Allocator& _allocator, const StringView& _contents) {
+  String result{_allocator};
   if (!result.reserve(_contents.size() * 4)) {
     return nullopt;
   }
@@ -69,49 +69,44 @@ VariableReference::VariableReference(const char* name,
   m_next = Context::add_variable(this);
 }
 
-void VariableReference::reset() {
+bool VariableReference::reset() {
   switch (m_type) {
   case VariableType::BOOLEAN:
-    cast<Bool>()->reset();
-    break;
+    return cast<Bool>()->reset();
   case VariableType::STRING:
-    cast<String>()->reset();
-    break;
+    return cast<String>()->reset();
   case VariableType::INT:
-    cast<Sint32>()->reset();
-    break;
+    return cast<Sint32>()->reset();
   case VariableType::FLOAT:
-    cast<Float32>()->reset();
-    break;
+    return cast<Float32>()->reset();
   case VariableType::VEC4F:
-    cast<Math::Vec4f>()->reset();
-    break;
+    return cast<Math::Vec4f>()->reset();
   case VariableType::VEC4I:
-    cast<Math::Vec4i>()->reset();
-    break;
+    return cast<Math::Vec4i>()->reset();
   case VariableType::VEC3F:
-    cast<Math::Vec3f>()->reset();
-    break;
+    return cast<Math::Vec3f>()->reset();
   case VariableType::VEC3I:
-    cast<Math::Vec3i>()->reset();
-    break;
+    return cast<Math::Vec3i>()->reset();
   case VariableType::VEC2F:
-    cast<Math::Vec2f>()->reset();
-    break;
+    return cast<Math::Vec2f>()->reset();
   case VariableType::VEC2I:
-    cast<Math::Vec2i>()->reset();
-    break;
+    return cast<Math::Vec2i>()->reset();
   }
+  return false;
 }
 
-String VariableReference::print_current() const {
+Optional<String> VariableReference::print_current() const {
   auto& allocator = Memory::SystemAllocator::instance();
 
   switch (m_type) {
   case VariableType::BOOLEAN:
-    return cast<Bool>()->get() ? "true" : "false";
+    return String::create(allocator, cast<Bool>()->get() ? "true" : "false");
   case VariableType::STRING:
-    return String::format(allocator, "\"%s\"", *escape(cast<String>()->get()));
+    if (auto esc = escape(allocator, cast<String>()->get())) {
+      return String::format(allocator, "\"%s\"", *esc);
+    } else {
+      return nullopt;
+    }
   case VariableType::INT:
     return String::format(allocator, "%d", cast<Sint32>()->get());
   case VariableType::FLOAT:
@@ -133,22 +128,25 @@ String VariableReference::print_current() const {
   RX_HINT_UNREACHABLE();
 }
 
-String VariableReference::print_range() const {
+Optional<String> VariableReference::print_range() const {
   auto& allocator = Memory::SystemAllocator::instance();
+
+  auto n_inf = *String::create(allocator, "-inf");
+  auto p_inf = *String::create(allocator, "+inf");
 
   if (m_type == VariableType::INT) {
     const auto handle{cast<Sint32>()};
     const auto min{handle->min()};
     const auto max{handle->max()};
-    const auto min_fmt{min == k_int_min ? "-inf" : String::format(allocator, "%d", min)};
-    const auto max_fmt{max == k_int_max ? "+inf" : String::format(allocator, "%d", max)};
+    const auto& min_fmt{min == k_int_min ? n_inf : String::format(allocator, "%d", min)};
+    const auto& max_fmt{max == k_int_max ? p_inf : String::format(allocator, "%d", max)};
     return String::format(allocator, "[%s, %s]", min_fmt, max_fmt);
   } else if (m_type == VariableType::FLOAT) {
     const auto handle{cast<Float32>()};
     const auto min{handle->min()};
     const auto max{handle->max()};
-    const auto min_fmt{min == k_float_min ? "-inf" : String::format(allocator, "%f", min)};
-    const auto max_fmt{max == k_float_max ? "+inf" : String::format(allocator, "%f", max)};
+    const auto min_fmt{min == k_float_min ? n_inf : String::format(allocator, "%f", min)};
+    const auto max_fmt{max == k_float_max ? p_inf : String::format(allocator, "%f", max)};
     return String::format(allocator, "[%s, %s]", min_fmt, max_fmt);
   } else if (m_type == VariableType::VEC4F) {
     const auto handle{cast<Vec4f>()};
@@ -157,10 +155,10 @@ String VariableReference::print_range() const {
 
     String min_fmt;
     if (min.is_any(k_float_min)) {
-      const auto min_x{min.x == k_float_min ? "-inf" : String::format(allocator, "%f", min.x)};
-      const auto min_y{min.y == k_float_min ? "-inf" : String::format(allocator, "%f", min.y)};
-      const auto min_z{min.z == k_float_min ? "-inf" : String::format(allocator, "%f", min.z)};
-      const auto min_w{min.w == k_float_min ? "-inf" : String::format(allocator, "%f", min.w)};
+      const auto min_x{min.x == k_float_min ? n_inf : String::format(allocator, "%f", min.x)};
+      const auto min_y{min.y == k_float_min ? n_inf : String::format(allocator, "%f", min.y)};
+      const auto min_z{min.z == k_float_min ? n_inf : String::format(allocator, "%f", min.z)};
+      const auto min_w{min.w == k_float_min ? n_inf : String::format(allocator, "%f", min.w)};
       min_fmt = String::format(allocator, "{%s, %s, %s, %s}", min_x, min_y, min_z, min_w);
     } else {
       min_fmt = String::format(allocator, "%s", min);
@@ -168,10 +166,10 @@ String VariableReference::print_range() const {
 
     String max_fmt;
     if (max.is_any(k_float_max)) {
-      const auto max_x{max.x == k_float_max ? "+inf" : String::format(allocator, "%f", max.x)};
-      const auto max_y{max.y == k_float_max ? "+inf" : String::format(allocator, "%f", max.y)};
-      const auto max_z{max.z == k_float_max ? "+inf" : String::format(allocator, "%f", max.z)};
-      const auto max_w{max.w == k_float_max ? "+inf" : String::format(allocator, "%f", max.w)};
+      const auto max_x{max.x == k_float_max ? p_inf : String::format(allocator, "%f", max.x)};
+      const auto max_y{max.y == k_float_max ? p_inf : String::format(allocator, "%f", max.y)};
+      const auto max_z{max.z == k_float_max ? p_inf : String::format(allocator, "%f", max.z)};
+      const auto max_w{max.w == k_float_max ? p_inf : String::format(allocator, "%f", max.w)};
       max_fmt = String::format(allocator, "{%s, %s, %s, %s}", max_x, max_y, max_z, max_w);
     } else {
       max_fmt = String::format(allocator, "%s", max);
@@ -185,10 +183,10 @@ String VariableReference::print_range() const {
 
     String min_fmt;
     if (min.is_any(k_int_min)) {
-      const auto min_x{min.x == k_int_min ? "-inf" : String::format(allocator, "%d", min.x)};
-      const auto min_y{min.y == k_int_min ? "-inf" : String::format(allocator, "%d", min.y)};
-      const auto min_z{min.z == k_int_min ? "-inf" : String::format(allocator, "%d", min.z)};
-      const auto min_w{min.w == k_int_min ? "-inf" : String::format(allocator, "%d", min.w)};
+      const auto min_x{min.x == k_int_min ? n_inf : String::format(allocator, "%d", min.x)};
+      const auto min_y{min.y == k_int_min ? n_inf : String::format(allocator, "%d", min.y)};
+      const auto min_z{min.z == k_int_min ? n_inf : String::format(allocator, "%d", min.z)};
+      const auto min_w{min.w == k_int_min ? n_inf : String::format(allocator, "%d", min.w)};
       min_fmt = String::format(allocator, "{%s, %s, %s, %s}", min_x, min_y, min_z, min_w);
     } else {
       min_fmt = String::format(allocator, "%s", min);
@@ -196,10 +194,10 @@ String VariableReference::print_range() const {
 
     String max_fmt;
     if (max.is_any(k_int_max)) {
-      const auto max_x{max.x == k_int_max ? "+inf" : String::format(allocator, "%d", max.x)};
-      const auto max_y{max.y == k_int_max ? "+inf" : String::format(allocator, "%d", max.y)};
-      const auto max_z{max.z == k_int_max ? "+inf" : String::format(allocator, "%d", max.z)};
-      const auto max_w{max.w == k_int_max ? "+inf" : String::format(allocator, "%d", max.w)};
+      const auto max_x{max.x == k_int_max ? p_inf : String::format(allocator, "%d", max.x)};
+      const auto max_y{max.y == k_int_max ? p_inf : String::format(allocator, "%d", max.y)};
+      const auto max_z{max.z == k_int_max ? p_inf : String::format(allocator, "%d", max.z)};
+      const auto max_w{max.w == k_int_max ? p_inf : String::format(allocator, "%d", max.w)};
       max_fmt = String::format(allocator, "{%s, %s, %s, %s}", max_x, max_y, max_z, max_w);
     } else {
       max_fmt = String::format(allocator, "%s", max);
@@ -213,9 +211,9 @@ String VariableReference::print_range() const {
 
     String min_fmt;
     if (min.is_any(k_float_min)) {
-      const auto min_x{min.x == k_float_min ? "-inf" : String::format(allocator, "%f", min.x)};
-      const auto min_y{min.y == k_float_min ? "-inf" : String::format(allocator, "%f", min.y)};
-      const auto min_z{min.z == k_float_min ? "-inf" : String::format(allocator, "%f", min.z)};
+      const auto min_x{min.x == k_float_min ? n_inf : String::format(allocator, "%f", min.x)};
+      const auto min_y{min.y == k_float_min ? n_inf : String::format(allocator, "%f", min.y)};
+      const auto min_z{min.z == k_float_min ? n_inf : String::format(allocator, "%f", min.z)};
       min_fmt = String::format(allocator, "{%s, %s, %s}", min_x, min_y, min_z);
     } else {
       min_fmt = String::format(allocator, "%s", min);
@@ -223,9 +221,9 @@ String VariableReference::print_range() const {
 
     String max_fmt;
     if (max.is_any(k_float_max)) {
-      const auto max_x{max.x == k_float_max ? "+inf" : String::format(allocator, "%f", max.x)};
-      const auto max_y{max.y == k_float_max ? "+inf" : String::format(allocator, "%f", max.y)};
-      const auto max_z{max.z == k_float_max ? "+inf" : String::format(allocator, "%f", max.z)};
+      const auto max_x{max.x == k_float_max ? p_inf : String::format(allocator, "%f", max.x)};
+      const auto max_y{max.y == k_float_max ? p_inf : String::format(allocator, "%f", max.y)};
+      const auto max_z{max.z == k_float_max ? p_inf : String::format(allocator, "%f", max.z)};
       max_fmt = String::format(allocator, "{%s, %s, %s, %s}", max_x, max_y, max_z);
     } else {
       max_fmt = String::format(allocator, "%s", max);
@@ -239,9 +237,9 @@ String VariableReference::print_range() const {
 
     String min_fmt;
     if (min.is_any(k_int_min)) {
-      const auto min_x{min.x == k_int_min ? "-inf" : String::format(allocator, "%d", min.x)};
-      const auto min_y{min.y == k_int_min ? "-inf" : String::format(allocator, "%d", min.y)};
-      const auto min_z{min.z == k_int_min ? "-inf" : String::format(allocator, "%d", min.z)};
+      const auto min_x{min.x == k_int_min ? n_inf : String::format(allocator, "%d", min.x)};
+      const auto min_y{min.y == k_int_min ? n_inf : String::format(allocator, "%d", min.y)};
+      const auto min_z{min.z == k_int_min ? n_inf : String::format(allocator, "%d", min.z)};
       min_fmt = String::format(allocator, "{%s, %s, %s}", min_x, min_y, min_z);
     } else {
       min_fmt = String::format(allocator, "%s", min);
@@ -249,9 +247,9 @@ String VariableReference::print_range() const {
 
     String max_fmt;
     if (max.is_any(k_int_max)) {
-      const auto max_x{max.x == k_int_max ? "+inf" : String::format(allocator, "%d", max.x)};
-      const auto max_y{max.y == k_int_max ? "+inf" : String::format(allocator, "%d", max.y)};
-      const auto max_z{max.z == k_int_max ? "+inf" : String::format(allocator, "%d", max.z)};
+      const auto max_x{max.x == k_int_max ? p_inf : String::format(allocator, "%d", max.x)};
+      const auto max_y{max.y == k_int_max ? p_inf : String::format(allocator, "%d", max.y)};
+      const auto max_z{max.z == k_int_max ? p_inf : String::format(allocator, "%d", max.z)};
       max_fmt = String::format(allocator, "{%s, %s, %s}", max_x, max_y, max_z);
     } else {
       max_fmt = String::format(allocator, "%s", max);
@@ -265,8 +263,8 @@ String VariableReference::print_range() const {
 
     String min_fmt;
     if (min.is_any(k_float_min)) {
-      const auto min_x{min.x == k_float_min ? "-inf" : String::format(allocator, "%f", min.x)};
-      const auto min_y{min.y == k_float_min ? "-inf" : String::format(allocator, "%f", min.y)};
+      const auto min_x{min.x == k_float_min ? n_inf : String::format(allocator, "%f", min.x)};
+      const auto min_y{min.y == k_float_min ? n_inf : String::format(allocator, "%f", min.y)};
       min_fmt = String::format(allocator, "{%s, %s}", min_x, min_y);
     } else {
       min_fmt = String::format(allocator, "%s", min);
@@ -274,8 +272,8 @@ String VariableReference::print_range() const {
 
     String max_fmt;
     if (max.is_any(k_float_max)) {
-      const auto max_x{max.x == k_float_max ? "+inf" : String::format(allocator, "%f", max.x)};
-      const auto max_y{max.y == k_float_max ? "+inf" : String::format(allocator, "%f", max.y)};
+      const auto max_x{max.x == k_float_max ? p_inf : String::format(allocator, "%f", max.x)};
+      const auto max_y{max.y == k_float_max ? p_inf : String::format(allocator, "%f", max.y)};
       max_fmt = String::format(allocator, "{%s, %s}", max_x, max_y);
     } else {
       max_fmt = String::format(allocator, "%s", max);
@@ -289,8 +287,8 @@ String VariableReference::print_range() const {
 
     String min_fmt;
     if (min.is_any(k_int_min)) {
-      const auto min_x{min.x == k_int_min ? "-inf" : String::format(allocator, "%d", min.x)};
-      const auto min_y{min.y == k_int_min ? "-inf" : String::format(allocator, "%d", min.y)};
+      const auto min_x{min.x == k_int_min ? n_inf : String::format(allocator, "%d", min.x)};
+      const auto min_y{min.y == k_int_min ? n_inf : String::format(allocator, "%d", min.y)};
       min_fmt = String::format(allocator, "{%s, %s}", min_x, min_y);
     } else {
       min_fmt = String::format(allocator, "%s", min);
@@ -298,8 +296,8 @@ String VariableReference::print_range() const {
 
     String max_fmt;
     if (max.is_any(k_int_max)) {
-      const auto max_x{max.x == k_int_max ? "+inf" : String::format(allocator, "%d", max.x)};
-      const auto max_y{max.y == k_int_max ? "+inf" : String::format(allocator, "%d", max.y)};
+      const auto max_x{max.x == k_int_max ? p_inf : String::format(allocator, "%d", max.x)};
+      const auto max_y{max.y == k_int_max ? p_inf : String::format(allocator, "%d", max.y)};
       max_fmt = String::format(allocator, "{%s, %s}", max_x, max_y);
     } else {
       max_fmt = String::format(allocator, "%s", max);
@@ -311,14 +309,18 @@ String VariableReference::print_range() const {
   RX_HINT_UNREACHABLE();
 }
 
-String VariableReference::print_initial() const {
+Optional<String> VariableReference::print_initial() const {
   auto& allocator = Memory::SystemAllocator::instance();
 
   switch (m_type) {
   case VariableType::BOOLEAN:
-    return cast<Bool>()->initial() ? "true" : "false";
+    return String::create(allocator, cast<Bool>()->initial() ? "true" : "false");
   case VariableType::STRING:
-    return String::format(allocator, "\"%s\"", *escape(cast<String>()->initial()));
+    if (auto esc = escape(allocator, cast<String>()->initial())) {
+      return String::format(allocator, "\"%s\"", *esc);
+    } else {
+      return nullopt;
+    }
   case VariableType::INT:
     return String::format(allocator, "%d", cast<Sint32>()->initial());
   case VariableType::FLOAT:

@@ -105,7 +105,7 @@ struct ColorGrader {
 
   static Optional<ColorGrader> create(Frontend::Context* _context);
 
-  Optional<Entry> load(const String& _file_name);
+  Optional<Entry> load(const StringView& _file_name);
 
   void update();
 

@@ -37,9 +37,8 @@ Uint64 MemoryStream::on_write(const Byte* _data, Uint64 _size, Uint64 _offset) {
   return bytes;
 }
 
-bool MemoryStream::on_stat(Stat& stat_) const {
-  stat_.size = m_size;
-  return true;
+Optional<Stat> MemoryStream::on_stat() const {
+  return Stat { m_size };
 }
 
 bool MemoryStream::on_truncate(Uint64 _size) {

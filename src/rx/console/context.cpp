@@ -57,13 +57,17 @@ static bool type_check(VariableType _VariableType, Token::Type _token_type) {
   return false;
 }
 
-bool Context::write(const String& message_) {
+bool Context::write(const StringView& _message) {
   // Limit the # of lines.
   if (m_lines.size() > MAX_LINES) {
     m_lines.erase(0, MAX_LINES);
   }
 
-  return m_lines.push_back(message_);
+  if (auto string = _message.to_string(m_allocator)) {
+    return m_lines.push_back(Utility::move(*string));
+  }
+
+  return false;
 }
 
 void Context::clear() {
@@ -74,7 +78,7 @@ const Vector<String>& Context::lines() {
   return m_lines;
 }
 
-Command* Context::add_command(const String& _name, const char* _signature,
+Command* Context::add_command(const StringView& _name, const StringView& _signature,
   Function<bool(Context& console_, const Vector<Command::Argument>&)>&& _function)
 {
   // Don't allow adding the same command multiple times.
@@ -84,13 +88,15 @@ Command* Context::add_command(const String& _name, const char* _signature,
 
   // Create the command and insert it into the Context.
   if (auto command = Command::create(m_allocator, _name, _signature, Utility::move(_function))) {
-    return m_commands.insert(_name, Utility::move(*command));
+    if (auto name = _name.to_string(m_allocator)) {
+      return m_commands.insert(Utility::move(*name), Utility::move(*command));
+    }
   }
 
   return nullptr;
 }
 
-bool Context::execute(const String& _contents) {
+bool Context::execute(const StringView& _contents) {
   auto& allocator = Memory::SystemAllocator::instance();
 
   Parser parse{allocator};
@@ -125,7 +131,7 @@ bool Context::execute(const String& _contents) {
       }
     }
 
-    print("^rerror: ^w%s", diagnostic.message);
+    print("^rerror: ^w%s", *diagnostic.message);
     print("%s", _contents);
     print("%s", format);
 
@@ -148,11 +154,14 @@ bool Context::execute(const String& _contents) {
     if (tokens.size() > 1) {
       switch (set_from_reference_and_token(variable, tokens[1])) {
       case VariableStatus::SUCCESS:
-        print("^gsuccess: ^wChanged: \"%s\" to %s", atom, tokens[1].print());
-        return true;
+        if (auto token = tokens[1].print()) {
+          return print("^gsuccess: ^wChanged: \"%s\" to %s", atom, *token);
+        }
+        return false;
       case VariableStatus::OUT_OF_RANGE:
-        print("^rerror: ^wOut of range: \"%s\" has range %s", atom,
-          variable->print_range());
+        if (auto range = variable->print_range()) {
+          print("^rerror: ^wOut of range: \"%s\" has range %s", atom, *range);
+        }
         return false;
       case VariableStatus::TYPE_MISMATCH:
         print("^rerror: ^wType mismatch: \"%s\" expected %s, got %s", atom,
@@ -169,9 +178,8 @@ bool Context::execute(const String& _contents) {
         print("^rOut of memory.");
         return false;
       }
-    } else {
-      print("^cinfo: ^w%s = %s", atom, variable->print_current());
-      return true;
+    } else if (auto current = variable->print_current()) {
+      return print("^cinfo: ^w%s = %s", atom, *current);
     }
   } else if (auto* command = m_commands.find(atom)) {
     tokens.erase(0, 1);
@@ -183,8 +191,8 @@ bool Context::execute(const String& _contents) {
   return false;
 }
 
-Optional<Vector<String>> Context::auto_complete_variables(const String& _prefix) {
-  Vector<String> results{m_allocator};
+Optional<Vector<StringView>> Context::auto_complete_variables(const StringView& _prefix) {
+  Vector<StringView> results{m_allocator};
   for (VariableReference* node = g_head; node; node = node->m_next) {
     if (!strncmp(node->name(), _prefix.data(), _prefix.size())) {
       if (!results.push_back(node->name())) {
@@ -195,8 +203,8 @@ Optional<Vector<String>> Context::auto_complete_variables(const String& _prefix)
   return results;
 }
 
-Optional<Vector<String>> Context::auto_complete_commands(const String& _prefix) {
-  Vector<String> results{m_allocator};
+Optional<Vector<StringView>> Context::auto_complete_commands(const StringView& _prefix) {
+  Vector<StringView> results{m_allocator};
   auto result = m_commands.each_key([&](const String& _key) {
     if (!strncmp(_key.data(), _prefix.data(), _prefix.size())) {
       if (!results.push_back(_key)) {
@@ -213,7 +221,7 @@ Optional<Vector<String>> Context::auto_complete_commands(const String& _prefix) 
   return nullopt;
 }
 
-bool Context::load(const char* _file_name) {
+bool Context::load(const StringView& _file_name) {
   // sort references
   {
     Concurrency::ScopeLock locked{g_lock};
@@ -226,21 +234,10 @@ bool Context::load(const char* _file_name) {
   if (!data) {
     return false;
   }
-
-  auto next_line = [&](char*& line_) -> char* {
-    if (!line_ || !*line_) {
-      return nullptr;
-    }
-    char* line = line_;
-    line_ += strcspn(line_, "\n");
-    *line_++ = '\0';
-    return line;
-  };
-
   Parser parse{allocator};
 
   auto token = reinterpret_cast<char*>(data->data());
-  while (auto line = next_line(token)) {
+  while (auto line = String::read_line(token)) {
     // Skip whitespace.
     while (strchr(" \t", *line)) {
       line++;
@@ -252,7 +249,7 @@ bool Context::load(const char* _file_name) {
     }
 
     if (!parse.parse(line)) {
-      logger->error("%s", parse.error().message);
+      logger->error("%s", *parse.error().message);
       continue;
     }
 
@@ -272,7 +269,7 @@ bool Context::load(const char* _file_name) {
   return true;
 }
 
-bool Context::save(const char* _file_name) {
+bool Context::save(const StringView& _file_name) {
   auto file = Filesystem::BufferedFile::open(m_allocator, _file_name, "w");
   if (!file) {
     return false;
@@ -280,6 +277,7 @@ bool Context::save(const char* _file_name) {
 
   Stream::TrackedStream stream{*file};
 
+  // TODO(dweiler): Check for errors in print_{range,initial,current}() calls.
   #define attempt(_expr) \
     if (!(_expr)) return false
 
@@ -287,14 +285,14 @@ bool Context::save(const char* _file_name) {
   for (const VariableReference *head = g_head; head; head = head->m_next) {
     if (VariableType_is_ranged(head->type())) {
       attempt(stream.print(m_allocator, "## %s (in range %s, defaults to %s)\n",
-        head->description(), head->print_range(), head->print_initial()));
+        head->description(), *head->print_range(), *head->print_initial()));
       attempt(stream.print(m_allocator, head->is_initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), head->print_current()));
+        head->name(), *head->print_current()));
     } else {
       attempt(stream.print(m_allocator, "## %s (defaults to %s)\n",
-        head->description(), head->print_initial()));
+        head->description(), *head->print_initial()));
       attempt(stream.print(m_allocator, head->is_initial() ? ";%s %s\n" : "%s %s\n",
-        head->name(), head->print_current()));
+        head->name(), *head->print_current()));
     }
   }
 
@@ -354,9 +352,9 @@ VariableStatus Context::set_from_reference_and_token(VariableReference* referenc
   RX_HINT_UNREACHABLE();
 }
 
-VariableReference* Context::find_variable_by_name(const char* _name) {
+VariableReference* Context::find_variable_by_name(const StringView& _name) {
   for (VariableReference* head{g_head}; head; head = head->m_next) {
-    if (!strcmp(head->name(), _name)) {
+    if (!strcmp(head->name(), _name.data())) {
       return head;
     }
   }

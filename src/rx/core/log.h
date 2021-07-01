@@ -31,14 +31,22 @@ struct RX_API Log {
 
   static void flush();
 
-  // Write a formatted message given by |_format| and |_arguments| of associated
-  // severity level |_level|. This will queue the given message on the logger
-  // thread.
-  //
-  // All delegates given by |on_queue| will be called immediately by this
-  // function (and thus on the same thread).
-  //
-  // This function is thread-safe.
+  /// \brief
+  /// Write a formatted message given by \p _format and \p _arguments of
+  /// associated severity level \p _level. This will queue the given message
+  /// on the logger thread.
+  ///
+  /// All delegates assigned by on_queue will be called immediately by this
+  /// function (and thus on the same thread).
+  ///
+  /// This function is thread-safe.
+  ///
+  /// \param _level The severity level.
+  /// \param _format The format string literal.
+  /// \param _arguments Format arguments.
+  ///
+  /// \return On success, true. On failure, false
+  /// \note This function can fail when out of memory.
   template<typename... Ts>
   RX_HINT_FORMAT(3, 0)
   bool write(Level _level, const char* _format, Ts&&... _arguments);
@@ -122,16 +130,18 @@ private:
 
 template<typename... Ts>
 bool Log::write(Level _level, const char* _format, Ts&&... _arguments) {
+  auto& allocator = Memory::SystemAllocator::instance();
   Optional<String> contents;
-  if constexpr (sizeof...(Ts) > 0) {
-    auto& allocator = Memory::SystemAllocator::instance();
-    contents = String::format(allocator, _format,
-      Utility::forward<Ts>(_arguments)...);
+  if constexpr (sizeof...(Ts) != 0) {
+    contents = String::format(allocator, _format, Utility::forward<Ts>(_arguments)...);
   } else {
-    contents = String(_format);
+    contents = String::create(allocator, _format);
   }
-  m_queue_event.signal(_level, *contents);
-  return enqueue(this, _level, Utility::move(*contents));
+  if (contents) {
+    m_queue_event.signal(_level, *contents);
+    return enqueue(this, _level, Utility::move(*contents));
+  }
+  return false;
 }
 
 inline bool Log::write(Level _level, String&& message_) {
