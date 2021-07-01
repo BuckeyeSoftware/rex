@@ -131,19 +131,19 @@ BufferedStream::Page* BufferedStream::fill_page(Uint32 _page_no, Uint16 _allocat
   page.page_no = _page_no;
 
   // Fill in the page cache now with new page data.
-  const auto bytes =
-    m_stream->on_read(page_data(page), m_page_size, page_offset(page));
+  const auto read = (m_stream->flags() & READ)
+    ? m_stream->on_read(page_data(page), m_page_size, page_offset(page))
+    : 0;
 
-  // Bytes read from the file is less than what we want to allocate.
-  if (bytes < _allocate) {
+  if (read < _allocate) {
     // Zero the area to allocate and expand allocation.
-    Memory::zero(page_data(page) + bytes, _allocate - bytes);
+    Memory::zero(page_data(page) + read, _allocate - read);
     page.size = _allocate;
     page.dirty = 1;
   } else {
     // Store the actual amount of bytes this page truely represents so that
     // future flushing of the contents do not over-flush the page.
-    page.size = bytes;
+    page.size = read;
   }
 
   return &page;
