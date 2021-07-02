@@ -7,17 +7,23 @@
     f32x3 importance_sample_ggx(f32x2 Xi, f32 roughness, f32x3 n) {
       f32 a = roughness * roughness;
 
+      // Sample in spherical coordinates.
       f32 phi = 2.0 * M_PI * Xi.x;
-      f32 cos_theta = clamp(sqrt((1.0 - Xi.y) / (1.0 + (a * a - 1.0) * Xi.y)), 0.0, 1.0);
+      f32 cos_theta = sqrt((1.0 - Xi.y) / (1.0 + (a * a - 1.0) * Xi.y));
       f32 sin_theta = sqrt(1.0 - cos_theta * cos_theta);
 
-      f32x3 h = f32x3(sin_theta * cos(phi), sin_theta * sin(phi), cos_theta);
+      // Construct tangent space vector.
+      f32x3 h = f32x3(
+        sin_theta * cos(phi),
+        sin_theta * sin(phi),
+        cos_theta);
 
+      // Tangent to world space.
       f32x3 up = abs(n.z) < 0.999 ? f32x3(0.0, 0.0, 1.0) : f32x3(1.0, 0.0, 0.0);
-      f32x3 tangent_x = normalize(cross(n, up));
-      f32x3 tangent_y = cross(n, tangent_x);
+      f32x3 tangent = normalize(cross(up, n));
+      f32x3 bitangent = cross(n, tangent);
 
-      return tangent_x * h.x + tangent_y * h.y + n * h.z;
+      return tangent * h.x + bitangent * h.y + n * h.z;
     }
   "
 }

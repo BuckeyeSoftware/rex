@@ -10,10 +10,11 @@
     }
   ],
   uniforms: [
-    { name: "u_cubemap",   type: "samplerCM", value: 0, when: "USE_CUBEMAP" },
-    { name: "u_hdri",      type: "sampler2D", value: 0, when: "USE_HDRI" },
-    { name: "u_face",      type: "s32" },
-    { name: "u_roughness", type: "f32" }
+    { name: "u_cubemap",    type: "samplerCM", value: 0, when: "USE_CUBEMAP" },
+    { name: "u_hdri",       type: "sampler2D", value: 0, when: "USE_HDRI" },
+    { name: "u_face",       type: "s32" },
+    { name: "u_resolution", type: "f32" },
+    { name: "u_roughness",  type: "f32" }
   ],
   shaders: [
     {
@@ -43,10 +44,21 @@
         "hammersley",
         "importance_sample_ggx",
         "cubemap_rotations",
-        "sample_hdri"
+        "sample_hdri",
+        "saturate",
+        "d_ggx"
       ],
       source: "
-        f32x3 prefilter(f32 roughness, f32x3 r) {
+        f32x3 sample_envmap(f32x3 l, f32 lod) {
+        #if defined(USE_CUBEMAP)
+          return rx_textureCMLod(u_cubemap, l, lod).rgb;
+        #elif defined(USE_HDRI)
+          return sample_hdri_lod(u_hdri, l, lod).rgb;
+        #endif
+        }
+
+        f32x3 prefilter(f32 roughness, f32x3 r, f32 resolution) {
+          // Isotropic approximation.
           f32x3 n = r;
           f32x3 v = r;
 
@@ -57,16 +69,41 @@
           for (u32 i = 0u; i < samples; i++) {
             f32x2 Xi = hammersley(i, samples);
             f32x3 h = importance_sample_ggx(Xi, roughness, n);
-            f32x3 l = 2.0 * dot(v, h) * h - v;
 
-            f32 n_dot_l = max(0.0, dot(n, l));
+            f32 v_dot_h = dot(v, h);
+
+            // Since n = v in this approximation.
+            f32 n_dot_h = v_dot_h;
+
+            // Use microfacet normal h to find l.
+            f32x3 l = 2.0f * v_dot_h * h - v;
+
+            f32 n_dot_l = saturate(dot(n, l));
+
+            // Clamp 0 <= n_dot_h <= 1
+            n_dot_h = saturate(n_dot_h);
 
             if (n_dot_l > 0.0) {
-        #if defined(USE_CUBEMAP)
-              color += rx_textureCM(u_cubemap, l).rgb * n_dot_l;
-        #elif defined(USE_HDRI)
-              color += sample_hdri(u_hdri, l).rgb * n_dot_l;
-        #endif
+              // Based off: https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch20.html
+              //
+              // Typically you'd have something like:
+              //  f32 pdf = d_ggx(n_dot_h, roughness) * n_dot_h / (4.0 * v_dot_h)
+              //
+              // However, since v = h => v_dot_h == n_dot_l.
+              f32 pdf = d_ggx(n_dot_h, roughness) / 4.0 + 0.001;
+
+              // Solid angle of current sample. Will be bigger for less likely
+              // samples.
+              f32 omega_s = 1.0 / (as_f32(samples) * pdf);
+
+              // Solid angle of texel.
+              f32 omega_p = 4.0 * M_PI / (6.0 * resolution * resolution);
+
+              // Mip level is determined by ratio of sample's solid angle to a
+              // texel's solid angle.
+              f32 lod = max(0.5 * log2(omega_s / omega_p), 0.0);
+
+              color += sample_envmap(l, lod) * n_dot_l;
               total_weight += n_dot_l;
             }
           }
@@ -76,7 +113,14 @@
 
         void main() {
           f32x3 direction = normalize(f32x3(vs_coordinate * 2.0 - 1.0, -1.0));
-          fs_color = f32x4(prefilter(u_roughness, CUBEMAP_ROTATIONS[u_face] * direction), 1.0);
+          f32x3 r = CUBEMAP_ROTATIONS[u_face] * direction;
+
+          // No need to integrate for u_roughness == 0 as it's perfect reflector.
+          if (u_roughness == 0.0) {
+            fs_color = f32x4(sample_envmap(r, 0.0), 1.0);
+          } else {
+            fs_color = f32x4(prefilter(u_roughness, r, u_resolution), 1.0);
+          }
         }
       "
     }

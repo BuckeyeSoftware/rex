@@ -290,6 +290,10 @@ bool Vector<T>::reserve(Size _size) {
 
 template<typename T>
 bool Vector<T>::append(const Vector& _other) {
+  if (_other.is_empty()) {
+    return true;
+  }
+
   const auto new_size = m_size + _other.m_size;
 
   // Slight optimization for trivially copyable |T|.

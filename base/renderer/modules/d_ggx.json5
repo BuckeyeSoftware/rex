@@ -1,0 +1,13 @@
+{
+  name: "d_ggx",
+  imports: [
+    "math_constants"
+  ],
+  source: "
+    f32 d_ggx(f32 n_dot_h, f32 roughness) {
+      f32 a = n_dot_h * roughness;
+      f32 k = roughness / (1.0 - n_dot_h * n_dot_h + a * a);
+      return k * k * (1.0 / M_PI);
+    }
+  "
+}

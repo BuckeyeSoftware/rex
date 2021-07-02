@@ -126,7 +126,7 @@ Optional<PrefilteredEnvironmentMap> PrefilteredEnvironmentMap::create(Frontend::
   texture->record_format(Frontend::Texture::DataFormat::RGBA_F16);
   texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   texture->record_dimensions({_resolution, _resolution});
-  texture->record_filter({true, false, true}); // LINEAR
+  texture->record_filter({true, true, true}); // LINEAR
   texture->record_wrap({Frontend::Texture::WrapType::REPEAT,
                         Frontend::Texture::WrapType::REPEAT,
                         Frontend::Texture::WrapType::REPEAT});
@@ -183,12 +183,18 @@ void PrefilteredEnvironmentMap::render_next_face() {
     return;
   }
 
-  auto program = m_technique->configuration(0).variant(is_hdri(m_environment_map) ? 1 : 0);
+  const auto hdri = is_hdri(m_environment_map);
+  const auto resolution = hdri
+    ? static_cast<Frontend::Texture2D*>(m_environment_map)->dimensions().cast<Float32>().max_element()
+    : static_cast<Frontend::TextureCM*>(m_environment_map)->dimensions().cast<Float32>().max_element();
+
+  auto program = m_technique->configuration(0).variant(hdri ? 1 : 0);
 
   Frontend::Textures textures;
   textures.add(m_environment_map);
 
   program->uniforms()[2].record_int(m_current_face);
+  program->uniforms()[3].record_float(resolution);
 
   Frontend::Buffers buffers;
   buffers.add(m_current_face);
@@ -200,7 +206,7 @@ void PrefilteredEnvironmentMap::render_next_face() {
     auto mipmap_size = m_resolution >> i;
     auto roughness = Float32(i) / (MAX_PREFILTER_LEVELS - 1);
     state.viewport.record_dimensions({mipmap_size, mipmap_size});
-    program->uniforms()[3].record_float(roughness);
+    program->uniforms()[4].record_float(roughness);
 
     m_frontend->draw(
       RX_RENDER_TAG("prefiltered environment map"),

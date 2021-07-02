@@ -4,6 +4,15 @@
     "math_constants"
   ],
   source: "
+    f32x4 sample_hdri_lod(rx_sampler2D hdri, f32x3 uvw, f32 lod) {
+      f32x3 n = normalize(uvw);
+      f32 phi = acos(-n.y);
+      f32 theta = atan(n.x, n.z) + M_PI;
+      f32x2 uv = f32x2(theta / M_TAU, 1.0 - phi / M_PI);
+      f32x4 load = rx_texture2DLod(hdri, uv, lod);
+      return f32x4(pow(load.xyz, f32x3(1.0 / 2.2)), 1.0);
+    }
+
     f32x4 sample_hdri(rx_sampler2D hdri, f32x3 uvw) {
       f32x3 n = normalize(uvw);
       f32 phi = acos(-n.y);
