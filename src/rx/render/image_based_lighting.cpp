@@ -245,7 +245,7 @@ Optional<ImageBasedLighting> ImageBasedLighting::create(
 
   scale_bias_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   scale_bias_texture->record_levels(1);
-  scale_bias_texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
+  scale_bias_texture->record_format(Frontend::Texture::DataFormat::RG_F16);
   scale_bias_texture->record_filter({true, false, false}); // LINEAR
   scale_bias_texture->record_dimensions({256, 256});
   scale_bias_texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
