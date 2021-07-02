@@ -14,7 +14,8 @@
     { name: "u_prefilter",          type: "samplerCM", value: 5 },
     { name: "u_scale_bias",         type: "sampler2D", value: 6 },
     { name: "u_inverse_projection", type: "f32x4x4" },
-    { name: "u_camera_position",    type: "f32x3" }
+    { name: "u_camera_position",    type: "f32x3" },
+    { name: "u_resolution",         type: "f32x2" }
   ],
   shaders: [
     {
@@ -42,7 +43,8 @@
       ],
       imports: [
         "position_from_depth",
-        "normal_decode"
+        "normal_decode",
+        "dither"
       ],
       source: "
         f32x3 approximate_specular_ibl(f32x3 specular_color, f32 roughness, f32x3 n, f32x3 v) {
@@ -78,6 +80,13 @@
           f32x3 indirect_diffuse = diffuse_color * irradiance + sample_emission.rgb;
           f32x3 indirect_specular = approximate_specular_ibl(
             specular_color, roughness, normal, v);
+
+          // When approximating indirect specular the result is severely
+          // undersampled due to the low-resolution and low-bitdepth prefilter'd
+          // environment map. This results in both ringing and banding artifacts,
+          // apply an ordered dither to the result of specular to spread this
+          // error out across several pixels rather than being concentrated.
+          indirect_specular += bayer256(vs_coordinate * u_resolution) / 255.0;
 
           fs_color = f32x4(sample_albedo.a * (indirect_diffuse + indirect_specular), 1.0);
         }

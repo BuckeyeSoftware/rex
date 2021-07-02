@@ -85,6 +85,7 @@ void IndirectLightingPass::render(const Math::Camera& _camera, const Input& _inp
   program->uniforms()[6].record_sampler(draw_textures.add(_input.scale_bias));
   program->uniforms()[7].record_mat4x4f(Math::invert(_camera.view() * _camera.projection));
   program->uniforms()[8].record_vec3f(_camera.translate);
+  program->uniforms()[9].record_vec2f(m_target->dimensions().cast<Float32>());
 
   m_frontend->draw(
     RX_RENDER_TAG("indirect lighting pass"),

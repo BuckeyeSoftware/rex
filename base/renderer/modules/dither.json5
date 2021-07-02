@@ -1,0 +1,22 @@
+{
+  name: "dither",
+  source: "
+    u32 bitfield_interleave_reverse16(u32 x, u32 y) {
+      x = (x | (x << 12u)) & 0xf0f0u;
+      x = (x | (x >> 6u)) & 0x3333u;
+      x = (x | (x << 3u)) & 0xaaaau;
+
+      y = (y | (y << 12u)) & 0xf0f0u;
+      y = (y | (y >> 6u)) & 0x3333u;
+      y = (y | (y << 3u)) & 0xaaaau;
+
+      return y >> 1u | x;
+    }
+
+    f32 bayer256(f32x2 coordinate) {
+      const f32 RCP_MAX_INT = 1.52588e-05;
+      const u32x2 x = as_u32x2(coordinate);
+      return as_f32(bitfield_interleave_reverse16(x.x ^ x.y, x.y)) * RCP_MAX_INT;
+    }
+  "
+}
