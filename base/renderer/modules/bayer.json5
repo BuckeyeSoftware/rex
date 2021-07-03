@@ -1,0 +1,21 @@
+// Analytical Bayer matrix for ordered dithering
+//
+// In general a Bayer matrix can be calculated recursively with the following
+// formula where n is the dimension of the matrix.
+//  M(i, j) = bit_reverse(bit_interleave(i ^ j, i)) / n ^ 2
+//
+// The Bayer function here uses n=16, producing a map of 256 values in [0, 1].
+{
+  name: "bayer",
+  source: "
+    f32 bayer_16x16(f32x2 coordinate) {
+      const f32 RCP_MAX_INT = 1.52588e-05; // 1.0 / exp2(16.0)
+      u32x2 x = as_u32x2(coordinate);
+      u32x2 xy = u32x2(x.x ^ x.y, x.y);
+      xy = (xy | (xy << 12u)) & 0xf0f0u;
+      xy = (xy | (xy >> 6u)) & 0x3333u;
+      xy = (xy | (xy << 3u)) & 0xaaaau;
+      return as_f32(xy.y >> 1u | xy.x) * RCP_MAX_INT;
+    }
+  "
+}
