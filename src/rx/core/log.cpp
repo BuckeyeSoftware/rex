@@ -5,8 +5,6 @@
 #include "rx/core/log.h"
 #include "rx/core/ptr.h"
 #include "rx/core/intrusive_list.h"
-
-#include "rx/core/stream/context.h"
 #include "rx/core/stream/buffered_stream.h"
 
 #include "rx/core/algorithm/max.h"

@@ -3,8 +3,6 @@
 #include "rx/core/stream/operations.h"
 #include "rx/core/string.h"
 
-#include <string.h> // TODO(dweiler): remove.
-
 namespace Rx::Stream {
 
 struct Context;
@@ -14,6 +12,7 @@ struct Context;
 /// An AdvancingStream connects a Context and provides a self-advancing
 /// cursor. You can have multiple AdvancingStream per stream Context.
 struct AdvancingStream {
+  virtual ~AdvancingStream();
   constexpr AdvancingStream(Context& _stream);
 
   /// \brief Read from the stream.
@@ -23,7 +22,7 @@ struct AdvancingStream {
   /// \param data_ The data to write into.
   /// \param _size The number of bytes to read.
   /// \returns The number of bytes actually read.
-  [[nodiscard]] Uint64 read(Byte* _data, Uint64 _size);
+  [[nodiscard]] virtual Uint64 read(Byte* _data, Uint64 _size);
 
   /// \brief Write to the stream.
   ///
@@ -32,7 +31,7 @@ struct AdvancingStream {
   /// \param _data The data to write.
   /// \param _size The amount of bytes from \p _data to write.
   /// \returns The number of bytes actually written.
-  [[nodiscard]] Uint64 write(const Byte* _data, Uint64 _size);
+  [[nodiscard]] virtual Uint64 write(const Byte* _data, Uint64 _size);
 
   /// \brief Seek the stream.
   ///
@@ -82,8 +81,8 @@ struct AdvancingStream {
   /// \c true. Otherwise, when formatting fails or not all characters of the
   /// formatted message are written, \c false.
   template<typename... Ts>
-  RX_HINT_FORMAT(3, 0) bool print(Memory::Allocator& _allocator,
-    const char* _format, Ts&&... _arguments);
+  [[nodiscard]] bool print(Memory::Allocator& _allocator,
+    const StringView& _format, Ts&&... _arguments);
 
 private:
   Context& m_stream;
@@ -98,21 +97,23 @@ inline constexpr AdvancingStream::AdvancingStream(Context& _stream)
 {
 }
 
+inline AdvancingStream::~AdvancingStream() = default;
+
 inline Uint64 AdvancingStream::tell() const {
   return m_offset;
 }
 
 template<typename... Ts>
-bool AdvancingStream::print(Memory::Allocator& _allocator, const char* _format, Ts&&... _arguments) {
+bool AdvancingStream::print(Memory::Allocator& _allocator, const StringView& _format, Ts&&... _arguments) {
   // Don't use String::format unless there are format arguments.
   if constexpr(sizeof...(Ts) != 0) {
-    const auto format = String::format(_allocator, _format, Utility::forward<Ts>(_arguments)...);
+    const auto format = String::format(_allocator, _format.data(), Utility::forward<Ts>(_arguments)...);
     const auto data = reinterpret_cast<const Byte*>(format.data());
     const auto size = format.size();
     return write(data, size) == size;
   } else {
-    const auto data = reinterpret_cast<const Byte*>(_format);
-    const auto size = strlen(_format);
+    const auto data = reinterpret_cast<const Byte*>(_format.data());
+    const auto size = _format.size();
     return write(data, size) == size;
   }
 }

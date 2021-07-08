@@ -72,21 +72,12 @@ JSON::Shared::~Shared() {
   m_allocator.deallocate(m_root);
 }
 
-Optional<JSON> JSON::parse(Memory::Allocator& _allocator, const char* _contents, Size _length) {
-  auto shared = _allocator.create<Shared>(_allocator, _contents, _length);
+Optional<JSON> JSON::parse(Memory::Allocator& _allocator, const StringView& _contents) {
+  auto shared = _allocator.create<Shared>(_allocator, _contents.data(), _contents.size());
   if (!shared) {
     return nullopt;
   }
-
-  // JSON result;
-  // result.m_value = shared->m_root;
-  // result.m_shared = shared;
-
   return JSON { shared, shared->m_root };
-}
-
-Optional<JSON> JSON::parse(Memory::Allocator& _allocator, const char* _contents) {
-  return parse(_allocator, _contents, strlen(_contents));
 }
 
 JSON::JSON(Shared* _shared, struct json_value_s* _value)

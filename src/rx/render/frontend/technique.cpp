@@ -502,7 +502,7 @@ bool Technique::load(Stream::Context& _stream) {
   auto& allocator = m_frontend->allocator();
   if (auto data = _stream.read_text(allocator)) {
     if (auto disown = data->disown()) {
-      if (auto json = JSON::parse(allocator, *disown)) {
+      if (auto json = JSON::parse(allocator, String{*disown})) {
         return parse(*json);
       }
     }

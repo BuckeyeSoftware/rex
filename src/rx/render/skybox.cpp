@@ -142,7 +142,7 @@ bool Skybox::load(Stream::Context& _stream, const Math::Vec2z& _max_face_dimensi
     return false;
   }
 
-  auto parse = JSON::parse(allocator, *disown);
+  auto parse = JSON::parse(allocator, String{*disown});
   if (!parse) {
     // Out of memory.
     return false;
