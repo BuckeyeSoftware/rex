@@ -1,7 +1,7 @@
 #include "rx/texture/writer.h"
 #include "rx/texture/convert.h"
 
-#include "rx/core/stream/tracked_stream.h"
+#include "rx/core/stream/advancing_stream.h"
 
 #include "lib/stb_image_write.h"
 
@@ -82,7 +82,7 @@ static inline PixelFormatInfo pixel_format_info(PixelFormat _pixel_format) {
 // error. The write callback |cb| will stop writing to the stream when this
 // occurs.
 struct Context {
-  Stream::TrackedStream stream;
+  Stream::AdvancingStream stream;
   Uint64 wrote = 0;
   Uint64 expected = 0;
   bool valid() const { return wrote == expected; }
@@ -99,7 +99,7 @@ static void cb(void* _context, void* _data, int _size) {
 
 bool write(Memory::Allocator& _allocator, FileFormat _file_format,
   PixelFormat _pixel_format, const Math::Vec2z& _dimensions, const Byte* _data,
-  Stream::UntrackedStream& output_)
+  Stream::Context& output_)
 {
   Context context{output_};
   const auto ctx = static_cast<void*>(&context);

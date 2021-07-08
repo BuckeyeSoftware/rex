@@ -3,7 +3,7 @@
 
 #include "rx/core/algorithm/min.h"
 
-#include "rx/core/stream/untracked_stream.h"
+#include "rx/core/stream/context.h"
 
 #include "rx/core/string.h"
 #include "rx/core/abort.h"
@@ -12,27 +12,27 @@
 
 namespace Rx::Stream {
 
-Uint64 UntrackedStream::on_read(Byte*, Uint64, Uint64) {
+Uint64 Context::on_read(Byte*, Uint64, Uint64) {
   abort("Stream does not implement on_read");
 }
 
-Uint64 UntrackedStream::on_write(const Byte*, Uint64, Uint64) {
+Uint64 Context::on_write(const Byte*, Uint64, Uint64) {
   abort("Stream does not implement on_write");
 }
 
-Optional<Stat> UntrackedStream::on_stat() const {
+Optional<Stat> Context::on_stat() const {
   abort("Stream does not implement on_stat");
 }
 
-bool UntrackedStream::on_flush() {
+bool Context::on_flush() {
   abort("Stream does not implement on_flush");
 }
 
-bool UntrackedStream::on_truncate(Uint64) {
+bool Context::on_truncate(Uint64) {
   abort("Stream does not implement on_truncate");
 }
 
-Uint64 UntrackedStream::on_zero(Uint64 _size, Uint64 _offset) {
+Uint64 Context::on_zero(Uint64 _size, Uint64 _offset) {
   // 4 KiB of zeros written in a loop.
   Byte zero[4096] = {0};
   Uint64 bytes = 0;
@@ -53,7 +53,7 @@ Uint64 UntrackedStream::on_zero(Uint64 _size, Uint64 _offset) {
   return bytes;
 }
 
-Uint64 UntrackedStream::on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size) {
+Uint64 Context::on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size) {
   // 4 KiB copies from one place to another.
   Byte buffer[4096];
   Uint64 bytes = 0;
@@ -117,7 +117,7 @@ static Optional<LinearBuffer> convert_text_encoding(LinearBuffer&& data_) {
   return Utility::move(data_);
 }
 
-Optional<LinearBuffer> UntrackedStream::read_binary(Memory::Allocator& _allocator) {
+Optional<LinearBuffer> Context::read_binary(Memory::Allocator& _allocator) {
   LinearBuffer result{_allocator};
 
   // When stat is supported try and use it to optimize the read.
@@ -154,7 +154,7 @@ Optional<LinearBuffer> UntrackedStream::read_binary(Memory::Allocator& _allocato
   return result;
 }
 
-Optional<LinearBuffer> UntrackedStream::read_text(Memory::Allocator& _allocator) {
+Optional<LinearBuffer> Context::read_text(Memory::Allocator& _allocator) {
   if (auto result = read_binary(_allocator)) {
     // Convert the given byte stream into a compatible UTF-8 encoding. This will
     // introduce a null-terminator, strip Unicode BOMs and convert UTF-16

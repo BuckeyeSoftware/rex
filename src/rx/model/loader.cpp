@@ -49,7 +49,7 @@ void Loader::destroy() {
   m_flags = 0;
 }
 
-bool Loader::load(Concurrency::Scheduler& _scheduler, Stream::UntrackedStream& _stream) {
+bool Loader::load(Concurrency::Scheduler& _scheduler, Stream::Context& _stream) {
   if (auto contents = _stream.read_text(allocator())) {
     if (auto disown = contents->disown()) {
       if (auto json = JSON::parse(allocator(), *disown)) {

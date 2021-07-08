@@ -1,5 +1,5 @@
-#ifndef RX_CORE_STREAM_TRACKED_STREAM_H
-#define RX_CORE_STREAM_TRACKED_STREAM_H
+#ifndef RX_CORE_STREAM_ADVANCING_STREAM_H
+#define RX_CORE_STREAM_ADVANCING_STREAM_H
 #include "rx/core/stream/operations.h"
 #include "rx/core/string.h"
 
@@ -7,14 +7,14 @@
 
 namespace Rx::Stream {
 
-struct UntrackedStream;
+struct Context;
 
 /// \brief A stream with internal cursor.
 ///
-/// A TrackedStream connects an UntrackedStream and provides a managed stream
-/// cursor. You can have multiple TrackedStreams per UntrackedStream.
-struct TrackedStream {
-  constexpr TrackedStream(UntrackedStream& _stream);
+/// An AdvancingStream connects a Context and provides a self-advancing
+/// cursor. You can have multiple AdvancingStream per stream Context.
+struct AdvancingStream {
+  constexpr AdvancingStream(Context& _stream);
 
   /// \brief Read from the stream.
   ///
@@ -86,24 +86,24 @@ struct TrackedStream {
     const char* _format, Ts&&... _arguments);
 
 private:
-  UntrackedStream& m_stream;
+  Context& m_stream;
   Uint64 m_offset;
   bool m_is_eos;
 };
 
-inline constexpr TrackedStream::TrackedStream(UntrackedStream& _stream)
+inline constexpr AdvancingStream::AdvancingStream(Context& _stream)
   : m_stream{_stream}
   , m_offset{0}
   , m_is_eos{false}
 {
 }
 
-inline Uint64 TrackedStream::tell() const {
+inline Uint64 AdvancingStream::tell() const {
   return m_offset;
 }
 
 template<typename... Ts>
-bool TrackedStream::print(Memory::Allocator& _allocator, const char* _format, Ts&&... _arguments) {
+bool AdvancingStream::print(Memory::Allocator& _allocator, const char* _format, Ts&&... _arguments) {
   // Don't use String::format unless there are format arguments.
   if constexpr(sizeof...(Ts) != 0) {
     const auto format = String::format(_allocator, _format, Utility::forward<Ts>(_arguments)...);
@@ -119,4 +119,4 @@ bool TrackedStream::print(Memory::Allocator& _allocator, const char* _format, Ts
 
 } // namespace Rx::Stream
 
-#endif // RX_CORE_STREAM_TRACKED_STREAM_H
+#endif // RX_CORE_STREAM_ADVANCING_STREAM_H

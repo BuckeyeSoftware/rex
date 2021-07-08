@@ -22,7 +22,7 @@ Texture::Texture(Memory::Allocator& _allocator)
 {
 }
 
-bool Texture::load(Stream::UntrackedStream& _stream) {
+bool Texture::load(Stream::Context& _stream) {
   if (auto contents = _stream.read_text(allocator())) {
     if (auto disown = contents->disown()) {
       if (auto json = JSON::parse(allocator(), *disown)) {

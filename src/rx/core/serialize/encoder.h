@@ -1,7 +1,7 @@
 #ifndef RX_CORE_SERIALIZE_ENCODER_H
 #define RX_CORE_SERIALIZE_ENCODER_H
 #include "rx/core/stream/buffered_stream.h"
-#include "rx/core/stream/tracked_stream.h"
+#include "rx/core/stream/advancing_stream.h"
 
 namespace Rx::Serialize {
 
@@ -13,7 +13,7 @@ struct Encoder {
   /// \param _allocator The allocator to use for stream buffering.
   /// \param _stream The underlying stream to write into.
   static Optional<Encoder> create(Memory::Allocator& _allocator,
-    Stream::UntrackedStream& _stream);
+    Stream::Context& _stream);
 
   // Endianess independent.
   bool put_u8(Uint8 _value);
@@ -50,13 +50,13 @@ struct Encoder {
   bool put_f64be(Float64 _value);
   /// @}
 
-  Stream::TrackedStream& stream();
+  Stream::AdvancingStream& stream();
 
 private:
   Encoder(Stream::BufferedStream&& buffered_stream_);
 
   Stream::BufferedStream m_buffer;
-  Stream::TrackedStream m_stream;
+  Stream::AdvancingStream m_stream;
 };
 
 inline Encoder::Encoder(Stream::BufferedStream&& buffered_stream_)
@@ -73,7 +73,7 @@ inline Encoder::Encoder(Encoder&& encoder_)
   (void)m_stream.seek(encoder_.m_stream.tell(), Stream::Whence::SET);
 }
 
-inline Stream::TrackedStream& Encoder::stream() {
+inline Stream::AdvancingStream& Encoder::stream() {
   return m_stream;
 }
 

@@ -4,8 +4,8 @@
 
 #include "rx/model/iqm.h"
 
-#include "rx/core/stream/untracked_stream.h"
-#include "rx/core/stream/tracked_stream.h"
+#include "rx/core/stream/context.h"
+#include "rx/core/stream/advancing_stream.h"
 
 namespace Rx::Model {
 
@@ -114,8 +114,8 @@ struct IQM::Header {
   Uint32 extensions_offset;
 };
 
-bool IQM::read(Stream::UntrackedStream& _stream) {
-  Stream::TrackedStream stream{_stream};
+bool IQM::read(Stream::Context& _stream) {
+  Stream::AdvancingStream stream{_stream};
 
   const auto stat = stream.stat();
   if (!stat) {

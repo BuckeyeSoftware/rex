@@ -149,7 +149,7 @@ struct TestGame
 
     if (auto skybox = Render::Skybox::create(&m_frontend)) {
       m_skybox = Utility::move(*skybox);
-      if (!m_skybox.load("base/skyboxes/sky_cloudy/sky_cloudy.json5", {1024, 1024})) {
+      if (!m_skybox.load("base/skyboxes/yokohama/yokohama.json5", {1024, 1024})) {
         return false;
       }
     } else {
@@ -223,12 +223,11 @@ struct TestGame
       "base/colorgrading/Vireo 37.CUBE",
       "base/colorgrading/Zed 32.CUBE",
       "base/colorgrading/Zeke 39.CUBE"
-    };
-*/
+    };*/
 
     Render::ImageBasedLighting::Options options;
     options.irradiance_size = 16;
-    options.prefilter_size = 64;
+    options.prefilter_size = 128;
     if (auto ibl = Render::ImageBasedLighting::create(&m_frontend, options)) {
       m_ibl = Utility::move(*ibl);
     } else {
@@ -245,7 +244,7 @@ struct TestGame
     m_color_grader.update();*/
 
     Math::Transform transform;
-    // transform.translate.x = -((5.0f * (4.0f - 1.0f)) * 0.5f);
+    // transform.translate.x = -((8.0f * (7.0f - 1.0f)) * 0.5f);
 
     auto add_model = [&](const char* _file_name) {
       if (auto model = Render::Model::create(&m_frontend)) {
@@ -262,12 +261,14 @@ struct TestGame
       return false;
     };
 
-    // if (!add_model("base/models/chest/chest.json5")) return false;
-    // if (!add_model("base/models/mrfixit/mrfixit.json5")) return false;
-    // if (!add_model("base/models/fire_hydrant/fire_hydrant.json5")) return false;
-    // if (!add_model("base/models/helmet/helmet.json5")) return false;
-    if (!add_model("base/models/raspberry_pico/raspberry_pico.json5")) return false;
-    // m_models[1].animate(0, true); // mrfixit loop 0th animation.
+    // if (!add_model("base/models/bedside_wardrobe/bedside_wardrobe.json5")) return false;
+    // if (!add_model("base/models/drak_chest/drak_chest.json5")) return false;
+    // if (!add_model("base/models/food_pineapple/food_pineapple.json5")) return false;
+    // if (!add_model("base/models/modern_nightstand/modern_nightstand.json5")) return false;
+    if (!add_model("base/models/osiris_monitor/osiris_monitor.json5")) return false;
+    // if (!add_model("base/models/raspberry_pico/raspberry_pico.json5")) return false;
+    // if (!add_model("base/models/ratcher_house/ratcher_house.json5")) return false;
+    // if (!add_model("base/models/spinal_roach/spinal_roach.json5")) return false;
 
     return true;
   }
@@ -298,9 +299,9 @@ struct TestGame
       m_camera.rotation = Math::Mat3x3f::rotate(m_mouse);
 
       if (input.root_layer().keyboard().is_held(Input::ScanCode::LEFT_CONTROL)) {
-        move_speed = 10.0f;
-      } else {
         move_speed = 5.0f;
+      } else {
+        move_speed = 1.0f;
       }
 
       if (input.root_layer().keyboard().is_held(Input::ScanCode::W)) {
@@ -383,7 +384,7 @@ struct TestGame
     });
 
     m_mdl_rotations.each_fwd([&](Math::Vec3f& rotation_) {
-      rotation_.y += 15.0f * _delta_time;
+      rotation_.y += 25.0f * _delta_time;
     });
 
     m_particle_system.update(_delta_time);

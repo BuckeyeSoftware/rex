@@ -5,7 +5,7 @@
 #include "rx/render/frontend/program.h"
 
 namespace Rx { struct JSON; }
-namespace Rx::Stream { struct UntrackedStream; }
+namespace Rx::Stream { struct Context; }
 
 namespace Rx::Render::Frontend {
 
@@ -115,7 +115,7 @@ public:
     Vector<String> m_specializations;
   };
 
-  [[nodiscard]] bool load(Stream::UntrackedStream& _stream);
+  [[nodiscard]] bool load(Stream::Context& _stream);
   [[nodiscard]] bool load(const StringView& _file_name);
 
   [[nodiscard]] bool parse(const JSON& _description);

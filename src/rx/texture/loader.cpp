@@ -24,7 +24,7 @@ RX_LOG("texture/loader", logger);
 
 namespace Rx::Texture {
 
-bool Loader::load(Stream::UntrackedStream& _stream, PixelFormat _want_format,
+bool Loader::load(Stream::Context& _stream, PixelFormat _want_format,
   const Math::Vec2z& _max_dimensions)
 {
   LinearBuffer content{allocator()};

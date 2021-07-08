@@ -6,7 +6,7 @@
 #include "rx/core/ptr.h"
 #include "rx/core/intrusive_list.h"
 
-#include "rx/core/stream/untracked_stream.h"
+#include "rx/core/stream/context.h"
 #include "rx/core/stream/buffered_stream.h"
 
 #include "rx/core/algorithm/max.h"
@@ -31,8 +31,8 @@ struct Logger {
 
   static constexpr Logger& instance();
 
-  bool subscribe(Stream::UntrackedStream& _stream);
-  bool unsubscribe(Stream::UntrackedStream& _stream);
+  bool subscribe(Stream::Context& _stream);
+  bool unsubscribe(Stream::Context& _stream);
   bool enqueue(Log* _log, Log::Level _level, String&& _message);
   void flush();
 
@@ -183,7 +183,7 @@ inline constexpr Logger& Logger::instance() {
   return *s_instance;
 }
 
-bool Logger::subscribe(Stream::UntrackedStream& _stream) {
+bool Logger::subscribe(Stream::Context& _stream) {
   // The stream needs to be readable and writable.
   if (!(_stream.flags() & Stream::WRITE) || !(_stream.flags() & Stream::READ)) {
     return false;
@@ -210,7 +210,7 @@ bool Logger::subscribe(Stream::UntrackedStream& _stream) {
   return m_streams.push_back(Utility::move(*stream));
 }
 
-bool Logger::unsubscribe(Stream::UntrackedStream& _stream) {
+bool Logger::unsubscribe(Stream::Context& _stream) {
   Concurrency::ScopeLock lock{m_mutex};
 
   auto compare = [&](const Stream::BufferedStream& _buffered_stream) {
@@ -349,7 +349,7 @@ void Logger::write(Ptr<Message>& message_) {
   // TODO(dweiler): Implement a Stream::TrackedStream for Emscripten log and
   // have engine entry point attach it to the logger. This should not be in
   // here.
-#if defined(RX_PLATFORM_EMSCRIPTEN)
+#if 0 // defined(RX_PLATFORM_EMSCRIPTEN)
   switch (message_->level) {
   case Log::Level::ERROR:
     emscripten_log(EM_LOG_ERROR, "%s", contents.data());
@@ -409,11 +409,11 @@ void Log::flush() {
   Logger::instance().flush();
 }
 
-bool Log::subscribe(Stream::UntrackedStream& _stream) {
+bool Log::subscribe(Stream::Context& _stream) {
   return Logger::instance().subscribe(_stream);
 }
 
-bool Log::unsubscribe(Stream::UntrackedStream& _stream) {
+bool Log::unsubscribe(Stream::Context& _stream) {
   return Logger::instance().unsubscribe(_stream);
 }
 

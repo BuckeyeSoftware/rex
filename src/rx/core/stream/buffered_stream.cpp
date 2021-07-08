@@ -10,7 +10,7 @@ namespace Rx::Stream {
 
 // [BufferedStream]
 BufferedStream::BufferedStream(BufferedStream&& buffered_stream_)
-  : UntrackedStream{Utility::move(buffered_stream_)}
+  : Context{Utility::move(buffered_stream_)}
   , m_stream{Utility::exchange(buffered_stream_.m_stream, nullptr)}
   , m_buffer{Utility::move(buffered_stream_.m_buffer)}
   , m_pages{Utility::move(buffered_stream_.m_pages)}
@@ -22,7 +22,7 @@ BufferedStream::BufferedStream(BufferedStream&& buffered_stream_)
 BufferedStream& BufferedStream::operator=(BufferedStream&& buffered_stream_) {
   if (this != &buffered_stream_) {
     on_flush();
-    UntrackedStream::operator=(Utility::move(buffered_stream_));
+    Context::operator=(Utility::move(buffered_stream_));
     m_stream = Utility::exchange(buffered_stream_.m_stream, nullptr);
     m_buffer = Utility::move(buffered_stream_.m_buffer);
     m_pages = Utility::move(buffered_stream_.m_pages);
@@ -209,7 +209,7 @@ bool BufferedStream::resize(Uint16 _page_size, Uint8 _page_count) {
   return false;
 }
 
-bool BufferedStream::attach(UntrackedStream& _stream) {
+bool BufferedStream::attach(Context& _stream) {
   // Nothing to do when already attached.
   if (m_stream == &_stream) {
     return true;

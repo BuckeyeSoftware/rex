@@ -11,7 +11,9 @@
 #include "rx/core/concurrency/scope_lock.h"
 
 #include "rx/core/filesystem/buffered_file.h"
-#include "rx/core/stream/tracked_stream.h"
+
+#include "rx/core/stream/context.h"
+#include "rx/core/stream/advancing_stream.h"
 
 #include "rx/core/log.h" // RX_LOG
 
@@ -275,7 +277,7 @@ bool Context::save(const StringView& _file_name) {
     return false;
   }
 
-  Stream::TrackedStream stream{*file};
+  Stream::AdvancingStream stream{*file};
 
   // TODO(dweiler): Check for errors in print_{range,initial,current}() calls.
   #define attempt(_expr) \
@@ -447,12 +449,12 @@ extern "C" bool rx_console_execute(const char* _contents) {
       switch (Context::set_from_reference_and_token(variable, tokens[1])) {
       case Console::VariableStatus::SUCCESS:
         format = String::format(allocator,
-          "Changed: \"%s\" to %s", atom, tokens[1].print());
+          "Changed: \"%s\" to %s", atom, *tokens[1].print());
         emscripten_console_log(format.data());
         return true;
       case Console::VariableStatus::OUT_OF_RANGE:
         format = String::format(allocator,
-          "Out of range: \"%s\" has range %s", atom, variable->print_range());
+          "Out of range: \"%s\" has range %s", atom, *variable->print_range());
         emscripten_console_error(format.data());
         return false;
       case Console::VariableStatus::TYPE_MISMATCH:
@@ -468,7 +470,7 @@ extern "C" bool rx_console_execute(const char* _contents) {
       }
     } else {
       const auto format = String::format(allocator,
-        "%s = %s", atom, variable->print_current());
+        "%s = %s", atom, *variable->print_current());
       emscripten_console_log(format.data());
     }
   } else {

@@ -1,6 +1,6 @@
 #ifndef RX_CORE_STREAM_BUFFERED_STREAM_H
 #define RX_CORE_STREAM_BUFFERED_STREAM_H
-#include "rx/core/stream/untracked_stream.h"
+#include "rx/core/stream/context.h"
 #include "rx/core/vector.h"
 
 /// \file buffered_stream.h
@@ -9,7 +9,7 @@ namespace Rx::Stream {
 
 /// \brief Buffered stream.
 ///
-/// A BufferedStream has the same interface as an UntrackedStream except stream
+/// A BufferedStream has the same interface as a Context except stream
 /// operations are buffered with a page cache.
 ///
 /// All stream operations have their offsets rounded to a page size granularity
@@ -28,7 +28,7 @@ namespace Rx::Stream {
 /// \note The maximum amount of memory a BufferedStream can buffer is given by
 /// the limits of 64 KiB for a page and 256 pages (16 MiB).
 struct RX_API BufferedStream
-  : UntrackedStream
+  : Context
 {
   /// Default page size (in bytes) for the page cache.
   static constexpr const auto BUFFER_PAGE_SIZE = 4096_u16;
@@ -93,16 +93,16 @@ struct RX_API BufferedStream
   /// during construction ran out of memory to resize the internal page cache.
   [[nodiscard]] bool resize(Uint16 _page_size, Uint8 _page_count);
 
-  /// Attach an UntrackedStream to this BufferedStream.
+  /// Attach a Context to this BufferedStream.
   ///
   /// This will flush the contents of the page cache out to the existing,
   /// underlying BufferedStream, if there is any, replacing it with the new
   /// stream. When the stream is the same this function does nothing.
   ///
   /// \param _stream The stream to attach.
-  [[nodiscard]] bool attach(UntrackedStream& _stream);
+  [[nodiscard]] bool attach(Context& _stream);
 
-  /// Detach an UntrackedStream from this BufferedStream.
+  /// Detach a Context from this BufferedStream.
   ///
   /// This will flush the contents in the page cache out to the existing,
   /// underlying BufferedStream and detach it, preventing further reads and
@@ -146,7 +146,7 @@ struct RX_API BufferedStream
   virtual Uint64 on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _size);
 
   /// \brief Get the attached stream.
-  UntrackedStream* stream() const;
+  Context* stream() const;
 
 private:
   // sizeof(Page) = 8.
@@ -233,7 +233,7 @@ private:
 
   Iterator page_iterate(Uint64 _size, Uint64 _offset) const;
 
-  UntrackedStream* m_stream;
+  Context* m_stream;
   LinearBuffer m_buffer;
   Vector<Page> m_pages;
   Uint16 m_page_size;
@@ -241,7 +241,7 @@ private:
 };
 
 inline constexpr BufferedStream::BufferedStream(Memory::Allocator& _allocator)
-  : UntrackedStream{0}
+  : Context{0}
   , m_stream{nullptr}
   , m_buffer{_allocator}
   , m_pages{_allocator}
@@ -250,7 +250,7 @@ inline constexpr BufferedStream::BufferedStream(Memory::Allocator& _allocator)
 {
 }
 
-inline UntrackedStream* BufferedStream::stream() const {
+inline Context* BufferedStream::stream() const {
   return m_stream;
 }
 

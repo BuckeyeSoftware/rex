@@ -531,7 +531,7 @@ void Model::render_skeleton(const Math::Mat4x4f& _world, Render::Immediate3D* _i
   }
 }
 
-bool Model::load(Concurrency::Scheduler& _scheduler, Stream::UntrackedStream& _stream) {
+bool Model::load(Concurrency::Scheduler& _scheduler, Stream::Context& _stream) {
   Rx::Model::Loader loader{m_frontend->allocator()};
   return loader.load(_scheduler, _stream) && upload(loader);
 }

@@ -1,16 +1,16 @@
 #ifndef RX_CORE_STREAM_MEMORY_STREAM_H
 #define RX_CORE_STREAM_MEMORY_STREAM_H
-#include "rx/core/stream/untracked_stream.h"
+#include "rx/core/stream/context.h"
 #include "rx/core/string.h"
 
 namespace Rx::Stream {
 
 /// \brief %Stream backed by memory.
 ///
-/// A MemoryStream has the same interface as an UntrackedStream except stream
+/// A MemoryStream has the same interface as an Context except stream
 /// operations occur on memory given to the MemoryStream.
 struct MemoryStream
-  : UntrackedStream
+  : Context
 {
   /// @{
   /// Construct a MemoryStream
@@ -68,7 +68,7 @@ private:
 };
 
 inline MemoryStream::MemoryStream(String&& name_, Span<const Byte> _span)
-  : UntrackedStream{READ | STAT | TRUNCATE}
+  : Context{READ | STAT | TRUNCATE}
   , m_data{const_cast<Byte*>(_span.data())}
   , m_capacity{_span.size()}
   , m_size{_span.size()}
@@ -77,7 +77,7 @@ inline MemoryStream::MemoryStream(String&& name_, Span<const Byte> _span)
 }
 
 inline MemoryStream::MemoryStream(String&& name_, Span<Byte> span_)
-  : UntrackedStream{READ | WRITE | STAT}
+  : Context{READ | WRITE | STAT}
   , m_data{span_.data()}
   , m_capacity{span_.size()}
   , m_size{0}

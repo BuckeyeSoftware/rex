@@ -1,6 +1,6 @@
 #ifndef RX_CORE_FILESYSTEM_UNBUFFERED_FILE_H
 #define RX_CORE_FILESYSTEM_UNBUFFERED_FILE_H
-#include "rx/core/stream/untracked_stream.h"
+#include "rx/core/stream/context.h"
 #include "rx/core/string.h"
 
 /// \file unbuffered_file.h
@@ -10,7 +10,7 @@ namespace Rx::Filesystem {
 
 /// \brief Unbuffered file.
 struct RX_API UnbufferedFile
-  : Stream::UntrackedStream
+  : Stream::Context
 {
   RX_MARK_NO_COPY(UnbufferedFile);
 
@@ -92,7 +92,7 @@ private:
 };
 
 inline constexpr UnbufferedFile::UnbufferedFile(Memory::Allocator& _allocator)
-  : Stream::UntrackedStream{0}
+  : Stream::Context{0}
   , m_impl{nullptr}
   , m_name{_allocator}
   , m_mode{nullptr}

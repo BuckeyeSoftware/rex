@@ -9,7 +9,7 @@
 #include "rx/render/color_grader.h"
 
 namespace Rx { struct JSON; }
-namespace Rx::Stream { struct UntrackedStream; }
+namespace Rx::Stream { struct Context; }
 namespace Rx::Concurrency { struct Scheduler; }
 
 namespace Rx::Render {
@@ -41,7 +41,7 @@ struct Skybox {
   bool load_async(Concurrency::Scheduler& _scheduler,
     const StringView& _file_name, const Math::Vec2z& _max_face_dimensions);
 
-  [[nodiscard]] bool load(Stream::UntrackedStream& _stream, const Math::Vec2z& _max_face_dimensions);
+  [[nodiscard]] bool load(Stream::Context& _stream, const Math::Vec2z& _max_face_dimensions);
   [[nodiscard]] bool load(const StringView& _file_name, const Math::Vec2z& _max_face_dimensions);
 
   Frontend::Texture* texture() const;

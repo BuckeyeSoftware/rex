@@ -34,7 +34,7 @@ Module& Module::operator=(Module&& module_) {
   return *this;
 }
 
-bool Module::load(Stream::UntrackedStream& _stream) {
+bool Module::load(Stream::Context& _stream) {
   if (auto data = _stream.read_text(allocator())) {
     if (auto disown = data->disown()) {
       if (auto json = JSON::parse(allocator(), *disown)) {

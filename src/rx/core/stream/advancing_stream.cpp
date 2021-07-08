@@ -1,9 +1,9 @@
-#include "rx/core/stream/tracked_stream.h"
-#include "rx/core/stream/untracked_stream.h"
+#include "rx/core/stream/advancing_stream.h"
+#include "rx/core/stream/context.h"
 
 namespace Rx::Stream {
 
-Uint64 TrackedStream::read(Byte* data_, Uint64 _size) {
+Uint64 AdvancingStream::read(Byte* data_, Uint64 _size) {
   if (!(m_stream.flags() & READ)) {
     // Stream does not support reading.
     return 0;
@@ -23,7 +23,7 @@ Uint64 TrackedStream::read(Byte* data_, Uint64 _size) {
   return read;
 }
 
-Uint64 TrackedStream::write(const Byte* _data, Uint64 _size) {
+Uint64 AdvancingStream::write(const Byte* _data, Uint64 _size) {
   if (!(m_stream.flags() & WRITE)) {
     // Stream does not support writing.
     return 0;
@@ -39,7 +39,7 @@ Uint64 TrackedStream::write(const Byte* _data, Uint64 _size) {
   return write;
 }
 
-bool TrackedStream::seek(Sint64 _where, Whence _whence) {
+bool AdvancingStream::seek(Sint64 _where, Whence _whence) {
   // Calculate the new offset based on |_whence|.
   if (_whence == Whence::CURRENT) {
     if (m_is_eos) {
@@ -93,12 +93,12 @@ bool TrackedStream::seek(Sint64 _where, Whence _whence) {
   return true;
 }
 
-void TrackedStream::rewind() {
+void AdvancingStream::rewind() {
   m_is_eos = false;
   m_offset = 0;
 }
 
-Optional<Stat> TrackedStream::stat() const {
+Optional<Stat> AdvancingStream::stat() const {
   if (!(m_stream.flags() & STAT)) {
     // Stream does not support stating.
     return nullopt;
@@ -106,7 +106,7 @@ Optional<Stat> TrackedStream::stat() const {
   return m_stream.on_stat();
 }
 
-bool TrackedStream::flush() {
+bool AdvancingStream::flush() {
   if (!(m_stream.flags() & FLUSH)) {
     // Stream does not support flushing.
     return false;
@@ -114,7 +114,7 @@ bool TrackedStream::flush() {
   return m_stream.on_flush();
 }
 
-bool TrackedStream::truncate(Uint64 _size) {
+bool AdvancingStream::truncate(Uint64 _size) {
   if (!(m_stream.flags() & TRUNCATE)) {
     // Stream does not support truncating.
     return false;
@@ -122,7 +122,7 @@ bool TrackedStream::truncate(Uint64 _size) {
   return m_stream.on_truncate(_size);
 }
 
-Uint64 TrackedStream::flags() const {
+Uint64 AdvancingStream::flags() const {
   return m_stream.flags();
 }
 

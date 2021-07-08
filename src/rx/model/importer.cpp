@@ -34,7 +34,7 @@ Importer::Importer(Memory::Allocator& _allocator)
 {
 }
 
-bool Importer::load(Stream::UntrackedStream& _stream) {
+bool Importer::load(Stream::Context& _stream) {
   auto name = Utility::copy(_stream.name());
   if (!name) {
     return false;

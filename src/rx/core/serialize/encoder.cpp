@@ -8,7 +8,7 @@ namespace Rx::Serialize {
 using namespace Rx::Utility;
 
 Optional<Encoder> Encoder::create(Memory::Allocator& _allocator,
-  Stream::UntrackedStream& _stream)
+  Stream::Context& _stream)
 {
   if (!(_stream.flags() & Stream::WRITE)) {
     // Stream does not support writing to.

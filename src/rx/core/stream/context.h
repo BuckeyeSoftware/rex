@@ -12,28 +12,28 @@ namespace Rx {
 /// Stream IO.
 namespace Rx::Stream {
 
-/// \brief UntrackedStream context
+/// \brief Stream context.
 ///
-/// An UntrackedStream is an interface that "stream-like" types can implement
-/// to participate in stream operations as defined by the rest of this namespace.
+/// A Context is an interface that "stream-like" types can implement to
+/// participate in stream operations as defined by the rest of this namespace.
 ///
 /// Something is "stream-like" if it supports a list of *directed* operations,
 /// as described by the methods of this class.
-struct RX_API UntrackedStream {
+struct RX_API Context {
   /// \brief Construct a stream context.
   /// \param _flags The flags indicating what features this stream support.
-  constexpr UntrackedStream(Uint32 _flags);
+  constexpr Context(Uint32 _flags);
 
   /// \brief Move constructor.
   /// \param stream_ The stream to move from.
-  UntrackedStream(UntrackedStream&& stream_);
+  Context(Context&& stream_);
 
   /// Destroy a stream context.
-  virtual ~UntrackedStream();
+  virtual ~Context();
 
   /// \brief Move assignment operator.
   /// \param stream_ The stream to move from.
-  UntrackedStream& operator=(UntrackedStream&& stream_);
+  Context& operator=(Context&& stream_);
 
   /// Get flags of the stream.
   constexpr Uint32 flags() const;
@@ -102,26 +102,26 @@ protected:
   Uint32 m_flags;
 };
 
-inline constexpr UntrackedStream::UntrackedStream(Uint32 _flags)
+inline constexpr Context::Context(Uint32 _flags)
   : m_flags{_flags}
 {
 }
 
-inline UntrackedStream::UntrackedStream(UntrackedStream&& context_)
+inline Context::Context(Context&& context_)
   : m_flags{Utility::exchange(context_.m_flags, 0)}
 {
 }
 
-inline UntrackedStream::~UntrackedStream() = default;
+inline Context::~Context() = default;
 
-inline UntrackedStream& UntrackedStream::operator=(UntrackedStream&& context_) {
+inline Context& Context::operator=(Context&& context_) {
   if (this != &context_) {
     m_flags = Utility::exchange(context_.m_flags, 0);
   }
   return *this;
 }
 
-inline constexpr Uint32 UntrackedStream::flags() const {
+inline constexpr Uint32 Context::flags() const {
   return m_flags;
 }
 

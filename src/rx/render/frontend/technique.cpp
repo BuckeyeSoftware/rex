@@ -487,7 +487,7 @@ Program* Technique::Configuration::variant(Size _index) const {
   return m_programs[_index].evaluate();
 }
 
-bool Technique::load(Stream::UntrackedStream& _stream) {
+bool Technique::load(Stream::Context& _stream) {
   auto name = Utility::copy(_stream.name());
   if (!name) {
     return false;

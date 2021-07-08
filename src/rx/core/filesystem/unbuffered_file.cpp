@@ -241,7 +241,7 @@ static bool stat_file(void* _impl, Stream::Stat& stat_) {
 #endif
 
 UnbufferedFile::UnbufferedFile(UnbufferedFile&& other_)
-  : UntrackedStream{Utility::move(other_)}
+  : Context{Utility::move(other_)}
   , m_impl{Utility::exchange(other_.m_impl, nullptr)}
   , m_name{Utility::move(other_.m_name)}
   , m_mode{Utility::exchange(other_.m_mode, nullptr)}
@@ -249,7 +249,7 @@ UnbufferedFile::UnbufferedFile(UnbufferedFile&& other_)
 }
 
 UnbufferedFile::UnbufferedFile(Uint32 _flags, void* _impl, String&& name_, const char* _mode)
-  : UntrackedStream{_flags}
+  : Context{_flags}
   , m_impl{_impl}
   , m_name{Utility::move(name_)}
   , m_mode{_mode}
@@ -259,7 +259,7 @@ UnbufferedFile::UnbufferedFile(Uint32 _flags, void* _impl, String&& name_, const
 UnbufferedFile& UnbufferedFile::operator=(UnbufferedFile&& file_) {
   if (this != &file_) {
     (void)close();
-    UntrackedStream::operator=(Utility::move(file_));
+    Context::operator=(Utility::move(file_));
     m_impl = Utility::exchange(file_.m_impl, nullptr);
     m_name = Utility::move(file_.m_name);
     m_mode = Utility::exchange(file_.m_mode, nullptr);
@@ -336,7 +336,7 @@ Uint64 UnbufferedFile::on_copy(Uint64 _dst_offset, Uint64 _src_offset, Uint64 _s
   return bytes;
 #endif
   // Use the fallback implementation which just copies in blocks.
-  return UntrackedStream::on_copy(_dst_offset, _src_offset, _size);
+  return Context::on_copy(_dst_offset, _src_offset, _size);
 }
 
 bool UnbufferedFile::close() {

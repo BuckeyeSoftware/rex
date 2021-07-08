@@ -12,7 +12,7 @@ namespace Rx {
 }
 
 namespace Rx::Stream {
-  struct UntrackedStream;
+  struct Context;
 }
 
 namespace Rx::Texture {
@@ -43,7 +43,7 @@ struct Loader {
   constexpr Loader(Memory::Allocator& _allocator);
   ~Loader() = default;
 
-  [[nodiscard]] bool load(Stream::UntrackedStream& _stream, PixelFormat _want_format,
+  [[nodiscard]] bool load(Stream::Context& _stream, PixelFormat _want_format,
     const Math::Vec2z& _max_dimensions);
   [[nodiscard]] bool load(const StringView& _file_name, PixelFormat _want_format,
     const Math::Vec2z& _max_dimensions);

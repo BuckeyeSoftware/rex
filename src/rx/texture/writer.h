@@ -4,7 +4,7 @@
 
 #include "rx/math/vec2.h"
 
-namespace Rx::Stream { struct UntrackedStream; }
+namespace Rx::Stream { struct Context; }
 namespace Rx::Memory { struct Allocator; }
 
 namespace Rx::Texture {
@@ -13,7 +13,7 @@ namespace Rx::Texture {
 /// in the specified pixel format with specified dimensions.
 bool write(Memory::Allocator& _allocator, FileFormat _file_format,
   PixelFormat _pixel_format, const Math::Vec2z& _dimensions, const Byte* _data,
-  Stream::UntrackedStream& output_);
+  Stream::Context& output_);
 
 } // namespace Rx::Texture
 

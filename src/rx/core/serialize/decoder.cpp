@@ -5,7 +5,7 @@
 namespace Rx::Serialize {
 
 Optional<Decoder> Decoder::create(Memory::Allocator& _allocator,
-  Stream::UntrackedStream& _stream)
+  Stream::Context& _stream)
 {
   if (!(_stream.flags() & Stream::READ)) {
     // Stream does not support reading from.
