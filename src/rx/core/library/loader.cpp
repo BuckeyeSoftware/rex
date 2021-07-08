@@ -19,7 +19,7 @@ namespace Rx::Library {
 // This will of course only work if every one agrees to use this interface.
 static Concurrency::SpinLock g_lock;
 
-Optional<Loader> Loader::open(Memory::Allocator& _allocator, const String& _file_name) {
+Optional<Loader> Loader::open(Memory::Allocator& _allocator, const StringView& _file_name) {
   // Discourage passing file extensions on the filename.
   if (_file_name.ends_with(".dll") || _file_name.ends_with(".so")) {
     return nullopt;

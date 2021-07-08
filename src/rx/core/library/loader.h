@@ -13,16 +13,26 @@ struct RX_API Loader {
 
   Loader& operator=(Loader&& loader_);
 
-  static Optional<Loader> open(Memory::Allocator& _allocator, const String& _file_name);
+  /// \brief Opens dynamic library
+  ///
+  /// \param _allocator The allocator to use for allocations during load.
+  /// \param _file_name The name of the library to open, ecluding file extension.
+  ///
+  /// \return On success a library, otherwise nullopt.
+  static Optional<Loader> open(Memory::Allocator& _allocator, const StringView& _file_name);
 
-  // Link the function pointer given by |function_| up with the symbol in
-  // the library given by |_symbol_name|. Returns true on success, false on
-  // failure.
+  /// \brief Link a function
+  ///
+  /// Link the function pointer given by \p function_ up with the symbol in
+  /// the library given by \p _symbol_name. Returns true on success, false on
+  /// failure.
+  ///
+  /// \param function_ The function to link.
+  /// \param _symbol_name The symbol to lookfor and link to \p function_.
+  ///
+  /// \return \c true on success, \c false otherwise.
   template<typename F>
-  bool link(F*& function_, const char* _symbol_name) const;
-
-  template<typename F>
-  bool link(F*& function_, const String& _symbol_name) const;
+  bool link(F*& function_, const StringView& _symbol_name) const;
 
 private:
   constexpr Loader(Memory::Allocator& _allocator, void* _handle);
@@ -55,17 +65,12 @@ inline constexpr Loader::Loader(Memory::Allocator& _allocator, void* _handle)
 }
 
 template<typename F>
-bool Loader::link(F*& function_, const char* _symbol_name) const {
-  if (const auto proc = address_of(_symbol_name)) {
+bool Loader::link(F*& function_, const StringView& _symbol_name) const {
+  if (const auto proc = address_of(_symbol_name.data())) {
     *reinterpret_cast<void**>(&function_) = proc;
     return true;
   }
   return false;
-}
-
-template<typename F>
-bool Loader::link(F*& function_, const String& _symbol_name) const {
-  return link(function_, _symbol_name.data());
 }
 
 } // namespace Rx::Library

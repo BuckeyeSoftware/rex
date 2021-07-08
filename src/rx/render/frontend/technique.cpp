@@ -159,7 +159,7 @@ static int binexp_evaluate(const char* _expression, const Map<String, bool>& _va
   return result;
 }
 
-static Optional<Uniform::Type> uniform_type_from_string(const String& _type) {
+static Optional<Uniform::Type> uniform_type_from_string(const StringView& _type) {
   static constexpr const struct {
     const char* match;
     Uniform::Type kind;
@@ -199,7 +199,7 @@ static Optional<Uniform::Type> uniform_type_from_string(const String& _type) {
   return nullopt;
 }
 
-static Optional<Shader::InOutType> inout_type_from_string(const String& _type) {
+static Optional<Shader::InOutType> inout_type_from_string(const StringView& _type) {
   static constexpr const struct {
     const char* match;
     Shader::InOutType kind;
