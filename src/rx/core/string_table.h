@@ -27,6 +27,7 @@ struct StringTable {
   const char* operator[](Size _index) const;
 
   void clear();
+  void reset();
 
 private:
   void update_table_references();
@@ -87,6 +88,11 @@ inline const char* StringTable::operator[](Size _index) const {
 inline void StringTable::clear() {
   m_string_data.clear();
   m_string_set.clear();
+}
+
+inline void StringTable::reset() {
+  m_string_data.reset();
+  m_string_set.reset();
 }
 
 inline void StringTable::update_table_references() {
