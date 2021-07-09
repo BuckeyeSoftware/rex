@@ -199,6 +199,11 @@ void Immediate2D::Queue::clear() {
   m_string_table.clear();
 }
 
+void Immediate2D::Queue::reset() {
+  m_commands.reset();
+  m_string_table.reset();
+}
+
 // [Immediate2D::Font]
 Optional<Immediate2D::Font>
 Immediate2D::Font::open(const Key& _key, Frontend::Context* _frontend) {
@@ -367,12 +372,19 @@ Immediate2D::Font::Font(Frontend::Context* _frontend, Sint32 _size,
 
 // [Immediate2D]
 Optional<Immediate2D> Immediate2D::create(Frontend::Context* _frontend) {
+  auto& allocator = _frontend->allocator();
+
+  auto memory = make_ptr<Allocator>(allocator, allocator);
+  if (!memory) {
+    return nullopt;
+  }
+
   auto technique = _frontend->find_technique_by_name("immediate2D");
   if (!technique) {
     return nullopt;
   }
 
-  Frontend::Buffer::Format format{_frontend->allocator()};
+  Frontend::Buffer::Format format{allocator};
   format.record_element_type(Frontend::Buffer::ElementType::U32);
   format.record_vertex_stride(sizeof(Vertex));
   format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x2, offsetof(Vertex, position)});
@@ -396,35 +408,40 @@ Optional<Immediate2D> Immediate2D::create(Frontend::Context* _frontend) {
     }
   }
 
+  auto storage = memory.get();
+
   return Immediate2D {
     _frontend,
+    Utility::move(memory),
     technique,
     FontMap {
-      _frontend->allocator()
+      *storage
     },
     Queue {
-      _frontend->allocator()
+      *storage
     },
     Vector<Batch> {
-      _frontend->allocator()
+      *storage
     },
     RenderBatches {
-      _frontend->allocator(),
-      _frontend->allocator()
+      *storage,
+      *storage
     },
     RenderQueues {
-      _frontend->allocator(),
-      _frontend->allocator()
+      *storage,
+      *storage
     },
     Utility::move(buffers)
   };
 }
 
 Immediate2D::Immediate2D(Frontend::Context* _frontend,
-  Frontend::Technique* _technique, FontMap&& font_map_, Queue&& queue_,
-  Vector<Batch>&& batches_, RenderBatches&& render_batches_,
-  RenderQueues&& render_queues_, Buffers&& buffers_)
+  Ptr<Allocator>&& allocator_, Frontend::Technique* _technique,
+  FontMap&& font_map_, Queue&& queue_, Vector<Batch>&& batches_,
+  RenderBatches&& render_batches_, RenderQueues&& render_queues_,
+  Buffers&& buffers_)
     : m_frontend{_frontend}
+    , m_allocator{Utility::move(allocator_)}
     , m_technique{_technique}
     , m_fonts{Utility::move(font_map_)}
     , m_queue{Utility::move(queue_)}

@@ -13,6 +13,7 @@
 #include "rx/render/frontend/state.h"
 
 #include "rx/core/memory/null_allocator.h"
+#include "rx/core/memory/temporary_allocator.h"
 
 namespace Rx::Render {
 
@@ -110,6 +111,7 @@ struct Immediate2D {
       const Math::Vec4f& _color);
 
     void clear();
+    void reset();
     bool is_empty() const;
 
   private:
@@ -123,8 +125,9 @@ struct Immediate2D {
   // The downside to having to pass allocator instances to everything as a
   // dependency cannot be understated here. This is not for the faint of heart.
   Immediate2D()
-    : Immediate2D{
+    : Immediate2D {
       nullptr,
+      { },
       nullptr,
       FontMap {
         Memory::NullAllocator::instance()
@@ -268,17 +271,20 @@ private:
 
   void release();
 
+  using Allocator = Memory::TemporaryAllocator<8_MiB>;
   using FontMap = Map<Font::Key, Font>;
   using RenderBatches = Array<Vector<Batch>[BUFFERS]>;
   using RenderQueues = Array<Queue[BUFFERS]>;
   using Buffers = Array<Frontend::Buffer*[BUFFERS]>;
 
-  Immediate2D(Frontend::Context* _frontend, Frontend::Technique* _technique,
-    FontMap&& font_map_, Queue&& queue_, Vector<Batch>&& batches_,
-    RenderBatches&& render_batches_, RenderQueues&& render_queues_,
-    Buffers&& buffers_);
+  Immediate2D(Frontend::Context* _frontend, Ptr<Allocator>&& allocator_,
+    Frontend::Technique* _technique, FontMap&& font_map_, Queue&& queue_,
+    Vector<Batch>&& batches_, RenderBatches&& render_batches_,
+    RenderQueues&& render_queues_, Buffers&& buffers_);
 
   Frontend::Context* m_frontend;
+  Ptr<Allocator> m_allocator;
+
   Frontend::Technique* m_technique;
 
   // loaded fonts
@@ -368,6 +374,7 @@ inline Frontend::Context* Immediate2D::Font::frontend() const {
 // [Immediate2D]
 inline Immediate2D::Immediate2D(Immediate2D&& immediate2D_)
   : m_frontend{Utility::exchange(immediate2D_.m_frontend, nullptr)}
+  , m_allocator{Utility::move(immediate2D_.m_allocator)}
   , m_technique{Utility::exchange(immediate2D_.m_technique, nullptr)}
   , m_fonts{Utility::move(immediate2D_.m_fonts)}
   , m_scissor_position{Utility::exchange(immediate2D_.m_scissor_position, Math::Vec2i{})}
@@ -395,6 +402,7 @@ inline Immediate2D& Immediate2D::operator=(Immediate2D&& immediate2D_) {
   if (this != &immediate2D_) {
     release();
     m_frontend = Utility::exchange(immediate2D_.m_frontend, nullptr);
+    m_allocator = Utility::move(immediate2D_.m_allocator);
     m_technique = Utility::exchange(immediate2D_.m_technique, nullptr);
     m_fonts = Utility::move(immediate2D_.m_fonts);
     m_scissor_position = Utility::exchange(immediate2D_.m_scissor_position, Math::Vec2i{});
