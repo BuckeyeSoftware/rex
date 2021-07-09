@@ -16,6 +16,8 @@ FrameGraph::FrameGraph(Render::Immediate2D* _immediate)
 }
 
 void FrameGraph::render() {
+  Memory::TemporaryAllocator<64_KiB> allocator{m_immediate->frontend()->allocator()};
+
   const Render::Frontend::Context& frontend{*m_immediate->frontend()};
   const Render::Frontend::FrameTimer& _timer{frontend.timer()};
   const Math::Vec2f &screen_size{frontend.swapchain()->dimensions().cast<Float32>()};
@@ -34,7 +36,8 @@ void FrameGraph::render() {
     {0.0f, 0.0f, 0.0f, 0.5f});
 
   static constexpr const auto FRAME_SCALE = 16.667f * 2.0f;
-  Vector<Math::Vec2f> points{m_immediate->frontend()->allocator()};
+
+  Vector<Math::Vec2f> points{allocator};
   _timer.frame_times().each_fwd([&](const Render::Frontend::FrameTimer::FrameTime &_time) {
     const auto delta_x{Float32((_timer.ticks() * _timer.resolution() - _time.life) / Render::Frontend::FrameTimer::HISTORY_SECONDS)};
     const auto delta_y{Float32(Algorithm::min(_time.frame / FRAME_SCALE, 1.0))};
@@ -52,8 +55,6 @@ void FrameGraph::render() {
       {0.0f, 1.0f, 0.0f, 1.0f});
   }
 
-  // 16 KiB temporary storage for string formatting below.
-  Memory::TemporaryAllocator<1024 * 16> temporary{Memory::SystemAllocator::instance()};
   m_immediate->frame_queue().record_line({box_left,   box_bottom}, {box_left,   box_top},    0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
   m_immediate->frame_queue().record_line({box_center, box_bottom}, {box_center, box_top},    0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
   m_immediate->frame_queue().record_line({box_right,  box_bottom}, {box_right,  box_top},    0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
@@ -62,8 +63,8 @@ void FrameGraph::render() {
   m_immediate->frame_queue().record_line({box_left,   box_top},    {box_right,  box_top},    0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
   m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_center,       box_top    + 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::CENTER, "Frame Time", {1.0f, 1.0f, 1.0f, 1.0f});
   m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_top    - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, "0.0", {1.0f, 1.0f, 1.0f, 1.0f});
-  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_middle - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format(temporary, "%.1f", FRAME_SCALE * .5), {1.0f, 1.0f, 1.0f, 1.0f});
-  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_bottom - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format(temporary, "%.1f", FRAME_SCALE), {1.0f, 1.0f, 1.0f, 1.0f});
+  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_middle - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format(allocator, "%.1f", FRAME_SCALE * .5), {1.0f, 1.0f, 1.0f, 1.0f});
+  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_bottom - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format(allocator, "%.1f", FRAME_SCALE), {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
 } // namespace rx::hud

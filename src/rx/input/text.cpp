@@ -4,8 +4,10 @@
 
 namespace Rx::Input {
 
-Text::Text()
-  : m_cursor{0}
+Text::Text(Memory::Allocator& _allocator)
+  : m_allocator{_allocator}
+  , m_contents{m_allocator}
+  , m_cursor{0}
   , m_cursor_visible_time{CURSOR_VISIBLE_TIME}
   , m_flags{0}
 {
@@ -207,7 +209,7 @@ void Text::move_cursor(Position _position) {
 }
 
 bool Text::assign(const StringView& _contents) {
-  auto contents = _contents.to_string(Memory::SystemAllocator::instance());
+  auto contents = _contents.to_string(m_allocator);
   if (!contents) {
     return false;
   }

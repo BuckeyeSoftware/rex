@@ -6,7 +6,7 @@
 namespace Rx::Input {
 
 struct Text {
-  Text();
+  Text(Memory::Allocator& _allocator);
 
   static inline constexpr const auto CURSOR_VISIBLE_TIME = 0.50f;
 
@@ -53,6 +53,7 @@ private:
     ACTIVE         = 1 << 5
   };
 
+  Memory::Allocator& m_allocator;
   String m_contents;
   Size m_selection[2];
   Size m_cursor;

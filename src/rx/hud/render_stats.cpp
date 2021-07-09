@@ -31,8 +31,8 @@ RenderStats::RenderStats(Render::Immediate2D* _immediate)
 }
 
 void RenderStats::render() {
-  // 16 KiB temporary storage for string formatting below.
-  Memory::TemporaryAllocator<1024 * 16> temporary{Memory::SystemAllocator::instance()};
+  // Temporary storage for string formatting below.
+  Memory::TemporaryAllocator<16_KiB> temporary{Memory::SystemAllocator::instance()};
 
   const Render::Frontend::Context& frontend = *m_immediate->frontend();
   const auto& buffer_stats = frontend.stats(Render::Frontend::Resource::Type::BUFFER);

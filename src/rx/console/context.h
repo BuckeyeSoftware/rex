@@ -37,8 +37,10 @@ struct Context {
   void clear();
   const Vector<String>& lines();
 
-  Optional<Vector<StringView>> auto_complete_variables(const StringView& _prefix);
-  Optional<Vector<StringView>> auto_complete_commands(const StringView& _prefix);
+  Optional<Vector<StringView>> auto_complete_variables(
+      Memory::Allocator& _allocator, const StringView& _prefix);
+  Optional<Vector<StringView>> auto_complete_commands(
+      Memory::Allocator& _allocator, const StringView& _prefix);
 
   // set variable |_reference| with token |_token|
   static VariableStatus set_from_reference_and_token(VariableReference* _reference, const Token& _token);

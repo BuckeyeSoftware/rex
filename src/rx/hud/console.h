@@ -2,6 +2,8 @@
 #define RX_HUD_CONSOLE_H
 #include "rx/input/context.h"
 
+#include "rx/core/memory/temporary_allocator.h"
+
 namespace Rx::Render {
   struct Immediate2D;
 } // namespace Rx::Render
@@ -17,7 +19,9 @@ struct Console {
   void render();
   void update(Rx::Console::Context& console_);
   void raise();
+
 private:
+  Memory::TemporaryAllocator<1_MiB> m_allocator;
   Render::Immediate2D* m_immediate;
   Input::Context& m_input_context;
   Input::Layer m_input_layer;

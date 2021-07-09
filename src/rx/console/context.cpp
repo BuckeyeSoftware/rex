@@ -193,8 +193,10 @@ bool Context::execute(const StringView& _contents) {
   return false;
 }
 
-Optional<Vector<StringView>> Context::auto_complete_variables(const StringView& _prefix) {
-  Vector<StringView> results{m_allocator};
+Optional<Vector<StringView>> Context::auto_complete_variables(
+  Memory::Allocator& _allocator, const StringView& _prefix)
+{
+  Vector<StringView> results{_allocator};
   for (VariableReference* node = g_head; node; node = node->m_next) {
     if (!strncmp(node->name(), _prefix.data(), _prefix.size())) {
       if (!results.push_back(node->name())) {
@@ -205,8 +207,10 @@ Optional<Vector<StringView>> Context::auto_complete_variables(const StringView& 
   return results;
 }
 
-Optional<Vector<StringView>> Context::auto_complete_commands(const StringView& _prefix) {
-  Vector<StringView> results{m_allocator};
+Optional<Vector<StringView>> Context::auto_complete_commands(
+  Memory::Allocator& _allocator, const StringView& _prefix)
+{
+  Vector<StringView> results{_allocator};
   auto result = m_commands.each_key([&](const String& _key) {
     if (!strncmp(_key.data(), _prefix.data(), _prefix.size())) {
       if (!results.push_back(_key)) {

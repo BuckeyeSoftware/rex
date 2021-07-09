@@ -68,12 +68,14 @@ RX_CONSOLE_V4FVAR(
   Math::Vec4f(0.6784f, 0.8392f, 1.0f, 1.0f - 0.1490f));
 
 Console::Console(Render::Immediate2D* _immediate, Input::Context& input_)
-  : m_immediate{_immediate}
+  : m_allocator{input_.allocator()}
+  , m_immediate{_immediate}
   , m_input_context{input_}
   , m_input_layer{&m_input_context}
+  , m_text{m_allocator}
   , m_selection{0}
-  , m_suggestions{input_.allocator()}
-  , m_lines{input_.allocator()}
+  , m_suggestions{m_allocator}
+  , m_lines{m_allocator}
 {
   m_input_layer.capture_text(&m_text);
 }
@@ -95,11 +97,13 @@ void Console::update(Rx::Console::Context& console_) {
   m_input_layer.resize({static_cast<Float32>(dimensions.w), height});
   m_input_layer.move({0.0f, dimensions.h - height});
 
-  // Make a copy of the console line output for rendering.
-  auto lines = Utility::copy(console_.lines());
-  if (lines) {
-    m_lines = Utility::move(*lines);
-  }
+  // Copy the lines into |m_lines| line by line.
+  m_lines.clear();
+  console_.lines().each_fwd([&](const String& _line) {
+    if (auto line = String::create(m_allocator, _line.data(), _line.size())) {
+      m_lines.push_back(Utility::move(*line));
+    }
+  });
 
   bool made_selection = false;
   if (m_input_layer.keyboard().is_pressed(Input::ScanCode::GRAVE)) {
@@ -123,8 +127,8 @@ void Console::update(Rx::Console::Context& console_) {
     return;
   }
 
-  auto complete_variables = console_.auto_complete_variables(m_text.contents());
-  auto complete_commands = console_.auto_complete_commands(m_text.contents());
+  auto complete_variables = console_.auto_complete_variables(m_allocator, m_text.contents());
+  auto complete_commands = console_.auto_complete_commands(m_allocator, m_text.contents());
   if (!complete_variables || !complete_commands) {
     return;
   }

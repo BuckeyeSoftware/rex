@@ -42,21 +42,28 @@ void MemoryStats::render() {
   auto line = [&](const String &_line) {
     m_immediate->frame_queue().record_text(
       font_name->get(),
-      Math::Vec2f{screen_size.x - 25.0f, y},
+      Math::Vec2f{screen_size.x - screen_size.x * 0.28f, y},
       *font_size,
       1.0f,
-      Render::Immediate2D::TextAlign::RIGHT,
+      Render::Immediate2D::TextAlign::LEFT,
       _line,
       {1.0f, 1.0f, 1.0f, 1.0f});
     y += *font_size;
   };
 
-  // 16 KiB temporary storage for string formatting below.
-  Memory::TemporaryAllocator<1024 * 16> temporary{allocator};
-  line(String::format(temporary, "used memory (requested): %s", *String::human_size_format(temporary, stats.used_request_bytes)));
-  line(String::format(temporary, "used memory (actual):    %s", *String::human_size_format(temporary, stats.used_actual_bytes)));
-  line(String::format(temporary, "peak memory (requested): %s", *String::human_size_format(temporary, stats.peak_request_bytes)));
-  line(String::format(temporary, "peak memory (actual):    %s", *String::human_size_format(temporary, stats.peak_actual_bytes)));
+  // Temporary storage for string formatting below.
+  Memory::TemporaryAllocator<16_KiB> temporary{allocator};
+
+  line(String::format(temporary, "used memory (requested):   %s", *String::human_size_format(temporary, stats.used_request_bytes)));
+  line(String::format(temporary, "used memory (actual):      %s", *String::human_size_format(temporary, stats.used_actual_bytes)));
+  line(String::format(temporary, "peak memory (requested):   %s", *String::human_size_format(temporary, stats.peak_request_bytes)));
+  line(String::format(temporary, "peak memory (actual):      %s", *String::human_size_format(temporary, stats.peak_actual_bytes)));
+
+  line(String::format(temporary, "deallocations:             %zu", stats.deallocations));
+  line(String::format(temporary, "reallocations (requested): %zu", stats.request_reallocations));
+  line(String::format(temporary, "reallocations (actual):    %zu", stats.actual_reallocations));
+  line(String::format(temporary, "allocations (active):      %zu", stats.allocations - stats.deallocations));
+  line(String::format(temporary, "allocations (total):       %zu", stats.allocations));
 }
 
 } // namespace rx::hud
