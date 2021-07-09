@@ -70,6 +70,21 @@ constexpr Uint64 operator"" _u64(unsigned long long _value) {
   return static_cast<Uint64>(_value);
 }
 
+/// Convenience user-defined literal for KiB to bytes.
+constexpr auto operator""_KiB(unsigned long long _value) {
+  return _value * 1024ul;
+}
+
+/// Convienence user-defined literal for MiB to bytes.
+constexpr auto operator""_MiB(unsigned long long _value) {
+  return _value * 1024_KiB;
+}
+
+/// Convienence user-defined literal for GiB to bytes.
+constexpr auto operator""_GiB(unsigned long long _value) {
+  return _value * 1024_MiB;
+}
+
 } // namespace Rx
 
 #endif // RX_FOUNDATION_TYPES_H
