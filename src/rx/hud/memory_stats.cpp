@@ -48,10 +48,10 @@ void MemoryStats::render() {
     y += *font_size;
   }};
 
-  line(String::format(allocator, "used memory (requested): %s", String::human_size_format(stats.used_request_bytes)));
-  line(String::format(allocator, "used memory (actual):    %s", String::human_size_format(stats.used_actual_bytes)));
-  line(String::format(allocator, "peak memory (requested): %s", String::human_size_format(stats.peak_request_bytes)));
-  line(String::format(allocator, "peak memory (actual):    %s", String::human_size_format(stats.peak_actual_bytes)));
+  line(String::format(allocator, "used memory (requested): %s", *String::human_size_format(allocator, stats.used_request_bytes)));
+  line(String::format(allocator, "used memory (actual):    %s", *String::human_size_format(allocator, stats.used_actual_bytes)));
+  line(String::format(allocator, "peak memory (requested): %s", *String::human_size_format(allocator, stats.peak_request_bytes)));
+  line(String::format(allocator, "peak memory (actual):    %s", *String::human_size_format(allocator, stats.peak_actual_bytes)));
 }
 
 } // namespace rx::hud

@@ -46,12 +46,6 @@ Optional<String> String::formatter(Memory::Allocator& _allocator, const char* _f
   return result;
 }
 
-String::String(Memory::Allocator& _allocator, const char* _contents)
-  : String{_allocator}
-{
-  (void)append(_contents);
-}
-
 String::String(String&& contents_)
   : m_allocator{contents_.m_allocator}
 {
@@ -297,7 +291,7 @@ void String::erase(Size _begin, Size _end) {
   *m_last = '\0';
 }
 
-String String::human_size_format(Size _size) {
+Optional<String> String::human_size_format(Memory::Allocator& _allocator, Size _size) {
   static constexpr const char* SUFFIXES[] = {
     "B", "KiB", "MiB", "GiB", "TiB"
   };
@@ -323,11 +317,25 @@ String String::human_size_format(Size _size) {
 #endif
 
   char* period = strchr(buffer, '.');
-  RX_ASSERT(period, "failed to format");
+  if (!period) {
+    return nullopt;
+  }
   period[3] = '\0';
-  // TODO(dweiler): Consider using NullAllocator here as human_size_format
-  // should fit completely in-situ.
-  return format(Memory::SystemAllocator::instance(), "%s %s", buffer, SUFFIXES[i]);
+
+  String result{_allocator};
+  if (!result.append(buffer)) {
+    return nullopt;
+  }
+
+  if (!result.append(' ')) {
+    return nullopt;
+  }
+
+  if (!result.append(SUFFIXES[i])) {
+    return nullopt;
+  }
+
+  return result;
 }
 
 bool String::begins_with(const StringView& _prefix) const {

@@ -63,7 +63,7 @@ void RenderStats::render() {
         color_ratio(_stats.used, _stats.total),
         _stats.used,
         _stats.total,
-        String::human_size_format(_stats.memory),
+        *String::human_size_format(allocator, _stats.memory),
         _stats.cached);
 
     m_immediate->frame_queue().record_text(
@@ -91,8 +91,8 @@ void RenderStats::render() {
       allocator,
       "commands: ^[%x]%s ^wof ^g%s ^w(%zu total)",
       color_ratio(commands_used, commands_total),
-      String::human_size_format(commands_used),
-      String::human_size_format(commands_total),
+      *String::human_size_format(allocator, commands_used),
+      *String::human_size_format(allocator, commands_total),
       frontend.commands()),
     {1.0f, 1.0f, 1.0f, 1.0f});
 

@@ -118,9 +118,9 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
 
   // Cache the device information from the backend.
   const auto& info{m_backend->query_device_info()};
-  m_device_info.vendor = info.vendor;
-  m_device_info.renderer = info.renderer;
-  m_device_info.version = info.version;
+  m_device_info.vendor = Utility::move(*String::create(m_allocator, info.vendor));
+  m_device_info.renderer = Utility::move(*String::create(m_allocator, info.renderer));
+  m_device_info.version = Utility::move(*String::create(m_allocator, info.version));
 
   // Load all modules.
   time.start();

@@ -19,22 +19,22 @@ struct StringView;
 struct RX_API String {
   static inline constexpr const Size INSITU_SIZE = 16;
 
+  constexpr String();
   constexpr String(Memory::Allocator& _allocator);
 
-  // TODO(dweiler): Remove this constructor. No failing in constructors.
-  String(Memory::Allocator& _allocator, const char* _contents);
-
-  constexpr String();
+  // TODO(dweiler): Remove copy constructor as this can fail.
   String(const String& _contents);
+
   String(String&& contents_);
-  String(const char* _contents);
   String(Memory::View _view);
   ~String();
 
   static Optional<String> create(Memory::Allocator& _allocator, const char* _contents);
   static Optional<String> create(Memory::Allocator& _allocator, const char* _contents, Size _size);
+
   static Optional<String> copy(const String& _other);
 
+  // TODO(dweiler): Have this return Optional<String> since it can fail.
   template<typename... Ts>
   RX_HINT_FORMAT(2, 0)
   static String format(Memory::Allocator& _allocator, const char* _format,
@@ -88,7 +88,7 @@ struct RX_API String {
   char* data();
   const char* data() const;
 
-  static RX_API String human_size_format(Size _size);
+  static RX_API Optional<String> human_size_format(Memory::Allocator& _allocator, Size _size);
 
   [[nodiscard]] bool begins_with(const StringView& _prefix) const;
   [[nodiscard]] bool ends_with(const StringView& _suffix) const;
@@ -225,13 +225,9 @@ inline constexpr String::String()
 }
 
 inline String::String(const String& _contents)
-  : String{_contents.allocator(), _contents.data()}
+  : String{_contents.allocator()}
 {
-}
-
-inline String::String(const char* _contents)
-  : String{Memory::SystemAllocator::instance(), _contents}
-{
+  (void)append(_contents.data());
 }
 
 RX_HINT_FORCE_INLINE Size String::size() const {
