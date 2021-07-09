@@ -420,7 +420,7 @@ Optional<Immediate2D> Immediate2D::create(Frontend::Context* _frontend) {
     Queue {
       *storage
     },
-    Vector<Batch> {
+    Batches {
       *storage
     },
     RenderBatches {
@@ -437,7 +437,7 @@ Optional<Immediate2D> Immediate2D::create(Frontend::Context* _frontend) {
 
 Immediate2D::Immediate2D(Frontend::Context* _frontend,
   Ptr<Allocator>&& allocator_, Frontend::Technique* _technique,
-  FontMap&& font_map_, Queue&& queue_, Vector<Batch>&& batches_,
+  FontMap&& font_map_, Queue&& queue_, Batches&& batches_,
   RenderBatches&& render_batches_, RenderQueues&& render_queues_,
   Buffers&& buffers_)
     : m_frontend{_frontend}

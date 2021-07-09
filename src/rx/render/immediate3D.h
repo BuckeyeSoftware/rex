@@ -2,11 +2,14 @@
 #define RX_RENDER_IMMEDIATE3D_H
 #include "rx/core/vector.h"
 #include "rx/core/array.h"
+#include "rx/core/ptr.h"
 
 #include "rx/math/mat4x4.h"
 #include "rx/math/aabb.h"
 
 #include "rx/render/frontend/state.h"
+
+#include "rx/core/memory/temporary_allocator.h"
 
 namespace Rx::Render {
 
@@ -215,12 +218,23 @@ private:
     const Math::Vec3f& _normal, const Math::Vec4f& _color);
   void add_instance(const Math::Mat4x4f& _transform, const Math::Vec4f& _color);
 
-  Immediate3D(Frontend::Context* _frontend,
-    Frontend::Technique* _technique, Array<Frontend::Buffer*[BUFFERS]>&& buffers_);
+  using Allocator = Memory::TemporaryAllocator<4_MiB>;
+  using Batches = Vector<Batch>;
+  using RenderBatches = Array<Vector<Batch>[BUFFERS]>;
+  using RenderQueues = Array<Queue[BUFFERS]>;
+  using Buffers = Array<Frontend::Buffer*[BUFFERS]>;
+
+  Immediate3D(Frontend::Context* _frontend, Ptr<Allocator>&& allocator_,
+    Frontend::Technique* _technique, Queue&& queue_, Batches&& batches_,
+    RenderBatches&& render_batches_, RenderQueues&& render_queues_,
+    Buffers&& buffers_);
 
   void release();
 
   Frontend::Context* m_frontend;
+
+  Ptr<Allocator> m_allocator;
+
   Frontend::Technique* m_technique;
 
   Queue m_queue;
@@ -228,7 +242,7 @@ private:
   Uint32* m_elements;
   Instance* m_instances;
 
-  Vector<Batch> m_batches;
+  Batches m_batches;
 
   Size m_vertex_index;
   Size m_element_index;
@@ -237,9 +251,9 @@ private:
   Size m_rd_index;
   Size m_wr_index;
 
-  Array<Vector<Batch>[BUFFERS]> m_render_batches;
-  Array<Queue[BUFFERS]> m_render_queues;
-  Array<Frontend::Buffer*[BUFFERS]> m_buffers;
+  RenderBatches m_render_batches;
+  RenderQueues m_render_queues;
+  Buffers m_buffers;
 };
 
 // [Immediate3D::Queue]
@@ -260,13 +274,9 @@ inline Immediate3D::Queue& Immediate3D::frame_queue() {
 }
 
 // [Immediate3D]
-inline Immediate3D::Immediate3D()
-  : Immediate3D{nullptr, nullptr, {}}
-{
-}
-
 inline Immediate3D::Immediate3D(Immediate3D&& immediate3D_)
   : m_frontend{Utility::exchange(immediate3D_.m_frontend, nullptr)}
+  , m_allocator{Utility::move(immediate3D_.m_allocator)}
   , m_technique{Utility::exchange(immediate3D_.m_technique, nullptr)}
   , m_queue{Utility::move(immediate3D_.m_queue)}
   , m_vertices{Utility::exchange(immediate3D_.m_vertices, nullptr)}
@@ -292,6 +302,7 @@ inline Immediate3D& Immediate3D::operator=(Immediate3D&& immediate3D_) {
   if (this != &immediate3D_) {
     release();
     m_frontend = Utility::exchange(immediate3D_.m_frontend, nullptr);
+    m_allocator = Utility::move(immediate3D_.m_allocator);
     m_technique = Utility::exchange(immediate3D_.m_technique, nullptr);
     m_queue = Utility::move(immediate3D_.m_queue);
     m_vertices = Utility::exchange(immediate3D_.m_vertices, nullptr);

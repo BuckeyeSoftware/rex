@@ -130,12 +130,19 @@ void Immediate3D::Queue::clear() {
 
 // [Immediate3D]
 Optional<Immediate3D> Immediate3D::create(Frontend::Context* _frontend) {
+  auto& allocator = _frontend->allocator();
+
   auto technique = _frontend->find_technique_by_name("immediate3D");
   if (!technique) {
     return nullopt;
   }
 
-  Frontend::Buffer::Format format{_frontend->allocator()};
+  auto memory = make_ptr<Allocator>(allocator, allocator);
+  if (!memory) {
+    return nullopt;
+  }
+
+  Frontend::Buffer::Format format{allocator};
   format.record_element_type(Frontend::Buffer::ElementType::U32);
   format.record_vertex_stride(sizeof(Vertex));
   format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, position)});
@@ -162,35 +169,78 @@ Optional<Immediate3D> Immediate3D::create(Frontend::Context* _frontend) {
     }
   }
 
-  return Immediate3D{_frontend, technique, Utility::move(buffers)};
+  auto storage = memory.get();
+
+  return Immediate3D {
+    _frontend,
+    Utility::move(memory),
+    technique,
+    Queue {
+      *storage
+    },
+    Batches {
+      *storage
+    },
+    RenderBatches {
+      *storage,
+      *storage
+    },
+    RenderQueues {
+      *storage,
+      *storage
+    },
+    Utility::move(buffers)
+  };
+}
+
+Immediate3D::Immediate3D()
+  : Immediate3D {
+    nullptr,
+    { },
+    nullptr,
+    Queue {
+      Memory::NullAllocator::instance()
+    },
+    Batches {
+      Memory::NullAllocator::instance()
+    },
+    RenderBatches {
+      Memory::NullAllocator::instance(),
+      Memory::NullAllocator::instance(),
+    },
+    RenderQueues {
+      Memory::NullAllocator::instance(),
+      Memory::NullAllocator::instance()
+    },
+    Buffers {
+      nullptr,
+      nullptr
+    }
+  }
+{
 }
 
 Immediate3D::Immediate3D(Frontend::Context* _frontend,
-  Frontend::Technique* _technique, Array<Frontend::Buffer*[BUFFERS]>&& buffers_)
+  Ptr<Allocator>&& allocator_, Frontend::Technique* _technique, Queue&& queue_,
+  Batches&& batches_, RenderBatches&& render_batches_,
+  RenderQueues&& render_queues_, Buffers&& buffers_)
   : m_frontend{_frontend}
+  , m_allocator{Utility::move(allocator_)}
   , m_technique{_technique}
+  , m_queue{Utility::move(queue_)}
   , m_vertices{nullptr}
   , m_elements{nullptr}
   , m_instances{nullptr}
+  , m_batches{Utility::move(batches_)}
   , m_vertex_index{0}
   , m_element_index{0}
   , m_instance_index{0}
   , m_rd_index{1}
   , m_wr_index{0}
+  , m_render_batches{Utility::move(render_batches_)}
+  , m_render_queues{Utility::move(render_queues_)}
   , m_buffers{Utility::move(buffers_)}
 {
-  if (m_frontend) {
-    // Wire up allocators.
-    auto& allocator = m_frontend->allocator();
-
-    m_queue = {allocator};
-    m_batches = {allocator};
-
-    for (Size i = 0; i < BUFFERS; i++) {
-      m_render_batches[i] = {allocator};
-      m_render_queues[i] = {allocator};
-    }
-  }
 }
 
 void Immediate3D::release() {

@@ -271,7 +271,8 @@ private:
 
   void release();
 
-  using Allocator = Memory::TemporaryAllocator<8_MiB>;
+  using Allocator = Memory::TemporaryAllocator<4_MiB>;
+  using Batches = Vector<Batch>;
   using FontMap = Map<Font::Key, Font>;
   using RenderBatches = Array<Vector<Batch>[BUFFERS]>;
   using RenderQueues = Array<Queue[BUFFERS]>;
@@ -279,7 +280,7 @@ private:
 
   Immediate2D(Frontend::Context* _frontend, Ptr<Allocator>&& allocator_,
     Frontend::Technique* _technique, FontMap&& font_map_, Queue&& queue_,
-    Vector<Batch>&& batches_, RenderBatches&& render_batches_,
+    Batches&& batches_, RenderBatches&& render_batches_,
     RenderQueues&& render_queues_, Buffers&& buffers_);
 
   Frontend::Context* m_frontend;
@@ -303,7 +304,7 @@ private:
   Vertex* m_vertices;
   Uint32* m_elements;
 
-  Vector<Batch> m_batches;
+  Batches m_batches;
 
   Size m_vertex_index;
   Size m_element_index;
