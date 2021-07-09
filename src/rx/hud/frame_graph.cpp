@@ -6,6 +6,8 @@
 
 #include "rx/render/immediate2D.h"
 
+#include "rx/core/memory/temporary_allocator.h"
+
 namespace Rx::hud {
 
 FrameGraph::FrameGraph(Render::Immediate2D* _immediate)
@@ -50,6 +52,8 @@ void FrameGraph::render() {
       {0.0f, 1.0f, 0.0f, 1.0f});
   }
 
+  // 16 KiB temporary storage for string formatting below.
+  Memory::TemporaryAllocator<1024 * 16> temporary{Memory::SystemAllocator::instance()};
   m_immediate->frame_queue().record_line({box_left,   box_bottom}, {box_left,   box_top},    0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
   m_immediate->frame_queue().record_line({box_center, box_bottom}, {box_center, box_top},    0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
   m_immediate->frame_queue().record_line({box_right,  box_bottom}, {box_right,  box_top},    0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
@@ -58,8 +62,8 @@ void FrameGraph::render() {
   m_immediate->frame_queue().record_line({box_left,   box_top},    {box_right,  box_top},    0.0f, 1.0f, {1.0f, 1.0f, 1.0f, 1.0f});
   m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_center,       box_top    + 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::CENTER, "Frame Time", {1.0f, 1.0f, 1.0f, 1.0f});
   m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_top    - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, "0.0", {1.0f, 1.0f, 1.0f, 1.0f});
-  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_middle - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format(Memory::SystemAllocator::instance(), "%.1f", FRAME_SCALE * .5), {1.0f, 1.0f, 1.0f, 1.0f});
-  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_bottom - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format(Memory::SystemAllocator::instance(), "%.1f", FRAME_SCALE), {1.0f, 1.0f, 1.0f, 1.0f});
+  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_middle - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format(temporary, "%.1f", FRAME_SCALE * .5), {1.0f, 1.0f, 1.0f, 1.0f});
+  m_immediate->frame_queue().record_text("Inconsolata-Regular", {box_right + 5.0f, box_bottom - 5.0f}, 18, 1.0f, Render::Immediate2D::TextAlign::LEFT, String::format(temporary, "%.1f", FRAME_SCALE), {1.0f, 1.0f, 1.0f, 1.0f});
 }
 
 } // namespace rx::hud

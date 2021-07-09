@@ -7,6 +7,8 @@
 
 #include "rx/console/variable.h"
 
+#include "rx/core/memory/temporary_allocator.h"
+
 namespace Rx::hud {
 
 RX_CONSOLE_SVAR(
@@ -29,7 +31,8 @@ RenderStats::RenderStats(Render::Immediate2D* _immediate)
 }
 
 void RenderStats::render() {
-  auto& allocator = Memory::SystemAllocator::instance();
+  // 16 KiB temporary storage for string formatting below.
+  Memory::TemporaryAllocator<1024 * 16> temporary{Memory::SystemAllocator::instance()};
 
   const Render::Frontend::Context& frontend = *m_immediate->frontend();
   const auto& buffer_stats = frontend.stats(Render::Frontend::Resource::Type::BUFFER);
@@ -57,13 +60,13 @@ void RenderStats::render() {
   auto render_stat = [&](const char *_label, const auto &_stats) {
     const auto format =
       String::format(
-        allocator,
+        temporary,
         "^w%s: ^[%x]%zu ^wof ^m%zu ^g%s ^w(%zu cached)",
         _label,
         color_ratio(_stats.used, _stats.total),
         _stats.used,
         _stats.total,
-        *String::human_size_format(allocator, _stats.memory),
+        *String::human_size_format(temporary, _stats.memory),
         _stats.cached);
 
     m_immediate->frame_queue().record_text(
@@ -88,11 +91,11 @@ void RenderStats::render() {
     1.0f,
     Render::Immediate2D::TextAlign::LEFT,
     String::format(
-      allocator,
+      temporary,
       "commands: ^[%x]%s ^wof ^g%s ^w(%zu total)",
       color_ratio(commands_used, commands_total),
-      *String::human_size_format(allocator, commands_used),
-      *String::human_size_format(allocator, commands_total),
+      *String::human_size_format(temporary, commands_used),
+      *String::human_size_format(temporary, commands_total),
       frontend.commands()),
     {1.0f, 1.0f, 1.0f, 1.0f});
 
@@ -114,7 +117,7 @@ void RenderStats::render() {
       *font_size,
       1.0f,
       Render::Immediate2D::TextAlign::LEFT,
-      String::format(allocator, "%s: %zu", _name, _number),
+      String::format(temporary, "%s: %zu", _name, _number),
       {1.0f, 1.0f, 1.0f, 1.0f});
     offset.y += *font_size;
   };
@@ -133,7 +136,7 @@ void RenderStats::render() {
     1.0f,
     Render::Immediate2D::TextAlign::LEFT,
     String::format(
-      allocator,
+      temporary,
       "draws: %zu (%zu instanced)",
       frontend.draw_calls(),
       frontend.instanced_draw_calls()),
@@ -152,7 +155,7 @@ void RenderStats::render() {
     1.0f,
     Render::Immediate2D::TextAlign::RIGHT,
     String::format(
-      allocator,
+      temporary,
       "MSPF: %.2f | FPS: %d",
       _timer.mspf(),
       _timer.fps()),

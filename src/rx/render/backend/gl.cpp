@@ -419,8 +419,7 @@ Optional<String> generate_glsl(Memory::Allocator& _allocator,
   int _version, bool _es)
 {
   String contents{_allocator};
-  auto version = String::format(_allocator, "#version %d %s\n", _version, _es ? "es" : "core");
-  if (!contents.append(version)) {
+  if (!contents.formatted_append("#version %d %s\n", _version, _es ? "es" : "core")) {
     return nullopt;
   }
 

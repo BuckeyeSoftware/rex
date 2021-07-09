@@ -7,6 +7,8 @@
 
 #include "rx/console/variable.h"
 
+#include "rx/core/memory/temporary_allocator.h"
+
 namespace Rx::hud {
 
 RX_CONSOLE_SVAR(
@@ -30,13 +32,14 @@ MemoryStats::MemoryStats(Render::Immediate2D* _immediate)
 
 void MemoryStats::render() {
   auto& allocator = Memory::SystemAllocator::instance();
+
   const auto stats = static_cast<const Memory::SystemAllocator*>(&allocator)->stats();
 
   const Render::Frontend::Context& frontend = *m_immediate->frontend();
   const Math::Vec2f &screen_size = frontend.swapchain()->dimensions().cast<Float32>();
 
   Float32 y = 25.0f;
-  auto line{[&](const String &_line) {
+  auto line = [&](const String &_line) {
     m_immediate->frame_queue().record_text(
       font_name->get(),
       Math::Vec2f{screen_size.x - 25.0f, y},
@@ -46,12 +49,14 @@ void MemoryStats::render() {
       _line,
       {1.0f, 1.0f, 1.0f, 1.0f});
     y += *font_size;
-  }};
+  };
 
-  line(String::format(allocator, "used memory (requested): %s", *String::human_size_format(allocator, stats.used_request_bytes)));
-  line(String::format(allocator, "used memory (actual):    %s", *String::human_size_format(allocator, stats.used_actual_bytes)));
-  line(String::format(allocator, "peak memory (requested): %s", *String::human_size_format(allocator, stats.peak_request_bytes)));
-  line(String::format(allocator, "peak memory (actual):    %s", *String::human_size_format(allocator, stats.peak_actual_bytes)));
+  // 16 KiB temporary storage for string formatting below.
+  Memory::TemporaryAllocator<1024 * 16> temporary{allocator};
+  line(String::format(temporary, "used memory (requested): %s", *String::human_size_format(temporary, stats.used_request_bytes)));
+  line(String::format(temporary, "used memory (actual):    %s", *String::human_size_format(temporary, stats.used_actual_bytes)));
+  line(String::format(temporary, "peak memory (requested): %s", *String::human_size_format(temporary, stats.peak_request_bytes)));
+  line(String::format(temporary, "peak memory (actual):    %s", *String::human_size_format(temporary, stats.peak_actual_bytes)));
 }
 
 } // namespace rx::hud
