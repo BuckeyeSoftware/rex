@@ -181,12 +181,6 @@ Optional<String> JSON::as_string(Memory::Allocator& _allocator) const {
   return String::create(_allocator, string->string, string->string_size);
 }
 
-String JSON::as_string_with_allocator(Memory::Allocator& _allocator) const {
-  RX_ASSERT(is_string(), "not a string");
-  auto string{reinterpret_cast<struct json_string_s*>(m_value->payload)};
-  return {_allocator, string->string, string->string + string->string_size};
-}
-
 Size JSON::size() const {
   RX_ASSERT(is_array() || is_object(), "not an indexable type");
   switch (m_value->type) {

@@ -60,7 +60,6 @@ struct RX_API JSON {
   Sint32 as_integer() const;
   JSON operator[](const char* _name) const;
   Optional<String> as_string(Memory::Allocator& _allocator) const;
-  String as_string_with_allocator(Memory::Allocator& _allocator) const;
 
   // # of elements for objects and arrays only
   Size size() const;

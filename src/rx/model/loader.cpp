@@ -94,7 +94,12 @@ bool Loader::parse(Concurrency::Scheduler& _scheduler, const JSON& _definition) 
     return m_report.error("expected String for 'name'");
   }
 
-  m_name = Utility::move(name.as_string_with_allocator(allocator()));
+  auto name_string = name.as_string(allocator());
+  if (!name_string) {
+    return false;
+  }
+
+  m_name = Utility::move(*name_string);
 
   if (!m_report.rename(m_name)) {
     return false;
@@ -124,23 +129,38 @@ bool Loader::parse(Concurrency::Scheduler& _scheduler, const JSON& _definition) 
   // Clear incase we're being run multiple times to change.
   m_materials.clear();
 
-  if (!import(file.as_string_with_allocator(allocator()))) {
+  auto file_name = file.as_string(allocator());
+  if (!file_name) {
+    return false;
+  }
+
+  if (!import(*file_name)) {
     return false;
   }
 
   // Load all the materials across multiple threads.
-
+  Concurrency::AtomicFlag error = false;
   Concurrency::Mutex mutex;
   Concurrency::WaitGroup group{materials.size()};
   materials.each([&](const JSON& _material) {
     (void)_scheduler.add([&, _material](int) {
       Material::Loader loader{allocator()};
-      if (_material.is_string() && loader.load(_material.as_string_with_allocator(allocator()))) {
-        Concurrency::ScopeLock lock{mutex};
-        m_materials.insert(loader.name(), Utility::move(loader));
+      if (_material.is_string()) {
+        if (auto file = _material.as_string(allocator()); file && loader.load(*file)) {
+          Concurrency::ScopeLock lock{mutex};
+          if (!m_materials.insert(loader.name(), Utility::move(loader))) {
+            error.test_and_set();
+          }
+        } else {
+          error.test_and_set();
+        }
       } else if (_material.is_object() && loader.parse(_material)) {
         Concurrency::ScopeLock lock{mutex};
-        m_materials.insert(loader.name(), Utility::move(loader));
+        if (!m_materials.insert(loader.name(), Utility::move(loader))) {
+          error.test_and_set();
+        }
+      } else {
+        error.test_and_set();
       }
       group.signal();
     });
@@ -148,7 +168,7 @@ bool Loader::parse(Concurrency::Scheduler& _scheduler, const JSON& _definition) 
   group.wait();
 
   // Validate the materials.
-  return validate();
+  return !error.test() && validate();
 }
 
 bool Loader::import(const StringView& _file_name) {

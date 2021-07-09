@@ -20,8 +20,9 @@ struct RX_API String {
   static inline constexpr const Size INSITU_SIZE = 16;
 
   constexpr String(Memory::Allocator& _allocator);
+
+  // TODO(dweiler): Remove this constructor. No failing in constructors.
   String(Memory::Allocator& _allocator, const char* _contents);
-  String(Memory::Allocator& _allocator, const char* _first, const char* _last);
 
   constexpr String();
   String(const String& _contents);
@@ -224,7 +225,7 @@ inline constexpr String::String()
 }
 
 inline String::String(const String& _contents)
-  : String{_contents.allocator(), _contents.data(), _contents.data() + _contents.size()}
+  : String{_contents.allocator(), _contents.data()}
 {
 }
 

@@ -590,6 +590,16 @@ struct AtomicFlag {
   }
 
   /// Atomically returns the value of the flag.
+  bool test(MemoryOrder _order = MemoryOrder::SEQ_CST) const {
+    return _::atomic_load(&m_value, _order);
+  }
+
+  /// Atomically returns the value of the flag.
+  bool test(MemoryOrder _order = MemoryOrder::SEQ_CST) const volatile {
+    return _::atomic_load(&m_value, _order);
+  }
+
+  /// Atomically sets flag to `false`.
   void clear(MemoryOrder _order = MemoryOrder::SEQ_CST) volatile {
     _::atomic_store(&m_value, false, _order);
   }

@@ -47,15 +47,9 @@ Optional<String> String::formatter(Memory::Allocator& _allocator, const char* _f
 }
 
 String::String(Memory::Allocator& _allocator, const char* _contents)
-  : String{_allocator, _contents, _contents + strlen(_contents)}
-{
-}
-
-String::String(Memory::Allocator& _allocator, const char* _first,
-               const char* _last)
   : String{_allocator}
 {
-  (void)append(_first, _last);
+  (void)append(_contents);
 }
 
 String::String(String&& contents_)

@@ -73,6 +73,11 @@ bool Texture::parse(const JSON& _definition) {
     return m_report.error("expected String for 'file'");
   }
 
+  auto file_name = file.as_string(allocator());
+  if (!file_name) {
+    return false;
+  }
+
   if (mipmaps && !mipmaps.is_boolean()) {
     return m_report.error("expected Boolean for 'mipmaps'");
   }
@@ -98,7 +103,7 @@ bool Texture::parse(const JSON& _definition) {
     return m_report.error("missing 'border' for \"clamp_to_border\"");
   }
 
-  m_file = file.as_string_with_allocator(allocator());
+  m_file = Utility::move(*file_name);
 
   // TODO(dweiler): Inject the max dimensions from a higher level place.
   return load_texture_file({4096, 4096});
@@ -153,19 +158,20 @@ bool Texture::parse_type(const JSON& _type) {
     { "custom",    Type::CUSTOM    }
   };
 
-  const auto& type_string = _type.as_string_with_allocator(allocator());
+  auto type = _type.as_string(allocator());
+  if (!type) {
+    return false;
+  }
 
   for (const auto& match : MATCHES) {
-    if (match.name != type_string) {
+    if (match.name != *type) {
       continue;
     }
-
     m_type = match.type;
-
     return true;
   }
 
-  return m_report.error("unknown type '%s'", type_string);
+  return m_report.error("unknown type '%s'", *type);
 }
 
 bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
@@ -179,9 +185,13 @@ bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
     "nearest"
   };
 
-  const auto& filter_string = _filter.as_string_with_allocator(allocator());
+  auto filter = _filter.as_string(allocator());
+  if (!filter) {
+    return false;
+  }
+
   for (const auto& match : MATCHES) {
-    if (filter_string != match) {
+    if (*filter != match) {
       continue;
     }
 
@@ -198,7 +208,7 @@ bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
     return true;
   }
 
-  return m_report.error("unknown filter '%s'", filter_string);
+  return m_report.error("unknown filter '%s'", *filter);
 }
 
 bool Texture::parse_wrap(const JSON& _wrap) {
@@ -226,16 +236,22 @@ bool Texture::parse_wrap(const JSON& _wrap) {
     return m_report.error("invalid wrap type '%s'", _type);
   };
 
-  const auto& s_wrap = parse(_wrap[0_z].as_string_with_allocator(allocator()));
-  const auto& t_wrap = parse(_wrap[1_z].as_string_with_allocator(allocator()));
-
-  if (s_wrap && t_wrap) {
-    m_wrap.s = *s_wrap;
-    m_wrap.t = *t_wrap;
-    return true;
+  auto s_string = _wrap[0_z].as_string(allocator());
+  auto t_string = _wrap[1_z].as_string(allocator());
+  if (!s_string || !t_string) {
+    return false;
   }
 
-  return false;
+  auto s_wrap = parse(*s_string);
+  auto t_wrap = parse(*t_string);
+  if (!s_wrap || !t_wrap) {
+    return false;
+  }
+
+  m_wrap.s = *s_wrap;
+  m_wrap.t = *t_wrap;
+
+  return true;
 }
 
 bool Texture::parse_border(const JSON& _border) {

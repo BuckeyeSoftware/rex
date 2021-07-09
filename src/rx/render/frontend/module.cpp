@@ -75,7 +75,12 @@ bool Module::parse(const JSON& _description) {
     return m_report.error("expected String for 'name'");
   }
 
-  m_name = Utility::move(name.as_string_with_allocator(allocator));
+  auto name_string = name.as_string(allocator);
+  if (!name_string) {
+    return false;
+  }
+
+  m_name = Utility::move(*name_string);
 
   if (!m_report.rename(m_name)) {
     return false;
@@ -89,8 +94,13 @@ bool Module::parse(const JSON& _description) {
     return m_report.error("expected String for 'source'");
   }
 
+  auto source_string = source.as_string(allocator);
+  if (!source_string) {
+    return false;
+  }
+
   // Trim any leading and trailing whitespace characters from the contents too.
-  m_source = source.as_string_with_allocator(allocator); //.strip("\t\r\n ");
+  m_source = Utility::move(*source_string); //.strip("\t\r\n ");
 
   const JSON& imports = _description["imports"];
   if (!imports) {
@@ -102,7 +112,8 @@ bool Module::parse(const JSON& _description) {
   }
 
   return imports.each([&](const JSON& _import) {
-    return m_dependencies.push_back(_import.as_string_with_allocator(allocator));
+    auto dependency = _import.as_string(allocator);
+    return dependency && m_dependencies.push_back(Utility::move(*dependency));
   });
 }
 
