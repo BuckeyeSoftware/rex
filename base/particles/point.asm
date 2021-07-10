@@ -9,9 +9,7 @@ mov %cv0, %rv0
 mov %cv2, %pv0  # rv0 = pv0
 
 # Color
-rnd %rs0
-rnd %rs1
-rnd %rs2
+rnd %rv0
 li %rs3, $1.0
 mov %cv3, %rv0
 
@@ -19,10 +17,10 @@ mov %cv3, %rv0
 rnd %rs0
 li %rs1, $5.0
 mul %rs0, %rs0, %rs1
-mov %cs4, %rs0
+mov %cs0, %rs0
 
 # Size
 rnd %rs0
 li %rs1, $10.0
 mul %rs0, %rs0, %rs1
-mov %cs5, %rs0
+mov %cs1, %rs0
