@@ -3,6 +3,8 @@
 #include "rx/particle/program.h"
 #include "rx/core/array.h"
 
+namespace Rx::Random { struct Context; }
+
 namespace Rx::Particle {
 
 struct State;
@@ -16,7 +18,7 @@ struct Emitter {
   Emitter(Emitter&& emitter_);
   Emitter& operator=(Emitter&& emitter_);
 
-  void emit(Float32 _delta_time, State* state_);
+  void emit(Random::Context& _random, Float32 _delta_time, State* state_);
 
   // Emitter parameter control.
   constexpr const Float32& operator[](Size _index) const;

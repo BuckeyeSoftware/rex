@@ -1,6 +1,6 @@
 #include "rx/math/noise/perlin.h"
 #include "rx/core/math/floor.h"
-#include "rx/core/random/mt19937.h"
+#include "rx/core/random/mersenne_twister.h"
 #include "rx/core/utility/swap.h"
 
 namespace Rx::Math::Noise {

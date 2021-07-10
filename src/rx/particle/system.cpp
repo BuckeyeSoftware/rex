@@ -15,7 +15,7 @@ void System::update(Float32 _delta_time) {
 
   // Execute emitters.
   m_emitters.each_fwd([this, _delta_time](Emitter& _emitter) {
-    _emitter.emit(_delta_time, this);
+    _emitter.emit(m_random, _delta_time, this);
   });
 
   const auto n_vectors = m_alive_count / 4;

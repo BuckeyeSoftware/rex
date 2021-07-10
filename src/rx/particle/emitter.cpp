@@ -4,8 +4,6 @@
 
 #include "rx/core/math/mod.h"
 
-#include "rx/core/random/mt19937.h"
-
 namespace Rx::Particle {
 
 Optional<Emitter> Emitter::create(const Program& _program, Float32 _rate) {
@@ -16,7 +14,7 @@ Optional<Emitter> Emitter::create(const Program& _program, Float32 _rate) {
   return Emitter{Utility::move(*program), _rate};
 }
 
-void Emitter::emit(Float32 _delta_time, State* state_) {
+void Emitter::emit(Random::Context& _random, Float32 _delta_time, State* state_) {
   using Channel = VM::Channel;
 
   m_accumulator += _delta_time;
@@ -28,12 +26,11 @@ void Emitter::emit(Float32 _delta_time, State* state_) {
   m_accumulator = Math::mod(m_accumulator, 1.0f / m_rate);
 
   // TODO(dweiler): Execute on thread pool.
-  Random::MT19937 random;
   VM vm;
   for (Size i = beg; i < end; i++) {
     state_->spawn(i);
 
-    const auto result = vm.execute(random, m_parameters, m_program);
+    const auto result = vm.execute(_random, m_parameters, m_program);
 
     // Check the execution mask to know which channels to update.
     if (result.mask & (1 << Channel::VELOCITY)) {

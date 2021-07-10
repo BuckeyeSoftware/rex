@@ -5,6 +5,8 @@
 
 #include "rx/core/vector.h"
 
+#include "rx/core/random/mersenne_twister.h"
+
 namespace Rx::Particle {
 
 struct System : State {
@@ -19,6 +21,7 @@ struct System : State {
   const Emitter& operator[](Size _index) const &;
 
 private:
+  Random::MersenneTwister m_random;
   Vector<Emitter> m_emitters;
 };
 

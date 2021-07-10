@@ -73,6 +73,7 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
         result.size = _value;
         return;
       }
+      break;
     case Instruction::Sink::PARAMETER:
       // Undefined.
       return;
@@ -149,7 +150,7 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
     case Instruction::Width::VECTOR:
       switch (_instruction.c.w) {
       case Instruction::Width::SCALAR:
-        return wr_v(_instruction.a.i,_f(rd_v(_instruction.b.i), rd_s(_instruction.c.i)));
+        return wr_v(_instruction.a.i, _f(rd_v(_instruction.b.i), rd_s(_instruction.c.i)));
       case Instruction::Width::VECTOR:
         return wr_v(_instruction.a.i, _f(rd_v(_instruction.b.i), rd_v(_instruction.c.i)));
       }

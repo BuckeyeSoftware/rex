@@ -2,6 +2,7 @@
 
 #include "rx/core/memory/aggregate.h"
 #include "rx/core/memory/copy.h"
+#include "rx/core/memory/zero.h"
 
 #include "rx/core/utility/swap.h"
 

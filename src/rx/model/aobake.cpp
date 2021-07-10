@@ -15,7 +15,7 @@
 
 #include "rx/math/ray.h"
 
-#include "rx/core/random/mt19937.h"
+#include "rx/core/random/mersenne_twister.h"
 
 namespace Rx::Model {
 
@@ -59,7 +59,7 @@ Optional<Vector<Float32>> bake_ao(
 {
   const auto max_distance = Math::length(_aabb.max() - _aabb.min());
 
-  Random::MT19937 random;
+  Random::MersenneTwister random;
   random.seed(_config.raytrace_seed);
 
   auto voxel = Voxel::create(

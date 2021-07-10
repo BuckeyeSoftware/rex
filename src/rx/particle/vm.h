@@ -70,11 +70,15 @@ struct VM {
   using Parameters = Array<Float32[32]>;
 
   enum Channel : Uint8 {
+    // Vector channels.
     VELOCITY,
     ACCELERATION,
     POSITION,
     COLOR,
-    LIFE,
+
+    // Scalar channels.
+    // Since channels cannot alias, start from 0 again.
+    LIFE = 0,
     SIZE
   };
 
@@ -110,9 +114,9 @@ struct VM {
 
     union Operand {
       struct {
-        Sink s : 2;
-        Width w : 1;
-        Uint8 i : 5;
+        Sink s : 2;  // 0 = REGISTER, 1 = PARAMETER, 2 = CHANNEL
+        Width w : 1; // 0 = SCALAR,   1 = VECTOR
+        Uint8 i : 5; // Index of sink.
       };
       Uint8 u8;
     };
