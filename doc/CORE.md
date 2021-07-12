@@ -229,7 +229,7 @@ There exists an efficient stream library with multiple types:
   * `BufferedStream` Adds buffering to an existing stream with page caching.
   * `MemoryStream` Treat memory as a stream.
   * `TrackedStream` Provides a seekable interface to a stream.
-  * `UntrackedStream` The default stream interface.
+  * `Context` The default stream interface.
 
 ## Time
 
