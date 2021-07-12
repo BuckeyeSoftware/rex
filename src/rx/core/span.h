@@ -1,6 +1,8 @@
 #ifndef RX_CORE_SPAN_H
 #define RX_CORE_SPAN_H
-#include "rx/core/types.h" // Size
+#include "rx/core/types.h"
+#include "rx/core/traits/is_same.h"
+#include "rx/core/traits/invoke_result.h"
 
 namespace Rx {
 
@@ -18,6 +20,9 @@ struct Span {
 
   constexpr T* data() const;
   constexpr Size size() const;
+
+  template<typename F>
+  constexpr bool each_fwd(F&& _func) const;
 
 private:
   T* m_data;
@@ -57,6 +62,22 @@ inline constexpr T* Span<T>::data() const {
 template<typename T>
 inline constexpr Size Span<T>::size() const {
   return m_size;
+}
+
+template<typename T>
+template<typename F>
+inline constexpr bool Span<T>::each_fwd(F&& _func) const {
+  using ReturnType = Traits::InvokeResult<F, const T&>;
+  for (Size i{0}; i < m_size; i++) {
+    if constexpr (Traits::IS_SAME<ReturnType, bool>) {
+      if (!_func(m_data[i])) {
+        return false;
+      }
+    } else {
+      _func(m_data[i]);
+    }
+  }
+  return true;
 }
 
 } // namespace Rx
