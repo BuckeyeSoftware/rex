@@ -24,6 +24,26 @@ private:
   T m_data[E];
 };
 
+template<typename T, Size E>
+inline bool operator==(const Array<T[E]>& _lhs, const Array<T[E]>& _rhs) {
+  for (Size i = 0; i < E; i++) {
+    if (_lhs[i] != _rhs[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+template<typename T, Size E>
+inline bool operator!=(const Array<T[E]>& _lhs, const Array<T[E]>& _rhs) {
+  for (Size i = 0; i < E; i++) {
+    if (_lhs[i] != _rhs[i]) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Deduction guide for Array{Ts...} to become Array<T[E]>.
 template<typename T, typename... Ts>
 Array(T, Ts...) -> Array<T[1 + sizeof...(Ts)]>;
