@@ -311,12 +311,6 @@ constexpr Vec3<T> max(const Vec3<T>& _a, const Vec3<T>& _b) {
   return {Algorithm::max(_a.x, _b.x), Algorithm::max(_a.y, _b.y), Algorithm::max(_a.z, _b.z)};
 }
 
-// Compute absolute vector of a given vectgor (per-element).
-template<typename T>
-Vec3<T> abs(const Vec3<T>& _v) {
-  return {abs(_v.x), abs(_v.y), abs(_v.y)};
-}
-
 // Only defined for floating point
 inline Float32 length_squared(const Vec3f& _v) {
   return dot(_v, _v);

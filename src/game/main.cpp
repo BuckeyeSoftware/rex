@@ -113,7 +113,7 @@ struct TestGame
     }
 
     Particle::Assembler assembler{m_frontend.allocator()};
-    m_particle_program = assembler.assemble("base/particles/point.asm");
+    m_particle_program = assembler.assemble("base/particles/sphere.asm");
     if (!m_particle_program) {
       return false;
     }
@@ -325,18 +325,20 @@ struct TestGame
       }
       if (input.root_layer().keyboard().is_released(Input::ScanCode::Y)) {
         static int group = 0;
-        for (int i = 0; i <= 100; i++) {
-          auto index = m_particle_system.add_emitter(group, *m_particle_program, 100.0f);
+        // for (int i = 0; i <= 100; i++) {
+          auto index = m_particle_system.add_emitter(group, *m_particle_program, 1000.0f);
           if (index) {
-            auto angle = 2.0f * Math::PI<Float32> * i / 100.0f;
-            auto radius = 10.0f;
+            // auto angle = 2.0f * Math::PI<Float32> * i / 100.0f;
+            // auto radius = 10.0f;
             auto& emitter = m_particle_system.emitter(*index);
-            emitter[0] = Math::cos(angle) * radius + m_camera.translate.x;
-            emitter[1] = m_camera.translate.y;
-            emitter[2] = Math::sin(angle) * radius + m_camera.translate.z;
-            emitter[3] = 0.0f;
+            emitter[0] = 10.0f;
+
+            // emitter[0] = Math::cos(angle) * radius + m_camera.translate.x;
+            // emitter[1] = m_camera.translate.y;
+            // emitter[2] = Math::sin(angle) * radius + m_camera.translate.z;
+            // emitter[3] = 0.0f;
           }
-        }
+        // }
         group++;
       }
     }

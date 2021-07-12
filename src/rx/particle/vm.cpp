@@ -5,8 +5,11 @@
 #include "rx/core/math/cos.h"
 #include "rx/core/math/tan.h"
 #include "rx/core/math/floor.h"
+#include "rx/core/math/ceil.h"
 
 #include "rx/core/random/context.h"
+
+#include "rx/core/algorithm/clamp.h"
 
 namespace Rx::Particle {
 
@@ -178,6 +181,32 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
     };
   };
 
+  // a = unary(a)
+  auto unary = [&](const Instruction& _instruction, auto&& _f) {
+    switch (_instruction.a.w) {
+    case Instruction::Width::SCALAR:
+      return wr_s(_instruction.a.i, _f(rd_s(_instruction.b.i)));
+    case Instruction::Width::VECTOR:
+      return wr_v(_instruction.a.i, rd_v(_instruction.b.i).map(_f));
+    }
+  };
+
+  // a = bin(b, c)
+  auto bin = [&](const Instruction& _instruction, auto&& _f) {
+    switch (_instruction.a.w) {
+    case Instruction::Width::SCALAR:
+      return wr_s(_instruction.a.i, _f(rd_s(_instruction.b.i), rd_s(_instruction.c.i)));
+    case Instruction::Width::VECTOR:
+      return wr_v(_instruction.a.i,
+        Math::Vec4f {
+          _f(rd_v(_instruction.b.i).x, rd_v(_instruction.c.i).x),
+          _f(rd_v(_instruction.b.i).y, rd_v(_instruction.c.i).y),
+          _f(rd_v(_instruction.b.i).z, rd_v(_instruction.c.i).z),
+          _f(rd_v(_instruction.b.i).w, rd_v(_instruction.c.i).w)
+        });
+    }
+  };
+
   const auto& instructions = reinterpret_cast<const Instruction*>(_program.instructions.data());
   const auto n_instructions = _program.instructions.size();
   for (Size i = 0; i < n_instructions; i++) {
@@ -225,7 +254,7 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
         break;
       }
       break;
-    // All binary operations are defined for:
+    // All binary arithmetic operations are defined for:
     //  Scalar <op> Scalar => Scalar
     //  Vector <op> Scalar => Vector
     //  Vector <op> Vector => Vector
@@ -238,6 +267,13 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
     case Instruction::OpCode::MUL:
       binop(instruction, [](auto a, auto b) { return a * b; });
       break;
+    // Defined for SCALAR and VECTOR (component-wise)
+    case Instruction::OpCode::MIN:
+      bin(instruction, [](auto a, auto b) { return Algorithm::min(a, b); });
+      break;
+    case Instruction::OpCode::MAX:
+      bin(instruction, [](auto a, auto b) { return Algorithm::max(a, b); });
+      break;
     case Instruction::OpCode::MIX:
       // Only valid for a.Width == b.Width && c.Width = SCALAR.
       // Clobbers %s0 for SCALAR or %v0 for VECTOR.
@@ -248,6 +284,19 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
       case Instruction::Width::VECTOR:
         wr_v(0, mix(rd_v(instruction.a.i), rd_v(instruction.b.i), rd_s(instruction.c.i)));
         break;
+      }
+      break;
+    case Instruction::OpCode::CLAMP:
+      // Only valid for b.Width = SCALAR && c.Width = SCALAR
+      switch (instruction.a.w) {
+      // Scalar clamp
+      case Instruction::Width::SCALAR:
+        wr_s(0, Algorithm::clamp(rd_s(instruction.a.i), rd_s(instruction.b.i), rd_s(instruction.c.i)));
+        break;
+      // Component wise clamp.
+      case Instruction::Width::VECTOR:
+        wr_v(0, rd_v(instruction.a.i).map([&](auto _value) {
+          return Algorithm::clamp(_value, rd_s(instruction.b.i), rd_s(instruction.c.i)); }));
       }
       break;
     case Instruction::OpCode::RND:
@@ -266,25 +315,39 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
         break;
       }
       break;
-
-    // These are only valid for a.Width = SCALAR & b.Width = SCALAR.
+    // These unary operations are defined for SCALAR and VECTOR (component-wise)
+    case Instruction::OpCode::ABS:
+      unary(instruction, [](auto _value) { return Math::abs(_value); });
+      break;
+    case Instruction::OpCode::CEIL:
+      unary(instruction, [](auto _value) { return Math::ceil(_value); });
+      break;
+    case Instruction::OpCode::FLOOR:
+      unary(instruction, [](auto _value) { return Math::floor(_value); });
+      break;
+    case Instruction::OpCode::FRACT:
+      unary(instruction, [](auto _value) { return Math::floor(_value); });
+      break;
     case Instruction::OpCode::SIN:
-      wr_s(instruction.a.i, Math::sin(rd_s(instruction.b.i)));
+      unary(instruction, [](auto _value) { return Math::sin(_value); });
       break;
     case Instruction::OpCode::COS:
-      wr_s(instruction.a.i, Math::cos(rd_s(instruction.b.i)));
+      unary(instruction, [](auto _value) { return Math::cos(_value); });
       break;
     case Instruction::OpCode::TAN:
-      wr_s(instruction.a.i, Math::tan(rd_s(instruction.b.i)));
+      unary(instruction, [](auto _value) { return Math::tan(_value); });
       break;
     case Instruction::OpCode::ASIN:
-      wr_s(instruction.a.i, Math::asin(rd_s(instruction.b.i)));
+      unary(instruction, [](auto _value) { return Math::asin(_value); });
       break;
     case Instruction::OpCode::ACOS:
-      wr_s(instruction.a.i, Math::acos(rd_s(instruction.b.i)));
+      unary(instruction, [](auto _value) { return Math::acos(_value); });
       break;
     case Instruction::OpCode::ATAN:
-      wr_s(instruction.a.i, Math::atan(rd_s(instruction.b.i)));
+      unary(instruction, [](auto _value) { return Math::atan(_value); });
+      break;
+    case Instruction::OpCode::SQRT:
+      unary(instruction, [](auto _value) { return Math::sqrt(_value); });
       break;
     }
   }

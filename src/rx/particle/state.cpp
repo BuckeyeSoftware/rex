@@ -15,12 +15,12 @@ namespace Rx::Particle {
 void State::kill(Uint32 _index) {
   RX_ASSERT(_index < m_alive_count, "out of bounds");
   swap(_index, m_alive_count - 1);
+  m_group_data[m_group_refs[m_alive_count - 1]].count--;
   m_alive_count--;
 }
 
 void State::spawn(Uint32 _group, Uint32 _index) {
   RX_ASSERT(_group < m_group_count, "out of bounds");
-
   swap(_index, m_alive_count);
   // Count another particle in this group.
   m_group_data[_group].count++;

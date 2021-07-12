@@ -21,19 +21,27 @@ static constexpr const struct {
   OpCode      opcode;
   Sint32      operands;
 } MNEMONICS[] = {
-  { "li",   OpCode::LI,   2 },
-  { "mov",  OpCode::MOV,  2 },
-  { "add",  OpCode::ADD,  3 },
-  { "sub",  OpCode::SUB,  3 },
-  { "mul",  OpCode::MUL,  3 },
-  { "mix",  OpCode::MIX,  3 },
-  { "rnd",  OpCode::RND,  1 },
-  { "sin",  OpCode::SIN,  2 },
-  { "cos",  OpCode::COS,  2 },
-  { "tan",  OpCode::TAN,  2 },
-  { "asin", OpCode::ASIN, 2 },
-  { "acos", OpCode::ACOS, 2 },
-  { "atan", OpCode::ATAN, 2 }
+  { "li",    OpCode::LI,    2 },
+  { "mov",   OpCode::MOV,   2 },
+  { "add",   OpCode::ADD,   3 },
+  { "sub",   OpCode::SUB,   3 },
+  { "mul",   OpCode::MUL,   3 },
+  { "mix",   OpCode::MIX,   3 },
+  { "clamp", OpCode::CLAMP, 3 },
+  { "rnd",   OpCode::RND,   1 },
+  { "sin",   OpCode::SIN,   2 },
+  { "cos",   OpCode::COS,   2 },
+  { "tan",   OpCode::TAN,   2 },
+  { "asin",  OpCode::ASIN,  2 },
+  { "acos",  OpCode::ACOS,  2 },
+  { "atan",  OpCode::ATAN,  2 },
+  { "sqrt",  OpCode::SQRT,  2 },
+  { "abs",   OpCode::ABS,   1 },
+  { "ceil",  OpCode::CEIL,  1 },
+  { "floor", OpCode::FLOOR, 1 },
+  { "fract", OpCode::FRACT, 1 },
+  { "min",   OpCode::MIN,   2 },
+  { "max",   OpCode::MAX,   2 }
 };
 
 static inline bool is_ident(int _ch) {

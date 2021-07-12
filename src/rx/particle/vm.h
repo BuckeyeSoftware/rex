@@ -86,19 +86,27 @@ struct VM {
 
   struct Instruction {
     enum class OpCode : Uint8 {
-      LI, // load immediate, next instruction is the immediate value.
+      LI,   // load immediate, next instruction is the immediate value.
       MOV,
       ADD,
       SUB,
       MUL,
-      MIX, // Clobbers s0 in scalar, v0 in vector.
+      MIX,   // Clobbers s0 in scalar, v0 in vector.
+      CLAMP, // Clobbers s0 in scalar, v0 in vector.
       RND,
       SIN,
       COS,
       TAN,
       ASIN,
       ACOS,
-      ATAN
+      ATAN,
+      SQRT,
+      ABS,
+      CEIL,
+      FLOOR,
+      FRACT,
+      MIN,
+      MAX
     };
 
     enum class Sink : Uint8 {
