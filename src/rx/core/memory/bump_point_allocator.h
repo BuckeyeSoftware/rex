@@ -38,6 +38,8 @@ struct RX_API BumpPointAllocator
   Size size() const;
   Size available() const;
 
+  using Allocator::allocate;
+
 private:
   Byte* allocate_unlocked(Size _size);
 
