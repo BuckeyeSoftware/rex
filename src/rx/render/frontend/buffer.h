@@ -24,16 +24,38 @@ struct Buffer
     enum class Type : Uint8 {
       // Scalars.
       F32,
+      S8,
+      S16,
       S32,
+      U8,
+      U16,
       U32,
 
       // Vectors.
       F32x2,
       F32x3,
       F32x4,
+
+      S8x2,
+      S8x3,
+      S8x4,
+
+      S16x2,
+      S16x3,
+      S16x4,
+
       S32x2,
       S32x3,
       S32x4,
+
+      U8x2,
+      U8x3,
+      U8x4,
+
+      U16x2,
+      U16x3,
+      U16x4,
+
       U32x2,
       U32x3,
       U32x4,

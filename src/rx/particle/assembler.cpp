@@ -8,6 +8,8 @@
 
 #include "rx/core/hints/unreachable.h"
 
+#include "rx/core/hash/djbx33a.h"
+
 namespace Rx::Particle {
 
 using Sink = VM::Instruction::Sink;
@@ -433,26 +435,31 @@ private:
   String m_error;
 };
 
-bool Assembler::assemble(const StringView& _file_name) {
+Optional<Program> Assembler::assemble(const StringView& _file_name) {
   auto& allocator = Memory::SystemAllocator::instance();
   auto file = Filesystem::read_text_file(allocator, _file_name);
   if (!file) {
-    return false;
+    return nullopt;
   }
 
   auto name = _file_name.data();
   auto contents = reinterpret_cast<const char*>(file->data());
 
+  auto hash_view = [](const Memory::View& _view) {
+    return Hash::djbx33a(_view.data, _view.size);
+  };
+
   Parser parser{allocator, {name, contents}};
   if (parser.parse()) {
-    m_program.instructions = parser.m_instructions.disown();
-    m_program.data = parser.m_data.disown();
-    return true;
+    const auto instructions = parser.m_instructions.disown();
+    const auto data = parser.m_data.disown();
+    const auto& hash = Hash::combine(hash_view(instructions), hash_view(data));
+    return Program { instructions, data, hash };
   }
 
   m_error = Utility::move(parser.m_error);
 
-  return false;
+  return nullopt;
 }
 
 } // namespace Rx::Particle

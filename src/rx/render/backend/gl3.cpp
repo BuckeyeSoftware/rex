@@ -1114,7 +1114,7 @@ void GL3::process(Byte* _command) {
                     index + j,
                     result.components,
                     result.type_enum,
-                    GL_FALSE,
+                    GL_TRUE,
                     _stride,
                     reinterpret_cast<const GLvoid*>(offset));
                 }

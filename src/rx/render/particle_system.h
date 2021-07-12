@@ -31,9 +31,7 @@ struct ParticleSystem {
 
   static Optional<ParticleSystem> create(Frontend::Context* _frontend);
 
-  bool update(const Particle::System* _system);
-
-  void render(Frontend::Target* _target,
+  void render(const Particle::System* _system, Frontend::Target* _target,
     const Math::Mat4x4f& _model, const Math::Mat4x4f& _view,
     const Math::Mat4x4f& _projection);
 
@@ -44,15 +42,16 @@ private:
 
   void release();
 
+  // Keeping this structure small is important for bandwidth purposes.
   struct Vertex {
-    Float32 size;
     Math::Vec3f position;
-    Math::Vec4f color;
+    Float32 size;
+    Math::Vec4b color;
   };
-
   Frontend::Context* m_frontend;
   Frontend::Buffer* m_buffer;
   Frontend::Technique* m_technique;
+  Uint64 m_last_id;
   Size m_count;
 };
 
@@ -67,6 +66,7 @@ inline constexpr ParticleSystem::ParticleSystem(
   : m_frontend{_frontend}
   , m_buffer{_buffer}
   , m_technique{_technique}
+  , m_last_id{0}
   , m_count{0}
 {
 }
@@ -75,6 +75,7 @@ inline ParticleSystem::ParticleSystem(ParticleSystem&& particle_system_)
   : m_frontend{Utility::exchange(particle_system_.m_frontend, nullptr)}
   , m_buffer{Utility::exchange(particle_system_.m_buffer, nullptr)}
   , m_technique{Utility::exchange(particle_system_.m_technique, nullptr)}
+  , m_last_id{Utility::exchange(particle_system_.m_last_id, 0)}
   , m_count{Utility::exchange(particle_system_.m_count, 0)}
 {
 }
@@ -89,6 +90,7 @@ inline ParticleSystem& ParticleSystem::operator=(ParticleSystem&& particle_syste
     m_frontend = Utility::exchange(particle_system_.m_frontend, nullptr);
     m_buffer = Utility::exchange(particle_system_.m_buffer, nullptr);
     m_technique = Utility::exchange(particle_system_.m_technique, nullptr);
+    m_last_id = Utility::exchange(particle_system_.m_last_id, 0);
     m_count = Utility::exchange(particle_system_.m_count, 0);
   }
   return *this;

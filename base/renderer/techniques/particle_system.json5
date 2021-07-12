@@ -13,9 +13,9 @@
     {
       type: "vertex",
       inputs: [
-        { name: "a_size",          type: "f32" },
-        { name: "a_position",      type: "f32x3" },
-        { name: "a_color",         type: "f32x4" }
+        { name: "a_position", type: "f32x3" },
+        { name: "a_size",     type: "f32"   },
+        { name: "a_color",    type: "f32x4" }
       ],
       outputs: [
         { name: "vs_color",        type: "f32x4" },

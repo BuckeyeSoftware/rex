@@ -6,14 +6,6 @@
 
 namespace Rx::Particle {
 
-Optional<Emitter> Emitter::create(const Program& _program, Float32 _rate) {
-  auto program = Utility::copy(_program);
-  if (!program) {
-    return nullopt;
-  }
-  return Emitter{Utility::move(*program), _rate};
-}
-
 void Emitter::emit(Random::Context& _random, Float32 _delta_time, State* state_) {
   using Channel = VM::Channel;
 
@@ -28,9 +20,9 @@ void Emitter::emit(Random::Context& _random, Float32 _delta_time, State* state_)
   // TODO(dweiler): Execute on thread pool.
   VM vm;
   for (Size i = beg; i < end; i++) {
-    state_->spawn(i);
+    state_->spawn(m_group, i);
 
-    const auto result = vm.execute(_random, m_parameters, m_program);
+    const auto result = vm.execute(_random, m_parameters, *m_program);
 
     // Check the execution mask to know which channels to update.
     if (result.mask & (1 << Channel::VELOCITY)) {
@@ -66,6 +58,8 @@ void Emitter::emit(Random::Context& _random, Float32 _delta_time, State* state_)
       state_->m_size[i] = result.size;
     }
   }
+
+  // state_->m_tree.validate();
 }
 
 } // namespace Rx::Particle

@@ -1,4 +1,5 @@
 #include <stddef.h> // offsetof
+#include <stdio.h>
 
 #include "rx/render/particle_system.h"
 
@@ -9,6 +10,8 @@
 #include "rx/render/frontend/target.h"
 
 #include "rx/particle/system.h"
+
+#include "rx/math/frustum.h"
 
 namespace Rx::Render {
 
@@ -21,9 +24,9 @@ Optional<ParticleSystem> ParticleSystem::create(Frontend::Context* _frontend) {
   Frontend::Buffer::Format format{_frontend->allocator()};
   format.record_element_type(Frontend::Buffer::ElementType::NONE);
   format.record_vertex_stride(sizeof(Vertex));
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32, offsetof(Vertex, size)});
   format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x3, offsetof(Vertex, position)});
-  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32x4, offsetof(Vertex, color)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::F32, offsetof(Vertex, size)});
+  format.record_vertex_attribute({Frontend::Buffer::Attribute::Type::U8x4, offsetof(Vertex, color)});
   format.finalize();
 
   auto buffer = _frontend->create_buffer(RX_RENDER_TAG("ParticleSystem"));
@@ -49,34 +52,49 @@ void ParticleSystem::release() {
   }
 }
 
-bool ParticleSystem::update(const Particle::System* _system) {
-  m_count = _system->alive_count();
-  if (m_count == 0) {
-    return true;
-  }
-
-  auto vertices = reinterpret_cast<Vertex*>(m_buffer->map_vertices(sizeof(Vertex) * m_count));
-  if (!vertices) {
-    return false;
-  }
-
-  for (Size i = 0; i < m_count; i++) {
-    vertices[i].size = _system->size(i);
-    vertices[i].position = _system->position(i);
-    vertices[i].color = _system->color(i);
-  }
-
-  m_buffer->record_vertices_edit(0, m_count * sizeof(Vertex));
-
-  m_frontend->update_buffer(RX_RENDER_TAG("ParticleSysten"), m_buffer);
-
-  return true;
-}
-
-void ParticleSystem::render(Frontend::Target* _target,
-  const Math::Mat4x4f& _model, const Math::Mat4x4f& _view,
-  const Math::Mat4x4f& _projection)
+void ParticleSystem::render(const Particle::System* _system,
+  Frontend::Target* _target, const Math::Mat4x4f& _model,
+  const Math::Mat4x4f& _view,const Math::Mat4x4f& _projection)
 {
+  Math::Frustum frustum{_view * _projection};
+
+  auto count = _system->alive_count();
+  if (count == 0) {
+    return;
+  }
+
+  // Each index needs 4 bytes, there can be a maximum of |count| particles
+  // before culling. Assuming a max of 500k particles, that is 2MiB.
+  Memory::TemporaryAllocator<2_MiB> allocator{Memory::SystemAllocator::instance()};
+
+  // Only update the content if this is a new state.
+  if (_system->id() != m_last_id) {
+    Vector<Uint32> indices{allocator};
+    if (!indices.resize(count)) {
+      return;
+    }
+
+    m_count = _system->visible({indices.data(), indices.size()}, frustum);
+
+    auto vertices = reinterpret_cast<Vertex*>(m_buffer->map_vertices(sizeof(Vertex) * m_count));
+    if (!vertices) {
+      return;
+    }
+
+    for (Size i = 0; i < m_count; i++) {
+      const auto index = indices[i];
+      vertices[i].size = _system->size(index);
+      vertices[i].position = _system->position(index);
+      vertices[i].color = _system->color(index);
+    }
+
+    m_buffer->record_vertices_edit(0, m_count * sizeof(Vertex));
+    m_frontend->update_buffer(RX_RENDER_TAG("ParticleSysten"), m_buffer);
+
+    m_last_id = _system->id();
+  }
+
+  // Nothing to render.
   if (m_count == 0) {
     return;
   }
@@ -84,7 +102,8 @@ void ParticleSystem::render(Frontend::Target* _target,
   Frontend::State state;
   state.cull.record_enable(false);
   state.blend.record_enable(true);
-  state.blend.record_blend_factors(Frontend::BlendState::FactorType::SRC_ALPHA,
+  state.blend.record_blend_factors(
+    Frontend::BlendState::FactorType::SRC_ALPHA,
     Frontend::BlendState::FactorType::ONE_MINUS_SRC_ALPHA);
   state.depth.record_test(true);
   state.depth.record_write(true);

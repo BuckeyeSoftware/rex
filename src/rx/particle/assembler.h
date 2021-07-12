@@ -7,27 +7,19 @@ namespace Rx::Particle {
 
 struct Assembler {
   Assembler(Memory::Allocator& _allocator)
-    : m_program{_allocator, _allocator}
-    , m_error{_allocator}
+    : m_error{_allocator}
   {
   }
 
-  // Assembles particle assembly source file |_src_file|.
-  [[nodiscard]] bool assemble(const StringView& _src_file);
+  // Assembles particle assembly source file |_src_file| and produces a Program.
+  [[nodiscard]] Optional<Program> assemble(const StringView& _src_file);
 
-  const Program& program() const &;
-
-  // When |assemble| returns false the error will be here.
+  // When |assemble| returns nullopt the error will be here.
   const String& error() const &;
 
 private:
-  Program m_program;
   String m_error;
 };
-
-inline const Program& Assembler::program() const & {
-  return m_program;
-}
 
 inline const String& Assembler::error() const & {
   return m_error;

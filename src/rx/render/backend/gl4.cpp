@@ -1017,7 +1017,7 @@ void GL4::process(Byte* _command) {
                     index + j,
                     result.components,
                     result.type_enum,
-                    GL_FALSE,
+                    GL_TRUE,
                     static_cast<GLuint>(offset));
                 }
                 offset += result.type_size * result.components;

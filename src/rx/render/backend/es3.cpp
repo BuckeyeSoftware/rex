@@ -160,7 +160,7 @@ static Size setup_attributes(
           index + j,
           result.components,
           result.type_enum,
-          GL_FALSE,
+          GL_TRUE,
           _stride,
           reinterpret_cast<const GLvoid*>(offset)));
       }

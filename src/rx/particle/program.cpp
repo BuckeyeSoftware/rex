@@ -8,7 +8,12 @@ Optional<Program> Program::copy(const Program& _program) {
   if (!instructions || !data) {
     return nullopt;
   }
-  return Program{Utility::move(*instructions), Utility::move(*data)};
+
+  return Program {
+    Utility::move(*instructions),
+    Utility::move(*data),
+    _program.hash
+  };
 }
 
 } // namespace Rx::Particle

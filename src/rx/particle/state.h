@@ -1,9 +1,12 @@
 #ifndef RX_PARTICLE_STATE_H
 #define RX_PARTICLE_STATE_H
-#include "rx/core/memory/allocator.h"
+#include "rx/core/memory/bump_point_allocator.h"
+#include "rx/core/uninitialized.h"
 
-#include "rx/math/vec3.h"
+#include "rx/math/aabb.h"
 #include "rx/math/vec4.h"
+
+namespace Rx::Math { struct Frustum; }
 
 namespace Rx::Particle {
 
@@ -12,27 +15,47 @@ struct State {
   RX_MARK_NO_COPY(State);
   RX_MARK_NO_MOVE(State);
 
-  constexpr State(Memory::Allocator& _allocator);
+  struct Group {
+    Math::AABB bounds;
+    Uint32* indices;
+    Uint32 count;
+  };
+
+  State(Memory::Allocator& _allocator);
   ~State();
 
-  [[nodiscard]] bool resize(Size _particles);
+  [[nodiscard]] bool resize(Size _particles, Size _groups);
 
-  bool spawn(Size _index);
-  bool kill(Size _index);
+  void spawn(Uint32 _group, Uint32 _index);
+  void kill(Uint32 _index);
 
   Size alive_count() const;
   Size total_count() const;
 
-  Math::Vec3f position(Size _index) const;
-  Math::Vec4f color(Size _index) const;
-  Float32 size(Size _index) const;
+  Math::Vec3f position(Uint32 _index) const;
+  Math::Vec4b color(Uint32 _index) const;
+  Float32 size(Uint32 _index) const;
+  Uint16 texture(Uint32 _index) const;
+
+  // Check for all visible particles in the frustum. This expects |indices_|
+  // contains enough space for every alive particle. Returns the number of
+  // visible particles.
+  Size visible(Span<Uint32> indices_, const Math::Frustum& _frustum) const;
+
+  Uint64 id() const;
+
+  Span<const Group> groups() const;
 
 protected:
   friend struct Emitter;
+  friend struct System;
 
-  void swap(Size _lhs, Size _rhs);
+  void swap(Uint32 _lhs, Uint32 _rhs);
 
   Memory::Allocator& m_allocator;
+
+  // TODO(dweiler): Use Optional?
+  Uninitialized<Memory::BumpPointAllocator> m_indices_allocator;
 
   Byte* m_data;
 
@@ -58,9 +81,19 @@ protected:
 
   Float32* m_life;
   Float32* m_size;
+
+  Uint16* m_texture;
+
+  Uint64 m_id;
+
+  Uint32* m_group_refs;
+
+  // The group array as referenced by index in |m_group_refs|.
+  Group* m_group_data;
+  Size m_group_count;
 };
 
-inline constexpr State::State(Memory::Allocator& _allocator)
+inline State::State(Memory::Allocator& _allocator)
   : m_allocator{_allocator}
   , m_data{nullptr}
   , m_alive_count{0}
@@ -80,6 +113,11 @@ inline constexpr State::State(Memory::Allocator& _allocator)
   , m_color_a{nullptr}
   , m_life{nullptr}
   , m_size{nullptr}
+  , m_texture{nullptr}
+  , m_id{0}
+  , m_group_refs{nullptr}
+  , m_group_data{nullptr}
+  , m_group_count{0}
 {
 }
 
@@ -89,6 +127,14 @@ inline Size State::alive_count() const {
 
 inline Size State::total_count() const {
   return m_total_count;
+}
+
+inline Uint64 State::id() const {
+  return m_id;
+}
+
+inline Span<const State::Group> State::groups() const {
+  return { m_group_data, m_group_count };
 }
 
 } // namespace Rx::Particle

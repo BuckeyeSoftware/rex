@@ -4,6 +4,7 @@
 #include "rx/core/math/sin.h"
 #include "rx/core/math/cos.h"
 #include "rx/core/math/tan.h"
+#include "rx/core/math/floor.h"
 
 #include "rx/core/random/context.h"
 
@@ -51,6 +52,8 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
         return result.life;
       case Channel::SIZE:
         return result.size;
+      case Channel::TEXTURE:
+        return result.texture;
       }
       break;
     case Instruction::Sink::PARAMETER:
@@ -71,6 +74,9 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
         return;
       case Channel::SIZE:
         result.size = _value;
+        return;
+      case Channel::TEXTURE:
+        result.texture = Math::floor(_value);
         return;
       }
       break;

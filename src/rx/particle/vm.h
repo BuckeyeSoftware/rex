@@ -48,11 +48,12 @@ struct Program;
 //   | COLOR         | %cv3     | VECTOR |
 //   | LIFE          | %cs0     | SCALAR |
 //   | SIZE          | %cs1     | SCALAR |
+//   | TEXTURE       | %cs2     | SCALAR |
 //
 //  Unlike registers and parameters, channels do not alias.
 //
 //  Channels %cv4, %cv5, ..., %cv8, as well as;
-//  Channels %cs2, %cs3, ..., %cs31 are user-defined channels.
+//  Channels %cs3, %cs4, ..., %cs31 are user-defined channels.
 //
 // # Instructions
 // Each instruction is 32-bits wide and has the following bit encoding:
@@ -79,7 +80,8 @@ struct VM {
     // Scalar channels.
     // Since channels cannot alias, start from 0 again.
     LIFE = 0,
-    SIZE
+    SIZE,
+    TEXTURE
   };
 
   struct Instruction {
@@ -141,6 +143,7 @@ struct VM {
     Math::Vec4f color;
     Float32 life;
     Float32 size;
+    Float32 texture;
     Uint8 mask;
   };
 

@@ -379,36 +379,68 @@ Attribute convert_attribute(const Frontend::Buffer::Attribute& _attribute) {
   using Type = Frontend::Buffer::Attribute::Type;
   switch (_attribute.type) {
   // Scalars.
-  case Type::S32:
-    return {GL_INT,          sizeof(Sint32), 1, 1};
-  case Type::U32:
-    return {GL_UNSIGNED_INT, sizeof(Uint32), 1, 1};
   case Type::F32:
-    return {GL_FLOAT,        sizeof(Float32), 1, 1};
+    return {GL_FLOAT,          sizeof(Float32), 1, 1};
+  case Type::S8:
+    return {GL_BYTE,           sizeof(Byte),    1, 1};
+  case Type::S16:
+    return {GL_SHORT,          sizeof(Sint16),  1, 1};
+  case Type::S32:
+    return {GL_INT,            sizeof(Sint32),  1, 1};
+  case Type::U8:
+    return {GL_UNSIGNED_BYTE,  sizeof(Byte),    1, 1};
+  case Type::U16:
+    return {GL_UNSIGNED_SHORT, sizeof(Uint16),  1, 1};
+  case Type::U32:
+    return {GL_UNSIGNED_INT,   sizeof(Uint32),  1, 1};
 
   // Vectors.
-  case Type::S32x2:
-    return {GL_INT,          sizeof(Sint32), 2, 1};
-  case Type::S32x3:
-    return {GL_INT,          sizeof(Sint32), 3, 1};
-  case Type::S32x4:
-    return {GL_INT,          sizeof(Sint32), 4, 1};
-  case Type::U32x2:
-    return {GL_UNSIGNED_INT, sizeof(Uint32), 2, 1};
-  case Type::U32x3:
-    return {GL_UNSIGNED_INT, sizeof(Uint32), 3, 1};
-  case Type::U32x4:
-    return {GL_UNSIGNED_INT, sizeof(Uint32), 4, 1};
   case Type::F32x2:
-    return {GL_FLOAT,        sizeof(Float32), 2, 1};
+    return {GL_FLOAT,          sizeof(Float32),  2, 1};
   case Type::F32x3:
-    return {GL_FLOAT,        sizeof(Float32), 3, 1};
+    return {GL_FLOAT,          sizeof(Float32),  3, 1};
   case Type::F32x4:
-    return {GL_FLOAT,        sizeof(Float32), 4, 1};
+    return {GL_FLOAT,          sizeof(Float32),  4, 1};
+  case Type::S8x2:
+    return {GL_BYTE,           sizeof(Byte),     2, 1};
+  case Type::S8x3:
+    return {GL_BYTE,           sizeof(Byte),     3, 1};
+  case Type::S8x4:
+    return {GL_BYTE,           sizeof(Byte),     4, 1};
+  case Type::S16x2:
+    return {GL_UNSIGNED_SHORT, sizeof(Uint16),   2, 1};
+  case Type::S16x3:
+    return {GL_UNSIGNED_SHORT, sizeof(Uint16),   3, 1};
+  case Type::S16x4:
+    return {GL_UNSIGNED_SHORT, sizeof(Uint16),   4, 1};
+  case Type::S32x2:
+    return {GL_INT,            sizeof(Sint32),   2, 1};
+  case Type::S32x3:
+    return {GL_INT,            sizeof(Sint32),   3, 1};
+  case Type::S32x4:
+    return {GL_INT,            sizeof(Sint32),   4, 1};
+  case Type::U8x2:
+    return {GL_UNSIGNED_BYTE,  sizeof(Byte),     2, 1};
+  case Type::U8x3:
+    return {GL_UNSIGNED_BYTE,  sizeof(Byte),     3, 1};
+  case Type::U8x4:
+    return {GL_UNSIGNED_BYTE,  sizeof(Byte),     4, 1};
+  case Type::U16x2:
+    return {GL_UNSIGNED_SHORT, sizeof(Uint16),   2, 1};
+  case Type::U16x3:
+    return {GL_UNSIGNED_SHORT, sizeof(Uint16),   3, 1};
+  case Type::U16x4:
+    return {GL_UNSIGNED_SHORT, sizeof(Uint16),   4, 1};
+  case Type::U32x2:
+    return {GL_UNSIGNED_INT,   sizeof(Uint32),   2, 1};
+  case Type::U32x3:
+    return {GL_UNSIGNED_INT,   sizeof(Uint32),   3, 1};
+  case Type::U32x4:
+    return {GL_UNSIGNED_INT,   sizeof(Uint32),   4, 1};
 
   // Matrices.
   case Type::F32x4x4:
-    return {GL_FLOAT,        sizeof(Float32), 4, 4};
+    return {GL_FLOAT,          sizeof(Float32), 4, 4};
   }
 
   RX_HINT_UNREACHABLE();
