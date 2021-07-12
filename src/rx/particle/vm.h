@@ -86,7 +86,7 @@ struct VM {
 
   struct Instruction {
     enum class OpCode : Uint8 {
-      LI,   // load immediate, next instruction is the immediate value.
+      LI,
       MOV,
       ADD,
       SUB,
@@ -106,7 +106,8 @@ struct VM {
       FLOOR,
       FRACT,
       MIN,
-      MAX
+      MAX,
+      HLT
     };
 
     enum class Sink : Uint8 {

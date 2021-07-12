@@ -41,7 +41,8 @@ static constexpr const struct {
   { "floor", OpCode::FLOOR, 1 },
   { "fract", OpCode::FRACT, 1 },
   { "min",   OpCode::MIN,   2 },
-  { "max",   OpCode::MAX,   2 }
+  { "max",   OpCode::MAX,   2 },
+  { "hlt",   OpCode::HLT,   0 }
 };
 
 static inline bool is_ident(int _ch) {
@@ -308,7 +309,7 @@ struct Parser {
   bool parse() {
     while (next()) {
       if (m_token.type == Token::Type::EOS) {
-        return true;
+        break;
       }
       if (m_token.type != Token::Type::MNEMONIC) {
         return error("expected instruction mnemonic");
@@ -317,6 +318,14 @@ struct Parser {
         return false;
       }
     }
+
+    // Ensure every program end with a HLT instruction.
+    VM::Instruction instruction{};
+    instruction.opcode = VM::Instruction::OpCode::HLT;
+    if (!m_instructions.push_back(instruction)) {
+      return false;
+    }
+
     return m_token.type != Token::Type::ERROR;
   }
 

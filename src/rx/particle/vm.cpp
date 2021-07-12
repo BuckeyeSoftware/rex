@@ -26,19 +26,19 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
 {
   Result result;
 
-  auto rd_s = [this](Uint8 _i) {
+  auto rd_s = [this](Uint8 _i) RX_HINT_FORCE_INLINE_LAMBDA {
     return m_registers.s[_i];
   };
 
-  auto rd_v = [this](Uint8 _i) -> Math::Vec4f {
+  auto rd_v = [this](Uint8 _i) RX_HINT_FORCE_INLINE_LAMBDA -> Math::Vec4f {
     return m_registers.v[_i];
   };
 
-  auto wr_s = [this](Uint8 _i, auto _value) {
+  auto wr_s = [this](Uint8 _i, auto _value) RX_HINT_FORCE_INLINE_LAMBDA {
     m_registers.s[_i] = _value;
   };
 
-  auto wr_v = [this](Uint8 _i, auto _value) {
+  auto wr_v = [this](Uint8 _i, auto _value) RX_HINT_FORCE_INLINE_LAMBDA {
     auto& vector = m_registers.v[_i];
     vector[0] = _value[0];
     vector[1] = _value[1];
@@ -147,12 +147,12 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
   };
 
   // Similar to vector_store_v but splats |_value| on all lanes.
-  auto vector_store_s = [&](Instruction::Operand _operand, Float32 _value) {
+  auto vector_store_s = [&](Instruction::Operand _operand, Float32 _value) RX_HINT_FORCE_INLINE_LAMBDA {
     return vector_store_v(_operand, {_value, _value, _value, _value});
   };
 
   // SCALAR <op> VECTOR is undefined.
-  auto binop = [&](const Instruction& _instruction, auto&& _f) {
+  auto binop = [&](const Instruction& _instruction, auto&& _f) RX_HINT_FORCE_INLINE_LAMBDA {
     switch (_instruction.a.w) {
     case Instruction::Width::SCALAR:
       return wr_s(_instruction.a.i, _f(rd_s(_instruction.b.i), rd_s(_instruction.c.i)));
@@ -166,12 +166,12 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
     }
   };
 
-  auto read_imm_scalar = [&](Uint8 _lo, Uint8 _hi) {
+  auto read_imm_scalar = [&](Uint8 _lo, Uint8 _hi) RX_HINT_FORCE_INLINE_LAMBDA {
     const auto index = Uint16(_lo) << 8 | Uint16(_hi);
     return _program.data[index];
   };
 
-  auto read_imm_vector = [&](Uint8 _lo, Uint8 _hi) {
+  auto read_imm_vector = [&](Uint8 _lo, Uint8 _hi) RX_HINT_FORCE_INLINE_LAMBDA {
     const auto index = Uint16(_lo) << 8 | Uint16(_hi);
     return Math::Vec4f {
       _program.data[index + 0],
@@ -182,7 +182,7 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
   };
 
   // a = unary(a)
-  auto unary = [&](const Instruction& _instruction, auto&& _f) {
+  auto unary = [&](const Instruction& _instruction, auto&& _f) RX_HINT_FORCE_INLINE_LAMBDA {
     switch (_instruction.a.w) {
     case Instruction::Width::SCALAR:
       return wr_s(_instruction.a.i, _f(rd_s(_instruction.b.i)));
@@ -192,7 +192,7 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
   };
 
   // a = bin(b, c)
-  auto bin = [&](const Instruction& _instruction, auto&& _f) {
+  auto bin = [&](const Instruction& _instruction, auto&& _f) RX_HINT_FORCE_INLINE_LAMBDA {
     switch (_instruction.a.w) {
     case Instruction::Width::SCALAR:
       return wr_s(_instruction.a.i, _f(rd_s(_instruction.b.i), rd_s(_instruction.c.i)));
@@ -207,106 +207,127 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
     }
   };
 
-  const auto& instructions = reinterpret_cast<const Instruction*>(_program.instructions.data());
-  const auto n_instructions = _program.instructions.size();
-  for (Size i = 0; i < n_instructions; i++) {
-    const Instruction& instruction = instructions[i];
-    switch (instruction.opcode) {
-    case Instruction::OpCode::LI:
-      switch (instruction.a.w) {
+#if defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG)
+  static constexpr void* DISPATCH_TABLE[] = {
+    &&LI, &&MOV, &&ADD, &&SUB, &&MUL, &&MIX, &&CLAMP, &&RND, &&SIN, &&COS, &&TAN,
+    &&ASIN, &&ACOS, &&ATAN, &&SQRT, &&ABS, &&CEIL, &&FLOOR, &&FRACT, &&MIN, &&MAX,
+    &&HLT
+  };
+#define CASE(_name) _name:
+#define BREAK() DISPATCH((++instruction)->opcode)
+#define SWITCH(code) DISPATCH(code)
+#define DISPATCH(code) goto *DISPATCH_TABLE[Size(code)];
+#else
+#define CASE(_name) case Instruction::OpCode::_name:
+#define BREAK() break
+#define SWITCH(code) switch (code)
+#define DISPATCH(code)
+#endif
+
+  const auto* instruction =
+    reinterpret_cast<const Instruction*>(_program.instructions.data());
+
+  DISPATCH(instruction->opcode);
+
+  for (;; instruction++) {
+    SWITCH(instruction->opcode) {
+    CASE(HLT)
+      return result;
+    CASE(LI)
+      switch (instruction->a.w) {
       case Instruction::Width::SCALAR:
-        wr_s(instruction.a.i, read_imm_scalar(instruction.b.u8, instruction.c.u8));
+        wr_s(instruction->a.i, read_imm_scalar(instruction->b.u8, instruction->c.u8));
         break;
       case Instruction::Width::VECTOR:
-        wr_v(instruction.a.i, read_imm_vector(instruction.b.u8, instruction.c.u8));
+        wr_v(instruction->a.i, read_imm_vector(instruction->b.u8, instruction->c.u8));
         break;
       }
-      break;
+      BREAK();
     // MOV dst:SCALAR, src:SCALAR - Copies src to dst.
     // MOV dst:SCALAR, src:VECTOR - Copies src's component c.i to dst.
     // MOV dst:VECTOR, src:SCALAR - Splats src to all lanes of dst.
     // MOV dst:VECTOR, src:VECTOR - Copies src to dst.
-    case Instruction::OpCode::MOV:
-      switch (instruction.a.w) {
+    CASE(MOV)
+      switch (instruction->a.w) {
       case Instruction::Width::SCALAR:
-        switch (instruction.b.w) {
+        switch (instruction->b.w) {
         case Instruction::Width::SCALAR:
           // Scalar load -> Scalar store.
-          scalar_store(instruction.a, scalar_load(instruction.b));
+          scalar_store(instruction->a, scalar_load(instruction->b));
           break;
         case Instruction::Width::VECTOR:
           // Vector load -> Scalar store.
-          scalar_store(instruction.a, vector_load(instruction.b)[instruction.c.i]);
+          scalar_store(instruction->a, vector_load(instruction->b)[instruction->c.i]);
           break;
         }
         break;
       case Instruction::Width::VECTOR:
-        switch (instruction.b.w) {
+        switch (instruction->b.w) {
         case Instruction::Width::SCALAR:
           // Scalar load -> Vector store.
-          vector_store_s(instruction.a, scalar_load(instruction.b));
+          vector_store_s(instruction->a, scalar_load(instruction->b));
           break;
         case Instruction::Width::VECTOR:
           // Vector load -> Vector store.
-          vector_store_v(instruction.a, vector_load(instruction.b));
+          vector_store_v(instruction->a, vector_load(instruction->b));
           break;
         }
         break;
       }
-      break;
+      BREAK();
     // All binary arithmetic operations are defined for:
     //  Scalar <op> Scalar => Scalar
     //  Vector <op> Scalar => Vector
     //  Vector <op> Vector => Vector
-    case Instruction::OpCode::ADD:
-      binop(instruction, [](auto a, auto b) { return a + b; });
-      break;
-    case Instruction::OpCode::SUB:
-      binop(instruction, [](auto a, auto b) { return a - b; });
-      break;
-    case Instruction::OpCode::MUL:
-      binop(instruction, [](auto a, auto b) { return a * b; });
-      break;
+    CASE(ADD)
+      binop(*instruction, [](auto a, auto b) { return a + b; });
+      BREAK();
+    CASE(SUB)
+      binop(*instruction, [](auto a, auto b) { return a - b; });
+      BREAK();
+    CASE(MUL)
+      binop(*instruction, [](auto a, auto b) { return a * b; });
+      BREAK();
     // Defined for SCALAR and VECTOR (component-wise)
-    case Instruction::OpCode::MIN:
-      bin(instruction, [](auto a, auto b) { return Algorithm::min(a, b); });
-      break;
-    case Instruction::OpCode::MAX:
-      bin(instruction, [](auto a, auto b) { return Algorithm::max(a, b); });
-      break;
-    case Instruction::OpCode::MIX:
+    CASE(MIN)
+      bin(*instruction, [](auto a, auto b) { return Algorithm::min(a, b); });
+      BREAK();
+    CASE(MAX)
+      bin(*instruction, [](auto a, auto b) { return Algorithm::max(a, b); });
+      BREAK();
+    CASE(MIX)
       // Only valid for a.Width == b.Width && c.Width = SCALAR.
       // Clobbers %s0 for SCALAR or %v0 for VECTOR.
-      switch (instruction.a.w) {
+      switch (instruction->a.w) {
       case Instruction::Width::SCALAR:
-        wr_s(0, mix(rd_s(instruction.a.i), rd_s(instruction.b.i), rd_s(instruction.c.i)));
+        wr_s(0, mix(rd_s(instruction->a.i), rd_s(instruction->b.i), rd_s(instruction->c.i)));
         break;
       case Instruction::Width::VECTOR:
-        wr_v(0, mix(rd_v(instruction.a.i), rd_v(instruction.b.i), rd_s(instruction.c.i)));
+        wr_v(0, mix(rd_v(instruction->a.i), rd_v(instruction->b.i), rd_s(instruction->c.i)));
         break;
       }
-      break;
-    case Instruction::OpCode::CLAMP:
+      BREAK();
+    CASE(CLAMP)
       // Only valid for b.Width = SCALAR && c.Width = SCALAR
-      switch (instruction.a.w) {
+      switch (instruction->a.w) {
       // Scalar clamp
       case Instruction::Width::SCALAR:
-        wr_s(0, Algorithm::clamp(rd_s(instruction.a.i), rd_s(instruction.b.i), rd_s(instruction.c.i)));
+        wr_s(0, Algorithm::clamp(rd_s(instruction->a.i), rd_s(instruction->b.i), rd_s(instruction->c.i)));
         break;
       // Component wise clamp.
       case Instruction::Width::VECTOR:
-        wr_v(0, rd_v(instruction.a.i).map([&](auto _value) {
-          return Algorithm::clamp(_value, rd_s(instruction.b.i), rd_s(instruction.c.i)); }));
+        wr_v(0, rd_v(instruction->a.i).map([&](auto _value) {
+          return Algorithm::clamp(_value, rd_s(instruction->b.i), rd_s(instruction->c.i)); }));
       }
-      break;
-    case Instruction::OpCode::RND:
-      switch (instruction.a.w) {
+      BREAK();
+    CASE(RND)
+      switch (instruction->a.w) {
       case Instruction::Width::SCALAR:
-        wr_s(instruction.a.i, rnd(_random, 0.0f, 1.0f));
+        wr_s(instruction->a.i, rnd(_random, 0.0f, 1.0f));
         break;
       case Instruction::Width::VECTOR:
         wr_v(
-          instruction.a.i,
+          instruction->a.i,
           Math::Vec4f {
             rnd(_random, 0.0f, 1.0f),
             rnd(_random, 0.0f, 1.0f),
@@ -314,45 +335,45 @@ VM::Result VM::execute(Random::Context& _random, const Parameters& _parameters,
             rnd(_random, 0.0f, 1.0f)});
         break;
       }
-      break;
+      BREAK();
     // These unary operations are defined for SCALAR and VECTOR (component-wise)
-    case Instruction::OpCode::ABS:
-      unary(instruction, [](auto _value) { return Math::abs(_value); });
-      break;
-    case Instruction::OpCode::CEIL:
-      unary(instruction, [](auto _value) { return Math::ceil(_value); });
-      break;
-    case Instruction::OpCode::FLOOR:
-      unary(instruction, [](auto _value) { return Math::floor(_value); });
-      break;
-    case Instruction::OpCode::FRACT:
-      unary(instruction, [](auto _value) { return Math::floor(_value); });
-      break;
-    case Instruction::OpCode::SIN:
-      unary(instruction, [](auto _value) { return Math::sin(_value); });
-      break;
-    case Instruction::OpCode::COS:
-      unary(instruction, [](auto _value) { return Math::cos(_value); });
-      break;
-    case Instruction::OpCode::TAN:
-      unary(instruction, [](auto _value) { return Math::tan(_value); });
-      break;
-    case Instruction::OpCode::ASIN:
-      unary(instruction, [](auto _value) { return Math::asin(_value); });
-      break;
-    case Instruction::OpCode::ACOS:
-      unary(instruction, [](auto _value) { return Math::acos(_value); });
-      break;
-    case Instruction::OpCode::ATAN:
-      unary(instruction, [](auto _value) { return Math::atan(_value); });
-      break;
-    case Instruction::OpCode::SQRT:
-      unary(instruction, [](auto _value) { return Math::sqrt(_value); });
-      break;
+    CASE(ABS)
+      unary(*instruction, [](auto _value) { return Math::abs(_value); });
+      BREAK();
+    CASE(CEIL)
+      unary(*instruction, [](auto _value) { return Math::ceil(_value); });
+      BREAK();
+    CASE(FLOOR)
+      unary(*instruction, [](auto _value) { return Math::floor(_value); });
+      BREAK();
+    CASE(FRACT)
+      unary(*instruction, [](auto _value) { return Math::floor(_value); });
+      BREAK();
+    CASE(SIN)
+      unary(*instruction, [](auto _value) { return Math::sin(_value); });
+      BREAK();
+    CASE(COS)
+      unary(*instruction, [](auto _value) { return Math::cos(_value); });
+      BREAK();
+    CASE(TAN)
+      unary(*instruction, [](auto _value) { return Math::tan(_value); });
+      BREAK();
+    CASE(ASIN)
+      unary(*instruction, [](auto _value) { return Math::asin(_value); });
+      BREAK();
+    CASE(ACOS)
+      unary(*instruction, [](auto _value) { return Math::acos(_value); });
+      BREAK();
+    CASE(ATAN)
+      unary(*instruction, [](auto _value) { return Math::atan(_value); });
+      BREAK();
+    CASE(SQRT)
+      unary(*instruction, [](auto _value) { return Math::sqrt(_value); });
+      BREAK();
     }
   }
 
-  return result;
+  RX_HINT_UNREACHABLE();
 }
 
 } // namespace Rx::Particle
