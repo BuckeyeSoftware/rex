@@ -59,6 +59,8 @@ struct Slab {
   template<typename T>
   void destroy(T* _data);
 
+  void clear();
+
   Size capacity() const;
   Size size() const;
 

@@ -219,4 +219,10 @@ void Slab::release() {
   m_caches.clear();
 }
 
+void Slab::clear() {
+  m_caches.each_fwd([](Cache& cache_) {
+    cache_.used.clear();
+  });
+}
+
 } // namespace Rx::Memory
