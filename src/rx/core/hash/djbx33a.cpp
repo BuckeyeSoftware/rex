@@ -1,6 +1,9 @@
 #include "rx/core/hash/djbx33a.h"
-#include "rx/core/memory/copy.h"
+#include "rx/core/hash/combine.h"
+
 #include "rx/core/hints/assume_aligned.h"
+
+#include "rx/core/utility/wire.h"
 
 #if defined(__SSE2__)
 #include <emmintrin.h>
@@ -85,8 +88,13 @@ Array<Byte[16]> djbx33a(const Byte* _data, Size _size) {
   }
 #endif
 
+  const auto& words = state_vector;
+
   Array<Byte[16]> result;
-  Memory::copy(result.data(), reinterpret_cast<const Byte*>(state_vector), sizeof state_vector);
+  Utility::write_u32(result.data() + 0, words[0]);
+  Utility::write_u32(result.data() + 4, words[1]);
+  Utility::write_u32(result.data() + 8, words[2]);
+  Utility::write_u32(result.data() + 12, words[3]);
   return result;
 }
 

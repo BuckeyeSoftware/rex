@@ -1,6 +1,7 @@
 #ifndef RX_CORE_HASH_COMBINE_H
 #define RX_CORE_HASH_COMBINE_H
 #include "rx/core/types.h" // Size
+#include "rx/core/array.h"
 
 /// \file combine.h
 ///
@@ -38,6 +39,9 @@ inline constexpr Size combine(Size _hash1, Size _hash2) {
     return combine_u32(_hash1, _hash2);
   }
 }
+
+/// Combine two djbx33a hashes into one.
+Array<Byte[16]> combine(const Array<Byte[16]>& _hash1, const Array<Byte[16]>& _hash2);
 
 } // namespace Rx::Hash
 
