@@ -41,6 +41,11 @@
 #include "rx/particle/system.h"
 #include "rx/particle/emitter.h"
 
+
+#include "rx/core/math/sin.h"
+#include "rx/core/math/cos.h"
+#include "rx/core/math/constants.h"
+
 using namespace Rx;
 
 RX_CONSOLE_FVAR(
@@ -88,7 +93,6 @@ struct TestGame
     , m_lut_index{0}
     , m_lut_count{0}
     , m_particle_system{m_frontend.allocator()}
-    , m_particle_program{m_frontend.allocator(), m_frontend.allocator()}
   {
     engine()->input().root_layer().raise();
   }
@@ -104,18 +108,13 @@ struct TestGame
 
     const auto& dimensions = m_frontend.swapchain()->dimensions();
 
-    if (!m_particle_system.resize(500'000)) {
+    if (!m_particle_system.resize(500'000, 128)) {
       return false;
     }
 
     Particle::Assembler assembler{m_frontend.allocator()};
-    if (!assembler.assemble("base/particles/point.asm")) {
-      return false;
-    }
-
-    if (auto program = Utility::copy(assembler.program())) {
-      m_particle_program = Utility::move(*program);
-    } else {
+    m_particle_program = assembler.assemble("base/particles/point.asm");
+    if (!m_particle_program) {
       return false;
     }
 
@@ -299,9 +298,9 @@ struct TestGame
       m_camera.rotation = Math::Mat3x3f::rotate(m_mouse);
 
       if (input.root_layer().keyboard().is_held(Input::ScanCode::LEFT_CONTROL)) {
-        move_speed = 5.0f;
+        move_speed = 25.0f;
       } else {
-        move_speed = 1.0f;
+        move_speed = 10.0f;
       }
 
       if (input.root_layer().keyboard().is_held(Input::ScanCode::W)) {
@@ -325,14 +324,20 @@ struct TestGame
         m_models.pop_back();
       }
       if (input.root_layer().keyboard().is_released(Input::ScanCode::Y)) {
-        auto emitter = Particle::Emitter::create(m_particle_program, 100.0f);
-        if (emitter) {
-          (*emitter)[0] = m_camera.translate.x;
-          (*emitter)[1] = m_camera.translate.y;
-          (*emitter)[2] = m_camera.translate.z + 1.0f;
-          (*emitter)[3] = 0.0f;
-          (void)m_particle_system.insert(Utility::move(*emitter));
+        static int group = 0;
+        for (int i = 0; i <= 100; i++) {
+          auto index = m_particle_system.add_emitter(group, *m_particle_program, 100.0f);
+          if (index) {
+            auto angle = 2.0f * Math::PI<Float32> * i / 100.0f;
+            auto radius = 10.0f;
+            auto& emitter = m_particle_system.emitter(*index);
+            emitter[0] = Math::cos(angle) * radius + m_camera.translate.x;
+            emitter[1] = m_camera.translate.y;
+            emitter[2] = Math::sin(angle) * radius + m_camera.translate.z;
+            emitter[3] = 0.0f;
+          }
         }
+        group++;
       }
     }
 
@@ -388,7 +393,6 @@ struct TestGame
     });
 
     m_particle_system.update(_delta_time);
-    m_particle_system_render.update(&m_particle_system);
 
     return true;
   }
@@ -433,10 +437,18 @@ struct TestGame
     m_skybox.render(m_indirect_lighting_pass.target(), m_camera.view(), m_camera.projection,
       m_lut_index ? &m_luts[m_lut_index] : nullptr);
 
+    m_particle_system.groups().each_fwd([&](const Particle::System::Group& _group) {
+      m_immediate3D.frame_queue().record_wire_box(
+        {1.0f, 0.0f, 0.0f, 1.0f},
+        _group.bounds,
+        0);
+    });
+
     // Then 3D immediates.
     m_immediate3D.render(m_indirect_lighting_pass.target(), m_camera.view(), m_camera.projection);
 
-    m_particle_system_render.render(m_indirect_lighting_pass.target(), {}, m_camera.view(), m_camera.projection);
+    m_particle_system_render.render(&m_particle_system,
+      m_indirect_lighting_pass.target(), {}, m_camera.view(), m_camera.projection);
 
     // Blit.
     Render::Frontend::State state;
@@ -532,7 +544,7 @@ struct TestGame
 
   Render::ParticleSystem m_particle_system_render;
   Particle::System m_particle_system;
-  Particle::Program m_particle_program;
+  Optional<Particle::Program> m_particle_program;
 
   Math::Camera m_camera;
   Math::Vec3f m_mouse;
