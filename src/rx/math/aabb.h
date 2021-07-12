@@ -19,6 +19,8 @@ struct AABB {
   void expand(const Vec3f& _point);
   void expand(const AABB& _bounds);
 
+  void reset();
+
   AABB transform(const Mat4x4f& _mat) const;
 
   const Vec3f& min() const &;
@@ -38,7 +40,7 @@ private:
 
 inline constexpr AABB::AABB()
   : m_min{ FLT_MAX,  FLT_MAX,  FLT_MAX}
-  , m_max{-FLT_MIN, -FLT_MAX, -FLT_MAX}
+  , m_max{-FLT_MAX, -FLT_MAX, -FLT_MAX}
 {
 }
 
@@ -51,6 +53,11 @@ inline constexpr AABB::AABB(const Vec3f& _min, const Vec3f& _max)
 inline void AABB::expand(const AABB& _bounds) {
   expand(_bounds.m_min);
   expand(_bounds.m_max);
+}
+
+inline void AABB::reset() {
+  m_min = { FLT_MAX, FLT_MAX, FLT_MAX };
+  m_max = -m_min;
 }
 
 inline const Vec3f& AABB::min() const & {
