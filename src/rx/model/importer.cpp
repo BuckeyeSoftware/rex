@@ -72,13 +72,12 @@ bool Importer::load(Stream::Context& _stream) {
     return m_report.error("unfinished triangles");
   }
 
-  logger->verbose("%s: loaded %zu triangles, %zu vertices, %zu meshes in %s",
-    m_name, m_elements.size() / 3, m_positions.size(), m_meshes.size(),
-    time.elapsed());
+  m_report.log(Log::Level::VERBOSE, "loaded %zu triangles, %zu vertices, %zu meshes in %s",
+    m_elements.size() / 3, m_positions.size(), m_meshes.size(), time.elapsed());
 
   // Check for normals.
   if (m_normals.is_empty()) {
-    logger->warning("missing normals");
+    m_report.log(Log::Level::WARNING, "missing normals");
     if (!generate_normals()) {
       return false;
     }
@@ -91,7 +90,7 @@ bool Importer::load(Stream::Context& _stream) {
     if (m_coordinates.is_empty()) {
       return m_report.error("missing tangents and texture coordinates, bailing");
     } else {
-      logger->warning("missing tangents, generating them");
+      m_report.log(Log::Level::WARNING, "missing tangents, generating them");
       if (!generate_tangents()) {
         return false;
       }
@@ -101,7 +100,7 @@ bool Importer::load(Stream::Context& _stream) {
   // Ensure none of the normals, tangents or coordinates go out of bounds of
   // the loaded model.
   if (m_normals.size() != vertices) {
-    logger->warning("too %s normals",
+    m_report.log(Log::Level::WARNING, "too %s normals",
       m_normals.size() > vertices ? "many" : "few");
     if (!m_normals.resize(vertices)) {
       return m_report.error("out of memory");
@@ -109,7 +108,7 @@ bool Importer::load(Stream::Context& _stream) {
   }
 
   if (m_tangents.size() != vertices) {
-    logger->warning("too %s tangents",
+    m_report.log(Log::Level::WARNING, "too %s tangents",
       m_tangents.size() > vertices ? "many" : "few");
     if (!m_tangents.resize(vertices)) {
       return m_report.error("out of memory");
@@ -117,7 +116,7 @@ bool Importer::load(Stream::Context& _stream) {
   }
 
   if (!m_coordinates.is_empty() && m_coordinates.size() != vertices) {
-    logger->warning("too %s coordinates",
+    m_report.log(Log::Level::WARNING, "too %s coordinates",
       m_coordinates.size() > vertices ? "many" : "few");
     if (!m_coordinates.resize(vertices)) {
       return m_report.error("out of memory");
@@ -189,8 +188,8 @@ bool Importer::load(Stream::Context& _stream) {
   time.stop();
 
   if (optimized_meshes.size() < m_meshes.size()) {
-    logger->info("%s: reduced %zu meshes to %zu in %s", m_name, m_meshes.size(),
-      optimized_meshes.size(), time.elapsed());
+    m_report.log(Log::Level::INFO, "reduced %zu meshes to %zu in %s",
+      m_meshes.size(), optimized_meshes.size(), time.elapsed());
   }
 
   m_meshes = Utility::move(optimized_meshes);
@@ -286,7 +285,7 @@ bool Importer::load(const StringView& _file_name) {
   if (auto file = Filesystem::BufferedFile::open(allocator(), _file_name, "r")) {
     return load(*file);
   }
-  return false;
+  return m_report.error("failed to open file: %s", _file_name);
 }
 
 bool Importer::generate_normals() {

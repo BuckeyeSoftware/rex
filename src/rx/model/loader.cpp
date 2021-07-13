@@ -1,5 +1,6 @@
 #include "rx/model/loader.h"
 #include "rx/model/iqm.h"
+#include "rx/model/obj.h"
 #include "rx/model/skeleton.h"
 
 #include "rx/core/map.h"
@@ -176,12 +177,15 @@ bool Loader::import(const StringView& _file_name) {
 
   // determine the model format based on the extension
   if (_file_name.ends_with(".iqm")) {
-    auto& this_allocator = allocator();
-    if (!(new_loader = make_ptr<IQM>(this_allocator, this_allocator))) {
-      return m_report.error("out of memory");
-    }
+    new_loader = make_ptr<IQM>(allocator(), allocator());
+  } else if (_file_name.ends_with(".obj")) {
+    new_loader = make_ptr<OBJ>(allocator(), allocator());
   } else {
     return m_report.error("unsupported model format");
+  }
+
+  if (!new_loader) {
+    return m_report.error("out of memory");
   }
 
   const bool result = new_loader->load(_file_name);

@@ -1,14 +1,12 @@
 #ifndef RX_MODEL_IQM_H
 #define RX_MODEL_IQM_H
 #include "rx/model/importer.h"
-#include "rx/core/linear_buffer.h"
 
 namespace Rx::Model {
 
 struct IQM
   : Importer
 {
-  IQM();
   IQM(Memory::Allocator& _allocator);
 
   struct Header;
