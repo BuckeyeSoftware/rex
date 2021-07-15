@@ -6,7 +6,7 @@
 
 #include "rx/core/algorithm/topological_sort.h"
 
-namespace Rx { struct JSON; }
+namespace Rx::Serialize { struct JSON; }
 namespace Rx::Stream { struct Context; }
 
 namespace Rx::Render::Frontend {
@@ -22,7 +22,7 @@ struct Module {
   [[nodiscard]] bool load(Stream::Context& _stream);
   [[nodiscard]] bool load(const StringView& _file_name);
 
-  [[nodiscard]] bool parse(const JSON& _description);
+  [[nodiscard]] bool parse(const Serialize::JSON& _description);
 
   const String& source() const &;
   const String& name() const &;

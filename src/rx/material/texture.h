@@ -9,7 +9,7 @@
 
 #include "rx/texture/chain.h"
 
-namespace Rx { struct JSON; }
+namespace Rx::Serialize { struct JSON; }
 namespace Rx::Stream { struct Context; }
 
 namespace Rx::Material {
@@ -58,7 +58,7 @@ struct Texture {
   [[nodiscard]] bool load(Stream::Context& _stream);
   [[nodiscard]] bool load(const StringView& _file_name);
 
-  [[nodiscard]] bool parse(const JSON& _definition);
+  [[nodiscard]] bool parse(const Serialize::JSON& _definition);
 
   const Filter& filter() const &;
   const Wrap& wrap() const &;
@@ -73,10 +73,10 @@ struct Texture {
 private:
   bool load_texture_file(const Math::Vec2z& _max_dimensions);
 
-  bool parse_type(const JSON& _type);
-  bool parse_filter(const JSON& _filter, bool& _mipmaps);
-  bool parse_wrap(const JSON& _wrap);
-  bool parse_border(const JSON& _border);
+  bool parse_type(const Serialize::JSON& _type);
+  bool parse_filter(const Serialize::JSON& _filter, bool& _mipmaps);
+  bool parse_wrap(const Serialize::JSON& _wrap);
+  bool parse_border(const Serialize::JSON& _border);
 
   Memory::Allocator* m_allocator;
   Bitmap m_bitmap;

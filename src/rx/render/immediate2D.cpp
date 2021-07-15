@@ -1,5 +1,6 @@
 #include <string.h> // strchr
 #include <stdio.h> // sscanf
+#include <stddef.h> // offsetof
 #include <inttypes.h> // PRIx32
 
 #include "rx/render/immediate2D.h"
@@ -16,7 +17,7 @@
 
 #include "rx/core/filesystem/unbuffered_file.h"
 #include "rx/core/profiler.h"
-#include "rx/core/json.h"
+#include "rx/core/serialize/json.h"
 
 #include "rx/texture/chain.h"
 

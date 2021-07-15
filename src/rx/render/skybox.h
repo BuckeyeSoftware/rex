@@ -8,7 +8,7 @@
 
 #include "rx/render/color_grader.h"
 
-namespace Rx { struct JSON; }
+namespace Rx::Serialize { struct JSON; }
 namespace Rx::Stream { struct Context; }
 namespace Rx::Concurrency { struct Scheduler; }
 
@@ -53,8 +53,8 @@ private:
 
   void release();
 
-  Frontend::Texture2D* create_hdri(const JSON& _json) const;
-  Frontend::TextureCM* create_cubemap(const JSON& _faces,
+  Frontend::Texture2D* create_hdri(const Serialize::JSON& _json) const;
+  Frontend::TextureCM* create_cubemap(const Serialize::JSON& _faces,
     const Math::Vec2z& _max_face_dimensions) const;
 
   Frontend::Context* m_frontend;

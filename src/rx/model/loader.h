@@ -18,7 +18,7 @@ struct Loader {
   [[nodiscard]] bool load(Concurrency::Scheduler& _scheduler, Stream::Context& _stream);
   [[nodiscard]] bool load(Concurrency::Scheduler& _scheduler, const StringView& _file_name);
 
-  [[nodiscard]] bool parse(Concurrency::Scheduler& _scheduler, const JSON& _json);
+  [[nodiscard]] bool parse(Concurrency::Scheduler& _scheduler, const Serialize::JSON& _json);
 
   struct Vertex {
     Math::Vec3f position;
@@ -58,7 +58,7 @@ struct Loader {
 
 private:
   void destroy();
-  bool parse_transform(const JSON& _transform);
+  bool parse_transform(const Serialize::JSON& _transform);
   bool validate();
 
   enum {

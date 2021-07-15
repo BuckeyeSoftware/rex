@@ -8,7 +8,7 @@
 #include "rx/math/vec3.h"
 
 #include "rx/core/filesystem/unbuffered_file.h"
-#include "rx/core/json.h"
+#include "rx/core/serialize/json.h"
 #include "rx/core/profiler.h"
 #include "rx/core/concurrency/thread_pool.h"
 
@@ -142,7 +142,7 @@ bool Skybox::load(Stream::Context& _stream, const Math::Vec2z& _max_face_dimensi
     return false;
   }
 
-  auto parse = JSON::parse(allocator, String{*disown});
+  auto parse = Serialize::JSON::parse(allocator, String{*disown});
   if (!parse) {
     // Out of memory.
     return false;
@@ -179,7 +179,7 @@ bool Skybox::load(Stream::Context& _stream, const Math::Vec2z& _max_face_dimensi
 
   Frontend::Texture* new_texture = nullptr;
   if (faces) {
-    if (!faces.is_array_of(JSON::Type::STRING, 6)) {
+    if (!faces.is_array_of(Serialize::JSON::Type::STRING, 6)) {
       return false;
     }
     new_texture = create_cubemap(faces, _max_face_dimensions);
@@ -207,7 +207,7 @@ bool Skybox::load(Stream::Context& _stream, const Math::Vec2z& _max_face_dimensi
   return true;
 }
 
-Frontend::TextureCM* Skybox::create_cubemap(const JSON& _faces,
+Frontend::TextureCM* Skybox::create_cubemap(const Serialize::JSON& _faces,
   const Math::Vec2z& _max_face_dimensions) const
 {
   auto& allocator = m_frontend->allocator();
@@ -227,7 +227,7 @@ Frontend::TextureCM* Skybox::create_cubemap(const JSON& _faces,
 
   Math::Vec2z dimensions;
   Frontend::TextureCM::Face face{Frontend::TextureCM::Face::RIGHT};
-  bool result = _faces.each([&](const JSON& _file_name) {
+  bool result = _faces.each([&](const Serialize::JSON& _file_name) {
     auto file_name = _file_name.as_string(allocator);
     if (!file_name) {
       return false;
@@ -256,7 +256,7 @@ Frontend::TextureCM* Skybox::create_cubemap(const JSON& _faces,
   return texture;
 }
 
-Frontend::Texture2D* Skybox::create_hdri(const JSON& _json) const {
+Frontend::Texture2D* Skybox::create_hdri(const Serialize::JSON& _json) const {
   auto& allocator = m_frontend->allocator();
 
   auto name = _json.as_string(allocator);

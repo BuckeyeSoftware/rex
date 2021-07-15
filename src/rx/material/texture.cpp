@@ -3,7 +3,7 @@
 #include "rx/core/algorithm/clamp.h"
 
 #include "rx/core/hash/djbx33a.h"
-#include "rx/core/json.h"
+#include "rx/core/serialize/json.h"
 
 #include "rx/math/transform.h"
 
@@ -25,7 +25,7 @@ Texture::Texture(Memory::Allocator& _allocator)
 bool Texture::load(Stream::Context& _stream) {
   if (auto contents = _stream.read_text(allocator())) {
     if (auto disown = contents->disown()) {
-      if (auto json = JSON::parse(allocator(), String{*disown})) {
+      if (auto json = Serialize::JSON::parse(allocator(), String{*disown})) {
         return parse(*json);
       }
     }
@@ -40,7 +40,7 @@ bool Texture::load(const StringView& _file_name) {
   return false;
 }
 
-bool Texture::parse(const JSON& _definition) {
+bool Texture::parse(const Serialize::JSON& _definition) {
   if (!_definition) {
     const auto json_error{_definition.error()};
     if (json_error) {
@@ -140,7 +140,7 @@ bool Texture::load_texture_file(const Math::Vec2z& _max_dimensions) {
   return true;
 }
 
-bool Texture::parse_type(const JSON& _type) {
+bool Texture::parse_type(const Serialize::JSON& _type) {
   if (!_type.is_string()) {
     return m_report.error("expected String");
   }
@@ -174,7 +174,7 @@ bool Texture::parse_type(const JSON& _type) {
   return m_report.error("unknown type '%s'", *type);
 }
 
-bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
+bool Texture::parse_filter(const Serialize::JSON& _filter, bool& _mipmaps) {
   if (!_filter.is_string()) {
     return m_report.error("expected String");
   }
@@ -211,8 +211,8 @@ bool Texture::parse_filter(const JSON& _filter, bool& _mipmaps) {
   return m_report.error("unknown filter '%s'", *filter);
 }
 
-bool Texture::parse_wrap(const JSON& _wrap) {
-  if (!_wrap.is_array_of(JSON::Type::STRING, 2)) {
+bool Texture::parse_wrap(const Serialize::JSON& _wrap) {
+  if (!_wrap.is_array_of(Serialize::JSON::Type::STRING, 2)) {
     return m_report.error("expected Array[String, 2]");
   }
 
@@ -254,8 +254,8 @@ bool Texture::parse_wrap(const JSON& _wrap) {
   return true;
 }
 
-bool Texture::parse_border(const JSON& _border) {
-  if (!_border.is_array_of(JSON::Type::NUMBER, 4)) {
+bool Texture::parse_border(const Serialize::JSON& _border) {
+  if (!_border.is_array_of(Serialize::JSON::Type::NUMBER, 4)) {
     return m_report.error("expected Array[Number, 4]");
   }
 

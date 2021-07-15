@@ -8,10 +8,7 @@
 
 #include "rx/material/texture.h"
 
-namespace Rx {
-  struct JSON;
-} // namespace Rx
-
+namespace Rx::Serialize { struct JSON; }
 namespace Rx::Stream { struct Context; }
 
 namespace Rx::Material {
@@ -27,7 +24,7 @@ struct Loader {
   [[nodiscard]] bool load(Stream::Context& _stream);
   [[nodiscard]] bool load(const StringView& _file_name);
 
-  [[nodiscard]] bool parse(const JSON& _definition);
+  [[nodiscard]] bool parse(const Serialize::JSON& _definition);
 
   constexpr Memory::Allocator& allocator() const;
   const Vector<Texture>& textures() const;
@@ -42,7 +39,7 @@ struct Loader {
   const Optional<Math::Transform>& transform() const &;
 
 private:
-  bool parse_textures(const JSON& _textures);
+  bool parse_textures(const Serialize::JSON& _textures);
 
   enum {
     ALPHA_TEST  = 1 << 0,

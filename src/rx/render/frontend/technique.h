@@ -4,7 +4,7 @@
 
 #include "rx/render/frontend/program.h"
 
-namespace Rx { struct JSON; }
+namespace Rx::Serialize { struct JSON; }
 namespace Rx::Stream { struct Context; }
 
 namespace Rx::Render::Frontend {
@@ -75,8 +75,8 @@ public:
   private:
     friend struct Technique;
 
-    bool parse_specializations(const JSON& _specializations, const char* _type);
-    bool parse_specialization(const JSON& _specialization, const char* _type);
+    bool parse_specializations(const Serialize::JSON& _specializations, const char* _type);
+    bool parse_specialization(const Serialize::JSON& _specialization, const char* _type);
 
     bool compile(const Map<String, Module>& _modules,
       const Map<String, bool>& _values);
@@ -118,7 +118,7 @@ public:
   [[nodiscard]] bool load(Stream::Context& _stream);
   [[nodiscard]] bool load(const StringView& _file_name);
 
-  [[nodiscard]] bool parse(const JSON& _description);
+  [[nodiscard]] bool parse(const Serialize::JSON& _description);
   [[nodiscard]] bool compile(const Map<String, Module>& _modules);
 
   const Configuration& configuration(Size _index) const;
@@ -162,18 +162,18 @@ private:
 
   bool evaluate_when(const Map<String, bool>& _values, const String& _when) const;
 
-  bool parse_uniforms(const JSON& _uniforms);
-  bool parse_shaders(const JSON& _shaders);
-  bool parse_configurations(const JSON& _configurations);
+  bool parse_uniforms(const Serialize::JSON& _uniforms);
+  bool parse_shaders(const Serialize::JSON& _shaders);
+  bool parse_configurations(const Serialize::JSON& _configurations);
 
-  bool parse_uniform(const JSON& _uniform);
-  bool parse_shader(const JSON& _shader);
-  bool parse_configuration(const JSON& _configuration);
+  bool parse_uniform(const Serialize::JSON& _uniform);
+  bool parse_shader(const Serialize::JSON& _shader);
+  bool parse_configuration(const Serialize::JSON& _configuration);
 
-  bool parse_inouts(const JSON& _inouts, const char* _type,
+  bool parse_inouts(const Serialize::JSON& _inouts, const char* _type,
                     Map<String, ShaderDefinition::InOut>& inouts_);
 
-  bool parse_inout(const JSON& _inout, const char* _type,
+  bool parse_inout(const Serialize::JSON& _inout, const char* _type,
                    Map<String, ShaderDefinition::InOut>& inouts_,
                    Size& index_);
 

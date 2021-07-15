@@ -1,7 +1,7 @@
 #include "rx/core/filesystem/unbuffered_file.h"
 #include "rx/core/concurrency/thread_pool.h"
 #include "rx/core/concurrency/wait_group.h"
-#include "rx/core/json.h"
+#include "rx/core/serialize/json.h"
 #include "rx/core/algorithm/clamp.h"
 
 #include "rx/material/loader.h"
@@ -57,7 +57,7 @@ Loader& Loader::operator=(Loader&& loader_) {
 bool Loader::load(Stream::Context& _stream) {
   if (auto contents = _stream.read_text(allocator())) {
     if (auto disown = contents->disown()) {
-      if (auto json = JSON::parse(allocator(), String{*disown})) {
+      if (auto json = Serialize::JSON::parse(allocator(), String{*disown})) {
         return parse(*json);
       }
     }
@@ -72,7 +72,7 @@ bool Loader::load(const StringView& _file_name) {
   return false;
 }
 
-bool Loader::parse(const JSON& _definition) {
+bool Loader::parse(const Serialize::JSON& _definition) {
   if (!_definition) {
     const auto json_error{_definition.error()};
     if (json_error) {
@@ -133,7 +133,7 @@ bool Loader::parse(const JSON& _definition) {
   }
 
   if (const auto& emission = _definition["emission"]) {
-    if (!emission.is_array_of(JSON::Type::NUMBER, 3)) {
+    if (!emission.is_array_of(Serialize::JSON::Type::NUMBER, 3)) {
       return m_report.error("expected Array[Number, 3] for 'emission'");
     }
     m_emission.r = Algorithm::clamp(emission[0_z].as_float(), 0.0f, 1.0f);
@@ -142,7 +142,7 @@ bool Loader::parse(const JSON& _definition) {
   }
 
   if (const auto& albedo = _definition["albedo"]) {
-    if (!albedo.is_array_of(JSON::Type::NUMBER, 3)) {
+    if (!albedo.is_array_of(Serialize::JSON::Type::NUMBER, 3)) {
       return m_report.error("expected Array[Number, 3] for 'emission'");
     }
     m_albedo.r = Algorithm::clamp(albedo[0_z].as_float(), 0.0f, 1.0f);
@@ -165,7 +165,7 @@ bool Loader::parse(const JSON& _definition) {
     const auto& translate{transform["translate"]};
 
     auto parse{[&](const auto& _vec, const char* _tag, Math::Vec3f& result_) -> bool {
-      if (!_vec.is_array_of(JSON::Type::NUMBER, 2)) {
+      if (!_vec.is_array_of(Serialize::JSON::Type::NUMBER, 2)) {
         return m_report.error("expected Array[Number, 2] for '%s'", _tag);
       }
       result_.x = _vec[0_z].as_float();
@@ -193,7 +193,7 @@ bool Loader::parse(const JSON& _definition) {
   }
 
   if (const auto& textures = _definition["textures"]) {
-    if (!textures.is_array_of(JSON::Type::OBJECT)) {
+    if (!textures.is_array_of(Serialize::JSON::Type::OBJECT)) {
       return m_report.error("expected Array[Object] for 'textures'");
     }
 
@@ -205,8 +205,8 @@ bool Loader::parse(const JSON& _definition) {
   return true;
 }
 
-bool Loader::parse_textures(const JSON& _textures) {
-  return _textures.each([this](const JSON& _texture) {
+bool Loader::parse_textures(const Serialize::JSON& _textures) {
+  return _textures.each([this](const Serialize::JSON& _texture) {
     Texture new_texture{allocator()};
     if (_texture.is_string()) {
       if (auto name = _texture.as_string(allocator())) {

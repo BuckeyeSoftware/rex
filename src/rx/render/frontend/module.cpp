@@ -1,5 +1,5 @@
 #include "rx/core/filesystem/unbuffered_file.h"
-#include "rx/core/json.h"
+#include "rx/core/serialize/json.h"
 
 #include "rx/render/frontend/module.h"
 
@@ -37,7 +37,7 @@ Module& Module::operator=(Module&& module_) {
 bool Module::load(Stream::Context& _stream) {
   if (auto data = _stream.read_text(allocator())) {
     if (auto disown = data->disown()) {
-      if (auto json = JSON::parse(allocator(), String{*disown})) {
+      if (auto json = Serialize::JSON::parse(allocator(), String{*disown})) {
         return parse(*json);
       }
     }
@@ -52,7 +52,7 @@ bool Module::load(const StringView& _file_name) {
   return false;
 }
 
-bool Module::parse(const JSON& _description) {
+bool Module::parse(const Serialize::JSON& _description) {
   auto& allocator = *m_allocator;
 
   if (!_description) {
@@ -102,16 +102,16 @@ bool Module::parse(const JSON& _description) {
   // Trim any leading and trailing whitespace characters from the contents too.
   m_source = Utility::move(*source_string); //.strip("\t\r\n ");
 
-  const JSON& imports = _description["imports"];
+  const auto& imports = _description["imports"];
   if (!imports) {
     return true;
   }
 
-  if (!imports.is_array_of(JSON::Type::STRING)) {
+  if (!imports.is_array_of(Serialize::JSON::Type::STRING)) {
     return m_report.error("expected Array[String] for 'imports'");
   }
 
-  return imports.each([&](const JSON& _import) {
+  return imports.each([&](const Serialize::JSON& _import) {
     auto dependency = _import.as_string(allocator);
     return dependency && m_dependencies.push_back(Utility::move(*dependency));
   });

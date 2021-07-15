@@ -4,7 +4,7 @@
 #include "rx/render/frontend/context.h"
 #include "rx/render/frontend/module.h"
 
-#include "rx/core/json.h"
+#include "rx/core/serialize/json.h"
 #include "rx/core/optional.h"
 #include "rx/core/filesystem/unbuffered_file.h"
 #include "rx/core/algorithm/topological_sort.h"
@@ -502,7 +502,7 @@ bool Technique::load(Stream::Context& _stream) {
   auto& allocator = m_frontend->allocator();
   if (auto data = _stream.read_text(allocator)) {
     if (auto disown = data->disown()) {
-      if (auto json = JSON::parse(allocator, String{*disown})) {
+      if (auto json = Serialize::JSON::parse(allocator, String{*disown})) {
         return parse(*json);
       }
     }
@@ -744,19 +744,19 @@ void Technique::Configuration::release() {
 }
 
 bool Technique::Configuration::parse_specializations(
-  const JSON& _specializations, const char* _type)
+  const Serialize::JSON& _specializations, const char* _type)
 {
-  if (!_specializations.is_array_of(JSON::Type::STRING)) {
+  if (!_specializations.is_array_of(Serialize::JSON::Type::STRING)) {
     return m_technique->m_report.error("expected Array[String] for '%ss'", _type);
   }
 
-  return _specializations.each([this, _type](const JSON& _specialization) {
+  return _specializations.each([this, _type](const Serialize::JSON& _specialization) {
     return parse_specialization(_specialization, _type);
   });
 }
 
 bool Technique::Configuration::parse_specialization(
-  const JSON& _specialization, const char* _type)
+  const Serialize::JSON& _specialization, const char* _type)
 {
   auto& allocator = m_technique->m_frontend->allocator();
 
@@ -859,7 +859,7 @@ bool Technique::load(const StringView& _file_name) {
   return false;
 }
 
-bool Technique::parse(const JSON& _description) {
+bool Technique::parse(const Serialize::JSON& _description) {
   auto& allocator = m_frontend->allocator();
 
   if (!_description) {
@@ -918,45 +918,45 @@ bool Technique::parse(const JSON& _description) {
   return true;
 }
 
-bool Technique::parse_uniforms(const JSON& _uniforms) {
-  if (!_uniforms.is_array_of(JSON::Type::OBJECT)) {
+bool Technique::parse_uniforms(const Serialize::JSON& _uniforms) {
+  if (!_uniforms.is_array_of(Serialize::JSON::Type::OBJECT)) {
     return m_report.error("expected Array[Object] for 'uniforms'");
   }
 
-  return _uniforms.each([this](const JSON& _uniform) {
+  return _uniforms.each([this](const Serialize::JSON& _uniform) {
     return parse_uniform(_uniform);
   });
 }
 
-bool Technique::parse_shaders(const JSON& _shaders) {
+bool Technique::parse_shaders(const Serialize::JSON& _shaders) {
   if (_shaders.is_empty()) {
     return m_report.error("empty 'shaders'");
   }
 
-  if (!_shaders.is_array_of(JSON::Type::OBJECT)) {
+  if (!_shaders.is_array_of(Serialize::JSON::Type::OBJECT)) {
     return m_report.error("expected Array[Object] for 'shaders'");
   }
 
-  return _shaders.each([this](const JSON& _shader) {
+  return _shaders.each([this](const Serialize::JSON& _shader) {
     return parse_shader(_shader);
   });
 }
 
-bool Technique::parse_configurations(const JSON& _configurations) {
+bool Technique::parse_configurations(const Serialize::JSON& _configurations) {
   if (_configurations.is_empty()) {
     return m_report.error("empty 'configurations'");
   }
 
-  if (!_configurations.is_array_of(JSON::Type::OBJECT)) {
+  if (!_configurations.is_array_of(Serialize::JSON::Type::OBJECT)) {
     return m_report.error("expected Array[Object] for 'configurations'");
   }
 
-  return _configurations.each([this](const JSON& _configuration) {
+  return _configurations.each([this](const Serialize::JSON& _configuration) {
     return parse_configuration(_configuration);
   });
 }
 
-bool Technique::parse_uniform(const JSON& _uniform) {
+bool Technique::parse_uniform(const Serialize::JSON& _uniform) {
   auto& allocator = m_frontend->allocator();
 
   if (!_uniform.is_object()) {
@@ -1030,7 +1030,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       constant.as_float = value.as_float();
       break;
     case Uniform::Type::S32x2:
-      if (!value.is_array_of(JSON::Type::INTEGER, 2)) {
+      if (!value.is_array_of(Serialize::JSON::Type::INTEGER, 2)) {
         return m_report.error("expected Array[Integer, 2] for '%s'", *name_string);
       }
       constant.as_vec2i = {
@@ -1039,7 +1039,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
     case Uniform::Type::S32x3:
-      if (!value.is_array_of(JSON::Type::INTEGER, 3)) {
+      if (!value.is_array_of(Serialize::JSON::Type::INTEGER, 3)) {
         return m_report.error("expected Array[Integer, 3] for '%s'", *name_string);
       }
       constant.as_vec3i = {
@@ -1049,7 +1049,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
     case Uniform::Type::S32x4:
-      if (!value.is_array_of(JSON::Type::INTEGER, 4)) {
+      if (!value.is_array_of(Serialize::JSON::Type::INTEGER, 4)) {
         return m_report.error("expected Array[Integer, 4] for '%s'", *name_string);
       }
       constant.as_vec4i = {
@@ -1060,7 +1060,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
     case Uniform::Type::F32x2:
-      if (!value.is_array_of(JSON::Type::NUMBER, 2)) {
+      if (!value.is_array_of(Serialize::JSON::Type::NUMBER, 2)) {
         return m_report.error("expected Array[Number, 2] for '%s'", *name_string);
       }
       constant.as_vec2f = {
@@ -1069,7 +1069,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
     case Uniform::Type::F32x3:
-      if (!value.is_array_of(JSON::Type::NUMBER, 3)) {
+      if (!value.is_array_of(Serialize::JSON::Type::NUMBER, 3)) {
         return m_report.error("expected Array[Number, 3] for '%s'", *name_string);
       }
       constant.as_vec3f = {
@@ -1079,7 +1079,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
     case Uniform::Type::F32x4:
-      if (!value.is_array_of(JSON::Type::NUMBER, 4)) {
+      if (!value.is_array_of(Serialize::JSON::Type::NUMBER, 4)) {
         return m_report.error("expected Array[Number, 4] for '%s'", *name_string);
       }
       constant.as_vec4f = {
@@ -1090,8 +1090,8 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
     case Uniform::Type::F32x4x4:
-      if (!value.is_array_of(JSON::Type::ARRAY, 4) ||
-          !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 4); }))
+      if (!value.is_array_of(Serialize::JSON::Type::ARRAY, 4) ||
+          !value.each([](const Serialize::JSON& _row) { return _row.is_array_of(Serialize::JSON::Type::NUMBER, 4); }))
       {
         return m_report.error("expected Array[Array[Number, 4], 4] for '%s'", *name_string);
       }
@@ -1123,8 +1123,8 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
     case Uniform::Type::F32x3x3:
-      if (!value.is_array_of(JSON::Type::ARRAY, 3) ||
-          !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 3); }))
+      if (!value.is_array_of(Serialize::JSON::Type::ARRAY, 3) ||
+          !value.each([](const Serialize::JSON& _row) { return _row.is_array_of(Serialize::JSON::Type::NUMBER, 3); }))
       {
         return m_report.error("expected Array[Array[Number, 3], 3] for '%s'", *name_string);
       }
@@ -1147,8 +1147,8 @@ bool Technique::parse_uniform(const JSON& _uniform) {
       };
       break;
     case Uniform::Type::F32x3x4:
-      if (!value.is_array_of(JSON::Type::ARRAY, 3) ||
-          !value.each([](const JSON& _row) { return _row.is_array_of(JSON::Type::NUMBER, 4); }))
+      if (!value.is_array_of(Serialize::JSON::Type::ARRAY, 3) ||
+          !value.each([](const Serialize::JSON& _row) { return _row.is_array_of(Serialize::JSON::Type::NUMBER, 4); }))
       {
         return m_report.error("expected Array[Array[Number, 4], 3] for '%s'", *name_string);
       }
@@ -1191,7 +1191,7 @@ bool Technique::parse_uniform(const JSON& _uniform) {
     Utility::move(*name_string), Utility::move(*when_string), variant);
 }
 
-bool Technique::parse_shader(const JSON& _shader) {
+bool Technique::parse_shader(const Serialize::JSON& _shader) {
   auto& allocator = m_frontend->allocator();
 
   if (!_shader.is_object()) {
@@ -1223,7 +1223,9 @@ bool Technique::parse_shader(const JSON& _shader) {
     return m_report.error("expected String for 'when'");
   }
 
-  if (imports && !imports.is_array_of(JSON::Type::STRING) && !imports.is_array_of(JSON::Type::OBJECT)) {
+  if (imports && !imports.is_array_of(Serialize::JSON::Type::STRING)
+    && !imports.is_array_of(Serialize::JSON::Type::OBJECT))
+  {
     return m_report.error("expected Array[String | Object] for 'imports'");
   }
 
@@ -1265,7 +1267,7 @@ bool Technique::parse_shader(const JSON& _shader) {
   }
 
   if (imports) {
-    const auto result = imports.each([&](const JSON& _import) -> bool {
+    const auto result = imports.each([&](const Serialize::JSON& _import) -> bool {
       if (_import.is_string()) {
         if (auto import = _import.as_string(allocator)) {
           return definition.dependencies.emplace_back(Utility::move(*import), String{});
@@ -1319,7 +1321,7 @@ bool Technique::parse_shader(const JSON& _shader) {
   return m_shader_definitions.push_back(Utility::move(definition));
 }
 
-bool Technique::parse_configuration(const JSON& _configuration) {
+bool Technique::parse_configuration(const Serialize::JSON& _configuration) {
   auto& allocator = m_frontend->allocator();
 
   const auto& name = _configuration["name"];
@@ -1370,20 +1372,20 @@ bool Technique::parse_configuration(const JSON& _configuration) {
   return true;
 }
 
-bool Technique::parse_inouts(const JSON& _inouts, const char* _type,
+bool Technique::parse_inouts(const Serialize::JSON& _inouts, const char* _type,
                              Map<String, ShaderDefinition::InOut>& inouts_)
 {
-  if (!_inouts.is_array_of(JSON::Type::OBJECT)) {
+  if (!_inouts.is_array_of(Serialize::JSON::Type::OBJECT)) {
     return m_report.error("expected Array[Object] in %ss", _type);
   }
 
   Size index = 0;
-  return _inouts.each([&](const JSON& _inout) {
+  return _inouts.each([&](const Serialize::JSON& _inout) {
     return parse_inout(_inout, _type, inouts_, index);
   });
 }
 
-bool Technique::parse_inout(const JSON& _inout, const char* _type,
+bool Technique::parse_inout(const Serialize::JSON& _inout, const char* _type,
                             Map<String, ShaderDefinition::InOut>& inouts_,
                             Size& index_)
 {

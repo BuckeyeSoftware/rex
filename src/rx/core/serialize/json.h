@@ -1,19 +1,9 @@
-#ifndef RX_CORE_JSON_H
-#define RX_CORE_JSON_H
-#include "rx/core/concurrency/atomic.h"
-
-#include "rx/core/traits/invoke_result.h"
-#include "rx/core/traits/is_same.h"
-
-#include "rx/core/utility/declval.h"
-#include "rx/core/utility/exchange.h"
-
-#include "rx/core/string.h"
+#ifndef RX_CORE_SERIALIZE_JSON_H
+#define RX_CORE_SERIALIZE_JSON_H
 #include "rx/core/optional.h"
+#include "rx/core/string.h"
 
-#include "lib/json.h"
-
-namespace Rx {
+namespace Rx::Serialize {
 
 // 32-bit: 8 bytes
 // 64-bit: 16 bytes
@@ -68,26 +58,24 @@ struct RX_API JSON {
   template<typename F>
   bool each(F&& _function) const;
 
-  constexpr Memory::Allocator& allocator() const;
-
 private:
-  struct Shared {
-    Shared(Memory::Allocator& _allocator, const char* _contents, Size _length);
-    ~Shared();
+  struct Shared;
 
-    Shared* acquire();
-    void release();
+  using EnumerateCallback = bool(*)(Shared*, const void*, const void*);
 
-    Memory::Allocator& m_allocator;
-    struct json_parse_result_s m_error;
-    struct json_value_s* m_root;
-    Concurrency::Atomic<Size> m_count;
-  };
+  JSON(Shared* _shared, const void* _head);
 
-  JSON(Shared* _shared, struct json_value_s* _head);
+  bool enumerate(const void* _user, const EnumerateCallback& _callback) const;
+
+  // Shared state reference count helpers.
+  static Shared* acquire(Shared* _shared);
+  static void release(Shared* _shared);
+
+  // Check if the shared state is valid or not.
+  static bool is_valid(const Shared* _shared);
 
   Shared* m_shared;
-  struct json_value_s* m_value;
+  const void* m_value;
 };
 
 inline constexpr JSON::JSON()
@@ -97,7 +85,7 @@ inline constexpr JSON::JSON()
 }
 
 inline JSON::JSON(const JSON& _json)
-  : m_shared{_json.m_shared->acquire()}
+  : m_shared{acquire(_json.m_shared)}
   , m_value{_json.m_value}
 {
 }
@@ -109,17 +97,13 @@ inline JSON::JSON(JSON&& json_)
 }
 
 inline JSON::~JSON() {
-  if (m_shared) {
-    m_shared->release();
-  }
+  release(m_shared);
 }
 
 inline JSON& JSON::operator=(const JSON& _json) {
   if (&_json != this) {
-    if (m_shared) {
-      m_shared->release();
-    }
-    m_shared = _json.m_shared->acquire();
+    release(m_shared);
+    m_shared = acquire(_json.m_shared);
     m_value = _json.m_value;
   }
   return *this;
@@ -134,7 +118,7 @@ inline JSON& JSON::operator=(JSON&& json_) {
 }
 
 inline JSON::operator bool() const {
-  return m_shared && m_shared->m_root;
+  return is_valid(m_shared);
 }
 
 inline bool JSON::is_array() const {
@@ -195,43 +179,18 @@ inline bool JSON::is_empty() const {
 
 template<typename F>
 RX_HINT_FORCE_INLINE bool JSON::each(F&& _function) const {
-  const bool array = is_array();
-  const bool object = is_object();
-
-  RX_ASSERT(array || object, "not enumerable");
-
   using ReturnType = Traits::InvokeResult<F, const JSON&>;
-
-  if (array) {
-    auto array = reinterpret_cast<struct json_array_s*>(m_value->payload);
-    for (auto element = array->start; element; element = element->next) {
-      if constexpr(Traits::IS_SAME<ReturnType, bool>) {
-        if (!_function({m_shared, element->value})) {
-          return false;
-        }
+  return enumerate(
+    static_cast<const void*>(&_function),
+    [](Shared* _shared, const void* _callable, const void* _value) {
+      const auto& function = *static_cast<const F*>(_callable);
+      if constexpr (Traits::IS_SAME<ReturnType, bool>) {
+        return function({_shared, _value});
       } else {
-        _function({m_shared, element->value});
+        function({_shared, _value});
       }
-    }
-  } else {
-    auto object = reinterpret_cast<struct json_object_s*>(m_value->payload);
-    for (auto element = object->start; element; element = element->next) {
-      if constexpr(Traits::IS_SAME<ReturnType, bool>) {
-        if (!_function({m_shared, element->value})) {
-          return false;
-        }
-      } else {
-        _function({m_shared, element->value});
-      }
-    }
-  }
-
-  return true;
-}
-
-RX_HINT_FORCE_INLINE constexpr Memory::Allocator& JSON::allocator() const {
-  RX_ASSERT(m_shared, "reference count reached zero");
-  return m_shared->m_allocator;
+      return true;
+    });
 }
 
 } // namespace Rx

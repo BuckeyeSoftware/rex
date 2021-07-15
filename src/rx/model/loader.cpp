@@ -6,7 +6,7 @@
 #include "rx/core/map.h"
 #include "rx/core/set.h"
 #include "rx/core/ptr.h"
-#include "rx/core/json.h"
+#include "rx/core/serialize/json.h"
 #include "rx/core/filesystem/unbuffered_file.h"
 #include "rx/core/algorithm/clamp.h"
 
@@ -53,7 +53,7 @@ void Loader::destroy() {
 bool Loader::load(Concurrency::Scheduler& _scheduler, Stream::Context& _stream) {
   if (auto contents = _stream.read_text(allocator())) {
     if (auto disown = contents->disown()) {
-      if (auto json = JSON::parse(allocator(), String{*disown})) {
+      if (auto json = Serialize::JSON::parse(allocator(), String{*disown})) {
         return parse(_scheduler, *json);
       }
     }
@@ -68,7 +68,7 @@ bool Loader::load(Concurrency::Scheduler& _scheduler, const StringView& _file_na
   return false;
 }
 
-bool Loader::parse(Concurrency::Scheduler& _scheduler, const JSON& _definition) {
+bool Loader::parse(Concurrency::Scheduler& _scheduler, const Serialize::JSON& _definition) {
   if (!_definition) {
     const auto json_error{_definition.error()};
     if (json_error) {
@@ -118,7 +118,9 @@ bool Loader::parse(Concurrency::Scheduler& _scheduler, const JSON& _definition) 
     return m_report.error("missing 'materials'");
   }
 
-  if (!materials.is_array_of(JSON::Type::OBJECT) && !materials.is_array_of(JSON::Type::STRING)) {
+  if (!materials.is_array_of(Serialize::JSON::Type::OBJECT)
+    && !materials.is_array_of(Serialize::JSON::Type::STRING))
+  {
     return m_report.error("expected Array[Object] or Array[String] for 'materials'");
   }
 
@@ -143,7 +145,7 @@ bool Loader::parse(Concurrency::Scheduler& _scheduler, const JSON& _definition) 
   Concurrency::AtomicFlag error = false;
   Concurrency::Mutex mutex;
   Concurrency::WaitGroup group{materials.size()};
-  materials.each([&](const JSON& _material) {
+  materials.each([&](const Serialize::JSON& _material) {
     (void)_scheduler.add([&, _material](int) {
       Material::Loader loader{allocator()};
       if (_material.is_string()) {
@@ -297,13 +299,13 @@ bool Loader::import(const StringView& _file_name) {
   return true;
 }
 
-bool Loader::parse_transform(const JSON& _transform) {
+bool Loader::parse_transform(const Serialize::JSON& _transform) {
   const auto& scale = _transform["scale"];
   const auto& rotate = _transform["rotate"];
   const auto& translate = _transform["translate"];
 
-  auto parse_vec3 = [&](const JSON& _array, const char* _tag, Math::Vec3f& result_) -> bool {
-    if (!_array.is_array_of(JSON::Type::NUMBER, 3)) {
+  auto parse_vec3 = [&](const Serialize::JSON& _array, const char* _tag, Math::Vec3f& result_) -> bool {
+    if (!_array.is_array_of(Serialize::JSON::Type::NUMBER, 3)) {
       return m_report.error("expected Array[Number, 3] for '%s'", _tag);
     }
     result_.x = Algorithm::clamp(_array[0_z].as_number(), -180.0, 180.0);

@@ -30,6 +30,7 @@ struct LinearBuffer {
 
   void erase(Size _from, Size _to);
 
+  bool append(Byte _data);
   bool append(const Byte* _data, Size _size);
 
   constexpr Byte* data();
@@ -86,6 +87,10 @@ inline LinearBuffer::~LinearBuffer() {
 
 inline void LinearBuffer::clear() {
   m_size = 0;
+}
+
+inline bool LinearBuffer::append(Byte _data) {
+  return append(&_data, 1);
 }
 
 inline constexpr Byte* LinearBuffer::data() {
