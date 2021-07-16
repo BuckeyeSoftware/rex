@@ -1,6 +1,6 @@
 #include "rx/core/config.h" // RX_PLATFORM_*
-#include "rx/core/assert.h" // RX_ASSERT
 #include "rx/core/linear_buffer.h"
+#include "rx/core/memory/copy.h"
 
 #if defined(RX_PLATFORM_POSIX)
 #include <dirent.h> // DIR, struct dirent, opendir, readdir, rewinddir, closedir

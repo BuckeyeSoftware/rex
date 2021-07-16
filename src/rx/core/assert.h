@@ -1,7 +1,7 @@
 #ifndef RX_CORE_ASSERT_H
 #define RX_CORE_ASSERT_H
-#include "rx/core/source_location.h"
 #include "rx/core/format.h"
+#include "rx/core/source_location.h"
 
 /// \file assert.h
 namespace Rx {

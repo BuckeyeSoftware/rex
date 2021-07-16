@@ -8,8 +8,6 @@
 #include "rx/core/concurrency/spin_lock.h"
 #include "rx/core/concurrency/scope_lock.h"
 
-#include "rx/core/utility/exchange.h"
-
 namespace Rx {
 
 template<typename T>

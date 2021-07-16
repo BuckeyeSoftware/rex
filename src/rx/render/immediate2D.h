@@ -1,9 +1,8 @@
 #ifndef RX_RENDER_IMMEDIATE2D_H
 #define RX_RENDER_IMMEDIATE2D_H
 #include "rx/core/string.h"
-#include "rx/core/array.h"
+#include "rx/core/vector.h"
 #include "rx/core/string_table.h"
-#include "rx/core/optional.h"
 #include "rx/core/map.h"
 #include "rx/core/ptr.h"
 

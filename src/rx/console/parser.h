@@ -6,9 +6,7 @@
 
 #include "rx/core/assert.h"
 #include "rx/core/string.h"
-
-#include "rx/core/utility/construct.h"
-#include "rx/core/utility/destruct.h"
+#include "rx/core/vector.h"
 
 namespace Rx::Console {
 

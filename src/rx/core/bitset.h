@@ -5,14 +5,12 @@
 #include "rx/core/traits/is_same.h"
 #include "rx/core/traits/invoke_result.h"
 
-#include "rx/core/memory/system_allocator.h"
-
 #include "rx/core/utility/exchange.h"
 
+namespace Rx::Memory { struct Allocator; }
+
 /// \file bitset.h
-
 namespace Rx {
-
 /// Represents a fixed-capacity sequence of bits.
 struct RX_API Bitset {
   RX_MARK_NO_COPY(Bitset);

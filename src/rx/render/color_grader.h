@@ -1,11 +1,12 @@
 #ifndef RX_RENDER_COLOR_GRADER_H
 #define RX_RENDER_COLOR_GRADER_H
-#include "rx/core/memory/null_allocator.h"
-#include "rx/core/concurrency/word_lock.h"
-
 #include "rx/core/bitset.h"
 #include "rx/core/string.h"
+#include "rx/core/vector.h"
 #include "rx/core/map.h"
+
+#include "rx/core/memory/null_allocator.h"
+#include "rx/core/concurrency/word_lock.h"
 
 #include "rx/math/vec2.h"
 #include "rx/math/vec4.h"

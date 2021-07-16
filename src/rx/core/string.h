@@ -1,12 +1,6 @@
 #ifndef RX_CORE_STRING_H
 #define RX_CORE_STRING_H
-#include "rx/core/assert.h" // RX_ASSERT
-#include "rx/core/format.h" // format
-#include "rx/core/vector.h" // Vector
-#include "rx/core/optional.h" // Optional
-
-#include "rx/core/traits/remove_cvref.h"
-
+#include "rx/core/optional.h"
 #include "rx/core/memory/system_allocator.h"
 
 namespace Rx {
