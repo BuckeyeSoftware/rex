@@ -299,14 +299,16 @@ Size Set<K>::element_hash(Size _index) const {
 
 template<typename K>
 bool Set<K>::allocate(Size _capacity) {
-  Memory::Aggregate aggregate;
-  aggregate.add<K>(_capacity);
-  aggregate.add<Size>(_capacity);
-  if (!aggregate.finalize()) {
+  Memory::Aggregate aggregate{*m_allocator};
+
+  bool result = true;
+  result &= aggregate.add<K>(_capacity);
+  result &= aggregate.add<Size>(_capacity);
+  if (!result) {
     return false;
   }
 
-  auto data = m_allocator->allocate(aggregate.bytes());
+  auto data = aggregate.allocate();
   if (!data) {
     return false;
   }

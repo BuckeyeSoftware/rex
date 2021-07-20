@@ -46,7 +46,7 @@ Optional<Slab> Slab::create(Memory::Allocator& _allocator,
 
   // Use an aggregate to setup the initial caches. This will be a contiguous
   // allocation representing all the caches from [0, _minimum_caches).
-  Memory::Aggregate aggregate;
+  Memory::Aggregate aggregate{_allocator};
   for (Size i = 0; i < _minimum_caches; i++) {
     // This can fail when |_object_size| rounded to alignment multiplied by
     // |_objects_per_cache| would overflow.
@@ -54,13 +54,8 @@ Optional<Slab> Slab::create(Memory::Allocator& _allocator,
       return nullopt;
     }
   }
-  // Finalization can fail if no caches are added to the aggregate.
-  if (!aggregate.finalize()) {
-    return nullopt;
-  }
 
-  auto data = _allocator.allocate(aggregate.bytes());
-
+  auto data = aggregate.allocate();
   if (!data) {
     return nullopt;
   }

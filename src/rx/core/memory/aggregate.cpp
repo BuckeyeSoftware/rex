@@ -7,9 +7,9 @@ namespace Rx::Memory {
 // padding rules of structures in C/C++.
 //
 // The final alignment is based on which field has the largest alignment.
-bool Aggregate::finalize() {
-  if (m_bytes || m_size == 0) {
-    return false;
+Byte* Aggregate::allocate() {
+  if (m_entries.is_empty()) {
+    return nullptr;
   }
 
   auto align = [](Size _alignment, Size _offset) {
@@ -18,35 +18,25 @@ bool Aggregate::finalize() {
 
   Size offset = 0;
   Size alignment = 0;
-  for (Size i = 0; i < m_size; i++) {
-    auto& entry = m_entries[i];
-    const Size aligned = align(entry.align, offset);
-    entry.offset = aligned;
-    offset = aligned + entry.size;
-    alignment = Algorithm::max(alignment, entry.align);
-  }
+  m_entries.each_fwd([&](Entry& entry_) {
+    const Size aligned = align(entry_.align, offset);
+    entry_.offset = aligned;
+    offset = aligned + entry_.size;
+    alignment = Algorithm::max(alignment, entry_.align);
+  });
 
-  m_bytes = align(alignment, offset);
-
-  return true;
+  return m_allocator.allocate(align(alignment, offset));
 }
 
 bool Aggregate::add(Size _size, Size _alignment, Size _count) {
   RX_ASSERT(_size && _alignment, "empty field");
-  RX_ASSERT(!m_bytes, "already finalized");
 
   // Would |_size * _count| overflow?
   if (_size && _count > -1_z / _size) {
     return false;
   }
 
-  // Would another entry overflow |m_entries|?
-  if (m_size >= sizeof m_entries / sizeof *m_entries) {
-    return false;
-  }
-
-  m_entries[m_size++] = {_size * _count, _alignment, 0};
-  return true;
+  return m_entries.emplace_back(_size * _count, _alignment, 0);
 }
 
 } // namespace Rx::Memory

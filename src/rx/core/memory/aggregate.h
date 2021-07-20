@@ -1,26 +1,21 @@
 #ifndef RX_CORE_MEMORY_AGGREGATE_H
 #define RX_CORE_MEMORY_AGGREGATE_H
-#include "rx/core/assert.h"
+#include "rx/core/vector.h"
 
 /// \file aggregate.h
 
 namespace Rx::Memory {
 
-/// \brief A memory aggregate.
+/// \brief An aggregate allocator.
 ///
 /// A way to define an aggregate allocation from multiple separate, differently
 /// sized and aligned allocations of objects (or arrays of objects) as one
 /// contiguous allocation with appropriate offsets to derive pointers that
 /// maintain alignment and prevent overlap.
 struct RX_API Aggregate {
-  constexpr Aggregate();
-
-  /// The number of bytes needed for this aggregate.
-  /// \note Asserts if finalize() hasn't been called.
-  Size bytes() const;
+  constexpr Aggregate(Allocator& _allocator);
 
   /// The offset of an item.
-  /// \note Asserts if finalize() hasn't been called.
   Size operator[](Size _index) const;
 
   /// \brief Add an object of type T to the aggregate.
@@ -36,9 +31,8 @@ struct RX_API Aggregate {
   /// \return On success, \c true. Otherwise, \c false.
   bool add(Size _size, Size _alignment, Size _count);
 
-  /// \brief Finalize the aggregate for use.
-  /// \return On success, \c true. Otherwise, \c false.
-  bool finalize();
+  /// \brief Allocate the aggregate.
+  Byte* allocate();
 
 private:
   struct Entry {
@@ -47,29 +41,17 @@ private:
     Size offset;
   };
 
-  union {
-    struct {} m_nat;
-    Entry m_entries[64];
-  };
-
-  Size m_size;
-  Size m_bytes;
+  Allocator& m_allocator;
+  Vector<Entry> m_entries;
 };
 
-inline constexpr Aggregate::Aggregate()
-  : m_nat{}
-  , m_size{0}
-  , m_bytes{0}
+inline constexpr Aggregate::Aggregate(Allocator& _allocator)
+  : m_allocator{_allocator}
+  , m_entries{m_allocator}
 {
 }
 
-inline Size Aggregate::bytes() const {
-  RX_ASSERT(m_bytes, "not finalized");
-  return m_bytes;
-}
-
 inline Size Aggregate::operator[](Size _index) const {
-  RX_ASSERT(m_bytes, "not finalized");
   return m_entries[_index].offset;
 }
 
