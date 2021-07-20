@@ -89,8 +89,8 @@ Optional<Directory> Directory::open(Memory::Allocator& _allocator, const StringV
     return nullopt;
   }
 
-  memcpy(path_data.data(), path_utf16.data(), path_utf16.size() * 2);
-  memcpy(path_data.data() + path_utf16.size() * 2, PATH_EXTRA, sizeof PATH_EXTRA);
+  Memory::copy(path_data.data(), path_utf16.data(), path_utf16.size() * 2);
+  Memory::copy(path_data.data() + path_utf16.size() * 2, PATH_EXTRA, sizeof PATH_EXTRA);
 
   // Execute one FindFirstFileW to check if the directory exists.
   const auto path = reinterpret_cast<const LPCWSTR>(path_data.data());

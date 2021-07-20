@@ -344,7 +344,7 @@ void Logger::write(Ptr<Message>& message_) {
 
   // Write the log to the browser for Emscripten.
   //
-  // TODO(dweiler): Implement a Stream::TrackedStream for Emscripten log and
+  // TODO(dweiler): Implement a Stream::AdvancingStream for Emscripten log and
   // have engine entry point attach it to the logger. This should not be in
   // here.
 #if 0 // defined(RX_PLATFORM_EMSCRIPTEN)

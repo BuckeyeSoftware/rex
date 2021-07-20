@@ -117,28 +117,28 @@ bool State::resize(Size _particles, Size _groups) {
   Memory::zero(data, aggregate.bytes());
 
   if (m_alive_count) {
-    memcpy(data + aggregate[0], m_velocity_x, sizeof(Float32) * m_alive_count);
-    memcpy(data + aggregate[1], m_velocity_y, sizeof(Float32) * m_alive_count);
-    memcpy(data + aggregate[2], m_velocity_z, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[0], m_velocity_x, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[1], m_velocity_y, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[2], m_velocity_z, sizeof(Float32) * m_alive_count);
 
-    memcpy(data + aggregate[3], m_acceleration_x, sizeof(Float32) * m_alive_count);
-    memcpy(data + aggregate[4], m_acceleration_y, sizeof(Float32) * m_alive_count);
-    memcpy(data + aggregate[5], m_acceleration_z, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[3], m_acceleration_x, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[4], m_acceleration_y, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[5], m_acceleration_z, sizeof(Float32) * m_alive_count);
 
-    memcpy(data + aggregate[6], m_position_x, sizeof(Float32) * m_alive_count);
-    memcpy(data + aggregate[7], m_position_y, sizeof(Float32) * m_alive_count);
-    memcpy(data + aggregate[8], m_position_z, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[6], m_position_x, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[7], m_position_y, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[8], m_position_z, sizeof(Float32) * m_alive_count);
 
-    memcpy(data + aggregate[9], m_color_r, sizeof(Float32) * m_alive_count);
-    memcpy(data + aggregate[10], m_color_g, sizeof(Float32) * m_alive_count);
-    memcpy(data + aggregate[11], m_color_b, sizeof(Float32) * m_alive_count);
-    memcpy(data + aggregate[12], m_color_a, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[9], m_color_r, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[10], m_color_g, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[11], m_color_b, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[12], m_color_a, sizeof(Float32) * m_alive_count);
 
-    memcpy(data + aggregate[13], m_life, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[13], m_life, sizeof(Float32) * m_alive_count);
 
-    memcpy(data + aggregate[14], m_size, sizeof(Float32) * m_alive_count);
+    Memory::copy(data + aggregate[14], m_size, sizeof(Float32) * m_alive_count);
 
-    memcpy(data + aggregate[15], m_texture, sizeof(Uint16) * m_alive_count);
+    Memory::copy(data + aggregate[15], m_texture, sizeof(Uint16) * m_alive_count);
   }
 #endif
 
