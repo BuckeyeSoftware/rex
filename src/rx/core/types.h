@@ -37,7 +37,7 @@ using Float64 = double;
 /// The different of two pointers.
 using PtrDiff = decltype((Byte*)0 - (Byte*)0);
 /// Unsigned integer large enough to hold a pointer.
-using UintPtr = Size;
+using UintPtr = decltype(sizeof 0);
 /// Alias for \c nullptr_t.
 using NullPointer = decltype(nullptr);
 /// The type 32-bit floating point arithmetic is evaluated in on the hardware.

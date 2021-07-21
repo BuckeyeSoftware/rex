@@ -18,7 +18,7 @@ struct RX_API Allocator {
   RX_MARK_INTERFACE(Allocator);
 
   /// All allocations must return pointers aligned by this alignment.
-  static inline constexpr const Size ALIGNMENT = 16;
+  static inline constexpr const UintPtr ALIGNMENT = 16;
 
   /// \brief Allocate memory.
   /// \param _size The size in bytes.

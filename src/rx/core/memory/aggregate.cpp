@@ -36,7 +36,7 @@ bool Aggregate::add(Size _size, Size _alignment, Size _count) {
     return false;
   }
 
-  return m_entries.emplace_back(_size * _count, _alignment, 0);
+  return m_entries.emplace_back(_size * _count, _alignment, 0_z);
 }
 
 } // namespace Rx::Memory
