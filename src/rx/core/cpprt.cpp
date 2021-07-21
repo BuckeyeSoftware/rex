@@ -4,29 +4,56 @@
 
 // These cannot be disabled in debug builds under Emscripten.
 #if !defined(RX_PLATFORM_EMSCRIPTEN) || (defined(RX_PLATFORM_EMSCRIPTEN) && !defined(RX_DEBUG))
-void* operator new(Rx::Size) {
-  Rx::abort("operator new is disabled");
+// Has to be in the std namespace since some compilers generate references to
+// the mangled name.
+namespace std {
+  using size_t = Rx::Size;
+  enum class align_val_t : size_t {};
+  struct nothrow_t {
+    explicit nothrow_t() = default;
+  };
 }
 
-void* operator new[](Rx::Size) {
-  Rx::abort("operator new[] is disabled");
-}
+// Bring them into global namespace to have "std::"-free stringizatze for the
+// messages passed to Rx::abort.
+using std::size_t;
+using std::align_val_t;
+using std::nothrow_t;
 
-void operator delete(void*) {
-  Rx::abort("operator delete is disabled");
-}
+// Templates for stamping out operator new and delete functions.
+#define NEW_TEMPLATE(...) \
+  void* operator __VA_ARGS__ { \
+    Rx::abort("operator " #__VA_ARGS__ " is disabled"); \
+  }
 
-void operator delete(void*, Rx::Size) {
-  Rx::abort("operator delete is disabled");
-}
+#define DELETE_TEMPLATE(...) \
+  void operator __VA_ARGS__ noexcept { \
+    Rx::abort("operator " #__VA_ARGS__ "is disabled"); \
+  }
 
-void operator delete[](void*) {
-  Rx::abort("operator delete[] is disabled");
-}
+// Generate new and delete operators for objects and arrays respectively
+// based on the varadic macro argument list.
+#define NEW(...) \
+  NEW_TEMPLATE(new(__VA_ARGS__)) \
+  NEW_TEMPLATE(new[](__VA_ARGS__))
 
-void operator delete[](void*, Rx::Size) {
-  Rx::abort("operator delete[] is disabled");
-}
+#define DELETE(...) \
+  DELETE_TEMPLATE(delete(__VA_ARGS__)) \
+  DELETE_TEMPLATE(delete[](__VA_ARGS__))
+
+// Replaceable allocation functions.
+NEW(size_t)
+NEW(size_t, align_val_t)
+
+// Replacable non-throwing allocation functions.
+NEW(size_t, const nothrow_t&)
+NEW(size_t, align_val_t, const nothrow_t&)
+
+// Replacable usual deallocation functions.
+DELETE(void*)
+DELETE(void*, align_val_t)
+DELETE(void*, size_t)
+DELETE(void*, size_t, align_val_t)
 #endif
 
 extern "C" {

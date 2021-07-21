@@ -2,6 +2,7 @@
 #define RX_RENDER_FRONTEND_BUFFER_H
 #include "rx/core/linear_buffer.h"
 #include "rx/core/vector.h"
+#include "rx/core/tagged_ptr.h"
 
 #include "rx/core/hash/combine.h"
 #include "rx/core/hash/mix_enum.h"

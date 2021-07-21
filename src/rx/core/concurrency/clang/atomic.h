@@ -127,7 +127,8 @@ T* atomic_fetch_add(volatile AtomicBase<T>* base_, PtrDiff _delta,
     static_cast<int>(_order));
 }
 
-// TODO(dweiler): This can be ambigious on some platforms. Find better approach.
+// This specialization can be ambigious on 32-bit platforms.
+#if 0
 template<typename T>
 T* atomic_fetch_add(AtomicBase<T>* base_, PtrDiff _delta,
   MemoryOrder _order)
@@ -135,6 +136,7 @@ T* atomic_fetch_add(AtomicBase<T>* base_, PtrDiff _delta,
   return __c11_atomic_fetch_add(&base_->value, _delta,
     static_cast<int>(_order));
 }
+#endif
 
 template<typename T>
 T atomic_fetch_sub(volatile AtomicBase<T>* base_, T _delta,
