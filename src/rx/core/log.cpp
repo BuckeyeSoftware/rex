@@ -347,18 +347,19 @@ void Logger::write(Ptr<Message>& message_) {
   // TODO(dweiler): Implement a Stream::AdvancingStream for Emscripten log and
   // have engine entry point attach it to the logger. This should not be in
   // here.
-#if 0 // defined(RX_PLATFORM_EMSCRIPTEN)
+#if defined(RX_PLATFORM_EMSCRIPTEN)
+  const auto contents = content_span.data();
   switch (message_->level) {
   case Log::Level::ERROR:
-    emscripten_log(EM_LOG_ERROR, "%s", contents.data());
+    emscripten_log(EM_LOG_ERROR, "%s", contents);
     break;
   case Log::Level::INFO:
     [[fallthrough]];
   case Log::Level::VERBOSE:
-    emscripten_log(EM_LOG_INFO, "%s", contents.data());
+    emscripten_log(EM_LOG_INFO, "%s", contents);
     break;
   case Log::Level::WARNING:
-    emscripten_log(EM_LOG_WARN, "%s", contents.data());
+    emscripten_log(EM_LOG_WARN, "%s", contents);
     break;
   }
 #endif
