@@ -1,6 +1,8 @@
 #include "rx/core/math/sqrt.h"
 #include "rx/core/math/shape.h"
 
+#include "rx/core/config.h"
+
 #if defined(RX_COMPILER_MSVC)
 #pragma warning(disable: 4723) // potential divide by 0
 #endif
@@ -10,8 +12,12 @@ namespace Rx::Math {
 static constexpr const Float32 TINY = 1.0e-30;
 
 Float32 sqrt(Float32 _x) {
-  const auto sign{static_cast<Sint32>(0x80000000)};
-  Sint32 ix{Shape{_x}.as_s32};
+#if defined(RX_ARCHITECTURE_AMD64) && (defined(RX_COMPILER_GCC) || defined(RX_COMPILER_CLANG))
+  __asm__("sqrtss %1, %0" : "=x"(_x) : "x"(_x));
+  return _x;
+#else
+  const auto sign = static_cast<Sint32>(0x80000000);
+  Sint32 ix = Shape{_x}.as_s32;
 
   if ((ix & 0x7f800000) == 0x7f000000) {
     // sqrt(NaN) = NaN
@@ -94,6 +100,7 @@ Float32 sqrt(Float32 _x) {
   ix += static_cast<Uint32>(m) << 23;
 
   return Shape{ix}.as_f32;
+#endif
 }
 
 } // namespace Rx::Math
