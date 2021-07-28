@@ -25,14 +25,17 @@ void MersenneTwister::generate() {
   Size i = 0;
   Uint32 y;
 
-  // i = [0, 226]
-  while (i < DIFFERENCE) {
+  // i = [0, 225]
+  while (i < DIFFERENCE - 1) {
     // 226 = 113*2, even number of steps.
     UNROLL(i + PERIOD);
 
     // TODO(dweiler): Check why this invokes UB.
-    // UNROLL(i + PERIOD);
+    UNROLL(i + PERIOD);
   }
+
+  // i = 226
+  UNROLL(i + PERIOD);
 
   // i = [227, 622]
   while (i < SIZE - 1) {
