@@ -166,7 +166,6 @@ struct Texture1D : Texture {
   const DimensionType& dimensions() const &;
   const WrapOptions& wrap() const &;
   const LevelInfo& info_for_level(Size _index) const &;
-  Size pitch() const;
 
   // Record an edit to level |_level| of this texture at offset |_offset| of
   // dimensions |_dimensions|.
@@ -205,7 +204,6 @@ struct Texture2D : Texture {
   const DimensionType& dimensions() const &;
   const WrapOptions& wrap() const &;
   const LevelInfo& info_for_level(Size _index) const &;
-  Size pitch() const;
 
   // Record an edit to level |_level| of this texture at offset |_offset| of
   // dimensions |_dimensions|.
@@ -246,7 +244,6 @@ struct Texture3D : Texture {
   const DimensionType& dimensions() const &;
   const WrapOptions& wrap() const &;
   const LevelInfo& info_for_level(Size _index) const &;
-  Size pitch() const;
 
   // Record an edit to level |_level| of this texture at offset |_offset| with
   // dimensions |_dimensions|.
@@ -294,7 +291,6 @@ struct TextureCM : Texture {
   const DimensionType& dimensions() const &;
   const WrapOptions& wrap() const &;
   const LevelInfo& info_for_level(Size _index) const &;
-  Size pitch() const;
 
 private:
   DimensionType m_dimensions;
@@ -621,10 +617,6 @@ inline const Texture1D::LevelInfo& Texture1D::info_for_level(Size _index) const 
   return m_level_info[_index];
 }
 
-inline Size Texture1D::pitch() const {
-  return (bits_per_pixel() * m_dimensions) / 8;
-}
-
 inline const Vector<Texture1D::Edit>& Texture1D::edits() const {
   return m_edits;
 }
@@ -644,10 +636,6 @@ inline const Texture2D::WrapOptions& Texture2D::wrap() const & {
 
 inline const Texture2D::LevelInfo& Texture2D::info_for_level(Size _index) const & {
   return m_level_info[_index];
-}
-
-inline Size Texture2D::pitch() const {
-  return (bits_per_pixel() * m_dimensions.w) / 8;
 }
 
 inline const Vector<Texture2D::Edit>& Texture2D::edits() const {
@@ -671,10 +659,6 @@ inline const Texture3D::LevelInfo& Texture3D::info_for_level(Size _index) const 
   return m_level_info[_index];
 }
 
-inline Size Texture3D::pitch() const {
-  return (bits_per_pixel() * m_dimensions.w) / 8;
-}
-
 inline const Vector<Texture3D::Edit>& Texture3D::edits() const {
   return m_edits;
 }
@@ -694,10 +678,6 @@ inline const TextureCM::WrapOptions& TextureCM::wrap() const & {
 
 inline const TextureCM::LevelInfo& TextureCM::info_for_level(Size _index) const & {
   return m_level_info[_index];
-}
-
-inline Size TextureCM::pitch() const {
-  return (bits_per_pixel() * m_dimensions.w) / 8;
 }
 
 } // namespace Rx::Render::Frontend

@@ -365,7 +365,7 @@ void ColorGrader::Atlas::update() {
 
   // Record all the edits to the atlas and update the texture.
   m_dirty.each_set([&](Bitset::WordType _texture) {
-    m_texture->record_edit(0, {0, 0, Size(size * _texture)}, {size, size, size});
+    m_texture->record_edit(0, {0, 0, Size(_texture)}, {size, size, size});
   });
 
   m_color_grader->m_frontend->update_texture(RX_RENDER_TAG("Atlas"), m_texture);

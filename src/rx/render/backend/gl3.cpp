@@ -292,7 +292,8 @@ namespace detail_gl3 {
 
       pglDepthFunc(GL_LEQUAL);
       pglDisable(GL_MULTISAMPLE);
-      pglPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+      use_pixel_store({1, 0, 0});
 
       pglGenVertexArrays(1, &m_empty_vao);
 
@@ -335,6 +336,22 @@ namespace detail_gl3 {
       } else {
         pglDisable(_thing);
       }
+    }
+
+    void use_pixel_store(const PixelStore& _pixel_store) {
+      if (m_pixel_store.unpack_alignment != _pixel_store.unpack_alignment) {
+        pglPixelStorei(GL_UNPACK_ALIGNMENT, _pixel_store.unpack_alignment);
+      }
+
+      if (m_pixel_store.unpack_row_length != _pixel_store.unpack_row_length) {
+        pglPixelStorei(GL_UNPACK_ROW_LENGTH, _pixel_store.unpack_row_length);
+      }
+
+      if (m_pixel_store.unpack_image_height != _pixel_store.unpack_image_height) {
+        pglPixelStorei(GL_UNPACK_IMAGE_HEIGHT, _pixel_store.unpack_image_height);
+      }
+
+      m_pixel_store = _pixel_store;
     }
 
     void use_state(const Frontend::State* _render_state) {
@@ -756,6 +773,8 @@ namespace detail_gl3 {
     Size m_active_texture;
 
     SDL_GLContext m_context;
+
+    PixelStore m_pixel_store;
   };
 };
 
@@ -1307,8 +1326,14 @@ void GL3::process(Byte* _command) {
             pglTexParameteriv(GL_TEXTURE_1D, GL_TEXTURE_BORDER_COLOR, color.data());
           }
 
-          for (GLint i{0}; i < levels; i++) {
-            const auto level_info{render_texture->info_for_level(i)};
+          for (GLint i = 0; i < levels; i++) {
+            const auto& level_info = render_texture->info_for_level(i);
+            const auto pixels = data.is_empty() ? nullptr : data.data() + level_info.offset;
+            if (pixels) {
+              const auto alignment = texture_alignment(pixels, (level_info.dimensions * render_texture->bits_per_pixel()) / 8);
+              state->use_pixel_store({alignment, 0, 0});
+            }
+
             if (render_texture->is_compressed_format()) {
               pglCompressedTexImage1D(
                 GL_TEXTURE_1D,
@@ -1317,7 +1342,7 @@ void GL3::process(Byte* _command) {
                 static_cast<GLsizei>(level_info.dimensions),
                 0,
                 level_info.size,
-                data.is_empty() ? nullptr : data.data() + level_info.offset);
+                pixels);
             } else {
               pglTexImage1D(
                 GL_TEXTURE_1D,
@@ -1327,7 +1352,7 @@ void GL3::process(Byte* _command) {
                 0,
                 convert_texture_format(format),
                 convert_texture_data_type(format),
-                data.is_empty() ? nullptr : data.data() + level_info.offset);
+                pixels);
             }
           }
         }
@@ -1361,8 +1386,14 @@ void GL3::process(Byte* _command) {
             pglTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color.data());
           }
 
-          for (GLint i{0}; i < levels; i++) {
-            const auto level_info{render_texture->info_for_level(i)};
+          for (GLint i = 0; i < levels; i++) {
+            const auto& level_info = render_texture->info_for_level(i);
+            const auto pixels = data.is_empty() ? nullptr : data.data() + level_info.offset;
+            if (pixels) {
+              const auto alignment = texture_alignment(pixels, (level_info.dimensions.w * render_texture->bits_per_pixel()) / 8);
+              state->use_pixel_store({alignment, 0, 0});
+            }
+          
             if (render_texture->is_compressed_format()) {
               pglCompressedTexImage2D(
                 GL_TEXTURE_2D,
@@ -1372,7 +1403,7 @@ void GL3::process(Byte* _command) {
                 static_cast<GLsizei>(level_info.dimensions.h),
                 0,
                 level_info.size,
-                data.is_empty() ? nullptr : data.data() + level_info.offset);
+                pixels);
             } else {
               pglTexImage2D(
                 GL_TEXTURE_2D,
@@ -1383,7 +1414,7 @@ void GL3::process(Byte* _command) {
                 0,
                 convert_texture_format(format),
                 convert_texture_data_type(format),
-                data.is_empty() ? nullptr : data.data() + level_info.offset);
+                pixels);
             }
           }
         }
@@ -1415,8 +1446,14 @@ void GL3::process(Byte* _command) {
             pglTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, color.data());
           }
 
-          for (GLint i{0}; i < levels; i++) {
-            const auto level_info{render_texture->info_for_level(i)};
+          for (GLint i = 0; i < levels; i++) {
+            const auto& level_info = render_texture->info_for_level(i);
+            const auto pixels = data.is_empty() ? nullptr : data.data() + level_info.offset;
+            if (pixels) {
+              const auto alignment = texture_alignment(pixels, (level_info.dimensions.w * render_texture->bits_per_pixel()) / 8);
+              state->use_pixel_store({alignment, 0, 0});
+            }
+
             if (render_texture->is_compressed_format()) {
               pglCompressedTexImage3D(
                 GL_TEXTURE_3D,
@@ -1471,9 +1508,15 @@ void GL3::process(Byte* _command) {
             pglTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BORDER_COLOR, color.data());
           }
 
-          for (GLint i{0}; i < levels; i++) {
-            const auto level_info{render_texture->info_for_level(i)};
-            for (GLint j{0}; j < 6; j++) {
+          for (GLint i = 0; i < levels; i++) {
+            const auto& level_info = render_texture->info_for_level(i);
+            for (GLint j = 0; j < 6; j++) {
+              const auto pixels = data.is_empty() ? nullptr : data.data() + level_info.offset + level_info.size / 6 * j;
+              if (pixels) {
+                const auto alignment = texture_alignment(pixels, (level_info.dimensions.w * render_texture->bits_per_pixel()) / 8);
+                state->use_pixel_store({alignment, 0, 0});
+              }
+
               if (render_texture->is_compressed_format()) {
                 pglCompressedTexImage2D(
                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
@@ -1483,7 +1526,7 @@ void GL3::process(Byte* _command) {
                   static_cast<GLsizei>(level_info.dimensions.h),
                   0,
                   level_info.size / 6,
-                  data.is_empty() ? nullptr : data.data() + level_info.offset + level_info.size / 6 * j);
+                  pixels);
               } else {
                 pglTexImage2D(
                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
@@ -1494,7 +1537,7 @@ void GL3::process(Byte* _command) {
                   0,
                   convert_texture_format(format),
                   convert_texture_data_type(format),
-                  data.is_empty() ? nullptr : data.data() + level_info.offset + level_info.size / 6 * j);
+                  pixels);
               }
             }
           }
@@ -1614,30 +1657,100 @@ void GL3::process(Byte* _command) {
         break;
       case Frontend::UpdateCommand::Type::TEXTURE1D:
         {
-          // TODO(dweiler): implement
+          const auto render_texture = resource->as_texture1D;
+          const auto& format = convert_texture_format(render_texture->format());
+          const auto& data_type = convert_texture_data_type(render_texture->format());
+          const auto edits = resource->edit<Frontend::Texture1D>();
+
+          state->use_texture(render_texture);
+
+          for (Size i = 0; i < resource->edits; i++) {
+            const auto& edit = edits[i];
+            const auto& level_info = render_texture->info_for_level(edit.level);
+            const auto pixels = render_texture->data().data() + level_info.offset;
+
+            auto offset = 0_z;
+            offset *= level_info.dimensions;
+            offset += edit.offset;
+            offset *= render_texture->bits_per_pixel();
+            offset /= 8;
+
+            state->use_pixel_store({1, 0, 0});
+
+            pglTexSubImage1D(
+              GL_TEXTURE_1D,
+              edit.level,
+              edit.offset,
+              edit.size,
+              format,
+              data_type,
+              pixels + offset);
+          }
         }
         break;
       case Frontend::UpdateCommand::Type::TEXTURE2D:
         {
-          // TODO(dweiler): implement
+          const auto render_texture = resource->as_texture2D;
+          const auto& format = convert_texture_format(render_texture->format());
+          const auto& data_type = convert_texture_data_type(render_texture->format());
+          const auto edits = resource->edit<Frontend::Texture2D>();
+
+          state->use_texture(render_texture);
+
+          for (Size i = 0; i < resource->edits; i++) {
+            const auto& edit = edits[i];
+            const auto& level_info = render_texture->info_for_level(edit.level);
+            const auto pixels = render_texture->data().data() + level_info.offset;
+
+            auto offset = 0_z;
+            offset *= level_info.dimensions.w;
+            offset += edit.offset.x;
+            offset *= level_info.dimensions.h;
+            offset += edit.offset.y;
+            offset *= render_texture->bits_per_pixel();
+            offset /= 8;
+
+            state->use_pixel_store({1, level_info.dimensions.w, 0});
+
+            pglTexSubImage2D(
+              GL_TEXTURE_2D,
+              edit.level,
+              edit.offset.x,
+              edit.offset.y,
+              edit.size.w,
+              edit.size.h,
+              format,
+              data_type,
+              pixels + offset);
+          }
         }
         break;
       case Frontend::UpdateCommand::Type::TEXTURE3D:
         {
           const auto render_texture = resource->as_texture3D;
+          const auto& format = convert_texture_format(render_texture->format());
+          const auto& data_type = convert_texture_data_type(render_texture->format());
           const auto edits = resource->edit<Frontend::Texture3D>();
 
           state->use_texture(render_texture);
 
           for (Size i = 0; i < resource->edits; i++) {
             const auto& edit = edits[i];
+            const auto& level_info = render_texture->info_for_level(edit.level);
+            const auto pixels = render_texture->data().data() + level_info.offset;
 
-            const auto bpp = render_texture->bits_per_pixel() / 8;
-            const auto pitch = render_texture->pitch();
-            const auto ptr = render_texture->data().data()
-              + edit.offset.z * pitch * render_texture->dimensions().h
-              + edit.offset.y * pitch
-              + edit.offset.x * bpp;
+            auto offset = 0_z;
+            offset *= level_info.dimensions.w;
+            offset += edit.offset.x;
+            offset *= level_info.dimensions.h;
+            offset += edit.offset.y;
+            // TODO(dweiler): Check what is going on here.
+            // offset *= level_info.dimensions.d;
+            // offset += edit.offset.z;
+            offset *= render_texture->bits_per_pixel();
+            offset /= 8;
+
+            state->use_pixel_store({1, level_info.dimensions.w, level_info.dimensions.h});
 
             pglTexSubImage3D(
               GL_TEXTURE_3D,
@@ -1648,9 +1761,9 @@ void GL3::process(Byte* _command) {
               edit.size.w,
               edit.size.h,
               edit.size.d,
-              convert_texture_format(render_texture->format()),
-              convert_texture_data_type(render_texture->format()),
-              ptr);
+              format,
+              data_type,
+              pixels + offset);
           }
         }
         break;

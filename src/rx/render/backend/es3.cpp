@@ -355,6 +355,22 @@ namespace detail_es3 {
       }
     }
 
+    void use_pixel_store(const PixelStore& _pixel_store) {
+      if (m_pixel_store.unpack_alignment != _pixel_store.unpack_alignment) {
+        pglPixelStorei(GL_UNPACK_ALIGNMENT, _pixel_store.unpack_alignment);
+      }
+
+      if (m_pixel_store.unpack_row_length != _pixel_store.unpack_row_length) {
+        pglPixelStorei(GL_UNPACK_ROW_LENGTH, _pixel_store.unpack_row_length);
+      }
+
+      if (m_pixel_store.unpack_image_height != _pixel_store.unpack_image_height) {
+        pglPixelStorei(GL_UNPACK_IMAGE_HEIGHT, _pixel_store.unpack_image_height);
+      }
+
+      m_pixel_store = _pixel_store;
+    }
+
     void use_state(const Frontend::State* _render_state) {
       RX_PROFILE_CPU("use_state");
 
@@ -773,6 +789,8 @@ namespace detail_es3 {
     Size m_active_texture;
 
     SDL_GLContext m_context;
+
+    PixelStore m_pixel_store;
   };
 };
 
@@ -1338,8 +1356,13 @@ void ES3::process(Byte* _command) {
             1));
 
           if (data.size()) {
-            for (GLint i{0}; i < levels; i++) {
-              const auto level_info{render_texture->info_for_level(i)};
+            for (GLint i = 0; i < levels; i++) {
+              const auto& level_info = render_texture->info_for_level(i);
+              const auto pixels = data.data() + level_info.offset;
+              const auto alignment = texture_alignment(pixels, (level_info.dimensions * render_texture->bits_per_pixel()) / 8);
+
+              state->use_pixel_store({alignment, 0, 0});
+
               if (render_texture->is_compressed_format()) {
                 GL(pglCompressedTexSubImage2D(
                   GL_TEXTURE_2D,
@@ -1350,7 +1373,7 @@ void ES3::process(Byte* _command) {
                   1,
                   convert_texture_data_format(format),
                   level_info.size,
-                  data.data() + level_info.offset));
+                  pixels));
               } else {
                 GL(pglTexSubImage2D(
                   GL_TEXTURE_2D,
@@ -1361,7 +1384,7 @@ void ES3::process(Byte* _command) {
                   1,
                   convert_texture_format(format),
                   convert_texture_data_type(format),
-                  data.data() + level_info.offset));
+                  pixels));
               }
             }
           }
@@ -1405,8 +1428,13 @@ void ES3::process(Byte* _command) {
             static_cast<GLsizei>(dimensions.h)));
 
           if (data.size()) {
-            for (GLint i{0}; i < levels; i++) {
-              const auto level_info{render_texture->info_for_level(i)};
+            for (GLint i = 0; i < levels; i++) {
+              const auto& level_info = render_texture->info_for_level(i);
+              const auto pixels = data.data() + level_info.offset;
+              const auto alignment = texture_alignment(pixels, (level_info.dimensions.w * render_texture->bits_per_pixel()) / 8);
+
+              state->use_pixel_store({alignment, 0, 0});
+
               if (render_texture->is_compressed_format()) {
                 GL(pglCompressedTexSubImage2D(
                   GL_TEXTURE_2D,
@@ -1417,7 +1445,7 @@ void ES3::process(Byte* _command) {
                   static_cast<GLsizei>(level_info.dimensions.h),
                   convert_texture_data_format(format),
                   level_info.size,
-                  data.data() + level_info.offset));
+                  pixels));
               } else {
                 GL(pglTexSubImage2D(
                   GL_TEXTURE_2D,
@@ -1428,7 +1456,7 @@ void ES3::process(Byte* _command) {
                   static_cast<GLsizei>(level_info.dimensions.h),
                   convert_texture_format(format),
                   convert_texture_data_type(format),
-                  data.data() + level_info.offset));
+                  pixels));
               }
             }
           }
@@ -1471,8 +1499,13 @@ void ES3::process(Byte* _command) {
             static_cast<GLsizei>(dimensions.d)));
 
           if (data.size()) {
-            for (GLint i{0}; i < levels; i++) {
-              const auto level_info{render_texture->info_for_level(i)};
+            for (GLint i = 0; i < levels; i++) {
+              const auto& level_info = render_texture->info_for_level(i);
+              const auto pixels = data.data() + level_info.offset;
+              const auto alignment = texture_alignment(pixels, (level_info.dimensions.w * render_texture->bits_per_pixel()) / 8);
+
+              state->use_pixel_store({alignment, 0, 0});
+
               if (render_texture->is_compressed_format()) {
                 GL(pglCompressedTexSubImage3D(
                   GL_TEXTURE_3D,
@@ -1485,7 +1518,7 @@ void ES3::process(Byte* _command) {
                   static_cast<GLsizei>(level_info.dimensions.d),
                   convert_texture_data_format(format),
                   level_info.size,
-                  data.data() + level_info.offset));
+                  pixels));
               } else {
                 GL(pglTexSubImage3D(
                   GL_TEXTURE_3D,
@@ -1498,7 +1531,7 @@ void ES3::process(Byte* _command) {
                   static_cast<GLsizei>(level_info.dimensions.d),
                   convert_texture_format(format),
                   convert_texture_data_type(format),
-                  data.data() + level_info.offset));
+                  pixels));
               }
             }
           }
@@ -1540,9 +1573,14 @@ void ES3::process(Byte* _command) {
             static_cast<GLsizei>(dimensions.h)));
 
           if (data.size()) {
-            for (GLint i{0}; i < levels; i++) {
-              const auto level_info{render_texture->info_for_level(i)};
-              for (GLint j{0}; j < 6; j++) {
+            for (GLint i = 0; i < levels; i++) {
+              const auto& level_info = render_texture->info_for_level(i);
+              for (GLint j = 0; j < 6; j++) {
+                const auto pixels = data.data() + level_info.offset + level_info.size / 6 * j;
+                const auto alignment = texture_alignment(pixels, (level_info.dimensions.w * render_texture->bits_per_pixel()) / 8);
+
+                state->use_pixel_store({alignment, 0, 0});
+
                 if (render_texture->is_compressed_format()) {
                   GL(pglCompressedTexSubImage2D(
                     GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
@@ -1553,7 +1591,7 @@ void ES3::process(Byte* _command) {
                     static_cast<GLsizei>(level_info.dimensions.h),
                     convert_texture_data_format(format),
                     level_info.size / 6,
-                    data.data() + level_info.offset + level_info.size / 6 * j));
+                    pixels));
                 } else {
                   GL(pglTexSubImage2D(
                     GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
@@ -1564,7 +1602,7 @@ void ES3::process(Byte* _command) {
                     static_cast<GLsizei>(level_info.dimensions.h),
                     convert_texture_format(format),
                     convert_texture_data_type(format),
-                    data.data() + level_info.offset + level_info.size / 6 * j));
+                    pixels));
                 }
               }
             }
@@ -1673,30 +1711,102 @@ void ES3::process(Byte* _command) {
         break;
       case Frontend::UpdateCommand::Type::TEXTURE1D:
         {
-          // TODO(dweiler): implement
+          const auto render_texture = resource->as_texture1D;
+          const auto edits = resource->edit<Frontend::Texture1D>();
+          const auto& format = convert_texture_format(render_texture->format());
+          const auto& data_type = convert_texture_data_type(render_texture->format());
+
+          state->use_texture(render_texture);
+
+          for (Size i = 0; i < resource->edits; i++) {
+            const auto& edit = edits[i];
+            const auto& level_info = render_texture->info_for_level(edit.level);
+            const auto pixels = render_texture->data().data() + level_info.offset;
+
+            auto offset = 0_z;
+            offset *= level_info.dimensions;
+            offset += edit.offset;
+            offset *= render_texture->bits_per_pixel();
+            offset /= 8;
+
+            state->use_pixel_store({1, 0, 0});
+
+            GL(pglTexSubImage2D(
+              GL_TEXTURE_2D,
+              edit.level,
+              edit.offset,
+              0,
+              edit.size,
+              1,
+              format,
+              data_type,
+              pixels + offset));
+          }
         }
         break;
       case Frontend::UpdateCommand::Type::TEXTURE2D:
         {
-          // TODO(dweiler): implement
+          const auto render_texture = resource->as_texture2D;
+          const auto edits = resource->edit<Frontend::Texture2D>();
+          const auto& format = convert_texture_format(render_texture->format());
+          const auto& data_type = convert_texture_data_type(render_texture->format());
+
+          state->use_texture(render_texture);
+
+          for (Size i = 0; i < resource->edits; i++) {
+            const auto& edit = edits[i];
+            const auto& level_info = render_texture->info_for_level(edit.level);
+            const auto pixels = render_texture->data().data() + level_info.offset;
+
+            auto offset = 0_z;
+            offset *= level_info.dimensions.w;
+            offset += edit.offset.x;
+            offset *= level_info.dimensions.h;
+            offset += edit.offset.y;
+            offset *= render_texture->bits_per_pixel();
+            offset /= 8;
+
+            state->use_pixel_store({1, level_info.dimensions.w, 0});
+
+            GL(pglTexSubImage2D(
+              GL_TEXTURE_2D,
+              edit.level,
+              edit.offset.x,
+              edit.offset.y,
+              edit.size.w,
+              edit.size.h,
+              format,
+              data_type,
+              pixels + offset));
+          }
         }
         break;
       case Frontend::UpdateCommand::Type::TEXTURE3D:
         {
           const auto render_texture = resource->as_texture3D;
           const auto edits = resource->edit<Frontend::Texture3D>();
+          const auto& format = convert_texture_format(render_texture->format());
+          const auto& data_type = convert_texture_data_type(render_texture->format());
 
           state->use_texture(render_texture);
 
           for (Size i = 0; i < resource->edits; i++) {
             const auto& edit = edits[i];
+            const auto& level_info = render_texture->info_for_level(edit.level);
+            const auto pixels = render_texture->data().data() + level_info.offset;
 
-            const auto bpp = render_texture->bits_per_pixel() / 8;
-            const auto pitch = render_texture->pitch();
-            const auto ptr = render_texture->data().data()
-              + edit.offset.z * pitch * render_texture->dimensions().h
-              + edit.offset.y * pitch
-              + edit.offset.x * bpp;
+            auto offset = 0_z;
+            offset *= level_info.dimensions.w;
+            offset += edit.offset.x;
+            offset *= level_info.dimensions.h;
+            offset += edit.offset.y;
+            // TODO(dweiler): Check what is wrong here?
+            // offset *= level_info.dimensions.d;
+            // offset += edit.offset.z;
+            offset *= render_texture->bits_per_pixel();
+            offset /= 8;
+
+            state->use_pixel_store({1, level_info.dimensions.w, level_info.dimensions.h});
 
             GL(pglTexSubImage3D(
               GL_TEXTURE_3D,
@@ -1705,11 +1815,11 @@ void ES3::process(Byte* _command) {
               edit.offset.y,
               edit.offset.z,
               edit.size.w,
-              edit.size.h, // height
-              edit.size.d, // depth
-              convert_texture_format(render_texture->format()),
-              convert_texture_data_type(render_texture->format()),
-              ptr));
+              edit.size.h,
+              edit.size.d,
+              format,
+              data_type,
+              pixels + offset));
           }
         }
         break;

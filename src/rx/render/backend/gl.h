@@ -114,6 +114,14 @@ Optional<String> generate_glsl(Memory::Allocator& _allocator,
   const Vector<Frontend::Uniform>& _uniforms, const Frontend::Shader& _shader,
   int _version, bool _es);
 
+Size texture_alignment(const Byte* _data, Size _pitch);
+
+struct PixelStore {
+  Size unpack_alignment = 1;
+  Size unpack_row_length = 0;
+  Size unpack_image_height = 0;
+};
+
 } // namespace Rx::Render
 
 #endif // RX_RENDER_BACKEND_GL_H
