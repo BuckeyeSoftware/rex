@@ -2,6 +2,7 @@
 
 #include "rx/core/random/mersenne_twister.h"
 #include "rx/core/concurrency/scope_lock.h"
+#include "rx/core/hints/unlikely.h"
 
 namespace Rx::Random {
 
@@ -16,7 +17,7 @@ namespace Rx::Random {
   } while (0)
 
 void MersenneTwister::generate() {
-  if (!m_seeded) {
+  if (RX_HINT_UNLIKELY(!m_seeded)) {
     // TODO(dweiler): Determine a better starter initial seed method.
     seed(5489_u32 + time(0));
     m_seeded = true;
