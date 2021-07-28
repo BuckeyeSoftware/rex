@@ -558,9 +558,9 @@ Optional<String> generate_glsl(Memory::Allocator& _allocator,
 }
 
 // Determine the texture alignment for unpacking.
-Size texture_alignment(const Byte* _data, Size _pitch) {
-  const auto address = UintPtr(_data) | _pitch;
-  if (address & 16) return 16;
+Size texture_alignment(const Byte* _data, Size _row_pixels, const Frontend::Texture* _texture) {
+  const auto pitch = (_row_pixels * _texture->bits_per_pixel()) / 8;
+  const auto address = UintPtr(_data) | pitch;
   if (address & 8) return 8;
   if (address & 4) return 4;
   if (address & 2) return 2;

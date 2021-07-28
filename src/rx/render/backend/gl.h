@@ -114,10 +114,11 @@ Optional<String> generate_glsl(Memory::Allocator& _allocator,
   const Vector<Frontend::Uniform>& _uniforms, const Frontend::Shader& _shader,
   int _version, bool _es);
 
-Size texture_alignment(const Byte* _data, Size _pitch);
+Size texture_alignment(const Byte* _data, Size _row_pixels,
+  const Frontend::Texture* _texture);
 
 struct PixelStore {
-  Size unpack_alignment = 1;
+  Size unpack_alignment = 0;
   Size unpack_row_length = 0;
   Size unpack_image_height = 0;
 };

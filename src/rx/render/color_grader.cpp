@@ -142,19 +142,6 @@ ColorGrader::ColorGrader(Frontend::Context* _frontend)
 Optional<ColorGrader::Entry> ColorGrader::load(const StringView& _file_name) {
   auto& allocator = m_frontend->allocator();
 
-  auto find_or_create_atlas = [&](Size _size) -> Atlas* {
-    Concurrency::ScopeLock lock{m_atlases_lock};
-    // Check if an atlas already exists for |_size|.
-    if (auto atlas = m_atlases.find(_size)) {
-      return atlas;
-    }
-    // Create a new atlas.
-    if (auto atlas = Atlas::create(this, _size)) {
-      return m_atlases.insert(_size, Utility::move(*atlas));
-    }
-    return nullptr;
-  };
-
   // Check if Adobe .CUBE first.
   if (_file_name.ends_with(".cube") || _file_name.ends_with(".CUBE")) {
     auto data = load_cube(allocator, _file_name);
@@ -198,6 +185,27 @@ Optional<ColorGrader::Entry> ColorGrader::load(const StringView& _file_name) {
 
   return entry;
 }
+
+Optional<ColorGrader::Entry> ColorGrader::allocate(Size _size) {
+  auto atlas = find_or_create_atlas(_size);
+  if (!atlas) {
+    return nullopt;
+  }
+  return atlas->allocate();
+}
+
+ColorGrader::Atlas* ColorGrader::find_or_create_atlas(Size _size) {
+  Concurrency::ScopeLock lock{m_atlases_lock};
+  // Check if an atlas already exists for |_size|.
+  if (auto atlas = m_atlases.find(_size)) {
+    return atlas;
+  }
+  // Create a new atlas.
+  if (auto atlas = Atlas::create(this, _size)) {
+    return m_atlases.insert(_size, Utility::move(*atlas));
+  }
+  return nullptr;
+};
 
 void ColorGrader::update() {
   Concurrency::ScopeLock lock{m_atlases_lock};

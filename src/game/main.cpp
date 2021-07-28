@@ -48,6 +48,44 @@
 
 using namespace Rx;
 
+static constexpr const char* LUTS[] = {
+  "base/colorgrading/Arabica 12.CUBE",
+  "base/colorgrading/Ava 614.CUBE",
+  "base/colorgrading/Azrael 93.CUBE",
+  "base/colorgrading/Bourbon 64.CUBE",
+  "base/colorgrading/Byers 11.CUBE",
+  "base/colorgrading/Chemical 168.CUBE",
+  "base/colorgrading/Clayton 33.CUBE",
+  "base/colorgrading/Clouseau 54.CUBE",
+  "base/colorgrading/Cobi 3.CUBE",
+  "base/colorgrading/Contrail 35.CUBE",
+  "base/colorgrading/Cubicle 99.CUBE",
+  "base/colorgrading/Django 25.CUBE",
+  "base/colorgrading/Domingo 145.CUBE",
+  "base/colorgrading/Faded 47.CUBE",
+  "base/colorgrading/Folger 50.CUBE",
+  "base/colorgrading/Fusion 88.CUBE",
+  "base/colorgrading/Hyla 68.CUBE",
+  "base/colorgrading/Korben 214.CUBE",
+  "base/colorgrading/Lenox 340.CUBE",
+  "base/colorgrading/Lucky 64.CUBE",
+  "base/colorgrading/McKinnon 75.CUBE",
+  "base/colorgrading/Milo 5.CUBE",
+  "base/colorgrading/Neon 770.CUBE",
+  "base/colorgrading/Paladin 1875.CUBE",
+  "base/colorgrading/Pasadena 21.CUBE",
+  "base/colorgrading/Pitaya 15.CUBE",
+  "base/colorgrading/Reeve 38.CUBE",
+  "base/colorgrading/Remy 24.CUBE",
+  "base/colorgrading/Sprocket 231.CUBE",
+  "base/colorgrading/Teigen 28.CUBE",
+  "base/colorgrading/Trent 18.CUBE",
+  "base/colorgrading/Tweed 71.CUBE",
+  "base/colorgrading/Vireo 37.CUBE",
+  "base/colorgrading/Zed 32.CUBE",
+  "base/colorgrading/Zeke 39.CUBE"
+};
+
 RX_CONSOLE_FVAR(
   lens_distortion,
   "lens.distortion",
@@ -185,45 +223,6 @@ struct TestGame
       }
     }
 
-/*
-    const char* LUTS[] = {
-      "base/colorgrading/Arabica 12.CUBE",
-      "base/colorgrading/Ava 614.CUBE",
-      "base/colorgrading/Azrael 93.CUBE",
-      "base/colorgrading/Bourbon 64.CUBE",
-      "base/colorgrading/Byers 11.CUBE",
-      "base/colorgrading/Chemical 168.CUBE",
-      "base/colorgrading/Clayton 33.CUBE",
-      "base/colorgrading/Clouseau 54.CUBE",
-      "base/colorgrading/Cobi 3.CUBE",
-      "base/colorgrading/Contrail 35.CUBE",
-      "base/colorgrading/Cubicle 99.CUBE",
-      "base/colorgrading/Django 25.CUBE",
-      "base/colorgrading/Domingo 145.CUBE",
-      "base/colorgrading/Faded 47.CUBE",
-      "base/colorgrading/Folger 50.CUBE",
-      "base/colorgrading/Fusion 88.CUBE",
-      "base/colorgrading/Hyla 68.CUBE",
-      "base/colorgrading/Korben 214.CUBE",
-      "base/colorgrading/Lenox 340.CUBE",
-      "base/colorgrading/Lucky 64.CUBE",
-      "base/colorgrading/McKinnon 75.CUBE",
-      "base/colorgrading/Milo 5.CUBE",
-      "base/colorgrading/Neon 770.CUBE",
-      "base/colorgrading/Paladin 1875.CUBE",
-      "base/colorgrading/Pasadena 21.CUBE",
-      "base/colorgrading/Pitaya 15.CUBE",
-      "base/colorgrading/Reeve 38.CUBE",
-      "base/colorgrading/Remy 24.CUBE",
-      "base/colorgrading/Sprocket 231.CUBE",
-      "base/colorgrading/Teigen 28.CUBE",
-      "base/colorgrading/Trent 18.CUBE",
-      "base/colorgrading/Tweed 71.CUBE",
-      "base/colorgrading/Vireo 37.CUBE",
-      "base/colorgrading/Zed 32.CUBE",
-      "base/colorgrading/Zeke 39.CUBE"
-    };*/
-
     Render::ImageBasedLighting::Options options;
     options.irradiance_size = 16;
     options.prefilter_size = 128;
@@ -233,14 +232,19 @@ struct TestGame
       return false;
     }
 
-    /*
+    // Make index 0 a neutral LUT.
+    if (auto neutral = m_color_grader.allocate(32)) {
+      m_luts[m_lut_count++] = Utility::move(*neutral);
+    }
+    
     // Load in all the grading LUTs and update the atlas.
     for (Size i = 0; i < sizeof LUTS / sizeof* LUTS; i++) {
       if (auto lut = m_color_grader.load(LUTS[i])) {
         m_luts[m_lut_count++] = Utility::move(*lut);
       }
     }
-    m_color_grader.update();*/
+
+    m_color_grader.update();
 
     Math::Transform transform;
     // transform.translate.x = -((8.0f * (7.0f - 1.0f)) * 0.5f);
@@ -370,7 +374,8 @@ struct TestGame
     }
 
     if (input.root_layer().keyboard().is_released(Input::ScanCode::N1)) {
-      m_lut_index = (m_lut_index + 1) % 35;
+      m_lut_index = (m_lut_index + 1) % (sizeof LUTS / sizeof *LUTS);
+      engine()->console().print("LUT: %s", m_lut_index ? LUTS[m_lut_index - 1] : "NEUTRAL");
     }
 
     if (input.root_layer().keyboard().is_released(Input::ScanCode::M)) {
@@ -436,8 +441,8 @@ struct TestGame
     m_indirect_lighting_pass.render(m_camera, ilp_input);
 
     // Render the skybox absolutely last into that target.
-    m_skybox.render(m_indirect_lighting_pass.target(), m_camera.view(), m_camera.projection,
-      m_lut_index ? &m_luts[m_lut_index] : nullptr);
+    m_skybox.render(m_indirect_lighting_pass.target(), m_camera.view(),
+      m_camera.projection, &m_luts[m_lut_index]);
 
     m_particle_system.groups().each_fwd([&](const Particle::System::Group& _group) {
       m_immediate3D.frame_queue().record_wire_box(

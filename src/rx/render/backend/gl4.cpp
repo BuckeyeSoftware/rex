@@ -1183,7 +1183,8 @@ void GL4::process(Byte* _command) {
             for (GLint i = 0; i < levels; i++) {
               const auto level_info = render_texture->info_for_level(i);
               const auto pixels = data.data() + level_info.offset;
-              const auto alignment = texture_alignment(pixels, (level_info.dimensions * render_texture->bits_per_pixel()) / 8);
+              const auto alignment = texture_alignment(pixels, level_info.dimensions, render_texture);
+
               state->use_pixel_store({alignment, 0, 0});
 
               if (render_texture->is_compressed_format()) {
@@ -1253,7 +1254,7 @@ void GL4::process(Byte* _command) {
             for (GLint i = 0; i < levels; i++) {
               const auto& level_info = render_texture->info_for_level(i);
               const auto pixels = data.data() + level_info.offset;
-              const auto alignment = texture_alignment(pixels, (level_info.dimensions.w * render_texture->bits_per_pixel()) / 8);
+              const auto alignment = texture_alignment(pixels, level_info.dimensions.w, render_texture);
 
               state->use_pixel_store({alignment, 0, 0});
 
@@ -1327,7 +1328,7 @@ void GL4::process(Byte* _command) {
             for (GLint i = 0; i < levels; i++) {
               const auto& level_info = render_texture->info_for_level(i);
               const auto pixels = data.data() + level_info.offset;
-              const auto alignment = texture_alignment(pixels, (level_info.dimensions.w * render_texture->bits_per_pixel()) / 8);
+              const auto alignment = texture_alignment(pixels, level_info.dimensions.w, render_texture);
 
               state->use_pixel_store({alignment, 0, 0});
 
@@ -1405,7 +1406,7 @@ void GL4::process(Byte* _command) {
               const auto& level_info = render_texture->info_for_level(i);
               for (GLint j = 0; j < 6; j++) {
                 const auto pixels = data.data() + level_info.offset + level_info.size / 6 * j;
-                const auto alignment = texture_alignment(pixels, (level_info.dimensions.w * render_texture->bits_per_pixel()) / 8);
+                const auto alignment = texture_alignment(pixels, level_info.dimensions.w, render_texture);
 
                 state->use_pixel_store({alignment, 0, 0});
 
@@ -1546,15 +1547,18 @@ void GL4::process(Byte* _command) {
           for (Size i = 0; i < resource->edits; i++) {
             const auto& edit = edits[i];
             const auto& level_info = render_texture->info_for_level(edit.level);
-            const auto pixels = render_texture->data().data() + level_info.offset;
 
             auto offset = 0_z;
             offset *= level_info.dimensions;
             offset += edit.offset;
             offset *= render_texture->bits_per_pixel();
             offset /= 8;
+            offset += level_info.offset;
 
-            state->use_pixel_store({1, 0, 0});
+            const auto pixels = render_texture->data().data() + offset;
+            const auto alignment = texture_alignment(pixels, level_info.dimensions, render_texture);
+
+            state->use_pixel_store({alignment, 0, 0});
 
             pglTextureSubImage1D(
               texture->tex,
@@ -1563,7 +1567,7 @@ void GL4::process(Byte* _command) {
               edit.size,
               format,
               data_type,
-              pixels + offset);
+              pixels);
           }
         }
         break;
@@ -1578,17 +1582,20 @@ void GL4::process(Byte* _command) {
           for (Size i = 0; i < resource->edits; i++) {
             const auto& edit = edits[i];
             const auto& level_info = render_texture->info_for_level(edit.level);
-            const auto pixels = render_texture->data().data() + level_info.offset;
 
             auto offset = 0_z;
-            offset *= level_info.dimensions.w;
-            offset += edit.offset.x;
             offset *= level_info.dimensions.h;
             offset += edit.offset.y;
+            offset *= level_info.dimensions.w;
+            offset += edit.offset.x;
             offset *= render_texture->bits_per_pixel();
             offset /= 8;
+            offset += level_info.offset;
 
-            state->use_pixel_store({1, level_info.dimensions.w, 0});
+            const auto pixels = render_texture->data().data() + offset;
+            const auto alignment = texture_alignment(pixels, level_info.dimensions.w, render_texture);
+
+            state->use_pixel_store({alignment, level_info.dimensions.w, 0});
 
             pglTextureSubImage2D(
               texture->tex,
@@ -1599,7 +1606,7 @@ void GL4::process(Byte* _command) {
               edit.size.h,
               format,
               data_type,
-              pixels + offset);
+              pixels);
           }
         }
         break;
@@ -1614,20 +1621,22 @@ void GL4::process(Byte* _command) {
           for (Size i = 0; i < resource->edits; i++) {
             const auto& edit = edits[i];
             const auto& level_info = render_texture->info_for_level(edit.level);
-            const auto pixels = render_texture->data().data() + level_info.offset;
 
             auto offset = 0_z;
-            offset *= level_info.dimensions.w;
-            offset += edit.offset.x;
+            offset *= level_info.dimensions.d;
+            offset += edit.offset.z;
             offset *= level_info.dimensions.h;
             offset += edit.offset.y;
-            // TODO(dweiler): Check what is going on here.
-            // offset *= level_info.dimensions.d;
-            // offset += edit.offset.z;
+            offset *= level_info.dimensions.w;
+            offset += edit.offset.x;
             offset *= render_texture->bits_per_pixel();
             offset /= 8;
+            offset += level_info.offset;
 
-            state->use_pixel_store({1, level_info.dimensions.w, level_info.dimensions.h});
+            const auto pixels = render_texture->data().data() + offset;
+            const auto alignment = texture_alignment(pixels, level_info.dimensions.w, render_texture);
+
+            state->use_pixel_store({alignment, level_info.dimensions.w, level_info.dimensions.h});
 
             pglTextureSubImage3D(
               texture->tex,
@@ -1640,7 +1649,7 @@ void GL4::process(Byte* _command) {
               edit.size.d,
               format,
               data_type,
-              pixels + offset);
+              pixels);
           }
         }
         break;

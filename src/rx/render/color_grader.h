@@ -106,11 +106,17 @@ struct ColorGrader {
 
   static Optional<ColorGrader> create(Frontend::Context* _context);
 
+  // Load LUT from |_file_name|.
   Optional<Entry> load(const StringView& _file_name);
+
+  // Allocate neutral LUT of size |_size|.
+  Optional<Entry> allocate(Size _size);
 
   void update();
 
 private:
+  Atlas* find_or_create_atlas(Size _size);
+
   Frontend::Context* m_frontend;
 
   Concurrency::WordLock m_atlases_lock;
