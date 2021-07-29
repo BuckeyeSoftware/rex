@@ -40,6 +40,14 @@ RX_CONSOLE_V2IVAR(
   Rx::Math::Vec2i(4096, 4096),
   Rx::Math::Vec2i(2048, 2048));
 
+RX_CONSOLE_IVAR(
+  anisotropic_filtering,
+  "render.anisotropic",
+  "anisotropic texture filtering",
+  0,
+  16,
+  8);
+
 RX_LOG("render", logger);
 
 static constexpr const char* TECHNIQUES_PATH = "base/renderer/techniques";

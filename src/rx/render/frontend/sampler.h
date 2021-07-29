@@ -1,6 +1,7 @@
 #ifndef RX_RENDER_FRONTEND_SAMPLER_H
 #define RX_RENDER_FRONTEND_SAMPLER_H
-#include "rx/core/optional.h"
+#include "rx/core/types.h"
+#include "rx/core/algorithm/saturate.h"
 
 namespace Rx::Render::Frontend {
 
@@ -38,12 +39,14 @@ struct Sampler {
     LINEAR   ///< Linear filtering between (Bilinear.)
   };
 
+  /// The type of filtering to use on mipmaps.
   enum class MipmapMode {
     NONE,    ///< No mipmaps.
     NEAREST, ///< Nearest filtering within a mip level.
     LINEAR   ///< Linear filtering between mip level (Trilinear.)
   };
 
+  /// The addressing mode to use for a given texture axis.
   enum class AddressMode {
     REPEAT,
     MIRRORED_REPEAT,
@@ -62,14 +65,15 @@ struct Sampler {
   void record_mag_filter(Filter _max_filter);
 
   void record_mipmap_mode(MipmapMode _mipmap_mode);
-  
+
   void record_address_mode_u(AddressMode _address_mode_u);
   void record_address_mode_v(AddressMode _address_mode_v);
   void record_address_mode_w(AddressMode _address_mode_w);
 
   void record_mipmap_lod_bias(Float32 _mipmap_lod_bias);
 
-  void record_anisotropy(Optional<Float32> _anisotropy);
+  // Values <= 0 disable anisostropic filtering.
+  void record_anisotropy(Float32 _anisotropy);
 
   void record_lod(const Lod& _lod);
 
@@ -85,7 +89,7 @@ struct Sampler {
 
   Float32 mipmap_lod_bias() const;
 
-  Optional<Float32> anisotropy() const;
+  Float32 anisotropy() const;
 
   Lod lod() const;
 
@@ -106,7 +110,7 @@ private:
 
   Float32 m_mipmap_lod_bias = 0.0f;
 
-  Optional<Float32> m_anisotropy;
+  Float32 m_anisotropy = 0.0f;
 
   Lod m_lod;
 
@@ -148,8 +152,8 @@ inline void Sampler::record_mipmap_lod_bias(Float32 _mipmap_lod_bias) {
   m_hash |= DIRTY_BIT;
 }
 
-inline void Sampler::record_anisotropy(Optional<Float32> _anisotropy) {
-  m_anisotropy = _anisotropy;
+inline void Sampler::record_anisotropy(Float32 _anisotropy) {
+  m_anisotropy = Algorithm::saturate(_anisotropy);
   m_hash |= DIRTY_BIT;
 }
 
@@ -186,7 +190,7 @@ inline Float32 Sampler::mipmap_lod_bias() const {
   return m_mipmap_lod_bias;
 }
 
-inline Optional<Float32> Sampler::anisotropy() const {
+inline Float32 Sampler::anisotropy() const {
   return m_anisotropy;
 }
 

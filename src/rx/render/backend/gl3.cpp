@@ -14,6 +14,8 @@
 
 #include "rx/core/memory/zero.h"
 
+#include "rx/console/context.h"
+
 namespace Rx::Render::Backend {
 
 RX_LOG("render/gl3", logger);
@@ -134,6 +136,17 @@ static void (GLAPIENTRYP pglFinish)(void);
 static void (GLAPIENTRYP pglDrawArraysInstancedBaseInstance)(GLenum, GLint, GLsizei, GLsizei, GLuint);
 static void (GLAPIENTRYP pglDrawElementsInstancedBaseInstance)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei, GLuint);
 static void (GLAPIENTRYP pglDrawElementsInstancedBaseVertexBaseInstance)(GLenum, GLsizei, GLenum, const GLvoid*, GLsizei, GLint, GLuint);
+
+// EXT_texture_filter_anisotropic
+//
+// Supported by our version of OpenGL here, but we have to define the enum
+// values if not defined because SDL_opengl.h
+#ifndef GL_TEXTURE_MAX_ANISOTROPY_EXT
+#define GL_TEXTURE_MAX_ANISOTROPY_EXT              0x84FE
+#endif
+#ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+#define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT          0x84FF
+#endif
 
 template<typename F>
 static void fetch(const char* _name, F& function_) {
@@ -305,19 +318,25 @@ namespace detail_gl3 {
 
       logger->info("GL %s %s %s", vendor, version, renderer);
 
-      GLint extensions{0};
+      GLint extensions = 0;
       pglGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
       bool has_arb_base_instance = false;
-      for (GLint i{0}; i < extensions; i++) {
+      for (GLint i = 0; i < extensions; i++) {
         const auto name = reinterpret_cast<const char*>(pglGetStringi(GL_EXTENSIONS, i));
-        logger->verbose("extension '%s' supported", name);
 
         // GL_ARB_base_instance
         if (!strcmp(name, "GL_ARB_base_instance")) {
           fetch("glDrawArraysInstancedBaseInstance", pglDrawArraysInstancedBaseInstance);
           fetch("glDrawElementsInstancedBaseInstance", pglDrawElementsInstancedBaseInstance);
           fetch("glDrawElementsInstancedBaseVertexBaseInstance", pglDrawElementsInstancedBaseVertexBaseInstance);
+          logger->info("Using '%s'", name);
           has_arb_base_instance = true;
+        }
+
+        // GL_EXT_texture_filter_anisotropic
+        if (!strcmp(name, "GL_EXT_texture_filter_anisotropic")) {
+          pglGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &m_max_aniso);
+          logger->info("Using '%s'", name);
         }
       }
 
@@ -760,6 +779,9 @@ namespace detail_gl3 {
     }
 
     void use_draw_images(const Frontend::Images& _images) {
+      static const auto& render_anisotropic = 
+        Console::Context::find_variable_by_name("render.anisotropic")->cast<Sint32>();
+
       auto bind_and_update_image = [&](Size _index) {
         using Type = Frontend::Resource::Type;
 
@@ -791,8 +813,8 @@ namespace detail_gl3 {
         }
 
         // Check for and update sampler settings.
-        const auto& old_sampler = *texture_sampler;
-        const auto& new_sampler = image.sampler;
+        auto old_sampler = *texture_sampler;
+        auto new_sampler = image.sampler;
         if (old_sampler != new_sampler) {
           const auto& options = convert_sampler(new_sampler);
 
@@ -817,7 +839,14 @@ namespace detail_gl3 {
             pglTexParameterf(texture_type, GL_TEXTURE_LOD_BIAS,  new_sampler.mipmap_lod_bias());
           }
 
-          // TODO(dweiler): anisotropic texture filtering.
+          if (new_sampler.anisotropy() != *render_anisotropic) {
+            new_sampler.record_anisotropy(Algorithm::max(m_max_aniso, Float32(*render_anisotropic)));
+            new_sampler.flush();
+          }
+
+          if (old_sampler.anisotropy() != new_sampler.anisotropy()) {
+            pglTexParameterf(texture_type, GL_TEXTURE_MAX_ANISOTROPY_EXT, new_sampler.anisotropy());
+          }
 
           const auto& old_lod = old_sampler.lod();
           const auto& new_lod = new_sampler.lod();
@@ -859,6 +888,8 @@ namespace detail_gl3 {
     SDL_GLContext m_context;
 
     PixelStore m_pixel_store;
+
+    Float32 m_max_aniso = 0.0f;
   };
 };
 

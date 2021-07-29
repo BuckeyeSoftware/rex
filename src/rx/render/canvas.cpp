@@ -179,6 +179,7 @@ struct Renderer {
   static inline constexpr const Uint8 TEXTURE_FLIPY        = 1 << 0;
   static inline constexpr const Uint8 TEXTURE_PREMUL_ALPHA = 1 << 1;
   Vector<TaggedPtr<Frontend::Texture2D>> textures;
+  Vector<Frontend::Sampler> samplers;
 
   Frontend::Buffer* buffer;
   Frontend::Target* target;
@@ -338,6 +339,7 @@ static int nvg_render_create_texture(void* _user, int _type, int _w, int _h,
   const auto renderer = reinterpret_cast<Renderer*>(_user);
   const auto context = renderer->context;
   auto& textures = renderer->textures;
+  auto& samplers = renderer->samplers;
 
   // Search for an empty slot.
   auto find = textures.find_if([](const TaggedPtr<Frontend::Texture2D>& _texture) {
@@ -348,6 +350,9 @@ static int nvg_render_create_texture(void* _user, int _type, int _w, int _h,
     // Append new empty slot if one could not be found.
     find = textures.size();
     if (!textures.emplace_back(nullptr, 0_u8)) {
+      return 0;
+    }
+    if (!samplers.emplace_back()) {
       return 0;
     }
   }
@@ -389,20 +394,28 @@ static int nvg_render_create_texture(void* _user, int _type, int _w, int _h,
     break;
   }
 
-// TODO(dweiler): SAMPLERS.
-#if 0
-  // Determine wrapping behavior for the texture.
-  texture->record_wrap({
-    ((_image_flags & NVG_IMAGE_REPEATX)
-      ? Frontend::Texture::WrapType::REPEAT
-      : Frontend::Texture::WrapType::CLAMP_TO_EDGE),
-    ((_image_flags & NVG_IMAGE_REPEATY)
-      ? Frontend::Texture::WrapType::REPEAT
-      : Frontend::Texture::WrapType::CLAMP_TO_EDGE)});
+  using Filter = Frontend::Sampler::Filter;
+  using MipmapMode = Frontend::Sampler::MipmapMode;
 
-  // TODO(dweiler): Check...
-  texture->record_filter({!nearest, false, mipmaps});
-#endif
+  auto& sampler = samplers[*find];
+
+  sampler.record_address_mode_u(
+    _image_flags & NVG_IMAGE_REPEATX
+      ? Frontend::Sampler::AddressMode::REPEAT
+      : Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+
+  sampler.record_address_mode_v(
+    _image_flags & NVG_IMAGE_REPEATY
+      ? Frontend::Sampler::AddressMode::REPEAT
+      : Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  
+  sampler.record_min_filter(nearest ? Filter::NEAREST : Filter::LINEAR);
+  sampler.record_mag_filter(nearest ? Filter::NEAREST : Filter::LINEAR);
+
+  sampler.record_mipmap_mode(
+    mipmaps
+      ? nearest ? MipmapMode::NEAREST : MipmapMode::LINEAR
+      : MipmapMode::NONE);
 
   // When we want mipmaps create a mipchain for the initial specification.
   if (mipmaps) {
@@ -1050,9 +1063,8 @@ static void prepare_draw(Renderer* _renderer, const Command& _command,
   // When there is an image, record the sampler, add the draw image and
   // determine the sampling type to use in the technique.
   if (_command.image) {
-    // TODO(dweiler): Work out the correct sampler for this.
-    program->uniforms()[0].record_sampler(
-      images_.add(_renderer->textures[_command.image - 1].as_ptr(), {}));
+    const auto index = _command.image - 1;
+    program->uniforms()[0].record_sampler(images_.add(_renderer->textures[index].as_ptr(), _renderer->samplers[index]));
     program->uniforms()[1].record_int(paint.image_type);
   }
 

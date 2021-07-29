@@ -9,24 +9,14 @@
 #include "rx/core/profiler.h"
 #include "rx/core/log.h"
 
-#include "rx/console/variable.h"
-
-#include "rx/core/memory/zero.h"
+#include "rx/console/context.h"
 
 namespace Rx::Render::Backend {
 
 RX_LOG("render/gl4", logger);
 
-RX_CONSOLE_IVAR(
-  anisotropy,
-  "gl4.anisotropy",
-  "anisotropy value (if supported)",
-  0,
-  16,
-  0);
-
-// 16MiB buffer slab size for unspecified buffer sizes
-static constexpr const Size BUFFER_SLAB_SIZE = 16 << 20;
+// 4MiB buffer slab size for unspecified buffer sizes
+static constexpr const Size BUFFER_SLAB_SIZE = 4_MiB;
 
 // buffers
 static void (GLAPIENTRYP pglCreateBuffers)(GLsizei, GLuint*);
@@ -308,23 +298,14 @@ namespace detail_gl4 {
 
       logger->info("GL %s %s %s", vendor, version, renderer);
 
-      bool texture_filter_anisotropic{false};
-      GLint extensions{0};
+      GLint extensions = 0;
       pglGetIntegerv(GL_NUM_EXTENSIONS, &extensions);
-      for (GLint i{0}; i < extensions; i++) {
-        const auto name{reinterpret_cast<const char*>(pglGetStringi(GL_EXTENSIONS, i))};
-        logger->verbose("extension '%s' supported", name);
-
+      for (GLint i = 0; i < extensions; i++) {
+        const auto name = reinterpret_cast<const char*>(pglGetStringi(GL_EXTENSIONS, i));
         if (!strcmp(name, "GL_ARB_texture_filter_anisotropic")) {
-          Float32 max_aniso{0.0f};
-          pglGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &max_aniso);
-          anisotropy->set(static_cast<Sint32>(max_aniso));
-          texture_filter_anisotropic = true;
+          pglGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &m_max_aniso);
+          logger->info("Using '%s'", name);
         }
-      }
-
-      if (!texture_filter_anisotropic) {
-        anisotropy->set(0);
       }
     }
 
@@ -624,6 +605,9 @@ namespace detail_gl4 {
     }
 
     void use_draw_images(const Frontend::Images& _images) {
+      static const auto& render_anisotropic = 
+        Console::Context::find_variable_by_name("render.anisotropic")->cast<Sint32>();
+
       if (_images.is_empty()) {
         return;
       }
@@ -659,8 +643,8 @@ namespace detail_gl4 {
         }
 
         // Check for and update sampler settings.
-        const auto& old_sampler = *texture_sampler;
-        const auto& new_sampler = image.sampler;
+        auto old_sampler = *texture_sampler;
+        auto new_sampler = image.sampler;
         if (old_sampler != new_sampler) {
           const auto& options = convert_sampler(new_sampler);
 
@@ -685,7 +669,14 @@ namespace detail_gl4 {
             pglTextureParameterf(texture_handle, GL_TEXTURE_LOD_BIAS,  new_sampler.mipmap_lod_bias());
           }
 
-          // TODO(dweiler): anisotropic texture filtering.
+          if (new_sampler.anisotropy() != *render_anisotropic) {
+            new_sampler.record_anisotropy(Algorithm::max(m_max_aniso, Float32(*render_anisotropic)));
+            new_sampler.flush();
+          }
+
+          if (old_sampler.anisotropy() != new_sampler.anisotropy()) {
+            pglTextureParameterf(texture_handle, GL_TEXTURE_MAX_ANISOTROPY, new_sampler.anisotropy());
+          }
 
           const auto& old_lod = old_sampler.lod();
           const auto& new_lod = new_sampler.lod();
@@ -727,6 +718,8 @@ namespace detail_gl4 {
     SDL_GLContext m_context;
 
     PixelStore m_pixel_store;
+
+    Float32 m_max_aniso = 0.0f;
   };
 }
 

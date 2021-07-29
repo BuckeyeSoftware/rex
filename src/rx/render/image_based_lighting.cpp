@@ -73,9 +73,16 @@ void IrradianceMap::render_next_face() {
 
   auto program = m_technique->configuration(0).variant(is_hdri(m_environment_map) ? 1 : 0);
 
-  // TODO(dweiler): Correct sampler.
+  Frontend::Sampler sampler;
+  sampler.record_address_mode_u(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_address_mode_v(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_address_mode_w(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_min_filter(Frontend::Sampler::Filter::NEAREST);
+  sampler.record_mag_filter(Frontend::Sampler::Filter::NEAREST);
+  sampler.record_mipmap_mode(Frontend::Sampler::MipmapMode::NONE);
+
   Frontend::Images draw_images;
-  draw_images.add(m_environment_map, {});
+  draw_images.add(m_environment_map, sampler);
 
   program->uniforms()[2].record_int(m_current_face);
   program->uniforms()[3].record_int(Sint32(m_resolution) * 4);
@@ -183,9 +190,16 @@ void PrefilteredEnvironmentMap::render_next_face() {
 
   auto program = m_technique->configuration(0).variant(hdri ? 1 : 0);
 
-  // TODO(dweiler): SAMPLERS.
+  Frontend::Sampler sampler;
+  sampler.record_address_mode_u(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_address_mode_v(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_address_mode_w(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_min_filter(Frontend::Sampler::Filter::NEAREST);
+  sampler.record_mag_filter(Frontend::Sampler::Filter::NEAREST);
+  sampler.record_mipmap_mode(Frontend::Sampler::MipmapMode::NONE);
+
   Frontend::Images draw_images;
-  draw_images.add(m_environment_map, {});
+  draw_images.add(m_environment_map, sampler);
 
   program->uniforms()[2].record_int(m_current_face);
   program->uniforms()[3].record_float(resolution);

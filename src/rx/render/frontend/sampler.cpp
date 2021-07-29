@@ -23,8 +23,7 @@ Size Sampler::flush() {
 
   m_hash = Hash::combine(m_hash, Hash::mix_float(m_mipmap_lod_bias));
 
-  // When there is no anisotropy, treat it as 0.0f.
-  m_hash = Hash::combine(m_hash, Hash::mix_float(m_anisotropy ? *m_anisotropy : 0.0f));
+  m_hash = Hash::combine(m_hash, Hash::mix_float(m_anisotropy));
 
   m_hash = Hash::combine(m_hash, Hash::mix_float(m_lod.min));
   m_hash = Hash::combine(m_hash, Hash::mix_float(m_lod.max));
@@ -64,6 +63,10 @@ bool Sampler::operator==(const Sampler& _sampler) const {
   }
 
   if (m_mipmap_lod_bias != _sampler.m_mipmap_lod_bias) {
+    return false;
+  }
+
+  if (m_anisotropy != _sampler.m_anisotropy) {
     return false;
   }
 

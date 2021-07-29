@@ -367,7 +367,6 @@ inline Size Buffer::Format::hash() const {
 }
 
 inline Memory::Allocator& Buffer::Format::allocator() const {
-  // TODO(dweiler): Put m_allocator in Format.
   return m_vertex_attributes.allocator();
 }
 
