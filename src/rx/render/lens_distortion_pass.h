@@ -34,6 +34,7 @@ struct LensDistortionPass {
 
   bool resize(const Math::Vec2z& _resolution);
 
+  // filter(true, false, false), wrap(CLAMP_TO_EDGE, CLAMP_TO_EDGE)
   Frontend::Texture2D* texture() const;
   Frontend::Target* target() const;
 

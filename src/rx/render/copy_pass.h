@@ -10,6 +10,7 @@ namespace Frontend {
   struct Target;
   struct Technique;
   struct Context;
+  struct Sampler;
 } // Frontend
 
 struct CopyPass {
@@ -29,14 +30,15 @@ struct CopyPass {
   static Optional<CopyPass> create(Frontend::Context* _frontend,
     const Options& _options);
 
-  void render(Frontend::Texture2D* _source);
+  void render(Frontend::Texture2D* _source, const Frontend::Sampler& _sampler);
   bool recreate(const Options& _options);
 
+  // filter(true, false, false), wrap(CLAMP_TO_EDGE, CLAMP_TO_EDGE)
   Frontend::Texture2D* texture() const;
   Frontend::Target* target() const;
 
 private:
-  CopyPass(Frontend::Context* _frontend, Frontend::Target* _target,
+  constexpr CopyPass(Frontend::Context* _frontend, Frontend::Target* _target,
     Frontend::Texture2D* _texture, Frontend::Technique* _technique);
 
   void release();
@@ -56,8 +58,9 @@ inline constexpr CopyPass::CopyPass()
 {
 }
 
-inline CopyPass::CopyPass(Frontend::Context* _frontend, Frontend::Target* _target,
-  Frontend::Texture2D* _texture, Frontend::Technique* _technique)
+inline constexpr CopyPass::CopyPass(Frontend::Context* _frontend,
+  Frontend::Target* _target, Frontend::Texture2D* _texture,
+  Frontend::Technique* _technique)
   : m_frontend{_frontend}
   , m_target{_target}
   , m_texture{_texture}

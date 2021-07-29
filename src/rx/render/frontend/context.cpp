@@ -173,9 +173,6 @@ Context::Context(Memory::Allocator& _allocator, Backend::Context* _backend, cons
   m_swapchain_texture->record_type(Texture::Type::ATTACHMENT);
   m_swapchain_texture->record_levels(1);
   m_swapchain_texture->record_dimensions(_dimensions);
-  m_swapchain_texture->record_filter({false, false, false});
-  m_swapchain_texture->record_wrap({Texture::WrapType::CLAMP_TO_EDGE,
-                                    Texture::WrapType::CLAMP_TO_EDGE});
   m_swapchain_texture->m_flags |= Texture::SWAPCHAIN;
   initialize_texture(RX_RENDER_TAG("swapchain"), m_swapchain_texture);
 
@@ -649,7 +646,7 @@ void Context::draw(
   Size _base_vertex,
   Size _base_instance,
   PrimitiveType _primitive_type,
-  const Textures& _draw_textures)
+  const Images& _draw_images)
 {
   RX_ASSERT(_state.viewport.dimensions().area() > 0, "empty viewport");
 
@@ -674,9 +671,8 @@ void Context::draw(
   }
 
   // Check for feedback loops.
-  const auto n_draw_textures = _draw_textures.size();
-  for (Size i = 0; i < n_draw_textures; i++) {
-    RX_ASSERT(!_target->has_feedback(_draw_textures[i], _draw_buffers),
+  for (Size n_draw_images = _draw_images.size(),  i = 0; i < n_draw_images; i++) {
+    RX_ASSERT(!_target->has_feedback(_draw_images[i].texture, _draw_buffers),
       "draw call forms texture <=> target feedback loop");
   }
 
@@ -715,7 +711,7 @@ void Context::draw(
     auto command = reinterpret_cast<DrawCommand*>(command_base + sizeof(CommandHeader));
 
     command->draw_buffers = _draw_buffers;
-    command->draw_textures = _draw_textures;
+    command->draw_images = _draw_images;
 
     command->render_state = _state;
     command->render_target = _target;
@@ -731,6 +727,7 @@ void Context::draw(
     command->dirty_uniforms_bitset = _program->dirty_uniforms_bitset();
 
     command->render_state.flush();
+    command->draw_images.flush();
 
     // Copy the uniforms directly into the command.
     if (dirty_uniforms_size) {

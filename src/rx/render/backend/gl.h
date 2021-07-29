@@ -20,21 +20,8 @@ GLenum convert_texture_data_format(Frontend::Texture::DataFormat _data_format);
 GLenum convert_texture_data_type(Frontend::Texture::DataFormat _data_format);
 GLenum convert_texture_format(Frontend::Texture::DataFormat _data_format);
 GLenum convert_primitive_type(Frontend::PrimitiveType _primitive_type);
-GLenum convert_texture_wrap(const Frontend::Texture::WrapType _type);
 GLenum convert_element_type(Frontend::Buffer::ElementType _element_type);
 GLenum convert_shader_type(Frontend::Shader::Type _type);
-
-struct Filter {
-  GLuint min;
-  GLuint mag;
-};
-
-Filter convert_texture_filter(const Frontend::Texture::FilterOptions& _filter_options);
-
-template<typename... Ts>
-bool requires_border_color(Ts... _types) {
-  return ((_types == GL_CLAMP_TO_BORDER) || ...);
-}
 
 struct Attribute {
   GLenum type_enum;
@@ -43,6 +30,17 @@ struct Attribute {
   GLsizei instances;
 };
 
+struct Sampler {
+  GLenum min;
+  GLenum mag;
+  GLfloat min_lod;
+  GLfloat max_lod;
+  GLenum address_mode_u;
+  GLenum address_mode_v;
+  GLenum address_mode_w;
+};
+
+Sampler convert_sampler(const Frontend::Sampler& _sampler);
 Attribute convert_attribute(const Frontend::Buffer::Attribute& _attribute);
 
 constexpr const char* inout_to_string(Frontend::Shader::InOutType _type) {

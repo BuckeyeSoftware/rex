@@ -25,12 +25,8 @@ Optional<IndirectLightingPass> IndirectLightingPass::create(
 
   texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
-  texture->record_filter({false, false, false});
   texture->record_levels(1);
   texture->record_dimensions(_options.dimensions);
-  texture->record_wrap({
-    Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-    Frontend::Texture::WrapType::CLAMP_TO_EDGE});
   _frontend->initialize_texture(RX_RENDER_TAG("indirect lighting pass"), texture);
 
   auto target = _frontend->create_target(RX_RENDER_TAG("indirect lighting pass"));
@@ -75,14 +71,45 @@ void IndirectLightingPass::render(const Math::Camera& _camera, const Input& _inp
   state.stencil.record_function(Frontend::StencilState::FunctionType::EQUAL);
   state.stencil.record_reference(1);
 
-  Frontend::Textures draw_textures;
-  program->uniforms()[0].record_sampler(draw_textures.add(_input.albedo));
-  program->uniforms()[1].record_sampler(draw_textures.add(_input.normal));
-  program->uniforms()[2].record_sampler(draw_textures.add(_input.emission));
-  program->uniforms()[3].record_sampler(draw_textures.add(_input.depth));
-  program->uniforms()[4].record_sampler(draw_textures.add(_input.irradiance));
-  program->uniforms()[5].record_sampler(draw_textures.add(_input.prefilter));
-  program->uniforms()[6].record_sampler(draw_textures.add(_input.scale_bias));
+  // LINEAR REPEAT for irradiance.
+  Frontend::Sampler irradiance_sampler;
+  irradiance_sampler.record_address_mode_u(Frontend::Sampler::AddressMode::REPEAT);
+  irradiance_sampler.record_address_mode_v(Frontend::Sampler::AddressMode::REPEAT);
+  irradiance_sampler.record_address_mode_w(Frontend::Sampler::AddressMode::REPEAT);
+  irradiance_sampler.record_min_filter(Frontend::Sampler::Filter::LINEAR);
+  irradiance_sampler.record_mag_filter(Frontend::Sampler::Filter::LINEAR);
+
+  // LINEAR REPEAT MIPMAP LINEAR for prefilter
+  Frontend::Sampler prefilter_sampler;
+  prefilter_sampler.record_address_mode_u(Frontend::Sampler::AddressMode::REPEAT);
+  prefilter_sampler.record_address_mode_v(Frontend::Sampler::AddressMode::REPEAT);
+  prefilter_sampler.record_address_mode_w(Frontend::Sampler::AddressMode::REPEAT);
+  prefilter_sampler.record_min_filter(Frontend::Sampler::Filter::LINEAR);
+  prefilter_sampler.record_mag_filter(Frontend::Sampler::Filter::LINEAR);
+  prefilter_sampler.record_mipmap_mode(Frontend::Sampler::MipmapMode::LINEAR);
+
+  // LINEAR, CLAMP_TO_EDGE for scale bias
+  Frontend::Sampler scale_bias_sampler;
+  scale_bias_sampler.record_address_mode_u(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  scale_bias_sampler.record_address_mode_v(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  scale_bias_sampler.record_min_filter(Frontend::Sampler::Filter::LINEAR);
+  scale_bias_sampler.record_mag_filter(Frontend::Sampler::Filter::LINEAR);
+
+  Frontend::Sampler nearest;
+  nearest.record_address_mode_u(Frontend::Sampler::AddressMode::REPEAT);
+  nearest.record_address_mode_v(Frontend::Sampler::AddressMode::REPEAT);
+  nearest.record_min_filter(Frontend::Sampler::Filter::NEAREST);
+  nearest.record_mag_filter(Frontend::Sampler::Filter::NEAREST);
+  nearest.record_mipmap_mode(Frontend::Sampler::MipmapMode::NONE);
+
+  Frontend::Images draw_images;
+  program->uniforms()[0].record_sampler(draw_images.add(_input.albedo, nearest));
+  program->uniforms()[1].record_sampler(draw_images.add(_input.normal, nearest));
+  program->uniforms()[2].record_sampler(draw_images.add(_input.emission, nearest));
+  program->uniforms()[3].record_sampler(draw_images.add(_input.depth, nearest));
+  program->uniforms()[4].record_sampler(draw_images.add(_input.irradiance, irradiance_sampler));
+  program->uniforms()[5].record_sampler(draw_images.add(_input.prefilter, prefilter_sampler));
+  program->uniforms()[6].record_sampler(draw_images.add(_input.scale_bias, scale_bias_sampler));
   program->uniforms()[7].record_mat4x4f(Math::invert(_camera.view() * _camera.projection));
   program->uniforms()[8].record_vec3f(_camera.translate);
   program->uniforms()[9].record_vec2f(m_target->dimensions().cast<Float32>());
@@ -100,7 +127,7 @@ void IndirectLightingPass::render(const Math::Camera& _camera, const Input& _inp
     0,
     0,
     Render::Frontend::PrimitiveType::TRIANGLES,
-    draw_textures);
+    draw_images);
 }
 
 bool IndirectLightingPass::recreate(const Options& _options) {

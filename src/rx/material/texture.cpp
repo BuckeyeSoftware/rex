@@ -53,9 +53,8 @@ bool Texture::parse(const Serialize::JSON& _definition) {
   const auto& file{_definition["file"]};
   const auto& type{_definition["type"]};
   const auto& filter{_definition["filter"]};
-  const auto& wrap{_definition["wrap"]};
+  const auto& address_mode{_definition["wrap"]};
   const auto& mipmaps{_definition["mipmaps"]};
-  const auto& border{_definition["border"]};
 
   if (!file) {
     return m_report.error("missing 'file'");
@@ -82,10 +81,6 @@ bool Texture::parse(const Serialize::JSON& _definition) {
     return m_report.error("expected Boolean for 'mipmaps'");
   }
 
-  if (border && !parse_border(border)) {
-    return false;
-  }
-
   if (!parse_type(type)) {
     return false;
   }
@@ -95,12 +90,8 @@ bool Texture::parse(const Serialize::JSON& _definition) {
     return false;
   }
 
-  if (!parse_wrap(wrap)) {
+  if (!parse_address_mode(address_mode)) {
     return false;
-  }
-
-  if (m_wrap.is_any(WrapType::CLAMP_TO_BORDER) && !m_border) {
-    return m_report.error("missing 'border' for \"clamp_to_border\"");
   }
 
   m_file = Utility::move(*file_name);
@@ -211,23 +202,21 @@ bool Texture::parse_filter(const Serialize::JSON& _filter, bool& _mipmaps) {
   return m_report.error("unknown filter '%s'", *filter);
 }
 
-bool Texture::parse_wrap(const Serialize::JSON& _wrap) {
-  if (!_wrap.is_array_of(Serialize::JSON::Type::STRING, 2)) {
+bool Texture::parse_address_mode(const Serialize::JSON& _address_mode) {
+  if (!_address_mode.is_array_of(Serialize::JSON::Type::STRING, 2)) {
     return m_report.error("expected Array[String, 2]");
   }
 
   static constexpr const struct {
     const char* match;
-    WrapType type;
+    AddressModeType type;
   } MATCHES[] = {
-    { "clamp_to_edge",        WrapType::CLAMP_TO_EDGE        },
-    { "clamp_to_border",      WrapType::CLAMP_TO_BORDER      },
-    { "mirrored_repeat",      WrapType::MIRRORED_REPEAT      },
-    { "repeat",               WrapType::REPEAT               },
-    { "mirror_clamp_to_edge", WrapType::MIRROR_CLAMP_TO_EDGE }
+    { "clamp_to_edge",        AddressModeType::CLAMP_TO_EDGE   },
+    { "mirrored_repeat",      AddressModeType::MIRRORED_REPEAT },
+    { "repeat",               AddressModeType::REPEAT          }
   };
 
-  const auto parse = [this](const String& _type) -> Optional<WrapType> {
+  const auto parse = [this](const String& _type) -> Optional<AddressModeType> {
     for (const auto& match : MATCHES) {
       if (_type == match.match) {
         return match.type;
@@ -236,35 +225,20 @@ bool Texture::parse_wrap(const Serialize::JSON& _wrap) {
     return m_report.error("invalid wrap type '%s'", _type);
   };
 
-  auto s_string = _wrap[0_z].as_string(allocator());
-  auto t_string = _wrap[1_z].as_string(allocator());
+  auto s_string = _address_mode[0_z].as_string(allocator());
+  auto t_string = _address_mode[1_z].as_string(allocator());
   if (!s_string || !t_string) {
     return false;
   }
 
-  auto s_wrap = parse(*s_string);
-  auto t_wrap = parse(*t_string);
-  if (!s_wrap || !t_wrap) {
+  const auto s_address_mode = parse(*s_string);
+  const auto t_address_mode = parse(*t_string);
+  if (!s_address_mode || !t_address_mode) {
     return false;
   }
 
-  m_wrap.s = *s_wrap;
-  m_wrap.t = *t_wrap;
-
-  return true;
-}
-
-bool Texture::parse_border(const Serialize::JSON& _border) {
-  if (!_border.is_array_of(Serialize::JSON::Type::NUMBER, 4)) {
-    return m_report.error("expected Array[Number, 4]");
-  }
-
-  m_border = {
-    Algorithm::clamp(_border[0_z].as_float(), 0.0f, 1.0f),
-    Algorithm::clamp(_border[1_z].as_float(), 0.0f, 1.0f),
-    Algorithm::clamp(_border[2_z].as_float(), 0.0f, 1.0f),
-    Algorithm::clamp(_border[3_z].as_float(), 0.0f, 1.0f)
-  };
+  m_address_mode.s = *s_address_mode;
+  m_address_mode.t = *t_address_mode;
 
   return true;
 }

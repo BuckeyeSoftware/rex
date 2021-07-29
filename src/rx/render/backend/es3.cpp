@@ -250,6 +250,7 @@ namespace detail_es3 {
     }
 
     GLuint tex;
+    Frontend::Sampler sampler;
   };
 
   struct texture2D {
@@ -262,6 +263,7 @@ namespace detail_es3 {
     }
 
     GLuint tex;
+    Frontend::Sampler sampler;
   };
 
   struct texture3D {
@@ -274,6 +276,7 @@ namespace detail_es3 {
     }
 
     GLuint tex;
+    Frontend::Sampler sampler;
   };
 
   struct textureCM {
@@ -286,6 +289,7 @@ namespace detail_es3 {
     }
 
     GLuint tex;
+    Frontend::Sampler sampler;
   };
 
   struct state
@@ -691,21 +695,21 @@ namespace detail_es3 {
     };
 
     template<GLuint texture_unit::*name, typename Bt, typename Ft>
-    void use_texture_template(GLenum _type, const Ft* _render_texture) {
-      RX_PROFILE_CPU("use_texture");
-
-      const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
-      auto& texture_unit{m_texture_units[m_active_texture]};
+    GLenum use_texture_template(GLenum _type, const Ft* _render_texture) {
+      RX_PROFILE_CPU("use_texture_template");
+      const auto this_texture = reinterpret_cast<const Bt*>(_render_texture + 1);
+      auto& texture_unit = m_texture_units[m_active_texture];
       if (texture_unit.*name != this_texture->tex) {
         texture_unit.*name = this_texture->tex;
         GL(pglBindTexture(_type, this_texture->tex));
       }
+      return _type;
     }
 
     template<GLuint texture_unit::*name, typename Bt, typename Ft>
-    void use_active_texture_template(GLenum _type, const Ft* _render_texture, Size _unit) {
-      const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
-      auto& texture_unit{m_texture_units[_unit]};
+    GLenum use_active_texture_template(GLenum _type, const Ft* _render_texture, Size _unit) {
+      const auto this_texture = reinterpret_cast<const Bt*>(_render_texture + 1);
+      auto& texture_unit = m_texture_units[_unit];
       if (texture_unit.*name != this_texture->tex) {
         if (m_active_texture != _unit) {
           GL(pglActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + _unit)));
@@ -714,11 +718,12 @@ namespace detail_es3 {
         texture_unit.*name = this_texture->tex;
         GL(pglBindTexture(_type, this_texture->tex));
       }
+      return _type;
     }
 
     template<typename Ft, typename Bt, GLuint texture_unit::*name>
     void invalidate_texture_template(const Ft* _render_texture) {
-      const auto this_texture{reinterpret_cast<const Bt*>(_render_texture + 1)};
+      const auto this_texture = reinterpret_cast<const Bt*>(_render_texture + 1);
       for (auto& texture_unit : m_texture_units) {
         if (texture_unit.*name == this_texture->tex) {
           texture_unit.*name = 0;
@@ -726,36 +731,36 @@ namespace detail_es3 {
       }
     }
 
-    void use_active_texture(const Frontend::Texture1D* _render_texture, Size _unit) {
-      use_active_texture_template<&texture_unit::texture1D, detail_es3::texture1D>(GL_TEXTURE_1D, _render_texture, _unit);
+    GLenum use_active_texture(const Frontend::Texture1D* _render_texture, Size _unit) {
+      return use_active_texture_template<&texture_unit::texture1D, detail_es3::texture1D>(GL_TEXTURE_1D, _render_texture, _unit);
     }
 
-    void use_active_texture(const Frontend::Texture2D* _render_texture, Size _unit) {
-      use_active_texture_template<&texture_unit::texture2D, detail_es3::texture2D>(GL_TEXTURE_2D, _render_texture, _unit);
+    GLenum use_active_texture(const Frontend::Texture2D* _render_texture, Size _unit) {
+      return use_active_texture_template<&texture_unit::texture2D, detail_es3::texture2D>(GL_TEXTURE_2D, _render_texture, _unit);
     }
 
-    void use_active_texture(const Frontend::Texture3D* _render_texture, Size _unit) {
-      use_active_texture_template<&texture_unit::texture1D, detail_es3::texture1D>(GL_TEXTURE_3D, _render_texture, _unit);
+    GLenum use_active_texture(const Frontend::Texture3D* _render_texture, Size _unit) {
+      return use_active_texture_template<&texture_unit::texture1D, detail_es3::texture1D>(GL_TEXTURE_3D, _render_texture, _unit);
     }
 
-    void use_active_texture(const Frontend::TextureCM* _render_texture, Size _unit) {
-      use_active_texture_template<&texture_unit::textureCM, detail_es3::textureCM>(GL_TEXTURE_CUBE_MAP, _render_texture, _unit);
+    GLenum use_active_texture(const Frontend::TextureCM* _render_texture, Size _unit) {
+      return use_active_texture_template<&texture_unit::textureCM, detail_es3::textureCM>(GL_TEXTURE_CUBE_MAP, _render_texture, _unit);
     }
 
-    void use_texture(const Frontend::Texture1D* _render_texture) {
-      use_texture_template<&texture_unit::texture1D, detail_es3::texture1D>(GL_TEXTURE_1D, _render_texture);
+    GLenum use_texture(const Frontend::Texture1D* _render_texture) {
+      return use_texture_template<&texture_unit::texture1D, detail_es3::texture1D>(GL_TEXTURE_1D, _render_texture);
     }
 
-    void use_texture(const Frontend::Texture2D* _render_texture) {
-      use_texture_template<&texture_unit::texture2D, detail_es3::texture2D>(GL_TEXTURE_2D, _render_texture);
+    GLenum use_texture(const Frontend::Texture2D* _render_texture) {
+      return use_texture_template<&texture_unit::texture2D, detail_es3::texture2D>(GL_TEXTURE_2D, _render_texture);
     }
 
-    void use_texture(const Frontend::Texture3D* _render_texture) {
-      use_texture_template<&texture_unit::texture3D, detail_es3::texture3D>(GL_TEXTURE_3D, _render_texture);
+    GLenum use_texture(const Frontend::Texture3D* _render_texture) {
+      return use_texture_template<&texture_unit::texture3D, detail_es3::texture3D>(GL_TEXTURE_3D, _render_texture);
     }
 
-    void use_texture(const Frontend::TextureCM* _render_texture) {
-      use_texture_template<&texture_unit::textureCM, detail_es3::textureCM>(GL_TEXTURE_CUBE_MAP, _render_texture);
+    GLenum use_texture(const Frontend::TextureCM* _render_texture) {
+      return use_texture_template<&texture_unit::textureCM, detail_es3::textureCM>(GL_TEXTURE_CUBE_MAP, _render_texture);
     }
 
     void invalidate_texture(const Frontend::Texture1D* _render_texture) {
@@ -774,6 +779,87 @@ namespace detail_es3 {
       invalidate_texture_template<Frontend::TextureCM, textureCM, &texture_unit::textureCM>(_render_texture);
     }
 
+    void use_draw_images(const Frontend::Images& _images) {
+      auto bind_and_update_image = [&](Size _index) {
+        using Type = Frontend::Resource::Type;
+
+        const auto& image = _images[_index];
+        const auto type = image.texture->resource_type();
+
+        GLenum texture_type = GL_NONE;
+        Frontend::Sampler* texture_sampler = nullptr;
+        if (type == Type::TEXTURE1D) {
+          const auto render_texture = static_cast<Frontend::Texture1D*>(image.texture);
+          const auto texture = reinterpret_cast<detail_es3::texture1D*>(render_texture + 1);
+          texture_type = use_active_texture(render_texture, _index);
+          texture_sampler = &texture->sampler;
+        } else if (type == Type::TEXTURE2D) {
+          const auto render_texture = static_cast<Frontend::Texture2D*>(image.texture);
+          const auto texture = reinterpret_cast<detail_es3::texture2D*>(render_texture + 1);
+          texture_type = use_active_texture(render_texture, _index);
+          texture_sampler = &texture->sampler;
+        } else if (type == Type::TEXTURE3D) {
+          const auto render_texture = static_cast<Frontend::Texture3D*>(image.texture);
+          const auto texture = reinterpret_cast<detail_es3::texture3D*>(render_texture + 1);
+          texture_type = use_active_texture(render_texture, _index);
+          texture_sampler = &texture->sampler;
+        } else if (type == Type::TEXTURECM) {
+          const auto render_texture = static_cast<Frontend::TextureCM*>(image.texture);
+          const auto texture = reinterpret_cast<detail_es3::textureCM*>(render_texture + 1);
+          texture_type = use_active_texture(render_texture, _index);
+          texture_sampler = &texture->sampler;
+        }
+
+        // Check for and update sampler settings.
+        const auto& old_sampler = *texture_sampler;
+        const auto& new_sampler = image.sampler;
+        if (old_sampler != new_sampler) {
+          const auto& options = convert_sampler(new_sampler);
+
+          if (old_sampler.min_filter() != new_sampler.min_filter()) {
+            pglTexParameteri(texture_type, GL_TEXTURE_MIN_FILTER, options.min);
+          }
+          if (old_sampler.mag_filter() != new_sampler.mag_filter()) {
+            pglTexParameteri(texture_type, GL_TEXTURE_MAG_FILTER, options.mag);
+          }
+
+          if (old_sampler.address_mode_u() != new_sampler.address_mode_u()) {
+            pglTexParameteri(texture_type, GL_TEXTURE_WRAP_S, options.address_mode_u);
+          }
+          if (old_sampler.address_mode_v() != new_sampler.address_mode_v()) {
+            pglTexParameteri(texture_type, GL_TEXTURE_WRAP_T, options.address_mode_v);
+          }
+          if (old_sampler.address_mode_w() != new_sampler.address_mode_w()) {
+            pglTexParameteri(texture_type, GL_TEXTURE_WRAP_R, options.address_mode_w);
+          }
+
+          if (old_sampler.mipmap_lod_bias() != new_sampler.mipmap_lod_bias()) {
+            pglTexParameterf(texture_type, GL_TEXTURE_LOD_BIAS,  new_sampler.mipmap_lod_bias());
+          }
+
+          // TODO(dweiler): anisotropic texture filtering.
+
+          const auto& old_lod = old_sampler.lod();
+          const auto& new_lod = new_sampler.lod();
+
+          if (old_lod != new_lod) {
+            if (old_lod.min != new_lod.min) {
+              pglTexParameterf(texture_type, GL_TEXTURE_MIN_LOD, new_lod.min);
+            }
+            if (old_lod.max != new_lod.max) {
+              pglTexParameterf(texture_type, GL_TEXTURE_MAX_LOD, new_lod.max);
+            }
+          }
+
+          *texture_sampler = new_sampler;
+        }
+      };
+
+      for (Size n_images = _images.size(), i = 0; i < n_images; i++) {
+        bind_and_update_image(i);
+      }
+    }
+
     Uint8 m_color_mask;
 
     GLuint m_empty_vao;
@@ -786,7 +872,7 @@ namespace detail_es3 {
     GLuint m_bound_program;
 
     GLuint m_swap_chain_fbo;
-    texture_unit m_texture_units[Frontend::Textures::MAX_TEXTURES];
+    texture_unit m_texture_units[Frontend::Images::MAX_TEXTURES];
     Size m_active_texture;
 
     SDL_GLContext m_context;
@@ -1327,11 +1413,8 @@ void ES3::process(Byte* _command) {
       case Frontend::ResourceCommand::Type::TEXTURE1D:
         {
           const auto render_texture{resource->as_texture1D};
-          const auto wrap{render_texture->wrap()};
-          const auto wrap_s{convert_texture_wrap(wrap)};
           const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
-          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
@@ -1339,15 +1422,8 @@ void ES3::process(Byte* _command) {
           state->use_texture(render_texture);
 
           // 1D textures are emulated on 2D.
-          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter.min));
-          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter.mag));
-          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s));
           GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0));
           GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levels - 1));
-          if (requires_border_color(wrap_s)) {
-            const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            GL(pglTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color.data()));
-          }
 
           GL(pglTexStorage2D(
             GL_TEXTURE_2D,
@@ -1398,28 +1474,16 @@ void ES3::process(Byte* _command) {
             break;
           }
 
-          const auto wrap{render_texture->wrap()};
-          const auto wrap_s{convert_texture_wrap(wrap.s)};
-          const auto wrap_t{convert_texture_wrap(wrap.t)};
           const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
-          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
           state->use_texture(render_texture);
 
-          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter.min));
-          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter.mag));
-          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s));
-          GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t));
           GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0));
           GL(pglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, levels - 1));
-          if (requires_border_color(wrap_s, wrap_t)) {
-            const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            GL(pglTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color.data()));
-          }
 
           GL(pglTexStorage2D(
             GL_TEXTURE_2D,
@@ -1466,30 +1530,16 @@ void ES3::process(Byte* _command) {
       case Frontend::ResourceCommand::Type::TEXTURE3D:
         {
           const auto render_texture{resource->as_texture3D};
-          const auto wrap{render_texture->wrap()};
-          const auto wrap_s{convert_texture_wrap(wrap.s)};
-          const auto wrap_t{convert_texture_wrap(wrap.t)};
-          const auto wrap_r{convert_texture_wrap(wrap.p)};
           const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
-          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
           state->use_texture(render_texture);
 
-          GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, filter.min));
-          GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, filter.mag));
-          GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, wrap_s));
-          GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, wrap_t));
-          GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, wrap_r));
           GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, 0));
           GL(pglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, levels - 1));
-          if (requires_border_color(wrap_s, wrap_t, wrap_r)) {
-            const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            GL(pglTexParameteriv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, color.data()));
-          }
 
           GL(pglTexStorage3D(
             GL_TEXTURE_3D,
@@ -1541,30 +1591,16 @@ void ES3::process(Byte* _command) {
       case Frontend::ResourceCommand::Type::TEXTURECM:
         {
           const auto render_texture{resource->as_textureCM};
-          const auto wrap{render_texture->wrap()};
-          const auto wrap_s{convert_texture_wrap(wrap.s)};
-          const auto wrap_t{convert_texture_wrap(wrap.t)};
-          const auto wrap_p{convert_texture_wrap(wrap.p)};
           const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
-          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
           state->use_texture(render_texture);
 
-          GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, filter.min));
-          GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, filter.mag));
-          GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, wrap_s));
-          GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, wrap_t));
-          GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, wrap_p));
           GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0));
           GL(pglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, levels - 1));
-          if (requires_border_color(wrap_s, wrap_t, wrap_p)) {
-            const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            GL(pglTexParameteriv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BORDER_COLOR, color.data()));
-          }
 
           GL(pglTexStorage2D(
             GL_TEXTURE_CUBE_MAP,
@@ -1973,26 +2009,7 @@ void ES3::process(Byte* _command) {
         }
       }
 
-      // apply any textures
-      for (Size i{0}; i < command->draw_textures.size(); i++) {
-        Frontend::Texture* texture{command->draw_textures[i]};
-        switch (texture->resource_type()) {
-          case Frontend::Resource::Type::TEXTURE1D:
-            state->use_active_texture(static_cast<Frontend::Texture1D*>(texture), i);
-            break;
-          case Frontend::Resource::Type::TEXTURE2D:
-            state->use_active_texture(static_cast<Frontend::Texture2D*>(texture), i);
-            break;
-          case Frontend::Resource::Type::TEXTURE3D:
-            state->use_active_texture(static_cast<Frontend::Texture3D*>(texture), i);
-            break;
-          case Frontend::Resource::Type::TEXTURECM:
-            state->use_active_texture(static_cast<Frontend::TextureCM*>(texture), i);
-            break;
-          default:
-            RX_HINT_UNREACHABLE();
-        }
-      }
+      state->use_draw_images(command->draw_images);
 
       const auto offset = static_cast<GLint>(command->offset);
       const auto count = static_cast<GLsizei>(command->count);

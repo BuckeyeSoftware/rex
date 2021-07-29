@@ -157,6 +157,7 @@ RX_LOG("engine", logger);
 Engine::Engine()
   : m_console{Memory::SystemAllocator::instance()}
   , m_input{Memory::SystemAllocator::instance()}
+  , m_window{nullptr}
   , m_render_backend{nullptr}
   , m_render_frontend{nullptr}
   , m_logging_event_handles{Memory::SystemAllocator::instance()}
@@ -176,6 +177,8 @@ Engine::~Engine() {
   auto& allocator = Memory::SystemAllocator::instance();
   allocator.destroy<Render::Frontend::Context>(m_render_frontend);
   allocator.destroy<Render::Backend::Context>(m_render_backend);
+
+  SDL_DestroyWindow(static_cast<SDL_Window*>(m_window));
 
   SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }

@@ -6,6 +6,7 @@
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/technique.h"
+#include "rx/render/frontend/sampler.h"
 
 #include "rx/texture/chain.h"
 
@@ -184,6 +185,7 @@ struct Renderer {
   Frontend::Texture2D* texture;
   Frontend::Technique* technique;
   Frontend::State state;
+  Frontend::Sampler sampler;
 };
 
 Renderer::Renderer(Frontend::Context* _context, const Math::Vec2z& _dimensions,
@@ -246,10 +248,7 @@ static bool resize_target(Renderer* _renderer, const Math::Vec2z& _dimensions) {
 
   texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
-  texture->record_filter({false, false, false});
   texture->record_levels(1);
-  texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-                        Frontend::Texture::WrapType::CLAMP_TO_EDGE});
   texture->record_dimensions(_dimensions);
 
   target->request_stencil(
@@ -263,8 +262,16 @@ static bool resize_target(Renderer* _renderer, const Math::Vec2z& _dimensions) {
   context->destroy_texture(RX_RENDER_TAG("canvas"), _renderer->texture);
   context->destroy_target(RX_RENDER_TAG("canvas"), _renderer->target);
 
+  // Nearest filtering.
+  Frontend::Sampler sampler;
+  sampler.record_address_mode_u(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_address_mode_v(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_min_filter(Frontend::Sampler::Filter::NEAREST);
+  sampler.record_mag_filter(Frontend::Sampler::Filter::NEAREST);
+
   _renderer->texture = texture;
   _renderer->target = target;
+  _renderer->sampler = sampler;
 
   _renderer->state.viewport.record_dimensions(_dimensions);
 
@@ -382,6 +389,8 @@ static int nvg_render_create_texture(void* _user, int _type, int _w, int _h,
     break;
   }
 
+// TODO(dweiler): SAMPLERS.
+#if 0
   // Determine wrapping behavior for the texture.
   texture->record_wrap({
     ((_image_flags & NVG_IMAGE_REPEATX)
@@ -393,6 +402,7 @@ static int nvg_render_create_texture(void* _user, int _type, int _w, int _h,
 
   // TODO(dweiler): Check...
   texture->record_filter({!nearest, false, mipmaps});
+#endif
 
   // When we want mipmaps create a mipchain for the initial specification.
   if (mipmaps) {
@@ -1028,20 +1038,21 @@ void Canvas::release() {
 
 // Helper function which prepares a draw.
 static void prepare_draw(Renderer* _renderer, const Command& _command,
-  Size _paint_index, Frontend::Program*& program_, Frontend::Textures& textures_)
+  Size _paint_index, Frontend::Program*& program_, Frontend::Images& images_)
 {
-  textures_.clear();
+  images_.clear();
 
   const auto& paint = _renderer->paints[_paint_index];
   const auto& data = paint.data;
 
   const auto program = _renderer->technique->configuration(0).variant(static_cast<Size>(paint.type));
 
-  // When there is an image, record the sampler, add the draw texture and
+  // When there is an image, record the sampler, add the draw image and
   // determine the sampling type to use in the technique.
   if (_command.image) {
+    // TODO(dweiler): Work out the correct sampler for this.
     program->uniforms()[0].record_sampler(
-      textures_.add(_renderer->textures[_command.image - 1].as_ptr()));
+      images_.add(_renderer->textures[_command.image - 1].as_ptr(), {}));
     program->uniforms()[1].record_int(paint.image_type);
   }
 
@@ -1096,10 +1107,10 @@ void draw_fill(Renderer* _renderer, const Command& _command) {
   Frontend::Buffers draw_buffers;
   draw_buffers.add(0);
 
-  Frontend::Textures draw_textures;
+  Frontend::Images draw_images;
   Frontend::Program* program;
 
-  prepare_draw(_renderer, _command, _command.paint + 0, program, draw_textures);
+  prepare_draw(_renderer, _command, _command.paint + 0, program, draw_images);
 
   for (Size i = 0; i < _command.path.count; i++) {
     const auto& path = _renderer->paths[_command.path.offset + i];
@@ -1116,7 +1127,7 @@ void draw_fill(Renderer* _renderer, const Command& _command) {
       0,
       0,
       Frontend::PrimitiveType::TRIANGLE_FAN,
-      draw_textures);
+      draw_images);
   }
 
   // Enable(CULL_FACE)
@@ -1129,7 +1140,7 @@ void draw_fill(Renderer* _renderer, const Command& _command) {
   // ColorMask(TRUE, TRUE, TRUE, TRUE)
   state.blend.record_write_mask(0b1111);
 
-  prepare_draw(_renderer, _command, _command.paint + 1, program, draw_textures);
+  prepare_draw(_renderer, _command, _command.paint + 1, program, draw_images);
 
   if (_renderer->flags & Canvas::ANTIALIAS) {
     // StencilFunc(EQUAL, 0x00, 0xff)
@@ -1160,7 +1171,7 @@ void draw_fill(Renderer* _renderer, const Command& _command) {
         0,
         0,
         Frontend::PrimitiveType::TRIANGLE_STRIP,
-        draw_textures);
+        draw_images);
     }
   }
 
@@ -1192,7 +1203,7 @@ void draw_fill(Renderer* _renderer, const Command& _command) {
       0,
       0,
       Frontend::PrimitiveType::TRIANGLE_STRIP,
-      draw_textures);
+      draw_images);
   }
 
   // Disable(STENCIL_TEST)
@@ -1206,10 +1217,10 @@ void draw_convex_fill(Renderer* _renderer, const Command& _command) {
   Frontend::Buffers draw_buffers;
   draw_buffers.add(0);
 
-  Frontend::Textures draw_textures;
-  Frontend::Program* program;
+  Frontend::Images draw_images;
+  Frontend::Program* program = nullptr;
 
-  prepare_draw(_renderer, _command, _command.paint + 0, program, draw_textures);
+  prepare_draw(_renderer, _command, _command.paint + 0, program, draw_images);
 
   for (Size i = 0; i < _command.path.count; i++) {
     const auto& path = _renderer->paths[_command.path.offset + i];
@@ -1226,7 +1237,7 @@ void draw_convex_fill(Renderer* _renderer, const Command& _command) {
       0,
       0,
       Frontend::PrimitiveType::TRIANGLE_FAN,
-      draw_textures);
+      draw_images);
 
     // Draw fringes.
     if (path.stroke.count) {
@@ -1243,7 +1254,7 @@ void draw_convex_fill(Renderer* _renderer, const Command& _command) {
         0,
         0,
         Frontend::PrimitiveType::TRIANGLE_STRIP,
-        draw_textures);
+        draw_images);
     }
   }
 }
@@ -1255,8 +1266,8 @@ void draw_stroke(Renderer* _renderer, const Command& _command) {
   Frontend::Buffers draw_buffers;
   draw_buffers.add(0);
 
-  Frontend::Textures draw_textures;
-  Frontend::Program* program;
+  Frontend::Images draw_images;
+  Frontend::Program* program = nullptr;
 
   // This is the most complicated draw.
   if (_renderer->flags & Canvas::STENCIL_STROKES) {
@@ -1279,7 +1290,7 @@ void draw_stroke(Renderer* _renderer, const Command& _command) {
     state.stencil.record_depth_fail_action(Frontend::StencilState::OperationType::KEEP);
     state.stencil.record_depth_pass_action(Frontend::StencilState::OperationType::INCREMENT);
 
-    prepare_draw(_renderer, _command, _command.paint + 1, program, draw_textures);
+    prepare_draw(_renderer, _command, _command.paint + 1, program, draw_images);
 
     for (Size i = 0; i < _command.path.count; i++) {
       const auto& path = _renderer->paths[_command.path.offset + i];
@@ -1300,7 +1311,7 @@ void draw_stroke(Renderer* _renderer, const Command& _command) {
         0,
         0,
         Frontend::PrimitiveType::TRIANGLE_STRIP,
-        draw_textures);
+        draw_images);
     }
 
     //
@@ -1317,7 +1328,7 @@ void draw_stroke(Renderer* _renderer, const Command& _command) {
     state.stencil.record_depth_fail_action(Frontend::StencilState::OperationType::KEEP);
     state.stencil.record_depth_pass_action(Frontend::StencilState::OperationType::KEEP);
 
-    prepare_draw(_renderer, _command, _command.paint + 0, program, draw_textures);
+    prepare_draw(_renderer, _command, _command.paint + 0, program, draw_images);
 
     for (Size i = 0; i < _command.path.count; i++) {
       const auto& path = _renderer->paths[_command.path.offset + i];
@@ -1338,7 +1349,7 @@ void draw_stroke(Renderer* _renderer, const Command& _command) {
         0,
         0,
         Frontend::PrimitiveType::TRIANGLE_STRIP,
-        draw_textures);
+        draw_images);
     }
 
     //
@@ -1377,7 +1388,7 @@ void draw_stroke(Renderer* _renderer, const Command& _command) {
         0,
         0,
         Frontend::PrimitiveType::TRIANGLE_STRIP,
-        draw_textures);
+        draw_images);
     }
 
     // ColorMask(TRUE, TRUE, TRUE)
@@ -1386,7 +1397,7 @@ void draw_stroke(Renderer* _renderer, const Command& _command) {
     // Disable(STENCIL_TEST)
     state.stencil.record_enable(false);
   } else {
-    prepare_draw(_renderer, _command, _command.paint + 0, program, draw_textures);
+    prepare_draw(_renderer, _command, _command.paint + 0, program, draw_images);
 
     for (Size i = 0; i < _command.path.count; i++) {
       const auto& path = _renderer->paths[_command.path.offset + i];
@@ -1407,7 +1418,7 @@ void draw_stroke(Renderer* _renderer, const Command& _command) {
         0,
         0,
         Frontend::PrimitiveType::TRIANGLE_STRIP,
-        draw_textures);
+        draw_images);
     }
   }
 }
@@ -1419,9 +1430,9 @@ void draw_triangles(Renderer* _renderer, const Command& _command) {
   Frontend::Buffers draw_buffers;
   draw_buffers.add(0);
 
-  Frontend::Textures draw_textures;
-  Frontend::Program* program;
-  prepare_draw(_renderer, _command, _command.paint + 0, program, draw_textures);
+  Frontend::Images draw_images;
+  Frontend::Program* program = nullptr;
+  prepare_draw(_renderer, _command, _command.paint + 0, program, draw_images);
 
   context->draw(
     RX_RENDER_TAG("canvas"),
@@ -1436,7 +1447,7 @@ void draw_triangles(Renderer* _renderer, const Command& _command) {
     0,
     0,
     Frontend::PrimitiveType::TRIANGLES,
-    draw_textures);
+    draw_images);
 }
 
 } // namespace Rx::Render

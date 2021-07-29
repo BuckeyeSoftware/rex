@@ -1,6 +1,7 @@
 #include "rx/render/frontend/material.h"
 #include "rx/render/frontend/context.h"
 #include "rx/render/frontend/texture.h"
+#include "rx/render/frontend/sampler.h"
 
 #include "rx/texture/loader.h"
 
@@ -30,35 +31,8 @@ static bool uses_alpha(const Byte* _data, Size _size) {
   return false;
 }
 
-static inline Texture2D::WrapOptions
-convert_material_wrap(const Rx::Material::Texture::Wrap& _wrap) {
-  auto convert = [](auto _value) {
-    switch (_value) {
-    case Rx::Material::Texture::WrapType::CLAMP_TO_EDGE:
-      return Texture::WrapType::CLAMP_TO_EDGE;
-    case Rx::Material::Texture::WrapType::CLAMP_TO_BORDER:
-      return Texture::WrapType::CLAMP_TO_BORDER;
-    case Rx::Material::Texture::WrapType::MIRRORED_REPEAT:
-      return Texture::WrapType::MIRRORED_REPEAT;
-    case Rx::Material::Texture::WrapType::MIRROR_CLAMP_TO_EDGE:
-      return Texture::WrapType::MIRROR_CLAMP_TO_EDGE;
-    case Rx::Material::Texture::WrapType::REPEAT:
-      return Texture::WrapType::REPEAT;
-    }
-    RX_HINT_UNREACHABLE();
-  };
-
-  return {convert(_wrap.s), convert(_wrap.t)};
-}
-
 Material::Material(Context* _frontend)
   : m_frontend{_frontend}
-  , m_albedo{nullptr}
-  , m_normal{nullptr}
-  , m_roughness{nullptr}
-  , m_metalness{nullptr}
-  , m_occlusion{nullptr}
-  , m_emissive{nullptr}
   , m_flags{0}
   , m_roughness_value{1.0f}
   , m_metalness_value{0.0f}
@@ -72,12 +46,12 @@ Material::Material(Context* _frontend)
 Material::~Material() {
   const auto& tag = RX_RENDER_TAG("finalizer");
 
-  m_frontend->destroy_texture(tag, m_albedo);
-  m_frontend->destroy_texture(tag, m_normal);
-  m_frontend->destroy_texture(tag, m_roughness);
-  m_frontend->destroy_texture(tag, m_metalness);
-  m_frontend->destroy_texture(tag, m_occlusion);
-  m_frontend->destroy_texture(tag, m_emissive);
+  m_frontend->destroy_texture(tag, m_albedo.texture);
+  m_frontend->destroy_texture(tag, m_normal.texture);
+  m_frontend->destroy_texture(tag, m_roughness.texture);
+  m_frontend->destroy_texture(tag, m_metalness.texture);
+  m_frontend->destroy_texture(tag, m_occlusion.texture);
+  m_frontend->destroy_texture(tag, m_emissive.texture);
 }
 
 bool Material::load(const Rx::Material::Loader& _loader) {
@@ -100,9 +74,9 @@ bool Material::load(const Rx::Material::Loader& _loader) {
 
   using Type = Rx::Material::Texture::Type;
 
-  // Simple table to map Type strings to texture2D destinations in this object.
+  // Simple table to map type strings to Image destinations in this object.
   struct Entry {
-    Texture2D** texture;
+    Image* image;
     Type type;
   } table[] {
     { &m_albedo,     Type::ALBEDO    },
@@ -127,19 +101,18 @@ bool Material::load(const Rx::Material::Loader& _loader) {
 
     // The texture destination could not be found or we already have a texture
     // constructed in that place.
-    if (!find || *find->texture) {
+    if (!find || find->image->texture) {
       return false;
     }
 
     const auto& bitmap = _texture.bitmap();
+    const auto& filter = _texture.filter();
 
     const auto& hash = hash_as_string(bitmap.hash);
 
     // Check if cached.
     auto texture = m_frontend->cached_texture2D(hash);
     if (!texture) {
-      const auto& filter = _texture.filter();
-
       // Create a mipmap chain of the texture.
       Rx::Texture::Chain chain{m_frontend->allocator()};
       if (!chain.generate(bitmap.data.data(), bitmap.format,
@@ -182,12 +155,6 @@ bool Material::load(const Rx::Material::Loader& _loader) {
       texture->record_type(Texture::Type::STATIC);
       texture->record_levels(chain.levels().size());
       texture->record_dimensions(chain.dimensions());
-      texture->record_filter({filter.bilinear, filter.trilinear, filter.mipmaps});
-      texture->record_wrap(convert_material_wrap(_texture.wrap()));
-
-      if (const auto border = _texture.border()) {
-        texture->record_border(*border);
-      }
 
       const auto& levels = chain.levels();
       for (Size i = 0; i < levels.size(); i++) {
@@ -213,7 +180,32 @@ bool Material::load(const Rx::Material::Loader& _loader) {
     }
 
     // Store it.
-    *find->texture = texture;
+    find->image->texture = texture;
+
+    // Create the sampler state for this texture.
+    Sampler sampler;
+    if (filter.mipmaps) {
+      if (filter.trilinear) {
+        sampler.record_mipmap_mode(Sampler::MipmapMode::LINEAR);
+        sampler.record_min_filter(Sampler::Filter::LINEAR);
+      } else {
+        // bilinear!
+        sampler.record_mipmap_mode(Sampler::MipmapMode::NEAREST);
+        sampler.record_min_filter(Sampler::Filter::NEAREST);
+      }
+    } else {
+      sampler.record_mipmap_mode(Sampler::MipmapMode::NONE);
+      sampler.record_min_filter(filter.bilinear ? Sampler::Filter::LINEAR : Sampler::Filter::NEAREST);
+    }
+
+    sampler.record_mag_filter(filter.bilinear ? Sampler::Filter::LINEAR : Sampler::Filter::NEAREST);
+
+// TODO(dweiler): SAMPLERS.
+#if 0
+      texture->record_wrap(convert_material_wrap(_texture.wrap()));
+#endif
+
+    find->image->sampler = sampler;
 
     return true;
   });

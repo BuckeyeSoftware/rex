@@ -60,6 +60,7 @@ private:
   Frontend::Context* m_frontend;
   Frontend::Technique* m_technique;
 
+  // filter(false, false, false), wrap(CLAMP_TO_EDGE, CLAMP_TO_EDGE)
   Concurrency::Atomic<Frontend::Texture*> m_texture;
   String m_name;
 

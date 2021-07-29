@@ -31,20 +31,6 @@ struct Texture
     T dimensions;
   };
 
-  struct FilterOptions {
-    bool bilinear;
-    bool trilinear;
-    bool mipmaps;
-  };
-
-  enum class WrapType : Uint8 {
-    CLAMP_TO_EDGE,
-    CLAMP_TO_BORDER,
-    MIRRORED_REPEAT,
-    MIRROR_CLAMP_TO_EDGE,
-    REPEAT
-  };
-
   enum class DataFormat : Uint8 {
     R_U8,
     R_F16,
@@ -77,21 +63,17 @@ struct Texture
 
   void record_format(DataFormat _format);
   void record_type(Type _type);
-  void record_filter(const FilterOptions& _options);
   void record_levels(Size _levels); // the number of levels including the base level
-  void record_border(const Math::Vec4f& _color);
 
   void validate() const;
 
   const LinearBuffer& data() const &;
   DataFormat format() const;
-  FilterOptions filter() const;
   Size channels() const;
   Type type() const;
   Size levels() const;
 
   Size bits_per_pixel() const;
-  const Math::Vec4f& border() const &;
 
   static bool is_compressed_format(DataFormat _format);
   static bool is_color_format(DataFormat _format);
@@ -126,12 +108,9 @@ protected:
   enum : Uint8 {
     FORMAT     = 1 << 0,
     TYPE       = 1 << 1,
-    FILTER     = 1 << 2,
-    WRAP       = 1 << 3,
-    DIMENSIONS = 1 << 4,
-    SWAPCHAIN  = 1 << 5,
-    LEVELS     = 1 << 6,
-    BORDER     = 1 << 7
+    DIMENSIONS = 1 << 2,
+    SWAPCHAIN  = 1 << 3,
+    LEVELS     = 1 << 4
   };
 
   friend struct Context;
@@ -139,15 +118,12 @@ protected:
   LinearBuffer m_data;
   DataFormat m_format;
   Type m_type;
-  FilterOptions m_filter;
   Uint16 m_flags;
   Size m_levels;
-  Math::Vec4f m_border;
 };
 
 struct Texture1D : Texture {
   using DimensionType = Size;
-  using WrapOptions = WrapType;
   using Edit = EditType<DimensionType>;
   using LevelInfo = LevelInfoType<DimensionType>;
 
@@ -161,10 +137,8 @@ struct Texture1D : Texture {
   Byte* map(Size _level);
 
   bool record_dimensions(const DimensionType& _dimensions);
-  void record_wrap(const WrapOptions& _wrap);
 
   const DimensionType& dimensions() const &;
-  const WrapOptions& wrap() const &;
   const LevelInfo& info_for_level(Size _index) const &;
 
   // Record an edit to level |_level| of this texture at offset |_offset| of
@@ -178,14 +152,12 @@ struct Texture1D : Texture {
 
 private:
   DimensionType m_dimensions;
-  WrapOptions m_wrap;
   Vector<LevelInfo> m_level_info;
   Vector<Edit> m_edits;
 };
 
 struct Texture2D : Texture {
   using DimensionType = Math::Vec2z;
-  using WrapOptions = Math::Vec2<WrapType>;
   using Edit = EditType<DimensionType>;
   using LevelInfo = LevelInfoType<DimensionType>;
 
@@ -199,10 +171,8 @@ struct Texture2D : Texture {
   Byte* map(Size _level);
 
   bool record_dimensions(const DimensionType& _dimensions);
-  void record_wrap(const WrapOptions& _wrap);
 
   const DimensionType& dimensions() const &;
-  const WrapOptions& wrap() const &;
   const LevelInfo& info_for_level(Size _index) const &;
 
   // Record an edit to level |_level| of this texture at offset |_offset| of
@@ -218,14 +188,12 @@ private:
   friend struct Context; // TODO(dweiler): Remove
 
   DimensionType m_dimensions;
-  WrapOptions m_wrap;
   Vector<LevelInfo> m_level_info;
   Vector<Edit> m_edits;
 };
 
 struct Texture3D : Texture {
   using DimensionType = Math::Vec3z;
-  using WrapOptions = Math::Vec3<WrapType>;
   using Edit = EditType<DimensionType>;
   using LevelInfo = LevelInfoType<DimensionType>;
 
@@ -239,10 +207,8 @@ struct Texture3D : Texture {
   Byte* map(Size _level);
 
   bool record_dimensions(const DimensionType& _dimensions);
-  void record_wrap(const WrapOptions& _wrap);
 
   const DimensionType& dimensions() const &;
-  const WrapOptions& wrap() const &;
   const LevelInfo& info_for_level(Size _index) const &;
 
   // Record an edit to level |_level| of this texture at offset |_offset| with
@@ -257,14 +223,12 @@ struct Texture3D : Texture {
 
 private:
   DimensionType m_dimensions;
-  WrapOptions m_wrap;
   Vector<LevelInfo> m_level_info;
   Vector<Edit> m_edits;
 };
 
 struct TextureCM : Texture {
   using DimensionType = Math::Vec2z;
-  using WrapOptions = Math::Vec3<WrapType>;
   using LevelInfo = LevelInfoType<DimensionType>;
 
   enum class Face : Uint8 {
@@ -286,15 +250,12 @@ struct TextureCM : Texture {
   Byte* map(Size _level, Face _face);
 
   bool record_dimensions(const DimensionType& _dimensions);
-  void record_wrap(const WrapOptions& _wrap);
 
   const DimensionType& dimensions() const &;
-  const WrapOptions& wrap() const &;
   const LevelInfo& info_for_level(Size _index) const &;
 
 private:
   DimensionType m_dimensions;
-  WrapOptions m_wrap;
   Vector<LevelInfo> m_level_info;
 };
 
@@ -306,11 +267,6 @@ inline const LinearBuffer& Texture::data() const & {
 inline Texture::DataFormat Texture::format() const {
   RX_ASSERT(m_flags & FORMAT, "format not recorded");
   return m_format;
-}
-
-inline Texture::FilterOptions Texture::filter() const {
-  RX_ASSERT(m_flags & FILTER, "filter not recorded");
-  return m_filter;
 }
 
 inline Size Texture::channels() const {
@@ -419,12 +375,6 @@ inline Size Texture::bits_per_pixel() const {
 
 inline bool Texture::has_alpha() const {
   return has_alpha(m_format);
-}
-
-inline const Math::Vec4f& Texture::border() const & {
-  // TODO(dweiler): Better method for texture borders...
-  // RX_ASSERT(m_flags & BORDER, "border not recorded");
-  return m_border;
 }
 
 inline bool Texture::is_color_format(DataFormat _format) {
@@ -609,10 +559,6 @@ inline const Texture1D::DimensionType& Texture1D::dimensions() const & {
   return m_dimensions;
 }
 
-inline const Texture1D::WrapOptions& Texture1D::wrap() const & {
-  return m_wrap;
-}
-
 inline const Texture1D::LevelInfo& Texture1D::info_for_level(Size _index) const & {
   return m_level_info[_index];
 }
@@ -628,10 +574,6 @@ inline void Texture1D::clear_edits() {
 // Texture2D
 inline const Texture2D::DimensionType& Texture2D::dimensions() const & {
   return m_dimensions;
-}
-
-inline const Texture2D::WrapOptions& Texture2D::wrap() const & {
-  return m_wrap;
 }
 
 inline const Texture2D::LevelInfo& Texture2D::info_for_level(Size _index) const & {
@@ -651,10 +593,6 @@ inline const Texture3D::DimensionType& Texture3D::dimensions() const & {
   return m_dimensions;
 }
 
-inline const Texture3D::WrapOptions& Texture3D::wrap() const & {
-  return m_wrap;
-}
-
 inline const Texture3D::LevelInfo& Texture3D::info_for_level(Size _index) const & {
   return m_level_info[_index];
 }
@@ -670,10 +608,6 @@ inline void Texture3D::clear_edits() {
 // TextureCM
 inline const TextureCM::DimensionType& TextureCM::dimensions() const & {
   return m_dimensions;
-}
-
-inline const TextureCM::WrapOptions& TextureCM::wrap() const & {
-  return m_wrap;
 }
 
 inline const TextureCM::LevelInfo& TextureCM::info_for_level(Size _index) const & {

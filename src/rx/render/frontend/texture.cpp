@@ -67,6 +67,7 @@ calculate_levels(Size _bits_per_pixel, Size _levels, const T& _dimensions) {
   return result;
 }
 
+/// [Texture]
 Texture::Texture(Context* _frontend, Resource::Type _type)
   : Resource{_frontend, _type}
   , m_data{_frontend->allocator()}
@@ -86,12 +87,6 @@ void Texture::record_type(Type _type) {
   m_flags |= TYPE;
 }
 
-void Texture::record_filter(const FilterOptions& _options) {
-  RX_ASSERT(!(m_flags & FILTER), "filter already recorded");
-  m_filter = _options;
-  m_flags |= FILTER;
-}
-
 void Texture::record_levels(Size _levels) {
   RX_ASSERT(!(m_flags & LEVELS), "levels already recorded");
   RX_ASSERT(_levels, "_levels must be at least 1");
@@ -100,30 +95,13 @@ void Texture::record_levels(Size _levels) {
   m_flags |= LEVELS;
 }
 
-void Texture::record_border(const Math::Vec4f& _border) {
-  RX_ASSERT(!(m_flags & BORDER), "border already recorded");
-  RX_ASSERT(m_flags & WRAP, "wrap not recorded");
-
-  m_border = _border;
-  m_flags |= BORDER;
-}
-
 void Texture::validate() const {
   RX_ASSERT(m_flags & FORMAT, "format not recorded");
   RX_ASSERT(m_flags & TYPE, "type not recorded");
-  RX_ASSERT(m_flags & FILTER, "filter not recorded");
-  RX_ASSERT(m_flags & WRAP, "wrap not recorded");
   RX_ASSERT(m_flags & DIMENSIONS, "dimensions not recorded");
   RX_ASSERT(m_flags & LEVELS, "levels not recorded");
 
-  if (m_filter.mipmaps) {
-    RX_ASSERT(m_levels > 1, "no levels specified for mipmaps");
-  }
-
   if (m_flags & SWAPCHAIN) {
-    RX_ASSERT(!m_filter.mipmaps, "swapchain cannot have mipmaps");
-    RX_ASSERT(!m_filter.bilinear, "swapchain cannot have bilinear filtering");
-    RX_ASSERT(!m_filter.trilinear, "swapchain cannot have trilinear filtering");
     RX_ASSERT(m_levels == 1, "swapchain cannot have levels");
   }
 }
@@ -180,13 +158,6 @@ bool Texture1D::record_dimensions(const DimensionType& _dimensions) {
   m_level_info = Utility::move(levels->levels);
 
   return true;
-}
-
-void Texture1D::record_wrap(const WrapOptions& _wrap) {
-  RX_ASSERT(!(m_flags & WRAP), "wrap already recorded");
-
-  m_wrap = _wrap;
-  m_flags |= WRAP;
 }
 
 void Texture1D::record_edit(Size _level, const DimensionType& _offset,
@@ -260,13 +231,6 @@ bool Texture2D::record_dimensions(const Math::Vec2z& _dimensions) {
   return true;
 }
 
-void Texture2D::record_wrap(const WrapOptions& _wrap) {
-  RX_ASSERT(!(m_flags & WRAP), "wrap already recorded");
-
-  m_wrap = _wrap;
-  m_flags |= WRAP;
-}
-
 void Texture2D::record_edit(Size _level, const DimensionType& _offset,
                             const DimensionType& _dimensions)
 {
@@ -333,13 +297,6 @@ bool Texture3D::record_dimensions(const Math::Vec3z& _dimensions) {
   m_level_info = Utility::move(levels->levels);
 
   return true;
-}
-
-void Texture3D::record_wrap(const WrapOptions& _wrap) {
-  RX_ASSERT(!(m_flags & WRAP), "wrap already recorded");
-
-  m_wrap = _wrap;
-  m_flags |= WRAP;
 }
 
 void Texture3D::record_edit(Size _level, const DimensionType& _offset,
@@ -412,13 +369,6 @@ bool TextureCM::record_dimensions(const Math::Vec2z& _dimensions) {
   m_level_info = Utility::move(levels->levels);
 
   return true;
-}
-
-void TextureCM::record_wrap(const WrapOptions& _wrap) {
-  RX_ASSERT(!(m_flags & WRAP), "wrap already recorded");
-
-  m_wrap = _wrap;
-  m_flags |= WRAP;
 }
 
 } // namespace Rx::Render::Frontend

@@ -50,6 +50,7 @@ struct IndirectLightingPass {
   void render(const Math::Camera& _camera, const Input& _input);
   bool recreate(const Options& _options);
 
+  // filter(false, false, false), wrap(CLAMP_TO_EDGE, CLAMP_TO_EDGE)
   Frontend::Texture2D* texture() const;
   Frontend::Target* target() const;
 

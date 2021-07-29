@@ -318,14 +318,14 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
     uniforms[7].record_vec3f(material.albedo_color());
     uniforms[8].record_vec3f(material.emission_color());
 
-    // Record all the textures.
-    Frontend::Textures draw_textures;
-    if (material.albedo())    uniforms[9].record_sampler(draw_textures.add(material.albedo()));
-    if (material.normal())    uniforms[10].record_sampler(draw_textures.add(material.normal()));
-    if (material.metalness()) uniforms[11].record_sampler(draw_textures.add(material.metalness()));
-    if (material.roughness()) uniforms[12].record_sampler(draw_textures.add(material.roughness()));
-    if (material.occlusion()) uniforms[13].record_sampler(draw_textures.add(material.occlusion()));
-    if (material.emissive())  uniforms[14].record_sampler(draw_textures.add(material.emissive()));
+    // Record all the images.
+    Frontend::Images draw_images;
+    if (const auto& image = material.albedo())    uniforms[9] .record_sampler(draw_images.add(image.texture, image.sampler));
+    if (const auto& image = material.normal())    uniforms[10].record_sampler(draw_images.add(image.texture, image.sampler));
+    if (const auto& image = material.metalness()) uniforms[11].record_sampler(draw_images.add(image.texture, image.sampler));
+    if (const auto& image = material.roughness()) uniforms[12].record_sampler(draw_images.add(image.texture, image.sampler));
+    if (const auto& image = material.occlusion()) uniforms[13].record_sampler(draw_images.add(image.texture, image.sampler));
+    if (const auto& image = material.emissive())  uniforms[14].record_sampler(draw_images.add(image.texture, image.sampler));
 
     // For animation
     if (m_animation) {
@@ -361,7 +361,7 @@ void Model::render(Frontend::Target* _target, const Math::Mat4x4f& _model,
       m_block.base_vertex(),
       m_block.base_instance(),
       Render::Frontend::PrimitiveType::TRIANGLES,
-      draw_textures);
+      draw_images);
 
     if (_flags & BOUNDS) {
       _immediate->frame_queue().record_wire_box(

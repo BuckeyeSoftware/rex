@@ -30,12 +30,8 @@ Optional<LensDistortionPass> LensDistortionPass::create(
 
   texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
-  texture->record_filter({true, false, false});
   texture->record_levels(1);
   texture->record_dimensions(_resolution);
-  texture->record_wrap({
-    Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-    Frontend::Texture::WrapType::CLAMP_TO_EDGE});
   _frontend->initialize_texture(RX_RENDER_TAG("LensDistortionPass"), texture);
 
   target->attach_texture(texture, 0);
@@ -62,8 +58,15 @@ void LensDistortionPass::render(Frontend::Texture2D* _source) {
   Frontend::Buffers draw_buffers;
   draw_buffers.add(0);
 
-  Frontend::Textures draw_textures;
-  draw_textures.add(_source);
+  Frontend::Sampler sampler;
+  sampler.record_address_mode_u(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_address_mode_v(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_min_filter(Frontend::Sampler::Filter::NEAREST);
+  sampler.record_mag_filter(Frontend::Sampler::Filter::NEAREST);
+  sampler.record_mipmap_mode(Frontend::Sampler::MipmapMode::NONE);
+
+  Frontend::Images draw_images;
+  draw_images.add(_source, sampler);
 
   Frontend::State state;
   state.viewport.record_dimensions(dimensions);
@@ -82,7 +85,7 @@ void LensDistortionPass::render(Frontend::Texture2D* _source) {
     0,
     0,
     Frontend::PrimitiveType::TRIANGLES,
-    draw_textures);
+    draw_images);
 }
 
 } // namespace Rx::Render

@@ -42,11 +42,8 @@ void Target::request_depth(Texture::DataFormat _format, const Math::Vec2z& _dime
   m_depth_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target depth"));
   m_depth_texture->record_format(_format);
   m_depth_texture->record_type(Texture::Type::ATTACHMENT);
-  m_depth_texture->record_filter({false, false, false});
   m_depth_texture->record_levels(1);
   m_depth_texture->record_dimensions(_dimensions);
-  m_depth_texture->record_wrap({Texture::WrapType::CLAMP_TO_EDGE,
-                                Texture::WrapType::CLAMP_TO_EDGE});
   m_frontend->initialize_texture(RX_RENDER_TAG("target depth"), m_depth_texture);
 
   m_flags |= OWNS_DEPTH;
@@ -68,11 +65,8 @@ void Target::request_stencil(Texture::DataFormat _format, const Math::Vec2z& _di
   m_stencil_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target stencil"));
   m_stencil_texture->record_format(_format);
   m_stencil_texture->record_type(Texture::Type::ATTACHMENT);
-  m_stencil_texture->record_filter({false, false, false});
   m_stencil_texture->record_levels(1);
   m_stencil_texture->record_dimensions(_dimensions);
-  m_stencil_texture->record_wrap({Texture::WrapType::CLAMP_TO_EDGE,
-                                  Texture::WrapType::CLAMP_TO_EDGE});
   m_frontend->initialize_texture(RX_RENDER_TAG("target stencil"), m_stencil_texture);
 
   m_flags |= OWNS_STENCIL;
@@ -97,11 +91,8 @@ void Target::request_depth_stencil(Texture::DataFormat _format, const Math::Vec2
   m_depth_stencil_texture = m_frontend->create_texture2D(RX_RENDER_TAG("target depth stencil"));
   m_depth_stencil_texture->record_format(_format);
   m_depth_stencil_texture->record_type(Texture::Type::ATTACHMENT);
-  m_depth_stencil_texture->record_filter({false, false, false});
   m_depth_stencil_texture->record_levels(1);
   m_depth_stencil_texture->record_dimensions(_dimensions);
-  m_depth_stencil_texture->record_wrap({Texture::WrapType::CLAMP_TO_EDGE,
-                                        Texture::WrapType::CLAMP_TO_EDGE});
   m_frontend->initialize_texture(RX_RENDER_TAG("target depth stencil"), m_depth_stencil_texture);
 
   m_flags |= OWNS_DEPTH;

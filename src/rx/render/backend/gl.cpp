@@ -317,23 +317,6 @@ GLenum convert_primitive_type(Frontend::PrimitiveType _primitive_type) {
   RX_HINT_UNREACHABLE();
 }
 
-GLenum convert_texture_wrap(const Frontend::Texture::WrapType _type) {
-  switch (_type) {
-  case Frontend::Texture::WrapType::CLAMP_TO_EDGE:
-    return GL_CLAMP_TO_EDGE;
-  case Frontend::Texture::WrapType::CLAMP_TO_BORDER:
-    return GL_CLAMP_TO_BORDER;
-  case Frontend::Texture::WrapType::MIRRORED_REPEAT:
-    return GL_MIRRORED_REPEAT;
-  case Frontend::Texture::WrapType::REPEAT:
-    return GL_REPEAT;
-  case Frontend::Texture::WrapType::MIRROR_CLAMP_TO_EDGE:
-    return GL_MIRROR_CLAMP_TO_EDGE;
-  }
-
-  RX_HINT_UNREACHABLE();
-}
-
 GLenum convert_element_type(Frontend::Buffer::ElementType _element_type) {
   using Type = Frontend::Buffer::ElementType;
   switch (_element_type) {
@@ -359,20 +342,75 @@ GLenum convert_shader_type(Frontend::Shader::Type _type) {
   RX_HINT_UNREACHABLE();
 }
 
-Filter convert_texture_filter(const Frontend::Texture::FilterOptions& _filter_options) {
-  static constexpr const GLenum MIN_TABLE[] = {
-    GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_NEAREST,
-    GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR
+Sampler convert_sampler(const Frontend::Sampler& _sampler) {
+  Sampler result;
+
+  // The magnificaiton filter maps directly.
+  switch (_sampler.mag_filter()) {
+  case Frontend::Sampler::Filter::NEAREST:
+    result.mag = GL_NEAREST;
+    break;
+  case Frontend::Sampler::Filter::LINEAR:
+    result.mag = GL_LINEAR;
+    break;
+  }
+
+  // The minification filter is a combination of min_filter and mipmap_mode
+  switch (_sampler.mipmap_mode()) {
+  case Frontend::Sampler::MipmapMode::NONE:
+    switch (_sampler.min_filter()) {
+    case Frontend::Sampler::Filter::NEAREST:
+      result.min = GL_NEAREST;
+      break;
+    case Frontend::Sampler::Filter::LINEAR:
+      result.min = GL_LINEAR;
+      break;
+    }
+    break;
+  case Frontend::Sampler::MipmapMode::NEAREST:
+    switch (_sampler.min_filter()) {
+    case Frontend::Sampler::Filter::NEAREST:
+      result.min = GL_NEAREST_MIPMAP_NEAREST;
+      break;
+    case Frontend::Sampler::Filter::LINEAR:
+      result.min = GL_NEAREST_MIPMAP_LINEAR;
+      break;
+    }
+    break;
+  case Frontend::Sampler::MipmapMode::LINEAR:
+    switch (_sampler.min_filter()) {
+    case Frontend::Sampler::Filter::NEAREST:
+      result.min = GL_LINEAR_MIPMAP_NEAREST;
+      break;
+    case Frontend::Sampler::Filter::LINEAR:
+      result.min = GL_LINEAR_MIPMAP_LINEAR;
+      break;
+    }
+    break;
+  }
+
+  result.min_lod = _sampler.lod().min;
+  result.max_lod = _sampler.lod().max;
+
+  // Convert addressing modes.
+  const auto convert_address_mode = [](Frontend::Sampler::AddressMode _address_mode) {
+    using AddressMode = Frontend::Sampler::AddressMode;
+    switch (_address_mode) {
+    case AddressMode::CLAMP_TO_EDGE:
+      return GL_CLAMP_TO_EDGE;
+    case AddressMode::REPEAT:
+      return GL_REPEAT;
+    case AddressMode::MIRRORED_REPEAT:
+      return GL_MIRRORED_REPEAT;
+    }
+    RX_HINT_UNREACHABLE();
   };
 
-  int filter_index = _filter_options.bilinear ? 1 : 0;
-  filter_index |= _filter_options.mipmaps << 1;
-  filter_index |= _filter_options.trilinear << 2;
+  result.address_mode_u = convert_address_mode(_sampler.address_mode_u());
+  result.address_mode_v = convert_address_mode(_sampler.address_mode_v());
+  result.address_mode_w = convert_address_mode(_sampler.address_mode_w());
 
-  const GLenum mag = static_cast<GLenum>(filter_index & 1 ? GL_LINEAR : GL_NEAREST);
-  const GLenum min = MIN_TABLE[filter_index];
-
-  return {min, mag};
+  return result;
 }
 
 Attribute convert_attribute(const Frontend::Buffer::Attribute& _attribute) {

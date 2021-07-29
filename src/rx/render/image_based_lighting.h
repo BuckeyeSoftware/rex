@@ -30,6 +30,7 @@ struct IrradianceMap {
 
   void render(Frontend::Texture* _env_map);
 
+  // filter(true, false, false) wrap(REPEAT, REPEAT, REPEAT)
   Frontend::TextureCM* texture() const;
 
 private:
@@ -104,6 +105,7 @@ struct PrefilteredEnvironmentMap {
 
   void render(Frontend::Texture* _env_map);
 
+  // filter(true, true, true), wrap(REPEAT, REPEAT, REPEAT)
   Frontend::TextureCM* texture() const;
 
 private:
@@ -181,7 +183,9 @@ struct ImageBasedLighting {
 
   void render(Frontend::Texture* _env_map);
 
+  // filter(true, false, false), wrap(CLAMP_TO_EDGE, CLAMP_TO_EDGE)
   Frontend::Texture2D* scale_bias() const;
+  
   Frontend::TextureCM* irradiance_map() const;
   Frontend::TextureCM* prefilter() const;
 

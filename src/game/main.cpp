@@ -7,6 +7,7 @@
 #include "rx/render/frontend/context.h"
 #include "rx/render/frontend/target.h"
 #include "rx/render/frontend/downloader.h"
+#include "rx/render/frontend/sampler.h"
 
 #include "rx/render/immediate2D.h"
 #include "rx/render/immediate3D.h"
@@ -40,7 +41,6 @@
 #include "rx/particle/assembler.h"
 #include "rx/particle/system.h"
 #include "rx/particle/emitter.h"
-
 
 #include "rx/core/math/sin.h"
 #include "rx/core/math/cos.h"
@@ -142,7 +142,7 @@ struct TestGame
   Vector<Math::Vec3f> m_mdl_rotations;
 
   virtual bool on_init() {
-    m_camera.translate = {0.0f, 0.0f, -1.0f};
+    m_camera.translate = {0.0f, 0.0f, -0.5f};
 
     const auto& dimensions = m_frontend.swapchain()->dimensions();
 
@@ -264,14 +264,14 @@ struct TestGame
       return false;
     };
 
-    // if (!add_model("base/models/bedside_wardrobe/bedside_wardrobe.json5")) return false;
-    // if (!add_model("base/models/drak_chest/drak_chest.json5")) return false;
-    // if (!add_model("base/models/food_pineapple/food_pineapple.json5")) return false;
-    // if (!add_model("base/models/modern_nightstand/modern_nightstand.json5")) return false;
+    if (!add_model("base/models/bedside_wardrobe/bedside_wardrobe.json5")) return false;
+    if (!add_model("base/models/drak_chest/drak_chest.json5")) return false;
+    if (!add_model("base/models/food_pineapple/food_pineapple.json5")) return false;
+    if (!add_model("base/models/modern_nightstand/modern_nightstand.json5")) return false;
     if (!add_model("base/models/osiris_monitor/osiris_monitor.json5")) return false;
-    // if (!add_model("base/models/raspberry_pico/raspberry_pico.json5")) return false;
-    // if (!add_model("base/models/ratcher_house/ratcher_house.json5")) return false;
-    // if (!add_model("base/models/spinal_roach/spinal_roach.json5")) return false;
+    if (!add_model("base/models/raspberry_pico/raspberry_pico.json5")) return false;
+    if (!add_model("base/models/ratcher_house/ratcher_house.json5")) return false;
+    if (!add_model("base/models/spinal_roach/spinal_roach.json5")) return false;
 
     return true;
   }
@@ -396,7 +396,7 @@ struct TestGame
     });
 
     m_mdl_rotations.each_fwd([&](Math::Vec3f& rotation_) {
-      rotation_.y += 25.0f * _delta_time;
+      // rotation_.y += 25.0f * _delta_time;
     });
 
     m_particle_system.update(_delta_time);
@@ -427,7 +427,10 @@ struct TestGame
     }
 
     // Copy the depth for IndirectLightingPass because DS.
-    m_depth_copy_pass.render(m_gbuffer.depth_stencil());
+    Render::Frontend::Sampler sampler;
+    sampler.record_min_filter(Render::Frontend::Sampler::Filter::LINEAR);
+    sampler.record_mag_filter(Render::Frontend::Sampler::Filter::LINEAR);
+    m_depth_copy_pass.render(m_gbuffer.depth_stencil(), sampler);
 
     // Render indirect lighting pass.
     Render::IndirectLightingPass::Input ilp_input;

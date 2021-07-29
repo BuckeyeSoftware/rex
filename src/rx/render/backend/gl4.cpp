@@ -229,6 +229,7 @@ namespace detail_gl4 {
     }
 
     GLuint tex;
+    Frontend::Sampler sampler;
   };
 
   struct texture2D {
@@ -241,6 +242,7 @@ namespace detail_gl4 {
     }
 
     GLuint tex;
+    Frontend::Sampler sampler;
   };
 
   struct texture3D {
@@ -253,6 +255,7 @@ namespace detail_gl4 {
     }
 
     GLuint tex;
+    Frontend::Sampler sampler;
   };
 
   struct textureCM {
@@ -265,6 +268,7 @@ namespace detail_gl4 {
     }
 
     GLuint tex;
+    Frontend::Sampler sampler;
   };
 
   struct state
@@ -617,6 +621,97 @@ namespace detail_gl4 {
         pglBindVertexArray(m_empty_vao);
         m_bound_vao = m_empty_vao;
       }
+    }
+
+    void use_draw_images(const Frontend::Images& _images) {
+      if (_images.is_empty()) {
+        return;
+      }
+
+      auto use_image = [&](Size _index) {
+        using Type = Frontend::Resource::Type;
+
+        const auto& image = _images[_index];
+        const auto type = image.texture->resource_type();
+
+        GLuint texture_handle = 0;
+        Frontend::Sampler* texture_sampler = nullptr;
+        if (type == Type::TEXTURE1D) {
+          const auto render_texture = static_cast<Frontend::Texture1D*>(image.texture);
+          const auto texture = reinterpret_cast<detail_gl4::texture1D*>(render_texture + 1);
+          texture_handle = texture->tex;
+          texture_sampler = &texture->sampler;
+        } else if (type == Type::TEXTURE2D) {
+          const auto render_texture = static_cast<Frontend::Texture2D*>(image.texture);
+          const auto texture = reinterpret_cast<detail_gl4::texture2D*>(render_texture + 1);
+          texture_handle = texture->tex;
+          texture_sampler = &texture->sampler;
+        } else if (type == Type::TEXTURE3D) {
+          const auto render_texture = static_cast<Frontend::Texture3D*>(image.texture);
+          const auto texture = reinterpret_cast<detail_gl4::texture3D*>(render_texture + 1);
+          texture_handle = texture->tex;
+          texture_sampler = &texture->sampler;
+        } else if (type == Type::TEXTURECM) {
+          const auto render_texture = static_cast<Frontend::TextureCM*>(image.texture);
+          const auto texture = reinterpret_cast<detail_gl4::textureCM*>(render_texture + 1);
+          texture_handle = texture->tex;
+          texture_sampler = &texture->sampler;
+        }
+
+        // Check for and update sampler settings.
+        const auto& old_sampler = *texture_sampler;
+        const auto& new_sampler = image.sampler;
+        if (old_sampler != new_sampler) {
+          const auto& options = convert_sampler(new_sampler);
+
+          if (old_sampler.min_filter() != new_sampler.min_filter()) {
+            pglTextureParameteri(texture_handle, GL_TEXTURE_MIN_FILTER, options.min);
+          }
+          if (old_sampler.mag_filter() != new_sampler.mag_filter()) {
+            pglTextureParameteri(texture_handle, GL_TEXTURE_MAG_FILTER, options.mag);
+          }
+
+          if (old_sampler.address_mode_u() != new_sampler.address_mode_u()) {
+            pglTextureParameteri(texture_handle, GL_TEXTURE_WRAP_S, options.address_mode_u);
+          }
+          if (old_sampler.address_mode_v() != new_sampler.address_mode_v()) {
+            pglTextureParameteri(texture_handle, GL_TEXTURE_WRAP_T, options.address_mode_v);
+          }
+          if (old_sampler.address_mode_w() != new_sampler.address_mode_w()) {
+            pglTextureParameteri(texture_handle, GL_TEXTURE_WRAP_R, options.address_mode_w);
+          }
+
+          if (old_sampler.mipmap_lod_bias() != new_sampler.mipmap_lod_bias()) {
+            pglTextureParameterf(texture_handle, GL_TEXTURE_LOD_BIAS,  new_sampler.mipmap_lod_bias());
+          }
+
+          // TODO(dweiler): anisotropic texture filtering.
+
+          const auto& old_lod = old_sampler.lod();
+          const auto& new_lod = new_sampler.lod();
+
+          if (old_lod != new_lod) {
+            if (old_lod.min != new_lod.min) {
+              pglTextureParameterf(texture_handle, GL_TEXTURE_MIN_LOD, new_lod.min);
+            }
+            if (old_lod.max != new_lod.max) {
+              pglTextureParameterf(texture_handle, GL_TEXTURE_MAX_LOD, new_lod.max);
+            }
+          }
+
+          *texture_sampler = new_sampler;
+        }
+
+        return texture_handle;
+      };
+
+      // Create a list of texture handles to pass to BindTextures.
+      GLuint textures[Frontend::Images::MAX_TEXTURES];
+      const auto n_images = _images.size();
+      for (Size i = 0; i < n_images; i++) {
+        textures[i] = use_image(i);
+      }
+      pglBindTextures(0, n_images, textures);
     }
 
     Uint8 m_color_mask;
@@ -1150,28 +1245,14 @@ void GL4::process(Byte* _command) {
         {
           const auto render_texture{resource->as_texture1D};
           const auto texture{reinterpret_cast<const detail_gl4::texture1D*>(render_texture + 1)};
-          const auto wrap{render_texture->wrap()};
-          const auto wrap_s{convert_texture_wrap(wrap)};
           const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
-          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, filter.min);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MAG_FILTER, filter.mag);
-          if (*anisotropy) {
-            pglTextureParameterf(texture->tex, GL_TEXTURE_MAX_ANISOTROPY, static_cast<Float32>(*anisotropy));
-          }
-
-          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
-          if (requires_border_color(wrap_s)) {
-            const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            pglTextureParameteriv(texture->tex, GL_TEXTURE_BORDER_COLOR, color.data());
-          }
 
           pglTextureStorage1D(
             texture->tex,
@@ -1218,30 +1299,14 @@ void GL4::process(Byte* _command) {
           }
 
           const auto texture{reinterpret_cast<const detail_gl4::texture2D*>(render_texture + 1)};
-          const auto wrap{render_texture->wrap()};
-          const auto wrap_s{convert_texture_wrap(wrap.s)};
-          const auto wrap_t{convert_texture_wrap(wrap.t)};
           const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
-          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, filter.min);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MAG_FILTER, filter.mag);
-          if (*anisotropy) {
-            pglTextureParameterf(texture->tex, GL_TEXTURE_MAX_ANISOTROPY, static_cast<Float32>(*anisotropy));
-          }
-
-          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
-          if (requires_border_color(wrap_s, wrap_t)) {
-            const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            pglTextureParameteriv(texture->tex, GL_TEXTURE_BORDER_COLOR, color.data());
-          }
 
           pglTextureStorage2D(
             texture->tex,
@@ -1289,32 +1354,14 @@ void GL4::process(Byte* _command) {
         {
           const auto render_texture{resource->as_texture3D};
           const auto texture{reinterpret_cast<const detail_gl4::texture3D*>(render_texture + 1)};
-          const auto wrap{render_texture->wrap()};
-          const auto wrap_s{convert_texture_wrap(wrap.s)};
-          const auto wrap_t{convert_texture_wrap(wrap.t)};
-          const auto wrap_r{convert_texture_wrap(wrap.p)};
           const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
-          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, filter.min);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MAG_FILTER, filter.mag);
-          if (*anisotropy) {
-            pglTextureParameterf(texture->tex, GL_TEXTURE_MAX_ANISOTROPY, static_cast<Float32>(*anisotropy));
-          }
-
-          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_R, wrap_r);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
-          if (requires_border_color(wrap_s, wrap_t, wrap_r)) {
-            const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            pglTextureParameteriv(texture->tex, GL_TEXTURE_BORDER_COLOR, color.data());
-          }
 
           pglTextureStorage3D(
             texture->tex,
@@ -1367,32 +1414,14 @@ void GL4::process(Byte* _command) {
         {
           const auto render_texture{resource->as_textureCM};
           const auto texture{reinterpret_cast<const detail_gl4::textureCM*>(render_texture + 1)};
-          const auto wrap{render_texture->wrap()};
-          const auto wrap_s{convert_texture_wrap(wrap.s)};
-          const auto wrap_t{convert_texture_wrap(wrap.t)};
-          const auto wrap_p{convert_texture_wrap(wrap.p)};
           const auto dimensions{render_texture->dimensions()};
           const auto format{render_texture->format()};
-          const auto filter{convert_texture_filter(render_texture->filter())};
           const auto& data{render_texture->data()};
 
           const auto levels{static_cast<GLint>(render_texture->levels())};
 
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MIN_FILTER, filter.min);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_MAG_FILTER, filter.mag);
-          if (*anisotropy) {
-            pglTextureParameterf(texture->tex, GL_TEXTURE_MAX_ANISOTROPY, static_cast<Float32>(*anisotropy));
-          }
-
-          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_S, wrap_s);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_T, wrap_t);
-          pglTextureParameteri(texture->tex, GL_TEXTURE_WRAP_R, wrap_p);
           pglTextureParameteri(texture->tex, GL_TEXTURE_BASE_LEVEL, 0);
           pglTextureParameteri(texture->tex, GL_TEXTURE_MAX_LEVEL, levels - 1);
-          if (requires_border_color(wrap_s, wrap_t, wrap_p)) {
-            const Math::Vec4i color{(render_texture->border() * 255.0f).cast<Sint32>()};
-            pglTextureParameteriv(texture->tex, GL_TEXTURE_BORDER_COLOR, color.data());
-          }
 
           pglTextureStorage2D(
             texture->tex,
@@ -1803,29 +1832,7 @@ void GL4::process(Byte* _command) {
       }
 
       // Can bind all textures with one call.
-      GLuint textures[Frontend::Textures::MAX_TEXTURES];
-      const auto n_textures = command->draw_textures.size();
-      for (Size i = 0; i < n_textures; i++) {
-        Frontend::Texture* texture = command->draw_textures[i];
-        switch (texture->resource_type()) {
-          case Frontend::Resource::Type::TEXTURE1D:
-            textures[i] = reinterpret_cast<detail_gl4::texture1D*>(static_cast<Frontend::Texture1D*>(texture) + 1)->tex;
-            break;
-          case Frontend::Resource::Type::TEXTURE2D:
-            textures[i] = reinterpret_cast<detail_gl4::texture2D*>(static_cast<Frontend::Texture2D*>(texture) + 1)->tex;
-            break;
-          case Frontend::Resource::Type::TEXTURE3D:
-            textures[i] = reinterpret_cast<detail_gl4::texture3D*>(static_cast<Frontend::Texture3D*>(texture) + 1)->tex;
-            break;
-          case Frontend::Resource::Type::TEXTURECM:
-            textures[i] = reinterpret_cast<detail_gl4::textureCM*>(static_cast<Frontend::TextureCM*>(texture) + 1)->tex;
-            break;
-          default:
-            RX_HINT_UNREACHABLE();
-        }
-      }
-
-      pglBindTextures(0, n_textures, textures);
+      state->use_draw_images(command->draw_images);
 
       const auto offset = static_cast<GLint>(command->offset);
       const auto count = static_cast<GLsizei>(command->count);

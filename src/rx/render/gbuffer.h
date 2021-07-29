@@ -17,7 +17,8 @@ namespace Frontend {
 struct GBuffer {
   RX_MARK_NO_COPY(GBuffer);
 
-  constexpr GBuffer();
+  constexpr GBuffer() = default;
+
   GBuffer(GBuffer&& gbuffer_);
   ~GBuffer();
 
@@ -37,29 +38,24 @@ struct GBuffer {
   Frontend::Texture2D* normal() const;
   Frontend::Texture2D* emission() const;
   Frontend::Texture2D* velocity() const;
-  Frontend::Texture2D* depth_stencil() const;
 
+  Frontend::Texture2D* depth_stencil() const;
   Frontend::Target* target() const;
 
 private:
   constexpr GBuffer(Frontend::Context* _frontend, Frontend::Target* _target,
     Frontend::Texture2D* _albedo, Frontend::Texture2D* _normal,
     Frontend::Texture2D* _emission, Frontend::Texture2D* _velocity);
-
+  
   void release();
 
-  Frontend::Context* m_frontend;
-  Frontend::Target* m_target;
-  Frontend::Texture2D* m_albedo_texture;
-  Frontend::Texture2D* m_normal_texture;
-  Frontend::Texture2D* m_emission_texture;
-  Frontend::Texture2D* m_velocity_texture;
+  Frontend::Context* m_frontend = nullptr;
+  Frontend::Target* m_target = nullptr;
+  Frontend::Texture2D* m_albedo = nullptr;
+  Frontend::Texture2D* m_normal = nullptr;
+  Frontend::Texture2D* m_emission = nullptr;
+  Frontend::Texture2D* m_velocity = nullptr;
 };
-
-inline constexpr GBuffer::GBuffer()
-  : GBuffer{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}
-{
-}
 
 inline constexpr GBuffer::GBuffer(Frontend::Context* _frontend,
   Frontend::Target* _target, Frontend::Texture2D* _albedo,
@@ -67,20 +63,20 @@ inline constexpr GBuffer::GBuffer(Frontend::Context* _frontend,
   Frontend::Texture2D* _velocity)
   : m_frontend{_frontend}
   , m_target{_target}
-  , m_albedo_texture{_albedo}
-  , m_normal_texture{_normal}
-  , m_emission_texture{_emission}
-  , m_velocity_texture{_velocity}
+  , m_albedo{_albedo}
+  , m_normal{_normal}
+  , m_emission{_emission}
+  , m_velocity{_velocity}
 {
 }
 
 inline GBuffer::GBuffer(GBuffer&& gbuffer_)
   : m_frontend{Utility::exchange(gbuffer_.m_frontend, nullptr)}
   , m_target{Utility::exchange(gbuffer_.m_target, nullptr)}
-  , m_albedo_texture{Utility::exchange(gbuffer_.m_albedo_texture, nullptr)}
-  , m_normal_texture{Utility::exchange(gbuffer_.m_normal_texture, nullptr)}
-  , m_emission_texture{Utility::exchange(gbuffer_.m_emission_texture, nullptr)}
-  , m_velocity_texture{Utility::exchange(gbuffer_.m_velocity_texture, nullptr)}
+  , m_albedo{Utility::exchange(gbuffer_.m_albedo, nullptr)}
+  , m_normal{Utility::exchange(gbuffer_.m_normal, nullptr)}
+  , m_emission{Utility::exchange(gbuffer_.m_emission, nullptr)}
+  , m_velocity{Utility::exchange(gbuffer_.m_velocity, nullptr)}
 {
 }
 
@@ -97,19 +93,19 @@ inline bool GBuffer::recreate(const Options& _options) {
 }
 
 inline Frontend::Texture2D* GBuffer::albedo() const {
-  return m_albedo_texture;
+  return m_albedo;
 }
 
 inline Frontend::Texture2D* GBuffer::normal() const {
-  return m_normal_texture;
+  return m_normal;
 }
 
 inline Frontend::Texture2D* GBuffer::emission() const {
-  return m_emission_texture;
+  return m_emission;
 }
 
 inline Frontend::Texture2D* GBuffer::velocity() const {
-  return m_velocity_texture;
+  return m_velocity;
 }
 
 inline Frontend::Target* GBuffer::target() const {

@@ -54,6 +54,7 @@ protected:
   Input::Context m_input;
 
   // TODO(dweiler): Implement a Render::Context that wraps Frontend & Backend.
+  void* m_window;
   Render::Backend::Context* m_render_backend;
   Render::Frontend::Context* m_render_frontend;
 

@@ -34,10 +34,6 @@ Optional<IrradianceMap> IrradianceMap::create(Frontend::Context* _frontend, Size
   texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
   texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   texture->record_dimensions({_resolution, _resolution});
-  texture->record_filter({true, false, false}); // LINEAR
-  texture->record_wrap({Frontend::Texture::WrapType::REPEAT,
-                        Frontend::Texture::WrapType::REPEAT,
-                        Frontend::Texture::WrapType::REPEAT});
   _frontend->initialize_texture(RX_RENDER_TAG(tag), texture);
 
   target->attach_texture(texture, 0);
@@ -77,8 +73,9 @@ void IrradianceMap::render_next_face() {
 
   auto program = m_technique->configuration(0).variant(is_hdri(m_environment_map) ? 1 : 0);
 
-  Frontend::Textures textures;
-  textures.add(m_environment_map);
+  // TODO(dweiler): Correct sampler.
+  Frontend::Images draw_images;
+  draw_images.add(m_environment_map, {});
 
   program->uniforms()[2].record_int(m_current_face);
   program->uniforms()[3].record_int(Sint32(m_resolution) * 4);
@@ -103,7 +100,7 @@ void IrradianceMap::render_next_face() {
     0,
     0,
     Frontend::PrimitiveType::TRIANGLES,
-    textures);
+    draw_images);
 
   m_current_face++;
 }
@@ -126,10 +123,6 @@ Optional<PrefilteredEnvironmentMap> PrefilteredEnvironmentMap::create(Frontend::
   texture->record_format(Frontend::Texture::DataFormat::RGBA_F16);
   texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   texture->record_dimensions({_resolution, _resolution});
-  texture->record_filter({true, true, true}); // LINEAR
-  texture->record_wrap({Frontend::Texture::WrapType::REPEAT,
-                        Frontend::Texture::WrapType::REPEAT,
-                        Frontend::Texture::WrapType::REPEAT});
   _frontend->initialize_texture(RX_RENDER_TAG(tag), texture);
 
   Array<Frontend::Target*[MAX_PREFILTER_LEVELS]> targets;
@@ -190,8 +183,9 @@ void PrefilteredEnvironmentMap::render_next_face() {
 
   auto program = m_technique->configuration(0).variant(hdri ? 1 : 0);
 
-  Frontend::Textures textures;
-  textures.add(m_environment_map);
+  // TODO(dweiler): SAMPLERS.
+  Frontend::Images draw_images;
+  draw_images.add(m_environment_map, {});
 
   program->uniforms()[2].record_int(m_current_face);
   program->uniforms()[3].record_float(resolution);
@@ -221,7 +215,7 @@ void PrefilteredEnvironmentMap::render_next_face() {
       0,
       0,
       Frontend::PrimitiveType::TRIANGLES,
-      textures);
+      draw_images);
   }
 
   m_current_face++;
@@ -246,10 +240,7 @@ Optional<ImageBasedLighting> ImageBasedLighting::create(
   scale_bias_texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   scale_bias_texture->record_levels(1);
   scale_bias_texture->record_format(Frontend::Texture::DataFormat::RG_F16);
-  scale_bias_texture->record_filter({true, false, false}); // LINEAR
   scale_bias_texture->record_dimensions({256, 256});
-  scale_bias_texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-                                   Frontend::Texture::WrapType::CLAMP_TO_EDGE});
   _frontend->initialize_texture(RX_RENDER_TAG("scale bias"), scale_bias_texture);
 
   scale_bias_target->attach_texture(scale_bias_texture, 0);

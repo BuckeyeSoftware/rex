@@ -24,12 +24,8 @@ Optional<CopyPass> CopyPass::create(Frontend::Context* _frontend,
 
   texture->record_type(Frontend::Texture::Type::ATTACHMENT);
   texture->record_format(_options.format);
-  texture->record_filter({true, false, false});
   texture->record_levels(1);
   texture->record_dimensions(_options.dimensions);
-  texture->record_wrap({
-    Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-    Frontend::Texture::WrapType::CLAMP_TO_EDGE});
   _frontend->initialize_texture(RX_RENDER_TAG("CopyPass"), texture);
 
   auto target = _frontend->create_target(RX_RENDER_TAG("CopyPass"));
@@ -56,7 +52,7 @@ void CopyPass::release() {
   }
 }
 
-void CopyPass::render(Frontend::Texture2D* _source) {
+void CopyPass::render(Frontend::Texture2D* _source, const Frontend::Sampler& _sampler) {
   const auto& dimensions = m_texture->dimensions();
 
   Frontend::Program* program = m_technique->configuration(0).basic();
@@ -64,8 +60,8 @@ void CopyPass::render(Frontend::Texture2D* _source) {
   Frontend::Buffers draw_buffers;
   draw_buffers.add(0);
 
-  Frontend::Textures draw_textures;
-  program->uniforms()[0].record_sampler(draw_textures.add(_source));
+  Frontend::Images draw_images;
+  program->uniforms()[0].record_sampler(draw_images.add(_source, _sampler));
 
   Frontend::State state;
   state.viewport.record_dimensions(dimensions);
@@ -87,7 +83,7 @@ void CopyPass::render(Frontend::Texture2D* _source) {
     0,
     0,
     Frontend::PrimitiveType::TRIANGLES,
-    draw_textures);
+    draw_images);
 }
 
 bool CopyPass::recreate(const Options& _options) {

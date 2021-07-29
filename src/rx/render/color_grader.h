@@ -10,7 +10,6 @@
 
 #include "rx/math/vec2.h"
 #include "rx/math/vec4.h"
-
 namespace Rx::Render {
 
 namespace Frontend {

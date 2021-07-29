@@ -79,13 +79,23 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
 
   state.viewport.record_dimensions(_target->dimensions());
 
+  // Sampler used by both the skybox and the atlas.
+  Frontend::Sampler sampler;
+  sampler.record_address_mode_u(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_address_mode_v(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_address_mode_w(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+  sampler.record_min_filter(Frontend::Sampler::Filter::LINEAR);
+  sampler.record_mag_filter(Frontend::Sampler::Filter::LINEAR);
+  sampler.record_mipmap_mode(Frontend::Sampler::MipmapMode::NONE);
+
   // Record all uniforms and textures.
-  Frontend::Textures draw_textures;
+  Frontend::Images draw_images;
   program->uniforms()[0].record_mat4x4f(Math::invert(_projection));
   program->uniforms()[1].record_mat4x4f(Math::invert(view));
-  program->uniforms()[is_hdri ? 2 : 3].record_sampler(draw_textures.add(m_texture));
+  program->uniforms()[is_hdri ? 2 : 3].record_sampler(draw_images.add(m_texture, sampler));
   if (_grading) {
-    program->uniforms()[4].record_sampler(draw_textures.add(_grading->atlas()->texture()));
+    const auto& atlas = _grading->atlas();
+    program->uniforms()[4].record_sampler(draw_images.add(atlas->texture(), sampler));
     program->uniforms()[5].record_vec2f(_grading->properties());
   }
 
@@ -106,7 +116,7 @@ void Skybox::render(Frontend::Target* _target, const Math::Mat4x4f& _view,
     0,
     0,
     Frontend::PrimitiveType::TRIANGLES,
-    draw_textures);
+    draw_images);
 }
 
 bool Skybox::load_async(Concurrency::Scheduler& _scheduler,
@@ -220,10 +230,6 @@ Frontend::TextureCM* Skybox::create_cubemap(const Serialize::JSON& _faces,
   texture->record_type(Frontend::Texture::Type::STATIC);
   texture->record_format(Frontend::Texture::DataFormat::RGBA_U8);
   texture->record_levels(1);
-  texture->record_filter({false, false, false});
-  texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-                        Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-                        Frontend::Texture::WrapType::CLAMP_TO_EDGE});
 
   Math::Vec2z dimensions;
   Frontend::TextureCM::Face face{Frontend::TextureCM::Face::RIGHT};
@@ -272,9 +278,6 @@ Frontend::Texture2D* Skybox::create_hdri(const Serialize::JSON& _json) const {
   texture->record_type(Frontend::Texture::Type::STATIC);
   texture->record_format(Frontend::Texture::DataFormat::RGBA_F32);
   texture->record_levels(1);
-  texture->record_filter({false, false, false});
-  texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-                        Frontend::Texture::WrapType::CLAMP_TO_EDGE});
 
   Texture::Loader loader{m_frontend->allocator()};
   if (!loader.load(*name, Texture::PixelFormat::RGBA_F32, {4096, 4096})) {

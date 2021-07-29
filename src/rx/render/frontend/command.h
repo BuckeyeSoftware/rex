@@ -7,6 +7,7 @@
 #include "rx/math/vec4.h"
 
 #include "rx/render/frontend/state.h"
+#include "rx/render/frontend/sampler.h"
 
 namespace Rx::Render::Frontend {
 
@@ -106,32 +107,34 @@ private:
   Size m_index;
 };
 
-struct Textures {
+struct Images {
   static constexpr const Size MAX_TEXTURES = 8;
 
-  constexpr Textures();
+  struct Image {
+    Texture* texture = nullptr;
+    Sampler sampler;
+  };
 
-  int add(Texture* _texture);
+  /// Add a texture and associated sampler object, returns the index of the image.
+  int add(Texture* _texture, const Sampler& _sampler);
 
   bool is_empty() const;
 
   Size size() const;
 
   void clear();
+  void flush();
 
-  Texture *operator[](Size _index) const;
+  const Image& operator[](Size _index) const;
 
 private:
-  union {
-    struct {} m_nat;
-    Texture* m_handles[MAX_TEXTURES];
-  };
-  Size m_index;
+  Image m_images[MAX_TEXTURES];
+  Size m_index = 0;
 };
 
 struct DrawCommand {
   Buffers draw_buffers;
-  Textures draw_textures;
+  Images draw_images;
   State render_state;
   Target *render_target;
   Buffer *render_buffer;
@@ -253,34 +256,34 @@ inline Size CommandBuffer::size() const {
   return m_allocator.size();
 }
 
-// [Texture]
-inline constexpr Textures::Textures()
-  : m_nat{}
-  , m_index{0}
-{
-}
-
-inline int Textures::add(Texture* _texture) {
+// [Images]
+inline int Images::add(Texture* _texture, const Sampler& _sampler) {
   RX_ASSERT(m_index < MAX_TEXTURES, "too many draw textures");
-  m_handles[m_index] = _texture;
+  m_images[m_index] = { _texture, _sampler };
   return static_cast<int>(m_index++);
 }
 
-inline bool Textures::is_empty() const {
+inline bool Images::is_empty() const {
   return m_index == 0;
 }
 
-inline Size Textures::size() const {
+inline Size Images::size() const {
   return m_index;
 }
 
-inline void Textures::clear() {
+inline void Images::clear() {
   m_index = 0;
 }
 
-inline Texture *Textures::operator[](Size _index) const {
+inline void Images::flush() {
+  for (Size i = 0; i < m_index; i++) {
+    m_images[i].sampler.flush();
+  }
+}
+
+inline const Images::Image& Images::operator[](Size _index) const {
   RX_ASSERT(_index < MAX_TEXTURES, "out of bounds");
-  return reinterpret_cast<Texture *>(m_handles[_index]);
+  return m_images[_index];
 }
 
 // [Buffers]

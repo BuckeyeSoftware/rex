@@ -277,9 +277,13 @@ Immediate2D::Font::open(const Key& _key, Frontend::Context* _frontend) {
       texture->record_type(Frontend::Texture::Type::STATIC);
       texture->record_levels(chain.levels().size());
       texture->record_dimensions({resolution, resolution});
-      texture->record_filter({true, false, true});
-      texture->record_wrap({Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-                            Frontend::Texture::WrapType::CLAMP_TO_EDGE});
+
+      Frontend::Sampler sampler;
+      sampler.record_address_mode_u(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+      sampler.record_address_mode_v(Frontend::Sampler::AddressMode::CLAMP_TO_EDGE);
+      sampler.record_min_filter(Frontend::Sampler::Filter::LINEAR);
+      sampler.record_mag_filter(Frontend::Sampler::Filter::LINEAR);
+      sampler.record_mipmap_mode(Frontend::Sampler::MipmapMode::NEAREST);
 
       const auto& levels = chain.levels();
       for (Size i = 0; i < levels.size(); i++) {
@@ -294,6 +298,7 @@ Immediate2D::Font::open(const Key& _key, Frontend::Context* _frontend) {
         _key.size,
         resolution,
         texture,
+        sampler,
         Utility::move(glyphs)
       };
     }
@@ -309,6 +314,7 @@ Immediate2D::Font::Font(Font&& font_)
   , m_size{Utility::exchange(font_.m_size, 0)}
   , m_resolution{Utility::exchange(font_.m_resolution, 0)}
   , m_texture{Utility::exchange(font_.m_texture, nullptr)}
+  , m_sampler{Utility::exchange(font_.m_sampler, {})}
   , m_glyphs{Utility::move(font_.m_glyphs)}
 {
 }
@@ -324,6 +330,7 @@ Immediate2D::Font& Immediate2D::Font::operator=(Font&& font_) {
     m_size = Utility::exchange(font_.m_size, 0);
     m_resolution = Utility::exchange(font_.m_resolution, 0);
     m_texture = Utility::exchange(font_.m_texture, nullptr);
+    m_sampler = Utility::exchange(font_.m_sampler, {});
     m_glyphs = Utility::move(font_.m_glyphs);
   }
   return *this;
@@ -362,11 +369,13 @@ Immediate2D::Font::Quad Immediate2D::Font::quad_for_glyph(Size _glyph,
 }
 
 Immediate2D::Font::Font(Frontend::Context* _frontend, Sint32 _size,
-  Size _resolution, Frontend::Texture2D* _texture, Vector<Glyph>&& glyphs_)
+  Size _resolution, Frontend::Texture2D* _texture,
+  const Frontend::Sampler& _sampler, Vector<Glyph>&& glyphs_)
   : m_frontend{_frontend}
   , m_size{_size}
   , m_resolution{_resolution}
   , m_texture{_texture}
+  , m_sampler{_sampler}
   , m_glyphs{Utility::move(glyphs_)}
 {
 }
@@ -595,7 +604,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
       Frontend::Buffers draw_buffers;
       draw_buffers.add(0);
 
-      Frontend::Textures draw_textures;
+      Frontend::Images draw_images;
 
       switch (_batch.type) {
       case Batch::Type::TRIANGLES:
@@ -631,8 +640,8 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           {});
           break;
       case Batch::Type::TEXT:
-        draw_textures.clear();
-        draw_textures.add(_batch.texture);
+        draw_images.clear();
+        draw_images.add(_batch.texture, _batch.sampler);
 
         m_frontend->draw(
           RX_RENDER_TAG("immediate2D text"),
@@ -647,7 +656,7 @@ void Immediate2D::Immediate2D::render(Frontend::Target* _target) {
           0,
           0,
           Frontend::PrimitiveType::TRIANGLES,
-          draw_textures);
+          draw_images);
         break;
       default:
         break;
@@ -945,7 +954,7 @@ void Immediate2D::generate_text(Sint32 _size, const char* _font,
     add_vertex({{quad.position[0].x, quad.position[1].y}, {quad.coordinate[0].s, quad.coordinate[1].t}, color});
   }
 
-  add_batch(offset, Batch::Type::TEXT, true, font_map->texture());
+  add_batch(offset, Batch::Type::TEXT, true, font_map->texture(), font_map->sampler());
 }
 
 void Immediate2D::generate_triangle(const Math::Vec2f& _position,
@@ -1008,7 +1017,7 @@ void Immediate2D::size_triangle(Size& n_vertices_, Size& n_elements_) {
 }
 
 bool Immediate2D::add_batch(Size _offset, Batch::Type _type, bool _blend,
-                            Frontend::Texture2D* _texture)
+  Frontend::Texture2D* _texture, const Frontend::Sampler& _sampler)
 {
   RX_PROFILE_CPU("immediate2D::add_batch");
 
@@ -1040,15 +1049,21 @@ bool Immediate2D::add_batch(Size _offset, Batch::Type _type, bool _blend,
 
   render_state.flush();
 
+  // Copy the sampler and flush for comparison.
+  Frontend::Sampler sampler = _sampler;
+  sampler.flush();
+
   if (!m_batches.is_empty()) {
     auto& batch{m_batches.last()};
-    if (batch.render_state == render_state && batch.type == _type && batch.texture == _texture) {
+    if (batch.render_state == render_state && batch.type == _type
+      && batch.texture == _texture && batch.sampler == sampler)
+    {
       batch.count += count;
       return true;
     }
   }
 
-  return m_batches.emplace_back(_offset, count, _type, render_state, _texture);
+  return m_batches.emplace_back(_offset, count, _type, render_state, _texture, sampler);
 }
 
 void Immediate2D::add_element(Uint32 _element) {

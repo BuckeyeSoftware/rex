@@ -90,7 +90,7 @@ struct Context {
     Size _base_vertex,
     Size _base_instance,
     PrimitiveType _primitive_type,
-    const Textures& _draw_textures);
+    const Images& _draw_images);
 
   // Performs a clear operation on |_target| with specified draw buffer layout
   // |_draw_buffers| and state |_state|. The clear mask specified by

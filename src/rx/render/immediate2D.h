@@ -10,6 +10,7 @@
 #include "rx/math/vec4.h"
 
 #include "rx/render/frontend/state.h"
+#include "rx/render/frontend/sampler.h"
 
 #include "rx/core/memory/null_allocator.h"
 #include "rx/core/memory/temporary_allocator.h"
@@ -201,16 +202,19 @@ struct Immediate2D {
 
     Sint32 size() const;
     Frontend::Texture2D* texture() const;
+    const Frontend::Sampler& sampler() const;
     Frontend::Context* frontend() const;
 
   private:
     Font(Frontend::Context* _context, Sint32 _size, Size _resolution,
-      Frontend::Texture2D* _texture, Vector<Glyph>&& glyphs_);
+      Frontend::Texture2D* _texture, const Frontend::Sampler& _sampler,
+      Vector<Glyph>&& glyphs_);
 
     Frontend::Context* m_frontend;
     Sint32 m_size;
     Size m_resolution;
     Frontend::Texture2D* m_texture;
+    Frontend::Sampler m_sampler;
     Vector<Glyph> m_glyphs;
   };
 
@@ -233,6 +237,7 @@ private:
     Type type;
     Frontend::State render_state;
     Frontend::Texture2D* texture;
+    Frontend::Sampler sampler;
   };
 
   static constexpr const Size BUFFERS = 2;
@@ -261,7 +266,7 @@ private:
     Size& n_vertices_, Size& n_elements_);
   void size_triangle(Size& n_vertices_, Size& n_elements_);
   bool add_batch(Size _offset, Batch::Type _type, bool _blend,
-                 Frontend::Texture2D* _texture = nullptr);
+    Frontend::Texture2D* _texture = nullptr, const Frontend::Sampler& _sampler = {});
 
   void add_element(Uint32 _element);
   void add_vertex(Vertex&& vertex_);
@@ -365,6 +370,10 @@ inline Sint32 Immediate2D::Font::size() const {
 
 inline Frontend::Texture2D* Immediate2D::Font::texture() const {
   return m_texture;
+}
+
+inline const Frontend::Sampler& Immediate2D::Font::sampler() const {
+  return m_sampler;
 }
 
 inline Frontend::Context* Immediate2D::Font::frontend() const {

@@ -4,6 +4,7 @@
 
 #include "rx/render/frontend/context.h"
 #include "rx/render/frontend/target.h"
+#include "rx/render/frontend/sampler.h"
 
 #include "rx/console/variable.h"
 
@@ -147,7 +148,10 @@ bool ModelViewer::on_render() {
   // lighting pass yet the indirect lighting pass has the geometry buffer's
   // depth stencil as an attachment to perform stencil testing. This forms a
   // feedback loop which is undefined behavior.
-  m_copy_pass->render(m_gbuffer->depth_stencil());
+  Render::Frontend::Sampler sampler;
+  sampler.record_min_filter(Render::Frontend::Sampler::Filter::LINEAR);
+  sampler.record_mag_filter(Render::Frontend::Sampler::Filter::LINEAR);
+  m_copy_pass->render(m_gbuffer->depth_stencil(), sampler);
 
   // Render indirect lighting pass now.
   Render::IndirectLightingPass::Input input;

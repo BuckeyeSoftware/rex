@@ -23,12 +23,10 @@ struct Texture {
     bool mipmaps;
   };
 
-  enum class WrapType : Byte {
-    CLAMP_TO_EDGE,
-    CLAMP_TO_BORDER,
-    MIRRORED_REPEAT,
+  enum class AddressModeType : Byte {
     REPEAT,
-    MIRROR_CLAMP_TO_EDGE
+    MIRRORED_REPEAT,
+    CLAMP_TO_EDGE
   };
 
   enum class Type : Byte {
@@ -41,7 +39,7 @@ struct Texture {
     CUSTOM
   };
 
-  using Wrap = Math::Vec2<WrapType>;
+  using AddressMode = Math::Vec2<AddressModeType>;
 
   struct Bitmap {
     LinearBuffer data;
@@ -61,10 +59,9 @@ struct Texture {
   [[nodiscard]] bool parse(const Serialize::JSON& _definition);
 
   const Filter& filter() const &;
-  const Wrap& wrap() const &;
+  const AddressMode& address_mode() const &;
   Type type() const;
   const String& file() const &;
-  const Optional<Math::Vec4f>& border() const;
 
   const Bitmap& bitmap() const;
 
@@ -75,16 +72,14 @@ private:
 
   bool parse_type(const Serialize::JSON& _type);
   bool parse_filter(const Serialize::JSON& _filter, bool& _mipmaps);
-  bool parse_wrap(const Serialize::JSON& _wrap);
-  bool parse_border(const Serialize::JSON& _border);
+  bool parse_address_mode(const Serialize::JSON& _address_mode);
 
   Memory::Allocator* m_allocator;
   Bitmap m_bitmap;
   Filter m_filter;
-  Wrap m_wrap;
+  AddressMode m_address_mode;
   Type m_type;
   String m_file;
-  Optional<Math::Vec4f> m_border;
   Report m_report;
 };
 
@@ -92,10 +87,9 @@ inline Texture::Texture(Texture&& texture_)
   : m_allocator{texture_.m_allocator}
   , m_bitmap{Utility::move(texture_.m_bitmap)}
   , m_filter{texture_.m_filter}
-  , m_wrap{texture_.m_wrap}
+  , m_address_mode{texture_.m_address_mode}
   , m_type{texture_.m_type}
   , m_file{Utility::move(texture_.m_file)}
-  , m_border{Utility::move(texture_.m_border)}
   , m_report{Utility::move(texture_.m_report)}
 {
 }
@@ -105,10 +99,9 @@ inline Texture& Texture::operator=(Texture&& texture_) {
     m_allocator = texture_.m_allocator;
     m_bitmap = Utility::move(texture_.m_bitmap);
     m_filter = texture_.m_filter;
-    m_wrap = texture_.m_wrap;
+    m_address_mode = texture_.m_address_mode;
     m_type = texture_.m_type;
     m_file = Utility::move(texture_.m_file);
-    m_border = Utility::move(texture_.m_border);
     m_report = Utility::move(texture_.m_report);
   }
   return *this;
@@ -118,8 +111,8 @@ inline const Texture::Filter& Texture::filter() const & {
   return m_filter;
 }
 
-inline const Texture::Wrap& Texture::wrap() const & {
-  return m_wrap;
+inline const Texture::AddressMode& Texture::address_mode() const & {
+  return m_address_mode;
 }
 
 inline Texture::Type Texture::type() const {
@@ -128,10 +121,6 @@ inline Texture::Type Texture::type() const {
 
 inline const String& Texture::file() const & {
   return m_file;
-}
-
-inline const Optional<Math::Vec4f>& Texture::border() const {
-  return m_border;
 }
 
 inline const Texture::Bitmap& Texture::bitmap() const {

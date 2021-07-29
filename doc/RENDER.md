@@ -378,14 +378,8 @@ void record_format(DataFormat _format);
 // Record the texture type |_type|.
 void record_type(Type _type);
 
-// Record the texture filter options |_options|.
-void record_filter(const FilterOptions& _options);
-
 // Record the number of levels |_levels|, including the base-level.
 void record_levels(Size _levels);
-
-// Record the optional border color |_color|.
-void record_border(const Math::Vec4f& _color);
 ```
 
 The contents of the texture can be specified and updated by calling the following functions:

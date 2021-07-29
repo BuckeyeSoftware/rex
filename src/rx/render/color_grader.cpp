@@ -327,13 +327,8 @@ Optional<ColorGrader::Atlas> ColorGrader::Atlas::create(ColorGrader* _context, S
 
   texture->record_type(Frontend::Texture::Type::DYNAMIC);
   texture->record_levels(1);
-  texture->record_filter({true, false, false});
   texture->record_format(Frontend::Texture::DataFormat::RGBA_F16);
   texture->record_dimensions({_size, _size, MAX_DEPTH});
-  texture->record_wrap({
-    Render::Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-    Render::Frontend::Texture::WrapType::CLAMP_TO_EDGE,
-    Render::Frontend::Texture::WrapType::CLAMP_TO_EDGE});
 
   frontend->initialize_texture(RX_RENDER_TAG("Atlas"), texture);
 
