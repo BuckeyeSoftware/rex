@@ -209,20 +209,20 @@ bool Texture::parse_address_mode(const Serialize::JSON& _address_mode) {
 
   static constexpr const struct {
     const char* match;
-    AddressModeType type;
+    AddressMode type;
   } MATCHES[] = {
-    { "clamp_to_edge",        AddressModeType::CLAMP_TO_EDGE   },
-    { "mirrored_repeat",      AddressModeType::MIRRORED_REPEAT },
-    { "repeat",               AddressModeType::REPEAT          }
+    { "clamp_to_edge",   AddressMode::CLAMP_TO_EDGE   },
+    { "mirrored_repeat", AddressMode::MIRRORED_REPEAT },
+    { "repeat",          AddressMode::REPEAT          }
   };
 
-  const auto parse = [this](const String& _type) -> Optional<AddressModeType> {
+  const auto parse = [this](const String& _type) -> Optional<AddressMode> {
     for (const auto& match : MATCHES) {
       if (_type == match.match) {
         return match.type;
       }
     }
-    return m_report.error("invalid wrap type '%s'", _type);
+    return m_report.error("invalid address mode '%s'", _type);
   };
 
   auto s_string = _address_mode[0_z].as_string(allocator());
@@ -231,14 +231,14 @@ bool Texture::parse_address_mode(const Serialize::JSON& _address_mode) {
     return false;
   }
 
-  const auto s_address_mode = parse(*s_string);
-  const auto t_address_mode = parse(*t_string);
-  if (!s_address_mode || !t_address_mode) {
+  const auto u_address_mode = parse(*s_string);
+  const auto v_address_mode = parse(*t_string);
+  if (!u_address_mode || !v_address_mode) {
     return false;
   }
 
-  m_address_mode.s = *s_address_mode;
-  m_address_mode.t = *t_address_mode;
+  m_address_mode_u = *u_address_mode;
+  m_address_mode_v = *v_address_mode;
 
   return true;
 }

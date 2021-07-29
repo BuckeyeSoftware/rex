@@ -200,10 +200,23 @@ bool Material::load(const Rx::Material::Loader& _loader) {
 
     sampler.record_mag_filter(filter.bilinear ? Sampler::Filter::LINEAR : Sampler::Filter::NEAREST);
 
-// TODO(dweiler): SAMPLERS.
-#if 0
-      texture->record_wrap(convert_material_wrap(_texture.wrap()));
-#endif
+    auto convert_address_mode = [](Rx::Material::Texture::AddressMode _mode) {
+      using SrcAddressMode = Rx::Material::Texture::AddressMode;
+      using DstAddressMode = Rx::Render::Frontend::Sampler::AddressMode;
+
+      switch (_mode) {
+      case SrcAddressMode::CLAMP_TO_EDGE:
+        return DstAddressMode::CLAMP_TO_EDGE;
+      case SrcAddressMode::MIRRORED_REPEAT:
+        return DstAddressMode::MIRRORED_REPEAT;
+      case SrcAddressMode::REPEAT:
+        return DstAddressMode::REPEAT;
+      }
+      RX_HINT_UNREACHABLE();
+    };
+
+    sampler.record_address_mode_u(convert_address_mode(_texture.address_mode_u()));
+    sampler.record_address_mode_v(convert_address_mode(_texture.address_mode_v()));
 
     find->image->sampler = sampler;
 

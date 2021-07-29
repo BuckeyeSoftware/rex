@@ -23,7 +23,7 @@ struct Texture {
     bool mipmaps;
   };
 
-  enum class AddressModeType : Byte {
+  enum class AddressMode : Byte {
     REPEAT,
     MIRRORED_REPEAT,
     CLAMP_TO_EDGE
@@ -38,8 +38,6 @@ struct Texture {
     EMISSIVE,
     CUSTOM
   };
-
-  using AddressMode = Math::Vec2<AddressModeType>;
 
   struct Bitmap {
     LinearBuffer data;
@@ -59,7 +57,8 @@ struct Texture {
   [[nodiscard]] bool parse(const Serialize::JSON& _definition);
 
   const Filter& filter() const &;
-  const AddressMode& address_mode() const &;
+  const AddressMode& address_mode_u() const &;
+  const AddressMode& address_mode_v() const &;
   Type type() const;
   const String& file() const &;
 
@@ -77,7 +76,8 @@ private:
   Memory::Allocator* m_allocator;
   Bitmap m_bitmap;
   Filter m_filter;
-  AddressMode m_address_mode;
+  AddressMode m_address_mode_u;
+  AddressMode m_address_mode_v;
   Type m_type;
   String m_file;
   Report m_report;
@@ -87,7 +87,8 @@ inline Texture::Texture(Texture&& texture_)
   : m_allocator{texture_.m_allocator}
   , m_bitmap{Utility::move(texture_.m_bitmap)}
   , m_filter{texture_.m_filter}
-  , m_address_mode{texture_.m_address_mode}
+  , m_address_mode_u{texture_.m_address_mode_u}
+  , m_address_mode_v{texture_.m_address_mode_v}
   , m_type{texture_.m_type}
   , m_file{Utility::move(texture_.m_file)}
   , m_report{Utility::move(texture_.m_report)}
@@ -99,7 +100,8 @@ inline Texture& Texture::operator=(Texture&& texture_) {
     m_allocator = texture_.m_allocator;
     m_bitmap = Utility::move(texture_.m_bitmap);
     m_filter = texture_.m_filter;
-    m_address_mode = texture_.m_address_mode;
+    m_address_mode_u = texture_.m_address_mode_u;
+    m_address_mode_v = texture_.m_address_mode_v;
     m_type = texture_.m_type;
     m_file = Utility::move(texture_.m_file);
     m_report = Utility::move(texture_.m_report);
@@ -111,8 +113,12 @@ inline const Texture::Filter& Texture::filter() const & {
   return m_filter;
 }
 
-inline const Texture::AddressMode& Texture::address_mode() const & {
-  return m_address_mode;
+inline const Texture::AddressMode& Texture::address_mode_u() const & {
+  return m_address_mode_u;
+}
+
+inline const Texture::AddressMode& Texture::address_mode_v() const & {
+  return m_address_mode_v;
 }
 
 inline Texture::Type Texture::type() const {
