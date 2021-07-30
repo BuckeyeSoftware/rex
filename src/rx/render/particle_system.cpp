@@ -62,18 +62,13 @@ void ParticleSystem::render(const Particle::System* _system,
     return;
   }
 
-  // Each index needs 4 bytes, there can be a maximum of |count| particles
-  // before culling. Assuming a max of 500k particles, that is 2MiB.
-  Memory::TemporaryAllocator<2_MiB> allocator{Memory::SystemAllocator::instance()};
-
   // Only update the content if this is a new state.
   if (_system->id() != m_last_id) {
-    Vector<Uint32> indices{allocator};
-    if (!indices.resize(count)) {
+    if (!m_indices.resize(count)) {
       return;
     }
 
-    m_count = _system->visible({indices.data(), indices.size()}, frustum);
+    m_count = _system->visible({m_indices.data(), m_indices.size()}, frustum);
 
     auto vertices = reinterpret_cast<Vertex*>(m_buffer->map_vertices(sizeof(Vertex) * m_count));
     if (!vertices) {
@@ -81,7 +76,7 @@ void ParticleSystem::render(const Particle::System* _system,
     }
 
     for (Size i = 0; i < m_count; i++) {
-      const auto index = indices[i];
+      const auto index = m_indices[i];
       vertices[i].size = _system->size(index);
       vertices[i].position = _system->position(index);
       vertices[i].color = _system->color(index);

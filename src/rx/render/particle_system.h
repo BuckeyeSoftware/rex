@@ -3,9 +3,7 @@
 #include "rx/math/vec3.h"
 #include "rx/math/mat4x4.h"
 
-#include "rx/core/optional.h"
-
-#include "rx/core/utility/exchange.h"
+#include "rx/core/vector.h"
 
 namespace Rx::Particle {
   struct System;
@@ -36,6 +34,7 @@ struct ParticleSystem {
     const Math::Mat4x4f& _projection);
 
 private:
+
   constexpr ParticleSystem(
     Frontend::Context* _frontend, Frontend::Buffer* _buffer,
     Frontend::Technique* _technique);
@@ -48,11 +47,14 @@ private:
     Float32 size;
     Math::Vec4b color;
   };
+
   Frontend::Context* m_frontend;
   Frontend::Buffer* m_buffer;
   Frontend::Technique* m_technique;
   Uint64 m_last_id;
   Size m_count;
+
+  Vector<Uint32> m_indices;
 };
 
 inline constexpr ParticleSystem::ParticleSystem()

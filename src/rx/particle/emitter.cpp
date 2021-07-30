@@ -58,8 +58,6 @@ void Emitter::emit(Random::Context& _random, Float32 _delta_time, State* state_)
       state_->m_size[i] = result.size;
     }
   }
-
-  // state_->m_tree.validate();
 }
 
 } // namespace Rx::Particle

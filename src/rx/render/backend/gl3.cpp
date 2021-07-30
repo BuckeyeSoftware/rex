@@ -817,7 +817,7 @@ namespace detail_gl3 {
         auto new_sampler = image.sampler;
 
         if (new_sampler.anisotropy() != render_anisotropic->get()) {
-          new_sampler.record_anisotropy(Algorithm::max(m_max_aniso, render_anisotropic->get()));
+          new_sampler.record_anisotropy(Algorithm::min(m_max_aniso, render_anisotropic->get()));
           new_sampler.flush();
         }
 

@@ -129,6 +129,33 @@ inline Size State::total_count() const {
   return m_total_count;
 }
 
+RX_HINT_FORCE_INLINE Math::Vec3f State::position(Uint32 _index) const {
+  RX_ASSERT(_index < m_alive_count, "out of bounds");
+  const auto x = m_position_x[_index];
+  const auto y = m_position_y[_index];
+  const auto z = m_position_z[_index];
+  return {x, y, z};
+}
+
+RX_HINT_FORCE_INLINE Math::Vec4b State::color(Uint32 _index) const {
+  RX_ASSERT(_index < m_alive_count, "out of bounds");
+  const auto r = Byte(m_color_r[_index] * 255.0);
+  const auto g = Byte(m_color_g[_index] * 255.0);
+  const auto b = Byte(m_color_b[_index] * 255.0);
+  const auto a = Byte(m_color_a[_index] * 255.0);
+  return {r, g, b, a};
+}
+
+RX_HINT_FORCE_INLINE Float32 State::size(Uint32 _index) const {
+  RX_ASSERT(_index < m_alive_count, "out of bounds");
+  return m_size[_index];
+}
+
+RX_HINT_FORCE_INLINE Uint16 State::texture(Uint32 _index) const {
+  RX_ASSERT(_index < m_alive_count, "out of bounds");
+  return m_texture[_index];
+}
+
 inline Uint64 State::id() const {
   return m_id;
 }
