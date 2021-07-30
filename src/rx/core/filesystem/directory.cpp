@@ -82,19 +82,19 @@ Optional<Directory> Directory::open(Memory::Allocator& _allocator, const StringV
   }
 
   // Convert |_path| to UTF-16 for Windows.
-  const auto path_utf16 = path.to_utf16();
+  const auto path_utf16 = path->to_utf16();
   static constexpr const wchar_t PATH_EXTRA[] = L"\\*";
   LinearBuffer path_data{_allocator};
   if (!path_data.resize(path_utf16.size() * 2 + sizeof PATH_EXTRA)) {
     return nullopt;
   }
 
-  Memory::copy(path_data.data(), path_utf16.data(), path_utf16.size() * 2);
-  Memory::copy(path_data.data() + path_utf16.size() * 2, PATH_EXTRA, sizeof PATH_EXTRA);
+  Memory::copy_untyped(path_data.data(), path_utf16.data(), path_utf16.size() * 2);
+  Memory::copy_untyped(path_data.data() + path_utf16.size() * 2, PATH_EXTRA, sizeof PATH_EXTRA);
 
   // Execute one FindFirstFileW to check if the directory exists.
-  const auto path = reinterpret_cast<const LPCWSTR>(path_data.data());
-  const HANDLE handle = FindFirstFileW(path, &context->find_data);
+  const auto path_raw = reinterpret_cast<const LPCWSTR>(path_data.data());
+  const HANDLE handle = FindFirstFileW(path_raw, &context->find_data);
   if (handle != INVALID_HANDLE_VALUE) {
     // The directory exists and has been opened. Cache the handle and the path
     // conversion for |each|.
@@ -233,7 +233,7 @@ bool create_directory(const StringView& _path) {
   // also requires that "\\?\" be prepended to the |_path| to remove the 248
   // character limit. Windows 10 doesn't require this, but it doesn't hurt
   // to add it either.
-  const auto path = String::format(_path.allocator(), "\\\\?\\%s", _path).to_utf16();
+  const auto path = String::format(Memory::SystemAllocator::instance(), "\\\\?\\%s", _path).to_utf16();
   return CreateDirectoryW(reinterpret_cast<LPCWSTR>(path.data()), nullptr);
 #endif
 }

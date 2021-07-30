@@ -153,6 +153,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <StackReserveSize>16777216</StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -177,6 +178,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <StackReserveSize>16777216</StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -194,6 +196,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <StackReserveSize>16777216</StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -225,6 +228,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <StackReserveSize>16777216</StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -260,11 +264,12 @@
     <ClCompile Include="src\rx\core\filesystem\unbuffered_file.cpp" />
     <ClCompile Include="src\rx\core\format.cpp" />
     <ClCompile Include="src\rx\core\global.cpp" />
+    <ClCompile Include="src\rx\core\hash\combine.cpp" />
     <ClCompile Include="src\rx\core\hash\djbx33a.cpp" />
     <ClCompile Include="src\rx\core\hash\fnv1a.cpp" />
+    <ClCompile Include="src\rx\core\hash\hasher.cpp" />
     <ClCompile Include="src\rx\core\intrusive_compressed_list.cpp" />
     <ClCompile Include="src\rx\core\intrusive_list.cpp" />
-    <ClCompile Include="src\rx\core\json.cpp" />
     <ClCompile Include="src\rx\core\library\loader.cpp" />
     <ClCompile Include="src\rx\core\linear_buffer.cpp" />
     <ClCompile Include="src\rx\core\log.cpp" />
@@ -299,14 +304,15 @@
     <ClCompile Include="src\rx\core\memory\system_allocator.cpp" />
     <ClCompile Include="src\rx\core\memory\vma.cpp" />
     <ClCompile Include="src\rx\core\profiler.cpp" />
-    <ClCompile Include="src\rx\core\random\mt19937.cpp" />
+    <ClCompile Include="src\rx\core\random\mersenne_twister.cpp" />
     <ClCompile Include="src\rx\core\report.cpp" />
     <ClCompile Include="src\rx\core\serialize\decoder.cpp" />
     <ClCompile Include="src\rx\core\serialize\encoder.cpp" />
+    <ClCompile Include="src\rx\core\serialize\json.cpp" />
+    <ClCompile Include="src\rx\core\stream\advancing_stream.cpp" />
     <ClCompile Include="src\rx\core\stream\buffered_stream.cpp" />
+    <ClCompile Include="src\rx\core\stream\context.cpp" />
     <ClCompile Include="src\rx\core\stream\memory_stream.cpp" />
-    <ClCompile Include="src\rx\core\stream\tracked_stream.cpp" />
-    <ClCompile Include="src\rx\core\stream\untracked_stream.cpp" />
     <ClCompile Include="src\rx\core\string.cpp" />
     <ClCompile Include="src\rx\core\string_table.cpp" />
     <ClCompile Include="src\rx\core\time\delay.cpp" />
@@ -346,6 +352,7 @@
     <ClCompile Include="src\rx\model\importer.cpp" />
     <ClCompile Include="src\rx\model\iqm.cpp" />
     <ClCompile Include="src\rx\model\loader.cpp" />
+    <ClCompile Include="src\rx\model\obj.cpp" />
     <ClCompile Include="src\rx\model\skeleton.cpp" />
     <ClCompile Include="src\rx\model\voxel.cpp" />
     <ClCompile Include="src\rx\particle\assembler.cpp" />
@@ -370,6 +377,7 @@
     <ClCompile Include="src\rx\render\frontend\module.cpp" />
     <ClCompile Include="src\rx\render\frontend\program.cpp" />
     <ClCompile Include="src\rx\render\frontend\resource.cpp" />
+    <ClCompile Include="src\rx\render\frontend\sampler.cpp" />
     <ClCompile Include="src\rx\render\frontend\state.cpp" />
     <ClCompile Include="src\rx\render\frontend\target.cpp" />
     <ClCompile Include="src\rx\render\frontend\technique.cpp" />
@@ -391,7 +399,6 @@
     <ClCompile Include="src\rx\texture\scale.cpp" />
     <ClInclude Include="src\demos\model_banner.h" />
     <ClInclude Include="src\demos\model_viewer.h" />
-    <ClInclude Include="src\game\terrain.h" />
     <ClInclude Include="src\lib\fontstash.h" />
     <ClInclude Include="src\lib\json.h" />
     <ClInclude Include="src\lib\stb_image.h" />
@@ -456,7 +463,6 @@
     <ClInclude Include="src\rx\core\hints\unreachable.h" />
     <ClInclude Include="src\rx\core\intrusive_compressed_list.h" />
     <ClInclude Include="src\rx\core\intrusive_list.h" />
-    <ClInclude Include="src\rx\core\json.h" />
     <ClInclude Include="src\rx\core\library\loader.h" />
     <ClInclude Include="src\rx\core\linear_buffer.h" />
     <ClInclude Include="src\rx\core\log.h" />
@@ -496,6 +502,7 @@
     <ClInclude Include="src\rx\core\memory\slab.h" />
     <ClInclude Include="src\rx\core\memory\stats_allocator.h" />
     <ClInclude Include="src\rx\core\memory\system_allocator.h" />
+    <ClInclude Include="src\rx\core\memory\temporary_allocator.h" />
     <ClInclude Include="src\rx\core\memory\uninitialized_storage.h" />
     <ClInclude Include="src\rx\core\memory\vma.h" />
     <ClInclude Include="src\rx\core\memory\zero.h" />
@@ -503,17 +510,18 @@
     <ClInclude Include="src\rx\core\profiler.h" />
     <ClInclude Include="src\rx\core\ptr.h" />
     <ClInclude Include="src\rx\core\random\context.h" />
-    <ClInclude Include="src\rx\core\random\mt19937.h" />
+    <ClInclude Include="src\rx\core\random\mersenne_twister.h" />
     <ClInclude Include="src\rx\core\report.h" />
     <ClInclude Include="src\rx\core\serialize\decoder.h" />
     <ClInclude Include="src\rx\core\serialize\encoder.h" />
+    <ClInclude Include="src\rx\core\serialize\json.h" />
     <ClInclude Include="src\rx\core\set.h" />
     <ClInclude Include="src\rx\core\source_location.h" />
+    <ClInclude Include="src\rx\core\stream\advancing_stream.h" />
     <ClInclude Include="src\rx\core\stream\buffered_stream.h" />
+    <ClInclude Include="src\rx\core\stream\context.h" />
     <ClInclude Include="src\rx\core\stream\memory_stream.h" />
     <ClInclude Include="src\rx\core\stream\operations.h" />
-    <ClInclude Include="src\rx\core\stream\tracked_stream.h" />
-    <ClInclude Include="src\rx\core\stream\untracked_stream.h" />
     <ClInclude Include="src\rx\core\string.h" />
     <ClInclude Include="src\rx\core\string_table.h" />
     <ClInclude Include="src\rx\core\tagged_ptr.h" />
@@ -575,6 +583,7 @@
     <ClInclude Include="src\rx\core\utility\pair.h" />
     <ClInclude Include="src\rx\core\utility\swap.h" />
     <ClInclude Include="src\rx\core\utility\uninitialized.h" />
+    <ClInclude Include="src\rx\core\utility\wire.h" />
     <ClInclude Include="src\rx\display.h" />
     <ClInclude Include="src\rx\engine.h" />
     <ClInclude Include="src\rx\hud\console.h" />
@@ -615,6 +624,7 @@
     <ClInclude Include="src\rx\model\importer.h" />
     <ClInclude Include="src\rx\model\iqm.h" />
     <ClInclude Include="src\rx\model\loader.h" />
+    <ClInclude Include="src\rx\model\obj.h" />
     <ClInclude Include="src\rx\model\skeleton.h" />
     <ClInclude Include="src\rx\model\voxel.h" />
     <ClInclude Include="src\rx\particle\assembler.h" />
@@ -640,6 +650,7 @@
     <ClInclude Include="src\rx\render\frontend\module.h" />
     <ClInclude Include="src\rx\render\frontend\program.h" />
     <ClInclude Include="src\rx\render\frontend\resource.h" />
+    <ClInclude Include="src\rx\render\frontend\sampler.h" />
     <ClInclude Include="src\rx\render\frontend\state.h" />
     <ClInclude Include="src\rx\render\frontend\target.h" />
     <ClInclude Include="src\rx\render\frontend\technique.h" />

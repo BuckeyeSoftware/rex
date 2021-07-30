@@ -146,7 +146,7 @@ struct TestGame
 
     const auto& dimensions = m_frontend.swapchain()->dimensions();
 
-    if (!m_particle_system.resize(500'000, 128)) {
+    if (!m_particle_system.resize(500'000, 8000)) {
       return false;
     }
 
@@ -447,12 +447,15 @@ struct TestGame
     m_skybox.render(m_indirect_lighting_pass.target(), m_camera.view(),
       m_camera.projection, &m_luts[m_lut_index]);
 
-    m_particle_system.groups().each_fwd([&](const Particle::System::Group& _group) {
-      m_immediate3D.frame_queue().record_wire_box(
-        {1.0f, 0.0f, 0.0f, 1.0f},
-        _group.bounds,
-        0);
-    });
+    /*m_particle_system.groups().each_fwd([&](const Particle::System::Group& _group) {
+      if(_group.count)
+      {
+        m_immediate3D.frame_queue().record_wire_box(
+          {1.0f, 0.0f, 0.0f, 1.0f},
+          _group.bounds,
+          0);
+      }
+    });*/
 
     // Then 3D immediates.
     m_immediate3D.render(m_indirect_lighting_pass.target(), m_camera.view(), m_camera.projection);

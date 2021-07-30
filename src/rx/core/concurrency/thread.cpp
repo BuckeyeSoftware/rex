@@ -150,7 +150,7 @@ bool Thread::State::spawn() {
   auto handle = reinterpret_cast<HANDLE>(thread);
 
   // Set the thread description.
-  s_thread_description->set(handle, m_name);
+  s_thread_description->set(handle, *String::create(Memory::SystemAllocator::instance(), m_name));
 
   // Store the handle.
   *reinterpret_cast<HANDLE*>(m_thread) = handle;

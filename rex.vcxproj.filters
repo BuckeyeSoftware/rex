@@ -414,9 +414,6 @@
     <ClCompile Include="src\rx\core\intrusive_list.cpp">
       <Filter>src\rx\core</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\core\json.cpp">
-      <Filter>src\rx\core</Filter>
-    </ClCompile>
     <ClCompile Include="src\rx\core\log.cpp">
       <Filter>src\rx\core</Filter>
     </ClCompile>
@@ -501,12 +498,6 @@
     <ClCompile Include="src\rx\core\stream\memory_stream.cpp">
       <Filter>src\rx\core\stream</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\core\stream\tracked_stream.cpp">
-      <Filter>src\rx\core\stream</Filter>
-    </ClCompile>
-    <ClCompile Include="src\rx\core\stream\untracked_stream.cpp">
-      <Filter>src\rx\core\stream</Filter>
-    </ClCompile>
     <ClCompile Include="src\rx\render\color_grader.cpp">
       <Filter>src\rx\render</Filter>
     </ClCompile>
@@ -570,9 +561,6 @@
     <ClCompile Include="src\rx\core\memory\move.cpp">
       <Filter>src\rx\core\memory</Filter>
     </ClCompile>
-    <ClCompile Include="src\rx\core\random\mt19937.cpp">
-      <Filter>src\rx\core\random</Filter>
-    </ClCompile>
     <ClCompile Include="src\demos\model_viewer.cpp">
       <Filter>src\demos</Filter>
     </ClCompile>
@@ -585,11 +573,32 @@
     <ClCompile Include="src\rx\core\serialize\encoder.cpp">
       <Filter>src\rx\core\serialize</Filter>
     </ClCompile>
+    <ClCompile Include="src\rx\core\stream\advancing_stream.cpp">
+      <Filter>src\rx\core\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\stream\context.cpp">
+      <Filter>src\rx\core\stream</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\hash\combine.cpp">
+      <Filter>src\rx\core\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\hash\hasher.cpp">
+      <Filter>src\rx\core\hash</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\random\mersenne_twister.cpp">
+      <Filter>src\rx\core\random</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\model\obj.cpp">
+      <Filter>src\rx\model</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\render\frontend\sampler.cpp">
+      <Filter>src\rx\render\frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rx\core\serialize\json.cpp">
+      <Filter>src\rx\core\serialize</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\game\terrain.h">
-      <Filter>src\game</Filter>
-    </ClInclude>
     <ClInclude Include="src\lib\json.h">
       <Filter>src\lib</Filter>
     </ClInclude>
@@ -1163,9 +1172,6 @@
     <ClInclude Include="src\rx\core\intrusive_list.h">
       <Filter>src\rx\core</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\core\json.h">
-      <Filter>src\rx\core</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\core\log.h">
       <Filter>src\rx\core</Filter>
     </ClInclude>
@@ -1283,12 +1289,6 @@
     <ClInclude Include="src\rx\core\stream\operations.h">
       <Filter>src\rx\core\stream</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\core\stream\tracked_stream.h">
-      <Filter>src\rx\core\stream</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rx\core\stream\untracked_stream.h">
-      <Filter>src\rx\core\stream</Filter>
-    </ClInclude>
     <ClInclude Include="src\rx\render\color_grader.h">
       <Filter>src\rx\render</Filter>
     </ClInclude>
@@ -1376,9 +1376,6 @@
     <ClInclude Include="src\rx\core\random\context.h">
       <Filter>src\rx\core\random</Filter>
     </ClInclude>
-    <ClInclude Include="src\rx\core\random\mt19937.h">
-      <Filter>src\rx\core\random</Filter>
-    </ClInclude>
     <ClInclude Include="src\demos\model_viewer.h">
       <Filter>src\demos</Filter>
     </ClInclude>
@@ -1399,6 +1396,30 @@
     </ClInclude>
     <ClInclude Include="src\rx\texture\format.h">
       <Filter>src\rx\texture</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\stream\advancing_stream.h">
+      <Filter>src\rx\core\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\stream\context.h">
+      <Filter>src\rx\core\stream</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\memory\temporary_allocator.h">
+      <Filter>src\rx\core\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\random\mersenne_twister.h">
+      <Filter>src\rx\core\random</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\utility\wire.h">
+      <Filter>src\rx\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\model\obj.h">
+      <Filter>src\rx\model</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\render\frontend\sampler.h">
+      <Filter>src\rx\render\frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rx\core\serialize\json.h">
+      <Filter>src\rx\core\serialize</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

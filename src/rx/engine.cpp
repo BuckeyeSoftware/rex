@@ -20,7 +20,7 @@
 #include <emscripten/html5.h>
 #endif
 
-#include "rx/bake.h"
+// #include "rx/bake.h"
 
 extern Rx::Ptr<Rx::Application> create(Rx::Engine* _engine);
 

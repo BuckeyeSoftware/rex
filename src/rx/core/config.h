@@ -87,6 +87,8 @@
 // long double => long double
 #  define RX_FLOAT_EVAL_METHOD 2
 # endif
+#elif defined(_M_X64)
+# define RX_FLOAT_EVAL_METHOD 0
 #else
 # error "Unsupported floating point."
 #endif
@@ -110,7 +112,7 @@
 # elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #  define RX_BYTE_ORDER_BIG_ENDIAN
 # endif
-#else
+#elif !defined(RX_BYTE_ORDER_LITTLE_ENDIAN) && !defined(RX_BYTE_ORDER_BIG_ENDIAN)
 # error "Unsupported endianess."
 #endif
 

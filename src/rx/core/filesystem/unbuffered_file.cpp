@@ -271,7 +271,7 @@ Optional<UnbufferedFile> UnbufferedFile::open(Memory::Allocator& _allocator,
   const StringView& _file_name, const StringView& _mode)
 {
   if (auto name = _file_name.to_string(_allocator)) {
-    if (auto file = open_file(_allocator, _file_name, _mode)) {
+    if (auto file = open_file(_allocator, _file_name.data(), _mode.data())) {
       return UnbufferedFile{flags_from_mode(_mode), file, Utility::move(*name), _mode.data()};
     }
   }
