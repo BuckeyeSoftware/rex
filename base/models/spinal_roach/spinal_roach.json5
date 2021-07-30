@@ -11,14 +11,11 @@
       name:       "roach",
       textures: [
         {
-          file:       "base/models/spinal_roach/albedo.png",
-          type:       "albedo",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/spinal_roach/albedo.png",
+          type:         "albedo",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         }
       ],
       alpha_test: false

@@ -42,7 +42,7 @@ bool Texture::load(const StringView& _file_name) {
 
 bool Texture::parse(const Serialize::JSON& _definition) {
   if (!_definition) {
-    const auto json_error{_definition.error()};
+    const auto json_error = _definition.error();
     if (json_error) {
       return m_report.error("%s", *json_error);
     } else {
@@ -50,11 +50,8 @@ bool Texture::parse(const Serialize::JSON& _definition) {
     }
   }
 
-  const auto& file{_definition["file"]};
-  const auto& type{_definition["type"]};
-  const auto& filter{_definition["filter"]};
-  const auto& address_mode{_definition["wrap"]};
-  const auto& mipmaps{_definition["mipmaps"]};
+  const auto& file = _definition["file"];
+  const auto& type = _definition["type"];
 
   if (!file) {
     return m_report.error("missing 'file'");
@@ -64,12 +61,8 @@ bool Texture::parse(const Serialize::JSON& _definition) {
     return m_report.error("missing 'type'");
   }
 
-  if (!filter) {
-    return m_report.error("missing 'filter'");
-  }
-
-  if (!file.is_string()) {
-    return m_report.error("expected String for 'file'");
+  if (!parse_type(type)) {
+    return false;
   }
 
   auto file_name = file.as_string(allocator());
@@ -77,20 +70,14 @@ bool Texture::parse(const Serialize::JSON& _definition) {
     return false;
   }
 
-  if (mipmaps && !mipmaps.is_boolean()) {
-    return m_report.error("expected Boolean for 'mipmaps'");
-  }
+  const auto& filter = _definition["filter"];
+  const auto& mipmap_mode = _definition["mipmap_mode"];
 
-  if (!parse_type(type)) {
+  if (filter && !parse_filter(filter)) {
     return false;
   }
 
-  bool has_mipmaps{mipmaps ? mipmaps.as_boolean() : false};
-  if (!parse_filter(filter, has_mipmaps)) {
-    return false;
-  }
-
-  if (!parse_address_mode(address_mode)) {
+  if (mipmap_mode && !parse_mipmap_mode(mipmap_mode)) {
     return false;
   }
 
@@ -149,57 +136,125 @@ bool Texture::parse_type(const Serialize::JSON& _type) {
     { "custom",    Type::CUSTOM    }
   };
 
-  auto type = _type.as_string(allocator());
+  const auto& type_string = _type.as_string(allocator());
+  if (!type_string) {
+    return false;
+  }
+
+  const auto find_match = [this](const String& _type) -> Optional<Type> {
+    for (const auto& match : MATCHES) {
+      if (match.name == _type) {
+        return match.type;
+      }
+    }
+    return m_report.error("unknown type '%s'", _type);
+  };
+
+  const auto& type = find_match(*type_string);
   if (!type) {
     return false;
   }
+ 
+  m_type = *type;
 
-  for (const auto& match : MATCHES) {
-    if (match.name != *type) {
-      continue;
-    }
-    m_type = match.type;
-    return true;
-  }
-
-  return m_report.error("unknown type '%s'", *type);
+  return true;
 }
 
-bool Texture::parse_filter(const Serialize::JSON& _filter, bool& _mipmaps) {
-  if (!_filter.is_string()) {
-    return m_report.error("expected String");
+bool Texture::parse_filter(const Serialize::JSON& _filter) {
+  if (!_filter.is_object()) {
+    return m_report.error("expected Object for 'filter'");
   }
 
-  static constexpr const char* MATCHES[] = {
-    "bilinear",
-    "trilinear",
-    "nearest"
+  const auto& min = _filter["min"];
+  const auto& mag = _filter["mag"];
+
+  if (!min) {
+    return m_report.error("missing 'min'");
+  }
+
+  if (!mag) {
+    return m_report.error("missing 'mag'");
+  }
+
+  if (!min.is_string()) {
+    return m_report.error("expected String for 'min'");
+  }
+
+  if (!mag.is_string()) {
+    return m_report.error("expected String for 'mag'");
+  }
+
+  static constexpr const struct {
+    const char* match;
+    Filter filter;
+  } MATCHES[] = {
+    { "linear",  Filter::LINEAR  },
+    { "nearest", Filter::NEAREST }
   };
 
-  auto filter = _filter.as_string(allocator());
-  if (!filter) {
+  const auto& min_string = min.as_string(allocator());
+  const auto& mag_string = mag.as_string(allocator());
+  if (!min_string || !mag_string) {
     return false;
   }
 
-  for (const auto& match : MATCHES) {
-    if (*filter != match) {
-      continue;
+  const auto find_match = [this](const String& _type) -> Optional<Filter> {
+    for (const auto& match : MATCHES) {
+      if (_type == match.match) {
+        return match.filter;
+      }
     }
+    return m_report.error("invalid filter '%s'", _type);
+  };
 
-    const bool trilinear = *match == 't';
-    const bool bilinear = trilinear || *match == 'b'; // trilinear is an extension of bilinear
-    const bool mipmaps = trilinear || _mipmaps; // trilinear needs mipmaps
-
-    m_filter.trilinear = trilinear;
-    m_filter.bilinear = bilinear;
-    m_filter.mipmaps = mipmaps;
-
-    _mipmaps = mipmaps;
-
-    return true;
+  const auto& min_filter = find_match(*min_string);
+  const auto& mag_filter = find_match(*mag_string);
+  if (!min_filter || !mag_filter) {
+    return false;
   }
 
-  return m_report.error("unknown filter '%s'", *filter);
+  m_min_filter = *min_filter;
+  m_mag_filter = *mag_filter;
+
+  return true;
+}
+
+bool Texture::parse_mipmap_mode(const Serialize::JSON& _mipmap_mode) {
+  if (!_mipmap_mode.is_string()) {
+    return m_report.error("expected String for 'mipmap_mode'");
+  }
+
+  const auto& mipmap_mode_string = _mipmap_mode.as_string(allocator());
+  if (!mipmap_mode_string) {
+    return false;
+  }
+
+  static constexpr const struct {
+    const char* match;
+    MipmapMode mipmap_mode;
+  } MATCHES[] = {
+    { "none",    MipmapMode::NONE    },
+    { "nearest", MipmapMode::NEAREST },
+    { "linear",  MipmapMode::LINEAR  }
+  };
+
+  const auto find_match = [this](const String& _type) -> Optional<MipmapMode> {
+    for (const auto& match : MATCHES) {
+      if (_type == match.match) {
+        return match.mipmap_mode;
+      }
+    }
+    return m_report.error("invalid mipamp mode '%s'", _type);
+  };
+
+  const auto& mipmap_mode = find_match(*mipmap_mode_string);
+  if (!mipmap_mode) {
+    return false;
+  }
+
+  m_mipmap_mode = *mipmap_mode;
+
+  return true;
 }
 
 bool Texture::parse_address_mode(const Serialize::JSON& _address_mode) {
@@ -216,7 +271,7 @@ bool Texture::parse_address_mode(const Serialize::JSON& _address_mode) {
     { "repeat",          AddressMode::REPEAT          }
   };
 
-  const auto parse = [this](const String& _type) -> Optional<AddressMode> {
+  const auto find_match = [this](const String& _type) -> Optional<AddressMode> {
     for (const auto& match : MATCHES) {
       if (_type == match.match) {
         return match.type;
@@ -225,20 +280,20 @@ bool Texture::parse_address_mode(const Serialize::JSON& _address_mode) {
     return m_report.error("invalid address mode '%s'", _type);
   };
 
-  auto s_string = _address_mode[0_z].as_string(allocator());
-  auto t_string = _address_mode[1_z].as_string(allocator());
-  if (!s_string || !t_string) {
+  const auto& address_mode_u_string = _address_mode[0_z].as_string(allocator());
+  const auto& address_mode_v_string = _address_mode[1_z].as_string(allocator());
+  if (!address_mode_u_string || !address_mode_v_string) {
     return false;
   }
 
-  const auto u_address_mode = parse(*s_string);
-  const auto v_address_mode = parse(*t_string);
-  if (!u_address_mode || !v_address_mode) {
+  const auto& address_mode_u = find_match(*address_mode_u_string);
+  const auto& address_mode_v = find_match(*address_mode_v_string);
+  if (!address_mode_u || !address_mode_v) {
     return false;
   }
 
-  m_address_mode_u = *u_address_mode;
-  m_address_mode_v = *v_address_mode;
+  m_address_mode_u = *address_mode_u;
+  m_address_mode_v = *address_mode_v;
 
   return true;
 }

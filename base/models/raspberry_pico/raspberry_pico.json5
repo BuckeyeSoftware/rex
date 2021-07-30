@@ -15,44 +15,32 @@
       roughness:  0.0,
       textures: [
         {
-          file:       "base/models/raspberry_pico/albedo.png",
-          type:       "albedo",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/raspberry_pico/albedo.png",
+          type:         "albedo",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         },
         {
-          file:       "base/models/raspberry_pico/normal.png",
-          type:       "normal",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/raspberry_pico/normal.png",
+          type:         "normal",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         },
         {
-          file:       "base/models/raspberry_pico/roughness.png",
-          type:       "roughness",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/raspberry_pico/roughness.png",
+          type:         "roughness",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         },
         {
-          file:       "base/models/raspberry_pico/metallic.png",
-          type:       "metalness",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/raspberry_pico/metallic.png",
+          type:         "metalness",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         }
       ],
       alpha_test: false

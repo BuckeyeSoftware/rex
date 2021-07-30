@@ -9,6 +9,46 @@ namespace Rx::Render::Frontend {
 
 RX_LOG("render/material", logger);
 
+static auto convert_address_mode(Rx::Material::Texture::AddressMode _mode) {
+  using SrcType = Rx::Material::Texture::AddressMode;
+  using DstType = Rx::Render::Frontend::Sampler::AddressMode;
+  switch (_mode) {
+  case SrcType::REPEAT:
+    return DstType::REPEAT;
+  case SrcType::MIRRORED_REPEAT:
+    return DstType::MIRRORED_REPEAT;
+  case SrcType::CLAMP_TO_EDGE:
+    return DstType::CLAMP_TO_EDGE;
+  }
+  RX_HINT_UNREACHABLE();
+};
+
+const auto convert_filter = [](Rx::Material::Texture::Filter _filter) {
+  using SrcType = Rx::Material::Texture::Filter;
+  using DstType = Rx::Render::Frontend::Sampler::Filter;
+  switch (_filter) {
+  case SrcType::NEAREST:
+    return DstType::NEAREST;
+  case SrcType::LINEAR:
+    return DstType::LINEAR;
+  }
+  RX_HINT_UNREACHABLE();
+};
+
+static auto convert_mipmap_mode(Rx::Material::Texture::MipmapMode _mipmap_mode) {
+  using SrcType = Rx::Material::Texture::MipmapMode;
+  using DstType = Rx::Render::Frontend::Sampler::MipmapMode;
+  switch (_mipmap_mode) {
+  case SrcType::NONE:
+    return DstType::NONE;
+  case SrcType::NEAREST:
+    return DstType::NEAREST;
+  case SrcType::LINEAR:
+    return DstType::LINEAR;
+  }
+  RX_HINT_UNREACHABLE();
+};
+
 // This cannot fail as it'll be in-situ.
 static String hash_as_string(const Array<Byte[16]>& _hash) {
   static constexpr const auto HEX = "0123456789abcdef";
@@ -79,12 +119,12 @@ bool Material::load(const Rx::Material::Loader& _loader) {
     Image* image;
     Type type;
   } table[] {
-    { &m_albedo,     Type::ALBEDO    },
-    { &m_normal,     Type::NORMAL    },
-    { &m_metalness,  Type::METALNESS },
-    { &m_roughness,  Type::ROUGHNESS },
-    { &m_occlusion,  Type::OCCLUSION },
-    { &m_emissive,   Type::EMISSIVE  }
+    { &m_albedo,    Type::ALBEDO    },
+    { &m_normal,    Type::NORMAL    },
+    { &m_metalness, Type::METALNESS },
+    { &m_roughness, Type::ROUGHNESS },
+    { &m_occlusion, Type::OCCLUSION },
+    { &m_emissive,  Type::EMISSIVE  }
   };
 
   return _loader.textures().each_fwd([this, &table](const Rx::Material::Texture& _texture) {
@@ -106,17 +146,16 @@ bool Material::load(const Rx::Material::Loader& _loader) {
     }
 
     const auto& bitmap = _texture.bitmap();
-    const auto& filter = _texture.filter();
-
     const auto& hash = hash_as_string(bitmap.hash);
 
     // Check if cached.
     auto texture = m_frontend->cached_texture2D(hash);
     if (!texture) {
       // Create a mipmap chain of the texture.
+      const bool mipmaps = _texture.mipmap_mode() != Rx::Material::Texture::MipmapMode::NONE;
       Rx::Texture::Chain chain{m_frontend->allocator()};
       if (!chain.generate(bitmap.data.data(), bitmap.format,
-        bitmap.format, bitmap.dimensions, false, filter.mipmaps))
+        bitmap.format, bitmap.dimensions, false, mipmaps))
       {
         return false;
       }
@@ -182,41 +221,13 @@ bool Material::load(const Rx::Material::Loader& _loader) {
     // Store it.
     find->image->texture = texture;
 
-    // Create the sampler state for this texture.
+    // Create the right sampler for this image.
     Sampler sampler;
-    if (filter.mipmaps) {
-      if (filter.trilinear) {
-        sampler.record_mipmap_mode(Sampler::MipmapMode::LINEAR);
-        sampler.record_min_filter(Sampler::Filter::LINEAR);
-      } else {
-        // bilinear!
-        sampler.record_mipmap_mode(Sampler::MipmapMode::NEAREST);
-        sampler.record_min_filter(Sampler::Filter::NEAREST);
-      }
-    } else {
-      sampler.record_mipmap_mode(Sampler::MipmapMode::NONE);
-      sampler.record_min_filter(filter.bilinear ? Sampler::Filter::LINEAR : Sampler::Filter::NEAREST);
-    }
-
-    sampler.record_mag_filter(filter.bilinear ? Sampler::Filter::LINEAR : Sampler::Filter::NEAREST);
-
-    auto convert_address_mode = [](Rx::Material::Texture::AddressMode _mode) {
-      using SrcAddressMode = Rx::Material::Texture::AddressMode;
-      using DstAddressMode = Rx::Render::Frontend::Sampler::AddressMode;
-
-      switch (_mode) {
-      case SrcAddressMode::CLAMP_TO_EDGE:
-        return DstAddressMode::CLAMP_TO_EDGE;
-      case SrcAddressMode::MIRRORED_REPEAT:
-        return DstAddressMode::MIRRORED_REPEAT;
-      case SrcAddressMode::REPEAT:
-        return DstAddressMode::REPEAT;
-      }
-      RX_HINT_UNREACHABLE();
-    };
-
     sampler.record_address_mode_u(convert_address_mode(_texture.address_mode_u()));
     sampler.record_address_mode_v(convert_address_mode(_texture.address_mode_v()));
+    sampler.record_min_filter(convert_filter(_texture.min_filter()));
+    sampler.record_mag_filter(convert_filter(_texture.mag_filter()));
+    sampler.record_mipmap_mode(convert_mipmap_mode(_texture.mipmap_mode()));
 
     find->image->sampler = sampler;
 

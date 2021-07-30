@@ -14,44 +14,32 @@
       name:       "Pineapple_1_leafs",
       textures: [
         {
-          file:       "base/models/food_pineapple/leafs_albedo.png",
-          type:       "albedo",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/food_pineapple/leafs_albedo.png",
+          type:         "albedo",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         },
         {
-          file:       "base/models/food_pineapple/leafs_metalness.png",
-          type:       "metalness",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/food_pineapple/leafs_metalness.png",
+          type:         "metalness",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         },
         {
-          file:       "base/models/food_pineapple/leafs_normal.png",
-          type:       "normal",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/food_pineapple/leafs_normal.png",
+          type:         "normal",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         },
         {
-          file:       "base/models/food_pineapple/leafs_occlusion.png",
-          type:       "occlusion",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/food_pineapple/leafs_occlusion.png",
+          type:         "occlusion",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         }
       ],
       alpha_test: true
@@ -60,44 +48,32 @@
       name:       "Pineapple_1",
         textures: [
         {
-          file:       "base/models/food_pineapple/albedo.png",
-          type:       "albedo",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/food_pineapple/albedo.png",
+          type:         "albedo",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         },
         {
-          file:       "base/models/food_pineapple/metalness.png",
-          type:       "metalness",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/food_pineapple/metalness.png",
+          type:         "metalness",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         },
         {
-          file:       "base/models/food_pineapple/normal.png",
-          type:       "normal",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/food_pineapple/normal.png",
+          type:         "normal",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         },
         {
-          file:       "base/models/food_pineapple/occlusion.png",
-          type:       "occlusion",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/food_pineapple/occlusion.png",
+          type:         "occlusion",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         }
       ],
       alpha_test: false

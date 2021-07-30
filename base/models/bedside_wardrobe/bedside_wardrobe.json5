@@ -14,34 +14,25 @@
       name:       "wood",
       textures: [
         {
-          file:       "base/models/bedside_wardrobe/albedo.jpg",
-          type:       "albedo",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/bedside_wardrobe/albedo.jpg",
+          type:         "albedo",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         },
         {
-          file:       "base/models/bedside_wardrobe/normal.jpg",
-          type:       "normal",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/bedside_wardrobe/normal.jpg",
+          type:         "normal",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         },
         {
-          file:       "base/models/bedside_wardrobe/roughness.jpg",
-          type:       "roughness",
-          filter:     "trilinear",
-          wrap: [
-            "clamp_to_edge",
-            "clamp_to_edge"
-          ],
-          mipmaps:    true
+          file:         "base/models/bedside_wardrobe/roughness.jpg",
+          type:         "roughness",
+          filter:       { min: "linear", mag: "linear" },
+          address_mode: [ "clamp_to_edge", "clamp_to_edge" ],
+          mipmap_mode:  "linear"
         }
       ],
       alpha_test: false,
