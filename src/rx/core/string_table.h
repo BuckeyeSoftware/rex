@@ -9,6 +9,12 @@ namespace Rx {
 
 struct StringView;
 
+/// Collection of strings.
+///
+/// An append-only, contigious data structure that stores and reuses strings.
+/// Strings in the table are stable and referred to by index. This is a useful
+/// data structure for supporting variable-length strings in binary data formats
+/// that need to be serialized.
 struct StringTable {
   RX_MARK_NO_COPY(StringTable);
 
@@ -17,16 +23,27 @@ struct StringTable {
 
   static Optional<StringTable> create_from_linear_buffer(LinearBuffer&& linear_buffer_);
 
+  /// Move assignment operator.
   StringTable& operator=(StringTable&& string_table_);
 
+  /// Add a string to the table.
+  /// \param _string The string to add.
   Optional<Size> add(const StringView& _string);
+
+  /// Search for a string in the table.
+  /// \param _string The string to search for.
   Optional<Size> find(const StringView& _string);
 
+  /// Access the contigious buffer of all the strings.
   const LinearBuffer& data() const &;
 
+  /// Access a string by index.
   const char* operator[](Size _index) const;
 
+  /// Clear the table.
   void clear();
+
+  /// Reset the table.
   void reset();
 
 private:

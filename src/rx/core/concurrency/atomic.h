@@ -15,7 +15,7 @@ namespace Rx::Concurrency {
 /// Specifies how memory accesses, including regular, non-atomic accesses are to
 /// be ordered around an atomic operation.
 ///
-/// The default behavior provided by \ref Atomic is full sequenial consistency.
+/// The default behavior provided by \link Atomic is full sequenial consistency.
 enum class MemoryOrder : Uint8 {
   /// A relaxed operation: there are no synchronization or ordering constraints
   /// imposed on other reads or writes, only this operation's atomicity is
@@ -149,7 +149,7 @@ struct AtomicValue {
   /// \brief Atomically obtains the value of the atomic object.
   ///
   /// Atomically loads and returns the current value of the atomic variable.
-  /// Memory is affected according to the value of \o _order.
+  /// Memory is affected according to the value of \p _order.
   ///
   /// \warning \p _order Must be one of:
   ///  * MemoryOrder::RELAXED

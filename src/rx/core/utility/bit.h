@@ -4,9 +4,15 @@
 
 namespace Rx {
 
+/// Search for least significant set bit.
+/// \param _bits The bits to search in.
+/// \return The index of the set bit.
 template<typename T>
 Size bit_search_lsb(T _bits);
 
+/// Calculate number of 1 bits.
+/// \param _bits The bits to count set bits of.
+/// \return The number of set bits.
 template<typename T>
 Size bit_pop_count(T _bits);
 
@@ -86,6 +92,10 @@ inline Size bit_pop_count(Uint64 _bits) {
 }
 #endif
 
+/// Find the next set bit.
+/// \param _bits The bits to search in.
+/// \param _bit The current bit index.
+/// \return The index of the next set bit.
 template<typename T>
 Size bit_next(T _bits, Size _bit) {
   return bit_search_lsb<T>(_bits & ~((T{1} << _bit) - 1));

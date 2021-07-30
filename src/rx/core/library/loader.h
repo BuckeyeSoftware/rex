@@ -32,7 +32,7 @@ struct RX_API Loader {
   ///
   /// \return \c true on success, \c false otherwise.
   template<typename F>
-  bool link(F*& function_, const StringView& _symbol_name) const;
+  [[nodiscard]] bool link(F*& function_, const StringView& _symbol_name) const;
 
 private:
   constexpr Loader(Memory::Allocator& _allocator, void* _handle);

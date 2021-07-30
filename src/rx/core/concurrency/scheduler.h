@@ -10,7 +10,7 @@ namespace Rx::Concurrency {
 ///
 /// The scheduler interface allows implementing simple task-based schedulers
 /// like thread pools as a polymorphic thing.
-struct Scheduler {
+struct RX_API Scheduler {
   /// The task type that add_task() expects.
   using Task = Function<void(Sint32)>;
 
@@ -25,8 +25,9 @@ struct Scheduler {
   template<typename F>
   [[nodiscard]] bool add(F&& functor_);
 
-  /// Determine how many threads of execution are on this scheduler.
+  /// Total number of threads.
   virtual Size total_threads() const = 0;
+  /// Number of threads that are currently executing tasks.
   virtual Size active_threads() const = 0;
 
   /// The function which must be implemented to add a task to the scheduler.

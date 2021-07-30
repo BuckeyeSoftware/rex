@@ -226,29 +226,25 @@ const T* Optional<T>::operator->() const {
   return m_data.data();
 }
 
-// Optional<T> == nullopt
+/// @{
+/// Comparison operators
 template<typename T>
 inline constexpr bool operator==(const Optional<T>& _optional, decltype(nullopt)) {
   return !_optional.has_value();
 }
-
-// Optional<T> != nullopt
 template<typename T>
 inline constexpr bool operator!=(const Optional<T>& _optional, decltype(nullopt)) {
   return _optional.has_value();
 }
-
-// nullopt == Optional<T>
 template<typename T>
 inline constexpr bool operator==(decltype(nullopt), const Optional<T>& _optional) {
   return !_optional.has_value();
 }
-
-// nullopt != Optional<T>
 template<typename T>
 inline constexpr bool operator!=(decltype(nullopt), const Optional<T>& _optional) {
   return _optional.has_value();
 }
+/// @}
 
 } // namespace Rx
 

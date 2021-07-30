@@ -13,7 +13,7 @@ namespace Rx::Filesystem {
 /// operations are buffered by a Stream::BufferedStream.
 ///
 /// \see Stream::BufferedStream for more information.
-struct BufferedFile
+struct RX_API BufferedFile
   : Stream::BufferedStream
 {
   /// \brief Construct a BufferedFile.

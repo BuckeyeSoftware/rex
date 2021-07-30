@@ -53,8 +53,6 @@ struct RX_API UnbufferedFile
   /// | "r+"    | Open for update. The file must exist.                        |
   /// | "w+"    | Create and open file for update. Replaces existing file.     |
   /// | "a+"    | Open for update. File is created if it does not exist.       |
-  /// \param _page_size The size of a buffer page in bytes.
-  /// \param _page_count The number of pages for the buffer.
   ///
   /// \note All files are treated as binary. There is no notion of a text or
   /// binary stream.
@@ -103,10 +101,22 @@ inline UnbufferedFile::~UnbufferedFile() {
   (void)close();
 }
 
-// Helper functions for whole-file reading.
-Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator,
+/// \brief Read a binary file into memory.
+/// \param _allocator The allocator to use to allocate the LinearBuffer.
+/// \param _file_name The file to read.
+/// \return On success the contents of the binary file. On failure, nullopt.
+RX_API Optional<LinearBuffer> read_binary_file(Memory::Allocator& _allocator,
   const StringView& _file_name);
-Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator,
+
+/// \brief Read a text file into memory.
+///
+/// Reads any text file into memory, normalizing line endings, handling Unicode
+/// BOM, and converting all flavors of Unicode into UTF-8.
+///
+/// \param _allocator The allocator to use to allocate the LinearBuffer.
+/// \param _file_name The file to read.
+/// \return On sucess, the contents of the text file. On failure, nullopt.
+RX_API Optional<LinearBuffer> read_text_file(Memory::Allocator& _allocator,
   const StringView& _file_name);
 
 } // namespace Rx::Filesystem

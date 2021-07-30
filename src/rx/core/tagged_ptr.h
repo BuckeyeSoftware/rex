@@ -5,21 +5,24 @@
 
 namespace Rx {
 
-// # Tagged pointer
-//
-// Since all allocations are aligned by |ALIGNMENT| there are bits that will
-// always be zero. We can use those bits to store a tag value along side the
-// pointer.
-//
-// This class enables such constructions and provides helper functions to
-// decode the pointer and tag.
+/// Tagged pointer
+///
+/// As most allocations are aligned by \link Memory::ALIGNMENT there is often
+/// several always-zero bits in a pointer which can be used to store short tag
+/// values. This class enables such constructions and provides helper functions
+/// to decode the pointer and tag and some additional assertions to detect
+/// tag value overflow.
 template<typename T>
 struct TaggedPtr {
   TaggedPtr(T* _ptr = nullptr, Byte _tag = 0);
 
+  /// Retag the pointer with a new tag value.
   void retag(Byte _tag);
 
+  /// Decode the pointer.
   T* as_ptr() const;
+
+  /// Decode the tag.
   Byte as_tag() const;
 
 private:

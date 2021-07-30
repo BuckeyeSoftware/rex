@@ -41,7 +41,7 @@ inline constexpr Size combine(Size _hash1, Size _hash2) {
 }
 
 /// Combine two djbx33a hashes into one.
-Array<Byte[16]> combine(const Array<Byte[16]>& _hash1, const Array<Byte[16]>& _hash2);
+RX_API Array<Byte[16]> combine(const Array<Byte[16]>& _hash1, const Array<Byte[16]>& _hash2);
 
 } // namespace Rx::Hash
 

@@ -153,7 +153,7 @@ struct Hasher<const char*> {
 // Specialization for Array<Byte[16]> because that's the 128-bit hash representation.
 template<>
 struct Hasher<Array<Byte[16]>> {
-  Size operator()(const Array<Byte[16]>& _value) const;
+  RX_API Size operator()(const Array<Byte[16]>& _value) const;
 };
 
 } // namespace Rx

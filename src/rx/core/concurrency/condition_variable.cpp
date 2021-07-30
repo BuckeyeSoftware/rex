@@ -40,7 +40,7 @@ ConditionVariable::~ConditionVariable() {
   // Windows does not require destruction of CONDITION_VARIABLE.
 }
 
-void ConditionVariable::wait([[maybe_unused]] Mutex& _mutex) {
+void ConditionVariable::wait(Mutex& _mutex) {
 #if defined(RX_PLATFORM_POSIX)
   auto cond_handle = reinterpret_cast<pthread_cond_t*>(m_cond);
   auto mutex_handle = reinterpret_cast<pthread_mutex_t*>(_mutex.m_mutex);
@@ -56,7 +56,7 @@ void ConditionVariable::wait([[maybe_unused]] Mutex& _mutex) {
 #endif
 }
 
-void ConditionVariable::wait([[maybe_unused]] RecursiveMutex& _mutex) {
+void ConditionVariable::wait(RecursiveMutex& _mutex) {
 #if defined(RX_PLATFORM_POSIX)
   auto cond_handle = reinterpret_cast<pthread_cond_t*>(m_cond);
   auto mutex_handle = reinterpret_cast<pthread_mutex_t*>(_mutex.m_mutex);

@@ -13,7 +13,7 @@ namespace Rx::Memory {
 /// \param _byte The byte value to search.
 /// \return Pointer to the first occurance of \p _byte in \p _haystack if found,
 /// \c nullptr otherwise.
-Byte* search(const void* _haystack, Size _haystack_size, Byte _byte);
+RX_API Byte* search(const void* _haystack, Size _haystack_size, Byte _byte);
 
 /// Search memory for a needle
 /// \param _haystack Haystack to search.
@@ -22,7 +22,7 @@ Byte* search(const void* _haystack, Size _haystack_size, Byte _byte);
 /// \param _needle_size Size of the needle in bytes.
 /// \returns Pointer to the first occurance of \p _needle in \p _haystack if found,
 /// \c nullptr otherwise.
-Byte* search(const void* _haystack, Size _haystack_size, const void* _needle, Size _needle_size);
+RX_API Byte* search(const void* _haystack, Size _haystack_size, const void* _needle, Size _needle_size);
 
 } // namespace Rx::Memory
 

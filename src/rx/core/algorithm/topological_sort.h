@@ -29,7 +29,7 @@ struct TopologicalSort {
 
   /// \brief Add a dependency to the sorter for a given key.
   /// \param _key The key to add a dependency to.
-  /// \param _depedency The dependency to add.
+  /// \param _dependency The dependency to add.
   /// \return true on success, false otherwise
   /// \note Fails when the key does not exist, the dependency already
   /// exists for that key, or out of memory.

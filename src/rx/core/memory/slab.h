@@ -6,8 +6,6 @@
 #include "rx/core/concurrency/mutex.h"
 #include "rx/core/concurrency/scope_lock.h"
 
-/// \file slab.h
-
 namespace Rx::Memory {
 
 /// \brief A slab allocator
@@ -49,16 +47,27 @@ struct Slab {
   ~Slab();
   Slab& operator=(Slab&& slab_);
 
+  /// Create a slab
+  /// \param _allocator The allocator to use.
+  /// \param _object_size The size of the object that will be allocated.
+  /// \param _objects_per_cache The number of objects each cache will hold.
+  /// \param _minimum_caches The minimum number of caches to always maintain.
+  /// \param _maximum_caches The maximum number of caches permitted.
+  /// \note A value of 0 for \p _maximum_caches disables cache limit.
   static Optional<Slab> create(Memory::Allocator& _allocator,
     Size _object_size, Size _objects_per_cache, Size _minimum_caches,
     Size _maximum_caches = 0);
 
+  /// Create an object with the slab.
+  /// \warning sizeof(T) must be <= \p _object_size.
   template<typename T, typename... Ts>
   T* create(Ts&&... _arguments);
 
+  /// Destroy an object.
   template<typename T>
   void destroy(T* _data);
 
+  /// Clear caches.
   void clear();
 
   Size capacity() const;

@@ -6,7 +6,7 @@
 
 namespace Rx::Memory {
 
-void move_untyped(void* dst_, const void* _src, Size _bytes);
+RX_API void move_untyped(void* dst_, const void* _src, Size _bytes);
 
 template<Concepts::TriviallyCopyable T>
 void move(T* dst_, const T* _src, Size _elements) {

@@ -24,6 +24,8 @@ private:
   T m_data[E];
 };
 
+/// @{
+/// Operators for element-wise comparison of an Array
 template<typename T, Size E>
 inline bool operator==(const Array<T[E]>& _lhs, const Array<T[E]>& _rhs) {
   for (Size i = 0; i < E; i++) {
@@ -33,7 +35,6 @@ inline bool operator==(const Array<T[E]>& _lhs, const Array<T[E]>& _rhs) {
   }
   return true;
 }
-
 template<typename T, Size E>
 inline bool operator!=(const Array<T[E]>& _lhs, const Array<T[E]>& _rhs) {
   for (Size i = 0; i < E; i++) {
@@ -43,8 +44,9 @@ inline bool operator!=(const Array<T[E]>& _lhs, const Array<T[E]>& _rhs) {
   }
   return false;
 }
+/// @}
 
-// Deduction guide for Array{Ts...} to become Array<T[E]>.
+/// Deduction guide for \pre Array{Ts...} to become \pre Array<T[E]>.
 template<typename T, typename... Ts>
 Array(T, Ts...) -> Array<T[1 + sizeof...(Ts)]>;
 

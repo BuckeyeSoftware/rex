@@ -93,7 +93,7 @@ struct RX_API Directory {
     /// Reference to the directory \c *this is associated with.
     const Directory& directory() const &;
 
-    /// \brief Attempt to open the item as a Directory itself.
+    /// Attempt to open the item as a Directory itself.
     /// \return On success, the Directory. Otherwise, \c nullopt.
     /// \note This can fail if the Item is not a directory or was just deleted
     /// between the time of recieving this item from enumerate() and the call to
@@ -230,7 +230,10 @@ RX_HINT_FORCE_INLINE Directory::Item::Item(const Directory* _directory, String&&
 {
 }
 
-bool create_directory(const StringView& _path);
+/// \brief Create a directory
+/// \param _path The path and name of the directory to create.
+/// \return `true` on success.
+RX_API bool create_directory(const StringView& _path);
 
 } // namespace Rx::Filesystem
 

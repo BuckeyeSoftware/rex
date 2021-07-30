@@ -2,8 +2,6 @@
 #define RX_CORE_CONCURRENCY_SCOPE_LOCK_H
 #include "rx/core/markers.h"
 
-/// \file scope_lock
-
 namespace Rx::Concurrency {
 
 /// \brief Scope-based lockable ownership wrapper.

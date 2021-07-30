@@ -11,6 +11,7 @@ struct StringView;
 // 32-bit: 16 + INSITU_SIZE bytes
 // 64-bit: 32 + INSITU_SIZE bytes
 struct RX_API String {
+  /// The number of characters to store in-situ before allocations are needed.
   static inline constexpr const Size INSITU_SIZE = 16;
 
   constexpr String();
@@ -23,84 +24,149 @@ struct RX_API String {
   String(Memory::View _view);
   ~String();
 
-  static Optional<String> create(Memory::Allocator& _allocator, const char* _contents);
-  static Optional<String> create(Memory::Allocator& _allocator, const char* _contents, Size _size);
+  /// @{
+  /// Create a string
+  RX_API static Optional<String> create(Memory::Allocator& _allocator, const char* _contents);
+  RX_API static Optional<String> create(Memory::Allocator& _allocator, const char* _contents, Size _size);
+  /// @}
 
-  static Optional<String> copy(const String& _other);
+  /// Copy a string.
+  /// \param _other The string to copy.
+  RX_API static Optional<String> copy(const String& _other);
 
   // TODO(dweiler): Have this return Optional<String> since it can fail.
   template<typename... Ts>
   RX_HINT_FORMAT(2, 0)
-  static String format(Memory::Allocator& _allocator, const char* _format,
+  RX_API static String format(Memory::Allocator& _allocator, const char* _format,
     Ts&&... _arguments);
 
+  /// Move assignment operator.
   String& operator=(String&& contents_);
 
+  /// Reserve storage in the string.
   [[nodiscard]] bool reserve(Size _size);
+
+  /// Resize the string.
   [[nodiscard]] bool resize(Size _size);
 
+  /// @{
+  /// Find the first instance of a substring.
   Optional<Size> find_first_of(int _ch) const;
   Optional<Size> find_first_of(const StringView& _contents) const;
+  /// @}
 
+  /// @{
+  /// Find the last instance of a substring.
   Optional<Size> find_last_of(int _ch) const;
   Optional<Size> find_last_of(const StringView& _contents) const;
+  /// @}
 
+  /// Size of the string.
   Size size() const;
+
+  /// Capacity of the string.
   Size capacity() const;
 
+  /// Check if the string is stored in-situ or is backed by an allocation.
   bool in_situ() const;
+
+  /// Check if the string is empty.
   bool is_empty() const;
 
+  /// Clear a string.
   void clear();
 
+  /// @{
+  /// Append a string.
   [[nodiscard]] bool append(const char* _first, const char* _last);
   [[nodiscard]] bool append(const char* _contents, Size _size);
   [[nodiscard]] bool append(const StringView& _contents);
   [[nodiscard]] bool append(char _ch);
+  /// @}
 
+  /// Format a string and append it.
+  /// \param _format The format string.
+  /// \param _arguments The format arguments.
   template<typename... Ts>
   [[nodiscard]] RX_HINT_FORMAT(2, 0)
   bool formatted_append(const char* _format, Ts&&... _arguments);
 
+  /// @{
+  /// Insert a string at a position.
   [[nodiscard]] bool insert_at(Size _position, const char* _contents, Size _size);
   [[nodiscard]] bool insert_at(Size _position, const char* _contents);
   [[nodiscard]] bool insert_at(Size _position, const String& _contents);
+  /// @}
 
-  // take substring from |offset| of |length|, use |length| of zero for whole string
+  /// Construct a substring.
   Optional<String> substring(Size _offset, Size _length = 0) const;
 
-  // scan string
+  /// Scan the string into values.
   Size scan(const char* _scan_format, ...) const;
 
+  /// Pop back the last codepoint.
   char pop_back();
 
+  /// Erase a range of codepoints.
   void erase(Size _begin, Size _end);
 
+  /// @{
+  /// Access a codepoint by index.
   char& operator[](Size _index);
   const char& operator[](Size _index) const;
+  /// @}
 
+  /// @{
+  /// Access the raw string data, null-terminated.
   char* data();
   const char* data() const;
+  /// @}
 
   static RX_API Optional<String> human_size_format(Memory::Allocator& _allocator, Size _size);
 
+  /// Check if string begins with a given prefix.
   [[nodiscard]] bool begins_with(const StringView& _prefix) const;
+
+  /// Check if string ends with a given suffix.
   [[nodiscard]] bool ends_with(const StringView& _suffix) const;
+
+  /// Check if string contains a substring.
   [[nodiscard]] bool contains(const StringView& _needle) const;
 
+  /// Compute a hash code.
   Size hash() const;
 
+  /// Convert the string to UTF-16.
   WideString to_utf16() const;
 
+  /// The allocator used for this string.
   constexpr Memory::Allocator& allocator() const;
 
+  /// Disown the memory of the string.
   Optional<Memory::View> disown();
 
-  // The span includes the null terminator.
+  /// @{
+  /// Non-owning access to the raw codepoints.
   Span<char> span();
   Span<const char> span() const;
+  /// @}
 
-  static char *read_line(char*& data_);
+  /// Read a line of text from a string.
+  /// \param data_ The data to read a line from.
+  ///
+  /// Modifies the contents pointed by \p data_ to null-terminate at each
+  /// newline character and advances the pointer by the line length, returning
+  /// a pointer to the line.
+  ///
+  /// The correct way to use this is in a loop reading lines like:
+  /// \code{cpp}
+  /// char* data = ...;
+  /// char* line = data;
+  /// while ((line = String::read_line(line))) {
+  ///   ...
+  /// }
+  /// \endcode
+  RX_API static char *read_line(char*& data_);
 
 private:
   static RX_API Optional<String> formatter(Memory::Allocator& _allocator, const char* _format, ...);
@@ -388,11 +454,26 @@ inline Span<const char> StringView::span() const {
   return { m_data, m_size + 1 };
 }
 
-// [*]
-Size utf16_to_utf8(const Uint16* _utf16_contents, Size _length,
+/// Convert UTF-16 to UTF-8
+/// \param _utf16_contents The UTF-16 contents.
+/// \param _length The number of codepoints in the contents.
+/// \param utf8_contents_ The output for UTF-8 codepoints.
+/// \return The number of UTF-8 codepoints successfully converted.
+/// \note This function can be called with nullptr for \p utf8_contents_ to
+/// calculate the number of UTF-8 codepoints such conversion would require to
+/// allocate the storage needed for \p utf8_contents_.
+RX_API Size utf16_to_utf8(const Uint16* _utf16_contents, Size _length,
   char* utf8_contents_);
 
-Size utf8_to_utf16(const char* _utf8_contents, Size _length,
+/// Convert UTF-8 to UTF-16
+/// \param _utf8_contents The UTF-8 contents.
+/// \param _length The number of codepoints in the contents.
+/// \param utf16_contents_ The output for UTF-16 codepoints.
+/// \return The number of UTF-16 codepoints successfully converted.
+/// \note This function can be called with nullptr for \p utf16_contents_ to
+/// calculate the number of UTF-16 codepoints such conversion would require to
+/// allocate the storage needed for \p utf16_contents_.
+RX_API Size utf8_to_utf16(const char* _utf8_contents, Size _length,
   Uint16* utf16_contents_);
 
 template<>
@@ -409,26 +490,23 @@ struct FormatNormalize<StringView> {
   }
 };
 
-// TODO(dweiler): Revisit this with three-way relational operator and StringView.
-// We don't inline comparison operators because they explode code size.
-bool operator==(const String& _lhs, const String& _rhs);
-bool operator==(const String& _lhs, const char* _rhs);
-bool operator==(const char* _lhs, const String& _rhs);
-
-bool operator!=(const String& _lhs, const String& rhs);
-bool operator!=(const String& _lhs, const char* _rhs);
-bool operator!=(const char* _lhs, const String& _rhs);
-
-bool operator<(const String& _lhs, const String& _rhs);
-bool operator<(const String& _lhs, const char* _rhs);
-bool operator<(const char* _lhs, const String& _rhs);
-
-bool operator>(const String& _lhs, const String& _rhs);
-bool operator>(const String& _lhs, const char* _rhs);
-bool operator>(const char* _lhs, const String& _rhs);
-
-bool operator==(const StringView& _lhs, const StringView& _rhs);
-bool operator!=(const StringView& _lhs, const StringView& _rhs);
+/// @{
+/// Comparison and relational operators for various String-like types.
+RX_API bool operator==(const String& _lhs, const String& _rhs);
+RX_API bool operator==(const String& _lhs, const char* _rhs);
+RX_API bool operator==(const char* _lhs, const String& _rhs);
+RX_API bool operator!=(const String& _lhs, const String& rhs);
+RX_API bool operator!=(const String& _lhs, const char* _rhs);
+RX_API bool operator!=(const char* _lhs, const String& _rhs);
+RX_API bool operator<(const String& _lhs, const String& _rhs);
+RX_API bool operator<(const String& _lhs, const char* _rhs);
+RX_API bool operator<(const char* _lhs, const String& _rhs);
+RX_API bool operator>(const String& _lhs, const String& _rhs);
+RX_API bool operator>(const String& _lhs, const char* _rhs);
+RX_API bool operator>(const char* _lhs, const String& _rhs);
+RX_API bool operator==(const StringView& _lhs, const StringView& _rhs);
+RX_API bool operator!=(const StringView& _lhs, const StringView& _rhs);
+/// @}
 
 } // namespace Rx
 

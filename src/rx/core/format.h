@@ -55,10 +55,17 @@ struct FormatNormalize<char[E]> {
   }
 };
 
-// Low-level format functions.
+/// @{
+/// Low-level format functions.
 RX_API Size format_buffer_va_list(Span<char> buffer_, const char* _format, va_list _list) RX_HINT_FORMAT(2, 0);
 RX_API Size format_buffer_va_args(Span<char> buffer_, const char* _format, ...); /*RX_HINT_FORMAT(2, 3);*/
+/// @}
 
+/// Format string into a buffer.
+/// \param buffer_ The buffer to format into.
+/// \param _format The format string.
+/// \param _arguments The format arguments.
+/// \return The number of bytes successfully formatted into \p buffer_.
 template<typename... Ts>
 RX_HINT_FORMAT(2, 0) Size format_buffer(Span<char> buffer_, const char* _format, Ts&&... _arguments) {
   return format_buffer_va_args(buffer_, _format,

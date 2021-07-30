@@ -4,7 +4,7 @@
 
 namespace Rx::Hash {
 
-Array<Byte[16]> djbx33a(const Byte* _data, Size _size);
+RX_API Array<Byte[16]> djbx33a(const Byte* _data, Size _size);
 
 } // namespace Rx::Hash
 
