@@ -1,6 +1,5 @@
 #include <time.h> // time_t, time
 #include <string.h> // strlen
-#include <stdio.h>
 
 #include "rx/core/log.h"
 #include "rx/core/ptr.h"

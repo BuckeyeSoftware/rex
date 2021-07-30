@@ -606,7 +606,7 @@ namespace detail_gl4 {
 
     void use_draw_images(const Frontend::Images& _images) {
       static const auto& render_anisotropic = 
-        Console::Context::find_variable_by_name("render.anisotropic")->cast<Sint32>();
+        Console::Context::find_variable_by_name("render.anisotropic")->cast<Float32>();
 
       if (_images.is_empty()) {
         return;
@@ -645,6 +645,12 @@ namespace detail_gl4 {
         // Check for and update sampler settings.
         auto old_sampler = *texture_sampler;
         auto new_sampler = image.sampler;
+
+        if (new_sampler.anisotropy() != render_anisotropic->get()) {
+          new_sampler.record_anisotropy(Algorithm::max(m_max_aniso, render_anisotropic->get()));
+          new_sampler.flush();
+        }
+
         if (old_sampler != new_sampler) {
           const auto& options = convert_sampler(new_sampler);
 
@@ -669,12 +675,7 @@ namespace detail_gl4 {
             pglTextureParameterf(texture_handle, GL_TEXTURE_LOD_BIAS,  new_sampler.mipmap_lod_bias());
           }
 
-          if (new_sampler.anisotropy() != *render_anisotropic) {
-            new_sampler.record_anisotropy(Algorithm::max(m_max_aniso, Float32(*render_anisotropic)));
-            new_sampler.flush();
-          }
-
-          if (old_sampler.anisotropy() != new_sampler.anisotropy()) {
+          if (m_max_aniso > 0.0f && old_sampler.anisotropy() != new_sampler.anisotropy()) {
             pglTextureParameterf(texture_handle, GL_TEXTURE_MAX_ANISOTROPY, new_sampler.anisotropy());
           }
 

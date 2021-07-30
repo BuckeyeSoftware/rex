@@ -4,6 +4,8 @@
 
 #include "rx/model/iqm.h"
 
+#include "rx/core/map.h"
+
 #include "rx/core/stream/context.h"
 #include "rx/core/stream/advancing_stream.h"
 
@@ -323,15 +325,50 @@ bool IQM::read_meshes(const Header& _header, const LinearBuffer& _data) {
 
   const auto* meshes =
     reinterpret_cast<const IQMMesh *>(_data.data() + _header.meshes_offset);
+  
+  // TODO(dweiler): Consider moving this to the importer so every model
+  // loader can take advantage of it.
 
+  // When there are duplicate mesh names, attempt to deduplicate.
+  Map<String, Size> mesh_names{m_allocator};
+
+  // Read in meshes, deduplicate mesh names and fixup general issues.
   for (Uint32 i = 0; i < _header.meshes; i++) {
     const auto& mesh = meshes[i];
+
+    // Work out the mesh name, taking special care to deduplicate meshes.
+    const auto iqm_mesh_name = string_table + mesh.name;
+    Optional<String> mesh_name;
+    if (auto find = mesh_names.find(iqm_mesh_name)) {
+      (*find)++; // This is a duplicate name, increment the count.
+      mesh_name = String::format(allocator(), "%s(%zu)", iqm_mesh_name, *find);
+    } else {
+      mesh_name = String::create(allocator(), iqm_mesh_name);
+      if (mesh_name && !mesh_names.insert(*mesh_name, 0_z)) {
+        return m_report.error("out of memory");
+      }
+    }
+
     auto material_name = String::create(allocator(), string_table + mesh.material);
-    auto mesh_name = String::create(allocator(), string_table + mesh.name);
-    if (!material_name || !mesh_name || !m_meshes.emplace_back(Utility::move(*mesh_name), Utility::move(*material_name), mesh.first_triangle * 3, mesh.num_triangles * 3, Vector<Vector<Math::AABB>>{allocator()})) {
+    if (!mesh_name || !material_name) {
+      return m_report.error("out of memory");
+    }
+
+    if (!m_meshes.emplace_back(Utility::move(*mesh_name), Utility::move(*material_name), mesh.first_triangle * 3, mesh.num_triangles * 3, Vector<Vector<Math::AABB>>{allocator()})) {
       return m_report.error("out of memory");
     }
   }
+
+  // Globally renumber duplicate meshes.
+  mesh_names.each_pair([&](const String& _name, Size _count) {
+    if (_count == 0) {
+      return true;
+    }
+    const auto find = m_meshes.find_if([&](const Mesh& _mesh) {
+      return _mesh.name == _name;
+    });
+    return m_meshes[*find].name.append("(0)");
+  });
 
   for (Uint32 i = 0; i < _header.triangles; i++) {
     const auto* triangle =

@@ -1,7 +1,6 @@
 #ifndef RX_RENDER_FRONTEND_SAMPLER_H
 #define RX_RENDER_FRONTEND_SAMPLER_H
 #include "rx/core/types.h"
-#include "rx/core/algorithm/saturate.h"
 
 namespace Rx::Render::Frontend {
 
@@ -153,7 +152,7 @@ inline void Sampler::record_mipmap_lod_bias(Float32 _mipmap_lod_bias) {
 }
 
 inline void Sampler::record_anisotropy(Float32 _anisotropy) {
-  m_anisotropy = Algorithm::saturate(_anisotropy);
+  m_anisotropy = _anisotropy;
   m_hash |= DIRTY_BIT;
 }
 

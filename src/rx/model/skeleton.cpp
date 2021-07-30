@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "rx/model/skeleton.h"
 
 namespace Rx::Model {

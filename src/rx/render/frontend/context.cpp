@@ -40,13 +40,13 @@ RX_CONSOLE_V2IVAR(
   Rx::Math::Vec2i(4096, 4096),
   Rx::Math::Vec2i(2048, 2048));
 
-RX_CONSOLE_IVAR(
+RX_CONSOLE_FVAR(
   anisotropic_filtering,
   "render.anisotropic",
   "anisotropic texture filtering",
-  0,
-  16,
-  8);
+  0.0f,
+  16.0f,
+  8.0f);
 
 RX_LOG("render", logger);
 

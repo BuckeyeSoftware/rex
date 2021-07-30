@@ -356,33 +356,29 @@ Sampler convert_sampler(const Frontend::Sampler& _sampler) {
   }
 
   // The minification filter is a combination of min_filter and mipmap_mode
-  switch (_sampler.mipmap_mode()) {
-  case Frontend::Sampler::MipmapMode::NONE:
-    switch (_sampler.min_filter()) {
-    case Frontend::Sampler::Filter::NEAREST:
+  switch (_sampler.min_filter()) {
+  case Frontend::Sampler::Filter::NEAREST:
+    switch (_sampler.mipmap_mode()) {
+    case Frontend::Sampler::MipmapMode::NONE:
       result.min = GL_NEAREST;
       break;
-    case Frontend::Sampler::Filter::LINEAR:
-      result.min = GL_LINEAR;
-      break;
-    }
-    break;
-  case Frontend::Sampler::MipmapMode::NEAREST:
-    switch (_sampler.min_filter()) {
-    case Frontend::Sampler::Filter::NEAREST:
+    case Frontend::Sampler::MipmapMode::NEAREST:
       result.min = GL_NEAREST_MIPMAP_NEAREST;
       break;
-    case Frontend::Sampler::Filter::LINEAR:
+    case Frontend::Sampler::MipmapMode::LINEAR:
       result.min = GL_NEAREST_MIPMAP_LINEAR;
       break;
     }
     break;
-  case Frontend::Sampler::MipmapMode::LINEAR:
-    switch (_sampler.min_filter()) {
-    case Frontend::Sampler::Filter::NEAREST:
+  case Frontend::Sampler::Filter::LINEAR:
+    switch (_sampler.mipmap_mode()) {
+    case Frontend::Sampler::MipmapMode::NONE:
+      result.min = GL_LINEAR;
+      break;
+    case Frontend::Sampler::MipmapMode::NEAREST:
       result.min = GL_LINEAR_MIPMAP_NEAREST;
       break;
-    case Frontend::Sampler::Filter::LINEAR:
+    case Frontend::Sampler::MipmapMode::LINEAR:
       result.min = GL_LINEAR_MIPMAP_LINEAR;
       break;
     }
@@ -599,10 +595,10 @@ Optional<String> generate_glsl(Memory::Allocator& _allocator,
 Size texture_alignment(const Byte* _data, Size _row_pixels, const Frontend::Texture* _texture) {
   const auto pitch = (_row_pixels * _texture->bits_per_pixel()) / 8;
   const auto address = UintPtr(_data) | pitch;
-  if (address & 8) return 8;
-  if (address & 4) return 4;
+  if (address & 1) return 1;
   if (address & 2) return 2;
-  return 1;
+  if (address & 4) return 4;
+  return 8;
 }
 
 } // namespace Rx::Render

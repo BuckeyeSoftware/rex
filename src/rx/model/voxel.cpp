@@ -18,8 +18,6 @@
 #include "rx/math/vec2.h"
 #include "rx/math/ray.h"
 
-#include <stdio.h>
-
 namespace Rx::Model {
 
 // Maximum distance to rasterize in [0, 1) range. A value close to 1.0 is ideal.

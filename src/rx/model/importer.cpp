@@ -124,18 +124,13 @@ bool Importer::load(Stream::Context& _stream) {
   }
 
   // Coalesce batches that share the same material.
-  struct Batch {
-    Size offset;
-    Size count;
-  };
-
-  Map<String, Vector<Batch>> batches{allocator()};
+  Map<String, Vector<const Mesh*>> batches{allocator()};
   auto batch = [&](const Mesh& _mesh) {
     if (auto* find = batches.find(_mesh.material)) {
-      return find->emplace_back(_mesh.offset, _mesh.count);
+      return find->emplace_back(&_mesh);
     } else {
-      Vector<Batch> batch{allocator()};
-      if (!batch.emplace_back(_mesh.offset, _mesh.count)) {
+      Vector<const Mesh*> batch{allocator()};
+      if (!batch.emplace_back(&_mesh)) {
         return false;
       }
       return batches.insert(_mesh.material, Utility::move(batch)) != nullptr;
@@ -149,36 +144,38 @@ bool Importer::load(Stream::Context& _stream) {
   Vector<Mesh> optimized_meshes{allocator()};
   Vector<Uint32> optimized_elements{allocator()};
 
-  auto coalesce_batch = [&](const String& _material_name, const Vector<Batch>& _batches) {
-    const auto n_elements = optimized_elements.size();
+  auto coalesce_batch = [&](const String& _material_name, const Vector<const Mesh*>& _batches) {
+    // Need a copy of the material name.
+    auto material_name = Utility::copy(_material_name);
+    if (!material_name) {
+      return false;
+    }
 
-    auto append_batch = [&](const Batch& _batch) {
+    String mesh_name{allocator()};
+    auto append_batch = [&](const Mesh* _batch) {
       const auto count = optimized_elements.size();
-      if (!optimized_elements.resize(count + _batch.count)) {
+      if (!optimized_elements.resize(count + _batch->count)) {
         return false;
       }
       Memory::copy(optimized_elements.data() + count,
-        m_elements.data() + _batch.offset, _batch.count);
-      return true;
+        m_elements.data() + _batch->offset, _batch->count);
+      if (!mesh_name.is_empty() && !mesh_name.append(" & ")) {
+        return false;
+      }
+      return mesh_name.append(_batch->name);
     };
 
+    const auto n_elements = optimized_elements.size();
     if (!_batches.each_fwd(append_batch)) {
       return false;
     }
 
-    const auto count = optimized_elements.size() - n_elements;
-
-    auto name = String::create(allocator(), "");
-    auto material = String::copy(_material_name);
-
-    // TODO(dweiler): Revisit this.
-    return name && material &&
-      optimized_meshes.emplace_back(
-        Utility::move(*name),
-        Utility::move(*material),
-        n_elements,
-        count,
-        Vector<Vector<Math::AABB>>{allocator()});
+    return optimized_meshes.emplace_back(
+      Utility::move(mesh_name),
+      Utility::move(*material_name),
+      n_elements,
+      optimized_elements.size() - n_elements,
+      Vector<Vector<Math::AABB>>{allocator()});
   };
 
   time.start();

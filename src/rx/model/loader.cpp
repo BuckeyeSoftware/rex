@@ -338,15 +338,22 @@ bool Loader::parse_transform(const Serialize::JSON& _transform) {
 bool Loader::validate() {
   // Validate that each mesh has a material and is referenced.
   Set<String> referenced{m_allocator};
+  bool error = false;
   auto check_mesh = [&](const Mesh& _mesh) -> bool {
     if (!m_materials.find(_mesh.material)) {
-      return m_report.error("missing material \"%s\" for mesh \"%s\"",
+      m_report.error("missing material \"%s\" for mesh \"%s\"",
         _mesh.material, _mesh.name);
+      return error = true;
+    } else {
+      return referenced.insert(_mesh.material);
     }
-    return referenced.insert(_mesh.material);
   };
 
   if (!m_meshes.each_fwd(check_mesh)) {
+    return false;
+  }
+
+  if (error) {
     return false;
   }
 

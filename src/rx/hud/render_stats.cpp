@@ -143,6 +143,19 @@ void RenderStats::render() {
     {1.0f, 1.0f, 1.0f, 1.0f});
   offset.y += *font_size;
 
+  m_immediate->frame_queue().record_text(
+    font_name->get(),
+    offset,
+    *font_size,
+    1.0f,
+    Render::Immediate2D::TextAlign::LEFT,
+    String::format(
+      temporary,
+      "footprint: %s",
+      *String::human_size_format(temporary, frontend.footprint())),
+    {1.0f, 1.0f, 1.0f, 1.0f});
+  offset.y += *font_size;
+
   const Math::Vec2f& screen_size =
     frontend.swapchain()->dimensions().cast<Float32>();
 

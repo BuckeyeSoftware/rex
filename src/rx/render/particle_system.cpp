@@ -1,5 +1,4 @@
 #include <stddef.h> // offsetof
-#include <stdio.h>
 
 #include "rx/render/particle_system.h"
 
