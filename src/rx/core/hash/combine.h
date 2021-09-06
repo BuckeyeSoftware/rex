@@ -4,7 +4,6 @@
 #include "rx/core/array.h"
 
 /// \file combine.h
-///
 /// This is an implementation of the TEA algorithm.
 ///
 /// Phi = (1 + sqrt(5)) / 2 = 1.6180339887498948482045868343656

@@ -77,12 +77,13 @@ struct RX_API Directory {
   ///
   /// \warning The Item has the same lifetime as the Directory. It's not valid
   /// to refer to an Item after the Directory has gone out of scope.
-  struct Item {
+  struct RX_API Item {
     RX_MARK_NO_COPY(Item);
     RX_MARK_NO_MOVE(Item);
 
     /// Test if an item is a file.
     bool is_file() const;
+
     /// Test if an item is a directory.
     bool is_directory() const;
 

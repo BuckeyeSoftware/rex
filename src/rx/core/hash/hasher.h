@@ -7,6 +7,8 @@
 
 #include "rx/core/hash/string.h"
 
+/// \file hasher.h
+
 namespace Rx {
   template<typename T>
   struct Array;
@@ -19,9 +21,11 @@ concept Hashable = requires(const T& _value) {
   _value.hash();
 };
 
+/// \brief Concrete hash functor object.
 template<typename T>
 struct Hasher;
 
+/// Specialization for types which satisfy Hashtable concept.
 template<Hashable T>
 struct Hasher<T> {
   Size operator()(const T& _value) const {
@@ -29,6 +33,7 @@ struct Hasher<T> {
   }
 };
 
+/// Specialization for types which satisfy Enum concept.
 template<Concepts::Enum T>
 struct Hasher<T> {
   Size operator()(const T& _enum) const {
@@ -36,6 +41,7 @@ struct Hasher<T> {
   }
 };
 
+/// Specialization for booleans.
 template<>
 struct Hasher<bool> {
   Size operator()(bool _value) const {
@@ -43,6 +49,8 @@ struct Hasher<bool> {
   }
 };
 
+/// @{
+/// Specialization for signed integer types
 template<>
 struct Hasher<signed char> {
   Size operator()(char _value) const {
@@ -81,7 +89,10 @@ struct Hasher<signed long long> {
     return mix_sint64(_value);
   }
 };
+/// @}
 
+/// @{
+/// Specialization for unsigned integer types.
 template<>
 struct Hasher<unsigned char> {
   Size operator()(unsigned char _value) const {
@@ -120,7 +131,10 @@ struct Hasher<unsigned long long> {
     return mix_uint64(_value);
   }
 };
+/// @}
 
+/// @{
+/// Specialization for floating point types.
 template<>
 struct Hasher<Float32> {
   Size operator()(Float32 _value) const {
@@ -134,7 +148,9 @@ struct Hasher<Float64> {
     return mix_float64(_value);
   }
 };
+/// @}
 
+/// Specialization for pointer types.
 template<typename T>
 struct Hasher<T*> {
   Size operator()(const T* _value) const {
@@ -142,7 +158,7 @@ struct Hasher<T*> {
   }
 };
 
-// Specialization for const char* as that is always a string.
+/// Specialization for null-terminated C-style strings.
 template<>
 struct Hasher<const char*> {
   Size operator()(const char* _value) const {
@@ -150,7 +166,7 @@ struct Hasher<const char*> {
   }
 };
 
-// Specialization for Array<Byte[16]> because that's the 128-bit hash representation.
+/// Specialization for Array<Byte[16]>.
 template<>
 struct Hasher<Array<Byte[16]>> {
   RX_API Size operator()(const Array<Byte[16]>& _value) const;

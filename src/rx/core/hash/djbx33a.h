@@ -4,6 +4,7 @@
 
 namespace Rx::Hash {
 
+/// \brief Hash with DJB33 hash algorithm interleaved 4 times for 128-bit hash.
 RX_API Array<Byte[16]> djbx33a(const Byte* _data, Size _size);
 
 } // namespace Rx::Hash

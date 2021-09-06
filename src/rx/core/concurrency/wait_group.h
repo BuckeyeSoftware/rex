@@ -5,13 +5,22 @@
 #include "rx/core/concurrency/mutex.h"
 #include "rx/core/concurrency/condition_variable.h"
 
+/// \file wait_group.h
+
 namespace Rx::Concurrency {
 
+/// \brief Convenience type to wait for a group of concurrent tasks.
 struct RX_API WaitGroup {
+  /// \brief Construct a wait group
+  /// \param _count The number of things intended to be waited on.
   WaitGroup(Size _count);
   WaitGroup();
 
+  /// \brief Signal completion of one thing in the group.
+  /// \return A boolean value indicating if there are more things to wait for.
   bool signal();
+
+  /// \brief Blocks calling thread until all things in group are signaled.
   void wait();
 
 private:
