@@ -3,6 +3,8 @@
 
 #if defined(RX_PLATFORM_POSIX)
 #include <sys/mman.h> // mmap, munmap, mprotect, posix_madvise, MAP_{FAILED,HUGETLB}, PROT_{NONE,READ,WRITE}, POSIX_MADV_{WILLNEED,DONTNEED}
+#include <stdlib.h> // mkstemp
+#include <unistd.h> // ftruncate
 #elif defined(RX_PLATFORM_WINDOWS)
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -14,72 +16,98 @@
 namespace Rx::Memory {
 
 void VMA::deallocate() {
-  if (!is_valid()) {
-    return;
+  const auto size = m_page_size * m_page_count;
+
+#if defined(RX_PLATFORM_POSIX)
+  if (m_shared != -1) {
+    RX_ASSERT(close(m_shared) == 0, "close failed");
   }
 
-  const auto size = m_page_size * m_page_count;
-#if defined(RX_PLATFORM_POSIX)
-  RX_ASSERT(munmap(m_base, size) == 0, "munmap failed");
+  if (m_base) {
+    RX_ASSERT(munmap(m_base, size) == 0, "munmap failed");
+  }
 #elif defined(RX_PLATFORM_WINDOWS)
-  RX_ASSERT(VirtualFree(m_base, 0, MEM_RELEASE), "VirtualFree failed");
+  if (m_base) {
+    RX_ASSERT(VirtualFree(m_base, 0, MEM_RELEASE), "VirtualFree failed");
+  }
 #endif
 }
 
-bool VMA::allocate(Size _page_size, Size _page_count) {
-  RX_ASSERT(!is_valid(), "already allocated");
-
+Optional<VMA> VMA::allocate(Size _page_size, Size _page_count, bool _remappable) {
+  const auto size = _page_size * _page_count;
 #if defined(RX_PLATFORM_POSIX)
-  int flags = MAP_PRIVATE | MAP_ANONYMOUS;
+  int shared = -1;
+  if (_remappable) {
+    char path[] = "/tmp/rx-mem-XXXXXX";
+    if ((shared = mkstemp(path)) < 0) {
+      return nullopt;
+    }
 
-  // Determine the page size that closely matches |_page_size|.
-  Size page_size = 4096;
-
-  // Emscripten does not support huge pages.
-#if !defined(RX_PLATFORM_EMSCRIPTEN)
-  if (_page_size > 4096) {
-    flags |= MAP_HUGETLB;
-    if (_page_size > 2 * 1024 * 1024) {
-      // 2 MiB pages.
-      flags |= 21 << MAP_HUGE_SHIFT;
-      page_size = 2 * 1024 * 1024;
-    } else {
-      // 1 GiB pages.
-      flags |= 30 << MAP_HUGE_SHIFT;
-      page_size = 1 * 1024 * 1024 * 1024;
+    if (unlink(path) || ftruncate(shared, size)) {
+      close(shared);
+      return nullopt;
     }
   }
-#endif
 
-  const auto size = page_size * _page_count;
+  const auto flags = MAP_PRIVATE | MAP_ANONYMOUS;
   const auto map = mmap(nullptr, size, PROT_NONE, flags, -1, 0);
-  if (map != MAP_FAILED) {
-    // Ensure these pages are not comitted initially.
-    if (posix_madvise(map, size, POSIX_MADV_DONTNEED) != 0) {
-       munmap(map, size);
-       return false;
-     }
-
-    m_page_size = page_size;
-    m_page_count = _page_count;
-    m_base = reinterpret_cast<Byte*>(map);
-    return true;
+  if (map == MAP_FAILED) {
+    return nullopt;
   }
-#elif defined(RX_PLATFORM_WINDOWS)
-  // Using large pages on Windows requires the SecLockMemoryPrivilege privilege
-  // which we cannot gurantee the user has. Just force 4 KiB pages.
-  _page_size = 4096;
 
+  // Ensure these pages are not comitted initially.
+  if (posix_madvise(map, size, POSIX_MADV_DONTNEED) != 0) {
+      munmap(map, size);
+      return nullopt;
+  }
+
+  return VMA {
+    reinterpret_cast<Byte*>(map),
+    shared,
+    _page_size,
+    _page_count,
+  };
+#elif defined(RX_PLATFORM_WINDOWS)
   const auto size = _page_size * _page_count;
   const auto map = VirtualAlloc(nullptr, size, MEM_RESERVE, PAGE_NOACCESS);
-  if (map) {
-    m_page_size = _page_size;
-    m_page_count = _page_count;
-    m_base = reinterpret_cast<Byte*>(map);
-    return true;
+  if (!map) {
+    return nullopt;
   }
+
+  return VMA {
+    reinterpret_cast<Byte*>(map),
+    -1,
+    _page_size,
+    _page_count
+  };
 #endif
-  return false;
+  return nullopt;
+}
+
+Optional<VMA> VMA::remap(Range _range, bool _read, bool _write) {
+  if (m_shared < 0 || !in_range(_range)) {
+    return nullopt;
+  }
+
+#if defined(RX_PLATFORM_POSIX)
+  const auto size = m_page_size * _range.count;
+  const auto prot = (_read ? PROT_READ : 0) | (_write ? PROT_WRITE : 0);
+  const auto flags = MAP_FIXED | MAP_SHARED;
+  const auto map = mmap(m_base + _range.offset * m_page_size, size, prot, flags, m_shared, 0);
+  if (map == MAP_FAILED) {
+    return nullopt;
+  }
+
+  return VMA {
+    reinterpret_cast<Byte*>(map),
+    -1,
+    m_page_size,
+    _range.count,
+  };
+#elif defined(RX_PLATFORM_WINDOWS)
+  // TODO(dweiler): Implement...
+#endif
+  return nullopt;
 }
 
 bool VMA::commit(Range _range, bool _read, bool _write) {

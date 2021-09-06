@@ -30,17 +30,17 @@ VMA* ElectricFenceAllocator::allocate_vma(Size _size) {
   const auto pages = pages_needed(_size);
 
   // Create a new mapping with no permissions.
-  VMA mapping;
-  if (RX_HINT_UNLIKELY(!mapping.allocate(PAGE_SIZE, pages))) {
+  auto mapping = VMA::allocate(PAGE_SIZE, pages);
+  if (RX_HINT_UNLIKELY(!mapping)) {
     return nullptr;
   }
 
   // Commit all pages except the first and last one.
-  if (RX_HINT_UNLIKELY(!mapping.commit({1, pages - 2}, true, true))) {
+  if (RX_HINT_UNLIKELY(!mapping->commit({1, pages - 2}, true, true))) {
     return nullptr;
   }
 
-  return m_mappings.insert(mapping.base(), Utility::move(mapping));
+  return m_mappings.insert(mapping->base(), Utility::move(*mapping));
 }
 
 Byte* ElectricFenceAllocator::allocate(Size _size) {
