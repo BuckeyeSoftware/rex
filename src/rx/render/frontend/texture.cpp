@@ -1,8 +1,6 @@
 #include "rx/render/frontend/texture.h"
 #include "rx/render/frontend/context.h"
 
-#include "rx/core/algorithm/quick_sort.h"
-
 #include "rx/core/math/log2.h"
 
 namespace Rx::Render::Frontend {

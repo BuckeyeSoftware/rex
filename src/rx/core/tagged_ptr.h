@@ -14,7 +14,8 @@ namespace Rx {
 /// tag value overflow.
 template<typename T>
 struct TaggedPtr {
-  TaggedPtr(T* _ptr = nullptr, Byte _tag = 0);
+  constexpr TaggedPtr();
+  TaggedPtr(T* _ptr, Byte _tag = 0);
 
   /// Retag the pointer with a new tag value.
   void retag(Byte _tag);
@@ -32,8 +33,16 @@ private:
   union {
     T* m_as_ptr;
     UintPtr m_as_bits;
+    struct {} m_as_nat;
   };
 };
+
+
+template<typename T>
+constexpr TaggedPtr<T>::TaggedPtr()
+  : m_as_nat{}
+{
+}
 
 template<typename T>
 TaggedPtr<T>::TaggedPtr(T* _ptr, Byte _tag) {
