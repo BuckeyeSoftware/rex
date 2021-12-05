@@ -200,19 +200,31 @@ Set<K>& Set<K>::operator=(Set<K>&& set_) {
 
 template<typename K>
 K* Set<K>::insert(K&& key_) {
-  if (++m_size >= m_resize_threshold && !grow()) {
+  const auto new_size = m_size + 1;
+  if (new_size >= m_resize_threshold && !grow()) {
     return nullptr;
   }
-  return inserter(hash_key(key_), Utility::forward<K>(key_));
+  auto result = inserter(hash_key(key_), Utility::forward<K>(key_));
+  if (!result) {
+    return nullptr;
+  }
+  m_size = new_size;
+  return result;
 }
 
 template<typename K>
 template<typename L>
 K* Set<K>::insert(const L& _key) {
-  if (++m_size >= m_resize_threshold && !grow()) {
+  const auto new_size = m_size + 1;
+  if (new_size >= m_resize_threshold && !grow()) {
     return nullptr;
   }
-  return inserter(hash_key(_key), _key);
+  auto result = inserter(hash_key(_key), _key);
+  if (!result) {
+    return nullptr;
+  }
+  m_size = new_size;
+  return result;
 }
 
 template<typename K>
@@ -404,8 +416,10 @@ K* Set<K>::inserter(Size _hash, K&& key_) {
 
 template<typename K>
 K* Set<K>::inserter(Size _hash, const K& _key) {
-  K key{_key};
-  return inserter(_hash, Utility::move(key));
+  if (auto copy = Utility::copy(_key)) {
+    return inserter(_hash, Utility::move(*copy));
+  }
+  return nullptr;
 }
 
 template<typename K>
@@ -415,11 +429,11 @@ bool Set<K>::lookup_index(const L& _key, Size& _index) const {
     return false;
   }
 
-  const Size hash{hash_key(_key)};
-  Size position{desired_position(hash)};
-  Size distance{0};
+  const auto hash = hash_key(_key);
+  Size position = desired_position(hash);
+  Size distance = 0;
   for (;;) {
-    const Size hash_element{element_hash(position)};
+    const auto hash_element = element_hash(position);
     if (hash_element == 0) {
       return false;
     } else if (distance > probe_distance(hash_element, position)) {
@@ -439,8 +453,8 @@ template<typename K>
 template<typename F>
 RX_HINT_FORCE_INLINE bool Set<K>::each(F&& _function) {
   using ReturnType = Traits::InvokeResult<F, K&>;
-  for (Size i{0}; i < m_capacity; i++) {
-    const auto hash{m_hashes[i]};
+  for (Size i = 0; i < m_capacity; i++) {
+    const auto hash = m_hashes[i];
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_keys[i])) {
@@ -458,8 +472,8 @@ template<typename K>
 template<typename F>
 RX_HINT_FORCE_INLINE bool Set<K>::each(F&& _function) const {
   using ReturnType = Traits::InvokeResult<F, const K&>;
-  for (Size i{0}; i < m_capacity; i++) {
-    const auto hash{m_hashes[i]};
+  for (Size i = 0; i < m_capacity; i++) {
+    const auto hash = m_hashes[i];
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_keys[i])) {

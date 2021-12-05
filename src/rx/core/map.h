@@ -218,18 +218,30 @@ Map<K, V>& Map<K, V>::operator=(Map<K, V>&& map_) {
 
 template<typename K, typename V>
 V* Map<K, V>::insert(const K& _key, V&& value_) {
-  if (++m_size >= m_resize_threshold && !grow()) {
+  const auto new_size = m_size + 1;
+  if (new_size >= m_resize_threshold && !grow()) {
     return nullptr;
   }
-  return inserter(hash_key(_key), _key, Utility::forward<V>(value_));
+  auto result = inserter(hash_key(_key), _key, Utility::forward<V>(value_));
+  if (!result) {
+    return nullptr;
+  }
+  m_size = new_size;
+  return result;
 }
 
 template<typename K, typename V>
 V* Map<K, V>::insert(const K& _key, const V& _value) {
-  if (++m_size >= m_resize_threshold && !grow()) {
+  const auto new_size = m_size + 1;
+  if (new_size >= m_resize_threshold && !grow()) {
     return nullptr;
   }
-  return inserter(hash_key(_key), _key, _value);
+  auto result = inserter(hash_key(_key), _key, _value);
+  if (!result) {
+    return nullptr;
+  }
+  m_size = new_size;
+  return result;
 }
 
 template<typename K, typename V>
@@ -466,11 +478,11 @@ bool Map<K, V>::lookup_index(const L& _key, Size& _index) const {
     return false;
   }
 
-  const Size hash{hash_key(_key)};
-  Size position{desired_position(hash)};
-  Size distance{0};
+  const auto hash = hash_key(_key);
+  Size position = desired_position(hash);
+  Size distance = 0;
   for (;;) {
-    const Size hash_element{element_hash(position)};
+    const auto hash_element = element_hash(position);
     if (hash_element == 0) {
       return false;
     } else if (distance > probe_distance(hash_element, position)) {
@@ -490,8 +502,8 @@ template<typename K, typename V>
 template<typename F>
 RX_HINT_FORCE_INLINE bool Map<K, V>::each_key(F&& _function) {
   using ReturnType = Traits::InvokeResult<F, const K&>;
-  for (Size i{0}; i < m_capacity; i++) {
-    const auto hash{m_hashes[i]};
+  for (Size i = 0; i < m_capacity; i++) {
+    const auto hash = m_hashes[i];
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_keys[i])) {
@@ -509,8 +521,8 @@ template<typename K, typename V>
 template<typename F>
 RX_HINT_FORCE_INLINE bool Map<K, V>::each_key(F&& _function) const {
   using ReturnType = Traits::InvokeResult<F, const K&>;
-  for (Size i{0}; i < m_capacity; i++) {
-    const auto hash{m_hashes[i]};
+  for (Size i = 0; i < m_capacity; i++) {
+    const auto hash = m_hashes[i];
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_keys[i])) {
@@ -528,8 +540,8 @@ template<typename K, typename V>
 template<typename F>
 RX_HINT_FORCE_INLINE bool Map<K, V>::each_value(F&& _function) {
   using ReturnType = Traits::InvokeResult<F, V&>;
-  for (Size i{0}; i < m_capacity; i++) {
-    const auto hash{m_hashes[i]};
+  for (Size i = 0; i < m_capacity; i++) {
+    const auto hash = m_hashes[i];
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_values[i])) {
@@ -547,7 +559,7 @@ template<typename K, typename V>
 template<typename F>
 RX_HINT_FORCE_INLINE bool Map<K, V>::each_value(F&& _function) const {
   using ReturnType = Traits::InvokeResult<F, const V&>;
-  for (Size i{0}; i < m_capacity; i++) {
+  for (Size i = 0; i < m_capacity; i++) {
     const auto hash{m_hashes[i]};
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (Traits::IS_SAME<ReturnType, bool>) {
@@ -566,8 +578,8 @@ template<typename K, typename V>
 template<typename F>
 RX_HINT_FORCE_INLINE bool Map<K, V>::each_pair(F&& _function) {
   using ReturnType = Traits::InvokeResult<F, const K&, V&>;
-  for (Size i{0}; i < m_capacity; i++) {
-    const auto hash{m_hashes[i]};
+  for (Size i = 0; i < m_capacity; i++) {
+    const auto hash = m_hashes[i];
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_keys[i], m_values[i])) {
@@ -585,8 +597,8 @@ template<typename K, typename V>
 template<typename F>
 RX_HINT_FORCE_INLINE bool Map<K, V>::each_pair(F&& _function) const {
   using ReturnType = Traits::InvokeResult<F, const K&, const V&>;
-  for (Size i{0}; i < m_capacity; i++) {
-    const auto hash{m_hashes[i]};
+  for (Size i = 0; i < m_capacity; i++) {
+    const auto hash = m_hashes[i];
     if (hash != 0 && !is_deleted(hash)) {
       if constexpr (Traits::IS_SAME<ReturnType, bool>) {
         if (!_function(m_keys[i], m_values[i])) {
